@@ -1,0 +1,119 @@
+<!--
+  <<
+  Davinci
+  ==
+  Copyright (C) 2016 - 2017 EDP
+  ==
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  
+       http://www.apache.org/licenses/LICENSE-2.0
+  
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  >>
+  -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- The first thing in any HTML file should be the charset -->
+    <meta charset="utf-8">
+    <!-- Make the page mobile compatible -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <!-- Allow installing the app to the homescreen -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Davinci</title>
+    <style>
+      .general-loading {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        top: 0;
+        left: 0;
+      }
+
+      .general-loading .dot-container {
+        width: 90px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate3d(-50%, -50%, 0);
+        display: table;
+      }
+
+      .general-loading .dot-container .dot {
+        width: 30px;
+        height: 30px;
+        display: table-cell;
+        position: relative;
+      }
+
+      .general-loading .dot-container .dot:after {
+        width: 26px;
+        height: 26px;
+        background-color: #8BC34A;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        content: '';
+      }
+
+      .general-loading .dot-container .dot:nth-child(1) {
+        animation: loading-1 1s linear infinite;
+      }
+
+      .general-loading .dot-container .dot:nth-child(2) {
+        transform: scale(.5, .5);
+        animation: loading-2 1s linear infinite;
+      }
+
+      .general-loading .dot-container .dot:nth-child(3) {
+        transform: scale(0, 0);
+        animation: loading-3 1s linear infinite;
+      }
+
+      @keyframes loading-1 {
+        0% { transform: scale(1, 1); }
+        50% { transform: scale(0, 0); }
+        100% { transform: scale(1, 1); }
+      }
+
+      @keyframes loading-2 {
+        0% { transform: scale(.5, .5); }
+        25% { transform: scale(1, 1); }
+        50% { transform: scale(.5, .5); }
+        75% { transform: scale(0, 0); }
+        100% { transform: scale(.5, .5); }
+      }
+
+      @keyframes loading-3 {
+        0% { transform: scale(0, 0); }
+        50% { transform: scale(1, 1); }
+        100% { transform: scale(0, 0); }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Display a message if JS has been disabled on the browser. -->
+    <noscript>如果你看到这条信息，说明<strong> 你的浏览器禁用了 JavaScript </strong>, 请 <strong>取消禁用</strong> 恢复应用程序正常工作。</noscript>
+
+    <!-- The app hooks into this div -->
+    <div id="app">
+      <div class="general-loading">
+        <div class="dot-container">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+    <!-- A lot of magic happens in this file. HtmlWebpackPlugin automatically includes all assets (e.g. bundle.js, main.css) with the correct HTML tags, which is why they are missing in this HTML file. Don't add any assets here! (Check out the webpack config files in internals/webpack for details) -->
+  </body>
+</html>

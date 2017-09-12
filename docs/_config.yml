@@ -1,0 +1,8 @@
+title: Davinci
+description: 可视洞察平台
+google_analytics:
+show_downloads: true
+theme: jekyll-theme-architect
+
+gems:
+  - jekyll-mentions

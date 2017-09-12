@@ -1,0 +1,149 @@
+/*-
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+/**** react-grid *****/
+
+.react-grid-item {
+  background-color: #fff;
+  border-radius: 2px;
+  cursor: move;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background-color: #586b84;
+}
+
+/***** antd *****/
+
+/* 调整因默认字体变大造成的按钮变形 */
+.ant-btn {
+  line-height: 22px;
+}
+
+/* 调整 InputGroup 后缀按钮变形 */
+.ant-input-group-wrap .ant-btn-lg {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+/* 调整 Form 中圆形按钮大小 */
+.ant-form .ant-btn-circle {
+  width: 30px;
+  height: 30px;
+  padding-bottom: 0;
+}
+
+/* 调整 ModalFooter 中按钮文字大小 */
+.ant-modal-footer .ant-btn-lg {
+  font-size: 14px;
+}
+
+.ant-form a {
+  line-height: 30px;
+}
+
+.ant-form-item-required:before {
+  line-height: 1;
+}
+
+.no-item-margin .ant-form-item {
+  margin-bottom: 0;
+}
+
+.ant-modal-small > .ant-modal {
+  width: 400px !important;
+}
+
+.ant-modal-medium > .ant-modal {
+  width: 600px !important;
+}
+
+.ant-modal-large > .ant-modal {
+  width: 900px !important;
+}
+
+.ant-modal-xlarge {
+  padding: 20px;
+}
+
+.ant-modal-xlarge > .ant-modal {
+  width: auto !important;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  top: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-modal-xlarge > .ant-modal > .ant-modal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;  /* firefox flex overflow issue */
+}
+
+.ant-modal-xlarge > .ant-modal > .ant-modal-content > .ant-modal-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;  /* firefox flex overflow issue */
+}
+
+@media (max-width: 1200px) {
+  .ant-modal-xlarge {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ant-modal-large > .ant-modal {
+    width: auto !important;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ant-modal-small > .ant-modal,
+  .ant-modal-medium > .ant-modal {
+    width: auto !important;
+  }
+}
+
+/* action 栏按钮左右间距 */
+.ant-table-action-column .ant-btn {
+  margin: 0 4px;
+}
+
+/* 缩小默认行高 */
+.ant-table-thead > tr > th,
+.ant-table-tbody > tr > td {
+  padding: 10px 8px;
+}
+
+/* 调整空列表与 BoxBody 下方间距 */
+.ant-table-empty {
+  margin-bottom: 20px;
+}
+
+/* 调整因字体大小造成的 RangePicker input 位置不对 */
+.ant-calendar-picker-input {
+  line-height: 1;
+}

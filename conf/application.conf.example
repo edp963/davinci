@@ -1,0 +1,85 @@
+akka {
+  loglevel = INFO
+  version = 2.4.17
+}
+
+mysqldb {
+  profile = "slick.jdbc.MySQLProfile$"
+  db {
+    url = "jdbc:mysql://localhost:3306/yourdb?useSSL=false"
+    user = "*"
+    password = "*"
+    profile = com.mysql.jdbc.Driver
+    keepAliveConnection = true
+    numThreads = 5
+  }
+}
+
+h2db {
+  profile = "slick.jdbc.H2Profile$"
+  db {
+    url = "jdbc:h2:mem:test1"
+    profile = org.h2.Driver
+    keepAliveConnection = true
+    numThreads = 10
+  }
+}
+
+h2test {
+  profile = "slick.jdbc.H2Profile$"
+  db {
+    url = "jdbc:h2:mem:testing"
+    driver = org.h2.Driver
+  }
+}
+
+pgdb {
+  profile = "slick.jdbc.PostgresProfile$"
+  db {
+    url = "jdbc:postgresql:test1"
+    driver = org.postgresql.Driver
+    user = ""
+    pwd = ""
+    numThreads = 10
+  }
+}
+spark {
+  master = "//todo"
+  appName = "sparkcluster"
+}
+
+sparklocal {
+  master = "local[2]"
+  appName = "sparklocal"
+}
+
+httpServer {
+  host = "localhost"
+  port = 8080
+}
+
+
+jwtToken {
+  typ = "JWT"
+  algorithm = "HS512"
+  timeout = 31536000
+  secret = "your secret"
+}
+
+aes {
+  secret = "your secret"
+}
+
+ldap {
+  isEnable = false
+  url = ""
+  dc = ""
+  user = ""
+  pwd = ""
+  read.timeout = "5000"
+  connect {
+    timeout = "5000"
+    pool = true
+  }
+}
+

@@ -1,0 +1,398 @@
+@import "../../assets/less/variable";
+
+.unit {
+  height: 120px;
+  background-color: @body-background;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  box-shadow: 0 2px 3px 0 rgba(0,0,0,.05);
+  transform: translate3d(0, 0, 0);
+  transition: all 200ms;
+  position: relative;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 7px 21px 0 rgba(0,0,0,.15);
+    transform: translate3d(0, -5px, 0);
+  }
+
+  &.editing {
+    opacity: .3;
+  }
+
+  header {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 100%);
+  }
+
+  .title {
+    padding: 12px 40px 0 12px;
+    color: @white;
+
+    .ellipsis;
+  }
+
+  .content {
+    padding: 8px 12px 24px;
+    color: @white;
+
+    .ellipsis;
+  }
+
+  .icon {
+    position: absolute;
+    top: 8px;
+    opacity: .7;
+    color: @white;
+    transition: transform 200ms ease;
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1, 1.1);
+    }
+  }
+
+  .edit {
+    right: 28px;
+
+    .icon;
+  }
+
+  .delete {
+    right: 8px;
+
+    .icon;
+  }
+}
+
+.gridItem {
+  &:hover {
+    .tools {
+      opacity: 1;
+    }
+  }
+
+  .title {
+    line-height: 40px;
+    padding: 0 10px;
+
+    .ellipsis;
+
+    .control {
+      font-weight: normal;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    .desc {
+      font-size: 10px;
+      font-weight: normal;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+  }
+
+  .tools {
+    line-height: 1;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+
+    i {
+      font-size: 18px;
+      margin-left: 8px;
+      cursor: pointer;
+      transition: transform 200ms ease;
+
+      &:hover {
+        transform: scale(1.1, 1.1);
+      }
+    }
+  }
+
+  .controlPanel {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    overflow: hidden;
+    z-index: 2;
+    display: none;
+
+    &.show {
+      display: block;
+      background-color: fade(@black, 50);
+    }
+
+    .form {
+      max-height: 100%;
+      background-color: @white;
+      border-top: 1px solid @border-color-base;
+      overflow-y: auto;
+
+      &.show {
+        transform: translate(0, 0);
+      }
+    }
+
+    &.controlPanelEnter {
+      background-color: transparent;
+
+      .form {
+        transform: translate(0, -100%);
+      }
+
+      &.controlPanelEnterActive {
+        background-color: fade(@black, 50);
+        transition: background-color 350ms ease;
+
+        .form {
+          transform: translate(0, 0);
+          transition: transform 200ms ease-out;
+        }
+      }
+    }
+
+    &.controlPanelLeave {
+      background-color: fade(@black, 50);
+
+      .form {
+        transform: translate(0, 0);
+      }
+
+      &.controlPanelLeaveActive {
+        background-color: transparent;
+        transition: background-color 350ms ease;
+
+        .form {
+          transform: translate(0, -100%);
+          transition: transform 200ms ease-out;
+        }
+      }
+    }
+  }
+
+  .block {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+
+    .chartBlock {
+      flex: 1;
+    }
+
+    .tableBlock {
+      padding: 0 16px;
+      flex: 1;
+    }
+  }
+
+  .move {
+    cursor: pointer;
+  }
+}
+
+.descPanel {
+  max-width: 256px;
+}
+
+.gridBottom {
+  height: 100px;
+}
+
+.filters {
+  width: 100%;
+  height: 100%;
+  padding-bottom: 40px;
+  position: relative;
+
+  .buttons {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.filterForm {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+
+  .empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .filterBlock {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .filterRel {
+    width: 80px;
+    margin: 0 5px;
+    flex-shrink: 0;
+    position: relative;
+
+    &:after{
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      content: '';
+    }
+  }
+
+  .filterList {
+    padding-left: 5px;
+    margin-left: 5px;
+    border-left: 1px solid @primary-color;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filterItem {
+    padding: 4px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+
+    & > *:not(.filterBlock) {
+      margin: 0 4px;
+    }
+
+    &:before {
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      left: -5px;
+      content: '';
+    }
+
+    &.root:before {
+      width: 0;
+      display: none;
+    }
+
+    &.noPadding {
+      padding: 0;
+    }
+
+    &:first-child,
+    &:last-child {
+      &:after {
+        width: 3px;
+        background-color: @white;
+        position: absolute;
+        left: -7px;
+        content: '';
+      }
+    }
+
+    &:first-child {
+      &:after {
+        height: 50%;
+        top: 0;
+      }
+    }
+
+    &:last-child {
+      &:after {
+        height: 50%;
+        bottom: -1px;
+      }
+    }
+  }
+
+  .filterFormItem {
+    margin-bottom: 0;
+
+    .inputNumber {
+      width: auto;
+      margin: 0;
+    }
+  }
+
+  .filterFormKey {
+    min-width: 100px;
+  }
+
+  .filterFormOperator {
+    min-width: 60px;
+  }
+}
+
+.dimension {
+  position: relative;
+  border-right: 2px solid transparent !important;
+
+  &:after {
+    background-image: linear-gradient(180deg, #1A237E, #4FC3F7, #FFB74D, #E65100);
+    position: absolute;
+    width: 2px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    content: '';
+  }
+}
+
+.shareTitle {
+  text-align: center;
+}
+
+.shareContentEmpty {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.controlForm {
+  padding: 10px;
+
+  .formItem {
+    margin-bottom: 10px;
+  }
+
+  .buttonRow {
+    text-align: right;
+  }
+}
+
+@media (max-width: 1024px) {
+  .gridItem {
+    .tools {
+      opacity: 1;
+    }
+  }
+}

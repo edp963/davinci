@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>edp.davinci</groupId>
+        <artifactId>davinci-parent_2.11</artifactId>
+        <version>0.1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>davinci-server_2.11</artifactId>
+    <packaging>jar</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
+        <akka-http.version>10.0.5</akka-http.version>
+        <slick.version>3.2.0</slick.version>
+        <json4s.version>3.2.11</json4s.version>
+        <joda-time.version>2.4</joda-time.version>
+        <slf4j.version>1.7.21</slf4j.version>
+    </properties>
+
+    <dependencies>
+        <!-- akka-http -->
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http_${scala.binary.version}</artifactId>
+            <version>${akka-http.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http-spray-json_${scala.binary.version}</artifactId>
+            <version>${akka-http.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-http-core_${scala.binary.version}</artifactId>
+            <version>${akka-http.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.swagger-akka-http</groupId>
+            <artifactId>swagger-akka-http_${scala.binary.version}</artifactId>
+            <version>0.9.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.javassist</groupId>
+                    <artifactId>javassist</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.code.findbugs</groupId>
+                    <artifactId>annotations</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- slick -->
+        <dependency>
+            <groupId>com.typesafe.slick</groupId>
+            <artifactId>slick_${scala.binary.version}</artifactId>
+            <version>${slick.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.slick</groupId>
+            <artifactId>slick-hikaricp_${scala.binary.version}</artifactId>
+            <version>${slick.version}</version>
+        </dependency>
+
+        <!-- json4s -->
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-jackson_${scala.binary.version}</artifactId>
+            <version>${json4s.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.json4s</groupId>
+            <artifactId>json4s-ext_${scala.binary.version}</artifactId>
+            <version>${json4s.version}</version>
+        </dependency>
+
+        <!-- joda-time -->
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>${joda-time.version}</version>
+        </dependency>
+
+        <!-- jwt -->
+        <dependency>
+            <groupId>com.pauldijou</groupId>
+            <artifactId>jwt-core_${scala.binary.version}</artifactId>
+            <version>0.9.2</version>
+        </dependency>
+
+        <!-- string template -->
+        <dependency>
+            <groupId>org.clapper</groupId>
+            <artifactId>scalasti_2.11</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
+        <!-- jsqlparser -->
+        <dependency>
+            <groupId>com.github.jsqlparser</groupId>
+            <artifactId>jsqlparser</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <!-- logging -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+    </dependencies>
+
+</project>

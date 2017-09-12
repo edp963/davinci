@@ -1,0 +1,352 @@
+@import "../../assets/less/variable";
+//#F1F8E9
+.login {
+  background-color: #F1F8E9;
+  //background-image: linear-gradient(135deg, #E3F2FD, #FFF3E0);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .banner {
+    width: 956px;
+    height: 200px;
+    position: relative;
+  }
+
+  .window {
+    width: 768px;
+    background-color: rgba(0, 0, 0, .035);
+    padding: 8px;
+    margin: 20px 0 80px;
+    border-radius: 4px;
+    position: relative;
+
+    button {
+      width: 100%;
+      height: 36px;
+      color: @light-text-color;
+    }
+  }
+
+  .loginFormItem {
+    margin-bottom: 0;
+
+    input {
+      height: 36px;
+      padding: 8px 10px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .login {
+    .window {
+      width: 80%;
+    }
+
+    .loginFormItem {
+      margin-bottom: 2px;
+    }
+  }
+}
+
+.word {
+  position: absolute;
+  top: 0;
+  transform-style: preserve-3d;
+  //transform: rotateX(-30deg) rotateY(-30deg);
+  //transition: all 1s ease;
+  animation: woo 1s ease 2s 1 forwards;
+
+  &:after {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    box-shadow: 200px 0 140px rgba(0, 0, 0, .3);
+    transform: translate3d(-190px, 120px, -20px) rotateX(-90deg);
+    transition: all 1s ease;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: '';
+  }
+}
+
+@keyframes woo {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotateX(-30deg) rotateY(-30deg);
+  }
+}
+
+// FIXME safari rotateY BUG
+// http://stackoverflow.com/questions/18146511/bug-in-css3-rotatey-transition-on-safari
+_::-webkit-full-page-media,
+_:future,
+:root .word {
+  transform: rotateX(-30deg) rotateY(-30deg);
+  animation: none;
+}
+
+_::-webkit-full-page-media,
+_:future,
+:root .word:after {
+  width: 0;
+  box-shadow: none;
+}
+
+_::-webkit-full-page-media,
+_:future,
+:root .cube {
+  transition: none;
+}
+
+@cube-width: 20px;
+
+.cube {
+  width: @cube-width;
+  height: @cube-width;
+  position: absolute;
+  transform-style: preserve-3d;
+  transition: all 1s ease;
+
+  .front, .back, .top, .bottom, .left, .right {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .front {
+    transform: translate3d(0, 0, @cube-width / 2);
+  }
+
+  .back {
+    transform: translate3d(0, 0, -@cube-width / 2) rotateY(180deg);
+  }
+
+  .top {
+    transform: translate3d(0, -@cube-width / 2, 0) rotateX(90deg);
+  }
+
+  .bottom {
+    transform: translate3d(0, @cube-width / 2, 0) rotateX(-90deg);
+  }
+
+  .left {
+    transform: translate3d(-@cube-width / 2, 0, 0) rotateY(-90deg);
+  }
+
+  .right {
+    transform: translate3d(@cube-width / 2, 0, 0) rotateY(90deg);
+  }
+}
+
+.cubeRock {
+  transform: rotateX(360deg);
+}
+
+.cubeRoll {
+  transform: rotateY(360deg);
+}
+
+.colouring(@color) {
+  .front {
+    background-color: @color;
+  }
+
+  .back {
+    background-color: darken(@color, 5%);
+  }
+
+  .top {
+    background-color: darken(@color, 15%);
+  }
+
+  .bottom {
+    background-color: darken(@color, 20%);
+  }
+
+  .left {
+    background-color: darken(@color, 20%);
+  }
+
+  .right {
+    background-color: darken(@color, 20%);
+  }
+}
+//#C5E1A5
+@word-name: d, a, v, i1, n, c, i2;
+@word-left: 0, 140, 280, 420, 560, 700, 840;
+
+@d-row-array-numbers: 5;
+@d-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@d-row-colors: #a0a8da, #a1a9d8, #a3a9d6, #a3a9d6, #a7abd2;
+@d-row-1: 0, 6;
+@d-row-2: 0, 1, 2, 3, 4, 5, 6;
+@d-row-3: 0, 6;
+@d-row-4: 0, 6;
+@d-row-5: 1, 2, 3, 4, 5;
+
+@a-row-array-numbers: 5;
+@a-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@a-row-colors: #a9acd0, #adadcd, #afaecb, #b2afc8, #b5b0c5;
+@a-row-1: 4, 5, 6;
+@a-row-2: 2, 5;
+@a-row-3: 0, 5;
+@a-row-4: 2, 5;
+@a-row-5: 4, 5, 6;
+
+@v-row-array-numbers: 5;
+@v-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@v-row-colors: #b8b2c2, #bbb3c0, #beb4bc, #c2b5b9, #c6b7b5;
+@v-row-1: 0, 1, 2;
+@v-row-2: 4;
+@v-row-3: 6;
+@v-row-4: 4;
+@v-row-5: 0, 1, 2;
+
+@i1-row-array-numbers: 5;
+@i1-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@i1-row-colors: #c9b8b3, #cdb9af, #d1bbab, #d4bca8, #d7bda5;
+@i1-row-1: 0, 6;
+@i1-row-2: 0, 6;
+@i1-row-3: 0, 1, 2, 3, 4, 5, 6;
+@i1-row-4: 0, 6;
+@i1-row-5: 0, 6;
+
+@n-row-array-numbers: 5;
+@n-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@n-row-colors: #dbbfa2, #debf9e, #e2c19b, #e5c298, #e9c496;
+@n-row-1: 0, 1, 2, 3, 4, 5, 6;
+@n-row-2: 1;
+@n-row-3: 3;
+@n-row-4: 5;
+@n-row-5: 0, 1, 2, 3, 4, 5, 6;
+
+@c-row-array-numbers: 5;
+@c-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@c-row-colors: #e8c396, #ecc592, #efc690, #f1c78d, #f4c88a;
+@c-row-1: 1, 2, 3, 4, 5;
+@c-row-2: 0, 6;
+@c-row-3: 0, 6;
+@c-row-4: 0, 6;
+@c-row-5: 1, 5;
+
+@i2-row-array-numbers: 5;
+@i2-row-colors: #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5, #C5E1A5;
+//@i2-row-colors: #f6c989, #f9c986, #faca84, #fccb83, #fecb81;
+@i2-row-1: 0, 6;
+@i2-row-2: 0, 6;
+@i2-row-3: 0, 1, 2, 3, 4, 5, 6;
+@i2-row-4: 0, 6;
+@i2-row-5: 0, 6;
+
+.gen-cube-class(@i: length(@word-name)) when (@i > 0) {
+  .gen-cube-class(@i - 1);
+  @current-word: extract(@word-name, @i);
+  @current-left: extract(@word-left, @i);
+  @current-rows-str: "@{current-word}-row-array-numbers";
+  @current-rows: @@current-rows-str;
+  @current-row-colors-str: "@{current-word}-row-colors";
+  @current-row-colors: @@current-row-colors-str;
+
+  .@{current-word} {
+    left: @current-left * 1px;
+  }
+
+  .gen-current-word-cube-class(@current-rows, @current-row-colors);
+}
+
+.gen-current-word-cube-class(@j, @colors) when (@j > 0) {
+  .gen-current-word-cube-class(@j - 1, @colors);
+  @row-array-str: "@{current-word}-row-@{j}";
+  @row-array: @@row-array-str;
+  @cube-color: extract(@colors, @j);
+
+  .gen-current-word-row-cube-class(length(@row-array), @j, @cube-color);
+}
+
+.gen-current-word-row-cube-class(@k, @j, @color) when (@k > 0) {
+  .gen-current-word-row-cube-class(@k - 1, @j, @color);
+  @row-height: extract(@row-array, @k);
+
+  .@{current-word}-@{j}-@{k} {
+    top: @row-height * 23 * 1px;
+    left: (@j - 1) * 23 * 1px;
+    .colouring(@color);
+  }
+}
+
+.gen-cube-class();
+
+// polyfill
+.a-p-1 {
+  top: 23px;
+  left: 34.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#adadcd);
+}
+.a-p-2 {
+  top: 23px;
+  left: 57.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#adadcd);
+}
+.a-p-3 {
+  top: 69px;
+  left: 11.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#afaecb);
+}
+.a-p-4 {
+  top: 69px;
+  left: 80.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#b2afc8);
+}
+.v-p-1 {
+  top: 115px;
+  left: 34.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#beb4bc);
+}
+.v-p-2 {
+  top: 115px;
+  left: 57.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#beb4bc);
+}
+.v-p-3 {
+  top: 69px;
+  left: 11.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#bbb3c0);
+}
+.v-p-4 {
+  top: 69px;
+  left: 80.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#c2b5b9);
+}
+.n-p-1 {
+  top: 46px;
+  left: 34.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#debf9e);
+}
+.n-p-2 {
+  top: 92px;
+  left: 57.5px;
+  .colouring(#C5E1A5);
+  //.colouring(#e5c298);
+}

@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>edp.davinci</groupId>
+    <artifactId>davinci-parent_2.11</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.html</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <modules>
+        <module>server</module>
+        <module>assembly</module>
+        <module>webapp</module>
+    </modules>
+
+    <properties>
+        <main.basedir>${project.basedir}</main.basedir>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <java.version>1.8</java.version>
+        <scala.version>2.11.8</scala.version>
+        <scala.binary.version>2.11</scala.binary.version>
+        <scalatest.version>2.2.5</scalatest.version>
+        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Maven Repository</name>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_${scala.binary.version}</artifactId>
+            <version>${scalatest.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- ========================================================== -->
+            <!-- compile scala and java -->
+            <!-- ========================================================== -->
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <scalaVersion>${scala.version}</scalaVersion>
+                    <scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
+                    <recompileMode>incremental</recompileMode>
+                    <useZincServer>false</useZincServer>
+                    <args>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-feature</arg>
+                    </args>
+                    <jvmArgs>
+                        <jvmArg>-Xms1024m</jvmArg>
+                        <jvmArg>-Xmx1024m</jvmArg>
+                        <jvmArg>-XX:+CMSClassUnloadingEnabled</jvmArg>
+                    </jvmArgs>
+                    <javacArgs>
+                        <javacArg>-source</javacArg>
+                        <javacArg>${java.version}</javacArg>
+                        <javacArg>-target</javacArg>
+                        <javacArg>${java.version}</javacArg>
+                        <javacArg>-Xlint:all,-serial,-path</javacArg>
+                    </javacArgs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>scala-compile-first</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>scala-test-compile</id>
+                        <phase>process-test-resources</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.6.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerVersion>${java.version}</compilerVersion>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <optimize>true</optimize>
+                    <maxmem>1024m</maxmem>
+                    <fork>true</fork>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-serial,-path</arg>
+                    </compilerArgs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ========================================================== -->
+            <!-- test and report -->
+            <!-- ========================================================== -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <!-- The ScalaTest Maven plugin allows you to run ScalaTest tests through Maven -->
+                <!-- To use the ScalaTest Maven plugin, you need to disable SureFire and enable ScalaTest -->
+                <version>1.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>EDPTestSuite.txt</filereports>
+                    <argLine>-Xms512M -Xmx2048M -XX:+CMSClassUnloadingEnabled</argLine>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ========================================================== -->
+            <!-- license -->
+            <!-- ========================================================== -->
+            <!-- mycila conflicts with codehaus -->
+            <!--<plugin>-->
+            <!--<groupId>com.mycila</groupId>-->
+            <!--<artifactId>license-maven-plugin</artifactId>-->
+            <!--<version>3.0</version>-->
+            <!--<configuration>-->
+            <!--<header>${main.basedir}/HEADER</header>-->
+            <!--<properties>-->
+            <!--<name>Davinci</name>-->
+            <!--</properties>-->
+            <!--<includes>-->
+            <!--<include>src/**/*.java</include>-->
+            <!--<include>src/**/*.scala</include>-->
+            <!--<include>src/**/*.xml</include>-->
+            <!--</includes>-->
+            <!--<excludes>-->
+            <!--<exclude>**/README</exclude>-->
+            <!--<exclude>**/src/main/resources/**</exclude>-->
+            <!--<exclude>**/src/test/resources/**</exclude>-->
+            <!--</excludes>-->
+            <!--</configuration>-->
+            <!--<executions>-->
+            <!--<execution>-->
+            <!--<id>check-license-header</id>-->
+            <!--<phase>initialize</phase>-->
+            <!--<goals>-->
+            <!--<goal>check</goal>-->
+            <!--</goals>-->
+            <!--</execution>-->
+            <!--</executions>-->
+            <!--</plugin>-->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>1.13</version>
+                <configuration>
+                    <!-- config for license:aggregate-add-third-party -->
+                    <outputDirectory>${main.basedir}</outputDirectory>
+                    <thirdPartyFilename>LICENSE-3RD-PARTY</thirdPartyFilename>
+                    <fileTemplate>/org/codehaus/mojo/license/third-party-file-groupByLicense.ftl</fileTemplate>
+                    <useMissingFile>true</useMissingFile>
+                    <missingFile>${main.basedir}/LICENSE-3RD-PARTY.properties</missingFile>
+                    <aggregateMissingLicensesFile>${main.basedir}/LICENSE-3RD-PARTY.properties
+                    </aggregateMissingLicensesFile>
+                    <licenseMerges>
+                        <licenseMerge>Apache 2.0|ASL, version
+                            2|http://www.apache.org/licenses/LICENSE-2.0.txt|http://asm.ow2.org/license.html|The Apache
+                            License, Version 2.0|Apache License|Apache License Version 2|Apache License Version
+                            2.0|Apache Software License - Version 2.0|Apache 2.0 License|Apache License 2.0|ASL|Apache
+                            2|Apache-2.0|the Apache License, ASL Version 2.0|The Apache Software License, Version
+                            2.0|Apache License, Version 2.0|Apache Public License 2.0
+                        </licenseMerge>
+                        <licenseMerge>BSD|The BSD 3-Clause License|The BSD License|Modified BSD License|New BSD
+                            License|New BSD license|Two-clause BSD-style license|BSD licence|BSD New|The New BSD
+                            License|BSD 3-Clause|BSD 3-clause
+                        </licenseMerge>
+                        <licenseMerge>MIT|MIT License|The MIT License</licenseMerge>
+                        <licenseMerge>LGPL|LGPL, version 2.1|GNU Library or Lesser General Public License (LGPL)
+                            V2.1|GNU Lesser General Public License (LGPL), Version 2.1|GNU Lesser General Public
+                            License, Version 2.1|LGPL 2.1
+                        </licenseMerge>
+                        <licenseMerge>CDDL|CDDL+GPL|CDDL+GPL License|CDDL + GPLv2 with classpath exception|CDDL
+                            License|CDDL 1.0|CDDL 1.1|COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version
+                            1.0|Common Development and Distribution License (CDDL) v1.0
+                        </licenseMerge>
+                        <licenseMerge>EPL|Eclipse Public License - Version 1.0</licenseMerge>
+                        <licenseMerge>GPL|GPL2 w/ CPE|GPLv2+CE|GNU General Public Library</licenseMerge>
+                        <licenseMerge>MPL|MPL 1.1</licenseMerge>
+                        <licenseMerge>Public Domain</licenseMerge>
+                        <licenseMerge>Common Public License|Common Public License Version 1.0</licenseMerge>
+                        <licenseMerge>CC0|CC0 1.0 Universal|Public Domain, per Creative Commons CC0</licenseMerge>
+                        <licenseMerge>Unknown License|Unknown license</licenseMerge>
+                    </licenseMerges>
+
+                    <!-- config for license:aggregate-download-licenses -->
+                    <aggregateDownloadLicenses.executeOnlyOnRootModule>true
+                    </aggregateDownloadLicenses.executeOnlyOnRootModule>
+                    <!--<licensesConfigFile>${main.basedir}/lic/config/licenses.xml</licensesConfigFile>-->
+                    <licensesOutputFile>dev/lic/licenses.xml</licensesOutputFile>
+                    <licensesOutputDirectory>dev/lic/licenses/</licensesOutputDirectory>
+
+                    <!-- config for license:update-file-header -->
+                    <licenseName>apache_v2</licenseName>
+                    <inceptionYear>2016</inceptionYear>
+                    <organizationName>EDP</organizationName>
+                    <projectName>Davinci</projectName>
+                    <roots>
+                        <root>src/main/java</root>
+                        <root>src/main/scala</root>
+                        <root>src/main/assembly</root>
+                        <root>src/test/java</root>
+                        <root>src/test/scala</root>
+                        <root>app</root>
+                        <root>share</root>
+                    </roots>
+                    <includes>
+                        <include>**/*.java</include>
+                        <include>**/*.scala</include>
+                        <include>**/*.xml</include>
+                        <include>**/*.sh</include>
+                        <include>**/*.py</include>
+                        <include>**/*.properties</include>
+                        <include>**/*.sql</include>
+                        <include>**/*.html</include>
+                        <include>**/*.less</include>
+                        <include>**/*.css</include>
+                        <include>**/*.js</include>
+                        <include>**/*.json</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/CSVFormat.scala</exclude>
+                        <exclude>**/CSVWriter.scala</exclude>
+                        <exclude>**/Formats.scala</exclude>
+                        <exclude>**/Quoting.scala</exclude>
+                    </excludes>
+                    <extraExtensions>
+                        <scala>java</scala>
+                    </extraExtensions>
+                    <canUpdateCopyright>true</canUpdateCopyright>
+                    <canUpdateDescription>true</canUpdateDescription>
+                    <addJavaLicenseAfterPackage>false</addJavaLicenseAfterPackage>
+                    <emptyLineAfterHeader>true</emptyLineAfterHeader>
+                    <processStartTag>&lt;&lt;</processStartTag>
+                    <processEndTag>&gt;&gt;</processEndTag>
+                    <sectionDelimiter>==</sectionDelimiter>
+                    <encoding>UTF-8</encoding>
+                    <!-- config for mvn license:update-project-license -->
+                    <licenseFile>${main.basedir}/LICENSE</licenseFile>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.jasig.maven</groupId>
+                <artifactId>maven-notice-plugin</artifactId>
+                <version>1.0.6.1</version>
+                <configuration>
+                    <generateChildNotices>false</generateChildNotices>
+                    <noticeTemplate>https://source.jasig.org/licenses/NOTICE.template</noticeTemplate>
+                    <licenseMapping>
+                        <param>https://source.jasig.org/licenses/license-mappings.xml</param>
+                    </licenseMapping>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -1,0 +1,39 @@
+@import "../../assets/less/variable";
+
+.sidebar {
+  width: 64px;
+  background-color: @body-background;
+  position: fixed;
+  top: 64px;
+  left: 0;
+  bottom: 0;
+
+  .option {
+    height: 64px;
+    text-align: center;
+    cursor: pointer;
+
+    &.active {
+      background-color: @bg-color;
+      color: @primary-color;
+    }
+
+    &:hover:not(.active) {
+      background-color: lighten(@bg-color, 3%);
+    }
+
+    a {
+      color: inherit;
+      display: block;
+
+      &:focus {
+        text-decoration: none;
+      }
+    }
+
+    i {
+      font-size: 24px;
+      line-height: 64px;
+    }
+  }
+}

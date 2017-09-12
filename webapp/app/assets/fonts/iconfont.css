@@ -1,0 +1,90 @@
+/*-
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
+@font-face {font-family: "iconfont";
+  src: url('iconfont.eot?t=1494157528649'); /* IE9*/
+  src: url('iconfont.eot?t=1494157528649#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('iconfont.woff?t=1494157528649') format('woff'), /* chrome, firefox */
+  url('iconfont.ttf?t=1494157528649') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('iconfont.svg?t=1494157528649#iconfont') format('svg'); /* iOS 4.1- */
+}
+
+.iconfont {
+  font-family:"iconfont" !important;
+  font-size:16px;
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-move1:before { content: "\e651"; }
+
+.icon-calendar:before { content: "\e626"; }
+
+.icon-area-chart:before { content: "\e62a"; }
+
+.icon-scatter-chart:before { content: "\e632"; }
+
+.icon-dashboard:before { content: "\e631"; }
+
+.icon-Graph:before { content: "\e6ab"; }
+
+.icon-iconloudoutu:before { content: "\e644"; }
+
+.icon-map:before { content: "\e852"; }
+
+.icon-gauge:before { content: "\e6c6"; }
+
+.icon-widget-gallery:before { content: "\e671"; }
+
+.icon-user1:before { content: "\e639"; }
+
+.icon-custom-business:before { content: "\e638"; }
+
+.icon-chartwordcloud:before { content: "\e6cd"; }
+
+.icon-datasource24:before { content: "\e6ef"; }
+
+.icon-radarchart:before { content: "\e7cb"; }
+
+.icon-group:before { content: "\e625"; }
+
+.icon-chartpie:before { content: "\e670"; }
+
+.icon-found:before { content: "\e60d"; }
+
+.icon-kongjiansangjitu:before { content: "\e863"; }
+
+.icon-relitu:before { content: "\e619"; }
+
+.icon-510tongji_guanxitu:before { content: "\e649"; }
+
+.icon-508tongji_xiangxiantu:before { content: "\e64d"; }
+
+.icon-507tongji_Kxiantu:before { content: "\e64e"; }
+
+.icon-chart-treemap:before { content: "\e613"; }
+
+.icon-chart-bar:before { content: "\e60c"; }
+
+.icon-chart-line:before { content: "\e611"; }
+
+.icon-table:before { content: "\e662"; }
+
