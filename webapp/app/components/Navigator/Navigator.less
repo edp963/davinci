@@ -1,0 +1,79 @@
+@import "../../assets/less/variable";
+
+.header {
+  width: 100%;
+  height: 64px;
+  background-color: @body-background;
+  box-shadow: 0 2px 1px 0 rgba(0,0,0,.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: @header-index;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  width: 120px;
+  height: 64px;
+  margin-left: 12px;
+  background-image: linear-gradient(90deg, #1A237E, #4FC3F7, #FFB74D, #E65100, #FFB74D, #4FC3F7, #1A237E, #4FC3F7, #FFB74D, #E65100);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  //-webkit-text-fill-color: transparent;
+  color: transparent;
+  font-size: 30px;
+  font-weight: bolder;
+  line-height: 60px;
+  text-align: center;
+  animation: flux 20s linear infinite;
+}
+
+@keyframes flux {
+  0%{background-position:0% 0%}
+  50%{background-position:50% 0%}
+  100%{background-position:100% 0%}
+}
+
+//.logo {
+//  background-image: none;
+//  -webkit-text-fill-color: inherit;
+//  & > span:nth-of-type(1) {
+//    color: #1A237E;
+//  }
+//  & > span:nth-of-type(2) {
+//    color: #1A237E;
+//  }
+//  & > span:nth-of-type(3) {
+//    color: #4FC3F7;
+//  }
+//  & > span:nth-of-type(4) {
+//    color: #4FC3F7;
+//  }
+//  & > span:nth-of-type(5) {
+//    color: #FFB74D;
+//  }
+//  & > span:nth-of-type(6) {
+//    color: #E65100;
+//  }
+//  & > span:nth-of-type(7) {
+//    color: #E65100;
+//  }
+//}
+
+.tools {
+  margin-right: 10px;
+  display: flex;
+  flex-direction: row;
+
+  li {
+    padding: 0 10px;
+
+    i {
+      font-size: 20px;
+      cursor: pointer;
+    }
+  }
+}

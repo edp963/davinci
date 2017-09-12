@@ -1,0 +1,22 @@
+@import "../../../node_modules/antd/lib/style/themes/default";
+
+@light-green                        : #8BC34A;
+@white                              : #fff;
+@black                              : #000;
+
+@bg-color                           : #EAEDF1;
+@primary-color                      : @light-green;
+@light-text-color                   : lighten(@text-color, 25%);
+@disabled-text-color                : lighten(@text-color, 35%);
+
+/*** z-index ***/
+@header-index                       : 2;
+
+@popover-box-shadow                 : 0 1px 6px rgba(0, 0, 0, .2);
+
+/*** global mixins ***/
+.ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

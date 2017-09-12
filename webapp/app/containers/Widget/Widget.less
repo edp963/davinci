@@ -1,0 +1,225 @@
+@import "../../assets/less/variable";
+
+.widget {
+  height: 120px;
+  background-color: @body-background;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  box-shadow: 0 2px 3px 0 rgba(0,0,0,.05);
+  transform: translate3d(0, 0, 0);
+  transition: all 200ms;
+  position: relative;
+  cursor: pointer;
+
+  &:hover {
+    box-shadow: 0 7px 21px 0 rgba(0,0,0,.15);
+    transform: translate3d(0, -5px, 0);
+  }
+
+  &.selector {
+    border: 1px solid @border-color-base;
+    border-radius: 4px;
+    box-shadow: none;
+
+    &:hover {
+      transform: none;
+    }
+
+    &.selected {
+      border-color: @primary-color;
+    }
+
+    .checkmark {
+      border-top: 12px solid @primary-color;
+      border-bottom: 12px solid transparent;
+      border-right: 20px solid @primary-color;
+      border-left: 20px solid transparent;
+      position: absolute;
+      top: 0;
+      right: 0;
+
+      i {
+        color: @white;
+        position: absolute;
+        top: -11px;
+        right: -18px;
+      }
+    }
+  }
+
+  .title {
+    padding: 12px 40px 0 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .content {
+    padding: 8px 12px;
+    color: @light-text-color;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .pic {
+    font-size: 35px;
+    font-weight: normal;
+    line-height: 1;
+    color: @primary-color;
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    opacity: .8;
+  }
+
+  .delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    opacity: .5;
+    transition: transform 200ms ease;
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1, 1.1);
+    }
+  }
+}
+
+.workbench {
+  margin: -16px;
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;  /* firefox flex overflow issue */
+
+  .formView {
+    padding: 16px;
+    border-right: 1px solid @border-color-base;
+    overflow-y: auto;
+    flex: 0 0 320px;
+
+    .scCol {
+      padding: 30px 0 20px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+  }
+
+  .splitView {
+    padding: 16px;
+    flex: 1;
+    overflow-x: auto;
+    display: flex;
+    flex-direction: column;
+
+    .splitViewBody {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .splitViewFooter {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+
+      .sqlInput {
+        flex-basis: 50%;
+
+        .runSql {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
+
+.formUnit {
+  .unitTitle {
+    padding: 10px 0;
+  }
+
+  .unitContent {
+    padding: 10px;
+    border: 1px solid @border-color-base;
+    border-radius: 4px;
+  }
+
+  .buttonCol {
+    padding: 10px 0;
+  }
+}
+
+.containerEmpty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.tableContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.widgetChart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+.tableChart,
+.commonChart{
+  width: 100%;
+  height: 100%;
+
+  &.invisible {
+    transform: translate(9999px, 0);
+    position: absolute;
+  }
+}
+
+.chartSelectOption {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  color: @primary-color;
+}
+
+.addCol {
+  padding-bottom: 10px;
+  text-align: right;
+}
+
+.variableConfigTable {
+
+  .formItem {
+    min-width: 150px;
+    margin-bottom: 0;
+  }
+
+  .actions {
+    a {
+      margin-right: 5px;
+    }
+  }
+}
+
+.variableConfigForm {
+  .footer {
+    margin-top: 16px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}

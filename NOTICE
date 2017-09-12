@@ -1,0 +1,84 @@
+Licensed to Apereo under one or more contributor license
+agreements. See the NOTICE file distributed with this work
+for additional information regarding copyright ownership.
+Apereo licenses this file to you under the Apache License,
+Version 2.0 (the "License"); you may not use this file
+except in compliance with the License.  You may obtain a
+copy of the License at the following location:
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+This project includes:
+  akka-actor under Apache License, Version 2.0
+  akka-http under Apache-2.0
+  akka-http-core under Apache-2.0
+  akka-http-spray-json under Apache-2.0
+  akka-parsing under Apache-2.0
+  akka-stream under Apache License, Version 2.0
+  ANTLR 3 Runtime under BSD licence
+  Apache Commons Lang under The Apache Software License, Version 2.0
+  Apache Log4j under The Apache Software License, Version 2.0
+  ASM Commons under BSD
+  ASM Core under BSD
+  ASM Tree under BSD
+  ASM Util under BSD
+  Bean Validation API under The Apache Software License, Version 2.0
+  Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs under Bouncy Castle Licence
+  Bouncy Castle Provider under Bouncy Castle Licence
+  classutil under BSD New
+  config under Apache License, Version 2.0
+  davinci-assembly_2.11 under Apache License, Version 2.0
+  davinci-parent_2.11 under Apache License, Version 2.0
+  davinci-server_2.11 under Apache License, Version 2.0
+  grizzled-scala under BSD
+  Guava: Google Core Libraries for Java under The Apache Software License, Version 2.0
+  HikariCP under The Apache Software License, Version 2.0
+  Jackson module: Paranamer under The Apache Software License, Version 2.0
+  Jackson-annotations under The Apache Software License, Version 2.0
+  Jackson-core under The Apache Software License, Version 2.0
+  jackson-databind under The Apache Software License, Version 2.0
+  Jackson-dataformat-YAML under The Apache Software License, Version 2.0
+  jackson-module-scala under The Apache Software License, Version 2.0
+  Joda-Convert under Apache 2
+  Joda-Time under Apache 2
+  json4s-ast under ASL
+  json4s-core under ASL
+  json4s-ext under ASL
+  json4s-jackson under ASL
+  JSQLParser library under GNU Library or Lesser General Public License (LGPL) V2.1 or The Apache Software License, Version 2.0
+  jsr311-api under CDDL License
+  jwt-core under Apache-2.0
+  jwt-core-impl under Apache-2.0
+  ParaNamer Core under BSD
+  reactive-streams under CC0
+  Reflections under WTFPL or The New BSD License
+  Scala Compiler under BSD 3-Clause
+  Scala Library under BSD 3-Clause
+  scala-java8-compat under BSD 3-clause
+  scala-parser-combinators under BSD 3-clause
+  scala-xml under BSD 3-clause
+  Scalap under BSD 3-Clause
+  scalasti under BSD
+  scalatest under the Apache License, ASL Version 2.0
+  SLF4J API Module under MIT License
+  SLF4J LOG4J-12 Binding under MIT License
+  Slick under Two-clause BSD-style license
+  Slick-HikariCP under Two-clause BSD-style license
+  SnakeYAML under Apache License, Version 2.0
+  spray-json under Apache 2
+  ssl-config-core under Apache License, Version 2.0
+  StringTemplate 4 under BSD licence
+  swagger-akka-http under The Apache Software License, Version 2.0
+  swagger-annotations under Apache License 2.0
+  swagger-core under Apache License 2.0
+  swagger-jaxrs under Apache License 2.0
+  swagger-models under Apache License 2.0
+  swagger-scala-module under Apache License 2.0
+

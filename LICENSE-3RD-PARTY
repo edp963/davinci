@@ -1,0 +1,91 @@
+
+List of third-party dependencies grouped by their license type.
+
+    Apache 2.0:
+
+        * Jackson-annotations (com.fasterxml.jackson.core:jackson-annotations:2.8.4 - http://github.com/FasterXML/jackson)
+        * Jackson-core (com.fasterxml.jackson.core:jackson-core:2.8.6 - https://github.com/FasterXML/jackson-core)
+        * jackson-databind (com.fasterxml.jackson.core:jackson-databind:2.8.4 - http://github.com/FasterXML/jackson)
+        * Jackson-dataformat-YAML (com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.6 - https://github.com/FasterXML/jackson)
+        * Jackson module: Paranamer (com.fasterxml.jackson.module:jackson-module-paranamer:2.8.6 - https://github.com/FasterXML/jackson-modules-base)
+        * jackson-module-scala (com.fasterxml.jackson.module:jackson-module-scala_2.11:2.8.6 - http://wiki.fasterxml.com/JacksonModuleScala)
+        * JSQLParser library (com.github.jsqlparser:jsqlparser:1.0 - https://github.com/JSQLParser/JSqlParser)
+        * swagger-akka-http (com.github.swagger-akka-http:swagger-akka-http_2.11:0.9.1 - https://github.com/swagger-akka-http/swagger-akka-http)
+        * Guava: Google Core Libraries for Java (com.google.guava:guava:18.0 - http://code.google.com/p/guava-libraries/guava)
+        * jwt-core-impl (com.pauldijou:jwt-core-impl_2.11:0.9.2 - http://pauldijou.fr/jwt-scala/)
+        * jwt-core (com.pauldijou:jwt-core_2.11:0.9.2 - http://pauldijou.fr/jwt-scala/)
+        * config (com.typesafe:config:1.2.1 - https://github.com/typesafehub/config)
+        * ssl-config-core (com.typesafe:ssl-config-core_2.11:0.2.1 - https://github.com/typesafehub/ssl-config)
+        * akka-actor (com.typesafe.akka:akka-actor_2.11:2.4.17 - http://akka.io/)
+        * akka-http-core (com.typesafe.akka:akka-http-core_2.11:10.0.5 - http://akka.io)
+        * akka-http-spray-json (com.typesafe.akka:akka-http-spray-json_2.11:10.0.5 - http://akka.io)
+        * akka-http (com.typesafe.akka:akka-http_2.11:10.0.5 - http://akka.io)
+        * akka-parsing (com.typesafe.akka:akka-parsing_2.11:10.0.5 - http://akka.io)
+        * akka-stream (com.typesafe.akka:akka-stream_2.11:2.4.17 - http://akka.io/)
+        * HikariCP (com.zaxxer:HikariCP:2.5.1 - https://github.com/brettwooldridge/HikariCP)
+        * spray-json (io.spray:spray-json_2.11:1.3.3 - https://github.com/spray/spray-json)
+        * swagger-annotations (io.swagger:swagger-annotations:1.5.12 - https://github.com/swagger-api/swagger-core/modules/swagger-annotations)
+        * swagger-core (io.swagger:swagger-core:1.5.12 - https://github.com/swagger-api/swagger-core/modules/swagger-core)
+        * swagger-jaxrs (io.swagger:swagger-jaxrs:1.5.12 - https://github.com/swagger-api/swagger-core/modules/swagger-jaxrs)
+        * swagger-models (io.swagger:swagger-models:1.5.12 - https://github.com/swagger-api/swagger-core/modules/swagger-models)
+        * swagger-scala-module (io.swagger:swagger-scala-module_2.11:1.0.3 - https://github.com/swagger-api/swagger-scala-module)
+        * Bean Validation API (javax.validation:validation-api:1.1.0.Final - http://beanvalidation.org)
+        * Joda-Time (joda-time:joda-time:2.4 - http://www.joda.org/joda-time/)
+        * Apache Log4j (log4j:log4j:1.2.17 - http://logging.apache.org/log4j/1.2/)
+        * Apache Commons Lang (org.apache.commons:commons-lang3:3.2.1 - http://commons.apache.org/proper/commons-lang/)
+        * Joda-Convert (org.joda:joda-convert:1.6 - http://www.joda.org/joda-convert/)
+        * json4s-ast (org.json4s:json4s-ast_2.11:3.2.11 - https://github.com/json4s/json4s)
+        * json4s-core (org.json4s:json4s-core_2.11:3.2.11 - https://github.com/json4s/json4s)
+        * json4s-ext (org.json4s:json4s-ext_2.11:3.2.11 - https://github.com/json4s/json4s)
+        * json4s-jackson (org.json4s:json4s-jackson_2.11:3.2.11 - https://github.com/json4s/json4s)
+        * scalatest (org.scalatest:scalatest_2.11:2.2.5 - http://www.scalatest.org)
+        * SnakeYAML (org.yaml:snakeyaml:1.17 - http://www.snakeyaml.org)
+
+    BSD:
+
+        * ParaNamer Core (com.thoughtworks.paranamer:paranamer:2.6 - http://paranamer.codehaus.org/paranamer)
+        * Slick-HikariCP (com.typesafe.slick:slick-hikaricp_2.11:3.2.0 - http://slick.typesafe.com)
+        * Slick (com.typesafe.slick:slick_2.11:3.2.0 - http://slick.typesafe.com)
+        * StringTemplate 4 (org.antlr:ST4:4.0.8 - http://www.stringtemplate.org)
+        * ANTLR 3 Runtime (org.antlr:antlr-runtime:3.5.2 - http://www.antlr.org)
+        * classutil (org.clapper:classutil_2.11:1.1.2 - http://software.clapper.org/classutil/)
+        * grizzled-scala (org.clapper:grizzled-scala_2.11:4.2.0 - http://software.clapper.org/grizzled-scala/)
+        * scalasti (org.clapper:scalasti_2.11:3.0.1 - http://software.clapper.org/scalasti/)
+        * ASM Core (org.ow2.asm:asm:5.1 - http://asm.objectweb.org/asm/)
+        * ASM Commons (org.ow2.asm:asm-commons:5.1 - http://asm.objectweb.org/asm-commons/)
+        * ASM Tree (org.ow2.asm:asm-tree:5.1 - http://asm.objectweb.org/asm-tree/)
+        * ASM Util (org.ow2.asm:asm-util:5.1 - http://asm.objectweb.org/asm-util/)
+        * Reflections (org.reflections:reflections:0.9.10 - http://github.com/ronmamo/reflections)
+        * Scala Compiler (org.scala-lang:scala-compiler:2.11.0 - http://www.scala-lang.org/)
+        * Scala Library (org.scala-lang:scala-library:2.11.8 - http://www.scala-lang.org/)
+        * Scala Compiler (org.scala-lang:scala-reflect:2.11.8 - http://www.scala-lang.org/)
+        * Scalap (org.scala-lang:scalap:2.11.0 - http://www.scala-lang.org/)
+        * scala-java8-compat (org.scala-lang.modules:scala-java8-compat_2.11:0.7.0 - http://www.scala-lang.org/)
+        * scala-parser-combinators (org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4 - http://www.scala-lang.org/)
+        * scala-xml (org.scala-lang.modules:scala-xml_2.11:1.0.2 - http://www.scala-lang.org/)
+
+    Bouncy Castle Licence:
+
+        * Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (org.bouncycastle:bcpkix-jdk15on:1.52 - http://www.bouncycastle.org/java.html)
+        * Bouncy Castle Provider (org.bouncycastle:bcprov-jdk15on:1.52 - http://www.bouncycastle.org/java.html)
+
+    CC0:
+
+        * reactive-streams (org.reactivestreams:reactive-streams:1.0.0 - http://www.reactive-streams.org/)
+
+    CDDL:
+
+        * jsr311-api (javax.ws.rs:jsr311-api:1.1.1 - https://jsr311.dev.java.net)
+
+    LGPL:
+
+        * JSQLParser library (com.github.jsqlparser:jsqlparser:1.0 - https://github.com/JSQLParser/JSqlParser)
+
+    MIT:
+
+        * SLF4J API Module (org.slf4j:slf4j-api:1.7.21 - http://www.slf4j.org)
+        * SLF4J LOG4J-12 Binding (org.slf4j:slf4j-log4j12:1.7.21 - http://www.slf4j.org)
+
+    WTFPL:
+
+        * Reflections (org.reflections:reflections:0.9.10 - http://github.com/ronmamo/reflections)
