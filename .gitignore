@@ -26,3 +26,4 @@ spark-warehouse
 *.conf
 swagger-ui
 davinci-ui
+lib
