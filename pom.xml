@@ -20,7 +20,6 @@
     <modules>
         <module>server</module>
         <module>assembly</module>
-        <module>webapp</module>
     </modules>
 
     <properties>
