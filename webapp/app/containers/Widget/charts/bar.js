@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@
  * Bar chart options generator
  */
 
-export default function (dataSource, flatInfo, chartParams) {
+export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
     xAxis,
     metrics,
@@ -38,7 +38,8 @@ export default function (dataSource, flatInfo, chartParams) {
     top,
     bottom,
     left,
-    right
+    right,
+    suffixYAxis
   } = chartParams
 
   let metricOptions,
@@ -50,7 +51,8 @@ export default function (dataSource, flatInfo, chartParams) {
     legendOptions,
     toolboxOptions,
     gridOptions,
-    dataZoomOptions
+    dataZoomOptions,
+    suffixYAxisOptions
 
   // series 数据项
   let metricArr = []
@@ -85,7 +87,25 @@ export default function (dataSource, flatInfo, chartParams) {
           name: m,
           type: 'bar',
           sampling: 'average',
-          data: dataSource.map(d => d[m])
+          data: dataSource.map((d, index) => {
+            if (index === interactIndex) {
+              return {
+                value: d[m],
+                itemStyle: {
+                  normal: {
+                    opacity: 1
+                  }
+                }
+              }
+            } else {
+              return d[m]
+            }
+          }),
+          itemStyle: {
+            normal: {
+              opacity: interactIndex === undefined ? 1 : 0.25
+            }
+          }
         },
         stackOption,
         labelOption
@@ -98,6 +118,9 @@ export default function (dataSource, flatInfo, chartParams) {
   }
 
   // x轴与y轴数据
+  suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
+    formatter: `{value} ${suffixYAxis}`
+  }} : null
   if (vertical && vertical.length) {
     if (xAxis) {
       xAxisOptions = {
@@ -146,7 +169,8 @@ export default function (dataSource, flatInfo, chartParams) {
 
     yAxisOptions = {
       yAxis: {
-        type: 'value'
+        ...{type: 'value'},
+        ...suffixYAxisOptions
       }
     }
   }

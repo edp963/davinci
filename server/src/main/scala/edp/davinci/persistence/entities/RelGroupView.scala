@@ -18,20 +18,16 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
 import slick.jdbc.H2Profile.api._
 
-case class RelGroupView(id: Long,
-                        group_id: Long,
-                        flatTable_id: Long,
-                        sql_params: String,
-                        active: Boolean,
-                        create_time: String,
-                        create_by: Long,
-                        update_time: String,
-                        update_by: Long) extends BaseEntity
+case class RelGroupView(id: Long, group_id: Long, flatTable_id: Long, sql_params: Option[String], active: Boolean, create_time: String, create_by: Long, update_time: String, update_by: Long) extends BaseEntity
 
 
 case class SimpleRelGroupView(group_id: Long,
@@ -50,12 +46,16 @@ case class PutRelGroupView(id: Long,
                            group_id: Long,
                            sql_params: String)
 
-class RelGroupViewTable(tag: Tag) extends BaseTable[RelGroupView](tag, "rel_group_flattable") {
+case class PostRelGroupViewSeq(payload: Seq[PostRelGroupView])
+
+case class PutRelGroupViewSeq(payload: Seq[PutRelGroupView])
+
+class RelGroupViewTable(tag: Tag) extends BaseTable[RelGroupView](tag, "rel_group_view") {
   def group_id = column[Long]("group_id")
 
   def flatTable_id = column[Long]("flatTable_id")
 
-  def sql_params = column[String]("sql_params")
+  def sql_params = column[Option[String]]("sql_params")
 
   def create_time = column[String]("create_time")
 

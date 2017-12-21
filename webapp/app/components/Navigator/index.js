@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,6 +21,7 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import classnames from 'classnames'
 
 import Icon from 'antd/lib/icon'
 
@@ -29,8 +30,12 @@ import { makeSelectLoginUser } from '../../containers/App/selectors'
 import styles from './Navigator.less'
 
 export function Navigator (props) {
+  const headerClass = classnames({
+    [styles.header]: true,
+    [styles.hide]: !props.show
+  })
   return (
-    <nav className={styles.header}>
+    <nav className={headerClass}>
       <div className={styles.logo}>
         <span>D</span>
         <span>a</span>
@@ -53,6 +58,7 @@ export function Navigator (props) {
 }
 
 Navigator.propTypes = {
+  show: PropTypes.bool,
   loginUser: PropTypes.object,
   onLogout: PropTypes.func
 }

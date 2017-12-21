@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,9 +19,20 @@
  */
 
 import appSagas from './containers/App/sagas'
-import reportSagas from './containers/Report/containerSagas'
+import groupSagas from './containers/Group/sagas'
+import userSagas from './containers/User/sagas'
+import sourceSagas from './containers/Source/sagas'
+import bizlogicSagas from './containers/Bizlogic/sagas'
+import widgetSagas from './containers/Widget/sagas'
+import dashboardSagas from './containers/Dashboard/sagas'
+// import displaySagas from './containers/Display/sagas'
 
 export default [
   ...appSagas,
-  ...reportSagas
+  ...groupSagas,
+  ...userSagas,
+  ...sourceSagas,
+  ...bizlogicSagas,
+  ...widgetSagas,
+  ...dashboardSagas
 ]

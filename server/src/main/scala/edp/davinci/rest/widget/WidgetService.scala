@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.widget
 
 import edp.davinci.ModuleInstance
@@ -27,28 +31,32 @@ import edp.davinci.rest.SessionClass
 import edp.davinci.util.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object WidgetService extends WidgetService
 
 trait WidgetService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAll(session: SessionClass): Future[Seq[(Long, Long, Long, String, Option[String], String, Option[String], Option[String], Boolean)]] = {
+  def getAll(session: SessionClass): Future[Seq[PutWidgetInfo]] = {
+    val viewIds = if (session.admin)
+      modules.viewQuery.filter(view => view.create_by === session.userId ||
+        (view.id in modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct)).map(_.id)
+    else modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
+
     if (session.admin)
-      db.run(modules.widgetQuery.map(r => (r.id, r.widgetlib_id, r.flatTable_id, r.name, r.adhoc_sql, r.desc, r.chart_params,r.query_params, r.publish)).result)
+      db.run(modules.widgetQuery.filter(widget => widget.create_by === session.userId || (widget.flatTable_id in viewIds)).map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidgetInfo.tupled, PutWidgetInfo.unapply)).result)
     else {
-      val query = (modules.widgetQuery.filter(_.publish)
-        join modules.relGroupViewQuery.filter(r => r.group_id inSet session.groupIdList)
-        on (_.flatTable_id === _.flatTable_id))
-        .map {
-          case (w, _) => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.chart_params,w.query_params, w.publish)
-        }.result
-      db.run(query)
+      val query = modules.widgetQuery.filter(widget => widget.publish && (widget.flatTable_id in viewIds))
+        .map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidgetInfo.tupled, PutWidgetInfo.unapply)).result
+      db.run(query).mapTo[Seq[PutWidgetInfo]]
     }
   }
 
-  def getWidgetById(id: Long): Future[(Long, Long, Long, String, Option[String], String, Option[String], Option[String], Boolean, Boolean)] = {
-    db.run(modules.widgetQuery.filter(_.id === id).map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.chart_params,w.query_params, w.publish,w.active)).result.head)
+  def getWidgetById(id: Long): Future[Option[PutWidgetInfo]] = {
+    db.run(modules.widgetQuery.filter(_.id === id).
+      map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidgetInfo.tupled, PutWidgetInfo.unapply)).result.headOption).
+      mapTo[Option[PutWidgetInfo]]
   }
 
   def getFlatTableId(widgetId: Long): Future[(Long, Option[String])] = {
@@ -57,8 +65,8 @@ trait WidgetService {
 
   def update(widgetSeq: Seq[PutWidgetInfo], session: SessionClass): Future[Unit] = {
     val query = DBIO.seq(widgetSeq.map(r => {
-      modules.widgetQuery.filter(_.id === r.id).map(w => (w.flatTable_id, w.widgetlib_id, w.name, w.adhoc_sql, w.desc, w.chart_params, w.query_params, w.publish, w.update_by, w.update_time))
-        .update(r.flatTable_id, r.widgetlib_id, r.name, Some(r.adhoc_sql), r.desc, r.chart_params, r.query_params, r.publish, session.userId, ResponseUtils.currentTime)
+      modules.widgetQuery.filter(w => w.id === r.id && w.create_by === session.userId).map(w => (w.flatTable_id, w.widgetlib_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.update_by, w.update_time))
+        .update(r.flatTable_id, r.widgetlib_id, r.name, r.adhoc_sql, r.desc, r.config, r.chart_params, r.query_params, r.publish, session.userId, ResponseUtils.currentTime)
     }): _*)
     db.run(query)
   }
@@ -71,12 +79,13 @@ trait WidgetService {
     db.run(query)
   }
 
-  def deleteWidget(widgetId: Long): Future[Int] = {
-    modules.widgetDal.deleteById(widgetId)
-  }
 
-  def deleteRelDW(widgetId: Long): Future[Int] = {
-    modules.relDashboardWidgetDal.deleteByFilter(_.widget_id === widgetId)
+  def deleteWidget(widgetId: Long, session: SessionClass): Future[Unit] = {
+    val query = (for {
+      _ <- modules.widgetQuery.filter(w => w.id === widgetId && w.create_by === session.userId).delete
+      _ <- modules.relDWQuery.filter(rel => rel.widget_id === widgetId && rel.create_by === session.userId).delete
+    } yield ()).transactionally
+    db.run(query)
   }
 
 

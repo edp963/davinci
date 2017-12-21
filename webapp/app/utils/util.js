@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import notification from 'antd/lib/notification'
  * @returns {string}
  */
 export const uuid = (len, radix) => {
-  var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
-  var uuid = []
-  var i
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
+  const uuid = []
+  let i
   radix = radix || chars.length
 
   if (len) {
@@ -37,7 +37,7 @@ export const uuid = (len, radix) => {
     for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix]
   } else {
     // rfc4122, version 4 form
-    var r
+    let r
 
     // rfc4122 requires these characters
     uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-'
@@ -53,6 +53,19 @@ export const uuid = (len, radix) => {
     }
   }
   return uuid.join('')
+}
+
+export function safeAddition (num1, num2) {
+  const decimalDigits = Math.max(
+    `${num1}`.indexOf('.') >= 0 ? `${num1}`.substr(`${num1}`.indexOf('.') + 1).length : 0,
+    `${num2}`.indexOf('.') >= 0 ? `${num2}`.substr(`${num2}`.indexOf('.') + 1).length : 0
+  )
+  if (decimalDigits) {
+    const times = Math.pow(10, decimalDigits)
+    return (Math.round(num1 * times) + Math.round(num2 * times)) / times
+  } else {
+    return num1 + num2
+  }
 }
 
 /**

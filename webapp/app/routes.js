@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,8 @@ import Widget from './containers/Widget'
 import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
 import Login from './containers/Login'
-import Visual from './containers/Visual'
+import Main from './containers/Main'
+// import Display from './containers/Display'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -48,61 +49,60 @@ export default function createRoutes (store) {
       component: Login
     },
     {
-      path: '/visual',
-      component: Visual,
-      indexRoute: {
-        onEnter: (_, replace) => {
-          replace('/visual/report')
-        }
-      },
+      component: Main,
       childRoutes: [
         {
-          path: '/visual/report',
+          path: '/report',
           name: 'report',
           indexRoute: {
             onEnter: (_, replace) => {
-              replace('/visual/report/dashboard')
+              replace('/report/dashboards')
             }
           },
           component: Report,
           childRoutes: [
             {
-              path: '/visual/report/dashboard',
-              name: 'dashboard',
+              path: '/report/dashboards',
+              name: 'dashboards',
               component: Dashboard
             },
             {
-              path: '/visual/report/grid/:id',
-              name: 'grid',
+              path: '/report/dashboard/:dashboardId',
+              name: 'dashboard',
               component: Grid
             },
             {
-              path: '/visual/report/widget',
-              name: 'widget',
+              path: '/report/widgets',
+              name: 'widgets',
               component: Widget
             },
             {
-              path: '/visual/report/bizlogic',
-              name: 'bizlogic',
+              path: '/report/bizlogics',
+              name: 'bizlogics',
               component: Bizlogic
             },
             {
-              path: '/visual/report/source',
-              name: 'source',
+              path: '/report/sources',
+              name: 'sources',
               component: Source
             },
             {
-              path: '/visual/report/user',
-              name: 'user',
+              path: '/report/users',
+              name: 'users',
               component: User
             },
             {
-              path: '/visual/report/group',
-              name: 'group',
+              path: '/report/groups',
+              name: 'groups',
               component: Group
             }
           ]
         }
+        // {
+        //   path: '/display',
+        //   name: 'display',
+        //   component: Display
+        // }
       ]
     },
     {

@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -27,6 +31,7 @@ case class Dashboard(id: Long,
                      name: String,
                      pic: Option[String],
                      desc: String,
+                     linkage_detail: Option[String],
                      publish: Boolean,
                      active: Boolean,
                      create_time: String,
@@ -37,15 +42,18 @@ case class Dashboard(id: Long,
 case class PostDashboardInfo(name: String,
                              pic: String,
                              desc: String,
+                             linkage_detail: String,
                              publish: Boolean) extends SimpleBaseEntity
 
-case class PutDashboardInfo(id: Long,
-                            name: String,
-                            pic: String,
-                            desc: String,
-                            publish: Boolean,
-                            active: Option[Boolean]=Some(true)
-                           )
+case class PutDashboardInfo(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), publish: Boolean, active: Boolean = true, create_by: Long = 0)
+
+case class DashboardInfo(id: Long, name: String, pic: String, desc: String, linkage_detail: String, publish: Boolean, create_by: Long, widgets: Seq[WidgetInfo])
+
+case class PostDashboardInfoSeq(payload: Seq[PostDashboardInfo])
+
+case class PutDashboardSeq(payload: Seq[PutDashboardInfo])
+
+
 
 class DashboardTable(tag: Tag) extends BaseTable[Dashboard](tag, "dashboard") {
 
@@ -53,6 +61,8 @@ class DashboardTable(tag: Tag) extends BaseTable[Dashboard](tag, "dashboard") {
   def pic = column[Option[String]]("pic")
 
   def desc = column[String]("desc")
+
+  def linkage_detail = column[Option[String]]("linkage_detail")
 
   def publish = column[Boolean]("publish")
 
@@ -64,5 +74,5 @@ class DashboardTable(tag: Tag) extends BaseTable[Dashboard](tag, "dashboard") {
 
   def update_by = column[Long]("update_by")
 
-  def * = (id, name, pic, desc, publish, active, create_time, create_by, update_time, update_by) <> (Dashboard.tupled, Dashboard.unapply)
+  def * = (id, name, pic, desc, linkage_detail, publish, active, create_time, create_by, update_time, update_by) <> (Dashboard.tupled, Dashboard.unapply)
 }

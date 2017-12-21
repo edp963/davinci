@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,8 @@
  */
 
 import React, { PropTypes } from 'react'
-
+import {connect} from 'react-redux'
+import {checkNameAction} from '../App/actions'
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -30,9 +31,22 @@ import utilStyles from '../../assets/less/util.less'
 
 export class GroupForm extends React.PureComponent {
 
+  checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckName, type } = this.props
+    const { getFieldsValue } = this.props.form
+    const { id } = getFieldsValue()
+    let idName = type === 'add' ? '' : id
+    let typeName = 'group'
+    onCheckName(idName, value, typeName,
+      res => {
+        callback()
+      }, err => {
+        callback(err)
+      })
+  }
+
   render () {
     const { getFieldDecorator } = this.props.form
-
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
@@ -54,6 +68,8 @@ export class GroupForm extends React.PureComponent {
                 rules: [{
                   required: true,
                   message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Name" />
@@ -81,7 +97,14 @@ export class GroupForm extends React.PureComponent {
 
 GroupForm.propTypes = {
   type: PropTypes.string,
-  form: PropTypes.any
+  form: PropTypes.any,
+  onCheckName: PropTypes.func
 }
 
-export default Form.create({withRef: true})(GroupForm)
+function mapDispatchToProps (dispatch) {
+  return {
+    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+  }
+}
+
+export default Form.create()(connect(null, mapDispatchToProps)(GroupForm))

@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest
 
 import javax.ws.rs.Path
@@ -25,13 +29,12 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule}
-import edp.davinci.persistence.entities.QueryUserInfo
+import edp.davinci.persistence.entities.{LoginClass, QueryUserInfo}
 import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.ResponseUtils._
 import edp.davinci.util.JsonProtocol._
+import edp.davinci.util.ResponseUtils._
 import io.swagger.annotations._
 import org.apache.log4j.Logger
-import org.slf4j.LoggerFactory
 
 import scala.util.{Failure, Success}
 
@@ -44,7 +47,7 @@ class LoginRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   @ApiOperation(value = "Login into the server and return token", notes = "", nickname = "login", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "username", value = "Login information", required = true, dataType = "edp.davinci.rest.LoginClass", paramType = "body")
+    new ApiImplicitParam(name = "username", value = "Login information", required = true, dataType = "edp.davinci.persistence.entities.LoginClass", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -55,7 +58,7 @@ class LoginRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   def accessTokenRoute: Route = path("login") {
     post {
       entity(as[LoginClass]) { login =>
-        val ldapIsEnable = modules.config.getBoolean("ldap.isEnable")
+        lazy val ldapIsEnable = modules.config.getBoolean("ldap.isEnable")
         onComplete(AuthorizationProvider.createSessionClass(login, ldapIsEnable)) {
           case Success(sessionEither) =>
             sessionEither.fold(authorizationError => complete(BadRequest, ResponseJson[String](getHeader(authorizationError.statusCode, authorizationError.desc, null), "user name or password invalid")),

@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -35,12 +39,16 @@ case class UserGroup(id: Long,
 
 case class PostGroupInfo(name: String,
                          desc: String
-                         ) extends SimpleBaseEntity
+                        ) extends SimpleBaseEntity
 
 case class PutGroupInfo(id: Long,
                         name: String,
-                        desc: String,
-                        active: Option[Boolean] = Some(true))
+                        desc: Option[String] = Some(""))
+
+
+case class PostGroupInfoSeq(payload: Seq[PostGroupInfo])
+
+case class PutGroupInfoSeq(payload: Seq[PutGroupInfo])
 
 class GroupTable(tag: Tag) extends BaseTable[UserGroup](tag, "user_group") {
 

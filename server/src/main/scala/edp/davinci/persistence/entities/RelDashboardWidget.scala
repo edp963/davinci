@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -58,6 +62,10 @@ case class PutRelDashboardWidget(id: Long,
                                  trigger_type: String,
                                  trigger_params: String)
 
+
+case class PostRelDashboardWidgetSeq(payload: Seq[PostRelDashboardWidget])
+
+case class PutRelDashboardWidgetSeq(payload: Seq[PutRelDashboardWidget])
 
 class RelDashboardWidgetTable(tag: Tag) extends BaseTable[RelDashboardWidget](tag, "rel_dashboard_widget") {
   def dashboard_id = column[Long]("dashboard_id")

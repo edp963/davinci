@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,21 +19,38 @@
  */
 
 import React, { PropTypes } from 'react'
+import {connect} from 'react-redux'
 
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
 import Select from 'antd/lib/select'
+import Icon from 'antd/lib/icon'
 const FormItem = Form.Item
 const Option = Select.Option
+import {checkNameAction} from '../App/actions'
 
 import utilStyles from '../../assets/less/util.less'
 
 export class SourceForm extends React.PureComponent {
 
+  checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckName, type } = this.props
+    const { getFieldsValue } = this.props.form
+    const { id } = getFieldsValue()
+    let idName = type === 'add' ? '' : id
+    let typeName = 'source'
+    onCheckName(idName, value, typeName,
+      res => {
+        callback()
+      }, err => {
+        callback(err)
+      })
+  }
   render () {
-    const { getFieldDecorator } = this.props.form
+    const { testLoading, form, onTestSourceConnection } = this.props
+    const { getFieldDecorator } = form
 
     const commonFormItemStyle = {
       labelCol: { span: 6 },
@@ -56,6 +73,8 @@ export class SourceForm extends React.PureComponent {
                 rules: [{
                   required: true,
                   message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Name" />
@@ -70,20 +89,54 @@ export class SourceForm extends React.PureComponent {
                 <Select>
                   <Option value="moonbox">Moonbox</Option>
                   <Option value="jdbc">JDBC</Option>
+                  <Option value="csv">CSV文件</Option>
                 </Select>
               )}
             </FormItem>
           </Col>
           <Col span={24}>
-            <FormItem label="Url" {...commonFormItemStyle}>
-              {getFieldDecorator('connection_url', {
+            <FormItem label="用户名" {...commonFormItemStyle}>
+              {getFieldDecorator('user', {
                 rules: [{
                   required: true,
-                  message: 'Connection Url 不能为空'
+                  message: 'User 不能为空'
                 }],
                 initialValue: ''
               })(
-                <Input placeholder="Connection Url" />
+                <Input placeholder="User" />
+              )}
+            </FormItem>
+          </Col>
+          <Col span={24}>
+            <FormItem label="密码" {...commonFormItemStyle}>
+              {getFieldDecorator('password', {
+                rules: [{
+                  required: true,
+                  message: 'Password 不能为空'
+                }],
+                initialValue: ''
+              })(
+                <Input placeholder="Password" />
+              )}
+            </FormItem>
+          </Col>
+          <Col span={24}>
+            <FormItem label="连接Url" {...commonFormItemStyle}>
+              {getFieldDecorator('url', {
+                rules: [{
+                  required: true,
+                  message: 'Url 不能为空'
+                }],
+                initialValue: ''
+              })(
+                <Input
+                  placeholder="Connection Url"
+                  addonAfter={
+                    testLoading
+                      ? <Icon type="loading" />
+                      : <span onClick={onTestSourceConnection} style={{cursor: 'pointer'}}>点击测试</span>
+                  }
+                />
               )}
             </FormItem>
           </Col>
@@ -121,7 +174,16 @@ export class SourceForm extends React.PureComponent {
 
 SourceForm.propTypes = {
   type: PropTypes.string,
-  form: PropTypes.any
+  testLoading: PropTypes.bool,
+  form: PropTypes.any,
+  onTestSourceConnection: PropTypes.func,
+  onCheckName: PropTypes.func
 }
 
-export default Form.create({withRef: true})(SourceForm)
+function mapDispatchToProps (dispatch) {
+  return {
+    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+  }
+}
+
+export default Form.create()(connect(null, mapDispatchToProps)(SourceForm))

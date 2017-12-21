@@ -18,22 +18,28 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.group
 
 import javax.ws.rs.Path
+
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
-import edp.davinci.util.ResponseUtils._
 import edp.davinci.module._
-import edp.davinci.persistence.entities.{PostGroupInfo, PutGroupInfo, UserGroup}
+import edp.davinci.persistence.entities._
 import edp.davinci.rest._
+import edp.davinci.rest.group.GroupService._
 import edp.davinci.util.AuthorizationProvider
 import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.getHeader
+import edp.davinci.util.ResponseUtils.{getHeader, _}
 import io.swagger.annotations._
-import scala.util.{Failure, Success}
+import org.apache.log4j.Logger
+
 import scala.concurrent.ExecutionContext.Implicits.global
-import  edp.davinci.rest.group.GroupService._
+import scala.util.{Failure, Success}
 
 @Api(value = "/groups", consumes = "application/json", produces = "application/json")
 @Path("/groups")
@@ -41,6 +47,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   val routes: Route = getGroupByAllRoute ~ postGroupRoute ~ putGroupRoute ~ deleteGroupByIdRoute
   private lazy val routeName = "groups"
+  private lazy val logger = Logger.getLogger(this.getClass)
 
   @ApiOperation(value = "get all group with the same domain", notes = "", nickname = "", httpMethod = "GET")
   @ApiImplicitParams(Array(
@@ -67,9 +74,9 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     if (session.admin) {
       onComplete(getAll(session)) {
         case Success(groupSeq) =>
-          val purGroups = groupSeq.map(g => PutGroupInfo(g._1, g._2, g._3.getOrElse("")))
-          complete(OK, ResponseSeqJson[PutGroupInfo](getHeader(200, session), purGroups))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+          complete(OK, ResponseSeqJson[PutGroupInfo](getHeader(200, session), groupSeq))
+        case Failure(ex) => logger.error("get all groups error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -77,7 +84,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   @ApiOperation(value = "Add a new group to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "group", value = "Group object to be added", required = true, dataType = "edp.davinci.rest.PostGroupInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "group", value = "Group object to be added", required = true, dataType = "edp.davinci.persistence.entities.PostGroupInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -102,9 +109,10 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val groupSeq = postGroupSeq.map(post => UserGroup(0, post.name, Some(post.desc), active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.groupDal.insert(groupSeq)) {
         case Success(groupWithIdSeq) =>
-          val responseGroup = groupWithIdSeq.map(group => PutGroupInfo(group.id, group.name, group.desc.getOrElse(""), Some(group.active)))
+          val responseGroup = groupWithIdSeq.map(group => PutGroupInfo(group.id, group.name, group.desc))
           complete(OK, ResponseSeqJson[PutGroupInfo](getHeader(200, session), responseGroup))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error("postGroup error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
 
@@ -112,7 +120,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   @ApiOperation(value = "update a group in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "group", value = "Group object to be updated", required = true, dataType = "edp.davinci.rest.PutGroupInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "group", value = "Group object to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutGroupInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -137,7 +145,8 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val future = update(groupSeq, session)
       onComplete(future) {
         case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error("put group error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -158,14 +167,10 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val operation = for {
-              group <- deleteGroup(groupId)
-              relGF <- deleteRelGF(groupId)
-              relGU <- deleteRelGU(groupId)
-            } yield (group, relGF, relGU)
-            onComplete(operation) {
+            onComplete(deleteGroup(groupId, session)) {
               case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-              case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              case Failure(ex) => logger.error("deleteGroupByIdRoute error", ex)
+                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
             }
           } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
 

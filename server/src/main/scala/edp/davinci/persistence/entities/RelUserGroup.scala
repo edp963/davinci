@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -44,6 +48,10 @@ case class SimpleRelUserGroup(user_id: Long,
 case class PostRelUserGroup(group_id: Long) extends SimpleBaseEntity
 
 case class PutRelUserGroup(relId: Long, group_id: Long)
+
+case class PostRelUserGroupSeq(payload: Seq[PostRelUserGroup])
+
+case class PutRelUserGroupSeq(payload: Seq[PutRelUserGroup])
 
 
 class RelUserGroupTable(tag: Tag) extends BaseTable[RelUserGroup](tag, "rel_user_group") {

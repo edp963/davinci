@@ -1,44 +1,30 @@
-/*-
- * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2017 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * >>
- */
+
 
 package edp.davinci.util
 
-import edp.davinci.DavinciConstants.CSVHeaderSeparator
+import com.github.tototoshi.csv.CSVReader
+import edp.davinci.util.DavinciConstants._
 import org.apache.log4j.Logger
 import org.clapper.scalasti.{Constants, STGroupFile}
 import org.stringtemplate.v4.STGroupString
-import edp.davinci.DavinciConstants._
+
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
+import scala.io.Source
 
 object STRenderUtils extends STRenderUtils
 
 trait STRenderUtils {
   private lazy val logger = Logger.getLogger(this.getClass)
 
-  def getHTMLStr(resultList: ListBuffer[Seq[String]], stgPath: String = "stg/tmpl.stg"): String = {
-    val columns = resultList.head.map(c => c.split(CSVHeaderSeparator).head)
-    resultList.remove(0)
-    resultList.prepend(columns)
-    resultList.prepend(Seq(""))
-    val noNullResult = resultList.map(seq => seq.map(s => if (null == s) "" else s))
+  def getHTML(resultList: Seq[String], stgPath: String = "stg/tmpl.stg"): String = {
+    val listBuf: mutable.Buffer[List[String]] = resultList.toBuffer.map {
+      str:String => CSVReader.open(Source.fromString(str)).readNext().get
+    }
+    val columns: List[String] = listBuf.head
+    listBuf.remove(0,2)
+    listBuf.prepend(columns)
+    listBuf.prepend(List(""))
+    val noNullResult = listBuf.map(seq => seq.map(s => if (null == s) "" else s))
     val tables = Seq(noNullResult)
     STGroupFile(stgPath, Constants.DefaultEncoding, dollarDelimiter, dollarDelimiter).instanceOf("email_html")
       .map(_.add("tables", tables).render().get)

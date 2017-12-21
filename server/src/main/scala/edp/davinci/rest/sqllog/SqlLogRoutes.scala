@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.sqllog
 
 import javax.ws.rs.Path
@@ -25,13 +29,14 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
-import edp.davinci.persistence.entities.SqlLog
+import edp.davinci.persistence.entities.{SimpleSqlLogSeq, SqlLog, SqlLogSeq}
 import edp.davinci.rest._
 import edp.davinci.util.AuthorizationProvider
 import edp.davinci.util.ResponseUtils.getHeader
 import io.swagger.annotations._
 import edp.davinci.util.JsonProtocol._
 import org.apache.log4j.Logger
+
 import scala.util.{Failure, Success}
 
 @Api(value = "/sqllogs", consumes = "application/json", produces = "application/json")
@@ -71,7 +76,7 @@ class SqlLogRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   @ApiOperation(value = "Add sqlLog to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "sqlLog", value = "sqlLog objects to be added", required = true, dataType = "edp.davinci.rest.SimpleSqlLogSeq", paramType = "body")
+    new ApiImplicitParam(name = "sqlLog", value = "sqlLog objects to be added", required = true, dataType = "edp.davinci.persistence.entities.SimpleSqlLogSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -101,7 +106,7 @@ class SqlLogRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   @ApiOperation(value = "update sqlLog in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "sqlLog", value = "sqlLog objects to be updated", required = true, dataType = "edp.davinci.rest.SqlLogSeq", paramType = "body")
+    new ApiImplicitParam(name = "sqlLog", value = "sqlLog objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.SqlLogSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),

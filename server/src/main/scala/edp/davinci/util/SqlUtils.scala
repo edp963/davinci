@@ -18,17 +18,23 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.util
 
-import java.sql.{Connection, ResultSet, Statement}
+import java.sql.Types._
+import java.sql.{Connection, ResultSet}
+import java.util.TimeZone
+import java.util.regex.Pattern
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import edp.davinci.DavinciConstants._
-import edp.davinci.KV
+import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
+import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
-import java.sql.Types._
+
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 
 
 object SqlUtils extends SqlUtils
@@ -37,19 +43,23 @@ trait SqlUtils extends Serializable {
   lazy val dataSourceMap: mutable.HashMap[(String, String), HikariDataSource] = new mutable.HashMap[(String, String), HikariDataSource]
   private lazy val logger = Logger.getLogger(this.getClass)
 
-  def getConnection(jdbcUrl: String, username: String, password: String, maxPoolSize: Int = 5): Connection = {
+  def getConnection(jdbcUrl: String, username: String, password: String, maxPoolSize: Int = 10): Connection = {
     val tmpJdbcUrl = jdbcUrl.toLowerCase
-    if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-      synchronized {
-        if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-          initJdbc(jdbcUrl, username, password, maxPoolSize)
+    if (tmpJdbcUrl.indexOf("elasticsearch") > -1)
+      ESConnection.getESJDBCConnection(tmpJdbcUrl, username)
+    else {
+      if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+        synchronized {
+          if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+            initJdbc(jdbcUrl, username, password, maxPoolSize)
+          }
         }
       }
+      dataSourceMap((tmpJdbcUrl, username)).getConnection
     }
-    dataSourceMap((tmpJdbcUrl, username)).getConnection
   }
 
-  private def initJdbc(jdbcUrl: String, username: String, password: String, muxPoolSize: Int = 5): Unit = {
+  private def initJdbc(jdbcUrl: String, username: String, password: String, muxPoolSize: Int = 10): Unit = {
     println(jdbcUrl)
     val config = new HikariConfig()
     val tmpJdbcUrl = jdbcUrl.toLowerCase
@@ -79,17 +89,35 @@ trait SqlUtils extends Serializable {
     } else if (tmpJdbcUrl.indexOf("sql4es") > -1) {
       println("elasticSearch")
       config.setDriverClassName("nl.anchormen.sql4es.jdbc.ESDriver")
+    } else if (tmpJdbcUrl.indexOf("presto") > -1) {
+      println("presto")
+      TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
+      config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
+    } else if (tmpJdbcUrl.indexOf("hive") > -1) {
+      println("hive")
+      config.setDriverClassName("org.apache.hadoop.hive.jdbc.HiveDriver")
+    } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
+      config.setDriverClassName("moonbox.jdbc.MbDriver")
     }
 
-    config.setUsername(username)
-    config.setPassword(password)
+    if (tmpJdbcUrl.indexOf("sql4es") > -1)
+      config.setUsername(null)
+    else
+      config.setUsername(username)
+    if (tmpJdbcUrl.indexOf("presto") > -1 || tmpJdbcUrl.indexOf("sql4es") > -1)
+      config.setPassword(null)
+    else
+      config.setPassword(password)
+
+
     config.setJdbcUrl(jdbcUrl)
     config.setMaximumPoolSize(muxPoolSize)
     config.setMinimumIdle(1)
+    config.setInitializationFailFast(false)
 
-    config.addDataSourceProperty("cachePrepStmts", "true")
-    config.addDataSourceProperty("prepStmtCacheSize", "250")
-    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
+    //    config.addDataSourceProperty("cachePrepStmts", "true")
+    //    config.addDataSourceProperty("prepStmtCacheSize", "250")
+    //    config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048")
 
     val ds: HikariDataSource = new HikariDataSource(config)
     println(tmpJdbcUrl + "$$$$$$$$$$$$$$$$$" + ds.getUsername + " " + ds.getPassword)
@@ -108,198 +136,161 @@ trait SqlUtils extends Serializable {
   }
 
 
-  def sqlExecute(filters: String,
-                 flatTableSqls: String,
-                 tableName: String,
-                 adHocSql: String,
-                 paginateAndSort: String,
-                 connectionUrl: String,
-                 paramSeq: Seq[KV] = null,
-                 groupParams: Seq[KV] = null): (ListBuffer[Seq[String]], Long) = {
-    val trimSql = flatTableSqls.trim
-    logger.info(trimSql + "~~~~~~~~~~~~~~~~~~~~~~~~~sqlTemp")
-    val sqls = if (trimSql.lastIndexOf(sqlSeparator) == trimSql.length - 1) trimSql.dropRight(1).split(sqlSeparator) else trimSql.split(sqlSeparator)
-    val groupKVMap = getGroupKVMap(sqls, groupParams)
-    val queryKVMap = getQueryKVMap(sqls, paramSeq)
-    val sqlWithoutVar = trimSql.substring(trimSql.indexOf(STStartChar) + 1, trimSql.indexOf(STEndChar)).trim
-    logger.info("sqlWithoutVar~~~~~~~~~~~~~~" + sqlWithoutVar)
-    val mergeSql = if (groupKVMap.nonEmpty) RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap) else sqlWithoutVar
-    logger.info("mergeSql~~~~~~~~~~~~~~" + mergeSql)
-    val renderedSql = if (queryKVMap.nonEmpty) STRenderUtils.renderSql(mergeSql, queryKVMap) else mergeSql
-    logger.info("renderedSql~~~~~~~~~~~~~~" + renderedSql)
-    val trimRenderSql = renderedSql.trim
-    val resetSql = if (trimRenderSql.lastIndexOf(sqlSeparator) == trimRenderSql.length - 1) trimRenderSql.dropRight(1).split(sqlSeparator) else trimRenderSql.split(sqlSeparator)
-    val resetSqlBuffer: mutable.Buffer[String] = resetSql.toBuffer
-    val projectSql = getProjectSql(resetSqlBuffer.last, filters, tableName, adHocSql, paginateAndSort)
-    logger.info(projectSql + "~~~~~~~~~~~~~~~~~~~~~~~~~projectSql")
-    resetSqlBuffer.remove(resetSqlBuffer.length - 1)
-    resetSqlBuffer.append(projectSql)
-    val result = getResult(connectionUrl, resetSqlBuffer)
-    val totalCount = result.size - 1
-    (result, totalCount)
-  }
-
-
-  def getGroupKVMap(sqlArr: Array[String], groupParams: Seq[KV]): mutable.HashMap[String, List[String]] = {
-    val defaultVars = sqlArr.filter(_.contains(groupVar))
-    val groupKVMap = mutable.HashMap.empty[String, List[String]]
-    try {
-      if (null != groupParams && groupParams.nonEmpty)
-        groupParams.foreach(group => {
-          val (k, v) = (group.k, group.v)
-          if (groupKVMap.contains(k)) groupKVMap(k) = groupKVMap(k) ::: List(v) else groupKVMap(k) = List(v)
-        })
-      if (defaultVars.nonEmpty)
-        defaultVars.foreach(g => {
-          val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
-          val v = g.substring(g.indexOf(assignmentChar) + 1).trim
-          if (!groupKVMap.contains(k))
-            groupKVMap(k) = List(v)
-        })
-    } catch {
-      case e: Throwable => logger.error("sql template is not in right format!!!", e)
-    }
-    groupKVMap
-  }
-
-  def getQueryKVMap(sqlArr: Array[String], paramSeq: Seq[KV]): mutable.HashMap[String, String] = {
-    val defaultVars = sqlArr.filter(_.contains(queryVar))
-    val queryKVMap = mutable.HashMap.empty[String, String]
-    if (null != paramSeq && paramSeq.nonEmpty) paramSeq.foreach(param => queryKVMap(param.k) = param.v)
-    if (defaultVars.nonEmpty)
-      defaultVars.foreach(g => {
-        val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
-        if (g.indexOf(assignmentChar) >= 0) {
-          val v = g.substring(g.indexOf(assignmentChar) + 1).trim
-          if (!queryKVMap.contains(k))
-            queryKVMap(k) = v
-        }
-      })
-    queryKVMap
-  }
-
-  def getResult(connectionUrl: String, sql: mutable.Buffer[String]): ListBuffer[Seq[String]] = {
-    logger.info("the sql in getResult:")
-    sql.foreach(logger.info)
-    val resultList = new ListBuffer[Seq[String]]
-    val columnList = new ListBuffer[String]
-    var dbConnection: Connection = null
-    var statement: Statement = null
-    if (connectionUrl != null) {
-      val connInfoArr: Array[String] = connectionUrl.split(sqlUrlSeparator)
-      val userAndPaw = connInfoArr.filter(u => u.contains("user") || u.contains("password"))
-        .map(u => u.substring(u.indexOf('=') + 1))
-      if (userAndPaw.length != 2) {
-        logger.info("connection is not in right format")
-        throw new Exception("connection is not in right format:" + connectionUrl)
-      } else {
-        try {
-          dbConnection = SqlUtils.getConnection(connInfoArr(0), userAndPaw(0), userAndPaw(1))
-          statement = dbConnection.createStatement()
-          if (sql.length > 1) for (elem <- sql.dropRight(1)) statement.execute(elem)
-          val resultSet = statement.executeQuery(sql.last)
-          val meta = resultSet.getMetaData
-          for (i <- 1 to meta.getColumnCount) columnList.append(meta.getColumnLabel(i) + ":" + meta.getColumnTypeName(i))
-          resultList.append(columnList)
-          while (resultSet.next()) resultList.append(getRow(resultSet))
-          resultList
-        } catch {
-          case e: Throwable => logger.error("get result exception", e)
-            throw e
-        } finally {
-          if (statement != null) statement.close()
-          if (dbConnection != null) dbConnection.close()
-        }
-      }
-    } else {
-      logger.info("connection is not given or is null")
-      ListBuffer(Seq(""))
-    }
-  }
-
-
-  /**
-    *
-    * @param querySql a SQL string; eg. SELECT * FROM Table
-    * @return SQL string mixing AdHoc SQL
-    */
-
-  def getProjectSql(querySql: String, filters: String, tableName: String, adHocSql: String, paginateStr: String = ""): String = {
-    logger.info(querySql + "~~~~~~~~~~~~~~~~~~~~~~~~~the initial project sql")
-    val projectSqlWithFilter = if (null != filters && filters != "") s"SELECT * FROM ($querySql) AS PROFILTER WHERE $filters" else querySql
-    val mixinSql = if (null != adHocSql && adHocSql.trim != "{}" && adHocSql.trim != "") {
-      try {
-        val sqlArr = adHocSql.toLowerCase.split(flatTable)
-        if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName` ${sqlArr(1)}" else sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName`"
-      } catch {
-        case e: Throwable => logger.error("adHoc sql is not in right format", e)
-          throw e
-      }
-    } else {
-      logger.info("adHoc sql is empty")
-      projectSqlWithFilter
-    }
-    if (paginateStr != "")
-      s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
-    else
-      mixinSql
-  }
-
-  def getRow(rs: ResultSet): Seq[String] = {
+  def getRow(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
     val meta = rs.getMetaData
     val columnNum = meta.getColumnCount
+    //    val numSeq = if (sourceConfig.url.indexOf("elasticsearch") > -1)  else
     (1 to columnNum).map(columnIndex => {
+      val valueIndex = if (sourceConfig.url.indexOf("elasticsearch") > -1) columnIndex - 1 else columnIndex
       val fieldValue = meta.getColumnType(columnIndex) match {
-        case INTEGER => rs.getInt(columnIndex)
-        case BIGINT => rs.getLong(columnIndex)
-
-        case DECIMAL => rs.getBigDecimal(columnIndex)
-        case NUMERIC => rs.getBigDecimal(columnIndex)
-
-        case FLOAT => rs.getFloat(columnIndex)
-        case DOUBLE => rs.getDouble(columnIndex)
-        case REAL => rs.getDouble(columnIndex)
-
-        case NVARCHAR => rs.getString(columnIndex)
-        case VARCHAR => rs.getString(columnIndex)
-        case LONGNVARCHAR => rs.getString(columnIndex)
-        case LONGVARCHAR => rs.getString(columnIndex)
-
-        case BOOLEAN => rs.getBoolean(columnIndex)
-        case BIT => rs.getBoolean(columnIndex)
-
-        case BINARY => rs.getBytes(columnIndex)
-        case VARBINARY => rs.getBytes(columnIndex)
-        case LONGVARBINARY => rs.getBytes(columnIndex)
-
-        case TINYINT => rs.getShort(columnIndex)
-        case SMALLINT => rs.getShort(columnIndex)
-
-        case DATE => rs.getDate(columnIndex)
-
-        case TIMESTAMP => rs.getTime(columnIndex)
-
-        case BLOB => rs.getBlob(columnIndex)
-
-        case CLOB => rs.getClob(columnIndex)
-
+        case BIGINT => rs.getLong(valueIndex)
+        case DECIMAL => rs.getBigDecimal(valueIndex)
+        case NUMERIC => rs.getBigDecimal(valueIndex)
+        case FLOAT => rs.getFloat(valueIndex)
+        case DOUBLE => rs.getDouble(valueIndex)
+        case REAL => rs.getDouble(valueIndex)
+        case NVARCHAR => rs.getString(valueIndex)
+        case VARCHAR => rs.getString(valueIndex)
+        case LONGNVARCHAR => rs.getString(valueIndex)
+        case LONGVARCHAR => rs.getString(valueIndex)
+        case BOOLEAN => rs.getBoolean(valueIndex)
+        case BIT => rs.getBoolean(valueIndex)
+        case BINARY => rs.getBytes(valueIndex)
+        case VARBINARY => rs.getBytes(valueIndex)
+        case LONGVARBINARY => rs.getBytes(valueIndex)
+        case TINYINT => rs.getShort(valueIndex)
+        case SMALLINT => rs.getShort(valueIndex)
+        case DATE => rs.getDate(valueIndex)
+        case TIMESTAMP => rs.getTimestamp(valueIndex)
+        case BLOB => rs.getBlob(valueIndex)
+        case CLOB => rs.getClob(valueIndex)
         case ARRAY =>
           throw new RuntimeException("ResultSetSerializer not yet implemented for SQL type ARRAY")
-
         case STRUCT =>
           throw new RuntimeException("ResultSetSerializer not yet implemented for SQL type STRUCT")
-
         case DISTINCT =>
           throw new RuntimeException("ResultSetSerializer not yet implemented for SQL type DISTINCT")
-
         case REF =>
           throw new RuntimeException("ResultSetSerializer not yet implemented for SQL type REF")
-
-        case JAVA_OBJECT => rs.getObject(columnIndex)
-        case _ => rs.getObject(columnIndex)
+        case JAVA_OBJECT => rs.getObject(valueIndex)
+        case _ => rs.getObject(valueIndex)
       }
       if (fieldValue == null) null.asInstanceOf[String] else fieldValue.toString
     })
   }
+
+
+  def str2dbType(fieldType: String): Int = fieldType.toUpperCase match {
+    case "INT" => java.sql.Types.INTEGER
+    case "BIGINT" => java.sql.Types.BIGINT
+    case "VARCHAR" => java.sql.Types.VARCHAR
+    case "NVARCHAR" => java.sql.Types.NVARCHAR
+    case "LONGVARCHAR" => java.sql.Types.LONGVARCHAR
+    case "LONGNVARCHAR" => java.sql.Types.LONGNVARCHAR
+    case "FLOAT" => java.sql.Types.FLOAT
+    case "DOUBLE" => java.sql.Types.DOUBLE
+    case "REAL" => java.sql.Types.REAL
+    case "DECIMAL" => java.sql.Types.DECIMAL
+    case "NUMERIC" => java.sql.Types.NUMERIC
+    case "BOOLEAN" => java.sql.Types.BOOLEAN
+    case "BIT" => java.sql.Types.BIT
+    case "BINARY" => java.sql.Types.BINARY
+    case "VARBINARY" => java.sql.Types.VARBINARY
+    case "LONGVARBINARY" => java.sql.Types.LONGVARBINARY
+    case "DATE" => java.sql.Types.DATE
+    case "DATETIME" => java.sql.Types.TIMESTAMP
+    case "TIMESTAMP" => java.sql.Types.TIMESTAMP
+    case "BLOB" => java.sql.Types.BLOB
+    case "CLOB" => java.sql.Types.CLOB
+    case _ => throw new UnsupportedOperationException(s"Unknown Type: $fieldType")
+  }
+
+
+  def str2MysqlType(fieldType: String): String = fieldType.toUpperCase match {
+    case "INT" => "INTEGER"
+    case "BIGINT" => "BIGINT(20)"
+    case "VARCHAR" => "VARCHAR(1000)"
+    case "NVARCHAR" => "NVARCHAR(2000)"
+    case "LONGVARCHAR" => "LONGVARCHAR(2000)"
+    case "LONGNVARCHAR" => "LONGNVARCHAR(2000)"
+    case "FLOAT" => "FLOAT"
+    case "DOUBLE" => "DOUBLE"
+    case "REAL" => "REAL"
+    case "DECIMAL" => "DECIMAL(17,3)"
+    case "NUMERIC" => "NUMERIC(17,3)"
+    case "BOOLEAN" => "TINYINT(1)"
+    case "BIT" => "BIT(8)"
+    case "BINARY" => "BINARY(128)"
+    case "VARBINARY" => "VARBINARY(128)"
+    case "LONGVARBINARY" => "LONGVARBINARY(128)"
+    case "DATE" => "DATE"
+    case "DATETIME" => "DATETIME"
+    case "TIMESTAMP" => "TIMESTAMP"
+    case "BLOB" => "BLOB"
+    case "CLOB" => "CLOB"
+    case _ => throw new UnsupportedOperationException(s"Unknown Type: $fieldType")
+  }
+
+
+  def s2dbValue(strType: String, value: String): Any = if (value == null || value == "") null
+  else strType.toUpperCase match {
+    case "INT" => value.trim.toInt
+    case "BIGINT" => value.trim.toLong
+    case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" => value.trim
+    case "FLOAT" => value.trim.toFloat
+    case "DOUBLE" => value.trim.toDouble
+    case "DECIMAL" => if ("" == value) new java.math.BigDecimal("0.0").stripTrailingZeros()
+    else new java.math.BigDecimal(value.trim).stripTrailingZeros()
+    case "BOOLEAN" => value.trim.toBoolean
+    case "BINARY" | "VARBINARY" | "LONGVARBINARY" => value.trim.getBytes
+    case "DATE" => DateUtils.dt2sqlDate(value.trim)
+    case "DATETIME" | "TIMESTAMP" => DateUtils.dt2timestamp(value.trim)
+    case _ => throw new UnsupportedOperationException(s"Unknown Type: $strType")
+  }
+
+
+  def getInsertSql(fieldName: List[String], tableName: String): String = {
+    val placeholders = (1 to fieldName.size).map(_ => "?").mkString("(", ",", ")")
+    val insertSql = s"INSERT INTO $tableName ${fieldName.map(field => s"`$field`").mkString("(", ",", ")")} values $placeholders"
+    //    logger.info("@INSERT SQL:" + insertSql)
+    insertSql
+  }
+
+  def getCreateSql(schemaMap: mutable.HashMap[String, (String, Int)], uploadMeta: PostUploadMeta): Set[String] = {
+    val fieldNames = schemaMap.map(f => {
+      if (f._2._1.contains("(") || f._2._1.contains(")")) s"`${f._1}` ${f._2._1}"
+      else s"`${f._1}` ${str2MysqlType(f._2._1)}"
+    }).mkString(",")
+
+    val index = if (uploadMeta.index_keys.isEmpty) ""
+    else ",INDEX " + uploadMeta.index_keys.get.split(",").mkString("_") + s" (${uploadMeta.index_keys.get})"
+
+    val primaryKeys = if (uploadMeta.primary_keys.isEmpty) ""
+    else s",PRIMARY KEY (${uploadMeta.primary_keys.get})"
+
+    val dropSql = s"DROP TABLE IF EXISTS `${uploadMeta.table_name}`"
+    val createSql = s"CREATE TABLE `${uploadMeta.table_name}` " + s"($fieldNames $primaryKeys $index) ENGINE=InnoDB  CHARACTER SET utf8;"
+    val fullSql = Set(dropSql, createSql)
+    logger.info("@CREATE TABLE SQL :")
+    fullSql.foreach(println)
+    fullSql
+  }
+
+
+  def getDeleteSql(uploadMeta: PostUploadMeta): String = {
+    val tableName = uploadMeta.table_name
+    val fieldNames = uploadMeta.primary_keys.get.split(",").toList
+    val deleteSql = s"DELETE FROM `$tableName  WHERE " + fieldNames.map(key => s"`$key`=?").mkString(" AND ")
+    logger.info("@DELETE sql " + deleteSql)
+    deleteSql
+  }
+
+  def filterSQl(sqlString: String): String = {
+    val p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/")
+    val result = p.matcher(sqlString).replaceAll("$1")
+    logger.info(s"sql after filter>>>>>>>>>>>$result")
+    result
+  }
+
 
 }

@@ -18,10 +18,14 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.util
 
 import java.util.regex.Pattern
-import edp.davinci.DavinciConstants._
+import DavinciConstants._
 import edp.davinci.util.SqlOperators._
 import org.apache.log4j.Logger
 import scala.collection.mutable
@@ -30,7 +34,7 @@ import scala.collection.mutable.ListBuffer
 object RegexMatcher extends RegexMatcher
 
 trait RegexMatcher {
-  lazy val groupRegex = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\$\\w+\\$\\s?\\)"
+  lazy val groupRegex = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?\\$\\w+\\$\\)?\\s?\\)"
   //  lazy val queryRegex = "\\$\\s*\\w+\\s*\\$"
   private lazy val logger = Logger.getLogger(this.getClass)
 

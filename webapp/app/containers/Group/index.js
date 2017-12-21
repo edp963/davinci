@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
+import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
@@ -201,7 +203,7 @@ export class Group extends React.PureComponent {
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">
-            <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)}></Button>
+            <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
           </Tooltip>
           <Popconfirm
             title="确定删除？"
@@ -241,6 +243,7 @@ export class Group extends React.PureComponent {
 
     return (
       <Container>
+        <Helmet title="Group" />
         <Container.Title>
           <Row>
             <Col span={24}>
@@ -259,7 +262,9 @@ export class Group extends React.PureComponent {
                 <Icon type="bars" />Group List
               </Box.Title>
               <Box.Tools>
-                <Button type="primary" icon="plus" onClick={this.showAdd}>新增</Button>
+                <Tooltip placement="bottom" title="新增">
+                  <Button type="primary" icon="plus" onClick={this.showAdd} />
+                </Tooltip>
               </Box.Tools>
             </Box.Header>
             <Box.Body>
