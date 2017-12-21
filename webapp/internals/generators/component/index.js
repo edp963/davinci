@@ -4,9 +4,9 @@
 
 /* eslint strict: ["off"] */
 
-'use strict';
+'use strict'
 
-const componentExists = require('../utils/componentExists');
+const componentExists = require('../utils/componentExists')
 
 module.exports = {
   description: 'Add an unconnected component',
@@ -15,7 +15,7 @@ module.exports = {
     name: 'type',
     message: 'Select the type of component',
     default: 'Stateless Function',
-    choices: () => ['Stateless Function', 'ES6 Class (Pure)', 'ES6 Class'],
+    choices: () => ['Stateless Function', 'ES6 Class (Pure)', 'ES6 Class']
   }, {
     type: 'input',
     name: 'name',
@@ -23,36 +23,36 @@ module.exports = {
     default: 'Button',
     validate: (value) => {
       if ((/.+/).test(value)) {
-        return componentExists(value) ? 'A component or container with this name already exists' : true;
+        return componentExists(value) ? 'A component or container with this name already exists' : true
       }
 
-      return 'The name is required';
-    },
+      return 'The name is required'
+    }
   }, {
     type: 'confirm',
     name: 'wantMessages',
     default: true,
-    message: 'Do you want i18n messages (i.e. will this component use text)?',
+    message: 'Do you want i18n messages (i.e. will this component use text)?'
   }],
   actions: (data) => {
     // Generate index.js and index.test.js
-    let componentTemplate;
+    let componentTemplate
 
     switch (data.type) {
       case 'ES6 Class': {
-        componentTemplate = './component/es6.js.hbs';
-        break;
+        componentTemplate = './component/es6.js.hbs'
+        break
       }
       case 'ES6 Class (Pure)': {
-        componentTemplate = './component/es6.pure.js.hbs';
-        break;
+        componentTemplate = './component/es6.pure.js.hbs'
+        break
       }
       case 'Stateless Function': {
-        componentTemplate = './component/stateless.js.hbs';
-        break;
+        componentTemplate = './component/stateless.js.hbs'
+        break
       }
       default: {
-        componentTemplate = './component/es6.js.hbs';
+        componentTemplate = './component/es6.js.hbs'
       }
     }
 
@@ -60,13 +60,13 @@ module.exports = {
       type: 'add',
       path: '../../app/components/{{properCase name}}/index.js',
       templateFile: componentTemplate,
-      abortOnFail: true,
+      abortOnFail: true
     }, {
       type: 'add',
       path: '../../app/components/{{properCase name}}/tests/index.test.js',
       templateFile: './component/test.js.hbs',
-      abortOnFail: true,
-    }];
+      abortOnFail: true
+    }]
 
     // If they want a i18n messages file
     if (data.wantMessages) {
@@ -74,10 +74,10 @@ module.exports = {
         type: 'add',
         path: '../../app/components/{{properCase name}}/messages.js',
         templateFile: './component/messages.js.hbs',
-        abortOnFail: true,
-      });
+        abortOnFail: true
+      })
     }
 
-    return actions;
-  },
-};
+    return actions
+  }
+}

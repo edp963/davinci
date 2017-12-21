@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.widget
 
 import javax.ws.rs.Path
@@ -25,7 +29,7 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
-import edp.davinci.persistence.entities.{PostWidgetInfo, PutWidgetInfo, Widget}
+import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.util.AuthorizationProvider
 import edp.davinci.util.JsonProtocol._
@@ -33,7 +37,9 @@ import edp.davinci.util.ResponseUtils._
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Failure, Success}
 
 @Api(value = "/widgets", consumes = "application/json", produces = "application/json")
@@ -67,15 +73,15 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   private def getAllWidgetsComplete(session: SessionClass, active: Boolean): Route = {
     onComplete(WidgetService.getAll(session)) {
       case Success(widgetSeq) =>
-        val responseSeq: Seq[PutWidgetInfo] = widgetSeq.map(r => PutWidgetInfo(r._1, r._2, r._3, r._4, r._5.getOrElse(""), r._6, r._7, r._8, r._9))
-        complete(OK, ResponseJson[Seq[PutWidgetInfo]](getHeader(200, session), responseSeq))
-      case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        complete(OK, ResponseJson[Seq[PutWidgetInfo]](getHeader(200, session), widgetSeq))
+      case Failure(ex) => logger.error("getAllWidgetsComplete error", ex)
+        complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
     }
   }
 
   @ApiOperation(value = "Add a new widget to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "widget", value = "Widget object to be added", required = true, dataType = "edp.davinci.rest.PostWidgetInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "widget", value = "Widget object to be added", required = true, dataType = "edp.davinci.persistence.entities.PostWidgetInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -97,12 +103,13 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   private def postWidgetComplete(session: SessionClass, postWidgetSeq: Seq[PostWidgetInfo]): Route = {
     if (session.admin) {
-      val widgetSeq = postWidgetSeq.map(post => Widget(0, post.widgetlib_id, post.flatTable_id, post.name, Some(post.adhoc_sql), post.desc, post.chart_params, post.query_params, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val widgetSeq = postWidgetSeq.map(post => Widget(0, post.widgetlib_id, post.flatTable_id, post.name, post.adhoc_sql, post.desc, post.config, post.chart_params, post.query_params, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.widgetDal.insert(widgetSeq)) {
         case Success(widgets) =>
-          val putWidgets = widgets.map(w => PutWidgetInfo(w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql.getOrElse(""), w.desc, w.chart_params, w.query_params, w.publish, Some(w.active)))
+          val putWidgets = widgets.map(w => PutWidgetInfo(w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by))
           complete(OK, ResponseSeqJson[PutWidgetInfo](getHeader(200, session), putWidgets))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error("postWidgetComplete error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -110,7 +117,7 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   @ApiOperation(value = "update widgets in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "widget", value = "Widget object to be updated", required = true, dataType = "edp.davinci.rest.PutWidgetInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "widget", value = "Widget object to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutWidgetInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -132,11 +139,15 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   private def putWidgetComplete(session: SessionClass, putWidgetSeq: Seq[PutWidgetInfo]): Route = {
     if (session.admin) {
-      val future = WidgetService.update(putWidgetSeq, session)
-      onComplete(future) {
-        case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-      }
+      val widget = Await.result(modules.widgetDal.findById(putWidgetSeq.head.id), new FiniteDuration(30, SECONDS))
+      if (widget.nonEmpty) {
+        if (session.userId == widget.get.create_by)
+          onComplete(WidgetService.update(putWidgetSeq, session)) {
+            case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+            case Failure(ex) => logger.error("putWidgetComplete error", ex)
+              complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+          } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not update the widget created by others", session), ""))
+      } else complete(BadRequest, ResponseJson[String](getHeader(400, "widget can not found", session), ""))
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
 
@@ -151,23 +162,21 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteWidgetByIdRoute: Route = path(routeName / LongNumber) {
-    widgetId =>
-      delete {
-        authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
-          session =>
-            if (session.admin) {
-              val operation = for {
-                user <- WidgetService.deleteWidget(widgetId)
-                relGU <- WidgetService.deleteRelDW(widgetId)
-              } yield (user, relGU)
-              onComplete(operation) {
+  def deleteWidgetByIdRoute: Route = path(routeName / LongNumber) { widgetId =>
+    delete {
+      authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
+        session =>
+          if (session.admin) {
+            val create_by = Await.result(modules.widgetDal.findById(widgetId), new FiniteDuration(30, SECONDS)).get.create_by
+            if (create_by == session.userId)
+              onComplete(WidgetService.deleteWidget(widgetId, session)) {
                 case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-                case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-              }
-            } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
-        }
+                case Failure(ex) => logger.error("deleteWidgetByIdRoute error", ex)
+                  complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied con not delete the widget created by others", session), ""))
+          } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
       }
+    }
   }
 
   @Path("/{widget_id}/sqls")
@@ -194,7 +203,8 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
       case Success(sqlSeq) =>
         val resultSql = formatSql(sqlSeq.head)
         complete(OK, ResponseJson[SqlInfo](getHeader(200, session), SqlInfo(resultSql)))
-      case Failure(ex) => complete(InternalServerError, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+      case Failure(ex) => logger.error("getWholeSqlComplete error", ex)
+        complete(InternalServerError, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
     }
   }
 

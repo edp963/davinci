@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@
 
 import React, { PropTypes, PureComponent } from 'react'
 import Animate from 'rc-animate'
+import classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
@@ -30,14 +31,18 @@ import Icon from 'antd/lib/icon'
 import Tooltip from 'antd/lib/tooltip'
 import Popconfirm from 'antd/lib/popconfirm'
 import Popover from 'antd/lib/popover'
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 
+import { ECHARTS_RENDERER } from '../../../globalConstants'
 import styles from '../Dashboard.less'
 
 export class DashboardItem extends PureComponent {
   constructor (props) {
     super(props)
     this.state = {
-      controlPanelVisible: false
+      controlPanelVisible: false,
+      resetSharePanel: false
     }
   }
 
@@ -45,8 +50,6 @@ export class DashboardItem extends PureComponent {
     const {
       itemId,
       widget,
-      triggerType,
-      triggerParams,
       onGetChartData
     } = this.props
 
@@ -62,11 +65,9 @@ export class DashboardItem extends PureComponent {
       data,
       chartInfo,
       triggerType,
-      triggerParams,
       onRenderChart
     } = nextProps
-
-    if (data && data !== this.props.data && chartInfo.name !== 'table') {
+    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER) {
       onRenderChart(itemId, widget, data.dataSource, chartInfo)
     }
 
@@ -107,11 +108,9 @@ export class DashboardItem extends PureComponent {
     onGetChartData('refresh', itemId, widget.id)
   }
 
-  onTableSearch = (queryParams) =>
-    this.onSearch('refresh', queryParams)
-
-  onControlSearch = (queryParams) =>
+  onControlSearch = (queryParams) => {
     this.onSearch('rerender', queryParams)
+  }
 
   onSearch = (renderType, queryParams) => {
     const {
@@ -129,6 +128,39 @@ export class DashboardItem extends PureComponent {
     })
   }
 
+  onFullScreen = () => {
+    const {
+      onShowFullScreen,
+      itemId,
+      w,
+      h,
+      data,
+      widget,
+      loading,
+      chartInfo,
+      onGetChartData
+    } = this.props
+    const chartsData = {itemId, w, h, widget, data, loading, chartInfo, onGetChartData}
+    if (onShowFullScreen) {
+      onShowFullScreen(chartsData)
+    }
+  }
+
+  sharePanelDownloadCsv = () => {
+    const {
+      itemId,
+      shareInfo,
+      onDownloadCsv
+    } = this.props
+
+    onDownloadCsv(itemId)(shareInfo)
+  }
+  resetSharePanel = (flag) => {
+    this.setState({
+      resetSharePanel: flag === 'open'
+    })
+  }
+
   render () {
     const {
       w,
@@ -139,43 +171,96 @@ export class DashboardItem extends PureComponent {
       data,
       loading,
       isAdmin,
+      isShared,
+      shareInfo,
+      secretInfo,
+      shareInfoLoading,
+      downloadCsvLoading,
+      isInteractive,
       onShowEdit,
+      isReadOnly,
       onShowWorkbench,
       onShowFiltersForm,
-      onDeleteDashboardItem
+      onDeleteDashboardItem,
+      onDownloadCsv,
+      onTurnOffInteract
     } = this.props
 
     const {
       controlPanelVisible
     } = this.state
 
-    let editButton = ''
-    let widgetButton = ''
-    let deleteButton = ''
+    const menu = (
+      <Menu>
+        {
+          isReadOnly ? <Menu.Item className={styles.menuItem}>
+            <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
+          </Menu.Item> : ''
+        }
+        {
+          isReadOnly ? <Menu.Item className={styles.menuItem}>
+            <span className={styles.menuText} onClick={onShowWorkbench(itemId, widget)}>Widget信息</span>
+          </Menu.Item> : ''
+        }
+        <Menu.Item className={styles.menuItem}>
+          <span className={styles.menuText} onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])}>条件查询</span>
+        </Menu.Item>
+        {
+          isReadOnly ? <Menu.Item className={styles.menuItem}>
+            <Popconfirm
+              title="确定删除？"
+              placement="bottom"
+              onConfirm={onDeleteDashboardItem(itemId)}
+            >
+              <span className={styles.menuText}>删除</span>
+            </Popconfirm>
+          </Menu.Item> : ''
+        }
+      </Menu>
+    )
 
-    if (isAdmin) {
-      editButton = (
-        <Tooltip title="基本信息">
-          <Icon type="edit" onClick={onShowEdit(itemId)} />
-        </Tooltip>
-      )
-      widgetButton = (
-        <Tooltip title="Widget信息">
-          <Icon type="setting" onClick={onShowWorkbench(itemId, widget)} />
-        </Tooltip>
-      )
-      deleteButton = (
-        <Popconfirm
-          title="确定删除？"
-          placement="bottom"
-          onConfirm={onDeleteDashboardItem(itemId)}
+    const userDownloadButton = isShared
+      ? <Tooltip title="下载数据">
+        <Icon type="download" onClick={this.sharePanelDownloadCsv} />
+      </Tooltip>
+      : ''
+
+    const shareButton = !isShared
+      ? <Tooltip title="分享">
+        <Popover
+          placement="bottomRight"
+          content={
+            <SharePanel
+              id={widget.id}
+              type="widget"
+              itemId={itemId}
+              shareInfo={shareInfo}
+              secretInfo={secretInfo}
+              shareInfoLoading={shareInfoLoading}
+              downloadCsvLoading={downloadCsvLoading}
+              onDownloadCsv={onDownloadCsv(itemId)}
+              resetSharePanel={this.state.resetSharePanel}
+              isResetSharePanel={this.resetSharePanel}
+            />
+          }
+          trigger="click"
         >
-          <Tooltip title="删除">
-            <Icon type="delete" />
-          </Tooltip>
-        </Popconfirm>
-      )
-    }
+          <Icon type="share-alt" onClick={() => this.resetSharePanel('open')} />
+        </Popover>
+      </Tooltip>
+      : ''
+
+    const filterButton = !isAdmin || isShared
+      ? <Tooltip title="条件查询">
+        <Icon type="search" onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])} />
+      </Tooltip>
+      : ''
+
+    const dropdownMenu = isAdmin
+      ? <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+        <Icon type="ellipsis" />
+      </Dropdown>
+      : ''
 
     const controls = widget.query_params
       ? JSON.parse(widget.query_params).filter(c => c.type)
@@ -191,6 +276,13 @@ export class DashboardItem extends PureComponent {
         </Tooltip>
       ) : ''
 
+    const descPanelHandle = widget.desc
+      ? (
+        <Popover placement="bottom" content={<p className={styles.descPanel}>{widget.desc}</p>}>
+          <Icon className={styles.desc} type="question-circle-o" />
+        </Popover>
+      ) : ''
+
     const controlPanelTransitionName = {
       enter: styles.controlPanelEnter,
       enterActive: styles.controlPanelEnterActive,
@@ -198,33 +290,49 @@ export class DashboardItem extends PureComponent {
       leaveActive: styles.controlPanelLeaveActive
     }
 
+    const chartClass = {
+      chart: styles.chartBlock,
+      table: styles.tableBlock,
+      container: styles.block
+    }
+
+    const gridItemClass = classnames({
+      [styles.gridItem]: true,
+      [styles.interact]: isInteractive
+    })
+
     return (
-      <div className={styles.gridItem}>
-        <h4 className={styles.title}>
-          {controlPanelHandle}
-          {widget.name}
-          <Popover placement="bottom" content={<p className={styles.descPanel}>{widget.desc}</p>}>
-            <Icon className={styles.desc} type="question-circle-o" />
-          </Popover>
-        </h4>
+      <div className={gridItemClass}>
+        {
+          chartInfo.name !== 'text'
+            ? (
+              <div className={styles.title}>
+                {controlPanelHandle}
+                <h4>{widget.name}</h4>
+                {descPanelHandle}
+              </div>
+            )
+            : (
+              <div className={styles.title} />
+            )
+        }
         <div className={styles.tools}>
-          <Tooltip title="移动">
-            <i className={`${styles.move} iconfont icon-move1`} />
-          </Tooltip>
-          {editButton}
-          {widgetButton}
-          <Tooltip title="条件查询">
-            <Icon type="search" onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])} />
-          </Tooltip>
           <Tooltip title="同步数据">
             <Icon type="reload" onClick={this.onSyncBizdatas} />
           </Tooltip>
-          <Tooltip title="分享">
-            <Popover placement="bottomRight" content={<SharePanel id={widget.id} type="widget" />} trigger="click">
-              <Icon type="share-alt" />
-            </Popover>
+          <Tooltip title="全屏">
+            <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
           </Tooltip>
-          {deleteButton}
+          {shareButton}
+          {filterButton}
+          {userDownloadButton}
+          {dropdownMenu}
+        </div>
+        <div className={styles.offInteract}>
+          <Icon
+            type="close-circle-o"
+            onClick={onTurnOffInteract(itemId)}
+          />
         </div>
         <Animate
           showProp="show"
@@ -242,11 +350,12 @@ export class DashboardItem extends PureComponent {
           id={`${itemId}`}
           w={w}
           h={h}
+          title={widget.name}
           data={data || {}}
           loading={loading}
           chartInfo={chartInfo}
-          chartParams={widget}
-          onTableSearch={this.onTableSearch}
+          chartParams={JSON.parse(widget.chart_params)}
+          classNames={chartClass}
         />
       </div>
     )
@@ -261,15 +370,31 @@ DashboardItem.propTypes = {
   chartInfo: PropTypes.object,
   data: PropTypes.object,
   loading: PropTypes.bool,
+  isReadOnly: PropTypes.bool,
   triggerType: PropTypes.string,
   triggerParams: PropTypes.string,
   isAdmin: PropTypes.bool,
+  isShared: PropTypes.bool,
+  shareInfo: PropTypes.string,
+  secretInfo: PropTypes.string,
+  shareInfoLoading: PropTypes.bool,
+  downloadCsvLoading: PropTypes.bool,
+  isInteractive: PropTypes.bool,
   onGetChartData: PropTypes.func,
   onRenderChart: PropTypes.func,
   onShowEdit: PropTypes.func,
   onShowWorkbench: PropTypes.func,
   onShowFiltersForm: PropTypes.func,
-  onDeleteDashboardItem: PropTypes.func
+  onDeleteDashboardItem: PropTypes.func,
+  onDownloadCsv: PropTypes.func,
+  onTurnOffInteract: PropTypes.func,
+  onShowFullScreen: PropTypes.func
+}
+// FIXME
+DashboardItem.defaultProps = {
+  onShowEdit: () => {},
+  onShowWorkbench: () => {},
+  onDeleteDashboardItem: () => {}
 }
 
 export default DashboardItem

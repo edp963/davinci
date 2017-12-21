@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest
 
 import akka.http.scaladsl.server._
@@ -28,6 +32,7 @@ import edp.davinci.rest.group.GroupRoutes
 import edp.davinci.rest.shares.ShareRoutes
 import edp.davinci.rest.source.SourceRoutes
 import edp.davinci.rest.sqllog.SqlLogRoutes
+import edp.davinci.rest.upload.UploadRoutes
 import edp.davinci.rest.user.UserRoutes
 import edp.davinci.rest.view.ViewRoutes
 import edp.davinci.rest.widget.WidgetRoutes
@@ -45,14 +50,18 @@ class RoutesApi(modules: ConfigurationModule with PersistenceModule with Busines
   val group = new GroupRoutes(modules)
   val sqlLog = new SqlLogRoutes(modules)
   val share = new ShareRoutes(modules)
-  val download = new DownloadRoutes(modules)
+  val download = new DownloadRoutes
   val davinci = new DavinciRoutes
+  val upload = new UploadRoutes(modules)
+  val check = new CheckRoutes(modules)
 
   val routes: Route =
     crossHandler(swagger.indexRoute) ~ crossHandler(swagger.routes) ~
       crossHandler(davinci.indexRoute) ~ crossHandler(davinci.shareRoute) ~
+      crossHandler(download.routes) ~
       pathPrefix("api" / "v1") {
         crossHandler(login.routes) ~
+          crossHandler(upload.routes) ~
           crossHandler(users.routes) ~
           crossHandler(changePwd.routes) ~
           crossHandler(source.routes) ~
@@ -62,6 +71,6 @@ class RoutesApi(modules: ConfigurationModule with PersistenceModule with Busines
           crossHandler(group.routes) ~
           crossHandler(sqlLog.routes) ~
           crossHandler(share.routes) ~
-          crossHandler(download.routes)
+          crossHandler(check.routes)
       }
 }

@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,56 +24,75 @@ import csvParser from 'jquery-csv'
 import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_WIDGET,
-  LOAD_SHARE_RESULTSET
+  LOAD_SHARE_RESULTSET,
+  LOAD_WIDGET_CSV
 } from './constants'
 import {
   dashboardGetted,
   widgetGetted,
-  resultsetGetted
+  resultsetGetted,
+  widgetCsvLoaded,
+  loadWidgetCsvFail
 } from './actions'
 
+import message from 'antd/lib/message'
 import request from '../../../app/utils/request'
 import api from '../../../app/utils/api'
-import { notifySagasError, uuid } from '../../../app/utils/util'
-import { promiseSagaCreator } from '../../../app/utils/reduxPromisation'
+import { uuid } from '../../../app/utils/util'
+import config, { env } from '../../../app/globalConfig'
+const shareHost = config[env].shareHost
 
-export const getDashboard = promiseSagaCreator(
-  function* ({ token }) {
-    const asyncData = yield call(request, `${api.share}/dashboard/${token}`)
+export function* getDashboard ({ payload }) {
+  try {
+    const asyncData = yield call(request, `${api.share}/dashboard/${payload.token}`)
     const dashboard = asyncData.payload
     yield put(dashboardGetted(dashboard))
-    return dashboard
-  },
-  function (err) {
-    notifySagasError(err, 'getDashboard')
+    payload.resolve(dashboard)
+  } catch (err) {
+    message.destroy()
+    console.log('getDashboard', err)
+    payload.reject(err)
   }
-)
+}
 
 export function* getDashboardWatcher () {
   yield fork(takeLatest, LOAD_SHARE_DASHBOARD, getDashboard)
 }
 
-export const getWidget = promiseSagaCreator(
-  function* ({ token }) {
-    const asyncData = yield call(request, `${api.share}/widget/${token}`)
+export function* getWidget ({ payload }) {
+  try {
+    const asyncData = yield call(request, `${api.share}/widget/${payload.token}`)
     const widget = asyncData.payload
     yield put(widgetGetted(widget))
-    return widget[0]
-  },
-  function (err) {
-    notifySagasError(err, 'getWidget')
+
+    if (payload.resolve) {
+      payload.resolve(widget[0])
+    }
+  } catch (err) {
+    message.destroy()
+    console.log('getWidget', err)
+    payload.reject(err)
   }
-)
+}
 
 export function* getWidgetWatcher () {
   yield fork(takeEvery, LOAD_SHARE_WIDGET, getWidget)
 }
 
-export const getResultset = promiseSagaCreator(
-  function* ({ token, sql, sortby, offset, limit }) {
+export function* getResultset ({ payload }) {
+  const {
+    itemId,
+    token,
+    sql,
+    sorts,
+    offset,
+    limit
+  } = payload
+
+  try {
     let queries = ''
     if (offset !== undefined && limit !== undefined) {
-      queries = `?sortby=${sortby}&offset=${offset}&limit=${limit}`
+      queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
     }
     const asyncData = yield call(request, {
       method: 'post',
@@ -81,13 +100,11 @@ export const getResultset = promiseSagaCreator(
       data: sql
     })
     const resultset = resultsetConverter(asyncData.payload)
-    yield put(resultsetGetted(resultset))
-    return resultset
-  },
-  function (err) {
-    notifySagasError(err, 'getResultset')
+    yield put(resultsetGetted(itemId, resultset))
+  } catch (err) {
+    console.log('getResultset', err)
   }
-)
+}
 
 function resultsetConverter (resultset) {
   let dataSource = []
@@ -96,12 +113,13 @@ function resultsetConverter (resultset) {
 
   if (resultset.result && resultset.result.length) {
     const arr = resultset.result
-    const keysWithType = csvParser.toArray(arr.splice(0, 1)[0])
 
-    keysWithType.forEach(kwt => {
-      const kwtArr = kwt.split(':')
-      keys.push(kwtArr[0])
-      types.push(kwtArr[1])
+    arr.splice(0, 2).forEach((d, index) => {
+      if (index) {
+        types = csvParser.toArray(d)
+      } else {
+        keys = csvParser.toArray(d)
+      }
     })
 
     dataSource = arr.map(csvVal => {
@@ -130,8 +148,37 @@ export function* getResultsetWatcher () {
   yield fork(takeEvery, LOAD_SHARE_RESULTSET, getResultset)
 }
 
+export function* getWidgetCsv ({ payload }) {
+  const { token, sql, sorts, offset, limit } = payload
+  let queries = ''
+
+  if (offset !== undefined && limit !== undefined) {
+    queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
+  }
+
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.share}/csv/${token}${queries}`,
+      data: sql || {}
+    })
+    yield put(widgetCsvLoaded(payload.itemId))
+    const path = asyncData.payload
+    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path}`
+    // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
+  } catch (err) {
+    yield put(loadWidgetCsvFail(payload.itemId))
+    message.error('获取csv文件失败，请稍后再试')
+  }
+}
+
+export function* getWidgetCsvWatcher () {
+  yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
+}
+
 export default [
   getDashboardWatcher,
   getWidgetWatcher,
-  getResultsetWatcher
+  getResultsetWatcher,
+  getWidgetCsvWatcher
 ]

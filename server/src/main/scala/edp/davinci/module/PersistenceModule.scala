@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.module
 
 import edp.davinci.persistence.base.{BaseDal, BaseDalImpl}
@@ -51,6 +55,7 @@ trait PersistenceModule {
   val libWidgetQuery: TableQuery[LibWidgetTable] = TableQuery[LibWidgetTable]
   val viewQuery: TableQuery[ViewTbl] = TableQuery[ViewTbl]
   val relGroupViewQuery: TableQuery[RelGroupViewTable] = TableQuery[RelGroupViewTable]
+  val uploadMetaQuery: TableQuery[MetaTable] = TableQuery[MetaTable]
 
 
   val groupDal: BaseDal[GroupTable, UserGroup]
@@ -64,6 +69,7 @@ trait PersistenceModule {
   val libWidgetDal: BaseDal[LibWidgetTable, LibWidget]
   val viewDal: BaseDal[ViewTbl, View]
   val relGroupViewDal: BaseDal[RelGroupViewTable, RelGroupView]
+  val uploadMetaDal: BaseDal[MetaTable, UploadMeta]
 }
 
 trait PersistenceModuleImpl extends PersistenceModule {
@@ -80,5 +86,6 @@ trait PersistenceModuleImpl extends PersistenceModule {
   override lazy val libWidgetDal = new BaseDalImpl[LibWidgetTable, LibWidget](TableQuery[LibWidgetTable])
   override lazy val viewDal = new BaseDalImpl[ViewTbl, View](TableQuery[ViewTbl])
   override lazy val relGroupViewDal = new BaseDalImpl[RelGroupViewTable, RelGroupView](TableQuery[RelGroupViewTable])
+  override lazy val uploadMetaDal = new BaseDalImpl[MetaTable, UploadMeta](TableQuery[MetaTable])
 
 }

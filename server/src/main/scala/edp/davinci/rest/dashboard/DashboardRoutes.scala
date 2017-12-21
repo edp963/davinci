@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.dashboard
 
 import javax.ws.rs.Path
@@ -27,20 +31,26 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.ResponseUtils._
-import edp.davinci.util.JsonProtocol._
-import io.swagger.annotations.{ApiImplicitParams, _}
 import edp.davinci.rest.dashboard.DashboardService._
-import scala.util.{Failure, Success}
+import edp.davinci.util.AuthorizationProvider
+import edp.davinci.util.JsonProtocol._
+import edp.davinci.util.ResponseUtils._
+import io.swagger.annotations.{ApiImplicitParams, _}
+import org.apache.log4j.Logger
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{FiniteDuration, SECONDS}
+import scala.util.{Failure, Success}
 
 @Api(value = "/dashboards", consumes = "application/json", produces = "application/json")
 @Path("/dashboards")
 class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = getWidgetByDashboardIdRoute ~ postDashboardRoute ~ putDashboardRoute ~ postWidget2DashboardRoute ~ getDashboardByAllRoute ~ deleteDashboardByIdRoute ~ deleteWidgetFromDashboardRoute ~ postWidget2DashboardRoute ~ putWidgetInDashboardRoute
+  val routes: Route = getWidgetByDashboardIdRoute ~ postDashboardRoute ~ putDashboardRoute ~ postWidget2DashboardRoute ~ getDashboardByAllRoute ~
+    deleteDashboardByIdRoute ~ deleteWidgetFromDashboardRoute ~ postWidget2DashboardRoute ~ putWidgetInDashboardRoute ~ nameCheckRoute
   private lazy val routeName = "dashboards"
+  private lazy val logger = Logger.getLogger(this.getClass)
 
 
   @Path("/{dashboard_id}")
@@ -64,18 +74,23 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def getDashboardById(dashboardId: Long, session: SessionClass): Route = {
     val operation = for {
-      inside <- getInsideInfo(session, dashboardId)
+      inside <- getRelInfo(session, dashboardId)
       dashboard <- getDashBoard(dashboardId)
     } yield (inside, dashboard)
-
     onComplete(operation) {
       case Success(info) =>
         val (insideInfo, dashboards) = info
-        val dashboard = dashboards.head
-        val infoSeq: Seq[WidgetInfo] = insideInfo.map(r => WidgetInfo(r._1, r._2, r._3, r._4, r._5, r._6, r._7, r._8, r._9))
-        val dashboardInfo = DashboardInfo(dashboard._1, dashboard._2, dashboard._3.getOrElse(""), dashboard._4, dashboard._5, infoSeq)
-        complete(OK, ResponseJson[DashboardInfo](getHeader(200, session), dashboardInfo))
-      case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        dashboards match {
+          case Some(dashboard) =>
+            val dashboardInfo = DashboardInfo(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""), dashboard.publish, dashboard.create_by, insideInfo)
+            complete(OK, ResponseJson[DashboardInfo](getHeader(200, session), dashboardInfo))
+          case None =>
+            logger.error(s"dashboard not found,id:$dashboardId")
+            complete(BadRequest, ResponseJson[String](getHeader(400, s"not found dashboard: $dashboardId", session), ""))
+        }
+      case Failure(ex) =>
+        logger.error(s"get dashboard or getInsideInfo error", ex)
+        complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
     }
   }
 
@@ -95,9 +110,10 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         session =>
           onComplete(getAll(session)) {
             case Success(dashboardSeq) =>
-              val dashboards = dashboardSeq.map(d => PutDashboardInfo(d._1, d._2, d._3.getOrElse(""), d._4, d._5))
-              complete(OK, ResponseSeqJson[PutDashboardInfo](getHeader(200, session), dashboards))
-            case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              complete(OK, ResponseSeqJson[PutDashboardInfo](getHeader(200, session), dashboardSeq))
+            case Failure(ex) =>
+              logger.error(s"get all dashboards error", ex)
+              complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
       }
     }
@@ -105,7 +121,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   @ApiOperation(value = "Add new dashboards to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "dashboards", value = "Dashboard objects to be added", required = true, dataType = "edp.davinci.rest.PostDashboardInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "dashboards", value = "Dashboard objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostDashboardInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -126,12 +142,13 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def postDashBoard(session: SessionClass, postDashboardSeq: Seq[PostDashboardInfo]): Route = {
     if (session.admin) {
-      val dashboardSeq = postDashboardSeq.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val dashboardSeq = postDashboardSeq.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail), post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.dashboardDal.insert(dashboardSeq)) {
         case Success(dashWithIdSeq) =>
-          val responseDashSeq = dashWithIdSeq.map(dashboard => PutDashboardInfo(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.publish, Some(dashboard.active)))
+          val responseDashSeq = dashWithIdSeq.map(dashboard => PutDashboardInfo(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail, dashboard.publish, dashboard.active, dashboard.create_by))
           complete(OK, ResponseSeqJson[PutDashboardInfo](getHeader(200, session), responseDashSeq))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error(s"insert dashboard error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -139,7 +156,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   @ApiOperation(value = "update dashboards in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "dashboard", value = "Dashboard objects to be updated", required = true, dataType = "edp.davinci.rest.PutDashboardSeq", paramType = "body")
+    new ApiImplicitParam(name = "dashboard", value = "Dashboard objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutDashboardSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -161,10 +178,14 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def putDashboardComplete(session: SessionClass, dashboardSeq: Seq[PutDashboardInfo]): Route = {
     if (session.admin) {
-      onComplete(update(session, dashboardSeq)) {
-        case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-      }
+      val create_by = Await.result(modules.dashboardDal.findById(dashboardSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
+      if (create_by == session.userId) {
+        onComplete(update(session, dashboardSeq)) {
+          case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+          case Failure(ex) => logger.error(s"update dashboard error", ex)
+            complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        }
+      } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied ,con not update dashboard created by others", session), ""))
     }
     else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -185,14 +206,15 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val operation = for {
-              delDashboard <- deleteDashboard(dashboardId)
-              delRel <- deleteRelByFilter(dashboardId)
-            } yield (delDashboard, delRel)
-            onComplete(operation) {
-              case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-              case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-            }
+            val dashboard = Await.result(modules.dashboardDal.findById(dashboardId), new FiniteDuration(30, SECONDS))
+            if (dashboard.nonEmpty) {
+              if (session.userId == dashboard.get.create_by)
+                onComplete(deleteDashboard(dashboardId, session)) {
+                  case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+                  case Failure(ex) => logger.error(s"delete dashboard error", ex)
+                    complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+                } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied, con not delete dashboard create by others", session), ""))
+            } else complete(BadRequest, ResponseJson[String](getHeader(400, "dashboard not found", session), ""))
           } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
       }
     }
@@ -201,7 +223,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
   @Path("/widgets")
   @ApiOperation(value = "add widgets to a dashboard", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "relDashboardWidget", value = "RelDashboardWidget objects to be added", required = true, dataType = "edp.davinci.rest.PostRelDashboardWidgetSeq", paramType = "body")
+    new ApiImplicitParam(name = "relDashboardWidget", value = "RelDashboardWidget objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostRelDashboardWidgetSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -222,13 +244,17 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def postWidget2Dashboard(session: SessionClass, postRelDWSeq: Seq[PostRelDashboardWidget]): Route = {
     if (session.admin) {
-      val relDWSeq = postRelDWSeq.map(post => RelDashboardWidget(0, post.dashboard_id, post.widget_id, post.position_x, post.position_y, post.length, post.width, post.trigger_type, post.trigger_params, active = true, currentTime, session.userId, currentTime, session.userId))
-      onComplete(modules.relDashboardWidgetDal.insert(relDWSeq)) {
-        case Success(relDWWithIdSeq) =>
-          val responseRelDWSeq = relDWWithIdSeq.map(rel => PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params))
-          complete(OK, ResponseSeqJson[PutRelDashboardWidget](getHeader(200, session), responseRelDWSeq))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-      }
+      val create_by = Await.result(modules.dashboardDal.findById(postRelDWSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
+      if (create_by == session.userId) {
+        val relDWSeq = postRelDWSeq.map(post => RelDashboardWidget(0, post.dashboard_id, post.widget_id, post.position_x, post.position_y, post.length, post.width, post.trigger_type, post.trigger_params, active = true, currentTime, session.userId, currentTime, session.userId))
+        onComplete(modules.relDashboardWidgetDal.insert(relDWSeq)) {
+          case Success(relDWWithIdSeq) =>
+            val responseRelDWSeq = relDWWithIdSeq.map(rel => PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params))
+            complete(OK, ResponseSeqJson[PutRelDashboardWidget](getHeader(200, session), responseRelDWSeq))
+          case Failure(ex) => logger.error(s"modules.relDashboardWidgetDal.insert error", ex)
+            complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        }
+      } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not add widget to the dashboard created by others", session), ""))
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
 
@@ -236,7 +262,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
   @Path("/widgets")
   @ApiOperation(value = "update widgets in the dashboard", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "relDashboardWidget", value = "RelDashboardWidget objects to be added", required = true, dataType = "edp.davinci.rest.PutRelDashboardWidgetSeq", paramType = "body")
+    new ApiImplicitParam(name = "relDashboardWidget", value = "RelDashboardWidget objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PutRelDashboardWidgetSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "update success"),
@@ -257,10 +283,14 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def updateWidgetInDashboard(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Route = {
     if (session.admin) {
-      onComplete(updateRelDashboardWidget(session, relSeq)) {
-        case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-      }
+      val create_by = Await.result(modules.dashboardDal.findById(relSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
+      if (create_by == session.userId) {
+        onComplete(updateRelDashboardWidget(session, relSeq)) {
+          case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+          case Failure(ex) => logger.error(s"updateWidgetInDashboard error", ex)
+            complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        }
+      } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not update dashboard created by others", session), ""))
     }
     else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -282,9 +312,46 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            onComplete(deleteRelDWById(relId)) {
-              case Success(r) => complete(OK, ResponseJson[Int](getHeader(200, session), r))
-              case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+            val rel = Await.result(modules.relDashboardWidgetDal.findById(relId), new FiniteDuration(30, SECONDS))
+            if (rel.nonEmpty) {
+              if (session.userId == rel.get.create_by)
+                onComplete(deleteRelDWById(relId, session)) {
+                  case Success(r) => complete(OK, ResponseJson[Int](getHeader(200, session), r))
+                  case Failure(ex) => logger.error(s"deleteWidgetFromDashboardRoute error", ex)
+                    complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+                } else complete(BadRequest, ResponseJson[String](getHeader(400, "relation con not found", session), ""))
+            } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not delete the one created by others", session), ""))
+          }
+          else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
+      }
+    }
+  }
+
+
+  @Path("/name/{name}")
+  @ApiOperation(value = "check unique name", notes = "", nickname = "", httpMethod = "get")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "name", value = "name", required = true, dataType = "string", paramType = "path")
+  ))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "correct name"),
+    new ApiResponse(code = 403, message = "user is not admin"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def nameCheckRoute: Route = path(routeName / "name" / Segment) { name =>
+    get {
+      authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+        session =>
+          if (session.admin) {
+            onComplete(DashboardService.nameCheck(name)) {
+              case Success(seq) =>
+                if (seq.nonEmpty)
+                  complete(OK, ResponseJson[String](getHeader(200, session), ""))
+                else complete(BadRequest, ResponseJson[String](getHeader(400, "名称已被使用", session), ""))
+
+              case Failure(ex) => logger.error(s"nameCheckRoute error", ex)
+                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
             }
           }
           else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))

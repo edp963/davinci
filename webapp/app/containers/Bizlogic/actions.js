@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,8 +33,14 @@ import {
   EDIT_BIZLOGIC_SUCCESS,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
+  LOAD_BIZDATAS_FAILURE,
   LOAD_BIZDATAS_FROM_ITEM,
-  LOAD_BIZDATAS_FROM_ITEM_SUCCESS
+  LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
+  LOAD_BIZDATAS_FROM_ITEM_FAILURE,
+  CLEAR_BIZDATAS,
+  SQL_VALIDATE,
+  SQL_VALIDATE_SUCCESS,
+  SQL_VALIDATE_FAILURE
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -50,10 +56,6 @@ export const loadBizlogicDetail = promiseActionCreator(LOAD_BIZLOGIC_DETAIL, ['i
 export const loadBizlogicGroups = promiseActionCreator(LOAD_BIZLOGIC_GROUPS, ['id'])
 
 export const editBizlogic = promiseActionCreator(EDIT_BIZLOGIC, ['bizlogic'])
-
-export const loadBizdatas = promiseActionCreator(LOAD_BIZDATAS, ['id', 'sql', 'sorts', 'offset', 'limit'])
-
-export const loadBizdatasFromItem = promiseActionCreator(LOAD_BIZDATAS_FROM_ITEM, ['itemId', 'id', 'sql', 'sorts', 'offset', 'limit'])
 
 export function bizlogicsLoaded (bizlogics) {
   return {
@@ -109,11 +111,49 @@ export function bizlogicEdited (result) {
   }
 }
 
+export function loadBizdatas (id, sql, sorts, offset, limit) {
+  return {
+    type: LOAD_BIZDATAS,
+    payload: {
+      id,
+      sql,
+      sorts,
+      offset,
+      limit
+    }
+  }
+}
+
 export function bizdatasLoaded (bizdatas) {
   return {
     type: LOAD_BIZDATAS_SUCCESS,
     payload: {
       bizdatas
+    }
+  }
+}
+
+export function loadBizdatasFail (error) {
+  return {
+    type: LOAD_BIZDATAS_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadBizdatasFromItem (itemId, id, sql, sorts, offset, limit, useCache, expired) {
+  return {
+    type: LOAD_BIZDATAS_FROM_ITEM,
+    payload: {
+      itemId,
+      id,
+      sql,
+      sorts,
+      offset,
+      limit,
+      useCache,
+      expired
     }
   }
 }
@@ -124,6 +164,47 @@ export function bizdatasFromItemLoaded (itemId, bizdatas) {
     payload: {
       itemId,
       bizdatas
+    }
+  }
+}
+
+export function loadBizdatasFromItemFail (error) {
+  return {
+    type: LOAD_BIZDATAS_FROM_ITEM_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function clearBizdatas () {
+  return {
+    type: CLEAR_BIZDATAS
+  }
+}
+
+export function sqlValidate (sourceId, sql) {
+  return {
+    type: SQL_VALIDATE,
+    payload: {
+      sourceId,
+      sql
+    }
+  }
+}
+
+export function validateSqlSuccess (payload) {
+  return {
+    type: SQL_VALIDATE_SUCCESS,
+    payload
+  }
+}
+
+export function validateSqlFailure (error) {
+  return {
+    type: SQL_VALIDATE_FAILURE,
+    Payload: {
+      error
     }
   }
 }

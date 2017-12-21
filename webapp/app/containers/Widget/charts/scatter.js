@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,13 +35,15 @@ export default function (dataSource, flatInfo, chartParams) {
     splitLine,
     size,
     label,
+    value,
     shadow,
     legend,
     toolbox,
     top,
     bottom,
     left,
-    right
+    right,
+    suffixYAxis
   } = chartParams
 
   let grouped,
@@ -55,7 +57,8 @@ export default function (dataSource, flatInfo, chartParams) {
     legendOptions,
     toolboxOptions,
     gridOptions,
-    dataZoomOptions
+    dataZoomOptions,
+    suffixYAxisOptions
 
   // series 数据项
   let metricArr = []
@@ -67,7 +70,7 @@ export default function (dataSource, flatInfo, chartParams) {
 
   sizeOptions = size && {
     symbolSize: function (data) {
-      return Math.sqrt(data[0] * data[1]) / size
+      return data[3] / size
     }
   }
   shadowOptions = shadow && shadow.length && {
@@ -97,7 +100,7 @@ export default function (dataSource, flatInfo, chartParams) {
           {
             name: k,
             type: 'scatter',
-            data: grouped[k].map(g => [g[xAxis], g[yAxis], g[label]])
+            data: grouped[k].map(g => [g[xAxis], g[yAxis], g[label], g[value]])
           },
           sizeOptions,
           labelOptions
@@ -109,7 +112,7 @@ export default function (dataSource, flatInfo, chartParams) {
       {
         name: '数据',
         type: 'scatter',
-        data: dataSource.map(g => [g[xAxis], g[yAxis], g[label]])
+        data: dataSource.map(g => [g[xAxis], g[yAxis], g[label], g[value]])
       },
       sizeOptions,
       labelOptions
@@ -140,12 +143,14 @@ export default function (dataSource, flatInfo, chartParams) {
       }
     }, splitLineOptions)
   }
-
+  suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
+    formatter: `{value} ${suffixYAxis}`
+  }} : null
   yAxisOptions = {
     yAxis: Object.assign({
       type: 'value',
       scale: true
-    }, splitLineOptions)
+    }, splitLineOptions, suffixYAxisOptions)
   }
 
   // legend

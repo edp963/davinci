@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
+import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
@@ -59,7 +61,7 @@ export class Dashboard extends React.Component {
   }
 
   toGrid = (dashboard) => () => {
-    this.props.router.push(`/visual/report/grid/${dashboard.id}`)
+    this.props.router.push(`/report/dashboard/${dashboard.id}`)
   }
 
   showDashboardForm = (formType, dashboard) => (e) => {
@@ -93,12 +95,12 @@ export class Dashboard extends React.Component {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
           this.props.onAddDashboard(Object.assign({}, values, {
-            pic: `${Math.ceil(Math.random() * 19)}`
+            pic: `${Math.ceil(Math.random() * 19)}`,
+            linkage_detail: '[]'
           }))
             .then(() => { this.hideDashboardForm() })
         } else {
-          this.props.onEditDashboard(values)
-            .then(() => { this.hideDashboardForm() })
+          this.props.onEditDashboard(values, () => { this.hideDashboardForm() })
         }
       }
     })
@@ -116,19 +118,19 @@ export class Dashboard extends React.Component {
       formType,
       formVisible
     } = this.state
-
+    let userId = loginUser && loginUser.id
     const dashboardItems = dashboards
       ? dashboards.map(d => {
         let editButton = ''
         let deleteButton = ''
 
         if (loginUser.admin) {
-          editButton = (
+          editButton = d['create_by'] === userId ? (
             <Tooltip title="编辑">
               <Icon className={styles.edit} type="setting" onClick={this.showDashboardForm('edit', d)} />
             </Tooltip>
-          )
-          deleteButton = (
+          ) : ''
+          deleteButton = d['create_by'] === userId ? (
             <Popconfirm
               title="确定删除？"
               placement="bottom"
@@ -138,7 +140,7 @@ export class Dashboard extends React.Component {
                 <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
               </Tooltip>
             </Popconfirm>
-          )
+          ) : ''
         }
 
         const itemClass = classnames({
@@ -194,18 +196,19 @@ export class Dashboard extends React.Component {
 
     const addButton = loginUser.admin
       ? (
-        <Button
-          size="large"
-          type="primary"
-          icon="plus"
-          onClick={this.showDashboardForm('add')}
-        >
-          新 增
-        </Button>
+        <Tooltip placement="bottom" title="新增">
+          <Button
+            size="large"
+            type="primary"
+            icon="plus"
+            onClick={this.showDashboardForm('add')}
+          />
+        </Tooltip>
       ) : ''
 
     return (
       <Container>
+        <Helmet title="Dashboard" />
         <Container.Title>
           <Row>
             <Col span={18}>
@@ -222,7 +225,7 @@ export class Dashboard extends React.Component {
             </Col>
           </Row>
         </Container.Title>
-        <Container.Body>
+        <Container.Body card>
           <Row gutter={20}>
             {dashboardItems}
           </Row>
@@ -266,7 +269,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
     onAddDashboard: (dashboard) => promiseDispatcher(dispatch, addDashboard, dashboard),
-    onEditDashboard: (dashboard) => promiseDispatcher(dispatch, editDashboard, dashboard),
+    onEditDashboard: (dashboard, resolve) => dispatch(editDashboard(dashboard, resolve)),
     onDeleteDashboard: (id) => () => promiseDispatcher(dispatch, deleteDashboard, id)
   }
 }

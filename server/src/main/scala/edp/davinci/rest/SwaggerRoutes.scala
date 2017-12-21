@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest
 
 import akka.actor.ActorSystem
@@ -31,9 +35,11 @@ import edp.davinci.rest.group.GroupRoutes
 import edp.davinci.rest.shares.ShareRoutes
 import edp.davinci.rest.source.SourceRoutes
 import edp.davinci.rest.sqllog.SqlLogRoutes
+import edp.davinci.rest.upload.UploadRoutes
 import edp.davinci.rest.user.UserRoutes
 import edp.davinci.rest.view.ViewRoutes
 import edp.davinci.rest.widget.WidgetRoutes
+import edp.davinci.util.CommonUtils
 
 import scala.reflect.runtime.universe._
 
@@ -51,10 +57,12 @@ class SwaggerRoutes extends SwaggerHttpService with HasActorSystem {
     typeOf[GroupRoutes],
     typeOf[SqlLogRoutes],
     typeOf[ShareRoutes],
-    typeOf[DownloadRoutes]
+    typeOf[DownloadRoutes],
+    typeOf[UploadRoutes],
+    typeOf[CheckRoutes]
   )
 
-  override val host: String = DavinciStarter.host + ":" + DavinciStarter.port
+  override val host = DavinciStarter.host + ":" + DavinciStarter.port
   //the url of your api, not swagger's json endpoint
   override val basePath = "/api/v1"
   //the basePath for the API you are exposing
@@ -62,12 +70,12 @@ class SwaggerRoutes extends SwaggerHttpService with HasActorSystem {
   //where you want the swagger-json endpoint exposed
   //  override val info = Info("Davinci REST API")
   //  provides license and other description details
-  val dir: String = System.getenv("DAVINCI_HOME")
+
   val indexRoute: Route = get {
     pathPrefix("swagger") {
       pathEndOrSingleSlash {
-        getFromFile(s"$dir/swagger-ui/index.html")
+        getFromFile(s"${CommonUtils.dir}/swagger-ui/index.html")
       }
-    } ~ getFromDirectory(s"$dir/swagger-ui")
+    } ~ getFromDirectory(s"${CommonUtils.dir}/swagger-ui")
   }
 }

@@ -8,16 +8,16 @@
  * the webpack process.
  */
 
-const { join } = require('path');
-const defaults = require('lodash/defaultsDeep');
-const webpack = require('webpack');
-const pkg = require(join(process.cwd(), 'package.json'));
-const dllPlugin = require('../config').dllPlugin;
+const { join } = require('path')
+const defaults = require('lodash/defaultsDeep')
+const webpack = require('webpack')
+const pkg = require(join(process.cwd(), 'package.json'))
+const dllPlugin = require('../config').dllPlugin
 
-if (!pkg.dllPlugin) { process.exit(0); }
+if (!pkg.dllPlugin) { process.exit(0) }
 
-const dllConfig = defaults(pkg.dllPlugin, dllPlugin.defaults);
-const outputPath = join(process.cwd(), dllConfig.path);
+const dllConfig = defaults(pkg.dllPlugin, dllPlugin.defaults)
+const outputPath = join(process.cwd(), dllConfig.path)
 
 module.exports = require('./webpack.base.babel')({
   context: process.cwd(),
@@ -26,12 +26,12 @@ module.exports = require('./webpack.base.babel')({
   output: {
     filename: '[name].dll.js',
     path: outputPath,
-    library: '[name]',
+    library: '[name]'
   },
   plugins: [
-    new webpack.DllPlugin({ name: '[name]', path: join(outputPath, '[name].json') }), // eslint-disable-line no-new
+    new webpack.DllPlugin({ name: '[name]', path: join(outputPath, '[name].json') }) // eslint-disable-line no-new
   ],
   performance: {
-    hints: false,
-  },
-});
+    hints: false
+  }
+})

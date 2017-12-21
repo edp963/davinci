@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -31,6 +35,7 @@ case class Widget(id: Long,
                   name: String,
                   adhoc_sql: Option[String] = None,
                   desc: String,
+                  config: Option[String] = None,
                   chart_params: Option[String] = None,
                   query_params: Option[String] = None,
                   publish: Boolean,
@@ -44,22 +49,24 @@ case class Widget(id: Long,
 case class PostWidgetInfo(widgetlib_id: Long,
                           flatTable_id: Long,
                           name: String,
-                          adhoc_sql: String,
+                          adhoc_sql: Option[String] = Some(""),
                           desc: String,
+                          config: Option[String] = None,
                           chart_params: Option[String] = Some(""),
                           query_params: Option[String] = Some(""),
                           publish: Boolean) extends SimpleBaseEntity
 
-case class PutWidgetInfo(id: Long,
-                         widgetlib_id: Long,
-                         flatTable_id: Long,
-                         name: String,
-                         adhoc_sql: String,
-                         desc: String,
-                         chart_params: Option[String] = Some(""),
-                         query_params: Option[String] = Some(""),
-                         publish: Boolean,
-                         active: Option[Boolean] = Some(true))
+case class PutWidgetInfo(id: Long, widgetlib_id: Long, flatTable_id: Long, name: String, adhoc_sql: Option[String] = None, desc: String, config: Option[String] = None, chart_params: Option[String] = Some(""), query_params: Option[String] = Some(""), publish: Boolean, create_by: Long=0)
+
+
+case class WidgetInfo(id: Long, widget_id: Long, flatTableId: Long, position_x: Int, position_y: Int, width: Int, length: Int, trigger_type: String, trigger_params: String, aesStr: String = "", create_by: Long)
+
+case class PostWidgetInfoSeq(payload: Seq[PostWidgetInfo])
+
+case class PutWidgetInfoSeq(payload: Seq[PutWidgetInfo])
+
+case class SqlInfo(sqls: Array[String])
+
 
 class WidgetTable(tag: Tag) extends BaseTable[Widget](tag, "widget") {
 
@@ -70,6 +77,8 @@ class WidgetTable(tag: Tag) extends BaseTable[Widget](tag, "widget") {
   def adhoc_sql: Rep[Option[String]] = column[Option[String]]("adhoc_sql", O.Default(null))
 
   def desc: Rep[String] = column[String]("desc")
+
+  def config: Rep[Option[String]] = column[Option[String]]("config",O.Default(null))
 
   def chart_params: Rep[Option[String]] = column[Option[String]]("chart_params", O.Default(null))
 
@@ -85,5 +94,5 @@ class WidgetTable(tag: Tag) extends BaseTable[Widget](tag, "widget") {
 
   def update_by: Rep[Long] = column[Long]("update_by")
 
-  def * : ProvenShape[Widget] = (id, widgetlib_id, flatTable_id, name, adhoc_sql, desc, chart_params,query_params, publish, active, create_time, create_by, update_time, update_by) <> (Widget.tupled, Widget.unapply)
+  def * : ProvenShape[Widget] = (id, widgetlib_id, flatTable_id, name, adhoc_sql, desc,config, chart_params, query_params, publish, active, create_time, create_by, update_time, update_by) <> (Widget.tupled, Widget.unapply)
 }

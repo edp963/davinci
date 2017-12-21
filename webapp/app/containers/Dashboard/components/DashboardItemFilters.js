@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,16 @@ import Input from 'antd/lib/input'
 import InputNumber from 'antd/lib/input-number'
 import DatePicker from 'antd/lib/date-picker'
 import Select from 'antd/lib/select'
+import Radio from 'antd/lib/radio'
 import Button from 'antd/lib/button'
 import Icon from 'antd/lib/icon'
 const Option = Select.Option
 const FormItem = Form.Item
+const RadioGroup = Radio.Group
+const RadioButton = Radio.Button
 
 import { uuid } from '../../../utils/util'
+import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
 
 import styles from '../Dashboard.less'
 
@@ -92,10 +96,10 @@ export class DashboardItemFilters extends PureComponent {
               {getFieldDecorator(`${filter.id}Rel`, {
                 initialValue: filter.rel
               })(
-                <Select onChange={this.changeLinkRel(filter)}>
-                  <Option value="and">And</Option>
-                  <Option value="or">Or</Option>
-                </Select>
+                <RadioGroup onChange={this.changeLinkRel(filter)}>
+                  <RadioButton value="and">And</RadioButton>
+                  <RadioButton value="or">Or</RadioButton>
+                </RadioGroup>
               )}
             </FormItem>
           </div>
@@ -198,12 +202,9 @@ export class DashboardItemFilters extends PureComponent {
 
   generateFilterOperatorOptions = (type) => {
     const operators = [
-      ['=', 'like', '!='],
+      ['=', 'like', '>', '<', '>=', '<=', '!='],
       ['=', '>', '<', '>=', '<=', '!=']
     ]
-    const numbers = ['INT', 'BIGINT', 'DOUBLE']
-    const date = 'DATE'
-    const datetime = 'DATETIME'
 
     const stringOptions = operators[0].slice().map(o => (
       <Option key={o} value={o}>{o}</Option>
@@ -213,7 +214,7 @@ export class DashboardItemFilters extends PureComponent {
       <Option key={o} value={o}>{o}</Option>
     ))
 
-    if (numbers.indexOf(type) >= 0 || date === type || datetime === type) {
+    if (SQL_NUMBER_TYPES.indexOf(type) >= 0 || SQL_DATE_TYPES.indexOf(type) >= 0) {
       return numbersAndDateOptions
     } else {
       return stringOptions
@@ -221,10 +222,6 @@ export class DashboardItemFilters extends PureComponent {
   }
 
   generateFilterValueInput = (filter) => {
-    const numbers = ['INT', 'BIGINT', 'DOUBLE']
-    const date = 'DATE'
-    const datetime = 'DATETIME'
-
     const stringInput = (
       <Input onChange={this.changeStringFilterValue(filter)} />
     )
@@ -241,11 +238,11 @@ export class DashboardItemFilters extends PureComponent {
       <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" onOk={this.changeDateFilterValue(filter)} />
     )
 
-    if (numbers.indexOf(filter.filterType) >= 0) {
+    if (SQL_NUMBER_TYPES.indexOf(filter.filterType) >= 0) {
       return numberInput
-    } else if (filter.filterType === date) {
+    } else if (filter.filterType === 'DATE') {
       return dateInput
-    } else if (filter.filterType === datetime) {
+    } else if (filter.filterType === 'DATETIME') {
       return datetimeInput
     } else {
       return stringInput
@@ -398,8 +395,8 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  changeLinkRel = (filter) => (val) => {
-    filter.rel = val
+  changeLinkRel = (filter) => (e) => {
+    filter.rel = e.target.value
   }
 
   changeFilterKey = (filter) => (val) => {
@@ -494,7 +491,6 @@ export class DashboardItemFilters extends PureComponent {
           {this.renderFilters(filterTree)}
         </Form>
         <div className={styles.buttons}>
-          <Button size="large">保存</Button>
           <Button size="large" type="primary" onClick={this.doQuery}>查询</Button>
         </div>
       </div>
@@ -511,4 +507,4 @@ DashboardItemFilters.propTypes = {
   onQuery: PropTypes.func
 }
 
-export default Form.create({withRef: true})(DashboardItemFilters)
+export default Form.create()(DashboardItemFilters)

@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,8 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
+import React, { PureComponent } from 'react'
+import PropTypes from 'prop-types'
 
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
@@ -29,6 +30,25 @@ const FormItem = Form.Item
 import styles from './Login3.less'
 
 export class LoginForm extends PureComponent {
+  componentWillUnmount () {
+    this.unbindDocumentKeypress()
+  }
+
+  bindDocumentKeypress = () => {
+    this.enterLogin = (e) => {
+      if (e.keyCode === 13) {
+        this.props.onLogin()
+      }
+    }
+
+    document.addEventListener('keypress', this.enterLogin, false)
+  }
+
+  unbindDocumentKeypress = () => {
+    document.removeEventListener('keypress', this.enterLogin, false)
+    this.enterLogin = null
+  }
+
   render () {
     const { getFieldDecorator } = this.props.form
 
@@ -44,7 +64,11 @@ export class LoginForm extends PureComponent {
                 }],
                 initialValue: ''
               })(
-                <Input placeholder="用户名" />
+                <Input
+                  placeholder="用户名"
+                  onFocus={this.bindDocumentKeypress}
+                  onBlur={this.unbindDocumentKeypress}
+                />
               )}
             </FormItem>
           </Col>
@@ -57,7 +81,12 @@ export class LoginForm extends PureComponent {
                 }],
                 initialValue: ''
               })(
-                <Input placeholder="密码" type="password" />
+                <Input
+                  placeholder="密码"
+                  type="password"
+                  onFocus={this.bindDocumentKeypress}
+                  onBlur={this.unbindDocumentKeypress}
+                />
               )}
             </FormItem>
           </Col>
@@ -68,7 +97,8 @@ export class LoginForm extends PureComponent {
 }
 
 LoginForm.propTypes = {
-  form: PropTypes.any
+  form: PropTypes.any,
+  onLogin: PropTypes.func
 }
 
-export default Form.create({withRef: true})(LoginForm)
+export default Form.create()(LoginForm)

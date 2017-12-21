@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@
  * Funnel chart options generator
  */
 
-export default function (dataSource, flatInfo, chartParams) {
+export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
     title,
     value,
@@ -31,7 +31,13 @@ export default function (dataSource, flatInfo, chartParams) {
     gap,
     tooltip,
     legend,
-    toolbox
+    toolbox,
+    top,
+    left,
+    width,
+    height,
+    minSize,
+    maxSize
   } = chartParams
 
   let metricOptions,
@@ -40,8 +46,7 @@ export default function (dataSource, flatInfo, chartParams) {
     gapOption,
     tooltipOptions,
     legendOptions,
-    toolboxOptions,
-    gridOptions
+    toolboxOptions
 
   // series 数据项
   let metricArr = []
@@ -62,10 +67,12 @@ export default function (dataSource, flatInfo, chartParams) {
     {
       name: '数据',
       type: 'funnel',
-      left: '10%',
-      width: '80%',
-      minSize: '0%',
-      maxSize: '100%',
+      top: `${top}%`,
+      left: `${left}%`,
+      width: `${width}%`,
+      height: `${height}%`,
+      minSize: `${minSize}%`,
+      maxSize: `${maxSize}%`,
       sort: 'descending',
       label: {
         normal: {
@@ -90,13 +97,28 @@ export default function (dataSource, flatInfo, chartParams) {
       itemStyle: {
         normal: {
           borderColor: '#fff',
-          borderWidth: 1
+          borderWidth: 1,
+          opacity: interactIndex === undefined ? 1 : 0.25
         }
       },
-      data: dataSource.map(d => ({
-        name: d[title],
-        value: d[value]
-      }))
+      data: dataSource.map((d, index) => {
+        if (index === interactIndex) {
+          return {
+            name: d[title],
+            value: Number(d[value]),
+            itemStyle: {
+              normal: {
+                opacity: 1
+              }
+            }
+          }
+        } else {
+          return {
+            name: d[title],
+            value: Number(d[value])
+          }
+        }
+      })
     },
     minOption,
     maxOption,
@@ -119,8 +141,9 @@ export default function (dataSource, flatInfo, chartParams) {
   legendOptions = legend && legend.length
     ? {
       legend: {
-        data: dataSource.map(d => d.name),
-        align: 'left'
+        data: dataSource.map(d => d[title]),
+        orient: 'vertical',
+        x: 'left'
       }
     } : null
 
@@ -136,18 +159,6 @@ export default function (dataSource, flatInfo, chartParams) {
       }
     } : null
 
-  // grid
-  gridOptions = {
-    grid: {
-      top: legend && legend.length  // FIXME
-        ? Math.ceil(metricArr.length / Math.round((document.documentElement.clientWidth - 40 - 320 - 32 - 200) / 100)) * 30 + 10
-        : 40,
-      left: 60,
-      right: 60,
-      bottom: 30
-    }
-  }
-
   return Object.assign({},
     {
       calculable: true
@@ -155,7 +166,6 @@ export default function (dataSource, flatInfo, chartParams) {
     metricOptions,
     tooltipOptions,
     legendOptions,
-    toolboxOptions,
-    gridOptions
+    toolboxOptions
   )
 }
