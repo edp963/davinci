@@ -18,10 +18,14 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
-import slick.jdbc.H2Profile.api._
+import slick.jdbc.MySQLProfile.api._
 
 case class Source(id: Long,
                   name: String,
@@ -47,8 +51,13 @@ case class PutSourceInfo(id: Long,
                          connection_url: String,
                          desc: String,
                          `type`: String,
-                         config: String,
-                         active: Option[Boolean] = Some(true))
+                         config: String)
+
+case class SourceConfig(url: String, user: String, password: String)
+
+case class PostSourceInfoSeq(payload: Seq[PostSourceInfo])
+
+case class PutSourceInfoSeq(payload: Seq[PutSourceInfo])
 
 class SourceTable(tag: Tag) extends BaseTable[Source](tag, "source") {
   //  def domain_id = column[Long]("domain_id")

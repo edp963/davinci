@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ import Input from 'antd/lib/input'
 import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
 import DatePicker from 'antd/lib/date-picker'
+import MultiDatePicker from '../../../components/MultiDatePicker'
 import Button from 'antd/lib/button'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -96,7 +97,10 @@ export class DashboardItemControlForm extends PureComponent {
             <Option key={sub.id} value={sub.value}>{sub.text}</Option>
           )
 
-          if (sub.variables.length && this.state.parentSelValues[c.id] === index) {
+          if (c.type === 'select' &&
+              c.hasRelatedComponent === 'yes' &&
+              sub.variableType &&
+              this.state.parentSelValues[c.id] === index) {
             followComponents = followComponents.concat(this.generateFormComponent(Object.assign({}, sub, {
               id: `sub_${c.id}_${sub.id}`,
               type: sub.variableType
@@ -160,6 +164,19 @@ export class DashboardItemControlForm extends PureComponent {
             </FormItem>
           </Col>
         )
+      case 'multiDate':
+        return (
+          <Col
+            key={c.id}
+            lg={12}
+          >
+            <FormItem className={styles.formItem}>
+              {getFieldDecorator(`${c.id}`, {})(
+                <MultiDatePicker />
+              )}
+            </FormItem>
+          </Col>
+        )
       case 'dateRange':
       case 'datetimeRange':
         let rangeFormat = c.type === 'datetimeRange'
@@ -214,6 +231,7 @@ export class DashboardItemControlForm extends PureComponent {
       this.setState({
         parentSelValues: parentSelValues
       }, () => {
+        // FIXME 当未关联控件时控制台报错
         this.props.form.setFieldsValue({
           [`sub_${control.id}_${control.sub[selIndex].id}`]: ''
         })
@@ -252,51 +270,92 @@ export class DashboardItemControlForm extends PureComponent {
       valControl.type = valControl.variableType || valControl.type
 
       if (Object.prototype.toString.call(val) === '[object Array]') {
-        val = val.map(v => {
-          switch (valControl.type) {
-            case 'dateRange':
-              return v.format('YYYY-MM-DD')
-            case 'datetimeRange':
-              return v.format('YYYY-MM-DD HH:mm:ss')
-            default:
-              return ''
-          }
-        })
-
-        arr = arr.concat({
-          k: valControl.variables[0],
-          v: `'${val[0]}'`
-        }).concat({
-          k: valControl.variables[1],
-          v: `'${val[1]}'`
-        })
+        switch (valControl.type) {
+          case 'dateRange':
+            val = val.map(v => v.format('YYYY-MM-DD'))
+            arr = arr.concat({
+              k: valControl.variables[0],
+              v: `'${val[0]}'`
+            }).concat({
+              k: valControl.variables[1],
+              v: `'${val[1]}'`
+            })
+            break
+          case 'datetimeRange':
+            val = val.map(v => v.format('YYYY-MM-DD HH:mm:ss'))
+            arr = arr.concat({
+              k: valControl.variables[0],
+              v: `'${val[0]}'`
+            }).concat({
+              k: valControl.variables[1],
+              v: `'${val[1]}'`
+            })
+            break
+          default:
+            break
+        }
       } else {
         if (val) {
           if (valControl.variables[0]) {
             switch (valControl.type) {
               case 'date':
                 val = val.format('YYYY-MM-DD')
+                arr = arr.concat({
+                  k: valControl.variables[0],
+                  v: `'${val}'`
+                })
                 break
               case 'datetime':
                 val = val.format('YYYY-MM-DD HH:mm:ss')
+                arr = arr.concat({
+                  k: valControl.variables[0],
+                  v: `'${val}'`
+                })
+                break
+              case 'multiDate':
+                arr = arr.concat({
+                  k: valControl.variables[0],
+                  v: val.split(',').map(v => `'${v}'`).join(',')
+                })
+                break
+              case 'select':
+              case 'multiSelect':
+                arr = arr.concat({
+                  k: valControl.variables[0],
+                  v: `${val}`
+                })
                 break
               default:
+                arr = arr.concat({
+                  k: valControl.variables[0],
+                  v: `'${val}'`
+                })
                 break
             }
+          } else {
+            if (valControl.type === 'select') {
+              if (valControl.hasRelatedComponent === 'no') {
+                const chosenSub = valControl.sub.find(s => s.value === val)
 
-            arr = arr.concat({
-              k: valControl.variables[0],
-              v: `'${val}'`
-            })
+                if (chosenSub.variables[0]) {
+                  arr = arr.concat({
+                    k: chosenSub.variables[0],
+                    v: `'${val}'`
+                  })
+                }
+              }
+            }
           }
         }
       }
+
       return arr
     }, [])
 
     onSearch({
       params
     })
+
     onHide()
   }
 
@@ -330,4 +389,4 @@ DashboardItemControlForm.propTypes = {
   onHide: PropTypes.func
 }
 
-export default Form.create({withRef: true})(DashboardItemControlForm)
+export default Form.create()(DashboardItemControlForm)

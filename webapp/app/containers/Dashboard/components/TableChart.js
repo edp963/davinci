@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,54 +18,95 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
+import React, { PureComponent } from 'react'
+import PropTypes from 'prop-types'
 import classnames from 'classnames'
+import moment from 'moment'
 
 import Table from 'antd/lib/table'
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../components/DateFilterDropdown/index'
 
-import { COLUMN_WIDTH } from '../../../globalConstants'
+import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
 import styles from '../Dashboard.less'
 
 export class TableChart extends PureComponent {
   constructor (props) {
     super(props)
     this.state = {
+      data: {
+        keys: props.data.keys ? props.data.keys.slice() : [],
+        types: props.data.types ? props.data.types.slice() : [],
+        dataSource: props.data.dataSource ? props.data.dataSource.slice() : []
+      },
       sortedInfo: {},
       filterDropdownVisibles: {},
       filterValues: {},
       pagination: {
-        pageSize: 20,
-        current: 1,
-        total: 0,
-        showSizeChanger: true
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
+        current: DEFAULT_TABLE_PAGE,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '30', '40', '50', '100']
       }
     }
   }
 
   componentWillUpdate (nextProps) {
+    const ec = this.props.chartParams.enumerationColumns
+    const nextEC = nextProps.chartParams.enumerationColumns
+
+    if (this.props.data !== nextProps.data) {
+      this.state.data = {
+        keys: nextProps.data.keys ? nextProps.data.keys.slice() : [],
+        types: nextProps.data.types ? nextProps.data.types.slice() : [],
+        dataSource: nextProps.data.dataSource ? nextProps.data.dataSource.slice() : []
+      }
+      this.state.filterValues = {}
+    }
+
     if (nextProps.data.keys &&
       nextProps.data.keys.length &&
       !Object.keys(this.state.filterValues).length) {
-      this.state.filterValues = nextProps.data.keys
-        .reduce((rdc, k) => {
+      this.state.filterValues = this.initialFilterValues(nextProps.data.keys, ec)
+    }
+
+    if (nextEC && nextEC !== ec) {
+      nextEC.forEach(k => {
+        this.state.filterValues[k] = []
+      })
+    }
+  }
+
+  initialFilterValues = (keys, enumColumns) => {
+    if (enumColumns) {
+      return keys.reduce((rdc, k) => {
+        if (enumColumns.indexOf(k) >= 0) {
+          rdc[k] = []
+        } else {
           rdc[k] = {
             from: '',
             to: ''
           }
-          return rdc
-        }, {})
+        }
+        return rdc
+      }, {})
+    } else {
+      return keys.reduce((rdc, k) => {
+        rdc[k] = {
+          from: '',
+          to: ''
+        }
+        return rdc
+      }, {})
     }
-
-    this.state.pagination.total = nextProps.data.total
   }
 
   handleTableChange = (pagination, filters, sorter) => {
     this.setState({
       pagination,
-      sortedInfo: sorter
+      sortedInfo: sorter,
+      filterValues: Object.assign(this.state.filterValues, filters)
     }, () => {
       this.onLoadData()
     })
@@ -98,79 +139,63 @@ export class TableChart extends PureComponent {
 
   onRangePickerChange = (columnName) => (dates, dateStrings) => {
     const filterValues = this.state.filterValues
-    this.setState({
-      filterValues: Object.assign({}, filterValues, {
-        [columnName]: {
-          from: dateStrings[0],
-          to: dateStrings[1]
-        }
-      })
-    }, () => {
-      this.onLoadData()
+    this.state.filterValues = Object.assign({}, filterValues, {
+      [columnName]: {
+        from: dateStrings[0],
+        to: dateStrings[1]
+      }
     })
+    this.onLoadData()
   }
 
   onLoadData = () => {
-    const {
-      sortedInfo,
-      filterValues,
-      pagination
-    } = this.state
+    const { data } = this.props
+    const { filterValues } = this.state
 
-    let filterSql = ''
-    let sorts = ''
-    let where = []
-    let order = []
-    let limit = pagination.pageSize
-    let offset = (pagination.current - 1) * limit
+    const { keys, types, dataSource } = data
 
-    const sortedInfoKeys = Object.keys(sortedInfo)
-    const filterValueKeys = Object.keys(filterValues)
+    let filteredSource = dataSource.slice()
 
-    if (sortedInfoKeys.length) {
-      const orderStr = sortedInfo['order']
-      order.push(`${sortedInfo['columnKey']} ${orderStr.substring(0, orderStr.length - 3)}`)
-    }
+    Object.keys(filterValues).forEach(fkey => {
+      const { from, to } = filterValues[fkey]
 
-    filterValueKeys.forEach(k => {
-      const pair = filterValues[k]
+      if (from !== undefined && to !== undefined) {
+        const keyIndex = keys.findIndex(k => k === fkey)
+        const columnType = types[keyIndex]
 
-      if (pair.to) {
-        if (pair.from) {
-          where.push(`(${k} between '${pair.from}' and '${pair.to}')`)
+        if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
+          if (from) {
+            filteredSource = filteredSource.filter(s => s[fkey] >= Number(from))
+          }
+          if (to) {
+            filteredSource = filteredSource.filter(s => s[fkey] <= Number(to))
+          }
+        } else if (SQL_DATE_TYPES.indexOf(columnType) >= 0) {
+          if (from) {
+            filteredSource = filteredSource.filter(s => s[fkey] >= moment(from))
+          }
+          if (to) {
+            filteredSource = filteredSource.filter(s => s[fkey] <= moment(to))
+          }
         } else {
-          where.push(`(${k} <= '${pair.to}')`)
-        }
-      } else {
-        if (pair.from) {
-          where.push(`(${k} like '%${pair.from}%')`)
+          if (from) {
+            filteredSource = filteredSource.filter(s => s[fkey].includes(from))
+          }
         }
       }
     })
 
-    if (where.length) {
-      filterSql = filterSql.concat(where.join(` and `))
-    }
-    if (order.length) {
-      sorts = sorts.concat(order.join(':'))
-    }
-
-    this.props.onChange({
-      filters: filterSql,
-      pagination: {
-        sorts,
-        offset,
-        limit
-      }
+    this.setState({
+      data: Object.assign({}, this.state.data, {
+        dataSource: filteredSource
+      })
     })
   }
 
   render () {
     const {
-      data,
       loading,
-      dimensionColumns,
-      metricColumns,
+      chartParams,
       className,
       filterable,
       sortable,
@@ -179,7 +204,7 @@ export class TableChart extends PureComponent {
     } = this.props
 
     const {
-      sortedInfo,
+      data,
       filterDropdownVisibles,
       filterValues,
       pagination
@@ -188,13 +213,31 @@ export class TableChart extends PureComponent {
     const dataSource = data.dataSource || []
     const dataKeys = data.keys || []
     const dataTypes = data.types || []
+    const enumerationColumns = chartParams.enumerationColumns || []
+    const dimensionColumns = chartParams.dimensionColumns || []
+    const metricColumns = chartParams.metricColumns || []
 
+    let enums = {}
     let columnKeys = null
     let columnTypes = null
 
-    if (dimensionColumns && dimensionColumns.length ||
-      metricColumns && metricColumns.length) {
-      columnKeys = Array.from(dimensionColumns).concat(Array.from(metricColumns))
+    if (enumerationColumns.length) {
+      enums = enumerationColumns.reduce((rlt, ec) => {
+        rlt[ec] = {}
+        return rlt
+      }, {})
+
+      dataSource.forEach(ds => {
+        enumerationColumns.forEach(enumColumn => {
+          if (!enums[enumColumn][ds[enumColumn]]) {
+            enums[enumColumn][ds[enumColumn]] = 1
+          }
+        })
+      })
+    }
+
+    if (dimensionColumns.length || metricColumns.length) {
+      columnKeys = [].concat(dimensionColumns).concat(metricColumns)
       columnTypes = dimensionColumns.map(dc => dataTypes[dataKeys.indexOf(dc)])
         .concat(metricColumns.map(mc => dataTypes[dataKeys.indexOf(mc)]))
     } else {
@@ -214,50 +257,57 @@ export class TableChart extends PureComponent {
         let filterDropdown = ''
         let filters = null
 
+        const columnType = columnTypes[index]
+
         if (filterable) {
-          const filterValue = filterValues[k] || {}
-          const columnType = columnTypes[index]
-          const isNumber = ['INT', 'BIGINT', 'DOUBLE']
-          const isDatetime = ['DATE', 'DATETIME']
-
-          if (isNumber.indexOf(columnType) >= 0) {
-            filterDropdown = (
-              <NumberFilterDropdown
-                from={filterValue.from}
-                to={filterValue.to}
-                onFromChange={this.onNumberInputChange(k, 'from')}
-                onToChange={this.onNumberInputChange(k, 'to')}
-                onSearch={this.onLoadData}
-              />
-            )
-          } else if (isDatetime.indexOf(columnType) >= 0) {
-            filterDropdown = (
-              <DateFilterDropdown
-                from={filterValue.from}
-                to={filterValue.to}
-                onChange={this.onRangePickerChange(k)}
-              />
-            )
+          if (enums[k]) {
+            filters = {
+              filters: Object.keys(enums[k]).map(en => ({ text: en, value: en })),
+              filteredValue: filterValues[k],
+              onFilter: (value, record) => record[k] === value
+            }
           } else {
-            filterDropdown = (
-              <SearchFilterDropdown
-                columnName={k}
-                filterValue={filterValues[k] === undefined ? '' : filterValues[k].from}
-                onSearchInputChange={this.onSearchInputChange(k)}
-                onSearch={this.onLoadData}
-              />
-            )
-          }
+            const filterValue = filterValues[k] || {}
 
-          filters = {
-            filterDropdown: filterDropdown,
-            filterDropdownVisible: filterDropdownVisibles[k] === undefined ? false : filterDropdownVisibles[k],
-            onFilterDropdownVisibleChange: visible => {
-              this.setState({
-                filterDropdownVisibles: Object.assign({}, filterDropdownVisibles, {
-                  [k]: visible
+            if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
+              filterDropdown = (
+                <NumberFilterDropdown
+                  from={filterValue.from}
+                  to={filterValue.to}
+                  onFromChange={this.onNumberInputChange(k, 'from')}
+                  onToChange={this.onNumberInputChange(k, 'to')}
+                  onSearch={this.onLoadData}
+                />
+              )
+            } else if (SQL_DATE_TYPES.indexOf(columnType) >= 0) {
+              filterDropdown = (
+                <DateFilterDropdown
+                  from={filterValue.from}
+                  to={filterValue.to}
+                  onChange={this.onRangePickerChange(k)}
+                />
+              )
+            } else {
+              filterDropdown = (
+                <SearchFilterDropdown
+                  columnName={k}
+                  filterValue={filterValues[k] === undefined ? '' : filterValues[k].from}
+                  onSearchInputChange={this.onSearchInputChange(k)}
+                  onSearch={this.onLoadData}
+                />
+              )
+            }
+
+            filters = {
+              filterDropdown: filterDropdown,
+              filterDropdownVisible: filterDropdownVisibles[k] === undefined ? false : filterDropdownVisibles[k],
+              onFilterDropdownVisibleChange: visible => {
+                this.setState({
+                  filterDropdownVisibles: Object.assign({}, filterDropdownVisibles, {
+                    [k]: visible
+                  })
                 })
-              })
+              }
             }
           }
         }
@@ -266,13 +316,18 @@ export class TableChart extends PureComponent {
 
         if (sortable) {
           sorters = {
-            sorter: true,
-            sortOrder: sortedInfo.columnKey === k && sortedInfo.order
+            sorter: (a, b) => {
+              if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
+                return Number(a[k]) - Number(b[k])
+              } else {
+                return a[k].trim() > b[k].trim() ? 1 : -1
+              }
+            }
           }
         }
 
         const dimensionClass = classnames({
-          [styles.dimension]: dimensionColumns && dimensionColumns.indexOf(k) === dimensionColumns.length - 1
+          [styles.dimension]: dimensionColumns.length && dimensionColumns.indexOf(k) === dimensionColumns.length - 1
         })
 
         let plainColumn = {
@@ -311,14 +366,18 @@ export class TableChart extends PureComponent {
 TableChart.propTypes = {
   data: PropTypes.object,
   loading: PropTypes.bool,
-  dimensionColumns: PropTypes.array,
-  metricColumns: PropTypes.array,
+  chartParams: PropTypes.object,
   className: PropTypes.string,
   filterable: PropTypes.bool,
   sortable: PropTypes.bool,
   width: PropTypes.number,
-  height: PropTypes.number,
-  onChange: PropTypes.func
+  height: PropTypes.number
+}
+
+TableChart.defaultProps = {
+  chartParams: {},
+  filterable: true,
+  sortable: true
 }
 
 export default TableChart

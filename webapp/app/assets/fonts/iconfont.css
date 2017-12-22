@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-qianjin:before { content: "\e646"; }
+
 .icon-move1:before { content: "\e651"; }
 
 .icon-calendar:before { content: "\e626"; }
@@ -43,6 +45,8 @@
 .icon-scatter-chart:before { content: "\e632"; }
 
 .icon-dashboard:before { content: "\e631"; }
+
+.icon-china:before { content: "\e609"; }
 
 .icon-Graph:before { content: "\e6ab"; }
 
@@ -66,13 +70,21 @@
 
 .icon-group:before { content: "\e625"; }
 
+.icon-jiedian:before { content: "\e7be"; }
+
 .icon-chartpie:before { content: "\e670"; }
+
+.icon-fuzhi:before { content: "\e61a"; }
 
 .icon-found:before { content: "\e60d"; }
 
 .icon-kongjiansangjitu:before { content: "\e863"; }
 
 .icon-relitu:before { content: "\e619"; }
+
+.icon-chexiao:before { content: "\e604"; }
+
+.icon-text:before { content: "\e63a"; }
 
 .icon-510tongji_guanxitu:before { content: "\e649"; }
 
@@ -88,3 +100,4 @@
 
 .icon-table:before { content: "\e662"; }
 
+.icon-niantie:before { content: "\e61d"; }

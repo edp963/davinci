@@ -1,18 +1,19 @@
 @import "../../assets/less/variable";
 
 .header {
-  width: 100%;
   height: 64px;
   background-color: @body-background;
-  box-shadow: 0 2px 1px 0 rgba(0,0,0,.1);
-  position: fixed;
-  top: 0;
-  left: 0;
+  box-shadow: @header-box-shadow;
+  flex-shrink: 0;
   z-index: @header-index;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+
+  &.hide {
+    display: none;
+  }
 }
 
 .logo {

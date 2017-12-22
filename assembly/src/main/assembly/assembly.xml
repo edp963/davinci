@@ -20,6 +20,8 @@
 
 
 
+
+
 <assembly>
     <id>dist</id>
     <formats>
@@ -53,9 +55,21 @@
         </fileSet>
         <fileSet>
             <directory>
+                ${project.parent.basedir}/tempFiles
+            </directory>
+            <outputDirectory>tempFiles</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>
                 ${project.parent.basedir}/davinci-ui
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>
+                ${project.parent.basedir}/swagger-ui
+            </directory>
+            <outputDirectory>swagger-ui</outputDirectory>
         </fileSet>
 
     </fileSets>

@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,10 @@
 
 import React, { PropTypes } from 'react'
 import classnames from 'classnames'
-
+import {connect} from 'react-redux'
+import {createStructuredSelector} from 'reselect'
+import { makeSelectSqlValidateCode, makeSelectSqlValidateMsg } from './selectors'
+import {checkNameAction} from '../App/actions'
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -28,6 +31,7 @@ import Input from 'antd/lib/input'
 import Select from 'antd/lib/select'
 import Steps from 'antd/lib/steps'
 import Table from 'antd/lib/table'
+import Alert from 'antd/lib/alert'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
@@ -35,6 +39,20 @@ const Step = Steps.Step
 import utilStyles from '../../assets/less/util.less'
 
 export class BizlogicForm extends React.Component {
+
+  checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckName, type } = this.props
+    const { getFieldsValue } = this.props.form
+    const { id } = getFieldsValue()
+    let idName = type === 'add' ? '' : id
+    let typeName = 'view'
+    onCheckName(idName, value, typeName,
+      res => {
+        callback()
+      }, err => {
+        callback(err)
+      })
+  }
   render () {
     const {
       form,
@@ -44,7 +62,10 @@ export class BizlogicForm extends React.Component {
       groupParams,
       selectedGroups,
       onGroupSelect,
-      onGroupParamChange
+      onGroupParamChange,
+      sqlValidateCode,
+      sqlValidateMessage,
+      isShowSqlValidateAlert
     } = this.props
     const { getFieldDecorator } = form
 
@@ -86,7 +107,12 @@ export class BizlogicForm extends React.Component {
         )
       })
     })
-
+    const sqlValidatePanel = isShowSqlValidateAlert ? <Alert
+      message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+      description={`${sqlValidateMessage || ''}`}
+      type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+      showIcon
+    /> : ''
     return (
       <Form>
         <Row className={utilStyles.formStepArea}>
@@ -107,6 +133,13 @@ export class BizlogicForm extends React.Component {
                 <Input />
               )}
             </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('create_by', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
             <FormItem
               label="名称"
               labelCol={{span: 4}}
@@ -116,6 +149,8 @@ export class BizlogicForm extends React.Component {
                 rules: [{
                   required: true,
                   message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Name" />
@@ -163,6 +198,9 @@ export class BizlogicForm extends React.Component {
               )}
             </FormItem>
           </Col>
+          <Col span={21} offset={2}>
+            {sqlValidatePanel}
+          </Col>
         </Row>
         <Row className={authInfoStyle}>
           <Col span={24}>
@@ -181,7 +219,19 @@ export class BizlogicForm extends React.Component {
       </Form>
     )
   }
+  componentDidUpdate (prevProps) {
+    const {onCodeMirrorChange} = this.props
+    let textarea = document.querySelector('#sql_tmpl')
+    if (onCodeMirrorChange) {
+      onCodeMirrorChange(textarea)
+    }
+  }
 }
+
+const mapStateToProps = createStructuredSelector({
+  sqlValidateCode: makeSelectSqlValidateCode(),
+  sqlValidateMessage: makeSelectSqlValidateMsg()
+})
 
 BizlogicForm.propTypes = {
   type: PropTypes.string,
@@ -192,7 +242,19 @@ BizlogicForm.propTypes = {
   selectedGroups: PropTypes.array,
   onGroupSelect: PropTypes.func,
   onGroupParamChange: PropTypes.func,
-  form: PropTypes.any
+  onCodeMirrorChange: PropTypes.func,
+  sqlValidateCode: PropTypes.any,
+  sqlValidateMessage: PropTypes.any,
+  isShowSqlValidateAlert: PropTypes.bool,
+  form: PropTypes.any,
+  onCheckName: PropTypes.func
 }
 
-export default Form.create({withRef: true})(BizlogicForm)
+function mapDispatchToProps (dispatch) {
+  return {
+    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+  }
+}
+
+export default Form.create()(connect(mapStateToProps, mapDispatchToProps)(BizlogicForm))
+

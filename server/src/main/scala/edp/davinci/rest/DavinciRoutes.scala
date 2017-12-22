@@ -18,9 +18,15 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest
 
 import akka.http.scaladsl.server.{Directives, Route}
+import edp.davinci.util.CommonUtils
+
 
 class DavinciRoutes extends Directives {
   //  override implicit val actorSystem: ActorSystem = Boot.system
@@ -35,20 +41,20 @@ class DavinciRoutes extends Directives {
   //where you want the swagger-json endpoint exposed
   //  override val info = Info("Davinci REST API")
   //  provides license and other description details
-  val dir: String = System.getenv("DAVINCI_HOME")
+
   val indexRoute: Route = get {
     pathPrefix("") {
       pathEndOrSingleSlash {
-        getFromFile(s"$dir/davinci-ui/index.html")
+        getFromFile(s"${CommonUtils.dir}/davinci-ui/index.html")
       }
-    } ~ getFromDirectory(s"$dir/davinci-ui")
+    } ~ getFromDirectory(s"${CommonUtils.dir}/davinci-ui")
   }
 
   val shareRoute: Route = get {
     pathPrefix("share") {
       pathEndOrSingleSlash {
-        getFromFile(s"$dir/davinci-ui/share.html")
+        getFromFile(s"${CommonUtils.dir}/davinci-ui/share.html")
       }
-    } ~ getFromDirectory(s"$dir/davinci-ui")
+    } ~ getFromDirectory(s"${CommonUtils.dir}/davinci-ui")
   }
 }

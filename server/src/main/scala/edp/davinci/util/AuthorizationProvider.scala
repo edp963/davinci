@@ -18,45 +18,53 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.util
 
 import akka.http.scaladsl.server.directives.Credentials
 import edp.davinci.ModuleInstance
-import edp.davinci.persistence.entities.{QueryUserInfo, User}
-import edp.davinci.rest.{LoginClass, SessionClass}
+import edp.davinci.module.DbModule
+import edp.davinci.module.DbModule._
+import edp.davinci.persistence.entities.{LoginClass, QueryUserInfo, User}
+import edp.davinci.rest.SessionClass
+import edp.davinci.util.LDAPValidate.validate
+import edp.davinci.util.ResponseUtils.currentTime
 import org.apache.log4j.Logger
 import slick.jdbc.MySQLProfile.api._
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import edp.davinci.util.ResponseUtils.currentTime
-import edp.davinci.util.LDAPValidate.validate
-import edp.davinci.module.DbModule._
 
 abstract class AuthorizationError(val statusCode: Int = 401, val desc: String = "authentication error") extends Exception
 
 class UserNotFoundError(statusCode: Int = 404, desc: String = "user not found") extends AuthorizationError(statusCode, desc)
 
-class passwordError(statusCode: Int = 400, desc: String = "pwd is wrong") extends AuthorizationError(statusCode, desc)
+class passwordError(statusCode: Int = 400, desc: String = "password is wrong") extends AuthorizationError(statusCode, desc)
 
 object AuthorizationProvider {
-  private lazy val module = ModuleInstance.modules
+  private lazy val module = ModuleInstance.getModule
   private lazy val logger = Logger.getLogger(this.getClass)
   lazy val realm = "davinci"
 
   def createSessionClass(login: LoginClass, enableLDAP: Boolean): Future[Either[AuthorizationError, (SessionClass, QueryUserInfo)] with Product with Serializable] = {
     try {
-      val user = if (enableLDAP) if (validate(login.username, login.password)) findUserByLDAP(login) else findUser(login) else findUser(login)
+      val user = if (enableLDAP && validate(login.username, login.password)) findUserByLDAP(login) else findUser(login)
       user.flatMap {
         user =>
-          module.relUserGroupDal.findByFilter(rel => rel.user_id === user.id).map {
-            relSeq =>
-              val groupIdList = new ListBuffer[Long]
-              if (relSeq.nonEmpty) relSeq.foreach(groupIdList += _.group_id)
-              val userInfo = QueryUserInfo(user.id, user.email, user.title, user.name, user.admin, user.active)
-              val session = SessionClass(user.id, groupIdList.toList, user.admin)
-              (session, userInfo)
-          }
+          DbModule.db.run(module.relUserGroupQuery.filter(_.user_id === user.id).map(_.group_id).distinct.result)
+            .map {
+              relSeq =>
+
+                val groupIdList = new ListBuffer[Long]
+                if (relSeq.nonEmpty) relSeq.foreach(groupIdList += _)
+                val userInfo = QueryUserInfo(user.id, user.email, user.title, user.name, user.admin)
+                val session = SessionClass(user.id, groupIdList.toList, user.admin)
+                (session, userInfo)
+            }
       }.map(Right(_)).recover {
         case e: AuthorizationError =>
           logger.error("createSessionClass error", e)
@@ -124,7 +132,7 @@ object AuthorizationProvider {
 
   private def verifyPwd(storePass: String, pass: String): Boolean = {
     //    pass.isBcrypted(storePass)
-    if (storePass == pass) true
+    if (PasswordHash.validatePassword(pass,storePass)) true
     else false
   }
 

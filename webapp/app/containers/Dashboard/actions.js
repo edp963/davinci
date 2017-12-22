@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,10 @@ import {
   ADD_DASHBOARD_SUCCESS,
   EDIT_DASHBOARD,
   EDIT_DASHBOARD_SUCCESS,
+  EDIT_DASHBOARD_FAILURE,
+  EDIT_CURRENT_DASHBOARD,
+  EDIT_CURRENT_DASHBOARD_SUCCESS,
+  EDIT_CURRENT_DASHBOARD_FAILURE,
   DELETE_DASHBOARD,
   DELETE_DASHBOARD_SUCCESS,
   LOAD_DASHBOARD_DETAIL,
@@ -40,8 +44,15 @@ import {
   CLEAR_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
+  LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
+  LOAD_DASHBOARD_SHARE_LINK_FAILURE,
   LOAD_WIDGET_SHARE_LINK,
-  LOAD_WIDGET_SHARE_LINK_SUCCESS
+  LOAD_WIDGET_SHARE_LINK_SUCCESS,
+  LOAD_WIDGET_SECRET_LINK_SUCCESS,
+  LOAD_WIDGET_SHARE_LINK_FAILURE,
+  LOAD_WIDGET_CSV,
+  LOAD_WIDGET_CSV_SUCCESS,
+  LOAD_WIDGET_CSV_FAILURE
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -49,8 +60,6 @@ import { promiseActionCreator } from '../../utils/reduxPromisation'
 export const loadDashboards = promiseActionCreator(LOAD_DASHBOARDS)
 
 export const addDashboard = promiseActionCreator(ADD_DASHBOARD, ['dashboard'])
-
-export const editDashboard = promiseActionCreator(EDIT_DASHBOARD, ['dashboard'])
 
 export const deleteDashboard = promiseActionCreator(DELETE_DASHBOARD, ['id'])
 
@@ -61,10 +70,6 @@ export const addDashboardItem = promiseActionCreator(ADD_DASHBOARD_ITEM, ['id', 
 export const deleteDashboardItem = promiseActionCreator(DELETE_DASHBOARD_ITEM, ['id'])
 
 export const clearCurrentDashboard = promiseActionCreator(CLEAR_CURRENT_DASHBOARD)
-
-export const loadDashboardShareLink = promiseActionCreator(LOAD_DASHBOARD_SHARE_LINK, ['id'])
-
-export const loadWidgetShareLink = promiseActionCreator(LOAD_WIDGET_SHARE_LINK, ['id'])
 
 export function dashboardsLoaded (dashboards) {
   return {
@@ -84,12 +89,53 @@ export function dashboardAdded (result) {
   }
 }
 
+export function editDashboard (dashboard, resolve) {
+  return {
+    type: EDIT_DASHBOARD,
+    payload: {
+      dashboard,
+      resolve
+    }
+  }
+}
+
 export function dashboardEdited (result) {
   return {
     type: EDIT_DASHBOARD_SUCCESS,
     payload: {
       result
     }
+  }
+}
+
+export function editDashboardFail () {
+  return {
+    type: EDIT_DASHBOARD_FAILURE
+  }
+}
+
+export function editCurrentDashboard (dashboard, resolve) {
+  return {
+    type: EDIT_CURRENT_DASHBOARD,
+    payload: {
+      dashboard,
+      resolve
+    }
+  }
+}
+
+export function currentDashboardEdited (result) {
+  return {
+    type: EDIT_CURRENT_DASHBOARD_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function editCurrentDashboardFail () {
+  return {
+    type: EDIT_CURRENT_DASHBOARD_FAILURE
   }
 }
 
@@ -167,6 +213,16 @@ export function dashboardItemDeleted (id) {
   }
 }
 
+export function loadDashboardShareLink (id, authName) {
+  return {
+    type: LOAD_DASHBOARD_SHARE_LINK,
+    payload: {
+      id,
+      authName
+    }
+  }
+}
+
 export function dashboardShareLinkLoaded (shareInfo) {
   return {
     type: LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
@@ -176,11 +232,89 @@ export function dashboardShareLinkLoaded (shareInfo) {
   }
 }
 
-export function widgetShareLinkLoaded (shareInfo) {
+export function dashboardSecretLinkLoaded (secretInfo) {
+  return {
+    type: LOAD_DASHBOARD_SECRET_LINK_SUCCESS,
+    payload: {
+      secretInfo
+    }
+  }
+}
+
+export function loadDashboardShareLinkFail () {
+  return {
+    type: LOAD_DASHBOARD_SHARE_LINK_FAILURE
+  }
+}
+
+export function loadWidgetShareLink (id, itemId, authName) {
+  return {
+    type: LOAD_WIDGET_SHARE_LINK,
+    payload: {
+      id,
+      itemId,
+      authName
+    }
+  }
+}
+
+export function widgetShareLinkLoaded (shareInfo, itemId) {
   return {
     type: LOAD_WIDGET_SHARE_LINK_SUCCESS,
     payload: {
-      shareInfo
+      shareInfo,
+      itemId
+    }
+  }
+}
+
+export function widgetSecretLinkLoaded (shareInfo, itemId) {
+  return {
+    type: LOAD_WIDGET_SECRET_LINK_SUCCESS,
+    payload: {
+      shareInfo,
+      itemId
+    }
+  }
+}
+
+export function loadWidgetShareLinkFail (itemId) {
+  return {
+    type: LOAD_WIDGET_SHARE_LINK_FAILURE,
+    payload: {
+      itemId
+    }
+  }
+}
+
+export function loadWidgetCsv (itemId, token, sql, sorts, offset, limit) {
+  return {
+    type: LOAD_WIDGET_CSV,
+    payload: {
+      itemId,
+      token,
+      sql,
+      sorts,
+      offset,
+      limit
+    }
+  }
+}
+
+export function widgetCsvLoaded (itemId) {
+  return {
+    type: LOAD_WIDGET_CSV_SUCCESS,
+    payload: {
+      itemId
+    }
+  }
+}
+
+export function loadWidgetCsvFail (itemId) {
+  return {
+    type: LOAD_WIDGET_CSV_FAILURE,
+    payload: {
+      itemId
     }
   }
 }

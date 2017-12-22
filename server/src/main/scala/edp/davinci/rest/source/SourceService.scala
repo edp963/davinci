@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.source
 
 import edp.davinci.ModuleInstance
@@ -27,29 +31,38 @@ import edp.davinci.rest.SessionClass
 import edp.davinci.util.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object SourceService extends SourceService
 
 trait SourceService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAll: Future[Seq[(Long, String, String, String, String, String)]] = {
-    db.run(modules.sourceQuery.map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config)).result)
+  def getAll(session: SessionClass): Future[Seq[PutSourceInfo]] = {
+    db.run(modules.sourceQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (PutSourceInfo.tupled, PutSourceInfo.unapply)).result).
+      mapTo[Seq[PutSourceInfo]]
+  }
+
+  def getById(id: Long): Future[Option[PutSourceInfo]] = {
+    db.run(modules.sourceQuery.filter(s => s.id === id).
+      map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (PutSourceInfo.tupled, PutSourceInfo.unapply)).result.headOption).
+      mapTo[Option[PutSourceInfo]]
   }
 
   def update(sourceSeq: Seq[PutSourceInfo], session: SessionClass): Future[Unit] = {
     val query = DBIO.seq(sourceSeq.map(r => {
-      modules.sourceQuery.filter(_.id === r.id).map(source => (source.name, source.connection_url, source.desc, source.`type`, source.config, source.update_by, source.update_time))
+      modules.sourceQuery.filter(s => s.id === r.id && s.create_by === session.userId).map(source => (source.name, source.connection_url, source.desc, source.`type`, source.config, source.update_by, source.update_time))
         .update(r.name, r.connection_url, r.desc, r.`type`, r.config, session.userId, ResponseUtils.currentTime)
     }): _*)
     db.run(query)
   }
 
-  def deleteSource(sourceId: Long): Future[Int] = {
-    modules.sourceDal.deleteById(sourceId)
+  def deleteSource(sourceId: Long, session: SessionClass): Future[Unit] = {
+    val query = (for {
+      _ <- modules.sourceQuery.filter(s => s.id === sourceId && s.create_by === session.userId).delete
+      _ <- modules.viewQuery.filter(v => v.source_id === sourceId && v.create_by === session.userId).map(_.source_id).update(0)
+    } yield ()).transactionally
+    db.run(query)
   }
 
-  def updateView(sourceId: Long): Future[Int] = {
-    db.run(modules.viewQuery.filter(_.source_id === sourceId).map(_.source_id).update(0))
-  }
 }

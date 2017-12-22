@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import {
   LOAD_DASHBOARDS,
   ADD_DASHBOARD,
   EDIT_DASHBOARD,
+  EDIT_CURRENT_DASHBOARD,
   DELETE_DASHBOARD,
   LOAD_DASHBOARD_DETAIL,
   ADD_DASHBOARD_ITEM,
@@ -31,13 +32,17 @@ import {
   EDIT_DASHBOARD_ITEMS,
   DELETE_DASHBOARD_ITEM,
   LOAD_DASHBOARD_SHARE_LINK,
-  LOAD_WIDGET_SHARE_LINK
+  LOAD_WIDGET_SHARE_LINK,
+  LOAD_WIDGET_CSV
 } from './constants'
 
 import {
   dashboardsLoaded,
   dashboardAdded,
   dashboardEdited,
+  editDashboardFail,
+  currentDashboardEdited,
+  editCurrentDashboardFail,
   dashboardDeleted,
   dashboardDetailLoaded,
   dashboardItemAdded,
@@ -45,13 +50,22 @@ import {
   dashboardItemsEdited,
   dashboardItemDeleted,
   dashboardShareLinkLoaded,
-  widgetShareLinkLoaded
+  dashboardSecretLinkLoaded,
+  widgetSecretLinkLoaded,
+  loadDashboardShareLinkFail,
+  widgetShareLinkLoaded,
+  loadWidgetShareLinkFail,
+  widgetCsvLoaded,
+  loadWidgetCsvFail
 } from './actions'
 
+import message from 'antd/lib/message'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import config, { env } from '../../globalConfig'
+const shareHost = config[env].shareHost
 
 export const getDashboards = promiseSagaCreator(
   function* () {
@@ -89,22 +103,42 @@ export function* addDashboardWatcher () {
   yield fork(takeEvery, ADD_DASHBOARD, addDashboard)
 }
 
-export const editDashboard = promiseSagaCreator(
-  function* ({ dashboard }) {
+export function* editDashboard ({ payload }) {
+  try {
     yield call(request, {
       method: 'put',
       url: api.dashboard,
-      data: writeAdapter(dashboard)
+      data: writeAdapter(payload.dashboard)
     })
-    yield put(dashboardEdited(dashboard))
-  },
-  function (err) {
-    console.log('editDashboard', err)
+    yield put(dashboardEdited(payload.dashboard))
+    payload.resolve()
+  } catch (err) {
+    yield put(editDashboardFail())
+    message.error('修改 Dashboard 失败，请稍后再试')
   }
-)
+}
 
 export function* editDashboardWatcher () {
   yield fork(takeEvery, EDIT_DASHBOARD, editDashboard)
+}
+
+export function* editCurrentDashboard ({ payload }) {
+  try {
+    yield call(request, {
+      method: 'put',
+      url: api.dashboard,
+      data: writeAdapter(payload.dashboard)
+    })
+    yield put(currentDashboardEdited(payload.dashboard))
+    payload.resolve()
+  } catch (err) {
+    yield put(editCurrentDashboardFail())
+    message.error('修改当前 Dashboard 内容失败，请稍后再试')
+  }
+}
+
+export function* editCurrentDashboardWatcher () {
+  yield fork(takeEvery, EDIT_CURRENT_DASHBOARD, editCurrentDashboard)
 }
 
 export const deleteDashboard = promiseSagaCreator(
@@ -178,7 +212,7 @@ export function* editDashboardItemWatcher () {
   yield fork(takeEvery, EDIT_DASHBOARD_ITEM, editDashboardItem)
 }
 
-export function* editDashboardItems({ payload }) {
+export function* editDashboardItems ({ payload }) {
   try {
     yield call(request, {
       method: 'put',
@@ -215,42 +249,85 @@ export function* deleteDashboardItemWatcher () {
   yield fork(takeEvery, DELETE_DASHBOARD_ITEM, deleteDashboardItem)
 }
 
-export const getDashboardShareLink = promiseSagaCreator(
-  function* ({ id }) {
-    const asyncData = yield call(request, `${api.share}/dashboard/${id}`)
+export function* getDashboardShareLink ({ payload }) {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.share}/dashboard/${payload.id}`,
+      params: {auth_name: payload.authName}
+    })
     const shareInfo = readListAdapter(asyncData)
-    yield put(dashboardShareLinkLoaded(shareInfo))
-    return shareInfo
-  },
-  function (err) {
-    console.log('getDashboardShareLink', err)
+    if (payload.authName) {
+      yield put(dashboardSecretLinkLoaded(shareInfo))
+    } else {
+      yield put(dashboardShareLinkLoaded(shareInfo))
+    }
+  } catch (err) {
+    yield put(loadDashboardShareLinkFail())
+    message.error('获取 Dashboard 分享链接失败，请稍后再试')
   }
-)
+}
 
 export function* getDashboardShareLinkWatcher () {
   yield fork(takeLatest, LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink)
 }
 
-export const getWidgetShareLink = promiseSagaCreator(
-  function* ({ id }) {
-    const asyncData = yield call(request, `${api.share}/widget/${id}`)
+export function* getWidgetShareLink ({ payload }) {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.share}/widget/${payload.id}`,
+      params: {auth_name: payload.authName}
+    })
     const shareInfo = readListAdapter(asyncData)
-    yield put(widgetShareLinkLoaded(shareInfo))
-    return shareInfo
-  },
-  function (err) {
-    console.log('getWidgetShareLink', err)
+    if (payload.authName) {
+      yield put(widgetSecretLinkLoaded(shareInfo, payload.itemId))
+    } else {
+      yield put(widgetShareLinkLoaded(shareInfo, payload.itemId))
+    }
+  } catch (err) {
+    yield put(loadWidgetShareLinkFail(payload.itemId))
+    message.error('获取 Widget 分享链接失败，请稍后再试')
   }
-)
+}
 
 export function* getWidgetShareLinkWatcher () {
   yield fork(takeLatest, LOAD_WIDGET_SHARE_LINK, getWidgetShareLink)
+}
+
+export function* getWidgetCsv ({ payload }) {
+  const { token, sql, sorts, offset, limit } = payload
+  let queries = ''
+
+  if (offset !== undefined && limit !== undefined) {
+    queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
+  }
+
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.share}/csv/${token}${queries}`,
+      data: sql || {}
+    })
+    yield put(widgetCsvLoaded(payload.itemId))
+    const path = readListAdapter(asyncData)
+    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path}`
+    // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
+  } catch (err) {
+    yield put(loadWidgetCsvFail(payload.itemId))
+    message.error('获取csv文件失败，请稍后再试')
+  }
+}
+
+export function* getWidgetCsvWatcher () {
+  yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
 }
 
 export default [
   getDashboardsWatcher,
   addDashboardWatcher,
   editDashboardWatcher,
+  editCurrentDashboardWatcher,
   deleteDashboardWatcher,
   getDashboardDetailWatcher,
   addDashboardItemWatcher,
@@ -258,5 +335,6 @@ export default [
   editDashboardItemsWatcher,
   deleteDashboardItemWatcher,
   getDashboardShareLinkWatcher,
-  getWidgetShareLinkWatcher
+  getWidgetShareLinkWatcher,
+  getWidgetCsvWatcher
 ]

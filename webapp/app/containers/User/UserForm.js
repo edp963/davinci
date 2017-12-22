@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,13 +20,14 @@
 
 import React, { PropTypes } from 'react'
 import classnames from 'classnames'
-
+import {connect} from 'react-redux'
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
 import Radio from 'antd/lib/radio'
 import Steps from 'antd/lib/steps'
+import {checkNameAction} from '../App/actions'
 import Transfer from 'antd/lib/transfer'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
@@ -41,6 +42,20 @@ export class UserForm extends React.PureComponent {
     } else {
       callback()
     }
+  }
+
+  checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckName, type } = this.props
+    const { getFieldsValue } = this.props.form
+    const { id } = getFieldsValue()
+    let idName = type === 'add' ? '' : id
+    let typeName = 'user'
+    onCheckName(idName, value, typeName,
+      res => {
+        callback()
+      }, err => {
+        callback(err)
+      })
   }
 
   forceCheckConfirm = (rule, value, callback) => {
@@ -121,6 +136,8 @@ export class UserForm extends React.PureComponent {
                 }, {
                   type: 'email',
                   message: '请输入正确的 Email 格式'
+                }, {
+                  validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Email" />
@@ -208,7 +225,14 @@ UserForm.propTypes = {
   step: PropTypes.number.isRequired,
   groupSource: PropTypes.array.isRequired,
   groupTarget: PropTypes.array.isRequired,
-  onGroupChange: PropTypes.func.isRequired
+  onGroupChange: PropTypes.func.isRequired,
+  onCheckName: PropTypes.func
 }
 
-export default Form.create({withRef: true})(UserForm)
+function mapDispatchToProps (dispatch) {
+  return {
+    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+  }
+}
+
+export default Form.create()(connect(null, mapDispatchToProps)(UserForm))

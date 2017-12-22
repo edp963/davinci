@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,8 @@ import {
   LOAD_BIZLOGIC_GROUPS,
   EDIT_BIZLOGIC,
   LOAD_BIZDATAS,
-  LOAD_BIZDATAS_FROM_ITEM
+  LOAD_BIZDATAS_FROM_ITEM,
+  SQL_VALIDATE
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -39,7 +40,11 @@ import {
   bizlogicGroupsLoaded,
   bizlogicEdited,
   bizdatasLoaded,
-  bizdatasFromItemLoaded
+  loadBizdatasFail,
+  bizdatasFromItemLoaded,
+  loadBizdatasFromItemFail,
+  validateSqlSuccess,
+  validateSqlFailure
 } from './actions'
 
 import request from '../../utils/request'
@@ -150,12 +155,21 @@ export function* editBizlogicWatcher () {
   yield fork(takeEvery, EDIT_BIZLOGIC, editBizlogic)
 }
 
-export const getBizdatas = promiseSagaCreator(
-  function* ({ id, sql, sorts, offset, limit }) {
-    let queries = ''
+export function* getBizdatas ({ payload }) {
+  try {
+    const { id, sql, sorts, offset, limit } = payload
+
+    let queries = []
+
     if (offset !== undefined && limit !== undefined) {
-      queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
+      queries = queries
+        .concat(`sortby=${sorts}`)
+        .concat(`offset=${offset}`)
+        .concat(`limit=${limit}`)
     }
+    queries = queries.concat('usecache=false').concat('expired=0')
+    queries = `?${queries.join('&')}`
+
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/resultset${queries}`,
@@ -163,39 +177,73 @@ export const getBizdatas = promiseSagaCreator(
     })
     const bizdatas = resultsetConverter(readListAdapter(asyncData))
     yield put(bizdatasLoaded(bizdatas))
-    return bizdatas
-  },
-  function (err) {
-    console.log('getBizdatas', err)
+  } catch (err) {
+    yield put(loadBizdatasFail(err))
   }
-)
+}
 
 export function* getBizdatasWatcher () {
   yield fork(takeEvery, LOAD_BIZDATAS, getBizdatas)
 }
 
-export const getBizdatasFromItem = promiseSagaCreator(
-  function* ({ itemId, id, sql, sorts, offset, limit }) {
-    let queries = ''
+export function* getBizdatasFromItem ({ payload }) {
+  try {
+    const { itemId, id, sql, sorts, offset, limit, useCache, expired } = payload
+
+    let queries = []
+
     if (offset !== undefined && limit !== undefined) {
-      queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
+      queries = queries
+        .concat(`sortby=${sorts}`)
+        .concat(`offset=${offset}`)
+        .concat(`limit=${limit}`)
     }
+    queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
+    queries = `?${queries.join('&')}`
+
+    let data = {}
+    if (sql) {
+      const { adHoc, filters, linkageFilters, params, linkageParams } = sql
+      data = {
+        adHoc,
+        manualFilters: filters && linkageFilters ? `${filters} and ${linkageFilters}` : filters || linkageFilters || '',
+        params: params && linkageParams ? [].concat(params).concat(linkageParams) : []
+      }
+    }
+
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/resultset${queries}`,
-      data: sql || {}
+      data: data
     })
     const bizdatas = resultsetConverter(readListAdapter(asyncData))
     yield put(bizdatasFromItemLoaded(itemId, bizdatas))
-    return bizdatas
-  },
-  function (err) {
-    console.log('getBizdatasFromItem', err)
+  } catch (err) {
+    yield put(loadBizdatasFromItemFail(err))
   }
-)
+}
 
 export function* getBizdatasFromItemWatcher () {
   yield fork(takeEvery, LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem)
+}
+
+export function* getSqlValidate ({payload}) {
+  const {sourceId, sql} = payload
+  try {
+    const repos = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${sourceId}`,
+      data: sql
+    })
+    let result = repos && repos.header
+    yield put(validateSqlSuccess(result))
+  } catch (err) {
+    yield put(validateSqlFailure(err))
+  }
+}
+
+export function* getSqlValidateWatcher () {
+  yield fork(takeEvery, SQL_VALIDATE, getSqlValidate)
 }
 
 function resultsetConverter (resultset) {
@@ -205,12 +253,13 @@ function resultsetConverter (resultset) {
 
   if (resultset.result && resultset.result.length) {
     const arr = resultset.result
-    const keysWithType = csvParser.toArray(arr.splice(0, 1)[0])
 
-    keysWithType.forEach(kwt => {
-      const kwtArr = kwt.split(':')
-      keys.push(kwtArr[0])
-      types.push(kwtArr[1])
+    arr.splice(0, 2).forEach((d, index) => {
+      if (index) {
+        types = csvParser.toArray(d)
+      } else {
+        keys = csvParser.toArray(d)
+      }
     })
 
     dataSource = arr.map(csvVal => {
@@ -243,5 +292,6 @@ export default [
   getBizlogicGroupsWatcher,
   editBizlogicWatcher,
   getBizdatasWatcher,
-  getBizdatasFromItemWatcher
+  getBizdatasFromItemWatcher,
+  getSqlValidateWatcher
 ]
