@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -57,23 +61,17 @@ case class PutViewInfo(id: Long,
                        trigger_type: String,
                        frequency: String,
                        `catch`: String,
-                       active: Option[Boolean] = Some(true),
                        relBG: Seq[PostRelGroupView])
 
 
-case class QueryView(id: Long,
-                     source_id: Long,
-                     name: String,
-                     sql_tmpl: String,
-                     desc: String,
-                     trigger_type: String,
-                     frequency: String,
-                     `catch`: String,
-                     result_table: String,
-                     active: Boolean)
+case class QueryView(id: Long, source_id: Long, name: String, sql_tmpl: String, desc: Option[String], trigger_type: String, frequency: String, `catch`: String, result_table: String, active: Boolean, create_by: Long=0)
+
+case class PostViewInfoSeq(payload: Seq[PostViewInfo])
+
+case class PutViewInfoSeq(payload: Seq[PutViewInfo])
 
 
-class ViewTbl(tag: Tag) extends BaseTable[View](tag, "flattable") {
+class ViewTbl(tag: Tag) extends BaseTable[View](tag, "view") {
 
   def sql_tmpl: Rep[String] = column[String]("sql_tmpl")
 

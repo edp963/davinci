@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,13 +21,14 @@
 /*
  * Line chart options generator
  */
-export default function (dataSource, flatInfo, chartParams) {
+export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const hasGroups = flatInfo.groups
 
   const {
     xAxis,
     metrics,
     groups,
+    label,
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
@@ -40,7 +41,8 @@ export default function (dataSource, flatInfo, chartParams) {
     top,
     bottom,
     left,
-    right
+    right,
+    suffixYAxis
   } = chartParams
 
   let grouped,
@@ -53,8 +55,13 @@ export default function (dataSource, flatInfo, chartParams) {
     legendOptions,
     toolboxOptions,
     gridOptions,
-    dataZoomOptions
+    labelOption,
+    dataZoomOptions,
+    suffixYAxisOptions
 
+  suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
+    formatter: `{value} ${suffixYAxis}`
+  }} : null
   // symbol
   symbolOption = symbol && symbol.length
     ? { symbol: 'emptyCircle' }
@@ -63,7 +70,16 @@ export default function (dataSource, flatInfo, chartParams) {
   smoothOption = smooth && smooth.length ? { smooth: true } : null
   // step
   stepOption = step && step.length ? { step: true } : null
-
+  // label
+  labelOption = label && label.length
+    ? {
+      label: {
+        normal: {
+          show: true,
+          position: 'top'
+        }
+      }
+    } : null
   // 数据分组
   if (hasGroups && groups && groups.length) {
     grouped = makeGourped(dataSource, [].concat(groups).filter(i => !!i))
@@ -83,7 +99,25 @@ export default function (dataSource, flatInfo, chartParams) {
                 name: `${k} ${m}`,
                 type: 'line',
                 sampling: 'average',
-                data: grouped[k].map(g => g[m])
+                data: grouped[k].map((g, index) => {
+                  if (index === interactIndex) {
+                    return {
+                      value: g[m],
+                      itemStyle: {
+                        normal: {
+                          opacity: 1
+                        }
+                      }
+                    }
+                  } else {
+                    return g[m]
+                  }
+                }),
+                itemStyle: {
+                  normal: {
+                    opacity: interactIndex === undefined ? 1 : 0.25
+                  }
+                }
               },
               symbolOption,
               smoothOption,
@@ -98,11 +132,40 @@ export default function (dataSource, flatInfo, chartParams) {
             type: 'line',
             sampling: 'average',
             symbol: symbolOption,
-            data: dataSource.map(d => d[m])
+            data: dataSource.map((d, index) => {
+              if (index === interactIndex) {
+                return {
+                  value: d[m],
+                  lineStyle: {
+                    normal: {
+                      opacity: 1
+                    }
+                  },
+                  itemStyle: {
+                    normal: {
+                      opacity: 1
+                    }
+                  }
+                }
+              } else {
+                return d[m]
+              }
+            }),
+            lineStyle: {
+              normal: {
+                opacity: interactIndex === undefined ? 1 : 0.25
+              }
+            },
+            itemStyle: {
+              normal: {
+                opacity: interactIndex === undefined ? 1 : 0.25
+              }
+            }
           },
           symbolOption,
           smoothOption,
-          stepOption
+          stepOption,
+          labelOption
         )
         metricArr.push(serieObj)
       }
@@ -197,7 +260,8 @@ export default function (dataSource, flatInfo, chartParams) {
   return Object.assign({},
     {
       yAxis: {
-        type: 'value'
+        ...{type: 'value'},
+        ...suffixYAxisOptions
       }
     },
     metricOptions,

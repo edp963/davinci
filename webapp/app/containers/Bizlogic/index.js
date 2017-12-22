@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,9 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import React from 'react'
+import PropTypes from 'prop-types'
+import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
@@ -38,14 +40,21 @@ import Icon from 'antd/lib/icon'
 import Popconfirm from 'antd/lib/popconfirm'
 import Breadcrumb from 'antd/lib/breadcrumb'
 
+import 'codemirror/lib/codemirror.css'
+import 'codemirror/theme/3024-day.css'
+const codeMirror = require('codemirror/lib/codemirror')
+require('codemirror/mode/sql/sql')
+
 import { promiseDispatcher } from '../../utils/reduxPromisation'
-import { loadBizlogics, addBizlogic, deleteBizlogic, loadBizlogicGroups, editBizlogic } from './actions'
+import { uuid } from '../../utils/util'
+import { loadBizlogics, addBizlogic, deleteBizlogic, loadBizlogicGroups, editBizlogic, sqlValidate } from './actions'
 import { loadGroups, addGroup } from '../Group/actions'
 import { loadSources } from '../Source/actions'
 import { makeSelectBizlogics } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
 import { makeSelectSources } from '../Source/selectors'
 import utilStyles from '../../assets/less/util.less'
+import { makeSelectLoginUser } from '../App/selectors'
 
 export class Bizlogic extends React.PureComponent {
   constructor (props) {
@@ -66,8 +75,11 @@ export class Bizlogic extends React.PureComponent {
       formStep: 0,
       groupFormVisible: false,
 
-      groupParams: []
+      groupParams: [],
+      redrawKey: 100000,
+      isShowSqlValidateAlert: false
     }
+    this.codeMirrorInstance = false
   }
 
   componentWillMount () {
@@ -83,11 +95,12 @@ export class Bizlogic extends React.PureComponent {
   }
 
   componentWillReceiveProps (props) {
+    const {loginUser} = this.props
     if (props.bizlogics) {
       this.state.tableSource = props.bizlogics.map(g => {
         g.key = g.id
         return g
-      })
+      }).filter(ts => ts['create_by'] === loginUser['id'])
     }
   }
 
@@ -102,6 +115,9 @@ export class Bizlogic extends React.PureComponent {
         params: [],
         checked: false
       }))
+    }, () => {
+      let sqlTmpl = document.querySelector('#sql_tmpl')
+      this.handleCodeMirror(sqlTmpl)
     })
   }
 
@@ -114,16 +130,20 @@ export class Bizlogic extends React.PureComponent {
         name,
         desc,
         source_id,
-        sql_tmpl
+        sql_tmpl,
+        create_by
       } = this.props.bizlogics.find(b => b.id === id)
 
       this.bizlogicForm.setFieldsValue({
         id,
         name,
+        create_by,
         desc,
         source_id: `${source_id}`,  // eslint-disable-line
         sql_tmpl
       })
+
+      this.codeMirrorInstance = false
 
       this.props.onLoadBizlogicGroups(id)
         .then(groups => {
@@ -133,18 +153,34 @@ export class Bizlogic extends React.PureComponent {
               id: g.id,
               key: g.id,
               name: g.name,
-              params: checkedGroup ? JSON.parse(checkedGroup.sql_params) : [],
+              params: checkedGroup && checkedGroup.sql_params ? JSON.parse(checkedGroup.sql_params) : [],
               checked: !!checkedGroup
             }
           })
 
           this.setState({
             groupTableSource: groupTableSource,
-            groupParams: groups.length ? JSON.parse(groups[0].sql_params).map(o => o.k) : [],
+            groupParams: groups.length && groups[0].sql_params ? JSON.parse(groups[0].sql_params).map(o => o.k) : [],
             groupTableSelectedRowKeys: groups.map(g => g.group_id)
           })
         })
     })
+  }
+  handleCodeMirror = (dom) => {
+    if (!this.codeMirrorInstance) {
+      this.codeMirrorInstance = codeMirror.fromTextArea(dom, {
+        mode: 'text/x-sql',
+        theme: '3024-day',
+        lineNumbers: true,
+        width: '100%',
+        height: '100%',
+        lineWrapping: true,
+        onChange: function (instance, changeObj) {
+          console.log(instance)
+          console.log(changeObj)
+        }
+      })
+    }
   }
 
   showGroupForm = () => {
@@ -152,9 +188,27 @@ export class Bizlogic extends React.PureComponent {
       groupFormVisible: true
     })
   }
-
+  validateSql = () => {
+    // todo 校验SQL next()
+    const {onValidateSql} = this.props
+    const sqlTmpl = this.codeMirrorInstance.getValue()
+    this.bizlogicForm.validateFieldsAndScroll((err, values) => {
+      const { source_id } = values
+      if (sqlTmpl) {
+        onValidateSql(source_id, sqlTmpl)
+        this.asyncValidateResult = setTimeout(() => {
+          this.setState({isShowSqlValidateAlert: true})
+        }, 100)
+      }
+    })
+  }
+  componentWillUnmount () {
+    clearTimeout(this.asyncValidateResult)
+  }
   changeFormStep = (sign) => () => {
     if (sign) {
+      let sqlValue = this.codeMirrorInstance.getValue()
+      this.bizlogicForm.setFieldsValue({sql_tmpl: sqlValue})
       this.bizlogicForm.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { groupTableSource } = this.state
@@ -162,7 +216,6 @@ export class Bizlogic extends React.PureComponent {
           const groupParams = sqlGroupVariables
             ? sqlGroupVariables.map(gv => gv.substring(gv.indexOf('$') + 1, gv.lastIndexOf('$')))
             : []
-
           groupTableSource.forEach(gs => {
             const originParams = gs.params
 
@@ -249,7 +302,6 @@ export class Bizlogic extends React.PureComponent {
     this.groupForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-
         this.props.onAddGroup(values)
           .then(({ id, name }) => {
             const { groupTableSource, groupParams } = this.state
@@ -277,11 +329,18 @@ export class Bizlogic extends React.PureComponent {
   }
 
   hideForm = () => {
+    const redrawKey = uuid(6, 10)
     this.setState({
-      modalLoading: false,
       formVisible: false,
-      formStep: 0,
-      groupTableSelectedRowKeys: []
+      redrawKey: redrawKey
+    }, () => {
+      this.codeMirrorInstance = false
+      this.setState({
+        isShowSqlValidateAlert: false,
+        modalLoading: false,
+        formStep: 0,
+        groupTableSelectedRowKeys: []
+      })
     })
     this.bizlogicForm && this.bizlogicForm.resetFields()
   }
@@ -349,6 +408,7 @@ export class Bizlogic extends React.PureComponent {
 
     const {
       sources,
+      loginUser,
       onDeleteBizlogic
     } = this.props
 
@@ -437,6 +497,13 @@ export class Bizlogic extends React.PureComponent {
       ]
       : [
         <Button
+          key="validate"
+          size="large"
+          onClick={this.validateSql}
+        >
+          SQL校验
+        </Button>,
+        <Button
           key="forward"
           size="large"
           type="primary"
@@ -465,6 +532,7 @@ export class Bizlogic extends React.PureComponent {
 
     return (
       <Container>
+        <Helmet title="View" />
         <Container.Title>
           <Row>
             <Col span={24}>
@@ -483,7 +551,9 @@ export class Bizlogic extends React.PureComponent {
                 <Icon type="bars" />View List
               </Box.Title>
               <Box.Tools>
-                <Button type="primary" icon="plus" onClick={this.showAdd}>新增</Button>
+                <Tooltip placement="bottom" title="新增">
+                  <Button type="primary" icon="plus" onClick={this.showAdd} />
+                </Tooltip>
               </Box.Tools>
             </Box.Header>
             <Box.Body>
@@ -499,6 +569,7 @@ export class Bizlogic extends React.PureComponent {
                 </Col>
               </Row>
               <Modal
+                key={this.state.redrawKey}
                 title={`${formType === 'add' ? '新增' : '修改'} View`}
                 wrapClassName="ant-modal-large"
                 visible={formVisible}
@@ -515,6 +586,8 @@ export class Bizlogic extends React.PureComponent {
                   selectedGroups={groupTableSelectedRowKeys}
                   onGroupSelect={this.onGroupTableSelect}
                   onGroupParamChange={this.onGroupParamChange}
+                  onCodeMirrorChange={this.handleCodeMirror}
+                  isShowSqlValidateAlert={this.state.isShowSqlValidateAlert}
                   ref={(f) => { this.bizlogicForm = f }}
                 />
               </Modal>
@@ -548,6 +621,7 @@ Bizlogic.propTypes = {
     PropTypes.bool,
     PropTypes.array
   ]),
+  loginUser: PropTypes.object,
   onLoadBizlogics: PropTypes.func,
   onAddBizlogic: PropTypes.func,
   onDeleteBizlogic: PropTypes.func,
@@ -555,7 +629,8 @@ Bizlogic.propTypes = {
   onEditBizlogic: PropTypes.func,
   onLoadGroups: PropTypes.func,
   onAddGroup: PropTypes.func,
-  onLoadSources: PropTypes.func
+  onLoadSources: PropTypes.func,
+  onValidateSql: PropTypes.func
 }
 
 export function mapDispatchToProps (dispatch) {
@@ -567,14 +642,17 @@ export function mapDispatchToProps (dispatch) {
     onEditBizlogic: (bizlogic) => promiseDispatcher(dispatch, editBizlogic, bizlogic),
     onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
     onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group),
-    onLoadSources: () => promiseDispatcher(dispatch, loadSources)
+    onLoadSources: () => promiseDispatcher(dispatch, loadSources),
+    onValidateSql: (sourceId, sql) => dispatch(sqlValidate(sourceId, sql))
   }
 }
 
 const mapStateToProps = createStructuredSelector({
   bizlogics: makeSelectBizlogics(),
   groups: makeSelectGroups(),
-  sources: makeSelectSources()
+  sources: makeSelectSources(),
+  loginUser: makeSelectLoginUser()
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Bizlogic)
+

@@ -18,29 +18,63 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.util
 
+import java.nio.charset.{Charset, CodingErrorAction}
 import java.sql.{Timestamp, Date => SqlDate}
 import java.text.SimpleDateFormat
-import java.util.Date
-import edp.davinci.util.EdpDefault._
+import java.util.{Date, TimeZone}
+
 import edp.davinci.util.DtFormat.DtFormat
+import edp.davinci.util.DVDefault._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+
+import scala.io.Codec
 import scala.util.matching.Regex
 
-/*
-object DontUseTimestampToString extends App {
-  val ts = java.sql.Timestamp.valueOf("2014-07-01 11:57:21.010")
-  val ts_str = ts.toString
-  println(ts_str)
-  val formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-  val new_ts_str1 = formatter.format(formatter.parse(ts_str))
-  println(new_ts_str1)
-  val new_ts_str2 = formatter.format(new java.util.Date(ts.getTime))
-  println(new_ts_str2)
+object DVDefault extends DVDefault
+
+trait DVDefault {
+  type JavaByteArray = Array[Byte]
+  type JavaShort = java.lang.Short
+  type JavaInteger = java.lang.Integer
+  type JavaLong = java.lang.Long
+  type JavaFloat = java.lang.Float
+  type JavaDouble = java.lang.Double
+  type JavaBoolean = java.lang.Boolean
+  type JavaCharacter = java.lang.Character
+  type JavaString = java.lang.String
+  type JavaBigInteger = java.math.BigInteger
+  type JavaBigDecimal = java.math.BigDecimal
+
+  type SuperComparable[T] = Comparable[_ >: T]
+
+  lazy val javaByteArrayType = classOf[JavaByteArray]
+  lazy val javaShortType = classOf[JavaShort]
+  lazy val javaIntegerType = classOf[JavaInteger]
+  lazy val javaLongType = classOf[JavaLong]
+  lazy val javaFloatType = classOf[JavaFloat]
+  lazy val javaDoubleType = classOf[JavaDouble]
+  lazy val javaBooleanType = classOf[JavaBoolean]
+  lazy val javaCharacterType = classOf[JavaCharacter]
+  lazy val javaStringType = classOf[JavaString]
+  lazy val javaBigIntegerType = classOf[JavaBigInteger]
+  lazy val javaBigDecimalType = classOf[JavaBigDecimal]
+
+  implicit lazy val defaultTimeZone = TimeZone.getTimeZone("Asia/Shanghai")
+
+  implicit lazy val defaultCodec = Codec.UTF8
+  defaultCodec.onMalformedInput(CodingErrorAction.REPLACE)
+  defaultCodec.onUnmappableCharacter(CodingErrorAction.REPLACE)
+
+  implicit lazy val defaultCharset = Charset.forName("UTF-8")
 }
- */
+
 
 object DtFormat extends Enumeration {
   type DtFormat = Value

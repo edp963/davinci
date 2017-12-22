@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.user
 
 import javax.ws.rs.Path
@@ -27,13 +31,15 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.util.AuthorizationProvider
 import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.getHeader
+import edp.davinci.util.ResponseUtils.{getHeader, _}
+import edp.davinci.util.{AuthorizationProvider, PasswordHash}
 import io.swagger.annotations._
 import org.apache.log4j.Logger
-import edp.davinci.util.ResponseUtils._
+
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.{FiniteDuration, SECONDS}
 import scala.util.{Failure, Success}
 
 @Api(value = "/users", consumes = "application/json", produces = "application/json")
@@ -69,9 +75,9 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     if (session.admin) {
       onComplete(UserService.getAll(session)) {
         case Success(userSeq) =>
-          val responseUser = userSeq.map(u => QueryUserInfo(u._1, u._2, u._3, u._4, u._5, active = true))
-          complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), responseUser))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+          complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), userSeq))
+        case Failure(ex) => logger.error("getAllUsersComplete error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
 
@@ -79,7 +85,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   @ApiOperation(value = "Add new users to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "users", value = "User objects to be added", required = true, dataType = "edp.davinci.rest.PostUserInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "users", value = "User objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostUserInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -102,7 +108,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   private def postUserComplete(session: SessionClass, userSeq: Seq[PostUserInfo]): Route = {
     if (session.admin) {
-      val userEntity = userSeq.map(postUser => User(0, postUser.email, postUser.password, postUser.title, postUser.name, postUser.admin, active = true, currentTime, session.userId, currentTime, session.userId))
+      val userEntity = userSeq.map(postUser => User(0, postUser.email, PasswordHash.createHash(postUser.password), postUser.title, postUser.name, postUser.admin, active = true, currentTime, session.userId, currentTime, session.userId))
       val operation = for {
         users <- modules.userDal.insert(userEntity)
         _ <- {
@@ -114,9 +120,10 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       } yield users
       onComplete(operation) {
         case Success(users) =>
-          val queryUsers = users.map(user => QueryUserInfo(user.id, user.email, user.title, user.name, user.admin, user.active))
+          val queryUsers = users.map(user => QueryUserInfo(user.id, user.email, user.title, user.name, user.admin))
           complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), queryUsers))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error("postUserComplete error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
   }
@@ -124,7 +131,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   @ApiOperation(value = "update users in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "user", value = "User objects to be updated", required = true, dataType = "edp.davinci.rest.PutUserInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "user", value = "User objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutUserInfoSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -147,18 +154,10 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   private def putUserComplete(session: SessionClass, userSeq: Seq[PutUserInfo]): Route = {
     if (session.admin) {
-      val operation = for {
-        a <- UserService.update(userSeq, session)
-        b <- UserService.deleteAllRelByUserId(userSeq)
-        c <- {
-          val relSeq = for {rel <- userSeq.head.relUG
-          } yield RelUserGroup(0, userSeq.head.id, rel.group_id, active = true, currentTime, session.userId, currentTime, session.userId)
-          modules.relUserGroupDal.insert(relSeq)
-        }
-      } yield (a, b, c)
-      onComplete(operation) {
+      onComplete(UserService.update(userSeq, session)) {
         case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-        case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+        case Failure(ex) => logger.error("putUserComplete error", ex)
+          complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
     }
     else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
@@ -167,7 +166,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   @Path("/profile")
   @ApiOperation(value = "update login users profile", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "user", value = "login user objects to be updated", required = true, dataType = "edp.davinci.rest.LoginUserInfo", paramType = "body")
+    new ApiImplicitParam(name = "user", value = "login user objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.LoginUserInfo", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -191,7 +190,8 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     val future = UserService.updateLoginUser(user, session)
     onComplete(future) {
       case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-      case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+      case Failure(ex) => logger.error("putLoginUserComplete error", ex)
+        complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
     }
   }
 
@@ -214,14 +214,15 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
           session =>
             if (session.admin) {
-              val operation = for {
-                user <- UserService.deleteUser(userId)
-                relGU <- UserService.deleteRelGU(userId)
-              } yield (user, relGU)
-              onComplete(operation) {
-                case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-                case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-              }
+              val user = Await.result(modules.userDal.findById(userId), new FiniteDuration(30, SECONDS))
+              if (user.nonEmpty) {
+                if(user.get.create_by == session.userId)
+                onComplete(UserService.deleteUser(userId, session)) {
+                  case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+                  case Failure(ex) => logger.error("deleteUserByIdRoute error", ex)
+                    complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+                }else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied ,delete user created by others ", session), ""))
+              } else complete(BadRequest, ResponseJson[String](getHeader(400, "user not found", session), ""))
             } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
         }
       }
@@ -250,10 +251,11 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   }
 
   private def getGroupsByUserIdComplete(session: SessionClass, userId: Long): Route = {
-    val future = UserService.getAllGroups(userId)
+    val future = UserService.getAllGroups(userId, session)
     onComplete(future) {
       case Success(relSeq) => complete(OK, ResponseSeqJson[PutRelUserGroup](getHeader(200, session), relSeq))
-      case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+      case Failure(ex) => logger.error("getGroupsByUserIdComplete error", ex)
+        complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
     }
   }
 
@@ -276,7 +278,8 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
           if (session.admin) {
             onComplete(modules.relUserGroupDal.deleteById(relId).mapTo[Int]) {
               case Success(r) => complete(OK, ResponseJson[Int](getHeader(200, session), r))
-              case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              case Failure(ex) => logger.error("deleteUserFromGroupRoute error", ex)
+                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
             }
           } else complete(Forbidden, ResponseJson[String](getHeader(403, session), ""))
       }
@@ -284,7 +287,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   }
 
   @Path("/token")
-  @ApiOperation(value = "remove user from group by rel id", notes = "", nickname = "", httpMethod = "GET")
+  @ApiOperation(value = "get user info by token", notes = "", nickname = "", httpMethod = "GET")
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
     new ApiResponse(code = 403, message = "user is not admin"),
@@ -298,9 +301,9 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         session =>
           onComplete(UserService.getUserInfo(session)) {
             case Success(userSeq) =>
-              val responseUser = userSeq.map(u => QueryUserInfo(u._1, u._2, u._3, u._4, u._5, u._6))
-              complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), responseUser))
-            case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), userSeq))
+            case Failure(ex) => logger.error("getUserInfoByToken error", ex)
+              complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
       }
     }

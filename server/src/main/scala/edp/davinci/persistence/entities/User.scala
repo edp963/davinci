@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -49,15 +53,26 @@ case class PutUserInfo(id: Long,
                        title: String,
                        name: String,
                        admin: Boolean,
-                       active:Option[Boolean]=Some(true),
+                       active: Option[Boolean] = Some(true),
                        relUG: Seq[PostRelUserGroup])
 
 case class QueryUserInfo(id: Long,
                          email: String,
                          title: String,
                          name: String,
-                         admin: Boolean,
-                         active: Boolean)
+                         admin: Boolean)
+
+case class PostUserInfoSeq(payload: Seq[PostUserInfo])
+
+case class PutUserInfoSeq(payload: Seq[PutUserInfo])
+
+case class LoginClass(username: String, password: String)
+
+case class LoginUserInfo(title: String, name: String)
+
+case class ChangePwdClass(oldPass: String, newPass: String)
+
+case class ChangeUserPwdClass(id: Long, oldPass: String, newPass: String)
 
 class UserTable(tag: Tag) extends BaseTable[User](tag, "user") {
 

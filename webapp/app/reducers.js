@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,7 +29,14 @@ import { LOCATION_CHANGE } from 'react-router-redux'
 
 import globalReducer from 'containers/App/reducer'
 import languageProviderReducer from 'containers/LanguageProvider/reducer'
-import reportReducers from 'containers/Report/containerReducers'
+import reportReducer from './containers/Report/reducer'
+import groupReducer from './containers/Group/reducer'
+import userReducer from './containers/User/reducer'
+import sourceReducer from './containers/Source/reducer'
+import bizlogicReducer from './containers/Bizlogic/reducer'
+import widgetReducer from './containers/Widget/reducer'
+import dashboardReducer from './containers/Dashboard/reducer'
+// import displayReducer from './containers/Display/reducer'
 
 /*
  * routeReducer
@@ -67,7 +74,14 @@ export default function createReducer (asyncReducers) {
     route: routeReducer,
     global: globalReducer,
     language: languageProviderReducer,
-    ...reportReducers,
+    report: reportReducer,
+    group: groupReducer,
+    user: userReducer,
+    source: sourceReducer,
+    bizlogic: bizlogicReducer,
+    widget: widgetReducer,
+    dashboard: dashboardReducer,
+    // display: displayReducer,
     ...asyncReducers
   })
 }

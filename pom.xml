@@ -273,8 +273,7 @@
                         <root>src/main/assembly</root>
                         <root>src/test/java</root>
                         <root>src/test/scala</root>
-                        <root>app</root>
-                        <root>share</root>
+
                     </roots>
                     <includes>
                         <include>**/*.java</include>
@@ -284,17 +283,23 @@
                         <include>**/*.py</include>
                         <include>**/*.properties</include>
                         <include>**/*.sql</include>
-                        <include>**/*.html</include>
-                        <include>**/*.less</include>
-                        <include>**/*.css</include>
-                        <include>**/*.js</include>
-                        <include>**/*.json</include>
+                        <!--<include>**/*.html</include>-->
+                        <!--<include>**/*.less</include>-->
+                        <!--<include>**/*.css</include>-->
+                        <!--<include>**/*.js</include>-->
                     </includes>
                     <excludes>
                         <exclude>**/CSVFormat.scala</exclude>
                         <exclude>**/CSVWriter.scala</exclude>
                         <exclude>**/Formats.scala</exclude>
                         <exclude>**/Quoting.scala</exclude>
+                        <exclude>**/csv/package.scala</exclude>
+                        <exclude>**/CSVParser.scala</exclude>
+                        <exclude>**/CSVReader.scala</exclude>
+                        <exclude>**/LineReader.java</exclude>
+                        <exclude>**/MalformedCSVException.scala</exclude>
+                        <exclude>**/ReaderLineReader.java</exclude>
+                        <exclude>**/SourceLineReader.java</exclude>
                     </excludes>
                     <extraExtensions>
                         <scala>java</scala>

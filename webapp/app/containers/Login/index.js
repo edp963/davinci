@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,8 +18,11 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
+import React, { PureComponent } from 'react'
+import PropTypes from 'prop-types'
+import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
 
 import Banner from './Banner3'
 import LoginForm from './LoginForm'
@@ -28,6 +31,7 @@ import Col from 'antd/lib/col'
 import Button from 'antd/lib/button'
 
 import { login, logged, setLoginUser } from '../App/actions'
+import { makeSelectLoginLoading } from '../App/selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
@@ -47,7 +51,7 @@ export class Login extends PureComponent {
       setToken(token)
       this.props.onLogged()
       this.props.onSetLoginUser(JSON.parse(loginUser))
-      this.props.router.push('/')
+      this.props.router.replace('/')
     }
   }
 
@@ -58,14 +62,16 @@ export class Login extends PureComponent {
     } = this.props
     this.loginForm.validateFieldsAndScroll((err, { username, password }) => {
       if (!err) {
-        onLogin(username, password, () => { router.push('/') })
+        onLogin(username, password, () => { router.replace('/') })
       }
     })
   }
 
   render () {
+    const { loginLoading } = this.props
     return (
       <div className={styles.login}>
+        <Helmet title="Login" />
         <div className={styles.logo}>
           <span>D</span>
           <span>a</span>
@@ -79,10 +85,20 @@ export class Login extends PureComponent {
         <div className={styles.window}>
           <Row gutter={8}>
             <Col sm={21}>
-              <LoginForm ref={f => { this.loginForm = f }} />
+              <LoginForm
+                onLogin={this.doLogin}
+                ref={f => { this.loginForm = f }}
+              />
             </Col>
             <Col sm={3}>
-              <Button size="large" onClick={this.doLogin}>登 录</Button>
+              <Button
+                size="large"
+                disabled={loginLoading}
+                loading={loginLoading}
+                onClick={this.doLogin}
+              >
+                登 录
+              </Button>
             </Col>
           </Row>
         </div>
@@ -93,10 +109,15 @@ export class Login extends PureComponent {
 
 Login.propTypes = {
   router: PropTypes.any,
+  loginLoading: PropTypes.bool,
   onLogin: PropTypes.func,
   onLogged: PropTypes.func,
   onSetLoginUser: PropTypes.func
 }
+
+const mapStateToProps = createStructuredSelector({
+  loginLoading: makeSelectLoginLoading()
+})
 
 export function mapDispatchToProps (dispatch) {
   return {
@@ -106,5 +127,5 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(null, mapDispatchToProps)(Login)
+export default connect(mapStateToProps, mapDispatchToProps)(Login)
 

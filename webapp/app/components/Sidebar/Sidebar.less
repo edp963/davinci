@@ -3,10 +3,7 @@
 .sidebar {
   width: 64px;
   background-color: @body-background;
-  position: fixed;
-  top: 64px;
-  left: 0;
-  bottom: 0;
+  flex-shrink: 0;
 
   .option {
     height: 64px;
@@ -14,12 +11,12 @@
     cursor: pointer;
 
     &.active {
-      background-color: @bg-color;
+      background-color: @body-bg;
       color: @primary-color;
     }
 
     &:hover:not(.active) {
-      background-color: lighten(@bg-color, 3%);
+      background-color: lighten(@body-bg, 3%);
     }
 
     a {

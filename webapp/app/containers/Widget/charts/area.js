@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -41,7 +41,8 @@ export default function (dataSource, flatInfo, chartParams) {
     top,
     bottom,
     left,
-    right
+    right,
+    suffixYAxis
   } = chartParams
 
   let grouped,
@@ -55,7 +56,12 @@ export default function (dataSource, flatInfo, chartParams) {
     legendOptions,
     toolboxOptions,
     gridOptions,
-    dataZoomOptions
+    dataZoomOptions,
+    suffixYAxisOptions
+
+  suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
+    formatter: `{value} ${suffixYAxis}`
+  }} : null
 
   // symbol
   symbolOption = symbol && symbol.length
@@ -202,7 +208,8 @@ export default function (dataSource, flatInfo, chartParams) {
   return Object.assign({},
     {
       yAxis: {
-        type: 'value'
+        ...{type: 'value'},
+        ...suffixYAxisOptions
       }
     },
     metricOptions,

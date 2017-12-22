@@ -8,14 +8,14 @@
   background-position: center center;
   margin-bottom: 20px;
   border-radius: 2px;
-  box-shadow: 0 2px 3px 0 rgba(0,0,0,.05);
+  box-shadow: @block-box-shadow;
   transform: translate3d(0, 0, 0);
   transition: all 200ms;
   position: relative;
   cursor: pointer;
 
   &:hover {
-    box-shadow: 0 7px 21px 0 rgba(0,0,0,.15);
+    box-shadow: @block-active-box-shadow;
     transform: translate3d(0, -5px, 0);
   }
 
@@ -68,26 +68,37 @@
 }
 
 .gridItem {
-  &:hover {
-    .tools {
-      opacity: 1;
-    }
-  }
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 350ms ease;
 
   .title {
-    line-height: 40px;
+    flex-shrink: 0;
+    height: 40px;
     padding: 0 10px;
+    line-height: 40px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: move;
 
-    .ellipsis;
+    h4 {
+      .ellipsis;
+      cursor: default;
+    }
 
     .control {
+      flex-shrink: 0;
+      font-size: 16px;
       font-weight: normal;
-      margin-right: 5px;
+      margin-right: 8px;
       cursor: pointer;
     }
 
     .desc {
-      font-size: 10px;
+      flex-shrink: 0;
       font-weight: normal;
       margin-left: 8px;
       cursor: pointer;
@@ -95,14 +106,14 @@
   }
 
   .tools {
-    line-height: 1;
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 0;
+    right: 10px;
     opacity: 0;
 
     i {
-      font-size: 18px;
+      font-size: 16px;
+      line-height: 40px;
       margin-left: 8px;
       cursor: pointer;
       transition: transform 200ms ease;
@@ -110,6 +121,41 @@
       &:hover {
         transform: scale(1.1, 1.1);
       }
+    }
+  }
+
+  &:hover {
+    .tools {
+      opacity: 1;
+    }
+  }
+
+  &.interact {
+    box-shadow: 0 0 3px @primary-color,
+    0 0 8px @primary-color;
+
+    &:hover {
+      .tools {
+        display: none;
+      }
+    }
+
+    .offInteract {
+      display: block;
+    }
+  }
+
+  .offInteract {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: none;
+
+    i {
+      color: @primary-color;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
     }
   }
 
@@ -177,27 +223,21 @@
   }
 
   .block {
-    position: absolute;
-    top: 40px;
-    left: 0;
-    bottom: 0;
-    right: 0;
+    flex: 1;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
 
     .chartBlock {
       flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .tableBlock {
       padding: 0 16px;
       flex: 1;
     }
-  }
-
-  .move {
-    cursor: pointer;
   }
 }
 
@@ -241,14 +281,14 @@
   }
 
   .filterBlock {
-    flex: 1;
+    flex-shrink: 0;
     display: flex;
     flex-direction: row;
     align-items: center;
   }
 
   .filterRel {
-    width: 80px;
+    width: 110px;
     margin: 0 5px;
     flex-shrink: 0;
     position: relative;
@@ -389,10 +429,53 @@
   }
 }
 
+.textChart {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px 40px;
+
+  .textContainer {
+    max-width: 100%;
+
+    .textChartTitle {
+      padding: 8px 0 0;
+      display: block;
+
+      .ellipsis;
+    }
+
+    .textChartContent {
+      padding: 8px 0;
+      color: @light-text-color;
+      display: block;
+
+      .ellipsis;
+    }
+  }
+}
+
+.menuItem {
+  padding: 0;
+
+  .menuText {
+    padding: 7px 8px;
+    display: block;
+  }
+}
+
 @media (max-width: 1024px) {
   .gridItem {
     .tools {
       opacity: 1;
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .fullScreen {
+    display: none;
   }
 }

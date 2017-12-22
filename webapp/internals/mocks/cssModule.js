@@ -1,1 +1,1 @@
-module.exports = 'CSS_MODULE';
+module.exports = 'CSS_MODULE'

@@ -3,6 +3,21 @@ akka {
   version = 2.4.17
 }
 
+akka.http {
+  server {
+
+    # Defines the default time period within which the application has to
+    # produce an HttpResponse for any given HttpRequest it received.
+    # The timeout begins to run when the *end* of the request has been
+    # received, so even potentially long uploads can have a short timeout.
+    # Set to `infinite` to completely disable request timeout checking.
+    #
+    # If this setting is not `infistomization of the timeout period and timeout response for each
+    # request individually.
+    request-timeout = 30 s
+  }
+}
+
 mysqldb {
   profile = "slick.jdbc.MySQLProfile$"
   db {
@@ -58,6 +73,8 @@ httpServer {
   port = 8080
 }
 
+domainName ="localhost:8080"
+
 
 jwtToken {
   typ = "JWT"
@@ -81,5 +98,14 @@ ldap {
     timeout = "5000"
     pool = true
   }
+}
+
+
+cache {
+  isEnable = true
+  url: "127.0.0.1:6379"
+  auth:""
+  expire:3
+  mode:"stand-alone"
 }
 

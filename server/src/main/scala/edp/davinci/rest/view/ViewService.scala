@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.rest.view
 
 import edp.davinci.ModuleInstance
@@ -26,6 +30,8 @@ import edp.davinci.persistence.entities._
 import edp.davinci.rest.SessionClass
 import edp.davinci.util.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 object ViewService extends ViewService
@@ -33,52 +39,54 @@ object ViewService extends ViewService
 trait ViewService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAllViews: Future[Seq[(Long, Long, String, String, Option[String], String, String, String, String)]] = {
-    db.run(modules.viewQuery.map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table)).result)
+  def getAllViews(session: SessionClass): Future[Seq[QueryView]] = {
+    val viewIds = modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
+    db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).
+      map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table, r.active, r.create_by) <> (QueryView.tupled, QueryView.unapply)).result).
+      mapTo[Seq[QueryView]]
   }
 
-  def updateFlatTbl(flatTableSeq: Seq[PutViewInfo], session: SessionClass): Future[Unit] = {
-    val query = DBIO.seq(flatTableSeq.map(r => {
-      modules.viewQuery.filter(obj => obj.id === r.id).map(flatTable => (flatTable.name, flatTable.source_id, flatTable.sql_tmpl, flatTable.desc, flatTable.trigger_type, flatTable.frequency, flatTable.`catch`, flatTable.update_by, flatTable.update_time))
-        .update(r.name, r.source_id, r.sql_tmpl, Some(r.desc), r.trigger_type, r.frequency, r.`catch`, session.userId, ResponseUtils.currentTime)
-    }): _*)
+  def updateFlatTbl(viewSeq: Seq[PutViewInfo], session: SessionClass): Future[Unit] = {
+    val query = for {
+      _ <- DBIO.seq(viewSeq.map(r => {
+        modules.viewQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(view => (view.name, view.source_id, view.sql_tmpl, view.desc, view.trigger_type, view.frequency, view.`catch`, view.update_by, view.update_time))
+          .update(r.name, r.source_id, r.sql_tmpl, Some(r.desc), r.trigger_type, r.frequency, r.`catch`, session.userId, ResponseUtils.currentTime)
+      }): _*)
+      _ <- modules.relGroupViewQuery.filter(view => (view.flatTable_id inSet viewSeq.map(_.id)) && view.create_by === session.userId).delete
+
+    } yield ()
     db.run(query)
   }
 
-  def deleteFromView(idSeq: Seq[Long]): Future[Int] = {
-    modules.viewDal.deleteById(idSeq)
+  def deleteFromView(idSeq: Seq[Long], session: SessionClass): Future[Int] = {
+    modules.viewDal.deleteByFilter(view => (view.id inSet session.groupIdList) && (view.create_by === session.userId))
   }
 
-  def deleteFromRel(viewId: Long): Future[Int] = {
-    modules.relGroupViewDal.deleteByFilter(_.flatTable_id === viewId)
+
+  def deleteView(viewId: Long, session: SessionClass): Future[Unit] = {
+    val query = (for {
+      _ <- modules.viewQuery.filter(_.id === viewId).delete
+      _ <- modules.relGroupViewQuery.filter(view => (view.flatTable_id === viewId) && view.create_by === session.userId).delete
+      _ <- modules.widgetQuery.filter(widget => widget.flatTable_id === viewId && widget.create_by === session.userId).map(_.flatTable_id).update(0)
+    } yield ()).transactionally
+    db.run(query)
   }
+
 
   def getGroups(flatId: Long): Future[Seq[(Long, Long, String)]] = {
-    db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params)).result)
+    db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params.get)).result)
   }
 
-  def updateWidget(flatTableId: Long): Future[Int] = {
-    db.run(modules.widgetQuery.filter(_.flatTable_id === flatTableId).map(_.flatTable_id).update(0))
-  }
+  def getSourceInfo(flatTableId: Long, session: SessionClass = null): Future[Seq[(String, String, String, Option[Option[String]])]] = {
+    val rel = if (session.admin)
+      modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
+    else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
 
-  def getSourceInfo(flatTableId: Long, session: SessionClass = null): Future[Seq[(String, String, String, String)]] = {
-    val rel = if (session.admin) modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId) else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
-    val query = (rel join modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
-      modules.sourceQuery on (_._2.source_id === _.id))
-      .map {
-        case (rf, s) => (rf._2.sql_tmpl, rf._2.result_table, s.connection_url, rf._1.sql_params)
-      }.result
-    db.run(query)
-  }
-
-  def getSqlInfo(flatTableId: Long, groupIds: Seq[Long], admin: Boolean): Future[Seq[(String, String, String, String)]] = {
-    val rel = if (admin) modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId) else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet groupIds)
-    val query = (rel join modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
-      modules.sourceQuery on (_._2.source_id === _.id))
-      .map {
-        case (rf, s) => (rf._2.sql_tmpl, rf._2.result_table, s.connection_url, rf._1.sql_params)
-      }.result
-    db.run(query)
+    val query = for {
+      ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
+        modules.sourceQuery on (_._2.source_id === _.id)
+    } yield (view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params))
+    db.run(query.result)
   }
 
 

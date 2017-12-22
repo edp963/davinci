@@ -18,6 +18,10 @@
  * >>
  */
 
+
+
+
+
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
@@ -40,6 +44,11 @@ case class SimpleSqlLog(user_id: Long,
                         end_time: String,
                         success: Boolean,
                         error: String) extends SimpleBaseEntity
+
+
+case class SimpleSqlLogSeq(payload: Seq[SimpleSqlLog])
+
+case class SqlLogSeq(payload: Seq[SqlLog])
 
 
 class SqlLogTable(tag: Tag) extends BaseTable[SqlLog](tag, "sql_log") {

@@ -1,0 +1,214 @@
+@import "../../assets/less/variable";
+
+.display {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    flex-shrink: 0;
+    height: 40px;
+    background-color: @light-bg;
+    box-shadow: @header-box-shadow;
+    z-index: @header-index;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .body {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+
+    .main {
+      background: url('../../assets/images/grid.png') repeat;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .editor {
+        flex: 1;
+        position: relative;
+      }
+
+      .bottom {
+        height: 40px;
+        background-color: @white;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+
+        .sliderWrapper {
+          width: 240px;
+          padding: 0 10px;
+          flex-shrink: 0;
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+
+          .slider {
+            flex: 1;
+          }
+
+          i {
+            flex-shrink: 0;
+            margin: 0 8px;
+            color: @disabled-text-color;
+            font-size: 18px;
+            cursor: pointer;
+          }
+        }
+      }
+    }
+
+    .sidebar {
+      width: 320px;
+      background-color: @light-bg;
+      box-shadow: @right-side-box-shadow;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+  }
+}
+
+.editorContainer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+}
+
+.displayContainer {
+  transition: all ease-in 200ms;
+}
+
+.displayPanelWrapper {
+  width: 100%;
+  height: 100%;
+
+  .displayPanel {
+    background-color: #3F51B5;
+    box-shadow: @block-active-box-shadow;
+    transform-origin: 0 0;
+    transition: transform ease-in 200ms;
+  }
+
+}
+
+.formTitle {
+  padding: 24px 16px 16px;
+  border-bottom: 1px solid @border-color-base;
+  color: @black;
+  font-size: 18px;
+  font-weight: normal;
+}
+
+.formBlockTitle {
+  padding: 16px 16px 10px;
+  font-size: 14px;
+  font-weight: normal;
+}
+
+.formBlock {
+  padding: 0 16px 0 32px;
+  border-bottom: 1px solid @border-color-base;
+}
+
+.formItemTitle {
+  margin-bottom: 16px;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.formItem {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 24px;
+  }
+
+  label {
+    font-size: 12px;
+  }
+
+  input {
+    background-color: @light-bg;
+  }
+
+  .inputNumber {
+    width: 100%;
+  }
+}
+
+.upload {
+  margin-bottom: 16px;
+  border: 1px dashed @border-color-base;
+  border-radius: 3px;
+  text-align: center;
+  display: block;
+  cursor: pointer;
+
+  i {
+    height: 180px;
+    font-size: 36px;
+    line-height: 180px;
+    color: @light-text-color;
+  }
+}
+
+.commands {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+
+  .commandGroup {
+    padding: 0 8px;
+    display: flex;
+    flex-direction: row;
+    position: relative;
+
+    &:before {
+      width: 1px;
+      height: 20px;
+      background-color: @border-color-base;
+      position: absolute;
+      top: 6px;
+      left: 0;
+      content: '';
+    }
+  }
+
+  .historyBack {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: row;
+  }
+
+  li {
+    width: 36px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      background-color: darken(@light-bg, 10%);
+    }
+
+    i {
+      font-size: 20px;
+      color: @light-text-color;
+
+      &.primary {
+        color: @primary-color;
+      }
+    }
+  }
+}
+

@@ -1,4 +1,4 @@
-/*-
+/*
  * <<
  * Davinci
  * ==
@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,7 +33,7 @@ const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 
-import chartIconMapping from '../../Widget/chartIconMapping'
+import { iconMapping } from '../../Widget/components/chartUtil'
 
 import utilStyles from '../../../assets/less/util.less'
 import widgetStyles from '../../Widget/Widget.less'
@@ -51,14 +51,18 @@ export class DashboardItemForm extends React.PureComponent {
     const {
       type,
       form,
-      widgets,
       selectedWidget,
       triggerType,
       step,
+      loginUser,
       onWidgetSelect,
       onTriggerTypeSelect
     } = this.props
 
+    let {widgets} = this.props
+    if (loginUser && loginUser.admin) {
+      widgets = widgets.filter(widget => widget['create_by'] === loginUser.id)
+    }
     const {getFieldDecorator} = form
 
     const widgetSelector = widgets.map(w => {
@@ -86,7 +90,7 @@ export class DashboardItemForm extends React.PureComponent {
           <div className={widgetClassName}>
             <h3 className={widgetStyles.title}>{w.name}</h3>
             <p className={widgetStyles.content}>{w.desc}</p>
-            <i className={`${widgetStyles.pic} iconfont ${chartIconMapping[widgetType]}`} />
+            <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} />
             {checkmark}
           </div>
         </Col>
@@ -173,10 +177,11 @@ DashboardItemForm.propTypes = {
   type: PropTypes.string,
   widgets: PropTypes.array,
   selectedWidget: PropTypes.number,
+  loginUser: PropTypes.object,
   triggerType: PropTypes.string,
   onWidgetSelect: PropTypes.func,
   onTriggerTypeSelect: PropTypes.func,
   step: PropTypes.number
 }
 
-export default Form.create({withRef: true})(DashboardItemForm)
+export default Form.create()(DashboardItemForm)
