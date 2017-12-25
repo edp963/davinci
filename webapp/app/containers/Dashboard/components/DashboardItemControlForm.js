@@ -224,9 +224,16 @@ export class DashboardItemControlForm extends PureComponent {
   parentSelectChange = (control) => (val) => {
     const { parentSelValues } = this.state
 
-    if (val) {
-      const selIndex = control.sub.findIndex(c => c.value === val)
-      parentSelValues[control.id] = selIndex
+    if (Object.prototype.toString.call(val) !== '[object Array]') {
+      let selIndex = -1
+
+      if (val) {
+        selIndex = control.sub.findIndex(c => c.value === val)
+        parentSelValues[control.id] = selIndex
+      } else {
+        selIndex = parentSelValues[control.id]
+        parentSelValues[control.id] = 0
+      }
 
       this.setState({
         parentSelValues: parentSelValues
@@ -235,17 +242,6 @@ export class DashboardItemControlForm extends PureComponent {
         this.props.form.setFieldsValue({
           [`sub_${control.id}_${control.sub[selIndex].id}`]: ''
         })
-      })
-    } else {
-      const selIndex = parentSelValues[control.id]
-      parentSelValues[control.id] = 0
-
-      this.props.form.setFieldsValue({
-        [`sub_${control.id}_${control.sub[selIndex].id}`]: ''
-      })
-
-      this.setState({
-        parentSelValues: parentSelValues
       })
     }
   }
@@ -291,6 +287,14 @@ export class DashboardItemControlForm extends PureComponent {
               v: `'${val[1]}'`
             })
             break
+          case 'multiSelect':
+            val.forEach(v => {
+              arr = arr.concat({
+                k: valControl.variables[0],
+                v: `${v}`
+              })
+            })
+            break
           default:
             break
         }
@@ -319,7 +323,6 @@ export class DashboardItemControlForm extends PureComponent {
                 })
                 break
               case 'select':
-              case 'multiSelect':
                 arr = arr.concat({
                   k: valControl.variables[0],
                   v: `${val}`
