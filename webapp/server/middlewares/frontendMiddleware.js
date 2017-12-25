@@ -17,7 +17,7 @@ const addDevMiddlewares = (app, webpackConfig) => {
     silent: true,
     stats: 'errors-only'
   })
-  app.use(['/api'], proxy({target: 'http://localhost:9080/', changeOrigin: true}))
+  app.use(['/api'], proxy({target: 'http://localhost:8080/', changeOrigin: true}))
   app.use(middleware)
   app.use(webpackHotMiddleware(compiler))
 

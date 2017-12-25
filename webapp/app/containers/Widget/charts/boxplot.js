@@ -55,7 +55,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     xAxisOptions = {
       xAxis: {
         type: 'category',
-        data: metrics,
+        data: xAxisData,
         boundaryGap: true,
         nameGap: 30,
         splitArea: {
@@ -76,11 +76,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   if (metrics && metrics.length) {
     let step1 = xAxisData.map(xData => dataSource.filter(data => data[xAxis] === xData))
     let step2 = step1.map(step => metrics.map(me => step.map(st => st[me])))
-    data = step2.map(step => dataTool(step))
+    let step3 = metrics.map((me, i) => {
+      let arr = []
+      step2.forEach((step, index) => {
+        arr.push(step[i])
+      })
+      return arr
+    })
+    data = step3.map(step => dataTool(step))
 
     metricOptions = {
       series: data.map((d, index) => ({
-        name: xAxisData[index],
+        name: metrics[index],
         type: 'boxplot',
         data: d.boxData,
         tooltip: {formatter: formatter}
@@ -113,7 +120,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   legendOptions = legend && legend.length
     ? {
       legend: {
-        data: metricOptions.series.map(m => m.name),
+        data: metrics,
         align: 'left',
         top: 3,
         right: 200
@@ -179,7 +186,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
 function formatter (param) {
   return [
-    `Experiment ${param.name}: `,
+    `${param.name}: `,
     `upper: ${param.data[0]}`,
     `Q1: ${param.data[1]}`,
     `median: ${param.data[2]}`,
