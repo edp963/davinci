@@ -328,11 +328,12 @@ export class DashboardItem extends PureComponent {
           {userDownloadButton}
           {dropdownMenu}
         </div>
-        <div className={styles.offInteract}>
-          <Icon
-            type="close-circle-o"
-            onClick={onTurnOffInteract(itemId)}
-          />
+        <div
+          className={styles.offInteract}
+          onClick={onTurnOffInteract(itemId)}
+        >
+          <i className="iconfont icon-unlink" />
+          <h3>点击取消联动</h3>
         </div>
         <Animate
           showProp="show"

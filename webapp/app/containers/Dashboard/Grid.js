@@ -1143,7 +1143,7 @@ export class Grid extends Component {
       grids = (
         <ResponsiveReactGridLayout
           className="layout"
-          style={{marginTop: '-16px'}}
+          style={{marginTop: '-14px'}}
           rowHeight={30}
           margin={[16, 16]}
           breakpoints={loginUser.admin ? ADMIN_GRID_BREAKPOINTS : USER_GRID_BREAKPOINTS}
