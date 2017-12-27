@@ -18,9 +18,10 @@
  * >>
  */
 
-import defaultEchartsTheme from './assets/json/echartsThemes/macarons.project.json'
+import defaultEchartsTheme from './assets/json/echartsThemes/default.project.json'
 
-export const DEFAULT_THEME_COLOR = '#8BC34A'
+export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
+export const DEFAULT_SECONDARY_COLOR = '#223151'
 
 export const ADMIN_GRID_BREAKPOINTS = { lg: 1136, md: 932, sm: 704, xs: 416, xxs: 0 }
 export const USER_GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }

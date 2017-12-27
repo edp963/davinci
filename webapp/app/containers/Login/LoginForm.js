@@ -21,13 +21,9 @@
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-const FormItem = Form.Item
+import Icon from 'antd/lib/icon'
 
-import styles from './Login3.less'
+import styles from './Login.less'
 
 export class LoginForm extends PureComponent {
   componentWillUnmount () {
@@ -50,55 +46,47 @@ export class LoginForm extends PureComponent {
   }
 
   render () {
-    const { getFieldDecorator } = this.props.form
+    const {
+      username,
+      password,
+      onChangeUsername,
+      onChangePassword
+    } = this.props
 
     return (
-      <Form>
-        <Row gutter={8}>
-          <Col sm={12}>
-            <FormItem className={styles.loginFormItem}>
-              {getFieldDecorator('username', {
-                rules: [{
-                  required: true,
-                  message: '请输入用户名'
-                }],
-                initialValue: ''
-              })(
-                <Input
-                  placeholder="用户名"
-                  onFocus={this.bindDocumentKeypress}
-                  onBlur={this.unbindDocumentKeypress}
-                />
-              )}
-            </FormItem>
-          </Col>
-          <Col sm={12}>
-            <FormItem className={styles.loginFormItem}>
-              {getFieldDecorator('password', {
-                rules: [{
-                  required: true,
-                  message: '请输入密码'
-                }],
-                initialValue: ''
-              })(
-                <Input
-                  placeholder="密码"
-                  type="password"
-                  onFocus={this.bindDocumentKeypress}
-                  onBlur={this.unbindDocumentKeypress}
-                />
-              )}
-            </FormItem>
-          </Col>
-        </Row>
-      </Form>
+      <div className={styles.form}>
+        <div className={styles.input}>
+          <Icon type="user" />
+          <input
+            placeholder="用户名"
+            value={username}
+            onFocus={this.bindDocumentKeypress}
+            onBlur={this.unbindDocumentKeypress}
+            onChange={onChangeUsername}
+          />
+        </div>
+        <div className={styles.input}>
+          <Icon type="unlock" />
+          <input
+            placeholder="密码"
+            type="password"
+            value={password}
+            onFocus={this.bindDocumentKeypress}
+            onBlur={this.unbindDocumentKeypress}
+            onChange={onChangePassword}
+          />
+        </div>
+      </div>
     )
   }
 }
 
 LoginForm.propTypes = {
-  form: PropTypes.any,
+  username: PropTypes.string,
+  password: PropTypes.string,
+  onChangeUsername: PropTypes.func,
+  onChangePassword: PropTypes.func,
   onLogin: PropTypes.func
 }
 
-export default Form.create()(LoginForm)
+export default LoginForm

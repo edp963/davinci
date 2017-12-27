@@ -19,6 +19,6 @@
  */
 
 module.exports = {
-  'primary-color': '#8BC34A',
+  'primary-color': '#1B98E0',
   'font-size-base': '14px'
 }

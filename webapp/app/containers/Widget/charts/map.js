@@ -96,7 +96,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         opacity: interactIndex === undefined ? 1 : 0.25
       }
       // emphasis: {
-      //   borderColor: DEFAULT_THEME_COLOR,
+      //   borderColor: DEFAULT_PRIMARY_COLOR,
       //   borderWidth: 1
       // }
     }

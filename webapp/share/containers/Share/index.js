@@ -38,7 +38,7 @@ import { getDashboard, getWidget, getResultset, setIndividualDashboard, loadWidg
 import { makeSelectTitle, makeSelectWidgets, makeSelectItems, makeSelectDataSources, makeSelectLoadings, makeSelectItemQueryParams, makeSelectItemDownloadCsvLoadings } from './selectors'
 import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
 import { changePosition } from '../../../app/containers/Dashboard/components/localPositionUtil'
-import { DEFAULT_THEME_COLOR, ECHARTS_RENDERER, GRID_COLS, USER_GRID_BREAKPOINTS } from '../../../app/globalConstants'
+import { DEFAULT_PRIMARY_COLOR, ECHARTS_RENDERER, GRID_COLS, USER_GRID_BREAKPOINTS } from '../../../app/globalConstants'
 
 import styles from '../../../app/containers/Dashboard/Dashboard.less'
 
@@ -157,9 +157,9 @@ export class Share extends React.Component {
     const dashboardItem = currentItems.find(c => c.id === itemId)
     const widget = widgets.find(w => w.id === widgetId)
     const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
-
     const chartInstanceId = `widget_${itemId}`
 
+    let widgetConfig = JSON.parse(widget.config)
     let currentChart = this.charts[chartInstanceId]
 
     if (chartInfo.renderer === ECHARTS_RENDERER) {
@@ -171,14 +171,18 @@ export class Share extends React.Component {
 
           currentChart = echarts.init(document.getElementById(chartInstanceId), 'default')
           this.charts[chartInstanceId] = currentChart
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
         case 'clear':
           currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
         case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
+          widgetConfig = { // 点击"同步数据"按钮时强制不使用缓存
+            useCache: 'false',
+            expired: 0
+          }
           break
         default:
           break
@@ -202,6 +206,8 @@ export class Share extends React.Component {
       pagination.sorts,
       pagination.offset,
       pagination.limit,
+      widgetConfig.useCache,
+      widgetConfig.expired
     )
   }
 
@@ -552,7 +558,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboard: (token, resolve, reject) => dispatch(getDashboard(token, resolve, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
-    onLoadResultset: (itemId, token, sql, sorts, offset, limit) => dispatch(getResultset(itemId, token, sql, sorts, offset, limit)),
+    onLoadResultset: (itemId, token, sql, sorts, offset, limit, useCache, expired) => dispatch(getResultset(itemId, token, sql, sorts, offset, limit, useCache, expired)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit))
   }

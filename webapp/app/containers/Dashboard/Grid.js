@@ -85,7 +85,7 @@ import { makeSelectLoginUser } from '../App/selectors'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 import { initializePosition, changePosition, diffPosition } from './components/localPositionUtil'
 import {
-  DEFAULT_THEME_COLOR,
+  DEFAULT_PRIMARY_COLOR,
   ECHARTS_RENDERER,
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
@@ -263,10 +263,9 @@ export class Grid extends Component {
     } = this.props
     const widget = widgets.find(w => w.id === widgetId)
     const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
-    const widgetConfig = JSON.parse(widget.config)
-
     const chartInstanceId = `widget_${itemId}`
 
+    let widgetConfig = JSON.parse(widget.config)
     let currentChart = this.charts[chartInstanceId]
 
     if (chartInfo.renderer === ECHARTS_RENDERER) {
@@ -278,14 +277,18 @@ export class Grid extends Component {
 
           currentChart = echarts.init(document.getElementById(chartInstanceId), 'default')
           this.charts[chartInstanceId] = currentChart       // todo  赋值 {domId: chartsInstance}
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
         case 'clear':
           currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
         case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_THEME_COLOR })
+          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
+          widgetConfig = { // 点击"同步数据"按钮时强制不使用缓存
+            useCache: 'false',
+            expired: 0
+          }
           break
         default:
           break

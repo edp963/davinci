@@ -86,14 +86,23 @@ export function* getResultset ({ payload }) {
     sql,
     sorts,
     offset,
-    limit
+    limit,
+    useCache,
+    expired
   } = payload
 
   try {
-    let queries = ''
+    let queries = []
+
     if (offset !== undefined && limit !== undefined) {
-      queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
+      queries = queries
+        .concat(`sortby=${sorts}`)
+        .concat(`offset=${offset}`)
+        .concat(`limit=${limit}`)
     }
+    queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
+    queries = `?${queries.join('&')}`
+
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/resultset/${token}${queries}`,
