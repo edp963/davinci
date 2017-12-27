@@ -59,7 +59,7 @@ export class LinkagePanel extends PureComponent {
     })
 
     if (!this.chart) {
-      this.chart = echarts.init(document.getElementById('linkageChart'))
+      this.chart = echarts.init(document.getElementById('linkageChart'), 'default')
     }
 
     this.chart.setOption({

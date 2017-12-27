@@ -71,7 +71,7 @@ export function widgetGetted (widget) {
   }
 }
 
-export function getResultset (itemId, token, sql, sorts, offset, limit) {
+export function getResultset (itemId, token, sql, sorts, offset, limit, useCache, expired) {
   return {
     type: LOAD_SHARE_RESULTSET,
     payload: {
@@ -80,7 +80,9 @@ export function getResultset (itemId, token, sql, sorts, offset, limit) {
       sql,
       sorts,
       offset,
-      limit
+      limit,
+      useCache,
+      expired
     }
   }
 }

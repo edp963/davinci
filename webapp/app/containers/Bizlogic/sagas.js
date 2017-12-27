@@ -202,7 +202,7 @@ export function* getBizdatasFromItem ({ payload }) {
     queries = `?${queries.join('&')}`
 
     let data = {}
-    if (sql) {
+    if (sql) {  // FIXME sql 是否需要判断
       const { adHoc, filters, linkageFilters, params, linkageParams } = sql
       data = {
         adHoc,

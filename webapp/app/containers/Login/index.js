@@ -24,11 +24,9 @@ import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import Banner from './Banner3'
+import Background from './Background'
 import LoginForm from './LoginForm'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
+import Icon from 'antd/lib/icon'
 
 import { login, logged, setLoginUser } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
@@ -36,9 +34,17 @@ import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
 
-import styles from './Login3.less'
+import styles from './Login.less'
 
 export class Login extends PureComponent {
+  constructor (props) {
+    super(props)
+    this.state = {
+      username: '',
+      password: ''
+    }
+  }
+
   componentWillMount () {
     this.checkNormalLogin()
   }
@@ -55,52 +61,54 @@ export class Login extends PureComponent {
     }
   }
 
-  doLogin = () => {
-    const {
-      onLogin,
-      router
-    } = this.props
-    this.loginForm.validateFieldsAndScroll((err, { username, password }) => {
-      if (!err) {
-        onLogin(username, password, () => { router.replace('/') })
-      }
+  changeUsername = (e) => {
+    this.setState({
+      username: e.target.value.trim()
     })
+  }
+
+  changePassword = (e) => {
+    this.setState({
+      password: e.target.value
+    })
+  }
+
+  doLogin = () => {
+    const { onLogin, router } = this.props
+    const { username, password } = this.state
+
+    if (username && password) {
+      onLogin(username, password, () => { router.replace('/') })
+    }
   }
 
   render () {
     const { loginLoading } = this.props
+    const { username, password } = this.state
     return (
       <div className={styles.login}>
         <Helmet title="Login" />
-        <div className={styles.logo}>
-          <span>D</span>
-          <span>a</span>
-          <span>v</span>
-          <span>i</span>
-          <span>n</span>
-          <span>c</span>
-          <span>i</span>
-        </div>
-        <Banner />
+        <Background />
+        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
         <div className={styles.window}>
-          <Row gutter={8}>
-            <Col sm={21}>
-              <LoginForm
-                onLogin={this.doLogin}
-                ref={f => { this.loginForm = f }}
-              />
-            </Col>
-            <Col sm={3}>
-              <Button
-                size="large"
-                disabled={loginLoading}
-                loading={loginLoading}
-                onClick={this.doLogin}
-              >
-                登 录
-              </Button>
-            </Col>
-          </Row>
+          <LoginForm
+            username={username}
+            password={password}
+            onChangeUsername={this.changeUsername}
+            onChangePassword={this.changePassword}
+            onLogin={this.doLogin}
+          />
+          <button
+            disabled={loginLoading}
+            onClick={this.doLogin}
+          >
+            {
+              loginLoading
+                ? <Icon type="loading" />
+                : ''
+            }
+            登 录
+          </button>
         </div>
       </div>
     )

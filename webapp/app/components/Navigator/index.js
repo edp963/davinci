@@ -37,13 +37,7 @@ export function Navigator (props) {
   return (
     <nav className={headerClass}>
       <div className={styles.logo}>
-        <span>D</span>
-        <span>a</span>
-        <span>v</span>
-        <span>i</span>
-        <span>n</span>
-        <span>c</span>
-        <span>i</span>
+        <img src={require('../../assets/images/logo.svg')} />
       </div>
       <ul className={styles.tools}>
         <li>
