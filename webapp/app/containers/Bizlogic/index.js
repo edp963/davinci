@@ -41,7 +41,7 @@ import Popconfirm from 'antd/lib/popconfirm'
 import Breadcrumb from 'antd/lib/breadcrumb'
 
 import 'codemirror/lib/codemirror.css'
-import 'codemirror/theme/3024-day.css'
+import '../../assets/override/codemirror_theme.css'
 const codeMirror = require('codemirror/lib/codemirror')
 require('codemirror/mode/sql/sql')
 
