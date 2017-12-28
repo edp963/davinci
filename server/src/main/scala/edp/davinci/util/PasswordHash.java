@@ -180,7 +180,7 @@ public class PasswordHash {
         try {
             // Print out 10 hashes
             for (int i = 0; i < 10; i++)
-                System.out.println(PasswordHash.createHash("guest123"));
+                System.out.println(PasswordHash.createHash("123456"));
 
             // Test password validation
             boolean failure = false;

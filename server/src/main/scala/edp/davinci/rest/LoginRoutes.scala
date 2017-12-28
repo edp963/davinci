@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest
 
 import javax.ws.rs.Path
@@ -64,7 +61,9 @@ class LoginRoutes(modules: ConfigurationModule with PersistenceModule with Busin
             sessionEither.fold(authorizationError => complete(BadRequest, ResponseJson[String](getHeader(authorizationError.statusCode, authorizationError.desc, null), "user name or password invalid")),
               info => complete(OK, ResponseJson[QueryUserInfo](getHeader(200, info._1), info._2))
             )
-          case Failure(ex) => complete(Unauthorized, ResponseJson[String](getHeader(401, ex.getMessage, null), ""))
+          case Failure(ex) =>
+            logger.error("login failure", ex)
+            complete(Unauthorized, ResponseJson[String](getHeader(401, ex.getMessage, null), ""))
         }
       }
     }
