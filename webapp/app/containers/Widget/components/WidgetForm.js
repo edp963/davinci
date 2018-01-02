@@ -33,6 +33,9 @@ import Radio from 'antd/lib/radio'
 import Button from 'antd/lib/button'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
+import Popover from 'antd/lib/popover'
+import Icon from 'antd/lib/icon'
+import Modal from 'antd/lib/modal'
 const FormItem = Form.Item
 const Option = Select.Option
 const CheckboxGroup = Checkbox.Group
@@ -40,11 +43,21 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
+import MarkConfigForm from './MarkConfigForm'
 
 import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
+import {uuid} from '../../../utils/util'
 
 export class WidgetForm extends React.Component {
+  constructor (props) {
+    super(props)
+    this.state = {
+      markConfigModalVisible: false,
+      tableSource: [],
+      isCanSaveForm: true
+    }
+  }
   checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
@@ -58,7 +71,80 @@ export class WidgetForm extends React.Component {
         callback(err)
       })
   }
+  toggleMarkConfigTable = () => {
+    let {markConfigModalVisible} = this.state
+    this.setState({
+      markConfigModalVisible: !markConfigModalVisible
+    })
+  }
+  resetMarkConfigForm = () => {
+    this.markConfigForm.resetFields()
+    this.setState({
+      tableSource: []
+    })
+  }
+  onAddConfigValue = () => {
+    const { tableSource } = this.state
+    this.setState({
+      tableSource: tableSource.concat({
+        id: uuid(8, 16),
+        text: '',
+        value: '',
+        status: 0
+      })
+    }, () => this.isCanSave())
+  }
+  onDeleteConfigValue = (id) => () => {
+    const { tableSource } = this.state
+    this.setState({
+      tableSource: tableSource.filter(t => t.id !== id)
+    }, () => this.isCanSave())
+  }
+  onUpdateConfigValue = (id) => () => {
+    this.markConfigForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const { tableSource } = this.state
+        let config = tableSource.find(t => t.id === id)
+        config.text = values[`${id}Text`]
+        config.value = values[`${id}Value`]
+        config.status = 1
+        this.setState({
+          tableSource: tableSource
+        }, () => this.isCanSave())
+      }
+    })
+  }
+  onChangeConfigValueStatus = (id) => () => {
+    const { tableSource } = this.state
+    tableSource.find(t => t.id === id).status = 0
+    this.setState({
+      tableSource: tableSource
+    }, () => this.isCanSave())
+  }
+  saveConfig = () => {
+    this.markConfigForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        console.log(this.state.tableSource)
+      }
+    })
+  }
+  isCanSave = () => {
+    const {tableSource} = this.state
+    let computed = tableSource.length
+      ? tableSource.filter(table => table.status === 0).length
+        ? 0
+        : 1
+      : 0
+    this.setState({
+      isCanSaveForm: !computed
+    })
+  }
   render () {
+    const {
+      markConfigModalVisible,
+      tableSource,
+      isCanSaveForm
+    } = this.state
     const {
       form,
       bizlogics,
@@ -219,6 +305,48 @@ export class WidgetForm extends React.Component {
                       </RadioGroup>
                     )}
                   </FormItem>
+                </Col>
+              )
+              break
+            case 'table':
+              formItem = (
+                <Col key={item.name} span={item.span || 12}>
+                  <FormItem label={item.title}>
+                    {getFieldDecorator(item.name, {
+                      initialValue: ''
+                    })(
+                      <Input
+                        className={utilStyles.hide}
+                        placeholder={item.tip || item.placeholder || item.name}
+                        onChange={onFormInputItemChange(item.name)}
+                      />
+                    )}
+                  </FormItem>
+                  <Popover placement="bottom" content={<p className={styles.descPanel}>点击配置</p>}>
+                    <Icon className={styles.desc} type="question-circle-o" onClick={this.toggleMarkConfigTable} />
+                  </Popover>
+                  <Modal
+                    title="标注器配置"
+                    wrapClassName="ant-modal-large"
+                    visible={markConfigModalVisible}
+                    onCancel={this.toggleMarkConfigTable}
+                    afterClose={this.resetMarkConfigForm}
+                    footer={false}
+                    maskClosable={false}
+                  >
+                    <MarkConfigForm
+                      dataSource={tableSource}
+                      configOptions={item.columns}
+                      isCanSaveForm={isCanSaveForm}
+                      onAddConfigValue={this.onAddConfigValue}
+                      onChangeConfigValueStatus={this.onChangeConfigValueStatus}
+                      onUpdateConfigValue={this.onUpdateConfigValue}
+                      onDeleteConfigValue={this.onDeleteConfigValue}
+                      onSaveConfigValue={this.saveConfig}
+                      onCancel={this.toggleMarkConfigTable}
+                      ref={f => { this.markConfigForm = f }}
+                     />
+                  </Modal>
                 </Col>
               )
               break
