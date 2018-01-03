@@ -782,6 +782,43 @@ export class Grid extends Component {
     })
   }
 
+  willDoInteract = (itemId) => {
+    // const {
+    //   currentItems,
+    //   widgets,
+    //   currentDatasources
+    // } = this.props
+
+    const { linkageTableSource } = this.state
+
+    let linkagers = []
+
+    linkageTableSource.forEach(lts => {
+      const { trigger, linkager, relation } = lts
+
+      const triggerId = trigger[0]
+      const linkagerId = linkager[0]
+
+      if (itemId === triggerId && this.charts[`widget_${triggerId}`]) {
+        const triggerValueInfo = trigger[1].split(DEFAULT_SPLITER)
+        const linkagerValueInfo = linkager[1].split(DEFAULT_SPLITER)
+
+        linkagers.push({
+          triggerValue: triggerValueInfo[0],
+          triggerValueType: triggerValueInfo[1],
+          linkagerValue: linkagerValueInfo[0],
+          linkagerType: linkagerValueInfo[2],
+          linkagerId,
+          relation
+        })
+      }
+    })
+
+    if (linkagers.length > 0) {
+
+    }
+  }
+
   getLinkageTableSourceTree = () => {
     let linkageTree = {}
 
@@ -1331,6 +1368,13 @@ export class Grid extends Component {
               {addButton}
               {shareButton}
               {settingButton}
+              {/*<Button*/}
+                {/*size="large"*/}
+                {/*type="primary"*/}
+                {/*icon="lock"*/}
+                {/*style={{marginLeft: '8px'}}*/}
+                {/*onClick={this.willDoInteract}*/}
+              {/*/>*/}
             </Col>
           </Row>
         </Container.Title>

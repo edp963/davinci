@@ -7,13 +7,17 @@
   border-radius: 2px;
   box-shadow: @block-box-shadow;
   transform: translate3d(0, 0, 0);
-  transition: all 200ms;
+  transition: all 200ms linear;
   position: relative;
   cursor: pointer;
 
   &:hover {
     box-shadow: @block-active-box-shadow;
     transform: translate3d(0, -5px, 0);
+
+    .pic {
+      transform: translate(0, -5px);
+    }
   }
 
   &.selector {
@@ -63,14 +67,15 @@
   }
 
   .pic {
-    font-size: 35px;
+    font-size: 36px;
     font-weight: normal;
     line-height: 1;
     color: @primary-color;
     position: absolute;
-    bottom: 10px;
+    bottom: 8px;
     right: 12px;
     opacity: .8;
+    transition: transform 300ms linear;
   }
 
   .delete {

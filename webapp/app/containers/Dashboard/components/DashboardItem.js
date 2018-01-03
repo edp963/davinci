@@ -212,11 +212,6 @@ export class DashboardItem extends PureComponent {
             <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
           </Menu.Item> : ''
         }
-        {
-          isReadOnly ? <Menu.Item className={styles.menuItem}>
-            <span className={styles.menuText} onClick={onShowWorkbench(itemId, widget)}>Widget信息</span>
-          </Menu.Item> : ''
-        }
         <Menu.Item className={styles.menuItem}>
           <span className={styles.menuText} onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])}>条件查询</span>
         </Menu.Item>
@@ -262,6 +257,12 @@ export class DashboardItem extends PureComponent {
         >
           <Icon type="share-alt" onClick={() => this.resetSharePanel('open')} />
         </Popover>
+      </Tooltip>
+      : ''
+
+    const widgetButton = isAdmin && isReadOnly
+      ? <Tooltip title="Widget信息">
+        <Icon type="setting" onClick={onShowWorkbench(itemId, widget)} />
       </Tooltip>
       : ''
 
@@ -335,6 +336,7 @@ export class DashboardItem extends PureComponent {
           <Tooltip title="同步数据">
             <Icon type="reload" onClick={this.onSyncBizdatas} />
           </Tooltip>
+          {widgetButton}
           <Tooltip title="全屏">
             <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
           </Tooltip>

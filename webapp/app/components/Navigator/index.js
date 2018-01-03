@@ -21,6 +21,7 @@
 import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import { Link } from 'react-router'
 import classnames from 'classnames'
 
 import Icon from 'antd/lib/icon'
@@ -37,7 +38,9 @@ export function Navigator (props) {
   return (
     <nav className={headerClass}>
       <div className={styles.logo}>
-        <img src={require('../../assets/images/logo.svg')} />
+        <Link to="/report/dashboards">
+          <img src={require('../../assets/images/logo.svg')} />
+        </Link>
       </div>
       <ul className={styles.tools}>
         <li>
