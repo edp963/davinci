@@ -246,8 +246,8 @@ export class DashboardItem extends PureComponent {
       : ''
 
     const widgetButton = isAdmin && isReadOnly
-      ? <Tooltip title="Widget信息">
-        <Icon type="setting" onClick={onShowWorkbench(itemId, widget)} />
+      ? <Tooltip title="编辑widget">
+        <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
       </Tooltip>
       : ''
 
