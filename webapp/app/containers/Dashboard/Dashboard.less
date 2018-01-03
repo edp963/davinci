@@ -4,17 +4,20 @@
   height: 120px;
   background-color: @body-background;
   background-repeat: no-repeat;
-  background-size: cover;
+  background-size: 100%;
   background-position: center center;
   margin-bottom: 20px;
   border-radius: 2px;
   box-shadow: @block-box-shadow;
   transform: translate3d(0, 0, 0);
-  transition: all 200ms;
+  transition: transform 200ms linear,
+              box-shadow 200ms linear,
+              background-size 500ms linear;
   position: relative;
   cursor: pointer;
 
   &:hover {
+    background-size: 110%;
     box-shadow: @block-active-box-shadow;
     transform: translate3d(0, -5px, 0);
   }

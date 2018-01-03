@@ -1,7 +1,7 @@
 @import "../../assets/less/variable";
 
 .login {
-  background-color: @secondary-color;
+  background: @secondary-color;
   position: fixed;
   top: 0;
   left: 0;
@@ -11,6 +11,14 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+
+  &.share {
+    background: linear-gradient(135deg, @primary-color, @secondary-color) transparent;
+
+    .window {
+      background-color: transparent;
+    }
+  }
 
   .background {
     position: absolute;
