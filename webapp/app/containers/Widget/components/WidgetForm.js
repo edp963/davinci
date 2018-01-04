@@ -258,8 +258,8 @@ export class WidgetForm extends React.Component {
                     })(
                       <InputNumber
                         placeholder={item.tip || item.placeholder || item.name}
-                        min={item.min || -1000000000000}
-                        max={item.max || 1000000000000}
+                        min={item.min === undefined ? -1000000000000 : item.min}
+                        max={item.max === undefined ? 1000000000000 : item.max}
                         onChange={onFormItemChange(item.name)}
                       />
                     )}
