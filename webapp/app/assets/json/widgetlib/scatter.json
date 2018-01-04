@@ -48,8 +48,8 @@
           "name": "size",
           "title": "大小",
           "component": "inputnumber",
-          "min": 1,
-          "default": 1
+          "min": 0,
+          "default": 0
         },
         {
           "name": "dataZoomThreshold",
