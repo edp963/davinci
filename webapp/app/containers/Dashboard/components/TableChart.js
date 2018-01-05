@@ -218,12 +218,6 @@ export class TableChart extends PureComponent {
   rowClassFilter = (record, index) =>
     this.props.interactIndex === index ? styles.selectedRow : ''
 
-  markOptions = (value, record, updateVar) => {
-    console.log(value)
-    console.log(record)
-    console.log(updateVar)
-  }
-
   render () {
     const {
       loading,
