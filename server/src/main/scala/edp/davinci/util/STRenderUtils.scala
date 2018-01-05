@@ -4,9 +4,10 @@ package edp.davinci.util
 
 import com.github.tototoshi.csv.CSVReader
 import edp.davinci.util.DavinciConstants._
+import grizzled.string.template.{StringTemplate, Variable}
 import org.apache.log4j.Logger
 import org.clapper.scalasti.{Constants, STGroupFile}
-import org.stringtemplate.v4.STGroupString
+import org.stringtemplate.v4.{ST, STGroupString}
 
 import scala.collection.mutable
 import scala.io.Source
@@ -46,6 +47,14 @@ trait STRenderUtils {
     val sqlST = stg.getInstanceOf("sqlTemplate")
     queryKVMap.foreach(kv => sqlST.add(kv._1, kv._2))
     sqlST.render()
+  }
+
+
+  def renderSqlByST(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
+    val sqlToRender: String = sqlWithoutVars.replaceAll("<>", "!=")
+    val sqlTemplate = new ST(sqlToRender,'$','$')
+    queryKVMap.foreach(kv => sqlTemplate.add(kv._1, kv._2))
+    sqlTemplate.render()
   }
 
 }

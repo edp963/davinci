@@ -7,7 +7,7 @@ import edp.davinci.util.JsonUtils.json2caseClass
 import edp.davinci.rest.RouteHelper._
 import edp.davinci.util.{RegexMatcher, STRenderUtils, SqlParser}
 import org.scalatest.FunSuite
-import org.stringtemplate.v4.STGroupString
+import org.stringtemplate.v4.{ST, STGroupString}
 
 class MatchAndReplace extends FunSuite {
   test("expression map") {
@@ -93,92 +93,13 @@ class MatchAndReplace extends FunSuite {
   }
 
 
-  test("template"){
+  test("template") {
 
     val queryStr = "[]"
     val flatTableSqls =
-      """query@var $yugu_renshu$=yugu;
-        |query@var $shenqing_renshu$;
-        |query@var $shenqingtg_renshu$;
-        |query@var $jinjian_renshu$;
-        |query@var $shenpi_renshu$;
-        |query@var $pihe_renshu$;
-        |{
-        |$if(shenqing_renshu)$
-        |select
-        |substring(t1.create_time, 12, 2) as 小时,
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = curdate() then t1.tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then t1.tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = DATE_SUB(CURDATE(), INTERVAL 7 DAY) then t1.tuser_id end) AS  '7天前人数'
-        |from tb_cbm_transport  t1
-        |left join tb_cbm_limit_gjj  t2  on  t1.LIMIT_ID = t2.LIMIT_ID and t1.platform_code =t2.platform_code
-        |where t2.LIMIT_STYLE ='social'
-        |and t1.platform_code ='yrdGjjAs'
-        |and substring(t1.create_time, 1, 10) IN  (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |group  by  substring(t1.create_time, 12, 2);
-        |$elseif(shenqingtg_renshu)$
-        |select
-        |substring(t1.create_time, 12, 2) as 小时,
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = curdate() then t1.tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then t1.tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(t1.create_time, 1, 10) = DATE_SUB(CURDATE(), INTERVAL 7 DAY) then t1.tuser_id end) AS  '7天前人数'
-        |from tb_cbm_transport  t1
-        |left join tb_cbm_limit_gjj  t2  on  t1.LIMIT_ID = t2.LIMIT_ID and t1.platform_code =t2.platform_code
-        |where t2.LIMIT_STYLE ='social'
-        |and t1.platform_code ='yrdGjjAs'
-        |and t1.IS_PASS = 'T'
-        |and t1.IS_SUCCESS = 'T'
-        |and substring(t1.create_time, 1, 10) IN  (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |group  by  substring(t1.create_time, 12, 2);
-        |$elseif(jinjian_renshu)$
-        |select
-        |substring(t1.yrd_time, 12, 2) as 小时,
-        |COUNT(DISTINCT  case when substring(t1.yrd_time, 1, 10) = curdate() then t1.tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(t1.yrd_time, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then t1.tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(t1.yrd_time, 1, 10) = DATE_SUB(CURDATE(), INTERVAL 7 DAY) then t1.tuser_id end) AS  '7天前人数'
-        |from tb_cbm_transport  t1
-        |left join tb_cbm_limit_gjj  t2  on  t1.LIMIT_ID = t2.LIMIT_ID and t1.platform_code =t2.platform_code
-        |where t2.LIMIT_STYLE ='social'
-        |and t1.platform_code ='yrdGjjAs'
-        |and substring(t1.yrd_time, 1, 10) IN (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |group  by  substring(t1.yrd_time, 12, 2);
-        |$elseif(shenpi_renshu)$
-        |select
-        |substring(t1.AUDIT_TIME, 12, 2) as 小时,
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = curdate() then t1.tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then t1.tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = DATE_SUB(CURDATE(), INTERVAL 7 DAY) then t1.tuser_id end) AS  '7天前人数'
-        |from tb_cbm_transport  t1
-        |left join tb_cbm_limit_gjj  t2  on  t1.LIMIT_ID = t2.LIMIT_ID and t1.platform_code =t2.platform_code
-        |where t2.LIMIT_STYLE ='social'
-        |and t1.platform_code ='yrdGjjAs'
-        |and substring(t1.AUDIT_TIME, 1, 10) IN (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |group  by  substring(t1.AUDIT_TIME, 12, 2);
-        |$elseif(pihe_renshu)$
-        |select
-        |substring(t1.AUDIT_TIME, 12, 2) as 小时,
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = curdate() then t1.tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then t1.tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(t1.AUDIT_TIME, 1, 10) = DATE_SUB(CURDATE(), INTERVAL 7 DAY) then t1.tuser_id end) AS  '7天前人数'
-        |from tb_cbm_transport  t1
-        |left join tb_cbm_limit_gjj  t2  on  t1.LIMIT_ID = t2.LIMIT_ID and t1.platform_code =t2.platform_code
-        |where t2.LIMIT_STYLE ='social'
-        |and t1.platform_code ='yrdGjjAs'
-        |and STATUS!=50
-        |and substring(t1.AUDIT_TIME, 1, 10) IN (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |group  by  substring(t1.AUDIT_TIME, 12, 2);
-        |$else$
-        |SELECT
-        |substring(create_time, 12, 2) AS hour,
-        |COUNT(DISTINCT  case when substring(create_time, 1, 10) =curdate() then tuser_id end) AS  '今天人数',
-        |COUNT(DISTINCT  case when substring(create_time, 1, 10) = DATE_SUB(CURDATE(),INTERVAL 1 DAY) then tuser_id end) AS  '昨天人数',
-        |COUNT(DISTINCT  case when substring(create_time, 1, 10) =DATE_SUB(CURDATE(), INTERVAL 7 DAY) then tuser_id end) AS  '7天前人数'
-        |FROM tb_cbm_limit_gjj
-        |WHERE platform_code ='yrdGjjAs'
-        |and LIMIT_STYLE = 'social'
-        |and substring(create_time, 1, 10) in (curdate(), DATE_SUB(CURDATE(),INTERVAL 1 DAY),DATE_SUB(CURDATE(), INTERVAL 7 DAY))
-        |GROUP BY substring(create_time, 12, 2);
-        |$endif$}""".stripMargin
+      """query@var $startdate$;
+        |query@var $enddate$;
+        |{SELECT DATE_FORMAT(createtime, '%Y-%m-%d')  as 注册日期, COUNT( * ) as 注册数量 FROM ec_carowner where 1=1 $if(startdate)$ and DATE_FORMAT(createtime, '%Y-%m-%d')>=$startdate$ and DATE_FORMAT(createtime, '%Y-%m-%d')<=$enddate$ $endif$ GROUP BY DATE_FORMAT(createtime, '%Y-%m-%d') order by DATE_FORMAT(createtime, '%Y-%m-%d')}""".stripMargin
 
 
     val queryParams = json2caseClass[Seq[KV]](queryStr)
@@ -190,8 +111,18 @@ class MatchAndReplace extends FunSuite {
     val groupKVMap = getGroupKVMap(sqls, null)
     val queryKVMap = getQueryKVMap(sqls, queryParams)
     val mergeSql = RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-    val renderedSql = if (queryKVMap.nonEmpty) STRenderUtils.renderSql(mergeSql, queryKVMap) else mergeSql
+    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
     println("~~~~~~~~~~~~~~~~~~~~~~~~sql:\n" + renderedSql)
+  }
+
+
+  test("ST"){
+    val template = "hi <name><if(a)> asdajh <endif>!"
+    val st = new ST(template)
+    val expected = "hi !"
+    val result = st.render()
+    println(result+">>>>>>>>")
+   println(result==expected)
   }
 
 }
