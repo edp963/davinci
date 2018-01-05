@@ -194,6 +194,12 @@ export class TableChart extends PureComponent {
     })
   }
 
+  markOptions = (value, record, updateVar) => {
+    console.log(value)
+    console.log(record)
+    console.log(updateVar)
+  }
+
   rowClick = (record, index) => {
     const { id, onCheckInteract, onDoInteract } = this.props
     const { data } = this.state

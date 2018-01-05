@@ -82,6 +82,7 @@ export class Chart extends PureComponent {
       updateInfo,
       chartParams,
       classNames,
+      updateParams,
       interactIndex,
       onCheckTableInteract,
       onDoTableInteract,
