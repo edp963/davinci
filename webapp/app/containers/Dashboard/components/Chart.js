@@ -79,8 +79,10 @@ export class Chart extends PureComponent {
       data,
       loading,
       chartInfo,
+      updateInfo,
       chartParams,
-      classNames
+      classNames,
+      updateParams
     } = this.props
 
     const {
@@ -193,6 +195,8 @@ export class Chart extends PureComponent {
           data={data}
           loading={loading}
           chartParams={chartParams}
+          updateInfo={updateInfo}
+          updateParams={updateParams}
           width={tableWidth}
           height={tableHeight}
         />
@@ -218,7 +222,9 @@ Chart.propTypes = {
   data: PropTypes.object,
   loading: PropTypes.bool,
   chartInfo: PropTypes.object,
+  updateInfo: PropTypes.any,
   chartParams: PropTypes.object,
+  updateParams: PropTypes.array,
   classNames: PropTypes.object
 }
 

@@ -52,3 +52,6 @@ export const LOAD_WIDGET_SHARE_LINK_FAILURE = 'davinci/Dashboard/LOAD_WIDGET_SHA
 export const LOAD_WIDGET_CSV = 'davinci/Dashboard/LOAD_WIDGET_CSV'
 export const LOAD_WIDGET_CSV_SUCCESS = 'davinci/Dashboard/LOAD_WIDGET_CSV_SUCCESS'
 export const LOAD_WIDGET_CSV_FAILURE = 'davinci/Dashboard/LOAD_WIDGET_CSV_FAILURE'
+export const UPDAATE_MARK = 'davinci/Dashboard/UPDAATE_MARK'
+export const UPDATE_MARK_SUCCESS = 'davinci/Dashboard/UPDATE_MARK_SUCCESS'
+export const UPDATE_MARK_ERROR = 'davinci/Dashboard/UPDATE_MARK_ERROR'

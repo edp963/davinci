@@ -26,45 +26,6 @@
           "placeholder": "Metrics"
         }
       ]
-    },
-    {
-      "name": "mark",
-      "title": "标注器配置",
-      "items": [
-        {
-          "name": "KeyField",
-          "title": "key字段",
-          "component": "multiSelect",
-          "placeholder": "Metrics"
-        },
-        {
-          "name": "markOptions",
-          "title": "标注值",
-          "component": "table",
-          "columns":[
-            {
-              "title":"Text",
-              "key":"text",
-              "dataIndex":"text"
-            },
-            {
-              "title":"Value",
-              "key":"value",
-              "dataIndex":"value"
-            }
-          ]
-        },
-        {
-          "name": "markField",
-          "title": "标注字段",
-          "component": "input"
-        },
-        {
-          "name": "isSupportMultiSelect",
-          "title": "标注是否多选",
-          "component": "checkbox"
-        }
-      ]
     }
   ]
 }

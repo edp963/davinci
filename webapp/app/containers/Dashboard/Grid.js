@@ -1117,6 +1117,7 @@ export class Grid extends Component {
               h={modifiedPosition ? modifiedPosition.h : 0}
               itemId={itemId}
               widget={widget}
+              bizlogics={bizlogics || []}
               chartInfo={chartInfo}
               data={data}
               loading={loading}
