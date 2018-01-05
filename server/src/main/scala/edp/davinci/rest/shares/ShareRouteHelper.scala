@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.shares
 
 import java.net.URLDecoder
@@ -37,7 +34,7 @@ import org.apache.log4j.Logger
 object ShareRouteHelper {
   private val logger = Logger.getLogger(this.getClass)
 
- lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")
+  lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")
 
   def getShareURL(userId: Long, infoId: Long, authorizedName: String): String = {
     val shareAuthInfo = caseClass2json[ShareAuthInfo](ShareAuthInfo(userId, infoId, authorizedName))
@@ -46,11 +43,11 @@ object ShareRouteHelper {
     AesUtils.encrypt(caseClass2json(shareQueryInfo), aesPassword)
   }
 
- def mergeInfo(infoArr: Array[String], manualInfo: ManualInfo): ManualInfo = {
+  def mergeInfo(infoArr: Array[String], manualInfo: ManualInfo): ManualInfo = {
     val (manualFilters, widgetParams, adHoc) =
       if (null == manualInfo) (null, null, null)
       else (manualInfo.manualFilters.orNull, manualInfo.params.orNull, manualInfo.adHoc.orNull)
-    val urlDecode = URLDecoder.decode(infoArr.last, defaultEncode)
+    val urlDecode = infoArr.last
     logger.info("info after urlDecode: " + urlDecode)
     val base64decoder = new sun.misc.BASE64Decoder
     val base64decode: String = new String(base64decoder.decodeBuffer(urlDecode))
@@ -63,7 +60,7 @@ object ShareRouteHelper {
     ManualInfo(Some(adHoc), Some(filters), Some(params))
   }
 
-   def isValidShareInfo(shareInfo: ShareInfo): Boolean = {
+  def isValidShareInfo(shareInfo: ShareInfo): Boolean = {
     if (null == shareInfo) false
     else {
       val MD5Info = MD5Utils.getMD5(caseClass2json(ShareAuthInfo(shareInfo.userId, shareInfo.infoId, shareInfo.authName)))
@@ -88,14 +85,14 @@ object ShareRouteHelper {
 
 
   private def mergeFilters(manualFilters: String, urlFilters: String) = {
-    if (null != manualFilters)
+    if (null != manualFilters && manualFilters != "")
       if (null != urlFilters) Set(manualFilters, urlFilters).map(f => s"($f)").mkString(" AND ") else manualFilters
     else urlFilters
   }
 
 
   private def mergeParams(widgetParams: List[KV], urlParams: List[KV]) = {
-    if (null != widgetParams)
+    if (null != widgetParams && widgetParams.nonEmpty)
       if (null != urlParams) widgetParams ::: urlParams else widgetParams
     else urlParams
   }

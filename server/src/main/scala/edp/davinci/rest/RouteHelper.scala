@@ -216,7 +216,7 @@ object RouteHelper extends Directives {
       if (groupKVMap.nonEmpty) RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
       else sqlWithoutVar
     logger.info("sql after group merge: " + mergeSql)
-    val renderedSql = if (queryKVMap.nonEmpty) STRenderUtils.renderSql(mergeSql, queryKVMap) else mergeSql
+    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
     logger.info("sql after query var render: " + renderedSql)
     val trimRenderSql = renderedSql.trim
     val resetSql =

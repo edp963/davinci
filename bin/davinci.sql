@@ -25,7 +25,7 @@ CREATE TABLE `dashboard` (
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `pic` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
   `desc` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
-  `linkage_detail` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `linkage_detail` varchar(1000) COLLATE utf8_unicode_ci DEFAULT '[]',
   `publish` tinyint(1) NOT NULL,
   `active` tinyint(1) DEFAULT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -157,7 +157,7 @@ DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `email` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
-  `password` varchar(32) COLLATE utf8_unicode_ci NOT NULL,
+  `password` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `title` varchar(100) COLLATE utf8_unicode_ci NOT NULL DEFAULT '',
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `admin` tinyint(1) NOT NULL,
@@ -173,7 +173,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'super@davinci.com','123456','super','super',1,1,'2017-08-17 06:32:40',1,'2017-05-22 09:40:30',1);
+INSERT INTO `user` VALUES (1,'super@davinci.com','83951b71ee368ddcbfdc4bd4:d90ab2a24a1bde356c3bcc20a289982245d2e96febf416a8','super','super',1,1,'2017-08-17 06:32:40',1,'2017-05-22 09:40:30',1);
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -204,7 +204,8 @@ CREATE TABLE `view` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `source_id` bigint(20) DEFAULT NULL,
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
-  `sql_tmpl` varchar(4000) COLLATE utf8_unicode_ci NOT NULL,
+  `sql_tmpl` text COLLATE utf8_unicode_ci NOT NULL,
+  `update_sql` text COLLATE utf8_unicode_ci NOT NULL,
   `result_table` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `desc` varchar(1000) CHARACTER SET utf8 DEFAULT NULL,
   `trigger_type` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -232,9 +233,9 @@ CREATE TABLE `widget` (
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `adhoc_sql` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
   `desc` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
-  `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT '{"useCache":"true","expired":300}',
   `chart_params` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `query_params` varchar(1000) COLLATE utf8_unicode_ci DEFAULT '',
+  `query_params` text COLLATE utf8_unicode_ci DEFAULT '',
   `publish` tinyint(1) NOT NULL,
   `active` tinyint(1) NOT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -102,7 +102,7 @@ ldap {
 
 
 cache {
-  isEnable = true
+  isEnable = false
   url: "127.0.0.1:6379"
   auth:""
   expire:3
