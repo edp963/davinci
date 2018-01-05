@@ -11,8 +11,8 @@ import Button from 'antd/lib/button'
 import Modal from 'antd/lib/modal'
 
 import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../../../globalConstants'
-import styles from './Linkage.less'
 import utilStyles from '../../../../assets/less/util.less'
+import styles from './Linkage.less'
 
 export class LinkagePanel extends PureComponent {
   constructor (props) {
@@ -53,8 +53,8 @@ export class LinkagePanel extends PureComponent {
       }
 
       links.push({
-        target: nodes[triggerId].name,
-        source: nodes[linkagerId].name
+        source: nodes[triggerId].name,
+        target: nodes[linkagerId].name
       })
     })
 
@@ -170,6 +170,7 @@ export class LinkagePanel extends PureComponent {
               {
                 key: 'trigger',
                 title: '触发器',
+                width: 155,
                 dataIndex: 'trigger',
                 render: (val) => {
                   const { cascaderSource } = this.props
@@ -180,6 +181,7 @@ export class LinkagePanel extends PureComponent {
               }, {
                 key: 'linkager',
                 title: '联动图表',
+                width: 155,
                 dataIndex: 'linkager',
                 render: (val) => {
                   const { cascaderSource } = this.props
@@ -191,10 +193,13 @@ export class LinkagePanel extends PureComponent {
               }, {
                 key: 'relation',
                 title: '关系',
+                width: 50,
+                className: `${utilStyles.textAlignCenter}`,
                 dataIndex: 'relation'
               }, {
                 title: '操作',
                 width: 50,
+                className: `${utilStyles.textAlignCenter}`,
                 render: (val, record) => (
                   <span>
                     <a onClick={onDelelteFromTable(record.key)}>删除</a>

@@ -61,7 +61,9 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('itemQueryParams', payload.dashboard.widgets.reduce((obj, w) => {
           obj[w.id] = {
             filters: '',
+            linkageFilters: '',
             params: [],
+            linkageParams: [],
             pagination: {}
           }
           return obj
@@ -88,7 +90,9 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('itemQueryParams', {
           1: {
             filters: '',
+            linkageFilters: '',
             params: [],
+            linkageParams: [],
             pagination: {}
           }
         })
@@ -101,8 +105,10 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_SHARE_RESULTSET:
       loadings[payload.itemId] = true
       itemQueryParams[payload.itemId] = {
-        filters: payload.sql.manualFilters,
+        filters: payload.sql.filters,
+        linkageFilters: payload.sql.linkageFilters,
         params: payload.sql.params,
+        linkageParams: payload.sql.linkageParams,
         pagination: {
           sorts: payload.sorts,
           offset: payload.offset,
