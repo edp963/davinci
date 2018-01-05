@@ -178,13 +178,16 @@ export class DashboardItem extends PureComponent {
       shareInfoLoading,
       downloadCsvLoading,
       isInteractive,
+      interactIndex,
       onShowEdit,
       isReadOnly,
       onShowWorkbench,
       onShowFiltersForm,
       onDeleteDashboardItem,
       onDownloadCsv,
-      onTurnOffInteract
+      onTurnOffInteract,
+      onCheckTableInteract,
+      onDoTableInteract
     } = this.props
 
     const {
@@ -376,6 +379,9 @@ export class DashboardItem extends PureComponent {
           updateParams={updateParams}
           updateInfo={updateInfo}
           classNames={chartClass}
+          interactIndex={interactIndex}
+          onCheckTableInteract={onCheckTableInteract}
+          onDoTableInteract={onDoTableInteract}
         />
       </div>
     )
@@ -404,6 +410,7 @@ DashboardItem.propTypes = {
   shareInfoLoading: PropTypes.bool,
   downloadCsvLoading: PropTypes.bool,
   isInteractive: PropTypes.bool,
+  interactIndex: PropTypes.number,
   onGetChartData: PropTypes.func,
   onRenderChart: PropTypes.func,
   onShowEdit: PropTypes.func,
@@ -412,7 +419,9 @@ DashboardItem.propTypes = {
   onDeleteDashboardItem: PropTypes.func,
   onDownloadCsv: PropTypes.func,
   onTurnOffInteract: PropTypes.func,
-  onShowFullScreen: PropTypes.func
+  onShowFullScreen: PropTypes.func,
+  onCheckTableInteract: PropTypes.func,
+  onDoTableInteract: PropTypes.func
 }
 // FIXME
 DashboardItem.defaultProps = {

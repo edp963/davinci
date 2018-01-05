@@ -38,7 +38,10 @@ import { getDashboard, getWidget, getResultset, setIndividualDashboard, loadWidg
 import { makeSelectTitle, makeSelectWidgets, makeSelectItems, makeSelectDataSources, makeSelectLoadings, makeSelectItemQueryParams, makeSelectItemDownloadCsvLoadings } from './selectors'
 import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
 import { changePosition } from '../../../app/containers/Dashboard/components/localPositionUtil'
-import { DEFAULT_PRIMARY_COLOR, ECHARTS_RENDERER, GRID_COLS, USER_GRID_BREAKPOINTS } from '../../../app/globalConstants'
+import {
+  DEFAULT_PRIMARY_COLOR, DEFAULT_SPLITER, ECHARTS_RENDERER, GRID_COLS, SQL_NUMBER_TYPES,
+  USER_GRID_BREAKPOINTS
+} from '../../../app/globalConstants'
 
 import styles from '../../../app/containers/Dashboard/Dashboard.less'
 
@@ -64,9 +67,13 @@ export class Share extends React.Component {
       filtersTypes: null,
       allowFullScreen: false,
       currentDataInFullScreen: {},
-      isShowLogin: false
+      showLogin: false,
+      linkageTableSource: false,
+      interactiveItems: {}
     }
     this.charts = {}
+    this.interactCallbacks = {}
+    this.interactingLinkagers = {}
   }
 
   /**
@@ -88,19 +95,22 @@ export class Share extends React.Component {
         dashboard.widgets.forEach(w => {
           onLoadWidget(w.aesStr)
         })
+        // FIXME
+        this.state.linkageTableSource = JSON.parse(dashboard.linkage_detail || '[]')
       }, (err) => {
         console.log(err)
         this.setState({
-          isShowLogin: true
+          showLogin: true
         })
       })
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
+        this.state.linkageTableSource = []
       }, (err) => {
         console.log(err)
         this.setState({
-          isShowLogin: true
+          showLogin: true
         })
       })
     }
@@ -127,6 +137,16 @@ export class Share extends React.Component {
           h: ci.length,
           i: `${ci.id}`
         }))
+      }
+
+      if (!Object.keys(this.state.interactiveItems).length) {
+        this.state.interactiveItems = currentItems.reduce((acc, i) => {
+          acc[i.id] = {
+            isInteractive: false,
+            interactIndex: -1
+          }
+          return acc
+        }, {})
       }
     }
   }
@@ -191,17 +211,35 @@ export class Share extends React.Component {
 
     const cachedQueryParams = itemQueryParams[itemId]
 
-    let filters = queryParams && queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
-    let params = queryParams && queryParams.params ? queryParams.params : cachedQueryParams.params
-    let pagination = queryParams && queryParams.pagination ? queryParams.pagination : cachedQueryParams.pagination
+    let filters
+    let linkageFilters
+    let params
+    let linkageParams
+    let pagination
+
+    if (queryParams) {
+      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
+      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
+      params = queryParams.params ? queryParams.params : cachedQueryParams.params
+      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
+      pagination = queryParams.pagination ? queryParams.pagination : cachedQueryParams.pagination
+    } else {
+      filters = cachedQueryParams.filters
+      linkageFilters = cachedQueryParams.linkageFilters
+      params = cachedQueryParams.params
+      linkageParams = cachedQueryParams.linkageParams
+      pagination = cachedQueryParams.pagination
+    }
 
     onLoadResultset(
       itemId,
       dashboardItem.aesStr,
       {
         adHoc: widget.adhoc_sql,
-        manualFilters: filters,
-        params
+        filters,
+        linkageFilters,
+        params,
+        linkageParams
       },
       pagination.sorts,
       pagination.offset,
@@ -211,7 +249,7 @@ export class Share extends React.Component {
     )
   }
 
-  renderChart = (itemId, widget, dataSource, chartInfo) => {
+  renderChart = (itemId, widget, dataSource, chartInfo, interactIndex) => {
     const chartInstance = this.charts[`widget_${itemId}`]
     const chartOptions = echartsOptionsGenerator({
       dataSource: dataSource,
@@ -222,15 +260,25 @@ export class Share extends React.Component {
         desc: widget.desc,
         flatTable_id: widget.flatTable_id,
         widgetlib_id: widget.widgetlib_id
-      }, JSON.parse(widget.chart_params))
+      }, JSON.parse(widget.chart_params)),
+      interactIndex
     })
     chartInstance.setOption(chartOptions)
 
-    chartInstance.on('dataZoom', (dzParams) => {
-
-    })
+    this.registerChartInteractListener(chartInstance, itemId)
 
     chartInstance.hideLoading()
+  }
+
+  registerChartInteractListener = (instance, itemId) => {
+    instance.off('click')
+    instance.on('click', (params) => {
+      const linkagers = this.checkInteract(itemId)
+
+      if (Object.keys(linkagers) > 0) {
+        this.doInteract(itemId, linkagers, params.dataIndex)
+      }
+    })
   }
 
   onLayoutChange = (layout, layouts) => {
@@ -352,9 +400,191 @@ export class Share extends React.Component {
   handleLegitimateUser = () => {
     const {type, shareInfo} = this.state
     this.setState({
-      isShowLogin: false
+      showLogin: false
     }, () => {
       this.loadShareContent({type, shareInfo})
+    })
+  }
+
+  checkInteract = (itemId) => {
+    const { currentItems, widgets } = this.props
+    const { linkageTableSource } = this.state
+    const dashboardItem = currentItems.find(ci => ci.id === itemId)
+    const widget = widgets.find(w => w.id === dashboardItem.widget_id)
+    const widgetlib = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+
+    let linkagers = {}
+
+    linkageTableSource.forEach(lts => {
+      const { trigger, linkager, relation } = lts
+
+      const triggerId = trigger[0]
+      const linkagerId = linkager[0]
+
+      if (itemId === triggerId) {
+        if (widgetlib.renderer === ECHARTS_RENDERER && !this.charts[`widget_${triggerId}`]) {
+          return false
+        }
+
+        const triggerValueInfo = trigger[1].split(DEFAULT_SPLITER)
+        const linkagerValueInfo = linkager[1].split(DEFAULT_SPLITER)
+
+        if (!linkagers[linkagerId]) {
+          linkagers[linkagerId] = []
+        }
+
+        linkagers[linkagerId].push({
+          triggerValue: triggerValueInfo[0],
+          triggerValueType: triggerValueInfo[1],
+          linkagerValue: linkagerValueInfo[0],
+          linkagerType: linkagerValueInfo[2],
+          linkagerId,
+          relation
+        })
+      }
+    })
+
+    return linkagers
+  }
+
+  doInteract = (itemId, linkagers, interactIndex) => {
+    const {
+      currentItems,
+      widgets,
+      dataSources
+    } = this.props
+
+    const triggerItem = currentItems.find(ci => ci.id === itemId)
+    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const dataSource = dataSources[itemId].dataSource
+    const triggeringData = dataSource[interactIndex]
+
+    if (chartInfo.renderer === ECHARTS_RENDERER) {
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndex)
+    }
+
+    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
+      [itemId]: {
+        isInteractive: true,
+        interactIndex
+      }
+    })
+
+    Object.keys(linkagers).forEach(key => {
+      const linkager = linkagers[key]
+
+      let linkagerId
+      let linkageFilters = []
+      let linkageParams = []
+      // 合并单个 linkager 所接收的数据
+      linkager.forEach(lr => {
+        linkagerId = lr.linkagerId
+
+        const {
+          triggerValue,
+          triggerValueType,
+          linkagerValue,
+          linkagerType,
+          relation
+        } = lr
+
+        const interactValue = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
+          ? triggeringData[triggerValue]
+          : `'${triggeringData[triggerValue]}'`
+
+        if (linkagerType === 'parameter') {
+          linkageFilters.push(`${linkagerValue} ${relation} ${interactValue}`)
+        } else {
+          linkageParams.push({
+            k: linkagerValue,
+            v: interactValue
+          })
+        }
+      })
+
+      const linkagerItem = currentItems.find(ci => ci.id === linkagerId)
+      const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
+      /*
+       * 多个 trigger 联动同一个 linkager
+       * interactingLinkagers 是个临时数据存储，且不触发render
+       */
+      if (alreadyInUseFiltersAndParams) {
+        const { filters, params } = alreadyInUseFiltersAndParams
+        const mergedFilters = linkageFilters.length ? Object.assign(filters, {[itemId]: linkageFilters}) : filters
+        const mergedParams = linkageParams.length ? Object.assign(params, {[itemId]: linkageParams}) : params
+
+        this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+          linkageFilters: Object.values(mergedFilters)
+            .reduce((arr, val) => arr.concat(...val), [])
+            .join(' and '),
+          linkageParams: Object.values(mergedParams).reduce((arr, val) => arr.concat(...val), [])
+        })
+
+        this.interactingLinkagers[linkagerId] = {
+          filters: mergedFilters,
+          params: mergedParams
+        }
+      } else {
+        this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+          linkageFilters: linkageFilters.join(' and '),
+          linkageParams
+        })
+
+        this.interactingLinkagers[linkagerId] = {
+          filters: linkageFilters.length ? {[itemId]: linkageFilters} : {},
+          params: linkageParams.length ? {[itemId]: linkageParams} : {}
+        }
+      }
+
+      if (!this.interactCallbacks[itemId]) {
+        this.interactCallbacks[itemId] = {}
+      }
+
+      if (!this.interactCallbacks[itemId][linkagerId]) {
+        this.interactCallbacks[itemId][linkagerId] = () => {
+          const { filters, params } = this.interactingLinkagers[linkagerId]
+
+          delete filters[itemId]
+          delete params[itemId]
+
+          this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+            linkageFilters: Object.values(filters)
+              .reduce((arr, val) => arr.concat(...val), [])
+              .join(' and '),
+            linkageParams: Object.values(params).reduce((arr, val) => arr.concat(...val), [])
+          })
+        }
+      }
+    })
+  }
+
+  turnOffInteract = (itemId) => () => {
+    const {
+      currentItems,
+      widgets,
+      dataSources
+    } = this.props
+
+    const triggerItem = currentItems.find(ci => ci.id === itemId)
+    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const dataSource = dataSources[itemId].dataSource
+
+    if (chartInfo.renderer === ECHARTS_RENDERER) {
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
+    }
+
+    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
+      [itemId]: {
+        isInteractive: false,
+        interactIndex: -1
+      }
+    })
+
+    Object.keys(this.interactCallbacks[itemId]).map(linkagerId => {
+      this.interactCallbacks[itemId][linkagerId]()
+      delete this.interactCallbacks[itemId][linkagerId]
     })
   }
 
@@ -374,9 +604,10 @@ export class Share extends React.Component {
       filtersVisible,
       filtersDashboardItem,
       filtersKeys,
-      isShowLogin,
+      showLogin,
       filtersTypes,
-      allowFullScreen
+      allowFullScreen,
+      interactiveItems
     } = this.state
 
     let grids = ''
@@ -404,10 +635,11 @@ export class Share extends React.Component {
           const loading = loadings[item.id]
           const modifiedPosition = modifiedPositions[index]
           const downloadCsvLoading = downloadCsvLoadings[item.id]
+          const { isInteractive, interactIndex } = interactiveItems[item.id]
 
           if (widget) {
             const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
-            // FIXME onTurnOffInteract
+
             itemblocks.push((
               <div key={item.id}>
                 <DashboardItem
@@ -424,11 +656,15 @@ export class Share extends React.Component {
                   isShared
                   shareInfo={item.aesStr}
                   downloadCsvLoading={downloadCsvLoading}
+                  isInteractive={isInteractive}
+                  interactIndex={interactIndex}
                   onGetChartData={this.getChartData}
                   onRenderChart={this.renderChart}
                   onShowFiltersForm={this.showFiltersForm}
                   onDownloadCsv={this.downloadCsv}
-                  onTurnOffInteract={() => {}}
+                  onTurnOffInteract={this.turnOffInteract}
+                  onCheckTableInteract={this.checkInteract}
+                  onDoTableInteract={this.doInteract}
                   onShowFullScreen={this.visibleFullScreen}
                 />
               </div>
@@ -475,7 +711,7 @@ export class Share extends React.Component {
 
       fullScreenComponent = ''
     }
-    loginPanel = isShowLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+    loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
     return (
       <Container>
         <Helmet title={title} />

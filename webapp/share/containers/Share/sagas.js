@@ -103,10 +103,20 @@ export function* getResultset ({ payload }) {
     queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
     queries = `?${queries.join('&')}`
 
+    let data = {}
+    if (sql) {  // FIXME sql 是否需要判断
+      const { adHoc, filters, linkageFilters, params, linkageParams } = sql
+      data = {
+        adHoc,
+        manualFilters: filters && linkageFilters ? `${filters} and ${linkageFilters}` : filters || linkageFilters || '',
+        params: params && linkageParams ? [].concat(params).concat(linkageParams) : []
+      }
+    }
+
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/resultset/${token}${queries}`,
-      data: sql
+      data: data
     })
     const resultset = resultsetConverter(asyncData.payload)
     yield put(resultsetGetted(itemId, resultset))

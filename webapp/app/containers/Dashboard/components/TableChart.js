@@ -194,11 +194,29 @@ export class TableChart extends PureComponent {
     })
   }
 
-  markOptions = (value, record, updateVar) => {
-    console.log(value)
-    console.log(record)
-    console.log(updateVar)
+  rowClick = (record, index) => {
+    const { id, onCheckInteract, onDoInteract } = this.props
+    const { data } = this.state
+
+    if (onCheckInteract && onDoInteract) {
+      const linkagers = onCheckInteract(Number(id))
+
+      if (Object.keys(linkagers) > 0) {
+        data.dataSource.forEach((ds, dsIndex) => {
+          if (dsIndex === index) {
+            onDoInteract(Number(id), linkagers, index)
+          }
+        })
+
+        this.setState({
+          data: Object.assign({}, data)
+        })
+      }
+    }
   }
+
+  rowClassFilter = (record, index) =>
+    this.props.interactIndex === index ? styles.selectedRow : ''
 
   render () {
     const {
@@ -382,6 +400,8 @@ export class TableChart extends PureComponent {
         loading={loading}
         scroll={tableSize}
         onChange={this.handleTableChange}
+        onRowClick={this.rowClick}
+        rowClassName={this.rowClassFilter}
         bordered
       />
     )
@@ -389,6 +409,7 @@ export class TableChart extends PureComponent {
 }
 
 TableChart.propTypes = {
+  id: PropTypes.string,
   data: PropTypes.object,
   loading: PropTypes.bool,
   chartParams: PropTypes.object,
@@ -398,7 +419,10 @@ TableChart.propTypes = {
   filterable: PropTypes.bool,
   sortable: PropTypes.bool,
   width: PropTypes.number,
-  height: PropTypes.number
+  height: PropTypes.number,
+  interactIndex: PropTypes.number,
+  onCheckInteract: PropTypes.func,
+  onDoInteract: PropTypes.func
 }
 
 TableChart.defaultProps = {

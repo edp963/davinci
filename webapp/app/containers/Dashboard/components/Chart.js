@@ -82,6 +82,9 @@ export class Chart extends PureComponent {
       updateInfo,
       chartParams,
       classNames,
+      interactIndex,
+      onCheckTableInteract,
+      onDoTableInteract,
       updateParams
     } = this.props
 
@@ -191,6 +194,7 @@ export class Chart extends PureComponent {
     const chartContent = chartInfo.name === 'table'
       ? (
         <TableChart
+          id={id}
           className={classNames.table}
           data={data}
           loading={loading}
@@ -199,6 +203,9 @@ export class Chart extends PureComponent {
           updateParams={updateParams}
           width={tableWidth}
           height={tableHeight}
+          interactIndex={interactIndex}
+          onCheckInteract={onCheckTableInteract}
+          onDoInteract={onDoTableInteract}
         />
       ) : (
         <div className={classNames.chart} id={`widget_${id}`}>
@@ -224,8 +231,11 @@ Chart.propTypes = {
   chartInfo: PropTypes.object,
   updateInfo: PropTypes.any,
   chartParams: PropTypes.object,
-  updateParams: PropTypes.array,
-  classNames: PropTypes.object
+  classNames: PropTypes.object,
+  interactIndex: PropTypes.number,
+  onCheckTableInteract: PropTypes.func,
+  onDoTableInteract: PropTypes.func,
+  updateParams: PropTypes.array
 }
 
 export default Chart

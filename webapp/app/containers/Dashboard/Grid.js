@@ -106,6 +106,7 @@ export class Grid extends Component {
 
     this.charts = {}
     this.interactCallbacks = {}
+    this.interactingLinkagers = {}
 
     this.state = {
       mounted: false,
@@ -134,7 +135,6 @@ export class Grid extends Component {
 
       linkageFormVisible: false,
       linkageTableSource: false,
-      linkageTableTree: false,
       linkageCascaderSource: false,
       interactiveItems: {},
 
@@ -190,7 +190,10 @@ export class Grid extends Component {
         this.state.localPositions = localPositions
 
         this.state.interactiveItems = currentItems.reduce((acc, i) => {
-          acc[i.id] = false
+          acc[i.id] = {
+            isInteractive: false,
+            interactIndex: -1
+          }
           return acc
         }, {})
       }
@@ -199,7 +202,6 @@ export class Grid extends Component {
         this.state.modifiedPositions = false
         this.state.linkageCascaderSource = false
         this.state.linkageTableSource = false
-        this.state.linkageTableTree = false
         onLoadDashboardDetail(params.dashboardId)
       }
 
@@ -241,7 +243,6 @@ export class Grid extends Component {
       }
       // FIXME
       this.state.linkageTableSource = JSON.parse(currentDashboard.linkage_detail || '[]')
-      this.state.linkageTableTree = this.getLinkageTableSourceTree()
     }
   }
 
@@ -336,9 +337,7 @@ export class Grid extends Component {
   }
 
   renderChart = (itemId, widget, dataSource, chartInfo, interactIndex) => {
-    const { linkageTableTree } = this.state
     const chartInstance = this.charts[`widget_${itemId}`]
-    const chartLinkageTree = linkageTableTree[itemId]
 
     const chartOptions = echartsOptionsGenerator({
       dataSource,
@@ -354,26 +353,20 @@ export class Grid extends Component {
     })
     chartInstance.setOption(chartOptions)
 
-    this.registerChartInteractListener(chartInstance, itemId, dataSource, chartLinkageTree)
+    this.registerChartInteractListener(chartInstance, itemId)
 
     chartInstance.hideLoading()
   }
 
-  registerChartInteractListener = (instance, itemId, dataSource, linkageTree) => {
+  registerChartInteractListener = (instance, itemId) => {
     instance.off('click')
+    instance.on('click', (params) => {
+      const linkagers = this.checkInteract(itemId)
 
-    if (linkageTree) {
-      instance.on('click', (params) => {
-        this.doInteract(`${itemId}`, {
-          type: 'chart',
-          isInteractive: true,
-          chartParams: {
-            index: params.dataIndex,
-            data: dataSource[params.dataIndex]
-          }
-        }, linkageTree)
-      })
-    }
+      if (Object.keys(linkagers) > 0) {
+        this.doInteract(itemId, linkagers, params.dataIndex)
+      }
+    })
   }
 
   onLayoutChange = (layout, layouts) => {
@@ -677,19 +670,16 @@ export class Grid extends Component {
   }
 
   afterLinkageFormClose = () => {
-    this.state.linkageTableSource = JSON.parse(this.props.currentDashboard.linkage_detail || '[]')
     this.setState({
-      // FIXME
-      linkageTableTree: this.getLinkageTableSourceTree()
+      linkageTableSource: JSON.parse(this.props.currentDashboard.linkage_detail || '[]')
     })
   }
 
   addToLinkageTable = (formValues) => {
-    this.state.linkageTableSource = this.state.linkageTableSource.concat(Object.assign({}, formValues, {
-      key: uuid(8, 16)
-    }))
     this.setState({
-      linkageTableTree: this.getLinkageTableSourceTree()
+      linkageTableSource: this.state.linkageTableSource.concat(Object.assign({}, formValues, {
+        key: uuid(8, 16)
+      }))
     })
   }
 
@@ -701,18 +691,23 @@ export class Grid extends Component {
       currentDatasources
     } = this.props
 
-    const { linkageTableTree, interactiveItems } = this.state
+    const { interactiveItems } = this.state
 
     Object.keys(interactiveItems).forEach(itemId => {
-      if (interactiveItems[itemId]) {
+      if (interactiveItems[itemId].isInteractive) {
         const triggerItem = currentItems.find(ci => `${ci.id}` === itemId)
         const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
         const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
         const dataSource = currentDatasources[itemId].dataSource
 
-        this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
+        if (chartInfo.renderer === ECHARTS_RENDERER) {
+          this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
+        }
 
-        interactiveItems[itemId] = false
+        interactiveItems[itemId] = {
+          isInteractive: false,
+          interactIndex: -1
+        }
       }
     })
 
@@ -726,11 +721,9 @@ export class Grid extends Component {
     // 由于新的配置和之前可能有很大不同，因此需要遍历 GridItem 来重新注册事件
     currentItems.forEach(ci => {
       const triggerIntance = this.charts[`widget_${ci.id}`]
-      const triggerLinkageTree = linkageTableTree[ci.id]
-      const currentDatasource = currentDatasources[ci.id]
 
       if (triggerIntance) {
-        this.registerChartInteractListener(triggerIntance, ci.id, currentDatasource.dataSource, triggerLinkageTree)
+        this.registerChartInteractListener(triggerIntance, ci.id)
       }
     })
     this.props.onEditCurrentDashboard(
@@ -746,10 +739,8 @@ export class Grid extends Component {
   }
 
   deleteLinkageCondition = (key) => () => {
-    this.state.linkageTableSource = this.state.linkageTableSource.filter(lt => lt.key !== key)
-
     this.setState({
-      linkageTableTree: this.getLinkageTableSourceTree()
+      linkageTableSource: this.state.linkageTableSource.filter(lt => lt.key !== key)
     })
   }
 
@@ -764,7 +755,7 @@ export class Grid extends Component {
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
       const params = currentDatasources[k].keys.map((pk, index) => ({
-        label: `${pk}[参数]`,
+        label: `${pk}`,
         value: `${pk}${DEFAULT_SPLITER}${currentDatasources[k].types[index]}${DEFAULT_SPLITER}parameter`
       }))
 
@@ -782,16 +773,14 @@ export class Grid extends Component {
     })
   }
 
-  willDoInteract = (itemId) => {
-    // const {
-    //   currentItems,
-    //   widgets,
-    //   currentDatasources
-    // } = this.props
-
+  checkInteract = (itemId) => {
+    const { currentItems, widgets } = this.props
     const { linkageTableSource } = this.state
+    const dashboardItem = currentItems.find(ci => ci.id === itemId)
+    const widget = widgets.find(w => w.id === dashboardItem.widget_id)
+    const widgetlib = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
 
-    let linkagers = []
+    let linkagers = {}
 
     linkageTableSource.forEach(lts => {
       const { trigger, linkager, relation } = lts
@@ -799,11 +788,19 @@ export class Grid extends Component {
       const triggerId = trigger[0]
       const linkagerId = linkager[0]
 
-      if (itemId === triggerId && this.charts[`widget_${triggerId}`]) {
+      if (itemId === triggerId) {
+        if (widgetlib.renderer === ECHARTS_RENDERER && !this.charts[`widget_${triggerId}`]) {
+          return false
+        }
+
         const triggerValueInfo = trigger[1].split(DEFAULT_SPLITER)
         const linkagerValueInfo = linkager[1].split(DEFAULT_SPLITER)
 
-        linkagers.push({
+        if (!linkagers[linkagerId]) {
+          linkagers[linkagerId] = []
+        }
+
+        linkagers[linkagerId].push({
           triggerValue: triggerValueInfo[0],
           triggerValueType: triggerValueInfo[1],
           linkagerValue: linkagerValueInfo[0],
@@ -814,180 +811,148 @@ export class Grid extends Component {
       }
     })
 
-    if (linkagers.length > 0) {
-
-    }
+    return linkagers
   }
 
-  getLinkageTableSourceTree = () => {
-    let linkageTree = {}
-
-    this.state.linkageTableSource.forEach(lts => {
-      const triggerId = lts.trigger[0]
-
-      if (this.charts[`widget_${triggerId}`]) {
-        if (!linkageTree[triggerId]) {
-          linkageTree[triggerId] = {}
-        }
-
-        let triggerValueData = lts.trigger[1].split(DEFAULT_SPLITER)
-        let linkagerId = lts.linkager[0]
-        let linkagerValueData = lts.linkager[1].split(DEFAULT_SPLITER)
-        let relation = lts.relation
-
-        if (!linkageTree[triggerId][linkagerId]) {
-          linkageTree[triggerId][linkagerId] = []
-        }
-
-        linkageTree[triggerId][linkagerId].push({
-          triggerValue: triggerValueData[0],
-          triggerValueType: triggerValueData[1],
-          linkagerValue: linkagerValueData[0],
-          linkagerType: linkagerValueData[2],
-          linkagerId,
-          relation
-        })
-      }
-    })
-
-    return linkageTree
-  }
-
-  doInteract = (itemIdStr, options, linkageTree) => {
+  doInteract = (itemId, linkagers, interactIndex) => {
     const {
       currentItems,
       widgets,
       currentDatasources
     } = this.props
 
-    const { type, isInteractive, chartParams } = options
+    const triggerItem = currentItems.find(ci => ci.id === itemId)
+    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const dataSource = currentDatasources[itemId].dataSource
+    const triggeringData = dataSource[interactIndex]
 
-    if (type === 'chart') {
-      const triggerItem = currentItems.find(ci => `${ci.id}` === itemIdStr)
-      const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
-      const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
-      const dataSource = currentDatasources[itemIdStr].dataSource
-
-      this.renderChart(itemIdStr, triggerWidget, dataSource, chartInfo, chartParams && chartParams.index)
-
-      /*
-       * 触发 LOAD_BIZDATA_FROM_ITEM 会重新render
-       * 这里由于级联取消联动会递归调用，使用 setState 反而会有状态覆盖的情况
-       */
-      this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
-        [itemIdStr]: isInteractive
-      })
+    if (chartInfo.renderer === ECHARTS_RENDERER) {
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndex)
     }
 
-    if (linkageTree) {
-      this.cancelInteract(itemIdStr, 'triggering')
+    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
+      [itemId]: {
+        isInteractive: true,
+        interactIndex
+      }
+    })
 
-      Object.keys(linkageTree).forEach(key => {
-        const linkagerInfo = linkageTree[key]
+    Object.keys(linkagers).forEach(key => {
+      const linkager = linkagers[key]
 
-        let linkagerId
-        let linkageFilters = []
-        let linkageParams = []
-        // 合并单个 linkager 所接收的数据
-        linkagerInfo.forEach(li => {
-          linkagerId = li.linkagerId
+      let linkagerId
+      let linkageFilters = []
+      let linkageParams = []
+      // 合并单个 linkager 所接收的数据
+      linkager.forEach(lr => {
+        linkagerId = lr.linkagerId
 
-          const {
-            triggerValue,
-            triggerValueType,
-            linkagerValue,
-            linkagerType,
-            relation
-          } = li
+        const {
+          triggerValue,
+          triggerValueType,
+          linkagerValue,
+          linkagerType,
+          relation
+        } = lr
 
-          let interactData
+        const interactValue = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
+          ? triggeringData[triggerValue]
+          : `'${triggeringData[triggerValue]}'`
 
-          if (type === 'chart') {
-            interactData = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
-              ? chartParams.data[triggerValue]
-              : `'${chartParams.data[triggerValue]}'`
+        if (linkagerType === 'parameter') {
+          linkageFilters.push(`${linkagerValue} ${relation} ${interactValue}`)
+        } else {
+          linkageParams.push({
+            k: linkagerValue,
+            v: interactValue
+          })
+        }
+      })
 
-            if (linkagerType === 'parameter') {
-              linkageFilters.push(`${linkagerValue} ${relation} ${interactData}`)
-            } else {
-              linkageParams.push({
-                k: linkagerValue,
-                v: interactData
-              })
-            }
-          }
-        })
-
-        const linkagerItem = currentItems.find(ci => ci.id === linkagerId)
+      const linkagerItem = currentItems.find(ci => ci.id === linkagerId)
+      const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
+      /*
+       * 多个 trigger 联动同一个 linkager
+       * interactingLinkagers 是个临时数据存储，且不触发render
+       */
+      if (alreadyInUseFiltersAndParams) {
+        const { filters, params } = alreadyInUseFiltersAndParams
+        const mergedFilters = linkageFilters.length ? Object.assign(filters, {[itemId]: linkageFilters}) : filters
+        const mergedParams = linkageParams.length ? Object.assign(params, {[itemId]: linkageParams}) : params
 
         this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
-          linkageFilters: linkageFilters.join(` and `),
+          linkageFilters: Object.values(mergedFilters)
+            .reduce((arr, val) => arr.concat(...val), [])
+            .join(' and '),
+          linkageParams: Object.values(mergedParams).reduce((arr, val) => arr.concat(...val), [])
+        })
+
+        this.interactingLinkagers[linkagerId] = {
+          filters: mergedFilters,
+          params: mergedParams
+        }
+      } else {
+        this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+          linkageFilters: linkageFilters.join(' and '),
           linkageParams
         })
 
-        if (!this.interactCallbacks[itemIdStr]) {
-          this.interactCallbacks[itemIdStr] = {}
+        this.interactingLinkagers[linkagerId] = {
+          filters: linkageFilters.length ? {[itemId]: linkageFilters} : {},
+          params: linkageParams.length ? {[itemId]: linkageParams} : {}
         }
-
-        if (!this.interactCallbacks[itemIdStr][linkagerId]) {
-          this.interactCallbacks[itemIdStr][linkagerId] = () => {
-            this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
-              linkageFilters: '',
-              linkageParams: []
-            })
-          }
-        }
-      })
-    } else {
-      if (this.interactCallbacks[itemIdStr]) {
-        this.cancelInteract(itemIdStr, 'cancelling')
-
-        Object.keys(this.interactCallbacks[itemIdStr]).map(linkagerId => {
-          this.interactCallbacks[itemIdStr][linkagerId]()
-          delete this.interactCallbacks[itemIdStr][linkagerId]
-        })
       }
-    }
+
+      if (!this.interactCallbacks[itemId]) {
+        this.interactCallbacks[itemId] = {}
+      }
+
+      if (!this.interactCallbacks[itemId][linkagerId]) {
+        this.interactCallbacks[itemId][linkagerId] = () => {
+          const { filters, params } = this.interactingLinkagers[linkagerId]
+
+          delete filters[itemId]
+          delete params[itemId]
+
+          this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+            linkageFilters: Object.values(filters)
+              .reduce((arr, val) => arr.concat(...val), [])
+              .join(' and '),
+            linkageParams: Object.values(params).reduce((arr, val) => arr.concat(...val), [])
+          })
+        }
+      }
+    })
   }
 
   turnOffInteract = (itemId) => () => {
-    this.doInteract(`${itemId}`, { type: 'chart', isInteractive: false })
-  }
+    const {
+      currentItems,
+      widgets,
+      currentDatasources
+    } = this.props
 
-  cancelInteract = (itemId, type) => {
-    const sourceTree = this.getLinkageTableSourceTree()
-    const linkagerTree = sourceTree[itemId]
-    const currentLinkagers = Object.keys(linkagerTree).sort()
+    const triggerItem = currentItems.find(ci => ci.id === itemId)
+    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const dataSource = currentDatasources[itemId].dataSource
 
-    switch (type) {
-      case 'triggering':
-        Object.keys(sourceTree).forEach(id => {
-          if (id !== itemId) {
-            const otherLinkagerTree = sourceTree[id]
-            const otherLinkagers = Object.keys(otherLinkagerTree).sort()
-            // 当其他trigger和当前trigger有同样的linkager时，turnoff掉
-            for (let i = 0, cll = currentLinkagers.length; i < cll; i += 1) {
-              if (currentLinkagers[i] === otherLinkagers[i]) {
-                this.turnOffInteract(id)()
-                break
-              }
-            }
-            // 当其他trigger为当前trigger的linkager，且已经被触发，turnoff掉
-            if (currentLinkagers.indexOf(id) >= 0 && !!this.interactCallbacks[id]) {
-              this.turnOffInteract(id)()
-            }
-          }
-        })
-        break
-      case 'cancelling':
-        // 级联取消联动
-        currentLinkagers.forEach(cl => {
-          if (this.interactCallbacks[cl]) {
-            this.turnOffInteract(cl)()
-          }
-        })
-        break
+    if (chartInfo.renderer === ECHARTS_RENDERER) {
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
     }
+
+    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
+      [itemId]: {
+        isInteractive: false,
+        interactIndex: -1
+      }
+    })
+
+    Object.keys(this.interactCallbacks[itemId]).map(linkagerId => {
+      this.interactCallbacks[itemId][linkagerId]()
+      delete this.interactCallbacks[itemId][linkagerId]
+    })
   }
 
   visibleFullScreen = (currentChartData) => {
@@ -1142,7 +1107,7 @@ export class Grid extends Component {
         const secretInfo = currentItemsSecretInfo[itemId]
         const shareInfoLoading = currentItemsShareInfoLoading[itemId]
         const downloadCsvLoading = currentItemsDownloadCsvLoading[itemId]
-        const isInteractive = interactiveItems[itemId]
+        const { isInteractive, interactIndex } = interactiveItems[itemId]
         // isReadOnly 非原创用户不能对 widget进行写的操作
         const isReadOnly = (widget['create_by'] === loginUser.id)
 
@@ -1167,6 +1132,7 @@ export class Grid extends Component {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               isInteractive={isInteractive}
+              interactIndex={interactIndex}
               onGetChartData={this.getChartData}
               onRenderChart={this.renderChart}
               onShowEdit={this.showEditDashboardItemForm}
@@ -1175,6 +1141,8 @@ export class Grid extends Component {
               onDeleteDashboardItem={this.deleteItem}
               onDownloadCsv={this.downloadCsv}
               onTurnOffInteract={this.turnOffInteract}
+              onCheckTableInteract={this.checkInteract}
+              onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
               isReadOnly={isReadOnly}
             />
@@ -1368,13 +1336,6 @@ export class Grid extends Component {
               {addButton}
               {shareButton}
               {settingButton}
-              {/*<Button*/}
-                {/*size="large"*/}
-                {/*type="primary"*/}
-                {/*icon="lock"*/}
-                {/*style={{marginLeft: '8px'}}*/}
-                {/*onClick={this.willDoInteract}*/}
-              {/*/>*/}
             </Col>
           </Row>
         </Container.Title>

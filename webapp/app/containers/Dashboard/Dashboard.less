@@ -250,6 +250,13 @@
     .tableBlock {
       padding: 0 16px;
       flex: 1;
+
+      .selectedRow {
+        td {
+          background-color: @primary-color;
+          color: @white;
+        }
+      }
     }
   }
 }
@@ -488,7 +495,11 @@
 }
 
 @media (max-width: 768px) {
-  .fullScreen {
-    display: none;
+  .gridItem {
+    .tools {
+      .fullScreen {
+        display: none;
+      }
+    }
   }
 }
