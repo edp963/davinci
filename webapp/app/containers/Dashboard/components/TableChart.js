@@ -24,6 +24,8 @@ import classnames from 'classnames'
 import moment from 'moment'
 
 import Table from 'antd/lib/table'
+import Select from 'antd/lib/select'
+const Option = Select.Option
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../components/DateFilterDropdown/index'
@@ -216,10 +218,18 @@ export class TableChart extends PureComponent {
   rowClassFilter = (record, index) =>
     this.props.interactIndex === index ? styles.selectedRow : ''
 
+  markOptions = (value, record, updateVar) => {
+    console.log(value)
+    console.log(record)
+    console.log(updateVar)
+  }
+
   render () {
     const {
       loading,
       chartParams,
+      updateParams,
+      updateInfo,
       className,
       filterable,
       sortable,
@@ -364,7 +374,22 @@ export class TableChart extends PureComponent {
 
         return Object.assign(plainColumn, filters, sorters)
       })
-
+    if (updateParams && updateParams.length) {
+      columns.push(
+        {
+          title: '标注',
+          dataIndex: 'mark',
+          width: 140,
+          render: (text, record) => (
+            <Select style={{ width: 120 }} onChange={(event) => this.markOptions(event, record, updateInfo)}>
+              {
+                updateParams.map(up => <Option key={up.id} value={up.value}>{up.text}</Option>)
+              }
+            </Select>
+          )
+        }
+      )
+    }
     const predictColumnsWidth = columnKeys.length * COLUMN_WIDTH
     const tableWidthObj = predictColumnsWidth > width
       ? { x: predictColumnsWidth }
@@ -394,6 +419,8 @@ TableChart.propTypes = {
   data: PropTypes.object,
   loading: PropTypes.bool,
   chartParams: PropTypes.object,
+  updateInfo: PropTypes.any,
+  updateParams: PropTypes.array,
   className: PropTypes.string,
   filterable: PropTypes.bool,
   sortable: PropTypes.bool,

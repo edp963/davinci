@@ -186,14 +186,27 @@ export class BizlogicForm extends React.Component {
             </FormItem>
           </Col>
           <Col span={24}>
-            <FormItem label="SQL" {...commonFormItemStyle}>
+            <FormItem label="QUERY" {...commonFormItemStyle}>
               {getFieldDecorator('sql_tmpl', {
                 initialValue: ''
               })(
                 <Input
-                  placeholder="SQL Template"
+                  placeholder="QUERY SQL Template"
                   type="textarea"
                   autosize={{minRows: 8, maxRows: 24}}
+                />
+              )}
+            </FormItem>
+          </Col>
+          <Col span={24}>
+            <FormItem label="UPDATE" {...commonFormItemStyle}>
+              {getFieldDecorator('update_sql', {
+                initialValue: ''
+              })(
+                <Input
+                  placeholder="UPDATE SQL Template"
+                  type="textarea"
+                  autosize={{minRows: 4, maxRows: 24}}
                 />
               )}
             </FormItem>
@@ -221,9 +234,10 @@ export class BizlogicForm extends React.Component {
   }
   componentDidUpdate (prevProps) {
     const {onCodeMirrorChange} = this.props
-    let textarea = document.querySelector('#sql_tmpl')
+    let queryTextarea = document.querySelector('#sql_tmpl')
+    let updateTextarea = document.querySelector('#update_sql')
     if (onCodeMirrorChange) {
-      onCodeMirrorChange(textarea)
+      onCodeMirrorChange(queryTextarea, updateTextarea)
     }
   }
 }

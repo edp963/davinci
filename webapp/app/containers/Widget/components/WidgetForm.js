@@ -33,9 +33,6 @@ import Radio from 'antd/lib/radio'
 import Button from 'antd/lib/button'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
-import Popover from 'antd/lib/popover'
-import Icon from 'antd/lib/icon'
-import Modal from 'antd/lib/modal'
 const FormItem = Form.Item
 const Option = Select.Option
 const CheckboxGroup = Checkbox.Group
@@ -43,21 +40,11 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
-import MarkConfigForm from './MarkConfigForm'
 
 import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
-import {uuid} from '../../../utils/util'
 
 export class WidgetForm extends React.Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      markConfigModalVisible: false,
-      tableSource: [],
-      isCanSaveForm: true
-    }
-  }
   checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
@@ -71,80 +58,7 @@ export class WidgetForm extends React.Component {
         callback(err)
       })
   }
-  toggleMarkConfigTable = () => {
-    let {markConfigModalVisible} = this.state
-    this.setState({
-      markConfigModalVisible: !markConfigModalVisible
-    })
-  }
-  resetMarkConfigForm = () => {
-    this.markConfigForm.resetFields()
-    this.setState({
-      tableSource: []
-    })
-  }
-  onAddConfigValue = () => {
-    const { tableSource } = this.state
-    this.setState({
-      tableSource: tableSource.concat({
-        id: uuid(8, 16),
-        text: '',
-        value: '',
-        status: 0
-      })
-    }, () => this.isCanSave())
-  }
-  onDeleteConfigValue = (id) => () => {
-    const { tableSource } = this.state
-    this.setState({
-      tableSource: tableSource.filter(t => t.id !== id)
-    }, () => this.isCanSave())
-  }
-  onUpdateConfigValue = (id) => () => {
-    this.markConfigForm.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { tableSource } = this.state
-        let config = tableSource.find(t => t.id === id)
-        config.text = values[`${id}Text`]
-        config.value = values[`${id}Value`]
-        config.status = 1
-        this.setState({
-          tableSource: tableSource
-        }, () => this.isCanSave())
-      }
-    })
-  }
-  onChangeConfigValueStatus = (id) => () => {
-    const { tableSource } = this.state
-    tableSource.find(t => t.id === id).status = 0
-    this.setState({
-      tableSource: tableSource
-    }, () => this.isCanSave())
-  }
-  saveConfig = () => {
-    this.markConfigForm.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        console.log(this.state.tableSource)
-      }
-    })
-  }
-  isCanSave = () => {
-    const {tableSource} = this.state
-    let computed = tableSource.length
-      ? tableSource.filter(table => table.status === 0).length
-        ? 0
-        : 1
-      : 0
-    this.setState({
-      isCanSaveForm: !computed
-    })
-  }
   render () {
-    const {
-      markConfigModalVisible,
-      tableSource,
-      isCanSaveForm
-    } = this.state
     const {
       form,
       bizlogics,
@@ -152,17 +66,23 @@ export class WidgetForm extends React.Component {
       dataSource,
       chartInfo,
       queryParams,
+      updateInfo,
+      updateParams,
       segmentControlActiveIndex,
       onBizlogicChange,
       onWidgetTypeChange,
       onFormItemChange,
+      onMarkFieldsOptionsChange,
       onFormInputItemChange,
       onSegmentControlChange,
       onShowVariableConfigTable,
-      onDeleteControl
+      onShowMarkConfigTable,
+      onDeleteControl,
+      onDeleteMarkControl
     } = this.props
 
     const { getFieldDecorator } = form
+    let markFieldsOptions = ''
 
     const bizlogicOptions = bizlogics.map(b => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
@@ -179,6 +99,82 @@ export class WidgetForm extends React.Component {
         }
       </Option>
     ))
+
+    const controlTypes = [
+      { text: '文本输入框', value: 'input' },
+      { text: '数字输入框', value: 'inputNumber' },
+      { text: '单选下拉菜单', value: 'select' },
+      { text: '多选下拉菜单', value: 'multiSelect' },
+      { text: '日期选择', value: 'date' },
+      { text: '日期多选', value: 'multiDate' },
+      { text: '日期时间选择', value: 'datetime' },
+      { text: '日期范围选择', value: 'dateRange' },
+      { text: '日期时间范围选择', value: 'datetimeRange' }
+    ]
+
+    const queryConfigColumns = [{
+      title: '控件',
+      dataIndex: 'type',
+      key: 'type',
+      render: (text, record) => controlTypes.find(c => c.value === text).text
+    }, {
+      title: '关联',
+      dataIndex: 'variables',
+      key: 'variables',
+      render: (text, record) => record.variables.join(',')
+    }, {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Button
+            size="small"
+            shape="circle"
+            icon="edit"
+            onClick={onShowVariableConfigTable(record.id)}
+          />
+          <Button
+            size="small"
+            shape="circle"
+            icon="delete"
+            onClick={onDeleteControl(record.id)}
+          />
+        </span>
+      )
+    }]
+
+    const updateConfigColumns = [{
+      title: '文本',
+      dataIndex: 'text',
+      key: 'text'
+    }, {
+      title: '值',
+      dataIndex: 'value',
+      key: 'value'
+    }, {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Button
+            size="small"
+            shape="circle"
+            icon="edit"
+            onClick={onShowMarkConfigTable(record.id)}
+          />
+          <Button
+            size="small"
+            shape="circle"
+            icon="delete"
+            onClick={onDeleteMarkControl(record.id)}
+          />
+        </span>
+      )
+    }]
 
     let chartConfigElements = ''
     if (chartInfo) {
@@ -308,48 +304,6 @@ export class WidgetForm extends React.Component {
                 </Col>
               )
               break
-            case 'table':
-              formItem = (
-                <Col key={item.name} span={item.span || 12}>
-                  <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
-                      initialValue: ''
-                    })(
-                      <Input
-                        className={utilStyles.hide}
-                        placeholder={item.tip || item.placeholder || item.name}
-                        onChange={onFormInputItemChange(item.name)}
-                      />
-                    )}
-                  </FormItem>
-                  <Popover placement="bottom" content={<p className={styles.descPanel}>点击配置</p>}>
-                    <Icon className={styles.desc} type="question-circle-o" onClick={this.toggleMarkConfigTable} />
-                  </Popover>
-                  <Modal
-                    title="标注器配置"
-                    wrapClassName="ant-modal-large"
-                    visible={markConfigModalVisible}
-                    onCancel={this.toggleMarkConfigTable}
-                    afterClose={this.resetMarkConfigForm}
-                    footer={false}
-                    maskClosable={false}
-                  >
-                    <MarkConfigForm
-                      dataSource={tableSource}
-                      configOptions={item.columns}
-                      isCanSaveForm={isCanSaveForm}
-                      onAddConfigValue={this.onAddConfigValue}
-                      onChangeConfigValueStatus={this.onChangeConfigValueStatus}
-                      onUpdateConfigValue={this.onUpdateConfigValue}
-                      onDeleteConfigValue={this.onDeleteConfigValue}
-                      onSaveConfigValue={this.saveConfig}
-                      onCancel={this.toggleMarkConfigTable}
-                      ref={f => { this.markConfigForm = f }}
-                     />
-                  </Modal>
-                </Col>
-              )
-              break
             default:
               break
           }
@@ -366,56 +320,38 @@ export class WidgetForm extends React.Component {
           </div>
         )
       })
-    }
 
-    const controlTypes = [
-      { text: '文本输入框', value: 'input' },
-      { text: '数字输入框', value: 'inputNumber' },
-      { text: '单选下拉菜单', value: 'select' },
-      { text: '多选下拉菜单', value: 'multiSelect' },
-      { text: '日期选择', value: 'date' },
-      { text: '日期多选', value: 'multiDate' },
-      { text: '日期时间选择', value: 'datetime' },
-      { text: '日期范围选择', value: 'dateRange' },
-      { text: '日期时间范围选择', value: 'datetimeRange' }
-    ]
+      if (updateInfo && updateInfo.length) {
+        markFieldsOptions = (
+          <Form key="333">
+            {
+              updateInfo.map(info => (
+                <FormItem label={info} key={info}>
+                  {getFieldDecorator(`mark${info}`, {})(
+                    <Select
+                      placeholder="关联变量"
+                      onChange={onMarkFieldsOptionsChange(info)}
+                      allowClear
+                    >
+                      {
+                        columns
+                          .map(c => (
+                            <Option key={c} value={c}>{c}</Option>
+                          ))
+                      }
+                    </Select>
+                  )}
+                </FormItem>
+              ))
+            }
+          </Form>
+        )
+      }
+    }
 
     // const controlTypeOptions = controlTypes.map(o => (
     //   <Option key={o.value} value={o.value}>{o.text}</Option>
     // ))
-
-    const queryConfigColumns = [{
-      title: '控件',
-      dataIndex: 'type',
-      key: 'type',
-      render: (text, record) => controlTypes.find(c => c.value === text).text
-    }, {
-      title: '关联',
-      dataIndex: 'variables',
-      key: 'variables',
-      render: (text, record) => record.variables.join(',')
-    }, {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      className: `${utilStyles.textAlignCenter}`,
-      render: (text, record) => (
-        <span className="ant-table-action-column">
-          <Button
-            size="small"
-            shape="circle"
-            icon="edit"
-            onClick={onShowVariableConfigTable(record.id)}
-          />
-          <Button
-            size="small"
-            shape="circle"
-            icon="delete"
-            onClick={onDeleteControl(record.id)}
-          />
-        </span>
-      )
-    }]
 
     const chartConfigClass = classnames({
       [utilStyles.hide]: !!segmentControlActiveIndex
@@ -532,7 +468,12 @@ export class WidgetForm extends React.Component {
         </div>
         <div className={queryConfigClass}>
           <Row>
-            <Col span={24} className={styles.addCol}>
+            <Col span={12}>
+              <h4>
+                QUERY 变量配置
+              </h4>
+            </Col>
+            <Col span={12} className={styles.addCol}>
               <Button
                 type="primary"
                 icon="plus"
@@ -548,6 +489,37 @@ export class WidgetForm extends React.Component {
             rowKey="id"
             pagination={false}
           />
+          {
+            chartInfo && chartInfo.name === 'table'
+              ? <div className={styles.mt20}>
+                <Row>
+                  <Col span={12}>
+                    <h4>
+                      UPDATE 变量配置
+                    </h4>
+                  </Col>
+                </Row>
+                {markFieldsOptions}
+                <Row>
+                  <Col span={12} offset={12} className={styles.addCol}>
+                    <Button
+                      type="primary"
+                      icon="plus"
+                      onClick={onShowMarkConfigTable()}
+                    >
+                      新增
+                    </Button>
+                  </Col>
+                </Row>
+                <Table
+                  dataSource={updateParams}
+                  columns={updateConfigColumns}
+                  rowKey="id"
+                  pagination={false}
+                />
+              </div>
+              : ''
+          }
         </div>
       </Form>
     )
@@ -568,6 +540,8 @@ WidgetForm.propTypes = {
     PropTypes.object
   ]),
   queryParams: PropTypes.array,
+  updateInfo: PropTypes.any,
+  updateParams: PropTypes.array,
   segmentControlActiveIndex: PropTypes.number,
   onBizlogicChange: PropTypes.func,
   onWidgetTypeChange: PropTypes.func,
@@ -575,7 +549,10 @@ WidgetForm.propTypes = {
   onFormInputItemChange: PropTypes.func,
   onSegmentControlChange: PropTypes.func,
   onShowVariableConfigTable: PropTypes.func,
+  onMarkFieldsOptionsChange: PropTypes.func,
+  onShowMarkConfigTable: PropTypes.func,
   onDeleteControl: PropTypes.func,
+  onDeleteMarkControl: PropTypes.func,
   onCheckName: PropTypes.func
 }
 

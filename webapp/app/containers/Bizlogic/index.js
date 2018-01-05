@@ -79,7 +79,8 @@ export class Bizlogic extends React.PureComponent {
       redrawKey: 100000,
       isShowSqlValidateAlert: false
     }
-    this.codeMirrorInstance = false
+    this.codeMirrorInstanceOfQuerySQL = false
+    this.codeMirrorInstanceOfUpdateSQL = false
   }
 
   componentWillMount () {
@@ -116,8 +117,9 @@ export class Bizlogic extends React.PureComponent {
         checked: false
       }))
     }, () => {
-      let sqlTmpl = document.querySelector('#sql_tmpl')
-      this.handleCodeMirror(sqlTmpl)
+      let queryTextarea = document.querySelector('#sql_tmpl')
+      let updateTextarea = document.querySelector('#update_sql')
+      this.handleCodeMirror(queryTextarea, updateTextarea)
     })
   }
 
@@ -131,7 +133,8 @@ export class Bizlogic extends React.PureComponent {
         desc,
         source_id,
         sql_tmpl,
-        create_by
+        create_by,
+        update_sql
       } = this.props.bizlogics.find(b => b.id === id)
 
       this.bizlogicForm.setFieldsValue({
@@ -140,10 +143,12 @@ export class Bizlogic extends React.PureComponent {
         create_by,
         desc,
         source_id: `${source_id}`,  // eslint-disable-line
-        sql_tmpl
+        sql_tmpl,
+        update_sql
       })
 
-      this.codeMirrorInstance = false
+      this.codeMirrorInstanceOfQuerySQL = false
+      this.codeMirrorInstanceOfUpdateSQL = false
 
       this.props.onLoadBizlogicGroups(id)
         .then(groups => {
@@ -166,19 +171,26 @@ export class Bizlogic extends React.PureComponent {
         })
     })
   }
-  handleCodeMirror = (dom) => {
-    if (!this.codeMirrorInstance) {
-      this.codeMirrorInstance = codeMirror.fromTextArea(dom, {
+  handleCodeMirror = (queryWrapperDOM, updateWrapperDOM) => {
+    if (!this.codeMirrorInstanceOfQuerySQL) {
+      this.codeMirrorInstanceOfQuerySQL = codeMirror.fromTextArea(queryWrapperDOM, {
         mode: 'text/x-sql',
         theme: '3024-day',
         lineNumbers: true,
         width: '100%',
         height: '100%',
-        lineWrapping: true,
-        onChange: function (instance, changeObj) {
-          console.log(instance)
-          console.log(changeObj)
-        }
+        lineWrapping: true
+      })
+    }
+
+    if (!this.codeMirrorInstanceOfUpdateSQL) {
+      this.codeMirrorInstanceOfUpdateSQL = codeMirror.fromTextArea(updateWrapperDOM, {
+        mode: 'text/x-sql',
+        theme: '3024-day',
+        lineNumbers: true,
+        width: '100%',
+        height: '100%',
+        lineWrapping: true
       })
     }
   }
@@ -191,7 +203,7 @@ export class Bizlogic extends React.PureComponent {
   validateSql = () => {
     // todo 校验SQL next()
     const {onValidateSql} = this.props
-    const sqlTmpl = this.codeMirrorInstance.getValue()
+    const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
     this.bizlogicForm.validateFieldsAndScroll((err, values) => {
       const { source_id } = values
       if (sqlTmpl) {
@@ -207,8 +219,9 @@ export class Bizlogic extends React.PureComponent {
   }
   changeFormStep = (sign) => () => {
     if (sign) {
-      let sqlValue = this.codeMirrorInstance.getValue()
-      this.bizlogicForm.setFieldsValue({sql_tmpl: sqlValue})
+      let querySqlValue = this.codeMirrorInstanceOfQuerySQL.getValue()
+      let updateSqlValue = this.codeMirrorInstanceOfUpdateSQL.getValue()
+      this.bizlogicForm.setFieldsValue({sql_tmpl: querySqlValue, update_sql: updateSqlValue})
       this.bizlogicForm.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { groupTableSource } = this.state
@@ -283,6 +296,7 @@ export class Bizlogic extends React.PureComponent {
             group_id: gs.id,
             sql_params: JSON.stringify(gs.params)
           }))
+        // Fixme
         values.trigger_type = ''
         values.frequency = ''
         values.catch = ''
@@ -334,7 +348,8 @@ export class Bizlogic extends React.PureComponent {
       formVisible: false,
       redrawKey: redrawKey
     }, () => {
-      this.codeMirrorInstance = false
+      this.codeMirrorInstanceOfQuerySQL = false
+      this.codeMirrorInstanceOfUpdateSQL = false
       this.setState({
         isShowSqlValidateAlert: false,
         modalLoading: false,
@@ -408,7 +423,6 @@ export class Bizlogic extends React.PureComponent {
 
     const {
       sources,
-      loginUser,
       onDeleteBizlogic
     } = this.props
 
@@ -501,7 +515,7 @@ export class Bizlogic extends React.PureComponent {
           size="large"
           onClick={this.validateSql}
         >
-          SQL校验
+          QUERY SQL校验
         </Button>,
         <Button
           key="forward"
