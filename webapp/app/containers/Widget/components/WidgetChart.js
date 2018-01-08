@@ -86,7 +86,10 @@ export class WidgetChart extends PureComponent {
       loading,
       data,
       chartInfo,
-      chartParams
+      updateConfig,
+      chartParams,
+      updateParams,
+      currentBizlogicId
     } = this.props
 
     const chartClass = {
@@ -94,7 +97,6 @@ export class WidgetChart extends PureComponent {
       table: styles.tableChart,
       container: styles.widgetChart
     }
-
     return (
       <Chart
         id="commonChart"
@@ -104,7 +106,10 @@ export class WidgetChart extends PureComponent {
         data={data}
         loading={loading}
         chartInfo={chartInfo}
+        updateConfig={updateConfig}
         chartParams={chartParams}
+        currentBizlogicId={currentBizlogicId}
+        updateParams={updateParams}
         classNames={chartClass}
       />
     )
@@ -115,7 +120,13 @@ WidgetChart.propTypes = {
   loading: PropTypes.bool,
   data: PropTypes.object,
   chartInfo: PropTypes.object,
-  chartParams: PropTypes.object
+  updateConfig: PropTypes.any,
+  chartParams: PropTypes.object,
+  updateParams: PropTypes.array,
+  currentBizlogicId: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number
+  ])
 }
 
 export default WidgetChart

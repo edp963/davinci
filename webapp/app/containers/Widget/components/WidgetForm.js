@@ -66,17 +66,24 @@ export class WidgetForm extends React.Component {
       dataSource,
       chartInfo,
       queryParams,
+      updateInfo,
+      updateParams,
+      updateFields,
       segmentControlActiveIndex,
       onBizlogicChange,
       onWidgetTypeChange,
       onFormItemChange,
+      onMarkFieldsOptionsChange,
       onFormInputItemChange,
       onSegmentControlChange,
       onShowVariableConfigTable,
-      onDeleteControl
+      onShowMarkConfigTable,
+      onDeleteControl,
+      onDeleteMarkControl
     } = this.props
 
     const { getFieldDecorator } = form
+    let markFieldsOptions = ''
 
     const bizlogicOptions = bizlogics.map(b => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
@@ -94,9 +101,86 @@ export class WidgetForm extends React.Component {
       </Option>
     ))
 
+    const controlTypes = [
+      { text: '文本输入框', value: 'input' },
+      { text: '数字输入框', value: 'inputNumber' },
+      { text: '单选下拉菜单', value: 'select' },
+      { text: '多选下拉菜单', value: 'multiSelect' },
+      { text: '日期选择', value: 'date' },
+      { text: '日期多选', value: 'multiDate' },
+      { text: '日期时间选择', value: 'datetime' },
+      { text: '日期范围选择', value: 'dateRange' },
+      { text: '日期时间范围选择', value: 'datetimeRange' }
+    ]
+
+    const queryConfigColumns = [{
+      title: '控件',
+      dataIndex: 'type',
+      key: 'type',
+      render: (text, record) => controlTypes.find(c => c.value === text).text
+    }, {
+      title: '关联',
+      dataIndex: 'variables',
+      key: 'variables',
+      render: (text, record) => record.variables.join(',')
+    }, {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Button
+            size="small"
+            shape="circle"
+            icon="edit"
+            onClick={onShowVariableConfigTable(record.id)}
+          />
+          <Button
+            size="small"
+            shape="circle"
+            icon="delete"
+            onClick={onDeleteControl(record.id)}
+          />
+        </span>
+      )
+    }]
+
+    const updateConfigColumns = [{
+      title: '文本',
+      dataIndex: 'text',
+      key: 'text'
+    }, {
+      title: '值',
+      dataIndex: 'value',
+      key: 'value'
+    }, {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Button
+            size="small"
+            shape="circle"
+            icon="edit"
+            onClick={onShowMarkConfigTable(record.id)}
+          />
+          <Button
+            size="small"
+            shape="circle"
+            icon="delete"
+            onClick={onDeleteMarkControl(record.id)}
+          />
+        </span>
+      )
+    }]
+
     let chartConfigElements = ''
+    let columns
     if (chartInfo) {
-      const columns = dataSource && dataSource.length ? Object.keys(dataSource[0]) : []
+      columns = dataSource && dataSource.length ? Object.keys(dataSource[0]) : []
 
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
@@ -238,56 +322,44 @@ export class WidgetForm extends React.Component {
           </div>
         )
       })
-    }
 
-    const controlTypes = [
-      { text: '文本输入框', value: 'input' },
-      { text: '数字输入框', value: 'inputNumber' },
-      { text: '单选下拉菜单', value: 'select' },
-      { text: '多选下拉菜单', value: 'multiSelect' },
-      { text: '日期选择', value: 'date' },
-      { text: '日期多选', value: 'multiDate' },
-      { text: '日期时间选择', value: 'datetime' },
-      { text: '日期范围选择', value: 'dateRange' },
-      { text: '日期时间范围选择', value: 'datetimeRange' }
-    ]
+      if (updateInfo && updateInfo.length) {
+        let fieldLists = [...columns]
+        fieldLists.unshift('标注器')
+        markFieldsOptions = (
+          <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
+            <div className={styles.unitContent}>
+              {
+                updateInfo.map((info, index) => (
+                  <Row key={info} style={{marginBottom: '8px'}}>
+                    <Col span={9}>
+                      {info}
+                    </Col>
+                    <Col span={15}>
+                      <Select
+                        placeholder="关联变量"
+                      //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
+                        onChange={(e) => onMarkFieldsOptionsChange(e, info)}
+                      >
+                        {
+                          fieldLists
+                            .filter(c => c !== 'antDesignTableId')
+                            .map(c => (<Option key={c} value={c}>{c}</Option>))
+                        }
+                      </Select>
+                    </Col>
+                  </Row>
+                ))
+              }
+            </div>
+          </div>
+        )
+      }
+    }
 
     // const controlTypeOptions = controlTypes.map(o => (
     //   <Option key={o.value} value={o.value}>{o.text}</Option>
     // ))
-
-    const queryConfigColumns = [{
-      title: '控件',
-      dataIndex: 'type',
-      key: 'type',
-      render: (text, record) => controlTypes.find(c => c.value === text).text
-    }, {
-      title: '关联',
-      dataIndex: 'variables',
-      key: 'variables',
-      render: (text, record) => record.variables.join(',')
-    }, {
-      title: '操作',
-      key: 'action',
-      width: 100,
-      className: `${utilStyles.textAlignCenter}`,
-      render: (text, record) => (
-        <span className="ant-table-action-column">
-          <Button
-            size="small"
-            shape="circle"
-            icon="edit"
-            onClick={onShowVariableConfigTable(record.id)}
-          />
-          <Button
-            size="small"
-            shape="circle"
-            icon="delete"
-            onClick={onDeleteControl(record.id)}
-          />
-        </span>
-      )
-    }]
 
     const chartConfigClass = classnames({
       [utilStyles.hide]: !!segmentControlActiveIndex
@@ -404,7 +476,12 @@ export class WidgetForm extends React.Component {
         </div>
         <div className={queryConfigClass}>
           <Row>
-            <Col span={24} className={styles.addCol}>
+            <Col span={12}>
+              <h4>
+                QUERY 变量配置
+              </h4>
+            </Col>
+            <Col span={12} className={styles.addCol}>
               <Button
                 type="primary"
                 icon="plus"
@@ -420,6 +497,37 @@ export class WidgetForm extends React.Component {
             rowKey="id"
             pagination={false}
           />
+          {
+            chartInfo && chartInfo.name === 'table'
+              ? <div className={styles.mt20}>
+                <Row>
+                  <Col span={12}>
+                    <h4>
+                      UPDATE 变量配置
+                    </h4>
+                  </Col>
+                </Row>
+                {markFieldsOptions}
+                <Row>
+                  <Col span={12} offset={12} className={styles.addCol}>
+                    <Button
+                      type="primary"
+                      icon="plus"
+                      onClick={onShowMarkConfigTable()}
+                    >
+                      新增标注选项
+                    </Button>
+                  </Col>
+                </Row>
+                <Table
+                  dataSource={updateParams}
+                  columns={updateConfigColumns}
+                  rowKey="id"
+                  pagination={false}
+                />
+              </div>
+              : ''
+          }
         </div>
       </Form>
     )
@@ -440,6 +548,9 @@ WidgetForm.propTypes = {
     PropTypes.object
   ]),
   queryParams: PropTypes.array,
+  updateInfo: PropTypes.any,
+  updateParams: PropTypes.array,
+  updateFields: PropTypes.any,
   segmentControlActiveIndex: PropTypes.number,
   onBizlogicChange: PropTypes.func,
   onWidgetTypeChange: PropTypes.func,
@@ -447,7 +558,10 @@ WidgetForm.propTypes = {
   onFormInputItemChange: PropTypes.func,
   onSegmentControlChange: PropTypes.func,
   onShowVariableConfigTable: PropTypes.func,
+  onMarkFieldsOptionsChange: PropTypes.func,
+  onShowMarkConfigTable: PropTypes.func,
   onDeleteControl: PropTypes.func,
+  onDeleteMarkControl: PropTypes.func,
   onCheckName: PropTypes.func
 }
 

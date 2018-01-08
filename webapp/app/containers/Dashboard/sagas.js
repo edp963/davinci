@@ -33,7 +33,8 @@ import {
   DELETE_DASHBOARD_ITEM,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK,
-  LOAD_WIDGET_CSV
+  LOAD_WIDGET_CSV,
+  UPDAATE_MARK
 } from './constants'
 
 import {
@@ -56,7 +57,9 @@ import {
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
   widgetCsvLoaded,
-  loadWidgetCsvFail
+  loadWidgetCsvFail,
+  updateMarkSuccess,
+  updateMarkError
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -323,6 +326,26 @@ export function* getWidgetCsvWatcher () {
   yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
 }
 
+export function* updateMarkRepos ({payload}) {
+  const {id, params, resolve, reject} = payload
+  console.log(params)
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/mark`,
+      data: {manualInfo: {params}}
+    })
+    const result = readListAdapter(asyncData)
+    resolve(result)
+  } catch (err) {
+    reject(err)
+  }
+}
+
+export function* updateMarkRepoWatcher () {
+  yield fork(takeLatest, UPDAATE_MARK, updateMarkRepos)
+}
+
 export default [
   getDashboardsWatcher,
   addDashboardWatcher,
@@ -336,5 +359,6 @@ export default [
   deleteDashboardItemWatcher,
   getDashboardShareLinkWatcher,
   getWidgetShareLinkWatcher,
-  getWidgetCsvWatcher
+  getWidgetCsvWatcher,
+  updateMarkRepoWatcher
 ]

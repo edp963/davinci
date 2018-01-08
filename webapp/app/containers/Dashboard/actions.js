@@ -52,7 +52,10 @@ import {
   LOAD_WIDGET_SHARE_LINK_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE
+  LOAD_WIDGET_CSV_FAILURE,
+  UPDAATE_MARK,
+  UPDATE_MARK_SUCCESS,
+  UPDATE_MARK_ERROR
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -315,6 +318,36 @@ export function loadWidgetCsvFail (itemId) {
     type: LOAD_WIDGET_CSV_FAILURE,
     payload: {
       itemId
+    }
+  }
+}
+
+export function updateMark (id, params, resolve, reject) {
+  return {
+    type: UPDAATE_MARK,
+    payload: {
+      id,
+      params,
+      resolve,
+      reject
+    }
+  }
+}
+
+export function updateMarkSuccess (id) {
+  return {
+    type: UPDATE_MARK_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function updateMarkError (id) {
+  return {
+    type: UPDATE_MARK_ERROR,
+    payload: {
+      id
     }
   }
 }

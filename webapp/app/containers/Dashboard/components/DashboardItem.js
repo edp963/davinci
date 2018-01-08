@@ -193,6 +193,20 @@ export class DashboardItem extends PureComponent {
       controlPanelVisible
     } = this.state
 
+    let updateParams
+    let updateConfig
+    let currentBizlogicId
+    if (widget && widget.config) {
+      currentBizlogicId = widget.flatTable_id
+      let config = JSON.parse(widget.config)
+      if (config && config['update_params']) {
+        updateParams = JSON.parse(config['update_params'])
+      }
+      if (config && config['update_fields']) {
+        updateConfig = JSON.parse(config['update_fields'])
+      }
+    }
+
     const menu = (
       <Menu>
         {
@@ -360,7 +374,10 @@ export class DashboardItem extends PureComponent {
           data={data || {}}
           loading={loading}
           chartInfo={chartInfo}
+          updateConfig={updateConfig}
           chartParams={JSON.parse(widget.chart_params)}
+          updateParams={updateParams}
+          currentBizlogicId={currentBizlogicId}
           classNames={chartClass}
           interactIndex={interactIndex}
           onCheckTableInteract={onCheckTableInteract}
