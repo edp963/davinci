@@ -328,12 +328,11 @@ export function* getWidgetCsvWatcher () {
 
 export function* updateMarkRepos ({payload}) {
   const {id, params, resolve, reject} = payload
-  console.log(params)
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/mark`,
-      data: {manualInfo: {params}}
+      data: {params}
     })
     const result = readListAdapter(asyncData)
     resolve(result)
