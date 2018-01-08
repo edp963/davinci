@@ -79,7 +79,8 @@ export class SplitView extends PureComponent {
       updateParams,
       tableLoading,
       adhocSql,
-      updateInfo,
+      updateConfig,
+      currentBizlogicId,
       onAdhocSqlInputChange,
       onAdhocSqlQuery
     } = this.props
@@ -116,8 +117,9 @@ export class SplitView extends PureComponent {
           loading={tableLoading}
           data={data || {}}
           chartInfo={chartInfo}
-          updateInfo={updateInfo}
+          updateConfig={updateConfig}
           chartParams={chartParams}
+          currentBizlogicId={currentBizlogicId}
           updateParams={updateParams}
         />
       )
@@ -189,9 +191,13 @@ SplitView.propTypes = {
     PropTypes.bool,
     PropTypes.object
   ]),
+  currentBizlogicId: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number
+  ]),
   chartParams: PropTypes.object,
   updateParams: PropTypes.array,
-  updateInfo: PropTypes.any,
+  updateConfig: PropTypes.any,
   tableLoading: PropTypes.bool,
   adhocSql: PropTypes.string,
   onSaveWidget: PropTypes.func,

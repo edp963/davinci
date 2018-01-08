@@ -68,6 +68,7 @@ export class WidgetForm extends React.Component {
       queryParams,
       updateInfo,
       updateParams,
+      updateFields,
       segmentControlActiveIndex,
       onBizlogicChange,
       onWidgetTypeChange,
@@ -177,8 +178,9 @@ export class WidgetForm extends React.Component {
     }]
 
     let chartConfigElements = ''
+    let columns
     if (chartInfo) {
-      const columns = dataSource && dataSource.length ? Object.keys(dataSource[0]) : []
+      columns = dataSource && dataSource.length ? Object.keys(dataSource[0]) : []
 
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
@@ -322,29 +324,35 @@ export class WidgetForm extends React.Component {
       })
 
       if (updateInfo && updateInfo.length) {
+        let fieldLists = [...columns]
+        fieldLists.unshift('标注器')
         markFieldsOptions = (
-          <Form key="333">
-            {
-              updateInfo.map(info => (
-                <FormItem label={info} key={info}>
-                  {getFieldDecorator(`mark${info}`, {})(
-                    <Select
-                      placeholder="关联变量"
-                      onChange={onMarkFieldsOptionsChange(info)}
-                      allowClear
-                    >
-                      {
-                        columns
-                          .map(c => (
-                            <Option key={c} value={c}>{c}</Option>
-                          ))
-                      }
-                    </Select>
-                  )}
-                </FormItem>
-              ))
-            }
-          </Form>
+          <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
+            <div className={styles.unitContent}>
+              {
+                updateInfo.map((info, index) => (
+                  <Row key={info} style={{marginBottom: '8px'}}>
+                    <Col span={9}>
+                      {info}
+                    </Col>
+                    <Col span={15}>
+                      <Select
+                        placeholder="关联变量"
+                      //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
+                        onChange={(e) => onMarkFieldsOptionsChange(e, info)}
+                      >
+                        {
+                          fieldLists
+                            .filter(c => c !== 'antDesignTableId')
+                            .map(c => (<Option key={c} value={c}>{c}</Option>))
+                        }
+                      </Select>
+                    </Col>
+                  </Row>
+                ))
+              }
+            </div>
+          </div>
         )
       }
     }
@@ -507,7 +515,7 @@ export class WidgetForm extends React.Component {
                       icon="plus"
                       onClick={onShowMarkConfigTable()}
                     >
-                      新增
+                      新增标注选项
                     </Button>
                   </Col>
                 </Row>
@@ -542,6 +550,7 @@ WidgetForm.propTypes = {
   queryParams: PropTypes.array,
   updateInfo: PropTypes.any,
   updateParams: PropTypes.array,
+  updateFields: PropTypes.any,
   segmentControlActiveIndex: PropTypes.number,
   onBizlogicChange: PropTypes.func,
   onWidgetTypeChange: PropTypes.func,
