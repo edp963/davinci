@@ -44,8 +44,11 @@ export class Workbench extends React.Component {
       chartParams: {},
       queryInfo: false,
       updateInfo: false,
+      updateConfig: {},
       queryParams: [],
       updateParams: [],
+      updateFields: {},
+      currentBizlogicId: false,
       formSegmentControlActiveIndex: 0,
       adhocSql: props.type === 'edit' ? props.widget.adhoc_sql : '',
 
@@ -103,7 +106,10 @@ export class Workbench extends React.Component {
 
         if (widget && widget.config) {
           let updateParams = JSON.parse(widget.config)['update_params']
+          let updateFields = JSON.parse(widget.config)['update_fields']
           this.state.updateParams = updateParams ? JSON.parse(updateParams) : []
+          this.state.updateFields = updateFields ? JSON.parse(updateFields) : {}
+          this.state.updateConfig = updateFields ? JSON.parse(updateFields) : {}
         }
 
         delete params.widgetName
@@ -146,8 +152,8 @@ export class Workbench extends React.Component {
     const sqlTemplate = this.props.bizlogics.find(bl => bl.id === Number(val))
     const queryArr = sqlTemplate.sql_tmpl.match(/query@var\s\$\w+\$/g) || []
     let updateArr = sqlTemplate.update_sql ? (sqlTemplate.update_sql.match(/update@var\s\$\w+\$/g) || []) : []
-
     this.setState({
+      currentBizlogicId: sqlTemplate.id,
       queryInfo: queryArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       updateInfo: updateArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       queryParams: []
@@ -190,7 +196,7 @@ export class Workbench extends React.Component {
   saveWidget = () => new Promise((resolve, reject) => {
     this.widgetForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { chartInfo, queryParams, adhocSql, updateParams } = this.state
+        const { chartInfo, queryParams, adhocSql, updateParams, updateFields } = this.state
 
         let id = values.id
         let name = values.name
@@ -227,7 +233,8 @@ export class Workbench extends React.Component {
           config: JSON.stringify({
             useCache,
             expired,
-            update_params: JSON.stringify(updateParams)
+            update_params: JSON.stringify(updateParams),
+            update_fields: JSON.stringify(updateFields)
           })
         }
 
@@ -338,8 +345,13 @@ export class Workbench extends React.Component {
   resetMarkConfigForm = () => {
     this.markConfigForm.resetFields()
   }
-  markFieldsOptionsChange = () => () => {
-    console.log('markFieldsOptionsChange')
+  markFieldsOptionsChange = (e, type) => {
+    const {updateFields} = this.state
+    let newFields = Object.assign({}, updateFields)
+    newFields[type] = e
+    this.setState({
+      updateFields: newFields
+    })
   }
   saveMarkConfig = () => {
     const { updateParams } = this.state
@@ -385,9 +397,12 @@ export class Workbench extends React.Component {
       chartInfo,
       queryInfo,
       updateInfo,
+      updateConfig,
       chartParams,
       queryParams,
       updateParams,
+      updateFields,
+      currentBizlogicId,
       formSegmentControlActiveIndex,
       adhocSql,
       variableConfigModalVisible,
@@ -405,8 +420,10 @@ export class Workbench extends React.Component {
           chartInfo={chartInfo}
           queryInfo={queryInfo}
           updateInfo={updateInfo}
+          updateConfig={updateConfig}
           queryParams={queryParams}
           updateParams={updateParams}
+          updateFields={updateFields}
           segmentControlActiveIndex={formSegmentControlActiveIndex}
           onBizlogicChange={this.bizlogicChange}
           onWidgetTypeChange={this.widgetTypeChange}
@@ -424,9 +441,10 @@ export class Workbench extends React.Component {
         <SplitView
           data={bizdatas}
           chartInfo={chartInfo}
-          updateInfo={updateInfo}
+          updateConfig={updateConfig}
           chartParams={chartParams}
           updateParams={updateParams}
+          currentBizlogicId={currentBizlogicId}
           tableLoading={bizdatasLoading}
           adhocSql={adhocSql}
           onSaveWidget={this.saveWidget}
@@ -461,7 +479,6 @@ export class Workbench extends React.Component {
         >
           <MarkConfigForm
             onCancel={this.hideMarkConfigTable}
-            updateInfo={updateInfo}
             onSaveMarkConfigValue={this.saveMarkConfig}
             ref={f => { this.markConfigForm = f }}
           />

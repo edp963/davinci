@@ -167,7 +167,6 @@ export class DashboardItem extends PureComponent {
       h,
       itemId,
       widget,
-      bizlogics,
       chartInfo,
       data,
       loading,
@@ -195,16 +194,16 @@ export class DashboardItem extends PureComponent {
     } = this.state
 
     let updateParams
-    let updateInfo
+    let updateConfig
+    let currentBizlogicId
     if (widget && widget.config) {
+      currentBizlogicId = widget.flatTable_id
       let config = JSON.parse(widget.config)
       if (config && config['update_params']) {
         updateParams = JSON.parse(config['update_params'])
       }
-      if (bizlogics) {
-        const sqlTemplate = this.props.bizlogics.find(bl => bl.id === Number(widget.flatTable_id))
-        let updateArr = sqlTemplate.update_sql && sqlTemplate.update_sql.length ? (sqlTemplate.update_sql.match(/update@var\s\$\w+\$/g) || []) : []
-        updateInfo = updateArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
+      if (config && config['update_fields']) {
+        updateConfig = JSON.parse(config['update_fields'])
       }
     }
 
@@ -375,9 +374,10 @@ export class DashboardItem extends PureComponent {
           data={data || {}}
           loading={loading}
           chartInfo={chartInfo}
+          updateConfig={updateConfig}
           chartParams={JSON.parse(widget.chart_params)}
           updateParams={updateParams}
-          updateInfo={updateInfo}
+          currentBizlogicId={currentBizlogicId}
           classNames={chartClass}
           interactIndex={interactIndex}
           onCheckTableInteract={onCheckTableInteract}
@@ -393,10 +393,6 @@ DashboardItem.propTypes = {
   h: PropTypes.number,
   itemId: PropTypes.number,
   widget: PropTypes.object,
-  bizlogics: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
   chartInfo: PropTypes.object,
   data: PropTypes.object,
   loading: PropTypes.bool,

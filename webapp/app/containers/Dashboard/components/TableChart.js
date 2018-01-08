@@ -19,18 +19,21 @@
  */
 
 import React, { PureComponent } from 'react'
+import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import classnames from 'classnames'
 import moment from 'moment'
 
 import Table from 'antd/lib/table'
 import Select from 'antd/lib/select'
+import Message from 'antd/lib/message'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../components/DateFilterDropdown/index'
 
 import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
+import {updateMark} from '../actions'
 import styles from '../Dashboard.less'
 
 export class TableChart extends PureComponent {
@@ -194,12 +197,6 @@ export class TableChart extends PureComponent {
     })
   }
 
-  markOptions = (value, record, updateVar) => {
-    console.log(value)
-    console.log(record)
-    console.log(updateVar)
-  }
-
   rowClick = (record, index) => {
     const { id, onCheckInteract, onDoInteract } = this.props
     const { data } = this.state
@@ -224,19 +221,37 @@ export class TableChart extends PureComponent {
   rowClassFilter = (record, index) =>
     this.props.interactIndex === index ? styles.selectedRow : ''
 
+  markOptions = (value, record, updateVar) => {
+    const {onUpdateMark, currentBizlogicId} = this.props
+    let params = Object.assign({}, updateVar)
+    for (let attr in params) {
+      if (params[attr] === '标注器') {
+        params[attr] = value
+      } else {
+        params[attr] = record[updateVar[attr]]
+      }
+    }
+    let paramsArr = Object.keys(params).map(param => ({'k': param, 'v': params[param]}))
+    onUpdateMark(currentBizlogicId, paramsArr,
+        result => {
+          Message.info(result)
+        }, err => {
+          Message.error(err)
+        })
+  }
+
   render () {
     const {
       loading,
       chartParams,
       updateParams,
-      updateInfo,
+      updateConfig,
       className,
       filterable,
       sortable,
       width,
       height
     } = this.props
-
     const {
       data,
       filterDropdownVisibles,
@@ -381,7 +396,7 @@ export class TableChart extends PureComponent {
           dataIndex: 'mark',
           width: 140,
           render: (text, record) => (
-            <Select style={{ width: 120 }} onChange={(event) => this.markOptions(event, record, updateInfo)}>
+            <Select style={{ width: 120 }} onChange={(event) => this.markOptions(event, record, updateConfig)}>
               {
                 updateParams.map(up => <Option key={up.id} value={up.value}>{up.text}</Option>)
               }
@@ -419,7 +434,7 @@ TableChart.propTypes = {
   data: PropTypes.object,
   loading: PropTypes.bool,
   chartParams: PropTypes.object,
-  updateInfo: PropTypes.any,
+  updateConfig: PropTypes.any,
   updateParams: PropTypes.array,
   className: PropTypes.string,
   filterable: PropTypes.bool,
@@ -428,7 +443,12 @@ TableChart.propTypes = {
   height: PropTypes.number,
   interactIndex: PropTypes.number,
   onCheckInteract: PropTypes.func,
-  onDoInteract: PropTypes.func
+  onDoInteract: PropTypes.func,
+  onUpdateMark: PropTypes.func,
+  currentBizlogicId: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.number
+  ])
 }
 
 TableChart.defaultProps = {
@@ -437,4 +457,10 @@ TableChart.defaultProps = {
   sortable: true
 }
 
-export default TableChart
+export function mapDispatchToProps (dispatch) {
+  return {
+    onUpdateMark: (id, params, resolve, reject) => dispatch(updateMark(id, params, resolve, reject))
+  }
+}
+
+export default connect(null, mapDispatchToProps)(TableChart)
