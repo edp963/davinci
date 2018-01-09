@@ -447,7 +447,7 @@ export class DashboardItemFilters extends PureComponent {
   }
 
   getSqlExpresstions = (tree) => {
-    if (Object.keys(tree).length > 0) {
+    if (Object.keys(tree).length) {
       if (tree.type === 'link') {
         const partials = tree.children.map(c => {
           if (c.type === 'link') {
