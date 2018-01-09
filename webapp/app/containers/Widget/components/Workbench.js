@@ -330,12 +330,10 @@ export class Workbench extends React.Component {
   }
   showMarkConfigTable = (id) => () => {
     const {updateParams} = this.state
-    if (id) {
-      this.markConfigForm.setFieldsValue(updateParams.find(u => u.id === id))
-    }
+    const currentParams = updateParams.find(u => u.id === id)
     this.setState({
       markConfigModalVisible: true
-    })
+    }, () => this.markConfigForm.setFieldsValue(currentParams))
   }
   hideMarkConfigTable = () => {
     this.setState({
