@@ -204,7 +204,7 @@ export class TableChart extends PureComponent {
     if (onCheckInteract && onDoInteract) {
       const linkagers = onCheckInteract(Number(id))
 
-      if (Object.keys(linkagers) > 0) {
+      if (Object.keys(linkagers).length) {
         data.dataSource.forEach((ds, dsIndex) => {
           if (dsIndex === index) {
             onDoInteract(Number(id), linkagers, index)

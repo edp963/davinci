@@ -363,7 +363,7 @@ export class Grid extends Component {
     instance.on('click', (params) => {
       const linkagers = this.checkInteract(itemId)
 
-      if (Object.keys(linkagers) > 0) {
+      if (Object.keys(linkagers).length) {
         this.doInteract(itemId, linkagers, params.dataIndex)
       }
     })
