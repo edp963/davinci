@@ -39,9 +39,9 @@ object UserService extends UserService
 trait UserService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAllUsers(session: SessionClass): Future[Seq[QueryUserInfo]] = {
-    val userInfo = db.run(modules.userQuery.map(r => (r.id, r.email, r.title, r.name, r.admin) <> (QueryUserInfo.tupled, QueryUserInfo.unapply)).result)
-    userInfo.mapTo[Seq[QueryUserInfo]]
+  def getAllUsers(session: SessionClass): Future[Seq[User4Query]] = {
+    val userInfo = db.run(modules.userQuery.map(r => (r.id, r.email, r.title, r.name, r.admin) <> (User4Query.tupled, User4Query.unapply)).result)
+    userInfo.mapTo[Seq[User4Query]]
   }
 
   def getUserGroup(userId: Long): Future[Seq[Long]] = {
@@ -52,7 +52,7 @@ trait UserService {
     db.run(modules.userQuery.filter(_.id === userId).map(u => (u.admin, u.email)).result.head)
   }
 
-  def updateUser(userSeq: Seq[PutUserInfo], session: SessionClass): Future[Unit] = {
+  def updateUser(userSeq: Seq[User4Put], session: SessionClass): Future[Unit] = {
     val query = (for {
       _ <- DBIO.seq(userSeq.map(r => {
         modules.userQuery.filter(_.id === r.id).map(user => (user.admin, user.name, user.email, user.title, user.update_by, user.update_time)).update(r.admin, r.name, r.email, r.title, session.userId, ResponseUtils.currentTime)
@@ -70,20 +70,20 @@ trait UserService {
   }
 
 
-  def updateLoginUser(loginUser: LoginUserInfo, session: SessionClass): Future[Int] = {
+  def updateLoginUser(loginUser: User4Login, session: SessionClass): Future[Int] = {
     db.run(modules.userQuery.filter(_.id === session.userId).map(user => (user.name, user.title, user.update_by, user.update_time)).update(loginUser.name, loginUser.title, session.userId, ResponseUtils.currentTime))
   }
 
-  def getAllGroups(userId: Long, session: SessionClass): Future[Seq[PutRelUserGroup]] = {
+  def getGroups(userId: Long, session: SessionClass): Future[Seq[PutRelUserGroup]] = {
     val query = modules.relUserGroupQuery.filter(rel => rel.user_id === userId && rel.create_by === session.userId)
       .map(r => (r.id, r.group_id)).result
     db.run(query).mapTo[Seq[PutRelUserGroup]]
   }
 
 
-  def getUserInfo(session: SessionClass): Future[Seq[QueryUserInfo]] = {
-    db.run(modules.userQuery.filter(_.id === session.userId).map(r => (r.id, r.email, r.title, r.name, r.admin) <> (QueryUserInfo.tupled, QueryUserInfo.unapply)).result).
-      mapTo[Seq[QueryUserInfo]]
+  def getUserInfo(session: SessionClass): Future[Seq[User4Query]] = {
+    db.run(modules.userQuery.filter(_.id === session.userId).map(r => (r.id, r.email, r.title, r.name, r.admin) <> (User4Query.tupled, User4Query.unapply)).result).
+      mapTo[Seq[User4Query]]
   }
 
 

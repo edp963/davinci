@@ -46,7 +46,7 @@ import scala.util.{Failure, Success}
 @Path("/users")
 class UserRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = postUserRoute ~ putUserRoute ~ putLoginUserRoute ~ getUserByAllRoute ~ deleteUserByIdRoute ~ getGroupsByUserIdRoute ~ deleteUserFromGroupRoute ~ getUserInfoByToken
+  val routes: Route = postUserRoute ~ putUserRoute ~ putLoginUserRoute ~ getUsersRoute ~ deleteUserByIdRoute ~ getGroupsByUserIdRoute ~ deleteUserFromGroupRoute ~ getUserInfoByToken
   private lazy val logger = Logger.getLogger(this.getClass)
   private lazy val routeName = "users"
 
@@ -61,21 +61,21 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def getUserByAllRoute: Route = path(routeName) {
+  def getUsersRoute: Route = path(routeName) {
     get {
       parameter('active.as[Boolean].?) { active =>
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-          session => getAllUsersComplete(session, active.getOrElse(true))
+          session => getUsersComplete(session, active.getOrElse(true))
         }
       }
     }
   }
 
-  private def getAllUsersComplete(session: SessionClass, active: Boolean): Route = {
+  private def getUsersComplete(session: SessionClass, active: Boolean): Route = {
     if (session.admin) {
       onComplete(UserService.getAllUsers(session)) {
         case Success(userSeq) =>
-          complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), userSeq))
+          complete(OK, ResponseSeqJson[User4Query](getHeader(200, session), userSeq))
         case Failure(ex) => logger.error("getAllUsersComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -85,7 +85,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   @ApiOperation(value = "Add new users to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "users", value = "User objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostUserInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "users", value = "User objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostUserSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -96,7 +96,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def postUserRoute: Route = path(routeName) {
     post {
-      entity(as[PostUserInfoSeq]) {
+      entity(as[PostUserSeq]) {
         userSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => postUserComplete(session, userSeq.payload)
@@ -106,22 +106,22 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   }
 
 
-  private def postUserComplete(session: SessionClass, userSeq: Seq[PostUserInfo]): Route = {
+  private def postUserComplete(session: SessionClass, user4PostSeq: Seq[User4Post]): Route = {
     if (session.admin) {
-      val userEntity = userSeq.map(postUser => User(0, postUser.email, PasswordHash.createHash(postUser.password), postUser.title, postUser.name, postUser.admin, active = true, currentTime, session.userId, currentTime, session.userId))
+      val userSeq = user4PostSeq.map(postUser => User(0, postUser.email, PasswordHash.createHash(postUser.password), postUser.title, postUser.name, postUser.admin, active = true, currentTime, session.userId, currentTime, session.userId))
       val operation = for {
-        users <- modules.userDal.insert(userEntity)
+        users <- modules.userDal.insert(userSeq)
         _ <- {
           val entities = users.flatMap(u => {
-            userSeq.head.relUG.map(rel => RelUserGroup(0, u.id, rel.group_id, active = true, currentTime, session.userId, currentTime, session.userId))
+            user4PostSeq.head.relUG.map(rel => RelUserGroup(0, u.id, rel.group_id, active = true, currentTime, session.userId, currentTime, session.userId))
           })
           modules.relUserGroupDal.insert(entities)
         }
       } yield users
       onComplete(operation) {
         case Success(users) =>
-          val queryUsers = users.map(user => QueryUserInfo(user.id, user.email, user.title, user.name, user.admin))
-          complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), queryUsers))
+          val queryUsers = users.map(user => User4Query(user.id, user.email, user.title, user.name, user.admin))
+          complete(OK, ResponseSeqJson[User4Query](getHeader(200, session), queryUsers))
         case Failure(ex) => logger.error("postUserComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -131,7 +131,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   @ApiOperation(value = "update users in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "user", value = "User objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutUserInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "user", value = "User objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutUserSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -142,7 +142,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def putUserRoute: Route = path(routeName) {
     put {
-      entity(as[PutUserInfoSeq]) {
+      entity(as[PutUserSeq]) {
         userSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => putUserComplete(session, userSeq.payload)
@@ -152,7 +152,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   }
 
 
-  private def putUserComplete(session: SessionClass, userSeq: Seq[PutUserInfo]): Route = {
+  private def putUserComplete(session: SessionClass, userSeq: Seq[User4Put]): Route = {
     if (session.admin) {
       onComplete(UserService.updateUser(userSeq, session)) {
         case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
@@ -166,7 +166,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   @Path("/profile")
   @ApiOperation(value = "update login users profile", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "user", value = "login user objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.LoginUserInfo", paramType = "body")
+    new ApiImplicitParam(name = "user", value = "login user objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.User4Login", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -177,7 +177,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def putLoginUserRoute: Route = path(routeName / "profile") {
     put {
-      entity(as[LoginUserInfo]) {
+      entity(as[User4Login]) {
         user =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => putLoginUserComplete(session, user)
@@ -186,7 +186,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     }
   }
 
-  private def putLoginUserComplete(session: SessionClass, user: LoginUserInfo): Route = {
+  private def putLoginUserComplete(session: SessionClass, user: User4Login): Route = {
     val future = UserService.updateLoginUser(user, session)
     onComplete(future) {
       case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
@@ -244,14 +244,14 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   def getGroupsByUserIdRoute: Route = path(routeName / LongNumber / "groups") { userId =>
     get {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-        session => getGroupsByUserIdComplete(session, userId)
+        session => getGroupsComplete(session, userId)
       }
 
     }
   }
 
-  private def getGroupsByUserIdComplete(session: SessionClass, userId: Long): Route = {
-    val future = UserService.getAllGroups(userId, session)
+  private def getGroupsComplete(session: SessionClass, userId: Long): Route = {
+    val future = UserService.getGroups(userId, session)
     onComplete(future) {
       case Success(relSeq) => complete(OK, ResponseSeqJson[PutRelUserGroup](getHeader(200, session), relSeq))
       case Failure(ex) => logger.error("getGroupsByUserIdComplete error", ex)
@@ -301,7 +301,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         session =>
           onComplete(UserService.getUserInfo(session)) {
             case Success(userSeq) =>
-              complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), userSeq))
+              complete(OK, ResponseSeqJson[User4Query](getHeader(200, session), userSeq))
             case Failure(ex) => logger.error("getUserInfoByToken error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }

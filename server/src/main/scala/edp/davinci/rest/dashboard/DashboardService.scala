@@ -38,7 +38,7 @@ object DashboardService extends DashboardService
 trait DashboardService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getRelInfo(session: SessionClass, dashboardId: Long): Future[Seq[WidgetInfo]] = {
+  def getRelation(session: SessionClass, dashboardId: Long): Future[Seq[WidgetLayout]] = {
     val viewIds = modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
     val widgetIds = if (session.admin) modules.widgetQuery.filter(_.publish).filter(_.flatTable_id in viewIds).map(_.id)
     else modules.widgetQuery.filter(_.publish).filter(_.flatTable_id in viewIds).map(_.id)
@@ -46,13 +46,13 @@ trait DashboardService {
     val query = if (session.admin)
       (modules.relDWQuery.filter(obj => obj.dashboard_id === dashboardId && ((obj.create_by === session.userId) || (obj.widget_id in widgetIds))) join modules.widgetQuery on (_.widget_id === _.id)).
         map {
-          case (r, w) => (r.id, w.id, w.flatTable_id, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, "", w.create_by) <> (WidgetInfo.tupled, WidgetInfo.unapply)
+          case (r, w) => (r.id, w.id, w.flatTable_id, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, "", w.create_by) <> (WidgetLayout.tupled, WidgetLayout.unapply)
         }.result
     else {
       (modules.relDWQuery.filter(obj => obj.dashboard_id === dashboardId) join
         modules.widgetQuery.filter(_.publish).filter(_.flatTable_id in viewIds) on (_.widget_id === _.id))
         .map {
-          case (rDW, w) => (rDW.id, w.id, w.flatTable_id, rDW.position_x, rDW.position_y, rDW.width, rDW.length, rDW.trigger_type, rDW.trigger_params, "", w.create_by) <> (WidgetInfo.tupled, WidgetInfo.unapply)
+          case (rDW, w) => (rDW.id, w.id, w.flatTable_id, rDW.position_x, rDW.position_y, rDW.width, rDW.length, rDW.trigger_type, rDW.trigger_params, "", w.create_by) <> (WidgetLayout.tupled, WidgetLayout.unapply)
         }.result
     }
     db.run(query)
@@ -72,7 +72,7 @@ trait DashboardService {
     db.run(query)
   }
 
-  def updateRelDashboardWidget(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Future[Unit] = {
+  def updateRelation(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Future[Unit] = {
     val query = DBIO.seq(relSeq.map(r => {
       modules.relDWQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(rel => (rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.width, rel.length, rel.trigger_type, rel.trigger_params, rel.update_by, rel.update_time))
         .update(r.dashboard_id, r.widget_id, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, session.userId, ResponseUtils.currentTime)
@@ -102,7 +102,7 @@ trait DashboardService {
     db.run(modules.dashboardQuery.filter(_.name === name).result)
   }
 
-  def deleteRelDWById(relId: Long, session: SessionClass): Future[Int] =
+  def deleteRelation(relId: Long, session: SessionClass): Future[Int] =
     db.run(modules.relDWQuery.filter(rel => rel.create_by === session.userId && rel.id === relId).delete)
 
 

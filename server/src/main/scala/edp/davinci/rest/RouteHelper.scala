@@ -69,23 +69,22 @@ object RouteHelper extends Directives {
   implicit lazy val ec = modules.system.dispatcher
 
   def getResultComplete(session: SessionClass, viewId: Long, paginate: Paginate, cacheClass: CacheClass, contentType: NonBinary, manualInfo: ManualInfo): StandardRoute = {
-    val sourceInfo = Await.result(ViewService.getSourceInfo(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
-    if (sourceInfo.nonEmpty) {
+    val source = Await.result(ViewService.getSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
+    if (source.nonEmpty) {
       try {
-        val (sqlTemp, tableName, config, _) = sourceInfo.head
-        val group = sourceInfo.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
+        val (sqlTemp, tableName, config, _) = source.head
+        val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
         val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
         if (sqlTemp.trim != "") {
-          val trimSql = sqlTemp.trim
-          logger.info("the sqlTemp written by admin:" + trimSql)
-          val filteredSql = filterAnnotation(trimSql)
-          val params = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, params, groupVars)
+          logger.info("the sqlTemp written by admin:" + sqlTemp)
+          val filteredSql = filterAnnotation(sqlTemp.trim)
+          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
+          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, queryParams, groupVars)
           val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
           val projectSql = getProjectSql(renderedSql.last, tableName, sourceConfig, paginate, manualInfo)
           logger.info("the projectSql get from sql template:" + projectSql)
-          val resultList = executeDirect(renderedSql, projectSql, sourceConfig, paginate, cacheClass)
-          contentTypeMatch(resultList, contentType)
+          val resultSeq = executeDirect(renderedSql, projectSql, sourceConfig, cacheClass)
+          contentTypeMatch(resultSeq, contentType)
         }
         else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
       }
@@ -98,25 +97,25 @@ object RouteHelper extends Directives {
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "获取sql结果集异常"))
       }
     } else {
-      logger.error("get source failure,source info size:" + sourceInfo.size)
+      logger.error("get source failure,source info size:" + source.size)
       complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), ""))
     }
   }
 
 
   def doUpdate(session: SessionClass, viewId: Long, manualInfo: ManualInfo): StandardRoute = {
-    val sourceInfo = Await.result(ViewService.getUpdateInfo(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
-    if (sourceInfo.nonEmpty) {
+    val source = Await.result(ViewService.getUpdateSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
+    if (source.nonEmpty) {
       try {
-        val (updateSql, _, config, _) = sourceInfo.head
-        val group = sourceInfo.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
+        val (updateSql, _, config, _) = source.head
+        val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
         val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
         val updateSql_get = updateSql.getOrElse("").trim
         if (updateSql_get != "") {
           logger.info("the sqlTemp written by admin:" + updateSql_get)
           val filteredSql = filterAnnotation(updateSql_get)
-          val params = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, params, groupVars)
+          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
+          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, queryParams, groupVars)
           val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
           executeUpdate(sourceConfig, renderedSql)
           complete(OK, ResponseJson[String](getHeader(200, "do update successfully", null), "do update successfully"))
@@ -132,23 +131,23 @@ object RouteHelper extends Directives {
           complete(BadRequest, ResponseJson[String](getHeader(400, exception.getMessage, null), "update操作失败"))
       }
     } else {
-      logger.error("get source failure,source info size:" + sourceInfo.size)
+      logger.error("get source failure,source info size:" + source.size)
       complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), "no source found"))
     }
   }
 
 
-  def contentTypeMatch(resultList: (Seq[String], Long), contentType: NonBinary): StandardRoute = {
+  def contentTypeMatch(resultList: Seq[String], contentType: NonBinary): StandardRoute = {
     val contentDisposition = if (contentType == textHtml) headers.`Content-Disposition`(inline, Map("filename" -> s"share.html")).asInstanceOf[HttpHeader]
     else headers.`Content-Disposition`(attachment, Map("filename" -> s"share.CSV")).asInstanceOf[HttpHeader]
     val route = contentType match {
       case `textHtml` =>
-        complete(HttpResponse(headers = List(contentDisposition), entity = HttpEntity(textHtml, getHTML(resultList._1))))
+        complete(HttpResponse(headers = List(contentDisposition), entity = HttpEntity(textHtml, getHTML(resultList))))
       case `textCSV` =>
-        val fileName = save2File(resultList._1)
+        val fileName = save2File(resultList)
         complete(OK, ResponseJson[String](getHeader(200, null), s"downloads/$fileName"))
       case `appJson` =>
-        complete(OK, ResponseJson[ViewResult](getHeader(200, null), ViewResult(resultList._1, resultList._2)))
+        complete(OK, ResponseJson[ViewResult](getHeader(200, null), ViewResult(resultList, -1)))
       case _ => logger.info(s"not supported content type $contentType")
         complete(OK, ResponseJson[String](getHeader(200, null), ""))
     }
@@ -170,7 +169,7 @@ object RouteHelper extends Directives {
     onComplete(httpResponse) {
       case Success(response) => response match {
         case HttpResponse(StatusCodes.OK, _, entity, _) =>
-//          val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
+          //          val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
 
           complete(OK, ResponseJson[String](getHeader(200, null), "get from quest successful"))
         case resp@HttpResponse(code, _, _, _) =>
@@ -184,7 +183,7 @@ object RouteHelper extends Directives {
   }
 
 
-  def executeDirect(renderedSql: mutable.Buffer[String], projectSql: String, sourceConfig: SourceConfig, paginate: Paginate, cacheClass: CacheClass): (Seq[String], Long) = {
+  def executeDirect(renderedSql: mutable.Buffer[String], projectSql: String, sourceConfig: SourceConfig, cacheClass: CacheClass): Seq[String] = {
     renderedSql.remove(renderedSql.length - 1)
     renderedSql.append(projectSql)
     val resultSeq: Seq[String] = if (cacheIsEnable) {
@@ -200,7 +199,7 @@ object RouteHelper extends Directives {
         } else executeQuery(sourceConfig, renderedSql)
       }
     } else executeQuery(sourceConfig, renderedSql)
-    (resultSeq, -1)
+    resultSeq
   }
 
 
@@ -231,16 +230,15 @@ object RouteHelper extends Directives {
   def mergeAndRender(sqlString: String,
                      paramSeq: Seq[KV] = null,
                      groupParams: Seq[KV] = null): mutable.Buffer[String] = {
-    val sqlArr =
-      if (sqlString.lastIndexOf(sqlSeparator) == sqlString.length - 1) sqlString.dropRight(1).split(sqlSeparator)
-      else sqlString.split(sqlSeparator)
-    val groupKVMap = getGroupKVMap(sqlArr, groupParams)
-    val queryKVMap = getQueryKVMap(sqlArr, paramSeq)
-    val sqlWithoutVar = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
-    logger.info("sql without var defined: " + sqlWithoutVar)
+    val sqlArray = if (sqlString.lastIndexOf(sqlSeparator) == sqlString.length - 1) sqlString.dropRight(1).split(sqlSeparator)
+    else sqlString.split(sqlSeparator)
+    val groupKVMap = getGroupKVMap(sqlArray, groupParams)
+    val queryKVMap = getQueryKVMap(sqlArray, paramSeq)
+    val noVarSql = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
+    logger.info("sql without var defined: " + noVarSql)
     val mergeSql =
-      if (groupKVMap.nonEmpty) RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-      else sqlWithoutVar
+      if (groupKVMap.nonEmpty) RegexMatcher.matchAndReplace(noVarSql, groupKVMap)
+      else noVarSql
     logger.info("sql after group merge: " + mergeSql)
     val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
     logger.info("sql after query var render: " + renderedSql)
@@ -253,7 +251,7 @@ object RouteHelper extends Directives {
 
 
   def getGroupKVMap(sqlArr: Array[String], groupParams: Seq[KV]): mutable.HashMap[String, List[String]] = {
-    val defaultVars = sqlArr.filter(_.contains(groupVar))
+    val defaultParams = sqlArr.filter(_.contains(groupVar))
     val groupKVMap = mutable.HashMap.empty[String, List[String]]
     try {
       if (null != groupParams && groupParams.nonEmpty)
@@ -263,8 +261,8 @@ object RouteHelper extends Directives {
             groupKVMap(k) = groupKVMap(k) ::: List(v)
           else groupKVMap(k) = List(v)
         })
-      if (defaultVars.nonEmpty)
-        defaultVars.foreach(g => {
+      if (defaultParams.nonEmpty)
+        defaultParams.foreach(g => {
           val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
           val v = g.substring(g.indexOf(assignmentChar) + 1).trim
           if (!groupKVMap.contains(k))
@@ -277,12 +275,12 @@ object RouteHelper extends Directives {
   }
 
   def getQueryKVMap(sqlArr: Array[String], paramSeq: Seq[KV]): mutable.HashMap[String, String] = {
-    val defaultVars = sqlArr.filter(s => s.contains(queryVar) || s.contains(updateVar))
+    val defaultParams = sqlArr.filter(s => s.contains(queryVar) || s.contains(updateVar))
     val queryKVMap = mutable.HashMap.empty[String, String]
     try {
       if (null != paramSeq && paramSeq.nonEmpty) paramSeq.foreach(param => queryKVMap(param.k) = param.v)
-      if (defaultVars.nonEmpty)
-        defaultVars.foreach(g => {
+      if (defaultParams.nonEmpty)
+        defaultParams.foreach(g => {
           val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
           if (g.indexOf(assignmentChar) >= 0) {
             val v = g.substring(g.indexOf(assignmentChar) + 1).trim

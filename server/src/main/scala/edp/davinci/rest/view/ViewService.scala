@@ -43,7 +43,7 @@ trait ViewService {
       mapTo[Seq[QueryView]]
   }
 
-  def updateFlatTbl(viewSeq: Seq[PutViewInfo], session: SessionClass): Future[Unit] = {
+  def updateView(viewSeq: Seq[View4Put], session: SessionClass): Future[Unit] = {
     val query = for {
       _ <- DBIO.seq(viewSeq.map(r => {
         modules.viewQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(view => (view.name, view.source_id, view.sql_tmpl, view.update_sql, view.desc, view.trigger_type, view.frequency, view.`catch`, view.update_by, view.update_time))
@@ -70,11 +70,11 @@ trait ViewService {
   }
 
 
-  def getGroups(flatId: Long): Future[Seq[(Long, Long, String)]] = {
+  def getGroupViewRelation(flatId: Long): Future[Seq[(Long, Long, String)]] = {
     db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params.get)).result)
   }
 
-  def getSourceInfo(flatTableId: Long, session: SessionClass = null): Future[Seq[(String, String, String, Option[Option[String]])]] = {
+  def getSource(flatTableId: Long, session: SessionClass = null): Future[Seq[(String, String, String, Option[Option[String]])]] = {
     val rel = if (session.admin)
       modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
     else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
@@ -86,7 +86,7 @@ trait ViewService {
     db.run(query.result)
   }
 
-  def getUpdateInfo(flatTableId: Long, session: SessionClass = null): Future[Seq[(Option[String], String, String, Option[Option[String]])]] = {
+  def getUpdateSource(flatTableId: Long, session: SessionClass = null): Future[Seq[(Option[String], String, String, Option[Option[String]])]] = {
     val rel = if (session.admin)
       modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
     else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)

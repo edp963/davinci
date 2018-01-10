@@ -286,8 +286,8 @@ trait SqlUtils extends Serializable {
   }
 
   def filterAnnotation(sqlString: String): String = {
-    val p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/")
-    val result = p.matcher(sqlString).replaceAll("$1")
+    val pattern = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/")
+    val result = pattern.matcher(sqlString).replaceAll("$1")
     logger.info(s"sql after filter>>>>>>>>>>>$result")
     result
   }

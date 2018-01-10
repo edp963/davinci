@@ -34,7 +34,7 @@ import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModul
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.dashboard.DashboardService
-import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareInfo, mergeURLManual, _}
+import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
 import edp.davinci.rest.view.ViewService
 import edp.davinci.rest.widget.WidgetService
@@ -177,10 +177,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val authName = shareInfo.authName
 
       def getWidgetInfo = {
-        if (isValidShareInfo(shareInfo)) {
+        if (isValidShareClass(shareInfo)) {
           onComplete(WidgetService.getWidgetById(shareInfo.infoId)) {
             case Success(widgetOpt) => widgetOpt match {
-              case Some(widget) => complete(OK, ResponseJson[Seq[PutWidgetInfo]](getHeader(200, null), Seq(widget)))
+              case Some(widget) => complete(OK, ResponseJson[Seq[PutWidget]](getHeader(200, null), Seq(widget)))
               case None => complete(BadRequest, ResponseJson[String](getHeader(400, s"not found widget: ${shareInfo.infoId}", null), ""))
             }
             case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
@@ -220,7 +220,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val authName = shareInfo.authName
 
       def getDashboardInfo = {
-        if (isValidShareInfo(shareInfo)) {
+        if (isValidShareClass(shareInfo)) {
           val infoArr = shareInfoStr.split(conditionSeparator.toString)
           if (infoArr.length > 1)
             getDashboardComplete(shareInfo, infoArr(1))
@@ -255,7 +255,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         val (groupIds, admin) = userGroup
         val dashboardInfo = for {
           dashboard <- DashboardService.getDashBoard(shareInfo.infoId)
-          widgetInfo <- DashboardService.getRelInfo(SessionClass(shareInfo.userId, groupIds.toList, admin._1), shareInfo.infoId)
+          widgetInfo <- DashboardService.getRelation(SessionClass(shareInfo.userId, groupIds.toList, admin._1), shareInfo.infoId)
         } yield (dashboard, widgetInfo)
         onComplete(dashboardInfo) {
           case Success(shareDashboard) =>
@@ -263,12 +263,12 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
             val infoSeq = widgets.map(r => {
               val aesStr = getShareURL(shareInfo.userId, r.widget_id, shareInfo.authName)
               val shareAES = if (null != urlOperation) s"$aesStr$conditionSeparator$urlOperation" else aesStr
-              WidgetInfo(r.id, r.widget_id, r.flatTableId, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, shareAES, r.create_by)
+              WidgetLayout(r.id, r.widget_id, r.flatTableId, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, shareAES, r.create_by)
             })
             if (null == dashboard) complete(BadRequest, ResponseJson[String](getHeader(400, "dashboard not exists", null), ""))
             else {
-              val dashboardInfo = DashboardAndWidget(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, infoSeq)
-              complete(OK, ResponseJson[DashboardAndWidget](getHeader(200, null), dashboardInfo))
+              val dashboardInfo = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, infoSeq)
+              complete(OK, ResponseJson[DashboardContent](getHeader(200, null), dashboardInfo))
             }
           case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
         }
@@ -313,7 +313,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val shareURLArr: Array[String] = shareString.split(conditionSeparator.toString)
       try {
         val shareClass = getShareClass(shareString)
-        if (isValidShareInfo(shareClass)) {
+        if (isValidShareClass(shareClass)) {
           if (shareURLArr.length == 2)
             getResultComplete(shareClass, contentType, mergeURLManual(shareURLArr, manualInfo), paginate, cacheClass)
           else getResultComplete(shareClass, contentType, manualInfo, paginate, cacheClass)
@@ -393,7 +393,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
                 val authName = getShareClass(shareInfoStr).authName
                 if (authName != email)
                   complete(BadRequest, ResponseJson[String](getHeader(400, "Not the authorized user,login and try again", null), "Not the authorized user,login and try again"))
-                else complete(OK, ResponseJson[QueryUserInfo](getHeader(200, info._1), info._2))
+                else complete(OK, ResponseJson[User4Query](getHeader(200, info._1), info._2))
               }
             )
           case Failure(ex) => complete(Unauthorized, ResponseJson[String](getHeader(401, ex.getMessage, null), ""))

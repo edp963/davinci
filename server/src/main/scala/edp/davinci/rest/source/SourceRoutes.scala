@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
 @Path("/sources")
 class SourceRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = getSourceByAllRoute ~ postSourceRoute ~ putSourceRoute ~ deleteSourceByIdRoute ~ testConnection
+  val routes: Route = getSourcesRoute ~ postSourceRoute ~ putSourceRoute ~ deleteSourceByIdRoute ~ testConnection
   private lazy val logger = Logger.getLogger(this.getClass)
   private lazy val routeName = "sources"
 
@@ -40,21 +40,21 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def getSourceByAllRoute: Route = path(routeName) {
+  def getSourcesRoute: Route = path(routeName) {
     get {
       parameter('active.as[Boolean].?) { active =>
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-          session => getAllSourcesComplete(session, active.getOrElse(true))
+          session => getSourceComplete(session, active.getOrElse(true))
         }
       }
     }
   }
 
-  private def getAllSourcesComplete(session: SessionClass, active: Boolean): Route = {
+  private def getSourceComplete(session: SessionClass, active: Boolean): Route = {
     if (session.admin) {
       onComplete(SourceService.getAll(session)) {
         case Success(sourceSeq) =>
-          complete(OK, ResponseSeqJson[PutSourceInfo](getHeader(200, session), sourceSeq))
+          complete(OK, ResponseSeqJson[Source4Put](getHeader(200, session), sourceSeq))
         case Failure(ex) => logger.error("getAllSourcesComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -64,7 +64,7 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   @ApiOperation(value = "Add new sources to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "sources", value = "Source objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostSourceInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "sources", value = "Source objects to be added", required = true, dataType = "edp.davinci.persistence.entities.Source4PostSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -74,7 +74,7 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   ))
   def postSourceRoute: Route = path(routeName) {
     post {
-      entity(as[PostSourceInfoSeq]) {
+      entity(as[Source4PostSeq]) {
         sourceSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => postSource(session, sourceSeq.payload)
@@ -84,13 +84,13 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   }
 
 
-  private def postSource(session: SessionClass, postSourceSeq: Seq[PostSourceInfo]): Route = {
+  private def postSource(session: SessionClass, postSourceSeq: Seq[Source4Post]): Route = {
     if (session.admin) {
       val sourceSeq = postSourceSeq.map(post => Source(0, post.name, post.connection_url, post.desc, post.`type`, post.config, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.sourceDal.insert(sourceSeq)) {
-        case Success(sourceWithIdSeq) =>
-          val responseSourceSeq = sourceWithIdSeq.map(source => PutSourceInfo(source.id, source.name, source.connection_url, source.desc, source.`type`, source.config))
-          complete(OK, ResponseSeqJson[PutSourceInfo](getHeader(200, session), responseSourceSeq))
+        case Success(sources) =>
+          val sources4Post = sources.map(source => Source4Put(source.id, source.name, source.connection_url, source.desc, source.`type`, source.config))
+          complete(OK, ResponseSeqJson[Source4Put](getHeader(200, session), sources4Post))
         case Failure(ex) => logger.error("getAllSourcesComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -100,7 +100,7 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   @ApiOperation(value = "update sources in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "sources", value = "Source objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutSourceInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "sources", value = "Source objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.Source4PutSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -111,7 +111,7 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   ))
   def putSourceRoute: Route = path(routeName) {
     put {
-      entity(as[PutSourceInfoSeq]) {
+      entity(as[Source4PutSeq]) {
         sourceSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => putSourceComplete(session, sourceSeq.payload)
@@ -120,10 +120,10 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
     }
   }
 
-  private def putSourceComplete(session: SessionClass, sourceSeq: Seq[PutSourceInfo]): Route = {
+  private def putSourceComplete(session: SessionClass, sourceSeq: Seq[Source4Put]): Route = {
     if (session.admin) {
-      val future = SourceService.update(sourceSeq, session)
-      onComplete(future) {
+      val updateFuture = SourceService.update(sourceSeq, session)
+      onComplete(updateFuture) {
         case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
         case Failure(ex) => logger.error("putSourceComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -173,16 +173,12 @@ class SourceRoutes(modules: ConfigurationModule with PersistenceModule with Busi
     post {
       entity(as[String]) { jsonConfig =>
         authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) { session =>
-          val connectionUrl = JsonUtils.json2caseClass[SourceConfig](jsonConfig)
-          val testQuery = if (connectionUrl.url.toLowerCase.indexOf("oracle") > -1) "select 1 from dual" else "select 1"
+          val connectionURL = JsonUtils.json2caseClass[SourceConfig](jsonConfig)
           var connection: Connection = null
           try {
-            connection = SqlUtils.getConnection(connectionUrl.url, connectionUrl.user, connectionUrl.password)
+            connection = SqlUtils.getConnection(connectionURL.url, connectionURL.user, connectionURL.password)
             if (!connection.isClosed)
               complete(OK, ResponseJson[String](getHeader(200, session), ""))
-            //            val statement = connection.createStatement()
-            //            if (statement.execute(testQuery))
-
             else {
               logger.error("testConnection error<<<<<<<<<<<<<<<<<<<<<<<<<<<")
               complete(BadRequest, ResponseJson[String](getHeader(400, session), "execute test query error"))

@@ -49,7 +49,7 @@ case class PostDashboard(name: String,
 
 case class PutDashboard(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), config:Option[String]=Some(""), publish: Boolean, active: Boolean = true, create_by: Long = 0)
 
-case class DashboardAndWidget(id: Long, name: String, pic: String, desc: String, linkage_detail: String, config:Option[String]=Some(""), publish: Boolean, create_by: Long, widgets: Seq[WidgetInfo])
+case class DashboardContent(id: Long, name: String, pic: String, desc: String, linkage_detail: String, config:Option[String]=Some(""), publish: Boolean, create_by: Long, widgets: Seq[WidgetLayout])
 
 case class PostDashboardSeq(payload: Seq[PostDashboard])
 

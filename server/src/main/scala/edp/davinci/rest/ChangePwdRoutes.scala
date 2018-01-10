@@ -7,7 +7,7 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule}
-import edp.davinci.persistence.entities.{ChangePwdClass, ChangeUserPwdClass, User}
+import edp.davinci.persistence.entities.{ChangePassword, ChangeUserPassword, User}
 import edp.davinci.util.{AuthorizationProvider, PasswordHash}
 import edp.davinci.util.ResponseUtils._
 import edp.davinci.util.JsonProtocol._
@@ -27,7 +27,7 @@ class ChangePwdRoutes(modules: ConfigurationModule with PersistenceModule with B
   @Path("/login")
   @ApiOperation(value = "change login user's pwd", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "changePwd", value = "change pwd information", required = true, dataType = "edp.davinci.persistence.entities.ChangePwdClass", paramType = "body")
+    new ApiImplicitParam(name = "changePwd", value = "change pwd information", required = true, dataType = "edp.davinci.persistence.entities.ChangePassword", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -38,7 +38,7 @@ class ChangePwdRoutes(modules: ConfigurationModule with PersistenceModule with B
   ))
   def changeLoginPwdRoute: Route = path("changepwd" / "login") {
     post {
-      entity(as[ChangePwdClass]) { changePwd =>
+      entity(as[ChangePassword]) { changePwd =>
         authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
           session =>
             onComplete(modules.userDal.findById(session.userId).mapTo[Option[User]]) {
@@ -69,7 +69,7 @@ class ChangePwdRoutes(modules: ConfigurationModule with PersistenceModule with B
   @Path("/users")
   @ApiOperation(value = "change user's pwd", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "changePwd", value = "change pwd information", required = true, dataType = "edp.davinci.persistence.entities.ChangeUserPwdClass", paramType = "body")
+    new ApiImplicitParam(name = "changePwd", value = "change pwd information", required = true, dataType = "edp.davinci.persistence.entities.ChangeUserPassword", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -80,7 +80,7 @@ class ChangePwdRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 403, message = "internal service error")))
   def changeUserPwdRoute: Route = path("changepwd" / "users") {
     post {
-      entity(as[ChangeUserPwdClass]) { changePwd =>
+      entity(as[ChangeUserPassword]) { changePwd =>
         authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
           session =>
             onComplete(modules.userDal.findById(changePwd.id).mapTo[Option[User]]) {

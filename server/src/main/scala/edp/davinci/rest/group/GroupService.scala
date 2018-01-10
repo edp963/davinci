@@ -26,7 +26,7 @@ package edp.davinci.rest.group
 
 import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
-import edp.davinci.persistence.entities.{PutGroupInfo, UserGroup}
+import edp.davinci.persistence.entities.{Group4Put, UserGroup}
 import edp.davinci.rest.SessionClass
 import edp.davinci.util.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
@@ -40,11 +40,11 @@ trait GroupService {
   private lazy val modules = ModuleInstance.getModule
 
   def getAll(session: SessionClass) = {
-    db.run(modules.groupQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.desc) <> (PutGroupInfo.tupled, PutGroupInfo.unapply)).result).
-      mapTo[Seq[PutGroupInfo]]
+    db.run(modules.groupQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.desc) <> (Group4Put.tupled, Group4Put.unapply)).result).
+      mapTo[Seq[Group4Put]]
   }
 
-  def update(groupSeq: Seq[PutGroupInfo], session: SessionClass): Future[Unit] = {
+  def update(groupSeq: Seq[Group4Put], session: SessionClass): Future[Unit] = {
     val query = DBIO.seq(groupSeq.map(r => {
       modules.groupQuery.filter(g => g.id === r.id && g.create_by === session.userId).map(group => (group.name, group.desc, group.update_by, group.update_time)).update(r.name, r.desc, session.userId, ResponseUtils.currentTime)
     }): _*)

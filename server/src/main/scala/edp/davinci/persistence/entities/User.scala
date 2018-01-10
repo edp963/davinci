@@ -40,39 +40,39 @@ case class User(id: Long,
                 update_time: String,
                 update_by: Long) extends BaseEntity
 
-case class PostUserInfo(email: String,
-                        password: String,
-                        title: String,
-                        name: String,
-                        admin: Boolean,
-                        relUG: Seq[PostRelUserGroup]
+case class User4Post(email: String,
+                     password: String,
+                     title: String,
+                     name: String,
+                     admin: Boolean,
+                     relUG: Seq[PostRelUserGroup]
                        ) extends SimpleBaseEntity
 
-case class PutUserInfo(id: Long,
-                       email: String,
-                       title: String,
-                       name: String,
-                       admin: Boolean,
-                       active: Option[Boolean] = Some(true),
-                       relUG: Seq[PostRelUserGroup])
+case class User4Put(id: Long,
+                    email: String,
+                    title: String,
+                    name: String,
+                    admin: Boolean,
+                    active: Option[Boolean] = Some(true),
+                    relUG: Seq[PostRelUserGroup])
 
-case class QueryUserInfo(id: Long,
-                         email: String,
-                         title: String,
-                         name: String,
-                         admin: Boolean)
+case class User4Query(id: Long,
+                      email: String,
+                      title: String,
+                      name: String,
+                      admin: Boolean)
 
-case class PostUserInfoSeq(payload: Seq[PostUserInfo])
+case class PostUserSeq(payload: Seq[User4Post])
 
-case class PutUserInfoSeq(payload: Seq[PutUserInfo])
+case class PutUserSeq(payload: Seq[User4Put])
 
 case class LoginClass(username: String, password: String)
 
-case class LoginUserInfo(title: String, name: String)
+case class User4Login(title: String, name: String)
 
-case class ChangePwdClass(oldPass: String, newPass: String)
+case class ChangePassword(oldPass: String, newPass: String)
 
-case class ChangeUserPwdClass(id: Long, oldPass: String, newPass: String)
+case class ChangeUserPassword(id: Long, oldPass: String, newPass: String)
 
 class UserTable(tag: Tag) extends BaseTable[User](tag, "user") {
 

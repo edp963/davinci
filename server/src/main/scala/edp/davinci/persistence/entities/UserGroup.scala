@@ -37,18 +37,18 @@ case class UserGroup(id: Long,
                      update_by: Long) extends BaseEntity
 
 
-case class PostGroupInfo(name: String,
-                         desc: String
+case class Group4Post(name: String,
+                      desc: String
                         ) extends SimpleBaseEntity
 
-case class PutGroupInfo(id: Long,
-                        name: String,
-                        desc: Option[String] = Some(""))
+case class Group4Put(id: Long,
+                     name: String,
+                     desc: Option[String] = Some(""))
 
 
-case class PostGroupInfoSeq(payload: Seq[PostGroupInfo])
+case class Group4PostSeq(payload: Seq[Group4Post])
 
-case class PutGroupInfoSeq(payload: Seq[PutGroupInfo])
+case class Group4PutSeq(payload: Seq[Group4Put])
 
 class GroupTable(tag: Tag) extends BaseTable[UserGroup](tag, "user_group") {
 

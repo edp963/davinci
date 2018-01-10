@@ -45,36 +45,36 @@ case class View(id: Long,
                 update_by: Long) extends BaseEntity
 
 
-case class PostViewInfo(source_id: Long,
-                        name: String,
-                        sql_tmpl: String,
-                        update_sql:Option[String]=None,
-                        desc: String,
-                        trigger_type: String,
-                        frequency: String,
-                        `catch`: String,
-                        relBG: Seq[PostRelGroupView]) extends SimpleBaseEntity
+case class View4Post(source_id: Long,
+                     name: String,
+                     sql_tmpl: String,
+                     update_sql:Option[String]=None,
+                     desc: String,
+                     trigger_type: String,
+                     frequency: String,
+                     `catch`: String,
+                     relBG: Seq[PostRelGroupView]) extends SimpleBaseEntity
 
-case class PutViewInfo(id: Long,
-                       source_id: Long,
-                       name: String,
-                       sql_tmpl: String,
-                       update_sql:Option[String]=None,
-                       desc: String,
-                       trigger_type: String,
-                       frequency: String,
-                       `catch`: String,
-                       relBG: Seq[PostRelGroupView])
+case class View4Put(id: Long,
+                    source_id: Long,
+                    name: String,
+                    sql_tmpl: String,
+                    update_sql:Option[String]=None,
+                    desc: String,
+                    trigger_type: String,
+                    frequency: String,
+                    `catch`: String,
+                    relBG: Seq[PostRelGroupView])
 
 
 case class QueryView(id: Long, source_id: Long, name: String, sql_tmpl: String, update_sql:Option[String]=None, desc: Option[String], trigger_type: String, frequency: String, `catch`: String, result_table: String, active: Boolean, create_by: Long=0)
 
-case class PostViewInfoSeq(payload: Seq[PostViewInfo])
+case class View4PostSeq(payload: Seq[View4Post])
 
-case class PutViewInfoSeq(payload: Seq[PutViewInfo])
+case class View4PutSeq(payload: Seq[View4Put])
 
 
-class ViewTbl(tag: Tag) extends BaseTable[View](tag, "view") {
+class ViewTb(tag: Tag) extends BaseTable[View](tag, "view") {
 
   def sql_tmpl: Rep[String] = column[String]("sql_tmpl")
 

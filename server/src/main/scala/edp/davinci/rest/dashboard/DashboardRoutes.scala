@@ -47,8 +47,8 @@ import scala.util.{Failure, Success}
 @Path("/dashboards")
 class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = getWidgetByDashboardIdRoute ~ postDashboardRoute ~ putDashboardRoute ~ postWidget2DashboardRoute ~ getDashboardByAllRoute ~
-    deleteDashboardByIdRoute ~ deleteWidgetFromDashboardRoute ~ postWidget2DashboardRoute ~ putWidgetInDashboardRoute ~ nameCheckRoute
+  val routes: Route = getDashboardByIdRoute ~ postDashboardRoute ~ putDashboardRoute ~ addWidgets ~ getDashboardsRoute ~
+    deleteDashboardByIdRoute ~ deleteRelationRoute ~ addWidgets ~ putWidgetInDashboardRoute ~ nameCheckRoute
   private lazy val routeName = "dashboards"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -64,26 +64,26 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 404, message = "dashboard not found"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def getWidgetByDashboardIdRoute: Route = path(routeName / LongNumber) { dashboard_id =>
+  def getDashboardByIdRoute: Route = path(routeName / LongNumber) { dashboardId =>
     get {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-        session => getDashboardById(dashboard_id, session)
+        session => getDashboardById(dashboardId, session)
       }
     }
   }
 
   def getDashboardById(dashboardId: Long, session: SessionClass): Route = {
     val operation = for {
-      inside <- getRelInfo(session, dashboardId)
+      relation <- getRelation(session, dashboardId)
       dashboard <- getDashBoard(dashboardId)
-    } yield (inside, dashboard)
+    } yield (relation, dashboard)
     onComplete(operation) {
-      case Success(info) =>
-        val (insideInfo, dashboards) = info
+      case Success(tuple) =>
+        val (relations, dashboards) = tuple
         dashboards match {
           case Some(dashboard) =>
-            val dashboardInfo = DashboardAndWidget(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, insideInfo)
-            complete(OK, ResponseJson[DashboardAndWidget](getHeader(200, session), dashboardInfo))
+            val dashboardContent = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, relations)
+            complete(OK, ResponseJson[DashboardContent](getHeader(200, session), dashboardContent))
           case None =>
             logger.error(s"dashboard not found,id:$dashboardId")
             complete(BadRequest, ResponseJson[String](getHeader(400, s"not found dashboard: $dashboardId", session), ""))
@@ -104,7 +104,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def getDashboardByAllRoute: Route = path(routeName) {
+  def getDashboardsRoute: Route = path(routeName) {
     get {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
@@ -132,20 +132,20 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
   def postDashboardRoute: Route = path(routeName) {
     post {
       entity(as[PostDashboardSeq]) {
-        dashboardSeq =>
+        dashboards =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => postDashBoard(session, dashboardSeq.payload)
+            session => postDashBoard(session, dashboards.payload)
           }
       }
     }
   }
 
-  def postDashBoard(session: SessionClass, postDashboardSeq: Seq[PostDashboard]): Route = {
+  def postDashBoard(session: SessionClass, postDashboards: Seq[PostDashboard]): Route = {
     if (session.admin) {
-      val dashboardSeq = postDashboardSeq.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),post.config, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val dashboardSeq = postDashboards.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),post.config, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.dashboardDal.insert(dashboardSeq)) {
-        case Success(dashWithIdSeq) =>
-          val responseDashSeq = dashWithIdSeq.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
+        case Success(dashboards) =>
+          val responseDashSeq = dashboards.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
           complete(OK, ResponseSeqJson[PutDashboard](getHeader(200, session), responseDashSeq))
         case Failure(ex) => logger.error(s"insert dashboard error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -231,25 +231,25 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def postWidget2DashboardRoute: Route = path(routeName / "widgets") {
+  def addWidgets: Route = path(routeName / "widgets") {
     post {
       entity(as[PostRelDashboardWidgetSeq]) {
-        relDashboardWidgetSeq =>
+        relationSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => postWidget2Dashboard(session, relDashboardWidgetSeq.payload)
+            session => addWidgets(session, relationSeq.payload)
           }
       }
     }
   }
 
-  def postWidget2Dashboard(session: SessionClass, postRelDWSeq: Seq[PostRelDashboardWidget]): Route = {
+  def addWidgets(session: SessionClass, postRelDWSeq: Seq[PostRelDashboardWidget]): Route = {
     if (session.admin) {
       val create_by = Await.result(modules.dashboardDal.findById(postRelDWSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
       if (create_by == session.userId) {
         val relDWSeq = postRelDWSeq.map(post => RelDashboardWidget(0, post.dashboard_id, post.widget_id, post.position_x, post.position_y, post.length, post.width, post.trigger_type, post.trigger_params, active = true, currentTime, session.userId, currentTime, session.userId))
         onComplete(modules.relDashboardWidgetDal.insert(relDWSeq)) {
-          case Success(relDWWithIdSeq) =>
-            val responseRelDWSeq = relDWWithIdSeq.map(rel => PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params))
+          case Success(relations) =>
+            val responseRelDWSeq = relations.map(rel => PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params))
             complete(OK, ResponseSeqJson[PutRelDashboardWidget](getHeader(200, session), responseRelDWSeq))
           case Failure(ex) => logger.error(s"modules.relDashboardWidgetDal.insert error", ex)
             complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -273,19 +273,19 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
   def putWidgetInDashboardRoute: Route = path(routeName / "widgets") {
     put {
       entity(as[PutRelDashboardWidgetSeq]) {
-        relDashboardWidgetSeq =>
+        relationPut =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => updateWidgetInDashboard(session, relDashboardWidgetSeq.payload)
+            session => updateWidgetLayout(session, relationPut.payload)
           }
       }
     }
   }
 
-  def updateWidgetInDashboard(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Route = {
+  def updateWidgetLayout(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Route = {
     if (session.admin) {
       val create_by = Await.result(modules.dashboardDal.findById(relSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
       if (create_by == session.userId) {
-        onComplete(updateRelDashboardWidget(session, relSeq)) {
+        onComplete(updateRelation(session, relSeq)) {
           case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
           case Failure(ex) => logger.error(s"updateWidgetInDashboard error", ex)
             complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -307,15 +307,15 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteWidgetFromDashboardRoute: Route = path(routeName / "widgets" / LongNumber) { relId =>
+  def deleteRelationRoute: Route = path(routeName / "widgets" / LongNumber) { relId =>
     delete {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val rel = Await.result(modules.relDashboardWidgetDal.findById(relId), new FiniteDuration(30, SECONDS))
-            if (rel.nonEmpty) {
-              if (session.userId == rel.get.create_by)
-                onComplete(deleteRelDWById(relId, session)) {
+            val relation = Await.result(modules.relDashboardWidgetDal.findById(relId), new FiniteDuration(30, SECONDS))
+            if (relation.nonEmpty) {
+              if (session.userId == relation.get.create_by)
+                onComplete(deleteRelation(relId, session)) {
                   case Success(r) => complete(OK, ResponseJson[Int](getHeader(200, session), r))
                   case Failure(ex) => logger.error(s"deleteWidgetFromDashboardRoute error", ex)
                     complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -345,8 +345,8 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         session =>
           if (session.admin) {
             onComplete(DashboardService.nameCheck(name)) {
-              case Success(seq) =>
-                if (seq.nonEmpty)
+              case Success(names) =>
+                if (names.nonEmpty)
                   complete(OK, ResponseJson[String](getHeader(200, session), ""))
                 else complete(BadRequest, ResponseJson[String](getHeader(400, "名称已被使用", session), ""))
 

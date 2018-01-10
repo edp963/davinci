@@ -53,7 +53,7 @@ trait PersistenceModule {
   val dashboardQuery: TableQuery[DashboardTable] = TableQuery[DashboardTable]
   val widgetQuery: TableQuery[WidgetTable] = TableQuery[WidgetTable]
   val libWidgetQuery: TableQuery[LibWidgetTable] = TableQuery[LibWidgetTable]
-  val viewQuery: TableQuery[ViewTbl] = TableQuery[ViewTbl]
+  val viewQuery: TableQuery[ViewTb] = TableQuery[ViewTb]
   val relGroupViewQuery: TableQuery[RelGroupViewTable] = TableQuery[RelGroupViewTable]
   val uploadMetaQuery: TableQuery[MetaTable] = TableQuery[MetaTable]
 
@@ -67,7 +67,7 @@ trait PersistenceModule {
   val relDashboardWidgetDal: BaseDal[RelDashboardWidgetTable, RelDashboardWidget]
   val widgetDal: BaseDal[WidgetTable, Widget]
   val libWidgetDal: BaseDal[LibWidgetTable, LibWidget]
-  val viewDal: BaseDal[ViewTbl, View]
+  val viewDal: BaseDal[ViewTb, View]
   val relGroupViewDal: BaseDal[RelGroupViewTable, RelGroupView]
   val uploadMetaDal: BaseDal[MetaTable, UploadMeta]
 }
@@ -84,7 +84,7 @@ trait PersistenceModuleImpl extends PersistenceModule {
   override lazy val relDashboardWidgetDal = new BaseDalImpl[RelDashboardWidgetTable, RelDashboardWidget](TableQuery[RelDashboardWidgetTable])
   override lazy val widgetDal = new BaseDalImpl[WidgetTable, Widget](TableQuery[WidgetTable])
   override lazy val libWidgetDal = new BaseDalImpl[LibWidgetTable, LibWidget](TableQuery[LibWidgetTable])
-  override lazy val viewDal = new BaseDalImpl[ViewTbl, View](TableQuery[ViewTbl])
+  override lazy val viewDal = new BaseDalImpl[ViewTb, View](TableQuery[ViewTb])
   override lazy val relGroupViewDal = new BaseDalImpl[RelGroupViewTable, RelGroupView](TableQuery[RelGroupViewTable])
   override lazy val uploadMetaDal = new BaseDalImpl[MetaTable, UploadMeta](TableQuery[MetaTable])
 

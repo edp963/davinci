@@ -26,7 +26,7 @@ package edp.davinci.rest.source
 
 import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
-import edp.davinci.persistence.entities.PutSourceInfo
+import edp.davinci.persistence.entities.Source4Put
 import edp.davinci.rest.SessionClass
 import edp.davinci.util.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
@@ -38,18 +38,18 @@ object SourceService extends SourceService
 trait SourceService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAll(session: SessionClass): Future[Seq[PutSourceInfo]] = {
-    db.run(modules.sourceQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (PutSourceInfo.tupled, PutSourceInfo.unapply)).result).
-      mapTo[Seq[PutSourceInfo]]
+  def getAll(session: SessionClass): Future[Seq[Source4Put]] = {
+    db.run(modules.sourceQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (Source4Put.tupled, Source4Put.unapply)).result).
+      mapTo[Seq[Source4Put]]
   }
 
-  def getById(id: Long): Future[Option[PutSourceInfo]] = {
+  def getById(id: Long): Future[Option[Source4Put]] = {
     db.run(modules.sourceQuery.filter(s => s.id === id).
-      map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (PutSourceInfo.tupled, PutSourceInfo.unapply)).result.headOption).
-      mapTo[Option[PutSourceInfo]]
+      map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (Source4Put.tupled, Source4Put.unapply)).result.headOption).
+      mapTo[Option[Source4Put]]
   }
 
-  def update(sourceSeq: Seq[PutSourceInfo], session: SessionClass): Future[Unit] = {
+  def update(sourceSeq: Seq[Source4Put], session: SessionClass): Future[Unit] = {
     val query = DBIO.seq(sourceSeq.map(r => {
       modules.sourceQuery.filter(s => s.id === r.id && s.create_by === session.userId).map(source => (source.name, source.connection_url, source.desc, source.`type`, source.config, source.update_by, source.update_time))
         .update(r.name, r.connection_url, r.desc, r.`type`, r.config, session.userId, ResponseUtils.currentTime)
