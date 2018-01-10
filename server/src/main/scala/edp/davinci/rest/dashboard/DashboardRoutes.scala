@@ -82,8 +82,8 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         val (insideInfo, dashboards) = info
         dashboards match {
           case Some(dashboard) =>
-            val dashboardInfo = DashboardInfo(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""), dashboard.publish, dashboard.create_by, insideInfo)
-            complete(OK, ResponseJson[DashboardInfo](getHeader(200, session), dashboardInfo))
+            val dashboardInfo = DashboardAndWidget(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, insideInfo)
+            complete(OK, ResponseJson[DashboardAndWidget](getHeader(200, session), dashboardInfo))
           case None =>
             logger.error(s"dashboard not found,id:$dashboardId")
             complete(BadRequest, ResponseJson[String](getHeader(400, s"not found dashboard: $dashboardId", session), ""))
@@ -110,7 +110,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         session =>
           onComplete(getAll(session)) {
             case Success(dashboardSeq) =>
-              complete(OK, ResponseSeqJson[PutDashboardInfo](getHeader(200, session), dashboardSeq))
+              complete(OK, ResponseSeqJson[PutDashboard](getHeader(200, session), dashboardSeq))
             case Failure(ex) =>
               logger.error(s"get all dashboards error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -121,7 +121,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   @ApiOperation(value = "Add new dashboards to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "dashboards", value = "Dashboard objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostDashboardInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "dashboards", value = "Dashboard objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostDashboardSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
@@ -131,7 +131,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
   ))
   def postDashboardRoute: Route = path(routeName) {
     post {
-      entity(as[PostDashboardInfoSeq]) {
+      entity(as[PostDashboardSeq]) {
         dashboardSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => postDashBoard(session, dashboardSeq.payload)
@@ -140,13 +140,13 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     }
   }
 
-  def postDashBoard(session: SessionClass, postDashboardSeq: Seq[PostDashboardInfo]): Route = {
+  def postDashBoard(session: SessionClass, postDashboardSeq: Seq[PostDashboard]): Route = {
     if (session.admin) {
-      val dashboardSeq = postDashboardSeq.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail), post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val dashboardSeq = postDashboardSeq.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),post.config, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.dashboardDal.insert(dashboardSeq)) {
         case Success(dashWithIdSeq) =>
-          val responseDashSeq = dashWithIdSeq.map(dashboard => PutDashboardInfo(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail, dashboard.publish, dashboard.active, dashboard.create_by))
-          complete(OK, ResponseSeqJson[PutDashboardInfo](getHeader(200, session), responseDashSeq))
+          val responseDashSeq = dashWithIdSeq.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
+          complete(OK, ResponseSeqJson[PutDashboard](getHeader(200, session), responseDashSeq))
         case Failure(ex) => logger.error(s"insert dashboard error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -176,7 +176,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     }
   }
 
-  def putDashboardComplete(session: SessionClass, dashboardSeq: Seq[PutDashboardInfo]): Route = {
+  def putDashboardComplete(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Route = {
     if (session.admin) {
       val create_by = Await.result(modules.dashboardDal.findById(dashboardSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
       if (create_by == session.userId) {

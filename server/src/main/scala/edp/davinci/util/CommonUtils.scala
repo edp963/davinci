@@ -29,7 +29,7 @@ import java.io.{ByteArrayOutputStream, FileOutputStream, OutputStreamWriter}
 import com.github.tototoshi.csv.CSVWriter
 import DavinciConstants.defaultEncode
 import edp.davinci.ModuleInstance
-import edp.davinci.rest.PageInfo
+import edp.davinci.rest.Paginate
 
 object CommonUtils extends CommonUtils
 
@@ -46,9 +46,9 @@ trait CommonUtils {
     CSVStr
   }
 
-  def getPageInfo(pageInfo: PageInfo): String = {
-    if (null != pageInfo) {
-      val (limit, offset, sortBy) = (pageInfo.limit, pageInfo.offset, pageInfo.sortBy)
+  def getPageInfo(paginate: Paginate): String = {
+    if (null != paginate) {
+      val (limit, offset, sortBy) = (paginate.limit, paginate.offset, paginate.sortBy)
       val paginationInfo = if (limit != -1)
         if (offset != -1)
           s"limit $limit offset $offset"

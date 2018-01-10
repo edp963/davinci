@@ -73,7 +73,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   private def getAllUsersComplete(session: SessionClass, active: Boolean): Route = {
     if (session.admin) {
-      onComplete(UserService.getAll(session)) {
+      onComplete(UserService.getAllUsers(session)) {
         case Success(userSeq) =>
           complete(OK, ResponseSeqJson[QueryUserInfo](getHeader(200, session), userSeq))
         case Failure(ex) => logger.error("getAllUsersComplete error", ex)
@@ -154,7 +154,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   private def putUserComplete(session: SessionClass, userSeq: Seq[PutUserInfo]): Route = {
     if (session.admin) {
-      onComplete(UserService.update(userSeq, session)) {
+      onComplete(UserService.updateUser(userSeq, session)) {
         case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
         case Failure(ex) => logger.error("putUserComplete error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))

@@ -37,17 +37,18 @@ object ShareRouteHelper {
   lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")
 
   def getShareURL(userId: Long, infoId: Long, authorizedName: String): String = {
-    val shareAuthInfo = caseClass2json[ShareAuthInfo](ShareAuthInfo(userId, infoId, authorizedName))
+    val shareAuthInfo = caseClass2json[ShareAuthClass](ShareAuthClass(userId, infoId, authorizedName))
     val MD5Info = MD5Utils.getMD5(shareAuthInfo)
-    val shareQueryInfo = ShareInfo(userId, infoId, authorizedName, MD5Info)
+    val shareQueryInfo = ShareClass(userId, infoId, authorizedName, MD5Info)
     AesUtils.encrypt(caseClass2json(shareQueryInfo), aesPassword)
   }
 
-  def mergeInfo(infoArr: Array[String], manualInfo: ManualInfo): ManualInfo = {
-    val (manualFilters, widgetParams, adHoc) =
+
+  def mergeURLManual(shareURLArr: Array[String], manualInfo: ManualInfo): ManualInfo = {
+    val (manualFilters, queryParams, adHoc) =
       if (null == manualInfo) (null, null, null)
       else (manualInfo.manualFilters.orNull, manualInfo.params.orNull, manualInfo.adHoc.orNull)
-    val urlDecode = infoArr.last
+    val urlDecode = shareURLArr.last
     logger.info("info after urlDecode: " + urlDecode)
     val base64decoder = new sun.misc.BASE64Decoder
     val base64decode: String = new String(base64decoder.decodeBuffer(urlDecode))
@@ -56,31 +57,32 @@ object ShareRouteHelper {
     val (urlFilters, urlParams) = (paramAndFilter.f_get, paramAndFilter.p_get)
     logger.info("url filter: " + urlFilters)
     val filters = mergeFilters(manualFilters, urlFilters)
-    val params = mergeParams(widgetParams, urlParams)
+    val params = mergeParams(queryParams, urlParams)
     ManualInfo(Some(adHoc), Some(filters), Some(params))
   }
 
-  def isValidShareInfo(shareInfo: ShareInfo): Boolean = {
+
+  def isValidShareInfo(shareInfo: ShareClass): Boolean = {
     if (null == shareInfo) false
     else {
-      val MD5Info = MD5Utils.getMD5(caseClass2json(ShareAuthInfo(shareInfo.userId, shareInfo.infoId, shareInfo.authName)))
+      val MD5Info = MD5Utils.getMD5(caseClass2json(ShareAuthClass(shareInfo.userId, shareInfo.infoId, shareInfo.authName)))
       if (MD5Info == shareInfo.md5) true else false
     }
   }
 
 
-  def getShareInfo(shareInfoStr: String): ShareInfo = {
+  def getShareClass(shareInfoStr: String): ShareClass = {
     val infoArr: Array[String] = shareInfoStr.split(conditionSeparator.toString)
     if (infoArr.head.trim != "") {
       try {
         val jsonShareInfo = AesUtils.decrypt(infoArr.head.trim, aesPassword)
-        json2caseClass[ShareInfo](jsonShareInfo)
+        json2caseClass[ShareClass](jsonShareInfo)
       } catch {
         case e: Throwable => logger.error("failed to resolve share info", e)
-          null.asInstanceOf[ShareInfo]
+          null.asInstanceOf[ShareClass]
       }
     }
-    else null.asInstanceOf[ShareInfo]
+    else null.asInstanceOf[ShareClass]
   }
 
 

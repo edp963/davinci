@@ -79,12 +79,12 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
 
   implicit val formatWidgetInfo: RootJsonFormat[WidgetInfo] = jsonFormat11(WidgetInfo)
-  implicit val formatDashboard: RootJsonFormat[Dashboard] = jsonFormat11(Dashboard)
-  implicit val formatPostDashboardInfo: RootJsonFormat[PostDashboardInfo] = jsonFormat5(PostDashboardInfo)
-  implicit val formatPutDashboardInfo: RootJsonFormat[PutDashboardInfo] = jsonFormat8(PutDashboardInfo)
+  implicit val formatDashboard: RootJsonFormat[Dashboard] = jsonFormat12(Dashboard)
+  implicit val formatPostDashboardInfo: RootJsonFormat[PostDashboard] = jsonFormat6(PostDashboard)
+  implicit val formatPutDashboardInfo: RootJsonFormat[PutDashboard] = jsonFormat9(PutDashboard)
   implicit val formatDashboardSeq: RootJsonFormat[PutDashboardSeq] = jsonFormat1(PutDashboardSeq)
-  implicit val formatDashboardClassSeq: RootJsonFormat[PostDashboardInfoSeq] = jsonFormat1(PostDashboardInfoSeq)
-  implicit val formatDashboardInfo: RootJsonFormat[DashboardInfo] = jsonFormat8(DashboardInfo)
+  implicit val formatDashboardClassSeq: RootJsonFormat[PostDashboardSeq] = jsonFormat1(PostDashboardSeq)
+  implicit val formatDashboardInfo: RootJsonFormat[DashboardAndWidget] = jsonFormat9(DashboardAndWidget)
 
 
   implicit val formatPostRelGroupBizlogic: RootJsonFormat[PostRelGroupView] = jsonFormat2(PostRelGroupView)
@@ -92,10 +92,10 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val formatPostRelGroupBizlogicSeq: RootJsonFormat[PostRelGroupViewSeq] = jsonFormat1(PostRelGroupViewSeq)
   implicit val formatPutRelGroupBizlogicSeq: RootJsonFormat[PutRelGroupViewSeq] = jsonFormat1(PutRelGroupViewSeq)
 
-  implicit val formatView: RootJsonFormat[View] = jsonFormat14(View)
-  implicit val formatPostBizlogicInfo: RootJsonFormat[PostViewInfo] = jsonFormat8(PostViewInfo)
-  implicit val formatPutBizlogicInfo: RootJsonFormat[PutViewInfo] = jsonFormat9(PutViewInfo)
-  implicit val formatQUeryBizlogic: RootJsonFormat[QueryView] = jsonFormat11(QueryView)
+  implicit val formatView: RootJsonFormat[View] = jsonFormat15(View)
+  implicit val formatPostBizlogicInfo: RootJsonFormat[PostViewInfo] = jsonFormat9(PostViewInfo)
+  implicit val formatPutBizlogicInfo: RootJsonFormat[PutViewInfo] = jsonFormat10(PutViewInfo)
+  implicit val formatQUeryBizlogic: RootJsonFormat[QueryView] = jsonFormat12(QueryView)
   implicit val formatPostBizlogicInfoSeq: RootJsonFormat[PostViewInfoSeq] = jsonFormat1(PostViewInfoSeq)
   implicit val formatPutBizlogicInfoSeq: RootJsonFormat[PutViewInfoSeq] = jsonFormat1(PutViewInfoSeq)
 

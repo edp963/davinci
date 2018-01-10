@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.view
 
 import edp.davinci.ModuleInstance
@@ -42,15 +39,15 @@ trait ViewService {
   def getAllViews(session: SessionClass): Future[Seq[QueryView]] = {
     val viewIds = modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
     db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).
-      map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table, r.active, r.create_by) <> (QueryView.tupled, QueryView.unapply)).result).
+      map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.update_sql, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table, r.active, r.create_by) <> (QueryView.tupled, QueryView.unapply)).result).
       mapTo[Seq[QueryView]]
   }
 
   def updateFlatTbl(viewSeq: Seq[PutViewInfo], session: SessionClass): Future[Unit] = {
     val query = for {
       _ <- DBIO.seq(viewSeq.map(r => {
-        modules.viewQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(view => (view.name, view.source_id, view.sql_tmpl, view.desc, view.trigger_type, view.frequency, view.`catch`, view.update_by, view.update_time))
-          .update(r.name, r.source_id, r.sql_tmpl, Some(r.desc), r.trigger_type, r.frequency, r.`catch`, session.userId, ResponseUtils.currentTime)
+        modules.viewQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(view => (view.name, view.source_id, view.sql_tmpl, view.update_sql, view.desc, view.trigger_type, view.frequency, view.`catch`, view.update_by, view.update_time))
+          .update(r.name, r.source_id, r.sql_tmpl, r.update_sql, Some(r.desc), r.trigger_type, r.frequency, r.`catch`, session.userId, ResponseUtils.currentTime)
       }): _*)
       _ <- modules.relGroupViewQuery.filter(view => (view.flatTable_id inSet viewSeq.map(_.id)) && view.create_by === session.userId).delete
 
@@ -88,6 +85,19 @@ trait ViewService {
     } yield (view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params))
     db.run(query.result)
   }
+
+  def getUpdateInfo(flatTableId: Long, session: SessionClass = null): Future[Seq[(Option[String], String, String, Option[Option[String]])]] = {
+    val rel = if (session.admin)
+      modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
+    else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
+
+    val query = for {
+      ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
+        modules.sourceQuery on (_._2.source_id === _.id)
+    } yield (view.update_sql, view.result_table, source.connection_url, rel.map(_.sql_params))
+    db.run(query.result)
+  }
+
 
 
 }

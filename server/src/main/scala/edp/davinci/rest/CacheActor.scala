@@ -44,21 +44,21 @@ class CacheActor extends Actor {
   lazy val cacheMap = mutable.Map.empty[String, Future[Seq[String]]]
 
   override def receive: Receive = {
-    case requestInfo: RequestInfo =>
-      val sqls = requestInfo.sqlBuffer.mkString(";")
+    case actorMessage: ActorMessage =>
+      val sqls = actorMessage.sqlBuffer.mkString(";")
       if (cacheMap.contains(sqls)) {
         val futureFromMap: Future[Seq[String]] = cacheMap(sqls)
         sender() ! futureFromMap
       }
       else {
-        val resFuture: Future[Seq[String]] = Future(RouteHelper.sqlExecute(requestInfo.sourceConfig, requestInfo.sqlBuffer)).mapTo[Seq[String]]
+        val resFuture: Future[Seq[String]] = Future(RouteHelper.executeQuery(actorMessage.sourceConfig, actorMessage.sqlBuffer)).mapTo[Seq[String]]
         cacheMap(sqls) = resFuture
         resFuture.onSuccess { case res =>
           cacheMap.remove(sqls)
           try {
-            if (JedisConnection.getList(sqls).size() == 0 && requestInfo.expired > 0) {
+            if (JedisConnection.getList(sqls).size() == 0 && actorMessage.expired > 0) {
               logger.info("update cache(*)(*)(*)(*)(*)")
-              JedisConnection.set(sqls, res.toList, requestInfo.expired)
+              JedisConnection.set(sqls, res.toList, actorMessage.expired)
             }
           } catch {
             case e: Throwable => logger.error("write to redis exception", e)

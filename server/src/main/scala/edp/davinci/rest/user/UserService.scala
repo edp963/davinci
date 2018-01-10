@@ -39,7 +39,7 @@ object UserService extends UserService
 trait UserService {
   private lazy val modules = ModuleInstance.getModule
 
-  def getAll(session: SessionClass): Future[Seq[QueryUserInfo]] = {
+  def getAllUsers(session: SessionClass): Future[Seq[QueryUserInfo]] = {
     val userInfo = db.run(modules.userQuery.map(r => (r.id, r.email, r.title, r.name, r.admin) <> (QueryUserInfo.tupled, QueryUserInfo.unapply)).result)
     userInfo.mapTo[Seq[QueryUserInfo]]
   }
@@ -48,11 +48,11 @@ trait UserService {
     db.run(modules.relUserGroupQuery.filter(_.user_id === userId).map(_.group_id).result)
   }
 
-  def getUserInfo(userId: Long): Future[(Boolean, String)] = {
+  def getUserById(userId: Long): Future[(Boolean, String)] = {
     db.run(modules.userQuery.filter(_.id === userId).map(u => (u.admin, u.email)).result.head)
   }
 
-  def update(userSeq: Seq[PutUserInfo], session: SessionClass): Future[Unit] = {
+  def updateUser(userSeq: Seq[PutUserInfo], session: SessionClass): Future[Unit] = {
     val query = (for {
       _ <- DBIO.seq(userSeq.map(r => {
         modules.userQuery.filter(_.id === r.id).map(user => (user.admin, user.name, user.email, user.title, user.update_by, user.update_time)).update(r.admin, r.name, r.email, r.title, session.userId, ResponseUtils.currentTime)
