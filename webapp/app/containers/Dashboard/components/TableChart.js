@@ -197,7 +197,14 @@ export class TableChart extends PureComponent {
     })
   }
 
-  rowClick = (record, index) => {
+  rowClick = (record, index, event) => {
+    let target = event.target
+    let targetName = target.tagName
+    let targetClassName = target.classList[0]
+    if (targetName === 'DIV' && targetClassName === 'ant-select-selection__rendered') {
+      event.stopPropagation()
+      return
+    }
     const { id, onCheckInteract, onDoInteract } = this.props
     const { data } = this.state
 
