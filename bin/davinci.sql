@@ -26,6 +26,7 @@ CREATE TABLE `dashboard` (
   `pic` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
   `desc` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
   `linkage_detail` varchar(1000) COLLATE utf8_unicode_ci DEFAULT '[]',
+  `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
   `publish` tinyint(1) NOT NULL,
   `active` tinyint(1) DEFAULT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
