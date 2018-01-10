@@ -43,7 +43,6 @@ object ShareRouteHelper {
     AesUtils.encrypt(caseClass2json(shareQueryInfo), aesPassword)
   }
 
-
   def mergeURLManual(shareURLArr: Array[String], manualInfo: ManualInfo): ManualInfo = {
     val (manualFilters, queryParams, adHoc) =
       if (null == manualInfo) (null, null, null)
@@ -60,7 +59,6 @@ object ShareRouteHelper {
     val params = mergeParams(queryParams, urlParams)
     ManualInfo(Some(adHoc), Some(filters), Some(params))
   }
-
 
   def isValidShareInfo(shareInfo: ShareClass): Boolean = {
     if (null == shareInfo) false
