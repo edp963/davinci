@@ -59,7 +59,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         boundaryGap: true,
         nameGap: 30,
         splitArea: {
-          show: false
+          show: true
         },
         axisLabel: {
           interval: xAxisInterval,
@@ -102,7 +102,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   yAxisOptions = {
     yAxis: Object.assign({
       type: 'value',
-      splitArea: {show: true}
+      splitArea: {show: false},
+      splitLine: {
+        show: false
+      }
     }, suffixYAxisOptions)
   }
 
