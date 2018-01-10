@@ -201,7 +201,8 @@ export class TableChart extends PureComponent {
     let target = event.target
     let targetName = target.tagName
     let targetClassName = target.classList[0]
-    if (targetName === 'DIV' && targetClassName === 'ant-select-selection__rendered') {
+    let re = /select/g
+    if (targetName === 'DIV' && re.test(targetClassName)) {
       event.stopPropagation()
       return
     }
