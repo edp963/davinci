@@ -2,12 +2,13 @@ import React, { PropTypes, PureComponent} from 'react'
 import Icon from 'antd/lib/icon'
 import Menu from 'antd/lib/menu'
 import classnames from 'classnames'
-import styles from './fullScreenPanel.less'
+import * as echarts from 'echarts/lib/echarts'
+import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
 import Chart from '../Chart'
 import widgetlibs from '../../../../assets/json/widgetlib'
-import * as echarts from 'echarts/lib/echarts'
 import {ECHARTS_RENDERER} from '../../../../globalConstants'
+import styles from './fullScreenPanel.less'
 
 class FullScreenPanel extends PureComponent {
   constructor (props) {
@@ -15,13 +16,22 @@ class FullScreenPanel extends PureComponent {
     this.chartInstance = false
   }
   state = {
-    isShowMenu: false
+    isShowMenu: false,
+    controlPanelVisible: false
   }
   hide = () => {
+    this.setState({
+      controlPanelVisible: false
+    })
     const {isVisible} = this.props
     if (isVisible) {
       isVisible()
     }
+  }
+  toggleControlPanel = () => {
+    this.setState({
+      controlPanelVisible: !this.state.controlPanelVisible
+    })
   }
   triggerWidget = (e) => {
     const {onCurrentWidgetInFullScreen} = this.props
@@ -64,8 +74,17 @@ class FullScreenPanel extends PureComponent {
       isShowMenu: !this.state.isShowMenu
     })
   }
+  onControlSearch = (queryParams) => {
+    const {currentDataInFullScreen} = this.props
+    const {
+      itemId,
+      widget,
+      onGetChartData
+    } = currentDataInFullScreen
+    onGetChartData('rerender', itemId, widget.id, queryParams)
+  }
   render () {
-    const {isShowMenu} = this.state
+    const {isShowMenu, controlPanelVisible} = this.state
     const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets} = this.props
     const fsClassName = classnames({
       [styles.fullScreen]: true,
@@ -133,6 +152,23 @@ class FullScreenPanel extends PureComponent {
           />
         : (<div style={{width: '100%', height: '100%'}} id="fsChartsWrapper"></div>)
     }
+    let isHasControl
+    if (currentDataInFullScreen && currentDataInFullScreen.widget && currentDataInFullScreen.widget.query_params) {
+      let queryParams = currentDataInFullScreen.widget.query_params
+      isHasControl = !!JSON.parse(queryParams).length
+    }
+    const controls = currentDataInFullScreen && currentDataInFullScreen.widget && currentDataInFullScreen.widget.query_params
+      ? JSON.parse(currentDataInFullScreen.widget.query_params).filter(c => c.type)
+      : []
+    const modalPanel = classnames({
+      [styles.modalPanel]: true,
+      [styles.displayNone]: !controlPanelVisible
+    })
+    const controlPanel = classnames({
+      [styles.controlPanel]: true,
+      [styles.showModalPanel]: controlPanelVisible,
+      [styles.hideModalPanel]: !controlPanelVisible
+    })
     return (
       <div className={fsClassName}>
         <div className={styles.container}>
@@ -142,6 +178,12 @@ class FullScreenPanel extends PureComponent {
               <span>{title}</span>
             </div>
             <ul className={styles.tools}>
+              {
+                isHasControl ? <li onClick={this.toggleControlPanel}>
+                  <Icon type={`${!controlPanelVisible ? 'down-square-o' : 'up-square-o'}`} /><span>控制器</span>
+                </li> : ''
+              }
+              <li></li>
               <li onClick={this.hide}>
                 <Icon type="shrink" /><span>退出全屏</span>
               </li>
@@ -150,6 +192,16 @@ class FullScreenPanel extends PureComponent {
           <div className={styles.body}>
             <div className={sideMenuClass}>
               {menus}
+            </div>
+            <div className={modalPanel} />
+            <div className={controlPanel}>
+              <div className={styles.formPanel}>
+                <DashboardItemControlForm
+                  controls={controls}
+                  onSearch={this.onControlSearch}
+                  onHide={this.toggleControlPanel}
+                />
+              </div>
             </div>
             <div className={mainChartClass}>
               {charts}

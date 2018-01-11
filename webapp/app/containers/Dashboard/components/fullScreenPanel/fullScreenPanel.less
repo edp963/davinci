@@ -22,7 +22,7 @@
       flex: 0 0 64px;
       background-color: @body-background;
       box-shadow: @header-box-shadow;
-      z-index: @header-index;
+      z-index: 3;
       display: flex;
       flex-direction: row;
       justify-content: space-between;
@@ -58,6 +58,7 @@
     .body{
       flex:1;
       position: relative;
+
       .sideMenu{
         width: 230px;
         height: 100%;
@@ -74,6 +75,31 @@
           margin-top: 20px;
           margin-bottom: 20px;
           border: none;
+        }
+      }
+      .modalPanel{
+        position: absolute;
+        height:100%;
+        width:100%;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-color: fade(@black, 50);
+        z-index: 1;
+      }
+      .controlPanel {
+        position: absolute;
+        width:100%;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        z-index: 2;
+        transition: all .3s;
+        .formPanel{
+          max-height: 100%;
+          background-color: @white;
+          overflow-y: auto;
         }
       }
       .chartWrapper{
@@ -118,5 +144,11 @@
 }
 .displayBlock{
   display: block;
+}
+.showModalPanel{
+  top:0;
+}
+.hideModalPanel{
+  top:-100px;
 }
 
