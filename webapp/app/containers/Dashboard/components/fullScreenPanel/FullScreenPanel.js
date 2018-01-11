@@ -166,6 +166,7 @@ class FullScreenPanel extends PureComponent {
     })
     const controlPanel = classnames({
       [styles.controlPanel]: true,
+      [styles.displayNone]: !controlPanelVisible,
       [styles.showModalPanel]: controlPanelVisible,
       [styles.hideModalPanel]: !controlPanelVisible
     })
