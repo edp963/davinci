@@ -302,9 +302,10 @@ object RouteHelper extends Directives {
     try {
       dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password, 10)
       statement = dbConnection.createStatement()
-      if (sqlBuffer.length > 1) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
+      if (sqlBuffer.lengthCompare(1) > 0) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
       //es statement NullPointerException ,so change 2 prepareStatement
-      val resultSet = dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
+      val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
+      else statement.executeQuery(sqlBuffer.last)
       covert2ListBuf(resultSet, sourceConfig)
     } catch {
       case e: Throwable => logger.error("get result exception", e)
@@ -312,6 +313,11 @@ object RouteHelper extends Directives {
     } finally {
       if (dbConnection != null) dbConnection.close()
     }
+  }
+
+
+  private def isES(url: String): Boolean = {
+    if (url.indexOf("elasticsearch") > -1) true else false
   }
 
 
