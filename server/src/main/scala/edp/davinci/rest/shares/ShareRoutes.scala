@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.shares
 
 import javax.ws.rs.Path
@@ -29,15 +26,14 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.{HttpEntity, _}
 import akka.http.scaladsl.server.{Directives, Route}
-import edp.davinci.util.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.dashboard.DashboardService
 import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
-import edp.davinci.rest.view.ViewService
 import edp.davinci.rest.widget.WidgetService
+import edp.davinci.util.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.util.JsonProtocol._
 import edp.davinci.util.ResponseUtils.getHeader
 import edp.davinci.util._
@@ -53,10 +49,9 @@ case class ShareAuthClass(userId: Long, infoId: Long, authName: String)
 @Api(value = "/shares", consumes = "application/json", produces = "application/json")
 @Path("/shares")
 class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives with SqlUtils {
-  val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ loginAndVerifyRoute
+  val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute
   private lazy val routeName = "shares"
   private lazy val logger = Logger.getLogger(this.getClass)
-
 
   @Path("/widget/{widget_id}")
   @ApiOperation(value = "get the share widget url", notes = "", nickname = "", httpMethod = "GET")
@@ -267,7 +262,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
             })
             if (null == dashboard) complete(BadRequest, ResponseJson[String](getHeader(400, "dashboard not exists", null), ""))
             else {
-              val dashboardInfo = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, infoSeq)
+              val dashboardInfo = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""), dashboard.config, dashboard.publish, dashboard.create_by, infoSeq)
               complete(OK, ResponseJson[DashboardContent](getHeader(200, null), dashboardInfo))
             }
           case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
@@ -309,7 +304,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
                          manualInfo: ManualInfo = null,
                          paginate: Paginate,
                          cacheClass: CacheClass): Route = {
-    def verifyAndGetResult: Route = {
+    def getResult: Route = {
       val shareURLArr: Array[String] = shareString.split(conditionSeparator.toString)
       try {
         val shareClass = getShareClass(shareString)
@@ -330,15 +325,16 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         session =>
           onComplete(UserService.getUserById(session.userId)) {
             case Success(user) =>
-              if (authName == user._2) verifyAndGetResult
+              if (authName == user._2) getResult
               else complete(BadRequest, ResponseJson[String](getHeader(400, "Not the authorized user,login and try again", null), ""))
             case Failure(ex) =>
               logger.error(s"user not found ", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
       }
-    } else verifyAndGetResult
+    } else getResult
   }
+
 
   private def getResultComplete(shareClass: ShareClass,
                                 contentType: ContentType.NonBinary,
@@ -355,9 +351,9 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       case Success(widgetAndGroup) =>
         val (widgetOpt, groupIds, admin) = widgetAndGroup
         widgetOpt match {
-          case Some(widget) => val session =SessionClass(shareClass.userId, groupIds.toList, admin._1)
+          case Some(widget) => val session = SessionClass(shareClass.userId, groupIds.toList, admin._1)
             logger.info("in widget option " + s"userid ${shareClass.userId} infoid ${shareClass.infoId}")
-            RouteHelper.getResultComplete(session,widget.flatTable_id , paginate, cacheClass, contentType, manualInfo)
+            RouteHelper.getResultComplete(session, widget.flatTable_id, paginate, cacheClass, contentType, manualInfo)
           case None =>
             logger.warn(s"widget not found: ${shareClass.infoId} ,user id ${shareClass.userId}")
             complete(BadRequest, ResponseJson[String](getHeader(404, s"not found: ${shareClass.infoId} user id ${shareClass.userId}", null), ""))
@@ -380,7 +376,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def loginAndVerifyRoute: Route = path(routeName / "login" / Segment) { shareInfoStr =>
+  def authShareRoute: Route = path(routeName / "login" / Segment) { shareInfoStr =>
     post {
       entity(as[LoginClass]) { login =>
         lazy val ldapIsEnable = modules.config.getBoolean("ldap.isEnable")

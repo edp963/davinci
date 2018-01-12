@@ -48,7 +48,7 @@ import scala.util.{Failure, Success}
 class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
   val routes: Route = getDashboardByIdRoute ~ postDashboardRoute ~ putDashboardRoute ~ addWidgets ~ getDashboardsRoute ~
-    deleteDashboardByIdRoute ~ deleteRelationRoute ~ addWidgets ~ putWidgetInDashboardRoute ~ nameCheckRoute
+    deleteDashboardRoute ~ deleteRelationRoute ~ addWidgets ~ putWidgetInDashboardRoute ~ nameCheckRoute
   private lazy val routeName = "dashboards"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -170,13 +170,13 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
       entity(as[PutDashboardSeq]) {
         dashboardSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => putDashboardComplete(session, dashboardSeq.payload)
+            session => putDashboard(session, dashboardSeq.payload)
           }
       }
     }
   }
 
-  def putDashboardComplete(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Route = {
+  def putDashboard(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Route = {
     if (session.admin) {
       val create_by = Await.result(modules.dashboardDal.findById(dashboardSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
       if (create_by == session.userId) {
@@ -201,7 +201,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteDashboardByIdRoute: Route = path(routeName / LongNumber) { dashboardId =>
+  def deleteDashboardRoute: Route = path(routeName / LongNumber) { dashboardId =>
     delete {
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>

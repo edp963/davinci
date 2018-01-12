@@ -45,7 +45,7 @@ import scala.util.{Failure, Success}
 @Path("/groups")
 class GroupRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = getGroupsRoute ~ postGroupRoute ~ putGroupRoute ~ deleteGroupByIdRoute
+  val routes: Route = getGroupsRoute ~ postGroupRoute ~ putGroupRoute ~ deleteGroupRoute
   private lazy val routeName = "groups"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -72,7 +72,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   private def getGroupsComplete(session: SessionClass, active: Boolean): Route = {
     if (session.admin) {
-      onComplete(getAll(session)) {
+      onComplete(getGroups(session)) {
         case Success(groupSeq) =>
           complete(OK, ResponseSeqJson[Group4Put](getHeader(200, session), groupSeq))
         case Failure(ex) => logger.error("get all groups error", ex)
@@ -134,13 +134,13 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       entity(as[Group4PutSeq]) {
         groupSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => putGroupComplete(session, groupSeq.payload)
+            session => putGroup(session, groupSeq.payload)
           }
       }
     }
   }
 
-  private def putGroupComplete(session: SessionClass, groupSeq: Seq[Group4Put]): Route = {
+  private def putGroup(session: SessionClass, groupSeq: Seq[Group4Put]): Route = {
     if (session.admin) {
       val future = update(groupSeq, session)
       onComplete(future) {
@@ -162,7 +162,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteGroupByIdRoute: Route = path(routeName / LongNumber) { groupId =>
+  def deleteGroupRoute: Route = path(routeName / LongNumber) { groupId =>
     delete {
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
