@@ -45,7 +45,7 @@ import scala.util.{Failure, Success}
 @Path("/groups")
 class GroupRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = getGroupByAllRoute ~ postGroupRoute ~ putGroupRoute ~ deleteGroupByIdRoute
+  val routes: Route = getGroupsRoute ~ postGroupRoute ~ putGroupRoute ~ deleteGroupRoute
   private lazy val routeName = "groups"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -60,21 +60,21 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     new ApiResponse(code = 404, message = "dashboard not found"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def getGroupByAllRoute: Route = path(routeName) {
+  def getGroupsRoute: Route = path(routeName) {
     get {
       parameter('active.as[Boolean].?) { active =>
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-          session => getAllGroupsComplete(session, active.getOrElse(true))
+          session => getGroupsComplete(session, active.getOrElse(true))
         }
       }
     }
   }
 
-  private def getAllGroupsComplete(session: SessionClass, active: Boolean): Route = {
+  private def getGroupsComplete(session: SessionClass, active: Boolean): Route = {
     if (session.admin) {
-      onComplete(getAll(session)) {
+      onComplete(getGroups(session)) {
         case Success(groupSeq) =>
-          complete(OK, ResponseSeqJson[PutGroupInfo](getHeader(200, session), groupSeq))
+          complete(OK, ResponseSeqJson[Group4Put](getHeader(200, session), groupSeq))
         case Failure(ex) => logger.error("get all groups error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -84,7 +84,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   @ApiOperation(value = "Add a new group to the system", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "group", value = "Group object to be added", required = true, dataType = "edp.davinci.persistence.entities.PostGroupInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "group", value = "Group object to be added", required = true, dataType = "edp.davinci.persistence.entities.Group4PostSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "OK"),
@@ -95,7 +95,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   ))
   def postGroupRoute: Route = path(routeName) {
     post {
-      entity(as[PostGroupInfoSeq]) {
+      entity(as[Group4PostSeq]) {
         groupSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
             session => postGroup(session, groupSeq.payload)
@@ -104,13 +104,13 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     }
   }
 
-  private def postGroup(session: SessionClass, postGroupSeq: Seq[PostGroupInfo]) = {
+  private def postGroup(session: SessionClass, postGroupSeq: Seq[Group4Post]) = {
     if (session.admin) {
       val groupSeq = postGroupSeq.map(post => UserGroup(0, post.name, Some(post.desc), active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.groupDal.insert(groupSeq)) {
-        case Success(groupWithIdSeq) =>
-          val responseGroup = groupWithIdSeq.map(group => PutGroupInfo(group.id, group.name, group.desc))
-          complete(OK, ResponseSeqJson[PutGroupInfo](getHeader(200, session), responseGroup))
+        case Success(groups) =>
+          val groups4Put = groups.map(group => Group4Put(group.id, group.name, group.desc))
+          complete(OK, ResponseSeqJson[Group4Put](getHeader(200, session), groups4Put))
         case Failure(ex) => logger.error("postGroup error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
       }
@@ -120,7 +120,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
 
   @ApiOperation(value = "update a group in the system", notes = "", nickname = "", httpMethod = "PUT")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "group", value = "Group object to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutGroupInfoSeq", paramType = "body")
+    new ApiImplicitParam(name = "group", value = "Group object to be updated", required = true, dataType = "edp.davinci.persistence.entities.Group4PutSeq", paramType = "body")
   ))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
@@ -131,16 +131,16 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   ))
   def putGroupRoute: Route = path(routeName) {
     put {
-      entity(as[PutGroupInfoSeq]) {
+      entity(as[Group4PutSeq]) {
         groupSeq =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-            session => putGroupComplete(session, groupSeq.payload)
+            session => putGroup(session, groupSeq.payload)
           }
       }
     }
   }
 
-  private def putGroupComplete(session: SessionClass, groupSeq: Seq[PutGroupInfo]): Route = {
+  private def putGroup(session: SessionClass, groupSeq: Seq[Group4Put]): Route = {
     if (session.admin) {
       val future = update(groupSeq, session)
       onComplete(future) {
@@ -162,7 +162,7 @@ class GroupRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteGroupByIdRoute: Route = path(routeName / LongNumber) { groupId =>
+  def deleteGroupRoute: Route = path(routeName / LongNumber) { groupId =>
     delete {
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>

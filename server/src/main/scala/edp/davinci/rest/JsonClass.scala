@@ -33,9 +33,9 @@ case class BaseInfo(id: Long, name: String)
 
 case class ManualInfo(adHoc: Option[String] = None, manualFilters: Option[String] = None, params: Option[List[KV]] = None)
 
-case class PageInfo(limit: Int, offset: Int, sortBy: String)
+case class Paginate(limit: Int, offset: Int, sortBy: String)
 
-case class CacheInfo(useCache: Boolean, expired: Int)
+case class CacheClass(useCache: Boolean, expired: Int)
 
 case class ViewResult(result: Seq[String] = null, totalCount: Long)
 

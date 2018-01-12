@@ -26,7 +26,7 @@ import javax.ws.rs.Path
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule}
-import edp.davinci.persistence.entities.{LoginClass, QueryUserInfo}
+import edp.davinci.persistence.entities.{LoginClass, User4Query}
 import edp.davinci.util.AuthorizationProvider
 import edp.davinci.util.JsonProtocol._
 import edp.davinci.util.ResponseUtils._
@@ -59,7 +59,7 @@ class LoginRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         onComplete(AuthorizationProvider.createSessionClass(login, ldapIsEnable)) {
           case Success(sessionEither) =>
             sessionEither.fold(authorizationError => complete(BadRequest, ResponseJson[String](getHeader(authorizationError.statusCode, authorizationError.desc, null), "user name or password invalid")),
-              info => complete(OK, ResponseJson[QueryUserInfo](getHeader(200, info._1), info._2))
+              info => complete(OK, ResponseJson[User4Query](getHeader(200, info._1), info._2))
             )
           case Failure(ex) =>
             logger.error("login failure", ex)

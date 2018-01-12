@@ -28,7 +28,7 @@ import akka.http.scaladsl.server.directives.Credentials
 import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule
 import edp.davinci.module.DbModule._
-import edp.davinci.persistence.entities.{LoginClass, QueryUserInfo, User}
+import edp.davinci.persistence.entities.{LoginClass, User4Query, User}
 import edp.davinci.rest.SessionClass
 import edp.davinci.util.LDAPValidate.validate
 import edp.davinci.util.ResponseUtils.currentTime
@@ -50,7 +50,7 @@ object AuthorizationProvider {
   private lazy val logger = Logger.getLogger(this.getClass)
   lazy val realm = "davinci"
 
-  def createSessionClass(login: LoginClass, enableLDAP: Boolean): Future[Either[AuthorizationError, (SessionClass, QueryUserInfo)] with Product with Serializable] = {
+  def createSessionClass(login: LoginClass, enableLDAP: Boolean): Future[Either[AuthorizationError, (SessionClass, User4Query)] with Product with Serializable] = {
     try {
       val user = if (enableLDAP && validate(login.username, login.password)) findUserByLDAP(login) else findUser(login)
       user.flatMap {
@@ -61,7 +61,7 @@ object AuthorizationProvider {
 
                 val groupIdList = new ListBuffer[Long]
                 if (relSeq.nonEmpty) relSeq.foreach(groupIdList += _)
-                val userInfo = QueryUserInfo(user.id, user.email, user.title, user.name, user.admin)
+                val userInfo = User4Query(user.id, user.email, user.title, user.name, user.admin)
                 val session = SessionClass(user.id, groupIdList.toList, user.admin)
                 (session, userInfo)
             }

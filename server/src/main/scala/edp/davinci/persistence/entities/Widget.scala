@@ -46,26 +46,26 @@ case class Widget(id: Long,
                   update_by: Long) extends BaseEntity
 
 
-case class PostWidgetInfo(widgetlib_id: Long,
-                          flatTable_id: Long,
-                          name: String,
-                          adhoc_sql: Option[String] = Some(""),
-                          desc: String,
-                          config: Option[String] = None,
-                          chart_params: Option[String] = Some(""),
-                          query_params: Option[String] = Some(""),
-                          publish: Boolean) extends SimpleBaseEntity
+case class PostWidget(widgetlib_id: Long,
+                      flatTable_id: Long,
+                      name: String,
+                      adhoc_sql: Option[String] = Some(""),
+                      desc: String,
+                      config: Option[String] = None,
+                      chart_params: Option[String] = Some(""),
+                      query_params: Option[String] = Some(""),
+                      publish: Boolean) extends SimpleBaseEntity
 
-case class PutWidgetInfo(id: Long, widgetlib_id: Long, flatTable_id: Long, name: String, adhoc_sql: Option[String] = None, desc: String, config: Option[String] = None, chart_params: Option[String] = Some(""), query_params: Option[String] = Some(""), publish: Boolean, create_by: Long=0)
+case class PutWidget(id: Long, widgetlib_id: Long, flatTable_id: Long, name: String, adhoc_sql: Option[String] = None, desc: String, config: Option[String] = None, chart_params: Option[String] = Some(""), query_params: Option[String] = Some(""), publish: Boolean, create_by: Long=0)
 
 
-case class WidgetInfo(id: Long, widget_id: Long, flatTableId: Long, position_x: Int, position_y: Int, width: Int, length: Int, trigger_type: String, trigger_params: String, aesStr: String = "", create_by: Long)
+case class WidgetLayout(id: Long, widget_id: Long, flatTableId: Long, position_x: Int, position_y: Int, width: Int, length: Int, trigger_type: String, trigger_params: String, aesStr: String = "", create_by: Long)
 
-case class PostWidgetInfoSeq(payload: Seq[PostWidgetInfo])
+case class PostWidgetSeq(payload: Seq[PostWidget])
 
-case class PutWidgetInfoSeq(payload: Seq[PutWidgetInfo])
+case class PutWidgetSeq(payload: Seq[PutWidget])
 
-case class SqlInfo(sqls: Array[String])
+case class SQL(sqls: Array[String])
 
 
 class WidgetTable(tag: Tag) extends BaseTable[Widget](tag, "widget") {

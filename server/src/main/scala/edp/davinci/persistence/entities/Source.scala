@@ -40,24 +40,24 @@ case class Source(id: Long,
                   update_by: Long) extends BaseEntity
 
 
-case class PostSourceInfo(name: String,
-                          connection_url: String,
-                          desc: String,
-                          `type`: String,
-                          config: String) extends SimpleBaseEntity
+case class Source4Post(name: String,
+                       connection_url: String,
+                       desc: String,
+                       `type`: String,
+                       config: String) extends SimpleBaseEntity
 
-case class PutSourceInfo(id: Long,
-                         name: String,
-                         connection_url: String,
-                         desc: String,
-                         `type`: String,
-                         config: String)
+case class Source4Put(id: Long,
+                      name: String,
+                      connection_url: String,
+                      desc: String,
+                      `type`: String,
+                      config: String)
 
 case class SourceConfig(url: String, user: String, password: String)
 
-case class PostSourceInfoSeq(payload: Seq[PostSourceInfo])
+case class Source4PostSeq(payload: Seq[Source4Post])
 
-case class PutSourceInfoSeq(payload: Seq[PutSourceInfo])
+case class Source4PutSeq(payload: Seq[Source4Put])
 
 class SourceTable(tag: Tag) extends BaseTable[Source](tag, "source") {
   //  def domain_id = column[Long]("domain_id")

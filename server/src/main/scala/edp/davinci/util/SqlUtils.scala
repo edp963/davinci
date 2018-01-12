@@ -285,9 +285,9 @@ trait SqlUtils extends Serializable {
     deleteSql
   }
 
-  def filterSQl(sqlString: String): String = {
-    val p = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/")
-    val result = p.matcher(sqlString).replaceAll("$1")
+  def filterAnnotation(sqlString: String): String = {
+    val pattern = Pattern.compile("(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/")
+    val result = pattern.matcher(sqlString).replaceAll("$1")
     logger.info(s"sql after filter>>>>>>>>>>>$result")
     result
   }

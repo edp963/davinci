@@ -32,6 +32,7 @@ case class Dashboard(id: Long,
                      pic: Option[String],
                      desc: String,
                      linkage_detail: Option[String],
+                     config:Option[String],
                      publish: Boolean,
                      active: Boolean,
                      create_time: String,
@@ -39,19 +40,20 @@ case class Dashboard(id: Long,
                      update_time: String,
                      update_by: Long) extends BaseEntity
 
-case class PostDashboardInfo(name: String,
-                             pic: String,
-                             desc: String,
-                             linkage_detail: String,
-                             publish: Boolean) extends SimpleBaseEntity
+case class PostDashboard(name: String,
+                         pic: String,
+                         desc: String,
+                         linkage_detail: String,
+                         config:Option[String]=Some(""),
+                         publish: Boolean) extends SimpleBaseEntity
 
-case class PutDashboardInfo(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), publish: Boolean, active: Boolean = true, create_by: Long = 0)
+case class PutDashboard(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), config:Option[String]=Some(""), publish: Boolean, active: Boolean = true, create_by: Long = 0)
 
-case class DashboardInfo(id: Long, name: String, pic: String, desc: String, linkage_detail: String, publish: Boolean, create_by: Long, widgets: Seq[WidgetInfo])
+case class DashboardContent(id: Long, name: String, pic: String, desc: String, linkage_detail: String, config:Option[String]=Some(""), publish: Boolean, create_by: Long, widgets: Seq[WidgetLayout])
 
-case class PostDashboardInfoSeq(payload: Seq[PostDashboardInfo])
+case class PostDashboardSeq(payload: Seq[PostDashboard])
 
-case class PutDashboardSeq(payload: Seq[PutDashboardInfo])
+case class PutDashboardSeq(payload: Seq[PutDashboard])
 
 
 
@@ -64,6 +66,8 @@ class DashboardTable(tag: Tag) extends BaseTable[Dashboard](tag, "dashboard") {
 
   def linkage_detail = column[Option[String]]("linkage_detail")
 
+  def config = column[Option[String]]("config")
+
   def publish = column[Boolean]("publish")
 
   def create_time = column[String]("create_time")
@@ -74,5 +78,5 @@ class DashboardTable(tag: Tag) extends BaseTable[Dashboard](tag, "dashboard") {
 
   def update_by = column[Long]("update_by")
 
-  def * = (id, name, pic, desc, linkage_detail, publish, active, create_time, create_by, update_time, update_by) <> (Dashboard.tupled, Dashboard.unapply)
+  def * = (id, name, pic, desc, linkage_detail,config, publish, active, create_time, create_by, update_time, update_by) <> (Dashboard.tupled, Dashboard.unapply)
 }

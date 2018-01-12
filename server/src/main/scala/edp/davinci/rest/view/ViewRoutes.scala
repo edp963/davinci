@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.view
 
 import java.sql.SQLException
@@ -35,7 +32,7 @@ import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProject
 import edp.davinci.rest._
 import edp.davinci.util.JsonProtocol._
 import edp.davinci.util.ResponseUtils._
-import edp.davinci.util.SqlUtils.filterSQl
+import edp.davinci.util.SqlUtils.filterAnnotation
 import edp.davinci.util.{AuthorizationProvider, DavinciConstants, JsonUtils}
 import io.swagger.annotations._
 import org.slf4j.LoggerFactory
@@ -50,7 +47,7 @@ import scala.util.{Failure, Success}
 @Path("/flattables")
 class ViewRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = postViewRoute ~ putViewRoute ~ getViewByAllRoute ~ deleteViewByIdRoute ~ getGroupsByViewIdRoute ~ getResultRoute ~ deleteRelGFById ~ sqlVerifyRoute
+  val routes: Route = postViewRoute ~ putViewRoute ~ getViewByAllRoute ~ deleteViewRoute ~ getGroupsByViewIdRoute ~ getResultRoute ~ deleteRelation ~ sqlVerifyRoute ~ markRoute
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val adHocTable = "table"
   private lazy val routeName = "flattables"
@@ -83,7 +80,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
 
   @ApiOperation(value = "Add new view to the system", notes = "", nickname = "", httpMethod = "POST")
-  @ApiImplicitParams(Array(new ApiImplicitParam(name = "views", value = "view objects to be added", required = true, dataType = "edp.davinci.persistence.entities.PostViewInfoSeq", paramType = "body")))
+  @ApiImplicitParams(Array(new ApiImplicitParam(name = "views", value = "view objects to be added", required = true, dataType = "edp.davinci.persistence.entities.View4PostSeq", paramType = "body")))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "post success"),
     new ApiResponse(code = 403, message = "user is not admin"),
@@ -93,25 +90,25 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def postViewRoute: Route = path(routeName) {
     post {
-      entity(as[PostViewInfoSeq]) { putViewSeq =>
+      entity(as[View4PostSeq]) { view4Post =>
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { session =>
-          val viewSeq = putViewSeq.payload
+          val view4PostSeq = view4Post.payload
           if (session.admin) {
             val uniqueTableName = adHocTable + java.util.UUID.randomUUID().toString
-            val bizEntitySeq: Seq[View] = viewSeq.map(v => View(0, v.source_id, v.name, v.sql_tmpl, uniqueTableName, Some(v.desc), v.trigger_type, v.frequency, v.`catch`, active = true, currentTime, session.userId, currentTime, session.userId))
+            val views: Seq[View] = view4PostSeq.map(v => View(0, v.source_id, v.name, v.sql_tmpl, v.update_sql, uniqueTableName, Some(v.desc), v.trigger_type, v.frequency, v.`catch`, active = true, currentTime, session.userId, currentTime, session.userId))
             val query = for {
-              bizSeq <- modules.viewDal.insert(bizEntitySeq)
+              insertViews <- modules.viewDal.insert(views)
               rel <- {
-                val relSeq = for {biz <- bizSeq
-                                  rel <- viewSeq.head.relBG
-                } yield RelGroupView(0, rel.group_id, biz.id, Some(rel.sql_params), active = true, currentTime, session.userId, currentTime, session.userId)
+                val relSeq = for {view <- insertViews
+                                  rel <- view4PostSeq.head.relBG
+                } yield RelGroupView(0, rel.group_id, view.id, Some(rel.sql_params), active = true, currentTime, session.userId, currentTime, session.userId)
                 modules.relGroupViewDal.insert(relSeq)
               }
-            } yield (bizSeq, rel)
+            } yield (insertViews, rel)
             onComplete(query) {
               case Success(tuple) =>
-                val queryBiz = tuple._1.map(v => QueryView(v.id, v.source_id, v.name, v.sql_tmpl, v.desc, v.trigger_type, v.frequency, v.`catch`, v.result_table, active = true, v.create_by))
-                complete(OK, ResponseSeqJson[QueryView](getHeader(200, session), queryBiz))
+                val queryView = tuple._1.map(v => QueryView(v.id, v.source_id, v.name, v.sql_tmpl, v.update_sql, v.desc, v.trigger_type, v.frequency, v.`catch`, v.result_table, active = true, v.create_by))
+                complete(OK, ResponseSeqJson[QueryView](getHeader(200, session), queryView))
               case Failure(ex) => logger.error("modules.relGroupViewDal.insert error", ex)
                 complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
             }
@@ -122,7 +119,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   }
 
   @ApiOperation(value = "update views in the system", notes = "", nickname = "", httpMethod = "PUT")
-  @ApiImplicitParams(Array(new ApiImplicitParam(name = "view", value = "view objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.PutViewInfoSeq", paramType = "body")))
+  @ApiImplicitParams(Array(new ApiImplicitParam(name = "view", value = "view objects to be updated", required = true, dataType = "edp.davinci.persistence.entities.View4PutSeq", paramType = "body")))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "put success"),
     new ApiResponse(code = 401, message = "authorization error"),
@@ -132,22 +129,23 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def putViewRoute: Route = path(routeName) {
     put {
-      entity(as[PutViewInfoSeq]) { putViewSeq =>
+      entity(as[View4PutSeq]) { view4Put =>
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { session =>
           if (session.admin) {
-            val viewSeq = putViewSeq.payload
-            val create_by = Await.result(modules.viewDal.findById(viewSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
-            if (create_by == session.userId)
-              onComplete(ViewService.updateFlatTbl(viewSeq, session)) {
-                case Success(_) => val relSeq = for {rel <- viewSeq.head.relBG
-                } yield RelGroupView(0, rel.group_id, viewSeq.head.id, Some(rel.sql_params), active = true, currentTime, session.userId, currentTime, session.userId)
-                  onComplete(modules.relGroupViewDal.insert(relSeq)) {
-                    case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
-                    case Failure(ex) => logger.error("modules.relGroupViewDal.insert error", ex)
-                      complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-                  }
-                case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-              } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not update view created by others", session), ""))
+            val view4PutSeq = view4Put.payload
+            val create_by = Await.result(modules.viewDal.findById(view4PutSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
+            if (create_by == session.userId) {
+              val relationSeq = view4PutSeq.head.relBG.map(r => RelGroupView(0, r.group_id, view4PutSeq.head.id, Some(r.sql_params), active = true, currentTime, session.userId, currentTime, session.userId))
+              val operation = for {
+                view <- ViewService.updateView(view4PutSeq, session)
+                relation <- modules.relGroupViewDal.insert(relationSeq)
+              } yield (view, relation)
+              onComplete(operation) {
+                case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
+                case Failure(ex) => logger.error("modules.relGroupViewDal.insert error", ex)
+                  complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              }
+            } else complete(BadRequest, ResponseJson[String](getHeader(400, "permission denied,con not update view created by others", session), ""))
           } else complete(BadRequest, ResponseJson[String](getHeader(400, session), ""))
         }
       }
@@ -163,7 +161,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteViewByIdRoute: Route = path(routeName / LongNumber) { viewId =>
+  def deleteViewRoute: Route = path(routeName / LongNumber) { viewId =>
     delete {
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
@@ -191,7 +189,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def deleteRelGFById: Route = path(routeName / "groups" / LongNumber) { relId =>
+  def deleteRelation: Route = path(routeName / "groups" / LongNumber) { relId =>
     delete {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
@@ -220,8 +218,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     get {
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
-          val future = ViewService.getGroups(viewId)
-          onComplete(future) {
+          onComplete(ViewService.getGroupViewRelation(viewId)) {
             case Success(relSeq) =>
               val putRelSeq = relSeq.map(r => PutRelGroupView(r._1, r._2, r._3))
               complete(OK, ResponseSeqJson[PutRelGroupView](getHeader(200, session), putRelSeq))
@@ -256,9 +253,30 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
           entity(as[ManualInfo]) { manualInfo =>
             parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? true, 'expired.as[Int] ? 300) {
               (offset, limit, sortBy, useCache, expired) =>
-                val sourceFuture: Future[Seq[(String, String, String, Option[Option[String]])]] = ViewService.getSourceInfo(viewId, session)
-                RouteHelper.getResultComplete(sourceFuture, DavinciConstants.appJson, manualInfo, PageInfo(limit, offset, sortBy), CacheInfo(useCache, expired))
+                RouteHelper.getResultComplete(session, viewId, Paginate(limit, offset, sortBy), CacheClass(useCache, expired), DavinciConstants.appJson, manualInfo)
             }
+          }
+      }
+    }
+  }
+
+
+  @Path("/{id}/mark")
+  @ApiOperation(value = "mark the view", notes = "", nickname = "", httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "id", value = "view id", required = true, dataType = "integer", paramType = "path"),
+    new ApiImplicitParam(name = "manualInfo", value = "manualInfo", required = false, dataType = "edp.davinci.rest.ManualInfo", paramType = "body")))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "ok"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def markRoute: Route = path(routeName / LongNumber / "mark") { viewId =>
+    post {
+      authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+        session =>
+          entity(as[ManualInfo]) { manualInfo =>
+            RouteHelper.doUpdate(session, viewId, manualInfo)
           }
       }
     }
@@ -276,36 +294,33 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def sqlVerifyRoute: Route = path(routeName / LongNumber) { sourceId =>
-    post {
-      entity(as[String]) { sqlTmp =>
-        authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-          _ =>
+  def sqlVerifyRoute: Route = path(routeName / LongNumber) {
+    sourceId =>
+      post {
+        entity(as[String]) { sqlTemplate =>
+          authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { _ =>
             val source = Await.result(modules.sourceDal.findById(sourceId), new FiniteDuration(30, SECONDS)).get
             try {
-              if (sqlTmp.trim != "") {
-                val trimSql = sqlTmp.trim
-                logger.info("the sqlTemp written by admin:\n" + trimSql)
-                val filterSql = filterSQl(trimSql)
-                val resetSqlBuffer: mutable.Buffer[String] = mergeAndRender(filterSql)
-                val pageInfo = PageInfo(10, -1, "")
+              if (sqlTemplate.trim != "") {
+                val filteredSql = filterAnnotation(sqlTemplate.trim)
+                val renderedSQLBuf: mutable.Buffer[String] = mergeAndRender(filteredSql)
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
-                val projectSql = getProjectSql(resetSqlBuffer.last, "SQLVERIFY", sourceConfig, pageInfo)
+                val projectSql = getProjectSql(renderedSQLBuf.last, "SQLVERIFY", sourceConfig, Paginate(10, -1, ""))
                 logger.info("the projectSql get from sql template:\n" + projectSql)
-                val resultList = executeDirect(resetSqlBuffer, projectSql, sourceConfig, pageInfo, CacheInfo(false, 0))
+                val resultList = executeDirect(renderedSQLBuf, projectSql, sourceConfig, CacheClass(useCache = false, 0))
                 contentTypeMatch(resultList, DavinciConstants.appJson)
               }
               else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), ""))
             } catch {
               case sqlEx: SQLException =>
                 logger.error("SQLException", sqlEx)
-                complete(BadRequest, ResponseJson[String](getHeader(400, sqlEx.getMessage, null), "sql synx exception"))
+                complete(BadRequest, ResponseJson[String](getHeader(400, sqlEx.getMessage, null), "sql语法错误"))
               case ex: Throwable =>
                 logger.error("error in get result complete ", ex)
-                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
+                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "获取数据异常"))
             }
+          }
         }
       }
-    }
   }
 }
