@@ -1,0 +1,81 @@
+{
+  "id": 15,
+  "name": "graph",
+  "title": "关系图",
+  "renderer": "echarts",
+  "params": [
+    {
+      "name": "data",
+      "title": "数据项配置",
+      "items":[
+        {
+          "name": "source",
+          "title": "SOURCE",
+          "component": "select"
+        },
+        {
+          "name": "target",
+          "title":"TARGET",
+          "component": "select"
+        },
+        {
+          "name": "metrics",
+          "title": "指标",
+          "component": "select"
+        },
+        {
+          "name": "category",
+          "title": "类型",
+          "component": "select"
+        }
+      ]
+    },
+    {
+      "name": "tools",
+      "title": "工具",
+      "items": [
+        {
+          "name": "tooltip",
+          "title": "Tooltip",
+          "component": "checkbox"
+        },
+        {
+          "name": "legend",
+          "title": "Legend",
+          "component": "checkbox"
+        },
+        {
+          "name": "toolbox",
+          "title": "Toolbox",
+          "component": "checkbox"
+        }
+      ]
+    },
+    {
+      "name": "position",
+      "title": "边距",
+      "items": [
+        {
+          "name": "top",
+          "title": "Top",
+          "component": "inputnumber"
+        },
+        {
+          "name": "bottom",
+          "title": "Bottom",
+          "component": "inputnumber"
+        },
+        {
+          "name": "left",
+          "title": "Left",
+          "component": "inputnumber"
+        },
+        {
+          "name": "right",
+          "title": "Right",
+          "component": "inputnumber"
+        }
+      ]
+    }
+  ]
+}

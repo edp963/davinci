@@ -30,6 +30,7 @@ import wordCloud from '../charts/wordCloud'
 import map from '../charts/map'
 import doubleYAxis from '../charts/doubleYAxis'
 import boxplot from '../charts/boxplot'
+import graph from '../charts/graph'
 
 export const iconMapping = {
   line: 'icon-chart-line',
@@ -45,7 +46,8 @@ export const iconMapping = {
   text: 'icon-text',
   map: 'icon-china',
   doubleYAxis: 'icon-chart-bar',
-  boxplot: 'icon-508tongji_xiangxiantu'
+  boxplot: 'icon-508tongji_xiangxiantu',
+  graph: 'icon-510tongji_guanxitu'
 }
 
 export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }) {
@@ -85,6 +87,8 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       return doubleYAxis(dataSource, flatInfo, chartParams, interactIndex)
     case 'boxplot':
       return boxplot(dataSource, flatInfo, chartParams, interactIndex)
+    case 'graph':
+      return graph(dataSource, flatInfo, chartParams, interactIndex)
     default:
       return {}
   }
