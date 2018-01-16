@@ -63,7 +63,7 @@ function groupReducer (state = initialState, { type, payload }) {
     case EDIT_GROUP:
       return state
     case EDIT_GROUP_SUCCESS:
-      groups.splice(groups.indexOf(groups.find(g => g.id === payload.result.id)), 1, payload.result)
+      groups.splice(groups.findIndex(g => g.id === payload.result.id), 1, payload.result)
       return state.set('groups', groups.slice())
     default:
       return state

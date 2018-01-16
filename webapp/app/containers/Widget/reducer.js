@@ -73,7 +73,7 @@ function widgetReducer (state = initialState, { type, payload }) {
     case EDIT_WIDGET:
       return state
     case EDIT_WIDGET_SUCCESS:
-      widgets.splice(widgets.indexOf(widgets.find(g => g.id === payload.result.id)), 1, payload.result)
+      widgets.splice(widgets.findIndex(g => g.id === payload.result.id), 1, payload.result)
       return state.set('widgets', widgets.slice())
     case LOAD_BIZDATAS:
       return state.set('bizdatasLoading', true)

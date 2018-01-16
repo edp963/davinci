@@ -105,11 +105,15 @@ export function* getResultset ({ payload }) {
 
     let data = {}
     if (sql) {  // FIXME sql 是否需要判断
-      const { adHoc, filters, linkageFilters, params, linkageParams } = sql
+      const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams } = sql
       data = {
         adHoc,
-        manualFilters: filters && linkageFilters ? `${filters} and ${linkageFilters}` : filters || linkageFilters || '',
-        params: params && linkageParams ? [].concat(params).concat(linkageParams) : []
+        manualFilters: [filters, linkageFilters, globalFilters]
+          .filter(f => !!f)
+          .join(' and '),
+        params: params && linkageParams
+          ? [].concat(params).concat(linkageParams)
+          : params || linkageParams || []
       }
     }
 

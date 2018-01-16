@@ -107,7 +107,12 @@
   min-height: 0;  /* firefox flex overflow issue */
 }
 
-/* 去掉默认动画效果 */
+/* 解决 RangePicker 与其他form元素不对齐 */
+.ant-form-item-control {
+  line-height: 1.5;
+}
+
+  /* 去掉默认动画效果 */
 .fade-enter,
 .fade-appear,
 .fade-leave,

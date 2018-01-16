@@ -25,7 +25,10 @@ export class LinkagePanel extends PureComponent {
 
   componentDidMount () {
     const { tableSource, onGetWidgetInfo } = this.props
-    this.renderChart(tableSource, onGetWidgetInfo)
+
+    if (tableSource.length) {
+      this.renderChart(tableSource, onGetWidgetInfo)
+    }
   }
 
   componentDidUpdate (prevProps) {
@@ -139,7 +142,7 @@ export class LinkagePanel extends PureComponent {
       cascaderSource,
       tableSource,
       onAddToTable,
-      onDelelteFromTable
+      onDeleteFromTable
     } = this.props
 
     const { formVisible } = this.state
@@ -202,7 +205,7 @@ export class LinkagePanel extends PureComponent {
                 className: `${utilStyles.textAlignCenter}`,
                 render: (val, record) => (
                   <span>
-                    <a onClick={onDelelteFromTable(record.key)}>删除</a>
+                    <a onClick={onDeleteFromTable(record.key)}>删除</a>
                   </span>
                 )
               }
@@ -242,7 +245,7 @@ LinkagePanel.propTypes = {
   cascaderSource: PropTypes.array,
   tableSource: PropTypes.array,
   onAddToTable: PropTypes.func,
-  onDelelteFromTable: PropTypes.func,
+  onDeleteFromTable: PropTypes.func,
   onGetWidgetInfo: PropTypes.func
 }
 

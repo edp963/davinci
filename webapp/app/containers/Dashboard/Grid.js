@@ -24,6 +24,8 @@ import PropTypes from 'prop-types'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import classnames from 'classnames'
+import moment from 'moment'
 import { Link } from 'react-router'
 import * as echarts from 'echarts/lib/echarts'
 
@@ -34,6 +36,8 @@ import DashboardItem from './components/DashboardItem'
 import DashboardItemFilters from './components/DashboardItemFilters'
 import SharePanel from '../../components/SharePanel'
 import DashboardLinkagePanel from './components/linkage/LinkagePanel'
+import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfigPanel'
+import GlobalFilters from './components/globalFilter/GlobalFilters'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -133,10 +137,13 @@ export class Grid extends Component {
       filtersKeys: null,
       filtersTypes: null,
 
-      linkageFormVisible: false,
+      linkagePanelVisible: false,
       linkageTableSource: false,
       linkageCascaderSource: false,
       interactiveItems: {},
+
+      globalFilterConfigPanelVisible: false,
+      globalFilterTableSource: false,
 
       resetSharePanel: false,
 
@@ -179,9 +186,18 @@ export class Grid extends Component {
 
     if (params.dashboardId !== this.props.params.dashboardId) {
       this.state.nextMenuTitle = ''
+      this.state.modifiedPositions = false
+      this.state.linkageCascaderSource = false
     }
 
     if (!currentDashboardLoading) {
+      // dashboard detail 首次加载完毕
+      if (this.props.currentDashboardLoading) {
+        // FIXME
+        this.state.linkageTableSource = JSON.parse(currentDashboard.linkage_detail || '[]')
+        this.state.globalFilterTableSource = JSON.parse(currentDashboard.config).globalFilters || []
+      }
+
       if (currentItems && currentItems !== this.props.currentItems) {
         const localPositions = initializePosition(loginUser, currentDashboard, currentItems)
         if (!modifiedPositions) {
@@ -199,9 +215,6 @@ export class Grid extends Component {
       }
 
       if (params.dashboardId !== this.props.params.dashboardId) {
-        this.state.modifiedPositions = false
-        this.state.linkageCascaderSource = false
-        this.state.linkageTableSource = false
         onLoadDashboardDetail(params.dashboardId)
       }
 
@@ -241,14 +254,13 @@ export class Grid extends Component {
           }
         }
       }
-      // FIXME
-      this.state.linkageTableSource = JSON.parse(currentDashboard.linkage_detail || '[]')
     }
   }
 
   componentDidMount () {
     this.setState({ mounted: true })
   }
+
   componentWillUnmount () {
     Object.keys(this.charts).forEach(k => {
       this.charts[k].dispose()
@@ -300,6 +312,7 @@ export class Grid extends Component {
 
     let filters
     let linkageFilters
+    let globalFilters
     let params
     let linkageParams
     let pagination
@@ -307,12 +320,14 @@ export class Grid extends Component {
     if (queryParams) {
       filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
+      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
       filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
+      globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       pagination = cachedQueryParams.pagination
@@ -325,6 +340,7 @@ export class Grid extends Component {
         adHoc: widget.adhoc_sql,
         filters,
         linkageFilters,
+        globalFilters,
         params,
         linkageParams
       },
@@ -657,19 +673,19 @@ export class Grid extends Component {
     })
   }
 
-  showLinkageForm = () => {
+  showLinkagePanel = () => {
     this.setState({
-      linkageFormVisible: true
+      linkagePanelVisible: true
     })
   }
 
-  hideLinkageForm = () => {
+  hideLinkagePanel = () => {
     this.setState({
-      linkageFormVisible: false
+      linkagePanelVisible: false
     })
   }
 
-  afterLinkageFormClose = () => {
+  afterLinkagePanelClose = () => {
     this.setState({
       linkageTableSource: JSON.parse(this.props.currentDashboard.linkage_detail || '[]')
     })
@@ -686,12 +702,14 @@ export class Grid extends Component {
   saveLinkageConditions = () => {
     // todo
     const {
+      currentDashboard,
       currentItems,
       widgets,
-      currentDatasources
+      currentDatasources,
+      onEditCurrentDashboard
     } = this.props
 
-    const { interactiveItems } = this.state
+    const { interactiveItems, linkageTableSource } = this.state
 
     Object.keys(interactiveItems).forEach(itemId => {
       if (interactiveItems[itemId].isInteractive) {
@@ -726,14 +744,14 @@ export class Grid extends Component {
         this.registerChartInteractListener(triggerIntance, ci.id)
       }
     })
-    this.props.onEditCurrentDashboard(
-      Object.assign({}, this.props.currentDashboard, {
-        linkage_detail: JSON.stringify(this.state.linkageTableSource),
+    onEditCurrentDashboard(
+      Object.assign({}, currentDashboard, {
+        linkage_detail: JSON.stringify(linkageTableSource),
         // FIXME
         active: true
       }),
       () => {
-        this.hideLinkageForm()
+        this.hideLinkagePanel()
       }
     )
   }
@@ -955,6 +973,112 @@ export class Grid extends Component {
     })
   }
 
+  showGlobalFilterConfigPanel = () => {
+    this.setState({
+      globalFilterConfigPanelVisible: true
+    })
+  }
+
+  hideGlobalFilterConfigPanel = () => {
+    this.setState({
+      globalFilterConfigPanelVisible: false
+    })
+  }
+
+  afterGlobalFilterConfigPanelClose = () => {
+    this.setState({
+      globalFilterTableSource: JSON.parse(this.props.currentDashboard.config).globalFilters || []
+    })
+  }
+
+  saveToGlobalFilterTable = (formValues) => {
+    let { globalFilterTableSource } = this.state
+
+    if (formValues.key) {
+      globalFilterTableSource.splice(globalFilterTableSource.findIndex(gfts => gfts.key === formValues.key), 1, formValues)
+    } else {
+      globalFilterTableSource.push(Object.assign({}, formValues, {
+        key: uuid(8, 16)
+      }))
+    }
+
+    this.setState({
+      globalFilterTableSource: globalFilterTableSource.slice()
+    })
+  }
+
+  deleteFromGlobalFilterTable = (key) => () => {
+    this.setState({
+      globalFilterTableSource: this.state.globalFilterTableSource.filter(gfts => gfts.key !== key)
+    })
+  }
+
+  saveGlobalFilters = () => {
+    const {
+      currentDashboard,
+      onEditCurrentDashboard
+    } = this.props
+
+    onEditCurrentDashboard(
+      Object.assign({}, currentDashboard, {
+        config: JSON.stringify(Object.assign({}, JSON.parse(currentDashboard.config), {
+          globalFilters: this.state.globalFilterTableSource
+        })),
+        // FIXME
+        active: true
+      }),
+      () => {
+        this.hideGlobalFilterConfigPanel()
+      }
+    )
+  }
+
+  globalFilterChange = (filter) => (e) => {
+    const { currentItems } = this.props
+    const { type, items } = filter
+
+    Object.keys(items).forEach(itemId => {
+      const columnAndType = items[itemId].split(DEFAULT_SPLITER)
+      const item = currentItems.find(ci => ci.id === Number(itemId))
+
+      let globalFilters = ''
+
+      switch (type) {
+        case 'select':
+          globalFilters = e ? `${columnAndType[0]} = ${e}` : ''
+          break
+        case 'multiSelect':
+          globalFilters = e.length ? e.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
+          break
+        case 'date':
+          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          break
+        case 'datetime':
+          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          break
+        case 'multiDate':
+          globalFilters = e ? e.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
+          break
+        case 'dateRange':
+          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          break
+        case 'datetimeRange':
+          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          break
+        default:
+          const inputValue = e.target.value.trim()
+          globalFilters = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
+          break
+      }
+
+      this.getChartData('rerender', itemId, item.widget_id, { globalFilters })
+    })
+
+    function getValidValue (val, type) {
+      return SQL_NUMBER_TYPES.indexOf(type) >= 0 ? val : `'${val}'`
+    }
+  }
+
   visibleFullScreen = (currentChartData) => {
     const {allowFullScreen} = this.state
     if (currentChartData) {
@@ -1042,9 +1166,11 @@ export class Grid extends Component {
       filtersDashboardItem,
       filtersKeys,
       filtersTypes,
-      linkageFormVisible,
+      linkagePanelVisible,
       linkageCascaderSource,
       linkageTableSource,
+      globalFilterConfigPanelVisible,
+      globalFilterTableSource,
       interactiveItems,
       allowFullScreen
     } = this.state
@@ -1200,7 +1326,7 @@ export class Grid extends Component {
       <Button
         key="cancel"
         size="large"
-        onClick={this.hideLinkageForm}>
+        onClick={this.hideLinkagePanel}>
         取 消
       </Button>,
       <Button
@@ -1214,10 +1340,29 @@ export class Grid extends Component {
       </Button>
     ]
 
+    const globalFilterConfigModalButtons = [
+      <Button
+        key="cancel"
+        size="large"
+        onClick={this.hideGlobalFilterConfigPanel}>
+        取 消
+      </Button>,
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={currentDashboardLoading}
+        disabled={currentDashboardLoading}
+        onClick={this.saveGlobalFilters}>
+        保 存
+      </Button>
+    ]
+
     let savePosButton = ''
     let addButton = ''
     let shareButton = ''
-    let settingButton = ''
+    let linkageButton = ''
+    let globalFilterButton = ''
 
     if (editPositionSign) {
       savePosButton = (
@@ -1274,20 +1419,41 @@ export class Grid extends Component {
         )
         : ''
 
-      settingButton = currentDashboard
+      linkageButton = currentDashboard
         ? (
           <Tooltip placement="bottom" title="联动关系配置">
             <Button
               size="large"
               type="primary"
-              icon="setting"
+              icon="link"
               style={{marginLeft: '8px'}}
-              onClick={this.showLinkageForm}
+              onClick={this.showLinkagePanel}
+            />
+          </Tooltip>
+        )
+        : ''
+
+      globalFilterButton = currentDashboard
+        ? (
+          <Tooltip placement="bottomRight" title="全局筛选器配置">
+            <Button
+              size="large"
+              type="primary"
+              icon="filter"
+              style={{marginLeft: '8px'}}
+              onClick={this.showGlobalFilterConfigPanel}
             />
           </Tooltip>
         )
         : ''
     }
+
+    const globalFilterValues = currentDashboard
+      ? JSON.parse(currentDashboard.config).globalFilters || []
+      : []
+    const globalFilterContainerClass = classnames({
+      [utilStyles.hide]: !globalFilterValues.length
+    })
 
     return (
       <Container>
@@ -1335,7 +1501,17 @@ export class Grid extends Component {
               {savePosButton}
               {addButton}
               {shareButton}
-              {settingButton}
+              {linkageButton}
+              {globalFilterButton}
+            </Col>
+          </Row>
+          <Row className={globalFilterContainerClass}>
+            <Col span={24}>
+              <GlobalFilters
+                filters={globalFilterValues}
+                onChange={this.globalFilterChange}
+                ref={f => { this.globalFilters = f }}
+              />
             </Col>
           </Row>
         </Container.Title>
@@ -1398,17 +1574,33 @@ export class Grid extends Component {
         <Modal
           title="联动关系配置"
           wrapClassName="ant-modal-large"
-          visible={linkageFormVisible}
-          onCancel={this.hideLinkageForm}
+          visible={linkagePanelVisible}
+          onCancel={this.hideLinkagePanel}
           footer={linkageModalButtons}
-          afterClose={this.afterLinkageFormClose}
+          afterClose={this.afterLinkagePanelClose}
         >
           <DashboardLinkagePanel
             cascaderSource={linkageCascaderSource || []}
             tableSource={linkageTableSource || []}
             onAddToTable={this.addToLinkageTable}
-            onDelelteFromTable={this.deleteLinkageCondition}
+            onDeleteFromTable={this.deleteLinkageCondition}
             onGetWidgetInfo={this.getWidgetInfo}
+          />
+        </Modal>
+        <Modal
+          title="全局筛选配置"
+          visible={globalFilterConfigPanelVisible}
+          onCancel={this.hideGlobalFilterConfigPanel}
+          footer={globalFilterConfigModalButtons}
+          afterClose={this.afterGlobalFilterConfigPanelClose}
+        >
+          <GlobalFilterConfigPanel
+            items={currentItems || []}
+            widgets={widgets || []}
+            dataSources={currentDatasources || {}}
+            tableSource={globalFilterTableSource || []}
+            onSaveToTable={this.saveToGlobalFilterTable}
+            onDeleteFromTable={this.deleteFromGlobalFilterTable}
           />
         </Modal>
         <FullScreenPanel

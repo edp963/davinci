@@ -33,6 +33,7 @@ import {
 
 const initialState = fromJS({
   title: '',
+  config: '{}',
   widgets: false,
   items: false,
   dataSources: false,
@@ -52,6 +53,7 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       return state
         .set('title', payload.dashboard.name)
+        .set('config', payload.dashboard.config)
         .set('items', payload.dashboard.widgets)
         .set('dataSources', {})
         .set('loadings', payload.dashboard.widgets.reduce((obj, w) => {
@@ -62,6 +64,7 @@ function shareReducer (state = initialState, { type, payload }) {
           obj[w.id] = {
             filters: '',
             linkageFilters: '',
+            globalFilters: '',
             params: [],
             linkageParams: [],
             pagination: {}
@@ -91,6 +94,7 @@ function shareReducer (state = initialState, { type, payload }) {
           1: {
             filters: '',
             linkageFilters: '',
+            globalFilters: '',
             params: [],
             linkageParams: [],
             pagination: {}
@@ -107,6 +111,7 @@ function shareReducer (state = initialState, { type, payload }) {
       itemQueryParams[payload.itemId] = {
         filters: payload.sql.filters,
         linkageFilters: payload.sql.linkageFilters,
+        globalFilters: payload.sql.globalFilters,
         params: payload.sql.params,
         linkageParams: payload.sql.linkageParams,
         pagination: {

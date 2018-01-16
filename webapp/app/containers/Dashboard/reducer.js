@@ -94,7 +94,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
       }
 
     case EDIT_DASHBOARD_SUCCESS:
-      dashboards.splice(dashboards.indexOf(dashboards.find(d => d.id === payload.result.id)), 1, payload.result)
+      dashboards.splice(dashboards.findIndex(d => d.id === payload.result.id), 1, payload.result)
       return state.set('dashboards', dashboards.slice())
 
     case EDIT_CURRENT_DASHBOARD:
@@ -126,6 +126,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
           obj[w.id] = {
             filters: '',
             linkageFilters: '',
+            globalFilters: '',
             params: [],
             linkageParams: [],
             pagination: {}
@@ -163,6 +164,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
           [payload.result.id]: {
             filters: '',
             linkageFilters: '',
+            globalFilters: '',
             params: [],
             linkageParams: [],
             pagination: {}
@@ -213,6 +215,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
           [payload.itemId]: {
             filters: payload.sql.filters,
             linkageFilters: payload.sql.linkageFilters,
+            globalFilters: payload.sql.globalFilters,
             params: payload.sql.params,
             linkageParams: payload.sql.linkageParams,
             pagination: {
