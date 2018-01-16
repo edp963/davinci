@@ -26,6 +26,10 @@ const makeSelectTitle = () => createSelector(
   selectShare,
   (shareState) => shareState.get('title')
 )
+const makeSelectConfig = () => createSelector(
+  selectShare,
+  (shareState) => shareState.get('config')
+)
 const makeSelectWidgets = () => createSelector(
   selectShare,
   (shareState) => shareState.get('widgets')
@@ -54,6 +58,7 @@ const makeSelectItemDownloadCsvLoadings = () => createSelector(
 export {
   selectShare,
   makeSelectTitle,
+  makeSelectConfig,
   makeSelectWidgets,
   makeSelectItems,
   makeSelectDataSources,

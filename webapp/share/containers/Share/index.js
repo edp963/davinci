@@ -23,10 +23,13 @@ import PropTypes from 'prop-types'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
+import classnames from 'classnames'
+import moment from 'moment'
 import * as echarts from 'echarts/lib/echarts'
 
 import Container from '../../../app/components/Container'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
+import GlobalFilters from '../../../app/containers/Dashboard/components/globalFilter/GlobalFilters'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import DashboardItemFilters from '../../../app/containers/Dashboard/components/DashboardItemFilters'
 import { Responsive, WidthProvider } from 'react-grid-layout'
@@ -35,7 +38,7 @@ import Col from 'antd/lib/col'
 import Modal from 'antd/lib/modal'
 
 import { getDashboard, getWidget, getResultset, setIndividualDashboard, loadWidgetCsv } from './actions'
-import { makeSelectTitle, makeSelectWidgets, makeSelectItems, makeSelectDataSources, makeSelectLoadings, makeSelectItemQueryParams, makeSelectItemDownloadCsvLoadings } from './selectors'
+import { makeSelectTitle, makeSelectConfig, makeSelectWidgets, makeSelectItems, makeSelectDataSources, makeSelectLoadings, makeSelectItemQueryParams, makeSelectItemDownloadCsvLoadings } from './selectors'
 import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
 import { changePosition } from '../../../app/containers/Dashboard/components/localPositionUtil'
 import {
@@ -44,6 +47,7 @@ import {
 } from '../../../app/globalConstants'
 
 import styles from '../../../app/containers/Dashboard/Dashboard.less'
+import utilStyles from '../../../app/assets/less/util.less'
 
 import widgetlibs from '../../../app/assets/json/widgetlib'
 import Login from '../../components/Login/index'
@@ -69,6 +73,7 @@ export class Share extends React.Component {
       currentDataInFullScreen: {},
       showLogin: false,
       linkageTableSource: false,
+      globalFilterTableSource: false,
       interactiveItems: {}
     }
     this.charts = {}
@@ -97,6 +102,7 @@ export class Share extends React.Component {
         })
         // FIXME
         this.state.linkageTableSource = JSON.parse(dashboard.linkage_detail || '[]')
+        this.state.globalFilterTableSource = JSON.parse(dashboard.config).globalFilters || []
       }, (err) => {
         console.log(err)
         this.setState({
@@ -107,6 +113,7 @@ export class Share extends React.Component {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
         this.state.linkageTableSource = []
+        this.state.globalFilterTableSource = []
       }, (err) => {
         console.log(err)
         this.setState({
@@ -174,7 +181,7 @@ export class Share extends React.Component {
       onLoadResultset
     } = this.props
 
-    const dashboardItem = currentItems.find(c => c.id === itemId)
+    const dashboardItem = currentItems.find(c => c.id === Number(itemId))
     const widget = widgets.find(w => w.id === widgetId)
     const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
     const chartInstanceId = `widget_${itemId}`
@@ -213,6 +220,7 @@ export class Share extends React.Component {
 
     let filters
     let linkageFilters
+    let globalFilters
     let params
     let linkageParams
     let pagination
@@ -220,12 +228,14 @@ export class Share extends React.Component {
     if (queryParams) {
       filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
+      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params ? queryParams.params : cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       pagination = queryParams.pagination ? queryParams.pagination : cachedQueryParams.pagination
     } else {
       filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
+      globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       pagination = cachedQueryParams.pagination
@@ -238,6 +248,7 @@ export class Share extends React.Component {
         adHoc: widget.adhoc_sql,
         filters,
         linkageFilters,
+        globalFilters,
         params,
         linkageParams
       },
@@ -588,9 +599,56 @@ export class Share extends React.Component {
     })
   }
 
+  globalFilterChange = (filter) => (e) => {
+    const { currentItems } = this.props
+    const { type, items } = filter
+
+    Object.keys(items).forEach(itemId => {
+      const columnAndType = items[itemId].split(DEFAULT_SPLITER)
+      const item = currentItems.find(ci => ci.id === Number(itemId))
+
+      let globalFilters = ''
+
+      switch (type) {
+        case 'select':
+          globalFilters = e ? `${columnAndType[0]} = ${e}` : ''
+          break
+        case 'multiSelect':
+          globalFilters = e.length ? e.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
+          break
+        case 'date':
+          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          break
+        case 'datetime':
+          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          break
+        case 'multiDate':
+          globalFilters = e ? e.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
+          break
+        case 'dateRange':
+          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          break
+        case 'datetimeRange':
+          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          break
+        default:
+          const inputValue = e.target.value.trim()
+          globalFilters = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
+          break
+      }
+
+      this.getChartData('rerender', itemId, item.widget_id, { globalFilters })
+    })
+
+    function getValidValue (val, type) {
+      return SQL_NUMBER_TYPES.indexOf(type) >= 0 ? val : `'${val}'`
+    }
+  }
+
   render () {
     const {
       title,
+      config,
       currentItems,
       dataSources,
       loadings,
@@ -711,7 +769,14 @@ export class Share extends React.Component {
 
       fullScreenComponent = ''
     }
+
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
+
+    const globalFilterValues = JSON.parse(config).globalFilters || []
+    const globalFilterContainerClass = classnames({
+      [utilStyles.hide]: !globalFilterValues.length
+    })
+
     return (
       <Container>
         <Helmet title={title} />
@@ -719,6 +784,15 @@ export class Share extends React.Component {
           <Row>
             <Col span={24}>
               <h2 className={styles.shareTitle}>{title}</h2>
+            </Col>
+          </Row>
+          <Row className={globalFilterContainerClass}>
+            <Col span={24}>
+              <GlobalFilters
+                filters={globalFilterValues}
+                onChange={this.globalFilterChange}
+                ref={f => { this.globalFilters = f }}
+              />
             </Col>
           </Row>
         </Container.Title>
@@ -749,6 +823,7 @@ export class Share extends React.Component {
 
 Share.propTypes = {
   title: PropTypes.string,
+  config: PropTypes.string,
   currentItems: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.array
@@ -782,6 +857,7 @@ Share.propTypes = {
 
 const mapStateToProps = createStructuredSelector({
   title: makeSelectTitle(),
+  config: makeSelectConfig(),
   widgets: makeSelectWidgets(),
   currentItems: makeSelectItems(),
   dataSources: makeSelectDataSources(),

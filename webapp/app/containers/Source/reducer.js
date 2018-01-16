@@ -88,7 +88,7 @@ function sourceReducer (state = initialState, { type, payload }) {
     case EDIT_SOURCE:
       return state.set('formLoading', true)
     case EDIT_SOURCE_SUCCESS:
-      sources.splice(sources.indexOf(sources.find(g => g.id === payload.result.id)), 1, payload.result)
+      sources.splice(sources.findIndex(g => g.id === payload.result.id), 1, payload.result)
       return state
         .set('formLoading', false)
         .set('sources', sources.slice())

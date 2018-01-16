@@ -63,7 +63,7 @@ function userReducer (state = initialState, { type, payload }) {
     case EDIT_USER_INFO:
       return state
     case EDIT_USER_INFO_SUCCESS:
-      users.splice(users.indexOf(users.find(u => u.id === payload.result.id)), 1, payload.result)
+      users.splice(users.findIndex(u => u.id === payload.result.id), 1, payload.result)
       return state.set('users', users.slice())
     default:
       return state
