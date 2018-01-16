@@ -31,6 +31,7 @@ import text from './text.json'
 import map from './map.json'
 import doubleYAxis from './doubleYAxis.json'
 import boxplot from './boxplot.json'
+import graph from './graph.json'
 
 export default [
   area,
@@ -45,5 +46,6 @@ export default [
   text,
   map,
   doubleYAxis,
-  boxplot
+  boxplot,
+  graph
 ]
