@@ -202,20 +202,24 @@ export class TableChart extends PureComponent {
     let targetName = target.tagName
     let targetClassName = target.classList[0]
     let re = /select/g
+
     if (targetName === 'DIV' && re.test(targetClassName)) {
       event.stopPropagation()
       return
     }
+
     const { id, onCheckInteract, onDoInteract } = this.props
-    const { data } = this.state
+    const { data, pagination } = this.state
+    const { current, pageSize } = pagination
+    const realIndex = (current - 1) * pageSize + index
 
     if (onCheckInteract && onDoInteract) {
       const linkagers = onCheckInteract(Number(id))
 
       if (Object.keys(linkagers).length) {
         data.dataSource.forEach((ds, dsIndex) => {
-          if (dsIndex === index) {
-            onDoInteract(Number(id), linkagers, index)
+          if (dsIndex === realIndex) {
+            onDoInteract(Number(id), linkagers, realIndex)
           }
         })
 
@@ -226,8 +230,11 @@ export class TableChart extends PureComponent {
     }
   }
 
-  rowClassFilter = (record, index) =>
-    this.props.interactIndex === index ? styles.selectedRow : ''
+  rowClassFilter = (record, index) => {
+    const { current, pageSize } = this.state.pagination
+    const realIndex = (current - 1) * pageSize + index
+    return this.props.interactIndex === realIndex ? styles.selectedRow : ''
+  }
 
   markOptions = (value, record, updateVar) => {
     const {onUpdateMark, currentBizlogicId} = this.props
