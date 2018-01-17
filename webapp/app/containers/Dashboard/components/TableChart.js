@@ -209,17 +209,15 @@ export class TableChart extends PureComponent {
     }
 
     const { id, onCheckInteract, onDoInteract } = this.props
-    const { data, pagination } = this.state
-    const { current, pageSize } = pagination
-    const realIndex = (current - 1) * pageSize + index
+    const { data } = this.state
 
     if (onCheckInteract && onDoInteract) {
       const linkagers = onCheckInteract(Number(id))
 
       if (Object.keys(linkagers).length) {
-        data.dataSource.forEach((ds, dsIndex) => {
-          if (dsIndex === realIndex) {
-            onDoInteract(Number(id), linkagers, realIndex)
+        data.dataSource.forEach(ds => {
+          if (ds.antDesignTableId === record.antDesignTableId) {
+            onDoInteract(Number(id), linkagers, record.antDesignTableId)
           }
         })
 
@@ -230,11 +228,8 @@ export class TableChart extends PureComponent {
     }
   }
 
-  rowClassFilter = (record, index) => {
-    const { current, pageSize } = this.state.pagination
-    const realIndex = (current - 1) * pageSize + index
-    return this.props.interactIndex === realIndex ? styles.selectedRow : ''
-  }
+  rowClassFilter = (record, index) =>
+    this.props.interactId === record.antDesignTableId ? styles.selectedRow : ''
 
   markOptions = (value, record, updateVar) => {
     const {onUpdateMark, currentBizlogicId} = this.props
@@ -456,7 +451,7 @@ TableChart.propTypes = {
   sortable: PropTypes.bool,
   width: PropTypes.number,
   height: PropTypes.number,
-  interactIndex: PropTypes.number,
+  interactId: PropTypes.string,
   onCheckInteract: PropTypes.func,
   onDoInteract: PropTypes.func,
   onUpdateMark: PropTypes.func,
