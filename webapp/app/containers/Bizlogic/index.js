@@ -77,7 +77,8 @@ export class Bizlogic extends React.PureComponent {
 
       groupParams: [],
       redrawKey: 100000,
-      isShowSqlValidateAlert: false
+      isShowSqlValidateAlert: false,
+      isShowUpdateSql: false
     }
     this.codeMirrorInstanceOfQuerySQL = false
     this.codeMirrorInstanceOfUpdateSQL = false
@@ -187,12 +188,13 @@ export class Bizlogic extends React.PureComponent {
       this.codeMirrorInstanceOfUpdateSQL = codeMirror.fromTextArea(updateWrapperDOM, {
         mode: 'text/x-sql',
         theme: '3024-day',
-        lineNumbers: true,
+       // lineNumbers: true,  fixme
         width: '100%',
         height: '100%',
         lineWrapping: true
       })
     }
+    this.codeMirrorInstanceOfUpdateSQL.setSize(null, '120px')
   }
 
   showGroupForm = () => {
@@ -352,6 +354,7 @@ export class Bizlogic extends React.PureComponent {
       this.codeMirrorInstanceOfUpdateSQL = false
       this.setState({
         isShowSqlValidateAlert: false,
+        isShowUpdateSql: false,
         modalLoading: false,
         formStep: 0,
         groupTableSelectedRowKeys: []
@@ -404,6 +407,12 @@ export class Bizlogic extends React.PureComponent {
       }).filter(record => !!record)
     })
   }
+  showUpdateSql = () => {
+    const {isShowUpdateSql} = this.state
+    this.setState({
+      isShowUpdateSql: !isShowUpdateSql
+    })
+  }
 
   render () {
     const {
@@ -418,7 +427,8 @@ export class Bizlogic extends React.PureComponent {
       formType,
       formStep,
       groupFormVisible,
-      groupParams
+      groupParams,
+      isShowUpdateSql
     } = this.state
 
     const {
@@ -511,6 +521,15 @@ export class Bizlogic extends React.PureComponent {
       ]
       : [
         <Button
+          key="add"
+          size="large"
+          type="default"
+          className={utilStyles.modalLeftButton}
+          onClick={this.showUpdateSql}
+        >
+          {isShowUpdateSql ? '隐藏' : '显示'} UPDATE
+        </Button>,
+        <Button
           key="validate"
           size="large"
           onClick={this.validateSql}
@@ -602,6 +621,7 @@ export class Bizlogic extends React.PureComponent {
                   onGroupParamChange={this.onGroupParamChange}
                   onCodeMirrorChange={this.handleCodeMirror}
                   isShowSqlValidateAlert={this.state.isShowSqlValidateAlert}
+                  isShowUpdateSql={isShowUpdateSql}
                   ref={(f) => { this.bizlogicForm = f }}
                 />
               </Modal>

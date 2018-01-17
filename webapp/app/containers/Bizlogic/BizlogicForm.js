@@ -65,6 +65,7 @@ export class BizlogicForm extends React.Component {
       onGroupParamChange,
       sqlValidateCode,
       sqlValidateMessage,
+      isShowUpdateSql,
       isShowSqlValidateAlert
     } = this.props
     const { getFieldDecorator } = form
@@ -198,7 +199,7 @@ export class BizlogicForm extends React.Component {
               )}
             </FormItem>
           </Col>
-          <Col span={24}>
+          <Col span={24} style={{display: isShowUpdateSql ? 'block' : 'none'}}>
             <FormItem label="UPDATE" {...commonFormItemStyle}>
               {getFieldDecorator('update_sql', {
                 initialValue: ''
@@ -260,6 +261,7 @@ BizlogicForm.propTypes = {
   sqlValidateCode: PropTypes.any,
   sqlValidateMessage: PropTypes.any,
   isShowSqlValidateAlert: PropTypes.bool,
+  isShowUpdateSql: PropTypes.bool,
   form: PropTypes.any,
   onCheckName: PropTypes.func
 }
