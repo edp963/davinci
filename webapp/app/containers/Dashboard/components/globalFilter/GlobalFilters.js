@@ -93,6 +93,7 @@ export class GlobalFilters extends PureComponent {
               onChange: onChange(f)
             }
           let dateProperties = Object.assign({
+            placeholder: f.name,
             className: styles.input
           }, dateFormat)
 
@@ -121,7 +122,10 @@ export class GlobalFilters extends PureComponent {
             >
               <FormItem className={styles.item}>
                 {getFieldDecorator(`${f.key}`, {})(
-                  <MultiDatePicker onChange={onChange(f)} />
+                  <MultiDatePicker
+                    placeholder={f.name}
+                    onChange={onChange(f)}
+                  />
                 )}
               </FormItem>
             </Col>
@@ -144,6 +148,7 @@ export class GlobalFilters extends PureComponent {
               onChange: onChange(f)
             }
           let rangeProperties = Object.assign({
+            placeholder: [`${f.name}从`, '到'],
             className: styles.input
           }, rangeFormat)
 

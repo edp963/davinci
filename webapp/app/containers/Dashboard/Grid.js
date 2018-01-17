@@ -1136,6 +1136,7 @@ export class Grid extends Component {
   render () {
     const {
       dashboards,
+      widgets,
       currentDashboard,
       currentDashboardLoading,
       currentDashboardShareInfo,
@@ -1177,8 +1178,6 @@ export class Grid extends Component {
       interactiveItems,
       allowFullScreen
     } = this.state
-
-    let {widgets} = this.props
 
     let navDropdown = (<span />)
     let grids = ''
@@ -1366,8 +1365,9 @@ export class Grid extends Component {
     let shareButton = ''
     let linkageButton = ''
     let globalFilterButton = ''
+    const isOwner = currentDashboard && loginUser.id === currentDashboard.create_by
 
-    if (editPositionSign) {
+    if (isOwner && editPositionSign) {
       savePosButton = (
         <Tooltip placement="bottom" title="保存位置修改">
           <Button
@@ -1379,7 +1379,7 @@ export class Grid extends Component {
       )
     }
 
-    if (loginUser.admin) {
+    if (isOwner && loginUser.admin) {
       addButton = (
         <Tooltip placement="bottom" title="新增">
           <Button
