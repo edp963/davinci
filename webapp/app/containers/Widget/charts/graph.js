@@ -24,8 +24,6 @@
 
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
-    title,
-    value,
     metrics,
     target,
     source,
@@ -35,9 +33,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     top,
     bottom,
     left,
-    right,
+    right
+  } = chartParams
+  let {
     category
   } = chartParams
+
+  if (!(category && category.length)) {
+    category = source
+  }
 
   let metricOptions,
     labelOptions,
@@ -59,17 +63,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // node value
   let nodeValue = []
 
-  if (category && category.length) {
-    let step1 = dataSource.map(data => data[category])
-    categories = step1.filter((st, index) => step1.indexOf(st) === index).concat(['其他'])
-    nodeValue = categories.map(cate => {
-      let ca = dataSource.filter(data => data[category] === cate)
-      return {
-        key: cate,
-        value: ca
-      }
-    })
-  }
+  let step1 = dataSource.map(data => data[category])
+  categories = step1.filter((st, index) => step1.indexOf(st) === index).concat(['其他'])
+  nodeValue = categories.map(cate => {
+    let ca = dataSource.filter(data => data[category] === cate)
+    return {
+      key: cate,
+      value: ca
+    }
+  })
 
   if (target && target.length && source && source.length && metrics && metrics.length) {
     links = dataSource.map(data => {
@@ -94,33 +96,38 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
   let nodeValueObj = nodeValue.reduce((sum, value) => Object.assign({}, sum, value), {})
-  let nodeKey = Object.keys(nodeValueObj)
-  let nodeArr = computSymbolSize(Object.values(nodeValueObj))
+  let nodeObjKey = Object.keys(nodeValueObj)
+  let nodeObjValue = Object.values(nodeValueObj)
+  let nodeObjValueComputed = computSymbolSize(Object.values(nodeValueObj))
 
   if (categories && categories.length && nodes && nodes.length) {
     nodes = nodes.map((node, index) => {
+      let symbolSize
+      let realValue
+      let i
       if (categories.find(cate => cate === node['category'])) {
+        i = nodeObjKey.indexOf(node['category'])
+        symbolSize = nodeObjValueComputed[i]
+        realValue = nodeObjValue[i]
         return {
           ...node,
           ...{
-          //  value: nodeValueObj[node['category']]
-          //  symbolSize: nodeValueObj[node['category']]
-          //  symbolSize: 50
+            symbolSize,
+            realValue
           }
         }
       } else {
         return {
           ...node,
           ...{
-            category: '其他'
-           // value: 0
-           // symbolSize: 5
+            category: '其他',
+            symbolSize: 1,
+            realValue: 0
           }
         }
       }
     })
   }
- // console.log(nodes)
   labelOptions = {
     label: {
       normal: {
@@ -178,7 +185,20 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // tooltip
   tooltipOptions = tooltip && tooltip.length
     ? {
-      tooltip: {}
+      tooltip: {
+        formatter: function (param) {
+          let data = param.data
+          let dataType = param.dataType
+          switch (dataType) {
+            case 'edge':
+              return `${data.source} => ${data.target} : ${data.value}`
+            case 'node':
+              return `${data.name} : ${data.realValue}`
+            default:
+              return ''
+          }
+        }
+      }
     } : null
 
   // legend
@@ -215,10 +235,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
 function computSymbolSize (list) {
   if (!(list && Array.isArray(list) && list.length)) return false
-  let max = list.reduce((sum, value) => value > sum ? value : sum)
+  let max = list.reduce((sum, value) => value > sum ? value : sum, 0)
   let min = 1
   return list.map(li => {
-    let count = Number(li) * 100 / max
+    let count = Number(li) * 60 / max
     return count < min ? min : count
   })
 }
