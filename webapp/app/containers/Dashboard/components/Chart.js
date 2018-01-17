@@ -83,7 +83,7 @@ export class Chart extends PureComponent {
       chartParams,
       classNames,
       updateParams,
-      interactIndex,
+      interactId,
       onCheckTableInteract,
       onDoTableInteract,
       currentBizlogicId
@@ -203,7 +203,7 @@ export class Chart extends PureComponent {
           currentBizlogicId={currentBizlogicId}
           width={tableWidth}
           height={tableHeight}
-          interactIndex={interactIndex}
+          interactId={interactId}
           onCheckInteract={onCheckTableInteract}
           onDoInteract={onDoTableInteract}
         />
@@ -233,7 +233,7 @@ Chart.propTypes = {
   chartParams: PropTypes.object,
   updateParams: PropTypes.array,
   classNames: PropTypes.object,
-  interactIndex: PropTypes.number,
+  interactId: PropTypes.string,
   onCheckTableInteract: PropTypes.func,
   onDoTableInteract: PropTypes.func,
   currentBizlogicId: PropTypes.oneOfType([

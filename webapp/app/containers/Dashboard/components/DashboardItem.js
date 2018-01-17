@@ -177,7 +177,7 @@ export class DashboardItem extends PureComponent {
       shareInfoLoading,
       downloadCsvLoading,
       isInteractive,
-      interactIndex,
+      interactId,
       onShowEdit,
       isReadOnly,
       onShowWorkbench,
@@ -379,7 +379,7 @@ export class DashboardItem extends PureComponent {
           updateParams={updateParams}
           currentBizlogicId={currentBizlogicId}
           classNames={chartClass}
-          interactIndex={interactIndex}
+          interactId={interactId}
           onCheckTableInteract={onCheckTableInteract}
           onDoTableInteract={onDoTableInteract}
         />
@@ -406,7 +406,7 @@ DashboardItem.propTypes = {
   shareInfoLoading: PropTypes.bool,
   downloadCsvLoading: PropTypes.bool,
   isInteractive: PropTypes.bool,
-  interactIndex: PropTypes.number,
+  interactId: PropTypes.string,
   onGetChartData: PropTypes.func,
   onRenderChart: PropTypes.func,
   onShowEdit: PropTypes.func,

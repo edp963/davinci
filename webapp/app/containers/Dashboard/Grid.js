@@ -208,7 +208,7 @@ export class Grid extends Component {
         this.state.interactiveItems = currentItems.reduce((acc, i) => {
           acc[i.id] = {
             isInteractive: false,
-            interactIndex: -1
+            interactId: null
           }
           return acc
         }, {})
@@ -724,7 +724,7 @@ export class Grid extends Component {
 
         interactiveItems[itemId] = {
           isInteractive: false,
-          interactIndex: -1
+          interactId: null
         }
       }
     })
@@ -832,7 +832,7 @@ export class Grid extends Component {
     return linkagers
   }
 
-  doInteract = (itemId, linkagers, interactIndex) => {
+  doInteract = (itemId, linkagers, interactIndexOrId) => {
     const {
       currentItems,
       widgets,
@@ -843,16 +843,19 @@ export class Grid extends Component {
     const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
     const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
     const dataSource = currentDatasources[itemId].dataSource
-    const triggeringData = dataSource[interactIndex]
+    let triggeringData
 
     if (chartInfo.renderer === ECHARTS_RENDERER) {
-      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndex)
+      triggeringData = dataSource[interactIndexOrId]
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndexOrId)
+    } else {
+      triggeringData = dataSource.find(ds => ds.antDesignTableId === interactIndexOrId)
     }
 
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: true,
-        interactIndex
+        interactId: triggeringData.antDesignTableId
       }
     })
 
@@ -963,7 +966,7 @@ export class Grid extends Component {
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: false,
-        interactIndex: -1
+        interactId: null
       }
     })
 
@@ -1233,7 +1236,7 @@ export class Grid extends Component {
         const secretInfo = currentItemsSecretInfo[itemId]
         const shareInfoLoading = currentItemsShareInfoLoading[itemId]
         const downloadCsvLoading = currentItemsDownloadCsvLoading[itemId]
-        const { isInteractive, interactIndex } = interactiveItems[itemId]
+        const { isInteractive, interactId } = interactiveItems[itemId]
         // isReadOnly 非原创用户不能对 widget进行写的操作
         const isReadOnly = (widget['create_by'] === loginUser.id)
 
@@ -1258,7 +1261,7 @@ export class Grid extends Component {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               isInteractive={isInteractive}
-              interactIndex={interactIndex}
+              interactId={interactId}
               onGetChartData={this.getChartData}
               onRenderChart={this.renderChart}
               onShowEdit={this.showEditDashboardItemForm}
