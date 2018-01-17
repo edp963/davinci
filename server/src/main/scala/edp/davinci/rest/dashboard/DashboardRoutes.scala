@@ -142,7 +142,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def postDashBoard(session: SessionClass, postDashboards: Seq[PostDashboard]): Route = {
     if (session.admin) {
-      val dashboardSeq = postDashboards.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),post.config, post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val dashboardSeq = postDashboards.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),Some(post.config.getOrElse("{}")), post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.dashboardDal.insert(dashboardSeq)) {
         case Success(dashboards) =>
           val responseDashSeq = dashboards.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
