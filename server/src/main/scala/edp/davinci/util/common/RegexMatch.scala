@@ -34,9 +34,9 @@ import org.apache.log4j.Logger
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-object RegexMatcher extends RegexMatcher
+object RegexMatch extends RegexMatch
 
-trait RegexMatcher {
+trait RegexMatch {
   lazy val groupRegex = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?\\$\\w+\\$\\)?\\s?\\)"
   //  lazy val queryRegex = "\\$\\s*\\w+\\s*\\$"
   private lazy val logger = Logger.getLogger(this.getClass)

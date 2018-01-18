@@ -4,7 +4,7 @@ package davinci
 import edp.davinci.KV
 import edp.davinci.rest.RouteHelper._
 import edp.davinci.util.common.DavinciConstants.{STEndChar, STStartChar, sqlSeparator}
-import edp.davinci.util.common.{RegexMatcher, STRenderUtils}
+import edp.davinci.util.common.{RegexMatch, STRender}
 import edp.davinci.util.sql.SqlParser
 import org.scalatest.FunSuite
 import org.stringtemplate.v4.{ST, STGroupString}
@@ -26,7 +26,7 @@ class MatchAndReplace extends FunSuite {
   test("get expression list") {
     val str = "Is is the cost of of gasoline going up up where ((name_) = <v1_<) and (city =<v2<) and (age > <v3<) or sex != '男'"
     val regex = "\\(<^\\<]*\\<\\w+\\<\\s?\\)"
-    val expressionList = RegexMatcher.getMatchedItemList(str, regex)
+    val expressionList = RegexMatch.getMatchedItemList(str, regex)
     expressionList.foreach(println)
     val exprList = List("((name_) = <v1_<)", "(city =<v2<)", "(age > <v3<)")
     assert(exprList == expressionList, "this is right what i want")
@@ -70,8 +70,8 @@ class MatchAndReplace extends FunSuite {
     val sqlWithoutVar = trimSql.substring(trimSql.indexOf(STStartChar) + 1, trimSql.indexOf(STEndChar)).trim
     val groupKVMap = getGroupKVMap(sqls, groupParams)
     val queryKVMap = getQueryKVMap(sqls, queryParams)
-    val mergeSql = RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-    val renderedSql = if (queryKVMap.nonEmpty) STRenderUtils.renderSql(mergeSql, queryKVMap) else mergeSql
+    val mergeSql = RegexMatch.matchAndReplace(sqlWithoutVar, groupKVMap)
+    val renderedSql = if (queryKVMap.nonEmpty) STRender.renderSql(mergeSql, queryKVMap) else mergeSql
     println("sql:" + renderedSql)
   }
 
@@ -111,8 +111,8 @@ class MatchAndReplace extends FunSuite {
     val sqlWithoutVar = trimSql.substring(trimSql.indexOf(STStartChar) + 1, trimSql.indexOf(STEndChar)).trim
     val groupKVMap = getGroupKVMap(sqls, null)
     val queryKVMap = getQueryKVMap(sqls, queryParams)
-    val mergeSql = RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
+    val mergeSql = RegexMatch.matchAndReplace(sqlWithoutVar, groupKVMap)
+    val renderedSql = STRender.renderSql(mergeSql, queryKVMap)
     println("sql:" + renderedSql)
   }
 

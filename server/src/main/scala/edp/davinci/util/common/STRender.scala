@@ -11,9 +11,9 @@ import org.stringtemplate.v4.{ST, STGroupString}
 import scala.collection.mutable
 import scala.io.Source
 
-object STRenderUtils extends STRenderUtils
+object STRender extends STRender
 
-trait STRenderUtils {
+trait STRender {
   private lazy val logger = Logger.getLogger(this.getClass)
 
   def getHTML(resultList: Seq[String], stgPath: String = "stg/tmpl.stg"): String = {

@@ -40,10 +40,10 @@ import edp.davinci.util.common.FileUtils._
 import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils.json2caseClass
 import edp.davinci.util.common.ResponseUtils.getHeader
-import edp.davinci.util.common.STRenderUtils.getHTML
+import edp.davinci.util.common.STRender.getHTML
 import edp.davinci.util.sql.SqlUtils._
 import edp.davinci.util.redis.JedisConnection
-import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatcher, STRenderUtils}
+import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatch, STRender}
 import edp.davinci.util.json.JsonUtils
 import edp.davinci.util.sql.SqlUtils
 import edp.davinci.{KV, ModuleInstance}
@@ -63,8 +63,8 @@ object RouteHelper extends Directives {
   val modules = ModuleInstance.getModule
   private lazy val fetchSize = 100
   private lazy val cacheIsEnable = ModuleInstance.getModule.config.getBoolean("cache.isEnable")
-//  private lazy val timeoutStr = ModuleInstance.getModule.config.getString("akka.http.server.request-timeout ")
-//  lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
+  //  private lazy val timeoutStr = ModuleInstance.getModule.config.getString("akka.http.server.request-timeout ")
+  //  lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
 
   implicit lazy val system = modules.system
   implicit lazy val materializer = ActorMaterializer()
@@ -239,10 +239,10 @@ object RouteHelper extends Directives {
     val noVarSql = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
     logger.info("sql without var defined: " + noVarSql)
     val mergeSql =
-      if (groupKVMap.nonEmpty) RegexMatcher.matchAndReplace(noVarSql, groupKVMap)
+      if (groupKVMap.nonEmpty) RegexMatch.matchAndReplace(noVarSql, groupKVMap)
       else noVarSql
     logger.info("sql after group merge: " + mergeSql)
-    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
+    val renderedSql = STRender.renderSql(mergeSql, queryKVMap)
     logger.info("sql after query var render: " + renderedSql)
     val trimRenderSql = renderedSql.trim
     val resetSql =
@@ -299,6 +299,7 @@ object RouteHelper extends Directives {
   def executeQuery(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Seq[String] = {
     logger.info("the sql in getResult:")
     sqlBuffer.foreach(logger.info)
+    val beforeExecute = System.currentTimeMillis()
     var dbConnection: Connection = null
     var statement: Statement = null
     try {
@@ -308,6 +309,8 @@ object RouteHelper extends Directives {
       //es statement NullPointerException ,so change 2 prepareStatement
       val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
       else statement.executeQuery(sqlBuffer.last)
+      val afterExecute = System.currentTimeMillis()
+      logger.info("total cost seconds:" + (afterExecute - beforeExecute) / 1000)
       covert2ListBuf(resultSet, sourceConfig)
     } catch {
       case e: Throwable => logger.error("get result exception", e)
