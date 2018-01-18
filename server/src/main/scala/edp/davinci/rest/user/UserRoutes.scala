@@ -31,9 +31,11 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.{getHeader, _}
-import edp.davinci.util.{AuthorizationProvider, PasswordHash}
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils.{getHeader, _}
+import edp.davinci.util.common.DavinciConstants.requestTimeout
+import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.encode.PasswordHash
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
@@ -214,7 +216,7 @@ class UserRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
           session =>
             if (session.admin) {
-              val user = Await.result(modules.userDal.findById(userId), new FiniteDuration(30, SECONDS))
+              val user = Await.result(modules.userDal.findById(userId), new FiniteDuration(requestTimeout, SECONDS))
               if (user.nonEmpty) {
                 if(user.get.create_by == session.userId)
                 onComplete(UserService.deleteUser(userId, session)) {

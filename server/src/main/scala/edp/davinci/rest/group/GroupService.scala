@@ -28,7 +28,7 @@ import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
 import edp.davinci.persistence.entities.{Group4Put, UserGroup}
 import edp.davinci.rest.SessionClass
-import edp.davinci.util.ResponseUtils
+import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 
 import scala.concurrent.Future

@@ -1,49 +1,27 @@
-/*-
- * <<
- * Davinci
- * ==
- * Copyright (C) 2016 - 2017 EDP
- * ==
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *      http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * >>
- */
-
-
-
-
-
-package edp.davinci.util
+package edp.davinci.util.common
 
 import akka.http.scaladsl.server.directives.Credentials
 import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule
-import edp.davinci.module.DbModule._
-import edp.davinci.persistence.entities.{LoginClass, User4Query, User}
+import edp.davinci.module.DbModule.db
+import edp.davinci.persistence.entities.{LoginClass, User, User4Query}
 import edp.davinci.rest.SessionClass
-import edp.davinci.util.LDAPValidate.validate
-import edp.davinci.util.ResponseUtils.currentTime
+import edp.davinci.util.common.ResponseUtils.currentTime
+import edp.davinci.util.encode.PasswordHash
+import edp.davinci.util.json.JwtSupport
 import org.apache.log4j.Logger
+import edp.davinci.util.common.LDAPValidate.validate
 import slick.jdbc.MySQLProfile.api._
-
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 abstract class AuthorizationError(val statusCode: Int = 401, val desc: String = "authentication error") extends Exception
 
+class passwordError(statusCode: Int = 400, desc: String = "password is wrong") extends AuthorizationError(statusCode, desc)
+
 class UserNotFoundError(statusCode: Int = 404, desc: String = "user not found") extends AuthorizationError(statusCode, desc)
 
-class passwordError(statusCode: Int = 400, desc: String = "password is wrong") extends AuthorizationError(statusCode, desc)
 
 object AuthorizationProvider {
   private lazy val module = ModuleInstance.getModule
@@ -132,7 +110,7 @@ object AuthorizationProvider {
 
   private def verifyPwd(storePass: String, pass: String): Boolean = {
     //    pass.isBcrypted(storePass)
-    if (PasswordHash.validatePassword(pass,storePass)) true
+    if (PasswordHash.validatePassword(pass, storePass)) true
     else false
   }
 

@@ -31,12 +31,13 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.DbModule.db
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule}
 import edp.davinci.persistence.base.BaseEntity
-import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.ResponseUtils._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.common.AuthorizationProvider
 import io.swagger.annotations.{ApiImplicitParams, _}
 import org.apache.log4j.Logger
 import slick.jdbc.MySQLProfile.api._
-import edp.davinci.util.JsonProtocol._
+import edp.davinci.util.json.JsonProtocol._
+
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 

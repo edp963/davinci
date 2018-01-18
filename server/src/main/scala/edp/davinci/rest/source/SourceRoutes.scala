@@ -10,12 +10,14 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.util.{AuthorizationProvider, JsonUtils, SqlUtils}
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.getHeader
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils.getHeader
 import io.swagger.annotations._
 import org.apache.log4j.Logger
-import edp.davinci.util.ResponseUtils._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.sql.SqlUtils
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}

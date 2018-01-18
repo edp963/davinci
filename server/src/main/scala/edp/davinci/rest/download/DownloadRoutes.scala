@@ -25,7 +25,7 @@
 package edp.davinci.rest.download
 
 import akka.http.scaladsl.server.{Directives, Route}
-import edp.davinci.util.{CommonUtils, DavinciConstants}
+import edp.davinci.util.common.{DavinciConstants, FileUtils}
 
 
 class DownloadRoutes extends Directives {
@@ -34,8 +34,8 @@ class DownloadRoutes extends Directives {
   val routes: Route = get {
     pathPrefix("downloads" / Segment) { fileName =>
       pathEndOrSingleSlash {
-        getFromFile(s"${CommonUtils.dir}/${DavinciConstants.downloadDir}/$fileName")
-      } ~ getFromDirectory(s"${CommonUtils.dir}/${DavinciConstants.downloadDir}")
+        getFromFile(s"${FileUtils.dir}/${DavinciConstants.downloadDir}/$fileName")
+      } ~ getFromDirectory(s"${FileUtils.dir}/${DavinciConstants.downloadDir}")
     }
   }
 

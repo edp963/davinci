@@ -25,7 +25,7 @@
 package edp.davinci.rest
 
 import akka.http.scaladsl.server.{Directives, Route}
-import edp.davinci.util.CommonUtils
+import edp.davinci.util.common.FileUtils
 
 
 class DavinciRoutes extends Directives {
@@ -45,16 +45,16 @@ class DavinciRoutes extends Directives {
   val indexRoute: Route = get {
     pathPrefix("") {
       pathEndOrSingleSlash {
-        getFromFile(s"${CommonUtils.dir}/davinci-ui/index.html")
+        getFromFile(s"${FileUtils.dir}/davinci-ui/index.html")
       }
-    } ~ getFromDirectory(s"${CommonUtils.dir}/davinci-ui")
+    } ~ getFromDirectory(s"${FileUtils.dir}/davinci-ui")
   }
 
   val shareRoute: Route = get {
     pathPrefix("share") {
       pathEndOrSingleSlash {
-        getFromFile(s"${CommonUtils.dir}/davinci-ui/share.html")
+        getFromFile(s"${FileUtils.dir}/davinci-ui/share.html")
       }
-    } ~ getFromDirectory(s"${CommonUtils.dir}/davinci-ui")
+    } ~ getFromDirectory(s"${FileUtils.dir}/davinci-ui")
   }
 }

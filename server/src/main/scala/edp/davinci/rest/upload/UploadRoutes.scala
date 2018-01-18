@@ -39,10 +39,14 @@ import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModul
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig, UploadMeta}
 import edp.davinci.rest.source.SourceService
 import edp.davinci.rest.{ResponseJson, SessionClass}
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.OpType.OpType
-import edp.davinci.util.ResponseUtils.{currentTime, getHeader}
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.OpType.OpType
+import edp.davinci.util.common.ResponseUtils.{currentTime, getHeader}
 import edp.davinci.util._
+import edp.davinci.util.common.DavinciConstants.requestTimeout
+import edp.davinci.util.common.{AuthorizationProvider, LoadMode, OpType}
+import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
 import org.slf4j.LoggerFactory
 
@@ -159,7 +163,7 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
 
   private def getSourceConf(sourceId: Long): SourceConfig = {
-    Await.result(SourceService.getById(sourceId), new FiniteDuration(30, SECONDS)) match {
+    Await.result(SourceService.getById(sourceId), new FiniteDuration(requestTimeout, SECONDS)) match {
       case Some(source) => JsonUtils.json2caseClass[SourceConfig](source.connection_url)
       case None => logger.error("$$$$$$$$$$$$$$$$$$$source not found " + sourceId)
         throw new Exception("source not found")
@@ -167,7 +171,7 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   }
 
   private def getUploadMeta(metaId: Long): PostUploadMeta = {
-    Await.result(UploadService.getUploadMeta(metaId), new FiniteDuration(30, SECONDS)) match {
+    Await.result(UploadService.getUploadMeta(metaId), new FiniteDuration(requestTimeout, SECONDS)) match {
       case Some(meta) => meta
       case None => logger.error("$$$$$$$$$$$$$$$$$$$meta not found " + metaId)
         throw new Exception("meta not found")

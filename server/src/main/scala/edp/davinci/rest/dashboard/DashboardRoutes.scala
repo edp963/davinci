@@ -32,9 +32,10 @@ import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.dashboard.DashboardService._
-import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils._
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.common.DavinciConstants.requestTimeout
+import edp.davinci.util.common.AuthorizationProvider
 import io.swagger.annotations.{ApiImplicitParams, _}
 import org.apache.log4j.Logger
 
@@ -178,7 +179,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def putDashboard(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Route = {
     if (session.admin) {
-      val create_by = Await.result(modules.dashboardDal.findById(dashboardSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
+      val create_by = Await.result(modules.dashboardDal.findById(dashboardSeq.head.id), new FiniteDuration(requestTimeout, SECONDS)).get.create_by
       if (create_by == session.userId) {
         onComplete(update(session, dashboardSeq)) {
           case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
@@ -206,7 +207,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val dashboard = Await.result(modules.dashboardDal.findById(dashboardId), new FiniteDuration(30, SECONDS))
+            val dashboard = Await.result(modules.dashboardDal.findById(dashboardId), new FiniteDuration(requestTimeout, SECONDS))
             if (dashboard.nonEmpty) {
               if (session.userId == dashboard.get.create_by)
                 onComplete(deleteDashboard(dashboardId, session)) {
@@ -244,7 +245,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def addWidgets(session: SessionClass, postRelDWSeq: Seq[PostRelDashboardWidget]): Route = {
     if (session.admin) {
-      val create_by = Await.result(modules.dashboardDal.findById(postRelDWSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
+      val create_by = Await.result(modules.dashboardDal.findById(postRelDWSeq.head.dashboard_id), new FiniteDuration(requestTimeout, SECONDS)).get.create_by
       if (create_by == session.userId) {
         val relDWSeq = postRelDWSeq.map(post => RelDashboardWidget(0, post.dashboard_id, post.widget_id, post.position_x, post.position_y, post.length, post.width, post.trigger_type, post.trigger_params, active = true, currentTime, session.userId, currentTime, session.userId))
         onComplete(modules.relDashboardWidgetDal.insert(relDWSeq)) {
@@ -283,7 +284,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def updateWidgetLayout(session: SessionClass, relSeq: Seq[PutRelDashboardWidget]): Route = {
     if (session.admin) {
-      val create_by = Await.result(modules.dashboardDal.findById(relSeq.head.dashboard_id), new FiniteDuration(30, SECONDS)).get.create_by
+      val create_by = Await.result(modules.dashboardDal.findById(relSeq.head.dashboard_id), new FiniteDuration(requestTimeout, SECONDS)).get.create_by
       if (create_by == session.userId) {
         onComplete(updateRelation(session, relSeq)) {
           case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))
@@ -312,7 +313,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val relation = Await.result(modules.relDashboardWidgetDal.findById(relId), new FiniteDuration(30, SECONDS))
+            val relation = Await.result(modules.relDashboardWidgetDal.findById(relId), new FiniteDuration(requestTimeout, SECONDS))
             if (relation.nonEmpty) {
               if (session.userId == relation.get.create_by)
                 onComplete(deleteRelation(relId, session)) {

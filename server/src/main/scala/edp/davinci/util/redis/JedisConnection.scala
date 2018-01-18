@@ -28,7 +28,7 @@ import java.util
 
 import edp.davinci.ModuleInstance
 import edp.davinci.rest.ViewResult
-import edp.davinci.util.CommonUtils
+import edp.davinci.util.common.FileUtils
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
 import org.apache.log4j.Logger
 
