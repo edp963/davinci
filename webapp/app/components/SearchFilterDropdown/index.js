@@ -31,9 +31,9 @@ export function SearchFilterDropdown (props) {
     <div className={utilStyles.searchFilterDropdown}>
       <Search
         size="large"
-        placeholder={`Search ${props.columnName}`}
-        value={props.filterValue}
-        onChange={props.onSearchInputChange}
+        placeholder={props.placeholder}
+        value={props.value}
+        onChange={props.onChange}
         onSearch={props.onSearch}
       />
     </div>
@@ -41,9 +41,9 @@ export function SearchFilterDropdown (props) {
 }
 
 SearchFilterDropdown.propTypes = {
-  columnName: PropTypes.string,
-  filterValue: PropTypes.string,
-  onSearchInputChange: PropTypes.func,
+  placeholder: PropTypes.string,
+  value: PropTypes.string,
+  onChange: PropTypes.func,
   onSearch: PropTypes.func
 }
 

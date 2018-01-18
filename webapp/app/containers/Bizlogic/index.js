@@ -207,12 +207,14 @@ export class Bizlogic extends React.PureComponent {
     const {onValidateSql} = this.props
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
     this.bizlogicForm.validateFieldsAndScroll((err, values) => {
-      const { source_id } = values
-      if (sqlTmpl) {
-        onValidateSql(source_id, sqlTmpl)
-        this.asyncValidateResult = setTimeout(() => {
-          this.setState({isShowSqlValidateAlert: true})
-        }, 100)
+      if (!err) {
+        const { source_id } = values
+        if (sqlTmpl) {
+          onValidateSql(source_id, sqlTmpl)
+          this.asyncValidateResult = setTimeout(() => {
+            this.setState({isShowSqlValidateAlert: true})
+          }, 100)
+        }
       }
     })
   }
@@ -442,9 +444,9 @@ export class Bizlogic extends React.PureComponent {
       key: 'name',
       filterDropdown: (
         <SearchFilterDropdown
-          columnName="name"
-          filterValue={nameFilterValue}
-          onSearchInputChange={this.onSearchInputChange('name')}
+          placeholder="name"
+          value={nameFilterValue}
+          onChange={this.onSearchInputChange('name')}
           onSearch={this.onSearch('name')}
         />
       ),

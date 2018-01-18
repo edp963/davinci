@@ -1036,7 +1036,7 @@ export class Grid extends Component {
     )
   }
 
-  globalFilterChange = (filter) => (e) => {
+  globalFilterChange = (filter) => (formValue) => {
     const { currentItems } = this.props
     const { type, items } = filter
 
@@ -1047,29 +1047,39 @@ export class Grid extends Component {
       let globalFilters = ''
 
       switch (type) {
+        case 'numberRange':
+          let numberFilters = []
+          if (formValue[0]) {
+            numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
+          }
+          if (formValue[1]) {
+            numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
+          }
+          globalFilters = formValue.length ? numberFilters.join(` and `) : ''
+          break
         case 'select':
-          globalFilters = e ? `${columnAndType[0]} = ${e}` : ''
+          globalFilters = formValue ? `${columnAndType[0]} = ${formValue}` : ''
           break
         case 'multiSelect':
-          globalFilters = e.length ? e.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
+          globalFilters = formValue.length ? formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
           break
         case 'date':
-          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}` : ''
           break
         case 'datetime':
-          globalFilters = e ? `${columnAndType[0]} = ${getValidValue(moment(e).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
           break
         case 'multiDate':
-          globalFilters = e ? e.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
+          globalFilters = formValue ? formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
           break
         case 'dateRange':
-          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
           break
         case 'datetimeRange':
-          globalFilters = e.length ? `${columnAndType[0]} >= ${getValidValue(moment(e[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(e[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
           break
         default:
-          const inputValue = e.target.value.trim()
+          const inputValue = formValue.target.value.trim()
           globalFilters = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
           break
       }
@@ -1136,6 +1146,7 @@ export class Grid extends Component {
   render () {
     const {
       dashboards,
+      widgets,
       currentDashboard,
       currentDashboardLoading,
       currentDashboardShareInfo,
@@ -1177,8 +1188,6 @@ export class Grid extends Component {
       interactiveItems,
       allowFullScreen
     } = this.state
-
-    let {widgets} = this.props
 
     let navDropdown = (<span />)
     let grids = ''
@@ -1366,8 +1375,9 @@ export class Grid extends Component {
     let shareButton = ''
     let linkageButton = ''
     let globalFilterButton = ''
+    const isOwner = currentDashboard && loginUser.id === currentDashboard.create_by
 
-    if (editPositionSign) {
+    if (isOwner && editPositionSign) {
       savePosButton = (
         <Tooltip placement="bottom" title="保存位置修改">
           <Button
@@ -1379,7 +1389,7 @@ export class Grid extends Component {
       )
     }
 
-    if (loginUser.admin) {
+    if (isOwner && loginUser.admin) {
       addButton = (
         <Tooltip placement="bottom" title="新增">
           <Button

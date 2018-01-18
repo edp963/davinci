@@ -57,6 +57,16 @@ export class TableChart extends PureComponent {
     }
   }
 
+  componentWillMount () {
+    const { data, chartParams } = this.props
+    const { filterValues } = this.state
+    const { enumerationColumns } = chartParams
+
+    if (data.keys && data.keys.length && !Object.keys(filterValues).length) {
+      this.state.filterValues = this.initialFilterValues(data.keys, enumerationColumns)
+    }
+  }
+
   componentWillUpdate (nextProps) {
     const ec = this.props.chartParams.enumerationColumns
     const nextEC = nextProps.chartParams.enumerationColumns
@@ -71,8 +81,8 @@ export class TableChart extends PureComponent {
     }
 
     if (nextProps.data.keys &&
-      nextProps.data.keys.length &&
-      !Object.keys(this.state.filterValues).length) {
+        nextProps.data.keys.length &&
+        !Object.keys(this.state.filterValues).length) {
       this.state.filterValues = this.initialFilterValues(nextProps.data.keys, ec)
     }
 
@@ -89,19 +99,13 @@ export class TableChart extends PureComponent {
         if (enumColumns.indexOf(k) >= 0) {
           rdc[k] = []
         } else {
-          rdc[k] = {
-            from: '',
-            to: ''
-          }
+          rdc[k] = ['', '']
         }
         return rdc
       }, {})
     } else {
       return keys.reduce((rdc, k) => {
-        rdc[k] = {
-          from: '',
-          to: ''
-        }
+        rdc[k] = ['', '']
         return rdc
       }, {})
     }
@@ -121,23 +125,20 @@ export class TableChart extends PureComponent {
     const filterValues = this.state.filterValues
     this.setState({
       filterValues: Object.assign({}, filterValues, {
-        [columnName]: {
-          from: e.target.value,
-          to: filterValues[columnName].to
-        }
+        [columnName]: [e.target.value]
       })
     })
   }
 
-  onNumberInputChange = (columnName, dir) => (e) => {
+  onNumberInputChange = (columnName) => (newValue) => {
     const filterValues = this.state.filterValues
-    const val = e.target.value
+
     this.setState({
       filterValues: Object.assign({}, filterValues, {
-        [columnName]: {
-          from: dir === 'from' ? (isNaN(val) ? '' : val) : filterValues[columnName].from,
-          to: dir === 'to' ? (isNaN(val) ? '' : val) : filterValues[columnName].to
-        }
+        [columnName]: [
+          isNaN(newValue[0]) ? filterValues[columnName][0] : newValue[0],
+          isNaN(newValue[1]) ? filterValues[columnName][1] : newValue[1]
+        ]
       })
     })
   }
@@ -145,10 +146,7 @@ export class TableChart extends PureComponent {
   onRangePickerChange = (columnName) => (dates, dateStrings) => {
     const filterValues = this.state.filterValues
     this.state.filterValues = Object.assign({}, filterValues, {
-      [columnName]: {
-        from: dateStrings[0],
-        to: dateStrings[1]
-      }
+      [columnName]: [dateStrings[0], dateStrings[1]]
     })
     this.onLoadData()
   }
@@ -162,30 +160,28 @@ export class TableChart extends PureComponent {
     let filteredSource = dataSource.slice()
 
     Object.keys(filterValues).forEach(fkey => {
-      const { from, to } = filterValues[fkey]
+      const filterValue = filterValues[fkey]
 
-      if (from !== undefined && to !== undefined) {
-        const keyIndex = keys.findIndex(k => k === fkey)
-        const columnType = types[keyIndex]
+      const keyIndex = keys.findIndex(k => k === fkey)
+      const columnType = types[keyIndex]
 
-        if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
-          if (from) {
-            filteredSource = filteredSource.filter(s => s[fkey] >= Number(from))
-          }
-          if (to) {
-            filteredSource = filteredSource.filter(s => s[fkey] <= Number(to))
-          }
-        } else if (SQL_DATE_TYPES.indexOf(columnType) >= 0) {
-          if (from) {
-            filteredSource = filteredSource.filter(s => s[fkey] >= moment(from))
-          }
-          if (to) {
-            filteredSource = filteredSource.filter(s => s[fkey] <= moment(to))
-          }
-        } else {
-          if (from) {
-            filteredSource = filteredSource.filter(s => s[fkey].includes(from))
-          }
+      if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
+        if (filterValue[0]) {
+          filteredSource = filteredSource.filter(s => s[fkey] >= Number(filterValue[0]))
+        }
+        if (filterValue[1]) {
+          filteredSource = filteredSource.filter(s => s[fkey] <= Number(filterValue[1]))
+        }
+      } else if (SQL_DATE_TYPES.indexOf(columnType) >= 0) {
+        if (filterValue[0]) {
+          filteredSource = filteredSource.filter(s => moment(s[fkey]) >= moment(filterValue[0]))
+        }
+        if (filterValue[1]) {
+          filteredSource = filteredSource.filter(s => moment(s[fkey]) <= moment(filterValue[1]))
+        }
+      } else {
+        if (filterValue[0]) {
+          filteredSource = filteredSource.filter(s => s[fkey].includes(filterValue[0]))
         }
       }
     })
@@ -326,32 +322,29 @@ export class TableChart extends PureComponent {
               onFilter: (value, record) => record[k] === value
             }
           } else {
-            const filterValue = filterValues[k] || {}
+            const filterValue = filterValues[k] || []
 
             if (SQL_NUMBER_TYPES.indexOf(columnType) >= 0) {
               filterDropdown = (
                 <NumberFilterDropdown
-                  from={filterValue.from}
-                  to={filterValue.to}
-                  onFromChange={this.onNumberInputChange(k, 'from')}
-                  onToChange={this.onNumberInputChange(k, 'to')}
+                  value={filterValue}
+                  onChange={this.onNumberInputChange(k)}
                   onSearch={this.onLoadData}
                 />
               )
             } else if (SQL_DATE_TYPES.indexOf(columnType) >= 0) {
               filterDropdown = (
                 <DateFilterDropdown
-                  from={filterValue.from}
-                  to={filterValue.to}
+                  value={filterValue}
                   onChange={this.onRangePickerChange(k)}
                 />
               )
             } else {
               filterDropdown = (
                 <SearchFilterDropdown
-                  columnName={k}
-                  filterValue={filterValues[k] === undefined ? '' : filterValues[k].from}
-                  onSearchInputChange={this.onSearchInputChange(k)}
+                  placeholder={k}
+                  value={filterValue[0]}
+                  onChange={this.onSearchInputChange(k)}
                   onSearch={this.onLoadData}
                 />
               )

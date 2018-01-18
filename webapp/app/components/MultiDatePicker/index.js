@@ -52,7 +52,7 @@ export class MultiDatePicker extends Component {
       <span className={styles.datepicker}>
         <input
           type="text"
-          placeholder="请选择日期（多选）"
+          placeholder={this.props.placeholder || '请选择日期（多选）'}
           className="ant-input"
           value={this.state.value}
           ref="input"
@@ -66,6 +66,7 @@ export class MultiDatePicker extends Component {
 
 MultiDatePicker.propTypes = {
   value: PropTypes.string,
+  placeholder: PropTypes.string,
   onChange: PropTypes.func
 }
 

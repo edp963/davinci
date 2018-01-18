@@ -21,41 +21,22 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import Input from 'antd/lib/input'
-// import Select from 'antd/lib/select'
-const InputGroup = Input.Group
+import NumberRange from '../NumberRange'
 
 import utilStyles from '../../assets/less/util.less'
 
 export function NumberFilterDropdown (props) {
   return (
     <div className={utilStyles.searchFilterDropdown}>
-      <InputGroup size="large" compact>
-        <Input
-          className={utilStyles.number}
-          value={props.from}
-          placeholder="从"
-          onChange={props.onFromChange}
-          onPressEnter={props.onSearch}
-        />
-        <Input className={utilStyles.numberDivider} placeholder="~" readOnly tabIndex="-1" />
-        <Input
-          className={`${utilStyles.number} ${utilStyles.to}`}
-          value={props.to}
-          placeholder="到"
-          onChange={props.onToChange}
-          onPressEnter={props.onSearch}
-        />
-      </InputGroup>
+      <NumberRange {...props} />
     </div>
   )
 }
 
 NumberFilterDropdown.propTypes = {
-  from: PropTypes.string,
-  to: PropTypes.string,
-  onFromChange: PropTypes.func,
-  onToChange: PropTypes.func,
+  placeholder: PropTypes.string,
+  value: PropTypes.array,
+  onChange: PropTypes.func,
   onSearch: PropTypes.func
 }
 

@@ -181,9 +181,9 @@ export class Group extends React.PureComponent {
       key: 'name',
       filterDropdown: (
         <SearchFilterDropdown
-          columnName="name"
-          filterValue={nameFilterValue}
-          onSearchInputChange={this.onSearchInputChange('name')}
+          placeholder="name"
+          value={nameFilterValue}
+          onChange={this.onSearchInputChange('name')}
           onSearch={this.onSearch('name')}
         />
       ),

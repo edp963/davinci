@@ -59,8 +59,8 @@ export class VariableConfigTable extends Component {
       // { text: '多选下拉菜单', value: 'multiSelect' },
       { text: '日期选择', value: 'date' },
       { text: '日期多选', value: 'multiDate' },
-      { text: '日期时间选择', value: 'datetime' },
       { text: '日期范围选择', value: 'dateRange' },
+      { text: '日期时间选择', value: 'datetime' },
       { text: '日期时间范围选择', value: 'datetimeRange' }
     ].map(o => (
       <Option key={o.value} value={o.value}>{o.text}</Option>
