@@ -19,15 +19,14 @@
  */
 
 
-
-
-
 package edp.davinci.module
 
 import java.io.File
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.log4j.PropertyConfigurator
+
+object ConfigurationModuleImpl extends ConfigurationModuleImpl
 
 trait ConfigurationModule {
   def config: Config

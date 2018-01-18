@@ -28,9 +28,10 @@ import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils._
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.common.DavinciConstants.requestTimeout
+import edp.davinci.util.common.AuthorizationProvider
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
@@ -136,7 +137,7 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   private def updateWidgets(session: SessionClass, putWidgetSeq: Seq[PutWidget]): Route = {
     if (session.admin) {
-      val widget = Await.result(modules.widgetDal.findById(putWidgetSeq.head.id), new FiniteDuration(30, SECONDS))
+      val widget = Await.result(modules.widgetDal.findById(putWidgetSeq.head.id), new FiniteDuration(requestTimeout, SECONDS))
       if (widget.nonEmpty) {
         if (session.userId == widget.get.create_by)
           onComplete(WidgetService.update(putWidgetSeq, session)) {
@@ -164,7 +165,7 @@ class WidgetRoutes(modules: ConfigurationModule with PersistenceModule with Busi
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val create_by = Await.result(modules.widgetDal.findById(widgetId), new FiniteDuration(30, SECONDS)).get.create_by
+            val create_by = Await.result(modules.widgetDal.findById(widgetId), new FiniteDuration(requestTimeout, SECONDS)).get.create_by
             if (create_by == session.userId)
               onComplete(WidgetService.deleteWidget(widgetId, session)) {
                 case Success(_) => complete(OK, ResponseJson[String](getHeader(200, session), ""))

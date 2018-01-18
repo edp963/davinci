@@ -24,14 +24,14 @@
 
 package davinci
 
-import edp.davinci.util.CommonUtils
+import edp.davinci.util.common.FileUtils
 import edp.davinci.util.redis.JedisConnection
 
 object JedisTest extends App {
 import scala.collection.JavaConversions._
   val result = List(Seq("a", "b", "c"), Seq("1", "2", "3"))
-  JedisConnection.set("maomao", result.map(CommonUtils.covert2CSV),3 )
-  JedisConnection.set("maomao", result.map(CommonUtils.covert2CSV),3 )
+  JedisConnection.set("maomao", result.map(FileUtils.covert2CSV),3 )
+  JedisConnection.set("maomao", result.map(FileUtils.covert2CSV),3 )
   val getRes = JedisConnection.getStr("maomao").foreach(println)
 
 

@@ -30,10 +30,12 @@ import edp.davinci.module.{ConfigurationModule, PersistenceModule, _}
 import edp.davinci.persistence.entities._
 import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql, mergeAndRender}
 import edp.davinci.rest._
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils._
-import edp.davinci.util.SqlUtils.filterAnnotation
-import edp.davinci.util.{AuthorizationProvider, DavinciConstants, JsonUtils}
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.sql.SqlUtils.filterAnnotation
+import edp.davinci.util.common.{AuthorizationProvider, DavinciConstants}
+import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.json.JsonUtils
 import io.swagger.annotations._
 import org.slf4j.LoggerFactory
 
@@ -49,6 +51,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
   val routes: Route = postViewRoute ~ putViewRoute ~ getViewByAllRoute ~ deleteViewRoute ~ getGroupsByViewIdRoute ~ getResultRoute ~ deleteRelation ~ sqlVerifyRoute ~ markRoute
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
+  private lazy val waitTimeout = 30
   private lazy val adHocTable = "table"
   private lazy val routeName = "flattables"
 
@@ -133,7 +136,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { session =>
           if (session.admin) {
             val view4PutSeq = view4Put.payload
-            val create_by = Await.result(modules.viewDal.findById(view4PutSeq.head.id), new FiniteDuration(30, SECONDS)).get.create_by
+            val create_by = Await.result(modules.viewDal.findById(view4PutSeq.head.id), new FiniteDuration(waitTimeout, SECONDS)).get.create_by
             if (create_by == session.userId) {
               val relationSeq = view4PutSeq.head.relBG.map(r => RelGroupView(0, r.group_id, view4PutSeq.head.id, Some(r.sql_params), active = true, currentTime, session.userId, currentTime, session.userId))
               val operation = for {
@@ -166,7 +169,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       authenticateOAuth2Async[SessionClass]("davinci", AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
-            val view = Await.result(modules.viewDal.findById(viewId), new FiniteDuration(30, SECONDS))
+            val view = Await.result(modules.viewDal.findById(viewId), new FiniteDuration(waitTimeout, SECONDS))
             if (view.nonEmpty) {
               if (session.userId == view.get.create_by)
                 onComplete(ViewService.deleteView(viewId, session)) {
@@ -299,7 +302,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       post {
         entity(as[String]) { sqlTemplate =>
           authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { _ =>
-            val source = Await.result(modules.sourceDal.findById(sourceId), new FiniteDuration(30, SECONDS)).get
+            val source = Await.result(modules.sourceDal.findById(sourceId), new FiniteDuration(waitTimeout, SECONDS)).get
             try {
               if (sqlTemplate.trim != "") {
                 val filteredSql = filterAnnotation(sqlTemplate.trim)

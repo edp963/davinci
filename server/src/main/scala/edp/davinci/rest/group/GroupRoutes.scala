@@ -32,9 +32,9 @@ import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.group.GroupService._
-import edp.davinci.util.AuthorizationProvider
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.{getHeader, _}
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils.{getHeader, _}
+import edp.davinci.util.common.AuthorizationProvider
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 

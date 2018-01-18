@@ -39,7 +39,7 @@ import edp.davinci.rest.upload.UploadRoutes
 import edp.davinci.rest.user.UserRoutes
 import edp.davinci.rest.view.ViewRoutes
 import edp.davinci.rest.widget.WidgetRoutes
-import edp.davinci.util.CommonUtils
+import edp.davinci.util.common.FileUtils
 
 import scala.reflect.runtime.universe._
 
@@ -74,8 +74,8 @@ class SwaggerRoutes extends SwaggerHttpService with HasActorSystem {
   val indexRoute: Route = get {
     pathPrefix("swagger") {
       pathEndOrSingleSlash {
-        getFromFile(s"${CommonUtils.dir}/swagger-ui/index.html")
+        getFromFile(s"${FileUtils.dir}/swagger-ui/index.html")
       }
-    } ~ getFromDirectory(s"${CommonUtils.dir}/swagger-ui")
+    } ~ getFromDirectory(s"${FileUtils.dir}/swagger-ui")
   }
 }

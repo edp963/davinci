@@ -28,9 +28,10 @@ import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest.SessionClass
-import edp.davinci.util.ResponseUtils
-import edp.davinci.util.ResponseUtils.currentTime
+import edp.davinci.util.common.ResponseUtils.currentTime
+import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 

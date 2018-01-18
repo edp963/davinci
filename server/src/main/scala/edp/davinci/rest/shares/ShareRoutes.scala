@@ -33,12 +33,15 @@ import edp.davinci.rest.dashboard.DashboardService
 import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
 import edp.davinci.rest.widget.WidgetService
-import edp.davinci.util.DavinciConstants.{conditionSeparator, _}
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.ResponseUtils.getHeader
+import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils.getHeader
 import edp.davinci.util._
+import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
 import org.apache.log4j.Logger
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.{Failure, Success}
 
@@ -120,7 +123,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   ))
   def getHtmlRoute: Route = path(routeName / "html" / Segment) { shareInfoStr =>
     get {
-      parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? true, 'expired.as[Int] ? 300) {
+      parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? false, 'expired.as[Int] ? 0) {
         (offset, limit, sortBy, useCache, expired) =>
           authVerify(shareInfoStr, textHtml, null, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
       }
@@ -147,7 +150,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   def getCSVRoute: Route = path(routeName / "csv" / Segment) { shareInfoStr =>
     post {
       entity(as[Option[ManualInfo]]) { manualInfo =>
-        parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? true, 'expired.as[Int] ? 300) {
+        parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? false, 'expired.as[Int] ? 0) {
           (offset, limit, sortBy, useCache, expired) =>
             authVerify(shareInfoStr, textCSV, manualInfo.orNull, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
         }

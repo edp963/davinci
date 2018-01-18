@@ -33,17 +33,19 @@ import akka.http.scaladsl.model.{HttpEntity, _}
 import akka.http.scaladsl.server.{Directives, Route, StandardRoute}
 import akka.stream.ActorMaterializer
 import akka.util.{ByteString, Timeout}
-import edp.davinci.util.DavinciConstants._
+import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.persistence.entities.SourceConfig
 import edp.davinci.rest.view.ViewService
-import edp.davinci.util.CommonUtils._
-import edp.davinci.util.JsonProtocol._
-import edp.davinci.util.JsonUtils.json2caseClass
-import edp.davinci.util.ResponseUtils.getHeader
-import edp.davinci.util.STRenderUtils.getHTML
-import edp.davinci.util.SqlUtils._
+import edp.davinci.util.common.FileUtils._
+import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.json.JsonUtils.json2caseClass
+import edp.davinci.util.common.ResponseUtils.getHeader
+import edp.davinci.util.common.STRenderUtils.getHTML
+import edp.davinci.util.sql.SqlUtils._
 import edp.davinci.util.redis.JedisConnection
-import edp.davinci.util._
+import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatcher, STRenderUtils}
+import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.sql.SqlUtils
 import edp.davinci.{KV, ModuleInstance}
 import org.slf4j.LoggerFactory
 
@@ -61,8 +63,8 @@ object RouteHelper extends Directives {
   val modules = ModuleInstance.getModule
   private lazy val fetchSize = 100
   private lazy val cacheIsEnable = ModuleInstance.getModule.config.getBoolean("cache.isEnable")
-  private lazy val timeoutStr = ModuleInstance.getModule.config.getString("akka.http.server.request-timeout ")
-  private lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
+//  private lazy val timeoutStr = ModuleInstance.getModule.config.getString("akka.http.server.request-timeout ")
+//  lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
 
   implicit lazy val system = modules.system
   implicit lazy val materializer = ActorMaterializer()
@@ -376,7 +378,7 @@ object RouteHelper extends Directives {
       logger.info("adHoc sql is empty")
       projectSqlWithFilter
     }
-    val paginateStr = CommonUtils.getPageInfo(pageInfo)
+    val paginateStr = FileUtils.getPageInfo(pageInfo)
     if (paginateStr != "" && sourceConfig.url.indexOf("elasticsearch") == -1)
       s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
     else mixinSql

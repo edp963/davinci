@@ -36,7 +36,7 @@ import edp.davinci.rest.upload.UploadRoutes
 import edp.davinci.rest.user.UserRoutes
 import edp.davinci.rest.view.ViewRoutes
 import edp.davinci.rest.widget.WidgetRoutes
-import edp.davinci.util.DavinciCorsSupport
+import edp.davinci.util.common.DavinciCorsSupport
 
 class RoutesApi(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives with DavinciCorsSupport {
   val swagger = new SwaggerRoutes

@@ -30,14 +30,10 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import edp.davinci.util.redis.JedisConnection
 import org.apache.log4j.Logger
-
+import edp.davinci.util.common.DavinciConstants.requestTimeout
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-
-object CacheMap {
-
-}
 
 class CacheActor extends Actor {
   private lazy val logger = Logger.getLogger(this.getClass)
@@ -73,7 +69,7 @@ class CacheActor extends Actor {
 
 object ActorSys extends App {
   lazy val system = ActorSystem("cacheSystem")
-  implicit val timeout = Timeout(30, TimeUnit.SECONDS)
+  implicit val timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
   private lazy val cacheRef = system.actorOf(Props[CacheActor], "cacheActor")
 
   def getActor: ActorRef = cacheRef

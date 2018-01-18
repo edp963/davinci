@@ -8,9 +8,10 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule}
 import edp.davinci.persistence.entities.{ChangePassword, ChangeUserPassword, User}
-import edp.davinci.util.{AuthorizationProvider, PasswordHash}
-import edp.davinci.util.ResponseUtils._
-import edp.davinci.util.JsonProtocol._
+import edp.davinci.util.common.ResponseUtils._
+import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.encode.PasswordHash
+import edp.davinci.util.json.JsonProtocol._
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 import org.slf4j.LoggerFactory

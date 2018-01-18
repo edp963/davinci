@@ -1,10 +1,9 @@
 
 
-package edp.davinci.util
+package edp.davinci.util.common
 
 import com.github.tototoshi.csv.CSVReader
-import edp.davinci.util.DavinciConstants._
-import grizzled.string.template.{StringTemplate, Variable}
+import edp.davinci.util.common.DavinciConstants._
 import org.apache.log4j.Logger
 import org.clapper.scalasti.{Constants, STGroupFile}
 import org.stringtemplate.v4.{ST, STGroupString}

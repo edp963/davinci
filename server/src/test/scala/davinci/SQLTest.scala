@@ -28,7 +28,7 @@ import java.util.regex.Pattern
 
 import edp.davinci.ModuleInstance
 import edp.davinci.persistence.entities.PostUploadMeta
-import edp.davinci.util.SqlUtils
+import edp.davinci.util.sql.SqlUtils
 import org.scalatest.FunSuite
 
 import scala.collection.mutable
