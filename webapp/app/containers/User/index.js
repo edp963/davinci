@@ -296,9 +296,9 @@ export class User extends React.PureComponent {
       key: 'email',
       filterDropdown: (
         <SearchFilterDropdown
-          columnName="email"
-          filterValue={emailFilterValue}
-          onSearchInputChange={this.onSearchInputChange('email')}
+          placeholder="email"
+          value={emailFilterValue}
+          onChange={this.onSearchInputChange('email')}
           onSearch={this.onSearch('email')}
         />
       ),
@@ -312,9 +312,9 @@ export class User extends React.PureComponent {
       key: 'name',
       filterDropdown: (
         <SearchFilterDropdown
-          columnName="name"
-          filterValue={nameFilterValue}
-          onSearchInputChange={this.onSearchInputChange('name')}
+          placeholder="name"
+          value={nameFilterValue}
+          onChange={this.onSearchInputChange('name')}
           onSearch={this.onSearch('name')}
         />
       ),

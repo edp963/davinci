@@ -27,6 +27,7 @@ export class GlobalFilterPanel extends PureComponent {
       filterTypes: [
         { text: '文本输入框', value: 'input' },
         // { text: '数字输入框', value: 'inputNumber' },
+        { text: '数字范围输入框', value: 'numberRange' },
         { text: '单选下拉菜单', value: 'select' },
         { text: '多选下拉菜单', value: 'multiSelect' },
         { text: '日期选择', value: 'date' },

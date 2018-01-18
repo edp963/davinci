@@ -6,6 +6,7 @@ import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
 // import InputNumber from 'antd/lib/input-number'
+import NumberRange from '../../../../components/NumberRange'
 import Select from 'antd/lib/select'
 import DatePicker from 'antd/lib/date-picker'
 import MultiDatePicker from '../../../../components/MultiDatePicker'
@@ -42,6 +43,25 @@ export class GlobalFilters extends PureComponent {
         //       </FormItem>
         //     </Col>
         //   )
+        case 'numberRange':
+          return (
+            <Col
+              key={f.key}
+              xl={3}
+              lg={4}
+              md={6}
+              sm={12}
+            >
+              <FormItem className={styles.item}>
+                {getFieldDecorator(`${f.key}`, {})(
+                  <NumberRange
+                    placeholder={f.name}
+                    onSearch={onChange(f)}
+                  />
+                )}
+              </FormItem>
+            </Col>
+          )
         case 'select':
         case 'multiSelect':
           let mode = f.type === 'multiSelect'

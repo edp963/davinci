@@ -1,0 +1,21 @@
+.range {
+  &.group {
+    display: flex !important;
+    flex-direction: row;
+
+    .numberDivider {
+      flex-shrink: 0;
+      width: 24px;
+      border-left: 0;
+      pointer-events: none;
+    }
+
+    .number {
+      flex: 1;
+    }
+
+    .to {
+      border-left: 0;
+    }
+  }
+}
