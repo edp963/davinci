@@ -111,6 +111,7 @@ export class Grid extends Component {
     this.charts = {}
     this.interactCallbacks = {}
     this.interactingLinkagers = {}
+    this.interactGlobalFilters = {}
 
     this.state = {
       mounted: false,
@@ -1038,13 +1039,14 @@ export class Grid extends Component {
 
   globalFilterChange = (filter) => (formValue) => {
     const { currentItems } = this.props
-    const { type, items } = filter
+    const { key, type, items } = filter
 
     Object.keys(items).forEach(itemId => {
       const columnAndType = items[itemId].split(DEFAULT_SPLITER)
       const item = currentItems.find(ci => ci.id === Number(itemId))
 
-      let globalFilters = ''
+      let filtersOnThisItem = this.interactGlobalFilters[itemId] || {}
+      let currentFilter
 
       switch (type) {
         case 'numberRange':
@@ -1055,36 +1057,45 @@ export class Grid extends Component {
           if (formValue[1]) {
             numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
           }
-          globalFilters = formValue.length ? numberFilters.join(` and `) : ''
+          currentFilter = numberFilters.length ? numberFilters.join(` and `) : ''
           break
         case 'select':
-          globalFilters = formValue ? `${columnAndType[0]} = ${formValue}` : ''
+          currentFilter = formValue ? `${columnAndType[0]} = ${formValue}` : ''
           break
         case 'multiSelect':
-          globalFilters = formValue.length ? formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
+          currentFilter = formValue.length ? formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
           break
         case 'date':
-          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          currentFilter = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}` : ''
           break
         case 'datetime':
-          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          currentFilter = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
           break
         case 'multiDate':
-          globalFilters = formValue ? formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
+          currentFilter = formValue ? formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
           break
         case 'dateRange':
-          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
+          currentFilter = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
           break
         case 'datetimeRange':
-          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
+          currentFilter = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
           break
         default:
           const inputValue = formValue.target.value.trim()
-          globalFilters = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
+          currentFilter = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
           break
       }
 
-      this.getChartData('rerender', itemId, item.widget_id, { globalFilters })
+      if (currentFilter) {
+        filtersOnThisItem[key] = currentFilter
+        this.interactGlobalFilters[itemId] = filtersOnThisItem
+      } else {
+        delete filtersOnThisItem[key]
+      }
+
+      this.getChartData('rerender', itemId, item.widget_id, {
+        globalFilters: Object.values(this.interactGlobalFilters[itemId]).join(` and `)
+      })
     })
 
     function getValidValue (val, type) {
@@ -1523,7 +1534,7 @@ export class Grid extends Component {
               <GlobalFilters
                 filters={globalFilterValues}
                 onChange={this.globalFilterChange}
-                ref={f => { this.globalFilters = f }}
+                wrappedComponentRef={f => { this.globalFilters = f }}
               />
             </Col>
           </Row>
