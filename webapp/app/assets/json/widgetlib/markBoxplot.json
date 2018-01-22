@@ -19,14 +19,14 @@
           "component": "select"
         },
         {
-          "name": "suffixYAxis",
-          "title": "Y轴后缀",
-          "component": "input"
-        },
-        {
           "name": "markMetrics",
           "title": "标注指标",
           "component": "select"
+        },
+        {
+          "name": "suffixYAxis",
+          "title": "Y轴后缀",
+          "component": "input"
         }
       ]
     },

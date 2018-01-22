@@ -103,10 +103,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
   }
   if (markMetrics && markMetrics.length) {
+    let step1 = dataSource.map(data => ({[xAxis]: data[xAxis], [markMetrics]: data[markMetrics]}))
+    let step2 = step1.reduce((next, value) => Object.assign({}, next, {[value[xAxis]]: value[markMetrics]}), {})
+    let data = Object.values(step2)
     metricOptions.series.push({
       name: markMetrics,
       type: 'scatter',
-      data: dataSource.map(data => data[markMetrics]),
+      data: data,
       itemStyle: {
         normal: {
           color: 'rgb(251, 118, 123)'
