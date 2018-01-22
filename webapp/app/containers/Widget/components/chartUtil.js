@@ -31,6 +31,7 @@ import map from '../charts/map'
 import doubleYAxis from '../charts/doubleYAxis'
 import boxplot from '../charts/boxplot'
 import graph from '../charts/graph'
+import markBoxplot from '../charts/markBoxplot'
 
 export const iconMapping = {
   line: 'icon-chart-line',
@@ -47,6 +48,7 @@ export const iconMapping = {
   map: 'icon-china',
   doubleYAxis: 'icon-chart-bar',
   boxplot: 'icon-508tongji_xiangxiantu',
+  markBoxplot: 'icon-508tongji_xiangxiantu',
   graph: 'icon-510tongji_guanxitu'
 }
 
@@ -89,6 +91,8 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       return boxplot(dataSource, flatInfo, chartParams, interactIndex)
     case 'graph':
       return graph(dataSource, flatInfo, chartParams, interactIndex)
+    case 'markBoxplot':
+      return markBoxplot(dataSource, flatInfo, chartParams, interactIndex)
     default:
       return {}
   }

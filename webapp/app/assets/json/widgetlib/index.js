@@ -32,6 +32,7 @@ import map from './map.json'
 import doubleYAxis from './doubleYAxis.json'
 import boxplot from './boxplot.json'
 import graph from './graph.json'
+import markBoxplot from './markBoxplot.json'
 
 export default [
   area,
@@ -47,5 +48,6 @@ export default [
   map,
   doubleYAxis,
   boxplot,
-  graph
+  graph,
+  markBoxplot
 ]

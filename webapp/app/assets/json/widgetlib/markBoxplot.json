@@ -1,0 +1,102 @@
+{
+  "id": 16,
+  "name": "markBoxplot",
+  "title": "标注箱线图",
+  "renderer": "echarts",
+  "params": [
+    {
+      "name": "data",
+      "title": "数据项配置",
+      "items": [
+        {
+          "name": "xAxis",
+          "title": "X轴",
+          "component": "select"
+        },
+        {
+          "name": "metrics",
+          "title": "显示指标",
+          "component": "select"
+        },
+        {
+          "name": "suffixYAxis",
+          "title": "Y轴后缀",
+          "component": "input"
+        },
+        {
+          "name": "markMetrics",
+          "title": "标注指标",
+          "component": "select"
+        }
+      ]
+    },
+    {
+      "name": "display",
+      "title": "显示",
+      "items": [
+        {
+          "name": "dataZoomThreshold",
+          "title": "超出后缩放",
+          "component": "inputnumber"
+        },
+        {
+          "name": "xAxisRotate",
+          "title": "x轴文字旋转角度",
+          "component": "inputnumber"
+        },
+        {
+          "name": "xAxisInterval",
+          "title": "x轴刻度显示间隔",
+          "component": "inputnumber"
+        }
+      ]
+    },
+    {
+      "name": "tools",
+      "title": "工具",
+      "items": [
+        {
+          "name": "tooltip",
+          "title": "Tooltip",
+          "component": "checkbox"
+        },
+        {
+          "name": "legend",
+          "title": "Legend",
+          "component": "checkbox"
+        },
+        {
+          "name": "toolbox",
+          "title": "Toolbox",
+          "component": "checkbox"
+        }
+      ]
+    },
+    {
+      "name": "position",
+      "title": "边距",
+      "items": [
+        {
+          "name": "top",
+          "title": "Top",
+          "component": "inputnumber"
+        },
+        {
+          "name": "bottom",
+          "title": "Bottom",
+          "component": "inputnumber"
+        },
+        {
+          "name": "left",
+          "title": "Left",
+          "component": "inputnumber"
+        },
+        {
+          "name": "right",
+          "title": "Right",
+          "component": "inputnumber"
+        }
+      ]
+    }
+  ]
+}
