@@ -382,8 +382,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   def authShareRoute: Route = path(routeName / "login" / Segment) { shareInfoStr =>
     post {
       entity(as[LoginClass]) { login =>
-        lazy val ldapIsEnable = modules.config.getBoolean("ldap.isEnable")
-        onComplete(AuthorizationProvider.createSessionClass(login, ldapIsEnable)) {
+        onComplete(AuthorizationProvider.createSessionClass(login)) {
           case Success(sessionEither) =>
             sessionEither.fold(
               authorizationError => complete(BadRequest, ResponseJson[String](getHeader(authorizationError.statusCode, authorizationError.desc, null), "user name or password invalid")),

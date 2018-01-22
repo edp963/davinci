@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.util.sql
 
 import java.sql.Types._
@@ -32,6 +29,7 @@ import java.util.regex.Pattern
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
 import edp.davinci.util.common.DateUtils
+import edp.davinci.util.common.DavinciConstants.sqlSeparator
 import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
 
@@ -291,6 +289,11 @@ trait SqlUtils extends Serializable {
     val result = pattern.matcher(sqlString).replaceAll("$1")
     logger.info(s"sql after filter>>>>>>>>>>>$result")
     result
+  }
+
+  def getSqlArray(sql: String): Array[String] = {
+    if (sql.lastIndexOf(sqlSeparator) == sql.length - 1) sql.dropRight(1).split(sqlSeparator)
+    else sql.split(sqlSeparator)
   }
 
 

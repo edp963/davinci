@@ -17,14 +17,8 @@ trait STRender {
   private lazy val logger = Logger.getLogger(this.getClass)
 
   def getHTML(resultList: Seq[String], stgPath: String = "stg/tmpl.stg"): String = {
-    val listBuf: mutable.Buffer[List[String]] = resultList.toBuffer.map {
-      str:String => CSVReader.open(Source.fromString(str)).readNext().get
-    }
-    val columns: List[String] = listBuf.head
-    listBuf.remove(0,2)
-    listBuf.prepend(columns)
-    listBuf.prepend(List(""))
-    val noNullResult = listBuf.map(seq => seq.map(s => if (null == s) "" else s))
+    val listBuffer: mutable.Buffer[List[String]] = covert2ListBuf(resultList)
+    val noNullResult = nullValue2EmptyString(listBuffer)
     val tables = Seq(noNullResult)
     STGroupFile(stgPath, Constants.DefaultEncoding, dollarDelimiter, dollarDelimiter).instanceOf("email_html")
       .map(_.add("tables", tables).render().get)
@@ -32,6 +26,21 @@ trait STRender {
         s"ST Error: $e"
       }.getOrElse("")
   }
+
+  private def covert2ListBuf(resultList: Seq[String]) = {
+    val listBuffer: mutable.Buffer[List[String]] = resultList.toBuffer.map {
+      str: String => CSVReader.open(Source.fromString(str)).readNext().get
+    }
+    val fieldTypeIndex = 1
+    listBuffer.remove(fieldTypeIndex)
+    listBuffer.prepend(List(""))
+    listBuffer
+  }
+
+  private def nullValue2EmptyString(listBuffer: mutable.Buffer[List[String]]) = {
+    listBuffer.map(seq => seq.map(s => if (null == s) "" else s))
+  }
+
 
   def renderSql(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
     val queryVars = queryKVMap.keySet.mkString("(", ",", ")")
@@ -41,17 +50,17 @@ trait STRender {
         s"""sqlTemplate$queryVars ::= <<
            |$sqlToRender
            |>>""".stripMargin
-    logger.info("~~~~~~~~~~~~~~~~~~~~~~~~sql template after merge:\n" + sqlTemplate)
+    logger.info("sql template in renderSql:" + sqlTemplate)
     val stg: STGroupString = new STGroupString(sqlTemplate)
     val sqlST = stg.getInstanceOf("sqlTemplate")
     queryKVMap.foreach(kv => sqlST.add(kv._1, kv._2))
-    sqlST.render()
+    sqlST.render().trim
   }
 
 
   def renderSqlByST(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
     val sqlToRender: String = sqlWithoutVars.replaceAll("<>", "!=")
-    val sqlTemplate = new ST(sqlToRender,'$','$')
+    val sqlTemplate = new ST(sqlToRender, '$', '$')
     queryKVMap.foreach(kv => sqlTemplate.add(kv._1, kv._2))
     sqlTemplate.render()
   }

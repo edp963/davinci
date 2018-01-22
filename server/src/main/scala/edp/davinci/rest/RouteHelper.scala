@@ -25,6 +25,7 @@ import java.io.File
 import java.sql.{Connection, ResultSet, SQLException, Statement}
 import java.util.concurrent.TimeUnit
 
+import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ContentType.NonBinary
 import akka.http.scaladsl.model.StatusCodes._
@@ -32,27 +33,27 @@ import akka.http.scaladsl.model.headers.ContentDispositionTypes.{attachment, inl
 import akka.http.scaladsl.model.{HttpEntity, _}
 import akka.http.scaladsl.server.{Directives, Route, StandardRoute}
 import akka.stream.ActorMaterializer
-import akka.util.{ByteString, Timeout}
-import edp.davinci.util.common.DavinciConstants._
+import akka.util.Timeout
 import edp.davinci.persistence.entities.SourceConfig
 import edp.davinci.rest.view.ViewService
+import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.common.FileUtils._
-import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.json.JsonUtils.json2caseClass
 import edp.davinci.util.common.ResponseUtils.getHeader
-import edp.davinci.util.common.STRender.getHTML
-import edp.davinci.util.sql.SqlUtils._
-import edp.davinci.util.redis.JedisConnection
-import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatch, STRender}
+import edp.davinci.util.common.STRenderUtils.getHTML
+import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatcher, STRenderUtils}
+import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.json.JsonUtils.json2caseClass
+import edp.davinci.util.redis.JedisConnection
 import edp.davinci.util.sql.SqlUtils
+import edp.davinci.util.sql.SqlUtils._
 import edp.davinci.{KV, ModuleInstance}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class ActorMessage(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig, expired: Int)
@@ -63,25 +64,22 @@ object RouteHelper extends Directives {
   val modules = ModuleInstance.getModule
   private lazy val fetchSize = 100
   private lazy val cacheIsEnable = ModuleInstance.getModule.config.getBoolean("cache.isEnable")
-  //  private lazy val timeoutStr = ModuleInstance.getModule.config.getString("akka.http.server.request-timeout ")
-  //  lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
-
-  implicit lazy val system = modules.system
-  implicit lazy val materializer = ActorMaterializer()
-  implicit lazy val ec = modules.system.dispatcher
+  implicit lazy val system: ActorSystem = modules.system
+  implicit lazy val materializer: ActorMaterializer = ActorMaterializer()
+  implicit lazy val ec: ExecutionContextExecutor = modules.system.dispatcher
 
   def getResultComplete(session: SessionClass, viewId: Long, paginate: Paginate, cacheClass: CacheClass, contentType: NonBinary, manualInfo: ManualInfo): StandardRoute = {
     val source = Await.result(ViewService.getSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
     if (source.nonEmpty) {
       try {
         val (sqlTemp, tableName, config, _) = source.head
-        val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
-        val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
         if (sqlTemp.trim != "") {
           logger.info("the sqlTemp written by admin:" + sqlTemp)
           val filteredSql = filterAnnotation(sqlTemp.trim)
+          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
+          val kvGroupParams = groupParams.flatMap(g => json2caseClass[Seq[KV]](g))
           val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, queryParams, groupVars)
+          val renderedSql: mutable.Buffer[String] = getNoVarSqls(filteredSql, queryParams, kvGroupParams)
           val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
           val projectSql = getProjectSql(renderedSql.last, tableName, sourceConfig, paginate, manualInfo)
           logger.info("the projectSql get from sql template:" + projectSql)
@@ -110,14 +108,14 @@ object RouteHelper extends Directives {
     if (source.nonEmpty) {
       try {
         val (updateSql, _, config, _) = source.head
-        val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
-        val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
         val updateSql_get = updateSql.getOrElse("").trim
         if (updateSql_get != "") {
           logger.info("the sqlTemp written by admin:" + updateSql_get)
           val filteredSql = filterAnnotation(updateSql_get)
+          val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
+          val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
           val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = mergeAndRender(filteredSql, queryParams, groupVars)
+          val renderedSql: mutable.Buffer[String] = getNoVarSqls(filteredSql, queryParams, groupVars)
           val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
           executeUpdate(sourceConfig, renderedSql)
           complete(OK, ResponseJson[String](getHeader(200, "do update successfully", null), "do update successfully"))
@@ -136,6 +134,28 @@ object RouteHelper extends Directives {
       logger.error("get source failure,source info size:" + source.size)
       complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), "no source found"))
     }
+  }
+
+  def getNoVarSqls(sqlString: String,
+                   paramSeq: Seq[KV] = null,
+                   groupParams: Seq[KV] = null): mutable.Buffer[String] = {
+    val sqlArray = if (sqlString.lastIndexOf(sqlSeparator) == sqlString.length - 1) sqlString.dropRight(1).split(sqlSeparator)
+    else sqlString.split(sqlSeparator)
+    val noVarSql = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
+    logger.info("sql without var defined: " + noVarSql)
+    val groupKVMap = getGroupKVMap(sqlArray, groupParams)
+    val mergeSql =
+      if (groupKVMap.nonEmpty) new GroupVar(groupParams).replace(sqlString)
+      else noVarSql
+    logger.info("sql after group merge: " + mergeSql)
+    val queryKVMap = getQueryKVMap(sqlArray, paramSeq)
+    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
+    logger.info("sql after query var render: " + renderedSql)
+    val trimRenderSql = renderedSql.trim
+    val resetSql =
+      if (trimRenderSql.lastIndexOf(sqlSeparator) == trimRenderSql.length - 1)
+        trimRenderSql.dropRight(1).split(sqlSeparator) else trimRenderSql.split(sqlSeparator)
+    resetSql.toBuffer
   }
 
 
@@ -207,6 +227,7 @@ object RouteHelper extends Directives {
 
   def queryCache(actorMessage: ActorMessage): Seq[String] = {
     import akka.pattern.ask
+
     import scala.collection.JavaConversions._
     implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
     try {
@@ -226,29 +247,6 @@ object RouteHelper extends Directives {
         logger.error("query cache exception", e)
         throw e
     }
-  }
-
-
-  def mergeAndRender(sqlString: String,
-                     paramSeq: Seq[KV] = null,
-                     groupParams: Seq[KV] = null): mutable.Buffer[String] = {
-    val sqlArray = if (sqlString.lastIndexOf(sqlSeparator) == sqlString.length - 1) sqlString.dropRight(1).split(sqlSeparator)
-    else sqlString.split(sqlSeparator)
-    val groupKVMap = getGroupKVMap(sqlArray, groupParams)
-    val queryKVMap = getQueryKVMap(sqlArray, paramSeq)
-    val noVarSql = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
-    logger.info("sql without var defined: " + noVarSql)
-    val mergeSql =
-      if (groupKVMap.nonEmpty) RegexMatch.matchAndReplace(noVarSql, groupKVMap)
-      else noVarSql
-    logger.info("sql after group merge: " + mergeSql)
-    val renderedSql = STRender.renderSql(mergeSql, queryKVMap)
-    logger.info("sql after query var render: " + renderedSql)
-    val trimRenderSql = renderedSql.trim
-    val resetSql =
-      if (trimRenderSql.lastIndexOf(sqlSeparator) == trimRenderSql.length - 1)
-        trimRenderSql.dropRight(1).split(sqlSeparator) else trimRenderSql.split(sqlSeparator)
-    resetSql.toBuffer
   }
 
 

@@ -28,7 +28,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{ConfigurationModule, PersistenceModule, _}
 import edp.davinci.persistence.entities._
-import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql, mergeAndRender}
+import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql, getNoVarSqls}
 import edp.davinci.rest._
 import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.common.ResponseUtils._
@@ -306,7 +306,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
             try {
               if (sqlTemplate.trim != "") {
                 val filteredSql = filterAnnotation(sqlTemplate.trim)
-                val renderedSQLBuf: mutable.Buffer[String] = mergeAndRender(filteredSql)
+                val renderedSQLBuf: mutable.Buffer[String] = getNoVarSqls(filteredSql)
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
                 val projectSql = getProjectSql(renderedSQLBuf.last, "SQLVERIFY", sourceConfig, Paginate(10, -1, ""))
                 logger.info("the projectSql get from sql template:\n" + projectSql)
