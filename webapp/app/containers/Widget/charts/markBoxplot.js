@@ -98,7 +98,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         symbolPosition: 'end',
         symbolSize: 8,
         barGap: '30%',
-        data: b.outliers
+        data: b.outliers,
+        tooltip: {formatter: function (param) {
+          return [
+            `${param.name} `,
+            `异常值: ${param.data[1]}`
+          ].join('<br/>')
+        }}
       }), [])
     }
   }
@@ -211,12 +217,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 }
 
 function formatter (param) {
-  return [
-    `${param.name}: `,
-    `upper: ${param.data[0]}`,
-    `Q1: ${param.data[1]}`,
-    `median: ${param.data[2]}`,
-    `Q3: ${param.data[3]}`,
-    `lower: ${param.data[4]}`
+  let result = [
+    `${param.name} `,
+    `最大值: ${param.data[5]}`,
+    `上四分位数: ${param.data[4]}`,
+    `中位数: ${param.data[3]}`,
+    `下四分位数: ${param.data[2]}`,
+    `最小值: ${param.data[1]}`
   ].join('<br/>')
+  return result
 }
