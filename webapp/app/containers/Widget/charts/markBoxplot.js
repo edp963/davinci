@@ -23,7 +23,6 @@ import dataTool from 'echarts/extension-src/dataTool/prepareBoxplotData'
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
     xAxis,
-    metrics,
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
@@ -34,9 +33,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     bottom,
     left,
     right,
-    suffixYAxis
+    suffixYAxis,
+    markMetrics
   } = chartParams
-
+  let {metrics} = chartParams
   let metricOptions,
     xAxisOptions,
     yAxisOptions,
@@ -74,6 +74,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
   data = []
   if (metrics && metrics.length) {
+    metrics = [metrics]
     let step1 = xAxisData.map(xData => dataSource.filter(data => data[xAxis] === xData))
     let step2 = step1.map(step => metrics.map(me => step.map(st => st[me])))
     let step3 = metrics.map((me, i) => {
@@ -100,6 +101,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         data: b.outliers
       }), [])
     }
+  }
+  if (markMetrics && markMetrics.length) {
+    metricOptions.series.push({
+      name: markMetrics,
+      type: 'scatter',
+      data: dataSource.map(data => data[markMetrics]),
+      itemStyle: {
+        normal: {
+          color: 'rgb(251, 118, 123)'
+        }
+      }
+    })
   }
 
   suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
@@ -181,7 +194,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }]
   }
 
- // console.log(metricOptions)
+  // console.log(metricOptions)
   return Object.assign({},
     metricOptions,
     xAxisOptions,
