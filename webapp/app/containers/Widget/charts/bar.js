@@ -39,7 +39,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     bottom,
     left,
     right,
-    suffixYAxis
+    suffixYAxis,
+    stackAccounting
   } = chartParams
 
   let metricOptions,
@@ -58,6 +59,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   let metricArr = []
 
   if (metrics) {
+    let dataOption = metrics.map(me => dataSource.map(data => data[me]))
+    let wrapper = []
+    dataOption.forEach((data, index) => {
+      data.forEach((da, i) => {
+        if (wrapper[i]) {
+          wrapper[i].push(da)
+        } else {
+          wrapper[i] = [da]
+        }
+      })
+    })
+    wrapper = wrapper.map((wrap, index) => wrap.reduce((sum, val) => sum + Number(val), 0))
     metrics.forEach(m => {
       stackOption = stack && stack.length ? { stack: 'stack' } : null
 
@@ -76,6 +89,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             label: {
               normal: {
                 show: true,
+                formatter: (param) => {
+                  let result = (Number(param.value) / wrapper[param.dataIndex]) * 100
+                  if (stackAccounting && stackAccounting.length && stack && stack.length) {
+                    return `${param.value}\r\n\r\n(${result.toFixed(0)}%)`
+                  }
+                },
                 position: stack && stack.length ? 'insideTop' : 'top'
               }
             }
