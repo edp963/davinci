@@ -64,6 +64,8 @@
 
 .icon-chartwordcloud:before { content: "\e6cd"; }
 
+.icon-duplex:before { content: "\e6eb"; }
+
 .icon-datasource24:before { content: "\e6ef"; }
 
 .icon-radarchart:before { content: "\e7cb"; }
@@ -105,3 +107,5 @@
 .icon-niantie:before { content: "\e61d"; }
 
 .icon-edit-2:before { content: "\e652"; }
+
+.icon-waterfall:before { content: "\e606"; }

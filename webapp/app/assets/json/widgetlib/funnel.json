@@ -42,19 +42,38 @@
       ]
     },
     {
+      "name": "legend",
+      "title": "图例",
+      "items": [
+        {
+          "name": "hasLegend",
+          "title": "开启图例",
+          "component": "checkbox",
+          "span": 24
+        },
+        {
+          "name": "legendPosition",
+          "title": "图例位置",
+          "component": "radio",
+          "values": [{
+            "name": "顶部",
+            "value": "top"
+          }, {
+            "name": "底部",
+            "value": "bottom"
+          }, {
+            "name": "右侧",
+            "value": "right"
+          }],
+          "default": "top",
+          "span": 24
+        }
+      ]
+    },
+    {
       "name": "tools",
       "title": "工具",
       "items": [
-        {
-          "name": "tooltip",
-          "title": "Tooltip",
-          "component": "checkbox"
-        },
-        {
-          "name": "legend",
-          "title": "Legend",
-          "component": "checkbox"
-        },
         {
           "name": "toolbox",
           "title": "Toolbox",
@@ -63,30 +82,16 @@
       ]
     },
     {
-      "name": "position",
-      "title": "边距比例",
+      "name": "size",
+      "title": "图形比例",
       "items": [
-        {
-          "name": "top",
-          "title": "Top",
-          "component": "inputnumber",
-          "min": 0,
-          "max": 100
-        },
-        {
-          "name": "left",
-          "title": "Left",
-          "component": "inputnumber",
-          "min": 0,
-          "max": 100
-        },
         {
           "name": "width",
           "title": "宽",
           "component": "inputnumber",
           "min": 0,
           "max": 100,
-          "default": 100
+          "default": 80
         },
         {
           "name": "height",
@@ -94,7 +99,7 @@
           "component": "inputnumber",
           "min": 0,
           "max": 100,
-          "default": 100
+          "default": 80
         },
         {
           "name": "minSize",
@@ -111,6 +116,28 @@
           "min": 0,
           "max": 100,
           "default": 100
+        }
+      ]
+    },
+    {
+      "name": "position",
+      "title": "边距比例",
+      "items": [
+        {
+          "name": "top",
+          "title": "上边距",
+          "component": "inputnumber",
+          "min": 0,
+          "max": 100,
+          "default": 10
+        },
+        {
+          "name": "left",
+          "title": "左边距",
+          "component": "inputnumber",
+          "min": 0,
+          "max": 100,
+          "default": 10
         }
       ]
     }

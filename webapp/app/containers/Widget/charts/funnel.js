@@ -29,8 +29,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     min,
     max,
     gap,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     left,
@@ -44,9 +44,36 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     minOption,
     maxOption,
     gapOption,
-    tooltipOptions,
     legendOptions,
     toolboxOptions
+
+  // legend
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 96 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
+        data: dataSource.map(d => d[title]),
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
 
   // series 数据项
   let metricArr = []
@@ -129,24 +156,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     series: metricArr
   }
 
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'item'
-      }
-    } : null
-
-  // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
-        data: dataSource.map(d => d[title]),
-        orient: 'vertical',
-        x: 'left'
-      }
-    } : null
-
   // toolbox
   toolboxOptions = toolbox && toolbox.length
     ? {
@@ -155,16 +164,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           dataView: {readOnly: false},
           restore: {},
           saveAsImage: {}
-        }
+        },
+        right: 8
       }
     } : null
 
-  return Object.assign({},
-    {
-      calculable: true
-    },
+  return Object.assign({
+    calculable: true,
+    tooltip: {
+      trigger: 'item'
+    }
+  },
     metricOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions
   )

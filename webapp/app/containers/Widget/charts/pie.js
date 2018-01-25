@@ -29,8 +29,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     circle,
     insideRadius,
     outsideRadius,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     left
@@ -38,9 +38,39 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
   let metricOptions,
     labelOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions
+
+  // legend
+  let adjustedLeft = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedLeft = 45
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 96 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
+        data: dataSource.map(d => d[title]),
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
 
   // series 数据项
   let metricArr = []
@@ -77,7 +107,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       name: title,
       type: 'pie',
       radius: circle && circle.length ? [`${insideRadius}%`, `${outsideRadius}%`] : `${insideRadius}%`,
-      center: [`${left}%`, `${top}%`],
+      center: [
+        adjustedLeft && legendPosition === 'right' ? `${Math.min(left, adjustedLeft)}%` : `${left}%`,
+        `${top}%`
+      ],
       avoidLabelOverlap: !circle || !circle.length,
       data: dataSource.map((d, index) => {
         if (index === interactIndex) {
@@ -110,25 +143,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     series: metricArr
   }
 
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'item',
-        formatter: '{b} <br/>{c} ({d}%)'
-      }
-    } : null
-
-  // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
-        data: dataSource.map(d => d[title]),
-        orient: 'vertical',
-        x: 'left'
-      }
-    } : null
-
   // toolbox
   toolboxOptions = toolbox && toolbox.length
     ? {
@@ -137,13 +151,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           dataView: {readOnly: false},
           restore: {},
           saveAsImage: {}
-        }
+        },
+        right: 8
       }
     } : null
 
-  return Object.assign({},
+  return Object.assign({
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b} <br/>{c} ({d}%)'
+    }
+  },
     metricOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions
   )

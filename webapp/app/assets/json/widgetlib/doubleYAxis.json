@@ -78,6 +78,12 @@
           "component": "checkbox"
         },
         {
+          "name": "yAxisSplitNumber",
+          "title": "y轴刻度条数",
+          "component": "inputnumber",
+          "default": 5
+        },
+        {
           "name": "dataZoomThreshold",
           "title": "超出后缩放",
           "component": "inputnumber"
@@ -111,7 +117,37 @@
         {
           "name": "symbol",
           "title": "节点标记",
-          "component": "checkbox"
+          "component": "checkbox",
+          "default": ["symbol"]
+        }
+      ]
+    },
+    {
+      "name": "legend",
+      "title": "图例",
+      "items": [
+        {
+          "name": "hasLegend",
+          "title": "开启图例",
+          "component": "checkbox",
+          "span": 24
+        },
+        {
+          "name": "legendPosition",
+          "title": "图例位置",
+          "component": "radio",
+          "values": [{
+            "name": "顶部",
+            "value": "top"
+          }, {
+            "name": "底部",
+            "value": "bottom"
+          }, {
+            "name": "右侧",
+            "value": "right"
+          }],
+          "default": "top",
+          "span": 24
         }
       ]
     },
@@ -119,16 +155,6 @@
       "name": "tools",
       "title": "工具",
       "items": [
-        {
-          "name": "tooltip",
-          "title": "Tooltip",
-          "component": "checkbox"
-        },
-        {
-          "name": "legend",
-          "title": "Legend",
-          "component": "checkbox"
-        },
         {
           "name": "toolbox",
           "title": "Toolbox",
@@ -142,23 +168,27 @@
       "items": [
         {
           "name": "top",
-          "title": "Top",
-          "component": "inputnumber"
+          "title": "上边距",
+          "component": "inputnumber",
+          "default": 45
         },
         {
           "name": "bottom",
-          "title": "Bottom",
-          "component": "inputnumber"
+          "title": "下边距",
+          "component": "inputnumber",
+          "default": 40
         },
         {
           "name": "left",
-          "title": "Left",
-          "component": "inputnumber"
+          "title": "左边距",
+          "component": "inputnumber",
+          "default": 50
         },
         {
           "name": "right",
-          "title": "Right",
-          "component": "inputnumber"
+          "title": "右边距",
+          "component": "inputnumber",
+          "default": 30
         }
       ]
     }

@@ -46,7 +46,7 @@ export const iconMapping = {
   table: 'icon-table',
   text: 'icon-text',
   map: 'icon-china',
-  doubleYAxis: 'icon-chart-bar',
+  doubleYAxis: 'icon-duplex',
   boxplot: 'icon-508tongji_xiangxiantu',
   markBoxplot: 'icon-508tongji_xiangxiantu',
   graph: 'icon-510tongji_guanxitu'

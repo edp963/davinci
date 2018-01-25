@@ -32,12 +32,13 @@ export default function (dataSource, flatInfo, chartParams) {
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
-    splitLine,
     size,
     label,
+    showLabel,
     value,
     shadow,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     bottom,
@@ -50,7 +51,6 @@ export default function (dataSource, flatInfo, chartParams) {
     metricOptions,
     xAxisOptions,
     yAxisOptions,
-    splitLineOptions,
     sizeOptions,
     labelOptions,
     shadowOptions,
@@ -74,21 +74,47 @@ export default function (dataSource, flatInfo, chartParams) {
     }
   }
   shadowOptions = shadow && shadow.length && {
-    shadowBlur: 10,
-    shadowColor: 'rgba(0, 0, 0, 0.35)',
-    shadowOffsetX: 10,
-    shadowOffsetY: 10
+    itemStyle: {
+      normal: {
+        shadowBlur: 10,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowOffsetY: 5
+      }
+    }
   }
-  labelOptions = label && {
-    label: {
-      emphasis: Object.assign({}, {
-        show: true,
-        opacity: 0.8,
-        position: 'top',
-        formatter: function (param) {
-          return param.data[2]
+
+  if (label || showLabel && showLabel.length) {
+    let normal
+    let emphasis
+
+    if (label) {
+      emphasis = {
+        emphasis: {
+          show: true,
+          opacity: 0.8,
+          position: 'top',
+          formatter: function (param) {
+            return param.data[2]
+          }
         }
-      }, shadowOptions)
+      }
+    }
+
+    if (showLabel && showLabel.length) {
+      normal = {
+        normal: {
+          show: true,
+          opacity: 0.8,
+          position: 'top',
+          formatter: function (param) {
+            return param.data[2]
+          }
+        }
+      }
+    }
+
+    labelOptions = {
+      label: Object.assign({}, normal, emphasis)
     }
   }
 
@@ -103,7 +129,8 @@ export default function (dataSource, flatInfo, chartParams) {
             data: grouped[k].map(g => [g[xAxis], g[yAxis], g[label], g[value]])
           },
           sizeOptions,
-          labelOptions
+          labelOptions,
+          shadowOptions
         )
         metricArr.push(serieObj)
       })
@@ -115,7 +142,8 @@ export default function (dataSource, flatInfo, chartParams) {
         data: dataSource.map(g => [g[xAxis], g[yAxis], g[label], g[value]])
       },
       sizeOptions,
-      labelOptions
+      labelOptions,
+      shadowOptions
     )
     metricArr.push(serieObj)
   }
@@ -124,24 +152,15 @@ export default function (dataSource, flatInfo, chartParams) {
     series: metricArr
   }
 
-  // 交叉轴
-  splitLineOptions = splitLine && splitLine.length && {
-    splitLine: {
-      lineStyle: {
-        type: 'dashed'
-      }
-    }
-  }
-
   // x轴数据
   xAxisOptions = {
-    xAxis: Object.assign({
+    xAxis: {
       type: 'value',
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
       }
-    }, splitLineOptions)
+    }
   }
   suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYAxis}`
@@ -150,18 +169,41 @@ export default function (dataSource, flatInfo, chartParams) {
     yAxis: Object.assign({
       type: 'value',
       scale: true
-    }, splitLineOptions, suffixYAxisOptions)
+    }, suffixYAxisOptions)
   }
 
   // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
+  let adjustedBottom = 0
+  let adjustedRight = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedRight = 108
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        adjustedBottom = 72
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 120 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
         data: metricArr.map(m => m.name),
-        align: 'left',
-        right: 200
-      }
-    } : null
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
 
   // toolbox
   toolboxOptions = toolbox && toolbox.length
@@ -175,7 +217,8 @@ export default function (dataSource, flatInfo, chartParams) {
           saveAsImage: {
             pixelRatio: 2
           }
-        }
+        },
+        right: 8
       }
     } : null
 
@@ -184,8 +227,8 @@ export default function (dataSource, flatInfo, chartParams) {
     grid: {
       top: top,
       left: left,
-      right: right,
-      bottom: bottom
+      right: Math.max(right, adjustedRight),
+      bottom: Math.max(bottom, adjustedBottom)
     }
   }
 
@@ -209,7 +252,19 @@ export default function (dataSource, flatInfo, chartParams) {
     }]
   }
 
-  return Object.assign({},
+  return Object.assign({
+    tooltip: {
+      formatter: (node) => {
+        const nodeValues = node.data
+        return `<span>
+          ${nodeValues[2]} <br/>
+          ${value}: ${nodeValues[3]} <br/>
+          ${xAxis}: ${nodeValues[0]} <br/>
+          ${yAxis}: ${nodeValues[1]} <br/>
+        </span>`
+      }
+    }
+  },
     metricOptions,
     xAxisOptions,
     yAxisOptions,

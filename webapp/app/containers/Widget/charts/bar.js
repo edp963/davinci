@@ -32,8 +32,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     bottom,
@@ -48,7 +48,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     yAxisOptions,
     stackOption,
     labelOption,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
@@ -101,7 +100,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           } : null
       }
 
-      let serieObj = Object.assign({},
+      let serieObj = Object.assign(
         {
           name: m,
           type: 'bar',
@@ -194,24 +193,38 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
   }
 
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'axis'
-      }
-    } : null
-
   // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
+  let adjustedBottom = 0
+  let adjustedRight = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedRight = 108
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        adjustedBottom = 72
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 120 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
         data: metricArr.map(m => m.name),
-        align: 'left',
-        top: 3,
-        right: 200
-      }
-    } : null
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
 
   // toolbox
   toolboxOptions = toolbox && toolbox.length
@@ -226,7 +239,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             pixelRatio: 2
           }
         },
-        right: 22
+        right: 8
       }
     } : null
 
@@ -235,8 +248,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     grid: {
       top: top,
       left: left,
-      right: right,
-      bottom: bottom
+      right: Math.max(right, adjustedRight),
+      bottom: Math.max(bottom, adjustedBottom)
     }
   }
 
@@ -260,11 +273,14 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }]
   }
 
-  return Object.assign({},
+  return Object.assign({
+    tooltip: {
+      trigger: 'axis'
+    }
+  },
     metricOptions,
     xAxisOptions,
     yAxisOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
