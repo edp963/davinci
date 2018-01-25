@@ -108,8 +108,8 @@
 }
 
 /* 解决 RangePicker 与其他form元素不对齐 */
-.ant-form-item-control {
-  line-height: 1.5;
+.ant-calendar-range-picker-input {
+  vertical-align: baseline;
 }
 
   /* 去掉默认动画效果 */

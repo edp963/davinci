@@ -33,9 +33,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     symbol,
     xAxisInterval,
     xAxisRotate,
+    yAxisSplitNumber,
     dataZoomThreshold,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     bottom,
@@ -54,7 +55,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     yAxisOptions,
     stackOption,
     labelOption,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
@@ -77,7 +77,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   smoothOption = smooth && smooth.length ? { smooth: true } : null
   // step
   stepOption = step && step.length ? { step: true } : null
-  stackOption = stack && stack.length ? { stack: 'stack' } : null
+  // stack
+  stackOption = (axis) => {
+    if (stack && stack.length) {
+      return { stack: axis }
+    } else {
+      return null
+    }
+  }
+
   suffixYLeftAxisOptions = suffixYLeftAxis && suffixYLeftAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYLeftAxis}`
   }} : null
@@ -106,13 +114,24 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
   if (yAxisLeft && yAxisRight) {
+    const leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+    const rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+    const leftInterval = getYaxisInterval(leftMax, yAxisSplitNumber)
+    const rightInterval = getYaxisInterval(rightMax, yAxisSplitNumber)
+
     yAxis[0] = Object.assign({
       type: 'value',
-      key: 'yAxisIndex0'
+      key: 'yAxisIndex0',
+      min: 0,
+      max: leftInterval * yAxisSplitNumber,
+      interval: leftInterval
     }, suffixYLeftAxisOptions)
     yAxis[1] = Object.assign({
       type: 'value',
-      key: 'yAxisIndex1'
+      key: 'yAxisIndex1',
+      min: 0,
+      max: rightInterval * yAxisSplitNumber,
+      interval: rightInterval
     }, suffixYRightAxisOptions)
     yAxisOptions = {
       yAxis
@@ -123,7 +142,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         type: yAxisLeft,
         data: dataSource.map(d => d[left]),
         ...labelOption,
-        ...stackOption
+        ...stackOption('left')
       }))
     }
     if (rightMetrics && rightMetrics.length > 0) {
@@ -133,7 +152,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         yAxisIndex: 1,
         data: dataSource.map(d => d[right]),
         ...labelOption,
-        ...stackOption
+        ...stackOption('right')
       }))
     }
 
@@ -167,29 +186,38 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }]
     }
   }
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'cross',
-          crossStyle: {
-            color: '#999'
-          }
-        }
-      }
-    } : null
   // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
+  let adjustedBottom = 0
+  let adjustedRight = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedRight = 180
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        adjustedBottom = 72
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 120 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
         data: metricOptions.series.map(m => m.name),
-        align: 'left',
-        top: 3,
-        right: 200
-      }
-    } : null
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
   // toolbox
   toolboxOptions = toolbox && toolbox.length
     ? {
@@ -203,7 +231,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             pixelRatio: 2
           }
         },
-        right: 22
+        right: 8
       }
     } : null
   // grid
@@ -211,8 +239,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     grid: {
       top: top,
       left: left,
-      right: right,
-      bottom: bottom
+      right: Math.max(right, adjustedRight),
+      bottom: Math.max(bottom, adjustedBottom)
     }
   }
   dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
@@ -234,15 +262,24 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }]
   }
-  let doubleYOptions = Object.assign({},
+  let doubleYOptions = Object.assign({
+    tooltip: {
+      trigger: 'axis'
+    }
+  },
     metricOptions,
     xAxisOptions,
     yAxisOptions,
     legendOptions,
     gridOptions,
-    tooltipOptions,
     toolboxOptions,
     dataZoomOptions
   )
   return doubleYOptions
+}
+
+function getYaxisInterval (max, splitNumber) {
+  const roughInterval = parseInt(max / splitNumber)
+  const divisor = Math.pow(10, (`${roughInterval}`.length - 1))
+  return (parseInt(roughInterval / divisor) + 1) * divisor
 }

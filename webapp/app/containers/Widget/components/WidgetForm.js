@@ -239,7 +239,7 @@ export class WidgetForm extends React.Component {
                 <Col key={item.name} span={item.span || 12}>
                   <FormItem label="">
                     {getFieldDecorator(item.name, {
-                      initialValue: []
+                      initialValue: item.default || []
                     })(
                       <CheckboxGroup
                         options={[{label: item.title, value: item.name}]}

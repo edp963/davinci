@@ -35,8 +35,8 @@ export default function (dataSource, flatInfo, chartParams) {
     step,
     stack,
     symbol,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
     top,
     bottom,
@@ -52,7 +52,6 @@ export default function (dataSource, flatInfo, chartParams) {
     stepOption,
     stackOption,
     symbolOption,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
@@ -141,23 +140,38 @@ export default function (dataSource, flatInfo, chartParams) {
     }
   }
 
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'axis'
-      }
-    } : null
-
   // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
+  let adjustedBottom = 0
+  let adjustedRight = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedRight = 108
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        adjustedBottom = 72
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 120 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
         data: metricArr.map(m => m.name),
-        align: 'left',
-        right: 200
-      }
-    } : null
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
 
   // toolbox
   toolboxOptions = toolbox && toolbox.length
@@ -171,7 +185,8 @@ export default function (dataSource, flatInfo, chartParams) {
           saveAsImage: {
             pixelRatio: 2
           }
-        }
+        },
+        right: 8
       }
     } : null
 
@@ -180,8 +195,8 @@ export default function (dataSource, flatInfo, chartParams) {
     grid: {
       top: top,
       left: left,
-      right: right,
-      bottom: bottom
+      right: Math.max(right, adjustedRight),
+      bottom: Math.max(bottom, adjustedBottom)
     }
   }
 
@@ -205,16 +220,17 @@ export default function (dataSource, flatInfo, chartParams) {
     }]
   }
 
-  return Object.assign({},
-    {
-      yAxis: {
-        ...{type: 'value'},
-        ...suffixYAxisOptions
-      }
+  return Object.assign({
+    yAxis: {
+      ...{type: 'value'},
+      ...suffixYAxisOptions
     },
+    tooltip: {
+      trigger: 'axis'
+    }
+  },
     metricOptions,
     xAxisOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
