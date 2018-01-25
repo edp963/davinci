@@ -243,12 +243,12 @@ export class Workbench extends React.Component {
           widget.create_by = createBy
           this.props.onEditWidget(widget).then(() => {
             resolve()
-            this.props.onClose()
+            this.props.onAfterSave()
           })
         } else {
           this.props.onAddWidget(widget).then(() => {
             resolve()
-            this.props.onClose()
+            this.props.onAfterSave()
           })
         }
       } else {
@@ -500,7 +500,7 @@ Workbench.propTypes = {
   onClearBizdatas: PropTypes.func,
   onAddWidget: PropTypes.func,
   onEditWidget: PropTypes.func,
-  onClose: PropTypes.func
+  onAfterSave: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({

@@ -188,9 +188,11 @@ export class WidgetForm extends React.Component {
           switch (item.component) {
             case 'select':
               formItem = (
-                <Col key={item.name} span={24}>
+                <Col key={item.name} span={item.span || 24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {})(
+                    {getFieldDecorator(item.name, {
+                      initialValue: item.default || undefined
+                    })(
                       <Select
                         placeholder={item.tip || item.placeholder || item.name}
                         onChange={onFormItemChange(item.name)}
@@ -199,7 +201,7 @@ export class WidgetForm extends React.Component {
                         {
                           item && item.values && item.values.length > 0
                           ? item.values.map(c => (
-                            <Option key={c.type} value={c.value}>{c.name}</Option>
+                            <Option key={c.value} value={c.value}>{c.name}</Option>
                             ))
                           : columns
                               .filter(c => c !== 'antDesignTableId')

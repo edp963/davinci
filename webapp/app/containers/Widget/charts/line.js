@@ -38,6 +38,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     hasLegend,
     legendPosition,
     toolbox,
+    splitLineX,
+    splitLineY,
+    splitLineStyle,
+    splitLineWidth,
     top,
     bottom,
     left,
@@ -120,47 +124,47 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
               },
               symbolOption,
               smoothOption,
-              stepOption
+              stepOption,
+              labelOption
             )
             metricArr.push(serieObj)
           })
       } else {
-        let serieObj = Object.assign({},
-          {
-            name: m,
-            type: 'line',
-            sampling: 'average',
-            symbol: symbolOption,
-            data: dataSource.map((d, index) => {
-              if (index === interactIndex) {
-                return {
-                  value: d[m],
-                  lineStyle: {
-                    normal: {
-                      opacity: 1
-                    }
-                  },
-                  itemStyle: {
-                    normal: {
-                      opacity: 1
-                    }
+        let serieObj = Object.assign({
+          name: m,
+          type: 'line',
+          sampling: 'average',
+          symbol: symbolOption,
+          data: dataSource.map((d, index) => {
+            if (index === interactIndex) {
+              return {
+                value: d[m],
+                lineStyle: {
+                  normal: {
+                    opacity: 1
+                  }
+                },
+                itemStyle: {
+                  normal: {
+                    opacity: 1
                   }
                 }
-              } else {
-                return d[m]
               }
-            }),
-            lineStyle: {
-              normal: {
-                opacity: interactIndex === undefined ? 1 : 0.25
-              }
-            },
-            itemStyle: {
-              normal: {
-                opacity: interactIndex === undefined ? 1 : 0.25
-              }
+            } else {
+              return d[m]
+            }
+          }),
+          lineStyle: {
+            normal: {
+              opacity: interactIndex === undefined ? 1 : 0.25
             }
           },
+          itemStyle: {
+            normal: {
+              opacity: interactIndex === undefined ? 1 : 0.25
+            }
+          }
+        },
           symbolOption,
           smoothOption,
           stepOption,
@@ -186,6 +190,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
+      },
+      splitLine: {
+        show: splitLineX && splitLineX.length,
+        lineStyle: {
+          width: splitLineWidth,
+          type: splitLineStyle
+        }
       }
     }
   }
@@ -272,7 +283,14 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
   return Object.assign({
     yAxis: {
-      ...{type: 'value'},
+      type: 'value',
+      splitLine: {
+        show: splitLineY && splitLineY.length,
+        lineStyle: {
+          width: splitLineWidth,
+          type: splitLineStyle
+        }
+      },
       ...suffixYAxisOptions
     },
     tooltip: {

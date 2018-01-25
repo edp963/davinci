@@ -35,6 +35,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     hasLegend,
     legendPosition,
     toolbox,
+    splitLineX,
+    splitLineY,
+    splitLineStyle,
+    splitLineWidth,
     top,
     bottom,
     left,
@@ -152,6 +156,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           },
           axisTick: {
             show: false
+          },
+          splitLine: {
+            show: splitLineY && splitLineY.length,
+            lineStyle: {
+              width: splitLineWidth,
+              type: splitLineStyle
+            }
           }
         }
       }
@@ -161,14 +172,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       xAxis: {
         type: 'value',
         position: 'top',
-        splitLine: {
-          lineStyle: {
-            type: 'dashed'
-          }
-        },
         axisLabel: {
           interval: xAxisInterval,
           rotate: xAxisRotate
+        },
+        splitLine: {
+          show: splitLineX && splitLineX.length,
+          lineStyle: {
+            width: splitLineWidth,
+            type: splitLineStyle
+          }
         }
       }
     }
@@ -180,6 +193,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           axisLabel: {
             interval: xAxisInterval,
             rotate: xAxisRotate
+          },
+          splitLine: {
+            show: splitLineX && splitLineX.length,
+            lineStyle: {
+              width: splitLineWidth,
+              type: splitLineStyle
+            }
           }
         }
       }
@@ -187,7 +207,14 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     yAxisOptions = {
       yAxis: {
-        ...{type: 'value'},
+        type: 'value',
+        splitLine: {
+          show: splitLineY && splitLineY.length,
+          lineStyle: {
+            width: splitLineWidth,
+            type: splitLineStyle
+          }
+        },
         ...suffixYAxisOptions
       }
     }

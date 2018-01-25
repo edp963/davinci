@@ -52,23 +52,108 @@
       ]
     },
     {
+      "name": "legend",
+      "title": "图例",
+      "items": [
+        {
+          "name": "hasLegend",
+          "title": "开启图例",
+          "component": "checkbox",
+          "span": 24
+        },
+        {
+          "name": "legendPosition",
+          "title": "图例位置",
+          "component": "radio",
+          "values": [{
+            "name": "顶部",
+            "value": "top"
+          }, {
+            "name": "底部",
+            "value": "bottom"
+          }, {
+            "name": "右侧",
+            "value": "right"
+          }],
+          "default": "top",
+          "span": 24
+        }
+      ]
+    },
+    {
       "name": "tools",
       "title": "工具",
       "items": [
         {
-          "name": "tooltip",
-          "title": "Tooltip",
-          "component": "checkbox"
-        },
-        {
-          "name": "legend",
-          "title": "Legend",
-          "component": "checkbox"
-        },
-        {
           "name": "toolbox",
           "title": "Toolbox",
           "component": "checkbox"
+        }
+      ]
+    },
+    {
+      "name": "splitLine",
+      "title": "分隔线",
+      "items": [
+        {
+          "name": "splitLineX",
+          "title": "x轴分隔线",
+          "component": "checkbox"
+        },
+        {
+          "name": "splitLineY",
+          "title": "y轴分隔线",
+          "component": "checkbox"
+        },
+        {
+          "name": "splitLineStyle",
+          "title": "样式",
+          "component": "select",
+          "values": [
+            {
+              "name": "直线",
+              "value": "solid"
+            },
+            {
+              "name": "虚线",
+              "value": "dashed"
+            },
+            {
+              "name": "点线",
+              "value": "dotted"
+            }
+          ],
+          "default": "solid",
+          "span": 12
+        },
+        {
+          "name": "splitLineWidth",
+          "title": "宽度",
+          "component": "select",
+          "values": [
+            {
+              "name": "1",
+              "value": "1"
+            },
+            {
+              "name": "2",
+              "value": "2"
+            },
+            {
+              "name": "3",
+              "value": "3"
+            },
+            {
+              "name": "5",
+              "value": "5"
+            },
+            {
+              "name": "10",
+              "value": "10"
+            }
+          ],
+          "default": "1",
+          "span": 12
         }
       ]
     },
@@ -78,23 +163,27 @@
       "items": [
         {
           "name": "top",
-          "title": "Top",
-          "component": "inputnumber"
+          "title": "上边距",
+          "component": "inputnumber",
+          "default": 45
         },
         {
           "name": "bottom",
-          "title": "Bottom",
-          "component": "inputnumber"
+          "title": "下边距",
+          "component": "inputnumber",
+          "default": 40
         },
         {
           "name": "left",
-          "title": "Left",
-          "component": "inputnumber"
+          "title": "左边距",
+          "component": "inputnumber",
+          "default": 50
         },
         {
           "name": "right",
-          "title": "Right",
-          "component": "inputnumber"
+          "title": "右边距",
+          "component": "inputnumber",
+          "default": 30
         }
       ]
     }

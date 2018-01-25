@@ -40,6 +40,10 @@ export default function (dataSource, flatInfo, chartParams) {
     hasLegend,
     legendPosition,
     toolbox,
+    splitLineX,
+    splitLineY,
+    splitLineStyle,
+    splitLineWidth,
     top,
     bottom,
     left,
@@ -159,6 +163,13 @@ export default function (dataSource, flatInfo, chartParams) {
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
+      },
+      splitLine: {
+        show: splitLineX && splitLineX.length,
+        lineStyle: {
+          width: splitLineWidth,
+          type: splitLineStyle
+        }
       }
     }
   }
@@ -168,7 +179,14 @@ export default function (dataSource, flatInfo, chartParams) {
   yAxisOptions = {
     yAxis: Object.assign({
       type: 'value',
-      scale: true
+      scale: true,
+      splitLine: {
+        show: splitLineY && splitLineY.length,
+        lineStyle: {
+          width: splitLineWidth,
+          type: splitLineStyle
+        }
+      }
     }, suffixYAxisOptions)
   }
 

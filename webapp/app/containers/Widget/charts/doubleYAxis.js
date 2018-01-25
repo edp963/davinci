@@ -38,6 +38,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     hasLegend,
     legendPosition,
     toolbox,
+    splitLineX,
+    splitLineY,
+    splitLineStyle,
+    splitLineWidth,
     top,
     bottom,
     left,
@@ -61,6 +65,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     dataZoomOptions,
     suffixYLeftAxisOptions,
     suffixYRightAxisOptions,
+    splitLineYOption,
     smoothOption,
     stepOption,
     symbolOption
@@ -92,6 +97,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   suffixYRightAxisOptions = suffixYRightAxis && suffixYRightAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYRightAxis}`
   }} : null
+  splitLineYOption = {
+    splitLine: {
+      show: splitLineY && splitLineY.length,
+      lineStyle: {
+        width: splitLineWidth,
+        type: splitLineStyle
+      }
+    }
+  }
   if (vertical && vertical.length) {
     labelOption = {
       label: {
@@ -116,23 +130,23 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   if (yAxisLeft && yAxisRight) {
     const leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
     const rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
-    const leftInterval = getYaxisInterval(leftMax, yAxisSplitNumber)
-    const rightInterval = getYaxisInterval(rightMax, yAxisSplitNumber)
+    const leftInterval = getYaxisInterval(leftMax, (yAxisSplitNumber - 1))
+    const rightInterval = getYaxisInterval(rightMax, (yAxisSplitNumber - 1))
 
     yAxis[0] = Object.assign({
       type: 'value',
       key: 'yAxisIndex0',
       min: 0,
-      max: leftInterval * yAxisSplitNumber,
+      max: leftInterval * (yAxisSplitNumber - 1),
       interval: leftInterval
-    }, suffixYLeftAxisOptions)
+    }, suffixYLeftAxisOptions, splitLineYOption)
     yAxis[1] = Object.assign({
       type: 'value',
       key: 'yAxisIndex1',
       min: 0,
-      max: rightInterval * yAxisSplitNumber,
+      max: rightInterval * (yAxisSplitNumber - 1),
       interval: rightInterval
-    }, suffixYRightAxisOptions)
+    }, suffixYRightAxisOptions, splitLineYOption)
     yAxisOptions = {
       yAxis
     }
@@ -182,6 +196,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         axisLabel: {
           interval: xAxisInterval,
           rotate: xAxisRotate
+        },
+        splitLine: {
+          show: splitLineX && splitLineX.length,
+          lineStyle: {
+            width: splitLineWidth,
+            type: splitLineStyle
+          }
         }
       }]
     }

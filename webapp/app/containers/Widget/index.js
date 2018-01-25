@@ -178,7 +178,7 @@ export class Widget extends React.Component {
             widget={currentWidget}
             bizlogics={bizlogics || []}
             widgetlibs={widgetlibs}
-            onClose={this.hideWorkbench}
+            onAfterSave={this.hideWorkbench}
             ref={f => { this.workbenchWrapper = f }}
           />
         </Modal>

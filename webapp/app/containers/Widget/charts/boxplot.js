@@ -27,9 +27,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
-    tooltip,
-    legend,
+    hasLegend,
+    legendPosition,
     toolbox,
+    splitLineX,
+    splitLineY,
+    splitLineStyle,
+    splitLineWidth,
     top,
     bottom,
     left,
@@ -40,7 +44,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   let metricOptions,
     xAxisOptions,
     yAxisOptions,
-    tooltipOptions,
     legendOptions,
     toolboxOptions,
     gridOptions,
@@ -67,7 +70,11 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           formatter: '{value}'
         },
         splitLine: {
-          show: false
+          show: splitLineX && splitLineX.length,
+          lineStyle: {
+            width: splitLineWidth,
+            type: splitLineStyle
+          }
         }
       }
     }
@@ -117,31 +124,47 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       type: 'value',
       splitArea: {show: false},
       splitLine: {
-        show: false
+        show: splitLineY && splitLineY.length,
+        lineStyle: {
+          width: splitLineWidth,
+          type: splitLineStyle
+        }
       }
     }, suffixYAxisOptions)
   }
 
-  // tooltip
-  tooltipOptions = tooltip && tooltip.length
-    ? {
-      tooltip: {
-        trigger: 'item',
-        axisPointer: {
-          type: 'shadow'
-        }
-      }
-    } : null
   // legend
-  legendOptions = legend && legend.length
-    ? {
-      legend: {
+  let adjustedBottom = 0
+  let adjustedRight = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedRight = 108
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        adjustedBottom = 72
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 120 }
+        break
+    }
+
+    legendOptions = {
+      legend: Object.assign({
         data: metrics,
-        align: 'left',
-        top: 3,
-        right: 200
-      }
-    } : null
+        type: 'scroll'
+      }, orient, positions)
+    }
+  }
   // toolbox
   toolboxOptions = toolbox && toolbox.length
     ? {
@@ -155,7 +178,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             pixelRatio: 2
           }
         },
-        right: 22
+        right: 8
       }
     } : null
   // grid
@@ -163,8 +186,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     grid: {
       top: top,
       left: left,
-      right: right,
-      bottom: bottom
+      right: Math.max(right, adjustedRight),
+      bottom: Math.max(bottom, adjustedBottom)
     }
   }
   dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
@@ -188,13 +211,19 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
  // console.log(metricOptions)
-  return Object.assign({},
+  return Object.assign({
+    tooltip: {
+      trigger: 'item',
+      axisPointer: {
+        type: 'shadow'
+      }
+    }
+  },
     metricOptions,
     xAxisOptions,
     yAxisOptions,
     legendOptions,
     gridOptions,
-    tooltipOptions,
     toolboxOptions,
     dataZoomOptions
   )

@@ -19,11 +19,9 @@
           "component": "select",
           "values": [{
             "name": "柱状图",
-            "type": "bar",
             "value": "bar"
           }, {
             "name": "折线图",
-            "type": "line",
             "value": "line"
           }]
         },
@@ -38,11 +36,9 @@
           "component": "select",
           "values": [{
             "name": "柱状图",
-            "type": "bar",
             "value": "bar"
           }, {
             "name": "折线图",
-            "type": "line",
             "value": "line"
           }]
         },
@@ -81,6 +77,7 @@
           "name": "yAxisSplitNumber",
           "title": "y轴刻度条数",
           "component": "inputnumber",
+          "min": 2,
           "default": 5
         },
         {
@@ -159,6 +156,73 @@
           "name": "toolbox",
           "title": "Toolbox",
           "component": "checkbox"
+        }
+      ]
+    },
+    {
+      "name": "splitLine",
+      "title": "分隔线",
+      "items": [
+        {
+          "name": "splitLineX",
+          "title": "x轴分隔线",
+          "component": "checkbox"
+        },
+        {
+          "name": "splitLineY",
+          "title": "y轴分隔线",
+          "component": "checkbox",
+          "default": ["splitLineY"]
+        },
+        {
+          "name": "splitLineStyle",
+          "title": "样式",
+          "component": "select",
+          "values": [
+            {
+              "name": "直线",
+              "value": "solid"
+            },
+            {
+              "name": "虚线",
+              "value": "dashed"
+            },
+            {
+              "name": "点线",
+              "value": "dotted"
+            }
+          ],
+          "default": "solid",
+          "span": 12
+        },
+        {
+          "name": "splitLineWidth",
+          "title": "宽度",
+          "component": "select",
+          "values": [
+            {
+              "name": "1",
+              "value": "1"
+            },
+            {
+              "name": "2",
+              "value": "2"
+            },
+            {
+              "name": "3",
+              "value": "3"
+            },
+            {
+              "name": "5",
+              "value": "5"
+            },
+            {
+              "name": "10",
+              "value": "10"
+            }
+          ],
+          "default": "1",
+          "span": 12
         }
       ]
     },
