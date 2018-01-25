@@ -69,6 +69,10 @@ case class View4Put(id: Long,
 
 case class QueryView(id: Long, source_id: Long, name: String, sql_tmpl: String, update_sql:Option[String]=None, desc: Option[String], trigger_type: String, frequency: String, `catch`: String, result_table: String, active: Boolean, create_by: Long=0)
 
+case class Config4QuerySql(sql_tmpl:String,result_table:String,url:String,sql_param:Option[Option[String]])
+
+case class Config4UpdateSql(updateSql:Option[String], result_table:String, url:String, sql_param:Option[Option[String]])
+
 case class View4PostSeq(payload: Seq[View4Post])
 
 case class View4PutSeq(payload: Seq[View4Put])

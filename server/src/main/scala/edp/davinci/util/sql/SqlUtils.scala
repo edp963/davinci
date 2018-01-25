@@ -135,12 +135,12 @@ trait SqlUtils extends Serializable {
   }
 
 
-  def getRow(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
+  def getRow(rs: ResultSet, isES: Boolean): Seq[String] = {
     val meta = rs.getMetaData
     val columnNum = meta.getColumnCount
     //    val numSeq = if (sourceConfig.url.indexOf("elasticsearch") > -1)  else
     (1 to columnNum).map(columnIndex => {
-      val valueIndex = if (sourceConfig.url.indexOf("elasticsearch") > -1) columnIndex - 1 else columnIndex
+      val valueIndex = if (isES) columnIndex - 1 else columnIndex
       val fieldValue = meta.getColumnType(columnIndex) match {
         case BIGINT => rs.getLong(valueIndex)
         case DECIMAL => rs.getBigDecimal(valueIndex)

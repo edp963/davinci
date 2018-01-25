@@ -74,7 +74,7 @@ trait ViewService {
     db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params.get)).result)
   }
 
-  def getSource(flatTableId: Long, session: SessionClass = null): Future[Seq[(String, String, String, Option[Option[String]])]] = {
+  def getSource(flatTableId: Long, session: SessionClass = null): Future[Seq[Config4QuerySql]] = {
     val rel = if (session.admin)
       modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
     else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
@@ -82,11 +82,12 @@ trait ViewService {
     val query = for {
       ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
         modules.sourceQuery on (_._2.source_id === _.id)
-    } yield (view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params))
+    } yield (view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params)) <>(Config4QuerySql.tupled,Config4QuerySql.unapply)
+
     db.run(query.result)
   }
 
-  def getUpdateSource(flatTableId: Long, session: SessionClass = null): Future[Seq[(Option[String], String, String, Option[Option[String]])]] = {
+  def getUpdateSource(flatTableId: Long, session: SessionClass = null): Future[Seq[Config4UpdateSql]] = {
     val rel = if (session.admin)
       modules.relGroupViewQuery.filter(rel => rel.flatTable_id === flatTableId && (rel.create_by === session.userId || (rel.group_id inSet session.groupIdList)))
     else modules.relGroupViewQuery.filter(_.flatTable_id === flatTableId).filter(_.group_id inSet session.groupIdList)
@@ -94,7 +95,7 @@ trait ViewService {
     val query = for {
       ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
         modules.sourceQuery on (_._2.source_id === _.id)
-    } yield (view.update_sql, view.result_table, source.connection_url, rel.map(_.sql_params))
+    } yield (view.update_sql, view.result_table, source.connection_url, rel.map(_.sql_params))<>(Config4UpdateSql.tupled,Config4UpdateSql.unapply)
     db.run(query.result)
   }
 

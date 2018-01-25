@@ -47,7 +47,7 @@ class CacheActor extends Actor {
         sender() ! futureFromMap
       }
       else {
-        val resFuture: Future[Seq[String]] = Future(RouteHelper.executeQuery(actorMessage.sourceConfig, actorMessage.sqlBuffer)).mapTo[Seq[String]]
+        val resFuture: Future[Seq[String]] = Future(QueryHelper.executeQuery( actorMessage.sqlBuffer,actorMessage.sourceConfig)).mapTo[Seq[String]]
         cacheMap(sqls) = resFuture
         resFuture.onSuccess { case res =>
           cacheMap.remove(sqls)

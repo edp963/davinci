@@ -28,7 +28,6 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{ConfigurationModule, PersistenceModule, _}
 import edp.davinci.persistence.entities._
-import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql}
 import edp.davinci.rest._
 import edp.davinci.util.common.ResponseUtils._
 import edp.davinci.util.common.{AuthorizationProvider, DavinciConstants}
@@ -255,7 +254,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
           entity(as[ManualInfo]) { manualInfo =>
             parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? true, 'expired.as[Int] ? 300) {
               (offset, limit, sortBy, useCache, expired) =>
-                RouteHelper.getResultComplete(session, viewId, Paginate(limit, offset, sortBy), CacheClass(useCache, expired), DavinciConstants.appJson, manualInfo)
+                new QueryHelper(session, viewId, Paginate(limit, offset, sortBy), CacheClass(useCache, expired), DavinciConstants.appJson, manualInfo).getResultComplete
             }
           }
       }
@@ -278,7 +277,8 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           entity(as[ManualInfo]) { manualInfo =>
-            RouteHelper.doUpdate(session, viewId, manualInfo)
+            new UpdateHelper(session, viewId, manualInfo).doUpdate()
+
           }
       }
     }
@@ -306,20 +306,24 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
               if (sqlTemplate.trim != "") {
                 val filteredSql = filterAnnotation(sqlTemplate.trim)
                 val mergeSql = new GroupVar(Seq.empty, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
-                logger.info("sql after group merge: " + mergeSql)
+                logger.info("@@sql after group merge: " + mergeSql)
 
                 val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
-                logger.info("sql after query var render: " + renderedSql)
+                logger.info("@@sql after query var render: " + renderedSql)
 
                 val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
                 val renderedSQLBuf: mutable.Buffer[String] = toArray(renderedSql).toBuffer
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
-                val projectSql = getProjectSql(renderedSQLBuf.last, "SQLVERIFY", sourceConfig, Paginate(10, -1, ""))
-                logger.info("the projectSql get from sql template:\n" + projectSql)
+                val projectSql: String =
+                  if (!QueryHelper.isES(sourceConfig.url))
+                    s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
+                  else renderedSQLBuf.last
+                logger.info("@@the projectSql get from sql template:" + projectSql)
                 renderedSQLBuf.remove(renderedSQLBuf.length - 1)
                 renderedSQLBuf.append(projectSql)
-                val resultList = executeDirect(renderedSQLBuf, sourceConfig, CacheClass(useCache = false, 0))
-                contentTypeMatch(resultList, DavinciConstants.appJson)
+
+                val resultList = QueryHelper.executeQuery(renderedSQLBuf, sourceConfig)
+                QueryHelper.contentTypeMatch(resultList, DavinciConstants.appJson)
               }
               else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), ""))
             } catch {

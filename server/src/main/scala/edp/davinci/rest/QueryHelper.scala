@@ -49,7 +49,7 @@ import edp.davinci.util.sql.SqlUtils
 import edp.davinci.util.sql.SqlUtils._
 import edp.davinci.{KV, ModuleInstance}
 import org.slf4j.LoggerFactory
-
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -58,40 +58,30 @@ import scala.util.{Failure, Success}
 
 case class ActorMessage(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig, expired: Int)
 
-object RouteHelper extends Directives {
-  private val logger = LoggerFactory.getLogger(this.getClass)
-  val dir: String = System.getenv("DAVINCI_HOME")
-  val modules = ModuleInstance.getModule
-  private lazy val fetchSize = 100
-  private lazy val cacheIsEnable = ModuleInstance.getModule.config.getBoolean("cache.isEnable")
+
+class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate, cacheClass: CacheClass, contentType: NonBinary, manualInfo: ManualInfo) extends Directives {
+  private val modules = ModuleInstance.getModule
   implicit lazy val system: ActorSystem = modules.system
   implicit lazy val materializer: ActorMaterializer = ActorMaterializer()
   implicit lazy val ec: ExecutionContextExecutor = modules.system.dispatcher
+  private val logger = LoggerFactory.getLogger(this.getClass)
+  private lazy val cacheIsEnable = ModuleInstance.getModule.config.getBoolean("cache.isEnable")
+  private lazy val source = Await.result(ViewService.getSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
 
-  def getResultComplete(session: SessionClass, viewId: Long, paginate: Paginate, cacheClass: CacheClass, contentType: NonBinary, manualInfo: ManualInfo): StandardRoute = {
-    val source = Await.result(ViewService.getSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
+
+  def getResultComplete: StandardRoute = {
     if (source.nonEmpty) {
       try {
-        val (sqlTemp, tableName, config, _) = source.head
-        if (sqlTemp.trim != "") {
-          logger.info("the sqlTemp written by admin:" + sqlTemp)
-          val filteredSql = filterAnnotation(sqlTemp.trim)
-          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "").flatMap(json2caseClass[Seq[KV]])
-          val mergeSql = new GroupVar(groupParams, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
-          logger.info("sql after group merge: " + mergeSql)
-
-          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql = new QueryVar(queryParams, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
-          logger.info("sql after query var render: " + renderedSql)
-
-          val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
-          val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
-          val projectSql = getProjectSql(sqlBuffer.last, tableName, sourceConfig, paginate, manualInfo)
-          logger.info("the projectSql get from sql template:" + projectSql)
-          sqlBuffer.remove(sqlBuffer.length - 1)
-          sqlBuffer.append(projectSql)
-          val resultSeq = executeDirect(sqlBuffer, sourceConfig, cacheClass)
-          contentTypeMatch(resultSeq, contentType)
+        val sqlTemplate = source.head.sql_tmpl
+        if (sqlTemplate.trim != "") {
+          logger.info("@@the sqlTemp written by admin:" + sqlTemplate)
+          val mergeSql = groupVarMerge()
+          logger.info("@@sql after group merge: " + mergeSql)
+          val renderedSql = queryVarRender(mergeSql)
+          logger.info("@@sql after query var render: " + renderedSql)
+          val sqlBuffer: mutable.Buffer[String] = sql2Buffer(renderedSql)
+          val resultSeq = executeDirect(sqlBuffer)
+          QueryHelper.contentTypeMatch(resultSeq, contentType)
         }
         else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
       }
@@ -110,19 +100,44 @@ object RouteHelper extends Directives {
   }
 
 
+  def groupVarMerge(): String = {
+    val filteredSql = filterAnnotation(source.head.sql_tmpl.trim)
+    val groupParams = source.map(_.sql_param.getOrElse(Some("")).get).filter(_.trim != "").flatMap(json2caseClass[Seq[KV]])
+    new GroupVar(groupParams, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
+  }
+
+
+  def queryVarRender(mergedSql: String): String = {
+    val filteredSql = filterAnnotation(source.head.sql_tmpl.trim)
+    val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
+    new QueryVar(queryParams, getDefaultVarMap(filteredSql, "query")).render(mergedSql)
+
+  }
+
+
+  def sql2Buffer(renderedSql: String): mutable.Buffer[String] = {
+    val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+    logger.info("@@the projectSql get from sql template:" + sqlBuffer.last)
+    val projectSql = getProjectSql(sqlBuffer.last)
+    logger.info("the final project sql: " + projectSql)
+    sqlBuffer.remove(sqlBuffer.length - 1)
+    sqlBuffer.append(projectSql)
+    sqlBuffer
+  }
+
+
   /**
     *
     * @param querySql a SQL string; eg. SELECT * FROM Table
     * @return SQL string mixing AdHoc SQL and a count(1) sql
     */
 
-  def getProjectSql(querySql: String, tableName: String, sourceConfig: SourceConfig, pageInfo: Paginate = null, manualInfo: ManualInfo = null): String = {
-    logger.info("the initial project sql: " + querySql)
-    val (filters, adHocSql) = if (null != manualInfo) (manualInfo.manualFilters.orNull, manualInfo.adHoc.orNull) else (null, null)
-    val projectSqlWithFilter = if (null != filters && filters != "") s"SELECT * FROM ($querySql) AS PROFILTER WHERE $filters" else querySql
-    val mixinSql = if (null != adHocSql && adHocSql.trim != "{}" && adHocSql.trim != "") {
+  def getProjectSql(querySql: String): String = {
+    val projectSqlWithFilter = if (filterIsValid) s"SELECT * FROM ($querySql) AS PROFILTER WHERE ${manualInfo.manualFilters.get}" else querySql
+    val mixinSql = if (adHocIsValid) {
       try {
-        val sqlArr = adHocSql.toLowerCase.split(flatTable)
+        val sqlArr = manualInfo.adHoc.get.toLowerCase.split(flatTable)
+        val tableName = source.head.result_table
         if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName` ${sqlArr(1)}"
         else sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName`"
       } catch {
@@ -133,32 +148,47 @@ object RouteHelper extends Directives {
       logger.info("adHoc sql is empty")
       projectSqlWithFilter
     }
-    val paginateStr = FileUtils.getPageInfo(pageInfo)
-    if (paginateStr != "" && sourceConfig.url.indexOf("elasticsearch") == -1)
+    val paginateStr = FileUtils.getPageInfo(paginate)
+    val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.head.url)
+    if (paginateStr != "" && QueryHelper.isES(sourceConfig.url))
       s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
     else mixinSql
   }
 
-  private def isES(url: String): Boolean = {
-    if (url.indexOf("elasticsearch") > -1) true else false
+  private def adHocIsValid: Boolean = {
+    val adHocSql = if (null != manualInfo) manualInfo.adHoc.orNull else null
+    if (null != adHocSql && adHocSql.trim != "{}" && adHocSql.trim != "") true else false
   }
 
-  def executeDirect(renderedSql: mutable.Buffer[String], sourceConfig: SourceConfig, cacheClass: CacheClass): Seq[String] = {
+  private def filterIsValid = {
+    val filters = if (null != manualInfo) manualInfo.manualFilters.orNull else null
+    if (null != filters && filters != "") true else false
+
+  }
+
+
+  def executeDirect(sqlBuffer: mutable.Buffer[String]): Seq[String] = {
+    val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.head.url)
     if (cacheIsEnable) {
-      if (cacheClass.useCache) queryCache(ActorMessage(renderedSql, sourceConfig, cacheClass.expired))
+      if (cacheClass.useCache) QueryHelper.queryCache(ActorMessage(sqlBuffer, sourceConfig, cacheClass.expired))
       else {
         if (cacheClass.expired > 0) {
           //update cache
           logger.info(s"cache expired time >0,expired:${cacheClass.expired}")
-          val res = executeQuery(sourceConfig, renderedSql)
-          JedisConnection.set(renderedSql.mkString(";"), res.toList, cacheClass.expired)
+          val res = QueryHelper.executeQuery(sqlBuffer, sourceConfig)
+          JedisConnection.set(sqlBuffer.mkString(";"), res.toList, cacheClass.expired)
           logger.info(s"update cache (:)(:)(:)(:)(:)(:)(:)")
           res
-        } else executeQuery(sourceConfig, renderedSql)
+        } else QueryHelper.executeQuery(sqlBuffer, sourceConfig)
       }
-    } else executeQuery(sourceConfig, renderedSql)
+    } else QueryHelper.executeQuery(sqlBuffer, sourceConfig)
   }
 
+
+}
+
+object QueryHelper extends Directives {
+  private val logger = LoggerFactory.getLogger(this.getClass)
 
   def queryCache(actorMessage: ActorMessage): Seq[String] = {
     import akka.pattern.ask
@@ -184,7 +214,7 @@ object RouteHelper extends Directives {
     }
   }
 
-  def executeQuery(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Seq[String] = {
+  def executeQuery(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig): Seq[String] = {
     logger.info("the sql in getResult:")
     sqlBuffer.foreach(logger.info)
     val beforeExecute = System.currentTimeMillis()
@@ -220,8 +250,12 @@ object RouteHelper extends Directives {
     }
     resultList.append(columnList)
     resultList.append(columnTypeList)
-    while (rs.next()) resultList.append(getRow(rs, sourceConfig))
+    while (rs.next()) resultList.append(getRow(rs, isES(sourceConfig.url)))
     resultList.map(covert2CSV)
+  }
+
+  def isES(url: String): Boolean = {
+    if (url.indexOf("elasticsearch") > -1) true else false
   }
 
   def contentTypeMatch(resultList: Seq[String], contentType: NonBinary): StandardRoute = {
@@ -250,80 +284,24 @@ object RouteHelper extends Directives {
     file.getName
   }
 
-  def callAPI: Route = {
-
-    val httpResponse = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
-    onComplete(httpResponse) {
-      case Success(response) => response match {
-        case HttpResponse(StatusCodes.OK, _, entity, _) =>
-          //          val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
-
-          complete(OK, ResponseJson[String](getHeader(200, null), "get from quest successful"))
-        case resp@HttpResponse(code, _, _, _) =>
-          logger.info("Request failed, response code: " + code)
-          resp.discardEntityBytes()
-          complete(code, ResponseJson[String](getHeader(code.intValue(), null), "get from quest successful"))
-      }
-      case Failure(ex) => logger.error("call api exception", ex)
-        complete(BadRequest, ResponseJson[String](getHeader(400, "", null), "api response failure"))
-    }
-  }
-
-
-  def doUpdate(session: SessionClass, viewId: Long, manualInfo: ManualInfo): StandardRoute = {
-    val source = Await.result(ViewService.getUpdateSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
-    if (source.nonEmpty) {
-      try {
-        val (updateSql, _, config, _) = source.head
-        val updateSql_get = updateSql.getOrElse("").trim
-        if (updateSql_get != "") {
-          logger.info("the sqlTemp written by admin:" + updateSql_get)
-          val filteredSql = filterAnnotation(updateSql_get.trim)
-          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "").flatMap(json2caseClass[Seq[KV]])
-          val mergeSql = new GroupVar(groupParams, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
-          logger.info("sql after group merge: " + mergeSql)
-
-          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql = new QueryVar(queryParams, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
-          logger.info("sql after query var render: " + renderedSql)
-
-          val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
-          val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
-          executeUpdate(sourceConfig, sqlBuffer)
-          complete(OK, ResponseJson[String](getHeader(200, "do update successfully", null), "do update successfully"))
-        }
-        else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
-      }
-      catch {
-        case sqlException: SQLException =>
-          logger.error("SQLException", sqlException)
-          complete(BadRequest, ResponseJson[String](getHeader(400, sqlException.getMessage, null), "sql语法错误"))
-        case exception: Throwable =>
-          logger.error("error in do update ", exception)
-          complete(BadRequest, ResponseJson[String](getHeader(400, exception.getMessage, null), "update操作失败"))
-      }
-    } else {
-      logger.error("get source failure,source info size:" + source.size)
-      complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), "no source found"))
-    }
-  }
-
-  def executeUpdate(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Unit = {
-    logger.info("the sql in execute update:")
-    sqlBuffer.foreach(logger.info)
-    var dbConnection: Connection = null
-    var statement: Statement = null
-    try {
-      dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password, 10)
-      statement = dbConnection.createStatement()
-      for (elem <- sqlBuffer) statement.execute(elem)
-    } catch {
-      case e: Throwable => logger.error("get result exception", e)
-        throw e
-    } finally {
-      if (dbConnection != null) dbConnection.close()
-    }
-  }
+//  def callAPI: Route = {
+//
+//    val httpResponse = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
+//    onComplete(httpResponse) {
+//      case Success(response) => response match {
+//        case HttpResponse(StatusCodes.OK, _, entity, _) =>
+//          //  val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
+//
+//          complete(OK, ResponseJson[String](getHeader(200, null), "get from quest successful"))
+//        case resp@HttpResponse(code, _, _, _) =>
+//          logger.info("Request failed, response code: " + code)
+//          resp.discardEntityBytes()
+//          complete(code, ResponseJson[String](getHeader(code.intValue(), null), "get from quest successful"))
+//      }
+//      case Failure(ex) => logger.error("call api exception", ex)
+//        complete(BadRequest, ResponseJson[String](getHeader(400, "", null), "api response failure"))
+//    }
+//  }
 
 }
 
