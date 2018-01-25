@@ -589,6 +589,10 @@ export class Grid extends Component {
     })
   }
 
+  afterWorkbenchModalClose = () => {
+    this.workbenchWrapper.refs.wrappedInstance.resetWorkbench()
+  }
+
   onWorkbenchClose = () => {
     const dashboardItem = this.props.currentItems.find(item => item.id === this.state.workbenchDashboardItem)
     this.getChartData('rerender', dashboardItem.id, dashboardItem.widget_id)
@@ -1568,6 +1572,7 @@ export class Grid extends Component {
           wrapClassName={`ant-modal-xlarge ${widgetStyles.workbenchWrapper}`}
           visible={workbenchVisible}
           onCancel={this.hideWorkbench}
+          afterClose={this.afterWorkbenchModalClose}
           footer={false}
           maskClosable={false}
         >
@@ -1576,7 +1581,8 @@ export class Grid extends Component {
             widget={workbenchWidget}
             bizlogics={bizlogics || []}
             widgetlibs={widgetlibs}
-            onClose={this.onWorkbenchClose}
+            onAfterSave={this.onWorkbenchClose}
+            ref={f => { this.workbenchWrapper = f }}
           />
         </Modal>
         <Modal
