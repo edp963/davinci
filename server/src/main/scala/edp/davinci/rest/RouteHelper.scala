@@ -39,8 +39,8 @@ import edp.davinci.rest.view.ViewService
 import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.common.FileUtils._
 import edp.davinci.util.common.ResponseUtils.getHeader
-import edp.davinci.util.common.STRenderUtils.getHTML
-import edp.davinci.util.common.{DavinciConstants, FileUtils, RegexMatcher, STRenderUtils}
+import edp.davinci.util.common.STRender.getHTML
+import edp.davinci.util.common.{DavinciConstants, FileUtils}
 import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils
 import edp.davinci.util.json.JsonUtils.json2caseClass
@@ -76,14 +76,21 @@ object RouteHelper extends Directives {
         if (sqlTemp.trim != "") {
           logger.info("the sqlTemp written by admin:" + sqlTemp)
           val filteredSql = filterAnnotation(sqlTemp.trim)
-          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
-          val kvGroupParams = groupParams.flatMap(g => json2caseClass[Seq[KV]](g))
+          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "").flatMap(json2caseClass[Seq[KV]])
+          val mergeSql = new GroupVar(groupParams, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
+          logger.info("sql after group merge: " + mergeSql)
+
           val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = getNoVarSqls(filteredSql, queryParams, kvGroupParams)
+          val renderedSql = new QueryVar(queryParams, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
+          logger.info("sql after query var render: " + renderedSql)
+
+          val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
           val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
-          val projectSql = getProjectSql(renderedSql.last, tableName, sourceConfig, paginate, manualInfo)
+          val projectSql = getProjectSql(sqlBuffer.last, tableName, sourceConfig, paginate, manualInfo)
           logger.info("the projectSql get from sql template:" + projectSql)
-          val resultSeq = executeDirect(renderedSql, projectSql, sourceConfig, cacheClass)
+          sqlBuffer.remove(sqlBuffer.length - 1)
+          sqlBuffer.append(projectSql)
+          val resultSeq = executeDirect(sqlBuffer, sourceConfig, cacheClass)
           contentTypeMatch(resultSeq, contentType)
         }
         else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
@@ -103,61 +110,119 @@ object RouteHelper extends Directives {
   }
 
 
-  def doUpdate(session: SessionClass, viewId: Long, manualInfo: ManualInfo): StandardRoute = {
-    val source = Await.result(ViewService.getUpdateSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
-    if (source.nonEmpty) {
+  /**
+    *
+    * @param querySql a SQL string; eg. SELECT * FROM Table
+    * @return SQL string mixing AdHoc SQL and a count(1) sql
+    */
+
+  def getProjectSql(querySql: String, tableName: String, sourceConfig: SourceConfig, pageInfo: Paginate = null, manualInfo: ManualInfo = null): String = {
+    logger.info("the initial project sql: " + querySql)
+    val (filters, adHocSql) = if (null != manualInfo) (manualInfo.manualFilters.orNull, manualInfo.adHoc.orNull) else (null, null)
+    val projectSqlWithFilter = if (null != filters && filters != "") s"SELECT * FROM ($querySql) AS PROFILTER WHERE $filters" else querySql
+    val mixinSql = if (null != adHocSql && adHocSql.trim != "{}" && adHocSql.trim != "") {
       try {
-        val (updateSql, _, config, _) = source.head
-        val updateSql_get = updateSql.getOrElse("").trim
-        if (updateSql_get != "") {
-          logger.info("the sqlTemp written by admin:" + updateSql_get)
-          val filteredSql = filterAnnotation(updateSql_get)
-          val group = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "")
-          val groupVars = group.flatMap(g => json2caseClass[Seq[KV]](g))
-          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
-          val renderedSql: mutable.Buffer[String] = getNoVarSqls(filteredSql, queryParams, groupVars)
-          val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
-          executeUpdate(sourceConfig, renderedSql)
-          complete(OK, ResponseJson[String](getHeader(200, "do update successfully", null), "do update successfully"))
-        }
-        else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
-      }
-      catch {
-        case sqlException: SQLException =>
-          logger.error("SQLException", sqlException)
-          complete(BadRequest, ResponseJson[String](getHeader(400, sqlException.getMessage, null), "sql语法错误"))
-        case exception: Throwable =>
-          logger.error("error in do update ", exception)
-          complete(BadRequest, ResponseJson[String](getHeader(400, exception.getMessage, null), "update操作失败"))
+        val sqlArr = adHocSql.toLowerCase.split(flatTable)
+        if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName` ${sqlArr(1)}"
+        else sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName`"
+      } catch {
+        case e: Throwable => logger.error("adHoc sql is not in right format", e)
+          throw e
       }
     } else {
-      logger.error("get source failure,source info size:" + source.size)
-      complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), "no source found"))
+      logger.info("adHoc sql is empty")
+      projectSqlWithFilter
+    }
+    val paginateStr = FileUtils.getPageInfo(pageInfo)
+    if (paginateStr != "" && sourceConfig.url.indexOf("elasticsearch") == -1)
+      s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
+    else mixinSql
+  }
+
+  private def isES(url: String): Boolean = {
+    if (url.indexOf("elasticsearch") > -1) true else false
+  }
+
+  def executeDirect(renderedSql: mutable.Buffer[String], sourceConfig: SourceConfig, cacheClass: CacheClass): Seq[String] = {
+    if (cacheIsEnable) {
+      if (cacheClass.useCache) queryCache(ActorMessage(renderedSql, sourceConfig, cacheClass.expired))
+      else {
+        if (cacheClass.expired > 0) {
+          //update cache
+          logger.info(s"cache expired time >0,expired:${cacheClass.expired}")
+          val res = executeQuery(sourceConfig, renderedSql)
+          JedisConnection.set(renderedSql.mkString(";"), res.toList, cacheClass.expired)
+          logger.info(s"update cache (:)(:)(:)(:)(:)(:)(:)")
+          res
+        } else executeQuery(sourceConfig, renderedSql)
+      }
+    } else executeQuery(sourceConfig, renderedSql)
+  }
+
+
+  def queryCache(actorMessage: ActorMessage): Seq[String] = {
+    import akka.pattern.ask
+
+    import scala.collection.JavaConversions._
+    implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
+    try {
+      val resFromJedis = JedisConnection.getList(actorMessage.sqlBuffer.mkString(";"))
+      if (resFromJedis.size != 0) {
+        logger.info("query from redis(:)(:)(:)(:)(:)")
+        resFromJedis
+      }
+      else {
+        logger.info("query from redis size =0 ,then send to actor")
+        val f = (ActorSys.getActor ? actorMessage).mapTo[Future[Seq[String]]]
+        val resFuture: Future[Seq[String]] = for (o <- f; i <- o) yield i
+        Await.result(resFuture, new FiniteDuration(requestTimeout, SECONDS))
+      }
+    } catch {
+      case e: Throwable =>
+        logger.error("query cache exception", e)
+        throw e
     }
   }
 
-  def getNoVarSqls(sqlString: String,
-                   paramSeq: Seq[KV] = null,
-                   groupParams: Seq[KV] = null): mutable.Buffer[String] = {
-    val sqlArray = if (sqlString.lastIndexOf(sqlSeparator) == sqlString.length - 1) sqlString.dropRight(1).split(sqlSeparator)
-    else sqlString.split(sqlSeparator)
-    val noVarSql = sqlString.substring(sqlString.indexOf(STStartChar) + 1, sqlString.indexOf(STEndChar)).trim
-    logger.info("sql without var defined: " + noVarSql)
-    val groupKVMap = getGroupKVMap(sqlArray, groupParams)
-    val mergeSql =
-      if (groupKVMap.nonEmpty) new GroupVar(groupParams).replace(sqlString)
-      else noVarSql
-    logger.info("sql after group merge: " + mergeSql)
-    val queryKVMap = getQueryKVMap(sqlArray, paramSeq)
-    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
-    logger.info("sql after query var render: " + renderedSql)
-    val trimRenderSql = renderedSql.trim
-    val resetSql =
-      if (trimRenderSql.lastIndexOf(sqlSeparator) == trimRenderSql.length - 1)
-        trimRenderSql.dropRight(1).split(sqlSeparator) else trimRenderSql.split(sqlSeparator)
-    resetSql.toBuffer
+  def executeQuery(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Seq[String] = {
+    logger.info("the sql in getResult:")
+    sqlBuffer.foreach(logger.info)
+    val beforeExecute = System.currentTimeMillis()
+    var dbConnection: Connection = null
+    var statement: Statement = null
+    try {
+      dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password, 10)
+      statement = dbConnection.createStatement()
+      if (sqlBuffer.lengthCompare(1) > 0) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
+      //es statement NullPointerException ,so change 2 prepareStatement
+      val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
+      else statement.executeQuery(sqlBuffer.last)
+      val afterExecute = System.currentTimeMillis()
+      logger.info("total cost seconds:" + (afterExecute - beforeExecute) / 1000)
+      covert2ListBuf(resultSet, sourceConfig)
+    } catch {
+      case e: Throwable => logger.error("get result exception", e)
+        throw e
+    } finally {
+      if (dbConnection != null) dbConnection.close()
+    }
   }
 
+
+  def covert2ListBuf(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
+    val resultList = new ListBuffer[Seq[String]]
+    val columnList = new ListBuffer[String]
+    val columnTypeList = new ListBuffer[String]
+    val meta = rs.getMetaData
+    for (i <- 1 to meta.getColumnCount) {
+      columnList.append(meta.getColumnLabel(i))
+      columnTypeList.append(meta.getColumnTypeName(i))
+    }
+    resultList.append(columnList)
+    resultList.append(columnTypeList)
+    while (rs.next()) resultList.append(getRow(rs, sourceConfig))
+    resultList.map(covert2CSV)
+  }
 
   def contentTypeMatch(resultList: Seq[String], contentType: NonBinary): StandardRoute = {
     val contentDisposition = if (contentType == textHtml) headers.`Content-Disposition`(inline, Map("filename" -> s"share.html")).asInstanceOf[HttpHeader]
@@ -205,124 +270,43 @@ object RouteHelper extends Directives {
   }
 
 
-  def executeDirect(renderedSql: mutable.Buffer[String], projectSql: String, sourceConfig: SourceConfig, cacheClass: CacheClass): Seq[String] = {
-    renderedSql.remove(renderedSql.length - 1)
-    renderedSql.append(projectSql)
-    val resultSeq: Seq[String] = if (cacheIsEnable) {
-      if (cacheClass.useCache) queryCache(ActorMessage(renderedSql, sourceConfig, cacheClass.expired))
-      else {
-        if (cacheClass.expired > 0) {
-          //update cache
-          logger.info(s"cache expired time >0,expired:${cacheClass.expired}")
-          val res = executeQuery(sourceConfig, renderedSql)
-          JedisConnection.set(renderedSql.mkString(";"), res.toList, cacheClass.expired)
-          logger.info(s"update cache (:)(:)(:)(:)(:)(:)(:)")
-          res
-        } else executeQuery(sourceConfig, renderedSql)
+  def doUpdate(session: SessionClass, viewId: Long, manualInfo: ManualInfo): StandardRoute = {
+    val source = Await.result(ViewService.getUpdateSource(viewId, session), new FiniteDuration(requestTimeout, SECONDS))
+    if (source.nonEmpty) {
+      try {
+        val (updateSql, _, config, _) = source.head
+        val updateSql_get = updateSql.getOrElse("").trim
+        if (updateSql_get != "") {
+          logger.info("the sqlTemp written by admin:" + updateSql_get)
+          val filteredSql = filterAnnotation(updateSql_get.trim)
+          val groupParams = source.map(_._4.getOrElse(Some("")).get).filter(_.trim != "").flatMap(json2caseClass[Seq[KV]])
+          val mergeSql = new GroupVar(groupParams, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
+          logger.info("sql after group merge: " + mergeSql)
+
+          val queryParams = if (null != manualInfo) manualInfo.params.orNull else null
+          val renderedSql = new QueryVar(queryParams, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
+          logger.info("sql after query var render: " + renderedSql)
+
+          val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+          val sourceConfig = JsonUtils.json2caseClass[SourceConfig](config)
+          executeUpdate(sourceConfig, sqlBuffer)
+          complete(OK, ResponseJson[String](getHeader(200, "do update successfully", null), "do update successfully"))
+        }
+        else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
       }
-    } else executeQuery(sourceConfig, renderedSql)
-    resultSeq
-  }
-
-
-  def queryCache(actorMessage: ActorMessage): Seq[String] = {
-    import akka.pattern.ask
-
-    import scala.collection.JavaConversions._
-    implicit val timeout: Timeout = Timeout(requestTimeout, TimeUnit.SECONDS)
-    try {
-      val resFromJedis = JedisConnection.getList(actorMessage.sqlBuffer.mkString(";"))
-      if (resFromJedis.size != 0) {
-        logger.info("query from redis(:)(:)(:)(:)(:)")
-        resFromJedis
+      catch {
+        case sqlException: SQLException =>
+          logger.error("SQLException", sqlException)
+          complete(BadRequest, ResponseJson[String](getHeader(400, sqlException.getMessage, null), "sql语法错误"))
+        case exception: Throwable =>
+          logger.error("error in do update ", exception)
+          complete(BadRequest, ResponseJson[String](getHeader(400, exception.getMessage, null), "update操作失败"))
       }
-      else {
-        logger.info("query from redis size =0 ,then send to actor")
-        val f = (ActorSys.getActor ? actorMessage).mapTo[Future[Seq[String]]]
-        val resFuture: Future[Seq[String]] = for (o <- f; i <- o) yield i
-        Await.result(resFuture, new FiniteDuration(requestTimeout, SECONDS))
-      }
-    } catch {
-      case e: Throwable =>
-        logger.error("query cache exception", e)
-        throw e
+    } else {
+      logger.error("get source failure,source info size:" + source.size)
+      complete(BadRequest, ResponseJson[String](getHeader(400, "no source found", null), "no source found"))
     }
   }
-
-
-  def getGroupKVMap(sqlArr: Array[String], groupParams: Seq[KV]): mutable.HashMap[String, List[String]] = {
-    val defaultParams = sqlArr.filter(_.contains(groupVar))
-    val groupKVMap = mutable.HashMap.empty[String, List[String]]
-    try {
-      if (null != groupParams && groupParams.nonEmpty)
-        groupParams.foreach(group => {
-          val (k, v) = (group.k, group.v)
-          if (groupKVMap.contains(k))
-            groupKVMap(k) = groupKVMap(k) ::: List(v)
-          else groupKVMap(k) = List(v)
-        })
-      if (defaultParams.nonEmpty)
-        defaultParams.foreach(g => {
-          val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
-          val v = g.substring(g.indexOf(assignmentChar) + 1).trim
-          if (!groupKVMap.contains(k))
-            groupKVMap(k) = List(v)
-        })
-    } catch {
-      case e: Throwable => logger.error("group var is not in right format!!!", e)
-    }
-    groupKVMap
-  }
-
-  def getQueryKVMap(sqlArr: Array[String], paramSeq: Seq[KV]): mutable.HashMap[String, String] = {
-    val defaultParams = sqlArr.filter(s => s.contains(queryVar) || s.contains(updateVar))
-    val queryKVMap = mutable.HashMap.empty[String, String]
-    try {
-      if (null != paramSeq && paramSeq.nonEmpty) paramSeq.foreach(param => queryKVMap(param.k) = param.v)
-      if (defaultParams.nonEmpty)
-        defaultParams.foreach(g => {
-          val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
-          if (g.indexOf(assignmentChar) >= 0) {
-            val v = g.substring(g.indexOf(assignmentChar) + 1).trim
-            if (!queryKVMap.contains(k))
-              queryKVMap(k) = v
-          }
-        })
-    } catch {
-      case e: Throwable => logger.error("query var is not in right format!!!", e)
-    }
-    queryKVMap
-  }
-
-  def executeQuery(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Seq[String] = {
-    logger.info("the sql in getResult:")
-    sqlBuffer.foreach(logger.info)
-    val beforeExecute = System.currentTimeMillis()
-    var dbConnection: Connection = null
-    var statement: Statement = null
-    try {
-      dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password, 10)
-      statement = dbConnection.createStatement()
-      if (sqlBuffer.lengthCompare(1) > 0) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
-      //es statement NullPointerException ,so change 2 prepareStatement
-      val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
-      else statement.executeQuery(sqlBuffer.last)
-      val afterExecute = System.currentTimeMillis()
-      logger.info("total cost seconds:" + (afterExecute - beforeExecute) / 1000)
-      covert2ListBuf(resultSet, sourceConfig)
-    } catch {
-      case e: Throwable => logger.error("get result exception", e)
-        throw e
-    } finally {
-      if (dbConnection != null) dbConnection.close()
-    }
-  }
-
-
-  private def isES(url: String): Boolean = {
-    if (url.indexOf("elasticsearch") > -1) true else false
-  }
-
 
   def executeUpdate(sourceConfig: SourceConfig, sqlBuffer: mutable.Buffer[String]): Unit = {
     logger.info("the sql in execute update:")
@@ -340,51 +324,6 @@ object RouteHelper extends Directives {
       if (dbConnection != null) dbConnection.close()
     }
   }
-
-  def covert2ListBuf(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
-    val resultList = new ListBuffer[Seq[String]]
-    val columnList = new ListBuffer[String]
-    val columnTypeList = new ListBuffer[String]
-    val meta = rs.getMetaData
-    for (i <- 1 to meta.getColumnCount) {
-      columnList.append(meta.getColumnLabel(i))
-      columnTypeList.append(meta.getColumnTypeName(i))
-    }
-    resultList.append(columnList)
-    resultList.append(columnTypeList)
-    while (rs.next()) resultList.append(getRow(rs, sourceConfig))
-    resultList.map(covert2CSV)
-  }
-
-  /**
-    *
-    * @param querySql a SQL string; eg. SELECT * FROM Table
-    * @return SQL string mixing AdHoc SQL and a count(1) sql
-    */
-
-  def getProjectSql(querySql: String, tableName: String, sourceConfig: SourceConfig, pageInfo: Paginate = null, manualInfo: ManualInfo = null): String = {
-    logger.info("the initial project sql: " + querySql)
-    val (filters, adHocSql) = if (null != manualInfo) (manualInfo.manualFilters.orNull, manualInfo.adHoc.orNull) else (null, null)
-    val projectSqlWithFilter = if (null != filters && filters != "") s"SELECT * FROM ($querySql) AS PROFILTER WHERE $filters" else querySql
-    val mixinSql = if (null != adHocSql && adHocSql.trim != "{}" && adHocSql.trim != "") {
-      try {
-        val sqlArr = adHocSql.toLowerCase.split(flatTable)
-        if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName` ${sqlArr(1)}"
-        else sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName`"
-      } catch {
-        case e: Throwable => logger.error("adHoc sql is not in right format", e)
-          throw e
-      }
-    } else {
-      logger.info("adHoc sql is empty")
-      projectSqlWithFilter
-    }
-    val paginateStr = FileUtils.getPageInfo(pageInfo)
-    if (paginateStr != "" && sourceConfig.url.indexOf("elasticsearch") == -1)
-      s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
-    else mixinSql
-  }
-
 
 }
 

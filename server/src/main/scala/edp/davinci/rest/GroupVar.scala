@@ -2,23 +2,43 @@ package edp.davinci.rest
 
 
 import edp.davinci.KV
-import edp.davinci.util.common.DavinciConstants.{STEndChar, STStartChar, assignmentChar, dollarDelimiter}
+import edp.davinci.util.common.DavinciConstants.{STEndChar, STStartChar, dollarDelimiter}
 import edp.davinci.util.common.RegexMatcher.getMatchedItemList
 import edp.davinci.util.sql.SqlOperators._
 import edp.davinci.util.sql.SqlParser
-import edp.davinci.util.sql.SqlUtils.getSqlArray
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
 
-class GroupVar(parameters: Seq[KV]) {
+class GroupVar(parameters: Seq[KV], defaultParameters: mutable.HashMap[String, List[String]]) {
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val groupRegex = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?\\$\\w+\\$\\)?\\s?\\)"
-  private lazy val groupVar = "group@var"
   private lazy val groupKVMap = mutable.HashMap.empty[String, List[String]]
 
+
+  private def initGroupKVMap: mutable.HashMap[String, List[String]] = {
+    if (isValidParam)
+      parameters.foreach(group => {
+        val (k, v) = (group.k, group.v)
+        if (groupKVMap.contains(k))
+          groupKVMap(k) = groupKVMap(k) ::: List(v)
+        else groupKVMap(k) = List(v)
+      })
+    if (defaultParameters.nonEmpty)
+      defaultParameters.foreach(d => {
+        val (key, value) = d
+        if (!groupKVMap.contains(key)) groupKVMap(key) = value
+      })
+    groupKVMap
+  }
+
+
+  private def isValidParam: Boolean = {
+    if (null != parameters && parameters.nonEmpty) true else false
+  }
+
   def replace(sql: String): String = {
-    val groupKVMap = mergeDefaultVar(sql)
+    val groupKVMap = initGroupKVMap
     var resultSql = getNoVarSql(sql)
     if (groupKVMap.nonEmpty) {
       val exprList = getMatchedItemList(resultSql, groupRegex)
@@ -31,42 +51,10 @@ class GroupVar(parameters: Seq[KV]) {
     resultSql.trim
   }
 
-  private def mergeDefaultVar(sql: String): mutable.HashMap[String, List[String]] = {
-    val sqlArray = getSqlArray(sql)
-    val defaultParams = sqlArray.filter(_.contains(groupVar))
-    try {
-      initGroupKVMap
-      if (defaultParams.nonEmpty)
-        defaultParams.foreach(g => {
-          val k = g.substring(g.indexOf(dollarDelimiter) + 1, g.lastIndexOf(dollarDelimiter)).trim
-          val v = g.substring(g.indexOf(assignmentChar) + 1).trim
-          if (!groupKVMap.contains(k))
-            groupKVMap(k) = List(v)
-        })
-    } catch {
-      case e: Throwable => logger.error("group var is not in right format!!!", e)
-    }
-    groupKVMap
-  }
-
-  private def getNoVarSql(sql:String)={
+  private def getNoVarSql(sql: String) = {
     val noVarSql = sql.substring(sql.indexOf(STStartChar) + 1, sql.indexOf(STEndChar)).trim
     logger.info("sql without var defined: " + noVarSql)
     noVarSql
-  }
-  private def initGroupKVMap: mutable.HashMap[String, List[String]] = {
-    if (isValidParam)
-      parameters.foreach(group => {
-        val (k, v) = (group.k, group.v)
-        if (groupKVMap.contains(k))
-          groupKVMap(k) = groupKVMap(k) ::: List(v)
-        else groupKVMap(k) = List(v)
-      })
-    groupKVMap
-  }
-
-  private def isValidParam: Boolean = {
-    if (null != parameters && parameters.nonEmpty) true else false
   }
 
 

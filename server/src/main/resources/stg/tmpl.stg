@@ -18,6 +18,11 @@ td, th {
 
 .header-tr {
     background-color: #99d6ff;
+    font-size: 13px
+}
+
+.body-tr {
+    font-size: 12px;
 }
 </style>
 </head>

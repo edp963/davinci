@@ -28,19 +28,18 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import edp.davinci.module.{ConfigurationModule, PersistenceModule, _}
 import edp.davinci.persistence.entities._
-import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql, getNoVarSqls}
+import edp.davinci.rest.RouteHelper.{contentTypeMatch, executeDirect, getProjectSql}
 import edp.davinci.rest._
-import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.common.ResponseUtils._
-import edp.davinci.util.sql.SqlUtils.filterAnnotation
 import edp.davinci.util.common.{AuthorizationProvider, DavinciConstants}
-import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.sql.SqlUtils.{filterAnnotation, getDefaultVarMap, toArray}
 import io.swagger.annotations._
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.{FiniteDuration, _}
 import scala.util.{Failure, Success}
@@ -306,11 +305,20 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
             try {
               if (sqlTemplate.trim != "") {
                 val filteredSql = filterAnnotation(sqlTemplate.trim)
-                val renderedSQLBuf: mutable.Buffer[String] = getNoVarSqls(filteredSql)
+                val mergeSql = new GroupVar(Seq.empty, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
+                logger.info("sql after group merge: " + mergeSql)
+
+                val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
+                logger.info("sql after query var render: " + renderedSql)
+
+                val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+                val renderedSQLBuf: mutable.Buffer[String] = toArray(renderedSql).toBuffer
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
                 val projectSql = getProjectSql(renderedSQLBuf.last, "SQLVERIFY", sourceConfig, Paginate(10, -1, ""))
                 logger.info("the projectSql get from sql template:\n" + projectSql)
-                val resultList = executeDirect(renderedSQLBuf, projectSql, sourceConfig, CacheClass(useCache = false, 0))
+                renderedSQLBuf.remove(renderedSQLBuf.length - 1)
+                renderedSQLBuf.append(projectSql)
+                val resultList = executeDirect(renderedSQLBuf, sourceConfig, CacheClass(useCache = false, 0))
                 contentTypeMatch(resultList, DavinciConstants.appJson)
               }
               else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), ""))

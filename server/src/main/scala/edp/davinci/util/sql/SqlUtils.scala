@@ -29,7 +29,7 @@ import java.util.regex.Pattern
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
 import edp.davinci.util.common.DateUtils
-import edp.davinci.util.common.DavinciConstants.sqlSeparator
+import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
 
@@ -291,10 +291,46 @@ trait SqlUtils extends Serializable {
     result
   }
 
-  def getSqlArray(sql: String): Array[String] = {
+  def toArray(sql: String): Array[String] = {
     if (sql.lastIndexOf(sqlSeparator) == sql.length - 1) sql.dropRight(1).split(sqlSeparator)
     else sql.split(sqlSeparator)
   }
 
+
+  def getDefaultVarMap(sql: String, varType: String): mutable.HashMap[String, List[String]] = {
+    val sqlArray: Array[String] = toArray(sql)
+    val defaultParams =
+      if (varType == "group")
+        sqlArray.filter(_.contains(groupVar))
+      else
+        sqlArray.filter(s => s.contains(queryVar) || s.contains(updateVar))
+    val kvMap = mutable.HashMap.empty[String, List[String]]
+    try {
+      if (defaultParams.nonEmpty)
+        defaultParams.foreach(g => {
+          if (hasAssignmentChar(g)) {
+            val k = getVarName(g)
+            val v = getVarValue(g)
+            kvMap(k) = List(v)
+          }
+        })
+    } catch {
+      case e: Throwable => logger.error("group var is not in right format!!!", e)
+    }
+    kvMap
+  }
+
+
+  private def getVarName(varDefined: String) = {
+    varDefined.substring(varDefined.indexOf(dollarDelimiter) + 1, varDefined.lastIndexOf(dollarDelimiter)).trim
+  }
+
+  private def getVarValue(varDefined: String) = {
+    varDefined.substring(varDefined.indexOf(assignmentChar) + 1).trim
+  }
+
+  private def hasAssignmentChar(varDefined: String) = {
+    if (varDefined.indexOf(assignmentChar) > 0) true else false
+  }
 
 }

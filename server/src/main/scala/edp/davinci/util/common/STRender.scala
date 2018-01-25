@@ -42,7 +42,7 @@ trait STRender {
   }
 
 
-  def renderSql(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
+  def renderBySTGroup(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
     val queryVars = queryKVMap.keySet.mkString("(", ",", ")")
     val sqlToRender = sqlWithoutVars.replaceAll("<>", "!=")
     val sqlTemplate =
@@ -58,7 +58,7 @@ trait STRender {
   }
 
 
-  def renderSqlByST(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
+  def renderByST(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
     val sqlToRender: String = sqlWithoutVars.replaceAll("<>", "!=")
     val sqlTemplate = new ST(sqlToRender, '$', '$')
     queryKVMap.foreach(kv => sqlTemplate.add(kv._1, kv._2))
