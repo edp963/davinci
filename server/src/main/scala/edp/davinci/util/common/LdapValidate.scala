@@ -33,9 +33,9 @@ import org.apache.log4j.Logger
 
 import scala.util.{Failure, Success, Try}
 
-object LDAPValidate extends LDAPValidate
+object LdapValidate extends LdapValidate
 
-trait LDAPValidate {
+trait LdapValidate {
   private lazy val logger = Logger.getLogger(this.getClass)
   private lazy val config = ModuleInstance.getModule.config
   private val ldapUser = config.getString("ldap.user")

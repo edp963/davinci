@@ -33,7 +33,7 @@ import edp.davinci.util.common.DavinciConstants.defaultEncode
 object FileUtils extends FileUtils
 
 trait FileUtils {
-  val dir = System.getenv("DAVINCI_HOME")
+  val dir: String = System.getenv("DAVINCI_HOME")
 
   def covert2CSV(row: Seq[String]): String = {
     val byteArrOS = new ByteArrayOutputStream()

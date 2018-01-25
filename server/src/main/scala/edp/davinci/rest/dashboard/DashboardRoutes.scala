@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.dashboard
 
 import javax.ws.rs.Path
@@ -83,7 +80,7 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         val (relations, dashboards) = tuple
         dashboards match {
           case Some(dashboard) =>
-            val dashboardContent = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""),dashboard.config, dashboard.publish, dashboard.create_by, relations)
+            val dashboardContent = DashboardContent(dashboard.id, dashboard.name, dashboard.pic.getOrElse(""), dashboard.desc, dashboard.linkage_detail.getOrElse(""), Some(dashboard.config.getOrElse("[]")), dashboard.publish, dashboard.create_by, relations)
             complete(OK, ResponseJson[DashboardContent](getHeader(200, session), dashboardContent))
           case None =>
             logger.error(s"dashboard not found,id:$dashboardId")
@@ -143,10 +140,10 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
 
   def postDashBoard(session: SessionClass, postDashboards: Seq[PostDashboard]): Route = {
     if (session.admin) {
-      val dashboardSeq = postDashboards.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail),Some(post.config.getOrElse("{}")), post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
+      val dashboardSeq = postDashboards.map(post => Dashboard(0, post.name, Some(post.pic), post.desc, Some(post.linkage_detail), Some(post.config.getOrElse("{}")), post.publish, active = true, currentTime, session.userId, currentTime, session.userId))
       onComplete(modules.dashboardDal.insert(dashboardSeq)) {
         case Success(dashboards) =>
-          val responseDashSeq = dashboards.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
+          val responseDashSeq = dashboards.map(dashboard => PutDashboard(dashboard.id, dashboard.name, dashboard.pic, dashboard.desc, dashboard.linkage_detail, dashboard.config, dashboard.publish, dashboard.active, dashboard.create_by))
           complete(OK, ResponseSeqJson[PutDashboard](getHeader(200, session), responseDashSeq))
         case Failure(ex) => logger.error(s"insert dashboard error", ex)
           complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))

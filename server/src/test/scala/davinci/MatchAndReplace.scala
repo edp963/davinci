@@ -2,13 +2,12 @@
 package davinci
 
 import edp.davinci.KV
-import edp.davinci.rest.RouteHelper._
-import edp.davinci.util.common.DavinciConstants.{STEndChar, STStartChar, sqlSeparator}
-import edp.davinci.util.common.{RegexMatcher, STRenderUtils}
-import edp.davinci.util.sql.SqlParser
+import edp.davinci.rest.{GroupVar, QueryVar}
+import edp.davinci.util.common.RegexMatcher
+import edp.davinci.util.json.JsonUtils.json2caseClass
+import edp.davinci.util.sql.{SqlParser, SqlUtils}
 import org.scalatest.FunSuite
 import org.stringtemplate.v4.{ST, STGroupString}
-import edp.davinci.util.json.JsonUtils.json2caseClass
 
 class MatchAndReplace extends FunSuite {
   test("expression map") {
@@ -66,12 +65,9 @@ class MatchAndReplace extends FunSuite {
 
     val trimSql = flatTableSqls.trim
     println("the initial sql template:" + trimSql)
-    val sqls = if (trimSql.lastIndexOf(sqlSeparator) == trimSql.length - 1) trimSql.dropRight(1).split(sqlSeparator) else trimSql.split(sqlSeparator)
-    val sqlWithoutVar = trimSql.substring(trimSql.indexOf(STStartChar) + 1, trimSql.indexOf(STEndChar)).trim
-    val groupKVMap = getGroupKVMap(sqls, groupParams)
-    val queryKVMap = getQueryKVMap(sqls, queryParams)
-    val mergeSql = RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-    val renderedSql = if (queryKVMap.nonEmpty) STRenderUtils.renderSql(mergeSql, queryKVMap) else mergeSql
+
+    val mergeSql = new GroupVar(groupParams, SqlUtils.getDefaultVarMap(trimSql, "group")).replace(trimSql)
+    val renderedSql = new QueryVar(queryParams, SqlUtils.getDefaultVarMap(trimSql, "query")).render(mergeSql)
     println("sql:" + renderedSql)
   }
 
@@ -100,30 +96,27 @@ class MatchAndReplace extends FunSuite {
     val flatTableSqls =
       """query@var $startdate$;
         |query@var $enddate$;
-        |{SELECT DATE_FORMAT(createtime, '%Y-%m-%d')  as 注册日期, COUNT( * ) as 注册数量 FROM ec_carowner where 1=1 $if(startdate)$ and DATE_FORMAT(createtime, '%Y-%m-%d')>=$startdate$ and DATE_FORMAT(createtime, '%Y-%m-%d')<=$enddate$ $endif$ GROUP BY DATE_FORMAT(createtime, '%Y-%m-%d') order by DATE_FORMAT(createtime, '%Y-%m-%d')}""".stripMargin
+        |{SELECT DATE_FORMAT(createtime, '%Y-%m-%d')  as 注册日期, COUNT( * ) as 注册数量 FROM ec_carowner where 1=1 $if(startdate)$ and DATE_FORMAT(createtime, '%Y-%m-%d')>=$startdate$ and DATE_FORMAT(createtime, '%Y-%m-%d')<=$enddate$ $endif$
+        |GROUP BY DATE_FORMAT(createtime, '%Y-%m-%d') order by DATE_FORMAT(createtime, '%Y-%m-%d')}""".stripMargin
 
 
     val queryParams = json2caseClass[Seq[KV]](queryStr)
 
     val trimSql = flatTableSqls.trim
     println("the initial sql template:" + trimSql)
-    val sqls = if (trimSql.lastIndexOf(sqlSeparator) == trimSql.length - 1) trimSql.dropRight(1).split(sqlSeparator) else trimSql.split(sqlSeparator)
-    val sqlWithoutVar = trimSql.substring(trimSql.indexOf(STStartChar) + 1, trimSql.indexOf(STEndChar)).trim
-    val groupKVMap = getGroupKVMap(sqls, null)
-    val queryKVMap = getQueryKVMap(sqls, queryParams)
-    val mergeSql = RegexMatcher.matchAndReplace(sqlWithoutVar, groupKVMap)
-    val renderedSql = STRenderUtils.renderSql(mergeSql, queryKVMap)
+    val mergeSql = new GroupVar(Seq.empty, SqlUtils.getDefaultVarMap(trimSql, "group")).replace(trimSql)
+    val renderedSql = new QueryVar(queryParams, SqlUtils.getDefaultVarMap(trimSql, "query")).render(mergeSql)
     println("sql:" + renderedSql)
   }
 
 
-  test("ST"){
+  test("ST") {
     val template = "hi <name><if(a)> asdajh <endif>!"
     val st = new ST(template)
     val expected = "hi !"
     val result = st.render()
-    println(result+">>>>>>>>")
-   println(result==expected)
+    println(result + ">>>>>>>>")
+    println(result == expected)
   }
 
 }
