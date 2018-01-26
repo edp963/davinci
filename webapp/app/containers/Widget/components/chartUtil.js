@@ -32,6 +32,7 @@ import doubleYAxis from '../charts/doubleYAxis'
 import boxplot from '../charts/boxplot'
 import graph from '../charts/graph'
 import markBoxplot from '../charts/markBoxplot'
+import waterfall from '../charts/waterfall'
 
 export const iconMapping = {
   line: 'icon-chart-line',
@@ -49,7 +50,8 @@ export const iconMapping = {
   doubleYAxis: 'icon-duplex',
   boxplot: 'icon-508tongji_xiangxiantu',
   markBoxplot: 'icon-508tongji_xiangxiantu',
-  graph: 'icon-510tongji_guanxitu'
+  graph: 'icon-510tongji_guanxitu',
+  waterfall: 'icon-waterfall'
 }
 
 export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }) {
@@ -93,6 +95,8 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       return graph(dataSource, flatInfo, chartParams, interactIndex)
     case 'markBoxplot':
       return markBoxplot(dataSource, flatInfo, chartParams, interactIndex)
+    case 'waterfall':
+      return waterfall(dataSource, flatInfo, chartParams, interactIndex)
     default:
       return {}
   }

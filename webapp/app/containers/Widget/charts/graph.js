@@ -207,7 +207,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       legend: {
         data: categories,
         orient: 'vertical',
-        left: 'left'
+        left: 'left',
+        type: 'scroll'
       }
     } : null
 
