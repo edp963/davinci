@@ -33,6 +33,7 @@ import doubleYAxis from './doubleYAxis.json'
 import boxplot from './boxplot.json'
 import graph from './graph.json'
 import markBoxplot from './markBoxplot.json'
+import waterfall from './waterfall.json'
 
 export default [
   area,
@@ -49,5 +50,6 @@ export default [
   doubleYAxis,
   boxplot,
   graph,
-  markBoxplot
+  markBoxplot,
+  waterfall
 ]
