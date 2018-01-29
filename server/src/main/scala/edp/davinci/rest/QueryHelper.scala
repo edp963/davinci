@@ -26,12 +26,11 @@ import java.sql.{Connection, ResultSet, SQLException, Statement}
 import java.util.concurrent.TimeUnit
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ContentType.NonBinary
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.{attachment, inline}
 import akka.http.scaladsl.model.{HttpEntity, _}
-import akka.http.scaladsl.server.{Directives, Route, StandardRoute}
+import akka.http.scaladsl.server.{Directives, StandardRoute}
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import edp.davinci.persistence.entities.SourceConfig
@@ -49,12 +48,12 @@ import edp.davinci.util.sql.SqlUtils
 import edp.davinci.util.sql.SqlUtils._
 import edp.davinci.{KV, ModuleInstance}
 import org.slf4j.LoggerFactory
-import scala.concurrent.ExecutionContext.Implicits.global
+
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import scala.util.{Failure, Success}
 
 case class ActorMessage(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig, expired: Int)
 
@@ -80,7 +79,9 @@ class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate, cache
           val renderedSql = queryVarRender(mergeSql)
           logger.info("@@sql after query var render: " + renderedSql)
           val sqlBuffer: mutable.Buffer[String] = sql2Buffer(renderedSql)
+          val executeBefore = System.currentTimeMillis()
           val resultSeq = executeDirect(sqlBuffer)
+          logger.info(s"@@view ${source.head.name} query cost " + (System.currentTimeMillis() - executeBefore) / 1000 + " seconds")
           QueryHelper.contentTypeMatch(resultSeq, contentType)
         }
         else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), "flatTable sql template is empty"))
@@ -190,6 +191,28 @@ class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate, cache
 object QueryHelper extends Directives {
   private val logger = LoggerFactory.getLogger(this.getClass)
 
+  def executeQuery(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig): Seq[String] = {
+    logger.info("query from db ^^^^^^^^^^^")
+    logger.info("the sql in getResult:")
+    sqlBuffer.foreach(logger.info)
+    var dbConnection: Connection = null
+    var statement: Statement = null
+    try {
+      dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password)
+      statement = dbConnection.createStatement()
+      if (sqlBuffer.lengthCompare(1) > 0) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
+      //es statement NullPointerException ,so change 2 prepareStatement
+      val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
+      else statement.executeQuery(sqlBuffer.last)
+      covert2ListBuf(resultSet, sourceConfig)
+    } catch {
+      case e: Throwable => logger.error("get result exception", e)
+        throw e
+    } finally {
+      if (dbConnection != null) dbConnection.close()
+    }
+  }
+
   def queryCache(actorMessage: ActorMessage): Seq[String] = {
     import akka.pattern.ask
 
@@ -211,30 +234,6 @@ object QueryHelper extends Directives {
       case e: Throwable =>
         logger.error("query cache exception", e)
         throw e
-    }
-  }
-
-  def executeQuery(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig): Seq[String] = {
-    logger.info("the sql in getResult:")
-    sqlBuffer.foreach(logger.info)
-    val beforeExecute = System.currentTimeMillis()
-    var dbConnection: Connection = null
-    var statement: Statement = null
-    try {
-      dbConnection = SqlUtils.getConnection(sourceConfig.url, sourceConfig.user, sourceConfig.password, 10)
-      statement = dbConnection.createStatement()
-      if (sqlBuffer.lengthCompare(1) > 0) for (elem <- sqlBuffer.dropRight(1)) statement.execute(elem)
-      //es statement NullPointerException ,so change 2 prepareStatement
-      val resultSet = if (isES(sourceConfig.url)) dbConnection.prepareStatement(sqlBuffer.last).executeQuery()
-      else statement.executeQuery(sqlBuffer.last)
-      val afterExecute = System.currentTimeMillis()
-      logger.info("total cost seconds:" + (afterExecute - beforeExecute) / 1000)
-      covert2ListBuf(resultSet, sourceConfig)
-    } catch {
-      case e: Throwable => logger.error("get result exception", e)
-        throw e
-    } finally {
-      if (dbConnection != null) dbConnection.close()
     }
   }
 
@@ -284,24 +283,26 @@ object QueryHelper extends Directives {
     file.getName
   }
 
-//  def callAPI: Route = {
-//
-//    val httpResponse = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
-//    onComplete(httpResponse) {
-//      case Success(response) => response match {
-//        case HttpResponse(StatusCodes.OK, _, entity, _) =>
-//          //  val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
-//
-//          complete(OK, ResponseJson[String](getHeader(200, null), "get from quest successful"))
-//        case resp@HttpResponse(code, _, _, _) =>
-//          logger.info("Request failed, response code: " + code)
-//          resp.discardEntityBytes()
-//          complete(code, ResponseJson[String](getHeader(code.intValue(), null), "get from quest successful"))
-//      }
-//      case Failure(ex) => logger.error("call api exception", ex)
-//        complete(BadRequest, ResponseJson[String](getHeader(400, "", null), "api response failure"))
-//    }
-//  }
+  //  def callAPI: Route = {
+  //
+  //    val httpResponse = Http().singleRequest(HttpRequest(uri = "http://akka.io"))
+  //    onComplete(httpResponse) {
+  //      case Success(response) => response match {
+  //        case HttpResponse(StatusCodes.OK, _, entity, _) =>
+  //          //  val resultStr = entity.dataBytes.runFold(ByteString(""))(_ ++ _).map(_.utf8String)
+  //
+  //          complete(OK, ResponseJson[String](getHeader(200, null), "get from quest successful"))
+  //        case resp@HttpResponse(code, _, _, _) =>
+  //          logger.info("Request failed, response code: " + code)
+  //          resp.discardEntityBytes()
+  //          complete(code, ResponseJson[String](getHeader(code.intValue(), null), "get from quest successful"))
+  //      }
+  //      case Failure(ex) => logger.error("call api exception", ex)
+  //        complete(BadRequest, ResponseJson[String](getHeader(400, "", null), "api response failure"))
+  //    }
+  //  }
+
+
 
 }
 
