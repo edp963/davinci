@@ -37,6 +37,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     bottom,
     left,
     right,
+    ascend,
     suffixYAxis
   } = chartParams
   let {metrics} = chartParams
@@ -47,12 +48,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     toolboxOptions,
     gridOptions,
     dataZoomOptions,
-    suffixYAxisOptions
+    suffixYAxisOptions,
+    xAxisOptionData
 
   // series 数据项
   let metricArr = []
   let sourceData = []
   metrics = [metrics]
+
+  if (xAxis && dataSource) {
+    xAxisOptionData = dataSource.map(d => d[xAxis])
+  }
+
   if (metrics && metrics.length) {
     let dataOption = metrics.map(me => dataSource.map(data => data[me]))
     let wrapper = []
@@ -105,6 +112,20 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           return a
         }
       })
+      let totalAscend = ascendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
+      let totalDiscendOrder = discendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
+      let difference = totalAscend - totalDiscendOrder
+      if (ascend && ascend.length) {
+        xAxisOptionData.push('累计')
+        baseData.push('-')
+        if (difference > 0) {
+          ascendOrder.push(difference)
+          discendOrder.push('-')
+        } else {
+          discendOrder.push(Math.abs(difference))
+          ascendOrder.push('-')
+        }
+      }
       let baseDataObj = Object.assign(
         {
           name: m,
@@ -215,7 +236,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     if (xAxis) {
       xAxisOptions = {
         xAxis: {
-          data: dataSource.map(d => d[xAxis]),
+          data: xAxisOptionData,
           axisLabel: {
             interval: xAxisInterval,
             rotate: xAxisRotate
@@ -325,8 +346,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           return `${pa.seriesName}: ${data}`
         })
         let xAxis = param[0]['axisValue']
-        text.unshift(xAxis)
-        return text.join('<br/>')
+        if (xAxis === '累计') {
+          return ''
+        } else {
+          text.unshift(xAxis)
+          return text.join('<br/>')
+        }
       }
     }
   },

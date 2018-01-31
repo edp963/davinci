@@ -30,6 +30,16 @@
       "title": "显示",
       "items": [
         {
+          "name": "label",
+          "title": "数值",
+          "component": "checkbox"
+        },
+        {
+          "name": "ascend",
+          "title": "累计",
+          "component": "checkbox"
+        },
+        {
           "name": "xAxisRotate",
           "title": "x轴文字旋转角度",
           "component": "inputnumber"
@@ -43,11 +53,6 @@
           "name": "dataZoomThreshold",
           "title": "超出后缩放",
           "component": "inputnumber"
-        },
-        {
-          "name": "label",
-          "title": "数值",
-          "component": "checkbox"
         }
       ]
     },

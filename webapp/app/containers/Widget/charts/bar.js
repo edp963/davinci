@@ -95,7 +95,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
                 formatter: (param) => {
                   let result = (Number(param.value) / wrapper[param.dataIndex]) * 100
                   if (stackAccounting && stackAccounting.length && stack && stack.length) {
-                    return `${param.value}\r\n\r\n(${result.toFixed(0)}%)`
+                    return `${param.value}\r\n(${result.toFixed(0)}%)`
                   }
                 },
                 position: stack && stack.length ? 'insideTop' : 'top'
