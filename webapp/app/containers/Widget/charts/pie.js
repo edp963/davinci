@@ -30,6 +30,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     insideRadius,
     outsideRadius,
     hasLegend,
+    legendSelected,
     legendPosition,
     toolbox,
     top,
@@ -64,11 +65,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         break
     }
 
+    const selected = legendSelected === 'unselectAll'
+      ? {
+        selected: dataSource.reduce((obj, d) => Object.assign(obj, { [d[title]]: false }), {})
+      } : null
+
     legendOptions = {
       legend: Object.assign({
         data: dataSource.map(d => d[title]),
         type: 'scroll'
-      }, orient, positions)
+      }, orient, positions, selected)
     }
   }
 

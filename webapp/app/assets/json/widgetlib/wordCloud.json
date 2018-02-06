@@ -21,33 +21,21 @@
       "items": [
         {
           "name": "gridSize",
-          "title": "GridSize",
-          "component": "inputnumber"
+          "title": "文字间距",
+          "component": "inputnumber",
+          "default": 8
         },
         {
           "name": "sizeRangeX",
-          "title": "SizeRangeX",
-          "component": "inputnumber"
+          "title": "文字最小尺寸",
+          "component": "inputnumber",
+          "default": 12
         },
         {
           "name": "sizeRangeY",
-          "title": "SizeRangeY",
-          "component": "inputnumber"
-        },
-        {
-          "name": "rotationStep",
-          "title": "RotationStep",
-          "component": "inputnumber"
-        },
-        {
-          "name": "rotationRangeX",
-          "title": "RotationRangeX",
-          "component": "inputnumber"
-        },
-        {
-          "name": "rotationRangeY",
-          "title": "RotationRangeY",
-          "component": "inputnumber"
+          "title": "文字最大尺寸",
+          "component": "inputnumber",
+          "default": 60
         }
       ]
     }

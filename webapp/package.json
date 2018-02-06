@@ -224,6 +224,7 @@
     "react": "15.4.1",
     "react-addons-css-transition-group": "^15.6.2",
     "react-codemirror2": "^3.0.7",
+    "react-color": "^2.13.8",
     "react-dom": "15.4.1",
     "react-grid-layout": "^0.14.4",
     "react-helmet": "3.2.2",

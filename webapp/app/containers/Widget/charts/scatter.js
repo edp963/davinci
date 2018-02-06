@@ -38,6 +38,7 @@ export default function (dataSource, flatInfo, chartParams) {
     value,
     shadow,
     hasLegend,
+    legendSelected,
     legendPosition,
     toolbox,
     splitLineX,
@@ -215,11 +216,16 @@ export default function (dataSource, flatInfo, chartParams) {
         break
     }
 
+    const selected = legendSelected === 'unselectAll'
+      ? {
+        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+      } : null
+
     legendOptions = {
       legend: Object.assign({
         data: metricArr.map(m => m.name),
         type: 'scroll'
-      }, orient, positions)
+      }, orient, positions, selected)
     }
   }
 
@@ -275,10 +281,10 @@ export default function (dataSource, flatInfo, chartParams) {
       formatter: (node) => {
         const nodeValues = node.data
         return `<span>
-          ${nodeValues[2]} <br/>
-          ${value}: ${nodeValues[3]} <br/>
-          ${xAxis}: ${nodeValues[0]} <br/>
-          ${yAxis}: ${nodeValues[1]} <br/>
+          ${nodeValues[2] || ''} <br/>
+          ${value}: ${nodeValues[3] || 0} <br/>
+          ${xAxis}: ${nodeValues[0] || 0} <br/>
+          ${yAxis}: ${nodeValues[1] || 0} <br/>
         </span>`
       }
     }

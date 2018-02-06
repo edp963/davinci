@@ -316,6 +316,7 @@ export class Grid extends Component {
     let globalFilters
     let params
     let linkageParams
+    let globalParams
     let pagination
 
     if (queryParams) {
@@ -324,6 +325,7 @@ export class Grid extends Component {
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
+      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
       pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
       filters = cachedQueryParams.filters
@@ -331,6 +333,7 @@ export class Grid extends Component {
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
+      globalParams = cachedQueryParams.globalParams
       pagination = cachedQueryParams.pagination
     }
 
@@ -343,7 +346,8 @@ export class Grid extends Component {
         linkageFilters,
         globalFilters,
         params,
-        linkageParams
+        linkageParams,
+        globalParams
       },
       pagination.sorts,
       pagination.offset,
@@ -1043,62 +1047,164 @@ export class Grid extends Component {
 
   globalFilterChange = (filter) => (formValue) => {
     const { currentItems } = this.props
-    const { key, type, items } = filter
+    const { key, type, relatedItems } = filter
 
-    Object.keys(items).forEach(itemId => {
-      const columnAndType = items[itemId].split(DEFAULT_SPLITER)
+    Object.keys(relatedItems).forEach(itemId => {
+      const columnAndType = relatedItems[itemId].split(DEFAULT_SPLITER)
+      const isParam = !columnAndType[1]  // 变量type为空
       const item = currentItems.find(ci => ci.id === Number(itemId))
 
-      let filtersOnThisItem = this.interactGlobalFilters[itemId] || {}
-      let currentFilter
-
-      switch (type) {
-        case 'numberRange':
-          let numberFilters = []
-          if (formValue[0]) {
-            numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
-          }
-          if (formValue[1]) {
-            numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
-          }
-          currentFilter = numberFilters.length ? numberFilters.join(` and `) : ''
-          break
-        case 'select':
-          currentFilter = formValue ? `${columnAndType[0]} = ${formValue}` : ''
-          break
-        case 'multiSelect':
-          currentFilter = formValue.length ? formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
-          break
-        case 'date':
-          currentFilter = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}` : ''
-          break
-        case 'datetime':
-          currentFilter = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
-          break
-        case 'multiDate':
-          currentFilter = formValue ? formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
-          break
-        case 'dateRange':
-          currentFilter = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
-          break
-        case 'datetimeRange':
-          currentFilter = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
-          break
-        default:
-          const inputValue = formValue.target.value.trim()
-          currentFilter = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
-          break
+      if (!this.interactGlobalFilters[itemId]) {
+        this.interactGlobalFilters[itemId] = {}
       }
 
-      if (currentFilter) {
-        filtersOnThisItem[key] = currentFilter
-        this.interactGlobalFilters[itemId] = filtersOnThisItem
+      if (isParam) {
+        let paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
+        let currentParam
+
+        switch (type) {
+          case 'numberRange':
+            if (formValue[0] || formValue[1]) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: fv
+              }))
+            }
+            break
+          case 'select':
+            if (formValue) {
+              currentParam = [{
+                k: columnAndType[0],
+                v: `${formValue}`
+              }]
+            }
+            break
+          case 'multiSelect':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `${fv}`
+              }))
+            }
+            break
+          case 'date':
+          case 'datetime':
+            if (formValue) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `'${formValue}'`
+              }
+            }
+            break
+          case 'multiDate':
+            if (formValue) {
+              currentParam = formValue.split(',').map(fv => ({
+                k: columnAndType[0],
+                v: `'${fv}'`
+              }))
+            }
+            break
+          case 'dateRange':
+          case 'datetimeRange':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `'${fv}'`
+              }))
+            }
+            break
+          default:
+            const val = formValue.target.value.trim()
+            if (val) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `${val}`
+              }
+            }
+            break
+        }
+
+        if (currentParam) {
+          paramsOnThisItem[key] = currentParam
+          this.interactGlobalFilters[itemId].params = paramsOnThisItem
+        } else {
+          delete paramsOnThisItem[key]
+        }
       } else {
-        delete filtersOnThisItem[key]
+        let filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
+        let currentFilter
+
+        switch (type) {
+          case 'numberRange':
+            let numberFilters = []
+            if (formValue[0]) {
+              numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
+            }
+            if (formValue[1]) {
+              numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
+            }
+            if (numberFilters.length) {
+              currentFilter = numberFilters.join(` and `)
+            }
+            break
+          case 'select':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${formValue}`
+            }
+            break
+          case 'multiSelect':
+            if (formValue.length) {
+              currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
+            }
+            break
+          case 'date':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}`
+            }
+            break
+          case 'datetime':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
+            }
+            break
+          case 'multiDate':
+            if (formValue) {
+              currentFilter = formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
+            }
+            break
+          case 'dateRange':
+            if (formValue.length) {
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
+            }
+            break
+          case 'datetimeRange':
+            if (formValue.length) {
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
+            }
+            break
+          default:
+            const inputValue = formValue.target.value.trim()
+            if (inputValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}`
+            }
+            break
+        }
+
+        if (currentFilter) {
+          filtersOnThisItem[key] = currentFilter
+          this.interactGlobalFilters[itemId].filters = filtersOnThisItem
+        } else {
+          delete filtersOnThisItem[key]
+        }
       }
 
       this.getChartData('rerender', itemId, item.widget_id, {
-        globalFilters: Object.values(this.interactGlobalFilters[itemId]).join(` and `)
+        globalFilters: this.interactGlobalFilters[itemId].filters
+          ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
+          : '',
+        globalParams: this.interactGlobalFilters[itemId].params
+          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr, val) => arr.concat(val), [])
+          : []
       })
     })
 
@@ -1627,6 +1733,7 @@ export class Grid extends Component {
           <GlobalFilterConfigPanel
             items={currentItems || []}
             widgets={widgets || []}
+            bizlogics={bizlogics || []}
             dataSources={currentDatasources || {}}
             tableSource={globalFilterTableSource || []}
             onSaveToTable={this.saveToGlobalFilterTable}

@@ -89,6 +89,19 @@
           "span": 24
         },
         {
+          "name": "legendSelected",
+          "component": "radio",
+          "values": [{
+            "name": "默认全选",
+            "value": "selectAll"
+          }, {
+            "name": "默认全不选",
+            "value": "unselectAll"
+          }],
+          "default": "selectAll",
+          "span": 24
+        },
+        {
           "name": "legendPosition",
           "title": "图例位置",
           "component": "radio",

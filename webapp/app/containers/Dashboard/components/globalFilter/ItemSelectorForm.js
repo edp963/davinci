@@ -18,10 +18,14 @@ export class ItemSelectorForm extends PureComponent {
     const { getFieldDecorator } = form
 
     const itemSelectors = items.map(i => {
-      const Options = i.keys.map((k, index) => {
-        const itemType = i.types[index]
-        return (<Option key={k} value={`${k}${DEFAULT_SPLITER}${itemType}`}>{k}</Option>)
-      })
+      const Options = i.keys
+        .map((k, index) => {
+          const itemType = i.types[index]
+          return (<Option key={k} value={`${k}${DEFAULT_SPLITER}${itemType}`}>{k}</Option>)
+        })
+        .concat(i.params.map(v => (
+          <Option key={v} value={`${v}${DEFAULT_SPLITER}`}>{`${v}[变量]`}</Option>
+        )))
 
       return (
         <Col key={i.id} span={6}>
@@ -30,7 +34,7 @@ export class ItemSelectorForm extends PureComponent {
             className={styles.formItem}
           >
             {getFieldDecorator(`${i.id}`, {})(
-              <Select placeholder="请选择参数" allowClear>
+              <Select placeholder="请选择参数或变量" allowClear>
                 {Options}
               </Select>
             )}

@@ -27,18 +27,13 @@ export default function (dataSource, flatInfo, chartParams) {
     title,
     gridSize,
     sizeRangeX,
-    sizeRangeY,
-    rotationStep,
-    rotationRangeX,
-    rotationRangeY
+    sizeRangeY
 
   } = chartParams
 
   let metricOptions,
     gridSizeOption,
     sizeRangeOption,
-    rotationStepOption,
-    rotationRangeOption,
     gridOptions
 
   // series 数据项
@@ -50,14 +45,6 @@ export default function (dataSource, flatInfo, chartParams) {
 
   sizeRangeOption = (sizeRangeX || sizeRangeY) && {
     sizeRange: [sizeRangeX || 0, sizeRangeY || 0]
-  }
-
-  rotationStepOption = rotationStep && {
-    rotationStep: rotationStep
-  }
-
-  rotationRangeOption = (rotationRangeX || rotationRangeY) && {
-    rotationRange: [rotationRangeX || 0, rotationRangeY || 0]
   }
 
   const grouped = dataSource.reduce((acc, val) => {
@@ -77,25 +64,19 @@ export default function (dataSource, flatInfo, chartParams) {
     type: 'wordCloud',
     textStyle: {
       normal: {
-        color: function (v) {
-          if (v.value > 600) {
-            return 'rgb(0, 116, 111)'
-          } else if (v.value > 200) {
-            return 'rgb(0, 156, 147)'
-          } else if (v.value > 9) {
-            return 'rgb(70, 209, 133)'
-          } else {
-            return 'rgb(20, 186, 167)'
-          }
-        }
+        color: '#509af2'
+      },
+      emphasis: {
+        shadowBlur: 10,
+        shadowColor: '#509af2'
       }
     },
-    data: Object.keys(grouped).map(k => grouped[k])
+    data: Object.keys(grouped).map(k => grouped[k]),
+    rotationStep: 45,
+    rotationRange: [-90, 90]
   },
     gridSizeOption,
-    sizeRangeOption,
-    rotationStepOption,
-    rotationRangeOption
+    sizeRangeOption
   )
   metricArr.push(serieObj)
   metricOptions = {

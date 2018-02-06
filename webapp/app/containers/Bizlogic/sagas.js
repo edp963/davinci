@@ -201,18 +201,13 @@ export function* getBizdatasFromItem ({ payload }) {
     queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
     queries = `?${queries.join('&')}`
 
-    let data = {}
-    if (sql) {  // FIXME sql 是否需要判断
-      const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams } = sql
-      data = {
-        adHoc,
-        manualFilters: [filters, linkageFilters, globalFilters]
-          .filter(f => !!f)
-          .join(' and '),
-        params: params && linkageParams
-          ? [].concat(params).concat(linkageParams)
-          : params || linkageParams || []
-      }
+    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
+    const data = {
+      adHoc,
+      manualFilters: [filters, linkageFilters, globalFilters]
+        .filter(f => !!f)
+        .join(' and '),
+      params: [].concat(params).concat(linkageParams).concat(globalParams)
     }
 
     const asyncData = yield call(request, {
