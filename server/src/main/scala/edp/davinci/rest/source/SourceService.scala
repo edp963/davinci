@@ -40,7 +40,7 @@ trait SourceService {
   private lazy val modules = ModuleInstance.getModule
 
   def getAll(session: SessionClass): Future[Seq[Source4Put]] = {
-    db.run(modules.sourceQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (Source4Put.tupled, Source4Put.unapply)).result).
+    db.run(modules.sourceQuery.filter(_.create_by === session.userId).sortBy(_.update_time.desc).map(r => (r.id, r.name, r.connection_url, r.desc, r.`type`, r.config) <> (Source4Put.tupled, Source4Put.unapply)).result).
       mapTo[Seq[Source4Put]]
   }
 

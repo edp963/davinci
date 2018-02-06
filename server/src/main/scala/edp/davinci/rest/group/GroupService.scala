@@ -40,7 +40,7 @@ trait GroupService {
   private lazy val modules = ModuleInstance.getModule
 
   def getGroups(session: SessionClass) = {
-    db.run(modules.groupQuery.filter(_.create_by === session.userId).map(r => (r.id, r.name, r.desc) <> (Group4Put.tupled, Group4Put.unapply)).result).
+    db.run(modules.groupQuery.filter(_.create_by === session.userId).sortBy(_.update_time.desc).map(r => (r.id, r.name, r.desc) <> (Group4Put.tupled, Group4Put.unapply)).result).
       mapTo[Seq[Group4Put]]
   }
 

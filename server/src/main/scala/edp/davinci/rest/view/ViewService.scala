@@ -38,7 +38,7 @@ trait ViewService {
 
   def getAllViews(session: SessionClass): Future[Seq[QueryView]] = {
     val viewIds = modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
-    db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).
+    db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).sortBy(_.update_time desc).
       map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.update_sql, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table, r.active, r.create_by) <> (QueryView.tupled, QueryView.unapply)).result).
       mapTo[Seq[QueryView]]
   }
@@ -82,7 +82,7 @@ trait ViewService {
     val query = for {
       ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
         modules.sourceQuery on (_._2.source_id === _.id)
-    } yield (view.name,view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params)) <>(Config4QuerySql.tupled,Config4QuerySql.unapply)
+    } yield (view.name, view.sql_tmpl, view.result_table, source.connection_url, rel.map(_.sql_params)) <> (Config4QuerySql.tupled, Config4QuerySql.unapply)
 
     db.run(query.result)
   }
@@ -95,10 +95,9 @@ trait ViewService {
     val query = for {
       ((rel, view), source) <- rel joinRight modules.viewQuery.filter(obj => obj.id === flatTableId) on (_.flatTable_id === _.id) join
         modules.sourceQuery on (_._2.source_id === _.id)
-    } yield (view.name,view.update_sql, view.result_table, source.connection_url, rel.map(_.sql_params))<>(Config4UpdateSql.tupled,Config4UpdateSql.unapply)
+    } yield (view.name, view.update_sql, view.result_table, source.connection_url, rel.map(_.sql_params)) <> (Config4UpdateSql.tupled, Config4UpdateSql.unapply)
     db.run(query.result)
   }
-
 
 
 }

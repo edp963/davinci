@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.widget
 
 import edp.davinci.ModuleInstance
@@ -45,13 +42,11 @@ trait WidgetService {
         (view.id in modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct)).map(_.id)
     else modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
 
-    if (session.admin)
-      db.run(modules.widgetQuery.filter(widget => widget.create_by === session.userId || (widget.flatTable_id in viewIds)).map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidget.tupled, PutWidget.unapply)).result)
-    else {
-      val query = modules.widgetQuery.filter(widget => widget.publish && (widget.flatTable_id in viewIds))
-        .map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidget.tupled, PutWidget.unapply)).result
-      db.run(query).mapTo[Seq[PutWidget]]
-    }
+    val query = (if (session.admin) modules.widgetQuery.filter(widget => widget.create_by === session.userId || (widget.flatTable_id in viewIds))
+    else modules.widgetQuery.filter(widget => widget.publish && (widget.flatTable_id in viewIds))
+      ).sortBy(_.update_time.desc).map(w => (w.id, w.widgetlib_id, w.flatTable_id, w.name, w.adhoc_sql, w.desc, w.config, w.chart_params, w.query_params, w.publish, w.create_by) <> (PutWidget.tupled, PutWidget.unapply)).result
+    db.run(query)
+
   }
 
   def getWidgetById(id: Long): Future[Option[PutWidget]] = {

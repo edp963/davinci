@@ -28,7 +28,7 @@ import java.util.regex.Pattern
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
-import edp.davinci.util.common.DateUtils
+import edp.davinci.util.common.{DateUtils, DavinciConstants}
 import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
@@ -113,6 +113,7 @@ trait SqlUtils extends Serializable {
     config.setMaximumPoolSize(muxPoolSize)
     config.setMinimumIdle(1)
     config.setInitializationFailFast(false)
+    config.setConnectionTimeout(DavinciConstants.requestTimeout * 1000)
 
     //    config.addDataSourceProperty("cachePrepStmts", "true")
     //    config.addDataSourceProperty("prepStmtCacheSize", "250")
