@@ -33,11 +33,10 @@ import edp.davinci.rest.dashboard.DashboardService
 import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
 import edp.davinci.rest.widget.WidgetService
-import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
-import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.common.ResponseUtils.getHeader
-import edp.davinci.util._
 import edp.davinci.util.common.AuthorizationProvider
+import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
+import edp.davinci.util.common.ResponseUtils.getHeader
+import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
 import org.apache.log4j.Logger
@@ -356,7 +355,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         widgetOpt match {
           case Some(widget) => val session = SessionClass(shareClass.userId, groupIds.toList, admin._1)
             logger.info("in widget option " + s"userid ${shareClass.userId} infoid ${shareClass.infoId}")
-            RouteHelper.getResultComplete(session, widget.flatTable_id, paginate, cacheClass, contentType, manualInfo)
+            new QueryHelper(session, widget.flatTable_id, paginate, cacheClass, contentType, manualInfo).getResultComplete
           case None =>
             logger.warn(s"widget not found: ${shareClass.infoId} ,user id ${shareClass.userId}")
             complete(BadRequest, ResponseJson[String](getHeader(404, s"not found: ${shareClass.infoId} user id ${shareClass.userId}", null), ""))

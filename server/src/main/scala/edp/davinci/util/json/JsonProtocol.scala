@@ -87,17 +87,17 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val formatDashboardInfo: RootJsonFormat[DashboardContent] = jsonFormat9(DashboardContent)
 
 
-  implicit val formatPostRelGroupBizlogic: RootJsonFormat[PostRelGroupView] = jsonFormat2(PostRelGroupView)
-  implicit val formatPutRelGroupView: RootJsonFormat[PutRelGroupView] = jsonFormat3(PutRelGroupView)
-  implicit val formatPostRelGroupBizlogicSeq: RootJsonFormat[PostRelGroupViewSeq] = jsonFormat1(PostRelGroupViewSeq)
-  implicit val formatPutRelGroupBizlogicSeq: RootJsonFormat[PutRelGroupViewSeq] = jsonFormat1(PutRelGroupViewSeq)
+  implicit val formatPostRelGroupView: RootJsonFormat[PostRelGroupView] = jsonFormat3(PostRelGroupView)
+  implicit val formatPutRelGroupView: RootJsonFormat[PutRelGroupView] = jsonFormat4(PutRelGroupView)
+  implicit val formatPostRelGroupViewSeq: RootJsonFormat[PostRelGroupViewSeq] = jsonFormat1(PostRelGroupViewSeq)
+  implicit val formatPutRelGroupViewSeq: RootJsonFormat[PutRelGroupViewSeq] = jsonFormat1(PutRelGroupViewSeq)
 
   implicit val formatView: RootJsonFormat[View] = jsonFormat15(View)
-  implicit val formatPostBizlogicInfo: RootJsonFormat[View4Post] = jsonFormat9(View4Post)
-  implicit val formatPutBizlogicInfo: RootJsonFormat[View4Put] = jsonFormat10(View4Put)
-  implicit val formatQUeryBizlogic: RootJsonFormat[QueryView] = jsonFormat12(QueryView)
-  implicit val formatPostBizlogicInfoSeq: RootJsonFormat[View4PostSeq] = jsonFormat1(View4PostSeq)
-  implicit val formatPutBizlogicInfoSeq: RootJsonFormat[View4PutSeq] = jsonFormat1(View4PutSeq)
+  implicit val formatPostViewInfo: RootJsonFormat[View4Post] = jsonFormat9(View4Post)
+  implicit val formatPutViewInfo: RootJsonFormat[View4Put] = jsonFormat10(View4Put)
+  implicit val formatQUeryView: RootJsonFormat[QueryView] = jsonFormat12(QueryView)
+  implicit val formatPostViewInfoSeq: RootJsonFormat[View4PostSeq] = jsonFormat1(View4PostSeq)
+  implicit val formatPutViewInfoSeq: RootJsonFormat[View4PutSeq] = jsonFormat1(View4PutSeq)
 
   implicit val formatPostUploadMeta: RootJsonFormat[PostUploadMeta] = jsonFormat5(PostUploadMeta)
 
@@ -120,7 +120,7 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit val formatPutLoginUserInfo: RootJsonFormat[User4Login] = jsonFormat2(User4Login)
 
-  implicit val formatBizlogicResult: RootJsonFormat[ViewResult] = jsonFormat2(ViewResult)
+  implicit val formatViewResult: RootJsonFormat[ViewResult] = jsonFormat2(ViewResult)
 
   implicit val formatResponsePayload: RootJsonFormat[ResponsePayload] = jsonFormat1(ResponsePayload)
 

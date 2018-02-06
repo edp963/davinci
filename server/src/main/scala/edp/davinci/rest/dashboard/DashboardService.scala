@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.rest.dashboard
 
 import edp.davinci.ModuleInstance
@@ -60,15 +57,15 @@ trait DashboardService {
   }
 
   def getDashBoard(dashboardId: Long): Future[Option[PutDashboard]] = {
-    val query = modules.dashboardQuery.filter(_.id === dashboardId).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail,d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
+    val query = modules.dashboardQuery.filter(_.id === dashboardId).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail, d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
     db.run(query.headOption).mapTo[Option[PutDashboard]]
   }
 
 
   def update(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Future[Unit] = {
     val query = DBIO.seq(dashboardSeq.map(r => {
-      modules.dashboardQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(dashboard => (dashboard.name, dashboard.desc, dashboard.linkage_detail,dashboard.config, dashboard.publish, dashboard.update_by, dashboard.update_time))
-        .update(r.name, r.desc, r.linkage_detail,r.config, r.publish, session.userId, ResponseUtils.currentTime)
+      modules.dashboardQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(dashboard => (dashboard.name, dashboard.desc, dashboard.linkage_detail, dashboard.config, dashboard.publish, dashboard.update_by, dashboard.update_time))
+        .update(r.name, r.desc, r.linkage_detail, r.config, r.publish, session.userId, ResponseUtils.currentTime)
     }): _*)
     db.run(query)
   }
@@ -93,8 +90,9 @@ trait DashboardService {
     }
     else modules.relDWQuery.filter(_.widget_id in widgetIds).map(_.dashboard_id).distinct
 
-    val query = if (session.admin) modules.dashboardQuery.filter(_.id in dashboardIds).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail,d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
-    else modules.dashboardQuery.filter(d => d.publish && (d.id in dashboardIds)).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail,d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
+    val query = (if (session.admin) modules.dashboardQuery.filter(_.id in dashboardIds)
+    else modules.dashboardQuery.filter(d => d.publish && (d.id in dashboardIds))
+      ).sortBy(_.update_time.desc).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail, d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
     db.run(query).mapTo[Seq[PutDashboard]]
   }
 

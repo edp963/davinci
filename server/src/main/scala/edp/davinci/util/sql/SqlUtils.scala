@@ -28,7 +28,7 @@ import java.util.regex.Pattern
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
-import edp.davinci.util.common.DateUtils
+import edp.davinci.util.common.{DateUtils, DavinciConstants}
 import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
@@ -113,6 +113,7 @@ trait SqlUtils extends Serializable {
     config.setMaximumPoolSize(muxPoolSize)
     config.setMinimumIdle(1)
     config.setInitializationFailFast(false)
+    config.setConnectionTimeout(DavinciConstants.requestTimeout * 1000)
 
     //    config.addDataSourceProperty("cachePrepStmts", "true")
     //    config.addDataSourceProperty("prepStmtCacheSize", "250")
@@ -135,12 +136,12 @@ trait SqlUtils extends Serializable {
   }
 
 
-  def getRow(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
+  def getRow(rs: ResultSet, isES: Boolean): Seq[String] = {
     val meta = rs.getMetaData
     val columnNum = meta.getColumnCount
     //    val numSeq = if (sourceConfig.url.indexOf("elasticsearch") > -1)  else
     (1 to columnNum).map(columnIndex => {
-      val valueIndex = if (sourceConfig.url.indexOf("elasticsearch") > -1) columnIndex - 1 else columnIndex
+      val valueIndex = if (isES) columnIndex - 1 else columnIndex
       val fieldValue = meta.getColumnType(columnIndex) match {
         case BIGINT => rs.getLong(valueIndex)
         case DECIMAL => rs.getBigDecimal(valueIndex)

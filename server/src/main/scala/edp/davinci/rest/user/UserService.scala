@@ -41,7 +41,7 @@ trait UserService {
   private lazy val modules = ModuleInstance.getModule
 
   def getAllUsers(session: SessionClass): Future[Seq[User4Query]] = {
-    val userInfo = db.run(modules.userQuery.map(r => (r.id, r.email, r.title, r.name, r.admin) <> (User4Query.tupled, User4Query.unapply)).result)
+    val userInfo = db.run(modules.userQuery.sortBy(_.update_time.desc).map(r => (r.id, r.email, r.title, r.name, r.admin) <> (User4Query.tupled, User4Query.unapply)).result)
     userInfo.mapTo[Seq[User4Query]]
   }
 
