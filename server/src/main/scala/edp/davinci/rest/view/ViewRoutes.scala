@@ -52,6 +52,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   private lazy val waitTimeout = 30
   private lazy val adHocTable = "table"
   private lazy val routeName = "flattables"
+  private lazy val DEFAULT_REL_CONFIG="""{"authority":["share", "download"]}"""
 
 
   @ApiOperation(value = "get all views", notes = "", nickname = "", httpMethod = "GET")
@@ -64,7 +65,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
   ))
   def getViewByAllRoute: Route = path(routeName) {
     get {
-      authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+      authenticateOAuth2Async(AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           if (session.admin) {
             onComplete(ViewService.getAllViews(session)) {
@@ -102,7 +103,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
               rel <- {
                 val relSeq = for {view <- insertViews
                                   rel <- view4PostSeq.head.relBG
-                } yield RelGroupView(0, rel.group_id, view.id, Some(rel.sql_params), active = true, currentTime, session.userId, currentTime, session.userId)
+                } yield RelGroupView(0, rel.group_id, view.id, Some(rel.sql_params), rel.config.getOrElse(DEFAULT_REL_CONFIG), active = true, currentTime, session.userId, currentTime, session.userId)
                 modules.relGroupViewDal.insert(relSeq)
               }
             } yield (insertViews, rel)
@@ -136,7 +137,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
             val view4PutSeq = view4Put.payload
             val create_by = Await.result(modules.viewDal.findById(view4PutSeq.head.id), new FiniteDuration(waitTimeout, SECONDS)).get.create_by
             if (create_by == session.userId) {
-              val relationSeq = view4PutSeq.head.relBG.map(r => RelGroupView(0, r.group_id, view4PutSeq.head.id, Some(r.sql_params), active = true, currentTime, session.userId, currentTime, session.userId))
+              val relationSeq = view4PutSeq.head.relBG.map(r => RelGroupView(0, r.group_id, view4PutSeq.head.id, Some(r.sql_params), r.config.getOrElse(DEFAULT_REL_CONFIG), active = true, currentTime, session.userId, currentTime, session.userId))
               val operation = for {
                 view <- ViewService.updateView(view4PutSeq, session)
                 relation <- modules.relGroupViewDal.insert(relationSeq)
@@ -221,7 +222,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         session =>
           onComplete(ViewService.getGroupViewRelation(viewId)) {
             case Success(relSeq) =>
-              val putRelSeq = relSeq.map(r => PutRelGroupView(r._1, r._2, r._3))
+              val putRelSeq = relSeq.map(r =>PutRelGroupView(r._1,r._2,r._3,Some(r._4)))
               complete(OK, ResponseSeqJson[PutRelGroupView](getHeader(200, session), putRelSeq))
             case Failure(ex) => logger.error("getGroupsByViewIdRoute error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -307,21 +308,10 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
                 val filteredSql = filterAnnotation(sqlTemplate.trim)
                 val mergeSql = new GroupVar(Seq.empty, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
                 logger.info("@@sql after group merge: " + mergeSql)
-
                 val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
                 logger.info("@@sql after query var render: " + renderedSql)
-
-                val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
-                val renderedSQLBuf: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+               val renderedSQLBuf: mutable.Buffer[String] =getSqlBuffer(renderedSql,source.connection_url)
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
-                val projectSql: String =
-                  if (!QueryHelper.isES(sourceConfig.url))
-                    s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
-                  else renderedSQLBuf.last
-                logger.info("@@the projectSql get from sql template:" + projectSql)
-                renderedSQLBuf.remove(renderedSQLBuf.length - 1)
-                renderedSQLBuf.append(projectSql)
-
                 val resultList = QueryHelper.executeQuery(renderedSQLBuf, sourceConfig)
                 QueryHelper.contentTypeMatch(resultList, DavinciConstants.appJson)
               }
@@ -338,4 +328,17 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         }
       }
   }
+
+ private def getSqlBuffer(sql: String,url:String): mutable.Buffer[String] = {
+   val renderedSQLBuf: mutable.Buffer[String] = toArray(sql).toBuffer
+   val sourceConfig = JsonUtils.json2caseClass[SourceConfig](url)
+   val projectSql: String =
+     if (!QueryHelper.isES(sourceConfig.url))
+       s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
+     else renderedSQLBuf.last
+   renderedSQLBuf.remove(renderedSQLBuf.length - 1)
+   renderedSQLBuf.append(projectSql)
+   renderedSQLBuf
+  }
+
 }

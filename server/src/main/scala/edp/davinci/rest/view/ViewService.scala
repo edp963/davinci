@@ -27,7 +27,7 @@ import edp.davinci.persistence.entities._
 import edp.davinci.rest.SessionClass
 import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
-
+import scala.language.postfixOps
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
@@ -38,7 +38,7 @@ trait ViewService {
 
   def getAllViews(session: SessionClass): Future[Seq[QueryView]] = {
     val viewIds = modules.relGroupViewQuery.filter(_.group_id inSet session.groupIdList).map(_.flatTable_id).distinct
-    db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).sortBy(_.update_time desc).
+    db.run(modules.viewQuery.filter(view => (view.create_by === session.userId) || (view.id in viewIds)).sortBy(_.update_time.desc).
       map(r => (r.id, r.source_id, r.name, r.sql_tmpl, r.update_sql, r.desc, r.trigger_type, r.frequency, r.`catch`, r.result_table, r.active, r.create_by) <> (QueryView.tupled, QueryView.unapply)).result).
       mapTo[Seq[QueryView]]
   }
@@ -70,8 +70,8 @@ trait ViewService {
   }
 
 
-  def getGroupViewRelation(flatId: Long): Future[Seq[(Long, Long, String)]] = {
-    db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params.get)).result)
+  def getGroupViewRelation(flatId: Long): Future[Seq[(Long, Long, String, String)]] = {
+    db.run(modules.relGroupViewQuery.filter(_.flatTable_id === flatId).map(rel => (rel.id, rel.group_id, rel.sql_params.get,rel.config)).result)
   }
 
   def getSource(flatTableId: Long, session: SessionClass = null): Future[Seq[Config4QuerySql]] = {

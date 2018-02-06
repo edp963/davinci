@@ -19,32 +19,21 @@
  */
 
 
-
-
-
 package edp.davinci.persistence.entities
 
 import edp.davinci.persistence.base.{BaseEntity, BaseTable, SimpleBaseEntity}
 import slick.jdbc.H2Profile.api._
 
-case class RelGroupView(id: Long, group_id: Long, flatTable_id: Long, sql_params: Option[String], active: Boolean, create_time: String, create_by: Long, update_time: String, update_by: Long) extends BaseEntity
-
-
-case class SimpleRelGroupView(group_id: Long,
-                              flatTable_id: Long,
-                              sql_params: String,
-                              active: Boolean,
-                              create_time: String,
-                              create_by: Long,
-                              update_time: String,
-                              update_by: Long) extends SimpleBaseEntity
+case class RelGroupView(id: Long, group_id: Long, flatTable_id: Long, sql_params: Option[String],config:String, active: Boolean, create_time: String, create_by: Long, update_time: String, update_by: Long) extends BaseEntity
 
 case class PostRelGroupView(group_id: Long,
-                            sql_params: String) extends SimpleBaseEntity
+                            sql_params: String,
+                            config: Option[String]) extends SimpleBaseEntity
 
 case class PutRelGroupView(id: Long,
                            group_id: Long,
-                           sql_params: String)
+                           sql_params: String,
+                           config: Option[String])
 
 case class PostRelGroupViewSeq(payload: Seq[PostRelGroupView])
 
@@ -57,6 +46,8 @@ class RelGroupViewTable(tag: Tag) extends BaseTable[RelGroupView](tag, "rel_grou
 
   def sql_params = column[Option[String]]("sql_params")
 
+  def config = column[String]("config")
+
   def create_time = column[String]("create_time")
 
   def create_by = column[Long]("create_by")
@@ -65,5 +56,5 @@ class RelGroupViewTable(tag: Tag) extends BaseTable[RelGroupView](tag, "rel_grou
 
   def update_by = column[Long]("update_by")
 
-  def * = (id, group_id, flatTable_id, sql_params, active, create_time, create_by, update_time, update_by) <> (RelGroupView.tupled, RelGroupView.unapply)
+  def * = (id, group_id, flatTable_id, sql_params,config, active, create_time, create_by, update_time, update_by) <> (RelGroupView.tupled, RelGroupView.unapply)
 }
