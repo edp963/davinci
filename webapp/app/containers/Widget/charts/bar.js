@@ -33,6 +33,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     xAxisRotate,
     dataZoomThreshold,
     hasLegend,
+    legendSelected,
     legendPosition,
     toolbox,
     splitLineX,
@@ -245,11 +246,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         break
     }
 
+    const selected = legendSelected === 'unselectAll'
+      ? {
+        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+      } : null
+
     legendOptions = {
       legend: Object.assign({
         data: metricArr.map(m => m.name),
         type: 'scroll'
-      }, orient, positions)
+      }, orient, positions, selected)
     }
   }
 

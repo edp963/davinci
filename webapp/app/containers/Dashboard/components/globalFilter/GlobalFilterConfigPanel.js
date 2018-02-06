@@ -79,7 +79,7 @@ export class GlobalFilterPanel extends PureComponent {
       if (!err) {
         this.props.onSaveToTable({
           ...values,
-          items: this.itemSelectorForm.props.form.getFieldsValue(),
+          relatedItems: this.itemSelectorForm.props.form.getFieldsValue(),
           options: this.state.optionTableSource
         })
         this.hideForm()
@@ -89,11 +89,11 @@ export class GlobalFilterPanel extends PureComponent {
 
   editItem = (key) => () => {
     const item = this.props.tableSource.find(ts => ts.key === key)
-    const { items, options, ...base } = item
+    const { relatedItems, options, ...base } = item
 
     this.showForm().then(() => {
       this.baseForm.props.form.setFieldsValue(base)
-      this.itemSelectorForm.props.form.setFieldsValue(items)
+      this.itemSelectorForm.props.form.setFieldsValue(relatedItems)
       this.setState({
         optionTableSource: options,
         optionFormDisabled: ['select', 'multiSelect'].indexOf(base.type) < 0
@@ -150,6 +150,7 @@ export class GlobalFilterPanel extends PureComponent {
     const {
       items,
       widgets,
+      bizlogics,
       dataSources,
       tableSource,
       onDeleteFromTable
@@ -165,11 +166,15 @@ export class GlobalFilterPanel extends PureComponent {
 
     const itemSelectorSource = items.map(i => {
       const widget = widgets.find(w => w.id === i.widget_id)
+      const flattable = bizlogics.find(bl => bl.id === widget.flatTable_id)
+
       return {
         id: i.id,
         name: widget.name,
         keys: dataSources[i.id].keys,
-        types: dataSources[i.id].types
+        types: dataSources[i.id].types,
+        params: (flattable.sql_tmpl.match(/query@var\s\$\w+\$/g) || [])
+          .map(qv => qv.substring(qv.indexOf('$') + 1, qv.lastIndexOf('$')))
       }
     })
 
@@ -255,6 +260,7 @@ export class GlobalFilterPanel extends PureComponent {
 GlobalFilterPanel.propTypes = {
   items: PropTypes.array,
   widgets: PropTypes.array,
+  bizlogics: PropTypes.array,
   dataSources: PropTypes.object,
   tableSource: PropTypes.array,
   onSaveToTable: PropTypes.func,

@@ -129,6 +129,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
             globalFilters: '',
             params: [],
             linkageParams: [],
+            globalParams: [],
             pagination: {}
           }
           return obj
@@ -167,6 +168,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
             globalFilters: '',
             params: [],
             linkageParams: [],
+            globalParams: [],
             pagination: {}
           }
         }))
@@ -218,6 +220,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
             globalFilters: payload.sql.globalFilters,
             params: payload.sql.params,
             linkageParams: payload.sql.linkageParams,
+            globalParams: payload.sql.globalParams,
             pagination: {
               sorts: payload.sorts,
               offset: payload.offset,
