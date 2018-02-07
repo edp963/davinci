@@ -300,14 +300,14 @@ export default function (dataSource, flatInfo, chartParams) {
 }
 
 export function makeGrouped (dataSource, groupColumns) {
-  return dataSource.reduce((acc, val, index) => {
+  return dataSource.reduce((acc, val) => {
     let accColumn = groupColumns
       .reduce((arr, col) => arr.concat(val[col]), [])
       .join(' ')
     if (!acc[accColumn]) {
       acc[accColumn] = []
     }
-    acc[accColumn][index] = val
+    acc[accColumn].push(val)
     return acc
   }, {})
 }
