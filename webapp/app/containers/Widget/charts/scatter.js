@@ -70,7 +70,7 @@ export default function (dataSource, flatInfo, chartParams) {
 
   // 数据分组
   if (hasGroups && groups) {
-    grouped = makeGourped(dataSource, [].concat(groups).filter(i => !!i))
+    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i))
   }
 
   sizeOptions = size && {
@@ -299,18 +299,15 @@ export default function (dataSource, flatInfo, chartParams) {
   )
 }
 
-export function makeGourped (dataSource, groupColumns) {
-  return dataSource.reduce((acc, val) => {
+export function makeGrouped (dataSource, groupColumns) {
+  return dataSource.reduce((acc, val, index) => {
     let accColumn = groupColumns
-      .reduce((arr, col) => {
-        arr.push(val[col])
-        return arr
-      }, [])
+      .reduce((arr, col) => arr.concat(val[col]), [])
       .join(' ')
     if (!acc[accColumn]) {
       acc[accColumn] = []
     }
-    acc[accColumn].push(val)
+    acc[accColumn][index] = val
     return acc
   }, {})
 }
