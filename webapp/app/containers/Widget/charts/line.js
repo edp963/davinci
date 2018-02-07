@@ -86,7 +86,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     } : null
   // 数据分组
   if (hasGroups && groups && groups.length) {
-    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i))
+    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i), metrics || [])
   }
 
   // series 数据项； series = metrics * groups
@@ -307,8 +307,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   )
 }
 
-export function makeGrouped (dataSource, groupColumns) {
-  return dataSource.reduce((acc, val, index) => {
+export function makeGrouped (dataSource, groupColumns, metrics) {
+  let grouped = dataSource.reduce((acc, val, index) => {
     let accColumn = groupColumns
       .reduce((arr, col) => arr.concat(val[col]), [])
       .join(' ')
@@ -318,4 +318,14 @@ export function makeGrouped (dataSource, groupColumns) {
     acc[accColumn][index] = val
     return acc
   }, {})
+
+  dataSource.forEach((ds, index) => {
+    Object.values(grouped).forEach(g => {
+      if (!g[index]) {
+        g[index] = Object.assign({}, ds, metrics.reduce((obj, m) => Object.assign(obj, { [m]: 0 }), {}))
+      }
+    })
+  })
+
+  return grouped
 }
