@@ -79,6 +79,7 @@ export class Share extends React.Component {
     this.charts = {}
     this.interactCallbacks = {}
     this.interactingLinkagers = {}
+    this.interactGlobalFilters = {}
   }
 
   /**
@@ -601,53 +602,165 @@ export class Share extends React.Component {
 
   globalFilterChange = (filter) => (formValue) => {
     const { currentItems } = this.props
-    const { type, items } = filter
+    const { key, type, relatedItems } = filter
 
-    Object.keys(items).forEach(itemId => {
-      const columnAndType = items[itemId].split(DEFAULT_SPLITER)
+    Object.keys(relatedItems).forEach(itemId => {
+      const columnAndType = relatedItems[itemId].split(DEFAULT_SPLITER)
+      const isParam = !columnAndType[1]  // 变量type为空
       const item = currentItems.find(ci => ci.id === Number(itemId))
 
-      let globalFilters = ''
-
-      switch (type) {
-        case 'numberRange':
-          let numberFilters = []
-          if (formValue[0]) {
-            numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
-          }
-          if (formValue[1]) {
-            numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
-          }
-          globalFilters = formValue.length ? numberFilters.join(` and `) : ''
-          break
-        case 'select':
-          globalFilters = formValue ? `${columnAndType[0]} = ${formValue}` : ''
-          break
-        case 'multiSelect':
-          globalFilters = formValue.length ? formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `) : ''
-          break
-        case 'date':
-          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}` : ''
-          break
-        case 'datetime':
-          globalFilters = formValue ? `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
-          break
-        case 'multiDate':
-          globalFilters = formValue ? formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `) : ''
-          break
-        case 'dateRange':
-          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}` : ''
-          break
-        case 'datetimeRange':
-          globalFilters = formValue.length ? `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}` : ''
-          break
-        default:
-          const inputValue = formValue.target.value.trim()
-          globalFilters = inputValue ? `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}` : ''
-          break
+      if (!this.interactGlobalFilters[itemId]) {
+        this.interactGlobalFilters[itemId] = {}
       }
 
-      this.getChartData('rerender', itemId, item.widget_id, { globalFilters })
+      if (isParam) {
+        let paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
+        let currentParam
+
+        switch (type) {
+          case 'numberRange':
+            if (formValue[0] || formValue[1]) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: fv
+              }))
+            }
+            break
+          case 'select':
+            if (formValue) {
+              currentParam = [{
+                k: columnAndType[0],
+                v: `${formValue}`
+              }]
+            }
+            break
+          case 'multiSelect':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `${fv}`
+              }))
+            }
+            break
+          case 'date':
+          case 'datetime':
+            if (formValue) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `'${formValue}'`
+              }
+            }
+            break
+          case 'multiDate':
+            if (formValue) {
+              currentParam = formValue.split(',').map(fv => ({
+                k: columnAndType[0],
+                v: `'${fv}'`
+              }))
+            }
+            break
+          case 'dateRange':
+          case 'datetimeRange':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `'${fv}'`
+              }))
+            }
+            break
+          default:
+            const val = formValue.target.value.trim()
+            if (val) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `${val}`
+              }
+            }
+            break
+        }
+
+        if (currentParam) {
+          paramsOnThisItem[key] = currentParam
+          this.interactGlobalFilters[itemId].params = paramsOnThisItem
+        } else {
+          delete paramsOnThisItem[key]
+        }
+      } else {
+        let filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
+        let currentFilter
+
+        switch (type) {
+          case 'numberRange':
+            let numberFilters = []
+            if (formValue[0]) {
+              numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
+            }
+            if (formValue[1]) {
+              numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
+            }
+            if (numberFilters.length) {
+              currentFilter = numberFilters.join(` and `)
+            }
+            break
+          case 'select':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${formValue}`
+            }
+            break
+          case 'multiSelect':
+            if (formValue.length) {
+              currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
+            }
+            break
+          case 'date':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}`
+            }
+            break
+          case 'datetime':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
+            }
+            break
+          case 'multiDate':
+            if (formValue) {
+              currentFilter = formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
+            }
+            break
+          case 'dateRange':
+            if (formValue.length) {
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
+            }
+            break
+          case 'datetimeRange':
+            if (formValue.length) {
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
+            }
+            break
+          default:
+            const inputValue = formValue.target.value.trim()
+            if (inputValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}`
+            }
+            break
+        }
+
+        if (currentFilter) {
+          filtersOnThisItem[key] = currentFilter
+          this.interactGlobalFilters[itemId].filters = filtersOnThisItem
+        } else {
+          delete filtersOnThisItem[key]
+        }
+      }
+
+      this.getChartData('rerender', itemId, item.widget_id, {
+        globalFilters: this.interactGlobalFilters[itemId].filters
+          ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
+          : '',
+        globalParams: this.interactGlobalFilters[itemId].params
+          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr, val) => arr.concat(val), [])
+          : []
+      })
     })
 
     function getValidValue (val, type) {
