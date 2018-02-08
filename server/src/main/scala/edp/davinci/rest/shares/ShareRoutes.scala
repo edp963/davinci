@@ -37,7 +37,6 @@ import edp.davinci.util.common.AuthorizationProvider
 import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.util.common.ResponseUtils.getHeader
 import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
@@ -50,7 +49,7 @@ case class ShareAuthClass(userId: Long, infoId: Long, authName: String)
 
 @Api(value = "/shares", consumes = "application/json", produces = "application/json")
 @Path("/shares")
-class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives with SqlUtils {
+class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives  {
   val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute
   private lazy val routeName = "shares"
   private lazy val logger = Logger.getLogger(this.getClass)
