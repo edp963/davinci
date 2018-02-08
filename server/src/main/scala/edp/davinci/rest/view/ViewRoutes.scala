@@ -341,4 +341,48 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
    renderedSQLBuf
   }
 
+
+
+  @Path("/{view_id}")
+  @ApiOperation(value = "distinct filed value request", notes = "", nickname = "", httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "DistinctFieldValueRequest", value = "DistinctFieldValueRequest", required = true, dataType = "edp.davinci.rest.DistinctFieldValueRequest", paramType = "body")))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "ok"),
+    new ApiResponse(code = 403, message = "user is not admin"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def distinctFieldValueRequest: Route = path(routeName / LongNumber) {
+    sourceId =>
+      post {
+        entity(as[String]) { sqlTemplate =>
+          authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { _ =>
+            val source = Await.result(modules.sourceDal.findById(sourceId), new FiniteDuration(waitTimeout, SECONDS)).get
+            try {
+              if (sqlTemplate.trim != "") {
+                val filteredSql = filterAnnotation(sqlTemplate.trim)
+                val mergeSql = new GroupVar(Seq.empty, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
+                logger.info("@@sql after group merge: " + mergeSql)
+                val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
+                logger.info("@@sql after query var render: " + renderedSql)
+                val renderedSQLBuf: mutable.Buffer[String] =getSqlBuffer(renderedSql,source.connection_url)
+                val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
+                val resultList = QueryHelper.executeQuery(renderedSQLBuf, sourceConfig)
+                QueryHelper.contentTypeMatch(resultList, DavinciConstants.appJson)
+              }
+              else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), ""))
+            } catch {
+              case sqlEx: SQLException =>
+                logger.error("SQLException", sqlEx)
+                complete(BadRequest, ResponseJson[String](getHeader(400, sqlEx.getMessage, null), "sql语法错误"))
+              case ex: Throwable =>
+                logger.error("error in get result complete ", ex)
+                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "获取数据异常"))
+            }
+          }
+        }
+      }
+  }
+
 }
