@@ -115,7 +115,7 @@ export class VariableConfigForm extends Component {
         text: '',
         value: '',
         variables: [],
-        variableType: '',
+        variableType: undefined,
         status: 0
       })
     })

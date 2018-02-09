@@ -85,8 +85,11 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     } : null
   // 数据分组
+  let xAxisDistincted = []
+
   if (hasGroups && groups && groups.length) {
-    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i), metrics || [])
+    xAxisDistincted = distinctXaxis(dataSource, xAxis)
+    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i), xAxis, metrics, xAxisDistincted)
   }
 
   // series 数据项； series = metrics * groups
@@ -182,7 +185,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // x轴数据
   xAxisOptions = xAxis && {
     xAxis: {
-      data: dataSource.map(d => d[xAxis]),
+      data: hasGroups && groups && groups.length
+        ? xAxisDistincted
+        : dataSource.map(d => d[xAxis]),
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
@@ -307,25 +312,43 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   )
 }
 
-export function makeGrouped (dataSource, groupColumns, metrics) {
-  let grouped = dataSource.reduce((acc, val, index) => {
-    let accColumn = groupColumns
-      .reduce((arr, col) => arr.concat(val[col]), [])
-      .join(' ')
-    if (!acc[accColumn]) {
-      acc[accColumn] = []
-    }
-    acc[accColumn][index] = val
-    return acc
-  }, {})
+export function makeGrouped (dataSource, groupColumns, xAxis, metrics, xAxisDistincted) {
+  let grouped = {}
 
-  dataSource.forEach((ds, index) => {
-    Object.values(grouped).forEach(g => {
-      if (!g[index]) {
-        g[index] = Object.assign({}, ds, metrics.reduce((obj, m) => Object.assign(obj, { [m]: 0 }), {}))
+  if (xAxis && metrics) {
+    dataSource.forEach(ds => {
+      let accColumn = groupColumns
+        .reduce((arr, col) => arr.concat(ds[col]), [])
+        .join(' ')
+      if (!grouped[accColumn]) {
+        grouped[accColumn] = {}
       }
+      grouped[accColumn][ds[xAxis]] = ds
     })
-  })
+
+    Object.keys(grouped).map(accColumn => {
+      const currentGroupValues = grouped[accColumn]
+
+      grouped[accColumn] = xAxisDistincted.map(xd => {
+        if (currentGroupValues[xd]) {
+          return currentGroupValues[xd]
+        } else {
+          return metrics.reduce((obj, m) => Object.assign(obj, { [m]: 0 }), {})
+        }
+      })
+    })
+  }
 
   return grouped
+}
+
+export function distinctXaxis (dataSource, xAxis) {
+  return xAxis
+    ? Object.keys(dataSource.reduce((distinct, ds) => {
+      if (!distinct[ds[xAxis]]) {
+        distinct[ds[xAxis]] = true
+      }
+      return distinct
+    }, {}))
+    : []
 }

@@ -129,8 +129,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
   if (yAxisLeft && yAxisRight) {
-    const leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
-    const rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+    let leftMax
+    let rightMax
+
+    if (stack && stack.length) {
+      leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+      rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+    } else {
+      leftMax = Math.max(...leftMetrics.map(m => Math.max(...dataSource.map(d => d[m]))))
+      rightMax = Math.max(...rightMetrics.map(m => Math.max(...dataSource.map(d => d[m]))))
+    }
+
     const leftInterval = getYaxisInterval(leftMax, (yAxisSplitNumber - 1))
     const rightInterval = getYaxisInterval(rightMax, (yAxisSplitNumber - 1))
 
