@@ -58,7 +58,10 @@ import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 case class ActorMessage(sqlBuffer: mutable.Buffer[String], sourceConfig: SourceConfig, expired: Int)
 
 
-class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate, cacheClass: CacheClass, contentType: NonBinary, manualInfo: ManualInfo) extends Directives {
+class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate= Paginate(-1, -1, ""),
+                  cacheClass: CacheClass=CacheClass(true, 300),
+                  contentType: NonBinary,
+                  manualInfo: ManualInfo) extends Directives {
   private val modules = ModuleInstance.getModule
   implicit lazy val system: ActorSystem = modules.system
   implicit lazy val materializer: ActorMaterializer = ActorMaterializer()

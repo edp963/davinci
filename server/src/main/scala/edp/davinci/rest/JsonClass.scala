@@ -39,7 +39,7 @@ case class ViewResult(result: Seq[String] = null, totalCount: Long)
 
 case class CascadeParent(fieldName: String, fieldValue: String)
 
-case class DistinctFieldValueRequest(parents: Option[Seq[CascadeParent]], childFieldName: String)
+case class DistinctFieldValueRequest(adHoc: Option[String] = None, manualFilters: Option[String] = None, params: Option[List[KV]] = None,parents: Option[Seq[CascadeParent]], childFieldName: String)
 
 case class ResponsePayload(response: String)
 
