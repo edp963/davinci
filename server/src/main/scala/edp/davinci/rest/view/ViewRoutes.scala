@@ -47,12 +47,12 @@ import scala.util.{Failure, Success}
 @Path("/flattables")
 class ViewRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
 
-  val routes: Route = postViewRoute ~ putViewRoute ~ getViewByAllRoute ~ deleteViewRoute ~ getGroupsByViewIdRoute ~ getResultRoute ~ deleteRelation ~ sqlVerifyRoute ~ markRoute
+  val routes: Route = postViewRoute ~ putViewRoute ~ getViewByAllRoute ~ deleteViewRoute ~ getGroupsByViewIdRoute ~ getResultRoute ~ deleteRelation ~ sqlVerifyRoute ~ markRoute ~ distinctFieldValueRequest
   private lazy val logger = LoggerFactory.getLogger(this.getClass)
   private lazy val waitTimeout = 30
   private lazy val adHocTable = "table"
   private lazy val routeName = "flattables"
-  private lazy val DEFAULT_REL_CONFIG="""{"authority":["share", "download"]}"""
+  private lazy val DEFAULT_REL_CONFIG ="""{"authority":["share", "download"]}"""
 
 
   @ApiOperation(value = "get all views", notes = "", nickname = "", httpMethod = "GET")
@@ -222,7 +222,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
         session =>
           onComplete(ViewService.getGroupViewRelation(viewId)) {
             case Success(relSeq) =>
-              val putRelSeq = relSeq.map(r =>PutRelGroupView(r._1,r._2,r._3,Some(r._4)))
+              val putRelSeq = relSeq.map(r => PutRelGroupView(r._1, r._2, r._3, Some(r._4)))
               complete(OK, ResponseSeqJson[PutRelGroupView](getHeader(200, session), putRelSeq))
             case Failure(ex) => logger.error("getGroupsByViewIdRoute error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -310,7 +310,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
                 logger.info("@@sql after group merge: " + mergeSql)
                 val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
                 logger.info("@@sql after query var render: " + renderedSql)
-               val renderedSQLBuf: mutable.Buffer[String] =getSqlBuffer(renderedSql,source.connection_url)
+                val renderedSQLBuf: mutable.Buffer[String] = getSqlBuffer(renderedSql, source.connection_url)
                 val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
                 val resultList = QueryHelper.executeQuery(renderedSQLBuf, sourceConfig)
                 QueryHelper.contentTypeMatch(resultList, DavinciConstants.appJson)
@@ -329,61 +329,63 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       }
   }
 
- private def getSqlBuffer(sql: String,url:String): mutable.Buffer[String] = {
-   val renderedSQLBuf: mutable.Buffer[String] = toArray(sql).toBuffer
-   val sourceConfig = JsonUtils.json2caseClass[SourceConfig](url)
-   val projectSql: String =
-     if (!QueryHelper.isES(sourceConfig.url))
-       s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
-     else renderedSQLBuf.last
-   renderedSQLBuf.remove(renderedSQLBuf.length - 1)
-   renderedSQLBuf.append(projectSql)
-   renderedSQLBuf
+  private def getSqlBuffer(sql: String, url: String): mutable.Buffer[String] = {
+    val renderedSQLBuf: mutable.Buffer[String] = toArray(sql).toBuffer
+    val sourceConfig = JsonUtils.json2caseClass[SourceConfig](url)
+    val projectSql: String =
+      if (!QueryHelper.isES(sourceConfig.url))
+        s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
+      else renderedSQLBuf.last
+    renderedSQLBuf.remove(renderedSQLBuf.length - 1)
+    renderedSQLBuf.append(projectSql)
+    renderedSQLBuf
   }
 
 
-
-  @Path("/{view_id}/")
+  @Path("/{id}/distinct_value")
   @ApiOperation(value = "distinct filed value request", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
     new ApiImplicitParam(name = "id", value = "view id", required = true, dataType = "integer", paramType = "path"),
-    new ApiImplicitParam(name = "manualInfo", value = "manualInfo", required = false, dataType = "edp.davinci.rest.ManualInfo", paramType = "body")))
+    new ApiImplicitParam(name = "distinct_field", value = "Distinct Field", required = false, dataType = "edp.davinci.rest.DistinctFieldValueRequest", paramType = "body")))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "ok"),
     new ApiResponse(code = 403, message = "user is not admin"),
     new ApiResponse(code = 401, message = "authorization error"),
     new ApiResponse(code = 400, message = "bad request")
   ))
-  def distinctFieldValueRequest: Route = path(routeName / LongNumber) {
-    sourceId =>
+  def distinctFieldValueRequest: Route = path(routeName / LongNumber / "distinct_value") { viewId =>
       post {
-        entity(as[String]) { sqlTemplate =>
-          authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { _ =>
-            val source = Await.result(modules.sourceDal.findById(sourceId), new FiniteDuration(waitTimeout, SECONDS)).get
-            try {
-              if (sqlTemplate.trim != "") {
-                val filteredSql = filterAnnotation(sqlTemplate.trim)
-                val mergeSql = new GroupVar(Seq.empty, getDefaultVarMap(filteredSql, "group")).replace(filteredSql)
-                logger.info("@@sql after group merge: " + mergeSql)
-                val renderedSql = new QueryVar(Seq.empty, getDefaultVarMap(filteredSql, "query")).render(mergeSql)
-                logger.info("@@sql after query var render: " + renderedSql)
-                val renderedSQLBuf: mutable.Buffer[String] =getSqlBuffer(renderedSql,source.connection_url)
-                val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.connection_url)
-                val resultList = QueryHelper.executeQuery(renderedSQLBuf, sourceConfig)
-                QueryHelper.contentTypeMatch(resultList, DavinciConstants.appJson)
-              }
-              else complete(BadRequest, ResponseJson[String](getHeader(400, "flatTable sql template is empty", null), ""))
-            } catch {
-              case sqlEx: SQLException =>
-                logger.error("SQLException", sqlEx)
-                complete(BadRequest, ResponseJson[String](getHeader(400, sqlEx.getMessage, null), "sql语法错误"))
-              case ex: Throwable =>
-                logger.error("error in get result complete ", ex)
-                complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "获取数据异常"))
-            }
+        entity(as[DistinctFieldValueRequest]) { distinctFieldValueRequest =>
+          authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) { session =>
+            val queryHelper = new QueryHelper(session, viewId,
+              contentType = DavinciConstants.appJson,
+              manualInfo = ManualInfo(distinctFieldValueRequest.adHoc,
+                distinctFieldValueRequest.manualFilters, distinctFieldValueRequest.params))
+            val mergeSql = queryHelper.groupVarMerge()
+            val renderedSql = queryHelper.queryVarRender(mergeSql)
+            val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+            val projectSql = queryHelper.getProjectSql(sqlBuffer.last)
+            val distinctValueSql = getDistinctSql(projectSql, distinctFieldValueRequest)
+            logger.info(s"@@distinctValueSql $distinctValueSql")
+            sqlBuffer.remove(sqlBuffer.length - 1)
+            sqlBuffer.append(distinctValueSql)
+            val resultSeq = queryHelper.executeDirect(sqlBuffer)
+            QueryHelper.contentTypeMatch(resultSeq, DavinciConstants.appJson)
           }
         }
       }
   }
 
+  def getDistinctSql(projectSql: String, distinctFieldValueRequest: DistinctFieldValueRequest) = {
+    val where = if (distinctFieldValueRequest.parents.nonEmpty) {
+      val parents: Seq[CascadeParent] = distinctFieldValueRequest.parents.get
+      parents.map(c => {
+        val op = if (c.fieldValue.split(",").length > 1) " IN " else "="
+        val value = if (c.fieldValue.split(",").length > 1) c.fieldValue.mkString("(", "", ")") else c.fieldValue
+        c.fieldName + op + value
+      }).mkString("WHERE ", " AND ", "")
+    }
+    else ""
+    s"SELECT DISTINCT ${distinctFieldValueRequest.childFieldName} FROM ($projectSql) AS TbDistinct $where"
+  }
 }

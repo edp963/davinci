@@ -82,9 +82,6 @@ object SqlUtils extends Serializable {
     } else if (tmpJdbcUrl.indexOf("phoenix") > -1) {
       println("hbase phoenix")
       config.setDriverClassName("org.apache.phoenix.jdbc.PhoenixDriver")
-    } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
-      println("cassandra")
-      config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
     } else if (tmpJdbcUrl.indexOf("mongodb") > -1) {
       println("mongodb")
       config.setDriverClassName("mongodb.jdbc.MongoDriver")
@@ -100,6 +97,9 @@ object SqlUtils extends Serializable {
       config.setDriverClassName("org.apache.hadoop.hive.jdbc.HiveDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
       config.setDriverClassName("moonbox.jdbc.MbDriver")
+    }else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
+      println("cassandra")
+      config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
     }
 
     if (tmpJdbcUrl.indexOf("sql4es") > -1)
