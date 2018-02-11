@@ -19,13 +19,9 @@
  */
 
 
-
-
-
 package edp.davinci.rest
 
 import edp.davinci.KV
-import edp.davinci.persistence.entities._
 
 case class SessionClass(userId: Long, groupIdList: List[Long], admin: Boolean, currentTs: Long = System.currentTimeMillis())
 
@@ -35,13 +31,15 @@ case class ManualInfo(adHoc: Option[String] = None, manualFilters: Option[String
 
 case class Paginate(limit: Int, offset: Int, sortBy: String)
 
+case class Permission(authority: Seq[String])
+
 case class CacheClass(useCache: Boolean, expired: Int)
 
 case class ViewResult(result: Seq[String] = null, totalCount: Long)
 
-case class CascadeParent(fieldName:String,fieldValue:String)
+case class CascadeParent(fieldName: String, fieldValue: String)
 
-case class DistinctFieldValueRequest(parents:Option[Seq[CascadeParent]],childFieldName:String)
+case class DistinctFieldValueRequest(parents: Option[Seq[CascadeParent]], childFieldName: String)
 
 case class ResponsePayload(response: String)
 
