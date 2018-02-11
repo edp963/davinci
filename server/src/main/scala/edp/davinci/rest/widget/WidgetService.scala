@@ -55,6 +55,13 @@ trait WidgetService {
       mapTo[Option[PutWidget]]
   }
 
+  def getWidgetConfig(id: Long, userId: Long): Future[Seq[String]] = {
+    db.run(((modules.relGroupViewQuery join modules.relUserGroupQuery.filter(_.user_id === userId) on (_.group_id === _.group_id))
+      join
+      modules.widgetQuery.filter(_.id === id) on (_._1.flatTable_id === _.flatTable_id))
+      .map(_._1._1.config).result)
+  }
+
   def getViewId(widgetId: Long): Future[(Long, Option[String])] = {
     db.run(modules.widgetQuery.filter(_.id === widgetId).map(w => (w.flatTable_id, w.adhoc_sql)).result.head)
   }

@@ -343,10 +343,11 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
 
 
 
-  @Path("/{view_id}")
+  @Path("/{view_id}/")
   @ApiOperation(value = "distinct filed value request", notes = "", nickname = "", httpMethod = "POST")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "DistinctFieldValueRequest", value = "DistinctFieldValueRequest", required = true, dataType = "edp.davinci.rest.DistinctFieldValueRequest", paramType = "body")))
+    new ApiImplicitParam(name = "id", value = "view id", required = true, dataType = "integer", paramType = "path"),
+    new ApiImplicitParam(name = "manualInfo", value = "manualInfo", required = false, dataType = "edp.davinci.rest.ManualInfo", paramType = "body")))
   @ApiResponses(Array(
     new ApiResponse(code = 200, message = "ok"),
     new ApiResponse(code = 403, message = "user is not admin"),
