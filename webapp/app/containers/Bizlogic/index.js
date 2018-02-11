@@ -153,6 +153,8 @@ export class Bizlogic extends React.PureComponent {
 
       this.props.onLoadBizlogicGroups(id)
         .then(groups => {
+          // console.log(groups)
+          // console.log(this.props.groups)
           const groupTableSource = this.props.groups.map(g => {
             const checkedGroup = groups.find(item => item.group_id === g.id)
             return {
@@ -160,10 +162,10 @@ export class Bizlogic extends React.PureComponent {
               key: g.id,
               name: g.name,
               params: checkedGroup && checkedGroup.sql_params ? JSON.parse(checkedGroup.sql_params) : [],
-              checked: !!checkedGroup
+              checked: !!checkedGroup,
+              authority: checkedGroup && checkedGroup.config ? JSON.parse(checkedGroup.config)['authority'] : []
             }
           })
-
           this.setState({
             groupTableSource: groupTableSource,
             groupParams: groups.length && groups[0].sql_params ? JSON.parse(groups[0].sql_params).map(o => o.k) : [],
@@ -203,7 +205,6 @@ export class Bizlogic extends React.PureComponent {
     })
   }
   validateSql = () => {
-    // todo 校验SQL next()
     const {onValidateSql} = this.props
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
     this.bizlogicForm.validateFieldsAndScroll((err, values) => {
@@ -292,13 +293,14 @@ export class Bizlogic extends React.PureComponent {
     this.bizlogicForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-
         values.source_id = Number(values.source_id)
+        // TODO config field  values.relBG
         values.relBG = this.state.groupTableSource
           .filter(gs => gs.checked)
           .map(gs => ({
             group_id: gs.id,
-            sql_params: JSON.stringify(gs.params)
+            sql_params: JSON.stringify(gs.params),
+            config: JSON.stringify({'authority': gs.authority})
           }))
         // Fixme
         values.trigger_type = ''
@@ -414,6 +416,21 @@ export class Bizlogic extends React.PureComponent {
     this.setState({
       isShowUpdateSql: !isShowUpdateSql
     })
+  }
+
+  authorityChange = (e, record) => {
+    const { groupTableSource } = this.state
+    let currentState = groupTableSource.map((source, index) => {
+      if (source.id === record.id) {
+        return {
+          ...source,
+          ...{'authority': e}
+        }
+      } else {
+        return source
+      }
+    })
+    this.setState({groupTableSource: currentState})
   }
 
   render () {
@@ -619,6 +636,7 @@ export class Bizlogic extends React.PureComponent {
                   groups={groupTableSource}
                   groupParams={groupParams}
                   selectedGroups={groupTableSelectedRowKeys}
+                  onAuthorityChange={this.authorityChange}
                   onGroupSelect={this.onGroupTableSelect}
                   onGroupParamChange={this.onGroupParamChange}
                   onCodeMirrorChange={this.handleCodeMirror}

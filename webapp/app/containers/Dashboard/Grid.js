@@ -1369,7 +1369,9 @@ export class Grid extends Component {
         const { isInteractive, interactId } = interactiveItems[itemId]
         // isReadOnly 非原创用户不能对 widget进行写的操作
         const isReadOnly = (widget['create_by'] === loginUser.id)
-
+        const permission = dashboardItem['permission']
+        const isShare = permission.indexOf('share') > -1
+        const isDownload = permission.indexOf('download') > -1
         itemblocks.push((
           <div key={pos.i}>
             <DashboardItem
@@ -1386,6 +1388,8 @@ export class Grid extends Component {
               triggerParams={dashboardItem.trigger_params}
               isAdmin={loginUser.admin}
               isShared={false}
+              isShare={isShare}
+              isDownload={isDownload}
               shareInfo={shareInfo}
               secretInfo={secretInfo}
               shareInfoLoading={shareInfoLoading}

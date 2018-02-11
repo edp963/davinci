@@ -25,6 +25,7 @@ import {createStructuredSelector} from 'reselect'
 import { makeSelectSqlValidateCode, makeSelectSqlValidateMsg } from './selectors'
 import {checkNameAction} from '../App/actions'
 import Form from 'antd/lib/form'
+import Checkbox from 'antd/lib/checkbox'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
@@ -32,6 +33,7 @@ import Select from 'antd/lib/select'
 import Steps from 'antd/lib/steps'
 import Table from 'antd/lib/table'
 import Alert from 'antd/lib/alert'
+const CheckboxGroup = Checkbox.Group
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
@@ -63,6 +65,7 @@ export class BizlogicForm extends React.Component {
       selectedGroups,
       onGroupSelect,
       onGroupParamChange,
+      onAuthorityChange,
       sqlValidateCode,
       sqlValidateMessage,
       isShowUpdateSql,
@@ -89,9 +92,23 @@ export class BizlogicForm extends React.Component {
     let columns = [{
       title: '用户组',
       dataIndex: 'name',
+      className: `${utilStyles.textAlignLeft}`,
+      width: 140,
       key: 'name'
+    }, {
+      title: '权限',
+      dataIndex: 'authority',
+      key: 'authority',
+      width: 500,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) =>
+        <CheckboxGroup
+          options={['share', 'download']}
+          value={record.authority}
+          disabled={!record.checked}
+          onChange={(e) => onAuthorityChange(e, record)}
+        />
     }]
-
     groupParams.forEach((gp, index) => {
       columns.push({
         title: gp,
@@ -257,6 +274,7 @@ BizlogicForm.propTypes = {
   selectedGroups: PropTypes.array,
   onGroupSelect: PropTypes.func,
   onGroupParamChange: PropTypes.func,
+  onAuthorityChange: PropTypes.func,
   onCodeMirrorChange: PropTypes.func,
   sqlValidateCode: PropTypes.any,
   sqlValidateMessage: PropTypes.any,
