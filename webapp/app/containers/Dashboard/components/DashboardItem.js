@@ -172,6 +172,8 @@ export class DashboardItem extends PureComponent {
       loading,
       isAdmin,
       isShared,
+      isShare,
+      isDownload,
       shareInfo,
       secretInfo,
       shareInfoLoading,
@@ -231,13 +233,13 @@ export class DashboardItem extends PureComponent {
       </Menu>
     )
 
-    const userDownloadButton = isShared
+    const userDownloadButton = isDownload
       ? <Tooltip title="下载数据">
         <Icon type="download" onClick={this.sharePanelDownloadCsv} />
       </Tooltip>
       : ''
 
-    const shareButton = !isShared
+    const shareButton = isShare
       ? <Tooltip title="分享">
         <Popover
           placement="bottomRight"
@@ -401,6 +403,8 @@ DashboardItem.propTypes = {
   triggerParams: PropTypes.string,
   isAdmin: PropTypes.bool,
   isShared: PropTypes.bool,
+  isShare: PropTypes.bool,
+  isDownload: PropTypes.bool,
   shareInfo: PropTypes.string,
   secretInfo: PropTypes.string,
   shareInfoLoading: PropTypes.bool,

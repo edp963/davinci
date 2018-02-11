@@ -21,8 +21,8 @@ export class ShareForm extends PureComponent {
     const {
       type,
       shareInfo,
-      downloadCsvLoading,
-      onDownloadCsv
+      // downloadCsvLoading,
+      // onDownloadCsv
     } = this.props
 
     let linkValue = ''
@@ -83,21 +83,6 @@ export class ShareForm extends PureComponent {
                     }
                     readOnly
                   />
-                </Col>
-              </Row>
-              <Row className={styles.shareRow}>
-                <Col span={5}>
-                  <span className={styles.shareText}>CSV：</span>
-                </Col>
-                <Col span={19}>
-                  <Button
-                    type="primary"
-                    onClick={onDownloadCsv}
-                    loading={downloadCsvLoading}
-                    disabled={!shareInfo && downloadCsvLoading}
-                  >
-                    点击下载
-                  </Button>
                 </Col>
               </Row>
             </div>
