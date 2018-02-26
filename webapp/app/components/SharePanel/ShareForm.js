@@ -96,8 +96,8 @@ export class ShareForm extends PureComponent {
 ShareForm.propTypes = {
   type: PropTypes.string,
   shareInfo: PropTypes.string,
-  downloadCsvLoading: PropTypes.bool,
-  onDownloadCsv: PropTypes.func
+  // downloadCsvLoading: PropTypes.bool,
+  // onDownloadCsv: PropTypes.func
 }
 
 export default ShareForm
