@@ -817,12 +817,11 @@ export class Share extends React.Component {
           const modifiedPosition = modifiedPositions[index]
           const downloadCsvLoading = downloadCsvLoadings[item.id]
           const { isInteractive, interactIndex } = interactiveItems[item.id]
-          const dashboardItem = widgets[index]
-          const permission = dashboardItem['permission']
-          const isDownload = permission && dashboardItem['permission'] ? permission.indexOf('download') > -1 : false
 
           if (widget) {
             const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+            const permission = widget['permission']
+            const isDownload = permission ? permission.indexOf('download') > -1 : false
 
             itemblocks.push((
               <div key={item.id}>
