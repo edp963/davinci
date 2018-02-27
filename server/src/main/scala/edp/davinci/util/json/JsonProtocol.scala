@@ -121,11 +121,14 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
 
   implicit val formatResponsePayload: RootJsonFormat[ResponsePayload] = jsonFormat1(ResponsePayload)
 
+  implicit val formatKV: RootJsonFormat[KV] = jsonFormat2(KV)
+
   implicit val formatCascadeParent: RootJsonFormat[CascadeParent] = jsonFormat2(CascadeParent)
 
   implicit val formatDistinctRequest: RootJsonFormat[DistinctFieldValueRequest] = jsonFormat5(DistinctFieldValueRequest)
 
-  implicit val formatKV: RootJsonFormat[KV] = jsonFormat2(KV)
+
+  implicit val formatWidgetWithPermission: RootJsonFormat[WidgetWithPermission] = jsonFormat12(WidgetWithPermission)
 
   implicit val formatManualInfo: RootJsonFormat[ManualInfo] = jsonFormat3(ManualInfo)
 

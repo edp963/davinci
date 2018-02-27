@@ -58,6 +58,7 @@ case class PostWidget(widgetlib_id: Long,
 
 case class PutWidget(id: Long, widgetlib_id: Long, flatTable_id: Long, name: String, adhoc_sql: Option[String] = None, desc: String, config: Option[String] = None, chart_params: Option[String] = Some(""), query_params: Option[String] = Some(""), publish: Boolean, create_by: Long=0)
 
+case class WidgetWithPermission(id: Long, widgetlib_id: Long, flatTable_id: Long, name: String, adhoc_sql: Option[String] = None, desc: String, config: Option[String] = None, chart_params: Option[String] = Some(""), query_params: Option[String] = Some(""), publish: Boolean, create_by: Long=0,permission:Set[String])
 
 case class WidgetLayout(id: Long, widget_id: Long, flatTableId: Long, position_x: Int, position_y: Int, width: Int, length: Int, trigger_type: String, trigger_params: String, aesStr: String = "", create_by: Long, permission: Set[String])
 
