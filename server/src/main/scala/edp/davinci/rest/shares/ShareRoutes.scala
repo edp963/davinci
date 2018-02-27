@@ -186,7 +186,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         if (isValidShareClass(shareInfo)) {
           onComplete(WidgetService.getWidgetById(shareInfo.infoId)) {
             case Success(widgetOpt) => widgetOpt match {
-              case Some(widget) => complete(OK, ResponseJson[Seq[PutWidget]](getHeader(200, null), Seq(widget)))
+              case Some(widget) =>
+                val userPermission = getUserPermission(shareInfo.infoId,shareInfo.userId)
+                val widgetWithPermission = WidgetWithPermission(widget.id,widget.widgetlib_id,widget.flatTable_id,widget.name,widget.adhoc_sql,widget.desc,widget.config,widget.chart_params,widget.query_params,widget.publish,widget.create_by,userPermission)
+                complete(OK, ResponseJson[Seq[WidgetWithPermission]](getHeader(200, null), Seq(widgetWithPermission)))
               case None => complete(BadRequest, ResponseJson[String](getHeader(400, s"not found widget: ${shareInfo.infoId}", null), ""))
             }
             case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
