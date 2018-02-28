@@ -540,17 +540,13 @@ export class Grid extends Component {
 
     const changedItems = currentItems.map((item, index) => {
       const modifiedItem = modifiedPositions[index]
-      return {
-        id: item.id,
-        widget_id: item.widget_id,
+      return Object.assign({}, item, {
         dashboard_id: currentDashboard.id,
         position_x: modifiedItem.x,
         position_y: modifiedItem.y,
         width: modifiedItem.w,
-        length: modifiedItem.h,
-        trigger_type: item.trigger_type,
-        trigger_params: item.trigger_params
-      }
+        length: modifiedItem.h
+      })
     })
 
     if (loginUser.admin) {
