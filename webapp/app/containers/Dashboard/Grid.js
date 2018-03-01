@@ -1084,11 +1084,18 @@ export class Grid extends Component {
             }
             break
           case 'date':
+            if (formValue) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `'${moment(formValue).format('YYYY-MM-DD')}'`
+              }
+            }
+            break
           case 'datetime':
             if (formValue) {
               currentParam = {
                 k: columnAndType[0],
-                v: `'${formValue}'`
+                v: `'${moment(formValue).format('YYYY-MM-DD HH:mm:ss')}'`
               }
             }
             break
@@ -1101,11 +1108,18 @@ export class Grid extends Component {
             }
             break
           case 'dateRange':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `'${moment(fv).format('YYYY-MM-DD')}'`
+              }))
+            }
+            break
           case 'datetimeRange':
             if (formValue.length) {
               currentParam = formValue.map(fv => ({
                 k: columnAndType[0],
-                v: `'${fv}'`
+                v: `'${moment(fv).format('YYYY-MM-DD HH:mm:ss')}'`
               }))
             }
             break
