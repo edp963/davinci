@@ -60,7 +60,9 @@ case class PutRelDashboardWidget(id: Long,
                                  length: Int,
                                  width: Int,
                                  trigger_type: String,
-                                 trigger_params: String)
+                                 trigger_params: String,
+                                 permission:Option[Set[String]])
+
 
 
 case class PostRelDashboardWidgetSeq(payload: Seq[PostRelDashboardWidget])

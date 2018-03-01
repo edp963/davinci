@@ -195,11 +195,6 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.43</version>
         </dependency>
-        <dependency>
-            <groupId>com.github.adejanovski</groupId>
-            <artifactId>cassandra-jdbc-wrapper</artifactId>
-            <version>3.1.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.nlpcn</groupId>

@@ -62,6 +62,11 @@ trait DashboardService {
     map
   }
 
+  def getPermission(widgetId: Long): Future[Seq[String]] = {
+    val query = (modules.widgetQuery.filter(_.id === widgetId) join modules.relGroupViewQuery on (_.flatTable_id === _.flatTable_id)).map(_._2.config).result
+    db.run(query)
+  }
+
   def getDashBoard(dashboardId: Long): Future[Option[PutDashboard]] = {
     val query = modules.dashboardQuery.filter(_.id === dashboardId).map(d => (d.id, d.name, d.pic, d.desc, d.linkage_detail, d.config, d.publish, d.active, d.create_by) <> (PutDashboard.tupled, PutDashboard.unapply)).result
     db.run(query.headOption).mapTo[Option[PutDashboard]]

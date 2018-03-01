@@ -29,6 +29,7 @@ import edp.davinci.module._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.dashboard.DashboardService._
+import edp.davinci.rest.view.ViewService
 import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.common.ResponseUtils._
 import edp.davinci.util.common.DavinciConstants.requestTimeout
@@ -247,7 +248,9 @@ class DashboardRoutes(modules: ConfigurationModule with PersistenceModule with B
         val relDWSeq = postRelDWSeq.map(post => RelDashboardWidget(0, post.dashboard_id, post.widget_id, post.position_x, post.position_y, post.length, post.width, post.trigger_type, post.trigger_params, active = true, currentTime, session.userId, currentTime, session.userId))
         onComplete(modules.relDashboardWidgetDal.insert(relDWSeq)) {
           case Success(relations) =>
-            val responseRelDWSeq = relations.map(rel => PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params))
+            val responseRelDWSeq = relations.map(rel =>{
+             val permission = Await.result(getPermission(rel.widget_id),new FiniteDuration(30,SECONDS)).toSet
+              PutRelDashboardWidget(rel.id, rel.dashboard_id, rel.widget_id, rel.position_x, rel.position_y, rel.length, rel.width, rel.trigger_type, rel.trigger_params,Some(permission))})
             complete(OK, ResponseSeqJson[PutRelDashboardWidget](getHeader(200, session), responseRelDWSeq))
           case Failure(ex) => logger.error(s"modules.relDashboardWidgetDal.insert error", ex)
             complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
