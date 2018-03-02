@@ -216,6 +216,25 @@ object QueryHelper extends Directives {
     }
   }
 
+
+
+  private def covert2ListBuf(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
+    val resultList = new ListBuffer[Seq[String]]
+    val columnList = new ListBuffer[String]
+    val columnTypeList = new ListBuffer[String]
+    val meta = rs.getMetaData
+    for (i <- 1 to meta.getColumnCount) {
+      val columnType = if (null == meta.getColumnTypeName(i)) "VARCHAR" else meta.getColumnTypeName(i)
+      columnList.append(meta.getColumnLabel(i))
+      columnTypeList.append(columnType)
+    }
+    resultList.append(columnList)
+    resultList.append(columnTypeList)
+    while (rs.next()) resultList.append(getRow(rs, isES(sourceConfig.url)))
+    resultList.map(covert2CSV)
+  }
+
+
   def queryCache(actorMessage: ActorMessage): Seq[String] = {
     import akka.pattern.ask
 
@@ -241,21 +260,6 @@ object QueryHelper extends Directives {
   }
 
 
-  def covert2ListBuf(rs: ResultSet, sourceConfig: SourceConfig): Seq[String] = {
-    val resultList = new ListBuffer[Seq[String]]
-    val columnList = new ListBuffer[String]
-    val columnTypeList = new ListBuffer[String]
-    val meta = rs.getMetaData
-    for (i <- 1 to meta.getColumnCount) {
-      val columnType = if (null == meta.getColumnTypeName(i)) "VARCHAR" else meta.getColumnTypeName(i)
-      columnList.append(meta.getColumnLabel(i))
-      columnTypeList.append(columnType)
-    }
-    resultList.append(columnList)
-    resultList.append(columnTypeList)
-    while (rs.next()) resultList.append(getRow(rs, isES(sourceConfig.url)))
-    resultList.map(covert2CSV)
-  }
 
 
   def isES(url: String): Boolean = {
