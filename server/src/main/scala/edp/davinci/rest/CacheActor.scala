@@ -19,18 +19,16 @@
  */
 
 
-
-
-
 package edp.davinci.rest
 
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
+import edp.davinci.util.common.DavinciConstants.requestTimeout
 import edp.davinci.util.redis.JedisConnection
 import org.apache.log4j.Logger
-import edp.davinci.util.common.DavinciConstants.requestTimeout
+
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -44,10 +42,11 @@ class CacheActor extends Actor {
       val sqls = actorMessage.sqlBuffer.mkString(";")
       if (cacheMap.contains(sqls)) {
         val futureFromMap: Future[Seq[String]] = cacheMap(sqls)
+        logger.info("@@query from cacheMap")
         sender() ! futureFromMap
       }
       else {
-        val resFuture: Future[Seq[String]] = Future(QueryHelper.executeQuery( actorMessage.sqlBuffer,actorMessage.sourceConfig)).mapTo[Seq[String]]
+        val resFuture: Future[Seq[String]] = Future(QueryHelper.executeQuery(actorMessage.sqlBuffer, actorMessage.sourceConfig)).mapTo[Seq[String]]
         cacheMap(sqls) = resFuture
         resFuture.onSuccess { case res =>
           cacheMap.remove(sqls)
@@ -60,6 +59,10 @@ class CacheActor extends Actor {
             case e: Throwable => logger.error("write to redis exception", e)
               throw e
           }
+        }
+        resFuture.onFailure { case ex: Throwable =>
+          cacheMap.remove(sqls)
+          logger.error("CacheActor execute query", ex)
         }
         sender() ! resFuture
       }
