@@ -21,21 +21,42 @@
 
 package edp.davinci.rest.shares
 
-import java.net.URLDecoder
-
-import edp.davinci.util.common.DavinciConstants.{conditionSeparator, defaultEncode}
 import edp.davinci.rest._
-import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.json.JsonUtils.{caseClass2json, json2caseClass}
-import edp.davinci.util._
+import edp.davinci.rest.user.UserService
+import edp.davinci.rest.widget.WidgetService
+import edp.davinci.util.common.DavinciConstants.conditionSeparator
+import edp.davinci.util.common.PermissionType
 import edp.davinci.util.encode.{AesUtils, MD5Utils}
+import edp.davinci.util.json.JsonUtils.{caseClass2json, json2caseClass}
 import edp.davinci.{KV, ModuleInstance, ParamHelper}
 import org.apache.log4j.Logger
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 object ShareRouteHelper {
   private val logger = Logger.getLogger(this.getClass)
 
   lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")
+
+  def hasDownloadPermission(widgetId: Long, userId: Long): Boolean = {
+    getUserPermission(widgetId, userId).contains(PermissionType.DOWNLOAD) || isAdmin(userId)
+  }
+
+  def hasSharePermission(widgetId: Long, userId: Long): Boolean = {
+    getUserPermission(widgetId, userId).contains(PermissionType.SHARE) || isAdmin(userId)
+  }
+
+  private def isAdmin(userId: Long) = {
+    Await.result(UserService.getUserById(userId), new FiniteDuration(30, SECONDS))._1
+  }
+
+  def getUserPermission(widgetId: Long, userId: Long): Set[String] = {
+    val permissionSeq = Await.result(WidgetService.getWidgetConfig(widgetId, userId), new FiniteDuration(30, SECONDS))
+    val permissionSet = permissionSeq.map(json2caseClass[Permission]).flatMap(_.authority).toSet
+    logger.info(s"user id $userId has permission ${permissionSet.mkString(",")}")
+    permissionSet
+  }
 
   def getShareURL(userId: Long, shareEntityId: Long, authorizedName: String): String = {
     val shareAuthClass = caseClass2json[ShareAuthClass](ShareAuthClass(userId, shareEntityId, authorizedName))

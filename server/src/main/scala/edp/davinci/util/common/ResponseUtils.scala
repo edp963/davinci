@@ -16,7 +16,7 @@ object ResponseUtils {
 
   def currentTime: String = yyyyMMddHHmmssToString(DateUtils.currentyyyyMMddHHmmss, DtFormat.TS_DASH_SEC)
 
-  val msgmap = Map(200 -> "Success", 404 -> "Not found", 401 -> "Unauthorized", 403 -> "User not admin", 500 -> "Internal server error")
+  val msgmap = Map(200 -> "Success", 404 -> "Not found", 401 -> "Unauthorized", 403 -> "User not admin", 406 ->"Not Acceptable",500 -> "Internal server error")
 
   def getHeader(code: Int, session: SessionClass): ResponseHeader = {
     if (session != null)

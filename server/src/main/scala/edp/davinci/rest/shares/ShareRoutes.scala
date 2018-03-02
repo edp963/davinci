@@ -37,7 +37,6 @@ import edp.davinci.util.common.AuthorizationProvider
 import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.util.common.ResponseUtils.getHeader
 import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
@@ -50,7 +49,7 @@ case class ShareAuthClass(userId: Long, infoId: Long, authName: String)
 
 @Api(value = "/shares", consumes = "application/json", produces = "application/json")
 @Path("/shares")
-class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives with SqlUtils {
+class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
   val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute
   private lazy val routeName = "shares"
   private lazy val logger = Logger.getLogger(this.getClass)
@@ -72,8 +71,12 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           parameter('auth_name.as[String].?) { authName =>
-            val aesStr = getShareURL(session.userId, widgetId, authName.getOrElse(""))
-            complete(OK, ResponseJson[String](getHeader(200, "url token", null), aesStr))
+            if (!hasSharePermission(widgetId, session.userId))
+              complete(Forbidden, ResponseJson[String](getHeader(406, session), "没有分享权限"))
+            else {
+              val aesStr = getShareURL(session.userId, widgetId, authName.getOrElse(""))
+              complete(OK, ResponseJson[String](getHeader(200, "url token", null), aesStr))
+            }
           }
       }
     }
@@ -124,7 +127,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     get {
       parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? false, 'expired.as[Int] ? 0) {
         (offset, limit, sortBy, useCache, expired) =>
-          authVerify(shareInfoStr, textHtml, null, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
+          val shareClass = getShareClass(shareInfoStr)
+          if (!hasSharePermission(shareClass.infoId, shareClass.userId))
+            complete(Forbidden, ResponseJson[String](getHeader(406, null), "没有分享权限"))
+          else authVerify(shareInfoStr, textHtml, null, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
       }
     }
   }
@@ -151,7 +157,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       entity(as[Option[ManualInfo]]) { manualInfo =>
         parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? false, 'expired.as[Int] ? 0) {
           (offset, limit, sortBy, useCache, expired) =>
-            authVerify(shareInfoStr, textCSV, manualInfo.orNull, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
+            val shareClass = getShareClass(shareInfoStr)
+            if (!hasDownloadPermission(shareClass.infoId, shareClass.userId))
+              complete(Forbidden, ResponseJson[String](getHeader(406, null), "没有下载权限"))
+            else authVerify(shareInfoStr, textCSV, manualInfo.orNull, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
         }
       }
     }
@@ -177,7 +186,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         if (isValidShareClass(shareInfo)) {
           onComplete(WidgetService.getWidgetById(shareInfo.infoId)) {
             case Success(widgetOpt) => widgetOpt match {
-              case Some(widget) => complete(OK, ResponseJson[Seq[PutWidget]](getHeader(200, null), Seq(widget)))
+              case Some(widget) =>
+                val userPermission = getUserPermission(shareInfo.infoId,shareInfo.userId)
+                val widgetWithPermission = WidgetWithPermission(widget.id,widget.widgetlib_id,widget.flatTable_id,widget.name,widget.adhoc_sql,widget.desc,widget.config,widget.chart_params,widget.query_params,widget.publish,widget.create_by,userPermission)
+                complete(OK, ResponseJson[Seq[WidgetWithPermission]](getHeader(200, null), Seq(widgetWithPermission)))
               case None => complete(BadRequest, ResponseJson[String](getHeader(400, s"not found widget: ${shareInfo.infoId}", null), ""))
             }
             case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
@@ -186,17 +198,22 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
         else complete(BadRequest, ResponseJson[String](getHeader(400, "bad request", null), "widget info verify failed"))
       }
 
-      if (authName != "") {
-        authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-          session =>
-            onComplete(UserService.getUserById(session.userId)) {
-              case Success(user) =>
-                if (authName == user._2) getWidgetInfo
-                else complete(BadRequest, ResponseJson[String](getHeader(400, "Not the authorized user,login and try again!!!", null), ""))
-              case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-            }
-        }
-      } else getWidgetInfo
+      val shareClass = getShareClass(shareInfoStr)
+      if (!hasSharePermission(shareClass.infoId, shareClass.userId))
+        complete(Forbidden, ResponseJson[String](getHeader(406, null), "没有分享权限"))
+      else {
+        if (authName != "") {
+          authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+            session =>
+              onComplete(UserService.getUserById(session.userId)) {
+                case Success(user) =>
+                  if (authName == user._2) getWidgetInfo
+                  else complete(BadRequest, ResponseJson[String](getHeader(400, "Not the authorized user,login and try again!!!", null), ""))
+                case Failure(ex) => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              }
+          }
+        } else getWidgetInfo
+      }
     }
   }
 
@@ -260,7 +277,7 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
             val infoSeq = widgets.map(r => {
               val aesStr = getShareURL(shareInfo.userId, r.widget_id, shareInfo.authName)
               val shareAES = if (null != urlOperation) s"$aesStr$conditionSeparator$urlOperation" else aesStr
-              WidgetLayout(r.id, r.widget_id, r.flatTableId, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, shareAES, r.create_by)
+              WidgetLayout(r.id, r.widget_id, r.flatTableId, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, shareAES, r.create_by, r.permission)
             })
             if (null == dashboard) complete(BadRequest, ResponseJson[String](getHeader(400, "dashboard not exists", null), ""))
             else {
@@ -295,7 +312,10 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       entity(as[Option[ManualInfo]]) { manualInfo =>
         parameters('offset.as[Int] ? -1, 'limit.as[Int] ? -1, 'sortby.as[String] ? "", 'usecache.as[Boolean] ? true, 'expired.as[Int] ? 300) {
           (offset, limit, sortBy, useCache, expired) =>
-            authVerify(shareInfoStr, appJson, manualInfo.orNull, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
+            val shareClass = getShareClass(shareInfoStr)
+            if (!hasSharePermission(shareClass.infoId, shareClass.userId))
+              complete(Forbidden, ResponseJson[String](getHeader(406, null), "没有分享权限"))
+            else authVerify(shareInfoStr, appJson, manualInfo.orNull, Paginate(limit, offset, sortBy), CacheClass(useCache, expired))
         }
       }
     }

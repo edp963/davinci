@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.util.common
 
 import akka.http.scaladsl.model.{ContentTypes, HttpCharsets, MediaTypes}
@@ -61,7 +58,7 @@ trait ContentType {
 }
 
 
-trait Timeout{
+trait Timeout {
   private lazy val timeoutStr = ConfigurationModuleImpl.config.getString("akka.http.server.request-timeout ")
   lazy val requestTimeout = timeoutStr.substring(0, timeoutStr.lastIndexOf("s")).trim.toLong
 }
@@ -79,9 +76,15 @@ object OpType extends Enumeration {
 object LoadMode extends Enumeration {
 
   lazy val APPEND = 0
-  lazy val REPLACE =1
+  lazy val REPLACE = 1
   lazy val MERGE = 2
 
+}
+
+object PermissionType {
+  lazy val DOWNLOAD = "download"
+  lazy val SHARE = "share"
+  lazy val QUERY = "query"
 }
 
 

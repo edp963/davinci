@@ -27,8 +27,9 @@ import java.util.TimeZone
 import java.util.regex.Pattern
 
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig}
-import edp.davinci.util.common.{DateUtils, DavinciConstants}
+import edp.davinci.module.ConfigurationModuleImpl
+import edp.davinci.persistence.entities.PostUploadMeta
+import edp.davinci.util.common.DateUtils
 import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.es.ESConnection
 import org.apache.log4j.Logger
@@ -36,11 +37,13 @@ import org.apache.log4j.Logger
 import scala.collection.mutable
 
 
-object SqlUtils extends SqlUtils
-
-trait SqlUtils extends Serializable {
+object SqlUtils extends Serializable {
   lazy val dataSourceMap: mutable.HashMap[(String, String), HikariDataSource] = new mutable.HashMap[(String, String), HikariDataSource]
   private lazy val logger = Logger.getLogger(this.getClass)
+  private lazy val maximumPoolSize = ConfigurationModuleImpl.config.getInt("source.maximumPoolSize")
+  private lazy val minimumIdle = ConfigurationModuleImpl.config.getInt("source.minimumIdle")
+  private lazy val idleTimeout = ConfigurationModuleImpl.config.getInt("source.idleTimeout")
+  private lazy val maxLifetime = ConfigurationModuleImpl.config.getInt("source.maxLifetime")
 
   def getConnection(jdbcUrl: String, username: String, password: String, maxPoolSize: Int = 10): Connection = {
     val tmpJdbcUrl = jdbcUrl.toLowerCase
@@ -79,9 +82,6 @@ trait SqlUtils extends Serializable {
     } else if (tmpJdbcUrl.indexOf("phoenix") > -1) {
       println("hbase phoenix")
       config.setDriverClassName("org.apache.phoenix.jdbc.PhoenixDriver")
-    } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
-      println("cassandra")
-      config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
     } else if (tmpJdbcUrl.indexOf("mongodb") > -1) {
       println("mongodb")
       config.setDriverClassName("mongodb.jdbc.MongoDriver")
@@ -97,6 +97,9 @@ trait SqlUtils extends Serializable {
       config.setDriverClassName("org.apache.hadoop.hive.jdbc.HiveDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
       config.setDriverClassName("moonbox.jdbc.MbDriver")
+    }else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
+      println("cassandra")
+      config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
     }
 
     if (tmpJdbcUrl.indexOf("sql4es") > -1)
@@ -110,10 +113,11 @@ trait SqlUtils extends Serializable {
 
 
     config.setJdbcUrl(jdbcUrl)
-    config.setMaximumPoolSize(muxPoolSize)
-    config.setMinimumIdle(1)
+    config.setMaxLifetime(maxLifetime)
+    config.setIdleTimeout(idleTimeout)
+    config.setMaximumPoolSize(maximumPoolSize)
+    config.setMinimumIdle(minimumIdle)
     config.setInitializationFailFast(false)
-    config.setConnectionTimeout(DavinciConstants.requestTimeout * 1000)
 
     //    config.addDataSourceProperty("cachePrepStmts", "true")
     //    config.addDataSourceProperty("prepStmtCacheSize", "250")

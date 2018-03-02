@@ -25,6 +25,7 @@ import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
+import edp.davinci.rest.shares.ShareRouteHelper
 import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 
@@ -44,15 +45,25 @@ trait DashboardService {
     val query = if (session.admin)
       (modules.relDWQuery.filter(obj => obj.dashboard_id === dashboardId && ((obj.create_by === session.userId) || (obj.widget_id in widgetIds))) join modules.widgetQuery on (_.widget_id === _.id)).
         map {
-          case (r, w) => (r.id, w.id, w.flatTable_id, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, "", w.create_by) <> (WidgetLayout.tupled, WidgetLayout.unapply)
+          case (r, w) =>
+            (r.id, w.id, w.flatTable_id, r.position_x, r.position_y, r.width, r.length, r.trigger_type, r.trigger_params, "", w.create_by)
         }.result
     else {
       (modules.relDWQuery.filter(obj => obj.dashboard_id === dashboardId) join
         modules.widgetQuery.filter(_.publish).filter(_.flatTable_id in viewIds) on (_.widget_id === _.id))
         .map {
-          case (rDW, w) => (rDW.id, w.id, w.flatTable_id, rDW.position_x, rDW.position_y, rDW.width, rDW.length, rDW.trigger_type, rDW.trigger_params, "", w.create_by) <> (WidgetLayout.tupled, WidgetLayout.unapply)
+          case (rDW, w) => (rDW.id, w.id, w.flatTable_id, rDW.position_x, rDW.position_y, rDW.width, rDW.length, rDW.trigger_type, rDW.trigger_params, "", w.create_by)
         }.result
     }
+    val map = db.run(query).map(_.map(s => {
+      val permission = ShareRouteHelper.getUserPermission(s._2, session.userId)
+      WidgetLayout(s._1, s._2, s._3, s._4, s._5, s._6, s._7, s._8, s._9, s._10, s._11, permission)
+    }))
+    map
+  }
+
+  def getPermission(widgetId: Long): Future[Seq[String]] = {
+    val query = (modules.widgetQuery.filter(_.id === widgetId) join modules.relGroupViewQuery on (_.flatTable_id === _.flatTable_id)).map(_._2.config).result
     db.run(query)
   }
 

@@ -30,9 +30,7 @@ import com.github.tototoshi.csv.CSVWriter
 import edp.davinci.rest.Paginate
 import edp.davinci.util.common.DavinciConstants.defaultEncode
 
-object FileUtils extends FileUtils
-
-trait FileUtils {
+object FileUtils {
   val dir: String = System.getenv("DAVINCI_HOME")
 
   def covert2CSV(row: Seq[String]): String = {
