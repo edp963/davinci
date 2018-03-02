@@ -414,7 +414,7 @@ export class Workbench extends React.Component {
           type={type}
           bizlogics={bizlogics}
           widgetlibs={widgetlibs}
-          dataSource={bizdatas ? bizdatas.dataSource : []}
+          dataColumns={bizdatas ? bizdatas.keys : []}
           chartInfo={chartInfo}
           queryInfo={queryInfo}
           updateInfo={updateInfo}
