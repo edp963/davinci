@@ -860,7 +860,7 @@ export class Grid extends Component {
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: true,
-        interactId: interactIndexOrId
+        interactId: `${interactIndexOrId}`
       }
     })
 

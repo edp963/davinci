@@ -482,7 +482,7 @@ export class Share extends React.Component {
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: true,
-        interactId: interactIndexOrId
+        interactId: `${interactIndexOrId}`
       }
     })
 
