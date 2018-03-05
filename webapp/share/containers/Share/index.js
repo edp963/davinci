@@ -151,7 +151,7 @@ export class Share extends React.Component {
         this.state.interactiveItems = currentItems.reduce((acc, i) => {
           acc[i.id] = {
             isInteractive: false,
-            interactIndex: -1
+            interactId: null
           }
           return acc
         }, {})
@@ -459,7 +459,7 @@ export class Share extends React.Component {
     return linkagers
   }
 
-  doInteract = (itemId, linkagers, interactIndex) => {
+  doInteract = (itemId, linkagers, interactIndexOrId) => {
     const {
       currentItems,
       widgets,
@@ -470,16 +470,19 @@ export class Share extends React.Component {
     const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
     const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
     const dataSource = dataSources[itemId].dataSource
-    const triggeringData = dataSource[interactIndex]
+    let triggeringData
 
     if (chartInfo.renderer === ECHARTS_RENDERER) {
-      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndex)
+      triggeringData = dataSource[interactIndexOrId]
+      this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndexOrId)
+    } else {
+      triggeringData = dataSource.find(ds => ds.antDesignTableId === interactIndexOrId)
     }
 
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: true,
-        interactIndex
+        interactId: interactIndexOrId
       }
     })
 
@@ -590,7 +593,7 @@ export class Share extends React.Component {
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
       [itemId]: {
         isInteractive: false,
-        interactIndex: -1
+        interactId: null
       }
     })
 
@@ -816,7 +819,7 @@ export class Share extends React.Component {
           const loading = loadings[item.id]
           const modifiedPosition = modifiedPositions[index]
           const downloadCsvLoading = downloadCsvLoadings[item.id]
-          const { isInteractive, interactIndex } = interactiveItems[item.id]
+          const { isInteractive, interactId } = interactiveItems[item.id]
 
           if (widget) {
             const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
@@ -841,7 +844,7 @@ export class Share extends React.Component {
                   shareInfo={item.aesStr}
                   downloadCsvLoading={downloadCsvLoading}
                   isInteractive={isInteractive}
-                  interactIndex={interactIndex}
+                  interactId={interactId}
                   onGetChartData={this.getChartData}
                   onRenderChart={this.renderChart}
                   onShowFiltersForm={this.showFiltersForm}

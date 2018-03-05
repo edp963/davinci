@@ -63,7 +63,7 @@ export class WidgetForm extends React.Component {
       form,
       bizlogics,
       widgetlibs,
-      dataSource,
+      dataColumns,
       chartInfo,
       queryParams,
       updateInfo,
@@ -177,10 +177,8 @@ export class WidgetForm extends React.Component {
     }]
 
     let chartConfigElements = ''
-    let columns
-    if (chartInfo) {
-      columns = dataSource && dataSource.length ? Object.keys(dataSource[0]) : []
 
+    if (chartInfo) {
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
           let formItem = ''
@@ -203,11 +201,9 @@ export class WidgetForm extends React.Component {
                           ? item.values.map(c => (
                             <Option key={c.value} value={c.value}>{c.name}</Option>
                             ))
-                          : columns
-                              .filter(c => c !== 'antDesignTableId')
-                              .map(c => (
-                                <Option key={c} value={c}>{c}</Option>
-                              ))
+                          : dataColumns.map(c => (
+                            <Option key={c} value={c}>{c}</Option>
+                          ))
                         }
                       </Select>
                     )}
@@ -226,9 +222,7 @@ export class WidgetForm extends React.Component {
                         onChange={onFormItemChange(item.name)}
                       >
                         {
-                          columns
-                            .filter(c => c !== 'antDesignTableId')
-                            .map(c => (<Option key={c} value={c}>{c}</Option>))
+                          dataColumns.map(c => (<Option key={c} value={c}>{c}</Option>))
                         }
                       </Select>
                     )}
@@ -325,7 +319,7 @@ export class WidgetForm extends React.Component {
       })
 
       if (updateInfo && updateInfo.length) {
-        let fieldLists = [...columns]
+        let fieldLists = [...dataColumns]
         fieldLists.unshift('标注器')
         markFieldsOptions = (
           <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
@@ -540,7 +534,7 @@ WidgetForm.propTypes = {
   form: PropTypes.any,
   bizlogics: PropTypes.array,
   widgetlibs: PropTypes.array,
-  dataSource: PropTypes.oneOfType([
+  dataColumns: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.array
   ]),

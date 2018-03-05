@@ -114,8 +114,7 @@ export class TableChart extends PureComponent {
   handleTableChange = (pagination, filters, sorter) => {
     this.setState({
       pagination,
-      sortedInfo: sorter,
-      filterValues: Object.assign(this.state.filterValues, filters)
+      sortedInfo: sorter
     }, () => {
       this.onLoadData()
     })
@@ -318,7 +317,6 @@ export class TableChart extends PureComponent {
           if (enums[k]) {
             filters = {
               filters: Object.keys(enums[k]).map(en => ({ text: en, value: en })),
-              filteredValue: filterValues[k],
               onFilter: (value, record) => record[k] === value
             }
           } else {
