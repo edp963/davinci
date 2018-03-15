@@ -25,6 +25,5 @@ spark-warehouse
 *.log
 *.conf
 swagger-ui/
-davinci-ui/
 lib/
 tempFiles/
