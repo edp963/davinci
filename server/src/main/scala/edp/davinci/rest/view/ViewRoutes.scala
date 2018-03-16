@@ -380,8 +380,10 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     val where = if (distinctFieldValueRequest.parents.nonEmpty) {
       val parents: Seq[CascadeParent] = distinctFieldValueRequest.parents.get
       parents.map(c => {
-        val op = if (c.fieldValue.split(",").length > 1) " IN " else "="
-        val value = if (c.fieldValue.split(",").length > 1) c.fieldValue.mkString("(", "", ")") else c.fieldValue
+        val filedsSize = c.fieldValue.split(",").length
+        val op = if (filedsSize > 1) " IN " else "="
+        val fieldFormat = c.fieldValue.split(",").map(f =>s"""'$f'""").mkString("(", ",", ")")
+        val value = if (filedsSize > 1) fieldFormat else s"""'${c.fieldValue}'"""
         c.fieldName + op + value
       }).mkString("WHERE ", " AND ", "")
     }
