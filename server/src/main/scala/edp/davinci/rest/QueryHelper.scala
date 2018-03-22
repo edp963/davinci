@@ -154,7 +154,7 @@ class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate = Pagi
     }
     val paginateStr = FileUtils.getPageInfo(paginate)
     val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.head.url)
-    if (paginateStr != "" && QueryHelper.isES(sourceConfig.url))
+    if (paginateStr != "" && !QueryHelper.isES(sourceConfig.url))
       s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
     else mixinSql
   }
