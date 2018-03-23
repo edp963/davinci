@@ -29,6 +29,7 @@ import java.util.regex.Pattern
 import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
 import edp.davinci.module.ConfigurationModuleImpl
 import edp.davinci.persistence.entities.PostUploadMeta
+import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
 import edp.davinci.util.common.DateUtils
 import edp.davinci.util.common.DavinciConstants._
 import edp.davinci.util.es.ESConnection
@@ -94,7 +95,7 @@ object SqlUtils extends Serializable {
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
     } else if (tmpJdbcUrl.indexOf("hive") > -1) {
       println("hive")
-      config.setDriverClassName("org.apache.hadoop.hive.jdbc.HiveDriver")
+      config.setDriverClassName("org.apache.hive.jdbc.HiveDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
       config.setDriverClassName("moonbox.jdbc.MbDriver")
     }else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
@@ -117,7 +118,6 @@ object SqlUtils extends Serializable {
     config.setIdleTimeout(idleTimeout)
     config.setMaximumPoolSize(maximumPoolSize)
     config.setMinimumIdle(minimumIdle)
-    config.setInitializationFailFast(false)
 
     //    config.addDataSourceProperty("cachePrepStmts", "true")
     //    config.addDataSourceProperty("prepStmtCacheSize", "250")
@@ -143,7 +143,6 @@ object SqlUtils extends Serializable {
   def getRow(rs: ResultSet, isES: Boolean): Seq[String] = {
     val meta = rs.getMetaData
     val columnNum = meta.getColumnCount
-    //    val numSeq = if (sourceConfig.url.indexOf("elasticsearch") > -1)  else
     (1 to columnNum).map(columnIndex => {
       val valueIndex = if (isES) columnIndex - 1 else columnIndex
       val fieldValue = meta.getColumnType(columnIndex) match {
@@ -287,6 +286,22 @@ object SqlUtils extends Serializable {
     val deleteSql = s"DELETE FROM `$tableName  WHERE " + fieldNames.map(key => s"`$key`=?").mkString(" AND ")
     logger.info("@DELETE sql " + deleteSql)
     deleteSql
+  }
+
+
+  def getDistinctSql(projectSql: String, distinctFieldValueRequest: DistinctFieldValueRequest): String = {
+    val where = if (distinctFieldValueRequest.parents.nonEmpty) {
+      val parents: Seq[CascadeParent] = distinctFieldValueRequest.parents.get
+      parents.map(c => {
+        val filedsSize = c.fieldValue.split(",").length
+        val op = if (filedsSize > 1) " IN " else "="
+        val fieldFormat = c.fieldValue.split(",").map(f =>s"""'$f'""").mkString("(", ",", ")")
+        val value = if (filedsSize > 1) fieldFormat else s"""'${c.fieldValue}'"""
+        c.fieldName + op + value
+      }).mkString("WHERE ", " AND ", "")
+    }
+    else ""
+    s"SELECT DISTINCT ${distinctFieldValueRequest.childFieldName} FROM ($projectSql) AS TbDistinct $where"
   }
 
   def filterAnnotation(sqlString: String): String = {
