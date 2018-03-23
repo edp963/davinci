@@ -33,6 +33,7 @@ import boxplot from '../charts/boxplot'
 import graph from '../charts/graph'
 import markBoxplot from '../charts/markBoxplot'
 import waterfall from '../charts/waterfall'
+import gauge from '../charts/gauge'
 
 export const iconMapping = {
   line: 'icon-chart-line',
@@ -51,7 +52,8 @@ export const iconMapping = {
   boxplot: 'icon-508tongji_xiangxiantu',
   markBoxplot: 'icon-508tongji_xiangxiantu',
   graph: 'icon-510tongji_guanxitu',
-  waterfall: 'icon-waterfall'
+  waterfall: 'icon-waterfall',
+  gauge: 'icon-gauge'
 }
 
 export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }) {
@@ -97,6 +99,8 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       return markBoxplot(dataSource, flatInfo, chartParams, interactIndex)
     case 'waterfall':
       return waterfall(dataSource, flatInfo, chartParams, interactIndex)
+    case 'gauge':
+      return gauge(dataSource, flatInfo, chartParams, interactIndex)
     default:
       return {}
   }

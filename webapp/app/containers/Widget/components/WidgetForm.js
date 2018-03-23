@@ -83,7 +83,7 @@ export class WidgetForm extends React.Component {
 
     const { getFieldDecorator } = form
     let markFieldsOptions = ''
-
+    getFieldDecorator('colorList', {initialValue: []})
     const bizlogicOptions = bizlogics.map(b => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
     ))
@@ -175,9 +175,7 @@ export class WidgetForm extends React.Component {
         </span>
       )
     }]
-
     let chartConfigElements = ''
-
     if (chartInfo) {
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {

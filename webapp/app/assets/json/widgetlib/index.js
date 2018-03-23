@@ -34,6 +34,7 @@ import boxplot from './boxplot.json'
 import graph from './graph.json'
 import markBoxplot from './markBoxplot.json'
 import waterfall from './waterfall.json'
+import gauge from './gauge.json'
 
 export default [
   area,
@@ -51,5 +52,6 @@ export default [
   boxplot,
   graph,
   markBoxplot,
-  waterfall
+  waterfall,
+  gauge
 ]
