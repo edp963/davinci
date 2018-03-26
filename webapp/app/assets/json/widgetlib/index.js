@@ -35,6 +35,7 @@ import graph from './graph.json'
 import markBoxplot from './markBoxplot.json'
 import waterfall from './waterfall.json'
 import gauge from './gauge.json'
+import radar from './radar.json'
 
 export default [
   area,
@@ -53,5 +54,6 @@ export default [
   graph,
   markBoxplot,
   waterfall,
-  gauge
+  gauge,
+  radar
 ]
