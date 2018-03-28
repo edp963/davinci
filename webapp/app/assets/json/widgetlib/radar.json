@@ -9,19 +9,14 @@
       "title": "数据项配置",
       "items": [
         {
-          "name": "indicator",
-          "title": "顶点",
-          "component": "multiSelect"
-        },
-        {
-          "name": "metrics",
-          "title": "显示指标",
+          "name": "dimension",
+          "title": "维度",
           "component": "select"
         },
         {
-          "name": "metricName",
-          "title": "指标名称",
-          "component": "input"
+          "name": "metrics",
+          "title": "指标",
+          "component": "multiSelect"
         }
       ]
     },
