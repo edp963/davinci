@@ -25,10 +25,16 @@
       "title": "显示",
       "items": [
         {
+          "name": "roseType",
+          "title": "南丁格尔玫瑰",
+          "component": "checkbox",
+          "span": 12
+        },
+        {
           "name": "circle",
           "title": "环状",
           "component": "checkbox",
-          "span": 24
+          "span": 12
         },
         {
           "name": "insideRadius",

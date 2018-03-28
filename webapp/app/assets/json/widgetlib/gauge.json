@@ -22,11 +22,6 @@
           "name": "suffix",
           "title": "后缀",
           "component": "input"
-        },
-        {
-          "name": "gaugeName",
-          "title": "标题",
-          "component": "input"
         }
       ]
     },
@@ -56,6 +51,11 @@
           "default" : 3,
           "min": 3,
           "max": 10
+        },
+        {
+          "name": "gaugeName",
+          "title": "仪表盘标题",
+          "component": "input"
         }
       ]
     },

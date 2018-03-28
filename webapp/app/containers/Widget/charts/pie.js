@@ -34,13 +34,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     legendPosition,
     toolbox,
     top,
+    roseType,
     left
   } = chartParams
 
   let metricOptions,
     labelOptions,
     legendOptions,
-    toolboxOptions
+    toolboxOptions,
+    roseOptions
 
   // legend
   let adjustedLeft = 0
@@ -107,7 +109,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         }
       }
     }
-
+  roseOptions = roseType && roseType.length ? {roseType: 'radius'} : null
   let serieObj = Object.assign({},
     {
       name: title,
@@ -142,6 +144,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         }
       }
     },
+    roseOptions,
     labelOptions
   )
   metricArr.push(serieObj)

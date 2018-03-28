@@ -20,9 +20,8 @@
 
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
-    indicator,
+    dimension,
     metrics,
-    metricName,
     hasLegend,
     legendSelected,
     legendPosition,
@@ -38,17 +37,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     toolboxOptions,
     gridOptions,
     data,
-    radarOptions,
-    metricsArr
+    radarOptions
 
-  if (indicator && indicator.length) {
+  if (dimension && dimension.length) {
     if (metrics && metrics.length) {
-      let indicatorData = indicator.map(indi => dataSource.map(data => data[indi]))
-      metricsArr = dataSource.map(data => data[metrics])
-      data = metricsArr.map((ti, index) => ({
-        name: ti,
-        value: indicatorData.map(indica => indica[index])
+      let metricData = metrics.map(me => dataSource.map(data => data[me]))
+      data = metrics.map((me, index) => ({
+        name: me,
+        value: metricData[index]
       }))
+
       radarOptions = {
         radar: {
           name: {
@@ -59,8 +57,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
               padding: [3, 5]
             }
           },
-          indicator: indicator.map(name => {
-            let max = Math.max.apply(null, dataSource.map(data => data[name]).map(arr => parseFloat(arr)))
+          indicator: dataSource.map(data => data[dimension]).map((name, index) => {
+            let max = Math.max.apply(null, metrics.map(me => dataSource.map(data => data[me])).map(list => list[index]).map(arr => parseFloat(arr)))
             return {
               name: name,
               max: max + parseInt(max * 0.1)
@@ -70,15 +68,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }
   }
-
   metricOptions = {
     series: [{
-      name: metricName && metricName.length ? metricName : '',
+     // name: metricName && metricName.length ? metricName : '',
       type: 'radar',
       data: data
     }]
   }
-
   // legend
   let adjustedBottom = 0
   let adjustedRight = 0
@@ -106,12 +102,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricsArr.reduce((obj, m) => Object.assign(obj, { [m]: false }), {})
+        selected: metrics.reduce((obj, m) => Object.assign(obj, { [m]: false }), {})
       } : null
 
     legendOptions = {
       legend: Object.assign({
-        data: metricsArr,
+        data: metrics,
         type: 'scroll'
       }, orient, positions, selected)
     }
@@ -141,21 +137,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       bottom: Math.max(bottom, adjustedBottom)
     }
   }
-
-  console.log(Object.assign({
-    tooltip: {
-      trigger: 'item',
-      axisPointer: {
-        type: 'shadow'
-      }
-    }
-  },
-    metricOptions,
-    radarOptions,
-    legendOptions,
-    gridOptions,
-    toolboxOptions
-  ))
 
   return Object.assign({
     tooltip: {
