@@ -19,6 +19,16 @@
           "component": "multiSelect"
         },
         {
+          "name": "xAxisMin",
+          "title": "Y轴最小值",
+          "component": "inputnumber"
+        },
+        {
+          "name": "xAxisMax",
+          "title": "Y轴最大值",
+          "component": "inputnumber"
+        },
+        {
           "name": "suffixYAxis",
           "title": "Y轴后缀",
           "component": "input"

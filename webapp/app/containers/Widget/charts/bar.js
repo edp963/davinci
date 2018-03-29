@@ -26,6 +26,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   const {
     xAxis,
     metrics,
+    xAxisMin,
+    xAxisMax,
     vertical,
     stack,
     label,
@@ -57,7 +59,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     toolboxOptions,
     gridOptions,
     dataZoomOptions,
-    suffixYAxisOptions
+    suffixYAxisOptions,
+    yAxisValueRangeOptions
 
   // series 数据项
   let metricArr = []
@@ -140,6 +143,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
   }
 
+  // y轴区间
+  yAxisValueRangeOptions = !xAxisMin && !xAxisMax ? null : {
+    min: xAxisMin,
+    max: xAxisMax
+  }
+
   // x轴与y轴数据
   suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYAxis}`
@@ -170,7 +179,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     yAxisOptions = {
-      xAxis: {
+      xAxis: Object.assign({
         type: 'value',
         position: 'top',
         axisLabel: {
@@ -184,7 +193,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             type: splitLineStyle
           }
         }
-      }
+      }, yAxisValueRangeOptions)
     }
   } else {
     if (xAxis) {
@@ -207,7 +216,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     yAxisOptions = {
-      yAxis: {
+      yAxis: Object.assign({
         type: 'value',
         splitLine: {
           show: splitLineY && splitLineY.length,
@@ -217,7 +226,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           }
         },
         ...suffixYAxisOptions
-      }
+      }, yAxisValueRangeOptions)
     }
   }
 
