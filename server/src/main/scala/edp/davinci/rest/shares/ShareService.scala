@@ -34,7 +34,7 @@ import org.apache.log4j.Logger
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-object ShareRouteHelper {
+object ShareService {
   private val logger = Logger.getLogger(this.getClass)
 
   lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")

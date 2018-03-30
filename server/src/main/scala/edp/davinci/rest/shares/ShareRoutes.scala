@@ -30,8 +30,9 @@ import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModul
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
 import edp.davinci.rest.dashboard.DashboardService
-import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
+import edp.davinci.rest.shares.ShareService.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
+import edp.davinci.rest.view.QueryHelper
 import edp.davinci.rest.widget.WidgetService
 import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.util.common.ResponseUtils.getHeader
@@ -55,7 +56,16 @@ case class ShareAuthClass(userId: Long, infoId: Long, authName: String)
 @Api(value = "/shares", consumes = "application/json", produces = "application/json")
 @Path("/shares")
 class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
-  val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute ~ getDistinctShareResultRoute
+  val routes: Route = getWidgetURLRoute ~
+    getDashboardURLRoute ~
+    getHtmlRoute ~
+    getCSVRoute ~
+    getShareDashboardRoute ~
+    getShareWidgetRoute ~
+    getShareResultRoute ~
+    authShareRoute ~
+    getDistinctShareResultRoute ~
+    getDistinctValueInDashboardRoute
   private lazy val routeName = "shares"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -357,9 +367,41 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
   }
 
 
-  private def getDistinctResult(shareClass: ShareClass, distinctFieldValueRequest: DistinctFieldValueRequest): StandardRoute = {
+  @Path("/resultset/{dashboard_share_info}/distinct_value/{view_id}")
+  @ApiOperation(value = "get shared result by share info", notes = "", nickname = "", httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "dashboard_share_info", value = "share info value", required = true, dataType = "string", paramType = "path"),
+    new ApiImplicitParam(name = "view_id ", value = "view_id", required = true, dataType = "integer", paramType = "path"),
+    new ApiImplicitParam(name = "distinct_field", value = "Distinct Field", required = false, dataType = "edp.davinci.rest.DistinctFieldValueRequest", paramType = "body")))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "post success"),
+    new ApiResponse(code = 403, message = "user is not admin"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def getDistinctValueInDashboardRoute: Route = path(routeName / "resultset" / Segment / "distinct_value" / LongNumber) { (shareInfoStr, viewId) =>
+    post {
+      entity(as[DistinctFieldValueRequest]) { distinctFieldValueRequest =>
+        val shareClass = getShareClass(shareInfoStr)
+        if (isValidShareClass(shareClass)) {
+          val authName = shareClass.authName
+          if (authName != "") {
+            authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+              session =>
+                if (isAuthUser(session, authName)) getDistinctResult(shareClass, distinctFieldValueRequest, Some(viewId))
+                else complete(Forbidden, ResponseJson[String](getHeader(400, null, session), ""))
+            }
+          } else getDistinctResult(shareClass, distinctFieldValueRequest, Some(viewId))
+        } else complete(Forbidden, ResponseJson[String](getHeader(400, "share is invalid", null), ""))
+      }
+    }
+  }
+
+
+  private def getDistinctResult(shareClass: ShareClass, distinctFieldValueRequest: DistinctFieldValueRequest, viewId: Option[Long] = None): StandardRoute = {
     val (widget, groupIds, admin) = getFromShareClass(shareClass)
-    val queryHelper = new QueryHelper(SessionClass(shareClass.userId, groupIds.toList, admin._1), widget.get.flatTable_id,
+    val factId = if (viewId.nonEmpty) viewId.get else widget.get.flatTable_id
+    val queryHelper = new QueryHelper(SessionClass(shareClass.userId, groupIds.toList, admin._1), factId,
       contentType = DavinciConstants.appJson,
       manualInfo = ManualInfo(distinctFieldValueRequest.adHoc,
         distinctFieldValueRequest.manualFilters, distinctFieldValueRequest.params))
