@@ -36,6 +36,8 @@ import Icon from 'antd/lib/icon'
 import Modal from 'antd/lib/modal'
 import Popconfirm from 'antd/lib/popconfirm'
 import Breadcrumb from 'antd/lib/breadcrumb'
+import Input from 'antd/lib/input'
+const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
@@ -57,7 +59,8 @@ export class Widget extends React.Component {
       currentWidget: null,
       workbenchVisible: false,
       copyWidgetVisible: false,
-      copyQueryInfo: null
+      copyQueryInfo: null,
+      searchWidgetName: null
     }
   }
 
@@ -148,24 +151,35 @@ export class Widget extends React.Component {
     })
   })
 
+  onSearchWidget = (value) => {
+    const filterArr = this.props.widgets.filter(i => i.name.includes(value))
+    this.setState({
+      searchWidgetName: filterArr
+    })
+  }
+
   render () {
     const {
       widgets,
       loginUser,
       onDeleteWidget
     } = this.props
+
     const {
       workbenchType,
       currentWidget,
       workbenchVisible,
-      copyWidgetVisible
+      copyWidgetVisible,
+      searchWidgetName
     } = this.state
+
+    const widgetsArr = !searchWidgetName ? widgets : searchWidgetName
 
     let {bizlogics} = this.props
     bizlogics = bizlogics ? bizlogics.filter(widget => widget['create_by'] === loginUser.id) : []
     // filter 非用户原创widget 不予显示
-    const cols = widgets
-      ? widgets
+    const cols = widgetsArr
+      ? widgetsArr
         .filter(widget => widget['create_by'] === loginUser.id)
         .map(w => {
           const widgetType = JSON.parse(w.chart_params).widgetType
@@ -209,7 +223,15 @@ export class Widget extends React.Component {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col span={6} className={utilStyles.textAlignRight}>
+            <Col span={5} className={utilStyles.textAlignRight}>
+              <Search
+                className={`${utilStyles.searchInput} ${utilStyles.searchAdmin}`}
+                placeholder="Widget 名称"
+                onSearch={this.onSearchWidget}
+                // enterButton
+              />
+            </Col>
+            <Col span={1} className={utilStyles.textAlignRight}>
               <Tooltip placement="bottom" title="新增">
                 <Button
                   size="large"

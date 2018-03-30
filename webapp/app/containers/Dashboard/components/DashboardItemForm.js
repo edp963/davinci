@@ -32,6 +32,7 @@ import Steps from 'antd/lib/steps'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
+const Search = Input.Search
 
 import { iconMapping } from '../../Widget/components/chartUtil'
 
@@ -43,8 +44,16 @@ export class DashboardItemForm extends React.PureComponent {
   constructor (props) {
     super(props)
     this.state = {
-      triggerType: 'manual'
+      triggerType: 'manual',
+      searchWidgetName: null
     }
+  }
+
+  onSearchWidgetItem = (value) => {
+    const filterArr = this.props.widgets.filter(i => i.name.includes(value))
+    this.setState({
+      searchWidgetName: filterArr
+    })
   }
 
   render () {
@@ -59,13 +68,19 @@ export class DashboardItemForm extends React.PureComponent {
       onTriggerTypeSelect
     } = this.props
 
+    const { searchWidgetName } = this.state
+
     let {widgets} = this.props
+
+    let widgetsArr
     if (loginUser && loginUser.admin) {
       widgets = widgets.filter(widget => widget['create_by'] === loginUser.id)
+      widgetsArr = !searchWidgetName ? widgets : searchWidgetName
     }
+
     const {getFieldDecorator} = form
 
-    const widgetSelector = widgets.map(w => {
+    const widgetSelector = widgetsArr.map(w => {
       const widgetType = JSON.parse(w.chart_params).widgetType
       const widgetClassName = classnames({
         [widgetStyles.widget]: true,
@@ -119,6 +134,13 @@ export class DashboardItemForm extends React.PureComponent {
               <Step title="完成" />
             </Steps>
           </Col>
+        </Row>
+        <Row className={`${selectWidgetStep} ${utilStyles.textAlignRight}`}>
+          <Search
+            className={widgetStyles.searchInputItem}
+            placeholder="Widget 名称"
+            onSearch={this.onSearchWidgetItem}
+          />
         </Row>
         <Row gutter={20} className={selectWidgetStep}>
           {widgetSelector}

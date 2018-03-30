@@ -36,6 +36,8 @@ import Tooltip from 'antd/lib/tooltip'
 import Modal from 'antd/lib/modal'
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Popconfirm from 'antd/lib/popconfirm'
+import Input from 'antd/lib/input'
+const Search = Input.Search
 
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadDashboards, addDashboard, editDashboard, deleteDashboard } from './actions'
@@ -52,7 +54,9 @@ export class Dashboard extends React.Component {
       modalLoading: false,
 
       formType: '',
-      formVisible: false
+      formVisible: false,
+
+      searchName: null
     }
   }
 
@@ -106,6 +110,13 @@ export class Dashboard extends React.Component {
     })
   }
 
+  onSearchDashboard = (value) => {
+    const filterArr = this.props.dashboards.filter(i => i.name.includes(value))
+    this.setState({
+      searchName: filterArr
+    })
+  }
+
   render () {
     const {
       dashboards,
@@ -116,11 +127,15 @@ export class Dashboard extends React.Component {
     const {
       modalLoading,
       formType,
-      formVisible
+      formVisible,
+      searchName
     } = this.state
+
+    const dashboardsArr = !searchName ? dashboards : searchName
+
     let userId = loginUser && loginUser.id
-    const dashboardItems = dashboards
-      ? dashboards.map(d => {
+    const dashboardItems = dashboardsArr
+      ? dashboardsArr.map(d => {
         let editButton = ''
         let deleteButton = ''
 
@@ -220,7 +235,15 @@ export class Dashboard extends React.Component {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col span={6} className={utilStyles.textAlignRight}>
+            <Col span={5} className={utilStyles.textAlignRight}>
+              <Search
+                className={`${utilStyles.searchInput} ${loginUser.admin ? utilStyles.searchAdmin : utilStyles.searchUser}`}
+                placeholder="Dashboard 名称"
+                onSearch={this.onSearchDashboard}
+                // enterButton
+              />
+            </Col>
+            <Col span={1} className={utilStyles.textAlignRight}>
               {addButton}
             </Col>
           </Row>
