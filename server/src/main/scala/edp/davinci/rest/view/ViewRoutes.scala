@@ -33,6 +33,7 @@ import edp.davinci.util.common.ResponseUtils._
 import edp.davinci.util.common.{AuthorizationProvider, DavinciConstants}
 import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils
+import edp.davinci.util.sql.SqlUtils
 import edp.davinci.util.sql.SqlUtils.{filterAnnotation, getDefaultVarMap, toArray}
 import io.swagger.annotations._
 import org.slf4j.LoggerFactory
@@ -365,7 +366,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
             val renderedSql = queryHelper.queryVarRender(mergeSql)
             val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
             val projectSql = queryHelper.getProjectSql(sqlBuffer.last)
-            val distinctValueSql = getDistinctSql(projectSql, distinctFieldValueRequest)
+            val distinctValueSql = SqlUtils.getDistinctSql(projectSql, distinctFieldValueRequest)
             logger.info(s"@@distinctValueSql $distinctValueSql")
             sqlBuffer.remove(sqlBuffer.length - 1)
             sqlBuffer.append(distinctValueSql)
@@ -376,16 +377,5 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
       }
   }
 
-  def getDistinctSql(projectSql: String, distinctFieldValueRequest: DistinctFieldValueRequest) = {
-    val where = if (distinctFieldValueRequest.parents.nonEmpty) {
-      val parents: Seq[CascadeParent] = distinctFieldValueRequest.parents.get
-      parents.map(c => {
-        val op = if (c.fieldValue.split(",").length > 1) " IN " else "="
-        val value = if (c.fieldValue.split(",").length > 1) c.fieldValue.mkString("(", "", ")") else c.fieldValue
-        c.fieldName + op + value
-      }).mkString("WHERE ", " AND ", "")
-    }
-    else ""
-    s"SELECT DISTINCT ${distinctFieldValueRequest.childFieldName} FROM ($projectSql) AS TbDistinct $where"
-  }
+
 }

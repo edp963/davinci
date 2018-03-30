@@ -24,8 +24,8 @@ package edp.davinci.rest.shares
 import javax.ws.rs.Path
 
 import akka.http.scaladsl.model.StatusCodes._
-import akka.http.scaladsl.model.{HttpEntity, _}
-import akka.http.scaladsl.server.{Directives, Route}
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.{Directives, Route, StandardRoute}
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
@@ -33,14 +33,19 @@ import edp.davinci.rest.dashboard.DashboardService
 import edp.davinci.rest.shares.ShareRouteHelper.{getShareClass, isValidShareClass, mergeURLManual, _}
 import edp.davinci.rest.user.UserService
 import edp.davinci.rest.widget.WidgetService
-import edp.davinci.util.common.AuthorizationProvider
 import edp.davinci.util.common.DavinciConstants.{conditionSeparator, _}
 import edp.davinci.util.common.ResponseUtils.getHeader
+import edp.davinci.util.common.{AuthorizationProvider, DavinciConstants}
 import edp.davinci.util.json.JsonProtocol._
+import edp.davinci.util.sql.SqlUtils
+import edp.davinci.util.sql.SqlUtils.toArray
 import io.swagger.annotations._
 import org.apache.log4j.Logger
 
+import scala.collection.mutable
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 case class ShareClass(userId: Long, infoId: Long, authName: String, md5: String)
@@ -50,7 +55,7 @@ case class ShareAuthClass(userId: Long, infoId: Long, authName: String)
 @Api(value = "/shares", consumes = "application/json", produces = "application/json")
 @Path("/shares")
 class ShareRoutes(modules: ConfigurationModule with PersistenceModule with BusinessModule with RoutesModuleImpl) extends Directives {
-  val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute
+  val routes: Route = getWidgetURLRoute ~ getDashboardURLRoute ~ getHtmlRoute ~ getCSVRoute ~ getShareDashboardRoute ~ getShareWidgetRoute ~ getShareResultRoute ~ authShareRoute ~ getDistinctShareResultRoute
   private lazy val routeName = "shares"
   private lazy val logger = Logger.getLogger(this.getClass)
 
@@ -187,8 +192,8 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
           onComplete(WidgetService.getWidgetById(shareInfo.infoId)) {
             case Success(widgetOpt) => widgetOpt match {
               case Some(widget) =>
-                val userPermission = getUserPermission(shareInfo.infoId,shareInfo.userId)
-                val widgetWithPermission = WidgetWithPermission(widget.id,widget.widgetlib_id,widget.flatTable_id,widget.name,widget.adhoc_sql,widget.desc,widget.config,widget.chart_params,widget.query_params,widget.publish,widget.create_by,userPermission)
+                val userPermission = getUserPermission(shareInfo.infoId, shareInfo.userId)
+                val widgetWithPermission = WidgetWithPermission(widget.id, widget.widgetlib_id, widget.flatTable_id, widget.name, widget.adhoc_sql, widget.desc, widget.config, widget.chart_params, widget.query_params, widget.publish, widget.create_by, userPermission)
                 complete(OK, ResponseJson[Seq[WidgetWithPermission]](getHeader(200, null), Seq(widgetWithPermission)))
               case None => complete(BadRequest, ResponseJson[String](getHeader(400, s"not found widget: ${shareInfo.infoId}", null), ""))
             }
@@ -321,6 +326,66 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
     }
   }
 
+
+  @Path("/resultset/{share_info}/distinct_value")
+  @ApiOperation(value = "get shared result by share info", notes = "", nickname = "", httpMethod = "POST")
+  @ApiImplicitParams(Array(
+    new ApiImplicitParam(name = "share_info", value = "share info value", required = true, dataType = "string", paramType = "path"),
+    new ApiImplicitParam(name = "distinct_field", value = "Distinct Field", required = false, dataType = "edp.davinci.rest.DistinctFieldValueRequest", paramType = "body")))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "post success"),
+    new ApiResponse(code = 403, message = "user is not admin"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def getDistinctShareResultRoute: Route = path(routeName / "resultset" / Segment / "distinct_value") { shareInfoStr =>
+    post {
+      entity(as[DistinctFieldValueRequest]) { distinctFieldValueRequest =>
+        val shareClass = getShareClass(shareInfoStr)
+        if (isValidShareClass(shareClass)) {
+          val authName = shareClass.authName
+          if (authName != "") {
+            authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+              session =>
+                if (isAuthUser(session, authName)) getDistinctResult(shareClass, distinctFieldValueRequest)
+                else complete(Forbidden, ResponseJson[String](getHeader(400, null, session), ""))
+            }
+          } else getDistinctResult(shareClass, distinctFieldValueRequest)
+        } else complete(Forbidden, ResponseJson[String](getHeader(400, "share is invalid", null), ""))
+      }
+    }
+  }
+
+
+  private def getDistinctResult(shareClass: ShareClass, distinctFieldValueRequest: DistinctFieldValueRequest): StandardRoute = {
+    val (widget, groupIds, admin) = getFromShareClass(shareClass)
+    val queryHelper = new QueryHelper(SessionClass(shareClass.userId, groupIds.toList, admin._1), widget.get.flatTable_id,
+      contentType = DavinciConstants.appJson,
+      manualInfo = ManualInfo(distinctFieldValueRequest.adHoc,
+        distinctFieldValueRequest.manualFilters, distinctFieldValueRequest.params))
+    val mergeSql = queryHelper.groupVarMerge()
+    val renderedSql = queryHelper.queryVarRender(mergeSql)
+    val sqlBuffer: mutable.Buffer[String] = toArray(renderedSql).toBuffer
+    val projectSql = queryHelper.getProjectSql(sqlBuffer.last)
+    val distinctValueSql = SqlUtils.getDistinctSql(projectSql, distinctFieldValueRequest)
+    logger.info(s"@@distinctValueSql $distinctValueSql")
+    sqlBuffer.remove(sqlBuffer.length - 1)
+    sqlBuffer.append(distinctValueSql)
+    val resultSeq = queryHelper.executeDirect(sqlBuffer)
+    QueryHelper.contentTypeMatch(resultSeq, DavinciConstants.appJson)
+  }
+
+
+  private def getFromShareClass(shareClass: ShareClass): (Option[PutWidget], Seq[Long], (Boolean, String)) = {
+    val operation = for {
+      widget <- WidgetService.getWidgetById(shareClass.infoId)
+      group <- UserService.getUserGroup(shareClass.userId)
+      user <- UserService.getUserById(shareClass.userId)
+    } yield (widget, group, user)
+    Await.result(operation, new FiniteDuration(30, SECONDS))
+  }
+
+
   private def authVerify(shareString: String,
                          contentType: ContentType.NonBinary,
                          manualInfo: ManualInfo = null,
@@ -330,31 +395,31 @@ class ShareRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       val shareURLArr: Array[String] = shareString.split(conditionSeparator.toString)
       try {
         val shareClass = getShareClass(shareString)
-        if (isValidShareClass(shareClass)) {
-          if (shareURLArr.length == 2)
-            getResultComplete(shareClass, contentType, mergeURLManual(shareURLArr, manualInfo), paginate, cacheClass)
-          else getResultComplete(shareClass, contentType, manualInfo, paginate, cacheClass)
-        } else complete(HttpEntity(contentType, "".getBytes("UTF-8")))
+        if (shareURLArr.length == 2)
+          getResultComplete(shareClass, contentType, mergeURLManual(shareURLArr, manualInfo), paginate, cacheClass)
+        else getResultComplete(shareClass, contentType, manualInfo, paginate, cacheClass)
       } catch {
         case ex: Throwable => complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
       }
     }
 
     val shareClass = getShareClass(shareString)
-    val authName = shareClass.authName
-    if (authName != "") {
-      authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
-        session =>
-          onComplete(UserService.getUserById(session.userId)) {
-            case Success(user) =>
-              if (authName == user._2) getResult
-              else complete(BadRequest, ResponseJson[String](getHeader(400, "Not the authorized user,login and try again", null), ""))
-            case Failure(ex) =>
-              logger.error(s"user not found ", ex)
-              complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
-          }
-      }
-    } else getResult
+    if (isValidShareClass(shareClass)) {
+      val authName = shareClass.authName
+      if (authName != "") {
+        authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
+          session =>
+            if (isAuthUser(session, authName)) getResult
+            else complete(Forbidden, ResponseJson[String](getHeader(400, null, session), ""))
+        }
+      } else getResult
+    } else complete(Forbidden, ResponseJson[String](getHeader(400, "share is invalid", null), ""))
+  }
+
+
+  private def isAuthUser(session: SessionClass, authName: String): Boolean = {
+    val (_, userEmail) = Await.result(UserService.getUserById(session.userId), new FiniteDuration(30, SECONDS))
+    if (authName == userEmail) true else false
   }
 
 

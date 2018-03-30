@@ -1,3 +1,6 @@
+
+--升级新版本，sql有更新，请注意！！！（要增加sql在文件末尾）
+
 -- MySQL dump 10.13  Distrib 5.7.18, for Win64 (x86_64)
 -- ------------------------------------------------------
 -- Server version	5.1.73
@@ -25,7 +28,6 @@ CREATE TABLE `dashboard` (
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `pic` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
   `desc` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
-  `linkage_detail` varchar(1000) COLLATE utf8_unicode_ci DEFAULT '[]',
   `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
   `publish` tinyint(1) NOT NULL,
   `active` tinyint(1) DEFAULT NULL,
@@ -44,7 +46,6 @@ CREATE TABLE `dashboard` (
 
 
 --
-
 DROP TABLE IF EXISTS `log_sql`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -102,6 +103,7 @@ CREATE TABLE `rel_group_view` (
   `group_id` bigint(20) NOT NULL,
   `flattable_id` bigint(20) NOT NULL,
   `sql_params` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
+  `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
   `active` tinyint(1) NOT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_by` bigint(20) NOT NULL,
@@ -206,7 +208,6 @@ CREATE TABLE `view` (
   `source_id` bigint(20) DEFAULT NULL,
   `name` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `sql_tmpl` text COLLATE utf8_unicode_ci NOT NULL,
-  `update_sql` text COLLATE utf8_unicode_ci NOT NULL,
   `result_table` varchar(200) COLLATE utf8_unicode_ci NOT NULL,
   `desc` varchar(1000) CHARACTER SET utf8 DEFAULT NULL,
   `trigger_type` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -266,3 +267,8 @@ CREATE TABLE `upload_meta` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+
+ ALTER TABLE `dashboard` ADD COLUMN `linkage_detail` VARCHAR(1000) DEFAULT '[]';
+ ALTER TABLE `view` ADD COLUMN `update_sql` text DEFAULT null;
+ ALTER TABLE `rel_group_view` ADD COLUMN `config` text DEFAULT null;
