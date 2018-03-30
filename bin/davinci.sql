@@ -103,7 +103,6 @@ CREATE TABLE `rel_group_view` (
   `group_id` bigint(20) NOT NULL,
   `flattable_id` bigint(20) NOT NULL,
   `sql_params` varchar(2000) CHARACTER SET utf8 DEFAULT NULL,
-  `config` varchar(1000) COLLATE utf8_unicode_ci DEFAULT NULL,
   `active` tinyint(1) NOT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_by` bigint(20) NOT NULL,
