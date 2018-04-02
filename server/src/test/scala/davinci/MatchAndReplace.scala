@@ -2,7 +2,7 @@
 package davinci
 
 import edp.davinci.KV
-import edp.davinci.rest.{GroupVar, QueryVar}
+import edp.davinci.rest.view.{GroupVar, QueryVar}
 import edp.davinci.util.common.RegexMatcher
 import edp.davinci.util.json.JsonUtils.json2caseClass
 import edp.davinci.util.sql.{SqlParser, SqlUtils}

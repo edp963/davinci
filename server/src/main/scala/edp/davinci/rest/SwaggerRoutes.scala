@@ -29,6 +29,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
 import com.github.swagger.akka.{HasActorSystem, SwaggerHttpService}
 import edp.davinci.DavinciStarter
+import edp.davinci.rest.cronjob.CronJobRoutes
 import edp.davinci.rest.dashboard.DashboardRoutes
 import edp.davinci.rest.download.DownloadRoutes
 import edp.davinci.rest.group.GroupRoutes
@@ -59,7 +60,8 @@ class SwaggerRoutes extends SwaggerHttpService with HasActorSystem {
     typeOf[ShareRoutes],
     typeOf[DownloadRoutes],
     typeOf[UploadRoutes],
-    typeOf[CheckRoutes]
+    typeOf[CheckRoutes],
+    typeOf[CronJobRoutes]
   )
 
   override val host = DavinciStarter.host + ":" + DavinciStarter.port

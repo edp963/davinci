@@ -1,13 +1,12 @@
-package edp.davinci.rest
+package edp.davinci.rest.view
 
 import java.sql.{Connection, SQLException, Statement}
 
-import akka.http.scaladsl.model.ContentType.NonBinary
 import akka.http.scaladsl.model.StatusCodes.{BadRequest, OK}
 import akka.http.scaladsl.server.{Directives, StandardRoute}
 import edp.davinci.KV
 import edp.davinci.persistence.entities.SourceConfig
-import edp.davinci.rest.view.ViewService
+import edp.davinci.rest.{ManualInfo, ResponseJson, SessionClass}
 import edp.davinci.util.common.DavinciConstants.requestTimeout
 import edp.davinci.util.common.ResponseUtils.getHeader
 import edp.davinci.util.json.JsonProtocol._

@@ -25,7 +25,7 @@ import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.rest.shares.ShareRouteHelper
+import edp.davinci.rest.shares.ShareService
 import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 
@@ -56,7 +56,7 @@ trait DashboardService {
         }.result
     }
     val map = db.run(query).map(_.map(s => {
-      val permission = ShareRouteHelper.getUserPermission(s._2, session.userId)
+      val permission = ShareService.getUserPermission(s._2, session.userId)
       WidgetLayout(s._1, s._2, s._3, s._4, s._5, s._6, s._7, s._8, s._9, s._10, s._11, permission)
     }))
     map

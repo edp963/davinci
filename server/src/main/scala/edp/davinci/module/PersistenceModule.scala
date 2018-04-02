@@ -19,9 +19,6 @@
  */
 
 
-
-
-
 package edp.davinci.module
 
 import edp.davinci.persistence.base.{BaseDal, BaseDalImpl}
@@ -56,6 +53,7 @@ trait PersistenceModule {
   val viewQuery: TableQuery[ViewTb] = TableQuery[ViewTb]
   val relGroupViewQuery: TableQuery[RelGroupViewTable] = TableQuery[RelGroupViewTable]
   val uploadMetaQuery: TableQuery[MetaTable] = TableQuery[MetaTable]
+  val cronJobQuery: TableQuery[CronJobTable] = TableQuery[CronJobTable]
 
 
   val groupDal: BaseDal[GroupTable, UserGroup]
@@ -70,6 +68,7 @@ trait PersistenceModule {
   val viewDal: BaseDal[ViewTb, View]
   val relGroupViewDal: BaseDal[RelGroupViewTable, RelGroupView]
   val uploadMetaDal: BaseDal[MetaTable, UploadMeta]
+  val cronJobDal: BaseDal[CronJobTable, CronJob]
 }
 
 trait PersistenceModuleImpl extends PersistenceModule {
@@ -87,5 +86,5 @@ trait PersistenceModuleImpl extends PersistenceModule {
   override lazy val viewDal = new BaseDalImpl[ViewTb, View](TableQuery[ViewTb])
   override lazy val relGroupViewDal = new BaseDalImpl[RelGroupViewTable, RelGroupView](TableQuery[RelGroupViewTable])
   override lazy val uploadMetaDal = new BaseDalImpl[MetaTable, UploadMeta](TableQuery[MetaTable])
-
+  override lazy val cronJobDal = new BaseDalImpl[CronJobTable, CronJob](TableQuery[CronJobTable])
 }

@@ -96,6 +96,14 @@ object JsonProtocol extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val formatPostViewInfoSeq: RootJsonFormat[View4PostSeq] = jsonFormat1(View4PostSeq)
   implicit val formatPutViewInfoSeq: RootJsonFormat[View4PutSeq] = jsonFormat1(View4PutSeq)
 
+  implicit val formatCronJob: RootJsonFormat[CronJob] = jsonFormat13(CronJob)
+  implicit val formatPostCronJob: RootJsonFormat[PostCronJob] =jsonFormat7(PostCronJob)
+  implicit val formatPutCronJob: RootJsonFormat[PutCronJob] = jsonFormat8(PutCronJob)
+  implicit val formatPostCronJobSeq: RootJsonFormat[PostCronJobSeq] =jsonFormat1(PostCronJobSeq)
+  implicit val formatPutCronJobSeq: RootJsonFormat[PutCronJobSeq] =jsonFormat1(PutCronJobSeq)
+  implicit val formatCronJobSeq: RootJsonFormat[CronJobSeq] =jsonFormat1(CronJobSeq)
+
+
   implicit val formatPostUploadMeta: RootJsonFormat[PostUploadMeta] = jsonFormat5(PostUploadMeta)
 
   implicit val formatLibWidget: RootJsonFormat[LibWidget] = jsonFormat9(LibWidget)

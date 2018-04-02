@@ -74,6 +74,19 @@
             <groupId>com.typesafe.slick</groupId>
             <artifactId>slick-hikaricp_${scala.binary.version}</artifactId>
             <version>${slick.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.zaxxer</groupId>
+                    <artifactId>HikariCP</artifactId>
+                </exclusion>
+
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>2.7.8</version>
         </dependency>
 
         <!-- json4s -->
@@ -161,11 +174,11 @@
             <artifactId>presto-jdbc</artifactId>
             <version>0.188</version>
         </dependency>
-
+        <!-- redis-->
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
-            <version>2.3.1</version>
+            <version>1.2.1000.2.6.1.0-129</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
@@ -188,6 +201,13 @@
                     <artifactId>log4j-web</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>2.2.0</version>
         </dependency>
 
         <dependency>
@@ -217,6 +237,31 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.11.Final</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.quartz-scheduler</groupId>
+            <artifactId>quartz</artifactId>
+            <version>2.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>mail</artifactId>
+            <version>1.4.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>4.0.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>4.0</version>
         </dependency>
 
     </dependencies>

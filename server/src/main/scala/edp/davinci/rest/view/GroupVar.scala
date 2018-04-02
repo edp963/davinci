@@ -1,5 +1,4 @@
-package edp.davinci.rest
-
+package edp.davinci.rest.view
 
 import edp.davinci.KV
 import edp.davinci.util.common.DavinciConstants.{STEndChar, STStartChar, dollarDelimiter}
