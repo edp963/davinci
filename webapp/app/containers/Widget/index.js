@@ -37,6 +37,7 @@ import Modal from 'antd/lib/modal'
 import Popconfirm from 'antd/lib/popconfirm'
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Input from 'antd/lib/input'
+import Pagination from 'antd/lib/pagination'
 const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
@@ -60,7 +61,9 @@ export class Widget extends React.Component {
       workbenchVisible: false,
       copyWidgetVisible: false,
       copyQueryInfo: null,
-      searchWidgetName: null
+      filteredWidgets: null,
+      pageSize: 12,
+      currentPage: 1
     }
   }
 
@@ -98,7 +101,7 @@ export class Widget extends React.Component {
     e.stopPropagation()
   }
 
-  onCopyPPG = (type, widget) => (e) => {
+  onCopy = (type, widget) => (e) => {
     e.stopPropagation()
     this.setState({
       workbenchType: type,
@@ -152,9 +155,22 @@ export class Widget extends React.Component {
   })
 
   onSearchWidget = (value) => {
-    const filterArr = this.props.widgets.filter(i => i.name.includes(value))
     this.setState({
-      searchWidgetName: filterArr
+      filteredWidgets: this.props.widgets.filter(i => i.name.includes(value)),
+      currentPage: 1
+    })
+  }
+
+  onChange = (page) => {
+    this.setState({
+      currentPage: page
+    })
+  }
+
+  onShowSizeChange = (current, pageSize) => {
+    this.setState({
+      currentPage: current,
+      pageSize: pageSize
     })
   }
 
@@ -170,10 +186,12 @@ export class Widget extends React.Component {
       currentWidget,
       workbenchVisible,
       copyWidgetVisible,
-      searchWidgetName
+      filteredWidgets,
+      currentPage,
+      pageSize
     } = this.state
 
-    const widgetsArr = !searchWidgetName ? widgets : searchWidgetName
+    const widgetsArr = filteredWidgets || widgets
 
     let {bizlogics} = this.props
     bizlogics = bizlogics ? bizlogics.filter(widget => widget['create_by'] === loginUser.id) : []
@@ -181,33 +199,44 @@ export class Widget extends React.Component {
     const cols = widgetsArr
       ? widgetsArr
         .filter(widget => widget['create_by'] === loginUser.id)
-        .map(w => {
+        .map((w, index) => {
           const widgetType = JSON.parse(w.chart_params).widgetType
-          return (
-            <Col
-              xl={4} lg={6} md={8} sm={12} xs={24}
-              key={w.id}
-              onClick={this.showWorkbench('edit', w)}
-          >
-              <div className={styles.widget}>
-                <h3 className={styles.title}>{w.name}</h3>
-                <p className={styles.content}>{w.desc}</p>
-                <i className={`${styles.pic} iconfont ${iconMapping[widgetType]}`} />
-                <Tooltip title="复制">
-                  <Icon className={styles.copy} type="copy" onClick={this.onCopyPPG('copy', w)} />
-                </Tooltip>
-                <Popconfirm
-                  title="确定删除？"
-                  placement="bottom"
-                  onConfirm={onDeleteWidget(w.id)}
+
+          const startCol = (currentPage - 1) * pageSize + 1
+          let endCol = currentPage * pageSize
+          endCol = (endCol > widgetsArr.length) ? widgetsArr.length : endCol
+
+          let colItems = ''
+          if ((index + 1 >= startCol && index + 1 <= endCol) ||
+            (startCol > widgetsArr.length)) {
+            colItems = (
+              <Col
+                xl={4} lg={6} md={8} sm={12} xs={24}
+                key={w.id}
+                onClick={this.showWorkbench('edit', w)}
               >
-                  <Tooltip title="删除">
-                    <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+                <div className={styles.widget}>
+                  <h3 className={styles.title}>{w.name}</h3>
+                  <p className={styles.content}>{w.desc}</p>
+                  <i className={`${styles.pic} iconfont ${iconMapping[widgetType]}`} />
+                  <Tooltip title="复制">
+                    <Icon className={styles.copy} type="copy" onClick={this.onCopy('copy', w)} />
                   </Tooltip>
-                </Popconfirm>
-              </div>
-            </Col>
-          )
+                  <Popconfirm
+                    title="确定删除？"
+                    placement="bottom"
+                    onConfirm={onDeleteWidget(w.id)}
+                  >
+                    <Tooltip title="删除">
+                      <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+                    </Tooltip>
+                  </Popconfirm>
+                </div>
+              </Col>
+            )
+          }
+
+          return colItems
         })
       : ''
 
@@ -223,15 +252,12 @@ export class Widget extends React.Component {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col span={5} className={utilStyles.textAlignRight}>
+            <Col span={6} className={utilStyles.textAlignRight}>
               <Search
-                className={`${utilStyles.searchInput} ${utilStyles.searchAdmin}`}
+                className={`${utilStyles.searchInput} ${utilStyles.searchInputAdmin}`}
                 placeholder="Widget 名称"
                 onSearch={this.onSearchWidget}
-                // enterButton
               />
-            </Col>
-            <Col span={1} className={utilStyles.textAlignRight}>
               <Tooltip placement="bottom" title="新增">
                 <Button
                   size="large"
@@ -246,6 +272,18 @@ export class Widget extends React.Component {
         <Container.Body card>
           <Row gutter={20}>
             {cols}
+          </Row>
+          <Row>
+            <Pagination
+              className={styles.paginationPosition}
+              showSizeChanger
+              onShowSizeChange={this.onShowSizeChange}
+              onChange={this.onChange}
+              total={widgetsArr.length}
+              defaultPageSize={12}
+              pageSizeOptions={['12', '24', '48', '60']}
+              current={currentPage}
+            />
           </Row>
         </Container.Body>
         <Modal

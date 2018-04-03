@@ -29,6 +29,7 @@ import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
 import Icon from 'antd/lib/icon'
 import Steps from 'antd/lib/steps'
+import Pagination from 'antd/lib/pagination'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
@@ -38,6 +39,7 @@ import { iconMapping } from '../../Widget/components/chartUtil'
 
 import utilStyles from '../../../assets/less/util.less'
 import widgetStyles from '../../Widget/Widget.less'
+import styles from '../Dashboard.less'
 
 export class DashboardItemForm extends React.PureComponent {
 
@@ -45,14 +47,36 @@ export class DashboardItemForm extends React.PureComponent {
     super(props)
     this.state = {
       triggerType: 'manual',
-      searchWidgetName: null
+      filteredWidgets: null,
+      pageSize: 12,
+      currentPage: 1
     }
   }
 
   onSearchWidgetItem = (value) => {
-    const filterArr = this.props.widgets.filter(i => i.name.includes(value))
     this.setState({
-      searchWidgetName: filterArr
+      filteredWidgets: this.props.widgets.filter(i => i.name.includes(value)),
+      currentPage: 1
+    })
+  }
+
+  onChange = (page) => {
+    this.setState({
+      currentPage: page
+    })
+  }
+
+  onShowSizeChange = (current, pageSize) => {
+    this.setState({
+      currentPage: current,
+      pageSize: pageSize
+    })
+  }
+
+  onReset = () => {
+    this.setState({
+      filteredWidgets: null,
+      currentPage: 1
     })
   }
 
@@ -68,20 +92,24 @@ export class DashboardItemForm extends React.PureComponent {
       onTriggerTypeSelect
     } = this.props
 
-    const { searchWidgetName } = this.state
+    const {
+      filteredWidgets,
+      pageSize,
+      currentPage
+    } = this.state
 
     let {widgets} = this.props
-
-    let widgetsArr
     if (loginUser && loginUser.admin) {
       widgets = widgets.filter(widget => widget['create_by'] === loginUser.id)
-      widgetsArr = !searchWidgetName ? widgets : searchWidgetName
     }
+
+    const widgetsArr = filteredWidgets || widgets
 
     const {getFieldDecorator} = form
 
-    const widgetSelector = widgetsArr.map(w => {
+    const widgetSelector = widgetsArr.map((w, index) => {
       const widgetType = JSON.parse(w.chart_params).widgetType
+
       const widgetClassName = classnames({
         [widgetStyles.widget]: true,
         [widgetStyles.selector]: true,
@@ -96,20 +124,30 @@ export class DashboardItemForm extends React.PureComponent {
         )
         : ''
 
-      return (
-        <Col
-          md={8} sm={12} xs={24}
-          key={w.id}
-          onClick={onWidgetSelect(w.id)}
-        >
-          <div className={widgetClassName}>
-            <h3 className={widgetStyles.title}>{w.name}</h3>
-            <p className={widgetStyles.content}>{w.desc}</p>
-            <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} />
-            {checkmark}
-          </div>
-        </Col>
-      )
+      const startCol = (currentPage - 1) * pageSize + 1
+      let endCol = currentPage * pageSize
+      endCol = (endCol > widgetsArr.length) ? widgetsArr.length : endCol
+
+      let colItems = ''
+      if ((index + 1 >= startCol && index + 1 <= endCol) ||
+        (startCol > widgetsArr.length)) {
+        colItems = (
+          <Col
+            md={8} sm={12} xs={24}
+            key={w.id}
+            onClick={onWidgetSelect(w.id)}
+          >
+            <div className={widgetClassName}>
+              <h3 className={widgetStyles.title}>{w.name}</h3>
+              <p className={widgetStyles.content}>{w.desc}</p>
+              <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} />
+              {checkmark}
+            </div>
+          </Col>
+        )
+      }
+
+      return colItems
     })
 
     const selectWidgetStep = classnames({
@@ -135,15 +173,33 @@ export class DashboardItemForm extends React.PureComponent {
             </Steps>
           </Col>
         </Row>
-        <Row className={`${selectWidgetStep} ${utilStyles.textAlignRight}`}>
-          <Search
-            className={widgetStyles.searchInputItem}
-            placeholder="Widget 名称"
-            onSearch={this.onSearchWidgetItem}
-          />
+        <Row className={`${selectWidgetStep} ${styles.searchRow}`}>
+          <Col span={17}></Col>
+          <Col>
+            <FormItem wrapperCol={{span: 7}}>
+              {getFieldDecorator('searchItem', {})(
+                <Search
+                  placeholder="Widget 名称"
+                  onSearch={this.onSearchWidgetItem}
+                />
+              )}
+            </FormItem>
+          </Col>
         </Row>
         <Row gutter={20} className={selectWidgetStep}>
           {widgetSelector}
+        </Row>
+        <Row>
+          <Pagination
+            className={widgetStyles.paginationPosition}
+            showSizeChanger
+            onShowSizeChange={this.onShowSizeChange}
+            onChange={this.onChange}
+            total={widgetsArr.length}
+            defaultPageSize={12}
+            pageSizeOptions={['12', '24', '48', '60']}
+            current={currentPage}
+          />
         </Row>
         <div className={inputFormStep}>
           <Row gutter={8}>
