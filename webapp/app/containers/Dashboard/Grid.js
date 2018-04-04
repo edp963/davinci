@@ -436,7 +436,7 @@ export class Grid extends Component {
       selectedWidget: dashboardItem.widget_id,
       triggerType: dashboardItem.trigger_type
     }, () => {
-      this.dashboardItemForm.setFieldsValue({
+      this.dashboardItemForm.props.form.setFieldsValue({
         id: dashboardItem.id,
         trigger_type: dashboardItem.trigger_type,
         trigger_params: dashboardItem.trigger_params
@@ -457,6 +457,8 @@ export class Grid extends Component {
       triggerType: 'manual',
       dashboardItemFormStep: 0
     })
+    this.dashboardItemForm.onReset()
+    this.dashboardItemForm.props.form.resetFields()
   }
 
   widgetSelect = (id) => () => {
@@ -481,7 +483,7 @@ export class Grid extends Component {
     const { currentDashboard, currentItems, widgets } = this.props
     const { modifiedPositions, selectedWidget, dashboardItemFormType, linkageCascaderSource } = this.state
 
-    const formdata = this.dashboardItemForm.getFieldsValue()
+    const formdata = this.dashboardItemForm.props.form.getFieldsValue()
 
     const predictPosYArr = modifiedPositions.map(wi => wi.y + wi.h)
 
@@ -1684,7 +1686,7 @@ export class Grid extends Component {
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
             onTriggerTypeSelect={this.triggerTypeSelect}
-            ref={f => { this.dashboardItemForm = f }}
+            wrappedComponentRef={f => { this.dashboardItemForm = f }}
           />
         </Modal>
         <Modal

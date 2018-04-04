@@ -78,10 +78,9 @@
     transition: transform 300ms linear;
   }
 
-  .delete {
+  .delete, .copy {
     position: absolute;
     top: 8px;
-    right: 8px;
     opacity: .5;
     transition: transform 200ms ease;
 
@@ -89,6 +88,14 @@
       opacity: 1;
       transform: scale(1.1, 1.1);
     }
+  }
+
+  .delete {
+    right: 8px;
+  }
+
+  .copy {
+    right: 28px;
   }
 }
 
@@ -237,4 +244,8 @@
 
 .mt20{
   margin-top: 20px;
+}
+
+.paginationPosition {
+  float: right;
 }

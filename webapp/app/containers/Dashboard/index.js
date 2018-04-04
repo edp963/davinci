@@ -36,6 +36,9 @@ import Tooltip from 'antd/lib/tooltip'
 import Modal from 'antd/lib/modal'
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Popconfirm from 'antd/lib/popconfirm'
+import Input from 'antd/lib/input'
+import Pagination from 'antd/lib/pagination'
+const Search = Input.Search
 
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadDashboards, addDashboard, editDashboard, deleteDashboard } from './actions'
@@ -44,6 +47,7 @@ import { makeSelectLoginUser } from '../App/selectors'
 
 import utilStyles from '../../assets/less/util.less'
 import styles from './Dashboard.less'
+import widgetStyles from '../Widget/Widget.less'
 
 export class Dashboard extends React.Component {
   constructor (props) {
@@ -52,7 +56,11 @@ export class Dashboard extends React.Component {
       modalLoading: false,
 
       formType: '',
-      formVisible: false
+      formVisible: false,
+
+      filteredDashboards: null,
+      currentPage: 1,
+      pageSize: 12
     }
   }
 
@@ -106,6 +114,26 @@ export class Dashboard extends React.Component {
     })
   }
 
+  onSearchDashboard = (value) => {
+    this.setState({
+      filteredDashboards: this.props.dashboards.filter(i => i.name.includes(value)),
+      currentPage: 1
+    })
+  }
+
+  onChange = (page) => {
+    this.setState({
+      currentPage: page
+    })
+  }
+
+  onShowSizeChange = (current, pageSize) => {
+    this.setState({
+      currentPage: current,
+      pageSize: pageSize
+    })
+  }
+
   render () {
     const {
       dashboards,
@@ -116,11 +144,17 @@ export class Dashboard extends React.Component {
     const {
       modalLoading,
       formType,
-      formVisible
+      formVisible,
+      filteredDashboards,
+      currentPage,
+      pageSize
     } = this.state
+
+    const dashboardsArr = filteredDashboards || dashboards
+
     let userId = loginUser && loginUser.id
-    const dashboardItems = dashboards
-      ? dashboards.map(d => {
+    const dashboardItems = dashboardsArr
+      ? dashboardsArr.map((d, index) => {
         let editButton = ''
         let deleteButton = ''
 
@@ -150,29 +184,38 @@ export class Dashboard extends React.Component {
 
         const editHint = !d.publish && '(编辑中…)'
 
-        return (
-          <Col
-            key={d.id}
-            xl={4} lg={6} md={8} sm={12} xs={24}
-          >
-            <div
-              className={itemClass}
-              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
-              onClick={this.toGrid(d)}
+        const startCol = (currentPage - 1) * pageSize + 1
+        const endCol = Math.min(currentPage * pageSize, dashboardsArr.length)
+
+        let colItems = ''
+        if ((index + 1 >= startCol && index + 1 <= endCol) ||
+          (startCol > dashboardsArr.length)) {
+          colItems = (
+            <Col
+              key={d.id}
+              xl={4} lg={6} md={8} sm={12} xs={24}
             >
-              <header>
-                <h3 className={styles.title}>
-                  {d.name} {editHint}
-                </h3>
-                <p className={styles.content}>
-                  {d.desc}
-                </p>
-              </header>
-              {editButton}
-              {deleteButton}
-            </div>
-          </Col>
-        )
+              <div
+                className={itemClass}
+                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+                onClick={this.toGrid(d)}
+              >
+                <header>
+                  <h3 className={styles.title}>
+                    {d.name} {editHint}
+                  </h3>
+                  <p className={styles.content}>
+                    {d.desc}
+                  </p>
+                </header>
+                {editButton}
+                {deleteButton}
+              </div>
+            </Col>
+          )
+        }
+
+        return colItems
       })
       : ''
 
@@ -221,6 +264,11 @@ export class Dashboard extends React.Component {
               </Breadcrumb>
             </Col>
             <Col span={6} className={utilStyles.textAlignRight}>
+              <Search
+                className={`${utilStyles.searchInput} ${loginUser.admin ? utilStyles.searchInputAdmin : ''}`}
+                placeholder="Dashboard 名称"
+                onSearch={this.onSearchDashboard}
+              />
               {addButton}
             </Col>
           </Row>
@@ -228,6 +276,18 @@ export class Dashboard extends React.Component {
         <Container.Body card>
           <Row gutter={20}>
             {dashboardItems}
+          </Row>
+          <Row>
+            <Pagination
+              className={widgetStyles.paginationPosition}
+              showSizeChanger
+              onShowSizeChange={this.onShowSizeChange}
+              onChange={this.onChange}
+              total={dashboardsArr.length}
+              defaultPageSize={12}
+              pageSizeOptions={['12', '24', '48', '60']}
+              current={currentPage}
+            />
           </Row>
         </Container.Body>
         <Modal
