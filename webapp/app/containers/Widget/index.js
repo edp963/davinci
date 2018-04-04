@@ -203,8 +203,7 @@ export class Widget extends React.Component {
           const widgetType = JSON.parse(w.chart_params).widgetType
 
           const startCol = (currentPage - 1) * pageSize + 1
-          let endCol = currentPage * pageSize
-          endCol = (endCol > widgetsArr.length) ? widgetsArr.length : endCol
+          const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
 
           let colItems = ''
           if ((index + 1 >= startCol && index + 1 <= endCol) ||

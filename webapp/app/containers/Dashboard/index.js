@@ -185,8 +185,7 @@ export class Dashboard extends React.Component {
         const editHint = !d.publish && '(编辑中…)'
 
         const startCol = (currentPage - 1) * pageSize + 1
-        let endCol = currentPage * pageSize
-        endCol = (endCol > dashboardsArr.length) ? dashboardsArr.length : endCol
+        const endCol = Math.min(currentPage * pageSize, dashboardsArr.length)
 
         let colItems = ''
         if ((index + 1 >= startCol && index + 1 <= endCol) ||
