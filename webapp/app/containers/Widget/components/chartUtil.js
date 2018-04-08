@@ -47,6 +47,7 @@ export const iconMapping = {
   treemap: 'icon-chart-treemap',
   wordCloud: 'icon-chartwordcloud',
   table: 'icon-table',
+  scorecard: 'icon-calendar1',
   text: 'icon-text',
   map: 'icon-china',
   doubleYAxis: 'icon-duplex',
