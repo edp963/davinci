@@ -62,7 +62,7 @@ export class Widget extends React.Component {
       copyWidgetVisible: false,
       copyQueryInfo: null,
       filteredWidgets: null,
-      pageSize: 12,
+      pageSize: 24,
       currentPage: 1
     }
   }
@@ -279,8 +279,8 @@ export class Widget extends React.Component {
               onShowSizeChange={this.onShowSizeChange}
               onChange={this.onChange}
               total={widgetsArr.length}
-              defaultPageSize={12}
-              pageSizeOptions={['12', '24', '48', '60']}
+              defaultPageSize={24}
+              pageSizeOptions={['24', '48', '72', '96']}
               current={currentPage}
             />
           </Row>

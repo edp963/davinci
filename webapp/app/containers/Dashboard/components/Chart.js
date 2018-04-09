@@ -23,7 +23,7 @@ import PropTypes from 'prop-types'
 
 import TableChart from './TableChart'
 import ScorecardChart from './ScorecardChart'
-// import TextChart from './TextChart'
+import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
 
@@ -115,15 +115,15 @@ export class Chart extends PureComponent {
           )
           break
         case 'text':
-          // chartContent = (
-          //   <TextChart
-          //     id={id}
-          //     className={classNames.chart}
-          //     data={data}
-          //     loading={loading}
-          //     chartParams={chartParams}
-          //   />
-          // )
+          chartContent = (
+            <TextChart
+              id={id}
+              className={classNames.chart}
+              data={data}
+              loading={loading}
+              chartParams={chartParams}
+            />
+          )
           break
       }
     }

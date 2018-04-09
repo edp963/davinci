@@ -48,7 +48,7 @@ export class DashboardItemForm extends React.PureComponent {
     this.state = {
       triggerType: 'manual',
       filteredWidgets: null,
-      pageSize: 12,
+      pageSize: 24,
       currentPage: 1
     }
   }
@@ -188,15 +188,15 @@ export class DashboardItemForm extends React.PureComponent {
         <Row gutter={20} className={selectWidgetStep}>
           {widgetSelector}
         </Row>
-        <Row>
+        <Row className={selectWidgetStep}>
           <Pagination
             className={widgetStyles.paginationPosition}
             showSizeChanger
             onShowSizeChange={this.onShowSizeChange}
             onChange={this.onChange}
             total={widgetsArr.length}
-            defaultPageSize={12}
-            pageSizeOptions={['12', '24', '48', '60']}
+            defaultPageSize={24}
+            pageSizeOptions={['24', '48', '72', '96']}
             current={currentPage}
           />
         </Row>
