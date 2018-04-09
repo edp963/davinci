@@ -51,7 +51,9 @@ import {
 import {
   LOAD_BIZDATAS_FROM_ITEM,
   LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
-  LOAD_BIZDATAS_FROM_ITEM_FAILURE
+  LOAD_BIZDATAS_FROM_ITEM_FAILURE,
+  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({
@@ -61,6 +63,7 @@ const initialState = fromJS({
   currentDashboardShareInfo: '',
   currentDashboardSecretInfo: '',
   currentDashboardShareInfoLoading: false,
+  currentDashboardCascadeSources: false,
   currentItems: false,
   currentDatasources: false,
   currentItemsLoading: false,
@@ -68,11 +71,13 @@ const initialState = fromJS({
   currentItemsShareInfo: false,
   currentItemsSecretInfo: false,
   currentItemsShareInfoLoading: false,
-  currentItemsDownloadCsvLoading: false
+  currentItemsDownloadCsvLoading: false,
+  currentItemsCascadeSources: false
 })
 
 function dashboardReducer (state = initialState, { type, payload }) {
   let dashboards = state.get('dashboards')
+  let dashboardCascadeSources = state.get('currentDashboardCascadeSources')
   let items = state.get('currentItems')
   let datasources = state.get('currentDatasources')
   let itemsLoading = state.get('currentItemsLoading')
@@ -80,6 +85,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
   let itemsShareInfo = state.get('currentItemsShareInfo')
   let itemsShareInfoLoading = state.get('currentItemsShareInfoLoading')
   let itemsDownloadCsvLoading = state.get('currentItemsDownloadCsvLoading')
+  let itemsCascadeSources = state.get('currentItemsCascadeSources')
 
   switch (type) {
     case LOAD_DASHBOARDS_SUCCESS:
@@ -102,6 +108,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
     case EDIT_CURRENT_DASHBOARD_SUCCESS:
       return state
         .set('currentDashboard', payload.result)
+        .set('currentDashboardCascadeSources', {})
         .set('currentDashboardLoading', false)
     case EDIT_CURRENT_DASHBOARD_FAILURE:
       return state.set('currentDashboardLoading', false)
@@ -116,6 +123,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
       return state
         .set('currentDashboardLoading', false)
         .set('currentDashboard', payload.dashboard)
+        .set('currentDashboardCascadeSources', {})
         .set('currentItems', payload.dashboard.widgets)
         .set('currentDatasources', {})
         .set('currentItemsLoading', payload.dashboard.widgets.reduce((obj, w) => {
@@ -146,6 +154,10 @@ function dashboardReducer (state = initialState, { type, payload }) {
           obj[w.id] = false
           return obj
         }, {}))
+        .set('currentItemsCascadeSources', payload.dashboard.widgets.reduce((obj, w) => {
+          obj[w.id] = {}
+          return obj
+        }, {}))
 
     case ADD_DASHBOARD_ITEM_SUCCESS:
       if (!items) {
@@ -155,6 +167,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
         itemsShareInfo = {}
         itemsShareInfoLoading = {}
         itemsDownloadCsvLoading = {}
+        itemsCascadeSources = {}
       }
       return state
         .set('currentItems', items.concat(payload.result))
@@ -180,6 +193,9 @@ function dashboardReducer (state = initialState, { type, payload }) {
         }))
         .set('currentItemsDownloadCsvLoading', Object.assign({}, itemsDownloadCsvLoading, {
           [payload.result.id]: false
+        }))
+        .set('currentItemsCascadeSources', Object.assign({}, itemsCascadeSources, {
+          [payload.result.id]: {}
         }))
 
     case EDIT_DASHBOARD_ITEM_SUCCESS:
@@ -207,6 +223,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
         .set('currentItemsShareInfo', false)
         .set('currentItemsShareInfoLoading', false)
         .set('currentItemsDownloadCsvLoading', false)
+        .set('currentItemsCascadeSources', false)
 
     case LOAD_BIZDATAS_FROM_ITEM:
       return state
@@ -268,7 +285,6 @@ function dashboardReducer (state = initialState, { type, payload }) {
           [payload.itemId]: false
         }))
     case LOAD_WIDGET_SECRET_LINK_SUCCESS:
-      console.log('zou')
       return state
         .set('currentItemsSecretInfo', Object.assign({}, itemsShareInfo, {
           [payload.itemId]: payload.shareInfo
@@ -289,6 +305,16 @@ function dashboardReducer (state = initialState, { type, payload }) {
     case LOAD_WIDGET_CSV_FAILURE:
       return state.set('currentItemsDownloadCsvLoading', Object.assign({}, itemsDownloadCsvLoading, {
         [payload.itemId]: false
+      }))
+    case LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS:
+      return state.set('currentItemsCascadeSources', Object.assign({}, itemsCascadeSources, {
+        [payload.itemId]: Object.assign({}, itemsCascadeSources[payload.itemId], {
+          [payload.controlId]: payload.values
+        })
+      }))
+    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
+      return state.set('currentDashboardCascadeSources', Object.assign({}, dashboardCascadeSources, {
+        [payload.controlId]: payload.values
       }))
     default:
       return state

@@ -54,15 +54,25 @@ const makeSelectItemDownloadCsvLoadings = () => createSelector(
   selectShare,
   (shareState) => shareState.get('downloadCsvLoadings')
 )
+const makeSelectDashboardCascadeSources = () => createSelector(
+  selectShare,
+  (shareState) => shareState.get('dashboardCascadeSources')
+)
+const makeSelectItemsCascadeSources = () => createSelector(
+  selectShare,
+  (shareState) => shareState.get('itemsCascadeSources')
+)
 
 export {
   selectShare,
   makeSelectTitle,
   makeSelectConfig,
+  makeSelectDashboardCascadeSources,
   makeSelectWidgets,
   makeSelectItems,
   makeSelectDataSources,
   makeSelectLoadings,
   makeSelectItemQueryParams,
-  makeSelectItemDownloadCsvLoadings
+  makeSelectItemDownloadCsvLoadings,
+  makeSelectItemsCascadeSources
 }

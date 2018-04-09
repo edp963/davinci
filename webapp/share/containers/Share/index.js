@@ -37,8 +37,27 @@ import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Modal from 'antd/lib/modal'
 
-import { getDashboard, getWidget, getResultset, setIndividualDashboard, loadWidgetCsv } from './actions'
-import { makeSelectTitle, makeSelectConfig, makeSelectWidgets, makeSelectItems, makeSelectDataSources, makeSelectLoadings, makeSelectItemQueryParams, makeSelectItemDownloadCsvLoadings } from './selectors'
+import {
+  getDashboard,
+  getWidget,
+  getResultset,
+  setIndividualDashboard,
+  loadWidgetCsv,
+  loadCascadeSourceFromItem,
+  loadCascadeSourceFromDashboard
+} from './actions'
+import {
+  makeSelectTitle,
+  makeSelectConfig,
+  makeSelectDashboardCascadeSources,
+  makeSelectWidgets,
+  makeSelectItems,
+  makeSelectDataSources,
+  makeSelectLoadings,
+  makeSelectItemQueryParams,
+  makeSelectItemDownloadCsvLoadings,
+  makeSelectItemsCascadeSources
+} from './selectors'
 import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
 import { changePosition } from '../../../app/containers/Dashboard/components/localPositionUtil'
 import {
@@ -74,7 +93,9 @@ export class Share extends React.Component {
       showLogin: false,
       linkageTableSource: false,
       globalFilterTableSource: false,
-      interactiveItems: {}
+      interactiveItems: {},
+
+      phantomRenderSign: false
     }
     this.charts = {}
     this.interactCallbacks = {}
@@ -94,16 +115,21 @@ export class Share extends React.Component {
     const {
       onLoadDashboard,
       onLoadWidget,
-      onSetIndividualDashboard
+      onSetIndividualDashboard,
+      onLoadCascadeSourceFromDashboard
     } = this.props
     if (qs.type === 'dashboard') {
       onLoadDashboard(qs.shareInfo, (dashboard) => {
         dashboard.widgets.forEach(w => {
           onLoadWidget(w.aesStr)
         })
-        // FIXME
-        this.state.linkageTableSource = JSON.parse(dashboard.linkage_detail || '[]')
-        this.state.globalFilterTableSource = JSON.parse(dashboard.config).globalFilters || []
+        this.state.linkageTableSource = this.adjustLinkageTableSource(dashboard, dashboard.widgets)
+        this.state.globalFilterTableSource = this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
+        this.state.globalFilterTableSource.forEach(gft => {
+          if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
+            onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
+          }
+        })
       }, (err) => {
         console.log(err)
         this.setState({
@@ -135,7 +161,7 @@ export class Share extends React.Component {
   }
 
   componentWillUpdate (nextProps) {
-    const { currentItems } = nextProps
+    const { currentItems, dataSources } = nextProps
     if (currentItems) {
       if (!this.state.modifiedPositions) {
         this.state.modifiedPositions = currentItems.map(ci => ({
@@ -155,6 +181,10 @@ export class Share extends React.Component {
           }
           return acc
         }, {})
+      }
+
+      if (currentItems.map(ci => ci.id).join(',') === Object.keys(dataSources).join(',')) {
+        this.state.phantomRenderSign = true
       }
     }
   }
@@ -224,6 +254,7 @@ export class Share extends React.Component {
     let globalFilters
     let params
     let linkageParams
+    let globalParams
     let pagination
 
     if (queryParams) {
@@ -232,6 +263,7 @@ export class Share extends React.Component {
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params ? queryParams.params : cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
+      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
       pagination = queryParams.pagination ? queryParams.pagination : cachedQueryParams.pagination
     } else {
       filters = cachedQueryParams.filters
@@ -239,6 +271,7 @@ export class Share extends React.Component {
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
+      globalParams = cachedQueryParams.globalParams
       pagination = cachedQueryParams.pagination
     }
 
@@ -251,7 +284,8 @@ export class Share extends React.Component {
         linkageFilters,
         globalFilters,
         params,
-        linkageParams
+        linkageParams,
+        globalParams
       },
       pagination.sorts,
       pagination.offset,
@@ -630,6 +664,7 @@ export class Share extends React.Component {
             }
             break
           case 'select':
+          case 'cascadeSelect':
             if (formValue) {
               currentParam = [{
                 k: columnAndType[0],
@@ -710,6 +745,11 @@ export class Share extends React.Component {
               currentFilter = `${columnAndType[0]} = ${formValue}`
             }
             break
+          case 'cascadeSelect':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(formValue, columnAndType[1])}`
+            }
+            break
           case 'multiSelect':
             if (formValue.length) {
               currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
@@ -771,19 +811,64 @@ export class Share extends React.Component {
     }
   }
 
+  getCascadeSource = (token, sql) => (itemId, controlId, flatTableId, column, parents) => {
+    this.props.onLoadCascadeSourceFromItem(itemId, controlId, token, sql, column, parents)
+  }
+
+  adjustLinkageTableSource = (currentDashboard, currentItems) => {
+    const { linkage_detail } = currentDashboard
+    const linkageTableSource = JSON.parse(linkage_detail)
+
+    return linkageTableSource.filter(lts => {
+      let linkagerSign = false
+      let triggerSign = false
+
+      for (let i = 0, cl = currentItems.length; i < cl; i += 1) {
+        if (currentItems[i].id === lts.linkager[0]) {
+          linkagerSign = true
+        }
+        if (currentItems[i].id === lts.trigger[0]) {
+          triggerSign = true
+        }
+      }
+
+      return linkagerSign && triggerSign
+    })
+  }
+
+  adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
+    const { config } = currentDashboard
+    const globalFilterTableSource = JSON.parse(config).globalFilters || []
+
+    return globalFilterTableSource.map(gfts => {
+      const deprecatedItems = Object.keys(gfts.relatedItems).filter(key => !currentItems.find(ci => ci.id === Number(key)))
+      deprecatedItems.forEach(di => {
+        delete gfts.relatedItems[di]
+      })
+      return gfts
+    })
+  }
+
+  loadCascadeSourceInsideGlobalFilters = (token) => (key, flatTableId, column, parents) => {
+    this.props.onLoadCascadeSourceFromDashboard(key, flatTableId, token, column, parents)
+  }
+
   render () {
     const {
       title,
-      config,
       currentItems,
       dataSources,
       loadings,
       widgets,
-      downloadCsvLoadings
+      itemQueryParams,
+      downloadCsvLoadings,
+      dashboardCascadeSources,
+      itemsCascadeSources
     } = this.props
 
     const {
       mounted,
+      shareInfo,
       modifiedPositions,
       filtersVisible,
       filtersDashboardItem,
@@ -791,7 +876,9 @@ export class Share extends React.Component {
       showLogin,
       filtersTypes,
       allowFullScreen,
-      interactiveItems
+      interactiveItems,
+      globalFilterTableSource,
+      phantomRenderSign
     } = this.state
 
     let grids = ''
@@ -819,6 +906,8 @@ export class Share extends React.Component {
           const loading = loadings[item.id]
           const modifiedPosition = modifiedPositions[index]
           const downloadCsvLoading = downloadCsvLoadings[item.id]
+          const sql = itemQueryParams[item.id]
+          const cascadeSources = itemsCascadeSources[item.id]
           const { isInteractive, interactId } = interactiveItems[item.id]
 
           if (widget) {
@@ -845,6 +934,7 @@ export class Share extends React.Component {
                   downloadCsvLoading={downloadCsvLoading}
                   isInteractive={isInteractive}
                   interactId={interactId}
+                  cascadeSources={cascadeSources}
                   onGetChartData={this.getChartData}
                   onRenderChart={this.renderChart}
                   onShowFiltersForm={this.showFiltersForm}
@@ -853,6 +943,7 @@ export class Share extends React.Component {
                   onCheckTableInteract={this.checkInteract}
                   onDoTableInteract={this.doInteract}
                   onShowFullScreen={this.visibleFullScreen}
+                  onGetCascadeSource={this.getCascadeSource(item.aesStr, Object.assign(sql, {adHoc: widget.adhoc_sql}))}
                 />
               </div>
             ))
@@ -901,10 +992,11 @@ export class Share extends React.Component {
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
-    const globalFilterValues = JSON.parse(config).globalFilters || []
     const globalFilterContainerClass = classnames({
-      [utilStyles.hide]: !globalFilterValues.length
+      [utilStyles.hide]: !globalFilterTableSource || !globalFilterTableSource.length
     })
+
+    const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign"></div>)
 
     return (
       <Container>
@@ -918,9 +1010,10 @@ export class Share extends React.Component {
           <Row className={globalFilterContainerClass}>
             <Col span={24}>
               <GlobalFilters
-                filters={globalFilterValues}
+                filters={globalFilterTableSource || []}
+                cascadeSources={dashboardCascadeSources || {}}
                 onChange={this.globalFilterChange}
-                ref={f => { this.globalFilters = f }}
+                onCascadeSelectChange={this.loadCascadeSourceInsideGlobalFilters(shareInfo)}
               />
             </Col>
           </Row>
@@ -945,6 +1038,7 @@ export class Share extends React.Component {
         </Modal>
         {fullScreenComponent}
         {loginPanel}
+        {phantomDOM}
       </Container>
     )
   }
@@ -952,7 +1046,7 @@ export class Share extends React.Component {
 
 Share.propTypes = {
   title: PropTypes.string,
-  config: PropTypes.string,
+  config: PropTypes.string, // eslint-disable-line
   currentItems: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.array
@@ -977,11 +1071,21 @@ Share.propTypes = {
     PropTypes.bool,
     PropTypes.object
   ]),
+  itemsCascadeSources: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.object
+  ]),
+  dashboardCascadeSources: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.object
+  ]),
   onLoadDashboard: PropTypes.func,
   onLoadWidget: PropTypes.func,
   onLoadResultset: PropTypes.func,
   onSetIndividualDashboard: PropTypes.func,
-  onLoadWidgetCsv: PropTypes.func
+  onLoadWidgetCsv: PropTypes.func,
+  onLoadCascadeSourceFromItem: PropTypes.func,
+  onLoadCascadeSourceFromDashboard: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({
@@ -992,7 +1096,9 @@ const mapStateToProps = createStructuredSelector({
   dataSources: makeSelectDataSources(),
   loadings: makeSelectLoadings(),
   itemQueryParams: makeSelectItemQueryParams(),
-  downloadCsvLoadings: makeSelectItemDownloadCsvLoadings()
+  downloadCsvLoadings: makeSelectItemDownloadCsvLoadings(),
+  itemsCascadeSources: makeSelectItemsCascadeSources(),
+  dashboardCascadeSources: makeSelectDashboardCascadeSources()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -1001,7 +1107,9 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (itemId, token, sql, sorts, offset, limit, useCache, expired) => dispatch(getResultset(itemId, token, sql, sorts, offset, limit, useCache, expired)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit))
+    onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
+    onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, token, sql, column, parents)),
+    onLoadCascadeSourceFromDashboard: (controlId, flatTableId, token, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, flatTableId, token, column, parents))
   }
 }
 

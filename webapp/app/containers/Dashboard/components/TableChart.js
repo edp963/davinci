@@ -32,7 +32,7 @@ import SearchFilterDropdown from '../../../components/SearchFilterDropdown/index
 import NumberFilterDropdown from '../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../components/DateFilterDropdown/index'
 
-import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
+import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../globalConstants'
 import {updateMark} from '../actions'
 import styles from '../Dashboard.less'
 
@@ -52,6 +52,7 @@ export class TableChart extends PureComponent {
         pageSize: DEFAULT_TABLE_PAGE_SIZE,
         current: DEFAULT_TABLE_PAGE,
         showSizeChanger: true,
+        showTotal: (total) => `共 ${total} 条`,
         pageSizeOptions: ['10', '20', '30', '40', '50', '100']
       }
     }
@@ -211,8 +212,8 @@ export class TableChart extends PureComponent {
 
       if (Object.keys(linkagers).length) {
         data.dataSource.forEach(ds => {
-          if (ds.antDesignTableId === record.antDesignTableId) {
-            onDoInteract(Number(id), linkagers, record.antDesignTableId)
+          if (ds[KEY_COLUMN] === record[KEY_COLUMN]) {
+            onDoInteract(Number(id), linkagers, record[KEY_COLUMN])
           }
         })
 
@@ -224,7 +225,7 @@ export class TableChart extends PureComponent {
   }
 
   rowClassFilter = (record, index) =>
-    this.props.interactId === record.antDesignTableId ? styles.selectedRow : ''
+    this.props.interactId === record[KEY_COLUMN] ? styles.selectedRow : ''
 
   markOptions = (value, record, updateVar) => {
     const {onUpdateMark, currentBizlogicId} = this.props
@@ -415,7 +416,7 @@ export class TableChart extends PureComponent {
     return (
       <Table
         className={className}
-        rowKey="antDesignTableId"
+        rowKey={KEY_COLUMN}
         dataSource={dataSource}
         columns={columns}
         pagination={pagination}

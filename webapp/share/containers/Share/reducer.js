@@ -28,32 +28,39 @@ import {
   LOAD_SHARE_RESULTSET_SUCCESS,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE
+  LOAD_WIDGET_CSV_FAILURE,
+  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
 } from './constants'
 
 const initialState = fromJS({
   title: '',
   config: '{}',
+  dashboardCascadeSources: false,
   widgets: false,
   items: false,
   dataSources: false,
   loadings: false,
   itemQueryParams: false,
-  downloadCsvLoadings: false
+  downloadCsvLoadings: false,
+  itemsCascadeSources: false
 })
 
 function shareReducer (state = initialState, { type, payload }) {
+  let dashboardCascadeSources = state.get('dashboardCascadeSources')
   let widgets = state.get('widgets')
   let dataSources = state.get('dataSources')
   let loadings = state.get('loadings')
   let itemQueryParams = state.get('itemQueryParams')
   let downloadCsvLoadings = state.get('downloadCsvLoadings')
+  let itemsCascadeSources = state.get('itemsCascadeSources')
 
   switch (type) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       return state
         .set('title', payload.dashboard.name)
         .set('config', payload.dashboard.config)
+        .set('dashboardCascadeSources', {})
         .set('items', payload.dashboard.widgets)
         .set('dataSources', {})
         .set('loadings', payload.dashboard.widgets.reduce((obj, w) => {
@@ -67,12 +74,17 @@ function shareReducer (state = initialState, { type, payload }) {
             globalFilters: '',
             params: [],
             linkageParams: [],
+            globalParams: [],
             pagination: {}
           }
           return obj
         }, {}))
         .set('downloadCsvLoadings', payload.dashboard.widgets.reduce((obj, w) => {
           obj[w.id] = false
+          return obj
+        }, {}))
+        .set('itemsCascadeSources', payload.dashboard.widgets.reduce((obj, w) => {
+          obj[w.id] = {}
           return obj
         }, {}))
     case SET_INDIVIDUAL_DASHBOARD:
@@ -97,6 +109,7 @@ function shareReducer (state = initialState, { type, payload }) {
             globalFilters: '',
             params: [],
             linkageParams: [],
+            globalParams: [],
             pagination: {}
           }
         })
@@ -114,6 +127,7 @@ function shareReducer (state = initialState, { type, payload }) {
         globalFilters: payload.sql.globalFilters,
         params: payload.sql.params,
         linkageParams: payload.sql.linkageParams,
+        globalParams: payload.sql.globalParams,
         pagination: {
           sorts: payload.sorts,
           offset: payload.offset,
@@ -137,6 +151,16 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_WIDGET_CSV_FAILURE:
       return state.set('downloadCsvLoadings', Object.assign({}, downloadCsvLoadings, {
         [payload.itemId]: false
+      }))
+    case LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS:
+      return state.set('itemsCascadeSources', Object.assign({}, itemsCascadeSources, {
+        [payload.itemId]: Object.assign({}, itemsCascadeSources[payload.itemId], {
+          [payload.controlId]: payload.values
+        })
+      }))
+    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
+      return state.set('dashboardCascadeSources', Object.assign({}, dashboardCascadeSources, {
+        [payload.controlId]: payload.values
       }))
     default:
       return state

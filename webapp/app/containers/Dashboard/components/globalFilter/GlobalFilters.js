@@ -16,10 +16,29 @@ const Search = Input.Search
 const RangePicker = DatePicker.RangePicker
 
 import styles from './GlobalFilter.less'
+import { KEY_COLUMN } from '../../../../globalConstants'
 
 export class GlobalFilters extends PureComponent {
+  getCascadeChildrenControlId = (column, chilrenArr) => {
+    const nearest = this.props.filters.find(c => c.parentColumn === column.cascadeColumn)
+    if (nearest) {
+      return this.getCascadeChildrenControlId(nearest, chilrenArr.concat(nearest.key))
+    } else {
+      return chilrenArr
+    }
+  }
+
+  getCascadeParents = (column, parentsArr) => {
+    if (column.parent) {
+      const parent = this.props.filters.find(c => c.cascadeColumn === column.parent)
+      return this.getCascadeParents(parent, parentsArr.concat(parent.cascadeColumn))
+    } else {
+      return parentsArr
+    }
+  }
+
   render () {
-    const { form, filters, onChange } = this.props
+    const { form, filters, cascadeSources, onChange, onCascadeSelectChange } = this.props
     const { getFieldDecorator } = form
 
     const filterItems = filters.map(f => {
@@ -90,6 +109,57 @@ export class GlobalFilters extends PureComponent {
                 {getFieldDecorator(`${f.key}`, {})(
                   <Select {...selProperties}>
                     {options}
+                  </Select>
+                )}
+              </FormItem>
+            </Col>
+          )
+        case 'cascadeSelect':
+          const column = f.cascadeColumn
+          const nearestChild = filters.find(fr => fr.parentColumn === column)
+          const dataSource = cascadeSources && cascadeSources[f.key]
+          const cascadeOptions = dataSource
+            ? dataSource.map(s => (
+              <Option key={s[KEY_COLUMN]} value={s[column]}>{s[column]}</Option>
+            ))
+            : ''
+
+          const changeCallback = {
+            onChange: (val) => {
+              if (nearestChild) {
+                // form.resetFields(this.getCascadeChildrenControlId(f, []))
+                if (val) {
+                  const childColumn = nearestChild.cascadeColumn
+                  const parentColumns = this.getCascadeParents(f, [column])
+                  const parents = parentColumns.length &&
+                    Object.entries(form.getFieldsValue(parentColumns)).map(arr => ({
+                      fieldName: arr[0],
+                      fieldValue: arr[0] === column ? val : arr[1]  // onChange未完成，不能获取到当前control的值
+                    }))
+                  onCascadeSelectChange(nearestChild.key, f.flatTableId, childColumn, parents)
+                }
+              }
+              onChange(f)(val)
+            }
+          }
+
+          const cascadeProperties = Object.assign({
+            placeholder: f.name,
+            allowClear: true
+          }, changeCallback)
+
+          return (
+            <Col
+              key={f.key}
+              xl={3}
+              lg={4}
+              md={6}
+              sm={12}
+            >
+              <FormItem className={styles.item}>
+                {getFieldDecorator(f.key, {})(
+                  <Select {...cascadeProperties}>
+                    {cascadeOptions}
                   </Select>
                 )}
               </FormItem>
@@ -218,7 +288,9 @@ export class GlobalFilters extends PureComponent {
 GlobalFilters.propTypes = {
   form: PropTypes.any,
   filters: PropTypes.array,
-  onChange: PropTypes.func
+  cascadeSources: PropTypes.object,
+  onChange: PropTypes.func,
+  onCascadeSelectChange: PropTypes.func
 }
 
 export default Form.create()(GlobalFilters)

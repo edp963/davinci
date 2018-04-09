@@ -461,6 +461,7 @@ export class Workbench extends React.Component {
           <VariableConfigForm
             queryInfo={queryInfo}
             control={variableConfigControl}
+            columns={bizdatas ? bizdatas.keys : []}
             onSave={this.saveControl}
             onClose={this.hideVariableConfigTable}
             wrappedComponentRef={f => { this.variableConfigForm = f }}

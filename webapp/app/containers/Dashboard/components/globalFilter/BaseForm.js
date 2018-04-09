@@ -14,12 +14,104 @@ import utilStyles from '../../../../assets/less/util.less'
 
 export class BaseForm extends PureComponent {
   render () {
-    const { form, filterTypes, onTypeSelect } = this.props
+    const {
+      form,
+      filterTypes,
+      bizlogics,
+      isCascadeSelect,
+      flatTableColumns,
+      onTypeSelectChange,
+      onFlatTableSelectChange
+    } = this.props
+
     const { getFieldDecorator } = form
 
     const filterTypeOptions = filterTypes.map(o => (
       <Option key={o.value} value={o.value}>{o.text}</Option>
     ))
+
+    let cascadeSelects
+
+    if (isCascadeSelect) {
+      cascadeSelects = [(
+        <Col key="flatTableId" span={8}>
+          <FormItem
+            label="View"
+            labelCol={{span: 8}}
+            wrapperCol={{span: 16}}
+            className={styles.formItem}
+          >
+            {getFieldDecorator('flatTableId', {
+              rules: [{
+                required: true,
+                message: '不能为空'
+              }]
+            })(
+              <Select
+                placeholder="请选择"
+                onChange={onFlatTableSelectChange}
+                allowClear
+              >
+                {
+                  bizlogics.map(b => (
+                    <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
+                  ))
+                }
+              </Select>
+            )}
+          </FormItem>
+        </Col>
+      ), (
+        <Col key="cascadeColumn" span={8}>
+          <FormItem
+            label="级联字段"
+            labelCol={{span: 8}}
+            wrapperCol={{span: 16}}
+            className={styles.formItem}
+          >
+            {getFieldDecorator('cascadeColumn', {
+              rules: [{
+                required: true,
+                message: '不能为空'
+              }]
+            })(
+              <Select
+                placeholder="请选择"
+                allowClear
+              >
+                {
+                  flatTableColumns.map(c => (
+                    <Option key={c} value={c}>{c}</Option>
+                  ))
+                }
+              </Select>
+            )}
+          </FormItem>
+        </Col>
+      ), (
+        <Col key="parentColumn" span={8}>
+          <FormItem
+            label="级联父字段"
+            labelCol={{span: 8}}
+            wrapperCol={{span: 16}}
+            className={styles.formItem}
+          >
+            {getFieldDecorator('parentColumn', {})(
+              <Select
+                placeholder="请选择"
+                allowClear
+              >
+                {
+                  flatTableColumns.map(c => (
+                    <Option key={c} value={c}>{c}</Option>
+                  ))
+                }
+              </Select>
+            )}
+          </FormItem>
+        </Col>
+      )]
+    }
 
     return (
       <Form>
@@ -27,8 +119,8 @@ export class BaseForm extends PureComponent {
           <Col span={8}>
             <FormItem
               label="名称"
-              labelCol={{span: 6}}
-              wrapperCol={{span: 18}}
+              labelCol={{span: 8}}
+              wrapperCol={{span: 16}}
               className={styles.formItem}
             >
               {getFieldDecorator('name', {
@@ -49,8 +141,8 @@ export class BaseForm extends PureComponent {
           <Col span={8}>
             <FormItem
               label="类型"
-              labelCol={{span: 6}}
-              wrapperCol={{span: 18}}
+              labelCol={{span: 8}}
+              wrapperCol={{span: 16}}
               className={styles.formItem}
             >
               {getFieldDecorator('type', {
@@ -61,7 +153,7 @@ export class BaseForm extends PureComponent {
               })(
                 <Select
                   placeholder="控件类型"
-                  onChange={onTypeSelect}
+                  onChange={onTypeSelectChange}
                   allowClear
                 >
                   {filterTypeOptions}
@@ -69,6 +161,7 @@ export class BaseForm extends PureComponent {
               )}
             </FormItem>
           </Col>
+          {cascadeSelects}
         </Row>
       </Form>
     )
@@ -78,7 +171,11 @@ export class BaseForm extends PureComponent {
 BaseForm.propTypes = {
   form: PropTypes.any,
   filterTypes: PropTypes.array,
-  onTypeSelect: PropTypes.func
+  bizlogics: PropTypes.array,
+  isCascadeSelect: PropTypes.bool,
+  flatTableColumns: PropTypes.array,
+  onTypeSelectChange: PropTypes.func,
+  onFlatTableSelectChange: PropTypes.func
 }
 
 export default Form.create()(BaseForm)

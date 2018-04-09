@@ -25,14 +25,20 @@ import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_WIDGET,
   LOAD_SHARE_RESULTSET,
-  LOAD_WIDGET_CSV
+  LOAD_WIDGET_CSV,
+  LOAD_CASCADESOURCE_FROM_ITEM,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD
 } from './constants'
 import {
   dashboardGetted,
   widgetGetted,
   resultsetGetted,
   widgetCsvLoaded,
-  loadWidgetCsvFail
+  loadWidgetCsvFail,
+  cascadeSourceFromItemLoaded,
+  loadCascadeSourceFromItemFail,
+  cascadeSourceFromDashboardLoaded,
+  loadCascadeSourceFromDashboardFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -40,6 +46,8 @@ import request from '../../../app/utils/request'
 import api from '../../../app/utils/api'
 import { uuid } from '../../../app/utils/util'
 import config, { env } from '../../../app/globalConfig'
+import { readListAdapter } from '../../../app/utils/asyncAdapter'
+import { KEY_COLUMN } from '../../../app/globalConstants'
 const shareHost = config[env].shareHost
 
 export function* getDashboard ({ payload }) {
@@ -103,24 +111,19 @@ export function* getResultset ({ payload }) {
     queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
     queries = `?${queries.join('&')}`
 
-    let data = {}
-    if (sql) {  // FIXME sql 是否需要判断
-      const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams } = sql
-      data = {
-        adHoc,
-        manualFilters: [filters, linkageFilters, globalFilters]
-          .filter(f => !!f)
-          .join(' and '),
-        params: params && linkageParams
-          ? [].concat(params).concat(linkageParams)
-          : params || linkageParams || []
-      }
+    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
+    const data = {
+      adHoc,
+      manualFilters: [filters, linkageFilters, globalFilters]
+        .filter(f => !!f)
+        .join(' and '),
+      params: [].concat(params).concat(linkageParams).concat(globalParams)
     }
 
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/resultset/${token}${queries}`,
-      data: data
+      data
     })
     const resultset = resultsetConverter(asyncData.payload)
     yield put(resultsetGetted(itemId, resultset))
@@ -148,7 +151,7 @@ function resultsetConverter (resultset) {
     dataSource = arr.map(csvVal => {
       const jsonVal = csvParser.toArray(csvVal)
       let obj = {
-        antDesignTableId: uuid(8, 32)
+        [KEY_COLUMN]: uuid(8, 32)
       }
       keys.forEach((k, index) => {
         obj[k] = jsonVal[index]
@@ -199,9 +202,67 @@ export function* getWidgetCsvWatcher () {
   yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
 }
 
+export function* getCascadeSourceFromItem ({ payload }) {
+  try {
+    const { itemId, controlId, token, sql, column, parents } = payload
+    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
+    const data = Object.assign({
+      adHoc,
+      manualFilters: [filters, linkageFilters, globalFilters]
+        .filter(f => !!f)
+        .join(' and '),
+      params: [].concat(params).concat(linkageParams).concat(globalParams),
+      childFieldName: column
+    }, parents && { parents })
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.share}/resultset/${token}/distinct_value`,
+      data
+    })
+    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
+    yield put(cascadeSourceFromItemLoaded(itemId, controlId, column, values))
+  } catch (err) {
+    yield put(loadCascadeSourceFromItemFail(err))
+  }
+}
+
+export function* getCascadeSourceFromItemWatcher () {
+  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem)
+}
+
+export function* getCascadeSourceFromDashboard ({ payload }) {
+  try {
+    const { flatTableId, controlId, token, column, parents } = payload
+
+    const data = Object.assign({
+      adHoc: '',
+      manualFilters: '',
+      params: [],
+      childFieldName: column
+    }, parents && { parents })
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.share}/resultset/${token}/distinct_value/${flatTableId}`,
+      data
+    })
+    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
+    yield put(cascadeSourceFromDashboardLoaded(controlId, column, values))
+  } catch (err) {
+    yield put(loadCascadeSourceFromDashboardFail(err))
+  }
+}
+
+export function* getCascadeSourceFromDashboardWatcher () {
+  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+}
+
 export default [
   getDashboardWatcher,
   getWidgetWatcher,
   getResultsetWatcher,
-  getWidgetCsvWatcher
+  getWidgetCsvWatcher,
+  getCascadeSourceFromItemWatcher,
+  getCascadeSourceFromDashboardWatcher
 ]

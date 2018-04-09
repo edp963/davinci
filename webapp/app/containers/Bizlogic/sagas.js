@@ -30,7 +30,10 @@ import {
   EDIT_BIZLOGIC,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_FROM_ITEM,
-  SQL_VALIDATE
+  SQL_VALIDATE,
+  LOAD_CASCADESOURCE_FROM_ITEM,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD,
+  LOAD_BIZDATA_SCHEMA
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -44,7 +47,13 @@ import {
   bizdatasFromItemLoaded,
   loadBizdatasFromItemFail,
   validateSqlSuccess,
-  validateSqlFailure
+  validateSqlFailure,
+  cascadeSourceFromItemLoaded,
+  loadCascadeSourceFromItemFail,
+  cascadeSourceFromDashboardLoaded,
+  loadCascadeSourceFromDashboardFail,
+  bizdataSchemaLoaded,
+  loadBizdataSchemaFail
 } from './actions'
 
 import request from '../../utils/request'
@@ -52,6 +61,7 @@ import api from '../../utils/api'
 import { uuid } from '../../utils/util'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import { KEY_COLUMN } from '../../globalConstants'
 
 export const getBizlogics = promiseSagaCreator(
   function* () {
@@ -213,7 +223,7 @@ export function* getBizdatasFromItem ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/resultset${queries}`,
-      data: data
+      data
     })
     const bizdatas = resultsetConverter(readListAdapter(asyncData))
     yield put(bizdatasFromItemLoaded(itemId, bizdatas))
@@ -245,6 +255,83 @@ export function* getSqlValidateWatcher () {
   yield fork(takeEvery, SQL_VALIDATE, getSqlValidate)
 }
 
+export function* getCascadeSourceFromItem ({ payload }) {
+  try {
+    const { itemId, controlId, id, sql, column, parents } = payload
+    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
+    const data = Object.assign({
+      adHoc,
+      manualFilters: [filters, linkageFilters, globalFilters]
+        .filter(f => !!f)
+        .join(' and '),
+      params: [].concat(params).concat(linkageParams).concat(globalParams),
+      childFieldName: column
+    }, parents && { parents })
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/distinct_value`,
+      data
+    })
+    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
+    yield put(cascadeSourceFromItemLoaded(itemId, controlId, column, values))
+  } catch (err) {
+    yield put(loadCascadeSourceFromItemFail(err))
+  }
+}
+
+export function* getCascadeSourceFromItemWatcher () {
+  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem)
+}
+
+export function* getCascadeSourceFromDashboard ({ payload }) {
+  try {
+    const { controlId, id, column, parents } = payload
+
+    const data = Object.assign({
+      adHoc: '',
+      manualFilters: '',
+      params: [],
+      childFieldName: column
+    }, parents && { parents })
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/distinct_value`,
+      data
+    })
+    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
+    yield put(cascadeSourceFromDashboardLoaded(controlId, column, values))
+  } catch (err) {
+    yield put(loadCascadeSourceFromDashboardFail(err))
+  }
+}
+
+export function* getCascadeSourceFromDashboardWatcher () {
+  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+}
+
+export function* getBizdataSchema ({ payload }) {
+  try {
+    const { id, resolve } = payload
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/resultset?limit=1`,
+      data: {}
+    })
+    const bizdatas = resultsetConverter(readListAdapter(asyncData))
+    yield put(bizdataSchemaLoaded(bizdatas.keys))
+    resolve(bizdatas.keys)
+  } catch (err) {
+    yield put(loadBizdataSchemaFail(err))
+  }
+}
+
+export function* getBizdataSchemaWatcher () {
+  yield fork(takeEvery, LOAD_BIZDATA_SCHEMA, getBizdataSchema)
+}
+
 function resultsetConverter (resultset) {
   let dataSource = []
   let keys = []
@@ -264,7 +351,7 @@ function resultsetConverter (resultset) {
     dataSource = arr.map(csvVal => {
       const jsonVal = csvParser.toArray(csvVal)
       let obj = {
-        antDesignTableId: uuid(8, 32)
+        [KEY_COLUMN]: uuid(8, 32)
       }
       keys.forEach((k, index) => {
         obj[k] = jsonVal[index]
@@ -292,5 +379,8 @@ export default [
   editBizlogicWatcher,
   getBizdatasWatcher,
   getBizdatasFromItemWatcher,
-  getSqlValidateWatcher
+  getSqlValidateWatcher,
+  getCascadeSourceFromItemWatcher,
+  getCascadeSourceFromDashboardWatcher,
+  getBizdataSchemaWatcher
 ]

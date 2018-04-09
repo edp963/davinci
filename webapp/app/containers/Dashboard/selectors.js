@@ -47,6 +47,10 @@ const makeSelectCurrentDashboardShareInfoLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentDashboardShareInfoLoading')
 )
+const makeSelectCurrentDashboardCascadeSources = () => createSelector(
+  selectDashboard,
+  (dashboardState) => dashboardState.get('currentDashboardCascadeSources')
+)
 const makeSelectCurrentItems = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentItems')
@@ -79,6 +83,10 @@ const makeSelectCurrentItemsShareInfoLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentItemsShareInfoLoading')
 )
+const makeSelectCurrentItemsCascadeSources = () => createSelector(
+  selectDashboard,
+  (dashboardState) => dashboardState.get('currentItemsCascadeSources')
+)
 
 export {
   selectDashboard,
@@ -93,7 +101,9 @@ export {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
+  makeSelectCurrentDashboardCascadeSources,
   makeSelectCurrentItemsShareInfo,
   makeSelectCurrentItemsSecretInfo,
-  makeSelectCurrentItemsShareInfoLoading
+  makeSelectCurrentItemsShareInfoLoading,
+  makeSelectCurrentItemsCascadeSources
 }

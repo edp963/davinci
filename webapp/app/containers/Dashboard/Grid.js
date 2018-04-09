@@ -79,10 +79,12 @@ import {
   makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentItemsShareInfo,
   makeSelectCurrentItemsSecretInfo,
-  makeSelectCurrentItemsShareInfoLoading
+  makeSelectCurrentItemsShareInfoLoading,
+  makeSelectCurrentItemsCascadeSources,
+  makeSelectCurrentDashboardCascadeSources
 } from './selectors'
 import { loadWidgets } from '../Widget/actions'
-import { loadBizlogics, loadBizdatasFromItem } from '../Bizlogic/actions'
+import { loadBizlogics, loadBizdatasFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -95,7 +97,8 @@ import {
   DEFAULT_SPLITER,
   ADMIN_GRID_BREAKPOINTS,
   USER_GRID_BREAKPOINTS,
-  GRID_COLS
+  GRID_COLS,
+  KEY_COLUMN
 } from '../../globalConstants'
 
 import utilStyles from '../../assets/less/util.less'
@@ -182,7 +185,7 @@ export class Grid extends Component {
       widgets,
       bizlogics
     } = nextProps
-    const { onLoadDashboardDetail } = this.props
+    const { onLoadDashboardDetail, onLoadCascadeSourceFromDashboard } = this.props
     const { modifiedPositions, linkageCascaderSource } = this.state
 
     if (params.dashboardId !== this.props.params.dashboardId) {
@@ -192,11 +195,15 @@ export class Grid extends Component {
     }
 
     if (!currentDashboardLoading) {
-      // dashboard detail 首次加载完毕
+      // dashboard 加载完成或修改完成
       if (this.props.currentDashboardLoading) {
-        // FIXME
-        this.state.linkageTableSource = JSON.parse(currentDashboard.linkage_detail || '[]')
-        this.state.globalFilterTableSource = JSON.parse(currentDashboard.config).globalFilters || []
+        this.state.linkageTableSource = this.adjustLinkageTableSource(currentDashboard, currentItems)
+        this.state.globalFilterTableSource = this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
+        this.state.globalFilterTableSource.forEach(gft => {
+          if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
+            onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, gft.cascadeColumn)
+          }
+        })
       }
 
       if (currentItems && currentItems !== this.props.currentItems) {
@@ -564,9 +571,14 @@ export class Grid extends Component {
   deleteItem = (id) => () => {
     this.props.onDeleteDashboardItem(id)
       .then(() => {
-        const { modifiedPositions, linkageCascaderSource } = this.state
-        modifiedPositions.splice(modifiedPositions.findIndex(mi => Number(mi.i) === id), 1)
-        linkageCascaderSource.splice(linkageCascaderSource.findIndex(lcs => lcs.value === id), 1)
+        const { modifiedPositions, linkageCascaderSource, linkageTableSource, globalFilterTableSource } = this.state
+        this.state.modifiedPositions = modifiedPositions.filter(mi => Number(mi.i) !== id)
+        this.state.linkageCascaderSource = linkageCascaderSource.filter(lcs => lcs.value !== id)
+        this.state.linkageTableSource = linkageTableSource.filter(lts => lts.linkager[0] !== id && lts.trigger[0] !== id)
+        this.state.globalFilterTableSource = globalFilterTableSource.map(gfts => {
+          delete gfts.relatedItems[id]
+          return gfts
+        })
         if (this.charts[`widget_${id}`]) {
           this.charts[`widget_${id}`].dispose()
         }
@@ -693,8 +705,9 @@ export class Grid extends Component {
   }
 
   afterLinkagePanelClose = () => {
+    const { currentDashboard, currentItems } = this.props
     this.setState({
-      linkageTableSource: JSON.parse(this.props.currentDashboard.linkage_detail || '[]')
+      linkageTableSource: this.adjustLinkageTableSource(currentDashboard, currentItems)
     })
   }
 
@@ -856,7 +869,7 @@ export class Grid extends Component {
       triggeringData = dataSource[interactIndexOrId]
       this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndexOrId)
     } else {
-      triggeringData = dataSource.find(ds => ds.antDesignTableId === interactIndexOrId)
+      triggeringData = dataSource.find(ds => ds[KEY_COLUMN] === interactIndexOrId)
     }
 
     this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
@@ -996,8 +1009,9 @@ export class Grid extends Component {
   }
 
   afterGlobalFilterConfigPanelClose = () => {
+    const { currentDashboard, currentItems } = this.props
     this.setState({
-      globalFilterTableSource: JSON.parse(this.props.currentDashboard.config).globalFilters || []
+      globalFilterTableSource: this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
     })
   }
 
@@ -1070,6 +1084,7 @@ export class Grid extends Component {
             }
             break
           case 'select':
+          case 'cascadeSelect':
             if (formValue) {
               currentParam = [{
                 k: columnAndType[0],
@@ -1162,6 +1177,11 @@ export class Grid extends Component {
           case 'select':
             if (formValue) {
               currentFilter = `${columnAndType[0]} = ${formValue}`
+            }
+            break
+          case 'cascadeSelect':
+            if (formValue) {
+              currentFilter = `${columnAndType[0]} = ${getValidValue(formValue, columnAndType[1])}`
             }
             break
           case 'multiSelect':
@@ -1276,6 +1296,44 @@ export class Grid extends Component {
     }
   }
 
+  getCascadeSource = (sql) => (itemId, controlId, flatTableId, column, parents) => {
+    this.props.onLoadCascadeSourceFromItem(itemId, controlId, flatTableId, sql, column, parents)
+  }
+
+  adjustLinkageTableSource = (currentDashboard, currentItems) => {
+    const { linkage_detail } = currentDashboard
+    const linkageTableSource = JSON.parse(linkage_detail)
+
+    return linkageTableSource.filter(lts => {
+      let linkagerSign = false
+      let triggerSign = false
+
+      for (let i = 0, cl = currentItems.length; i < cl; i += 1) {
+        if (currentItems[i].id === lts.linkager[0]) {
+          linkagerSign = true
+        }
+        if (currentItems[i].id === lts.trigger[0]) {
+          triggerSign = true
+        }
+      }
+
+      return linkagerSign && triggerSign
+    })
+  }
+
+  adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
+    const { config } = currentDashboard
+    const globalFilterTableSource = JSON.parse(config).globalFilters || []
+
+    return globalFilterTableSource.map(gfts => {
+      const deprecatedItems = Object.keys(gfts.relatedItems).filter(key => !currentItems.find(ci => ci.id === Number(key)))
+      deprecatedItems.forEach(di => {
+        delete gfts.relatedItems[di]
+      })
+      return gfts
+    })
+  }
+
   render () {
     const {
       dashboards,
@@ -1292,8 +1350,13 @@ export class Grid extends Component {
       currentItemsSecretInfo,
       currentItemsShareInfoLoading,
       currentItemsDownloadCsvLoading,
+      currentItemsQueryParams,
+      currentItemsCascadeSources,
+      currentDashboardCascadeSources,
       loginUser,
-      bizlogics
+      bizlogics,
+      onLoadBizdataSchema,
+      onLoadCascadeSourceFromDashboard
     } = this.props
 
     const {
@@ -1378,6 +1441,8 @@ export class Grid extends Component {
         const secretInfo = currentItemsSecretInfo[itemId]
         const shareInfoLoading = currentItemsShareInfoLoading[itemId]
         const downloadCsvLoading = currentItemsDownloadCsvLoading[itemId]
+        const sql = currentItemsQueryParams[itemId]
+        const cascadeSources = currentItemsCascadeSources[itemId]
         const { isInteractive, interactId } = interactiveItems[itemId]
         // isReadOnly 非原创用户不能对 widget进行写的操作
         const isReadOnly = (widget['create_by'] === loginUser.id)
@@ -1392,7 +1457,6 @@ export class Grid extends Component {
               h={modifiedPosition ? modifiedPosition.h : 0}
               itemId={itemId}
               widget={widget}
-              bizlogics={bizlogics || []}
               chartInfo={chartInfo}
               data={data}
               loading={loading}
@@ -1408,6 +1472,7 @@ export class Grid extends Component {
               downloadCsvLoading={downloadCsvLoading}
               isInteractive={isInteractive}
               interactId={interactId}
+              cascadeSources={cascadeSources}
               onGetChartData={this.getChartData}
               onRenderChart={this.renderChart}
               onShowEdit={this.showEditDashboardItemForm}
@@ -1419,6 +1484,7 @@ export class Grid extends Component {
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
+              onGetCascadeSource={this.getCascadeSource(Object.assign(sql, {adHoc: widget.adhoc_sql}))}
               isReadOnly={isReadOnly}
             />
           </div>
@@ -1598,11 +1664,8 @@ export class Grid extends Component {
         : ''
     }
 
-    const globalFilterValues = currentDashboard
-      ? JSON.parse(currentDashboard.config).globalFilters || []
-      : []
     const globalFilterContainerClass = classnames({
-      [utilStyles.hide]: !globalFilterValues.length
+      [utilStyles.hide]: !globalFilterTableSource || !globalFilterTableSource.length
     })
 
     return (
@@ -1658,9 +1721,10 @@ export class Grid extends Component {
           <Row className={globalFilterContainerClass}>
             <Col span={24}>
               <GlobalFilters
-                filters={globalFilterValues}
+                filters={globalFilterTableSource || []}
+                cascadeSources={currentDashboardCascadeSources || {}}
                 onChange={this.globalFilterChange}
-                wrappedComponentRef={f => { this.globalFilters = f }}
+                onCascadeSelectChange={onLoadCascadeSourceFromDashboard}
               />
             </Col>
           </Row>
@@ -1754,6 +1818,7 @@ export class Grid extends Component {
             tableSource={globalFilterTableSource || []}
             onSaveToTable={this.saveToGlobalFilterTable}
             onDeleteFromTable={this.deleteFromGlobalFilterTable}
+            onLoadBizdataSchema={onLoadBizdataSchema}
           />
         </Modal>
         <FullScreenPanel
@@ -1813,6 +1878,14 @@ Grid.propTypes = {
     PropTypes.bool,
     PropTypes.object
   ]),
+  currentItemsCascadeSources: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.object
+  ]),
+  currentDashboardCascadeSources: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.object
+  ]),
   onLoadDashboards: PropTypes.func,
   onLoadDashboardDetail: PropTypes.func,
   onAddDashboardItem: PropTypes.func,
@@ -1835,7 +1908,10 @@ Grid.propTypes = {
   onLoadBizlogics: PropTypes.func,
   onLoadBizdatasFromItem: PropTypes.func,
   onClearCurrentDashboard: PropTypes.func,
-  onLoadWidgetCsv: PropTypes.func
+  onLoadWidgetCsv: PropTypes.func,
+  onLoadCascadeSourceFromItem: PropTypes.func,
+  onLoadCascadeSourceFromDashboard: PropTypes.func,
+  onLoadBizdataSchema: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({
@@ -1853,6 +1929,8 @@ const mapStateToProps = createStructuredSelector({
   currentItemsSecretInfo: makeSelectCurrentItemsSecretInfo(),
   currentItemsShareInfoLoading: makeSelectCurrentItemsShareInfoLoading(),
   currentItemsDownloadCsvLoading: makeSelectCurrentItemsDownloadCsvLoading(),
+  currentItemsCascadeSources: makeSelectCurrentItemsCascadeSources(),
+  currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
   loginUser: makeSelectLoginUser()
@@ -1871,7 +1949,10 @@ export function mapDispatchToProps (dispatch) {
     onLoadBizlogics: () => promiseDispatcher(dispatch, loadBizlogics),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
     onClearCurrentDashboard: () => promiseDispatcher(dispatch, clearCurrentDashboard),
-    onLoadWidgetCsv: (token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(token, sql, sorts, offset, limit))
+    onLoadWidgetCsv: (token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(token, sql, sorts, offset, limit)),
+    onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
+    onLoadCascadeSourceFromDashboard: (controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, sql, column, parents)),
+    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve))
   }
 }
 

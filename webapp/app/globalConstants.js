@@ -19,7 +19,7 @@
  */
 
 import defaultEchartsTheme from './assets/json/echartsThemes/default.project.json'
-
+export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'
 
@@ -40,8 +40,7 @@ export const SQL_NUMBER_TYPES = ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIG
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 
 export const DEFAULT_SPLITER = '@davinci@'
-
-export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
+export const KEY_COLUMN = 'davinciUniqueId'
 
 export const DEFAULT_DISPLAY_WIDTH = 1920
 export const DEFAULT_DISPLAY_HEIGHT = 1080

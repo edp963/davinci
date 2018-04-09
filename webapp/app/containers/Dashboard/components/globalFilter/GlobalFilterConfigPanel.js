@@ -22,14 +22,17 @@ export class GlobalFilterPanel extends PureComponent {
     this.state = {
       formVisible: false,
       activeTabKey: 'widget',
+      isCascadeSelect: false,
       optionFormDisabled: true,
       optionTableSource: [],
+      flatTableColumns: [],
       filterTypes: [
         { text: '文本输入框', value: 'input' },
         // { text: '数字输入框', value: 'inputNumber' },
         { text: '数字范围输入框', value: 'numberRange' },
         { text: '单选下拉菜单', value: 'select' },
         { text: '多选下拉菜单', value: 'multiSelect' },
+        { text: '级联下拉菜单', value: 'cascadeSelect' },
         { text: '日期选择', value: 'date' },
         { text: '日期多选', value: 'multiDate' },
         { text: '日期范围选择', value: 'dateRange' },
@@ -39,9 +42,10 @@ export class GlobalFilterPanel extends PureComponent {
     }
   }
 
-  typeSelect = (val) => {
+  typeSelectChange = (val) => {
     this.setState({
-      optionFormDisabled: ['select', 'multiSelect'].indexOf(val) < 0
+      optionFormDisabled: !['select', 'multiSelect'].includes(val),
+      isCascadeSelect: ['cascadeSelect'].includes(val)
     })
   }
 
@@ -71,6 +75,7 @@ export class GlobalFilterPanel extends PureComponent {
     this.itemSelectorForm.props.form.resetFields()
     this.state.activeTabKey = 'widget'
     this.state.optionFormDisabled = true
+    this.state.isCascadeSelect = false
     this.state.optionTableSource = []
   }
 
@@ -92,11 +97,16 @@ export class GlobalFilterPanel extends PureComponent {
     const { relatedItems, options, ...base } = item
 
     this.showForm().then(() => {
-      this.baseForm.props.form.setFieldsValue(base)
-      this.itemSelectorForm.props.form.setFieldsValue(relatedItems)
       this.setState({
         optionTableSource: options,
-        optionFormDisabled: ['select', 'multiSelect'].indexOf(base.type) < 0
+        optionFormDisabled: !['select', 'multiSelect'].includes(base.type),
+        isCascadeSelect: ['cascadeSelect'].includes(base.type)
+      }, () => {
+        this.baseForm.props.form.setFieldsValue(base)
+        this.itemSelectorForm.props.form.setFieldsValue(relatedItems)
+        if (this.state.isCascadeSelect) {
+          this.flatTableSelectChange(base.flatTableId, true)
+        }
       })
     })
   }
@@ -146,6 +156,23 @@ export class GlobalFilterPanel extends PureComponent {
     })
   }
 
+  flatTableSelectChange = (val, stayColumnValue) => {
+    if (val) {
+      this.props.onLoadBizdataSchema(Number(val), (schema) => {
+        this.setState({
+          flatTableColumns: schema
+        })
+        if (!stayColumnValue) {
+          this.baseForm.props.form.resetFields(['cascadeColumn', 'parentColumn'])
+        }
+      })
+    } else {
+      this.setState({
+        flatTableColumns: []
+      })
+    }
+  }
+
   render () {
     const {
       items,
@@ -153,12 +180,15 @@ export class GlobalFilterPanel extends PureComponent {
       bizlogics,
       dataSources,
       tableSource,
-      onDeleteFromTable
+      onDeleteFromTable,
+      onLoadBizdataSchema
     } = this.props
 
     const {
       formVisible,
       activeTabKey,
+      isCascadeSelect,
+      flatTableColumns,
       optionFormDisabled,
       optionTableSource,
       filterTypes
@@ -221,7 +251,12 @@ export class GlobalFilterPanel extends PureComponent {
           <div className={styles.form}>
             <BaseForm
               filterTypes={filterTypes}
-              onTypeSelect={this.typeSelect}
+              bizlogics={bizlogics}
+              isCascadeSelect={isCascadeSelect}
+              flatTableColumns={flatTableColumns}
+              onTypeSelectChange={this.typeSelectChange}
+              onFlatTableSelectChange={this.flatTableSelectChange}
+              onLoadBizdataSchema={onLoadBizdataSchema}
               wrappedComponentRef={f => { this.baseForm = f }}
             />
             <Tabs
@@ -264,7 +299,8 @@ GlobalFilterPanel.propTypes = {
   dataSources: PropTypes.object,
   tableSource: PropTypes.array,
   onSaveToTable: PropTypes.func,
-  onDeleteFromTable: PropTypes.func
+  onDeleteFromTable: PropTypes.func,
+  onLoadBizdataSchema: PropTypes.func
 }
 
 export default GlobalFilterPanel
