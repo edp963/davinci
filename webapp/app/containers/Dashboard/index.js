@@ -60,7 +60,7 @@ export class Dashboard extends React.Component {
 
       filteredDashboards: null,
       currentPage: 1,
-      pageSize: 12
+      pageSize: 24
     }
   }
 
@@ -284,8 +284,8 @@ export class Dashboard extends React.Component {
               onShowSizeChange={this.onShowSizeChange}
               onChange={this.onChange}
               total={dashboardsArr.length}
-              defaultPageSize={12}
-              pageSizeOptions={['12', '24', '48', '60']}
+              defaultPageSize={24}
+              pageSizeOptions={['24', '48', '72', '96']}
               current={currentPage}
             />
           </Row>

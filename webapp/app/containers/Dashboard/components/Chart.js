@@ -23,7 +23,7 @@ import PropTypes from 'prop-types'
 
 import TableChart from './TableChart'
 import ScorecardChart from './ScorecardChart'
-// import TextChart from './TextChart'
+import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
 
@@ -79,7 +79,9 @@ export class Chart extends PureComponent {
 
     let chartContent
     if (chartInfo.renderer && chartInfo.renderer === 'echarts') {
-      chartContent = <div className={classNames.chart} id={`widget_${id}`}></div>
+      chartContent = (
+        <div className={classNames.chart} id={`widget_${id}`} />
+      )
     } else {
       switch (chartInfo.name) {
         case 'table':
@@ -115,15 +117,15 @@ export class Chart extends PureComponent {
           )
           break
         case 'text':
-          // chartContent = (
-          //   <TextChart
-          //     id={id}
-          //     className={classNames.chart}
-          //     data={data}
-          //     loading={loading}
-          //     chartParams={chartParams}
-          //   />
-          // )
+          chartContent = (
+            <TextChart
+              id={id}
+              className={classNames.chart}
+              data={data}
+              loading={loading}
+              chartParams={chartParams}
+            />
+          )
           break
       }
     }
