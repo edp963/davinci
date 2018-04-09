@@ -26,7 +26,6 @@ import ScorecardChart from './ScorecardChart'
 import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
-import styles from '../Dashboard.less'
 
 export class Chart extends PureComponent {
   constructor (props) {
@@ -80,7 +79,9 @@ export class Chart extends PureComponent {
 
     let chartContent
     if (chartInfo.renderer && chartInfo.renderer === 'echarts') {
-      chartContent = <div className={classNames.chart} id={`widget_${id}`}></div>
+      chartContent = (
+        <div className={classNames.chart} id={`widget_${id}`} />
+      )
     } else {
       switch (chartInfo.name) {
         case 'table':
