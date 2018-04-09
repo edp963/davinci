@@ -27,6 +27,7 @@ import sankey from './sankey.json'
 import scatter from './scatter.json'
 import wordCloud from './wordCloud.json'
 import table from './table.json'
+import scorecard from './scorecard.json'
 import text from './text.json'
 import map from './map.json'
 import doubleYAxis from './doubleYAxis.json'
@@ -47,6 +48,7 @@ export default [
   scatter,
   wordCloud,
   table,
+  scorecard,
   text,
   map,
   doubleYAxis,

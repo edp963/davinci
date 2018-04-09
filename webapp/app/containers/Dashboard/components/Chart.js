@@ -22,10 +22,10 @@ import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
 
 import TableChart from './TableChart'
-import Icon from 'antd/lib/icon'
+import ScorecardChart from './ScorecardChart'
+// import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
-import styles from '../Dashboard.less'
 
 export class Chart extends PureComponent {
   constructor (props) {
@@ -55,27 +55,9 @@ export class Chart extends PureComponent {
     })
   }
 
-  prettifyContent = (content) => {
-    if (!isNaN(Number(content))) {
-      let arr = content.split('.')
-      arr[0] = arr[0].split('').reduceRight((formatted, str, index, oarr) => {
-        if (index % 3 === 2 && index !== oarr.length - 1) {
-          formatted = `,${str}${formatted}`
-        } else {
-          formatted = `${str}${formatted}`
-        }
-        return formatted
-      }, '')
-      return arr.join('.')
-    }
-
-    return ''
-  }
-
   render () {
     const {
       id,
-      title,
       data,
       loading,
       chartInfo,
@@ -95,123 +77,56 @@ export class Chart extends PureComponent {
       blockHeight
     } = this.state
 
-    // FIXME
-    const textLengthRef = Math.min(blockWidth - 80, blockHeight)
-
-    let header = ''
-    let prefixHeader = ''
-    let suffixHeader = ''
-
-    let content = ''
-    let prefixContent = ''
-    let suffixContent = ''
-
-    let footer = ''
-    let prefixFooter = ''
-    let suffixFooter = ''
-
-    if (data.dataSource && data.dataSource.length) {
-      header = this.prettifyContent(data.dataSource[0][chartParams['metricsHeader']])
-      prefixHeader = chartParams['prefixHeader']
-      suffixHeader = chartParams['suffixHeader']
-
-      content = this.prettifyContent(data.dataSource[0][chartParams['metricsContent']])
-      prefixContent = chartParams['prefixContent']
-      suffixContent = chartParams['suffixContent']
-
-      footer = this.prettifyContent(data.dataSource[0][chartParams['metricsFooter']])
-      prefixFooter = chartParams['prefixFooter']
-      suffixFooter = chartParams['suffixFooter']
+    let chartContent
+    if (chartInfo.renderer && chartInfo.renderer === 'echarts') {
+      chartContent = <div className={classNames.chart} id={`widget_${id}`}></div>
+    } else {
+      switch (chartInfo.name) {
+        case 'table':
+          chartContent = (
+            <TableChart
+              id={id}
+              className={classNames.table}
+              data={data}
+              loading={loading}
+              chartParams={chartParams}
+              updateConfig={updateConfig}
+              updateParams={updateParams}
+              currentBizlogicId={currentBizlogicId}
+              width={tableWidth}
+              height={tableHeight}
+              interactId={interactId}
+              onCheckInteract={onCheckTableInteract}
+              onDoInteract={onDoTableInteract}
+            />
+          )
+          break
+        case 'scorecard':
+          chartContent = (
+            <ScorecardChart
+              id={id}
+              className={classNames.chart}
+              data={data}
+              loading={loading}
+              chartParams={chartParams}
+              width={blockWidth}
+              height={blockHeight}
+            />
+          )
+          break
+        case 'text':
+          // chartContent = (
+          //   <TextChart
+          //     id={id}
+          //     className={classNames.chart}
+          //     data={data}
+          //     loading={loading}
+          //     chartParams={chartParams}
+          //   />
+          // )
+          break
+      }
     }
-    // FIXME
-    const titleSize = (textLengthRef - 40) * 0.2 < 12 ? 12 : ((textLengthRef - 40) * 0.15 < 12 ? 12 : (textLengthRef - 40) * 0.15)
-    const contentSize = (textLengthRef - 40) * 0.6 < 32 ? 32 : ((textLengthRef - 40) * 0.4 < 20 ? 20 : (textLengthRef - 40) * 0.4)
-    const textChart = chartInfo.name === 'text'
-      ? loading
-        ? (
-          <div className={styles.textChart}>
-            <div className={styles.textContainer}>
-              <Icon type="loading" />
-            </div>
-          </div>
-        )
-        : (
-          <div className={styles.textChart}>
-            <div className={styles.textContainer}>
-              <p
-                className={styles.textChartTitle}
-                style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-              >
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {prefixHeader}
-                </span>
-                {header}
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {suffixHeader}
-                </span>
-              </p>
-              <p
-                className={styles.textChartContent}
-                style={{fontSize: `${contentSize}px`, lineHeight: `${contentSize}px`}}
-              >
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {prefixContent}
-                </span>
-                {content}
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {suffixContent}
-                </span>
-              </p>
-              <p
-                className={styles.textChartContent}
-                style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-              >
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {prefixFooter}
-                </span>
-                {footer}
-                <span
-                  style={{fontSize: `${titleSize}px`, lineHeight: `${titleSize}px`}}
-                >
-                  {suffixFooter}
-                </span>
-              </p>
-            </div>
-          </div>
-        )
-      : ''
-    const chartContent = chartInfo.name === 'table'
-      ? (
-        <TableChart
-          id={id}
-          className={classNames.table}
-          data={data}
-          loading={loading}
-          chartParams={chartParams}
-          updateConfig={updateConfig}
-          updateParams={updateParams}
-          currentBizlogicId={currentBizlogicId}
-          width={tableWidth}
-          height={tableHeight}
-          interactId={interactId}
-          onCheckInteract={onCheckTableInteract}
-          onDoInteract={onDoTableInteract}
-        />
-      ) : (
-        <div className={classNames.chart} id={`widget_${id}`}>
-          {textChart}
-        </div>
-      )
 
     return (
       <div className={classNames.container} ref="block">
@@ -225,7 +140,6 @@ Chart.propTypes = {
   id: PropTypes.string,
   w: PropTypes.number,  // eslint-disable-line
   h: PropTypes.number,  // eslint-disable-line
-  title: PropTypes.string,
   data: PropTypes.object,
   loading: PropTypes.bool,
   chartInfo: PropTypes.object,
