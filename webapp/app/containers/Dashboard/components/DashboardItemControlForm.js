@@ -33,6 +33,7 @@ const FormItem = Form.Item
 const Option = Select.Option
 const RangePicker = DatePicker.RangePicker
 
+import { KEY_COLUMN } from '../../../globalConstants'
 import styles from '../Dashboard.less'
 
 export class DashboardItemControlForm extends PureComponent {
@@ -44,19 +45,18 @@ export class DashboardItemControlForm extends PureComponent {
   }
 
   componentWillMount () {
-    this.generateParentSelValues(this.props)
+    this.getStateValues(this.props.controls)
   }
 
   componentWillUpdate (nextProps) {
-    const currentControlIds = this.props.controls.map(c => c.key).join(',')
-    const nextControlIds = nextProps.controls.map(c => c.key).join(',')
-    if (currentControlIds !== nextControlIds) {
-      this.generateParentSelValues(nextProps)
+    if (nextProps.controls.map(c => c.id).join(',') !==
+        this.props.controls.map(c => c.id).join(',')) {
+      this.getStateValues(nextProps.controls)
     }
   }
 
-  generateParentSelValues = (props) => {
-    this.state.parentSelValues = props.controls
+  getStateValues = (controls) => {
+    this.state.parentSelValues = controls
       .filter(c => c.sub.length)
       .reduce((acc, c) => {
         acc[c.id] = 0
@@ -64,9 +64,30 @@ export class DashboardItemControlForm extends PureComponent {
       }, {})
   }
 
+  getCascadeChildrenControlId = (column, chilrenArr) => {
+    const nearest = this.props.controls.find(c => c.parentColumn === column.cascadeColumn)
+    if (nearest) {
+      return this.getCascadeChildrenControlId(nearest, chilrenArr.concat(nearest.id))
+    } else {
+      return chilrenArr
+    }
+  }
+
+  getCascadeParents = (column, parentsArr) => {
+    if (column.parent) {
+      const parent = this.props.controls.find(c => c.cascadeColumn === column.parent)
+      return this.getCascadeParents(parent, parentsArr.concat(parent.cascadeColumn))
+    } else {
+      return parentsArr
+    }
+  }
+
   generateFormComponent = (c) => {
     const {
-      form
+      form,
+      controls,
+      cascadeSources,
+      onCascadeSelectChange
     } = this.props
 
     const { getFieldDecorator } = form
@@ -108,14 +129,14 @@ export class DashboardItemControlForm extends PureComponent {
           }
         })
 
-        let mode = c.type === 'multiSelect'
+        const mode = c.type === 'multiSelect'
           ? {
             mode: 'multiple'
           }
           : {
             allowClear: true
           }
-        let selProperties = Object.assign({
+        const selProperties = Object.assign({
           placeholder: c.variables[0] || '请选择',
           onChange: this.parentSelectChange(c)
         }, mode)
@@ -138,9 +159,56 @@ export class DashboardItemControlForm extends PureComponent {
         )
 
         return followComponents
+      case 'cascadeSelect':
+        const column = c.cascadeColumn
+        const nearestChild = controls.find(cl => cl.parentColumn === column)
+        const dataSource = cascadeSources && cascadeSources[c.id]
+        const cascadeOptions = dataSource
+          ? dataSource.map(s => (
+            <Option key={s[KEY_COLUMN]} value={s[column]}>{s[column]}</Option>
+          ))
+          : ''
+
+        const changeCallback = nearestChild && {
+          onChange: (val) => {
+            if (val) {
+              const childColumn = nearestChild.cascadeColumn
+              const parentColumns = this.getCascadeParents(c, [column])
+              const parents = parentColumns.length &&
+                Object.entries(form.getFieldsValue(parentColumns)).map(arr => ({
+                  fieldName: arr[0],
+                  fieldValue: arr[0] === column ? val : arr[1]  // onChange未完成，不能获取到当前control的值
+                }))
+              onCascadeSelectChange(nearestChild.id, childColumn, parents)
+            }
+            form.resetFields(this.getCascadeChildrenControlId(c, []))
+          }
+        }
+
+        const cascadeProperties = Object.assign({
+          placeholder: column,
+          allowClear: true
+        }, changeCallback)
+
+        return (
+          <Col
+            key={c.id}
+            lg={6}
+            md={8}
+            sm={12}
+          >
+            <FormItem className={styles.formItem}>
+              {getFieldDecorator(c.id, {})(
+                <Select {...cascadeProperties}>
+                  {cascadeOptions}
+                </Select>
+              )}
+            </FormItem>
+          </Col>
+        )
       case 'date':
       case 'datetime':
-        let dateFormat = c.type === 'datetime'
+        const dateFormat = c.type === 'datetime'
           ? {
             format: 'YYYY-MM-DD HH:mm:ss',
             showTime: true
@@ -148,7 +216,7 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             format: 'YYYY-MM-DD'
           }
-        let dateProperties = Object.assign({}, dateFormat)
+        const dateProperties = Object.assign({}, dateFormat)
 
         return (
           <Col
@@ -179,7 +247,7 @@ export class DashboardItemControlForm extends PureComponent {
         )
       case 'dateRange':
       case 'datetimeRange':
-        let rangeFormat = c.type === 'datetimeRange'
+        const rangeFormat = c.type === 'datetimeRange'
           ? {
             format: 'YYYY-MM-DD HH:mm:ss',
             showTime: true
@@ -187,7 +255,9 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             format: 'YYYY-MM-DD'
           }
-        let rangeProperties = Object.assign({}, rangeFormat)
+        const rangeProperties = Object.assign({
+          placeholder: c.variables[0]
+        }, rangeFormat)
 
         return (
           <Col
@@ -388,8 +458,10 @@ export class DashboardItemControlForm extends PureComponent {
 DashboardItemControlForm.propTypes = {
   form: PropTypes.any,
   controls: PropTypes.array,
+  cascadeSources: PropTypes.object,
   onSearch: PropTypes.func,
-  onHide: PropTypes.func
+  onHide: PropTypes.func,
+  onCascadeSelectChange: PropTypes.func
 }
 
 export default Form.create()(DashboardItemControlForm)

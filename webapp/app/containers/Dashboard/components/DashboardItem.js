@@ -46,6 +46,10 @@ export class DashboardItem extends PureComponent {
     }
   }
 
+  componentWillMount () {
+    this.initControlCascadeSource(this.props)
+  }
+
   componentDidMount () {
     const {
       itemId,
@@ -73,6 +77,10 @@ export class DashboardItem extends PureComponent {
 
     if (triggerType !== this.props.triggerType) {
       this.setFrequent(nextProps)
+    }
+
+    if (nextProps.widget !== this.props.widget) {
+      this.initControlCascadeSource(nextProps)
     }
   }
 
@@ -161,6 +169,22 @@ export class DashboardItem extends PureComponent {
     })
   }
 
+  initControlCascadeSource = (props) => {
+    const { itemId, widget, onGetCascadeSource } = props
+    const { query_params } = widget
+
+    JSON.parse(query_params).forEach(c => {
+      if (c.type === 'cascadeSelect' && !c.parentColumn) {
+        onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
+      }
+    })
+  }
+
+  onCascadeSelectChange = (controlId, column, parents) => {
+    const { itemId, widget, onGetCascadeSource } = this.props
+    onGetCascadeSource(itemId, controlId, widget.flatTable_id, column, parents)
+  }
+
   render () {
     const {
       w,
@@ -180,6 +204,7 @@ export class DashboardItem extends PureComponent {
       downloadCsvLoading,
       isInteractive,
       interactId,
+      cascadeSources,
       onShowEdit,
       isReadOnly,
       onShowWorkbench,
@@ -363,8 +388,10 @@ export class DashboardItem extends PureComponent {
           <DashboardItemControlPanel show={controlPanelVisible}>
             <DashboardItemControlForm
               controls={controls}
+              cascadeSources={cascadeSources}
               onSearch={this.onControlSearch}
               onHide={this.toggleControlPanel}
+              onCascadeSelectChange={this.onCascadeSelectChange}
             />
           </DashboardItemControlPanel>
         </Animate>
@@ -411,6 +438,7 @@ DashboardItem.propTypes = {
   downloadCsvLoading: PropTypes.bool,
   isInteractive: PropTypes.bool,
   interactId: PropTypes.string,
+  cascadeSources: PropTypes.object,
   onGetChartData: PropTypes.func,
   onRenderChart: PropTypes.func,
   onShowEdit: PropTypes.func,
@@ -421,7 +449,8 @@ DashboardItem.propTypes = {
   onTurnOffInteract: PropTypes.func,
   onShowFullScreen: PropTypes.func,
   onCheckTableInteract: PropTypes.func,
-  onDoTableInteract: PropTypes.func
+  onDoTableInteract: PropTypes.func,
+  onGetCascadeSource: PropTypes.func
 }
 // FIXME
 DashboardItem.defaultProps = {

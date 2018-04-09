@@ -28,7 +28,13 @@ import {
   SET_INDIVIDUAL_DASHBOARD,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE
+  LOAD_WIDGET_CSV_FAILURE,
+  LOAD_CASCADESOURCE_FROM_ITEM,
+  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE
 } from './constants'
 
 export function getDashboard (token, resolve, reject) {
@@ -135,6 +141,74 @@ export function loadWidgetCsvFail (itemId) {
     type: LOAD_WIDGET_CSV_FAILURE,
     payload: {
       itemId
+    }
+  }
+}
+
+export function loadCascadeSourceFromItem (itemId, controlId, token, sql, column, parents) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM,
+    payload: {
+      itemId,
+      controlId,
+      token,
+      sql,
+      column,
+      parents
+    }
+  }
+}
+
+export function cascadeSourceFromItemLoaded (itemId, controlId, column, values) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+    payload: {
+      itemId,
+      controlId,
+      column,
+      values
+    }
+  }
+}
+
+export function loadCascadeSourceFromItemFail (error) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadCascadeSourceFromDashboard (controlId, flatTableId, token, column, parents) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
+    payload: {
+      controlId,
+      flatTableId,
+      token,
+      column,
+      parents
+    }
+  }
+}
+
+export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+    payload: {
+      controlId,
+      column,
+      values
+    }
+  }
+}
+
+export function loadCascadeSourceFromDashboardFail (error) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+    payload: {
+      error
     }
   }
 }

@@ -40,6 +40,7 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
+import { KEY_COLUMN } from '../../../globalConstants'
 
 import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
@@ -105,6 +106,7 @@ export class WidgetForm extends React.Component {
       { text: '数字输入框', value: 'inputNumber' },
       { text: '单选下拉菜单', value: 'select' },
       { text: '多选下拉菜单', value: 'multiSelect' },
+      { text: '级联下拉菜单', value: 'cascadeSelect' },
       { text: '日期选择', value: 'date' },
       { text: '日期多选', value: 'multiDate' },
       { text: '日期范围选择', value: 'dateRange' },
@@ -336,7 +338,7 @@ export class WidgetForm extends React.Component {
                       >
                         {
                           fieldLists
-                            .filter(c => c !== 'antDesignTableId')
+                            .filter(c => c !== KEY_COLUMN)
                             .map(c => (<Option key={c} value={c}>{c}</Option>))
                         }
                       </Select>
@@ -532,10 +534,7 @@ WidgetForm.propTypes = {
   form: PropTypes.any,
   bizlogics: PropTypes.array,
   widgetlibs: PropTypes.array,
-  dataColumns: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
+  dataColumns: PropTypes.array,
   chartInfo: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.object

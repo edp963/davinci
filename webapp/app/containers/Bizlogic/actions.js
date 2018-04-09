@@ -40,7 +40,16 @@ import {
   CLEAR_BIZDATAS,
   SQL_VALIDATE,
   SQL_VALIDATE_SUCCESS,
-  SQL_VALIDATE_FAILURE
+  SQL_VALIDATE_FAILURE,
+  LOAD_CASCADESOURCE_FROM_ITEM,
+  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+  LOAD_BIZDATA_SCHEMA,
+  LOAD_BIZDATA_SCHEMA_SUCCESS,
+  LOAD_BIZDATA_SCHEMA_FAILURE
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -204,6 +213,101 @@ export function validateSqlFailure (error) {
   return {
     type: SQL_VALIDATE_FAILURE,
     Payload: {
+      error
+    }
+  }
+}
+
+export function loadCascadeSourceFromItem (itemId, controlId, id, sql, column, parents) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM,
+    payload: {
+      itemId,
+      controlId,
+      id,
+      sql,
+      column,
+      parents
+    }
+  }
+}
+
+export function cascadeSourceFromItemLoaded (itemId, controlId, column, values) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
+    payload: {
+      itemId,
+      controlId,
+      column,
+      values
+    }
+  }
+}
+
+export function loadCascadeSourceFromItemFail (error) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadCascadeSourceFromDashboard (controlId, id, column, parents) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
+    payload: {
+      controlId,
+      id,
+      column,
+      parents
+    }
+  }
+}
+
+export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+    payload: {
+      controlId,
+      column,
+      values
+    }
+  }
+}
+
+export function loadCascadeSourceFromDashboardFail (error) {
+  return {
+    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadBizdataSchema (id, resolve) {
+  return {
+    type: LOAD_BIZDATA_SCHEMA,
+    payload: {
+      id,
+      resolve
+    }
+  }
+}
+
+export function bizdataSchemaLoaded (scheme) {
+  return {
+    type: LOAD_BIZDATA_SCHEMA_SUCCESS,
+    payload: {
+      scheme
+    }
+  }
+}
+
+export function loadBizdataSchemaFail (error) {
+  return {
+    type: LOAD_BIZDATA_SCHEMA_FAILURE,
+    payload: {
       error
     }
   }
