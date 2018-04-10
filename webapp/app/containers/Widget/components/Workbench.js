@@ -383,6 +383,12 @@ export class Workbench extends React.Component {
       }
     })
   }
+
+  textEditorChange = (content) => {
+    console.log(content)
+    // 将 content 保存到 widgetForm 的对应隐藏 input 中
+  }
+
   render () {
     const {
       type,
@@ -431,7 +437,6 @@ export class Workbench extends React.Component {
           onSegmentControlChange={this.formSegmentControlChange}
           onShowVariableConfigTable={this.showVariableConfigTable}
           onShowMarkConfigTable={this.showMarkConfigTable}
-          onShowMardConfigTable
           onDeleteControl={this.deleteControl}
           onDeleteMarkControl={this.deleteMarkControl}
           wrappedComponentRef={f => { this.widgetForm = f }}
@@ -448,6 +453,7 @@ export class Workbench extends React.Component {
           onSaveWidget={this.saveWidget}
           onAdhocSqlInputChange={this.adhocSqlInputChange}
           onAdhocSqlQuery={this.adhocSqlQuery}
+          onTextEditorChange={this.textEditorChange}
         />
         <Modal
           title="QUERY变量配置"

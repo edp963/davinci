@@ -19,9 +19,6 @@
  */
 
 import React, { Component } from 'react'
-window.THREE = require('three')
-require('three/examples/js/renderers/Projector')
-require('three/examples/js/renderers/CanvasRenderer')
 
 import { DEFAULT_SECONDARY_COLOR } from '../../globalConstants'
 import styles from './Login.less'
@@ -31,7 +28,25 @@ export class Background extends Component {
     super(props)
     this.removeListeners = null
   }
+
   componentDidMount () {
+    import('three')
+      .then(_ => {
+        window.THREE = _
+        Promise.all([
+          import('three/examples/js/renderers/Projector'),
+          import('three/examples/js/renderers/CanvasRenderer')
+        ]).then(() => {
+          this.drawBackground()
+        })
+      })
+  }
+
+  componentWillUnmount () {
+    this.removeListeners()
+  }
+
+  drawBackground = () => {
     const THREE = window.THREE
     const SEPARATION = 100
     const AMOUNTX = 50
@@ -156,10 +171,6 @@ export class Background extends Component {
       renderer.render(scene, camera)
       count += 0.1
     }
-  }
-
-  componentWillUnmount () {
-    this.removeListeners()
   }
 
   render () {

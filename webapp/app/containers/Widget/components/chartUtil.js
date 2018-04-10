@@ -71,42 +71,64 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
     return fi
   }, {}))
 
+  let result
+
   switch (flatInfo.name) {
     case 'line':
-      return line(dataSource, flatInfo, chartParams, interactIndex)
+      result = line(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'bar':
-      return bar(dataSource, flatInfo, chartParams, interactIndex)
+      result = bar(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'scatter':
-      return scatter(dataSource, flatInfo, chartParams, interactIndex)
+      result = scatter(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'pie':
-      return pie(dataSource, flatInfo, chartParams, interactIndex)
+      result = pie(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'area':
-      return area(dataSource, flatInfo, chartParams, interactIndex)
+      result = area(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'sankey':
-      return sankey(dataSource, flatInfo, chartParams, interactIndex)
+      result = sankey(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'funnel':
-      return funnel(dataSource, flatInfo, chartParams, interactIndex)
+      result = funnel(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'treemap':
-      return treemap(dataSource, flatInfo, chartParams, interactIndex)
+      result = treemap(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'wordCloud':
-      return wordCloud(dataSource, flatInfo, chartParams, interactIndex)
+      result = wordCloud(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'map':
-      return map(dataSource, flatInfo, chartParams, interactIndex)
+      result = map(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'doubleYAxis':
-      return doubleYAxis(dataSource, flatInfo, chartParams, interactIndex)
+      result = doubleYAxis(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'boxplot':
-      return boxplot(dataSource, flatInfo, chartParams, interactIndex)
+      result = boxplot(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'graph':
-      return graph(dataSource, flatInfo, chartParams, interactIndex)
+      result = graph(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'markBoxplot':
-      return markBoxplot(dataSource, flatInfo, chartParams, interactIndex)
+      result = markBoxplot(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'waterfall':
-      return waterfall(dataSource, flatInfo, chartParams, interactIndex)
+      result = waterfall(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'gauge':
-      return gauge(dataSource, flatInfo, chartParams, interactIndex)
+      result = gauge(dataSource, flatInfo, chartParams, interactIndex)
+      break
     case 'radar':
-      return radar(dataSource, flatInfo, chartParams, interactIndex)
+      result = radar(dataSource, flatInfo, chartParams, interactIndex)
+      break
     default:
-      return {}
+      result = {}
+      break
   }
+
+  return Promise.resolve(result)
 }

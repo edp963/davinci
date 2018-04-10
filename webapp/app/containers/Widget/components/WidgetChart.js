@@ -20,7 +20,6 @@
 
 import React, { PureComponent } from 'react'
 import PropTypes from 'prop-types'
-import classnames from 'classnames'
 
 import Chart from '../../Dashboard/components/Chart'
 import * as echarts from 'echarts/lib/echarts'
@@ -28,7 +27,6 @@ import * as echarts from 'echarts/lib/echarts'
 import { echartsOptionsGenerator } from './chartUtil'
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
-import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
 
 export class WidgetChart extends PureComponent {
@@ -55,27 +53,28 @@ export class WidgetChart extends PureComponent {
         this.chart = echarts.init(document.getElementById('widget_commonChart'), 'default')
       }
 
-      const chartOptions = echartsOptionsGenerator({
+      echartsOptionsGenerator({
         dataSource: data.dataSource,
         chartInfo,
         chartParams
       })
-
-      switch (chartInfo.name) {
-        case 'line':
-        case 'bar':
-        case 'scatter':
-        case 'area':
-          if (chartOptions.xAxis && chartOptions.series) {
-            this.chart.setOption(chartOptions)
+        .then(chartOptions => {
+          switch (chartInfo.name) {
+            case 'line':
+            case 'bar':
+            case 'scatter':
+            case 'area':
+              if (chartOptions.xAxis && chartOptions.series) {
+                this.chart.setOption(chartOptions)
+              }
+              break
+            default:
+              if (chartOptions.series) {
+                this.chart.setOption(chartOptions)
+              }
+              break
           }
-          break
-        default:
-          if (chartOptions.series) {
-            this.chart.setOption(chartOptions)
-          }
-          break
-      }
+        })
     } else {
       this.chart = undefined
     }
@@ -89,7 +88,8 @@ export class WidgetChart extends PureComponent {
       updateConfig,
       chartParams,
       updateParams,
-      currentBizlogicId
+      currentBizlogicId,
+      onTextEditorChange
     } = this.props
 
     const chartClass = {
@@ -111,6 +111,7 @@ export class WidgetChart extends PureComponent {
         currentBizlogicId={currentBizlogicId}
         updateParams={updateParams}
         classNames={chartClass}
+        onTextEditorChange={onTextEditorChange}
       />
     )
   }
@@ -126,7 +127,8 @@ WidgetChart.propTypes = {
   currentBizlogicId: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.number
-  ])
+  ]),
+  onTextEditorChange: PropTypes.func
 }
 
 export default WidgetChart

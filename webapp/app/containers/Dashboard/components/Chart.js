@@ -68,7 +68,8 @@ export class Chart extends PureComponent {
       interactId,
       onCheckTableInteract,
       onDoTableInteract,
-      currentBizlogicId
+      currentBizlogicId,
+      onTextEditorChange
     } = this.props
     const {
       tableWidth,
@@ -123,7 +124,9 @@ export class Chart extends PureComponent {
               className={classNames.chart}
               data={data}
               loading={loading}
+              editing={id === 'commonChart'}
               chartParams={chartParams}
+              onTextEditorChange={onTextEditorChange}
             />
           )
           break
@@ -155,7 +158,8 @@ Chart.propTypes = {
   currentBizlogicId: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.number
-  ])
+  ]),
+  onTextEditorChange: PropTypes.func
 }
 
 export default Chart

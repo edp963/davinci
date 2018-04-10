@@ -367,7 +367,7 @@ export class Grid extends Component {
   renderChart = (itemId, widget, dataSource, chartInfo, interactIndex) => {
     const chartInstance = this.charts[`widget_${itemId}`]
 
-    const chartOptions = echartsOptionsGenerator({
+    echartsOptionsGenerator({
       dataSource,
       chartInfo,
       chartParams: Object.assign({
@@ -379,11 +379,11 @@ export class Grid extends Component {
       }, JSON.parse(widget.chart_params)),
       interactIndex
     })
-    chartInstance.setOption(chartOptions)
-
-    this.registerChartInteractListener(chartInstance, itemId)
-
-    chartInstance.hideLoading()
+      .then(chartOptions => {
+        chartInstance.setOption(chartOptions)
+        this.registerChartInteractListener(chartInstance, itemId)
+        chartInstance.hideLoading()
+      })
   }
 
   registerChartInteractListener = (instance, itemId) => {
@@ -1823,6 +1823,7 @@ export class Grid extends Component {
         </Modal>
         <FullScreenPanel
           widgets={widgets}
+          widgetlibs={widgetlibs}
           currentDashboard={currentDashboard}
           currentDatasources={currentDatasources}
           visible={allowFullScreen}

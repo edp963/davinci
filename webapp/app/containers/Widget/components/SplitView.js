@@ -82,7 +82,8 @@ export class SplitView extends PureComponent {
       updateConfig,
       currentBizlogicId,
       onAdhocSqlInputChange,
-      onAdhocSqlQuery
+      onAdhocSqlQuery,
+      onTextEditorChange
     } = this.props
 
     const {
@@ -121,6 +122,7 @@ export class SplitView extends PureComponent {
           chartParams={chartParams}
           currentBizlogicId={currentBizlogicId}
           updateParams={updateParams}
+          onTextEditorChange={onTextEditorChange}
         />
       )
       : (
@@ -202,7 +204,8 @@ SplitView.propTypes = {
   adhocSql: PropTypes.string,
   onSaveWidget: PropTypes.func,
   onAdhocSqlInputChange: PropTypes.func,
-  onAdhocSqlQuery: PropTypes.func
+  onAdhocSqlQuery: PropTypes.func,
+  onTextEditorChange: PropTypes.func
 }
 
 export default SplitView

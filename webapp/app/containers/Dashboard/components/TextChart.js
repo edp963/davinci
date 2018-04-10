@@ -25,18 +25,53 @@ import Icon from 'antd/lib/icon'
 
 import styles from '../Dashboard.less'
 
+let ReactQuill
+
 export class TextChart extends PureComponent {
+  constructor (props) {
+    super(props)
+
+    this.state = {
+      editorLoaded: false,
+      content: ''
+    }
+
+    import('react-quill').then(rq => {
+      ReactQuill = rq
+      this.setState({
+        editorLoaded: true
+      })
+    })
+  }
 
   render () {
     const {
-      id,
       // data,
       loading,
-      className
-      // chartParams
+      editing,
+      className,
+      // chartParams,
+      onTextEditorChange
     } = this.props
 
-    const textcard = loading
+    const {
+      editorLoaded,
+      content
+    } = this.state
+
+    const editorContent = editorLoaded
+      ? (
+        <ReactQuill
+          value={content}
+          onChange={onTextEditorChange}
+          className={styles.editor}
+        />
+      )
+      : (
+        <p>编辑器加载中……</p>
+      )
+
+    const chartContent = loading
       ? (
         <div className={styles.scorecard}>
           <div className={styles.scorecardContainer}>
@@ -45,27 +80,33 @@ export class TextChart extends PureComponent {
         </div>
       )
       : (
-        <div className={styles.scorecard}>
-          <div className={styles.scorecardContainer}>
-
-          </div>
+        <div className={styles.textEditorContainer}>
+          {
+            editing
+              ? editorContent
+              : (
+                <div>显示编辑好的文本</div>
+              )
+          }
         </div>
       )
 
     return (
-      <div className={className} id={`widget_${id}`}>
-        {textcard}
+      <div className={className}>
+        {chartContent}
       </div>
     )
   }
 }
 
 TextChart.propTypes = {
-  id: PropTypes.string,
+  // id: PropTypes.string,
   // data: PropTypes.object,
   loading: PropTypes.bool,
-  className: PropTypes.string
-  // chartParams: PropTypes.object
+  editing: PropTypes.bool,
+  className: PropTypes.string,
+  // chartParams: PropTypes.object,
+  onTextEditorChange: PropTypes.func
 }
 
 TextChart.defaultProps = {

@@ -35,10 +35,11 @@ import { translationMessages } from './i18n'
 import '!file-loader?name=[name].[ext]!./favicon.ico'
 import '!file-loader?name=[name].[ext]!./manifest.json'
 import 'file-loader?name=[name].[ext]!./.htaccess'
-import '../node_modules/antd/dist/antd.less'
-import '../node_modules/react-grid-layout/css/styles.css'
+import 'antd/dist/antd.less'
+import 'react-grid-layout/css/styles.css'
 import '../node_modules/react-resizable/css/styles.css'
-import '../node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
+import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
+import 'react-quill/dist/quill.snow.css'
 import './assets/fonts/iconfont.css'
 import './assets/override/antd.css'
 import './assets/override/react-grid.css'
@@ -132,8 +133,6 @@ if (!window.Intl) {
 // it's not most important operation and if main code fails,
 // we do not want it installed
 if (process.env.NODE_ENV === 'production') {
-  require('offline-plugin/runtime').install() // eslint-disable-line global-require
-
   // disable react developer tools in production
   if (window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
     window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = function () {}
