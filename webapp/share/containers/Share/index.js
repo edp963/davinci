@@ -297,7 +297,7 @@ export class Share extends React.Component {
 
   renderChart = (itemId, widget, dataSource, chartInfo, interactIndex) => {
     const chartInstance = this.charts[`widget_${itemId}`]
-    const chartOptions = echartsOptionsGenerator({
+    echartsOptionsGenerator({
       dataSource: dataSource,
       chartInfo: chartInfo,
       chartParams: Object.assign({
@@ -309,11 +309,11 @@ export class Share extends React.Component {
       }, JSON.parse(widget.chart_params)),
       interactIndex
     })
-    chartInstance.setOption(chartOptions)
-
-    this.registerChartInteractListener(chartInstance, itemId)
-
-    chartInstance.hideLoading()
+      .then(chartOptions => {
+        chartInstance.setOption(chartOptions)
+        this.registerChartInteractListener(chartInstance, itemId)
+        chartInstance.hideLoading()
+      })
   }
 
   registerChartInteractListener = (instance, itemId) => {
@@ -970,6 +970,7 @@ export class Share extends React.Component {
         fullScreenComponent = (
           <FullScreenPanel
             widgets={widgets}
+            widgetlibs={widgetlibs}
             currentDashboard={{ widgets: currentItems }}
             currentDatasources={dataSources}
             visible={allowFullScreen}

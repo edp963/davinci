@@ -6,7 +6,6 @@ import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
 import Chart from '../Chart'
-import widgetlibs from '../../../../assets/json/widgetlib'
 import {ECHARTS_RENDERER} from '../../../../globalConstants'
 import styles from './fullScreenPanel.less'
 
@@ -54,7 +53,7 @@ class FullScreenPanel extends PureComponent {
   }
 
   renderChart = (chartInstance, itemId, widget, dataSource, chartInfo, interactIndex) => {
-    const chartOptions = echartsOptionsGenerator({
+    echartsOptionsGenerator({
       dataSource,
       chartInfo,
       chartParams: Object.assign({
@@ -66,8 +65,10 @@ class FullScreenPanel extends PureComponent {
       }, JSON.parse(widget.chart_params)),
       interactIndex
     })
-    chartInstance.setOption(chartOptions)
-    chartInstance.hideLoading()
+      .then(chartOptions => {
+        chartInstance.setOption(chartOptions)
+        chartInstance.hideLoading()
+      })
   }
   isShowSideMenu = () => {
     this.setState({
@@ -85,7 +86,7 @@ class FullScreenPanel extends PureComponent {
   }
   render () {
     const {isShowMenu, controlPanelVisible} = this.state
-    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets} = this.props
+    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets, widgetlibs} = this.props
     const fsClassName = classnames({
       [styles.fullScreen]: true,
       [styles.displayNone]: !visible,
@@ -219,6 +220,7 @@ FullScreenPanel.propTypes = {
   isVisible: PropTypes.func,
   currentDataInFullScreen: PropTypes.object,
   widgets: PropTypes.any,
+  widgetlibs: PropTypes.array,
   currentDatasources: PropTypes.oneOfType([
     PropTypes.bool,
     PropTypes.object
