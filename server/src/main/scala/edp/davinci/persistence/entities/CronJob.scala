@@ -45,9 +45,16 @@ case class PutCronJobSeq(payload: Seq[PutCronJob])
 case class CronJobSeq(payload:Seq[CronJob])
 
 
-case class EmailCronJobConfig(toAddress: String, cc: String, subject: String, contentURL: String)
+case class EmailCronJobConfig(to: String,
+                              cc: Option[String]=Some(""),
+                              bcc:Option[String]=Some(""),
+                              subject: String,
+                              contentList:Seq[Content],
+                              `type`:String)
 
-class CronJobTable(tag: Tag) extends BaseTable[CronJob](tag, "cronjob") {
+case class Content(id:Long,`type`:String)
+
+class CronJobTable(tag: Tag) extends BaseTable[CronJob](tag, "cron_job") {
   //  def name = column[String]("name")
   def job_type = column[String]("job_type")
 

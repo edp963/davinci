@@ -55,7 +55,7 @@ class MatchAndReplace extends FunSuite {
         |    $elseif(fromdate)$
         |        afafjajfhjaf;
         |    $else$
-        |        select 拒贷码,人数,CONCAT(round(人数/总数 *100,2),'%') as 占比 from table1 where a <> $v3$ and b = $v5$ and c = 5;
+        |        select 拒码,人数,CONCAT(round(人数/总数 *100,2),'%') as 占比 from table1 where a <> $v3$ and b = $v5$ and c = 5;
         |    $endif$
         |    adadaada
         |}""".stripMargin
@@ -94,10 +94,8 @@ class MatchAndReplace extends FunSuite {
 
     val queryStr = "[]"
     val flatTableSqls =
-      """query@var $startdate$;
-        |query@var $enddate$;
-        |{SELECT DATE_FORMAT(createtime, '%Y-%m-%d')  as 注册日期, COUNT( * ) as 注册数量 FROM ec_carowner where 1=1 $if(startdate)$ and DATE_FORMAT(createtime, '%Y-%m-%d')>=$startdate$ and DATE_FORMAT(createtime, '%Y-%m-%d')<=$enddate$ $endif$
-        |GROUP BY DATE_FORMAT(createtime, '%Y-%m-%d') order by DATE_FORMAT(createtime, '%Y-%m-%d')}""".stripMargin
+      """query@var $city$;
+        |{SELECT * FROM city_population where city = $if(city)$ $city$ $else$ '北京' $endif$;}""".stripMargin
 
 
     val queryParams = json2caseClass[Seq[KV]](queryStr)

@@ -158,6 +158,7 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
 
   private def psSet(schemaMap: mutable.HashMap[String, (String, Int)], row: List[String], ps: PreparedStatement): Unit = {
     val fieldNames = schemaMap.keySet.toList
+    row.foreach(println)
     for (i <- fieldNames.indices) {
       val accuracyIndex = schemaMap(fieldNames(i))._1.indexOf("(")
       val strType = if (accuracyIndex > -1) schemaMap(fieldNames(i))._1.substring(0, accuracyIndex) else schemaMap(fieldNames(i))._1

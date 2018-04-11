@@ -76,7 +76,7 @@ trait DashboardService {
   def update(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Future[Unit] = {
     val query = DBIO.seq(dashboardSeq.map(r => {
       modules.dashboardQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(dashboard => (dashboard.name, dashboard.desc, dashboard.linkage_detail, dashboard.config, dashboard.publish, dashboard.update_by, dashboard.update_time))
-        .update(r.name, r.desc, r.linkage_detail, r.config, r.publish, session.userId, ResponseUtils.currentTime)
+        .update(r.name, r.desc, r.linkage_detail, Some(r.config.getOrElse("{}")), r.publish, session.userId, ResponseUtils.currentTime)
     }): _*)
     db.run(query)
   }

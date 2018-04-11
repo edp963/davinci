@@ -41,10 +41,10 @@ case class PostDashboard(name: String,
                          pic: String,
                          desc: String,
                          linkage_detail: String,
-                         config: Option[String] = None,
+                         config: Option[String],
                          publish: Boolean) extends SimpleBaseEntity
 
-case class PutDashboard(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), config: Option[String] = Some(""), publish: Boolean, active: Boolean = true, create_by: Long = 0)
+case class PutDashboard(id: Long, name: String, pic: Option[String] = Some(""), desc: String, linkage_detail: Option[String] = Some(""), config: Option[String] = Some("{}"), publish: Boolean, active: Boolean = true, create_by: Long = 0)
 
 case class DashboardContent(id: Long, name: String, pic: String, desc: String, linkage_detail: String, config: Option[String] = Some(""), publish: Boolean, create_by: Long, widgets: Seq[WidgetLayout])
 

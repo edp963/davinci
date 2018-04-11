@@ -85,7 +85,7 @@ mail{
     # 邮件服务器的SMTP地址
     host = smtp.yeah.net
     # 邮件服务器的SMTP端口
-    port = 465
+    port = 25
     # 发件人（必须正确，否则发送失败）
     from = hutool@yeah.net
     # 用户名
@@ -102,3 +102,4 @@ mail{
     # 指定的端口连接到在使用指定的套接字工厂。如果没有设置,将使用默认端口465
     socketFactoryPort = 465
 }
+phantomjs_home = "/$your_path$s/phantomjs-2.1.1-macosx/bin/phantomjs"
