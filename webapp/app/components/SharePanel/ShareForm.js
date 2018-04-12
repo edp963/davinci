@@ -1,7 +1,6 @@
 import React, { PureComponent, PropTypes } from 'react'
 
 import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import config, { env } from '../../globalConfig'
@@ -20,9 +19,7 @@ export class ShareForm extends PureComponent {
   render () {
     const {
       type,
-      shareInfo,
-      // downloadCsvLoading,
-      // onDownloadCsv
+      shareInfo
     } = this.props
 
     let linkValue = ''
@@ -95,9 +92,7 @@ export class ShareForm extends PureComponent {
 
 ShareForm.propTypes = {
   type: PropTypes.string,
-  shareInfo: PropTypes.string,
-  // downloadCsvLoading: PropTypes.bool,
-  // onDownloadCsv: PropTypes.func
+  shareInfo: PropTypes.string
 }
 
 export default ShareForm

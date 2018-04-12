@@ -49,11 +49,18 @@ export class SharePanel extends PureComponent {
       this.getShareInfo('')
     }
   }
+
   componentWillReceiveProps () {
-    this.setState({
-      authName: ''
-    })
+    this.state.authName = ''
   }
+
+  componentDidUpdate () {
+    const { shareInfo, shareInfoLoading } = this.props
+    if (!shareInfo && !shareInfoLoading) {
+      this.getShareInfo('')
+    }
+  }
+
   getShareInfo = (authName) => {
     const {
       id,
@@ -63,12 +70,16 @@ export class SharePanel extends PureComponent {
       onLoadWidgetShareLink
     } = this.props
 
+    let name = authName.target
+      ? authName.target.value
+      : authName
+
     switch (type) {
       case 'dashboard':
-        onLoadDashboardShareLink(id, authName)
+        onLoadDashboardShareLink(id, name)
         break
       case 'widget':
-        onLoadWidgetShareLink(id, itemId, authName)
+        onLoadWidgetShareLink(id, itemId, name)
         break
       default:
         break
@@ -85,12 +96,10 @@ export class SharePanel extends PureComponent {
     this.props.onDownloadCsv(this.props.shareInfo)
   }
   creditShare = () => {
-    const { authName } = this.state
-    const { isResetSharePanel } = this.props
-    this.getShareInfo(authName)
-    isResetSharePanel('close')
+    this.getShareInfo(this.state.authName)
+    this.props.afterAuthorization()
   }
-  handleChange = (event) => {
+  authNameChange = (event) => {
     this.setState({authName: event.target.value})
   }
   render () {
@@ -100,11 +109,12 @@ export class SharePanel extends PureComponent {
       secretInfo,
       shareInfoLoading,
       downloadCsvLoading,
-      resetSharePanel
+      authorized
     } = this.props
 
     const {
-      active
+      active,
+      authName
     } = this.state
 
     const segmentControl = (
@@ -137,7 +147,7 @@ export class SharePanel extends PureComponent {
       }
     }
 
-    if (secretInfo && !resetSharePanel) {
+    if (secretInfo && authorized) {
       secretContent = (
         <ShareForm
           type={type}
@@ -157,8 +167,8 @@ export class SharePanel extends PureComponent {
               <Input
                 className={styles.shareInput}
                 placeholder="请输入要分享的用户名"
-                onChange={this.handleChange}
-                value={this.state.authName}
+                onChange={this.authNameChange}
+                value={authName}
                 addonAfter={
                   <span
                     style={{cursor: 'pointer'}}
@@ -196,11 +206,11 @@ SharePanel.propTypes = {
   secretInfo: PropTypes.string,
   shareInfoLoading: PropTypes.bool,
   downloadCsvLoading: PropTypes.bool,
+  authorized: PropTypes.bool,
   onLoadDashboardShareLink: PropTypes.func,
   onLoadWidgetShareLink: PropTypes.func,
   onDownloadCsv: PropTypes.func,
-  resetSharePanel: PropTypes.bool,
-  isResetSharePanel: PropTypes.func
+  afterAuthorization: PropTypes.func
 }
 
 SharePanel.defaultProps = {

@@ -117,7 +117,10 @@ function dashboardReducer (state = initialState, { type, payload }) {
       return state.set('dashboards', dashboards.filter(d => d.id !== payload.id))
 
     case LOAD_DASHBOARD_DETAIL:
-      return state.set('currentDashboardLoading', true)
+      return state
+        .set('currentDashboardLoading', true)
+        .set('currentDashboardShareInfo', '')
+        .set('currentDashboardSecretInfo', '')
 
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       return state
