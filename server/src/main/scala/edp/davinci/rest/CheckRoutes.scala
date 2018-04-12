@@ -96,6 +96,8 @@ class CheckRoutes(modules: ConfigurationModule with PersistenceModule with Busin
       else modules.groupDal.findByFilter(_.name === name)
       case "user" => if (id > 0) modules.userDal.findByFilter(d => d.id =!= id && d.email === name)
       else modules.userDal.findByFilter(_.email === name)
+      case "cronjob"=>if(id > 0) modules.cronJobDal.findByFilter(d =>d.id =!= id && d.name === name)
+      else modules.cronJobDal.findByFilter(_.name === name)
       case _ => throw new Exception("not supported entity type")
     }
   }

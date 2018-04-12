@@ -32,7 +32,7 @@ import edp.davinci.persistence.entities.PostUploadMeta
 import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
 import edp.davinci.util.common.DateUtils
 import edp.davinci.util.common.DavinciConstants._
-import edp.davinci.util.es.ESConnection
+import edp.davinci.util.jdbc.ESConnection
 import org.apache.log4j.Logger
 
 import scala.collection.mutable
@@ -93,12 +93,9 @@ object SqlUtils extends Serializable {
       println("presto")
       TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
-    } else if (tmpJdbcUrl.indexOf("hive") > -1) {
-      println("hive")
-      config.setDriverClassName("org.apache.hive.jdbc.HiveDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
       config.setDriverClassName("moonbox.jdbc.MbDriver")
-    }else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
+    } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
     }
@@ -205,6 +202,7 @@ object SqlUtils extends Serializable {
     case "TIMESTAMP" => java.sql.Types.TIMESTAMP
     case "BLOB" => java.sql.Types.BLOB
     case "CLOB" => java.sql.Types.CLOB
+    case "CHAR" => java.sql.Types.CHAR
     case _ => throw new UnsupportedOperationException(s"Unknown Type: $fieldType")
   }
 
@@ -231,6 +229,7 @@ object SqlUtils extends Serializable {
     case "TIMESTAMP" => "TIMESTAMP"
     case "BLOB" => "BLOB"
     case "CLOB" => "CLOB"
+    case "CHAR" => "CHAR(1)"
     case _ => throw new UnsupportedOperationException(s"Unknown Type: $fieldType")
   }
 
@@ -239,7 +238,7 @@ object SqlUtils extends Serializable {
   else strType.toUpperCase match {
     case "INT" => value.trim.toInt
     case "BIGINT" => value.trim.toLong
-    case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" => value.trim
+    case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" | "CHAR" => value.trim
     case "FLOAT" => value.trim.toFloat
     case "DOUBLE" => value.trim.toDouble
     case "DECIMAL" => if ("" == value) new java.math.BigDecimal("0.0").stripTrailingZeros()

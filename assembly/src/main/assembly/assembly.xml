@@ -65,12 +65,12 @@
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>
-                ${project.parent.basedir}/swagger-ui
-            </directory>
-            <outputDirectory>swagger-ui</outputDirectory>
-        </fileSet>
+        <!--<fileSet>-->
+            <!--<directory>-->
+                <!--${project.parent.basedir}/swagger-ui-->
+            <!--</directory>-->
+            <!--<outputDirectory>swagger-ui</outputDirectory>-->
+        <!--</fileSet>-->
 
     </fileSets>
 

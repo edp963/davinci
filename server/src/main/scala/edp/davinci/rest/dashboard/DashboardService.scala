@@ -25,7 +25,7 @@ import edp.davinci.ModuleInstance
 import edp.davinci.module.DbModule._
 import edp.davinci.persistence.entities._
 import edp.davinci.rest._
-import edp.davinci.rest.shares.ShareRouteHelper
+import edp.davinci.rest.shares.ShareService
 import edp.davinci.util.common.ResponseUtils
 import slick.jdbc.MySQLProfile.api._
 
@@ -56,7 +56,7 @@ trait DashboardService {
         }.result
     }
     val map = db.run(query).map(_.map(s => {
-      val permission = ShareRouteHelper.getUserPermission(s._2, session.userId)
+      val permission = ShareService.getUserPermission(s._2, session.userId)
       WidgetLayout(s._1, s._2, s._3, s._4, s._5, s._6, s._7, s._8, s._9, s._10, s._11, permission)
     }))
     map
@@ -76,7 +76,7 @@ trait DashboardService {
   def update(session: SessionClass, dashboardSeq: Seq[PutDashboard]): Future[Unit] = {
     val query = DBIO.seq(dashboardSeq.map(r => {
       modules.dashboardQuery.filter(obj => obj.id === r.id && obj.create_by === session.userId).map(dashboard => (dashboard.name, dashboard.desc, dashboard.linkage_detail, dashboard.config, dashboard.publish, dashboard.update_by, dashboard.update_time))
-        .update(r.name, r.desc, r.linkage_detail, r.config, r.publish, session.userId, ResponseUtils.currentTime)
+        .update(r.name, r.desc, r.linkage_detail, Some(r.config.getOrElse("{}")), r.publish, session.userId, ResponseUtils.currentTime)
     }): _*)
     db.run(query)
   }

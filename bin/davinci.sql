@@ -268,6 +268,26 @@ CREATE TABLE `upload_meta` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 
+DROP TABLE IF EXISTS `cron_job`;
+CREATE TABLE `cron_job` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `name` varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+  `job_type` varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+  `job_status` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `cron_pattern` varchar(45) COLLATE utf8_unicode_ci NOT NULL,
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `config` text COLLATE utf8_unicode_ci NOT NULL,
+  `desc` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `exec_log` text COLLATE utf8_unicode_ci NOT NULL,
+  `create_by` bigint(20) NOT NULL,
+  `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `update_time` timestamp NOT NULL DEFAULT '1970-01-01 08:00:01',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name_UNIQUE` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+
  ALTER TABLE `dashboard` ADD COLUMN `linkage_detail` VARCHAR(1000) DEFAULT '[]';
  ALTER TABLE `view` ADD COLUMN `update_sql` text DEFAULT null;
  ALTER TABLE `rel_group_view` ADD COLUMN `config` text DEFAULT null;

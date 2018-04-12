@@ -26,6 +26,7 @@ package edp.davinci.rest
 
 import akka.http.scaladsl.server._
 import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModule, RoutesModuleImpl}
+import edp.davinci.rest.cronjob.CronJobRoutes
 import edp.davinci.rest.dashboard.DashboardRoutes
 import edp.davinci.rest.download.DownloadRoutes
 import edp.davinci.rest.group.GroupRoutes
@@ -54,6 +55,7 @@ class RoutesApi(modules: ConfigurationModule with PersistenceModule with Busines
   val davinci = new DavinciRoutes
   val upload = new UploadRoutes(modules)
   val check = new CheckRoutes(modules)
+  val cronJob = new CronJobRoutes(modules)
 
   val routes: Route =
     crossHandler(swagger.indexRoute) ~ crossHandler(swagger.routes) ~
@@ -71,6 +73,7 @@ class RoutesApi(modules: ConfigurationModule with PersistenceModule with Busines
           crossHandler(group.routes) ~
           crossHandler(sqlLog.routes) ~
           crossHandler(share.routes) ~
-          crossHandler(check.routes)
+          crossHandler(check.routes)~
+        crossHandler(cronJob.routes)
       }
 }

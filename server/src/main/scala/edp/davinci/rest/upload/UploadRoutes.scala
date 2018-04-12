@@ -7,9 +7,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,18 +19,16 @@
  */
 
 
-
-
-
 package edp.davinci.rest.upload
 
-import java.sql.Connection
-import javax.ws.rs.Path
+import java.io.FileOutputStream
+import java.sql.{Connection, PreparedStatement}
 
+import akka.Done
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.Framing
+import akka.stream.scaladsl.{Framing, Source}
 import akka.util.ByteString
 import com.github.tototoshi.csv
 import com.github.tototoshi.csv.{CSVFormat, CSVParser}
@@ -39,21 +37,19 @@ import edp.davinci.module.{BusinessModule, ConfigurationModule, PersistenceModul
 import edp.davinci.persistence.entities.{PostUploadMeta, SourceConfig, UploadMeta}
 import edp.davinci.rest.source.SourceService
 import edp.davinci.rest.{ResponseJson, SessionClass}
-import edp.davinci.util.json.JsonProtocol._
-import edp.davinci.util.common.OpType.OpType
-import edp.davinci.util.common.ResponseUtils.{currentTime, getHeader}
-import edp.davinci.util._
 import edp.davinci.util.common.DavinciConstants.requestTimeout
-import edp.davinci.util.common.{AuthorizationProvider, LoadMode, OpType}
+import edp.davinci.util.common.ResponseUtils.{currentTime, getHeader}
+import edp.davinci.util.common.{AuthorizationProvider, FileUtils}
+import edp.davinci.util.json.JsonProtocol._
 import edp.davinci.util.json.JsonUtils
 import edp.davinci.util.sql.SqlUtils
 import io.swagger.annotations._
+import javax.ws.rs.Path
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.Await
 import scala.concurrent.duration.{FiniteDuration, SECONDS}
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
 @Api(value = "/uploads", consumes = "application/json", produces = "application/json")
@@ -80,42 +76,10 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   def upload2Mysql: Route = path("uploads" / "csv" / LongNumber) { metaId =>
     post {
       fileUpload("csv") { case (fileInfo, fileStream) =>
-        val uploadClass = getUploadMeta(metaId)
-        val sourceConf = getSourceConf(uploadClass.source_id)
-        val listBuffer = new ListBuffer[List[String]]
-        val schemaMap = mutable.HashMap.empty[String, (String, Int)]
-        val batchSize = if (uploadClass.replace_mode == LoadMode.REPLACE) 500 else 1
-        var conn: Connection = null
         try {
-          conn = SqlUtils.getConnection(sourceConf.url, sourceConf.user, sourceConf.password)
-          var rowCnt: Int = 0
-          var schemaRow: List[String] = null
-          val writeResult = fileStream.via(Framing.delimiter(ByteString("\r\n"), 1024000))
-            .map(s => parser.parseLine(s.utf8String).get).runForeach(row => {
-            rowCnt += 1
-            if (rowCnt == 1) schemaRow = row
-            logger.info(">>>>>>>>>>>>>>>>")
-            if (rowCnt == 2) {
-              for (i <- row.indices) schemaMap += schemaRow(i) -> (row(i), i)
-              if (uploadClass.replace_mode == 1) SqlUtils.getCreateSql(schemaMap, uploadClass).foreach(conn.createStatement().execute)
-            }
-            if (rowCnt > 2)
-              if (rowCnt % batchSize == 0) {
-                listBuffer.append(row)
-                write2DB(schemaMap, listBuffer, conn, uploadClass)
-                listBuffer.clear()
-              } else listBuffer.append(row)
-          })
-          onComplete(writeResult) {
-            case Success(_) =>
-              write2DB(schemaMap, listBuffer, conn, uploadClass)
-              if (null != conn) conn.close()
-              complete(OK, ResponseJson[String](getHeader(200, null), s"${fileInfo.fileName} upload successful"))
-            case Failure(ex) =>
-              if (null != conn) conn.close()
-              logger.error("upload stream error", ex)
-              complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "write to db exception"))
-          }
+          val sourceList: Source[List[String], Any] = fileStream.via(Framing.delimiter(ByteString("\r\n"), 1024000))
+            .map(s => parser.parseLine(s.utf8String).get)
+          sourceListProcess(sourceList, metaId)
         } catch {
           case e: Throwable => logger.error("upload exception", e)
             complete(BadRequest, ResponseJson[String](getHeader(400, e.getMessage, null), ""))
@@ -125,40 +89,91 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
   }
 
 
-  private def write2DB(schemaMap: mutable.HashMap[String, (String, Int)], listBuffer: ListBuffer[List[String]], conn: Connection, uploadClass: PostUploadMeta) = {
-    def sqlProcess(opType: OpType): Unit = {
-      val fieldNames = if (opType == OpType.INSERT) schemaMap.keySet.toList else uploadClass.primary_keys.get.split(",").toList
-      val sql = if (opType == OpType.INSERT) SqlUtils.getInsertSql(fieldNames, uploadClass.table_name)
-      else SqlUtils.getDeleteSql(uploadClass)
-      val ps = conn.prepareStatement(sql)
-      if (listBuffer.nonEmpty) {
-        listBuffer.foreach(row => {
-          for (i <- fieldNames.indices) {
-            val accuracyIndex = schemaMap(fieldNames(i))._1.indexOf("(")
-            val strType = if (accuracyIndex > -1) schemaMap(fieldNames(i))._1.substring(0, accuracyIndex) else schemaMap(fieldNames(i))._1
-            val value = SqlUtils.s2dbValue(strType, row(schemaMap(fieldNames(i))._2).trim)
-            val sqlType = SqlUtils.str2dbType(strType)
-            if (null == value) ps.setNull(i + 1, sqlType)
-            else ps.setObject(i + 1, value, sqlType)
-          }
-          ps.addBatch()
-        })
-        ps.executeBatch()
-      }
-    }
-
+  private def sourceListProcess(sourceList: Source[List[String], Any], metaId: Long): Route = {
+    var conn: Connection = null
+    val uploadClass: PostUploadMeta = getUploadMeta(metaId)
+    val sourceConf = getSourceConf(uploadClass.source_id)
     try {
-      sqlProcess(OpType.INSERT)
-    } catch {
-      case s: com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException =>
-        logger.error("com.mysql.jdbc.exceptions ", s)
-        if (uploadClass.replace_mode == LoadMode.MERGE) {
-          sqlProcess(OpType.DELETE)
-          sqlProcess(OpType.INSERT)
+      conn = SqlUtils.getConnection(sourceConf.url, sourceConf.user, sourceConf.password)
+      conn.setAutoCommit(false)
+      var ps: PreparedStatement = null
+      var rowCnt: Int = 0
+      var schemaRow: List[String] = null
+      var schemaMap: mutable.HashMap[String, (String, Int)] = null
+      val done: Future[Done] = sourceList.runForeach(row => {
+        rowCnt += 1
+        if (rowCnt == 1) schemaRow = row
+        logger.info(s">>>>>>>>>>>>>>>> $rowCnt")
+        if (rowCnt == 2) {
+          schemaMap = getSchemaMap(schemaRow, row)
+          if (uploadClass.replace_mode == 1) {
+            val st = conn.createStatement()
+            val sqlSet = SqlUtils.getCreateSql(schemaMap, uploadClass)
+            sqlSet.foreach(st.execute)
+          }
+          ps = conn.prepareStatement(getSql(schemaMap, uploadClass.table_name))
         }
-      case e: Throwable => logger.error("ps execute ", e)
-        throw e
+        if (rowCnt > 2) {
+          psSet(schemaMap, row, ps)
+          ps.execute()
+        }
+      })
+      doDone(done, conn, ps)
+    } catch {
+      case ex: Throwable =>
+        logger.error("sourceListProcess exception", ex)
+        throw ex
     }
+  }
+
+
+  private def doDone(done: Future[Done], conn: Connection, ps: PreparedStatement) = {
+    onComplete(done) {
+      case Success(_) =>
+        try {
+          conn.commit()
+        } catch {
+          case ex: Throwable => logger.error("commit exception", ex)
+            conn.rollback()
+            throw ex
+        } finally {
+          if (null != conn) conn.close()
+        }
+        logger.info("do done successfully")
+        complete(OK, ResponseJson[String](getHeader(200, null), s"file upload successful"))
+      case Failure(ex) =>
+        logger.error("upload stream error", ex)
+        if (null != conn)
+          conn.close()
+        complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "write to db exception"))
+    }
+  }
+
+  private def getSql(schemaMap: mutable.HashMap[String, (String, Int)], tableName: String) = {
+    val fieldNames = schemaMap.keySet.toList
+    SqlUtils.getInsertSql(fieldNames, tableName)
+
+  }
+
+
+  private def psSet(schemaMap: mutable.HashMap[String, (String, Int)], row: List[String], ps: PreparedStatement): Unit = {
+    val fieldNames = schemaMap.keySet.toList
+    row.foreach(println)
+    for (i <- fieldNames.indices) {
+      val accuracyIndex = schemaMap(fieldNames(i))._1.indexOf("(")
+      val strType = if (accuracyIndex > -1) schemaMap(fieldNames(i))._1.substring(0, accuracyIndex) else schemaMap(fieldNames(i))._1
+      val value = SqlUtils.s2dbValue(strType, row(schemaMap(fieldNames(i))._2).trim)
+      val sqlType = SqlUtils.str2dbType(strType)
+      if (null == value) ps.setNull(i + 1, sqlType)
+      else ps.setObject(i + 1, value, sqlType)
+    }
+  }
+
+
+  private def getSchemaMap(schemaRow: List[String], fieldTypeRow: List[String]) = {
+    val schemaMap = mutable.HashMap.empty[String, (String, Int)]
+    for (i <- fieldTypeRow.indices) schemaMap += schemaRow(i) -> (fieldTypeRow(i), i)
+    schemaMap
   }
 
 
@@ -207,6 +222,40 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
       }
     }
   }
+
+
+  @Path("/local")
+  @ApiOperation(value = "upload meta", notes = "", nickname = "", httpMethod = "POST")
+  @ApiImplicitParams(Array(new ApiImplicitParam(name = "file ", value = "csv", required = true, dataType = "file", paramType = "formdata")
+  ))
+  @ApiResponses(Array(
+    new ApiResponse(code = 200, message = "OK"),
+    new ApiResponse(code = 401, message = "authorization error"),
+    new ApiResponse(code = 400, message = "bad request")
+  ))
+  def upload2Local: Route = path("uploads" / "csv" / LongNumber) { metaId =>
+    post {
+      fileUpload("csv") { case (fileInfo, fileStream) =>
+        val filePath = FileUtils.dir + "/tempFiles" + "/uuid.csv"
+        val fileOutput = new FileOutputStream(filePath)
+
+        def writeFileOnLocal(array: Array[Byte], byteString: ByteString): Array[Byte] = {
+          logger.info("in write file on local")
+          val byteArray: Array[Byte] = byteString.toArray
+          fileOutput.write(byteArray)
+          array ++ byteArray
+        }
+
+        onComplete(fileStream.runFold(Array[Byte]())(writeFileOnLocal)) {
+          case Success(array) => complete(OK, ResponseJson[String](getHeader(200, null), s"File successfully uploaded. Fil size is ${array.length}"))
+          case Failure(ex) => logger.error("save upload meta", ex)
+            complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), ""))
+        }
+      }
+    }
+  }
+
+
 }
 
 

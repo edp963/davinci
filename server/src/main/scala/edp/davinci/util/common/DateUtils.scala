@@ -135,7 +135,7 @@ trait DateUtils {
     * @param timeString time as String type
     * @return time as Date
     */
-  private def dt2dateInternal(timeString: String): Date = {
+   def dt2dateInternal(timeString: String): Date = {
     if (timeString == null) return null
 
     val DATE_DASH = "yyyy-MM-dd"

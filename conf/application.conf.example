@@ -38,50 +38,13 @@ mysqldb {
   }
 }
 
-h2db {
-  profile = "slick.jdbc.H2Profile$"
-  db {
-    url = "jdbc:h2:mem:test1"
-    profile = org.h2.Driver
-    keepAliveConnection = true
-    numThreads = 10
-  }
-}
 
-h2test {
-  profile = "slick.jdbc.H2Profile$"
-  db {
-    url = "jdbc:h2:mem:testing"
-    driver = org.h2.Driver
-  }
-}
-
-pgdb {
-  profile = "slick.jdbc.PostgresProfile$"
-  db {
-    url = "jdbc:postgresql:test1"
-    driver = org.postgresql.Driver
-    user = ""
-    pwd = ""
-    numThreads = 10
-  }
-}
-spark {
-  master = "//todo"
-  appName = "sparkcluster"
-}
-
-sparklocal {
-  master = "local[2]"
-  appName = "sparklocal"
-}
 
 httpServer {
   host = "localhost"
   port = 8080
 }
 
-domainName ="localhost:8080"
 
 
 jwtToken {
@@ -117,3 +80,26 @@ cache {
   mode:"stand-alone"
 }
 
+
+mail{
+    # 邮件服务器的SMTP地址
+    host = smtp.yeah.net
+    # 邮件服务器的SMTP端口
+    port = 25
+    # 发件人（必须正确，否则发送失败）
+    from = hutool@yeah.net
+    # 用户名
+    user = hutool
+    # 密码（注意，某些邮箱需要为SMTP服务单独设置密码，详情查看相关帮助）
+    pass = q1w2e3
+
+    #使用 STARTTLS安全连接
+    startttlsEnable = true
+    # 指定实现javax.net.SocketFactory接口的类的名称,这个类将被用于创建SMTP的套接字
+    socketFactoryClass = javax.net.ssl.SSLSocketFactory
+    # 如果设置为true,未能创建一个套接字使用指定的套接字工厂类将导致使用java.net.Socket创建的套接字类, 默认值为true
+    socketFactoryFallback = true
+    # 指定的端口连接到在使用指定的套接字工厂。如果没有设置,将使用默认端口465
+    socketFactoryPort = 465
+}
+phantomjs_home = "/$your_path$s/phantomjs-2.1.1-macosx/bin/phantomjs"
