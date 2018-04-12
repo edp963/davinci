@@ -149,7 +149,7 @@ export class Grid extends Component {
       globalFilterConfigPanelVisible: false,
       globalFilterTableSource: false,
 
-      resetSharePanel: false,
+      dashboardSharePanelAuthorized: false,
 
       nextMenuTitle: ''
     }
@@ -1279,9 +1279,9 @@ export class Grid extends Component {
       }
     })
   }
-  resetSharePanel = (flag) => {
+  changeDashboardSharePanelAuthorizeState = (state) => () => {
     this.setState({
-      resetSharePanel: flag === 'open'
+      dashboardSharePanelAuthorized: state
     })
   }
 
@@ -1382,7 +1382,8 @@ export class Grid extends Component {
       globalFilterConfigPanelVisible,
       globalFilterTableSource,
       interactiveItems,
-      allowFullScreen
+      allowFullScreen,
+      dashboardSharePanelAuthorized
     } = this.state
 
     let navDropdown = (<span />)
@@ -1615,8 +1616,8 @@ export class Grid extends Component {
                 shareInfo={currentDashboardShareInfo}
                 secretInfo={currentDashboardSecretInfo}
                 shareInfoLoading={currentDashboardShareInfoLoading}
-                resetSharePanel={this.state.resetSharePanel}
-                isResetSharePanel={this.resetSharePanel}
+                authorized={dashboardSharePanelAuthorized}
+                afterAuthorization={this.changeDashboardSharePanelAuthorizeState(true)}
                 type="dashboard"
               />
             }
@@ -1628,7 +1629,7 @@ export class Grid extends Component {
                 type="primary"
                 icon="share-alt"
                 style={{marginLeft: '8px'}}
-                onClick={() => this.resetSharePanel('open')}
+                onClick={this.changeDashboardSharePanelAuthorizeState(false)}
               />
             </Tooltip>
           </Popover>

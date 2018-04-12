@@ -42,7 +42,7 @@ export class DashboardItem extends PureComponent {
     super(props)
     this.state = {
       controlPanelVisible: false,
-      resetSharePanel: false
+      sharePanelAuthorized: false
     }
   }
 
@@ -163,9 +163,9 @@ export class DashboardItem extends PureComponent {
 
     onDownloadCsv(itemId)(shareInfo)
   }
-  resetSharePanel = (flag) => {
+  changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
-      resetSharePanel: flag === 'open'
+      sharePanelAuthorized: state
     })
   }
 
@@ -217,7 +217,8 @@ export class DashboardItem extends PureComponent {
     } = this.props
 
     const {
-      controlPanelVisible
+      controlPanelVisible,
+      sharePanelAuthorized
     } = this.state
 
     let updateParams
@@ -268,6 +269,7 @@ export class DashboardItem extends PureComponent {
       ? <Tooltip title="分享">
         <Popover
           placement="bottomRight"
+          trigger="click"
           content={
             <SharePanel
               id={widget.id}
@@ -278,13 +280,12 @@ export class DashboardItem extends PureComponent {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               onDownloadCsv={onDownloadCsv(itemId)}
-              resetSharePanel={this.state.resetSharePanel}
-              isResetSharePanel={this.resetSharePanel}
+              authorized={sharePanelAuthorized}
+              afterAuthorization={this.changeSharePanelAuthorizeState(true)}
             />
           }
-          trigger="click"
         >
-          <Icon type="share-alt" onClick={() => this.resetSharePanel('open')} />
+          <Icon type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
         </Popover>
       </Tooltip>
       : ''
