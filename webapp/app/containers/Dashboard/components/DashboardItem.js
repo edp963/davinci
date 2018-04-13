@@ -224,15 +224,12 @@ export class DashboardItem extends PureComponent {
     let updateParams
     let updateConfig
     let currentBizlogicId
-    if (widget && widget.config) {
+
+    if (widget.config) {
+      const config = JSON.parse(widget.config)
       currentBizlogicId = widget.flatTable_id
-      let config = JSON.parse(widget.config)
-      if (config && config['update_params']) {
-        updateParams = JSON.parse(config['update_params'])
-      }
-      if (config && config['update_fields']) {
-        updateConfig = JSON.parse(config['update_fields'])
-      }
+      updateParams = config['update_params']
+      updateConfig = config['update_fields']
     }
 
     const menu = (
