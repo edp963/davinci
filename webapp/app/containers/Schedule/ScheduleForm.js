@@ -177,17 +177,16 @@ export class ScheduleForm extends React.PureComponent {
             <FormItem>
               {
                   getFieldDecorator('month', {
-                    hidden: this.props.type === 'add',
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="1st">1st</Option><Option value="2nd">2nd</Option><Option value="3rd">3rd</Option><Option value="4th">4th</Option><Option value="5th">5th</Option>
-                      <Option value="6th">6th</Option><Option value="7th">7th</Option><Option value="8th">8th</Option><Option value="9th">9th</Option><Option value="10th">10th</Option>
-                      <Option value="11th">11th</Option><Option value="12th">12th</Option><Option value="13th">13th</Option><Option value="14th">14th</Option><Option value="15th">15th</Option>
-                      <Option value="16th">16th</Option><Option value="17th">17th</Option><Option value="18th">18th</Option><Option value="19th">19th</Option><Option value="20th">20th</Option>
-                      <Option value="21st">21st</Option><Option value="22nd">22nd</Option><Option value="23rd">23rd</Option><Option value="24th">24th</Option><Option value="25th">25th</Option>
-                      <Option value="26th">26th</Option><Option value="27th">27th</Option><Option value="28th">28th</Option><Option value="29th">29th</Option><Option value="30th">30th</Option>
-                      <Option value="31st">31st</Option>
+                      <Option value="1">1st</Option><Option value="2">2nd</Option><Option value="3">3rd</Option><Option value="4">4th</Option><Option value="5">5th</Option>
+                      <Option value="6">6th</Option><Option value="7">7th</Option><Option value="8">8th</Option><Option value="9">9th</Option><Option value="10">10th</Option>
+                      <Option value="11">11th</Option><Option value="12">12th</Option><Option value="13">13th</Option><Option value="14">14th</Option><Option value="15">15th</Option>
+                      <Option value="16">16th</Option><Option value="17">17th</Option><Option value="18">18th</Option><Option value="19">19th</Option><Option value="20">20th</Option>
+                      <Option value="21">21st</Option><Option value="22">22nd</Option><Option value="23">23rd</Option><Option value="24">24th</Option><Option value="25">25th</Option>
+                      <Option value="26">26th</Option><Option value="27">27th</Option><Option value="28">28th</Option><Option value="29">29th</Option><Option value="30">30th</Option>
+                      <Option value="31">31st</Option>
                     </Select>
                   )
                 }
@@ -202,7 +201,6 @@ export class ScheduleForm extends React.PureComponent {
             >
               {
                   getFieldDecorator('hour', {
-                    hidden: this.props.type === 'add',
                     initialValue: ''
                   })(
                     <Select>
@@ -221,17 +219,16 @@ export class ScheduleForm extends React.PureComponent {
             <FormItem>
               {
                   getFieldDecorator('week', {
-                    hidden: this.props.type === 'add',
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="Sunday">Sunday</Option>
-                      <Option value="Monday">Monday</Option>
-                      <Option value="Tuesday">Tuesday</Option>
-                      <Option value="Wednesday">Wednesday</Option>
-                      <Option value="Thursday">Thursday</Option>
-                      <Option value="Friday">Friday</Option>
-                      <Option value="Saturday">Saturday</Option>
+                      <Option value="0">Sunday</Option>
+                      <Option value="1">Monday</Option>
+                      <Option value="2">Tuesday</Option>
+                      <Option value="3">Wednesday</Option>
+                      <Option value="4">Thursday</Option>
+                      <Option value="5">Friday</Option>
+                      <Option value="6">Saturday</Option>
                     </Select>
                   )
                 }
@@ -245,8 +242,7 @@ export class ScheduleForm extends React.PureComponent {
             <FormItem>
               {
                   getFieldDecorator('time', {
-                    hidden: this.props.type === 'add',
-                    initialValue: moment('12:00', 'HH:mm')
+                    initialValue: moment('00:00', 'HH:mm')
                   })(
                     <TimePicker format="HH:mm" />
                   )

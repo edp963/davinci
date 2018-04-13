@@ -102,9 +102,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }, () => {
       const { id, name, desc, config } = this.props.schedule.find(s => s.id === scheduleId)
       const config2json = JSON.parse(config)
-      const {time_range, range, contentList} = config2json
+      const {time_range, range, contentList, month, hour, week } = config2json
       let formatterContentList = this.json2arr(contentList)
-      config2json.contentList = formatterContentList
       this.setState({
         emailConfig: config2json,
         dashboardTreeValue: formatterContentList
@@ -113,7 +112,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       if (range) {
         momentRange = range.map(ra => moment(ra))
       }
-      this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range })
+      this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week })
     })
   }
 
@@ -132,6 +131,25 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           emailConfig['week'] = values.week
           emailConfig['time'] = values.time
           emailConfig['range'] = values.range
+        //  emailConfig['contentList'] = this.arr2json(JSON.parse(values.config)['contentList'])
+        }
+        let valueTime = moment(values.time).format('HH:mm')
+        let formatterValueTime = valueTime.split(':')
+        let HH = formatterValueTime[0]
+        let mm = formatterValueTime[1]
+        let cronPatten = ''
+        if (values) {
+          let minute = '0'
+          let hour = '*'
+          if (values.time && mm !== '00' && HH !== '00') {
+            minute = mm
+            hour = HH
+          }
+          if (values.hour) {
+            minute = values.hour
+            hour = '*'
+          }
+          cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
         }
         this.setState({
           emailConfig: emailConfig
@@ -145,7 +163,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           let params = Object.assign({}, values, {
             start_date: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
             end_date: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-            cron_pattern: '0 * * * * ?'
+            cron_pattern: cronPatten
           })
           if (this.state.formType === 'add') {
             onAddSchedule(params).then(() => this.hideForm())
@@ -267,8 +285,17 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
   }
 
   onChangeRange = (value) => {
+    let rangeArr = ['month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
+    })
+    rangeArr.map(range => {
+      if (range === 'time') {
+      } else {
+        this.scheduleForm.setFieldsValue({
+          [range]: ''
+        })
+      }
     })
   }
 
