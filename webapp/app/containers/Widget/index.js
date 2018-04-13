@@ -300,36 +300,29 @@ export class Widget extends React.Component {
               </Breadcrumb>
             </Col>
             <Col span={6} className={utilStyles.textAlignRight}>
-              <Row gutter={12}>
-                <Col span={11}>
-                  <Select
-                    size="large"
-                    className={styles.searchSelect}
-                    placeholder="Widget 类型"
-                    onChange={this.onSearchWidgetType}
-                    allowClear
-                    value={filteredWidgetsType}
-                  >
-                    {widgetlibOptions}
-                  </Select>
-                </Col>
-                <Col span={11}>
-                  <Search
-                    className={styles.searchInput}
-                    placeholder="Widget 名称"
-                    onSearch={this.onSearchWidgetName}
-                  />
-                </Col>
-                <Tooltip placement="bottom" title="新增">
-                  <Button
-                    size="large"
-                    type="primary"
-                    icon="plus"
-                    onClick={this.showWorkbench('add')}
-                  />
-                </Tooltip>
-              </Row>
-
+              <Select
+                size="large"
+                className={styles.searchSelect}
+                placeholder="Widget 类型"
+                onChange={this.onSearchWidgetType}
+                allowClear
+                value={filteredWidgetsType}
+              >
+                {widgetlibOptions}
+              </Select>
+              <Search
+                className={styles.searchInput}
+                placeholder="Widget 名称"
+                onSearch={this.onSearchWidgetName}
+              />
+              <Tooltip placement="bottom" title="新增">
+                <Button
+                  size="large"
+                  type="primary"
+                  icon="plus"
+                  onClick={this.showWorkbench('add')}
+                />
+              </Tooltip>
             </Col>
           </Row>
         </Container.Title>
