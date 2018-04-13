@@ -40,7 +40,7 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
-import { KEY_COLUMN } from '../../../globalConstants'
+import { KEY_COLUMN, DEFAULT_SPLITER } from '../../../globalConstants'
 
 import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
@@ -181,14 +181,15 @@ export class WidgetForm extends React.Component {
     if (chartInfo) {
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
+          const itemName = `${chartInfo.name}${DEFAULT_SPLITER}${item.name}`
           let formItem = ''
 
           switch (item.component) {
             case 'select':
               formItem = (
-                <Col key={item.name} span={item.span || 24}>
+                <Col key={itemName} span={item.span || 24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(itemName, {
                       initialValue: item.default || undefined
                     })(
                       <Select
@@ -213,9 +214,9 @@ export class WidgetForm extends React.Component {
               break
             case 'multiSelect':
               formItem = (
-                <Col key={item.name} span={24}>
+                <Col key={itemName} span={24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {})(
+                    {getFieldDecorator(itemName, {})(
                       <Select
                         placeholder={item.tip || item.placeholder || item.name}
                         mode="multiple"
@@ -232,9 +233,9 @@ export class WidgetForm extends React.Component {
               break
             case 'checkbox':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={itemName} span={item.span || 12}>
                   <FormItem label="">
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(itemName, {
                       initialValue: item.default || []
                     })(
                       <CheckboxGroup
@@ -248,9 +249,9 @@ export class WidgetForm extends React.Component {
               break
             case 'inputnumber':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={itemName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(itemName, {
                       initialValue: item.default || 0
                     })(
                       <InputNumber
@@ -266,9 +267,9 @@ export class WidgetForm extends React.Component {
               break
             case 'input':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={itemName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(itemName, {
                       initialValue: ''
                     })(
                       <Input
@@ -282,9 +283,9 @@ export class WidgetForm extends React.Component {
               break
             case 'radio':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={itemName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(itemName, {
                       initialValue: item.default || ''
                     })(
                       <RadioGroup

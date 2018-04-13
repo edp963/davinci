@@ -115,6 +115,7 @@ export class Grid extends Component {
     this.interactCallbacks = {}
     this.interactingLinkagers = {}
     this.interactGlobalFilters = {}
+    this.resizeSign = void 0
 
     this.state = {
       mounted: false,
@@ -266,10 +267,12 @@ export class Grid extends Component {
   }
 
   componentDidMount () {
+    window.addEventListener('resize', this.onResize, false)
     this.setState({ mounted: true })
   }
 
   componentWillUnmount () {
+    window.removeEventListener('resize', this.onResize, false)
     Object.keys(this.charts).forEach(k => {
       this.charts[k].dispose()
     })
@@ -397,26 +400,18 @@ export class Grid extends Component {
     })
   }
 
-  onLayoutChange = (layout, layouts) => {
+  onLayoutChange = (layout) => {
     // setTimtout 中 setState 会被同步执行
     setTimeout(() => {
-      const { currentItems, currentDatasources, widgets } = this.props
+      const { currentItems } = this.props
       const { localPositions, modifiedPositions } = this.state
 
       if (modifiedPositions) {
         const newModifiedItems = changePosition(modifiedPositions, layout, (pos) => {
           const dashboardItem = currentItems.find(item => item.id === Number(pos.i))
-          const widget = widgets.find(w => w.id === dashboardItem.widget_id)
-          const data = currentDatasources[dashboardItem.id]
-          const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
-
-          if (chartInfo.renderer === ECHARTS_RENDERER) {
-            const chartInstanceId = `widget_${dashboardItem.id}`
-            const chartInstance = this.charts[chartInstanceId]
-            chartInstance.dispose()
-            this.charts[chartInstanceId] = echarts.init(document.getElementById(chartInstanceId), 'default')
-            this.renderChart(dashboardItem.id, widget, data ? data.dataSource : [], chartInfo)
-          }
+          const chartInstanceId = `widget_${dashboardItem.id}`
+          const chartInstance = this.charts[chartInstanceId]
+          chartInstance && chartInstance.resize()
         })
 
         this.setState({
@@ -425,6 +420,18 @@ export class Grid extends Component {
         })
       }
     }, 50)
+  }
+
+  onResize = () => {
+    this.resizeSign === void 0 && clearTimeout(this.resizeSign)
+    this.resizeSign = setTimeout(() => {
+      this.props.currentItems.forEach(ci => {
+        const chartInstance = this.charts[`widget_${ci.id}`]
+        chartInstance && chartInstance.resize()
+      })
+      clearTimeout(this.resizeSign)
+      this.resizeSign = void 0
+    }, 500)
   }
 
   showAddDashboardItemForm = () => {

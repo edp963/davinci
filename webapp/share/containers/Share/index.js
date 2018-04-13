@@ -101,6 +101,7 @@ export class Share extends React.Component {
     this.interactCallbacks = {}
     this.interactingLinkagers = {}
     this.interactGlobalFilters = {}
+    this.resizeSign = void 0
   }
 
   /**
@@ -157,6 +158,7 @@ export class Share extends React.Component {
   }
 
   componentDidMount () {
+    window.addEventListener('resize', this.onResize, false)
     this.setState({ mounted: true })
   }
 
@@ -190,6 +192,7 @@ export class Share extends React.Component {
   }
 
   componentWillUnmount () {
+    window.removeEventListener('resize', this.onResize, false)
     Object.keys(this.charts).forEach(k => {
       this.charts[k].dispose()
     })
@@ -327,29 +330,34 @@ export class Share extends React.Component {
     })
   }
 
-  onLayoutChange = (layout, layouts) => {
+  onLayoutChange = (layout) => {
     setTimeout(() => {
-      const { currentItems, dataSources, widgets } = this.props
+      const { currentItems } = this.props
       const { modifiedPositions } = this.state
+
       const newModifiedItems = changePosition(modifiedPositions, layout, (pos) => {
         const dashboardItem = currentItems.find(item => item.id === Number(pos.i))
-        const widget = widgets.find(w => w.id === dashboardItem.widget_id)
-        const data = dataSources[dashboardItem.id]
-        const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
-
-        if (chartInfo.renderer === ECHARTS_RENDERER) {
-          const chartInstanceId = `widget_${dashboardItem.id}`
-          const chartInstance = this.charts[chartInstanceId]
-          chartInstance.dispose()
-          this.charts[chartInstanceId] = echarts.init(document.getElementById(chartInstanceId), 'default')
-          this.renderChart(dashboardItem.id, widget, data ? data.dataSource : [], chartInfo)
-        }
+        const chartInstanceId = `widget_${dashboardItem.id}`
+        const chartInstance = this.charts[chartInstanceId]
+        chartInstance && chartInstance.resize()
       })
 
       this.setState({
         modifiedPositions: newModifiedItems
       })
     })
+  }
+
+  onResize = () => {
+    this.resizeSign === void 0 && clearTimeout(this.resizeSign)
+    this.resizeSign = setTimeout(() => {
+      this.props.currentItems.forEach(ci => {
+        const chartInstance = this.charts[`widget_${ci.id}`]
+        chartInstance && chartInstance.resize()
+      })
+      clearTimeout(this.resizeSign)
+      this.resizeSign = void 0
+    }, 500)
   }
 
   showFiltersForm = (itemId, keys, types) => () => {
