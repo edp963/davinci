@@ -38,6 +38,7 @@ import Popconfirm from 'antd/lib/popconfirm'
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Input from 'antd/lib/input'
 import Pagination from 'antd/lib/pagination'
+import Select from 'antd/lib/select'
 const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
@@ -62,6 +63,9 @@ export class Widget extends React.Component {
       copyWidgetVisible: false,
       copyQueryInfo: null,
       filteredWidgets: null,
+      filteredWidgetsName: '',
+      filteredWidgetsType: undefined,
+      filteredWidgetsTypeId: '',
       pageSize: 24,
       currentPage: 1
     }
@@ -154,10 +158,20 @@ export class Widget extends React.Component {
     })
   })
 
-  onSearchWidget = (value) => {
+  onSearchWidgetName = (value) => {
+    const { widgets } = this.props
+    const { filteredWidgetsTypeId, filteredWidgetsType } = this.state
+
+    const filterLib = widgetlibs.find(i => i.id === Number(filteredWidgetsTypeId))
+
     this.setState({
-      filteredWidgets: this.props.widgets.filter(i => i.name.includes(value)),
-      currentPage: 1
+      filteredWidgetsName: value,
+      currentPage: 1,
+      filteredWidgets: filteredWidgetsType
+        ? widgets.filter(i => i.name.includes(value) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+        : value
+          ? widgets.filter(i => i.name.includes(value))
+          : widgets
     })
   }
 
@@ -171,6 +185,26 @@ export class Widget extends React.Component {
     this.setState({
       currentPage: current,
       pageSize: pageSize
+    })
+  }
+
+  onSearchWidgetType = (value) => {
+    const { widgets } = this.props
+    const { filteredWidgetsName } = this.state
+
+    const filterLib = value ? widgetlibs.find(i => i.id === Number(value)) : ''
+
+    this.setState({
+      filteredWidgetsTypeId: value,
+      filteredWidgetsType: filterLib.title,
+      currentPage: 1,
+      filteredWidgets: filteredWidgetsName
+        ? value
+          ? widgets.filter(i => i.name.includes(filteredWidgetsName) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+          : widgets.filter(i => i.name.includes(filteredWidgetsName))
+        : value
+          ? widgets.filter(i => JSON.parse(i.chart_params).widgetType.includes(filterLib.name))
+          : widgets
     })
   }
 
@@ -188,7 +222,9 @@ export class Widget extends React.Component {
       copyWidgetVisible,
       filteredWidgets,
       currentPage,
-      pageSize
+      pageSize,
+      filteredWidgetsTypeId,
+      filteredWidgetsType
     } = this.state
 
     const widgetsArr = filteredWidgets || widgets
@@ -239,6 +275,18 @@ export class Widget extends React.Component {
         })
       : ''
 
+    const widgetlibOptions = widgetlibs.map(w => (
+      <Select.Option key={w.id} value={`${w.id}`}>
+        {w.title}
+        {
+          `${w.id}` !== filteredWidgetsTypeId
+            ? (
+              <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
+          ) : ''
+        }
+      </Select.Option>
+    ))
+
     return (
       <Container>
         <Helmet title="Widget" />
@@ -252,19 +300,36 @@ export class Widget extends React.Component {
               </Breadcrumb>
             </Col>
             <Col span={6} className={utilStyles.textAlignRight}>
-              <Search
-                className={`${utilStyles.searchInput} ${utilStyles.searchInputAdmin}`}
-                placeholder="Widget 名称"
-                onSearch={this.onSearchWidget}
-              />
-              <Tooltip placement="bottom" title="新增">
-                <Button
-                  size="large"
-                  type="primary"
-                  icon="plus"
-                  onClick={this.showWorkbench('add')}
-                />
-              </Tooltip>
+              <Row gutter={12}>
+                <Col span={11}>
+                  <Select
+                    size="large"
+                    className={styles.searchSelect}
+                    placeholder="Widget 类型"
+                    onChange={this.onSearchWidgetType}
+                    allowClear
+                    value={filteredWidgetsType}
+                  >
+                    {widgetlibOptions}
+                  </Select>
+                </Col>
+                <Col span={11}>
+                  <Search
+                    className={styles.searchInput}
+                    placeholder="Widget 名称"
+                    onSearch={this.onSearchWidgetName}
+                  />
+                </Col>
+                <Tooltip placement="bottom" title="新增">
+                  <Button
+                    size="large"
+                    type="primary"
+                    icon="plus"
+                    onClick={this.showWorkbench('add')}
+                  />
+                </Tooltip>
+              </Row>
+
             </Col>
           </Row>
         </Container.Title>
