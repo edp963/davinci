@@ -34,5 +34,6 @@ export default {
   dashboard: `${host}/dashboards`,
   share: `${host}/shares`,
   checkName: `${host}/check/name`,
-  uploads: `${host}/uploads`
+  uploads: `${host}/uploads`,
+  schedule: `${host}/cronjobs`
 }
