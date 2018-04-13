@@ -41,7 +41,6 @@ export const promiseActionCreator = (type, payload = []) =>
       `(app/utils/reduxPromisation...) promiseActionCreator: Expected ${payload.length} payloads but got ${paramArr.length}.
        预期有 ${payload.length} 个 payloads 但确拿到了 ${paramArr.length} 个`
     )
-
     return {
       type: type,
       payload: payload.reduce((obj, name, index) => {

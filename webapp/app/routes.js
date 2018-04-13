@@ -30,6 +30,7 @@ import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
 import Login from './containers/Login'
 import Main from './containers/Main'
+import Schedule from './containers/Schedule'
 // import Display from './containers/Display'
 
 const errorLoading = (err) => {
@@ -95,6 +96,11 @@ export default function createRoutes (store) {
               path: '/report/groups',
               name: 'groups',
               component: Group
+            },
+            {
+              path: '/report/schedule',
+              name: 'schedule',
+              component: Schedule
             }
           ]
         }
