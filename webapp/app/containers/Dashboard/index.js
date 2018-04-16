@@ -115,8 +115,9 @@ export class Dashboard extends React.Component {
   }
 
   onSearchDashboard = (value) => {
+    const valReg = new RegExp(value, 'i')
     this.setState({
-      filteredDashboards: this.props.dashboards.filter(i => i.name.includes(value)),
+      filteredDashboards: this.props.dashboards.filter(i => valReg.test(i.name)),
       currentPage: 1
     })
   }

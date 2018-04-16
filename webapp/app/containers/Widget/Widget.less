@@ -250,13 +250,17 @@
   float: right;
 }
 
-.searchInput {
-  width: 40%;
-  height: 32px;
-  margin-right: 10px;
+.searchCol, .addCol {
+  padding: 0 4px;
+  text-align: right;
 }
 
 .searchSelect {
-  width: 40%;
-  margin-right: 10px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .searchCol {
+    margin-bottom: 8px;
+  }
 }
