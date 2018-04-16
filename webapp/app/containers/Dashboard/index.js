@@ -255,7 +255,7 @@ export class Dashboard extends React.Component {
         <Helmet title="Dashboard" />
         <Container.Title>
           <Row>
-            <Col span={18}>
+            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link>
@@ -264,13 +264,20 @@ export class Dashboard extends React.Component {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col span={6} className={utilStyles.textAlignRight}>
-              <Search
-                className={`${utilStyles.searchInput} ${loginUser.admin ? utilStyles.searchInputAdmin : ''}`}
-                placeholder="Dashboard 名称"
-                onSearch={this.onSearchDashboard}
-              />
-              {addButton}
+            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+              <Row>
+                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={utilStyles.searchCol}>
+                  <Search
+                    size="large"
+                    className={`${utilStyles.searchInput} ${loginUser.admin ? utilStyles.searchInputAdmin : ''}`}
+                    placeholder="Dashboard 名称"
+                    onSearch={this.onSearchDashboard}
+                  />
+                </Col>
+                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={utilStyles.addCol}>
+                  {addButton}
+                </Col>
+              </Row>
             </Col>
           </Row>
         </Container.Title>
