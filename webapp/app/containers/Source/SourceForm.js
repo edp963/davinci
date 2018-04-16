@@ -84,10 +84,9 @@ export class SourceForm extends React.PureComponent {
           <Col span={24}>
             <FormItem label="类型" {...commonFormItemStyle}>
               {getFieldDecorator('type', {
-                initialValue: 'moonbox'
+                initialValue: 'jdbc'
               })(
                 <Select>
-                  <Option value="moonbox">Moonbox</Option>
                   <Option value="jdbc">JDBC</Option>
                   <Option value="csv">CSV文件</Option>
                 </Select>
@@ -116,7 +115,7 @@ export class SourceForm extends React.PureComponent {
                 }],
                 initialValue: ''
               })(
-                <Input placeholder="Password" />
+                <Input placeholder="Password" type="password" />
               )}
             </FormItem>
           </Col>

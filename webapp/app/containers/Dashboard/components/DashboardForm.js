@@ -78,6 +78,11 @@ export class DashboardForm extends React.PureComponent {
                 <Input />
               )}
             </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('config', {})(
+                <Input />
+              )}
+            </FormItem>
             <FormItem label="名称" {...commonFormItemStyle}>
               {getFieldDecorator('name', {
                 rules: [{
