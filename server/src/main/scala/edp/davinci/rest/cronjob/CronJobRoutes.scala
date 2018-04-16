@@ -94,11 +94,14 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
       authenticateOAuth2Async[SessionClass](AuthorizationProvider.realm, AuthorizationProvider.authorize) {
         session =>
           entity(as[PutCronJobSeq]) { putCronJobSeq =>
-            val cronJobs = putCronJobSeq.payload.map(p => CronJob(0, p.name, p.job_type, NEW, p.cron_pattern, p.start_date, p.end_date, p.config, p.desc, "", session.userId, currentTime, currentTime))
-            onComplete(updateCronJob(session, putCronJobSeq.payload)) {
+           onComplete(updateCronJob(session, putCronJobSeq.payload)) {
               case Success(_) =>
+                try{
+                val cronJobs = putCronJobSeq.payload.map(p => CronJob(p.id, p.name, p.job_type, NEW, p.cron_pattern, p.start_date, p.end_date, p.config, p.desc, "", session.userId, currentTime, currentTime))
                 QuartzManager.modifyJob(cronJobs.head)
-                complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), cronJobs))
+                complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), cronJobs))}catch{
+                  case ex:Throwable =>complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+                }
               case Failure(ex) =>
                 logger.error(s"update cron job error", ex)
                 complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
@@ -126,8 +129,11 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
         session =>
           onComplete(deleteCronJob(session, jobId)) {
             case Success(_) =>
+              try{
               QuartzManager.removeJob(jobId.toString, jobId.toString)
-              complete(OK, ResponseJson[String](getHeader(200, session), "删除成功"))
+              complete(OK, ResponseJson[String](getHeader(200, session), "删除成功"))}catch{
+                case ex:Throwable =>complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              }
             case Failure(ex) => logger.error(s"delete cron job  error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
@@ -153,11 +159,14 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
         session =>
           onComplete(getJobById(session, jobId)) {
             case Success(job) =>
+              try{
               QuartzManager.addJob(job)
               sendMail(job)
               val refreshStatusJob = CronJob(job.id, job.name, job.job_type, STARTED, job.cron_pattern, job.start_date, job.end_date, job.config, job.desc, STARTED, job.create_by, job.create_time, job.update_time)
               Await.result(updateCronJobStatus(job.id, STARTED, ResponseUtils.currentTime, STARTED), new FiniteDuration(30, SECONDS))
-              complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), Seq(refreshStatusJob)))
+              complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), Seq(refreshStatusJob)))}catch{
+                case ex:Throwable =>complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              }
             case Failure(ex) => logger.error(s"get cron job error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
@@ -183,10 +192,13 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
         session =>
           onComplete(getJobById(session, jobId)) {
             case Success(job) =>
+              try{
               QuartzManager.removeJob(job.id.toString, job.id.toString)
               val refreshStatusJob = CronJob(job.id, job.name, job.job_type, STOPPED, job.cron_pattern, job.start_date, job.end_date, job.config, job.desc, STOPPED, job.create_by, job.create_time, job.update_time)
               Await.result(updateCronJobStatus(job.id, STOPPED, ResponseUtils.currentTime, STOPPED), new FiniteDuration(30, SECONDS))
-              complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), Seq(refreshStatusJob)))
+              complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), Seq(refreshStatusJob)))}catch{
+                case ex:Throwable =>complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
+              }
             case Failure(ex) => logger.error(s"get cron job error", ex)
               complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
           }
