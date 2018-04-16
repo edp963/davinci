@@ -104,7 +104,8 @@ export class Dashboard extends React.Component {
         if (this.state.formType === 'add') {
           this.props.onAddDashboard(Object.assign({}, values, {
             pic: `${Math.ceil(Math.random() * 19)}`,
-            linkage_detail: '[]'
+            linkage_detail: '[]',
+            config: '{}'
           }))
             .then(() => { this.hideDashboardForm() })
         } else {

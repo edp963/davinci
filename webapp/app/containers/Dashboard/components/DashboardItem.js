@@ -228,8 +228,13 @@ export class DashboardItem extends PureComponent {
     if (widget.config) {
       const config = JSON.parse(widget.config)
       currentBizlogicId = widget.flatTable_id
-      updateParams = config['update_params']
-      updateConfig = config['update_fields']
+      // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
+      updateParams = typeof config['update_params'] === 'string'
+        ? JSON.parse(config['update_params'])
+        : config['update_params']
+      updateConfig = typeof config['update_fields'] === 'string'
+        ? JSON.parse(config['update_fields'])
+        : config['update_fields']
     }
 
     const menu = (

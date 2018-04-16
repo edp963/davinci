@@ -369,9 +369,6 @@ export class Source extends React.PureComponent {
       dataIndex: 'type',
       key: 'type',
       filters: [{
-        text: 'Moonbox',
-        value: 'moonbox'
-      }, {
         text: 'JDBC',
         value: 'jdbc'
       }, {
@@ -383,8 +380,6 @@ export class Source extends React.PureComponent {
       render: (text, record) => {
         let type = record.type
         switch (type) {
-          case 'moonbox':
-            return 'Moonbox'
           case 'jdbc':
             return 'JDBC'
           case 'csv':
