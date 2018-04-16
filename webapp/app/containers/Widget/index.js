@@ -302,7 +302,7 @@ export class Widget extends React.Component {
             </Col>
             <Col xl={6} lg={6} md={8} sm={12} xs={24}>
               <Row>
-                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={utilStyles.searchCol}>
                   <Select
                     size="large"
                     className={styles.searchSelect}
@@ -314,14 +314,14 @@ export class Widget extends React.Component {
                     {widgetlibOptions}
                   </Select>
                 </Col>
-                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={utilStyles.searchCol}>
                   <Search
                     size="large"
                     placeholder="Widget 名称"
                     onSearch={this.onSearchWidgetName}
                   />
                 </Col>
-                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={styles.addCol}>
+                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={utilStyles.addCol}>
                   <Tooltip placement="bottom" title="新增">
                     <Button
                       size="large"
@@ -333,10 +333,6 @@ export class Widget extends React.Component {
                 </Col>
               </Row>
             </Col>
-
-
-
-            {/*className={utilStyles.textAlignRight}*/}
           </Row>
         </Container.Title>
         <Container.Body card>
