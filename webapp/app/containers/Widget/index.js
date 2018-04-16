@@ -161,16 +161,17 @@ export class Widget extends React.Component {
   onSearchWidgetName = (value) => {
     const { widgets } = this.props
     const { filteredWidgetsTypeId, filteredWidgetsType } = this.state
+    const valReg = new RegExp(value, 'i')
 
     const filterLib = widgetlibs.find(i => i.id === Number(filteredWidgetsTypeId))
 
     this.setState({
-      filteredWidgetsName: value,
+      filteredWidgetsName: valReg,
       currentPage: 1,
       filteredWidgets: filteredWidgetsType
-        ? widgets.filter(i => i.name.includes(value) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
-        : value
-          ? widgets.filter(i => i.name.includes(value))
+        ? widgets.filter(i => valReg.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+        : valReg
+          ? widgets.filter(i => valReg.test(i.name))
           : widgets
     })
   }
@@ -200,8 +201,8 @@ export class Widget extends React.Component {
       currentPage: 1,
       filteredWidgets: filteredWidgetsName
         ? value
-          ? widgets.filter(i => i.name.includes(filteredWidgetsName) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
-          : widgets.filter(i => i.name.includes(filteredWidgetsName))
+          ? widgets.filter(i => filteredWidgetsName.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+          : widgets.filter(i => filteredWidgetsName.test(i.name))
         : value
           ? widgets.filter(i => JSON.parse(i.chart_params).widgetType.includes(filterLib.name))
           : widgets
@@ -292,38 +293,50 @@ export class Widget extends React.Component {
         <Helmet title="Widget" />
         <Container.Title>
           <Row>
-            <Col span={18}>
+            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link>Widget</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col span={6} className={utilStyles.textAlignRight}>
-              <Select
-                size="large"
-                className={styles.searchSelect}
-                placeholder="Widget 类型"
-                onChange={this.onSearchWidgetType}
-                allowClear
-                value={filteredWidgetsType}
-              >
-                {widgetlibOptions}
-              </Select>
-              <Search
-                className={styles.searchInput}
-                placeholder="Widget 名称"
-                onSearch={this.onSearchWidgetName}
-              />
-              <Tooltip placement="bottom" title="新增">
-                <Button
-                  size="large"
-                  type="primary"
-                  icon="plus"
-                  onClick={this.showWorkbench('add')}
-                />
-              </Tooltip>
+            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+              <Row>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
+                  <Select
+                    size="large"
+                    className={styles.searchSelect}
+                    placeholder="Widget 类型"
+                    onChange={this.onSearchWidgetType}
+                    allowClear
+                    value={filteredWidgetsType}
+                  >
+                    {widgetlibOptions}
+                  </Select>
+                </Col>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
+                  <Search
+                    size="large"
+                    placeholder="Widget 名称"
+                    onSearch={this.onSearchWidgetName}
+                  />
+                </Col>
+                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={styles.addCol}>
+                  <Tooltip placement="bottom" title="新增">
+                    <Button
+                      size="large"
+                      type="primary"
+                      icon="plus"
+                      onClick={this.showWorkbench('add')}
+                    />
+                  </Tooltip>
+                </Col>
+              </Row>
             </Col>
+
+
+
+            {/*className={utilStyles.textAlignRight}*/}
           </Row>
         </Container.Title>
         <Container.Body card>

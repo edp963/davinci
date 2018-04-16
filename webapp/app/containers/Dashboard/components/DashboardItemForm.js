@@ -54,8 +54,9 @@ export class DashboardItemForm extends React.PureComponent {
   }
 
   onSearchWidgetItem = (value) => {
+    const valReg = new RegExp(value, 'i')
     this.setState({
-      filteredWidgets: this.props.widgets.filter(i => i.name.includes(value)),
+      filteredWidgets: this.props.widgets.filter(i => valReg.test(i.name)),
       currentPage: 1
     })
   }
