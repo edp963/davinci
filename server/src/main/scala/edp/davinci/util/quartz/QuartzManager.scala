@@ -20,6 +20,8 @@
 
 package edp.davinci.util.quartz
 
+import java.util.Date
+
 import edp.davinci.persistence.entities.CronJob
 import edp.davinci.rest.cronjob.CronJobService.getJobExecutor
 import edp.davinci.util.common.DateUtils.dt2dateInternal
@@ -40,7 +42,7 @@ object QuartzManager {
     val endTimeStamp = dt2dateInternal(cronJob.end_date).getTime
     if (endTimeStamp > System.currentTimeMillis()) {
       val triggerBuilder = TriggerBuilder.newTrigger.withIdentity(cronJob.id.toString)
-      triggerBuilder.startNow()
+      triggerBuilder.startAt(if (startTimeStamp > new Date().getTime) dt2dateInternal(cronJob.start_date) else new Date())
         .withSchedule(CronScheduleBuilder.cronSchedule(cronJob.cron_pattern))
         .endAt(dt2dateInternal(cronJob.end_date))
       // 创建Trigger对象
@@ -59,9 +61,7 @@ object QuartzManager {
     val sched = schedulerFactory.getScheduler
     val triggerKey = TriggerKey.triggerKey(cronJob.id.toString)
     val trigger = sched.getTrigger(triggerKey).asInstanceOf[CronTrigger]
-    if (trigger == null) return
-    val oldTime = trigger.getCronExpression
-    if (!oldTime.equalsIgnoreCase(cronJob.cron_pattern)) {
+    if (trigger != null) {
       removeJob(cronJob.id.toString, cronJob.id.toString)
       addJob(cronJob)
     }
