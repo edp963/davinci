@@ -242,7 +242,8 @@ export class ScheduleForm extends React.PureComponent {
             <FormItem>
               {
                   getFieldDecorator('time', {
-                    initialValue: moment('00:00', 'HH:mm')
+                    initialValue: moment('00:00', 'HH:mm'),
+                    hidden: ['Day', 'Week', 'Month'].indexOf(this.props.rangeTime) < 0
                   })(
                     <TimePicker format="HH:mm" />
                   )
