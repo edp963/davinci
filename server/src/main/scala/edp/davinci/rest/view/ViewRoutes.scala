@@ -335,7 +335,7 @@ class ViewRoutes(modules: ConfigurationModule with PersistenceModule with Busine
     val sourceConfig = JsonUtils.json2caseClass[SourceConfig](url)
     val projectSql: String =
       if (!QueryHelper.isES(sourceConfig.url))
-        s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY WHERE 1 = 0"
+        s"SELECT * FROM (${renderedSQLBuf.last}) AS SQLVERIFY LIMIT 10"
       else renderedSQLBuf.last
     renderedSQLBuf.remove(renderedSQLBuf.length - 1)
     renderedSQLBuf.append(projectSql)

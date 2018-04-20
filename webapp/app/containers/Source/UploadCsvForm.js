@@ -29,7 +29,6 @@ import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 import Upload from 'antd/lib/upload'
 import Icon from 'antd/lib/icon'
-import Popover from 'antd/lib/popover'
 import Button from 'antd/lib/button'
 import Steps from 'antd/lib/steps'
 const Step = Steps.Step
@@ -41,7 +40,7 @@ export class UploadCsvForm extends React.PureComponent {
   constructor (props) {
     super(props)
     this.state = {
-      replaceModeState: 1
+      replaceModeState: 0
     }
   }
   replaceModeChange = (e) => {
@@ -123,18 +122,10 @@ export class UploadCsvForm extends React.PureComponent {
                 initialValue: 0
               })(
                 <RadioGroup onChange={this.replaceModeChange} value={this.state.replaceModeState}>
-                  <Radio value={1}>替换</Radio>
                   <Radio value={0}>追加</Radio>
+                  <Radio value={1}>替换</Radio>
                 </RadioGroup>
               )}
-              <Popover
-                placement="right"
-                content={
-                  <p>首次上传文件到新表请选择"替换"</p>
-                }
-              >
-                <Icon type="question-circle-o" />
-              </Popover>
             </FormItem>
           </Col>
         </Row>
