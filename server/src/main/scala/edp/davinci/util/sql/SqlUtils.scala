@@ -94,10 +94,14 @@ object SqlUtils extends Serializable {
       TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
+      println("moonbox")
       config.setDriverClassName("moonbox.jdbc.MbDriver")
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
+    }else if(tmpJdbcUrl.indexOf("kylin") > -1){
+      println("kylin")
+      config.setDriverClassName("org.apache.kylin.jdbc.Driver")
     }
 
     if (tmpJdbcUrl.indexOf("sql4es") > -1)
