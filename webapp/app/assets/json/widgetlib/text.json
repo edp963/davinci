@@ -3,6 +3,21 @@
   "name": "text",
   "title": "富文本",
   "params": [
-
+    {
+      "name": "richText",
+      "title": "富文本格式",
+      "items": [
+        {
+          "name": "richTextContent",
+          "title": "富文本",
+          "component": "input"
+        },
+        {
+          "name": "richTextEdited",
+          "title": "已编辑好的文本",
+          "component": "input"
+        }
+      ]
+    }
   ]
 }

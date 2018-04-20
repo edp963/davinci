@@ -40,7 +40,7 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
-import { KEY_COLUMN, DEFAULT_SPLITER } from '../../../globalConstants'
+import { KEY_COLUMN } from '../../../globalConstants'
 
 import utilStyles from '../../../assets/less/util.less'
 import styles from '../Widget.less'
@@ -96,7 +96,7 @@ export class WidgetForm extends React.Component {
           `${w.id}` !== form.getFieldValue('widgetlib_id')
             ? (
               <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-            ) : ''
+          ) : ''
         }
       </Option>
     ))
@@ -181,15 +181,14 @@ export class WidgetForm extends React.Component {
     if (chartInfo) {
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
-          const itemName = `${chartInfo.name}${DEFAULT_SPLITER}${item.name}`
           let formItem = ''
 
           switch (item.component) {
             case 'select':
               formItem = (
-                <Col key={itemName} span={item.span || 24}>
+                <Col key={item.name} span={item.span || 24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(item.name, {
                       initialValue: item.default || undefined
                     })(
                       <Select
@@ -199,11 +198,11 @@ export class WidgetForm extends React.Component {
                       >
                         {
                           item && item.values && item.values.length > 0
-                          ? item.values.map(c => (
-                            <Option key={c.value} value={c.value}>{c.name}</Option>
-                            ))
-                          : dataColumns.map(c => (
-                            <Option key={c} value={c}>{c}</Option>
+                            ? item.values.map(c => (
+                              <Option key={c.value} value={c.value}>{c.name}</Option>
+                          ))
+                            : dataColumns.map(c => (
+                              <Option key={c} value={c}>{c}</Option>
                           ))
                         }
                       </Select>
@@ -214,9 +213,9 @@ export class WidgetForm extends React.Component {
               break
             case 'multiSelect':
               formItem = (
-                <Col key={itemName} span={24}>
+                <Col key={item.name} span={24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {})(
+                    {getFieldDecorator(item.name, {})(
                       <Select
                         placeholder={item.tip || item.placeholder || item.name}
                         mode="multiple"
@@ -233,9 +232,9 @@ export class WidgetForm extends React.Component {
               break
             case 'checkbox':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={item.name} span={item.span || 12}>
                   <FormItem label="">
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(item.name, {
                       initialValue: item.default || []
                     })(
                       <CheckboxGroup
@@ -249,9 +248,9 @@ export class WidgetForm extends React.Component {
               break
             case 'inputnumber':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={item.name} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(item.name, {
                       initialValue: item.default || 0
                     })(
                       <InputNumber
@@ -267,9 +266,9 @@ export class WidgetForm extends React.Component {
               break
             case 'input':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={item.name} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(item.name, {
                       initialValue: ''
                     })(
                       <Input
@@ -283,9 +282,9 @@ export class WidgetForm extends React.Component {
               break
             case 'radio':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={item.name} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(item.name, {
                       initialValue: item.default || ''
                     })(
                       <RadioGroup
@@ -310,7 +309,7 @@ export class WidgetForm extends React.Component {
         })
 
         return (
-          <div className={styles.formUnit} key={info.name}>
+          <div className={`${styles.formUnit} ${info.name === 'richText' ? utilStyles.hide : ''}`} key={info.name}>
             <h4 className={styles.unitTitle}>{info.title}</h4>
             <Row className={styles.unitContent} gutter={8}>
               {formItems}
@@ -334,7 +333,7 @@ export class WidgetForm extends React.Component {
                     <Col span={15}>
                       <Select
                         placeholder="关联变量"
-                      //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
+                        //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
                         onChange={(e) => onMarkFieldsOptionsChange(e, info)}
                       >
                         {
@@ -543,7 +542,7 @@ WidgetForm.propTypes = {
   queryParams: PropTypes.array,
   updateInfo: PropTypes.any,
   updateParams: PropTypes.array,
-  updateFields: PropTypes.any,
+  // updateFields: PropTypes.any,
   segmentControlActiveIndex: PropTypes.number,
   onBizlogicChange: PropTypes.func,
   onWidgetTypeChange: PropTypes.func,

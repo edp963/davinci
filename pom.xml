@@ -6,7 +6,7 @@
 
     <groupId>edp.davinci</groupId>
     <artifactId>davinci-parent_2.11</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <licenses>

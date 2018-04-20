@@ -485,6 +485,10 @@
     width: 100%;
     height: 100%;
   }
+
+  .textEditor {
+    height: 100%;
+  }
 }
 
 .menuItem {
@@ -516,4 +520,44 @@
 
 .searchRow {
   margin: -10px 0 -10px;
+}
+
+.popHide, .popShow {
+  background-color: @white;
+  position: absolute;
+  width: 8%;
+  top: 29px;
+  z-index: 1;
+  border: 1px solid transparent;
+  box-shadow: rgba(0,0,0,0.2) 0 2px 8px;
+}
+
+.popHide {
+  display: none;
+}
+
+.popShow {
+  display: block;
+}
+
+.selectBtn, .selectBtn:hover {
+  color:  @rich-text !important;
+}
+
+.selectItem {
+  padding: 4px;
+  cursor: pointer;
+  text-align: center;
+
+  &:hover {
+    color: @blue;
+  }
+}
+
+.selectIcon {
+  font-size: 17px;
+}
+
+.size {
+  width: 78px !important;
 }

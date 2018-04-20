@@ -367,6 +367,11 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         key: 'end_date'
       },
       {
+        title: '状态',
+        dataIndex: 'job_status',
+        key: 'job_status'
+      },
+      {
         title: '操作',
         key: 'action',
         width: 135,
