@@ -5,27 +5,6 @@
   "renderer": "echarts",
   "params": [
     {
-      "name": "data",
-      "title": "数据项配置",
-      "items": [
-        {
-          "name": "source",
-          "title": "SOURCE",
-          "component": "select"
-        },
-        {
-          "name": "target",
-          "title": "TARGET",
-          "component": "select"
-        },
-        {
-          "name": "metrics",
-          "title": "指标",
-          "component": "select"
-        }
-      ]
-    },
-    {
       "name": "tools",
       "title": "工具",
       "items": [

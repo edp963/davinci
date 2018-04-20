@@ -57,24 +57,6 @@ export class ConfigForm extends React.PureComponent {
     return (
       <Form>
         <Row>
-          <Col>
-            <FormItem
-              label="主题"
-              labelCol={{span: 2}}
-              wrapperCol={{span: 21}}
-            >
-              {getFieldDecorator('subject', {
-                rules: [{
-                  required: true,
-                  message: 'Name 不能为空'
-                }]
-              })(
-                <Input placeholder="subject" />
-              )}
-            </FormItem>
-          </Col>
-        </Row>
-        <Row>
           <Col span={12}>
             <FormItem className={utilStyles.hide}>
               {getFieldDecorator('id', {
@@ -84,7 +66,7 @@ export class ConfigForm extends React.PureComponent {
               )}
             </FormItem>
             <FormItem
-              label="收件人"
+              label="发件人"
               {...commonFormItemStyle}
             >
               {getFieldDecorator('to', {
@@ -99,6 +81,23 @@ export class ConfigForm extends React.PureComponent {
           </Col>
           <Col span={12}>
             <FormItem
+              label="主题"
+              {...commonFormItemStyle}
+            >
+              {getFieldDecorator('subject', {
+                rules: [{
+                  required: true,
+                  message: 'Name 不能为空'
+                }]
+              })(
+                <Input placeholder="subject" />
+              )}
+            </FormItem>
+          </Col>
+        </Row>
+        <Row>
+          <Col span={12}>
+            <FormItem
               label="抄送"
               {...commonFormItemStyle}
             >
@@ -109,8 +108,6 @@ export class ConfigForm extends React.PureComponent {
               )}
             </FormItem>
           </Col>
-        </Row>
-        <Row>
           <Col span={12}>
             <FormItem
               label="私密发送"
@@ -120,21 +117,6 @@ export class ConfigForm extends React.PureComponent {
                 initialValue: ''
               })(
                 <Input placeholder="bcc" />
-              )}
-            </FormItem>
-          </Col>
-          <Col span={12}>
-            <FormItem
-              label="文件类型"
-              {...commonFormItemStyle}
-            >
-              {getFieldDecorator('type', {
-                initialValue: 'image'
-              })(
-                <Select>
-                  <Option value="excel">excel</Option>
-                  <Option value="image">image</Option>
-                </Select>
               )}
             </FormItem>
           </Col>
