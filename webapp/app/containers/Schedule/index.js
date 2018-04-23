@@ -8,7 +8,6 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { Link } from 'react-router'
-
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import Modal from 'antd/lib/modal'
@@ -102,7 +101,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }, () => {
       const { id, name, desc, config } = this.props.schedule.find(s => s.id === scheduleId)
       const config2json = JSON.parse(config)
-      const {time_range, range, contentList, month, hour, week } = config2json
+      const {time_range, range, contentList, month, hour, week, time } = config2json
       let formatterContentList = this.json2arr(contentList)
       this.setState({
         emailConfig: config2json,
@@ -112,7 +111,10 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       if (range) {
         momentRange = range.map(ra => moment(ra))
       }
-      this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week })
+      this.setState({
+        rangeTime: time_range
+      }, () => this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week, time: moment(time) })
+      )
     })
   }
 
@@ -137,13 +139,16 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         let formatterValueTime = valueTime.split(':')
         let HH = formatterValueTime[0]
         let mm = formatterValueTime[1]
+        console.log(HH, mm)
         let cronPatten = ''
         if (values) {
           let minute = '0'
           let hour = '*'
-          if (values.time && mm !== '00' && HH !== '00') {
-            minute = mm
-            hour = HH
+          console.log(values.time)
+          console.log(values.hour)
+          if (values.time) {
+            minute = mm.replace(/\b(0)/gi, '')
+            hour = HH.replace(/\b(0)/gi, '')
           }
           if (values.hour) {
             minute = values.hour
@@ -151,6 +156,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           }
           cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
         }
+        console.log(cronPatten)
         this.setState({
           emailConfig: emailConfig
         }, () => {
