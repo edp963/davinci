@@ -37,6 +37,7 @@ import markBoxplot from './markBoxplot.json'
 import waterfall from './waterfall.json'
 import gauge from './gauge.json'
 import radar from './radar.json'
+import parallel from './parallel.json'
 
 export default [
   area,
@@ -57,5 +58,6 @@ export default [
   markBoxplot,
   waterfall,
   gauge,
-  radar
+  radar,
+  parallel
 ]
