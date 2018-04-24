@@ -1,0 +1,178 @@
+{
+  "id": 22,
+  "name": "confidenceBand",
+  "title": "置信带",
+  "renderer": "echarts",
+  "params": [{
+    "name": "data",
+    "title": "数据项配置",
+    "items": [{
+      "name": "xAxis",
+      "title": "X轴",
+      "component": "select",
+      "tip": "建议为时间类型数据"
+    }, {
+      "name": "metrics",
+      "title": "显示指标",
+      "component": "select",
+      "tip": "建议为数值类型数据"
+    }, {
+      "name": "lower",
+      "title": "Lower",
+      "component": "select",
+      "tip": "建议为数值类型数据"
+    }, {
+      "name": "upper",
+      "title": "Upper",
+      "component": "select",
+      "tip": "建议为数值类型数据"
+    }, {
+      "name": "suffixYAxis",
+      "title": "Y轴后缀",
+      "component": "input"
+    }]
+  }, {
+    "name": "display",
+    "title": "显示",
+    "items": [{
+        "name": "xAxisRotate",
+        "title": "x轴文字旋转角度",
+        "component": "inputnumber"
+      },
+      {
+        "name": "xAxisInterval",
+        "title": "x轴刻度显示间隔",
+        "component": "inputnumber"
+      },
+      {
+        "name": "dataZoomThreshold",
+        "title": "超出后缩放",
+        "component": "inputnumber"
+      }
+    ]
+  }, {
+    "name": "style",
+    "title": "样式",
+    "items": [{
+        "name": "smooth",
+        "title": "平滑",
+        "component": "checkbox"
+      },
+      {
+        "name": "step",
+        "title": "阶梯",
+        "component": "checkbox"
+      },
+      {
+        "name": "symbol",
+        "title": "节点标记",
+        "component": "checkbox",
+        "default": ["symbol"]
+      },
+      {
+        "name": "label",
+        "title": "数值",
+        "component": "checkbox"
+      }
+    ]
+  }, {
+    "name": "tools",
+    "title": "工具",
+    "items": [{
+      "name": "toolbox",
+      "title": "Toolbox",
+      "component": "checkbox"
+    }]
+  }, {
+    "name": "splitLine",
+    "title": "分隔线",
+    "items": [{
+        "name": "splitLineX",
+        "title": "x轴分隔线",
+        "component": "checkbox"
+      },
+      {
+        "name": "splitLineY",
+        "title": "y轴分隔线",
+        "component": "checkbox",
+        "default": ["splitLineY"]
+      },
+      {
+        "name": "splitLineStyle",
+        "title": "样式",
+        "component": "select",
+        "values": [{
+            "name": "直线",
+            "value": "solid"
+          },
+          {
+            "name": "虚线",
+            "value": "dashed"
+          },
+          {
+            "name": "点线",
+            "value": "dotted"
+          }
+        ],
+        "default": "solid",
+        "span": 12
+      },
+      {
+        "name": "splitLineWidth",
+        "title": "宽度",
+        "component": "select",
+        "values": [{
+            "name": "1",
+            "value": "1"
+          },
+          {
+            "name": "2",
+            "value": "2"
+          },
+          {
+            "name": "3",
+            "value": "3"
+          },
+          {
+            "name": "5",
+            "value": "5"
+          },
+          {
+            "name": "10",
+            "value": "10"
+          }
+        ],
+        "default": "1",
+        "span": 12
+      }
+    ]
+  }, {
+    "name": "position",
+    "title": "边距",
+    "items": [{
+        "name": "top",
+        "title": "上边距",
+        "component": "inputnumber",
+        "default": 45
+      },
+      {
+        "name": "bottom",
+        "title": "下边距",
+        "component": "inputnumber",
+        "default": 40
+      },
+      {
+        "name": "left",
+        "title": "左边距",
+        "component": "inputnumber",
+        "default": 50
+      },
+      {
+        "name": "right",
+        "title": "右边距",
+        "component": "inputnumber",
+        "default": 30
+      }
+    ]
+  }]
+}

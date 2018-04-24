@@ -38,6 +38,7 @@ import waterfall from './waterfall.json'
 import gauge from './gauge.json'
 import radar from './radar.json'
 import parallel from './parallel.json'
+import confidenceBand from './confidenceBand.json'
 
 export default [
   area,
@@ -59,5 +60,6 @@ export default [
   waterfall,
   gauge,
   radar,
-  parallel
+  parallel,
+  confidenceBand
 ]
