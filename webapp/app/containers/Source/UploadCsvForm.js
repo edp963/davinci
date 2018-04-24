@@ -120,7 +120,7 @@ export class UploadCsvForm extends React.PureComponent {
             <FormItem label="导入方式" {...commonFormItemStyle}>
               {getFieldDecorator('replace_mode', {
                 valuePropName: 'checked',
-                initialValue: 0
+                initialValue: 1
               })(
                 <RadioGroup onChange={this.replaceModeChange} value={this.state.replaceModeState}>
                   <Radio value={1}>替换</Radio>
