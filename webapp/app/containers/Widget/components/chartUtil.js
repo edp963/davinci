@@ -36,6 +36,7 @@ import waterfall from '../charts/waterfall'
 import gauge from '../charts/gauge'
 import radar from '../charts/radar'
 import parallel from '../charts/parallel'
+import confidenceBand from '../charts/confidenceBand'
 
 export const iconMapping = {
   line: 'icon-chart-line',
@@ -58,7 +59,8 @@ export const iconMapping = {
   waterfall: 'icon-waterfall',
   gauge: 'icon-gauge',
   radar: 'icon-radarchart',
-  parallel: 'icon-parallel'
+  parallel: 'icon-parallel',
+  confidenceBand: 'icon-confidence-band'
 }
 
 export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }) {
@@ -129,6 +131,9 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       break
     case 'parallel':
       result = parallel(dataSource, flatInfo, chartParams, interactIndex)
+      break
+    case 'confidenceBand':
+      result = confidenceBand(dataSource, flatInfo, chartParams, interactIndex)
       break
     default:
       result = {}
