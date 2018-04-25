@@ -78,7 +78,9 @@ export class Bizlogic extends React.PureComponent {
       groupParams: [],
       redrawKey: 100000,
       isShowSqlValidateAlert: false,
-      isShowUpdateSql: false
+      isShowUpdateSql: false,
+
+      screenWidth: 0
     }
     this.codeMirrorInstanceOfQuerySQL = false
     this.codeMirrorInstanceOfUpdateSQL = false
@@ -94,10 +96,15 @@ export class Bizlogic extends React.PureComponent {
     onLoadBizlogics()
     onLoadSources()
     onLoadGroups()
+
+    this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   componentWillReceiveProps (props) {
     const {loginUser} = this.props
+
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.bizlogics) {
       this.state.tableSource = props.bizlogics.map(g => {
         g.key = g.id
@@ -447,7 +454,8 @@ export class Bizlogic extends React.PureComponent {
       formStep,
       groupFormVisible,
       groupParams,
-      isShowUpdateSql
+      isShowUpdateSql,
+      screenWidth
     } = this.state
 
     const {
@@ -507,6 +515,7 @@ export class Bizlogic extends React.PureComponent {
     }]
 
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }
