@@ -34,6 +34,29 @@
   }
 }
 
+@media (min-width: 768px) {
+  .logoPc {
+    display: block;
+  }
+
+  .logoMobile {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .logoPc {
+    display: none;
+  }
+
+  .logoMobile {
+    display: block;
+    img {
+      margin-left: -142px;
+    }
+  }
+}
+
 .tools {
   margin-right: 10px;
   display: flex;
@@ -47,4 +70,11 @@
       cursor: pointer;
     }
   }
+
+  @media (max-width: 768px) {
+    .emailHide {
+      display: none;
+    }
+  }
+
 }

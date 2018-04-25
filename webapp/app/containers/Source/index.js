@@ -83,15 +83,20 @@ export class Source extends React.PureComponent {
       metaId: false,
       isUploadDisabled: false,
 
-      newUploadModalKey: '1'
+      newUploadModalKey: '1',
+      screenWidth: 0
     }
   }
 
   componentWillMount () {
     this.props.onLoadSources()
+
+    this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.sources) {
       this.state.tableSource = props.sources.map(g => {
         g.key = g.id
@@ -324,7 +329,8 @@ export class Source extends React.PureComponent {
       formStep,
       metaId,
       isUploadDisabled,
-      newUploadModalKey
+      newUploadModalKey,
+      screenWidth
     } = this.state
 
     const {
@@ -417,6 +423,7 @@ export class Source extends React.PureComponent {
     }]
 
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }

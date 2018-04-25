@@ -37,13 +37,23 @@ export function Navigator (props) {
   })
   return (
     <nav className={headerClass}>
-      <div className={styles.logo}>
-        <Link to="/report/dashboards">
-          <img src={require('../../assets/images/logo.svg')} />
-        </Link>
+      <div className={styles.logoPc}>
+        <div className={styles.logo}>
+          <Link to="/report/dashboards">
+            <img src={require('../../assets/images/logo.svg')} />
+          </Link>
+        </div>
       </div>
+      <div className={styles.logoMobile}>
+        <div className={styles.logo}>
+          <Link to="/report/dashboards">
+            <img src={require('../../assets/images/logo_mobile.svg')} />
+          </Link>
+        </div>
+      </div>
+
       <ul className={styles.tools}>
-        <li>
+        <li className={styles.emailHide}>
           <p>{props.loginUser.email}</p>
         </li>
         <li>

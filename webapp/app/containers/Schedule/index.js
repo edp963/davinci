@@ -47,7 +47,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       modalLoading: false,
       configVisible: false,
       dashboardTreeValue: [],
-      rangeTime: 'Minute'
+      rangeTime: 'Minute',
+      screenWidth: 0
     }
   }
 
@@ -69,7 +70,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         }
       }))
       this.setState({
-        dashboardTree: initDashboardTree
+        dashboardTree: initDashboardTree,
+        screenWidth: document.documentElement.clientWidth
       })
     })
     this.setState({ tableLoading: true })
@@ -79,6 +81,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       })
   }
   componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.schedule) {
       this.state.tableSource = props.schedule.map(s => {
         s.key = s.id
@@ -101,7 +105,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }, () => {
       const { id, name, desc, config } = this.props.schedule.find(s => s.id === scheduleId)
       const config2json = JSON.parse(config)
-      const {time_range, range, contentList, month, hour, week, time } = config2json
+      const { time_range, range, contentList, month, hour, week, time } = config2json
       let formatterContentList = this.json2arr(contentList)
       this.setState({
         emailConfig: config2json,
@@ -336,12 +340,14 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       tableLoading,
       configVisible,
       dashboardTree,
-      dashboardTreeValue
+      dashboardTreeValue,
+      screenWidth
     } = this.state
     const {
       onDeleteSchedule
     } = this.props
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }

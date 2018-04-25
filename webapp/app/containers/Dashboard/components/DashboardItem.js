@@ -351,32 +351,35 @@ export class DashboardItem extends PureComponent {
 
     return (
       <div className={gridItemClass}>
-        {
-          chartInfo.name !== 'text'
-            ? (
-              <div className={styles.title}>
-                {controlPanelHandle}
-                <h4>{widget.name}</h4>
-                {descPanelHandle}
-              </div>
+        <div className={styles.header}>
+          {
+            chartInfo.name !== 'text'
+              ? (
+                <div className={styles.title}>
+                  {controlPanelHandle}
+                  <h4>{widget.name}</h4>
+                  {descPanelHandle}
+                </div>
             )
-            : (
-              <div className={styles.title} />
+              : (
+                <div className={styles.title} />
             )
-        }
-        <div className={styles.tools}>
-          <Tooltip title="同步数据">
-            <Icon type="reload" onClick={this.onSyncBizdatas} />
-          </Tooltip>
-          {widgetButton}
-          <Tooltip title="全屏">
-            <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
-          </Tooltip>
-          {shareButton}
-          {filterButton}
-          {userDownloadButton}
-          {dropdownMenu}
+          }
+          <div className={styles.tools}>
+            <Tooltip title="同步数据">
+              <Icon type="reload" onClick={this.onSyncBizdatas} />
+            </Tooltip>
+            {widgetButton}
+            <Tooltip title="全屏">
+              <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
+            </Tooltip>
+            {shareButton}
+            {filterButton}
+            {userDownloadButton}
+            {dropdownMenu}
+          </div>
         </div>
+
         <div
           className={styles.offInteract}
           onClick={onTurnOffInteract(itemId)}

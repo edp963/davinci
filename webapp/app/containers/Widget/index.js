@@ -67,7 +67,8 @@ export class Widget extends React.Component {
       filteredWidgetsType: undefined,
       filteredWidgetsTypeId: '',
       pageSize: 24,
-      currentPage: 1
+      currentPage: 1,
+      screenWidth: 0
     }
   }
 
@@ -79,6 +80,11 @@ export class Widget extends React.Component {
 
     onLoadWidgets()
     onLoadBizlogics()
+    this.setState({ screenWidth: document.documentElement.clientWidth })
+  }
+
+  componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   showWorkbench = (type, widget) => () => {
@@ -225,7 +231,8 @@ export class Widget extends React.Component {
       currentPage,
       pageSize,
       filteredWidgetsTypeId,
-      filteredWidgetsType
+      filteredWidgetsType,
+      screenWidth
     } = this.state
 
     const widgetsArr = filteredWidgets || widgets
@@ -302,7 +309,7 @@ export class Widget extends React.Component {
             </Col>
             <Col xl={6} lg={6} md={8} sm={12} xs={24}>
               <Row>
-                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={utilStyles.searchCol}>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
                   <Select
                     size="large"
                     className={styles.searchSelect}
@@ -314,14 +321,14 @@ export class Widget extends React.Component {
                     {widgetlibOptions}
                   </Select>
                 </Col>
-                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={utilStyles.searchCol}>
+                <Col xl={11} lg={11} md={11} sm={11} xs={24} className={styles.searchCol}>
                   <Search
                     size="large"
                     placeholder="Widget 名称"
                     onSearch={this.onSearchWidgetName}
                   />
                 </Col>
-                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={utilStyles.addCol}>
+                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={styles.addCol}>
                   <Tooltip placement="bottom" title="新增">
                     <Button
                       size="large"
@@ -341,6 +348,7 @@ export class Widget extends React.Component {
           </Row>
           <Row>
             <Pagination
+              simple={screenWidth < 768 || screenWidth === 768}
               className={styles.paginationPosition}
               showSizeChanger
               onShowSizeChange={this.onShowSizeChange}

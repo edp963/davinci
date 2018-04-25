@@ -78,73 +78,78 @@
   flex-direction: column;
   transition: all 350ms ease;
 
-  .title {
-    flex-shrink: 0;
-    height: 40px;
-    padding: 0 10px;
-    line-height: 40px;
+  .header {
+    width: 100%;
     display: flex;
     flex-direction: row;
-    align-items: center;
-    cursor: move;
 
-    h4 {
-      .ellipsis;
-      cursor: default;
-    }
-
-    .control {
-      flex-shrink: 0;
-      font-size: 16px;
-      font-weight: normal;
-      margin-right: 8px;
-      cursor: pointer;
-    }
-
-    .desc {
-      flex-shrink: 0;
-      font-weight: normal;
-      margin-left: 8px;
-      cursor: pointer;
-    }
-  }
-
-  .tools {
-    position: absolute;
-    top: 0;
-    right: 10px;
-    opacity: 0;
-
-    i {
-      font-size: 16px;
+    .title {
+      min-width: 0;
+      height: 40px;
+      padding: 0 10px;
       line-height: 40px;
-      margin-left: 8px;
-      display: inline-block;
-      cursor: pointer;
-      transition: transform 200ms ease;
+      display: flex;
+      flex-direction: row;
+      cursor: move;
+      flex: 1 1 auto;
 
-      &:hover {
-        transform: scale(1.1, 1.1);
+      h4 {
+        .ellipsis;
+        cursor: default;
+      }
+
+      .control, .desc {
+        font-weight: normal;
+        cursor: pointer;
+        line-height: 40px;
+      }
+
+      .control {
+        font-size: 16px;
+        margin-right: 8px;
+      }
+
+      .desc {
+        margin-left: 8px;
       }
     }
-  }
 
-  &:hover {
     .tools {
-      opacity: 1;
-    }
-  }
+      opacity: 0;
+      padding-right: 10px;
+      flex-shrink: 0;
 
-  &.interact {
-    box-shadow: 0 0 3px @primary-color,
-    0 0 8px @primary-color;
+      i {
+        font-size: 16px;
+        line-height: 40px;
+        margin-left: 8px;
+        display: inline-block;
+        cursor: pointer;
+        transition: transform 200ms ease;
+
+        &:hover {
+          transform: scale(1.1, 1.1);
+        }
+      }
+    }
 
     &:hover {
       .tools {
-        display: none;
+        opacity: 1;
       }
-      .offInteract {
-        display: flex;
+    }
+
+    &.interact {
+      box-shadow: 0 0 3px @primary-color,
+      0 0 8px @primary-color;
+
+      &:hover {
+        .tools {
+          display: none;
+        }
+        .offInteract {
+          display: flex;
+        }
       }
     }
   }
@@ -556,6 +561,25 @@
 
 .selectIcon {
   font-size: 17px;
+}
+
+.searchAdmin, .addCol {
+  padding: 0 4px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .searchAdmin {
+    margin-bottom: 8px;
+  }
+}
+
+.searchUser {
+  float: right;
+}
+
+.searchInputAdmin {
+  margin-right: 10px;
 }
 
 .size {

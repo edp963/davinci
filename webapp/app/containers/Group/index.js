@@ -58,12 +58,16 @@ export class Group extends React.PureComponent {
       modalLoading: false,
 
       formVisible: false,
-      formType: 'add'
+      formType: 'add',
+      screenWidth: 0
     }
   }
 
   componentWillMount () {
-    this.setState({ tableLoading: true })
+    this.setState({
+      tableLoading: true,
+      screenWidth: document.documentElement.clientWidth
+    })
     this.props.onLoadGroups()
       .then(() => {
         this.setState({ tableLoading: false })
@@ -71,6 +75,8 @@ export class Group extends React.PureComponent {
   }
 
   componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.groups) {
       this.state.tableSource = props.groups.map(g => {
         g.key = g.id
@@ -168,7 +174,8 @@ export class Group extends React.PureComponent {
       nameFilterDropdownVisible,
       modalLoading,
       formVisible,
-      formType
+      formType,
+      screenWidth
     } = this.state
 
     const {
@@ -219,6 +226,7 @@ export class Group extends React.PureComponent {
     }]
 
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }
