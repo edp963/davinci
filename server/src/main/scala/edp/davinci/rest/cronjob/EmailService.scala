@@ -45,7 +45,7 @@ object EmailService {
   private lazy val SMTP_PASSWORD = ConfigurationModuleImpl.config.getString("mail.pass")
 
   private lazy val phantomHome = ConfigurationModuleImpl.config.getString("phantomjs_home")
-  private lazy val phantomJsFile = new File(this.getClass.getResource("/phantom.js").getFile).getPath
+  private lazy val phantomJsFile = FileUtils.dir+"/bin/phantom.js"
 
 
   def sendEmailWithImage(cronJob: CronJob): Unit = {
@@ -85,7 +85,7 @@ object EmailService {
     lazy val host = modules.config.getString("httpServer.host")
     lazy val port = modules.config.getInt("httpServer.port")
     val shareInfo = ShareService.getShareURL(userId, contentId, "")
-    val url = s"""http://$host:$port/share/#/share?shareInfo=$shareInfo&type=$contentType"""
+    val url = s"""http://$host:$port/share/#share?shareInfo=$shareInfo&type=$contentType"""
     logger.info(s"content url : $url")
     url
   }
