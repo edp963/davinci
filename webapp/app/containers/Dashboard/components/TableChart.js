@@ -48,14 +48,27 @@ export class TableChart extends PureComponent {
       sortedInfo: {},
       filterDropdownVisibles: {},
       filterValues: {},
-      pagination: {
+      pagination: {}
+    }
+  }
+
+  pageAutoAdapted = (value) => {
+    const paginationState = value === 'pc'
+      ? {
+        simple: false,
         pageSize: DEFAULT_TABLE_PAGE_SIZE,
         current: DEFAULT_TABLE_PAGE,
         showSizeChanger: true,
         showTotal: (total) => `共 ${total} 条`,
         pageSizeOptions: ['10', '20', '30', '40', '50', '100']
       }
-    }
+      : {
+        simple: true,
+        pageSize: DEFAULT_TABLE_PAGE_SIZE,
+        current: DEFAULT_TABLE_PAGE,
+        showSizeChanger: true
+      }
+    return paginationState
   }
 
   componentWillMount () {
@@ -65,6 +78,24 @@ export class TableChart extends PureComponent {
 
     if (data.keys && data.keys.length && !Object.keys(filterValues).length) {
       this.state.filterValues = this.initialFilterValues(data.keys, enumerationColumns)
+    }
+
+    const screenWidth = document.documentElement.clientWidth
+    this.setState({
+      pagination: screenWidth < 768 || screenWidth === 768
+        ? this.pageAutoAdapted('mobile')
+        : this.pageAutoAdapted('pc')
+    })
+  }
+
+  componentWillReceiveProps (props) {
+    window.onresize = () => {
+      const screenWidth = document.documentElement.clientWidth
+      this.setState({
+        pagination: screenWidth < 768 || screenWidth === 768
+          ? this.pageAutoAdapted('mobile')
+          : this.pageAutoAdapted('pc')
+      })
     }
   }
 
