@@ -40,11 +40,11 @@ object ShareService {
   lazy val aesPassword: String = ModuleInstance.getModule.config.getString("aes.secret")
 
   def hasDownloadPermission(widgetId: Long, userId: Long): Boolean = {
-    getUserPermission(widgetId, userId).contains(PermissionType.DOWNLOAD) || isAdmin(userId)
+    getUserPermission(widgetId, userId).contains(PermissionType.DOWNLOAD)
   }
 
   def hasSharePermission(widgetId: Long, userId: Long): Boolean = {
-    getUserPermission(widgetId, userId).contains(PermissionType.SHARE) || isAdmin(userId)
+    getUserPermission(widgetId, userId).contains(PermissionType.SHARE)
   }
 
   private def isAdmin(userId: Long) = {
@@ -52,8 +52,13 @@ object ShareService {
   }
 
   def getUserPermission(widgetId: Long, userId: Long): Set[String] = {
-    val permissionSeq = Await.result(WidgetService.getWidgetConfig(widgetId, userId), new FiniteDuration(30, SECONDS))
-    val permissionSet = permissionSeq.map(json2caseClass[Permission]).flatMap(_.authority).toSet
+    val permissionSet =
+      if (isAdmin(userId))
+        Set("share", "download")
+      else {
+        val permissionSeq = Await.result(WidgetService.getWidgetConfig(widgetId, userId), new FiniteDuration(30, SECONDS))
+        permissionSeq.map(json2caseClass[Permission]).flatMap(_.authority).toSet
+      }
     logger.info(s"user id $userId has permission ${permissionSet.mkString(",")}")
     permissionSet
   }
