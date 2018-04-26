@@ -184,6 +184,7 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
           onComplete(getJobById(session, jobId)) {
             case Success(job) =>
               try {
+                QuartzManager.removeJob(job.id.toString, job.id.toString)
                 QuartzManager.addJob(job)
                 sendMail(job)
                 val refreshStatusJob = CronJob(job.id, job.name, job.job_type, STARTED, job.cron_pattern, job.start_date, job.end_date, job.config, job.desc, STARTED, job.create_by, job.create_time, job.update_time)
