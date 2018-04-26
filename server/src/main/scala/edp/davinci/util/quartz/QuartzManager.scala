@@ -73,9 +73,12 @@ object QuartzManager {
   def removeJob(jobName: String, triggerName: String): Unit = try {
     val sched = schedulerFactory.getScheduler
     val triggerKey = TriggerKey.triggerKey(triggerName)
-    sched.pauseTrigger(triggerKey) // 停止触发器
-    sched.unscheduleJob(triggerKey) // 移除触发器
-    sched.deleteJob(JobKey.jobKey(jobName)) // 删除任务
+    val trigger = sched.getTrigger(triggerKey).asInstanceOf[CronTrigger]
+    if (trigger != null) {
+      sched.pauseTrigger(triggerKey) // 停止触发器
+      sched.unscheduleJob(triggerKey) // 移除触发器
+      sched.deleteJob(JobKey.jobKey(jobName))
+    } // 删除任务
   } catch {
     case e: Exception =>
       throw new RuntimeException(e)
