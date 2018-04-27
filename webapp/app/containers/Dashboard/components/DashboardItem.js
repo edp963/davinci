@@ -25,6 +25,7 @@ import classnames from 'classnames'
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
+import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
 import Icon from 'antd/lib/icon'
@@ -263,7 +264,23 @@ export class DashboardItem extends PureComponent {
 
     const userDownloadButton = isDownload
       ? <Tooltip title="下载数据">
-        <Icon type="download" onClick={this.sharePanelDownloadCsv} />
+        <Popover
+          placement="bottomRight"
+          trigger="click"
+          content={
+            <DownLoadCsv
+              id={widget.id}
+              type="widget"
+              itemId={itemId}
+              shareInfo={shareInfo}
+              shareInfoLoading={shareInfoLoading}
+              downloadCsvLoading={downloadCsvLoading}
+              onDownloadCsv={this.sharePanelDownloadCsv}
+            />
+          }
+        >
+          <Icon type="download" />
+        </Popover>
       </Tooltip>
       : ''
 

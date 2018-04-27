@@ -52,10 +52,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }
   }
 
-  handleTableChange = () => {
-
-  }
-
   componentWillMount () {
     this.props.onLoadWidgets()
     this.props.onLoadDashboards().then(() => {
@@ -143,13 +139,10 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         let formatterValueTime = valueTime.split(':')
         let HH = formatterValueTime[0]
         let mm = formatterValueTime[1]
-        console.log(HH, mm)
         let cronPatten = ''
         if (values) {
           let minute = '0'
           let hour = '*'
-          console.log(values.time)
-          console.log(values.hour)
           if (values.time) {
             minute = mm.replace(/\b(0)/gi, '')
             hour = HH.replace(/\b(0)/gi, '')
@@ -160,7 +153,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           }
           cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
         }
-        console.log(cronPatten)
         this.setState({
           emailConfig: emailConfig
         }, () => {
@@ -178,7 +170,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           if (this.state.formType === 'add') {
             onAddSchedule(params).then(() => this.hideForm())
           } else {
-            console.log('onUpdateSchedule')
             onUpdateSchedule(params).then(() => this.hideForm())
           }
         })
@@ -324,6 +315,16 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }
   }
 
+  formatStatusText = (status) => {
+    let emunObj = {
+      'new': '启动',
+      'failed': '重启',
+      'started': '暂停',
+      'stopped': '启动'
+    }
+    return emunObj[status]
+  }
+
   changeStatus = (record) => {
     const { id, job_status } = record
     const { onChangeCurrentJobStatus } = this.props
@@ -390,7 +391,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         className: `${utilStyles.textAlignCenter}`,
         render: (text, record) => (
           <span className="ant-table-action-column">
-            <Tooltip title="状态">
+            <Tooltip title={`${this.formatStatusText(record.job_status)}`}>
               <Button icon={this.formatStatusIcon(record.job_status)} shape="circle" type="ghost" onClick={() => this.changeStatus(record)} />
             </Tooltip>
             <Tooltip title="修改">
@@ -477,7 +478,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
                     columns={columns}
                     pagination={pagination}
                     loading={tableLoading}
-                    onChange={this.handleTableChange}
                     bordered
                   />
                 </Col>
