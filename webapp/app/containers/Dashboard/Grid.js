@@ -63,7 +63,7 @@ import {
   editDashboardItems,
   deleteDashboardItem,
   clearCurrentDashboard,
-  loadWidgetCsv
+  loadWidgetCsv, loadWidgetShareLink, loadDashboardShareLink
 } from './actions'
 import {
   makeSelectDashboards,
@@ -1363,6 +1363,7 @@ export class Grid extends Component {
       loginUser,
       bizlogics,
       onLoadBizdataSchema,
+      onLoadWidgetShareLink,
       onLoadCascadeSourceFromDashboard
     } = this.props
 
@@ -1961,7 +1962,9 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidgetCsv: (token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(token, sql, sorts, offset, limit)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
     onLoadCascadeSourceFromDashboard: (controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, sql, column, parents)),
-    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve))
+    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
+    onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
+    onLoadWidgetShareLink: (id, itemId, authName) => dispatch(loadWidgetShareLink(id, itemId, authName))
   }
 }
 
