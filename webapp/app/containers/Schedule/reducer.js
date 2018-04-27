@@ -43,11 +43,11 @@ function scheduleReducer (state = initialState, {type, payload}) {
     case CHANGE_SCHEDULE_STATUS:
       return state
     case CHANGE_SCHEDULE_STATUS_SUCCESS:
-      return state.set('schedule', schedule.map(s => { if (s.id === payload.id) return payload.schedules }))
+      return state.set('schedule', schedule.map(s => s.id === payload.id ? payload.schedules : s))
     case UPDATE_SCHEDULES:
       return state
     case UPDATE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.map(s => { if (s.id === payload.result.id) return payload.result }))
+      return state.set('schedule', schedule.map(s => s.id === payload.result.id ? payload.result : s))
     default:
       return state
   }
