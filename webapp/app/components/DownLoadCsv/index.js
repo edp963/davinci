@@ -22,7 +22,6 @@ import React, { PureComponent, PropTypes } from 'react'
 import { connect } from 'react-redux'
 import Button from 'antd/lib/button'
 
-
 import { loadDashboardShareLink, loadWidgetShareLink } from '../../containers/Dashboard/actions'
 
 export class DownLoadCsv extends PureComponent {
