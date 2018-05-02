@@ -18,7 +18,7 @@
  * >>
  */
 
-import React, { Component } from 'react'
+import * as React from 'react'
 import {findDOMNode} from 'react-dom'
 import PropTypes from 'prop-types'
 import Helmet from 'react-helmet'
@@ -107,15 +107,78 @@ import styles from './Dashboard.less'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
-export class Grid extends Component {
+interface IGridProps {
+  dashboards: boolean | any[]
+  widgets: boolean | any[]
+  bizlogics: boolean | any[]
+  loginUser: { admin: boolean }
+  router: any
+  params: any
+  currentDashboard: object,
+  currentDashboardLoading: boolean
+  currentDashboardShareInfo: string
+  currentDashboardSecretInfo: string
+  currentDashboardShareInfoLoading: boolean
+  currentItems: boolean | any[]
+  currentDatasources: boolean | object
+  currentItemsLoading: boolean | object
+  currentItemsQueryParams: boolean | object
+  currentItemsShareInfo: boolean | object
+  currentItemsSecretInfo: boolean | object
+  currentItemsShareInfoLoading: boolean | object
+  currentItemsDownloadCsvLoading: boolean | object
+  currentItemsCascadeSources: boolean | object
+  currentDashboardCascadeSources: boolean | object
+  onLoadDashboards: () => any
+  onLoadDashboardDetail: (dashboardId: number) => any
+  onAddDashboardItem: () => any
+  onEditCurrentDashboard: () => any
+  onEditDashboardItem: () => any
+  onEditDashboardItems: () => any
+  onDeleteDashboardItem: () => any
+  onLoadWidgets: () => any
+  onLoadBizlogics: () => any
+  onLoadBizdatasFromItem: () => any
+  onClearCurrentDashboard: () => any
+  onLoadWidgetCsv: () => any
+  onLoadCascadeSourceFromItem: () => any
+  onLoadCascadeSourceFromDashboard: () => any
+  onLoadBizdataSchema: () => any
+}
+
+interface IGridStates {
+  mounted: boolean
+  localPositions: any[]
+  allowFullScreen: boolean
+  currentDataInFullScreen: object
+  modifiedPositions: boolean
+  editPositionSign: boolean
+  dashboardItemFormType: string
+  dashboardItemFormVisible: boolean
+  dashboardItemFormStep: number
+  modalLoading: boolean
+  selectedWidget: number
+  triggerType: string
+  workbenchDashboardItem: number
+  workbenchWidget: object
+  workbenchVisible: boolean
+  filtersVisible: boolean
+  filtersDashboardItem: number
+  filtersKeys: object
+  filtersTypes: object
+  linkagePanelVisible: boolean
+  linkageTableSource: boolean
+  linkageCascaderSource: boolean
+  interactiveItems: object
+  globalFilterConfigPanelVisible: boolean
+  globalFilterTableSource: any[]
+  dashboardSharePanelAuthorized: boolean
+  nextMenuTitle: string
+}
+
+export class Grid extends React.Component<IGridProps, IGridStates> {
   constructor (props) {
     super(props)
-
-    this.charts = {}
-    this.interactCallbacks = {}
-    this.interactingLinkagers = {}
-    this.interactGlobalFilters = {}
-    this.resizeSign = void 0
 
     this.state = {
       mounted: false,
@@ -148,7 +211,7 @@ export class Grid extends Component {
       interactiveItems: {},
 
       globalFilterConfigPanelVisible: false,
-      globalFilterTableSource: false,
+      globalFilterTableSource: [],
 
       dashboardSharePanelAuthorized: false,
 
@@ -156,7 +219,15 @@ export class Grid extends Component {
     }
   }
 
-  componentWillMount () {
+  private charts: object = {}
+  private interactCallbacks: object = {}
+  private interactingLinkagers: object = {}
+  private interactGlobalFilters: object = {}
+  private resizeSign: number
+
+  private workbenchWrapper: { refs: { wrappedInstance: { resetWorkbench: () => void } } } = null
+
+  public componentWillMount () {
     const {
       onLoadDashboards,
       onLoadWidgets,
@@ -175,7 +246,7 @@ export class Grid extends Component {
     onLoadDashboardDetail(params.dashboardId)
   }
 
-  componentWillUpdate (nextProps) {
+  public componentWillUpdate (nextProps) {
     const {
       loginUser,
       currentDashboard,
@@ -266,12 +337,12 @@ export class Grid extends Component {
     }
   }
 
-  componentDidMount () {
+  public componentDidMount () {
     window.addEventListener('resize', this.onResize, false)
     this.setState({ mounted: true })
   }
 
-  componentWillUnmount () {
+  public componentWillUnmount () {
     window.removeEventListener('resize', this.onResize, false)
     Object.keys(this.charts).forEach(k => {
       this.charts[k].dispose()
@@ -279,7 +350,7 @@ export class Grid extends Component {
     this.props.onClearCurrentDashboard()
   }
 
-  getChartData = (renderType, itemId, widgetId, queryParams) => {
+  private getChartData = (renderType, itemId, widgetId, queryParams) => {
     const {
       widgets,
       currentItemsQueryParams,
@@ -1022,8 +1093,8 @@ export class Grid extends Component {
     })
   }
 
-  saveToGlobalFilterTable = (formValues) => {
-    let { globalFilterTableSource } = this.state
+  private saveToGlobalFilterTable = (formValues) => {
+    const { globalFilterTableSource } = this.state
 
     if (formValues.key) {
       globalFilterTableSource.splice(globalFilterTableSource.findIndex(gfts => gfts.key === formValues.key), 1, formValues)
@@ -1674,7 +1745,7 @@ export class Grid extends Component {
     }
 
     const globalFilterContainerClass = classnames({
-      [utilStyles.hide]: !globalFilterTableSource || !globalFilterTableSource.length
+      [utilStyles.hide]: !globalFilterTableSource.length
     })
 
     return (
@@ -1730,7 +1801,7 @@ export class Grid extends Component {
           <Row className={globalFilterContainerClass}>
             <Col span={24}>
               <GlobalFilters
-                filters={globalFilterTableSource || []}
+                filters={globalFilterTableSource}
                 cascadeSources={currentDashboardCascadeSources || {}}
                 onChange={this.globalFilterChange}
                 onCascadeSelectChange={onLoadCascadeSourceFromDashboard}
@@ -1824,7 +1895,7 @@ export class Grid extends Component {
             widgets={widgets || []}
             bizlogics={bizlogics || []}
             dataSources={currentDatasources || {}}
-            tableSource={globalFilterTableSource || []}
+            tableSource={globalFilterTableSource}
             onSaveToTable={this.saveToGlobalFilterTable}
             onDeleteFromTable={this.deleteFromGlobalFilterTable}
             onLoadBizdataSchema={onLoadBizdataSchema}
@@ -1844,84 +1915,6 @@ export class Grid extends Component {
       </Container>
     )
   }
-}
-
-Grid.propTypes = {
-  dashboards: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  currentDashboard: PropTypes.object,
-  currentDashboardLoading: PropTypes.bool,
-  currentDashboardShareInfo: PropTypes.string,
-  currentDashboardSecretInfo: PropTypes.string,
-  currentDashboardShareInfoLoading: PropTypes.bool,
-  currentItems: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  currentDatasources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsLoading: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsQueryParams: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsShareInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsSecretInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsShareInfoLoading: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsDownloadCsvLoading: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentItemsCascadeSources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentDashboardCascadeSources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  onLoadDashboards: PropTypes.func,
-  onLoadDashboardDetail: PropTypes.func,
-  onAddDashboardItem: PropTypes.func,
-  onEditCurrentDashboard: PropTypes.func,
-  onEditDashboardItem: PropTypes.func,
-  onEditDashboardItems: PropTypes.func,
-  onDeleteDashboardItem: PropTypes.func,
-  widgets: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  bizlogics: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  loginUser: PropTypes.object,
-  router: PropTypes.any,
-  params: PropTypes.any,
-  onLoadWidgets: PropTypes.func,
-  onLoadBizlogics: PropTypes.func,
-  onLoadBizdatasFromItem: PropTypes.func,
-  onClearCurrentDashboard: PropTypes.func,
-  onLoadWidgetCsv: PropTypes.func,
-  onLoadCascadeSourceFromItem: PropTypes.func,
-  onLoadCascadeSourceFromDashboard: PropTypes.func,
-  onLoadBizdataSchema: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({
@@ -1968,4 +1961,4 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Grid)
+export default connect<{}, {}, IGridProps>(mapStateToProps, mapDispatchToProps)(Grid)
