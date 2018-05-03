@@ -32,7 +32,7 @@ import edp.davinci.persistence.entities.PostUploadMeta
 import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
 import edp.davinci.util.common.DateUtils
 import edp.davinci.util.common.DavinciConstants._
-import edp.davinci.util.jdbc.ESConnection
+import edp.davinci.util.jdbc.{ESConnection, HiveConnection}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable
@@ -51,14 +51,18 @@ object SqlUtils extends Serializable {
     if (tmpJdbcUrl.indexOf("elasticsearch") > -1)
       ESConnection.getESJDBCConnection(tmpJdbcUrl, username)
     else {
-      if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-        synchronized {
-          if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-            initJdbc(jdbcUrl, username, password, maxPoolSize)
+      if (tmpJdbcUrl.indexOf("hive") > -1 && tmpJdbcUrl.indexOf("presto") == -1)
+        HiveConnection.getConnection(tmpJdbcUrl, username, password)
+      else {
+        if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+          synchronized {
+            if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+              initJdbc(jdbcUrl, username, password, maxPoolSize)
+            }
           }
         }
+        dataSourceMap((tmpJdbcUrl, username)).getConnection
       }
-      dataSourceMap((tmpJdbcUrl, username)).getConnection
     }
   }
 
@@ -99,7 +103,7 @@ object SqlUtils extends Serializable {
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
-    }else if(tmpJdbcUrl.indexOf("kylin") > -1){
+    } else if (tmpJdbcUrl.indexOf("kylin") > -1) {
       println("kylin")
       config.setDriverClassName("org.apache.kylin.jdbc.Driver")
     }
