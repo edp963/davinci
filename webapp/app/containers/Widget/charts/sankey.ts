@@ -135,7 +135,7 @@ export default function (dataSource, flatInfo, chartParams) {
 
 function getCycle (graph) {
   // Copy the graph, converting all node references to String
-  graph = Object.assign(...Object.keys(graph).map(node => ({ [node]: graph[node].map(String) })))
+  graph = Object.assign({}, ...Object.keys(graph).map(node => ({ [node]: graph[node].map(String) })))
 
   let queue = Object.keys(graph).map(node => [node])
   while (queue.length) {

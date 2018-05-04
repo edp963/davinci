@@ -20,7 +20,6 @@
 
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, fork, put } from 'redux-saga/effects'
-import csvParser from 'jquery-csv'
 import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_WIDGET,
@@ -44,11 +43,10 @@ import {
 import message from 'antd/lib/message'
 import request from '../../../app/utils/request'
 import api from '../../../app/utils/api'
-import { uuid } from '../../../app/utils/util'
 import config, { env } from '../../../app/globalConfig'
 import { readListAdapter } from '../../../app/utils/asyncAdapter'
-import { KEY_COLUMN } from '../../../app/globalConstants'
 const shareHost = config[env].shareHost
+import resultsetConverter from '../../../app/utils/resultsetConverter'
 
 export function* getDashboard ({ payload }) {
   try {
@@ -129,44 +127,6 @@ export function* getResultset ({ payload }) {
     yield put(resultsetGetted(itemId, resultset))
   } catch (err) {
     console.log('getResultset', err)
-  }
-}
-
-function resultsetConverter (resultset) {
-  let dataSource = []
-  let keys = []
-  let types = []
-
-  if (resultset.result && resultset.result.length) {
-    const arr = resultset.result
-
-    arr.splice(0, 2).forEach((d, index) => {
-      if (index) {
-        types = csvParser.toArray(d)
-      } else {
-        keys = csvParser.toArray(d)
-      }
-    })
-
-    dataSource = arr.map(csvVal => {
-      const jsonVal = csvParser.toArray(csvVal)
-      let obj = {
-        [KEY_COLUMN]: uuid(8, 32)
-      }
-      keys.forEach((k, index) => {
-        obj[k] = jsonVal[index]
-      })
-      return obj
-    })
-  }
-
-  return {
-    dataSource: dataSource,
-    keys: keys,
-    types: types,
-    pageSize: resultset.limit,
-    pageIndex: parseInt(resultset.offset / resultset.limit) + 1,
-    total: resultset.totalCount
   }
 }
 

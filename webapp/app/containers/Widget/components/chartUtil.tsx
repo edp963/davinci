@@ -63,7 +63,7 @@ export const iconMapping = {
   confidenceBand: 'icon-confidence-band'
 }
 
-export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }) {
+export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }: { dataSource: any, chartInfo: any, chartParams: any, interactIndex?: number }) {
   // chartInfo 去层级
   const flatInfo = Object.assign({}, {
     title: chartInfo.title,
@@ -85,25 +85,25 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       result = bar(dataSource, flatInfo, chartParams, interactIndex)
       break
     case 'scatter':
-      result = scatter(dataSource, flatInfo, chartParams, interactIndex)
+      result = scatter(dataSource, flatInfo, chartParams)
       break
     case 'pie':
       result = pie(dataSource, flatInfo, chartParams, interactIndex)
       break
     case 'area':
-      result = area(dataSource, flatInfo, chartParams, interactIndex)
+      result = area(dataSource, flatInfo, chartParams)
       break
     case 'sankey':
-      result = sankey(dataSource, flatInfo, chartParams, interactIndex)
+      result = sankey(dataSource, flatInfo, chartParams)
       break
     case 'funnel':
       result = funnel(dataSource, flatInfo, chartParams, interactIndex)
       break
     case 'treemap':
-      result = treemap(dataSource, flatInfo, chartParams, interactIndex)
+      result = treemap(dataSource, flatInfo, chartParams)
       break
     case 'wordCloud':
-      result = wordCloud(dataSource, flatInfo, chartParams, interactIndex)
+      result = wordCloud(dataSource, flatInfo, chartParams)
       break
     case 'map':
       result = map(dataSource, flatInfo, chartParams, interactIndex)
@@ -124,7 +124,7 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       result = waterfall(dataSource, flatInfo, chartParams, interactIndex)
       break
     case 'gauge':
-      result = gauge(dataSource, flatInfo, chartParams, interactIndex)
+      result = gauge(dataSource, flatInfo, chartParams)
       break
     case 'radar':
       result = radar(dataSource, flatInfo, chartParams, interactIndex)

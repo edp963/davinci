@@ -18,22 +18,34 @@
  * >>
  */
 
-import React, { PropTypes, Component } from 'react'
+import * as React from 'react'
+import { PropTypes, Component } from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table from 'antd/lib/table'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Button from 'antd/lib/button'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Table = require('antd/lib/table')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Button = require('antd/lib/button')
 const FormItem = Form.Item
 const Option = Select.Option
 
-import utilStyles from '../../../assets/less/util.less'
-import styles from '../Widget.less'
+const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Widget.less')
 
-export class VariableConfigTable extends Component {
+interface IVariableConfigTableProps {
+  form: any,
+  dataSource: any[],
+  variableSource: any[],
+  hasRelatedComponent: string,
+  onAddConfigValue: () => void,
+  onChangeConfigValueStatus: (id: any) => any,
+  onUpdateConfigValue: (id: any) => any,
+  onDeleteConfigValue: (id: any) => any
+}
+
+export class VariableConfigTable extends Component<IVariableConfigTableProps, {}> {
   render () {
     const {
       form,
@@ -203,17 +215,6 @@ export class VariableConfigTable extends Component {
       </Row>
     )
   }
-}
-
-VariableConfigTable.propTypes = {
-  form: PropTypes.any,
-  dataSource: PropTypes.array,
-  variableSource: PropTypes.array,
-  hasRelatedComponent: PropTypes.string,
-  onAddConfigValue: PropTypes.func,
-  onChangeConfigValueStatus: PropTypes.func,
-  onUpdateConfigValue: PropTypes.func,
-  onDeleteConfigValue: PropTypes.func
 }
 
 export default Form.create()(VariableConfigTable)

@@ -31,6 +31,15 @@ import {
   DELETE_WIDGET_SUCCESS
 } from './constants'
 
+import {
+  LOAD_BIZLOGICS,
+  LOAD_BIZLOGICS_SUCCESS,
+  LOAD_BIZDATAS,
+  LOAD_BIZDATAS_SUCCESS,
+  LOAD_BIZDATAS_FAILURE,
+  CLEAR_BIZDATAS
+} from '../Bizlogic/constants'
+
 import { promiseActionCreator } from '../../utils/reduxPromisation'
 
 export const loadWidgets = promiseActionCreator(LOAD_WIDGETS)
@@ -85,5 +94,55 @@ export function widgetDeleted (id) {
     payload: {
       id
     }
+  }
+}
+
+// Bizlogic
+
+export const loadBizlogics = promiseActionCreator(LOAD_BIZLOGICS)
+
+export function bizlogicsLoaded (bizlogics) {
+  return {
+    type: LOAD_BIZLOGICS_SUCCESS,
+    payload: {
+      bizlogics
+    }
+  }
+}
+
+export function loadBizdatas (id, sql, sorts, offset, limit) {
+  return {
+    type: LOAD_BIZDATAS,
+    payload: {
+      id,
+      sql,
+      sorts,
+      offset,
+      limit
+    }
+  }
+}
+
+export function bizdatasLoaded (bizdatas) {
+  return {
+    type: LOAD_BIZDATAS_SUCCESS,
+    payload: {
+      bizdatas
+    }
+  }
+}
+
+export function loadBizdatasFail (error) {
+  return {
+    type: LOAD_BIZDATAS_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function clearBizdatas () {
+  return {
+    type: CLEAR_BIZDATAS
   }
 }

@@ -61,7 +61,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             let max = Math.max.apply(null, metrics.map(me => dataSource.map(data => data[me])).map(list => list[index]).map(arr => parseFloat(arr)))
             return {
               name: name,
-              max: max + parseInt(max * 0.1)
+              max: max + Math.floor(max * 0.1)
             }
           })
         }

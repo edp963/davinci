@@ -18,21 +18,21 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
-import {connect} from 'react-redux'
-import classnames from 'classnames'
-import {checkNameAction} from '../../App/actions'
-import Table from 'antd/lib/table'
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import Checkbox from 'antd/lib/checkbox'
-import Radio from 'antd/lib/radio'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import * as React from 'react'
+import { connect } from 'react-redux'
+import * as classnames from 'classnames'
+import { checkNameAction } from '../../App/actions'
+
+const Table = require('antd/lib/table')
+const Form = require('antd/lib/form')
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Select = require('antd/lib/select')
+const Checkbox = require('antd/lib/checkbox')
+const Radio = require('antd/lib/radio/radio')
+const Button = require('antd/lib/button')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const FormItem = Form.Item
 const Option = Select.Option
 const CheckboxGroup = Checkbox.Group
@@ -42,10 +42,39 @@ const RadioGroup = Radio.Group
 import { iconMapping } from './chartUtil'
 import { KEY_COLUMN } from '../../../globalConstants'
 
-import utilStyles from '../../../assets/less/util.less'
-import styles from '../Widget.less'
+const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Widget.less')
 
-export class WidgetForm extends React.Component {
+interface IWidgetFormProps {
+  type: string,
+  form: any,
+  bizlogics: any[],
+  widgetlibs: any[],
+  dataColumns: any[],
+  chartInfo: any,
+  queryParams: any[],
+  updateInfo: any,
+  updateParams: any[],
+  // updateFields: any,
+  segmentControlActiveIndex: number,
+  queryInfo: any,
+  updateConfig: object,
+  updateFields: object,
+  wrappedComponentRef: any,
+  onBizlogicChange: (id: any) => void,
+  onWidgetTypeChange: (id: any) => Promise<any>,
+  onFormItemChange: (name: any) => any,
+  onFormInputItemChange: (name: string) => any,
+  onSegmentControlChange: (e: any) => void,
+  onShowVariableConfigTable: (id?: any) => any,
+  onMarkFieldsOptionsChange: (e: any, info: any) => void,
+  onShowMarkConfigTable: (id?: any) => any,
+  onDeleteControl: (id: any) => any,
+  onDeleteMarkControl: (id: any) => any,
+  onCheckName: (id: any, name: any, type: any, resolve: any, reject: any) => void
+}
+
+export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
   checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
@@ -83,7 +112,7 @@ export class WidgetForm extends React.Component {
     } = this.props
 
     const { getFieldDecorator } = form
-    let markFieldsOptions = ''
+    let markFieldsOptions: any = ''
     getFieldDecorator('colorList', {initialValue: []})
     const bizlogicOptions = bizlogics.map(b => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
@@ -181,7 +210,7 @@ export class WidgetForm extends React.Component {
     if (chartInfo) {
       chartConfigElements = chartInfo.params.map(info => {
         const formItems = info.items.map(item => {
-          let formItem = ''
+          let formItem: any = ''
 
           switch (item.component) {
             case 'select':
@@ -527,34 +556,6 @@ export class WidgetForm extends React.Component {
       </Form>
     )
   }
-}
-
-WidgetForm.propTypes = {
-  type: PropTypes.string,
-  form: PropTypes.any,
-  bizlogics: PropTypes.array,
-  widgetlibs: PropTypes.array,
-  dataColumns: PropTypes.array,
-  chartInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  queryParams: PropTypes.array,
-  updateInfo: PropTypes.any,
-  updateParams: PropTypes.array,
-  // updateFields: PropTypes.any,
-  segmentControlActiveIndex: PropTypes.number,
-  onBizlogicChange: PropTypes.func,
-  onWidgetTypeChange: PropTypes.func,
-  onFormItemChange: PropTypes.func,
-  onFormInputItemChange: PropTypes.func,
-  onSegmentControlChange: PropTypes.func,
-  onShowVariableConfigTable: PropTypes.func,
-  onMarkFieldsOptionsChange: PropTypes.func,
-  onShowMarkConfigTable: PropTypes.func,
-  onDeleteControl: PropTypes.func,
-  onDeleteMarkControl: PropTypes.func,
-  onCheckName: PropTypes.func
 }
 
 function mapDispatchToProps (dispatch) {

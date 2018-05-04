@@ -18,8 +18,7 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -28,32 +27,58 @@ import { Link } from 'react-router'
 import Workbench from './components/Workbench'
 import CopyWidgetForm from './components/CopyWidgetForm'
 import Container from '../../components/Container'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Modal from 'antd/lib/modal'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Input from 'antd/lib/input'
-import Pagination from 'antd/lib/pagination'
-import Select from 'antd/lib/select'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Tooltip = require('antd/lib/tooltip')
+const Icon = require('antd/lib/icon')
+const Modal = require('antd/lib/modal')
+const Popconfirm = require('antd/lib/popconfirm')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const Input = require('antd/lib/input')
+const Pagination = require('antd/lib/pagination')
+const Select = require('antd/lib/select')
 const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadWidgets, deleteWidget, addWidget } from './actions'
 import { makeSelectWidgets } from './selectors'
-import { loadBizlogics } from '../Bizlogic/actions'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { loadBizlogics } from './actions'
+import { makeSelectBizlogics } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { iconMapping } from './components/chartUtil'
 
-import styles from './Widget.less'
-import utilStyles from '../../assets/less/util.less'
+const styles = require('./Widget.less')
+const utilStyles = require('../../assets/less/util.less')
 
-export class Widget extends React.Component {
+interface IWidgetProps {
+  widgets: any[]
+  bizlogics: any[],
+  loginUser: any,
+  onLoadWidgets: () => void,
+  onLoadBizlogics: () => void,
+  onDeleteWidget: (any) => void,
+  onAddWidget: (object) => Promise<any>
+}
+
+interface IWidgetStates {
+  workbenchType: string,
+  currentWidget: object,
+  workbenchVisible: boolean,
+  copyWidgetVisible: boolean,
+  copyQueryInfo: object,
+  filteredWidgets: any[],
+  filteredWidgetsName: RegExp,
+  filteredWidgetsType: object,
+  filteredWidgetsTypeId: string,
+  pageSize: number,
+  currentPage: number,
+  screenWidth: number
+}
+
+export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
   constructor (props) {
     super(props)
     this.state = {
@@ -63,7 +88,7 @@ export class Widget extends React.Component {
       copyWidgetVisible: false,
       copyQueryInfo: null,
       filteredWidgets: null,
-      filteredWidgetsName: '',
+      filteredWidgetsName: null,
       filteredWidgetsType: undefined,
       filteredWidgetsTypeId: '',
       pageSize: 24,
@@ -72,7 +97,10 @@ export class Widget extends React.Component {
     }
   }
 
-  componentWillMount () {
+  private workbenchWrapper: any
+  private copyWidgetForm: WrappedFormUtils
+
+  public componentWillMount () {
     const {
       onLoadWidgets,
       onLoadBizlogics
@@ -83,11 +111,11 @@ export class Widget extends React.Component {
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  componentWillReceiveProps (props) {
+  public componentWillReceiveProps (props) {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  showWorkbench = (type, widget) => () => {
+  private showWorkbench = (type, widget?: any) => () => {
     this.setState({
       workbenchType: type,
       currentWidget: widget,
@@ -95,7 +123,7 @@ export class Widget extends React.Component {
     })
   }
 
-  hideWorkbench = () => {
+  private hideWorkbench = () => {
     this.setState({
       workbenchVisible: false,
       workbenchType: '',
@@ -103,22 +131,22 @@ export class Widget extends React.Component {
     })
   }
 
-  afterModalClose = () => {
-    this.workbenchWrapper.refs.wrappedInstance.resetWorkbench()
+  private afterModalClose = () => {
+    this.workbenchWrapper.wrappedInstance.resetWorkbench()
   }
 
-  stopPPG = (e) => {
+  private stopPPG = (e) => {
     e.stopPropagation()
   }
 
-  onCopy = (type, widget) => (e) => {
+  private onCopy = (type, widget) => (e) => {
     e.stopPropagation()
     this.setState({
       workbenchType: type,
       currentWidget: widget,
       copyWidgetVisible: true
     }, () => {
-      const copyItem = this.props.widgets.find(i => i.id === widget.id)
+      const copyItem = (this.props.widgets as any[]).find(i => i.id === widget.id)
       this.setState({
         copyQueryInfo: {
           widgetlib_id: copyItem.widgetlib_id,
@@ -138,7 +166,7 @@ export class Widget extends React.Component {
     })
   }
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
       copyWidgetVisible: false,
       workbenchType: '',
@@ -146,9 +174,9 @@ export class Widget extends React.Component {
     })
   }
 
-  resetModal = () => this.copyWidgetForm.resetFields()
+  private resetModal = () => this.copyWidgetForm.resetFields()
 
-  onModalOk = () => new Promise((resolve, reject) => {
+  private onModalOk = () => new Promise((resolve, reject) => {
     this.copyWidgetForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { copyQueryInfo } = this.state
@@ -164,7 +192,7 @@ export class Widget extends React.Component {
     })
   })
 
-  onSearchWidgetName = (value) => {
+  private onSearchWidgetName = (value) => {
     const { widgets } = this.props
     const { filteredWidgetsTypeId, filteredWidgetsType } = this.state
     const valReg = new RegExp(value, 'i')
@@ -182,20 +210,20 @@ export class Widget extends React.Component {
     })
   }
 
-  onChange = (page) => {
+  private onChange = (page) => {
     this.setState({
       currentPage: page
     })
   }
 
-  onShowSizeChange = (current, pageSize) => {
+  private onShowSizeChange = (current, pageSize) => {
     this.setState({
       currentPage: current,
       pageSize: pageSize
     })
   }
 
-  onSearchWidgetType = (value) => {
+  private onSearchWidgetType = (value) => {
     const { widgets } = this.props
     const { filteredWidgetsName } = this.state
 
@@ -215,7 +243,7 @@ export class Widget extends React.Component {
     })
   }
 
-  render () {
+  public render () {
     const {
       widgets,
       loginUser,
@@ -249,7 +277,7 @@ export class Widget extends React.Component {
           const startCol = (currentPage - 1) * pageSize + 1
           const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
 
-          let colItems = ''
+          let colItems: any = ''
           if ((index + 1 >= startCol && index + 1 <= endCol) ||
             (startCol > widgetsArr.length)) {
             colItems = (
@@ -303,7 +331,7 @@ export class Widget extends React.Component {
             <Col xl={18} lg={18} md={16} sm={12} xs={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link>Widget</Link>
+                  <Link to="">Widget</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
@@ -342,7 +370,7 @@ export class Widget extends React.Component {
             </Col>
           </Row>
         </Container.Title>
-        <Container.Body card>
+        <Container.Body>
           <Row gutter={20}>
             {cols}
           </Row>
@@ -415,22 +443,6 @@ export class Widget extends React.Component {
   }
 }
 
-Widget.propTypes = {
-  widgets: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  bizlogics: PropTypes.oneOfType([
-    PropTypes.array,
-    PropTypes.bool
-  ]),
-  loginUser: PropTypes.object,
-  onLoadWidgets: PropTypes.func,
-  onLoadBizlogics: PropTypes.func,
-  onDeleteWidget: PropTypes.func,
-  onAddWidget: PropTypes.func
-}
-
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
@@ -446,4 +458,4 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Widget)
+export default connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)(Widget)
