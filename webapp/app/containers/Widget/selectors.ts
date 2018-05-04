@@ -27,6 +27,11 @@ const makeSelectWidgets = () => createSelector(
   (widgetState) => widgetState.get('widgets')
 )
 
+const makeSelectBizlogics = () => createSelector(
+  selectWidget,
+  (widgetState) => widgetState.get('bizlogics')
+)
+
 const makeSelectBizdatas = () => createSelector(
   selectWidget,
   (widgetState) => widgetState.get('bizdatas')
@@ -40,6 +45,7 @@ const makeSelectBizdatasLoading = () => createSelector(
 export {
   selectWidget,
   makeSelectWidgets,
+  makeSelectBizlogics,
   makeSelectBizdatas,
   makeSelectBizdatasLoading
 }

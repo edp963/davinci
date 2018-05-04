@@ -18,16 +18,17 @@
  * >>
  */
 
-import React, { Component, PropTypes } from 'react'
+import * as React from 'react'
+import { Component } from 'react'
 
-import VariableConfigTable from './VariableConfigTable'
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+const VariableConfigTable = require('./VariableConfigTable')
+const Form = require('antd/lib/form')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Radio = require('antd/lib/radio')
+const Button = require('antd/lib/button')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const FormItem = Form.Item
 const Option = Select.Option
 const RadioButton = Radio.Button
@@ -35,10 +36,35 @@ const RadioGroup = Radio.Group
 
 import { uuid } from '../../../utils/util'
 
-import utilStyles from '../../../assets/less/util.less'
-import styles from '../Widget.less'
+const utilStyles= require('../../../assets/less/util.less')
+const styles= require('../Widget.less')
 
-export class VariableConfigForm extends Component {
+interface IVariableConfigFormProps  {
+  form: any,
+  queryInfo: any[],
+  control: object,
+  columns: any[],
+  onSave: (obj: any) => void,
+  onClose: () => void
+}
+
+interface IVariableConfigFormStates {
+  variableNumber: number,
+  chosenType: string,
+  tableVisible: boolean,
+  cascadeColumnVisible: boolean,
+  hasRelatedComponent: string,
+  tableSource: any[]
+}
+
+export class VariableConfigForm extends Component<IVariableConfigFormProps, IVariableConfigFormStates> {
+
+  private WITH_TABLE = ['select', 'multiSelect']
+  private DOUBLE_VARIABLES = ['dateRange', 'datetimeRange']
+  private CASCADE = ['cascadeSelect']
+
+  private variableConfigTable: any
+
   constructor (props) {
     super(props)
     this.state = {
@@ -49,17 +75,13 @@ export class VariableConfigForm extends Component {
       hasRelatedComponent: 'yes',
       tableSource: []
     }
-
-    this.WITH_TABLE = ['select', 'multiSelect']
-    this.DOUBLE_VARIABLES = ['dateRange', 'datetimeRange']
-    this.CASCADE = ['cascadeSelect']
   }
 
-  componentWillMount () {
+  public componentWillMount () {
     this.formInit(this.props)
   }
 
-  componentDidMount () {
+  public componentDidMount () {
     this.setFormValue(this.props)
   }
 
@@ -69,13 +91,13 @@ export class VariableConfigForm extends Component {
     }
   }
 
-  componentDidUpdate (prevProps) {
+  public componentDidUpdate (prevProps) {
     if (prevProps.control !== this.props.control) {
       this.setFormValue(this.props)
     }
   }
 
-  setFormValue = (props) => {
+  private setFormValue = (props) => {
     const control = props.control
 
     if (Object.keys(control).length) {
@@ -105,14 +127,16 @@ export class VariableConfigForm extends Component {
     }
   }
 
-  formInit = (props) => {
-    this.state.variableNumber = props.control.variables
-      ? props.control.variables.length
-      : 1
-    this.state.cascadeColumnVisible = !!props.control.cascadeColumn
+  private formInit = (props) => {
+    this.setState({
+      variableNumber: props.control.variables
+        ? props.control.variables.length
+        : 1,
+      cascadeColumnVisible: !!props.control.cascadeColumn
+    })
   }
 
-  addVariableConfig = () => {
+  private addVariableConfig = () => {
     const { tableSource } = this.state
     this.setState({
       tableSource: tableSource.concat({
@@ -126,7 +150,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  changeConfigValueStatus = (id) => () => {
+  private changeConfigValueStatus = (id) => () => {
     const { tableSource } = this.state
     tableSource.find(t => t.id === id).status = 0
     this.setState({
@@ -134,7 +158,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  updateConfigValue = (id) => () => {
+  private updateConfigValue = (id) => () => {
     this.variableConfigTable.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { tableSource } = this.state
@@ -153,7 +177,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  deleteConfigValue = (id) => () => {
+  private deleteConfigValue = (id) => () => {
     const { tableSource } = this.state
 
     this.setState({
@@ -161,7 +185,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  typeChange = (val) => {
+  private typeChange = (val) => {
     this.setState({
       chosenType: val,
       variableNumber: this.DOUBLE_VARIABLES.indexOf(val) >= 0 ? 2 : 1,
@@ -170,13 +194,13 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  hasRelatedComponentChange = (e) => {
+  private hasRelatedComponentChange = (e) => {
     this.setState({
       hasRelatedComponent: e.target.value
     })
   }
 
-  saveConfig = () => {
+  private saveConfig = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { variableNumber, tableSource } = this.state
@@ -211,7 +235,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  resetForm = () => {
+  private resetForm = () => {
     this.props.form.resetFields()
     this.setState({
       variableNumber: 1,
@@ -220,7 +244,7 @@ export class VariableConfigForm extends Component {
     })
   }
 
-  render () {
+  public render () {
     const {
       form,
       queryInfo,
@@ -398,18 +422,6 @@ export class VariableConfigForm extends Component {
       </div>
     )
   }
-}
-
-VariableConfigForm.propTypes = {
-  form: PropTypes.any,
-  queryInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  control: PropTypes.object,
-  columns: PropTypes.array,
-  onSave: PropTypes.func,
-  onClose: PropTypes.func
 }
 
 export default Form.create()(VariableConfigForm)

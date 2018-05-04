@@ -28,17 +28,26 @@ import {
   EDIT_WIDGET
 } from './constants'
 import {
+  LOAD_BIZLOGICS,
+  LOAD_BIZDATAS
+} from '../Bizlogic/constants'
+import {
   widgetsLoaded,
   widgetAdded,
   widgetDeleted,
   widgetDetailLoaded,
-  widgetEdited
+  widgetEdited,
+  bizlogicsLoaded,
+  bizdatasLoaded,
+  loadBizdatasFail
 } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import resultsetConverter from '../../utils/resultsetConverter';
+
 
 export const getWidgets = promiseSagaCreator(
   function* () {
@@ -52,8 +61,8 @@ export const getWidgets = promiseSagaCreator(
   }
 )
 
-export function* getWidgetsWatcher () {
-  yield fork(takeLatest, LOAD_WIDGETS, getWidgets)
+export function* getWidgetsWatcher (): IterableIterator<any> {
+  yield takeLatest(LOAD_WIDGETS, getWidgets)
 }
 
 export const addWidget = promiseSagaCreator(
@@ -73,7 +82,7 @@ export const addWidget = promiseSagaCreator(
 )
 
 export function* addWidgetWatcher () {
-  yield fork(takeEvery, ADD_WIDGET, addWidget)
+  yield takeEvery(ADD_WIDGET, addWidget)
 }
 
 export const deleteWidget = promiseSagaCreator(
@@ -90,7 +99,7 @@ export const deleteWidget = promiseSagaCreator(
 )
 
 export function* deleteWidgetWatcher () {
-  yield fork(takeEvery, DELETE_WIDGET, deleteWidget)
+  yield takeEvery(DELETE_WIDGET, deleteWidget)
 }
 
 export const getWidgetDetail = promiseSagaCreator(
@@ -105,7 +114,7 @@ export const getWidgetDetail = promiseSagaCreator(
 )
 
 export function* getWidgetDetailWatcher () {
-  yield fork(takeLatest, LOAD_WIDGET_DETAIL, getWidgetDetail)
+  yield takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail)
 }
 
 export const editWidget = promiseSagaCreator(
@@ -123,7 +132,55 @@ export const editWidget = promiseSagaCreator(
 )
 
 export function* editWidgetWatcher () {
-  yield fork(takeEvery, EDIT_WIDGET, editWidget)
+  yield takeEvery(EDIT_WIDGET, editWidget)
+}
+
+// bizlogics
+export const getBizlogics = promiseSagaCreator(
+  function* () {
+    const asyncData = yield call(request, api.bizlogic)
+    const bizlogics = readListAdapter(asyncData)
+    yield put(bizlogicsLoaded(bizlogics))
+    return bizlogics
+  },
+  function (err) {
+    console.log('getBizlogics', err)
+  }
+)
+
+export function* getBizlogicsWatcher () {
+  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
+}
+
+export function* getBizdatas ({ payload }) {
+  try {
+    const { id, sql, sorts, offset, limit } = payload
+
+    let queries: string[] | string = []
+
+    if (offset !== undefined && limit !== undefined) {
+      queries = queries
+        .concat(`sortby=${sorts}`)
+        .concat(`offset=${offset}`)
+        .concat(`limit=${limit}`)
+    }
+    queries = queries.concat('usecache=false').concat('expired=0')
+    queries = `?${queries.join('&')}`
+
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/resultset${queries}`,
+      data: sql || {}
+    })
+    const bizdatas = resultsetConverter(readListAdapter(asyncData))
+    yield put(bizdatasLoaded(bizdatas))
+  } catch (err) {
+    yield put(loadBizdatasFail(err))
+  }
+}
+
+export function* getBizdatasWatcher (): IterableIterator<any> {
+  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
 }
 
 export default [
@@ -131,5 +188,7 @@ export default [
   addWidgetWatcher,
   deleteWidgetWatcher,
   getWidgetDetailWatcher,
-  editWidgetWatcher
+  editWidgetWatcher,
+  getBizlogicsWatcher,
+  getBizdatasWatcher
 ]

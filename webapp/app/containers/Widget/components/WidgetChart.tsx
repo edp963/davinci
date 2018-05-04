@@ -18,8 +18,8 @@
  * >>
  */
 
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
+import { PureComponent } from 'react'
 
 import Chart from '../../Dashboard/components/Chart'
 import * as echarts from 'echarts/lib/echarts'
@@ -27,21 +27,31 @@ import * as echarts from 'echarts/lib/echarts'
 import { echartsOptionsGenerator } from './chartUtil'
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
-import styles from '../Widget.less'
+const styles = require('../Widget.less')
 
-export class WidgetChart extends PureComponent {
+interface IWidgetChartProps {
+  loading: boolean,
+  data: object,
+  chartInfo: { renderer?: string },
+  updateConfig: any,
+  chartParams: any,
+  updateParams: any[],
+  currentBizlogicId: boolean | number,
+  onTextEditorChange: (content: any) => void
+}
+
+export class WidgetChart extends PureComponent<IWidgetChartProps, {}> {
   constructor (props) {
     super(props)
-    this.state = {
-
-    }
   }
 
-  componentDidMount () {
+  private chart: any = undefined
+
+  public componentDidMount () {
     this.renderOrDisposeChart(this.props)
   }
 
-  componentDidUpdate () {
+  public componentDidUpdate () {
     this.renderOrDisposeChart(this.props)
   }
 
@@ -115,20 +125,6 @@ export class WidgetChart extends PureComponent {
       />
     )
   }
-}
-
-WidgetChart.propTypes = {
-  loading: PropTypes.bool,
-  data: PropTypes.object,
-  chartInfo: PropTypes.object,
-  updateConfig: PropTypes.any,
-  chartParams: PropTypes.object,
-  updateParams: PropTypes.array,
-  currentBizlogicId: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.number
-  ]),
-  onTextEditorChange: PropTypes.func
 }
 
 export default WidgetChart

@@ -18,19 +18,44 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
+import * as React from 'react'
+import { PureComponent } from 'react'
 
 import TableChart from '../../Dashboard/components/TableChart'
 import SegmentControl from '../../../components/SegmentControl/index'
 import WidgetChart from './WidgetChart'
-import Icon from 'antd/lib/icon'
-import Button from 'antd/lib/button'
-import Input from 'antd/lib/input'
+
+const Icon = require('antd/lib/icon')
+const Button = require('antd/lib/button')
+const Input = require('antd/lib/input')
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
-import styles from '../Widget.less'
+const styles = require('../Widget.less')
 
-export class SplitView extends PureComponent {
+interface ISplitViewProps {
+  data: object,
+  chartInfo: object,
+  currentBizlogicId: number,
+  chartParams: object,
+  updateParams: any[],
+  updateConfig: any,
+  tableLoading: boolean,
+  adhocSql: string,
+  onSaveWidget: () => Promise<any>,
+  onAdhocSqlInputChange: (event: any) => void,
+  onAdhocSqlQuery: () => void,
+  onTextEditorChange: (content: any) => void
+}
+
+interface ISplitViewStates {
+  tableInitiate: boolean,
+  chartInitiate: boolean,
+  tableWidth: number,
+  tableHeight: number,
+  loading: boolean
+}
+
+export class SplitView extends PureComponent<ISplitViewProps, ISplitViewStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -44,14 +69,17 @@ export class SplitView extends PureComponent {
   }
 
   componentDidMount () {
+    let tableContainer = this.refs.tableContainer as HTMLScriptElement
     this.setState({
-      tableWidth: this.refs.tableContainer.offsetHeight,
-      tableHeight: this.refs.tableContainer.offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT
+      tableWidth: tableContainer.offsetHeight,
+      tableHeight: tableContainer.offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT
     })
   }
 
   componentWillUpdate (props) {
-    this.state.tableInitiate = !!props.data
+    this.setState({
+      tableInitiate: !!props.data
+    })
   }
 
   sengmentControlChange = (val) => {
@@ -182,30 +210,6 @@ export class SplitView extends PureComponent {
       </div>
     )
   }
-}
-
-SplitView.propTypes = {
-  data: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  chartInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  currentBizlogicId: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.number
-  ]),
-  chartParams: PropTypes.object,
-  updateParams: PropTypes.array,
-  updateConfig: PropTypes.any,
-  tableLoading: PropTypes.bool,
-  adhocSql: PropTypes.string,
-  onSaveWidget: PropTypes.func,
-  onAdhocSqlInputChange: PropTypes.func,
-  onAdhocSqlQuery: PropTypes.func,
-  onTextEditorChange: PropTypes.func
 }
 
 export default SplitView

@@ -315,7 +315,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 }
 
 function getYaxisInterval (max, splitNumber) {
-  const roughInterval = parseInt(max / splitNumber)
+  const roughInterval = Math.floor(max / splitNumber)
   const divisor = Math.pow(10, (`${roughInterval}`.length - 1))
-  return (parseInt(roughInterval / divisor) + 1) * divisor
+  return (Math.floor(roughInterval / divisor) + 1) * divisor
 }

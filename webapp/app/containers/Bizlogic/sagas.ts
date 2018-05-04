@@ -20,7 +20,6 @@
 
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, fork, put } from 'redux-saga/effects'
-import csvParser from 'jquery-csv'
 import {
   LOAD_BIZLOGICS,
   ADD_BIZLOGIC,
@@ -58,10 +57,9 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { uuid } from '../../utils/util'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-import { KEY_COLUMN } from '../../globalConstants'
+import resultsetConverter from '../../utils/resultsetConverter';
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object
@@ -334,44 +332,6 @@ export function* getBizdataSchema ({ payload }) {
 
 export function* getBizdataSchemaWatcher () {
   yield takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
-}
-
-function resultsetConverter (resultset) {
-  let dataSource = []
-  let keys = []
-  let types = []
-
-  if (resultset.result && resultset.result.length) {
-    const arr = resultset.result
-
-    arr.splice(0, 2).forEach((d, index) => {
-      if (index) {
-        types = csvParser.toArray(d)
-      } else {
-        keys = csvParser.toArray(d)
-      }
-    })
-
-    dataSource = arr.map((csvVal) => {
-      const jsonVal = csvParser.toArray(csvVal)
-      const obj = {
-        [KEY_COLUMN]: uuid(8, 32)
-      }
-      keys.forEach((k, index) => {
-        obj[k] = jsonVal[index]
-      })
-      return obj
-    })
-  }
-
-  return {
-    ['dataSource']: dataSource,
-    ['keys']: keys,
-    ['types']: types,
-    pageSize: resultset.limit,
-    pageIndex: parseInt(`${resultset.offset / resultset.limit}`, 10) + 1,
-    total: resultset.totalCount
-  }
 }
 
 export default [

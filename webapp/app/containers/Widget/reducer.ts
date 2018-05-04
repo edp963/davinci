@@ -31,6 +31,8 @@ import {
   EDIT_WIDGET_SUCCESS
 } from './constants'
 import {
+  LOAD_BIZLOGICS,
+  LOAD_BIZLOGICS_SUCCESS,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
   LOAD_BIZDATAS_FAILURE,
@@ -41,7 +43,8 @@ import { fromJS } from 'immutable'
 const initialState = fromJS({
   widgets: false,
   bizdatasLoading: false,
-  bizdatas: false
+  bizdatas: false,
+  bizlogics: false
 })
 
 function widgetReducer (state = initialState, { type, payload }) {
@@ -91,6 +94,8 @@ function widgetReducer (state = initialState, { type, payload }) {
       return state.set('bizdatasLoading', false)
     case CLEAR_BIZDATAS:
       return state.set('bizdatas', false)
+    case LOAD_BIZLOGICS_SUCCESS:
+      return state.set('bizlogics', payload.bizlogics)
     default:
       return state
   }

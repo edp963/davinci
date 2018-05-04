@@ -18,21 +18,27 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
-import {connect} from 'react-redux'
+import * as React from 'react'
+import { connect } from 'react-redux'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
 const FormItem = Form.Item
 
-import {checkNameAction} from '../../App/actions'
+import { checkNameAction } from '../../App/actions'
 
-import utilStyles from '../../../assets/less/util.less'
-import styles from '../Widget.less'
+const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Widget.less')
 
-export class CopyWidgetForm extends React.Component {
+interface ICopyWidgetFormProps {
+  form: any,
+  type: string,
+  onCheckName: (idName: any, value: any, typeName: any, success: (res: any) => void, error: (err: any) => void) => void
+}
+
+export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
   checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
@@ -87,12 +93,6 @@ export class CopyWidgetForm extends React.Component {
       </Form>
     )
   }
-}
-
-CopyWidgetForm.propTypes = {
-  form: PropTypes.any,
-  type: PropTypes.string,
-  onCheckName: PropTypes.func
 }
 
 function mapDispatchToProps (dispatch) {
