@@ -18,39 +18,51 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Radio = require('antd/lib/radio/radio')
 const RadioGroup = Radio.Group
-import Upload from 'antd/lib/upload'
-import Icon from 'antd/lib/icon'
-import Popover from 'antd/lib/popover'
-import Button from 'antd/lib/button'
-import Steps from 'antd/lib/steps'
+const Upload = require('antd/lib/upload')
+const Icon = require('antd/lib/icon')
+const Popover = require('antd/lib/popover')
+const Button = require('antd/lib/button')
+const Steps = require('antd/lib/steps')
 const Step = Steps.Step
 const FormItem = Form.Item
 
-import utilStyles from './upload.less'
+const utilStyles = require('./upload.less')
 
-export class UploadCsvForm extends React.PureComponent {
+interface IUploadCsvFormProps {
+  form: any
+  step: any
+  uploadProps: any
+}
+
+interface IUploadCsvFormStates {
+  replaceModeState: number
+}
+
+export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUploadCsvFormStates> {
   constructor (props) {
     super(props)
     this.state = {
       replaceModeState: 1
     }
   }
-  replaceModeChange = (e) => {
+
+  private replaceModeChange = (e) => {
     this.setState({
-      replaceModeState: e.target.value
+      replaceModeState: e.target.value as number
     })
   }
-  render () {
-    const {step, form, uploadProps} = this.props
+
+  public render () {
+    const { step, form, uploadProps } = this.props
     const { getFieldDecorator } = form
 
     const commonFormItemStyle = {
@@ -61,9 +73,11 @@ export class UploadCsvForm extends React.PureComponent {
     const baseInfoStyle = classnames({
       [utilStyles.hide]: !!step
     })
+
     const authInfoStyle = classnames({
       [utilStyles.hide]: !step
     })
+
     const uploadComponent = (
       <Upload {...uploadProps} >
         <Button>
@@ -71,6 +85,7 @@ export class UploadCsvForm extends React.PureComponent {
         </Button>
       </Upload>
     )
+
     return (
       <Form>
         <Row className={utilStyles.formStepArea}>
@@ -151,12 +166,6 @@ export class UploadCsvForm extends React.PureComponent {
       </Form>
     )
   }
-}
-
-UploadCsvForm.propTypes = {
-  form: PropTypes.any,
-  step: PropTypes.any,
-  uploadProps: PropTypes.any
 }
 
 export default Form.create()(UploadCsvForm)

@@ -46,7 +46,8 @@ const initialState = fromJS({
   testLoading: false
 })
 
-function sourceReducer (state = initialState, { type, payload }) {
+function sourceReducer (state = initialState, action) {
+  const { type, payload } = action
   const sources = state.get('sources')
 
   switch (type) {
@@ -78,7 +79,7 @@ function sourceReducer (state = initialState, { type, payload }) {
     case DELETE_SOURCE_SUCCESS:
       return state
         .set('listLoading', false)
-        .set('sources', sources.filter(g => g.id !== payload.id))
+        .set('sources', sources.filter((g) => g.id !== payload.id))
     case DELETE_SOURCE_FAILURE:
       return state.set('listLoading', false)
     case LOAD_SOURCE_DETAIL:
@@ -88,7 +89,7 @@ function sourceReducer (state = initialState, { type, payload }) {
     case EDIT_SOURCE:
       return state.set('formLoading', true)
     case EDIT_SOURCE_SUCCESS:
-      sources.splice(sources.findIndex(g => g.id === payload.result.id), 1, payload.result)
+      sources.splice(sources.findIndex((g) => g.id === payload.result.id), 1, payload.result)
       return state
         .set('formLoading', false)
         .set('sources', sources.slice())

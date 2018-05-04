@@ -18,37 +18,45 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import {connect} from 'react-redux'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Icon from 'antd/lib/icon'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Icon = require('antd/lib/icon')
 const FormItem = Form.Item
 const Option = Select.Option
 import {checkNameAction} from '../App/actions'
 
-import utilStyles from '../../assets/less/util.less'
+const utilStyles = require('../../assets/less/util.less')
 
-export class SourceForm extends React.PureComponent {
+interface ISourceFormProps {
+  type: string
+  testLoading: boolean
+  form: any
+  onTestSourceConnection: () => any
+  onCheckName: (idName: any, value: any, typeName: any, resolve: any, reject: any) => any
+}
 
-  checkNameUnique = (rule, value = '', callback) => {
+export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
+
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'source'
-    onCheckName(idName, value, typeName,
-      res => {
+    const idName = type === 'add' ? '' : id
+    const typeName = 'source'
+    onCheckName(idName, value, typeName, (res) => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
-  render () {
+
+  public render () {
     const { testLoading, form, onTestSourceConnection } = this.props
     const { getFieldDecorator } = form
 
@@ -169,14 +177,6 @@ export class SourceForm extends React.PureComponent {
       </Form>
     )
   }
-}
-
-SourceForm.propTypes = {
-  type: PropTypes.string,
-  testLoading: PropTypes.bool,
-  form: PropTypes.any,
-  onTestSourceConnection: PropTypes.func,
-  onCheckName: PropTypes.func
 }
 
 function mapDispatchToProps (dispatch) {

@@ -21,8 +21,8 @@
 import appSagas from './containers/App/sagas'
 import groupSagas from './containers/Group/sagas'
 import userSagas from './containers/User/sagas'
-// import sourceSagas from './containers/Source/sagas'
-// import bizlogicSagas from './containers/Bizlogic/sagas'
+import sourceSagas from './containers/Source/sagas'
+import bizlogicSagas from './containers/Bizlogic/sagas'
 // import widgetSagas from './containers/Widget/sagas'
 // import dashboardSagas from './containers/Dashboard/sagas'
 // import scheduleSages from './containers/Schedule/sagas'
@@ -31,9 +31,9 @@ import userSagas from './containers/User/sagas'
 export default [
   ...appSagas,
   ...groupSagas,
-  ...userSagas
-  // ...sourceSagas,
-  // ...bizlogicSagas,
+  ...userSagas,
+  ...sourceSagas,
+  ...bizlogicSagas
   // ...widgetSagas,
   // ...dashboardSagas,
   // ...scheduleSages

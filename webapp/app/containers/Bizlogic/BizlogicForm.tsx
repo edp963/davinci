@@ -18,44 +18,66 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import { makeSelectSqlValidateCode, makeSelectSqlValidateMsg } from './selectors'
 import {checkNameAction} from '../App/actions'
-import Form from 'antd/lib/form'
-import Checkbox from 'antd/lib/checkbox'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Steps from 'antd/lib/steps'
-import Table from 'antd/lib/table'
-import Alert from 'antd/lib/alert'
+const Form = require('antd/lib/form')
+const Checkbox = require('antd/lib/checkbox')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Steps = require('antd/lib/steps')
+const Table = require('antd/lib/table')
+const Alert = require('antd/lib/alert')
+
 const CheckboxGroup = Checkbox.Group
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 
-import utilStyles from '../../assets/less/util.less'
+const utilStyles = require('../../assets/less/util.less')
 
-export class BizlogicForm extends React.Component {
+interface IBizlogicFormProps {
+  type: string
+  step: number
+  sources: any[]
+  groups: any[]
+  groupParams: any[]
+  selectedGroups: any[]
+  onGroupSelect: () => any
+  onGroupParamChange: (id: number, index: number) => any
+  onAuthorityChange: (e: any, record: any) => any
+  onCodeMirrorChange: (queryTextarea: any, updateTextarea: any) => any
+  sqlValidateCode: any
+  sqlValidateMessage: any
+  isShowSqlValidateAlert: boolean
+  isShowUpdateSql: boolean
+  form: any
+  onCheckName: (idName, value, typeName, res, err) => any
+}
 
-  checkNameUnique = (rule, value = '', callback) => {
+export class BizlogicForm extends React.Component<IBizlogicFormProps, {}> {
+
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'view'
-    onCheckName(idName, value, typeName,
-      res => {
+    const idName = type === 'add' ? '' : id
+    const typeName = 'view'
+    onCheckName(idName, value, typeName, (res) => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
-  render () {
+
+  private authorityChange = (record) => (e) => this.props.onAuthorityChange(e, record)
+
+  public render () {
     const {
       form,
       step,
@@ -65,7 +87,6 @@ export class BizlogicForm extends React.Component {
       selectedGroups,
       onGroupSelect,
       onGroupParamChange,
-      onAuthorityChange,
       sqlValidateCode,
       sqlValidateMessage,
       isShowUpdateSql,
@@ -78,7 +99,7 @@ export class BizlogicForm extends React.Component {
       wrapperCol: { span: 21 }
     }
 
-    const sourceOptions = sources.map(s => (
+    const sourceOptions = sources.map((s) => (
       <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>
     ))
 
@@ -89,7 +110,7 @@ export class BizlogicForm extends React.Component {
       [utilStyles.hide]: !step
     })
 
-    let columns = [{
+    const columns = [{
       title: '用户组',
       dataIndex: 'name',
       className: `${utilStyles.textAlignLeft}`,
@@ -102,12 +123,13 @@ export class BizlogicForm extends React.Component {
       width: 500,
       className: `${utilStyles.textAlignCenter}`,
       render: (text, record) =>
+        (
         <CheckboxGroup
           options={['share', 'download']}
           value={record.authority}
           disabled={!record.checked}
-          onChange={(e) => onAuthorityChange(e, record)}
-        />
+          onChange={this.authorityChange(record)}
+        />)
     }]
     groupParams.forEach((gp, index) => {
       columns.push({
@@ -123,14 +145,22 @@ export class BizlogicForm extends React.Component {
             disabled={!record.checked}
           />
         )
-      })
+      } as any)
     })
-    const sqlValidatePanel = isShowSqlValidateAlert ? <Alert
-      message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
-      description={`${sqlValidateMessage || ''}`}
-      type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
-      showIcon
-    /> : ''
+
+    let sqlValidatePanel
+    if (isShowSqlValidateAlert) {
+      sqlValidatePanel = (
+      <Alert
+        message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+        description={`${sqlValidateMessage || ''}`}
+        type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+        showIcon
+      />)
+    } else {
+      sqlValidatePanel = ''
+    }
+
     return (
       <Form>
         <Row className={utilStyles.formStepArea}>
@@ -250,10 +280,10 @@ export class BizlogicForm extends React.Component {
       </Form>
     )
   }
-  componentDidUpdate (prevProps) {
+  public componentDidUpdate (prevProps) {
     const {onCodeMirrorChange} = this.props
-    let queryTextarea = document.querySelector('#sql_tmpl')
-    let updateTextarea = document.querySelector('#update_sql')
+    const queryTextarea = document.querySelector('#sql_tmpl')
+    const updateTextarea = document.querySelector('#update_sql')
     if (onCodeMirrorChange) {
       onCodeMirrorChange(queryTextarea, updateTextarea)
     }
@@ -264,25 +294,6 @@ const mapStateToProps = createStructuredSelector({
   sqlValidateCode: makeSelectSqlValidateCode(),
   sqlValidateMessage: makeSelectSqlValidateMsg()
 })
-
-BizlogicForm.propTypes = {
-  type: PropTypes.string,
-  step: PropTypes.number,
-  sources: PropTypes.array,
-  groups: PropTypes.array,
-  groupParams: PropTypes.array,
-  selectedGroups: PropTypes.array,
-  onGroupSelect: PropTypes.func,
-  onGroupParamChange: PropTypes.func,
-  onAuthorityChange: PropTypes.func,
-  onCodeMirrorChange: PropTypes.func,
-  sqlValidateCode: PropTypes.any,
-  sqlValidateMessage: PropTypes.any,
-  isShowSqlValidateAlert: PropTypes.bool,
-  isShowUpdateSql: PropTypes.bool,
-  form: PropTypes.any,
-  onCheckName: PropTypes.func
-}
 
 function mapDispatchToProps (dispatch) {
   return {
