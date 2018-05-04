@@ -33,7 +33,8 @@ const initialState = fromJS({
   sqlValidateMessage: false
 })
 
-function bizlogicReducer (state = initialState, { type, payload }) {
+function bizlogicReducer (state = initialState, action) {
+  const { type, payload } = action
   const bizlogics = state.get('bizlogics')
   switch (type) {
     case LOAD_BIZLOGICS_SUCCESS:
@@ -46,9 +47,9 @@ function bizlogicReducer (state = initialState, { type, payload }) {
         return state.set('bizlogics', [payload.result])
       }
     case DELETE_BIZLOGIC_SUCCESS:
-      return state.set('bizlogics', bizlogics.filter(g => g.id !== payload.id))
+      return state.set('bizlogics', bizlogics.filter((g) => g.id !== payload.id))
     case EDIT_BIZLOGIC_SUCCESS:
-      bizlogics.splice(bizlogics.findIndex(g => g.id === payload.result.id), 1, payload.result)
+      bizlogics.splice(bizlogics.findIndex((g) => g.id === payload.result.id), 1, payload.result)
       return state.set('bizlogics', bizlogics.slice())
     case SQL_VALIDATE_SUCCESS:
       return state.set('sqlValidateMessage', payload && payload.msg ? payload.msg : undefined)

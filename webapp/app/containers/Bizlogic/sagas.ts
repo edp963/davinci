@@ -63,6 +63,10 @@ import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { KEY_COLUMN } from '../../globalConstants'
 
+declare interface IObjectConstructor {
+  assign (...objects: object[]): object
+}
+
 export const getBizlogics = promiseSagaCreator(
   function* () {
     const asyncData = yield call(request, api.bizlogic)
@@ -76,7 +80,7 @@ export const getBizlogics = promiseSagaCreator(
 )
 
 export function* getBizlogicsWatcher () {
-  yield fork(takeLatest, LOAD_BIZLOGICS, getBizlogics)
+  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
 }
 
 export const addBizlogic = promiseSagaCreator(
@@ -96,7 +100,7 @@ export const addBizlogic = promiseSagaCreator(
 )
 
 export function* addBizlogicWatcher () {
-  yield fork(takeEvery, ADD_BIZLOGIC, addBizlogic)
+  yield takeEvery(ADD_BIZLOGIC, addBizlogic)
 }
 
 export const deleteBizlogic = promiseSagaCreator(
@@ -113,7 +117,7 @@ export const deleteBizlogic = promiseSagaCreator(
 )
 
 export function* deleteBizlogicWatcher () {
-  yield fork(takeEvery, DELETE_BIZLOGIC, deleteBizlogic)
+  yield takeEvery(DELETE_BIZLOGIC, deleteBizlogic)
 }
 
 export const getBizlogicDetail = promiseSagaCreator(
@@ -128,7 +132,7 @@ export const getBizlogicDetail = promiseSagaCreator(
 )
 
 export function* getBizlogicDetailWatcher () {
-  yield fork(takeLatest, LOAD_BIZLOGIC_DETAIL, getBizlogicDetail)
+  yield takeLatest(LOAD_BIZLOGIC_DETAIL, getBizlogicDetail)
 }
 
 export const getBizlogicGroups = promiseSagaCreator(
@@ -144,7 +148,7 @@ export const getBizlogicGroups = promiseSagaCreator(
 )
 
 export function* getBizlogicGroupsWatcher () {
-  yield fork(takeLatest, LOAD_BIZLOGIC_GROUPS, getBizlogicGroups)
+  yield takeLatest(LOAD_BIZLOGIC_GROUPS, getBizlogicGroups)
 }
 
 export const editBizlogic = promiseSagaCreator(
@@ -162,7 +166,7 @@ export const editBizlogic = promiseSagaCreator(
 )
 
 export function* editBizlogicWatcher () {
-  yield fork(takeEvery, EDIT_BIZLOGIC, editBizlogic)
+  yield takeEvery(EDIT_BIZLOGIC, editBizlogic)
 }
 
 export function* getBizdatas ({ payload }) {
@@ -178,7 +182,7 @@ export function* getBizdatas ({ payload }) {
         .concat(`limit=${limit}`)
     }
     queries = queries.concat('usecache=false').concat('expired=0')
-    queries = `?${queries.join('&')}`
+    queries = `?${queries.join('&')}` as any
 
     const asyncData = yield call(request, {
       method: 'post',
@@ -193,7 +197,7 @@ export function* getBizdatas ({ payload }) {
 }
 
 export function* getBizdatasWatcher () {
-  yield fork(takeEvery, LOAD_BIZDATAS, getBizdatas)
+  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
 }
 
 export function* getBizdatasFromItem ({ payload }) {
@@ -209,13 +213,13 @@ export function* getBizdatasFromItem ({ payload }) {
         .concat(`limit=${limit}`)
     }
     queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
-    queries = `?${queries.join('&')}`
+    queries = `?${queries.join('&')}` as any
 
     const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
     const data = {
       adHoc,
       manualFilters: [filters, linkageFilters, globalFilters]
-        .filter(f => !!f)
+        .filter((f) => !!f)
         .join(' and '),
       params: [].concat(params).concat(linkageParams).concat(globalParams)
     }
@@ -233,7 +237,7 @@ export function* getBizdatasFromItem ({ payload }) {
 }
 
 export function* getBizdatasFromItemWatcher () {
-  yield fork(takeEvery, LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem)
+  yield takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any)
 }
 
 export function* getSqlValidate ({payload}) {
@@ -244,7 +248,7 @@ export function* getSqlValidate ({payload}) {
       url: `${api.bizlogic}/${sourceId}`,
       data: sql
     })
-    let result = repos && repos.header
+    const result = repos && repos.header
     yield put(validateSqlSuccess(result))
   } catch (err) {
     yield put(validateSqlFailure(err))
@@ -252,17 +256,17 @@ export function* getSqlValidate ({payload}) {
 }
 
 export function* getSqlValidateWatcher () {
-  yield fork(takeEvery, SQL_VALIDATE, getSqlValidate)
+  yield takeEvery(SQL_VALIDATE, getSqlValidate as any)
 }
 
 export function* getCascadeSourceFromItem ({ payload }) {
   try {
     const { itemId, controlId, id, sql, column, parents } = payload
     const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
-    const data = Object.assign({
+    const data = (Object as IObjectConstructor).assign({
       adHoc,
       manualFilters: [filters, linkageFilters, globalFilters]
-        .filter(f => !!f)
+        .filter((f) => !!f)
         .join(' and '),
       params: [].concat(params).concat(linkageParams).concat(globalParams),
       childFieldName: column
@@ -281,14 +285,14 @@ export function* getCascadeSourceFromItem ({ payload }) {
 }
 
 export function* getCascadeSourceFromItemWatcher () {
-  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem)
+  yield takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any)
 }
 
 export function* getCascadeSourceFromDashboard ({ payload }) {
   try {
     const { controlId, id, column, parents } = payload
 
-    const data = Object.assign({
+    const data = (Object as IObjectConstructor).assign({
       adHoc: '',
       manualFilters: '',
       params: [],
@@ -308,7 +312,7 @@ export function* getCascadeSourceFromDashboard ({ payload }) {
 }
 
 export function* getCascadeSourceFromDashboardWatcher () {
-  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+  yield takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any)
 }
 
 export function* getBizdataSchema ({ payload }) {
@@ -329,7 +333,7 @@ export function* getBizdataSchema ({ payload }) {
 }
 
 export function* getBizdataSchemaWatcher () {
-  yield fork(takeEvery, LOAD_BIZDATA_SCHEMA, getBizdataSchema)
+  yield takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
 }
 
 function resultsetConverter (resultset) {
@@ -348,9 +352,9 @@ function resultsetConverter (resultset) {
       }
     })
 
-    dataSource = arr.map(csvVal => {
+    dataSource = arr.map((csvVal) => {
       const jsonVal = csvParser.toArray(csvVal)
-      let obj = {
+      const obj = {
         [KEY_COLUMN]: uuid(8, 32)
       }
       keys.forEach((k, index) => {
@@ -361,11 +365,11 @@ function resultsetConverter (resultset) {
   }
 
   return {
-    dataSource: dataSource,
-    keys: keys,
-    types: types,
+    ['dataSource']: dataSource,
+    ['keys']: keys,
+    ['types']: types,
     pageSize: resultset.limit,
-    pageIndex: parseInt(resultset.offset / resultset.limit) + 1,
+    pageIndex: parseInt(`${resultset.offset / resultset.limit}`, 10) + 1,
     total: resultset.totalCount
   }
 }
