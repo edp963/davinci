@@ -149,7 +149,7 @@ export const getBizlogics = promiseSagaCreator(
 )
 
 export function* getBizlogicsWatcher () {
-  yield fork(takeLatest, LOAD_BIZLOGICS, getBizlogics)
+  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
 }
 
 export function* getBizdatas ({ payload }) {
@@ -179,8 +179,8 @@ export function* getBizdatas ({ payload }) {
   }
 }
 
-export function* getBizdatasWatcher () {
-  yield takeEvery(LOAD_BIZDATAS, getBizdatas)
+export function* getBizdatasWatcher (): IterableIterator<any> {
+  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
 }
 
 export default [

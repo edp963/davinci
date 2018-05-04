@@ -180,15 +180,12 @@ export function testSourceConnectionFail () {
   }
 }
 
-export function getCsvMetaId (tableName, sourceId, primaryKeys, indexKeys, replaceMode, resolve, reject) {
+// tableName, sourceId, primaryKeys, indexKeys, replaceMode
+export function getCsvMetaId (csvMeta, resolve, reject) {
   return {
     type: GET_CSV_META_ID,
     payload: {
-      tableName,
-      sourceId,
-      primaryKeys,
-      indexKeys,
-      replaceMode,
+      csvMeta,
       resolve,
       reject
     }

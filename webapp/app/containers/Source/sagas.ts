@@ -44,9 +44,10 @@ import {
   testSourceConnectionFail
 } from './actions'
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
+import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getSources () {
@@ -60,8 +61,8 @@ export function* getSources () {
   }
 }
 
-export function* getSourcesWatcher () {
-  yield fork(takeLatest, LOAD_SOURCES, getSources)
+export function* getSourcesWatcher (): IterableIterator<any> {
+  yield takeLatest(LOAD_SOURCES, getSources)
 }
 
 export function* addSource ({ payload }) {
@@ -80,8 +81,8 @@ export function* addSource ({ payload }) {
   }
 }
 
-export function* addSourceWatcher () {
-  yield fork(takeEvery, ADD_SOURCE, addSource)
+export function* addSourceWatcher (): IterableIterator<any> {
+  yield takeEvery(ADD_SOURCE, addSource as any)
 }
 
 export function* deleteSource ({ payload }) {
@@ -97,8 +98,8 @@ export function* deleteSource ({ payload }) {
   }
 }
 
-export function* deleteSourceWatcher () {
-  yield fork(takeEvery, DELETE_SOURCE, deleteSource)
+export function* deleteSourceWatcher (): IterableIterator<any> {
+  yield takeEvery(DELETE_SOURCE, deleteSource as any)
 }
 
 export function* getSourceDetail ({ payload }) {
@@ -111,8 +112,8 @@ export function* getSourceDetail ({ payload }) {
   }
 }
 
-export function* getSourceDetailWatcher () {
-  yield fork(takeLatest, LOAD_SOURCE_DETAIL, getSourceDetail)
+export function* getSourceDetailWatcher (): IterableIterator<any> {
+  yield takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail as any)
 }
 
 export function* editSource ({ payload }) {
@@ -131,7 +132,7 @@ export function* editSource ({ payload }) {
 }
 
 export function* editSourceWatcher () {
-  yield fork(takeEvery, EDIT_SOURCE, editSource)
+  yield takeEvery(EDIT_SOURCE, editSource as any)
 }
 
 export function* testSourceConnection ({ payload }) {
@@ -150,25 +151,27 @@ export function* testSourceConnection ({ payload }) {
       message.error(res.header.msg)
     }
   } catch (err) {
+    console.log('err')
     yield put(testSourceConnectionFail())
     message.error('测试 Source 连接失败')
   }
 }
 
 export function* testSourceConnectionWatcher () {
-  yield fork(takeEvery, TEST_SOURCE_CONNECTION, testSourceConnection)
+  yield takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection as any)
 }
+
 export function* getCsvMetaId ({payload}) {
   try {
     const res = yield call(request, {
       url: `${api.uploads}/meta`,
       method: 'post',
       data: {
-        'table_name': payload.tableName,
-        'source_id': payload.sourceId,
-        'primary_keys': payload.primaryKeys,
-        'index_keys': payload.indexKeys,
-        'replace_mode': payload.replaceMode
+        table_name: payload.csvMeta.table_name,
+        source_id: payload.csvMeta.source_id,
+        primary_keys: payload.csvMeta.primary_keys,
+        index_keys: payload.csvMeta.index_keys,
+        replace_mode: payload.csvMeta.replace_mode
       }
     })
     if (res && res.header && res.header.code === 200) {
@@ -181,7 +184,7 @@ export function* getCsvMetaId ({payload}) {
   }
 }
 export function* getCsvMetaIdWatcher () {
-  yield fork(takeEvery, GET_CSV_META_ID, getCsvMetaId)
+  yield takeEvery(GET_CSV_META_ID, getCsvMetaId as any)
 }
 
 export default [

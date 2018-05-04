@@ -33,8 +33,8 @@ import languageProviderReducer from './containers/LanguageProvider/reducer'
 import reportReducer from './containers/Report/reducer'
 import groupReducer from './containers/Group/reducer'
 import userReducer from './containers/User/reducer'
-// import sourceReducer from './containers/Source/reducer'
-// import bizlogicReducer from './containers/Bizlogic/reducer'
+import sourceReducer from './containers/Source/reducer'
+import bizlogicReducer from './containers/Bizlogic/reducer'
 import widgetReducer from './containers/Widget/reducer'
 // import dashboardReducer from './containers/Dashboard/reducer'
 // import scheduleReducer from './containers/Schedule/reducer'
@@ -80,8 +80,8 @@ export default function createReducer (asyncReducers: ReducersMapObject = {}): R
     report: reportReducer,
     group: groupReducer,
     user: userReducer,
-    // source: sourceReducer,
-    // bizlogic: bizlogicReducer,
+    source: sourceReducer,
+    bizlogic: bizlogicReducer,
     widget: widgetReducer,
     // dashboard: dashboardReducer,
     // schedule: scheduleReducer,
