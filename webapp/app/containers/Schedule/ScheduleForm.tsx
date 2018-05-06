@@ -18,39 +18,49 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import {connect} from 'react-redux'
 import {checkNameAction} from '../App/actions'
 import moment from 'moment'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import DatePicker from 'antd/lib/date-picker'
-import TimePicker from 'antd/lib/time-picker'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const DatePicker = require('antd/lib/date-picker')
+const TimePicker = require('antd/lib/time-picker').default
 const Option = Select.Option
 const { RangePicker } = DatePicker
 const FormItem = Form.Item
-import utilStyles from '../../assets/less/util.less'
+const utilStyles = require('../../assets/less/util.less')
 
-export class ScheduleForm extends React.PureComponent {
-  checkNameUnique = (rule, value = '', callback) => {
+interface IScheduleFormProps {
+  type: string
+  rangeTime: string
+  form: any
+  changeRange: () => any
+  configValue: string
+  onCheckName: (name: string, val: string, type: string, resolve: (res: any) => any, reject: (err: any) => any) => any
+  onShowConfig: () => any
+}
+
+export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'cronjob'
+    const idName = type === 'add' ? '' : id
+    const typeName = 'cronjob'
     onCheckName(idName, value, typeName,
-      res => {
+      (res) => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
 
-  render () {
-    let size = 'large'
+  public render () {
+    const size = 'large'
     const { onShowConfig, configValue } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
@@ -143,8 +153,6 @@ export class ScheduleForm extends React.PureComponent {
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
                     placeholder={['Start Time', 'End Time']}
-                    onChange={this.onChange}
-                    onOk={this.onOk}
                   />
                 )
               }
@@ -173,19 +181,24 @@ export class ScheduleForm extends React.PureComponent {
           <Col
             span={5}
             offset={1}
-            className={`${this.props.rangeTime === 'Month' ? '' : utilStyles.hide}`}>
+            className={`${this.props.rangeTime === 'Month' ? '' : utilStyles.hide}`}
+          >
             <FormItem>
               {
                   getFieldDecorator('month', {
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="1">1st</Option><Option value="2">2nd</Option><Option value="3">3rd</Option><Option value="4">4th</Option><Option value="5">5th</Option>
-                      <Option value="6">6th</Option><Option value="7">7th</Option><Option value="8">8th</Option><Option value="9">9th</Option><Option value="10">10th</Option>
-                      <Option value="11">11th</Option><Option value="12">12th</Option><Option value="13">13th</Option><Option value="14">14th</Option><Option value="15">15th</Option>
-                      <Option value="16">16th</Option><Option value="17">17th</Option><Option value="18">18th</Option><Option value="19">19th</Option><Option value="20">20th</Option>
-                      <Option value="21">21st</Option><Option value="22">22nd</Option><Option value="23">23rd</Option><Option value="24">24th</Option><Option value="25">25th</Option>
-                      <Option value="26">26th</Option><Option value="27">27th</Option><Option value="28">28th</Option><Option value="29">29th</Option><Option value="30">30th</Option>
+                      <Option value="1">1st</Option><Option value="2">2nd</Option><Option value="3">3rd</Option>
+                      <Option value="4">4th</Option><Option value="5">5th</Option><Option value="6">6th</Option>
+                      <Option value="7">7th</Option><Option value="8">8th</Option><Option value="9">9th</Option>
+                      <Option value="10">10th</Option><Option value="11">11th</Option><Option value="12">12th</Option>
+                      <Option value="13">13th</Option><Option value="14">14th</Option><Option value="15">15th</Option>
+                      <Option value="16">16th</Option><Option value="17">17th</Option><Option value="18">18th</Option>
+                      <Option value="19">19th</Option><Option value="20">20th</Option><Option value="21">21st</Option>
+                      <Option value="22">22nd</Option><Option value="23">23rd</Option><Option value="24">24th</Option>
+                      <Option value="25">25th</Option><Option value="26">26th</Option><Option value="27">27th</Option>
+                      <Option value="28">28th</Option><Option value="29">29th</Option><Option value="30">30th</Option>
                       <Option value="31">31st</Option>
                     </Select>
                   )
@@ -204,8 +217,12 @@ export class ScheduleForm extends React.PureComponent {
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="0">0</Option><Option value="5">5</Option><Option value="10">10</Option><Option value="15">15</Option><Option value="20">20</Option><Option value="25">25</Option>
-                      <Option value="30">30</Option><Option value="35">35</Option><Option value="40">40</Option><Option value="45">45</Option><Option value="50">50</Option><Option value="55">55</Option>
+                      <Option value="0">0</Option><Option value="5">5</Option>
+                      <Option value="10">10</Option><Option value="15">15</Option>
+                      <Option value="20">20</Option><Option value="25">25</Option>
+                      <Option value="30">30</Option><Option value="35">35</Option>
+                      <Option value="40">40</Option><Option value="45">45</Option>
+                      <Option value="50">50</Option><Option value="55">55</Option>
                     </Select>
                   )
                 }
@@ -256,20 +273,10 @@ export class ScheduleForm extends React.PureComponent {
   }
 }
 
-ScheduleForm.propTypes = {
-  type: PropTypes.string,
-  rangeTime: PropTypes.string,
-  form: PropTypes.any,
-  changeRange: PropTypes.func,
-  configValue: PropTypes.string,
-  onCheckName: PropTypes.func,
-  onShowConfig: PropTypes.func
-}
-
 function mapDispatchToProps (dispatch) {
   return {
     onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
   }
 }
 
-export default Form.create()(connect(null, mapDispatchToProps)(ScheduleForm))
+export default Form.create()(connect<{}, {}, IScheduleFormProps>(null, mapDispatchToProps)(ScheduleForm))

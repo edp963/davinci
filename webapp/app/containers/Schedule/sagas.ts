@@ -21,7 +21,7 @@ export const getSchedules = promiseSagaCreator(
 )
 
 export function* getSchedulesWatcher () {
-  yield fork(takeLatest, LOAD_SCHEDULES, getSchedules)
+  yield takeEvery(LOAD_SCHEDULES, getSchedules)
 }
 
 export const addSchedules = promiseSagaCreator(
@@ -42,7 +42,7 @@ export const addSchedules = promiseSagaCreator(
 )
 
 export function* addScheduleWatcher () {
-  yield fork(takeEvery, ADD_SCHEDULES, addSchedules)
+  yield takeEvery(ADD_SCHEDULES, addSchedules)
 }
 
 export const deleteSchedule = promiseSagaCreator(
@@ -59,7 +59,7 @@ export const deleteSchedule = promiseSagaCreator(
 )
 
 export function* deleteScheduleWatcher () {
-  yield fork(takeEvery, DELETE_SCHEDULES, deleteSchedule)
+  yield takeEvery(DELETE_SCHEDULES, deleteSchedule)
 }
 
 export const changeScheduleStatus = promiseSagaCreator(
@@ -94,7 +94,7 @@ export const changeScheduleStatus = promiseSagaCreator(
 )
 
 export function* changeScheduleStatusWatcher () {
-  yield fork(takeEvery, CHANGE_SCHEDULE_STATUS, changeScheduleStatus)
+  yield takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus)
 }
 
 export const updateSchedule = promiseSagaCreator(
@@ -115,7 +115,7 @@ export const updateSchedule = promiseSagaCreator(
 )
 
 export function* updateScheduleWatcher () {
-  yield fork(takeEvery, UPDATE_SCHEDULES, updateSchedule)
+  yield takeEvery(UPDATE_SCHEDULES, updateSchedule)
 }
 
 // All sagas to be loaded

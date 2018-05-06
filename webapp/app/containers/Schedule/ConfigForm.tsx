@@ -18,22 +18,34 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import {connect} from 'react-redux'
 import {checkNameAction} from '../App/actions'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import TreeSelect from 'antd/lib/tree-select'
+const Form  = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Option = Select.Option
+const TreeSelect = require('antd/lib/tree-select')
 const SHOW_PARENT = TreeSelect.SHOW_PARENT
 const FormItem = Form.Item
+const utilStyles =  require('../../assets/less/util.less')
 
-import utilStyles from '../../assets/less/util.less'
 
-export class ConfigForm extends React.PureComponent {
-  render () {
+
+interface IConfigFormProps {
+  form: any
+  type: string
+  dashboardTree: any[]
+  treeSelect: () => any
+  treeChange: () => any
+  loadTreeData: () => any
+  dashboardTreeValue: any
+}
+
+export class ConfigForm extends React.PureComponent<IConfigFormProps> {
+  public render () {
     const { getFieldDecorator } = this.props.form
     const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData } = this.props
     const commonFormItemStyle = {
@@ -150,14 +162,5 @@ export class ConfigForm extends React.PureComponent {
   }
 }
 
-ConfigForm.propTypes = {
-  form: PropTypes.any,
-  type: PropTypes.string,
-  dashboardTree: PropTypes.array,
-  treeSelect: PropTypes.func,
-  treeChange: PropTypes.func,
-  loadTreeData: PropTypes.func,
-  dashboardTreeValue: PropTypes.any
-}
 
 export default Form.create()(ConfigForm)

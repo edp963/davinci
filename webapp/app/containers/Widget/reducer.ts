@@ -47,7 +47,8 @@ const initialState = fromJS({
   bizlogics: false
 })
 
-function widgetReducer (state = initialState, { type, payload }) {
+function widgetReducer (state = initialState, action) {
+  const { type, payload } = action
   const widgets = state.get('widgets')
   const bizdatas = state.get('bizdatas')
 
