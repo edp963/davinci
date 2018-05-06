@@ -17,14 +17,33 @@ import {
   UPDATE_SCHEDULES,
   UPDATE_SCHEDULES_SUCCESS
 } from './constants'
+import {
+  LOAD_DASHBOARDS_SUCCESS,
+  LOAD_DASHBOARD_DETAIL_SUCCESS
+} from '../Dashboard/constants'
+import {
+  LOAD_WIDGETS_SUCCESS
+} from '../Widget/constants'
 
 const initialState = fromJS({
-  schedule: false
+  widgets: false,
+  schedule: false,
+  dashboards: false,
+  currentDashboard: false
 })
 
-function scheduleReducer (state = initialState, {type, payload}) {
+function scheduleReducer (state = initialState, action) {
+  const { type, payload } = action
   const schedule = state.get('schedule')
+  const dashboards = state.get('dashboards')
   switch (type) {
+    case LOAD_WIDGETS_SUCCESS:
+      return state.set('widgets', payload.widgets)
+    case LOAD_DASHBOARDS_SUCCESS:
+      return state.set('dashboards', payload.dashboards)
+    case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      return state
+        .set('currentDashboard', payload.dashboard)
     case LOAD_SCHEDULES:
       return state
     case LOAD_SCHEDULES_SUCCESS:
@@ -39,15 +58,15 @@ function scheduleReducer (state = initialState, {type, payload}) {
     case DELETE_SCHEDULES:
       return state
     case DELETE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.filter(g => g.id !== payload.id))
+      return state.set('schedule', schedule.filter((g) => g.id !== payload.id))
     case CHANGE_SCHEDULE_STATUS:
       return state
     case CHANGE_SCHEDULE_STATUS_SUCCESS:
-      return state.set('schedule', schedule.map(s => s.id === payload.id ? payload.schedules : s))
+      return state.set('schedule', schedule.map((s) => s.id === payload.id ? payload.schedules : s))
     case UPDATE_SCHEDULES:
       return state
     case UPDATE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.map(s => s.id === payload.result.id ? payload.result : s))
+      return state.set('schedule', schedule.map((s) => s.id === payload.result.id ? payload.result : s))
     default:
       return state
   }

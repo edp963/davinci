@@ -4,40 +4,84 @@
  *
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { Link } from 'react-router'
 import Container from '../../components/Container'
-import Box from '../../components/Box'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
 import moment from 'moment'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
-import makeSelectSchedule from './selectors'
-import utilStyles from '../../assets/less/util.less'
+import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
 
 import {loadDashboardDetail, loadDashboards} from '../Dashboard/actions'
 import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule } from './actions'
-import {makeSelectCurrentDashboard, makeSelectDashboards} from '../Dashboard/selectors'
 import {loadWidgets} from '../Widget/actions'
-import {makeSelectWidgets} from '../Widget/selectors'
+import Box from '../../components/Box'
 
-export class Schedule extends React.Component { // eslint-disable-line react/prefer-stateless-function
+const Modal =  require ('antd/lib/modal')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Table = require('antd/lib/table')
+const Button = require('antd/lib/button')
+const Tooltip = require('antd/lib/tooltip')
+const Icon = require('antd/lib/icon')
+const Popconfirm = require('antd/lib/popconfirm')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const utilStyles = require('../../assets/less/util.less')
+import { PaginationProps } from 'antd/lib/pagination'
+
+
+interface ICurrentDashboard {
+  config: string
+  create_by: number
+  desc: string
+  id: number
+  linkage_detail: string
+  name: string
+  pic: string
+  publish: boolean
+  widgets: any[]
+}
+
+interface IScheduleProps {
+  widgets: boolean | any[]
+  schedule: boolean | any[]
+  dashboards: boolean | any[]
+  onAddSchedule: (param: object) => any
+  onLoadWidgets: () => any
+  onLoadSchedules: () => any
+  onLoadDashboards: () => any
+  onDeleteSchedule: (id: number) => any
+  onUpdateSchedule: (param: object) => any
+  currentDashboard: null | ICurrentDashboard
+  onLoadDashboardDetail: (key: number) => any
+  onChangeCurrentJobStatus: (id: number, status: string) => any
+}
+
+interface IScheduleStates {
+  emailConfig: {to?: any, cc?: any, subject?: any, bcc?: any}
+  formType: string,
+  tableSource: any[],
+  configType: string,
+  dashboardTree: any[],
+  formVisible: boolean,
+  tableLoading: boolean,
+  modalLoading: boolean,
+  configVisible: boolean,
+  dashboardTreeValue: any[],
+  rangeTime: string,
+  screenWidth: number
+}
+
+export class Schedule extends React.Component<IScheduleProps, IScheduleStates> { // eslint-disable-line react/prefer-stateless-function
   constructor (props) {
     super(props)
     this.state = {
-      emailConfig: [],
+      emailConfig: {},
       formType: 'add',
       tableSource: [],
       configType: 'add',
@@ -52,11 +96,14 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }
   }
 
-  componentWillMount () {
+  private scheduleForm: WrappedFormUtils = null
+  private configForm: WrappedFormUtils = null
+
+  public componentWillMount () {
     this.props.onLoadWidgets()
     this.props.onLoadDashboards().then(() => {
       const {dashboards} = this.props
-      const initDashboardTree = dashboards.map(dashboard => ({
+      const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
         ...dashboard,
         ...{
           label: dashboard.name,
@@ -76,40 +123,47 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         this.setState({ tableLoading: false })
       })
   }
-  componentWillReceiveProps (props) {
+
+  public componentWillReceiveProps (props) {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     if (props.schedule) {
-      this.state.tableSource = props.schedule.map(s => {
-        s.key = s.id
-        return s
+      this.setState({
+        tableSource: props.schedule.map((g) => {
+          g.key = g.id
+          return g
+        })
       })
     }
   }
 
-  showAdd = () => {
+  private showAdd = () => {
     this.setState({
       formVisible: true,
       formType: 'add'
     })
   }
 
-  showDetail = (scheduleId) => () => {
+  private handleTableChange = (pagination, filters, sorter) => {
+    
+  }
+
+  private showDetail = (scheduleId) => () => {
     this.setState({
       formVisible: true,
       formType: 'edit'
     }, () => {
-      const { id, name, desc, config } = this.props.schedule.find(s => s.id === scheduleId)
+      const { id, name, desc, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
       const config2json = JSON.parse(config)
       const { time_range, range, contentList, month, hour, week, time } = config2json
-      let formatterContentList = this.json2arr(contentList)
+      const formatterContentList = this.json2arr(contentList)
       this.setState({
         emailConfig: config2json,
         dashboardTreeValue: formatterContentList
       })
       let momentRange = []
       if (range) {
-        momentRange = range.map(ra => moment(ra))
+        momentRange = range.map((ra) => moment(ra))
       }
       this.setState({
         rangeTime: time_range
@@ -118,14 +172,14 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  onScheduleOk = () => {
+  private onScheduleOk = () => {
     const { onAddSchedule, onUpdateSchedule } = this.props
     this.scheduleForm.validateFieldsAndScroll((err, values) => {
-      let { emailConfig } = this.state
+      const { emailConfig } = this.state
       if (!err) {
         this.setState({ modalLoading: true })
-        let startDate = values.range && values.range[0] ? values.range[0] : ''
-        let endDate = values.range && values.range[1] ? values.range[1] : ''
+        const startDate = values.range && values.range[0] ? values.range[0] : ''
+        const endDate = values.range && values.range[1] ? values.range[1] : ''
         if (values && values.config) {
           emailConfig['time_range'] = values.time_range
           emailConfig['month'] = values.month
@@ -135,10 +189,10 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           emailConfig['range'] = values.range
         //  emailConfig['contentList'] = this.arr2json(JSON.parse(values.config)['contentList'])
         }
-        let valueTime = moment(values.time).format('HH:mm')
-        let formatterValueTime = valueTime.split(':')
-        let HH = formatterValueTime[0]
-        let mm = formatterValueTime[1]
+        const valueTime = moment(values.time).format('HH:mm')
+        const formatterValueTime = valueTime.split(':')
+        const HH = formatterValueTime[0]
+        const mm = formatterValueTime[1]
         let cronPatten = ''
         if (values) {
           let minute = '0'
@@ -156,17 +210,20 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         this.setState({
           emailConfig: emailConfig
         }, () => {
-          for (let i in emailConfig) {
+          for (const i in emailConfig) {
             if (!emailConfig[i]) {
               delete emailConfig[i]
             }
           }
           values.config = JSON.stringify(emailConfig)
-          let params = Object.assign({}, values, {
-            start_date: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-            end_date: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-            cron_pattern: cronPatten
-          })
+          const params = {
+            ...values,
+            ...{
+              start_date: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+              end_date: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+              cron_pattern: cronPatten
+            }
+          }
           if (this.state.formType === 'add') {
             onAddSchedule(params).then(() => this.hideForm())
           } else {
@@ -177,16 +234,16 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  arr2json = (arr) => {
-    let result = arr.map(arr => {
-      if (arr.indexOf('(w)') > -1) {
+  private arr2json = (arr) => {
+    const result = arr.map((a) => {
+      if (a.indexOf('(w)') > -1) {
         return {
-          id: parseInt(arr.replace('(w)', '')),
+          id: parseInt(a.replace('(w)', '')),
           type: 'widget'
         }
       } else {
         return {
-          id: parseInt(arr.replace('(d)', '')),
+          id: parseInt(a.replace('(d)', '')),
           type: 'dashboard'
         }
       }
@@ -194,13 +251,13 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     return result
   }
 
-  json2arr = (json) => json.map(js => `${js.id}(${js.type.substr(0, 1)})`)
+  private json2arr = (json) => json.map((js) => `${js.id}(${js.type.substr(0, 1)})`)
 
-  onConfigModalOk = () => {
+  private onConfigModalOk = () => {
     this.configForm.validateFieldsAndScroll((err, values) => {
       const { dashboardTreeValue } = this.state
       if (!err) {
-        let emailConfigData = {
+        const emailConfigData = {
           ...values,
           ...{contentList: this.arr2json(dashboardTreeValue)}
         }
@@ -211,24 +268,24 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
       modalLoading: false,
       formVisible: false,
-      emailConfig: []
+      emailConfig: {}
     }, () => this.scheduleForm.resetFields())
   }
 
-  hideConfigForm = () => {
+  private hideConfigForm = () => {
     this.setState({
       configVisible: false,
       dashboardTreeValue: []
     }, () => this.configForm.resetFields())
   }
 
-  showConfig = () => {
+  private showConfig = () => {
     const { emailConfig } = this.state
-    let jsonStringify = JSON.stringify(emailConfig)
+    const jsonStringify = JSON.stringify(emailConfig)
     this.setState({
       configVisible: true,
       configType: 'add'
@@ -240,32 +297,32 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  onTreeSelect = f => f
+  private onTreeSelect = (f) => f
 
-  onTreeChange = (value, label, extra) => {
+  private onTreeChange = (value, label, extra) => {
    // let triggerData = extra.triggerNode.props
     this.setState({
       dashboardTreeValue: value
     })
   }
 
-  onLoadTreeData = (treeNode) => {
+  private onLoadTreeData = (treeNode) => {
     const eventKey = treeNode.props.eventKey
     return new Promise((resolve, reject) => {
       this.props.onLoadDashboardDetail(eventKey).then(() => {
         const { currentDashboard, widgets } = this.props
         const { dashboardTree } = this.state
-        const widgetFilter = (dashboardName) => currentDashboard.widgets.map(widget => ({
+        const widgetFilter = (dashboardName) => currentDashboard.widgets.map((widget) => ({
           ...widget,
           ...{
-            label: `${dashboardName} / ${widgets.find(wi => wi.id === widget.widget_id)['name']}`,
+            label: `${dashboardName} / ${(widgets as any[]).find((wi) => wi.id === widget.widget_id)['name']}`,
             key: widget.id,
             value: `${widget.id}(w)`,
             type: 'widget',
             isLeaf: true
           }
         }))
-        let dashboardTreeChildren = dashboardTree.map((tree, index) => {
+        const dashboardTreeChildren = dashboardTree.map((tree, index) => {
           if (`${tree.key}` === eventKey) {
             return {
               ...tree,
@@ -285,13 +342,14 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  onChangeRange = (value) => {
-    let rangeArr = ['month', 'hour', 'week', 'time']
+  private onChangeRange = (value) => {
+    const rangeArr = ['month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
     })
-    rangeArr.map(range => {
+    rangeArr.map((range) => {
       if (range === 'time') {
+        return range
       } else {
         this.scheduleForm.setFieldsValue({
           [range]: ''
@@ -300,7 +358,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     })
   }
 
-  formatStatusIcon = (status) => {
+  private formatStatusIcon = (status) => {
     switch (status) {
       case 'new':
         return 'caret-right'
@@ -315,23 +373,23 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }
   }
 
-  formatStatusText = (status) => {
-    let emunObj = {
-      'new': '启动',
-      'failed': '重启',
-      'started': '暂停',
-      'stopped': '启动'
+  private formatStatusText = (status) => {
+    const emunObj = {
+      new: '启动',
+      failed: '重启',
+      started: '暂停',
+      stopped: '启动'
     }
     return emunObj[status]
   }
 
-  changeStatus = (record) => {
+  private changeStatus = (record) => () => {
     const { id, job_status } = record
     const { onChangeCurrentJobStatus } = this.props
     onChangeCurrentJobStatus(id, job_status)
   }
 
-  render () {
+  public render () {
     const {
       formType,
       configType,
@@ -347,10 +405,12 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     const {
       onDeleteSchedule
     } = this.props
-    const pagination = {
-      simple: screenWidth < 768 || screenWidth === 768,
+
+    const pagination: PaginationProps = {
+     // simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
-      showSizeChanger: true
+      showSizeChanger: true,
+      total: tableSource.length
     }
 
     const columns = [
@@ -392,7 +452,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         render: (text, record) => (
           <span className="ant-table-action-column">
             <Tooltip title={`${this.formatStatusText(record.job_status)}`}>
-              <Button icon={this.formatStatusIcon(record.job_status)} shape="circle" type="ghost" onClick={() => this.changeStatus(record)} />
+              <Button icon={this.formatStatusIcon(record.job_status)} shape="circle" type="ghost" onClick={this.changeStatus(record)} />
             </Tooltip>
             <Tooltip title="修改">
               <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
@@ -411,39 +471,50 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       }]
 
     const scheduleButtons = ([
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideForm}>
-        取 消
-      </Button>,
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onScheduleOk}>
-        保 存
-      </Button>
+      (
+        <Button
+          key="back"
+          size="large"
+          onClick={this.hideForm}
+        >
+          取 消
+        </Button>
+      ),
+      (
+        <Button
+          key="submit"
+          size="large"
+          type="primary"
+          loading={modalLoading}
+          disabled={modalLoading}
+          onClick={this.onScheduleOk}
+        >
+          保 存
+        </Button>
+      )
     ])
 
     const configModalButtons = ([
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideConfigForm}>
-        取 消
-      </Button>,
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        onClick={this.onConfigModalOk}>
-        保 存
-      </Button>
+      (
+        <Button
+          key="back"
+          size="large"
+          onClick={this.hideConfigForm}
+        >
+          取 消
+        </Button>
+      ),
+      (
+        <Button
+          key="submit"
+          size="large"
+          type="primary"
+          onClick={this.onConfigModalOk}
+        >
+          保 存
+        </Button>
+      )
     ])
-
     return (
       <Container>
         <Helmet title="Schedule" />
@@ -452,7 +523,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
             <Col span={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link>Schedule</Link>
+                  <Link to="">Schedule</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
@@ -478,6 +549,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
                     columns={columns}
                     pagination={pagination}
                     loading={tableLoading}
+                    onChange={this.handleTableChange}
                     bordered
                   />
                 </Col>
@@ -488,7 +560,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
                 visible={formVisible}
                 footer={scheduleButtons}
                 onCancel={this.hideForm}
-               >
+              >
                 <ScheduleForm
                   type={formType}
                   rangeTime={this.state.rangeTime}
@@ -496,7 +568,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
                   configValue={JSON.stringify(this.state.emailConfig)}
                   onShowConfig={this.showConfig}
                   ref={(f) => { this.scheduleForm = f }}
-                 />
+                />
               </Modal>
 
               <Modal
@@ -526,30 +598,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
   }
 }
 
-Schedule.propTypes = {
-  widgets: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  schedule: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  dashboards: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  onAddSchedule: PropTypes.func,
-  onLoadWidgets: PropTypes.func,
-  onLoadSchedules: PropTypes.func,
-  onLoadDashboards: PropTypes.func,
-  onDeleteSchedule: PropTypes.func,
-  onUpdateSchedule: PropTypes.func,
-  currentDashboard: PropTypes.object,
-  onLoadDashboardDetail: PropTypes.func,
-  onChangeCurrentJobStatus: PropTypes.func
-}
-
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
   schedule: makeSelectSchedule(),
@@ -570,4 +618,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Schedule)
+export default connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)(Schedule)
