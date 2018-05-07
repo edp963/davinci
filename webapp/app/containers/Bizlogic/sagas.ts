@@ -59,7 +59,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-import resultsetConverter from '../../utils/resultsetConverter';
+import resultsetConverter from '../../utils/resultsetConverter'
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object
