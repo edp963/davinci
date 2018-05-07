@@ -144,10 +144,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     })
   }
 
-  private handleTableChange = (pagination, filters, sorter) => {
-    
-  }
-
   private showDetail = (scheduleId) => () => {
     this.setState({
       formVisible: true,
@@ -549,7 +545,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
                     columns={columns}
                     pagination={pagination}
                     loading={tableLoading}
-                    onChange={this.handleTableChange}
                     bordered
                   />
                 </Col>
