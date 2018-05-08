@@ -27,3 +27,4 @@ spark-warehouse
 swagger-ui/
 lib/
 tempFiles/
+.vscode
