@@ -151,7 +151,6 @@ export function* testSourceConnection ({ payload }) {
       message.error(res.header.msg)
     }
   } catch (err) {
-    console.log('err')
     yield put(testSourceConnectionFail())
     message.error('测试 Source 连接失败')
   }
