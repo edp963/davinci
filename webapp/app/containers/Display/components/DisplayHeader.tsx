@@ -1,12 +1,13 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
 
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
+const styles = require('../Display.less')
 
-import styles from '../Display.less'
+interface IDisplayHeaderProps {
+  widgets: any[]
+}
 
-export function DisplayHeader (props) {
+export function DisplayHeader (props: IDisplayHeaderProps) {
   return (
     <div className={styles.header}>
       <div className={styles.commands}>
@@ -59,10 +60,6 @@ export function DisplayHeader (props) {
       </div>
     </div>
   )
-}
-
-DisplayHeader.propTypes = {
-  widgets: PropTypes.array
 }
 
 export default DisplayHeader

@@ -4,7 +4,7 @@
  *
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { createStructuredSelector } from 'reselect'
@@ -21,9 +21,26 @@ import SettingForm from './components/SettingForm'
 
 import { hideNavigator } from '../App/actions'
 import { DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT } from '../../globalConstants'
-import styles from './Display.less'
+const styles = require('./Display.less')
 
-export class Display extends React.Component {
+
+interface IDisplayProps {
+  onHideNavigator: () => void
+}
+
+interface IDisplayStates {
+  editorWidth: number,
+  editorHeight: number,
+  editorPadding: string,
+  scale: number,
+  sliderValue: number,
+  displayWidth: number,
+  displayHeight: number,
+  displayScale: string,
+  gridDistance: number
+}
+
+export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -40,7 +57,9 @@ export class Display extends React.Component {
     }
   }
 
-  componentDidMount () {
+  private editor: any
+
+  public componentDidMount () {
     this.props.onHideNavigator()
     window.addEventListener('resize', this.containerResize, false)
     // onHideNavigator 导致页面渲染
@@ -49,49 +68,45 @@ export class Display extends React.Component {
     })
   }
 
-  componentWillUnmount () {
+  public componentWillUnmount () {
     window.removeEventListener('resize', this.containerResize, false)
   }
 
-  containerResize = () => {
+  private containerResize = () => {
     this.sliderChange(this.state.sliderValue)
   }
 
-  sliderChange = (value) => {
+  private sliderChange = (value) => {
     this.doScale(value / 40 + 0.5)
     this.setState({
       sliderValue: value
     })
   }
 
-  zoomIn = () => {
+  private zoomIn = () => {
     if (this.state.sliderValue) {
       this.sliderChange(Math.max(this.state.sliderValue - 10, 0))
     }
   }
 
-  zoomOut = () => {
+  private zoomOut = () => {
     if (this.state.sliderValue !== 100) {
       this.sliderChange(Math.min(this.state.sliderValue + 10, 100))
     }
   }
 
-  doScale = (times) => {
+  private doScale = (times) => {
     const { displayWidth, displayHeight } = this.state
     const { offsetWidth, offsetHeight } = this.editor.container
 
-    let editorWidth = Math.max(offsetWidth * times, offsetWidth)
-    let editorHeight = Math.max(offsetHeight * times, offsetHeight)
+    const editorWidth = Math.max(offsetWidth * times, offsetWidth)
+    const editorHeight = Math.max(offsetHeight * times, offsetHeight)
 
-    let scale = 1
-
-    if (displayWidth / displayHeight > editorWidth / editorHeight) {
+    const scale = (displayWidth / displayHeight > editorWidth / editorHeight) ?
       // landscape
-      scale = (editorWidth - 64) / displayWidth * times
-    } else {
+      (editorWidth - 64) / displayWidth * times :
       // portrait
-      scale = (editorHeight - 64) / displayHeight * times
-    }
+      (editorHeight - 64) / displayHeight * times
 
     const leftRightPadding = Math.max((offsetWidth - displayWidth * scale) / 2, 32)
     const topBottomPadding = Math.max((offsetHeight - displayHeight * scale) / 2, 32)
@@ -104,7 +119,7 @@ export class Display extends React.Component {
     })
   }
 
-  displaySizeChange = (width, height) => {
+  private displaySizeChange = (width, height) => {
     this.setState({
       displayWidth: width,
       displayHeight: height
@@ -113,23 +128,23 @@ export class Display extends React.Component {
     })
   }
 
-  displayScaleChange = (event) => {
+  private displayScaleChange = (event) => {
     this.setState({
       displayScale: event.target.value
     })
   }
 
-  gridDistanceChange = (distance) => {
+  private gridDistanceChange = (distance) => {
     this.setState({
       gridDistance: distance
     })
   }
 
-  abc = (e, d) => {
+  private abc = (e, d) => {
     console.log(e, d)
   }
 
-  render () {
+  public render () {
     const {
       editorWidth,
       editorHeight,
@@ -146,9 +161,7 @@ export class Display extends React.Component {
         <Helmet
           title="Display"
         />
-        <DisplayHeader
-
-        />
+        <DisplayHeader widgets={[]}/>
         <DisplayBody>
           <DisplayEditor
             key="editor"
@@ -158,7 +171,7 @@ export class Display extends React.Component {
             scale={scale}
             displayWidth={displayWidth}
             displayHeight={displayHeight}
-            ref={f => { this.editor = f }}
+            ref={(f) => { this.editor = f }}
           >
             <Draggable
               grid={[gridDistance * scale, gridDistance * scale]}
@@ -166,7 +179,7 @@ export class Display extends React.Component {
               scale={scale}
               onStop={this.abc}
             >
-              <div style={{width: '192px', height: '192px', border: '1px solid #000'}}></div>
+              <div style={{width: '192px', height: '192px', border: '1px solid #000'}}/>
             </Draggable>
           </DisplayEditor>
           <DisplayBottom
@@ -190,10 +203,6 @@ export class Display extends React.Component {
       </div>
     )
   }
-}
-
-Display.propTypes = {
-  onHideNavigator: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({

@@ -1,28 +1,38 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import InputNumber from 'antd/lib/input-number'
-import Radio from 'antd/lib/radio'
-import Upload from 'antd/lib/upload'
-import Icon from 'antd/lib/icon'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const InputNumber = require('antd/lib/input-number')
+const Radio = require('antd/lib/radio/radio')
+const Upload = require('antd/lib/upload')
+const Icon = require('antd/lib/icon')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 
-import styles from '../Display.less'
+const styles = require('../Display.less')
 
-export class SettingForm extends PureComponent {
-  changeWidth = (val) => {
-    this.props.onDisplaySizeChange(parseInt(val), this.props.screenHeight)
+interface ISettingFormProps {
+  form: any,
+  screenWidth: number,
+  screenHeight: number,
+  scale: string,
+  gridDistance: number,
+  onDisplaySizeChange: (val: number, height: number) => void,
+  onDisplayScaleChange: (width: number, val: number) => void,
+  onGridDistanceChange: () => void
+}
+
+export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
+  private changeWidth = (val) => {
+    this.props.onDisplaySizeChange(parseInt(val, 10), this.props.screenHeight)
   }
 
-  changeHeight = (val) => {
-    this.props.onDisplaySizeChange(this.props.screenWidth, parseInt(val))
+  private changeHeight = (val) => {
+    this.props.onDisplaySizeChange(this.props.screenWidth, parseInt(val, 10))
   }
 
-  render () {
+  public render () {
     const {
       form,
       screenWidth,
@@ -118,17 +128,6 @@ export class SettingForm extends PureComponent {
       </Form>
     )
   }
-}
-
-SettingForm.propTypes = {
-  form: PropTypes.any,
-  screenWidth: PropTypes.number,
-  screenHeight: PropTypes.number,
-  scale: PropTypes.string,
-  gridDistance: PropTypes.number,
-  onDisplaySizeChange: PropTypes.func,
-  onDisplayScaleChange: PropTypes.func,
-  onGridDistanceChange: PropTypes.func
 }
 
 export default Form.create()(SettingForm)

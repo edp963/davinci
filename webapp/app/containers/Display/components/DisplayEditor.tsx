@@ -1,10 +1,21 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import styles from '../Display.less'
+const styles = require('../Display.less')
 
-export class DisplayEditor extends PureComponent {
-  render () {
+interface IDisplayEditorProps {
+  width: number,
+  height: number,
+  padding: string,
+  scale: number,
+  displayWidth: number,
+  displayHeight: number,
+  children: JSX.Element
+}
+
+export class DisplayEditor extends React.PureComponent<IDisplayEditorProps, {}> {
+  private container: any
+
+  public render () {
     const {
       width,
       height,
@@ -17,13 +28,13 @@ export class DisplayEditor extends PureComponent {
 
     return (
       <div className={styles.editor}>
-        <div ref={f => { this.container = f }} className={styles.editorContainer}>
+        <div ref={(f) => { this.container = f }} className={styles.editorContainer}>
           <div
             className={styles.displayContainer}
             style={{
               width: `${width}px`,
               height: `${height}px`,
-              padding: padding
+              padding
             }}
           >
             <div className={styles.displayPanelWrapper}>
@@ -43,16 +54,6 @@ export class DisplayEditor extends PureComponent {
       </div>
     )
   }
-}
-
-DisplayEditor.propTypes = {
-  width: PropTypes.number,
-  height: PropTypes.number,
-  padding: PropTypes.string,
-  scale: PropTypes.number,
-  displayWidth: PropTypes.number,
-  displayHeight: PropTypes.number,
-  children: PropTypes.node
 }
 
 export default DisplayEditor
