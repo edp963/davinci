@@ -50,18 +50,18 @@ export default function (dataSource, flatInfo, chartParams) {
     suffixYAxis
   } = chartParams
 
-  let grouped,
-    metricOptions,
-    xAxisOptions,
-    smoothOption,
-    stepOption,
-    stackOption,
-    symbolOption,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYAxisOptions
+  let grouped
+  let metricOptions
+  let xAxisOptions
+  let smoothOption
+  let stepOption
+  let stackOption
+  let symbolOption
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYAxisOptions
 
   suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYAxis}`
@@ -83,47 +83,43 @@ export default function (dataSource, flatInfo, chartParams) {
 
   if (hasGroups && groups && groups.length) {
     xAxisDistincted = distinctXaxis(dataSource, xAxis)
-    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i), xAxis, metrics, xAxisDistincted)
+    grouped = makeGrouped(dataSource, [].concat(groups).filter((i) => !!i), xAxis, metrics, xAxisDistincted)
   }
 
   // series 数据项； series = metrics * groups
-  let metricArr = []
+  const metricArr = []
 
   if (metrics) {
-    metrics.forEach(m => {
+    metrics.forEach((m) => {
       if (hasGroups && groups && groups.length) {
         Object
           .keys(grouped)
-          .forEach(k => {
-            let serieObj = Object.assign({},
-              {
-                name: `${k} ${m}`,
-                type: 'line',
-                areaStyle: {normal: {}},
-                sampling: 'average',
-                data: grouped[k].map(g => g[m])
-              },
-              symbolOption,
-              smoothOption,
-              stepOption,
-              stackOption
-            )
+          .forEach((k) => {
+            const serieObj = {
+              name: `${k} ${m}`,
+              type: 'line',
+              areaStyle: {normal: {}},
+              sampling: 'average',
+              data: grouped[k].map((g) => g[m]),
+              ...symbolOption,
+              ...smoothOption,
+              ...stepOption,
+              ...stackOption
+            }
             metricArr.push(serieObj)
           })
       } else {
-        let serieObj = Object.assign({},
-          {
-            name: m,
-            type: 'line',
-            areaStyle: {normal: {}},
-            sampling: 'average',
-            symbol: symbolOption,
-            data: dataSource.map(d => d[m])
-          },
-          symbolOption,
-          smoothOption,
-          stepOption
-        )
+        const serieObj = {
+          name: m,
+          type: 'line',
+          areaStyle: {normal: {}},
+          sampling: 'average',
+          symbol: symbolOption,
+          data: dataSource.map((d) => d[m]),
+          ...symbolOption,
+          ...smoothOption,
+          ...stepOption
+        }
         metricArr.push(serieObj)
       }
     })
@@ -137,7 +133,7 @@ export default function (dataSource, flatInfo, chartParams) {
     xAxis: {
       data: hasGroups && groups && groups.length
         ? xAxisDistincted
-        : dataSource.map(d => d[xAxis]),
+        : dataSource.map((d) => d[xAxis]),
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
@@ -179,14 +175,17 @@ export default function (dataSource, flatInfo, chartParams) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricArr.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: metricArr.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
@@ -210,8 +209,8 @@ export default function (dataSource, flatInfo, chartParams) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -237,7 +236,7 @@ export default function (dataSource, flatInfo, chartParams) {
     }]
   }
 
-  return Object.assign({
+  return {
     yAxis: {
       type: 'value',
       splitLine: {
@@ -251,23 +250,22 @@ export default function (dataSource, flatInfo, chartParams) {
     },
     tooltip: {
       trigger: 'axis'
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...legendOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...dataZoomOptions
+  }
 }
 
 export function makeGrouped (dataSource, groupColumns, xAxis, metrics, xAxisDistincted) {
-  let grouped = {}
+  const grouped = {}
 
   if (xAxis && metrics) {
-    dataSource.forEach(ds => {
-      let accColumn = groupColumns
+    dataSource.forEach((ds) => {
+      const accColumn = groupColumns
         .reduce((arr, col) => arr.concat(ds[col]), [])
         .join(' ')
       if (!grouped[accColumn]) {
@@ -276,14 +274,14 @@ export function makeGrouped (dataSource, groupColumns, xAxis, metrics, xAxisDist
       grouped[accColumn][ds[xAxis]] = ds
     })
 
-    Object.keys(grouped).map(accColumn => {
+    Object.keys(grouped).map((accColumn) => {
       const currentGroupValues = grouped[accColumn]
 
-      grouped[accColumn] = xAxisDistincted.map(xd => {
+      grouped[accColumn] = xAxisDistincted.map((xd) => {
         if (currentGroupValues[xd]) {
           return currentGroupValues[xd]
         } else {
-          return metrics.reduce((obj, m) => Object.assign(obj, { [m]: 0 }), {})
+          return metrics.reduce((obj, m) => ({ ...obj, [m]: 0 }), {})
         }
       })
     })

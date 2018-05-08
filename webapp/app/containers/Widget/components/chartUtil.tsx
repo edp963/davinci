@@ -65,15 +65,16 @@ export const iconMapping = {
 
 export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, interactIndex }: { dataSource: any, chartInfo: any, chartParams: any, interactIndex?: number }) {
   // chartInfo 去层级
-  const flatInfo = Object.assign({}, {
+  const flatInfo = {
     title: chartInfo.title,
-    name: chartInfo.name
-  }, chartInfo.params.reduce((fi, info) => {
-    info.items.forEach(i => {
-      fi[i.name] = i
-    })
-    return fi
-  }, {}))
+    name: chartInfo.name,
+    ...chartInfo.params.reduce((fi, info) => {
+      info.items.forEach((i) => {
+        fi[i.name] = i
+      })
+      return fi
+    }, {})
+  }
 
   let result
 

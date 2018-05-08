@@ -29,7 +29,7 @@ import { DEFAULT_ECHARTS_THEME } from '../../../globalConstants'
 let geoData
 
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
-  return import('../../../assets/json/geo.json').then(d => {
+  return import('../../../assets/json/geo.json').then((d) => {
     geoData = d
 
     const {
@@ -42,12 +42,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       toolbox
     } = chartParams
 
-    let metricOptions,
-      scatterOptions,
-      heatmapOptions,
-      visualMapOptions,
-      tooltipOptions,
-      toolboxOptions
+    let metricOptions
+    let scatterOptions
+    // let heatmapOptions
+    let visualMapOptions
+    let tooltipOptions
+    let toolboxOptions
 
     // 对原数据进行加工
     let dataTree
@@ -84,7 +84,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     // series 数据项
-    let metricArr = []
+    const metricArr = []
 
     scatterOptions = {
       symbolSize: 12,
@@ -107,7 +107,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }
 
-    const serieObj = Object.assign({
+    let serieObj = {
       name: area,
       type: layerType || 'scatter',
       coordinateSystem: 'geo',
@@ -130,7 +130,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           }
         }
       })
-    }, layerType === 'scatter' ? scatterOptions : heatmapOptions)
+    }
+    if (layerType === 'scatter') {
+      serieObj = {
+        ...serieObj,
+        ...scatterOptions
+      }
+    }
 
     metricArr.push(serieObj)
     metricOptions = {
@@ -141,7 +147,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     visualMapOptions = value && {
       visualMap: {
         min: 0,
-        max: Math.max(...dataSource.map(d => d[value] || 0)),
+        max: Math.max(...dataSource.map((d) => d[value] || 0)),
         calculable: true,
         inRange: {
           color: DEFAULT_ECHARTS_THEME.visualMapColor
@@ -155,13 +161,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     tooltipOptions = {
       tooltip: {
         trigger: 'item',
-        formatter: function (params) {
+        formatter: (params) => {
           const treeNode = dataTree[params.name]
 
           let content = `${params.name}：${treeNode.value}`
 
           if (group && group.length) {
-            const groupContent = Object.keys(treeNode.children).map(k => `${k}：${treeNode.children[k]}<br/>`).join('')
+            const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
             content += `<br/>${groupContent}`
           }
 
@@ -182,7 +188,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         }
       } : null
 
-    return Object.assign({
+    return {
       geo: {
         map: 'china',
         label: {
@@ -201,12 +207,11 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           }
         },
         roam: !!(roam && roam.length)
-      }
-    },
-      metricOptions,
-      visualMapOptions,
-      tooltipOptions,
-      toolboxOptions
-    )
+      },
+      ...metricOptions,
+      ...visualMapOptions,
+      ...tooltipOptions,
+      ...toolboxOptions
+    }
   })
 }

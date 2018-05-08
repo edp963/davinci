@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { Component } from 'react'
 
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
@@ -37,8 +36,8 @@ interface IMarkConfigFormProps {
   onSaveMarkConfigValue: () => void
 }
 
-export class MarkConfigForm extends Component<IMarkConfigFormProps, {}> {
-  render () {
+export class MarkConfigForm extends React.Component<IMarkConfigFormProps, {}> {
+  public render () {
     const {
       form,
       onCancel,

@@ -35,12 +35,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     toolbox
   } = chartParams
 
-  let grouped,
-    parallelAxisOptions,
-    metricOptions,
-    legendOptions,
-    parallelOptions,
-    toolboxOptions
+  let grouped
+  let parallelAxisOptions
+  let metricOptions
+  let legendOptions
+  let parallelOptions
+  let toolboxOptions
 
   grouped = {}
   if (hasGroups && groups && groups.length) {
@@ -58,8 +58,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
   let dim = parallelAxisOptions.parallelAxis.length
   if (categories && categories.length) {
-    categories.forEach(c => {
-      let data = dataSource.map(item => item[c])
+    categories.forEach((c) => {
+      let data = dataSource.map((item) => item[c])
       data = data.filter((item, idx) => (
         data.indexOf(item) === idx
       ))
@@ -74,7 +74,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
   let metricArr
   if (hasGroups && groups && groups.length) {
-    metricArr = Object.keys(grouped).map(key => ({
+    metricArr = Object.keys(grouped).map((key) => ({
       name: key,
       type: 'parallel',
       lineStyle: {
@@ -88,7 +88,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       lineStyle: {
         width: 4
       },
-      data: dataSource.map(item => [].concat(metrics, categories).map(m => item[m]))
+      data: dataSource.map((item) => [].concat(metrics, categories).map((m) => item[m]))
     }]
   }
   metricOptions = {
@@ -117,14 +117,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricArr.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: metricArr.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
@@ -156,12 +159,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     } : null
 
-  return Object.assign({},
-    parallelAxisOptions,
-    metricOptions,
-    legendOptions,
-    parallelOptions,
-    toolboxOptions)
+  return {
+    ...parallelAxisOptions,
+    ...metricOptions,
+    ...legendOptions,
+    ...parallelOptions,
+    ...toolboxOptions
+  }
 }
 
 /**
@@ -175,19 +179,19 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
  * @returns grouped data
  */
 export function makeGrouped (dataSource, groupColumns, metrics, categories) {
-  let grouped = {}
+  const grouped = {}
 
   if (metrics) {
     // init the key of 'grouped' according by distincted values from 'dataSource'
-    dataSource.forEach(item => {
-      let key = groupColumns.map(grpCol => item[grpCol]).join(' ')
+    dataSource.forEach((item) => {
+      const key = groupColumns.map((grpCol) => item[grpCol]).join(' ')
       if (!grouped[key]) {
         grouped[key] = []
       }
-      let row = [];
-      [metrics, categories].forEach(fields => {
+      const row = [];
+      [metrics, categories].forEach((fields) => {
         if (fields && fields.length) {
-          row.push(...fields.map(f => item[f]))
+          row.push(...fields.map((f) => item[f]))
         }
       })
       grouped[key].push(row)

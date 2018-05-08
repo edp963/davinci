@@ -46,22 +46,22 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     suffixYAxis
   } = chartParams
 
-  let metricOptions,
-    xAxisOptions,
-    smoothOption,
-    stepOption,
-    symbolOption,
-    toolboxOptions,
-    gridOptions,
-    labelOption,
-    dataZoomOptions,
-    suffixYAxisOptions
+  let metricOptions
+  let xAxisOptions
+  let smoothOption
+  let stepOption
+  let symbolOption
+  let toolboxOptions
+  let gridOptions
+  let labelOption
+  let dataZoomOptions
+  let suffixYAxisOptions
 
-  let base = -dataSource.reduce((min, val) => Math.floor(Math.min(min, +val[lower])), Infinity)
+  const base = -dataSource.reduce((min, val) => Math.floor(Math.min(min, +val[lower])), Infinity)
 
   suffixYAxisOptions = {
     axisLabel: {
-      formatter: val => `${val - base} ${suffixYAxis || ''}`
+      formatter: (val) => `${val - base} ${suffixYAxis || ''}`
     }
   }
   // symbol
@@ -85,10 +85,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   } : null
 
   // series 数据项； series = metrics * confidenceBand
-  let metricArr = []
+  const metricArr = []
 
   if (metrics) {
-    let serieObj = Object.assign({
+    const serieObj = {
       name: metrics,
       type: 'line',
       sampling: 'average',
@@ -121,17 +121,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         normal: {
           opacity: interactIndex === undefined ? 1 : 0.25
         }
-      }
-    },
-      symbolOption,
-      smoothOption,
-      stepOption,
-      labelOption
-    )
+      },
+      ...symbolOption,
+      ...smoothOption,
+      ...stepOption,
+      ...labelOption
+    }
     metricArr.push(serieObj)
   }
 
-  let baseConfidenceBand = {
+  const baseConfidenceBand = {
     type: 'line',
     lineStyle: {
       normal: {
@@ -142,12 +141,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     symbol: 'none'
   }
 
-  let seriesConfidenceBand = [{
+  const seriesConfidenceBand = [{
     name: 'L',
-    data: dataSource.map(item => +item[lower] + base)
+    data: dataSource.map((item) => +item[lower] + base)
   }, {
     name: 'U',
-    data: dataSource.map(item => +item[upper] - item[lower]),
+    data: dataSource.map((item) => +item[upper] - item[lower]),
     areaStyle: {
       normal: {
         color: '#ccc'
@@ -155,7 +154,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
   }]
 
-  seriesConfidenceBand.forEach(item => {
+  seriesConfidenceBand.forEach((item) => {
     Object.assign(item, baseConfidenceBand)
   })
   metricArr.push(...seriesConfidenceBand)
@@ -167,7 +166,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // x轴数据
   xAxisOptions = xAxis && {
     xAxis: {
-      data: dataSource.map(d => d[xAxis]),
+      data: dataSource.map((d) => d[xAxis]),
       axisLabel: {
         interval: xAxisInterval,
         rotate: xAxisRotate
@@ -181,10 +180,6 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }
   }
-
-  // legend
-  let adjustedBottom = 0
-  let adjustedRight = 0
 
   // toolbox
   toolboxOptions = toolbox && toolbox.length ? {
@@ -205,10 +200,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
-      right: Math.max(right, adjustedRight),
-      bottom: Math.max(bottom, adjustedBottom)
+      top,
+      left,
+      right,
+      bottom
     }
   }
 
@@ -232,10 +227,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }]
   }
 
-  return Object.assign({
+  return {
     yAxis: {
       axisLabel: {
-        formatter: val => +val - base
+        formatter: (val) => +val - base
       },
       type: 'value',
       splitLine: {
@@ -249,13 +244,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     },
     tooltip: {
       trigger: 'axis',
-      formatter: params => `${params[0].name}<br />${params[0].value}`
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions
-  )
+      formatter: (params) => `${params[0].name}<br />${params[0].value}`
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...dataZoomOptions
+  }
 }

@@ -42,19 +42,19 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     suffixYAxis
   } = chartParams
 
-  let metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYAxisOptions,
-    data,
-    xAxisData
+  let metricOptions
+  let xAxisOptions
+  let yAxisOptions
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYAxisOptions
+  let data
+  let xAxisData
 
   if (xAxis && metrics && metrics.length) {
-    let data = dataSource.map(data => data[xAxis])
+    const data = dataSource.map((data) => data[xAxis])
     xAxisData = data.filter((x, index) => data.indexOf(x) === index)
     xAxisOptions = {
       xAxis: {
@@ -82,23 +82,23 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
   data = []
   if (metrics && metrics.length) {
-    let step1 = xAxisData.map(xData => dataSource.filter(data => data[xAxis] === xData))
-    let step2 = step1.map(step => metrics.map(me => step.map(st => st[me])))
-    let step3 = metrics.map((me, i) => {
-      let arr = []
+    const step1 = xAxisData.map((xData) => dataSource.filter((data) => data[xAxis] === xData))
+    const step2 = step1.map((step) => metrics.map((me) => step.map((st) => st[me])))
+    const step3 = metrics.map((me, i) => {
+      const arr = []
       step2.forEach((step, index) => {
         arr.push(step[i])
       })
       return arr
     })
-    data = step3.map(step => dataTool(step))
+    data = step3.map((step) => dataTool(step))
 
     metricOptions = {
       series: data.reduce((a, b, index) => a.concat({
         name: metrics[index],
         type: 'boxplot',
         data: b.boxData,
-        tooltip: {formatter: formatter}
+        tooltip: { formatter }
       }, {
         name: metrics[index],
         type: 'pictorialBar',
@@ -106,12 +106,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         symbolSize: 8,
         barGap: '30%',
         data: b.outliers,
-        tooltip: {formatter: function (param) {
-          return [
+        tooltip: {
+          formatter: (param) => [
             `${param.name} `,
             `异常值: ${param.data[1]}`
           ].join('<br/>')
-        }}
+        }
       }), [])
     }
   }
@@ -121,7 +121,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }} : null
 
   yAxisOptions = {
-    yAxis: Object.assign({
+    yAxis: {
       type: 'value',
       splitArea: {show: false},
       splitLine: {
@@ -130,8 +130,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           width: splitLineWidth,
           type: splitLineStyle
         }
-      }
-    }, suffixYAxisOptions)
+      },
+      ...suffixYAxisOptions
+    }
   }
 
   // legend
@@ -161,14 +162,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metrics.reduce((obj, m) => Object.assign(obj, { [m]: false }), {})
+        selected: metrics.reduce((obj, m) => ({ ...obj, [m]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
+      legend: {
         data: metrics,
-        type: 'scroll'
-      }, orient, positions, selected)
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
   // toolbox
@@ -190,8 +194,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -217,22 +221,21 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
  // console.log(metricOptions)
-  return Object.assign({
+  return {
     tooltip: {
       trigger: 'item',
       axisPointer: {
         type: 'shadow'
       }
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    gridOptions,
-    toolboxOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...yAxisOptions,
+    ...legendOptions,
+    ...gridOptions,
+    ...toolboxOptions,
+    ...dataZoomOptions
+  }
 }
 
 function formatter (param) {

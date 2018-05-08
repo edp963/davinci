@@ -28,19 +28,18 @@ export default function (dataSource, flatInfo, chartParams) {
     gridSize,
     sizeRangeX,
     sizeRangeY
-
   } = chartParams
 
-  let metricOptions,
-    gridSizeOption,
-    sizeRangeOption,
-    gridOptions
+  let metricOptions
+  let gridSizeOption
+  let sizeRangeOption
+  let gridOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   gridSizeOption = gridSize && {
-    gridSize: gridSize
+    gridSize
   }
 
   sizeRangeOption = (sizeRangeX || sizeRangeY) && {
@@ -48,7 +47,7 @@ export default function (dataSource, flatInfo, chartParams) {
   }
 
   const grouped = dataSource.reduce((acc, val) => {
-    let objName = val[title]
+    const objName = val[title]
     if (acc[objName]) {
       acc[objName].value += 1
     } else {
@@ -60,7 +59,7 @@ export default function (dataSource, flatInfo, chartParams) {
     return acc
   }, {})
 
-  let serieObj = Object.assign({}, {
+  const serieObj = {
     type: 'wordCloud',
     textStyle: {
       normal: {
@@ -71,13 +70,13 @@ export default function (dataSource, flatInfo, chartParams) {
         shadowColor: '#509af2'
       }
     },
-    data: Object.keys(grouped).map(k => grouped[k]),
+    data: Object.keys(grouped).map((k) => grouped[k]),
     rotationStep: 45,
-    rotationRange: [-90, 90]
-  },
-    gridSizeOption,
-    sizeRangeOption
-  )
+    rotationRange: [-90, 90],
+    ...gridSizeOption,
+    ...sizeRangeOption
+  }
+
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
@@ -93,8 +92,8 @@ export default function (dataSource, flatInfo, chartParams) {
     }
   }
 
-  return Object.assign({},
-    metricOptions,
-    gridOptions
-  )
+  return {
+    ...metricOptions,
+    ...gridOptions
+  }
 }

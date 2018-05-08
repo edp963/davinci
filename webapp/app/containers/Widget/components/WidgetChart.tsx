@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { PureComponent } from 'react'
 
 import Chart from '../../Dashboard/components/Chart'
 import * as echarts from 'echarts/lib/echarts'
@@ -40,7 +39,7 @@ interface IWidgetChartProps {
   onTextEditorChange: (content: any) => void
 }
 
-export class WidgetChart extends PureComponent<IWidgetChartProps, {}> {
+export class WidgetChart extends React.PureComponent<IWidgetChartProps, {}> {
   constructor (props) {
     super(props)
   }
@@ -55,7 +54,7 @@ export class WidgetChart extends PureComponent<IWidgetChartProps, {}> {
     this.renderOrDisposeChart(this.props)
   }
 
-  renderOrDisposeChart = ({ data, chartInfo, chartParams }) => {
+  private renderOrDisposeChart = ({ data, chartInfo, chartParams }) => {
     if (this.props.chartInfo.renderer === ECHARTS_RENDERER) {
       if (this.chart) {
         this.chart.clear()
@@ -68,7 +67,7 @@ export class WidgetChart extends PureComponent<IWidgetChartProps, {}> {
         chartInfo,
         chartParams
       })
-        .then(chartOptions => {
+        .then((chartOptions) => {
           switch (chartInfo.name) {
             case 'line':
             case 'bar':
@@ -90,7 +89,7 @@ export class WidgetChart extends PureComponent<IWidgetChartProps, {}> {
     }
   }
 
-  render () {
+  public render () {
     const {
       loading,
       data,

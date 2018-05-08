@@ -55,25 +55,25 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     suffixYRightAxis
   } = chartParams
 
-  let metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    stackOption,
-    labelOption,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYLeftAxisOptions,
-    suffixYRightAxisOptions,
-    splitLineYOption,
-    smoothOption,
-    stepOption,
-    symbolOption
+  let metricOptions
+  let xAxisOptions
+  let yAxisOptions
+  let stackOption
+  let labelOption
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYLeftAxisOptions
+  let suffixYRightAxisOptions
+  let splitLineYOption
+  let smoothOption
+  let stepOption
+  let symbolOption
 
   let seriesArrLeft = []
   let seriesArrRight = []
-  let yAxis = []
+  const yAxis = []
 
   // symbol
   symbolOption = symbol && symbol.length
@@ -133,66 +133,72 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     let rightMax
 
     if (stack && stack.length) {
-      leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
-      rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map(d => d[m])), 0)
+      leftMax = leftMetrics.reduce((num, m) => num + Math.max(...dataSource.map((d) => d[m])), 0)
+      rightMax = rightMetrics.reduce((num, m) => num + Math.max(...dataSource.map((d) => d[m])), 0)
     } else {
-      leftMax = Math.max(...leftMetrics.map(m => Math.max(...dataSource.map(d => d[m]))))
-      rightMax = Math.max(...rightMetrics.map(m => Math.max(...dataSource.map(d => d[m]))))
+      leftMax = Math.max(...leftMetrics.map((m) => Math.max(...dataSource.map((d) => d[m]))))
+      rightMax = Math.max(...rightMetrics.map((m) => Math.max(...dataSource.map((d) => d[m]))))
     }
 
     const leftInterval = getYaxisInterval(leftMax, (yAxisSplitNumber - 1))
     const rightInterval = getYaxisInterval(rightMax, (yAxisSplitNumber - 1))
 
-    yAxis[0] = Object.assign({
+    yAxis[0] = {
       type: 'value',
       key: 'yAxisIndex0',
       min: 0,
       max: leftInterval * (yAxisSplitNumber - 1),
-      interval: leftInterval
-    }, suffixYLeftAxisOptions, splitLineYOption)
-    yAxis[1] = Object.assign({
+      interval: leftInterval,
+      ...suffixYLeftAxisOptions,
+      ...splitLineYOption
+    }
+    yAxis[1] = {
       type: 'value',
       key: 'yAxisIndex1',
       min: 0,
       max: rightInterval * (yAxisSplitNumber - 1),
-      interval: rightInterval
-    }, suffixYRightAxisOptions, splitLineYOption)
+      interval: rightInterval,
+      ...suffixYRightAxisOptions,
+      ...splitLineYOption
+    }
     yAxisOptions = {
       yAxis
     }
     if (leftMetrics && leftMetrics.length > 0) {
-      seriesArrLeft = leftMetrics.map(left => ({
+      seriesArrLeft = leftMetrics.map((left) => ({
         name: left,
         type: yAxisLeft,
-        data: dataSource.map(d => d[left]),
+        data: dataSource.map((d) => d[left]),
         ...labelOption,
         ...stackOption('left')
       }))
     }
     if (rightMetrics && rightMetrics.length > 0) {
-      seriesArrRight = rightMetrics.map(right => ({
+      seriesArrRight = rightMetrics.map((right) => ({
         name: right,
         type: yAxisRight,
         yAxisIndex: 1,
-        data: dataSource.map(d => d[right]),
+        data: dataSource.map((d) => d[right]),
         ...labelOption,
         ...stackOption('right')
       }))
     }
 
-    let metricArray = [...seriesArrLeft, ...seriesArrRight]
+    const metricArray = [...seriesArrLeft, ...seriesArrRight]
 
     metricOptions = {
-      series: metricArray.map(series => {
+      series: metricArray.map((series) => {
         if (series.type === 'line') {
-          return Object.assign({},
-            series,
-            symbolOption,
-            smoothOption,
-            stepOption)
+          return {
+            ...series,
+            ...symbolOption,
+            ...smoothOption,
+            ...stepOption
+          }
         } else {
-          return Object.assign({},
-            series)
+          return {
+            ...series
+          }
         }
       })
     }
@@ -201,7 +207,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   if (xAxis) {
     xAxisOptions = {
       xAxis: [{
-        data: dataSource.map(d => d[xAxis]),
+        data: dataSource.map((d) => d[xAxis]),
         type: 'category',
         axisLabel: {
           interval: xAxisInterval,
@@ -244,14 +250,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricOptions.series.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+        selected: metricOptions.series.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricOptions.series.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: metricOptions.series.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
   // toolbox
@@ -273,8 +282,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -298,19 +307,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }]
   }
-  let doubleYOptions = Object.assign({
+  const doubleYOptions = {
     tooltip: {
       trigger: 'axis'
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    gridOptions,
-    toolboxOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...yAxisOptions,
+    ...legendOptions,
+    ...gridOptions,
+    ...toolboxOptions,
+    ...dataZoomOptions
+  }
   return doubleYOptions
 }
 

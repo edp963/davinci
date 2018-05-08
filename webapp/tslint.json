@@ -15,7 +15,7 @@
     "object-literal-sort-keys": false,
     "no-shadowed-variable": false,
     "no-console": [false],
-    "max-line-length": [true, 180],
+    "max-line-length": [true, { "limit": 180, "ignore-pattern": "'[^']{180,}'" }],
     "no-consecutive-blank-lines": [false],
     "no-string-literal": false,
     "jsx-no-multiline-js": false,

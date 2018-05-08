@@ -43,10 +43,8 @@ const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
-import { loadWidgets, deleteWidget, addWidget } from './actions'
-import { makeSelectWidgets } from './selectors'
-import { loadBizlogics } from './actions'
-import { makeSelectBizlogics } from './selectors'
+import { loadWidgets, deleteWidget, addWidget, loadBizlogics } from './actions'
+import { makeSelectWidgets, makeSelectBizlogics } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { iconMapping } from './components/chartUtil'
 
@@ -59,8 +57,8 @@ interface IWidgetProps {
   loginUser: any,
   onLoadWidgets: () => void,
   onLoadBizlogics: () => void,
-  onDeleteWidget: (any) => void,
-  onAddWidget: (object) => Promise<any>
+  onDeleteWidget: (id: any) => void,
+  onAddWidget: (widget: object) => Promise<any>
 }
 
 interface IWidgetStates {
@@ -78,7 +76,7 @@ interface IWidgetStates {
   screenWidth: number
 }
 
-export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
+export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -146,7 +144,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
       currentWidget: widget,
       copyWidgetVisible: true
     }, () => {
-      const copyItem = (this.props.widgets as any[]).find(i => i.id === widget.id)
+      const copyItem = (this.props.widgets as any[]).find((i) => i.id === widget.id)
       this.setState({
         copyQueryInfo: {
           widgetlib_id: copyItem.widgetlib_id,
@@ -180,7 +178,10 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
     this.copyWidgetForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { copyQueryInfo } = this.state
-        const widgetValue = Object.assign({}, values, copyQueryInfo)
+        const widgetValue = {
+          ...values,
+          ...copyQueryInfo
+        }
 
         this.props.onAddWidget(widgetValue).then(() => {
           resolve()
@@ -197,15 +198,15 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
     const { filteredWidgetsTypeId, filteredWidgetsType } = this.state
     const valReg = new RegExp(value, 'i')
 
-    const filterLib = widgetlibs.find(i => i.id === Number(filteredWidgetsTypeId))
+    const filterLib = widgetlibs.find((i) => i.id === Number(filteredWidgetsTypeId))
 
     this.setState({
       filteredWidgetsName: valReg,
       currentPage: 1,
       filteredWidgets: filteredWidgetsType
-        ? widgets.filter(i => valReg.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+        ? widgets.filter((i) => valReg.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
         : valReg
-          ? widgets.filter(i => valReg.test(i.name))
+          ? widgets.filter((i) => valReg.test(i.name))
           : widgets
     })
   }
@@ -219,7 +220,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
   private onShowSizeChange = (current, pageSize) => {
     this.setState({
       currentPage: current,
-      pageSize: pageSize
+      pageSize
     })
   }
 
@@ -227,7 +228,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
     const { widgets } = this.props
     const { filteredWidgetsName } = this.state
 
-    const filterLib = value ? widgetlibs.find(i => i.id === Number(value)) : ''
+    const filterLib = value ? widgetlibs.find((i) => i.id === Number(value)) : ''
 
     this.setState({
       filteredWidgetsTypeId: value,
@@ -235,10 +236,10 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
       currentPage: 1,
       filteredWidgets: filteredWidgetsName
         ? value
-          ? widgets.filter(i => filteredWidgetsName.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
-          : widgets.filter(i => filteredWidgetsName.test(i.name))
+          ? widgets.filter((i) => filteredWidgetsName.test(i.name) && JSON.parse(i.chart_params).widgetName.includes(filterLib.title))
+          : widgets.filter((i) => filteredWidgetsName.test(i.name))
         : value
-          ? widgets.filter(i => JSON.parse(i.chart_params).widgetType.includes(filterLib.name))
+          ? widgets.filter((i) => JSON.parse(i.chart_params).widgetType.includes(filterLib.name))
           : widgets
     })
   }
@@ -266,11 +267,11 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
     const widgetsArr = filteredWidgets || widgets
 
     let {bizlogics} = this.props
-    bizlogics = bizlogics ? bizlogics.filter(widget => widget['create_by'] === loginUser.id) : []
+    bizlogics = bizlogics ? bizlogics.filter((widget) => widget['create_by'] === loginUser.id) : []
     // filter 非用户原创widget 不予显示
     const cols = widgetsArr
       ? widgetsArr
-        .filter(widget => widget['create_by'] === loginUser.id)
+        .filter((widget) => widget['create_by'] === loginUser.id)
         .map((w, index) => {
           const widgetType = JSON.parse(w.chart_params).widgetType
 
@@ -282,7 +283,11 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
             (startCol > widgetsArr.length)) {
             colItems = (
               <Col
-                xl={4} lg={6} md={8} sm={12} xs={24}
+                xl={4}
+                lg={6}
+                md={8}
+                sm={12}
+                xs={24}
                 key={w.id}
                 onClick={this.showWorkbench('edit', w)}
               >
@@ -311,15 +316,13 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
         })
       : ''
 
-    const widgetlibOptions = widgetlibs.map(w => (
+    const widgetlibOptions = widgetlibs.map((w) => (
       <Select.Option key={w.id} value={`${w.id}`}>
         {w.title}
-        {
-          `${w.id}` !== filteredWidgetsTypeId
+        {`${w.id}` !== filteredWidgetsTypeId
             ? (
               <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-          ) : ''
-        }
+          ) : ''}
       </Select.Option>
     ))
 
@@ -403,7 +406,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates>{
             bizlogics={bizlogics || []}
             widgetlibs={widgetlibs}
             onAfterSave={this.hideWorkbench}
-            ref={f => { this.workbenchWrapper = f }}
+            ref={(f) => { this.workbenchWrapper = f }}
           />
         </Modal>
         <Modal

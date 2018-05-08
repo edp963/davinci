@@ -52,29 +52,29 @@ export default function (dataSource, flatInfo, chartParams) {
     suffixYAxis
   } = chartParams
 
-  let grouped,
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    sizeOptions,
-    labelOptions,
-    shadowOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYAxisOptions
+  let grouped
+  let metricOptions
+  let xAxisOptions
+  let yAxisOptions
+  let sizeOptions
+  let labelOptions
+  let shadowOptions
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYAxisOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   // 数据分组
   if (hasGroups && groups) {
-    grouped = makeGrouped(dataSource, [].concat(groups).filter(i => !!i))
+    grouped = makeGrouped(dataSource, [].concat(groups).filter((i) => !!i))
   }
 
   sizeOptions = size && {
-    symbolSize: function (data) {
+    symbolSize: (data) => {
       return data[3] / size
     }
   }
@@ -98,7 +98,7 @@ export default function (dataSource, flatInfo, chartParams) {
           show: true,
           opacity: 0.8,
           position: 'top',
-          formatter: function (param) {
+          formatter: (param) => {
             return param.data[2]
           }
         }
@@ -111,7 +111,7 @@ export default function (dataSource, flatInfo, chartParams) {
           show: true,
           opacity: 0.8,
           position: 'top',
-          formatter: function (param) {
+          formatter: (param) => {
             return param.data[2]
           }
         }
@@ -119,37 +119,36 @@ export default function (dataSource, flatInfo, chartParams) {
     }
 
     labelOptions = {
-      label: Object.assign({}, normal, emphasis)
+      label: {
+        ...normal,
+        ...emphasis
+      }
     }
   }
 
   if (hasGroups && groups) {
     Object
       .keys(grouped)
-      .forEach(k => {
-        let serieObj = Object.assign({},
-          {
-            name: k,
-            type: 'scatter',
-            data: grouped[k].map(g => [g[xAxis], g[yAxis], g[label], g[value]])
-          },
-          sizeOptions,
-          labelOptions,
-          shadowOptions
-        )
+      .forEach((k) => {
+        const serieObj = {
+          name: k,
+          type: 'scatter',
+          data: grouped[k].map((g) => [g[xAxis], g[yAxis], g[label], g[value]]),
+          ...sizeOptions,
+          ...labelOptions,
+          ...shadowOptions
+        }
         metricArr.push(serieObj)
       })
   } else {
-    let serieObj = Object.assign({},
-      {
-        name: '数据',
-        type: 'scatter',
-        data: dataSource.map(g => [g[xAxis], g[yAxis], g[label], g[value]])
-      },
-      sizeOptions,
-      labelOptions,
-      shadowOptions
-    )
+    const serieObj = {
+      name: '数据',
+      type: 'scatter',
+      data: dataSource.map((g) => [g[xAxis], g[yAxis], g[label], g[value]]),
+      ...sizeOptions,
+      ...labelOptions,
+      ...shadowOptions
+    }
     metricArr.push(serieObj)
   }
 
@@ -178,7 +177,7 @@ export default function (dataSource, flatInfo, chartParams) {
     formatter: `{value} ${suffixYAxis}`
   }} : null
   yAxisOptions = {
-    yAxis: Object.assign({
+    yAxis: {
       type: 'value',
       scale: true,
       splitLine: {
@@ -187,8 +186,9 @@ export default function (dataSource, flatInfo, chartParams) {
           width: splitLineWidth,
           type: splitLineStyle
         }
-      }
-    }, suffixYAxisOptions)
+      },
+      ...suffixYAxisOptions
+    }
   }
 
   // legend
@@ -218,14 +218,17 @@ export default function (dataSource, flatInfo, chartParams) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({ obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricArr.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: metricArr.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
@@ -249,8 +252,8 @@ export default function (dataSource, flatInfo, chartParams) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -276,7 +279,7 @@ export default function (dataSource, flatInfo, chartParams) {
     }]
   }
 
-  return Object.assign({
+  return {
     tooltip: {
       formatter: (node) => {
         const nodeValues = node.data
@@ -287,21 +290,20 @@ export default function (dataSource, flatInfo, chartParams) {
           ${yAxis}: ${nodeValues[1] || 0} <br/>
         </span>`
       }
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...yAxisOptions,
+    ...legendOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...dataZoomOptions
+  }
 }
 
 export function makeGrouped (dataSource, groupColumns) {
   return dataSource.reduce((acc, val) => {
-    let accColumn = groupColumns
+    const accColumn = groupColumns
       .reduce((arr, col) => arr.concat(val[col]), [])
       .join(' ')
     if (!acc[accColumn]) {

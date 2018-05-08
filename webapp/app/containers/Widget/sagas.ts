@@ -46,7 +46,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import resultsetConverter from '../../utils/resultsetConverter';
+import resultsetConverter from '../../utils/resultsetConverter'
 
 
 export const getWidgets = promiseSagaCreator(

@@ -28,15 +28,15 @@ export default function (dataSource, flatInfo, chartParams) {
     toolbox
   } = chartParams
 
-  let metricOptions,
-    tooltipOptions,
-    toolboxOptions,
-    gridOptions
+  let metricOptions
+  let tooltipOptions
+  let toolboxOptions
+  let gridOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
-  let serieObj = {
+  const serieObj = {
     name: '数据',
     type: 'treemap',
     visibleMin: 300,
@@ -113,10 +113,10 @@ export default function (dataSource, flatInfo, chartParams) {
     }
   }
 
-  return Object.assign({},
-    metricOptions,
-    tooltipOptions,
-    toolboxOptions,
-    gridOptions
-  )
+  return {
+    ...metricOptions,
+    ...tooltipOptions,
+    ...toolboxOptions,
+    ...gridOptions
+  }
 }

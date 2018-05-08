@@ -29,8 +29,7 @@ import SplitView from './SplitView'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 const Modal = require('antd/lib/modal')
 
-import { loadBizdatas, clearBizdatas } from '../actions'
-import { addWidget, editWidget } from '../actions'
+import { loadBizdatas, clearBizdatas, addWidget, editWidget } from '../actions'
 import { makeSelectBizdatas, makeSelectBizdatasLoading } from '../selectors'
 import { promiseDispatcher } from '../../../utils/reduxPromisation'
 import { uuid } from '../../../utils/util'
@@ -93,9 +92,15 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
       tableHeight: 0
     }
+
+    this.refHandlers = {
+      widgetForm: (ref) => this.widgetForm = ref,
+      variableConfigForm: (ref) => this.variableConfigForm = ref
+    }
   }
 
   private markConfigForm: WrappedFormUtils
+  private refHandlers: { widgetForm: (ref: any) => void, variableConfigForm: (ref: any) => void }
   private variableConfigForm: any
   private widgetForm: any
 
@@ -111,7 +116,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  public componentWillUpdate (nextProps, ns) {
+  public componentWillReceiveProps (nextProps) {
     const type = nextProps.type
     const widget = nextProps.widget || {}
     const currentWidget = this.props.widget || {}
@@ -146,8 +151,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         const params = JSON.parse(widget.chart_params)
 
         if (widget && widget.config) {
-          let updateParams = JSON.parse(widget.config)['update_params']
-          let updateFields = JSON.parse(widget.config)['update_fields']
+          const updateParams = JSON.parse(widget.config)['update_params']
+          const updateFields = JSON.parse(widget.config)['update_fields']
           this.setState({
             updateParams: updateParams ? JSON.parse(updateParams) : [],
             updateFields: updateFields ? JSON.parse(updateFields) : {},
@@ -158,7 +163,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         delete params.widgetName
         delete params.widgetType
 
-        const formValues = Object.assign({}, info, params)
+        const formValues = {
+          ...info,
+          ...params
+        }
 
         this.setState({
           chartParams: formValues,
@@ -194,19 +202,19 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private bizlogicChange = (val) => {
-    const sqlTemplate = this.props.bizlogics.find(bl => bl.id === Number(val))
+    const sqlTemplate = this.props.bizlogics.find((bl) => bl.id === Number(val))
     const queryArr = sqlTemplate.sql_tmpl.match(/query@var\s\$\w+\$/g) || []
-    let updateArr = sqlTemplate.update_sql ? (sqlTemplate.update_sql.match(/update@var\s\$\w+\$/g) || []) : []
+    const updateArr = sqlTemplate.update_sql ? (sqlTemplate.update_sql.match(/update@var\s\$\w+\$/g) || []) : []
     this.setState({
       currentBizlogicId: sqlTemplate.id,
-      queryInfo: queryArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
-      updateInfo: updateArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
+      queryInfo: queryArr.map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
+      updateInfo: updateArr.map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       queryParams: [],
       chartParams: {}
     })
     this.widgetForm.props.form.setFieldsValue({
-      'richTextContent': '',
-      'richTextEdited': ''
+      richTextContent: '',
+      richTextEdited: ''
     })
 
     this.getBizdatas(val, this.state.adhocSql)
@@ -222,7 +230,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
       this.setState({
-        chartInfo: this.props.widgetlibs.find(wl => wl.id === Number(val))
+        chartInfo: this.props.widgetlibs.find((wl) => wl.id === Number(val))
       }, () => {
         this.setState({
           chartParams: this.widgetForm.props.form.getFieldsValue()
@@ -233,13 +241,19 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private formItemChange = (field) => (val) => {
     this.setState({
-      chartParams: Object.assign({}, this.state.chartParams, { [field]: val })
+      chartParams: {
+        ...this.state.chartParams,
+        [field]: val
+      }
     })
   }
 
   private formInputItemChange = (field) => (e) => {
     this.setState({
-      chartParams: Object.assign({}, this.state.chartParams, { [field]: e.target.value })
+      chartParams: {
+        ...this.state.chartParams,
+        [field]: e.target.value
+      }
     })
   }
 
@@ -248,14 +262,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       if (!err) {
         const { chartInfo, queryParams, adhocSql, updateParams, updateFields } = this.state
 
-        let id = values.id
-        let name = values.name
-        let desc = values.desc
-        let widgetlibId = Number(values.widgetlib_id)
-        let flatTableId = Number(values.flatTable_id)
-        let useCache = values.useCache
-        let expired = values.expired
-        let createBy = Number(values.create_by)
+        const id = values.id
+        const name = values.name
+        const desc = values.desc
+        const widgetlibId = Number(values.widgetlib_id)
+        const flatTableId = Number(values.flatTable_id)
+        const useCache = values.useCache
+        const expired = values.expired
+        const createBy = Number(values.create_by)
 
         delete values.id
         delete values.name
@@ -266,17 +280,18 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         delete values.useCache
         delete values.expired
 
-        let widget = {
+        const widget = {
           name,
           desc,
           adhoc_sql: adhocSql,
           publish: true,
           trigger_type: '',
           widgetlib_id: widgetlibId,
-          chart_params: JSON.stringify(Object.assign({}, values, {
+          chart_params: JSON.stringify({
+            ...values,
             widgetName: chartInfo.title,
             widgetType: chartInfo.name
-          })),
+          }),
           query_params: JSON.stringify(queryParams),
           trigger_params: '',
           flatTable_id: flatTableId,
@@ -289,7 +304,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         }
 
         if (this.props.type === 'edit') {
-          widget = Object.assign(widget, { id, createBy })
+          widget['id'] = id
+          widget['create_by'] = createBy
           this.props.onEditWidget(widget).then(() => {
             resolve()
             this.props.onAfterSave()
@@ -334,7 +350,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveControl = (control) => {
     const { queryParams } = this.state
-    const itemIndex = queryParams.findIndex(q => q.id === control.id)
+    const itemIndex = queryParams.findIndex((q) => q.id === control.id)
 
     if (itemIndex >= 0) {
       queryParams.splice(itemIndex, 1, control)
@@ -351,19 +367,19 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private deleteControl = (id) => () => {
     this.setState({
-      queryParams: this.state.queryParams.filter(q => q.id !== id)
+      queryParams: this.state.queryParams.filter((q) => q.id !== id)
     })
   }
   private deleteMarkControl = (id) => () => {
     this.setState({
-      updateParams: this.state.updateParams.filter(u => u.id !== id)
+      updateParams: this.state.updateParams.filter((u) => u.id !== id)
     })
   }
   private showVariableConfigTable = (id) => () => {
     this.setState({
       variableConfigModalVisible: true,
       variableConfigControl: id
-        ? this.state.queryParams.find(q => q.id === id)
+        ? this.state.queryParams.find((q) => q.id === id)
         : {}
     })
   }
@@ -379,7 +395,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
   private showMarkConfigTable = (id) => () => {
     const {updateParams} = this.state
-    const currentParams = updateParams.find(u => u.id === id)
+    const currentParams = updateParams.find((u) => u.id === id)
     this.setState({
       markConfigModalVisible: true
     }, () => this.markConfigForm.setFieldsValue(currentParams))
@@ -392,9 +408,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private resetMarkConfigForm = () => {
     this.markConfigForm.resetFields()
   }
-  private markFieldsOptionsChange = (e, type) => {
+  private markFieldsOptionsChange = (e) => (type) => {
     const {updateFields} = this.state
-    let newFields = Object.assign({}, updateFields)
+    const newFields = { ...updateFields }
     newFields[type] = e
     this.setState({
       updateFields: newFields
@@ -404,8 +420,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const { updateParams } = this.state
     this.markConfigForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        let id = values.id
-        let isHasNoRecord = updateParams.every(up => up.id !== id)
+        const id = values.id
+        const isHasNoRecord = updateParams.every((up) => up.id !== id)
         let update = []
         if (isHasNoRecord) {
           update = updateParams.concat({
@@ -414,7 +430,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             value: values['value']
           })
         } else {
-          update = updateParams.map(up => {
+          update = updateParams.map((up) => {
             if (up.id === id) {
               return {
                 id: up.id,
@@ -439,8 +455,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const deleteHtml = content.replace(/<\/?.+?>/g, '')
     const deleteSpace = deleteHtml.replace(/ /g, '')
     this.widgetForm.props.form.setFieldsValue({
-      'richTextContent': deleteSpace,
-      'richTextEdited': content
+      richTextContent: deleteSpace,
+      richTextEdited: content
     })
     const temp = {
       colorList: chartParams.colorList,
@@ -458,7 +474,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       richTextEdited: content
     }
     this.setState({
-      chartParams: Object.assign({}, temp, richTextObj)
+      chartParams: {
+        ...temp,
+        ...richTextObj
+      }
     })
   }
 
@@ -512,7 +531,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           onShowMarkConfigTable={this.showMarkConfigTable}
           onDeleteControl={this.deleteControl}
           onDeleteMarkControl={this.deleteMarkControl}
-          wrappedComponentRef={f => { this.widgetForm = f }}
+          wrappedComponentRef={this.refHandlers.widgetForm}
         />
         <SplitView
           data={bizdatas}
@@ -543,7 +562,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             columns={bizdatas ? bizdatas.keys : []}
             onSave={this.saveControl}
             onClose={this.hideVariableConfigTable}
-            wrappedComponentRef={f => { this.variableConfigForm = f }}
+            wrappedComponentRef={this.refHandlers.variableConfigForm}
           />
         </Modal>
         <Modal
@@ -558,7 +577,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           <MarkConfigForm
             onCancel={this.hideMarkConfigTable}
             onSaveMarkConfigValue={this.saveMarkConfig}
-            ref={f => { this.markConfigForm = f }}
+            ref={(f) => { this.markConfigForm = f }}
           />
         </Modal>
       </div>
