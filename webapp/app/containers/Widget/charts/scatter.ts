@@ -218,7 +218,7 @@ export default function (dataSource, flatInfo, chartParams) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => ({ obj, [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {

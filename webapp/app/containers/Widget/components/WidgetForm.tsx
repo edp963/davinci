@@ -67,7 +67,7 @@ interface IWidgetFormProps {
   onFormInputItemChange: (name: string) => any,
   onSegmentControlChange: (e: any) => void,
   onShowVariableConfigTable: (id?: any) => any,
-  onMarkFieldsOptionsChange: (e) => (info: any) => void,
+  onMarkFieldsOptionsChange: (e: any, type: any)  => void,
   onShowMarkConfigTable: (id?: any) => any,
   onDeleteControl: (id: any) => any,
   onDeleteMarkControl: (id: any) => any,
@@ -359,7 +359,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                       <Select
                         placeholder="关联变量"
                         //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
-                        onChange={onMarkFieldsOptionsChange.bind(info)}
+                        onChange={onMarkFieldsOptionsChange.bind(this, info)}
                       >
                         {
                           fieldLists

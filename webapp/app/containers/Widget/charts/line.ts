@@ -226,7 +226,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => ({ obj, [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
@@ -332,7 +332,7 @@ export function makeGrouped (dataSource, groupColumns, xAxis, metrics, xAxisDist
         if (currentGroupValues[xd]) {
           return currentGroupValues[xd]
         } else {
-          return metrics.reduce((obj, m) => ({ obj, [m]: 0 }), {})
+          return metrics.reduce((obj, m) => ({ ...obj, [m]: 0 }), {})
         }
       })
     })

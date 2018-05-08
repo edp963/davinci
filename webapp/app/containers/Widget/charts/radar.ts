@@ -102,7 +102,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metrics.reduce((obj, m) => ({ obj, [m]: false }), {})
+        selected: metrics.reduce((obj, m) => ({ ...obj, [m]: false }), {})
       } : null
 
     legendOptions = {

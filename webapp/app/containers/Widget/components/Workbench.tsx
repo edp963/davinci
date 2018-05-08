@@ -408,7 +408,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private resetMarkConfigForm = () => {
     this.markConfigForm.resetFields()
   }
-  private markFieldsOptionsChange = (e) => (type) => {
+  private markFieldsOptionsChange = (type, e) => {
     const {updateFields} = this.state
     const newFields = { ...updateFields }
     newFields[type] = e
