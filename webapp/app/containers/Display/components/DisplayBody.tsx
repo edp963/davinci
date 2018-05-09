@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 import DisplayEditor from './DisplayEditor'
 import DisplayBottom from './DisplayBottom'
 import DisplaySidebar from './DisplaySidebar'

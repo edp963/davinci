@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 const styles = require('../Display.less')
 
 interface IDisplaySidebarProps {

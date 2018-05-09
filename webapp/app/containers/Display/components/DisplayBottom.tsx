@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 const Slider = require('antd/lib/slider')
 const Icon = require('antd/lib/icon')
 

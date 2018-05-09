@@ -1,3 +1,5 @@
+import * as React from 'react'
+
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 
