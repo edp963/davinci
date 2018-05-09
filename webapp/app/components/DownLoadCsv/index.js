@@ -64,9 +64,10 @@ export class DownLoadCsv extends PureComponent {
   }
 
   render () {
+    const { shareInfoLoading } = this.props
     return (
       <div>
-        <Button type="primary" icon="download" size="default" onClick={() => this.props.onDownloadCsv()}>Download CSV</Button>
+        <Button type="primary" disabled={shareInfoLoading} icon="download" size="default" onClick={() => this.props.onDownloadCsv()}>Download CSV</Button>
       </div>
     )
   }
