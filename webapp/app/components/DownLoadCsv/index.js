@@ -22,7 +22,6 @@ import React, { PureComponent, PropTypes } from 'react'
 import { connect } from 'react-redux'
 import Button from 'antd/lib/button'
 
-
 import { loadDashboardShareLink, loadWidgetShareLink } from '../../containers/Dashboard/actions'
 
 export class DownLoadCsv extends PureComponent {
@@ -65,9 +64,10 @@ export class DownLoadCsv extends PureComponent {
   }
 
   render () {
+    const { shareInfoLoading } = this.props
     return (
       <div>
-        <Button type="primary" icon="download" size="default" onClick={() => this.props.onDownloadCsv()}>Download CSV</Button>
+        <Button type="primary" disabled={shareInfoLoading} icon="download" size="default" onClick={() => this.props.onDownloadCsv()}>Download CSV</Button>
       </div>
     )
   }
