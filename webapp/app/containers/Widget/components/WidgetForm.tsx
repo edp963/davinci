@@ -67,7 +67,7 @@ interface IWidgetFormProps {
   onFormInputItemChange: (name: string) => any,
   onSegmentControlChange: (e: any) => void,
   onShowVariableConfigTable: (id?: any) => any,
-  onMarkFieldsOptionsChange: (e: any, info: any) => void,
+  onMarkFieldsOptionsChange: (e: any, type: any)  => void,
   onShowMarkConfigTable: (id?: any) => any,
   onDeleteControl: (id: any) => any,
   onDeleteMarkControl: (id: any) => any,
@@ -75,20 +75,20 @@ interface IWidgetFormProps {
 }
 
 export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
-  checkNameUnique = (rule, value = '', callback) => {
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'widget'
+    const idName = type === 'add' ? '' : id
+    const typeName = 'widget'
     onCheckName(idName, value, typeName,
-      res => {
+      (res) => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
-  render () {
+  public render () {
     const {
       form,
       bizlogics,
@@ -114,19 +114,17 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
     const { getFieldDecorator } = form
     let markFieldsOptions: any = ''
     getFieldDecorator('colorList', {initialValue: []})
-    const bizlogicOptions = bizlogics.map(b => (
+    const bizlogicOptions = bizlogics.map((b) => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
     ))
 
-    const widgetlibOptions = widgetlibs.map(w => (
+    const widgetlibOptions = widgetlibs.map((w) => (
       <Option key={w.id} value={`${w.id}`}>
         {w.title}
-        {
-          `${w.id}` !== form.getFieldValue('widgetlib_id')
+        {`${w.id}` !== form.getFieldValue('widgetlib_id')
             ? (
               <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-          ) : ''
-        }
+          ) : ''}
       </Option>
     ))
 
@@ -147,7 +145,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
       title: '控件',
       dataIndex: 'type',
       key: 'type',
-      render: (text, record) => controlTypes.find(c => c.value === text).text
+      render: (text, record) => controlTypes.find((c) => c.value === text).text
     }, {
       title: '关联',
       dataIndex: 'variables',
@@ -208,8 +206,8 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
     }]
     let chartConfigElements = ''
     if (chartInfo) {
-      chartConfigElements = chartInfo.params.map(info => {
-        const formItems = info.items.map(item => {
+      chartConfigElements = chartInfo.params.map((info) => {
+        const formItems = info.items.map((item) => {
           let formItem: any = ''
 
           switch (item.component) {
@@ -227,10 +225,10 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                       >
                         {
                           item && item.values && item.values.length > 0
-                            ? item.values.map(c => (
+                            ? item.values.map((c) => (
                               <Option key={c.value} value={c.value}>{c.name}</Option>
                           ))
-                            : dataColumns.map(c => (
+                            : dataColumns.map((c) => (
                               <Option key={c} value={c}>{c}</Option>
                           ))
                         }
@@ -250,9 +248,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                         mode="multiple"
                         onChange={onFormItemChange(item.name)}
                       >
-                        {
-                          dataColumns.map(c => (<Option key={c} value={c}>{c}</Option>))
-                        }
+                        {dataColumns.map((c) => (<Option key={c} value={c}>{c}</Option>))}
                       </Select>
                     )}
                   </FormItem>
@@ -320,7 +316,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                         onChange={onFormInputItemChange(item.name)}
                       >
                         {
-                          item.values.map(c => (
+                          item.values.map((c) => (
                             <Radio key={c.value} value={c.value}>{c.name}</Radio>
                           ))
                         }
@@ -348,7 +344,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
       })
 
       if (updateInfo && updateInfo.length) {
-        let fieldLists = [...dataColumns]
+        const fieldLists = [...dataColumns]
         fieldLists.unshift('标注器')
         markFieldsOptions = (
           <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
@@ -363,12 +359,12 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                       <Select
                         placeholder="关联变量"
                         //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
-                        onChange={(e) => onMarkFieldsOptionsChange(e, info)}
+                        onChange={onMarkFieldsOptionsChange.bind(this, info)}
                       >
                         {
                           fieldLists
-                            .filter(c => c !== KEY_COLUMN)
-                            .map(c => (<Option key={c} value={c}>{c}</Option>))
+                            .filter((c) => c !== KEY_COLUMN)
+                            .map((c) => (<Option key={c} value={c}>{c}</Option>))
                         }
                       </Select>
                     </Col>

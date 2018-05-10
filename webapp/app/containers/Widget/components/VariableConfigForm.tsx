@@ -19,13 +19,12 @@
  */
 
 import * as React from 'react'
-import { Component } from 'react'
 
 const VariableConfigTable = require('./VariableConfigTable')
 const Form = require('antd/lib/form')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
-const Radio = require('antd/lib/radio')
+const Radio = require('antd/lib/radio/radio')
 const Button = require('antd/lib/button')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -36,8 +35,8 @@ const RadioGroup = Radio.Group
 
 import { uuid } from '../../../utils/util'
 
-const utilStyles= require('../../../assets/less/util.less')
-const styles= require('../Widget.less')
+const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Widget.less')
 
 interface IVariableConfigFormProps  {
   form: any,
@@ -57,7 +56,7 @@ interface IVariableConfigFormStates {
   tableSource: any[]
 }
 
-export class VariableConfigForm extends Component<IVariableConfigFormProps, IVariableConfigFormStates> {
+export class VariableConfigForm extends React.Component<IVariableConfigFormProps, IVariableConfigFormStates> {
 
   private WITH_TABLE = ['select', 'multiSelect']
   private DOUBLE_VARIABLES = ['dateRange', 'datetimeRange']
@@ -85,7 +84,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
     this.setFormValue(this.props)
   }
 
-  componentWillUpdate (nextProps) {
+  public componentWillReceiveProps (nextProps) {
     if (nextProps.control !== this.props.control) {
       this.formInit(nextProps)
     }
@@ -110,12 +109,13 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
           variable: control.variables[0]
         }
 
-      this.props.form.setFieldsValue(Object.assign({
+      this.props.form.setFieldsValue({
         id: control.id,
         type: control.type,
         cascadeColumn: control.cascadeColumn,
-        parentColumn: control.parentColumn
-      }, variables))
+        parentColumn: control.parentColumn,
+        ...variables
+      })
 
       this.setState({
         variableNumber: this.DOUBLE_VARIABLES.indexOf(control.type) >= 0 ? 2 : 1,
@@ -152,9 +152,9 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
 
   private changeConfigValueStatus = (id) => () => {
     const { tableSource } = this.state
-    tableSource.find(t => t.id === id).status = 0
+    tableSource.find((t) => t.id === id).status = 0
     this.setState({
-      tableSource: tableSource
+      tableSource
     })
   }
 
@@ -162,7 +162,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
     this.variableConfigTable.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { tableSource } = this.state
-        let config = tableSource.find(t => t.id === id)
+        const config = tableSource.find((t) => t.id === id)
 
         config.text = values[`${id}Text`]
         config.value = values[`${id}Value`]
@@ -171,7 +171,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
         config.status = 1
 
         this.setState({
-          tableSource: tableSource
+          tableSource
         })
       }
     })
@@ -181,7 +181,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
     const { tableSource } = this.state
 
     this.setState({
-      tableSource: tableSource.filter(t => t.id !== id)
+      tableSource: tableSource.filter((t) => t.id !== id)
     })
   }
 
@@ -213,7 +213,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
         const sub = this.WITH_TABLE.indexOf(type) >= 0
           ? this.state.hasRelatedComponent === 'yes'
             ? tableSource
-            : tableSource.map(s => {
+            : tableSource.map((s) => {
               delete s.variableType
               return s
             })
@@ -274,14 +274,14 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
       { text: '日期范围选择', value: 'dateRange' },
       { text: '日期时间选择', value: 'datetime' },
       { text: '日期时间范围选择', value: 'datetimeRange' }
-    ].map(o => (
+    ].map((o) => (
       <Option key={o.value} value={o.value}>{o.text}</Option>
     ))
 
     let variableOptions = null
 
     if (queryInfo) {
-      variableOptions = queryInfo.map(q => (
+      variableOptions = queryInfo.map((q) => (
         <Option key={q} value={q}>{q}</Option>
       ))
     }
@@ -350,7 +350,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
           <FormItem>
             {getFieldDecorator('cascadeColumn', {})(
               <Select placeholder="级联字段" allowClear>
-                {columns.map(c => (
+                {columns.map((c) => (
                   <Option key={c} value={c}>{c}</Option>
                 ))}
               </Select>
@@ -363,7 +363,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
           <FormItem>
             {getFieldDecorator('parentColumn', {})(
               <Select placeholder="级联父字段" allowClear>
-                {columns.map(c => (
+                {columns.map((c) => (
                   <Option key={c} value={c}>{c}</Option>
                 ))}
               </Select>
@@ -411,7 +411,7 @@ export class VariableConfigForm extends Component<IVariableConfigFormProps, IVar
               onChangeConfigValueStatus={this.changeConfigValueStatus}
               onUpdateConfigValue={this.updateConfigValue}
               onDeleteConfigValue={this.deleteConfigValue}
-              ref={f => { this.variableConfigTable = f }}
+              ref={(f) => { this.variableConfigTable = f }}
             />
             : ''
         }

@@ -18,7 +18,7 @@
  * >>
  */
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 
 /*
  * Sankey chart options generator
@@ -32,13 +32,13 @@ export default function (dataSource, flatInfo, chartParams) {
     toolbox
   } = chartParams
 
-  let metricOptions,
-    tooltipOptions,
-    toolboxOptions,
-    gridOptions
+  let metricOptions
+  let tooltipOptions
+  let toolboxOptions
+  let gridOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   // 节点列
   let nodes = []
@@ -46,7 +46,7 @@ export default function (dataSource, flatInfo, chartParams) {
   let links = []
 
   if (source && target) {
-    links = dataSource.map(data => {
+    links = dataSource.map((data) => {
       nodes.push(...[data[source], data[target]])
       return {
         source: data[source],
@@ -55,13 +55,15 @@ export default function (dataSource, flatInfo, chartParams) {
       }
     })
 
-    var graph = {}
-    links.forEach(link => {
-      if (!graph[link.source]) graph[link.source] = []
+    const graph = {}
+    links.forEach((link) => {
+      if (!graph[link.source]) {
+        graph[link.source] = []
+      }
       graph[link.source].push(link.target)
     })
 
-    let cycle = getCycle(graph)
+    const cycle = getCycle(graph)
     if (cycle && cycle.length) {
       message.error(`节点 ${cycle.join()} 存在循环引用`)
       links = []
@@ -69,14 +71,14 @@ export default function (dataSource, flatInfo, chartParams) {
   }
   nodes = nodes.filter((n, idx) => (
     nodes.indexOf(n) === idx
-  )).map(n => ({ name: n }))
+  )).map((n) => ({ name: n }))
 
-  let serieObj = {
+  const serieObj = {
     name: '数据',
     type: 'sankey',
     layout: 'none',
     data: nodes,
-    links: links,
+    links,
     itemStyle: {
       normal: {
         borderWidth: 1,
@@ -125,25 +127,27 @@ export default function (dataSource, flatInfo, chartParams) {
     }
   }
 
-  return Object.assign({},
-    metricOptions,
-    tooltipOptions,
-    toolboxOptions,
-    gridOptions
-  )
+  return {
+    ...metricOptions,
+    ...tooltipOptions,
+    ...toolboxOptions,
+    ...gridOptions
+  }
 }
 
 function getCycle (graph) {
   // Copy the graph, converting all node references to String
-  graph = Object.assign({}, ...Object.keys(graph).map(node => ({ [node]: graph[node].map(String) })))
+  graph = Object.assign({}, ...Object.keys(graph).map((node) => ({ [node]: graph[node].map(String) })))
 
-  let queue = Object.keys(graph).map(node => [node])
+  let queue = Object.keys(graph).map((node) => [node])
   while (queue.length) {
     const batch = []
     for (const path of queue) {
       const parents = graph[path[0]] || []
       for (const node of parents) {
-        if (node === path[path.length - 1]) return [node, ...path]
+        if (node === path[path.length - 1]) {
+          return [node, ...path]
+        }
         batch.push([node, ...path])
       }
     }

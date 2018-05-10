@@ -38,11 +38,11 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     left
   } = chartParams
 
-  let metricOptions,
-    labelOptions,
-    legendOptions,
-    toolboxOptions,
-    roseOptions
+  let metricOptions
+  let labelOptions
+  let legendOptions
+  let toolboxOptions
+  let roseOptions
 
   // legend
   let adjustedLeft = 0
@@ -69,19 +69,22 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: dataSource.reduce((obj, d) => Object.assign(obj, { [d[title]]: false }), {})
+        selected: dataSource.reduce((obj, d) => ({ ...obj, [d[title]]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: dataSource.map(d => d[title]),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: dataSource.map((d) => d[title]),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   labelOptions = circle && circle.length
     ? {
@@ -110,43 +113,41 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }
   roseOptions = roseType && roseType.length ? {roseType: 'radius'} : null
-  let serieObj = Object.assign({},
-    {
-      name: title,
-      type: 'pie',
-      radius: circle && circle.length ? [`${insideRadius}%`, `${outsideRadius}%`] : `${insideRadius}%`,
-      center: [
-        adjustedLeft && legendPosition === 'right' ? `${Math.min(left, adjustedLeft)}%` : `${left}%`,
-        `${top}%`
-      ],
-      avoidLabelOverlap: !circle || !circle.length,
-      data: dataSource.map((d, index) => {
-        if (index === interactIndex) {
-          return {
-            name: d[title],
-            value: Number(d[value]),
-            itemStyle: {
-              normal: {
-                opacity: 1
-              }
+  const serieObj = {
+    name: title,
+    type: 'pie',
+    radius: circle && circle.length ? [`${insideRadius}%`, `${outsideRadius}%`] : `${insideRadius}%`,
+    center: [
+      adjustedLeft && legendPosition === 'right' ? `${Math.min(left, adjustedLeft)}%` : `${left}%`,
+      `${top}%`
+    ],
+    avoidLabelOverlap: !circle || !circle.length,
+    data: dataSource.map((d, index) => {
+      if (index === interactIndex) {
+        return {
+          name: d[title],
+          value: Number(d[value]),
+          itemStyle: {
+            normal: {
+              opacity: 1
             }
           }
-        } else {
-          return {
-            name: d[title],
-            value: Number(d[value])
-          }
         }
-      }),
-      itemStyle: {
-        normal: {
-          opacity: interactIndex === undefined ? 1 : 0.25
+      } else {
+        return {
+          name: d[title],
+          value: Number(d[value])
         }
       }
+    }),
+    itemStyle: {
+      normal: {
+        opacity: interactIndex === undefined ? 1 : 0.25
+      }
     },
-    roseOptions,
-    labelOptions
-  )
+    ...roseOptions,
+    ...labelOptions
+  }
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
@@ -165,14 +166,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     } : null
 
-  return Object.assign({
+  return {
     tooltip: {
       trigger: 'item',
       formatter: '{b} <br/>{c} ({d}%)'
-    }
-  },
-    metricOptions,
-    legendOptions,
-    toolboxOptions
-  )
+    },
+    ...metricOptions,
+    ...legendOptions,
+    ...toolboxOptions
+  }
 }

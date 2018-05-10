@@ -39,21 +39,21 @@ interface ICopyWidgetFormProps {
 }
 
 export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
-  checkNameUnique = (rule, value = '', callback) => {
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'widget'
+    const idName = type === 'add' ? '' : id
+    const typeName = 'widget'
     onCheckName(idName, value, typeName,
-      res => {
+      (res) => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
 
-  render () {
+  public render () {
     const { getFieldDecorator } = this.props.form
 
     const itemStyle = {

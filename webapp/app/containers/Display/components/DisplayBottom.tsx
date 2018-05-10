@@ -1,12 +1,18 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Slider from 'antd/lib/slider'
-import Icon from 'antd/lib/icon'
+const Slider = require('antd/lib/slider')
+const Icon = require('antd/lib/icon')
 
-import styles from '../Display.less'
+const styles = require('../Display.less')
 
-export function DisplayBottom (props) {
+interface IDisplayBottomProps {
+  sliderValue: number,
+  onZoomIn: () => void,
+  onZoomOut: () => void,
+  onSliderChange: (val: number) => void
+}
+
+export function DisplayBottom (props: IDisplayBottomProps) {
   return (
     <div className={styles.bottom}>
       <div className={styles.sliderWrapper}>
@@ -16,13 +22,6 @@ export function DisplayBottom (props) {
       </div>
     </div>
   )
-}
-
-DisplayBottom.propTypes = {
-  sliderValue: PropTypes.number,
-  onZoomIn: PropTypes.func,
-  onZoomOut: PropTypes.func,
-  onSliderChange: PropTypes.func
 }
 
 export default DisplayBottom

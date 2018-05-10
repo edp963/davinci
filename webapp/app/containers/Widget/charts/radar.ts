@@ -32,16 +32,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     right
   } = chartParams
 
-  let metricOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    data,
-    radarOptions
+  let metricOptions
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let data
+  let radarOptions
 
   if (dimension && dimension.length) {
     if (metrics && metrics.length) {
-      let metricData = metrics.map(me => dataSource.map(data => data[me]))
+      const metricData = metrics.map((me) => dataSource.map((data) => data[me]))
       data = metrics.map((me, index) => ({
         name: me,
         value: metricData[index]
@@ -57,10 +57,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
               padding: [3, 5]
             }
           },
-          indicator: dataSource.map(data => data[dimension]).map((name, index) => {
-            let max = Math.max.apply(null, metrics.map(me => dataSource.map(data => data[me])).map(list => list[index]).map(arr => parseFloat(arr)))
+          indicator: dataSource.map((data) => data[dimension]).map((name, index) => {
+            const max = Math.max.apply(null, metrics.map((me) => dataSource.map((data) => data[me])).map((list) => list[index]).map((arr) => parseFloat(arr)))
             return {
-              name: name,
+              name,
               max: max + Math.floor(max * 0.1)
             }
           })
@@ -72,7 +72,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     series: [{
      // name: metricName && metricName.length ? metricName : '',
       type: 'radar',
-      data: data
+      data
     }]
   }
   // legend
@@ -102,14 +102,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metrics.reduce((obj, m) => Object.assign(obj, { [m]: false }), {})
+        selected: metrics.reduce((obj, m) => ({ ...obj, [m]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
+      legend: {
         data: metrics,
-        type: 'scroll'
-      }, orient, positions, selected)
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
   // toolbox
@@ -131,25 +134,24 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
   }
 
-  return Object.assign({
+  return {
     tooltip: {
       trigger: 'item',
       axisPointer: {
         type: 'shadow'
       }
-    }
-  },
-    metricOptions,
-    radarOptions,
-    legendOptions,
-    gridOptions,
-    toolboxOptions
-  )
+    },
+    ...metricOptions,
+    ...radarOptions,
+    ...legendOptions,
+    ...gridOptions,
+    ...toolboxOptions
+  }
 }

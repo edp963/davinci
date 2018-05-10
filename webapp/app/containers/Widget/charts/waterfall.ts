@@ -40,28 +40,28 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     ascend,
     suffixYAxis
   } = chartParams
-  let {metrics} = chartParams
-  let metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYAxisOptions,
-    xAxisOptionData
+  let { metrics } = chartParams
+  let metricOptions
+  let xAxisOptions
+  let yAxisOptions
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYAxisOptions
+  let xAxisOptionData
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
   let sourceData = []
   metrics = [metrics]
 
   if (xAxis && dataSource) {
-    xAxisOptionData = dataSource.map(d => d[xAxis])
+    xAxisOptionData = dataSource.map((d) => d[xAxis])
   }
 
   if (metrics && metrics.length) {
-    let dataOption = metrics.map(me => dataSource.map(data => data[me]))
+    const dataOption = metrics.map((me) => dataSource.map((data) => data[me]))
     let wrapper = []
     dataOption.forEach((data, index) => {
       data.forEach((da, i) => {
@@ -73,7 +73,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       })
     })
     wrapper = wrapper.map((wrap, index) => wrap.reduce((sum, val) => sum + Number(val), 0))
-    metrics.forEach(m => {
+    metrics.forEach((m) => {
       sourceData = dataSource.map((d, index) => d[m]
         // if (index === interactIndex) {
         //   return {
@@ -88,13 +88,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         //   return d[m]
         // }
       )
-      let baseData = []
-      let ascendOrder = []
-      let discendOrder = []
+      const baseData = []
+      const ascendOrder = []
+      const discendOrder = []
       sourceData.map((a, index) => {
         a = parseFloat(a)
         if (index > 0) {
-          let result = a - parseFloat(sourceData[index - 1])
+          const result = a - parseFloat(sourceData[index - 1])
           if (result >= 0) {
             ascendOrder.push(result)
             discendOrder.push('-')
@@ -112,9 +112,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           return a
         }
       })
-      let totalAscend = ascendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
-      let totalDiscendOrder = discendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
-      let difference = totalAscend - totalDiscendOrder
+      const totalAscend = ascendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
+      const totalDiscendOrder = discendOrder.reduce((sum, val) => typeof val === 'number' ? sum + val : sum + 0, 0)
+      const difference = totalAscend - totalDiscendOrder
       if (ascend && ascend.length) {
         xAxisOptionData.push('累计')
         baseData.push('-')
@@ -126,66 +126,60 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           ascendOrder.push('-')
         }
       }
-      let baseDataObj = Object.assign(
-        {
-          name: m,
-          type: 'bar',
-          sampling: 'average',
-          data: baseData,
-          itemStyle: {
-            normal: {
-              barBorderColor: 'rgba(0,0,0,0)',
-              color: 'rgba(0,0,0,0)',
-              opacity: interactIndex === undefined ? 1 : 0.25
-            },
-            emphasis: {
-              barBorderColor: 'rgba(0,0,0,0)',
-              color: 'rgba(0,0,0,0)'
-            }
+      const baseDataObj = {
+        name: m,
+        type: 'bar',
+        sampling: 'average',
+        data: baseData,
+        itemStyle: {
+          normal: {
+            barBorderColor: 'rgba(0,0,0,0)',
+            color: 'rgba(0,0,0,0)',
+            opacity: interactIndex === undefined ? 1 : 0.25
+          },
+          emphasis: {
+            barBorderColor: 'rgba(0,0,0,0)',
+            color: 'rgba(0,0,0,0)'
           }
         },
-        {stack: 'stack'}
-      )
-      let ascendOrderObj = Object.assign(
-        {
-          name: '升',
-          type: 'bar',
-          sampling: 'average',
-          data: ascendOrder,
-          itemStyle: {
-            normal: {
-              opacity: interactIndex === undefined ? 1 : 0.25
-            }
+        stack: 'stack'
+      }
+      const ascendOrderObj = {
+        name: '升',
+        type: 'bar',
+        sampling: 'average',
+        data: ascendOrder,
+        itemStyle: {
+          normal: {
+            opacity: interactIndex === undefined ? 1 : 0.25
           }
         },
-        {stack: 'stack'},
-        {label: {
+        stack: 'stack',
+        label: {
           normal: {
             show: !!(label && label.length),
             position: 'top'
           }
-        }}
-      )
-      let discendOrderObj = Object.assign(
-        {
-          name: '降',
-          type: 'bar',
-          sampling: 'average',
-          data: discendOrder,
-          itemStyle: {
-            normal: {
-              opacity: interactIndex === undefined ? 1 : 0.25
-            }
+        }
+      }
+      const discendOrderObj = {
+        name: '降',
+        type: 'bar',
+        sampling: 'average',
+        data: discendOrder,
+        itemStyle: {
+          normal: {
+            opacity: interactIndex === undefined ? 1 : 0.25
           }
         },
-        {stack: 'stack'},
-        {label: {
+        stack: 'stack',
+        label: {
           normal: {
             show: !!(label && label.length),
             position: 'bottom'
           }
-        }}
-      )
+        }
+      }
       metricArr.push(baseDataObj)
       metricArr.push(ascendOrderObj)
       metricArr.push(discendOrderObj)
@@ -203,7 +197,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     if (xAxis) {
       xAxisOptions = {
         yAxis: {
-          data: dataSource.map(d => d[xAxis]),
+          data: dataSource.map((d) => d[xAxis]),
           axisLabel: {
             show: false
           },
@@ -279,10 +273,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricArr.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions)
+      legend: {
+        data: metricArr.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions
+      }
     }
   }
 
@@ -306,8 +302,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -332,20 +328,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     }]
   }
-  return Object.assign({
+  return {
     tooltip: {
       trigger: 'axis',
-      formatter: function (param) {
-        let text = param.map((pa, index) => {
-          let data
-          if (index === 0) {
-            data = parseFloat(sourceData[pa.dataIndex])
-          } else {
-            data = pa.data
-          }
+      formatter: (param) => {
+        const text = param.map((pa, index) => {
+          const data = index === 0 ? parseFloat(sourceData[pa.dataIndex]) : pa.data
           return `${pa.seriesName}: ${data}`
         })
-        let xAxis = param[0]['axisValue']
+        const xAxis = param[0]['axisValue']
         if (xAxis === '累计') {
           return ''
         } else {
@@ -353,14 +344,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           return text.join('<br/>')
         }
       }
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...yAxisOptions,
+    ...legendOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...dataZoomOptions
+  }
 }

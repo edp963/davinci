@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { PureComponent } from 'react'
 
 import TableChart from '../../Dashboard/components/TableChart'
 import SegmentControl from '../../../components/SegmentControl/index'
@@ -55,7 +54,7 @@ interface ISplitViewStates {
   loading: boolean
 }
 
-export class SplitView extends PureComponent<ISplitViewProps, ISplitViewStates> {
+export class SplitView extends React.PureComponent<ISplitViewProps, ISplitViewStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -68,27 +67,28 @@ export class SplitView extends PureComponent<ISplitViewProps, ISplitViewStates> 
     }
   }
 
-  componentDidMount () {
-    let tableContainer = this.refs.tableContainer as HTMLScriptElement
+  private tableContainer: HTMLDivElement
+
+  public componentDidMount () {
     this.setState({
-      tableWidth: tableContainer.offsetHeight,
-      tableHeight: tableContainer.offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT
+      tableWidth: this.tableContainer.offsetHeight,
+      tableHeight: this.tableContainer.offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT
     })
   }
 
-  componentWillUpdate (props) {
+  public componentWillReceiveProps (props) {
     this.setState({
       tableInitiate: !!props.data
     })
   }
 
-  sengmentControlChange = (val) => {
+  private sengmentControlChange = (val) => {
     this.setState({
       chartInitiate: /chartView$/.test(val)
     })
   }
 
-  saveWidget = () => {
+  private saveWidget = () => {
     this.setState({ loading: true })
     this.props.onSaveWidget()
       .then(() => {
@@ -99,7 +99,7 @@ export class SplitView extends PureComponent<ISplitViewProps, ISplitViewStates> 
       })
   }
 
-  render () {
+  public render () {
     const {
       data,
       chartInfo,
@@ -169,7 +169,7 @@ export class SplitView extends PureComponent<ISplitViewProps, ISplitViewStates> 
               tab={<i className="iconfont icon-table" />}
               key="tableView"
             >
-              <div className={styles.tableContainer} ref="tableContainer">
+              <div className={styles.tableContainer} ref={(f) => {this.tableContainer = f}}>
                 {tableContent}
               </div>
             </SegmentControl.SegmentPane>

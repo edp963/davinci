@@ -32,7 +32,7 @@ import Dashboard from './containers/Dashboard'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
-// import Display from './containers/Display'
+import Display from './containers/Display'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -110,12 +110,12 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Schedule
             }
           ]
+        },
+        {
+          path: '/display',
+          name: 'display',
+          component: Display
         }
-        // {
-        //   path: '/display',
-        //   name: 'display',
-        //   component: Display
-        // }
       ]
     },
     {

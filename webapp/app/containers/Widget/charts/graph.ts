@@ -43,16 +43,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     category = source
   }
 
-  let metricOptions,
-    labelOptions,
-    tooltipOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    otherOptions
+  let metricOptions
+  let labelOptions
+  let tooltipOptions
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let otherOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   // 节点列
   let nodes = []
@@ -63,10 +63,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // node value
   let nodeValue = []
 
-  let step1 = dataSource.map(data => data[category])
+  const step1 = dataSource.map((data) => data[category])
   categories = step1.filter((st, index) => step1.indexOf(st) === index).concat(['其他'])
-  nodeValue = categories.map(cate => {
-    let ca = dataSource.filter(data => data[category] === cate)
+  nodeValue = categories.map((cate) => {
+    const ca = dataSource.filter((data) => data[category] === cate)
     return {
       key: cate,
       value: ca
@@ -74,7 +74,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   })
 
   if (target && target.length && source && source.length && metrics && metrics.length) {
-    links = dataSource.map(data => {
+    links = dataSource.map((data) => {
       Array.prototype.push.apply(nodes, [data[source], data[target]])
       return {
         value: data[metrics],
@@ -83,7 +83,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     })
     if (nodeValue && nodeValue.length) {
-      nodeValue = nodeValue.map(node => (
+      nodeValue = nodeValue.map((node) => (
         {
           [node.key]: node.value.reduce((sum, value) => sum + Number(value[metrics]), 0)
         }
@@ -92,20 +92,20 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
 
   if (nodes && nodes.length) {
-    nodes = nodes.filter((node, index) => nodes.indexOf(node) === index).map(c => ({name: c, category: c}))
+    nodes = nodes.filter((node, index) => nodes.indexOf(node) === index).map((c) => ({name: c, category: c}))
   }
 
-  let nodeValueObj = nodeValue.reduce((sum, value) => Object.assign({}, sum, value), {})
-  let nodeObjKey = Object.keys(nodeValueObj)
-  let nodeObjValue = Object.values(nodeValueObj)
-  let nodeObjValueComputed = computSymbolSize(Object.values(nodeValueObj))
+  const nodeValueObj = nodeValue.reduce((sum, value) => ({ ...sum, ...value }), {})
+  const nodeObjKey = Object.keys(nodeValueObj)
+  const nodeObjValue = Object.values(nodeValueObj)
+  const nodeObjValueComputed = computSymbolSize(Object.values(nodeValueObj))
 
   if (categories && categories.length && nodes && nodes.length) {
     nodes = nodes.map((node, index) => {
       let symbolSize
       let realValue
       let i
-      if (categories.find(cate => cate === node['category'])) {
+      if (categories.find((cate) => cate === node['category'])) {
         i = nodeObjKey.indexOf(node['category'])
         symbolSize = nodeObjValueComputed[i]
         realValue = nodeObjValue[i]
@@ -138,10 +138,10 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   }
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
-      right: right,
-      bottom: bottom
+      top,
+      left,
+      right,
+      bottom
     }
   }
   otherOptions = {
@@ -149,34 +149,32 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     animationEasingUpdate: 'quinticInOut'
   }
 
-  let serieObj = Object.assign({},
-    {
-      type: 'graph',
-      layout: 'circular',
-      symbolSize: 30,
-      roam: true,
-      focusNodeAdjacency: true,
-      edgeSymbol: ['circle', 'arrow'],
-      edgeSymbolSize: [4, 10],
-      edgeLabel: {
-        normal: {}
-      },
-      circular: {
-        rotateLabel: true
-      },
-      data: nodes,
-      links: links,
-      categories: categories.map(d => ({name: d})),
-      lineStyle: {
-        normal: {
-          color: 'source',
-          opacity: 0.9,
-          curveness: 0.3
-        }
+  const serieObj = {
+    type: 'graph',
+    layout: 'circular',
+    symbolSize: 30,
+    roam: true,
+    focusNodeAdjacency: true,
+    edgeSymbol: ['circle', 'arrow'],
+    edgeSymbolSize: [4, 10],
+    edgeLabel: {
+      normal: {}
+    },
+    circular: {
+      rotateLabel: true
+    },
+    data: nodes,
+    links,
+    categories: categories.map((d) => ({name: d})),
+    lineStyle: {
+      normal: {
+        color: 'source',
+        opacity: 0.9,
+        curveness: 0.3
       }
     },
-    labelOptions
-  )
+    ...labelOptions
+  }
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
@@ -186,9 +184,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   tooltipOptions = tooltip && tooltip.length
     ? {
       tooltip: {
-        formatter: function (param) {
-          let data = param.data
-          let dataType = param.dataType
+        formatter: (param) => {
+          const data = param.data
+          const dataType = param.dataType
           switch (dataType) {
             case 'edge':
               return `${data.source} => ${data.target} : ${data.value}`
@@ -224,22 +222,25 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     } : null
 
-  return Object.assign({},
-    metricOptions,
-    tooltipOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    otherOptions
-  )
+  return {
+    ...metricOptions,
+    ...tooltipOptions,
+    ...legendOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...otherOptions
+  }
 }
 
 function computSymbolSize (list) {
-  if (!(list && Array.isArray(list) && list.length)) return false
-  let max = list.reduce((sum, value) => value > sum ? value : sum, 0)
-  let min = 1
-  return list.map(li => {
-    let count = Number(li) * 60 / max
+  if (!(list && Array.isArray(list) && list.length)) {
+    return false
+  }
+
+  const max = list.reduce((sum, value) => value > sum ? value : sum, 0)
+  const min = 1
+  return list.map((li) => {
+    const count = Number(li) * 60 / max
     return count < min ? min : count
   })
 }

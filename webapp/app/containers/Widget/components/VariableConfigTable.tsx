@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { PropTypes, Component } from 'react'
 
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
@@ -45,8 +44,8 @@ interface IVariableConfigTableProps {
   onDeleteConfigValue: (id: any) => any
 }
 
-export class VariableConfigTable extends Component<IVariableConfigTableProps, {}> {
-  render () {
+export class VariableConfigTable extends React.Component<IVariableConfigTableProps, {}> {
+  public render () {
     const {
       form,
       dataSource,
@@ -60,7 +59,7 @@ export class VariableConfigTable extends Component<IVariableConfigTableProps, {}
 
     const { getFieldDecorator } = form
 
-    const variableOptions = variableSource.map(r => (
+    const variableOptions = variableSource.map((r) => (
       <Option key={r} value={r}>{r}</Option>
     ))
 
@@ -74,11 +73,11 @@ export class VariableConfigTable extends Component<IVariableConfigTableProps, {}
       { text: '日期范围选择', value: 'dateRange' },
       { text: '日期时间选择', value: 'datetime' },
       { text: '日期时间范围选择', value: 'datetimeRange' }
-    ].map(o => (
+    ].map((o) => (
       <Option key={o.value} value={o.value}>{o.text}</Option>
     ))
 
-    let columns = [{
+    const columns = [{
       title: 'Text',
       dataIndex: 'text',
       render: (text, record) => {

@@ -41,12 +41,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     maxSize
   } = chartParams
 
-  let metricOptions,
-    minOption,
-    maxOption,
-    gapOption,
-    legendOptions,
-    toolboxOptions
+  let metricOptions
+  let minOption
+  let maxOption
+  let gapOption
+  let legendOptions
+  let toolboxOptions
 
   // legend
   if (hasLegend && hasLegend.length) {
@@ -70,93 +70,95 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: dataSource.reduce((obj, d) => Object.assign(obj, { [d[title]]: false }), {})
+        selected: dataSource.reduce((obj, d) => ({ ...obj, [d[title]]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: dataSource.map(d => d[title]),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: dataSource.map((d) => d[title]),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   minOption = min && {
-    min: min
+    min
   }
 
   maxOption = max && {
-    max: max
+    max
   }
 
   gapOption = gap && {
-    gap: gap
+    gap
   }
 
-  let serieObj = Object.assign({},
-    {
-      name: '数据',
-      type: 'funnel',
-      top: `${top}%`,
-      left: `${left}%`,
-      width: `${width}%`,
-      height: `${height}%`,
-      minSize: `${minSize}%`,
-      maxSize: `${maxSize}%`,
-      sort: 'descending',
-      label: {
-        normal: {
-          show: true,
-          position: 'inside'
-        },
-        emphasis: {
-          textStyle: {
-            fontSize: 20
-          }
-        }
+  const serieObj = {
+    name: '数据',
+    type: 'funnel',
+    top: `${top}%`,
+    left: `${left}%`,
+    width: `${width}%`,
+    height: `${height}%`,
+    minSize: `${minSize}%`,
+    maxSize: `${maxSize}%`,
+    sort: 'descending',
+    label: {
+      normal: {
+        show: true,
+        position: 'inside'
       },
-      labelLine: {
-        normal: {
-          length: 10,
-          lineStyle: {
-            width: 1,
-            type: 'solid'
-          }
+      emphasis: {
+        textStyle: {
+          fontSize: 20
         }
-      },
-      itemStyle: {
-        normal: {
-          borderColor: '#fff',
-          borderWidth: 1,
-          opacity: interactIndex === undefined ? 1 : 0.25
+      }
+    },
+    labelLine: {
+      normal: {
+        length: 10,
+        lineStyle: {
+          width: 1,
+          type: 'solid'
         }
-      },
-      data: dataSource.map((d, index) => {
-        if (index === interactIndex) {
-          return {
-            name: d[title],
-            value: Number(d[value]),
-            itemStyle: {
-              normal: {
-                opacity: 1
-              }
+      }
+    },
+    itemStyle: {
+      normal: {
+        borderColor: '#fff',
+        borderWidth: 1,
+        opacity: interactIndex === undefined ? 1 : 0.25
+      }
+    },
+    data: dataSource.map((d, index) => {
+      if (index === interactIndex) {
+        return {
+          name: d[title],
+          value: Number(d[value]),
+          itemStyle: {
+            normal: {
+              opacity: 1
             }
           }
-        } else {
-          return {
-            name: d[title],
-            value: Number(d[value])
-          }
         }
-      })
-    },
-    minOption,
-    maxOption,
-    gapOption
-  )
+      } else {
+        return {
+          name: d[title],
+          value: Number(d[value])
+        }
+      }
+    }),
+    ...minOption,
+    ...maxOption,
+    ...gapOption
+  }
+
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
@@ -175,14 +177,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       }
     } : null
 
-  return Object.assign({
+  return {
     calculable: true,
     tooltip: {
       trigger: 'item'
-    }
-  },
-    metricOptions,
-    legendOptions,
-    toolboxOptions
-  )
+    },
+    ...metricOptions,
+    ...legendOptions,
+    ...toolboxOptions
+  }
 }

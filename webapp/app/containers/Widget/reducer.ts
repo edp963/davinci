@@ -69,7 +69,7 @@ function widgetReducer (state = initialState, action) {
     case DELETE_WIDGET:
       return state
     case DELETE_WIDGET_SUCCESS:
-      return state.set('widgets', widgets.filter(g => g.id !== payload.id))
+      return state.set('widgets', widgets.filter((g) => g.id !== payload.id))
     case LOAD_WIDGET_DETAIL:
       return state
     case LOAD_WIDGET_DETAIL_SUCCESS:
@@ -77,7 +77,7 @@ function widgetReducer (state = initialState, action) {
     case EDIT_WIDGET:
       return state
     case EDIT_WIDGET_SUCCESS:
-      widgets.splice(widgets.findIndex(g => g.id === payload.result.id), 1, payload.result)
+      widgets.splice(widgets.findIndex((g) => g.id === payload.result.id), 1, payload.result)
       return state.set('widgets', widgets.slice())
     case LOAD_BIZDATAS:
       return state.set('bizdatasLoading', true)

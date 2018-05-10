@@ -50,23 +50,23 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     stackAccounting
   } = chartParams
 
-  let metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    stackOption,
-    labelOption,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions,
-    suffixYAxisOptions,
-    yAxisValueRangeOptions
+  let metricOptions
+  let xAxisOptions
+  let yAxisOptions
+  let stackOption
+  let labelOption
+  let legendOptions
+  let toolboxOptions
+  let gridOptions
+  let dataZoomOptions
+  let suffixYAxisOptions
+  let yAxisValueRangeOptions
 
   // series 数据项
-  let metricArr = []
+  const metricArr = []
 
   if (metrics) {
-    let dataOption = metrics.map(me => dataSource.map(data => data[me]))
+    const dataOption = metrics.map((me) => dataSource.map((data) => data[me]))
     let wrapper = []
     dataOption.forEach((data, index) => {
       data.forEach((da, i) => {
@@ -78,7 +78,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
       })
     })
     wrapper = wrapper.map((wrap, index) => wrap.reduce((sum, val) => sum + Number(val), 0))
-    metrics.forEach(m => {
+    metrics.forEach((m) => {
       stackOption = stack && stack.length ? { stack: 'stack' } : null
 
       if (vertical && vertical.length) {
@@ -97,7 +97,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
               normal: {
                 show: true,
                 formatter: (param) => {
-                  let result = (Number(param.value) / wrapper[param.dataIndex]) * 100
+                  const result = (Number(param.value) / wrapper[param.dataIndex]) * 100
                   if (stackAccounting && stackAccounting.length && stack && stack.length) {
                     return `${param.value}\r\n(${result.toFixed(0)}%)`
                   }
@@ -108,34 +108,32 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
           } : null
       }
 
-      let serieObj = Object.assign(
-        {
-          name: m,
-          type: 'bar',
-          sampling: 'average',
-          data: dataSource.map((d, index) => {
-            if (index === interactIndex) {
-              return {
-                value: d[m],
-                itemStyle: {
-                  normal: {
-                    opacity: 1
-                  }
+      const serieObj = {
+        name: m,
+        type: 'bar',
+        sampling: 'average',
+        data: dataSource.map((d, index) => {
+          if (index === interactIndex) {
+            return {
+              value: d[m],
+              itemStyle: {
+                normal: {
+                  opacity: 1
                 }
               }
-            } else {
-              return d[m]
             }
-          }),
-          itemStyle: {
-            normal: {
-              opacity: interactIndex === undefined ? 1 : 0.25
-            }
+          } else {
+            return d[m]
+          }
+        }),
+        itemStyle: {
+          normal: {
+            opacity: interactIndex === undefined ? 1 : 0.25
           }
         },
-        stackOption,
-        labelOption
-      )
+        ...stackOption,
+        ...labelOption
+      }
       metricArr.push(serieObj)
     })
     metricOptions = {
@@ -157,7 +155,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     if (xAxis) {
       xAxisOptions = {
         yAxis: {
-          data: dataSource.map(d => d[xAxis]),
+          data: dataSource.map((d) => d[xAxis]),
           axisLabel: {
             show: false
           },
@@ -179,7 +177,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     yAxisOptions = {
-      xAxis: Object.assign({
+      xAxis: {
         type: 'value',
         position: 'top',
         axisLabel: {
@@ -192,14 +190,15 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             width: splitLineWidth,
             type: splitLineStyle
           }
-        }
-      }, yAxisValueRangeOptions)
+        },
+        ...yAxisValueRangeOptions
+      }
     }
   } else {
     if (xAxis) {
       xAxisOptions = {
         xAxis: {
-          data: dataSource.map(d => d[xAxis]),
+          data: dataSource.map((d) => d[xAxis]),
           axisLabel: {
             interval: xAxisInterval,
             rotate: xAxisRotate
@@ -216,7 +215,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }
 
     yAxisOptions = {
-      yAxis: Object.assign({
+      yAxis: {
         type: 'value',
         splitLine: {
           show: splitLineY && splitLineY.length,
@@ -225,8 +224,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             type: splitLineStyle
           }
         },
-        ...suffixYAxisOptions
-      }, yAxisValueRangeOptions)
+        ...suffixYAxisOptions,
+        ...yAxisValueRangeOptions
+      }
     }
   }
 
@@ -257,14 +257,17 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => Object.assign(obj, { [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {
-      legend: Object.assign({
-        data: metricArr.map(m => m.name),
-        type: 'scroll'
-      }, orient, positions, selected)
+      legend: {
+        data: metricArr.map((m) => m.name),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
     }
   }
 
@@ -288,8 +291,8 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   // grid
   gridOptions = {
     grid: {
-      top: top,
-      left: left,
+      top,
+      left,
       right: Math.max(right, adjustedRight),
       bottom: Math.max(bottom, adjustedBottom)
     }
@@ -315,17 +318,16 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
     }]
   }
 
-  return Object.assign({
+  return {
     tooltip: {
       trigger: 'axis'
-    }
-  },
-    metricOptions,
-    xAxisOptions,
-    yAxisOptions,
-    legendOptions,
-    toolboxOptions,
-    gridOptions,
-    dataZoomOptions
-  )
+    },
+    ...metricOptions,
+    ...xAxisOptions,
+    ...yAxisOptions,
+    ...legendOptions,
+    ...toolboxOptions,
+    ...gridOptions,
+    ...dataZoomOptions
+  }
 }
