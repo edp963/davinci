@@ -24,6 +24,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
@@ -756,5 +762,13 @@ const mapStateToProps = createStructuredSelector({
   loginUser: makeSelectLoginUser()
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(Bizlogic)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'bizlogic', reducer })
+const withSaga = injectSaga({ key: 'bizlogic', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Bizlogic)
 

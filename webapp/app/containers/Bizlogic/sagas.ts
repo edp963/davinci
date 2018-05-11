@@ -77,10 +77,6 @@ export const getBizlogics = promiseSagaCreator(
   }
 )
 
-export function* getBizlogicsWatcher () {
-  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
-}
-
 export const addBizlogic = promiseSagaCreator(
   function* ({ bizlogic }) {
     const asyncData = yield call(request, {
@@ -97,10 +93,6 @@ export const addBizlogic = promiseSagaCreator(
   }
 )
 
-export function* addBizlogicWatcher () {
-  yield takeEvery(ADD_BIZLOGIC, addBizlogic)
-}
-
 export const deleteBizlogic = promiseSagaCreator(
   function* ({ id }) {
     yield call(request, {
@@ -114,10 +106,6 @@ export const deleteBizlogic = promiseSagaCreator(
   }
 )
 
-export function* deleteBizlogicWatcher () {
-  yield takeEvery(DELETE_BIZLOGIC, deleteBizlogic)
-}
-
 export const getBizlogicDetail = promiseSagaCreator(
   function* ({ id }) {
     const bizlogic = yield call(request, `${api.bizlogic}/${id}`)
@@ -128,10 +116,6 @@ export const getBizlogicDetail = promiseSagaCreator(
     console.log('getBizlogicDetail', err)
   }
 )
-
-export function* getBizlogicDetailWatcher () {
-  yield takeLatest(LOAD_BIZLOGIC_DETAIL, getBizlogicDetail)
-}
 
 export const getBizlogicGroups = promiseSagaCreator(
   function* ({ id }) {
@@ -144,10 +128,6 @@ export const getBizlogicGroups = promiseSagaCreator(
     console.log('getBizlogicGroups', err)
   }
 )
-
-export function* getBizlogicGroupsWatcher () {
-  yield takeLatest(LOAD_BIZLOGIC_GROUPS, getBizlogicGroups)
-}
 
 export const editBizlogic = promiseSagaCreator(
   function* ({ bizlogic }) {
@@ -162,10 +142,6 @@ export const editBizlogic = promiseSagaCreator(
     console.log('editBizlogic', err)
   }
 )
-
-export function* editBizlogicWatcher () {
-  yield takeEvery(EDIT_BIZLOGIC, editBizlogic)
-}
 
 export function* getBizdatas ({ payload }) {
   try {
@@ -192,10 +168,6 @@ export function* getBizdatas ({ payload }) {
   } catch (err) {
     yield put(loadBizdatasFail(err))
   }
-}
-
-export function* getBizdatasWatcher () {
-  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
 }
 
 export function* getBizdatasFromItem ({ payload }) {
@@ -234,10 +206,6 @@ export function* getBizdatasFromItem ({ payload }) {
   }
 }
 
-export function* getBizdatasFromItemWatcher () {
-  yield takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any)
-}
-
 export function* getSqlValidate ({payload}) {
   const {sourceId, sql} = payload
   try {
@@ -251,10 +219,6 @@ export function* getSqlValidate ({payload}) {
   } catch (err) {
     yield put(validateSqlFailure(err))
   }
-}
-
-export function* getSqlValidateWatcher () {
-  yield takeEvery(SQL_VALIDATE, getSqlValidate as any)
 }
 
 export function* getCascadeSourceFromItem ({ payload }) {
@@ -282,10 +246,6 @@ export function* getCascadeSourceFromItem ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromItemWatcher () {
-  yield takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any)
-}
-
 export function* getCascadeSourceFromDashboard ({ payload }) {
   try {
     const { controlId, id, column, parents } = payload
@@ -309,10 +269,6 @@ export function* getCascadeSourceFromDashboard ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromDashboardWatcher () {
-  yield takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any)
-}
-
 export function* getBizdataSchema ({ payload }) {
   try {
     const { id, resolve } = payload
@@ -330,21 +286,19 @@ export function* getBizdataSchema ({ payload }) {
   }
 }
 
-export function* getBizdataSchemaWatcher () {
-  yield takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
+export default function* rootBizlogicSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_BIZLOGICS, getBizlogics),
+    takeEvery(ADD_BIZLOGIC, addBizlogic),
+    takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
+    takeLatest(LOAD_BIZLOGIC_DETAIL, getBizlogicDetail),
+    takeLatest(LOAD_BIZLOGIC_GROUPS, getBizlogicGroups),
+    takeEvery(EDIT_BIZLOGIC, editBizlogic),
+    takeEvery(LOAD_BIZDATAS, getBizdatas as any),
+    takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any),
+    takeEvery(SQL_VALIDATE, getSqlValidate as any),
+    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any),
+    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any),
+    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
+  ]
 }
-
-export default [
-  getBizlogicsWatcher,
-  addBizlogicWatcher,
-  deleteBizlogicWatcher,
-  getBizlogicDetailWatcher,
-  getBizlogicGroupsWatcher,
-  editBizlogicWatcher,
-  getBizdatasWatcher,
-  getBizdatasFromItemWatcher,
-  getSqlValidateWatcher,
-  getCascadeSourceFromItemWatcher,
-  getCascadeSourceFromDashboardWatcher,
-  getBizdataSchemaWatcher
-]

@@ -57,7 +57,13 @@ interface IBizlogicFormProps {
   isShowSqlValidateAlert: boolean
   isShowUpdateSql: boolean
   form: any
-  onCheckName: (idName, value, typeName, res, err) => any
+  onCheckName: (
+    id: number,
+    name: string,
+    type: string,
+    resolve: (res: any) => void,
+    reject: (err: any) => void
+  ) => any
 }
 
 export class BizlogicForm extends React.Component<IBizlogicFormProps, {}> {
@@ -68,7 +74,8 @@ export class BizlogicForm extends React.Component<IBizlogicFormProps, {}> {
     const { id } = getFieldsValue()
     const idName = type === 'add' ? '' : id
     const typeName = 'view'
-    onCheckName(idName, value, typeName, (res) => {
+    onCheckName(idName, value, typeName,
+      (res) => {
         callback()
       }, (err) => {
         callback(err)

@@ -56,10 +56,6 @@ export const getUsers = promiseSagaCreator(
   }
 )
 
-export function* getUsersWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_USERS, getUsers)
-}
-
 export const addUser = promiseSagaCreator(
   function* ({ user }) {
     const asyncData = yield call(request, {
@@ -76,10 +72,6 @@ export const addUser = promiseSagaCreator(
   }
 )
 
-export function* addUserWatcher (): IterableIterator<any> {
-  yield takeEvery(ADD_USER, addUser)
-}
-
 export const deleteUser = promiseSagaCreator(
   function* ({ id }) {
     yield call(request, {
@@ -93,10 +85,6 @@ export const deleteUser = promiseSagaCreator(
   }
 )
 
-export function* deleteUserWatcher (): IterableIterator<any> {
-  yield takeEvery(DELETE_USER, deleteUser)
-}
-
 export const getUserDetail = promiseSagaCreator(
   function* ({ id }) {
     const user = yield call(request, `${api.user}/${id}`)
@@ -107,10 +95,6 @@ export const getUserDetail = promiseSagaCreator(
     console.log('getUserDetail', err)
   }
 )
-
-export function* getUserDetailWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_USER_DETAIL, getUserDetail)
-}
 
 export const getUserGroups = promiseSagaCreator(
   function* ({ id }) {
@@ -123,10 +107,6 @@ export const getUserGroups = promiseSagaCreator(
     console.log('getUserGroups', err)
   }
 )
-
-export function* getUserGroupsWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_USER_GROUPS, getUserGroups)
-}
 
 export const editUserInfo = promiseSagaCreator(
   function* ({ user }) {
@@ -141,10 +121,6 @@ export const editUserInfo = promiseSagaCreator(
     console.log('editUserInfo', err)
   }
 )
-
-export function* editUserInfoWatcher (): IterableIterator<any> {
-  yield takeEvery(EDIT_USER_INFO, editUserInfo)
-}
 
 export const changeUserPassword = promiseSagaCreator(
   function* ({ info }) {
@@ -161,16 +137,14 @@ export const changeUserPassword = promiseSagaCreator(
   }
 )
 
-export function* changeUserPasswordWatcher (): IterableIterator<any> {
-  yield takeEvery(CHANGE_USER_PASSWORD, changeUserPassword)
+export default function* rootUserSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_USERS, getUsers),
+    takeEvery(ADD_USER, addUser),
+    takeEvery(DELETE_USER, deleteUser),
+    takeLatest(LOAD_USER_DETAIL, getUserDetail),
+    takeLatest(LOAD_USER_GROUPS, getUserGroups),
+    takeEvery(EDIT_USER_INFO, editUserInfo),
+    takeEvery(CHANGE_USER_PASSWORD, changeUserPassword)
+  ]
 }
-
-export default [
-  getUsersWatcher,
-  addUserWatcher,
-  deleteUserWatcher,
-  getUserDetailWatcher,
-  getUserGroupsWatcher,
-  editUserInfoWatcher,
-  changeUserPasswordWatcher
-]

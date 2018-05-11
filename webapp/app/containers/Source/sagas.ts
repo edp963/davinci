@@ -61,10 +61,6 @@ export function* getSources () {
   }
 }
 
-export function* getSourcesWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_SOURCES, getSources)
-}
-
 export function* addSource ({ payload }) {
   try {
     const asyncData = yield call(request, {
@@ -81,10 +77,6 @@ export function* addSource ({ payload }) {
   }
 }
 
-export function* addSourceWatcher (): IterableIterator<any> {
-  yield takeEvery(ADD_SOURCE, addSource as any)
-}
-
 export function* deleteSource ({ payload }) {
   try {
     yield call(request, {
@@ -98,10 +90,6 @@ export function* deleteSource ({ payload }) {
   }
 }
 
-export function* deleteSourceWatcher (): IterableIterator<any> {
-  yield takeEvery(DELETE_SOURCE, deleteSource as any)
-}
-
 export function* getSourceDetail ({ payload }) {
   try {
     const source = yield call(request, `${api.source}/${payload.id}`)
@@ -110,10 +98,6 @@ export function* getSourceDetail ({ payload }) {
     yield put(loadSourceDetailFail())
     message.error('加载详情失败')
   }
-}
-
-export function* getSourceDetailWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail as any)
 }
 
 export function* editSource ({ payload }) {
@@ -129,10 +113,6 @@ export function* editSource ({ payload }) {
     yield put(editSourceFail())
     message.error('修改失败')
   }
-}
-
-export function* editSourceWatcher () {
-  yield takeEvery(EDIT_SOURCE, editSource as any)
 }
 
 export function* testSourceConnection ({ payload }) {
@@ -154,10 +134,6 @@ export function* testSourceConnection ({ payload }) {
     yield put(testSourceConnectionFail())
     message.error('测试 Source 连接失败')
   }
-}
-
-export function* testSourceConnectionWatcher () {
-  yield takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection as any)
 }
 
 export function* getCsvMetaId ({payload}) {
@@ -182,16 +158,15 @@ export function* getCsvMetaId ({payload}) {
     payload.reject(err)
   }
 }
-export function* getCsvMetaIdWatcher () {
-  yield takeEvery(GET_CSV_META_ID, getCsvMetaId as any)
-}
 
-export default [
-  getSourcesWatcher,
-  addSourceWatcher,
-  deleteSourceWatcher,
-  getSourceDetailWatcher,
-  editSourceWatcher,
-  testSourceConnectionWatcher,
-  getCsvMetaIdWatcher
-]
+export default function* rootSourceSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_SOURCES, getSources),
+    takeEvery(ADD_SOURCE, addSource as any),
+    takeEvery(DELETE_SOURCE, deleteSource as any),
+    takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail as any),
+    takeEvery(EDIT_SOURCE, editSource as any),
+    takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection as any),
+    takeEvery(GET_CSV_META_ID, getCsvMetaId as any)
+  ]
+}

@@ -24,6 +24,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
@@ -355,4 +361,12 @@ const mapStateToProps = createStructuredSelector({
   groups: makeSelectGroups()
 })
 
-export default connect<{}, {}, IGroupProps>(mapStateToProps, mapDispatchToProps)(Group)
+const withConnect = connect<{}, {}, IGroupProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'group', reducer })
+const withSaga = injectSaga({ key: 'group', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Group)

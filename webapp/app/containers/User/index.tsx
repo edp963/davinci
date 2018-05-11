@@ -24,6 +24,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
@@ -622,4 +628,12 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<{}, {}, IUserProps>(mapStateToProps, mapDispatchToProps)(User)
+const withConnect = connect<{}, {}, IUserProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'user', reducer })
+const withSaga = injectSaga({ key: 'user', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(User)

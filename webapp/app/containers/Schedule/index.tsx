@@ -12,6 +12,13 @@ import Container from '../../components/Container'
 import moment from 'moment'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
+
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
@@ -613,4 +620,12 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)(Schedule)
+const withConnect = connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'schedule', reducer })
+const withSaga = injectSaga({ key: 'schedule', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Schedule)

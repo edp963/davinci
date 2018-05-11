@@ -52,10 +52,6 @@ export const getGroups = promiseSagaCreator(
   }
 )
 
-export function* getGroupsWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_GROUPS, getGroups)
-}
-
 export const addGroup = promiseSagaCreator(
   function* ({ group }) {
     const asyncData = yield call(request, {
@@ -72,10 +68,6 @@ export const addGroup = promiseSagaCreator(
   }
 )
 
-export function* addGroupWatcher (): IterableIterator<any> {
-  yield takeEvery(ADD_GROUP, addGroup)
-}
-
 export const deleteGroup = promiseSagaCreator(
   function* ({ id }) {
     yield call(request, {
@@ -89,10 +81,6 @@ export const deleteGroup = promiseSagaCreator(
   }
 )
 
-export function* deleteGroupWatcher (): IterableIterator<any> {
-  yield takeEvery(DELETE_GROUP, deleteGroup)
-}
-
 export const getGroupDetail = promiseSagaCreator(
   function* (payload) {
     const asyncData = yield call(request, `${api.group}/${payload.id}`)
@@ -104,10 +92,6 @@ export const getGroupDetail = promiseSagaCreator(
     console.log('getGroupDetail', err)
   }
 )
-
-export function* getGroupDetailWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_GROUP_DETAIL, getGroupDetail)
-}
 
 export const editGroup = promiseSagaCreator(
   function* ({ group }) {
@@ -123,14 +107,12 @@ export const editGroup = promiseSagaCreator(
   }
 )
 
-export function* editGroupWatcher (): IterableIterator<any> {
-  yield takeEvery(EDIT_GROUP, editGroup)
+export default function* rootGroupSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_GROUPS, getGroups),
+    takeEvery(ADD_GROUP, addGroup),
+    takeEvery(DELETE_GROUP, deleteGroup),
+    takeLatest(LOAD_GROUP_DETAIL, getGroupDetail),
+    takeEvery(EDIT_GROUP, editGroup)
+  ]
 }
-
-export default [
-  getGroupsWatcher,
-  addGroupWatcher,
-  deleteGroupWatcher,
-  getGroupDetailWatcher,
-  editGroupWatcher
-]

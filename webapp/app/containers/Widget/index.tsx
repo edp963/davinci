@@ -24,6 +24,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Workbench from './components/Workbench'
 import CopyWidgetForm from './components/CopyWidgetForm'
 import Container from '../../components/Container'
@@ -461,4 +467,14 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)(Widget)
+// export default connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)(Widget)
+
+const withConnect = connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'widget', reducer })
+const withSaga = injectSaga({ key: 'widget', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Widget)

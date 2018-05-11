@@ -61,10 +61,6 @@ export const getWidgets = promiseSagaCreator(
   }
 )
 
-export function* getWidgetsWatcher (): IterableIterator<any> {
-  yield takeLatest(LOAD_WIDGETS, getWidgets)
-}
-
 export const addWidget = promiseSagaCreator(
   function* ({ widget }) {
     const asyncData = yield call(request, {
@@ -81,10 +77,6 @@ export const addWidget = promiseSagaCreator(
   }
 )
 
-export function* addWidgetWatcher () {
-  yield takeEvery(ADD_WIDGET, addWidget)
-}
-
 export const deleteWidget = promiseSagaCreator(
   function* ({ id }) {
     yield call(request, {
@@ -98,10 +90,6 @@ export const deleteWidget = promiseSagaCreator(
   }
 )
 
-export function* deleteWidgetWatcher () {
-  yield takeEvery(DELETE_WIDGET, deleteWidget)
-}
-
 export const getWidgetDetail = promiseSagaCreator(
   function* (payload) {
     const widget = yield call(request, `${api.widget}/${payload.id}`)
@@ -112,10 +100,6 @@ export const getWidgetDetail = promiseSagaCreator(
     console.log('getWidgetDetail', err)
   }
 )
-
-export function* getWidgetDetailWatcher () {
-  yield takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail)
-}
 
 export const editWidget = promiseSagaCreator(
   function* ({ widget }) {
@@ -131,10 +115,6 @@ export const editWidget = promiseSagaCreator(
   }
 )
 
-export function* editWidgetWatcher () {
-  yield takeEvery(EDIT_WIDGET, editWidget)
-}
-
 // bizlogics
 export const getBizlogics = promiseSagaCreator(
   function* () {
@@ -147,10 +127,6 @@ export const getBizlogics = promiseSagaCreator(
     console.log('getBizlogics', err)
   }
 )
-
-export function* getBizlogicsWatcher () {
-  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
-}
 
 export function* getBizdatas ({ payload }) {
   try {
@@ -179,16 +155,14 @@ export function* getBizdatas ({ payload }) {
   }
 }
 
-export function* getBizdatasWatcher (): IterableIterator<any> {
-  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
+export default function* rootWidgetSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_WIDGETS, getWidgets),
+    takeEvery(ADD_WIDGET, addWidget),
+    takeEvery(DELETE_WIDGET, deleteWidget),
+    takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
+    takeEvery(EDIT_WIDGET, editWidget),
+    takeLatest(LOAD_BIZLOGICS, getBizlogics),
+    takeEvery(LOAD_BIZDATAS, getBizdatas as any)
+  ]
 }
-
-export default [
-  getWidgetsWatcher,
-  addWidgetWatcher,
-  deleteWidgetWatcher,
-  getWidgetDetailWatcher,
-  editWidgetWatcher,
-  getBizlogicsWatcher,
-  getBizdatasWatcher
-]

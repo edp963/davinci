@@ -20,10 +20,6 @@ export const getSchedules = promiseSagaCreator(
   }
 )
 
-export function* getSchedulesWatcher () {
-  yield takeEvery(LOAD_SCHEDULES, getSchedules)
-}
-
 export const addSchedules = promiseSagaCreator(
   function* ({ schedule }) {
     const asyncData = yield call(request, {
@@ -32,7 +28,6 @@ export const addSchedules = promiseSagaCreator(
       data: writeAdapter(schedule)
     })
     const result = readObjectAdapter(asyncData)
-    console.log(result)
     yield put(scheduleAdded(result))
     return result
   },
@@ -40,10 +35,6 @@ export const addSchedules = promiseSagaCreator(
     console.log('addSchedules', err)
   }
 )
-
-export function* addScheduleWatcher () {
-  yield takeEvery(ADD_SCHEDULES, addSchedules)
-}
 
 export const deleteSchedule = promiseSagaCreator(
   function* ({ id }) {
@@ -57,10 +48,6 @@ export const deleteSchedule = promiseSagaCreator(
     console.log('deleteSchedule', err)
   }
 )
-
-export function* deleteScheduleWatcher () {
-  yield takeEvery(DELETE_SCHEDULES, deleteSchedule)
-}
 
 export const changeScheduleStatus = promiseSagaCreator(
   function* ({ id, currentStatus }) {
@@ -93,10 +80,6 @@ export const changeScheduleStatus = promiseSagaCreator(
   }
 )
 
-export function* changeScheduleStatusWatcher () {
-  yield takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus)
-}
-
 export const updateSchedule = promiseSagaCreator(
   function* ({ schedule }) {
     const asyncData = yield call(request, {
@@ -114,15 +97,12 @@ export const updateSchedule = promiseSagaCreator(
   }
 )
 
-export function* updateScheduleWatcher () {
-  yield takeEvery(UPDATE_SCHEDULES, updateSchedule)
+export default function* rootScheduleSaga (): IterableIterator<any> {
+  yield [
+    takeEvery(LOAD_SCHEDULES, getSchedules),
+    takeEvery(ADD_SCHEDULES, addSchedules),
+    takeEvery(DELETE_SCHEDULES, deleteSchedule),
+    takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
+    takeEvery(UPDATE_SCHEDULES, updateSchedule)
+  ]
 }
-
-// All sagas to be loaded
-export default [
-  getSchedulesWatcher,
-  addScheduleWatcher,
-  deleteScheduleWatcher,
-  changeScheduleStatusWatcher,
-  updateScheduleWatcher
-]
