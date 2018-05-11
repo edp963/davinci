@@ -120,6 +120,10 @@ export class ScheduleForm extends React.PureComponent {
               {...commonFormItemStyle}
             >
               {getFieldDecorator('config', {
+                rules: [{
+                  required: true,
+                  message: '配置不能为空'
+                }],
                 initialValue: configValue && configValue.length > 2 ? configValue : ''
               })(
                 <Input placeholder="config" readOnly onClick={onShowConfig} />
@@ -135,7 +139,11 @@ export class ScheduleForm extends React.PureComponent {
             >
               {
                 getFieldDecorator('range', {
-                  initialValue: ''
+                  initialValue: '',
+                  rules: [{
+                    required: true,
+                    message: '范围不能为空'
+                  }]
                 })(
                   <RangePicker
                     style={{width: '300px'}}
