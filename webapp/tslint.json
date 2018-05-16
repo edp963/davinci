@@ -10,7 +10,7 @@
     "only-arrow-functions": false,
     "no-var-requires": false,
     "ordered-imports": false,
-    "no-unused-variable": [false, "react"],
+    "no-unused-variable": true,
     "member-ordering": [false],
     "object-literal-sort-keys": false,
     "no-shadowed-variable": false,

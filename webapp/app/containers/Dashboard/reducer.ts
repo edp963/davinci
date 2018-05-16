@@ -22,7 +22,9 @@ import { fromJS } from 'immutable'
 
 import {
   LOAD_DASHBOARDS_SUCCESS,
+  LOAD_DASHBOARDS_FAILURE,
   ADD_DASHBOARD_SUCCESS,
+  ADD_DASHBOARD_FAILURE,
   EDIT_DASHBOARD_SUCCESS,
   EDIT_CURRENT_DASHBOARD,
   EDIT_CURRENT_DASHBOARD_SUCCESS,
@@ -57,29 +59,30 @@ import {
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({
-  dashboards: false,
+  dashboards: null,
   currentDashboard: null,
   currentDashboardLoading: false,
   currentDashboardShareInfo: '',
   currentDashboardSecretInfo: '',
   currentDashboardShareInfoLoading: false,
-  currentDashboardCascadeSources: false,
-  currentItems: false,
-  currentDatasources: false,
-  currentItemsLoading: false,
-  currentItemsQueryParams: false,
-  currentItemsShareInfo: false,
-  currentItemsSecretInfo: false,
-  currentItemsShareInfoLoading: false,
-  currentItemsDownloadCsvLoading: false,
-  currentItemsCascadeSources: false
+  currentDashboardCascadeSources: null,
+  currentItems: null,
+  currentDatasources: null,
+  currentItemsLoading: null,
+  currentItemsQueryParams: null,
+  currentItemsShareInfo: null,
+  currentItemsSecretInfo: null,
+  currentItemsShareInfoLoading: null,
+  currentItemsDownloadCsvLoading: null,
+  currentItemsCascadeSources: null
 })
 
-function dashboardReducer (state = initialState, { type, payload }) {
-  let dashboards = state.get('dashboards')
-  let dashboardCascadeSources = state.get('currentDashboardCascadeSources')
+function dashboardReducer (state = initialState, action) {
+  const { type, payload } = action
+  const dashboards = state.get('dashboards')
+  const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
   let items = state.get('currentItems')
-  let datasources = state.get('currentDatasources')
+  const datasources = state.get('currentDatasources')
   let itemsLoading = state.get('currentItemsLoading')
   let queryParams = state.get('currentItemsQueryParams')
   let itemsShareInfo = state.get('currentItemsShareInfo')
@@ -90,6 +93,8 @@ function dashboardReducer (state = initialState, { type, payload }) {
   switch (type) {
     case LOAD_DASHBOARDS_SUCCESS:
       return state.set('dashboards', payload.dashboards)
+    case LOAD_DASHBOARDS_FAILURE:
+      return state
 
     case ADD_DASHBOARD_SUCCESS:
       if (dashboards) {
@@ -98,9 +103,11 @@ function dashboardReducer (state = initialState, { type, payload }) {
       } else {
         return state.set('dashboards', [payload.result])
       }
+    case ADD_DASHBOARD_FAILURE:
+      return state
 
     case EDIT_DASHBOARD_SUCCESS:
-      dashboards.splice(dashboards.findIndex(d => d.id === payload.result.id), 1, payload.result)
+      dashboards.splice(dashboards.findIndex((d) => d.id === payload.result.id), 1, payload.result)
       return state.set('dashboards', dashboards.slice())
 
     case EDIT_CURRENT_DASHBOARD:
@@ -114,7 +121,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
       return state.set('currentDashboardLoading', false)
 
     case DELETE_DASHBOARD_SUCCESS:
-      return state.set('dashboards', dashboards.filter(d => d.id !== payload.id))
+      return state.set('dashboards', dashboards.filter((d) => d.id !== payload.id))
 
     case LOAD_DASHBOARD_DETAIL:
       return state
@@ -174,10 +181,12 @@ function dashboardReducer (state = initialState, { type, payload }) {
       }
       return state
         .set('currentItems', items.concat(payload.result))
-        .set('currentItemsLoading', Object.assign({}, itemsLoading, {
+        .set('currentItemsLoading', {
+          ...itemsLoading,
           [payload.result.id]: false
-        }))
-        .set('currentItemsQueryParams', Object.assign({}, queryParams, {
+        })
+        .set('currentItemsQueryParams', {
+          ...queryParams,
           [payload.result.id]: {
             filters: '',
             linkageFilters: '',
@@ -187,22 +196,26 @@ function dashboardReducer (state = initialState, { type, payload }) {
             globalParams: [],
             pagination: {}
           }
-        }))
-        .set('currentItemsShareInfo', Object.assign({}, itemsShareInfo, {
+        })
+        .set('currentItemsShareInfo', {
+          ...itemsShareInfo,
           [payload.result.id]: ''
-        }))
-        .set('currentItemsShareInfoLoading', Object.assign({}, itemsShareInfoLoading, {
+        })
+        .set('currentItemsShareInfoLoading', {
+          ...itemsShareInfoLoading,
           [payload.result.id]: false
-        }))
-        .set('currentItemsDownloadCsvLoading', Object.assign({}, itemsDownloadCsvLoading, {
+        })
+        .set('currentItemsDownloadCsvLoading', {
+          ...itemsDownloadCsvLoading,
           [payload.result.id]: false
-        }))
-        .set('currentItemsCascadeSources', Object.assign({}, itemsCascadeSources, {
+        })
+        .set('currentItemsCascadeSources', {
+          ...itemsCascadeSources,
           [payload.result.id]: {}
-        }))
+        })
 
     case EDIT_DASHBOARD_ITEM_SUCCESS:
-      items.splice(items.indexOf(items.find(i => i.id === payload.result.id)), 1, payload.result)
+      items.splice(items.indexOf(items.find((i) => i.id === payload.result.id)), 1, payload.result)
       return state.set('currentItems', items.slice())
 
     case EDIT_DASHBOARD_ITEMS_SUCCESS:
@@ -215,7 +228,7 @@ function dashboardReducer (state = initialState, { type, payload }) {
       delete itemsShareInfo[payload.id]
       delete itemsShareInfoLoading[payload.id]
       delete itemsDownloadCsvLoading[payload.id]
-      return state.set('currentItems', items.filter(i => i.id !== payload.id))
+      return state.set('currentItems', items.filter((i) => i.id !== payload.id))
 
     case CLEAR_CURRENT_DASHBOARD:
       return state
@@ -230,10 +243,12 @@ function dashboardReducer (state = initialState, { type, payload }) {
 
     case LOAD_BIZDATAS_FROM_ITEM:
       return state
-        .set('currentItemsLoading', Object.assign({}, itemsLoading, {
+        .set('currentItemsLoading', {
+          ...itemsLoading,
           [payload.itemId]: true
-        }))
-        .set('currentItemsQueryParams', Object.assign({}, queryParams, {
+        })
+        .set('currentItemsQueryParams', {
+          ...queryParams,
           [payload.itemId]: {
             filters: payload.sql.filters,
             linkageFilters: payload.sql.linkageFilters,
@@ -247,20 +262,23 @@ function dashboardReducer (state = initialState, { type, payload }) {
               limit: payload.limit
             }
           }
-        }))
+        })
 
     case LOAD_BIZDATAS_FROM_ITEM_SUCCESS:
       return state
-        .set('currentItemsLoading', Object.assign({}, itemsLoading, {
+        .set('currentItemsLoading', {
+          ...itemsLoading,
           [payload.itemId]: false
-        }))
-        .set('currentDatasources', Object.assign({}, datasources, {
+        })
+        .set('currentDatasources', {
+          ...datasources,
           [payload.itemId]: payload.bizdatas
-        }))
+        })
     case LOAD_BIZDATAS_FROM_ITEM_FAILURE:
-      return state.set('currentItemsLoading', Object.assign({}, itemsLoading, {
+      return state.set('currentItemsLoading', {
+        ...itemsLoading,
         [payload.itemId]: false
-      }))
+      })
 
     case LOAD_DASHBOARD_SHARE_LINK:
       return state.set('currentDashboardShareInfoLoading', true)
@@ -276,49 +294,60 @@ function dashboardReducer (state = initialState, { type, payload }) {
       return state.set('currentDashboardShareInfoLoading', false)
 
     case LOAD_WIDGET_SHARE_LINK:
-      return state.set('currentItemsShareInfoLoading', Object.assign({}, itemsShareInfoLoading, {
+      return state.set('currentItemsShareInfoLoading', {
+        ...itemsShareInfoLoading,
         [payload.itemId]: true
-      }))
+      })
     case LOAD_WIDGET_SHARE_LINK_SUCCESS:
       return state
-        .set('currentItemsShareInfo', Object.assign({}, itemsShareInfo, {
+        .set('currentItemsShareInfo', {
+          ...itemsShareInfo,
           [payload.itemId]: payload.shareInfo
-        }))
-        .set('currentItemsShareInfoLoading', Object.assign({}, itemsShareInfoLoading, {
+        })
+        .set('currentItemsShareInfoLoading', {
+          ...itemsShareInfoLoading,
           [payload.itemId]: false
-        }))
+        })
     case LOAD_WIDGET_SECRET_LINK_SUCCESS:
       return state
-        .set('currentItemsSecretInfo', Object.assign({}, itemsShareInfo, {
+        .set('currentItemsSecretInfo', {
+          ...itemsShareInfo,
           [payload.itemId]: payload.shareInfo
-        }))
-        .set('currentItemsShareInfoLoading', Object.assign({}, itemsShareInfoLoading, {
+        })
+        .set('currentItemsShareInfoLoading', {
+          ...itemsShareInfoLoading,
           [payload.itemId]: false
-        }))
+        })
     case LOAD_WIDGET_SHARE_LINK_FAILURE:
-      return state.set('currentItemsShareInfoLoading', Object.assign({}, itemsShareInfoLoading, {
+      return state.set('currentItemsShareInfoLoading', {
+        ...itemsShareInfoLoading,
         [payload.itemId]: false
-      }))
+      })
 
     case LOAD_WIDGET_CSV:
-      return state.set('currentItemsDownloadCsvLoading', Object.assign({}, itemsDownloadCsvLoading, {
+      return state.set('currentItemsDownloadCsvLoading', {
+        ...itemsDownloadCsvLoading,
         [payload.itemId]: true
-      }))
+      })
     case LOAD_WIDGET_CSV_SUCCESS:
     case LOAD_WIDGET_CSV_FAILURE:
-      return state.set('currentItemsDownloadCsvLoading', Object.assign({}, itemsDownloadCsvLoading, {
+      return state.set('currentItemsDownloadCsvLoading', {
+        ...itemsDownloadCsvLoading,
         [payload.itemId]: false
-      }))
+      })
     case LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS:
-      return state.set('currentItemsCascadeSources', Object.assign({}, itemsCascadeSources, {
-        [payload.itemId]: Object.assign({}, itemsCascadeSources[payload.itemId], {
+      return state.set('currentItemsCascadeSources', {
+        ...itemsCascadeSources,
+        [payload.itemId]: {
+          ...itemsCascadeSources[payload.itemId],
           [payload.controlId]: payload.values
-        })
-      }))
+        }
+      })
     case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
-      return state.set('currentDashboardCascadeSources', Object.assign({}, dashboardCascadeSources, {
+      return state.set('currentDashboardCascadeSources', {
+        ...dashboardCascadeSources,
         [payload.controlId]: payload.values
-      }))
+      })
     default:
       return state
   }

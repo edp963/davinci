@@ -290,12 +290,12 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
     })
   }
 
-  private onEmailInputChange = (e) => {
-    this.setState({ emailFilterValue: e.target.value })
+  private onEmailInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    this.setState({ emailFilterValue: e.currentTarget.value })
   }
 
-  private onNameInputChange = (e) => {
-    this.setState({ nameFilterValue: e.target.value })
+  private onNameInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    this.setState({ nameFilterValue: e.currentTarget.value })
   }
 
   private onNameSearch = () => {

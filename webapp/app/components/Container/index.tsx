@@ -24,8 +24,8 @@ import * as classnames from 'classnames'
 const styles = require('./Container.less')
 
 interface IContainerProps {
-  grid?: string
-  card?: string
+  grid?: boolean
+  card?: boolean
   children: React.ReactNode
 }
 

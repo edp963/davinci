@@ -21,8 +21,10 @@
 import {
   LOAD_DASHBOARDS,
   LOAD_DASHBOARDS_SUCCESS,
+  LOAD_DASHBOARDS_FAILURE,
   ADD_DASHBOARD,
   ADD_DASHBOARD_SUCCESS,
+  ADD_DASHBOARD_FAILURE,
   EDIT_DASHBOARD,
   EDIT_DASHBOARD_SUCCESS,
   EDIT_DASHBOARD_FAILURE,
@@ -31,6 +33,7 @@ import {
   EDIT_CURRENT_DASHBOARD_FAILURE,
   DELETE_DASHBOARD,
   DELETE_DASHBOARD_SUCCESS,
+  DELETE_DASHBOARD_FAILURE,
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
   ADD_DASHBOARD_ITEM,
@@ -60,19 +63,19 @@ import {
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
 
-export const loadDashboards = promiseActionCreator(LOAD_DASHBOARDS)
-
-export const addDashboard = promiseActionCreator(ADD_DASHBOARD, ['dashboard'])
-
-export const deleteDashboard = promiseActionCreator(DELETE_DASHBOARD, ['id'])
-
 export const loadDashboardDetail = promiseActionCreator(LOAD_DASHBOARD_DETAIL, ['id'])
 
-export const addDashboardItem = promiseActionCreator(ADD_DASHBOARD_ITEM, ['id', 'item'])
+export const addDashboardItem = promiseActionCreator(ADD_DASHBOARD_ITEM, ['item'])
 
 export const deleteDashboardItem = promiseActionCreator(DELETE_DASHBOARD_ITEM, ['id'])
 
 export const clearCurrentDashboard = promiseActionCreator(CLEAR_CURRENT_DASHBOARD)
+
+export function loadDashboards () {
+  return {
+    type: LOAD_DASHBOARDS
+  }
+}
 
 export function dashboardsLoaded (dashboards) {
   return {
@@ -83,12 +86,34 @@ export function dashboardsLoaded (dashboards) {
   }
 }
 
+export function loadDashboardsFail () {
+  return {
+    type: LOAD_DASHBOARDS_FAILURE
+  }
+}
+
+export function addDashboard (dashboard, resolve) {
+  return {
+    type: ADD_DASHBOARD,
+    payload: {
+      dashboard,
+      resolve
+    }
+  }
+}
+
 export function dashboardAdded (result) {
   return {
     type: ADD_DASHBOARD_SUCCESS,
     payload: {
       result
     }
+  }
+}
+
+export function addDashboardFail () {
+  return {
+    type: ADD_DASHBOARD_FAILURE
   }
 }
 
@@ -142,12 +167,27 @@ export function editCurrentDashboardFail () {
   }
 }
 
+export function deleteDashboard (id) {
+  return {
+    type: DELETE_DASHBOARD,
+    payload: {
+      id
+    }
+  }
+}
+
 export function dashboardDeleted (id) {
   return {
     type: DELETE_DASHBOARD_SUCCESS,
     payload: {
       id
     }
+  }
+}
+
+export function deleteDashboardFail () {
+  return {
+    type: DELETE_DASHBOARD_FAILURE
   }
 }
 

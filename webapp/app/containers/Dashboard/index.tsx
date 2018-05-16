@@ -18,38 +18,67 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
-import classnames from 'classnames'
+import { Link, InjectedRouter } from 'react-router'
+import * as classnames from 'classnames'
 
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Popconfirm from 'antd/lib/popconfirm'
-import Input from 'antd/lib/input'
-import Pagination from 'antd/lib/pagination'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
+const Modal = require('antd/lib/modal')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const Popconfirm = require('antd/lib/popconfirm')
+const Input = require('antd/lib/input')
+const Pagination = require('antd/lib/pagination')
 const Search = Input.Search
 
-import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadDashboards, addDashboard, editDashboard, deleteDashboard } from './actions'
 import { makeSelectDashboards } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 
-import utilStyles from '../../assets/less/util.less'
-import styles from './Dashboard.less'
-import widgetStyles from '../Widget/Widget.less'
+const utilStyles = require('../../assets/less/util.less')
+const styles = require('./Dashboard.less')
+const widgetStyles = require('../Widget/Widget.less')
 
-export class Dashboard extends React.Component {
+interface IDashboardProps {
+  dashboards: IDashboard[]
+  loginUser: { id: number, admin: boolean },
+  router: InjectedRouter
+  onLoadDashboards: () => void
+  onAddDashboard: (dashboard: IDashboard, resolve: () => void) => void
+  onEditDashboard: (dashboard: IDashboard, resolve: () => void) => void
+  onDeleteDashboard: (id: number) => void
+}
+
+interface IDashboardStates {
+  modalLoading: boolean
+  formType: 'add' | 'edit' | ''
+  formVisible: boolean
+  filteredDashboards: IDashboard[]
+  currentPage: number
+  pageSize: number
+  screenWidth: number
+}
+
+export interface IDashboard {
+  id?: number
+  name: string
+  pic: string
+  desc: string
+  linkage_detail: string
+  config: string
+  publish: boolean
+}
+
+export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -65,23 +94,25 @@ export class Dashboard extends React.Component {
     }
   }
 
-  componentWillMount () {
+  private dashboardForm: WrappedFormUtils
+
+  public componentWillMount () {
     this.props.onLoadDashboards()
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  componentWillReceiveProps (props) {
+  public componentWillReceiveProps () {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  toGrid = (dashboard) => () => {
+  private toGrid = (dashboard) => () => {
     this.props.router.push(`/report/dashboard/${dashboard.id}`)
   }
 
-  showDashboardForm = (formType, dashboard) => (e) => {
+  private showDashboardForm = (formType, dashboard?: IDashboard) => (e) => {
     e.stopPropagation()
     this.setState({
-      formType: formType,
+      formType,
       formVisible: true
     }, () => {
       if (dashboard) {
@@ -90,7 +121,7 @@ export class Dashboard extends React.Component {
     })
   }
 
-  hideDashboardForm = () => {
+  private hideDashboardForm = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
@@ -99,21 +130,21 @@ export class Dashboard extends React.Component {
     })
   }
 
-  stopPPG = (e) => {
+  private stopPPG = (e) => {
     e.stopPropagation()
   }
 
-  onModalOk = () => {
+  private onModalOk = () => {
     this.dashboardForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
-          this.props.onAddDashboard(Object.assign({}, values, {
+          this.props.onAddDashboard({
+            ...values,
             pic: `${Math.ceil(Math.random() * 19)}`,
             linkage_detail: '[]',
             config: '{}'
-          }))
-            .then(() => { this.hideDashboardForm() })
+          }, () => { this.hideDashboardForm() })
         } else {
           this.props.onEditDashboard(values, () => { this.hideDashboardForm() })
         }
@@ -121,28 +152,28 @@ export class Dashboard extends React.Component {
     })
   }
 
-  onSearchDashboard = (value) => {
+  private onSearchDashboard = (value) => {
     const valReg = new RegExp(value, 'i')
     this.setState({
-      filteredDashboards: this.props.dashboards.filter(i => valReg.test(i.name)),
+      filteredDashboards: this.props.dashboards.filter((i) => valReg.test(i.name)),
       currentPage: 1
     })
   }
 
-  onChange = (page) => {
+  private onChange = (page) => {
     this.setState({
       currentPage: page
     })
   }
 
-  onShowSizeChange = (current, pageSize) => {
+  private onShowSizeChange = (currentPage, pageSize) => {
     this.setState({
-      currentPage: current,
-      pageSize: pageSize
+      currentPage,
+      pageSize
     })
   }
 
-  render () {
+  public render () {
     const {
       dashboards,
       loginUser,
@@ -161,19 +192,20 @@ export class Dashboard extends React.Component {
 
     const dashboardsArr = filteredDashboards || dashboards
 
-    let userId = loginUser && loginUser.id
+    const userId = loginUser.id
+
     const dashboardItems = dashboardsArr
       ? dashboardsArr.map((d, index) => {
-        let editButton = ''
-        let deleteButton = ''
+        let editButton = void 0
+        let deleteButton = void 0
 
         if (loginUser.admin) {
-          editButton = d['create_by'] === userId ? (
+          editButton = d['create_by'] === userId && (
             <Tooltip title="编辑">
               <Icon className={styles.edit} type="setting" onClick={this.showDashboardForm('edit', d)} />
             </Tooltip>
-          ) : ''
-          deleteButton = d['create_by'] === userId ? (
+          )
+          deleteButton = d['create_by'] === userId && (
             <Popconfirm
               title="确定删除？"
               placement="bottom"
@@ -183,7 +215,7 @@ export class Dashboard extends React.Component {
                 <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
               </Tooltip>
             </Popconfirm>
-          ) : ''
+          )
         }
 
         const itemClass = classnames({
@@ -196,13 +228,18 @@ export class Dashboard extends React.Component {
         const startCol = (currentPage - 1) * pageSize + 1
         const endCol = Math.min(currentPage * pageSize, dashboardsArr.length)
 
-        let colItems = ''
+        let colItems = void 0
+
         if ((index + 1 >= startCol && index + 1 <= endCol) ||
           (startCol > dashboardsArr.length)) {
           colItems = (
             <Col
               key={d.id}
-              xl={4} lg={6} md={8} sm={12} xs={24}
+              xl={4}
+              lg={6}
+              md={8}
+              sm={12}
+              xs={24}
             >
               <div
                 className={itemClass}
@@ -228,23 +265,40 @@ export class Dashboard extends React.Component {
       })
       : ''
 
-    const modalButtons = ([
+    const pagination = dashboardsArr && (
+      <Pagination
+        simple={screenWidth < 768 || screenWidth === 768}
+        className={widgetStyles.paginationPosition}
+        showSizeChanger
+        onShowSizeChange={this.onShowSizeChange}
+        onChange={this.onChange}
+        total={dashboardsArr.length}
+        defaultPageSize={24}
+        pageSizeOptions={['24', '48', '72', '96']}
+        current={currentPage}
+      />
+    )
+
+    const modalButtons = [(
       <Button
         key="back"
         size="large"
-        onClick={this.hideDashboardForm}>
+        onClick={this.hideDashboardForm}
+      >
         取 消
-      </Button>,
+      </Button>
+    ), (
       <Button
         key="submit"
         size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}
-        onClick={this.onModalOk}>
+        onClick={this.onModalOk}
+      >
         保 存
       </Button>
-    ])
+    )]
 
     const addButton = loginUser.admin
       ? (
@@ -270,7 +324,7 @@ export class Dashboard extends React.Component {
             <Col xl={18} lg={18} md={16} sm={12} xs={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link>
+                  <Link to="">
                     Dashboard
                   </Link>
                 </Breadcrumb.Item>
@@ -296,17 +350,7 @@ export class Dashboard extends React.Component {
             {dashboardItems}
           </Row>
           <Row>
-            <Pagination
-              simple={screenWidth < 768 || screenWidth === 768}
-              className={widgetStyles.paginationPosition}
-              showSizeChanger
-              onShowSizeChange={this.onShowSizeChange}
-              onChange={this.onChange}
-              total={dashboardsArr.length}
-              defaultPageSize={24}
-              pageSizeOptions={['24', '48', '72', '96']}
-              current={currentPage}
-            />
+            {pagination}
           </Row>
         </Container.Body>
         <Modal
@@ -326,19 +370,6 @@ export class Dashboard extends React.Component {
   }
 }
 
-Dashboard.propTypes = {
-  dashboards: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  loginUser: PropTypes.object,
-  router: PropTypes.any,
-  onLoadDashboards: PropTypes.func,
-  onAddDashboard: PropTypes.func,
-  onEditDashboard: PropTypes.func,
-  onDeleteDashboard: PropTypes.func
-}
-
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   loginUser: makeSelectLoginUser()
@@ -346,10 +377,10 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
-    onAddDashboard: (dashboard) => promiseDispatcher(dispatch, addDashboard, dashboard),
+    onLoadDashboards: () => dispatch(loadDashboards()),
+    onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
     onEditDashboard: (dashboard, resolve) => dispatch(editDashboard(dashboard, resolve)),
-    onDeleteDashboard: (id) => () => promiseDispatcher(dispatch, deleteDashboard, id)
+    onDeleteDashboard: (id) => () => dispatch(deleteDashboard(id))
   }
 }
 
