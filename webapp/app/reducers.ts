@@ -36,7 +36,7 @@ import userReducer from './containers/User/reducer'
 import sourceReducer from './containers/Source/reducer'
 import bizlogicReducer from './containers/Bizlogic/reducer'
 import widgetReducer from './containers/Widget/reducer'
-// import dashboardReducer from './containers/Dashboard/reducer'
+import dashboardReducer from './containers/Dashboard/reducer'
 import scheduleReducer from './containers/Schedule/reducer'
 import displayReducer from './containers/Display/reducer'
 
@@ -82,7 +82,7 @@ export default function createReducer (asyncReducers: ReducersMapObject = {}): R
     source: sourceReducer,
     bizlogic: bizlogicReducer,
     widget: widgetReducer,
-    // dashboard: dashboardReducer,
+    dashboard: dashboardReducer,
     schedule: scheduleReducer,
     display: displayReducer,
     ...asyncReducers

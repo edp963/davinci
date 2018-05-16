@@ -24,7 +24,7 @@ import userSagas from './containers/User/sagas'
 import sourceSagas from './containers/Source/sagas'
 import bizlogicSagas from './containers/Bizlogic/sagas'
 import widgetSagas from './containers/Widget/sagas'
-// import dashboardSagas from './containers/Dashboard/sagas'
+import dashboardSagas from './containers/Dashboard/sagas'
 import scheduleSagas from './containers/Schedule/sagas'
 import displaySagas from './containers/Display/sagas'
 
@@ -35,7 +35,7 @@ export default [
   ...sourceSagas,
   ...bizlogicSagas,
   ...widgetSagas,
-  // ...dashboardSagas,
+  ...dashboardSagas,
   ...scheduleSagas,
   ...displaySagas
 ]
