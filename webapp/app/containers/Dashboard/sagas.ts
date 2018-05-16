@@ -39,12 +39,15 @@ import {
 
 import {
   dashboardsLoaded,
+  loadDashboardsFail,
   dashboardAdded,
+  addDashboardFail,
   dashboardEdited,
   editDashboardFail,
   currentDashboardEdited,
   editCurrentDashboardFail,
   dashboardDeleted,
+  deleteDashboardFail,
   dashboardDetailLoaded,
   dashboardItemAdded,
   dashboardItemEdited,
@@ -70,24 +73,24 @@ import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/as
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
 
-export const getDashboards = promiseSagaCreator(
-  function* () {
+export function* getDashboards () {
+  try {
     const asyncData = yield call(request, api.dashboard)
     const dashboards = readListAdapter(asyncData)
     yield put(dashboardsLoaded(dashboards))
-    return dashboards
-  },
-  function (err) {
-    console.log('getDashboards', err)
+  } catch (err) {
+    yield put(loadDashboardsFail())
+    message.error('获取 Dashboards 失败，请稍后再试')
   }
-)
-
-export function* getDashboardsWatcher () {
-  yield fork(takeLatest, LOAD_DASHBOARDS, getDashboards)
 }
 
-export const addDashboard = promiseSagaCreator(
-  function* ({ dashboard }) {
+export function* getDashboardsWatcher () {
+  yield takeLatest(LOAD_DASHBOARDS, getDashboards)
+}
+
+export function* addDashboard (action) {
+  const { dashboard, resolve } = action.payload
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.dashboard,
@@ -95,26 +98,27 @@ export const addDashboard = promiseSagaCreator(
     })
     const result = readObjectAdapter(asyncData)
     yield put(dashboardAdded(result))
-    return result
-  },
-  function (err) {
-    console.log('addDashboard', err)
+    resolve()
+  } catch (err) {
+    yield put(addDashboardFail())
+    message.error('添加 Dashboard 失败，请稍后再试')
   }
-)
-
-export function* addDashboardWatcher () {
-  yield fork(takeEvery, ADD_DASHBOARD, addDashboard)
 }
 
-export function* editDashboard ({ payload }) {
+export function* addDashboardWatcher () {
+  yield takeEvery(ADD_DASHBOARD, addDashboard)
+}
+
+export function* editDashboard (action) {
+  const { dashboard, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
       url: api.dashboard,
-      data: writeAdapter(payload.dashboard)
+      data: writeAdapter(dashboard)
     })
-    yield put(dashboardEdited(payload.dashboard))
-    payload.resolve()
+    yield put(dashboardEdited(dashboard))
+    resolve()
   } catch (err) {
     yield put(editDashboardFail())
     message.error('修改 Dashboard 失败，请稍后再试')
@@ -122,18 +126,19 @@ export function* editDashboard ({ payload }) {
 }
 
 export function* editDashboardWatcher () {
-  yield fork(takeEvery, EDIT_DASHBOARD, editDashboard)
+  yield takeEvery(EDIT_DASHBOARD, editDashboard)
 }
 
-export function* editCurrentDashboard ({ payload }) {
+export function* editCurrentDashboard (action) {
+  const { dashboard, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
       url: api.dashboard,
-      data: writeAdapter(payload.dashboard)
+      data: writeAdapter(dashboard)
     })
-    yield put(currentDashboardEdited(payload.dashboard))
-    payload.resolve()
+    yield put(currentDashboardEdited(dashboard))
+    resolve()
   } catch (err) {
     yield put(editCurrentDashboardFail())
     message.error('修改当前 Dashboard 内容失败，请稍后再试')
@@ -141,29 +146,30 @@ export function* editCurrentDashboard ({ payload }) {
 }
 
 export function* editCurrentDashboardWatcher () {
-  yield fork(takeEvery, EDIT_CURRENT_DASHBOARD, editCurrentDashboard)
+  yield takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard)
 }
 
-export const deleteDashboard = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteDashboard (action) {
+  const { id } = action.payload
+  try {
     yield call(request, {
       method: 'delete',
       url: `${api.dashboard}/${id}`
     })
     yield put(dashboardDeleted(id))
-  },
-  function (err) {
-    console.log('deleteDashboard', err)
+  } catch (err) {
+    yield put(deleteDashboardFail())
+    message.error('删除当前 Dashboard 失败，请稍后再试')
   }
-)
+}
 
 export function* deleteDashboardWatcher () {
-  yield fork(takeEvery, DELETE_DASHBOARD, deleteDashboard)
+  yield takeEvery(DELETE_DASHBOARD, deleteDashboard)
 }
 
 export const getDashboardDetail = promiseSagaCreator(
-  function* ({ id }) {
-    const asyncData = yield call(request, `${api.dashboard}/${id}`)
+  function* (payload) {
+    const asyncData = yield call(request, `${api.dashboard}/${payload.id}`)
     const dashboard = readListAdapter(asyncData) // FIXME 返回格式不标准
     yield put(dashboardDetailLoaded(dashboard))
     return dashboard
@@ -174,7 +180,7 @@ export const getDashboardDetail = promiseSagaCreator(
 )
 
 export function* getDashboardDetailWatcher () {
-  yield fork(takeLatest, LOAD_DASHBOARD_DETAIL, getDashboardDetail)
+  yield takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail)
 }
 
 export const addDashboardItem = promiseSagaCreator(
@@ -194,45 +200,47 @@ export const addDashboardItem = promiseSagaCreator(
 )
 
 export function* addDashboardItemWatcher () {
-  yield fork(takeEvery, ADD_DASHBOARD_ITEM, addDashboardItem)
+  yield takeEvery(ADD_DASHBOARD_ITEM, addDashboardItem)
 }
 
-export function* editDashboardItem ({ payload }) {
+export function* editDashboardItem (action) {
+  const { item, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
       url: `${api.dashboard}/widgets`,
-      data: writeAdapter(payload.item)
+      data: writeAdapter(item)
     })
-    yield put(dashboardItemEdited(payload.item))
-    payload.resolve()
+    yield put(dashboardItemEdited(item))
+    resolve()
   } catch (err) {
     console.log('editDashboardItem', err)
   }
 }
 
 export function* editDashboardItemWatcher () {
-  yield fork(takeEvery, EDIT_DASHBOARD_ITEM, editDashboardItem)
+  yield takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem)
 }
 
-export function* editDashboardItems ({ payload }) {
+export function* editDashboardItems (action) {
+  const { items, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
       url: `${api.dashboard}/widgets`,
       data: {
-        payload: payload.items
+        payload: items
       }
     })
-    yield put(dashboardItemsEdited(payload.items))
-    payload.resolve()
+    yield put(dashboardItemsEdited(items))
+    resolve()
   } catch (err) {
     console.log('editDashboardItems', err)
   }
 }
 
 export function* editDashboardItemsWatcher () {
-  yield fork(takeEvery, EDIT_DASHBOARD_ITEMS, editDashboardItems)
+  yield takeEvery(EDIT_DASHBOARD_ITEMS, editDashboardItems)
 }
 
 export const deleteDashboardItem = promiseSagaCreator(
@@ -249,18 +257,19 @@ export const deleteDashboardItem = promiseSagaCreator(
 )
 
 export function* deleteDashboardItemWatcher () {
-  yield fork(takeEvery, DELETE_DASHBOARD_ITEM, deleteDashboardItem)
+  yield takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem)
 }
 
-export function* getDashboardShareLink ({ payload }) {
+export function* getDashboardShareLink (action) {
+  const { id, authName } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'get',
-      url: `${api.share}/dashboard/${payload.id}`,
-      params: {auth_name: payload.authName}
+      url: `${api.share}/dashboard/${id}`,
+      params: {auth_name: authName}
     })
     const shareInfo = readListAdapter(asyncData)
-    if (payload.authName) {
+    if (authName) {
       yield put(dashboardSecretLinkLoaded(shareInfo))
     } else {
       yield put(dashboardShareLinkLoaded(shareInfo))
@@ -272,34 +281,35 @@ export function* getDashboardShareLink ({ payload }) {
 }
 
 export function* getDashboardShareLinkWatcher () {
-  yield fork(takeLatest, LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink)
+  yield takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink)
 }
 
-export function* getWidgetShareLink ({ payload }) {
+export function* getWidgetShareLink (action) {
+  const { id, authName, itemId } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'get',
-      url: `${api.share}/widget/${payload.id}`,
-      params: {auth_name: payload.authName}
+      url: `${api.share}/widget/${id}`,
+      params: {auth_name: authName}
     })
     const shareInfo = readListAdapter(asyncData)
-    if (payload.authName) {
-      yield put(widgetSecretLinkLoaded(shareInfo, payload.itemId))
+    if (authName) {
+      yield put(widgetSecretLinkLoaded(shareInfo, itemId))
     } else {
-      yield put(widgetShareLinkLoaded(shareInfo, payload.itemId))
+      yield put(widgetShareLinkLoaded(shareInfo, itemId))
     }
   } catch (err) {
-    yield put(loadWidgetShareLinkFail(payload.itemId))
+    yield put(loadWidgetShareLinkFail(itemId))
     message.error('获取 Widget 分享链接失败，请稍后再试')
   }
 }
 
 export function* getWidgetShareLinkWatcher () {
-  yield fork(takeLatest, LOAD_WIDGET_SHARE_LINK, getWidgetShareLink)
+  yield takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink)
 }
 
-export function* getWidgetCsv ({ payload }) {
-  const { token, sql, sorts, offset, limit } = payload
+export function* getWidgetCsv (action) {
+  const { token, sql, sorts, offset, limit, itemId } = action.payload
   let queries = ''
 
   if (offset !== undefined && limit !== undefined) {
@@ -312,22 +322,22 @@ export function* getWidgetCsv ({ payload }) {
       url: `${api.share}/csv/${token}${queries}`,
       data: sql || {}
     })
-    yield put(widgetCsvLoaded(payload.itemId))
+    yield put(widgetCsvLoaded(itemId))
     const path = readListAdapter(asyncData)
     location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path}`
     // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
   } catch (err) {
-    yield put(loadWidgetCsvFail(payload.itemId))
+    yield put(loadWidgetCsvFail(itemId))
     message.error('获取csv文件失败，请稍后再试')
   }
 }
 
 export function* getWidgetCsvWatcher () {
-  yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
+  yield takeLatest(LOAD_WIDGET_CSV, getWidgetCsv)
 }
 
-export function* updateMarkRepos ({payload}) {
-  const {id, params, resolve, reject} = payload
+export function* updateMarkRepos (action) {
+  const {id, params, resolve, reject} = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -342,7 +352,7 @@ export function* updateMarkRepos ({payload}) {
 }
 
 export function* updateMarkRepoWatcher () {
-  yield fork(takeLatest, UPDAATE_MARK, updateMarkRepos)
+  yield takeLatest(UPDAATE_MARK, updateMarkRepos)
 }
 
 export default [

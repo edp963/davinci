@@ -216,6 +216,7 @@
     "jquery-csv": "^0.8.3",
     "lodash": "4.17.4",
     "minimist": "1.2.0",
+    "moment": "^2.19.3",
     "prop-types": "15.5.10",
     "rc-animate": "^2.4.1",
     "react": "~15.6.1",

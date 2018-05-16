@@ -18,82 +18,123 @@
  * >>
  */
 
-import React, {PropTypes} from 'react'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import Icon from 'antd/lib/icon'
-import Steps from 'antd/lib/steps'
-import Pagination from 'antd/lib/pagination'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Select = require('antd/lib/select')
+const Icon = require('antd/lib/icon')
+const Steps = require('antd/lib/steps')
+const Pagination = require('antd/lib/pagination')
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 const Search = Input.Search
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { iconMapping } from '../../Widget/components/chartUtil'
 
-import utilStyles from '../../../assets/less/util.less'
-import widgetStyles from '../../Widget/Widget.less'
-import styles from '../Dashboard.less'
+const utilStyles = require('../../../assets/less/util.less')
+const widgetStyles = require('../../Widget/Widget.less')
+const styles = require('../Dashboard.less')
 
-export class DashboardItemForm extends React.PureComponent {
+interface IDashboardItemFormProps {
+  form: WrappedFormUtils
+  type: string
+  widgets: any[]
+  selectedWidget: number
+  loginUser: { id: number, admin: boolean }
+  triggerType: string,
+  step: number
+  onWidgetSelect: (id: number) => void
+  onTriggerTypeSelect: () => any
+}
+
+interface IDashboardItemFormStates {
+  triggerType: string
+  authorizedWidgets: any[]
+  filteredWidgets: any[]
+  pageSize: number
+  currentPage: number
+  screenWidth: number
+}
+
+export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps, IDashboardItemFormStates> {
 
   constructor (props) {
     super(props)
     this.state = {
       triggerType: 'manual',
-      filteredWidgets: null,
+      authorizedWidgets: [],
+      filteredWidgets: [],
       pageSize: 24,
       currentPage: 1,
       screenWidth: 0
     }
   }
 
-  componentWillMount () {
+  public componentWillReceiveProps (nextProps) {
+    const { widgets, loginUser } = this.props
+    if (nextProps.widgets !== widgets) {
+      this.setAuthorizedWidgets(nextProps.widgets)
+    }
+    window.addEventListener('resize', this.getScreenWidth, false)
+  }
+
+  public componentWillUnmount () {
+    window.removeEventListener('resize', this.getScreenWidth, false)
+  }
+
+  private setAuthorizedWidgets = (widgets) => {
+    const { loginUser } = this.props
+    if (loginUser.admin) {
+      this.setState({
+        authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
+      })
+    }
+  }
+
+  private getScreenWidth = () => {
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  componentWillReceiveProps (props) {
-    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
-  }
-
-  onSearchWidgetItem = (value) => {
+  private onSearchWidgetItem = (value) => {
     const valReg = new RegExp(value, 'i')
     this.setState({
-      filteredWidgets: this.props.widgets.filter(i => valReg.test(i.name)),
+      filteredWidgets: this.state.authorizedWidgets.filter((i) => valReg.test(i.name)),
       currentPage: 1
     })
   }
 
-  onChange = (page) => {
+  private onChange = (page) => {
     this.setState({
       currentPage: page
     })
   }
 
-  onShowSizeChange = (current, pageSize) => {
+  private onShowSizeChange = (currentPage, pageSize) => {
     this.setState({
-      currentPage: current,
-      pageSize: pageSize
+      currentPage,
+      pageSize
     })
   }
 
-  onReset = () => {
+  private onReset = () => {
     this.setState({
-      filteredWidgets: null,
+      filteredWidgets: [],
       currentPage: 1
     })
   }
 
-  render () {
+  public render () {
     const {
       type,
       form,
+      widgets,
       selectedWidget,
       triggerType,
       step,
@@ -103,20 +144,16 @@ export class DashboardItemForm extends React.PureComponent {
     } = this.props
 
     const {
+      authorizedWidgets,
       filteredWidgets,
       pageSize,
       currentPage,
       screenWidth
     } = this.state
 
-    let {widgets} = this.props
-    if (loginUser && loginUser.admin) {
-      widgets = widgets.filter(widget => widget['create_by'] === loginUser.id)
-    }
+    const widgetsArr = filteredWidgets.length ? filteredWidgets : authorizedWidgets
 
-    const widgetsArr = filteredWidgets || widgets
-
-    const {getFieldDecorator} = form
+    const { getFieldDecorator } = form
 
     const widgetSelector = widgetsArr.map((w, index) => {
       const widgetType = JSON.parse(w.chart_params).widgetType
@@ -138,12 +175,14 @@ export class DashboardItemForm extends React.PureComponent {
       const startCol = (currentPage - 1) * pageSize + 1
       const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
 
-      let colItems = ''
+      let colItems = void 0
       if ((index + 1 >= startCol && index + 1 <= endCol) ||
         (startCol > widgetsArr.length)) {
         colItems = (
           <Col
-            md={8} sm={12} xs={24}
+            md={8}
+            sm={12}
+            xs={24}
             key={w.id}
             onClick={onWidgetSelect(w.id)}
           >
@@ -184,7 +223,7 @@ export class DashboardItemForm extends React.PureComponent {
           </Col>
         </Row>
         <Row className={`${selectWidgetStep} ${styles.searchRow}`}>
-          <Col span={17}></Col>
+          <Col span={17} />
           <Col>
             <FormItem wrapperCol={{span: 7}}>
               {getFieldDecorator('searchItem', {})(
@@ -215,13 +254,15 @@ export class DashboardItemForm extends React.PureComponent {
         <div className={inputFormStep}>
           <Row gutter={8}>
             <Col sm={8}>
-              <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('id', {
-                  hidden: type === 'add'
-                })(
-                  <Input />
-                )}
-              </FormItem>
+              {
+                type === 'add'
+                  ? <FormItem className={utilStyles.hide}>
+                    {getFieldDecorator('id', {})(
+                      <Input />
+                    )}
+                  </FormItem>
+                  : void 0
+              }
               <FormItem
                 label="数据刷新模式"
                 labelCol={{span: 10}}
@@ -259,18 +300,6 @@ export class DashboardItemForm extends React.PureComponent {
       </Form>
     )
   }
-}
-
-DashboardItemForm.propTypes = {
-  form: PropTypes.any,
-  type: PropTypes.string,
-  widgets: PropTypes.array,
-  selectedWidget: PropTypes.number,
-  loginUser: PropTypes.object,
-  triggerType: PropTypes.string,
-  onWidgetSelect: PropTypes.func,
-  onTriggerTypeSelect: PropTypes.func,
-  step: PropTypes.number
 }
 
 export default Form.create()(DashboardItemForm)
