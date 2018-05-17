@@ -25,14 +25,19 @@ import {
   ADD_WIDGET_SUCCESS,
   DELETE_WIDGET,
   DELETE_WIDGET_SUCCESS,
-  LOAD_WIDGET_DETAIL,
-  LOAD_WIDGET_DETAIL_SUCCESS,
+  DELETE_WIDGET_FAILURE,
+  // LOAD_WIDGET_DETAIL,
+  // LOAD_WIDGET_DETAIL_SUCCESS,
   EDIT_WIDGET,
-  EDIT_WIDGET_SUCCESS
+  EDIT_WIDGET_SUCCESS,
+  EDIT_WIDGET_FAILURE,
+  LOAD_WIDGETS_FAILURE,
+  ADD_WIDGET_FAILURE
 } from './constants'
 import {
   LOAD_BIZLOGICS,
   LOAD_BIZLOGICS_SUCCESS,
+  LOAD_BIZLOGICS_FAILURE,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
   LOAD_BIZDATAS_FAILURE,
@@ -57,6 +62,8 @@ function widgetReducer (state = initialState, action) {
       return state
     case LOAD_WIDGETS_SUCCESS:
       return state.set('widgets', payload.widgets)
+    case LOAD_WIDGETS_FAILURE:
+      return state
     case ADD_WIDGET:
       return state
     case ADD_WIDGET_SUCCESS:
@@ -66,19 +73,25 @@ function widgetReducer (state = initialState, action) {
       } else {
         return state.set('widgets', [payload.result])
       }
+    case ADD_WIDGET_FAILURE:
+      return state
     case DELETE_WIDGET:
       return state
     case DELETE_WIDGET_SUCCESS:
       return state.set('widgets', widgets.filter((g) => g.id !== payload.id))
-    case LOAD_WIDGET_DETAIL:
+    case DELETE_WIDGET_FAILURE:
       return state
-    case LOAD_WIDGET_DETAIL_SUCCESS:
-      return state
+    // case LOAD_WIDGET_DETAIL:
+    //   return state
+    // case LOAD_WIDGET_DETAIL_SUCCESS:
+    //   return state
     case EDIT_WIDGET:
       return state
     case EDIT_WIDGET_SUCCESS:
       widgets.splice(widgets.findIndex((g) => g.id === payload.result.id), 1, payload.result)
       return state.set('widgets', widgets.slice())
+    case EDIT_WIDGET_FAILURE:
+      return state
     case LOAD_BIZDATAS:
       return state.set('bizdatasLoading', true)
     case LOAD_BIZDATAS_SUCCESS:
@@ -97,6 +110,8 @@ function widgetReducer (state = initialState, action) {
       return state.set('bizdatas', false)
     case LOAD_BIZLOGICS_SUCCESS:
       return state.set('bizlogics', payload.bizlogics)
+    case LOAD_BIZLOGICS_FAILURE:
+      return state
     default:
       return state
   }

@@ -24,6 +24,14 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+import bizlogicReducer from '../Bizlogic/reducer'
+import bizlogicSaga from '../Bizlogic/sagas'
+
 import Workbench from './components/Workbench'
 import CopyWidgetForm from './components/CopyWidgetForm'
 import Container from '../../components/Container'
@@ -42,7 +50,6 @@ const Select = require('antd/lib/select')
 const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadWidgets, deleteWidget, addWidget, loadBizlogics } from './actions'
 import { makeSelectWidgets, makeSelectBizlogics } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -53,26 +60,26 @@ const utilStyles = require('../../assets/less/util.less')
 
 interface IWidgetProps {
   widgets: any[]
-  bizlogics: any[],
-  loginUser: any,
-  onLoadWidgets: () => void,
-  onLoadBizlogics: () => void,
-  onDeleteWidget: (id: any) => void,
-  onAddWidget: (widget: object) => Promise<any>
+  bizlogics: any[]
+  loginUser: any
+  onLoadWidgets: () => void
+  onLoadBizlogics: () => void
+  onDeleteWidget: (id: any) => void
+  onAddWidget: (widget: object, resolve: any) => Promise<any>
 }
 
 interface IWidgetStates {
-  workbenchType: string,
-  currentWidget: object,
-  workbenchVisible: boolean,
-  copyWidgetVisible: boolean,
-  copyQueryInfo: object,
-  filteredWidgets: any[],
-  filteredWidgetsName: RegExp,
-  filteredWidgetsType: object,
-  filteredWidgetsTypeId: string,
-  pageSize: number,
-  currentPage: number,
+  workbenchType: string
+  currentWidget: object
+  workbenchVisible: boolean
+  copyWidgetVisible: boolean
+  copyQueryInfo: object
+  filteredWidgets: any[]
+  filteredWidgetsName: RegExp
+  filteredWidgetsType: object
+  filteredWidgetsTypeId: string
+  pageSize: number
+  currentPage: number
   screenWidth: number
 }
 
@@ -183,7 +190,8 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
           ...copyQueryInfo
         }
 
-        this.props.onAddWidget(widgetValue).then(() => {
+        console.log('widgetValue', widgetValue)
+        this.props.onAddWidget(widgetValue, () => {
           resolve()
           this.hideForm()
         })
@@ -454,11 +462,25 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadWidgets: () => promiseDispatcher(dispatch, loadWidgets),
-    onLoadBizlogics: () => promiseDispatcher(dispatch, loadBizlogics),
-    onDeleteWidget: (id) => () => promiseDispatcher(dispatch, deleteWidget, id),
-    onAddWidget: (widget) => promiseDispatcher(dispatch, addWidget, widget)
+    onLoadWidgets: () => dispatch(loadWidgets()),
+    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onDeleteWidget: (id) => () => dispatch(deleteWidget(id)),
+    onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve))
   }
 }
 
-export default connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)(Widget)
+const withConnect = connect<{}, {}, IWidgetProps>(mapStateToProps, mapDispatchToProps)
+
+const withReducerWidget = injectReducer({ key: 'widget', reducer })
+const withSagaWidget = injectSaga({ key: 'widget', saga })
+
+const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
+const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+
+export default compose(
+  withReducerWidget,
+  withReducerBizlogic,
+  withSagaBizlogic,
+  withSagaWidget,
+  withConnect
+)(Widget)

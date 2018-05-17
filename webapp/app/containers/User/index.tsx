@@ -24,6 +24,14 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+import groupReducer from '../Group/reducer'
+import groupSaga from '../Group/sagas'
+
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
@@ -40,31 +48,33 @@ const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
 const Breadcrumb = require('antd/lib/breadcrumb')
+const message = require('antd/lib/message')
 
 import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUserPassword } from './actions'
 import { loadGroups, addGroup } from '../Group/actions'
-import { makeSelectUsers } from './selectors'
+import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
+import { resolve } from 'dns'
 const utilStyles = require('../../assets/less/util.less')
 
 interface IUserProps {
   users: boolean | any[]
   groups: boolean | any[]
+  tableLoading: boolean
+  formLoading: boolean
   onLoadUsers: () => any
-  onAddUser: (userData: any) => any
+  onAddUser: (userData: object, resolve: any) => any
   onDeleteUser: (id: number) => any
-  onLoadUserGroups: (id: number) => any
-  onEditUserInfo: (userData: any) => any
-  onChangeUserPassword: (formdata: any) => any
+  onLoadUserGroups: (id: number, resolve: any) => any
+  onEditUserInfo: (userData: object, resolve: any) => any
+  onChangeUserPassword: (formdata: any, resolve: any, reject: any) => any
   onLoadGroups: () => any
-  onAddGroup: (group: any) => any
+  onAddGroup: (group: any, resolve: any) => any
 }
 
 interface IUserStates {
   tableSource: any[]
   tableSortedInfo: {columnKey?: string, order?: string}
-  tableLoading: boolean
   formType: string
   groupTransfer: { id: string, targets: any[] }
   emailFilterValue: string
@@ -85,7 +95,6 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
     this.state = {
       tableSource: [],
       tableSortedInfo: {},
-      tableLoading: false,
 
       formType: '',
       groupTransfer: {
@@ -114,13 +123,9 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
   private groupForm: WrappedFormUtils = null
 
   public componentWillMount () {
-    this.setState({
-      tableLoading: true,
-      screenWidth: document.documentElement.clientWidth
-    })
+    this.setState({ screenWidth: document.documentElement.clientWidth })
     this.props.onLoadGroups()
     this.props.onLoadUsers()
-      .then(() => { this.setState({ tableLoading: false }) })
   }
 
   public componentWillReceiveProps (props) {
@@ -149,22 +154,21 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
       userFormVisible: true
     }, () => {
       const { email, admin, name, title } = (this.props.users as any[]).find((u) => u.id === id)
-      this.props.onLoadUserGroups(id)
-        .then((groups) => {
-          this.userForm.setFieldsValue({
-            id,
-            email,
-            name,
-            title,
-            admin
-          })
-          this.setState({
-            groupTransfer: {
-              id,
-              targets: groups ? groups.map((g) => g.group_id) : []
-            }
-          })
+      this.props.onLoadUserGroups(id, (groups) => {
+        this.userForm.setFieldsValue({
+          id,
+          email,
+          name,
+          title,
+          admin
         })
+        this.setState({
+          groupTransfer: {
+            id,
+            targets: groups ? groups.map((g) => g.group_id) : []
+          }
+        })
+      })
     })
   }
 
@@ -210,15 +214,17 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
             }))
           }
         }
-        this.setState({ modalLoading: true })
+
         switch (formType) {
           case 'add':
-            this.props.onAddUser(userData)
-              .then(() => { this.hideForm() })
+            this.props.onAddUser(userData, () => {
+              this.hideForm()
+            })
             break
           case 'edit':
-            this.props.onEditUserInfo(userData)
-              .then(() => { this.hideForm() })
+            this.props.onEditUserInfo(userData, () => {
+              this.hideForm()
+            })
             break
           default:
             break
@@ -230,8 +236,11 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
   private onPasswordModalOk = () => {
     this.userPasswordForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.props.onChangeUserPassword(values)
-          .then(() => { this.hideForm() })
+        this.props.onChangeUserPassword(values, () => {
+          this.hideForm()
+        }, (msg) => {
+          message.error(msg, 3)
+        })
       }
     })
   }
@@ -249,15 +258,15 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
     this.groupForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-        this.props.onAddGroup(values)
-          .then(() => { this.hideGroupForm() })
+        this.props.onAddGroup(values, () => {
+          this.hideGroupForm()
+        })
       }
     })
   }
 
   private hideForm = () => {
     this.setState({
-      modalLoading: false,
       userFormVisible: false,
       passwordFormVisible: false,
       groupTransfer: {
@@ -352,7 +361,6 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
     const {
       tableSource,
       tableSortedInfo,
-      tableLoading,
       emailFilterValue,
       emailFilterDropdownVisible,
       nameFilterValue,
@@ -369,7 +377,9 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
 
     const {
       groups,
-      onDeleteUser
+      onDeleteUser,
+      tableLoading,
+      formLoading
     } = this.props
 
     const columns = [{
@@ -480,8 +490,8 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
           key="submit"
           size="large"
           type="primary"
-          loading={modalLoading}
-          disabled={modalLoading}   // 防多次提交
+          loading={formLoading}
+          disabled={formLoading}   // 防多次提交
           onClick={this.onUserModalOk}
         >
           保 存
@@ -606,20 +616,36 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
 
 const mapStateToProps = createStructuredSelector({
   users: makeSelectUsers(),
-  groups: makeSelectGroups()
+  groups: makeSelectGroups(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadUsers: () => promiseDispatcher(dispatch, loadUsers),
-    onAddUser: (user) => promiseDispatcher(dispatch, addUser, user),
-    onDeleteUser: (id) => () => promiseDispatcher(dispatch, deleteUser, id),
-    onLoadUserGroups: (id) => promiseDispatcher(dispatch, loadUserGroups, id),
-    onEditUserInfo: (user) => promiseDispatcher(dispatch, editUserInfo, user),
-    onChangeUserPassword: (user) => promiseDispatcher(dispatch, changeUserPassword, user),
-    onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
-    onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group)
+    onLoadUsers: () => dispatch(loadUsers()),
+    onAddUser: (user, resolve) => dispatch(addUser(user, resolve)),
+    onDeleteUser: (id) => () => dispatch(deleteUser(id)),
+    onLoadUserGroups: (id, resolve) => dispatch(loadUserGroups(id, resolve)),
+    onEditUserInfo: (user, resolve) => dispatch(editUserInfo(user, resolve)),
+    onChangeUserPassword: (user, resolve, reject) => dispatch(changeUserPassword(user, resolve, reject)),
+    onLoadGroups: () => dispatch(loadGroups()),
+    onAddGroup: (group, resolve) => dispatch(addGroup(group, resolve))
   }
 }
 
-export default connect<{}, {}, IUserProps>(mapStateToProps, mapDispatchToProps)(User)
+const withConnect = connect<{}, {}, IUserProps>(mapStateToProps, mapDispatchToProps)
+
+const withReducerUser = injectReducer({ key: 'user', reducer })
+const withSagaUser = injectSaga({ key: 'user', saga })
+
+const withReducerGroup = injectReducer({ key: 'group', reducer: groupReducer })
+const withSagaGroup = injectSaga({ key: 'group', saga: groupSaga })
+
+export default compose(
+  withReducerUser,
+  withReducerGroup,
+  withSagaUser,
+  withSagaGroup,
+  withConnect
+)(User)

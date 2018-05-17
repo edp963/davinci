@@ -37,9 +37,21 @@ const makeSelectSqlValidateMsg = () => createSelector(
   (bizlogicState) => bizlogicState.get('sqlValidateMessage')
 )
 
+const makeSelectTableLoading = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('tableLoading')
+)
+
+const makeSelectFormLoading = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('formLoading')
+)
+
 export {
   selectBizlogic,
   makeSelectBizlogics,
   makeSelectSqlValidateMsg,
-  makeSelectSqlValidateCode
+  makeSelectSqlValidateCode,
+  makeSelectTableLoading,
+  makeSelectFormLoading
 }

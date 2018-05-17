@@ -31,9 +31,11 @@ import sagas from './sagas'
 
 const sagaMiddleware = createSagaMiddleware()
 
-interface IStore<T> extends Store<T> {
+export interface IStore<T> extends Store<T> {
   runSaga?: (saga: (...args: any[]) => SagaIterator, ...args: any[]) => Task
-  asyncReducers?: ReducersMapObject
+  // asyncReducers?: ReducersMapObject,
+  injectedReducers?: ReducersMapObject,
+  injectedSagas?: ReducersMapObject
 }
 
 declare interface IWindow extends Window {
@@ -68,18 +70,21 @@ export default function configureStore<T> (initialState: object = {}, history): 
   // Extensions
   store.runSaga = sagaMiddleware.run
   sagas.map(store.runSaga)
-  store.asyncReducers = {} // Async reducer registry
+  // store.asyncReducers = {} // Async reducer registry
+  store.injectedReducers = {} // Reducer registry
+  store.injectedSagas = {} // Saga registry
 
   // Make reducers hot reloadable, see http://mxs.is/googmo
   /* istanbul ignore next */
   if (module.hot) {
     module.hot.accept('./reducers', () => {
-      import('./reducers').then((reducerModule) => {
-        const createReducers = reducerModule.default
-        const nextReducers = createReducers(store.asyncReducers)
+      store.replaceReducer(createReducer(store.injectedReducers))
+      // import('./reducers').then((reducerModule) => {
+      //   const createReducers = reducerModule.default
+      //   const nextReducers = createReducers(store.asyncReducers)
 
-        store.replaceReducer(nextReducers)
-      })
+      //   store.replaceReducer(nextReducers)
+      // })
     })
   }
 

@@ -8,14 +8,18 @@ import { fromJS } from 'immutable'
 import {
   LOAD_SCHEDULES,
   LOAD_SCHEDULES_SUCCESS,
+  LOAD_SCHEDULES_FAILUER,
   ADD_SCHEDULES,
   ADD_SCHEDULES_SUCCESS,
+  ADD_SCHEDULES_FAILURE,
   DELETE_SCHEDULES,
   DELETE_SCHEDULES_SUCCESS,
   CHANGE_SCHEDULE_STATUS,
   CHANGE_SCHEDULE_STATUS_SUCCESS,
   UPDATE_SCHEDULES,
-  UPDATE_SCHEDULES_SUCCESS
+  UPDATE_SCHEDULES_SUCCESS,
+  UPDATE_SCHEDULES_FAILURE,
+  CHANGE_SCHEDULE_STATUS_FAILURE
 } from './constants'
 import {
   LOAD_DASHBOARDS_SUCCESS,
@@ -29,7 +33,9 @@ const initialState = fromJS({
   widgets: false,
   schedule: false,
   dashboards: false,
-  currentDashboard: false
+  currentDashboard: false,
+  tableLoading: false,
+  formLoading: false
 })
 
 function scheduleReducer (state = initialState, action) {
@@ -45,16 +51,28 @@ function scheduleReducer (state = initialState, action) {
       return state
         .set('currentDashboard', payload.dashboard)
     case LOAD_SCHEDULES:
-      return state
+      return state.set('tableLoading', true)
     case LOAD_SCHEDULES_SUCCESS:
-      return state.set('schedule', payload.schedules)
+      return state
+        .set('schedule', payload.schedules)
+        .set('tableLoading', false)
+    case LOAD_SCHEDULES_FAILUER:
+      return state.set('tableLoading', false)
+    case ADD_SCHEDULES:
+      return state.set('formLoading', true)
     case ADD_SCHEDULES_SUCCESS:
       if (schedule) {
         schedule.unshift(payload.result)
-        return state.set('schedule', schedule.slice())
+        return state
+          .set('schedule', schedule.slice())
+          .set('formLoading', false)
       } else {
-        return state.set('schedule', [payload.result])
+        return state
+          .set('schedule', [payload.result])
+          .set('formLoading', false)
       }
+    case ADD_SCHEDULES_FAILURE:
+      return state.set('formLoading', false)
     case DELETE_SCHEDULES:
       return state
     case DELETE_SCHEDULES_SUCCESS:
@@ -63,10 +81,16 @@ function scheduleReducer (state = initialState, action) {
       return state
     case CHANGE_SCHEDULE_STATUS_SUCCESS:
       return state.set('schedule', schedule.map((s) => s.id === payload.id ? payload.schedules : s))
-    case UPDATE_SCHEDULES:
+    case CHANGE_SCHEDULE_STATUS_FAILURE:
       return state
+    case UPDATE_SCHEDULES:
+      return state.set('formLoading', true)
     case UPDATE_SCHEDULES_SUCCESS:
-      return state.set('schedule', schedule.map((s) => s.id === payload.result.id ? payload.result : s))
+      return state
+        .set('schedule', schedule.map((s) => s.id === payload.result.id ? payload.result : s))
+        .set('formLoading', false)
+    case UPDATE_SCHEDULES_FAILURE:
+      return state.set('formLoading', false)
     default:
       return state
   }

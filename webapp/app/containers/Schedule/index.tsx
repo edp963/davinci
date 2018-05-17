@@ -12,7 +12,18 @@ import Container from '../../components/Container'
 import moment from 'moment'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { createStructuredSelector } from 'reselect'
-import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets} from './selectors'
+
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+import widgetReducer from '../Widget/reducer'
+import widgetSaga from '../Widget/sagas'
+import dashboardReducer from '../Dashboard/reducer'
+import dashboardSaga from '../Dashboard/sagas'
+
+import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
@@ -34,7 +45,6 @@ const Breadcrumb = require('antd/lib/breadcrumb')
 const utilStyles = require('../../assets/less/util.less')
 import { PaginationProps } from 'antd/lib/pagination'
 
-
 interface ICurrentDashboard {
   config: string
   create_by: number
@@ -51,12 +61,14 @@ interface IScheduleProps {
   widgets: boolean | any[]
   schedule: boolean | any[]
   dashboards: boolean | any[]
-  onAddSchedule: (param: object) => any
+  tableLoading: boolean
+  formLoading: boolean
+  onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: () => any
   onLoadSchedules: () => any
   onLoadDashboards: () => any
   onDeleteSchedule: (id: number) => any
-  onUpdateSchedule: (param: object) => any
+  onUpdateSchedule: (param: object, resolve: any) => any
   currentDashboard: null | ICurrentDashboard
   onLoadDashboardDetail: (key: number) => any
   onChangeCurrentJobStatus: (id: number, status: string) => any
@@ -69,8 +81,6 @@ interface IScheduleStates {
   configType: string,
   dashboardTree: any[],
   formVisible: boolean,
-  tableLoading: boolean,
-  modalLoading: boolean,
   configVisible: boolean,
   dashboardTreeValue: any[],
   rangeTime: string,
@@ -87,8 +97,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       configType: 'add',
       dashboardTree: [],
       formVisible: false,
-      tableLoading: false,
-      modalLoading: false,
       configVisible: false,
       dashboardTreeValue: [],
       rangeTime: 'Minute',
@@ -117,11 +125,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         screenWidth: document.documentElement.clientWidth
       })
     })
-    this.setState({ tableLoading: true })
     this.props.onLoadSchedules()
-      .then(() => {
-        this.setState({ tableLoading: false })
-      })
   }
 
   public componentWillReceiveProps (props) {
@@ -173,7 +177,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     this.scheduleForm.validateFieldsAndScroll((err, values) => {
       const { emailConfig } = this.state
       if (!err) {
-        this.setState({ modalLoading: true })
         const startDate = values.range && values.range[0] ? values.range[0] : ''
         const endDate = values.range && values.range[1] ? values.range[1] : ''
         if (values && values.config) {
@@ -221,9 +224,13 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
             }
           }
           if (this.state.formType === 'add') {
-            onAddSchedule(params).then(() => this.hideForm())
+            onAddSchedule(params, () => {
+              this.hideForm()
+            })
           } else {
-            onUpdateSchedule(params).then(() => this.hideForm())
+            onUpdateSchedule(params, () => {
+              this.hideForm()
+            })
           }
         })
       }
@@ -266,7 +273,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
 
   private hideForm = () => {
     this.setState({
-      modalLoading: false,
       formVisible: false,
       emailConfig: {}
     }, () => this.scheduleForm.resetFields())
@@ -391,15 +397,15 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       configType,
       tableSource,
       formVisible,
-      modalLoading,
-      tableLoading,
       configVisible,
       dashboardTree,
       dashboardTreeValue,
       screenWidth
     } = this.state
     const {
-      onDeleteSchedule
+      onDeleteSchedule,
+      tableLoading,
+      formLoading
     } = this.props
 
     const pagination: PaginationProps = {
@@ -481,8 +487,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           key="submit"
           size="large"
           type="primary"
-          loading={modalLoading}
-          disabled={modalLoading}
+          loading={formLoading}
+          disabled={formLoading}
           onClick={this.onScheduleOk}
         >
           保 存
@@ -597,20 +603,41 @@ const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
   schedule: makeSelectSchedule(),
   dashboards: makeSelectDashboards(),
-  currentDashboard: makeSelectCurrentDashboard()
+  currentDashboard: makeSelectCurrentDashboard(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadWidgets: () => promiseDispatcher(dispatch, loadWidgets),
-    onLoadSchedules: () => promiseDispatcher(dispatch, loadSchedules),
+    onLoadWidgets: () => dispatch(loadWidgets()),
+    onLoadSchedules: () => dispatch(loadSchedules()),
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
-    onAddSchedule: (schedule) => promiseDispatcher(dispatch, addSchedule, schedule),
-    onUpdateSchedule: (schedule) => promiseDispatcher(dispatch, updateSchedule, schedule),
+    onAddSchedule: (schedule, resolve) => dispatch(addSchedule(schedule, resolve)),
+    onUpdateSchedule: (schedule, resolve) => dispatch(updateSchedule(schedule, resolve)),
     onLoadDashboardDetail: (id) => promiseDispatcher(dispatch, loadDashboardDetail, id),
-    onDeleteSchedule: (id) => () => promiseDispatcher(dispatch, deleteSchedule, id),
-    onChangeCurrentJobStatus: (id, currentStatus) => promiseDispatcher(dispatch, changeSchedulesStatus, id, currentStatus)
+    onDeleteSchedule: (id) => () => dispatch(deleteSchedule(id)),
+    onChangeCurrentJobStatus: (id, currentStatus) => dispatch(changeSchedulesStatus(id, currentStatus))
   }
 }
 
-export default connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)(Schedule)
+const withConnect = connect<{}, {}, IScheduleProps>(mapStateToProps, mapDispatchToProps)
+
+const withReducerSchedule = injectReducer({ key: 'schedule', reducer })
+const withSagaSchedule = injectSaga({ key: 'schedule', saga })
+
+const withReducerWidget = injectReducer({ key: 'widget', reducer: widgetReducer })
+const withSagaWidget = injectSaga({ key: 'widget', saga: widgetSaga })
+
+// const withReducerDashboard = injectReducer({ key: 'dashboard', reducer: dashboardReducer })
+// const withSagaDashboard = injectSaga({ key: 'dashboard', saga: dashboardSaga })
+
+export default compose(
+  withReducerSchedule,
+  withReducerWidget,
+  // withReducerDashboard,
+  withSagaSchedule,
+  withSagaWidget,
+  // withSagaDashboard,
+  withConnect
+)(Schedule)

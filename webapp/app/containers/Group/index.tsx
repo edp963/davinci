@@ -24,6 +24,12 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
@@ -41,26 +47,25 @@ const Breadcrumb = require('antd/lib/breadcrumb')
 import { PaginationProps } from 'antd/lib/pagination'
 import Column from 'antd/lib/table/Column'
 
-import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { loadGroups, addGroup, deleteGroup, editGroup } from './actions'
-import { makeSelectGroups } from './selectors'
+import { makeSelectGroups, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 
 interface IGroupProps {
   groups: boolean | any[]
+  tableLoading: boolean
+  formLoading: boolean
   onLoadGroups: () => any
-  onAddGroup: (values: object) => any
+  onAddGroup: (values: object, resolve: any) => any
   onDeleteGroup: (id: number) => any
-  onEditGroup: (values: object) => any
+  onEditGroup: (values: object, resolve: any) => any
 }
 
 interface IGroupStates {
   tableSource: any[]
   tableSortedInfo: { columnKey?: string, order?: string }
-  tableLoading: boolean
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
-  modalLoading: boolean
   formVisible: boolean
   formType: string
   screenWidth: number
@@ -72,12 +77,9 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
     this.state = {
       tableSource: [],
       tableSortedInfo: {},
-      tableLoading: false,
 
       nameFilterValue: '',
       nameFilterDropdownVisible: false,
-
-      modalLoading: false,
 
       formVisible: false,
       formType: 'add',
@@ -92,14 +94,8 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
   } = null
 
   public componentWillMount () {
-    this.setState({
-      tableLoading: true,
-      screenWidth: document.documentElement.clientWidth
-    })
+    this.setState({ screenWidth: document.documentElement.clientWidth })
     this.props.onLoadGroups()
-      .then(() => {
-        this.setState({ tableLoading: false })
-      })
   }
 
   public componentWillReceiveProps (props) {
@@ -140,13 +136,14 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
   private onModalOk = () => {
     this.groupForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
-          this.props.onAddGroup(values)
-            .then(() => { this.hideForm() })
+          this.props.onAddGroup(values, () => {
+            this.hideForm()
+          })
         } else {
-          this.props.onEditGroup(values)
-            .then(() => { this.hideForm() })
+          this.props.onEditGroup(values, () => {
+            this.hideForm()
+          })
         }
       }
     })
@@ -154,7 +151,6 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
 
   private hideForm = () => {
     this.setState({
-      modalLoading: false,
       formVisible: false
     })
     this.groupForm.resetFields()
@@ -199,17 +195,17 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
     const {
       tableSource,
       tableSortedInfo,
-      tableLoading,
       nameFilterValue,
       nameFilterDropdownVisible,
-      modalLoading,
       formVisible,
       formType,
       screenWidth
     } = this.state
 
     const {
-      onDeleteGroup
+      onDeleteGroup,
+      tableLoading,
+      formLoading
     } = this.props
 
     const columns: any = [{
@@ -275,8 +271,8 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
         key="submit"
         size="large"
         type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
+        loading={formLoading}
+        disabled={formLoading}
         onClick={this.onModalOk}
       >
         保 存
@@ -344,15 +340,25 @@ export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
-    onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group),
-    onDeleteGroup: (id) => () => promiseDispatcher(dispatch, deleteGroup, id),
-    onEditGroup: (group) => promiseDispatcher(dispatch, editGroup, group)
+    onLoadGroups: () => dispatch(loadGroups()),
+    onAddGroup: (group, resolve) => dispatch(addGroup(group, resolve)),
+    onDeleteGroup: (id) => () => dispatch(deleteGroup(id)),
+    onEditGroup: (group, resolve) => dispatch(editGroup(group, resolve))
   }
 }
 
 const mapStateToProps = createStructuredSelector({
-  groups: makeSelectGroups()
+  groups: makeSelectGroups(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
-export default connect<{}, {}, IGroupProps>(mapStateToProps, mapDispatchToProps)(Group)
+const withConnect = connect<{}, {}, IGroupProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'group', reducer })
+const withSaga = injectSaga({ key: 'group', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Group)

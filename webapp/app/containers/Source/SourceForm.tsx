@@ -38,18 +38,25 @@ interface ISourceFormProps {
   testLoading: boolean
   form: any
   onTestSourceConnection: () => any
-  onCheckName: (idName: any, value: any, typeName: any, resolve: any, reject: any) => any
+  onCheckName: (
+    id: number,
+    name: string,
+    type: string,
+    resolve: (res: any) => void,
+    reject: (err: any) => void
+  ) => any
 }
 
 export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
-  private checkNameUnique = (rule, value = '', callback) => {
+  public checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
     const idName = type === 'add' ? '' : id
     const typeName = 'source'
-    onCheckName(idName, value, typeName, (res) => {
+    onCheckName(idName, value, typeName,
+      (res) => {
         callback()
       }, (err) => {
         callback(err)

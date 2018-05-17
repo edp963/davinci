@@ -21,15 +21,15 @@
 import * as React from 'react'
 import PropTypes from 'prop-types'
 import Helmet from 'react-helmet'
-import {
-  connect
-} from 'react-redux'
-import {
-  createStructuredSelector
-} from 'reselect'
-import {
-  Link
-} from 'react-router'
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+import { Link } from 'react-router'
+
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
@@ -132,7 +132,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
   public componentWillMount () {
     this.props.onLoadSources()
-
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -200,7 +199,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       if (!err) {
         const { id, name, type, url, user, password, desc, config } = values
         if (this.state.formType === 'add') {
-          const addParameter = {
+          this.props.onAddSource({
             name,
             type,
             connection_url: JSON.stringify({
@@ -210,13 +209,11 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
             }),
             desc,
             config
-          }
-          new Promise((resolve) => {
-            this.props.onAddSource(addParameter, () => {console.log('')})
-            resolve()
-          }).then(() => this.hideForm())
+          }, () => {
+            this.hideForm()
+          })
         } else {
-          const editParameter = {
+          this.props.onEditSource({
             id,
             name,
             type,
@@ -227,11 +224,9 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
             }),
             desc,
             config
-          }
-          new Promise((resolve) => {
-            this.props.onEditSource(editParameter, () => {console.log('')})
-            resolve()
-          }).then(() => this.hideForm())
+          }, () => {
+            this.hideForm()
+          })
         }
       }
     })
@@ -608,4 +603,12 @@ const mapStateToProps = createStructuredSelector({
   testLoading: makeSelectTestLoading()
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(Source)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'source', reducer })
+const withSaga = injectSaga({ key: 'source', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Source)

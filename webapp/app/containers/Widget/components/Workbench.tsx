@@ -31,7 +31,6 @@ const Modal = require('antd/lib/modal')
 
 import { loadBizdatas, clearBizdatas, addWidget, editWidget } from '../actions'
 import { makeSelectBizdatas, makeSelectBizdatasLoading } from '../selectors'
-import { promiseDispatcher } from '../../../utils/reduxPromisation'
 import { uuid } from '../../../utils/util'
 
 const styles = require('../Widget.less')
@@ -45,8 +44,8 @@ interface IWorkbenchProps {
   bizdatasLoading?: boolean,
   onLoadBizdatas?: (id: any, sql: any, sorts: any, offset: any, limit: any) => void,
   onClearBizdatas?: () => void,
-  onAddWidget?: (object) => Promise<any>,
-  onEditWidget?: (object) => Promise<any>,
+  onAddWidget?: (widget: object, resolve: any) => Promise<any>,
+  onEditWidget?: (widget: object, resolve: any) => Promise<any>,
   onAfterSave?: () => void
 }
 
@@ -306,12 +305,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         if (this.props.type === 'edit') {
           widget['id'] = id
           widget['create_by'] = createBy
-          this.props.onEditWidget(widget).then(() => {
+          this.props.onEditWidget(widget, () => {
             resolve()
             this.props.onAfterSave()
           })
         } else {
-          this.props.onAddWidget(widget).then(() => {
+          this.props.onAddWidget(widget, () => {
             resolve()
             this.props.onAfterSave()
           })
@@ -595,8 +594,8 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadBizdatas: (id, sql, sorts, offset, limit) => dispatch(loadBizdatas(id, sql, sorts, offset, limit)),
     onClearBizdatas: () => dispatch(clearBizdatas()),
-    onAddWidget: (widget) => promiseDispatcher(dispatch, addWidget, widget),
-    onEditWidget: (widget) => promiseDispatcher(dispatch, editWidget, widget)
+    onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
+    onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve))
   }
 }
 

@@ -27,7 +27,19 @@ const makeSelectGroups = () => createSelector(
   (groupState) => groupState.get('groups')
 )
 
+const makeSelectTableLoading = () => createSelector(
+  selectGroup,
+  (groupState) => groupState.get('tableLoading')
+)
+
+const makeSelectFormLoading = () => createSelector(
+  selectGroup,
+  (groupState) => groupState.get('formLoading')
+)
+
 export {
   selectGroup,
-  makeSelectGroups
+  makeSelectGroups,
+  makeSelectTableLoading,
+  makeSelectFormLoading
 }

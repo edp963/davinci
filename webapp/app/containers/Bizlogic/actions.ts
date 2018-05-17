@@ -21,16 +21,21 @@
 import {
   LOAD_BIZLOGICS,
   LOAD_BIZLOGICS_SUCCESS,
+  LOAD_BIZLOGICS_FAILURE,
   ADD_BIZLOGIC,
   ADD_BIZLOGIC_SUCCESS,
+  ADD_BIZLOGIC_FAILURE,
   DELETE_BIZLOGIC,
   DELETE_BIZLOGIC_SUCCESS,
-  LOAD_BIZLOGIC_DETAIL,
-  LOAD_BIZLOGIC_DETAIL_SUCCESS,
+  DELETE_BIZLOGIC_FAILURE,
+  // LOAD_BIZLOGIC_DETAIL,
+  // LOAD_BIZLOGIC_DETAIL_SUCCESS,
   LOAD_BIZLOGIC_GROUPS,
   LOAD_BIZLOGIC_GROUPS_SUCCESS,
+  LOAD_BIZLOGIC_GROUPS_FAILURE,
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
+  EDIT_BIZLOGIC_FAILURE,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
   LOAD_BIZDATAS_FAILURE,
@@ -52,25 +57,35 @@ import {
   LOAD_BIZDATA_SCHEMA_FAILURE
 } from './constants'
 
-import { promiseActionCreator } from '../../utils/reduxPromisation'
+// export const loadBizlogicDetail = promiseActionCreator(LOAD_BIZLOGIC_DETAIL, ['id'])
 
-export const loadBizlogics = promiseActionCreator(LOAD_BIZLOGICS)
-
-export const addBizlogic = promiseActionCreator(ADD_BIZLOGIC, ['bizlogic'])
-
-export const deleteBizlogic = promiseActionCreator(DELETE_BIZLOGIC, ['id'])
-
-export const loadBizlogicDetail = promiseActionCreator(LOAD_BIZLOGIC_DETAIL, ['id'])
-
-export const loadBizlogicGroups = promiseActionCreator(LOAD_BIZLOGIC_GROUPS, ['id'])
-
-export const editBizlogic = promiseActionCreator(EDIT_BIZLOGIC, ['bizlogic'])
+export function loadBizlogics () {
+  return {
+    type: LOAD_BIZLOGICS
+  }
+}
 
 export function bizlogicsLoaded (bizlogics) {
   return {
     type: LOAD_BIZLOGICS_SUCCESS,
     payload: {
       bizlogics
+    }
+  }
+}
+
+export function loadBizlogicsFail () {
+  return {
+    type: LOAD_BIZLOGICS_FAILURE
+  }
+}
+
+export function addBizlogic (bizlogic, resolve) {
+  return {
+    type: ADD_BIZLOGIC,
+    payload: {
+      bizlogic,
+      resolve
     }
   }
 }
@@ -84,6 +99,21 @@ export function bizlogicAdded (result) {
   }
 }
 
+export function addBizlogicFail () {
+  return {
+    type: ADD_BIZLOGIC_FAILURE
+  }
+}
+
+export function deleteBizlogic (id) {
+  return {
+    type: DELETE_BIZLOGIC,
+    payload: {
+      id
+    }
+  }
+}
+
 export function bizlogicDeleted (id) {
   return {
     type: DELETE_BIZLOGIC_SUCCESS,
@@ -93,11 +123,27 @@ export function bizlogicDeleted (id) {
   }
 }
 
-export function bizlogicDetailLoaded (bizlogic) {
+export function deleteBizlogicFail () {
   return {
-    type: LOAD_BIZLOGIC_DETAIL_SUCCESS,
+    type: DELETE_BIZLOGIC_FAILURE
+  }
+}
+
+// export function bizlogicDetailLoaded (bizlogic) {
+//   return {
+//     type: LOAD_BIZLOGIC_DETAIL_SUCCESS,
+//     payload: {
+//       bizlogic
+//     }
+//   }
+// }
+
+export function loadBizlogicGroups (id, resolve) {
+  return {
+    type: LOAD_BIZLOGIC_GROUPS,
     payload: {
-      bizlogic
+      id,
+      resolve
     }
   }
 }
@@ -111,12 +157,34 @@ export function bizlogicGroupsLoaded (groups) {
   }
 }
 
+export function loadBizlogicGroupsFail () {
+  return {
+    type: LOAD_BIZLOGIC_GROUPS_FAILURE
+  }
+}
+
+export function editBizlogic (bizlogic, resolve) {
+  return {
+    type: EDIT_BIZLOGIC,
+    payload: {
+      bizlogic,
+      resolve
+    }
+  }
+}
+
 export function bizlogicEdited (result) {
   return {
     type: EDIT_BIZLOGIC_SUCCESS,
     payload: {
       result
     }
+  }
+}
+
+export function editBizlogicFail () {
+  return {
+    type: EDIT_BIZLOGIC_FAILURE
   }
 }
 

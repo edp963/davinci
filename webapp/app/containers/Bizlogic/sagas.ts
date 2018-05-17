@@ -24,7 +24,7 @@ import {
   LOAD_BIZLOGICS,
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
-  LOAD_BIZLOGIC_DETAIL,
+  // LOAD_BIZLOGIC_DETAIL,
   LOAD_BIZLOGIC_GROUPS,
   EDIT_BIZLOGIC,
   LOAD_BIZDATAS,
@@ -36,11 +36,16 @@ import {
 } from './constants'
 import {
   bizlogicsLoaded,
+  loadBizlogicsFail,
   bizlogicAdded,
+  addBizlogicFail,
   bizlogicDeleted,
-  bizlogicDetailLoaded,
+  deleteBizlogicFail,
+  // bizlogicDetailLoaded,
   bizlogicGroupsLoaded,
+  loadBizlogicGroupsFail,
   bizlogicEdited,
+  editBizlogicFail,
   bizdatasLoaded,
   loadBizdatasFail,
   bizdatasFromItemLoaded,
@@ -55,116 +60,95 @@ import {
   loadBizdataSchemaFail
 } from './actions'
 
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import resultsetConverter from '../../utils/resultsetConverter'
+import messages from '../Display/messages'
+import { resolve } from 'path'
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object
 }
 
-export const getBizlogics = promiseSagaCreator(
-  function* () {
+export function* getBizlogics () {
+  try {
     const asyncData = yield call(request, api.bizlogic)
     const bizlogics = readListAdapter(asyncData)
     yield put(bizlogicsLoaded(bizlogics))
-    return bizlogics
-  },
-  function (err) {
-    console.log('getBizlogics', err)
+  } catch (err) {
+    yield put(loadBizlogicsFail())
+    message.error('加载 View 列表失败')
   }
-)
-
-export function* getBizlogicsWatcher () {
-  yield takeLatest(LOAD_BIZLOGICS, getBizlogics)
 }
 
-export const addBizlogic = promiseSagaCreator(
-  function* ({ bizlogic }) {
+export function* addBizlogic ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.bizlogic,
-      data: writeAdapter(bizlogic)
+      data: writeAdapter(payload.bizlogic)
     })
     const result = readObjectAdapter(asyncData)
     yield put(bizlogicAdded(result))
-    return result
-  },
-  function (err) {
-    console.log('addBizlogic', err)
+    payload.resolve()
+  } catch (err) {
+    yield put(addBizlogicFail())
+    message.error('新增失败')
   }
-)
-
-export function* addBizlogicWatcher () {
-  yield takeEvery(ADD_BIZLOGIC, addBizlogic)
 }
 
-export const deleteBizlogic = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteBizlogic ({ payload }) {
+  try {
     yield call(request, {
       method: 'delete',
-      url: `${api.bizlogic}/${id}`
+      url: `${api.bizlogic}/${payload.id}`
     })
-    yield put(bizlogicDeleted(id))
-  },
-  function (err) {
-    console.log('deleteBizlogic', err)
+    yield put(bizlogicDeleted(payload.id))
+  } catch (err) {
+    yield put(deleteBizlogicFail())
+    message.error('删除失败')
   }
-)
-
-export function* deleteBizlogicWatcher () {
-  yield takeEvery(DELETE_BIZLOGIC, deleteBizlogic)
 }
 
-export const getBizlogicDetail = promiseSagaCreator(
-  function* ({ id }) {
-    const bizlogic = yield call(request, `${api.bizlogic}/${id}`)
-    yield put(bizlogicDetailLoaded(bizlogic))
-    return bizlogic
-  },
-  function (err) {
-    console.log('getBizlogicDetail', err)
-  }
-)
+// export const getBizlogicDetail = promiseSagaCreator(
+//   function* ({ id }) {
+//     const bizlogic = yield call(request, `${api.bizlogic}/${id}`)
+//     yield put(bizlogicDetailLoaded(bizlogic))
+//     return bizlogic
+//   },
+//   function (err) {
+//     console.log('getBizlogicDetail', err)
+//   }
+// )
 
-export function* getBizlogicDetailWatcher () {
-  yield takeLatest(LOAD_BIZLOGIC_DETAIL, getBizlogicDetail)
-}
-
-export const getBizlogicGroups = promiseSagaCreator(
-  function* ({ id }) {
-    const asyncData = yield call(request, `${api.bizlogic}/${id}/groups`)
+export function* getBizlogicGroups ({ payload }) {
+  try {
+    const asyncData = yield call(request, `${api.bizlogic}/${payload.id}/groups`)
     const groups = readListAdapter(asyncData)
     yield put(bizlogicGroupsLoaded(groups))
-    return groups
-  },
-  function (err) {
-    console.log('getBizlogicGroups', err)
+    payload.resolve(groups)
+  } catch (err) {
+    yield put(loadBizlogicGroupsFail())
+    message.error('加载权限信息失败')
   }
-)
-
-export function* getBizlogicGroupsWatcher () {
-  yield takeLatest(LOAD_BIZLOGIC_GROUPS, getBizlogicGroups)
 }
 
-export const editBizlogic = promiseSagaCreator(
-  function* ({ bizlogic }) {
+export function* editBizlogic ({ payload }) {
+  try {
     yield call(request, {
       method: 'put',
       url: api.bizlogic,
-      data: writeAdapter(bizlogic)
+      data: writeAdapter(payload.bizlogic)
     })
-    yield put(bizlogicEdited(bizlogic))
-  },
-  function (err) {
-    console.log('editBizlogic', err)
+    yield put(bizlogicEdited(payload.bizlogic))
+    payload.resolve()
+  } catch (err) {
+    yield put(editBizlogicFail())
+    message.error('修改失败')
   }
-)
-
-export function* editBizlogicWatcher () {
-  yield takeEvery(EDIT_BIZLOGIC, editBizlogic)
 }
 
 export function* getBizdatas ({ payload }) {
@@ -192,10 +176,6 @@ export function* getBizdatas ({ payload }) {
   } catch (err) {
     yield put(loadBizdatasFail(err))
   }
-}
-
-export function* getBizdatasWatcher () {
-  yield takeEvery(LOAD_BIZDATAS, getBizdatas as any)
 }
 
 export function* getBizdatasFromItem ({ payload }) {
@@ -234,10 +214,6 @@ export function* getBizdatasFromItem ({ payload }) {
   }
 }
 
-export function* getBizdatasFromItemWatcher () {
-  yield takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any)
-}
-
 export function* getSqlValidate ({payload}) {
   const {sourceId, sql} = payload
   try {
@@ -251,10 +227,6 @@ export function* getSqlValidate ({payload}) {
   } catch (err) {
     yield put(validateSqlFailure(err))
   }
-}
-
-export function* getSqlValidateWatcher () {
-  yield takeEvery(SQL_VALIDATE, getSqlValidate as any)
 }
 
 export function* getCascadeSourceFromItem ({ payload }) {
@@ -282,10 +254,6 @@ export function* getCascadeSourceFromItem ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromItemWatcher () {
-  yield takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any)
-}
-
 export function* getCascadeSourceFromDashboard ({ payload }) {
   try {
     const { controlId, id, column, parents } = payload
@@ -309,10 +277,6 @@ export function* getCascadeSourceFromDashboard ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromDashboardWatcher () {
-  yield takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any)
-}
-
 export function* getBizdataSchema ({ payload }) {
   try {
     const { id, resolve } = payload
@@ -330,21 +294,19 @@ export function* getBizdataSchema ({ payload }) {
   }
 }
 
-export function* getBizdataSchemaWatcher () {
-  yield takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
+export default function* rootBizlogicSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_BIZLOGICS, getBizlogics),
+    takeEvery(ADD_BIZLOGIC, addBizlogic as any),
+    takeEvery(DELETE_BIZLOGIC, deleteBizlogic as any),
+    // takeLatest(LOAD_BIZLOGIC_DETAIL, getBizlogicDetail),
+    takeLatest(LOAD_BIZLOGIC_GROUPS, getBizlogicGroups as any),
+    takeEvery(EDIT_BIZLOGIC, editBizlogic as any),
+    takeEvery(LOAD_BIZDATAS, getBizdatas as any),
+    takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any),
+    takeEvery(SQL_VALIDATE, getSqlValidate as any),
+    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any),
+    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any),
+    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any)
+  ]
 }
-
-export default [
-  getBizlogicsWatcher,
-  addBizlogicWatcher,
-  deleteBizlogicWatcher,
-  getBizlogicDetailWatcher,
-  getBizlogicGroupsWatcher,
-  editBizlogicWatcher,
-  getBizdatasWatcher,
-  getBizdatasFromItemWatcher,
-  getSqlValidateWatcher,
-  getCascadeSourceFromItemWatcher,
-  getCascadeSourceFromDashboardWatcher,
-  getBizdataSchemaWatcher
-]
