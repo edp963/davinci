@@ -29,6 +29,10 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
+import groupReducer from '../Group/reducer'
+import groupSaga from '../Group/sagas'
+import sourceReducer from '../Source/reducer'
+import sourceSaga from '../Source/sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
@@ -52,27 +56,29 @@ import '../../assets/override/codemirror_theme.css'
 const codeMirror = require('codemirror/lib/codemirror')
 require('codemirror/mode/sql/sql')
 
-import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { uuid } from '../../utils/util'
 import { loadBizlogics, addBizlogic, deleteBizlogic, loadBizlogicGroups, editBizlogic, sqlValidate } from './actions'
 import { loadGroups, addGroup } from '../Group/actions'
 import { loadSources } from '../Source/actions'
-import { makeSelectBizlogics } from './selectors'
+import { makeSelectBizlogics, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
 import { makeSelectSources } from '../Source/selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
+import { resolve } from 'url'
 
 interface IBizlogicProps  {
   bizlogics: boolean | any[]
   groups: boolean | any[]
   sources: boolean | any[]
   loginUser: object
+  tableLoading: false
+  formLoading: false
   onLoadBizlogics: () => any
-  onAddBizlogic: (values: any) => any
+  onAddBizlogic: (values: object, resolve: any) => any
   onDeleteBizlogic: (id: number) => any
-  onLoadBizlogicGroups: (id: number) => any
-  onEditBizlogic: (values: any) => any
+  onLoadBizlogicGroups: (id: number, resolve: any) => any
+  onEditBizlogic: (values: object, resolve: any) => any
   onLoadGroups: () => any
   onAddGroup: (values: any) => any
   onLoadSources: () => any
@@ -212,10 +218,7 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
       this.codeMirrorInstanceOfQuerySQL = false
       this.codeMirrorInstanceOfUpdateSQL = false
 
-      this.props.onLoadBizlogicGroups(id)
-        .then((groups) => {
-          // console.log(groups)
-          // console.log(this.props.groups)
+      this.props.onLoadBizlogicGroups(id, (groups) => {
           const groupTableSource = (this.props.groups as any[]).map((g) => {
             const checkedGroup = groups.find((item) => item.group_id === g.id)
             return {
@@ -232,7 +235,7 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
             groupParams: groups.length && groups[0].sql_params ? JSON.parse(groups[0].sql_params).map((o) => o.k) : [],
             groupTableSelectedRowKeys: groups.map((g) => g.group_id)
           })
-        })
+      })
     })
   }
   private handleCodeMirror = (queryWrapperDOM, updateWrapperDOM) => {
@@ -371,11 +374,13 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
         values.catch = ''
 
         if (this.state.formType === 'add') {
-          this.props.onAddBizlogic(values)
-            .then(() => { this.hideForm() })
+          this.props.onAddBizlogic(values, () => {
+            this.hideForm()
+          })
         } else {
-          this.props.onEditBizlogic(values)
-            .then(() => { this.hideForm() })
+          this.props.onEditBizlogic(values, () => {
+            this.hideForm()
+          })
         }
       }
     })
@@ -519,7 +524,9 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
 
     const {
       sources,
-      onDeleteBizlogic
+      onDeleteBizlogic,
+      tableLoading,
+      formLoading
     } = this.props
 
     const columns = [{
@@ -695,6 +702,7 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
                     columns={columns}
                     pagination={pagination}
                     onChange={this.handleTableChange}
+                    loading={tableLoading}
                     bordered
                   />
                 </Col>
@@ -707,6 +715,7 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
                 footer={modalButtons}
                 onCancel={this.hideForm}
                 maskClosable={false}
+                loading={formLoading}
               >
                 <BizlogicForm
                   type={formType}
@@ -743,14 +752,14 @@ export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicState
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadBizlogics: () => promiseDispatcher(dispatch, loadBizlogics),
-    onAddBizlogic: (bizlogic) => promiseDispatcher(dispatch, addBizlogic, bizlogic),
-    onDeleteBizlogic: (id) => () => promiseDispatcher(dispatch, deleteBizlogic, id),
-    onLoadBizlogicGroups: (id) => promiseDispatcher(dispatch, loadBizlogicGroups, id),
-    onEditBizlogic: (bizlogic) => promiseDispatcher(dispatch, editBizlogic, bizlogic),
-    onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
-    onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group),
-    onLoadSources: () => promiseDispatcher(dispatch, loadSources),
+    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
+    onDeleteBizlogic: (id) => () => dispatch(deleteBizlogic(id)),
+    onLoadBizlogicGroups: (id, resolve) => dispatch(loadBizlogicGroups(id, resolve)),
+    onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
+    onLoadGroups: () => dispatch(loadGroups()),
+    onAddGroup: (group, resolve) => dispatch(addGroup(group, resolve)),
+    onLoadSources: () => dispatch(loadSources()),
     onValidateSql: (sourceId, sql) => dispatch(sqlValidate(sourceId, sql))
   }
 }
@@ -759,16 +768,29 @@ const mapStateToProps = createStructuredSelector({
   bizlogics: makeSelectBizlogics(),
   groups: makeSelectGroups(),
   sources: makeSelectSources(),
-  loginUser: makeSelectLoginUser()
+  loginUser: makeSelectLoginUser(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'bizlogic', reducer })
-const withSaga = injectSaga({ key: 'bizlogic', saga })
+
+const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer })
+const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga })
+
+const withReducerGroup = injectReducer({ key: 'group', reducer: groupReducer })
+const withSagaGroup = injectSaga({ key: 'group', saga: groupSaga })
+
+const withReducerSource = injectReducer({ key: 'source', reducer: sourceReducer })
+const withSagaSource = injectSaga({ key: 'source', saga: sourceSaga })
 
 export default compose(
-  withReducer,
-  withSaga,
+  withReducerBizlogic,
+  withReducerGroup,
+  withReducerSource,
+  withSagaBizlogic,
+  withSagaGroup,
+  withSagaSource,
   withConnect
 )(Bizlogic)
 

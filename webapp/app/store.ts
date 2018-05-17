@@ -33,9 +33,9 @@ const sagaMiddleware = createSagaMiddleware()
 
 export interface IStore<T> extends Store<T> {
   runSaga?: (saga: (...args: any[]) => SagaIterator, ...args: any[]) => Task
-  asyncReducers?: ReducersMapObject,
-  injectedReducers?: any,
-  injectedSagas?: any
+  // asyncReducers?: ReducersMapObject,
+  injectedReducers?: ReducersMapObject,
+  injectedSagas?: ReducersMapObject
 }
 
 declare interface IWindow extends Window {
@@ -70,7 +70,7 @@ export default function configureStore<T> (initialState: object = {}, history): 
   // Extensions
   store.runSaga = sagaMiddleware.run
   sagas.map(store.runSaga)
-  store.asyncReducers = {} // Async reducer registry
+  // store.asyncReducers = {} // Async reducer registry
   store.injectedReducers = {} // Reducer registry
   store.injectedSagas = {} // Saga registry
 

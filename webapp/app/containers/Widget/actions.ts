@@ -21,42 +21,61 @@
 import {
   LOAD_WIDGETS,
   LOAD_WIDGETS_SUCCESS,
+  LOAD_WIDGETS_FAILURE,
   ADD_WIDGET,
   ADD_WIDGET_SUCCESS,
-  LOAD_WIDGET_DETAIL,
-  LOAD_WIDGET_DETAIL_SUCCESS,
+  ADD_WIDGET_FAILURE,
+  // LOAD_WIDGET_DETAIL,
+  // LOAD_WIDGET_DETAIL_SUCCESS,
   EDIT_WIDGET,
   EDIT_WIDGET_SUCCESS,
+  EDIT_WIDGET_FAILURE,
   DELETE_WIDGET,
-  DELETE_WIDGET_SUCCESS
+  DELETE_WIDGET_SUCCESS,
+  DELETE_WIDGET_FAILURE
 } from './constants'
 
 import {
   LOAD_BIZLOGICS,
   LOAD_BIZLOGICS_SUCCESS,
+  LOAD_BIZLOGICS_FAILURE,
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
   LOAD_BIZDATAS_FAILURE,
   CLEAR_BIZDATAS
 } from '../Bizlogic/constants'
 
-import { promiseActionCreator } from '../../utils/reduxPromisation'
+// import { promiseActionCreator } from '../../utils/reduxPromisation'
 
-export const loadWidgets = promiseActionCreator(LOAD_WIDGETS)
+// export const loadWidgetDetail = promiseActionCreator(LOAD_WIDGET_DETAIL, ['id'])
 
-export const addWidget = promiseActionCreator(ADD_WIDGET, ['widget'])
-
-export const loadWidgetDetail = promiseActionCreator(LOAD_WIDGET_DETAIL, ['id'])
-
-export const editWidget = promiseActionCreator(EDIT_WIDGET, ['widget'])
-
-export const deleteWidget = promiseActionCreator(DELETE_WIDGET, ['id'])
+export function loadWidgets () {
+  return {
+    type: LOAD_WIDGETS
+  }
+}
 
 export function widgetsLoaded (widgets) {
   return {
     type: LOAD_WIDGETS_SUCCESS,
     payload: {
       widgets
+    }
+  }
+}
+
+export function widgetsLoadedFail () {
+  return {
+    type: LOAD_WIDGETS_FAILURE
+  }
+}
+
+export function addWidget (widget, resolve) {
+  return {
+    type: ADD_WIDGET,
+    payload: {
+      widget,
+      resolve
     }
   }
 }
@@ -70,11 +89,27 @@ export function widgetAdded (result) {
   }
 }
 
-export function widgetDetailLoaded (widget) {
+export function addWidgetFail () {
   return {
-    type: LOAD_WIDGET_DETAIL_SUCCESS,
+    type: ADD_WIDGET_FAILURE
+  }
+}
+
+// export function widgetDetailLoaded (widget) {
+//   return {
+//     type: LOAD_WIDGET_DETAIL_SUCCESS,
+//     payload: {
+//       widget
+//     }
+//   }
+// }
+
+export function editWidget (widget, resolve) {
+  return {
+    type: EDIT_WIDGET,
     payload: {
-      widget
+      widget,
+      resolve
     }
   }
 }
@@ -88,6 +123,21 @@ export function widgetEdited (result) {
   }
 }
 
+export function editWidgetFail () {
+  return {
+    type: EDIT_WIDGET_FAILURE
+  }
+}
+
+export function deleteWidget (id) {
+  return {
+    type: DELETE_WIDGET,
+    payload: {
+      id
+    }
+  }
+}
+
 export function widgetDeleted (id) {
   return {
     type: DELETE_WIDGET_SUCCESS,
@@ -97,9 +147,18 @@ export function widgetDeleted (id) {
   }
 }
 
-// Bizlogic
+export function deleteWidgetFail () {
+  return {
+    type: DELETE_WIDGET_FAILURE
+  }
+}
 
-export const loadBizlogics = promiseActionCreator(LOAD_BIZLOGICS)
+// Bizlogic
+export function loadBizlogics () {
+  return {
+    type: LOAD_BIZLOGICS
+  }
+}
 
 export function bizlogicsLoaded (bizlogics) {
   return {
@@ -107,6 +166,12 @@ export function bizlogicsLoaded (bizlogics) {
     payload: {
       bizlogics
     }
+  }
+}
+
+export function loadBizlogicsFail () {
+  return {
+    type: LOAD_BIZLOGICS_FAILURE
   }
 }
 

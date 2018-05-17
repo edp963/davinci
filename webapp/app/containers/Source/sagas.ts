@@ -47,7 +47,6 @@ import {
 const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getSources () {

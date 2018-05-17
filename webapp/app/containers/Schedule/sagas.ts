@@ -2,57 +2,68 @@ import { takeLatest, takeEvery } from 'redux-saga'
 import { call, fork, put } from 'redux-saga/effects'
 
 import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES} from './constants'
-import { schedulesLoaded, scheduleAdded, scheduleDeleted, currentScheduleStatusChanged, scheduleUpdated, updateScheduleFail } from './actions'
+import {
+  schedulesLoaded,
+  loadSchedulesFail,
+  scheduleAdded,
+  addScheduleFail,
+  scheduleDeleted,
+  deleteScheduleFail,
+  currentScheduleStatusChanged,
+  changeSchedulesStatusFail,
+  scheduleUpdated,
+  updateScheduleFail
+} from './actions'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import messages from '../Display/messages'
+const message = require('antd/lib/message')
 
-export const getSchedules = promiseSagaCreator(
-  function* () {
+export function* getSchedules () {
+  try {
     const asyncData = yield call(request, api.schedule)
     const schedules = readListAdapter(asyncData)
     yield put(schedulesLoaded(schedules))
-    return schedules
-  },
-  function (err) {
-    console.log('getSchedules', err)
+  } catch (err) {
+    yield put(loadSchedulesFail())
+    message.error('加载 Schedules 列表失败')
   }
-)
+}
 
-export const addSchedules = promiseSagaCreator(
-  function* ({ schedule }) {
+export function* addSchedules ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.schedule,
-      data: writeAdapter(schedule)
+      data: writeAdapter(payload.schedule)
     })
     const result = readObjectAdapter(asyncData)
     yield put(scheduleAdded(result))
-    return result
-  },
-  function (err) {
-    console.log('addSchedules', err)
+    payload.resolve()
+  } catch (err) {
+    yield put(addScheduleFail())
+    message.error('新增失败')
   }
-)
+}
 
-export const deleteSchedule = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteSchedule ({ payload }) {
+  try {
     yield call(request, {
       method: 'delete',
-      url: `${api.schedule}/${id}`
+      url: `${api.schedule}/${payload.id}`
     })
-    yield put(scheduleDeleted(id))
-  },
-  function (err) {
-    console.log('deleteSchedule', err)
+    yield put(scheduleDeleted(payload.id))
+  } catch (err) {
+    yield put(deleteScheduleFail())
+    message.error('删除失败')
   }
-)
+}
 
-export const changeScheduleStatus = promiseSagaCreator(
-  function* ({ id, currentStatus }) {
+export function* changeScheduleStatus ({ payload }) {
+  try {
     let status = ''
-    switch (currentStatus) {
+    switch (payload.currentStatus) {
       case 'new':
         status = 'start'
         break
@@ -70,39 +81,38 @@ export const changeScheduleStatus = promiseSagaCreator(
     }
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.schedule}/${status}/${id}`
+      url: `${api.schedule}/${status}/${payload.id}`
     })
     const result = readObjectAdapter(asyncData)
-    yield put(currentScheduleStatusChanged(id, result))
-  },
-  function (err) {
-    console.log('changeScheduleStatus', err)
+    yield put(currentScheduleStatusChanged(payload.id, result))
+  } catch (err) {
+    yield put(changeSchedulesStatusFail())
+    message.error('更改状态失败')
   }
-)
+}
 
-export const updateSchedule = promiseSagaCreator(
-  function* ({ schedule }) {
+export function* updateSchedule ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'put',
       url: api.schedule,
-      data: writeAdapter(schedule)
+      data: writeAdapter(payload.schedule)
     })
     const result = readObjectAdapter(asyncData)
-    console.log(result)
     yield put(scheduleUpdated(result))
-    return result
-  },
-  function (err) {
-    console.log('updateSchedule', err)
+    payload.resolve()
+  } catch (err) {
+    yield put(updateScheduleFail())
+    message.error('修改失败')
   }
-)
+}
 
 export default function* rootScheduleSaga (): IterableIterator<any> {
   yield [
     takeEvery(LOAD_SCHEDULES, getSchedules),
-    takeEvery(ADD_SCHEDULES, addSchedules),
-    takeEvery(DELETE_SCHEDULES, deleteSchedule),
-    takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus),
-    takeEvery(UPDATE_SCHEDULES, updateSchedule)
+    takeEvery(ADD_SCHEDULES, addSchedules as any),
+    takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
+    takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
+    takeEvery(UPDATE_SCHEDULES, updateSchedule as any)
   ]
 }

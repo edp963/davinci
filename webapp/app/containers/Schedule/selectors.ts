@@ -29,11 +29,21 @@ const makeSelectWidgets = () => createSelector(
   selectSchedule,
   (substate) => substate.get('widgets')
 )
+const makeSelectTableLoading = () => createSelector(
+  selectSchedule,
+  (substate) => substate.get('tableLoading')
+)
+const makeSelectFormLoading = () => createSelector(
+  selectSchedule,
+  (substate) => substate.get('formLoading')
+)
 
 export {
   selectSchedule,
   makeSelectWidgets,
   makeSelectSchedule,
   makeSelectDashboards,
-  makeSelectCurrentDashboard
+  makeSelectCurrentDashboard,
+  makeSelectTableLoading,
+  makeSelectFormLoading
 }

@@ -24,95 +24,100 @@ import {
   LOAD_GROUPS,
   ADD_GROUP,
   DELETE_GROUP,
-  LOAD_GROUP_DETAIL,
+  // LOAD_GROUP_DETAIL,
   EDIT_GROUP
 } from './constants'
 import {
   groupsLoaded,
+  loadGroupFail,
   groupAdded,
+  addGroupFail,
   groupDeleted,
-  groupDetailLoaded,
-  groupEdited
+  deleteGroupFail,
+  // groupDetailLoaded,
+  groupEdited,
+  editGroupFail
 } from './actions'
 
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 
-export const getGroups = promiseSagaCreator(
-  function* () {
+export function* getGroups () {
+  try {
     const asyncData = yield call(request, api.group)
     const groups = readListAdapter(asyncData)
     yield put(groupsLoaded(groups))
-    return groups
-  },
-  function (err) {
-    console.log('getGroups', err)
+  } catch (err) {
+    yield put(loadGroupFail())
+    message.error('加载 Group 列表失败')
   }
-)
+}
 
-export const addGroup = promiseSagaCreator(
-  function* ({ group }) {
+export function* addGroup ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.group,
-      data: writeAdapter(group)
+      data: writeAdapter(payload.group)
     })
     const result = readObjectAdapter(asyncData)
     yield put(groupAdded(result))
-    return result
-  },
-  function (err) {
-    console.log('addGroup', err)
+    payload.resolve()
+  } catch (err) {
+    yield put(addGroupFail())
+    message.error('新增失败')
   }
-)
+}
 
-export const deleteGroup = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteGroup ({ payload }) {
+  try {
     yield call(request, {
       method: 'delete',
-      url: `${api.group}/${id}`
+      url: `${api.group}/${payload.id}`
     })
-    yield put(groupDeleted(id))
-  },
-  function (err) {
-    console.log('deleteGroup', err)
+    yield put(groupDeleted(payload.id))
+  } catch (err) {
+    yield put(deleteGroupFail())
+    message.error('删除失败')
   }
-)
+}
 
-export const getGroupDetail = promiseSagaCreator(
-  function* (payload) {
-    const asyncData = yield call(request, `${api.group}/${payload.id}`)
-    const group = readObjectAdapter(asyncData)
-    yield put(groupDetailLoaded(group))
-    return group
-  },
-  function (err) {
-    console.log('getGroupDetail', err)
-  }
-)
+// export const getGroupDetail = promiseSagaCreator(
+//   function* (payload) {
+//     const asyncData = yield call(request, `${api.group}/${payload.id}`)
+//     const group = readObjectAdapter(asyncData)
+//     yield put(groupDetailLoaded(group))
+//     return group
+//   },
+//   function (err) {
+//     console.log('getGroupDetail', err)
+//   }
+// )
 
-export const editGroup = promiseSagaCreator(
-  function* ({ group }) {
+export function* editGroup ({ payload }) {
+  try {
     yield call(request, {
       method: 'put',
       url: api.group,
-      data: writeAdapter(group)
+      data: writeAdapter(payload.group)
     })
-    yield put(groupEdited(group))
-  },
-  function (err) {
-    console.log('editGroup', err)
+    yield put(groupEdited(payload.group))
+    payload.resolve()
+  } catch (err) {
+    yield put(editGroupFail())
+    message.error('修改失败')
   }
-)
+}
 
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_GROUPS, getGroups),
-    takeEvery(ADD_GROUP, addGroup),
-    takeEvery(DELETE_GROUP, deleteGroup),
-    takeLatest(LOAD_GROUP_DETAIL, getGroupDetail),
-    takeEvery(EDIT_GROUP, editGroup)
+    takeEvery(ADD_GROUP, addGroup as any),
+    takeEvery(DELETE_GROUP, deleteGroup as any),
+    // takeLatest(LOAD_GROUP_DETAIL, getGroupDetail),
+    takeEvery(EDIT_GROUP, editGroup as any)
   ]
 }

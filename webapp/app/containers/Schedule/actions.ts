@@ -9,24 +9,29 @@ import {
   LOAD_SCHEDULES,
   DELETE_SCHEDULES,
   ADD_SCHEDULES_SUCCESS,
+  ADD_SCHEDULES_FAILURE,
   LOAD_SCHEDULES_SUCCESS,
+  LOAD_SCHEDULES_FAILUER,
   DELETE_SCHEDULES_SUCCESS,
-  LOAD_SHEDULE_DETAIL,
+  // LOAD_SHEDULE_DETAIL,
   UPDATE_SCHEDULES,
   UPDATE_SCHEDULES_SUCCESS,
   UPDATE_SCHEDULES_FAILURE,
   CHANGE_SCHEDULE_STATUS,
-  CHANGE_SCHEDULE_STATUS_SUCCESS
+  CHANGE_SCHEDULE_STATUS_SUCCESS,
+  DELETE_SCHEDULES_FAILURE,
+  CHANGE_SCHEDULE_STATUS_FAILURE
 } from './constants'
 
-import { promiseActionCreator } from '../../utils/reduxPromisation'
+// import { promiseActionCreator } from '../../utils/reduxPromisation'
 
-export const loadSchedules = promiseActionCreator(LOAD_SCHEDULES)
-export const addSchedule = promiseActionCreator(ADD_SCHEDULES, ['schedule'])
-export const updateSchedule = promiseActionCreator(UPDATE_SCHEDULES, ['schedule'])
-export const deleteSchedule = promiseActionCreator(DELETE_SCHEDULES, ['id'])
-export const loadScheduleDetail = promiseActionCreator(LOAD_SHEDULE_DETAIL, ['id'])
-export const changeSchedulesStatus = promiseActionCreator(CHANGE_SCHEDULE_STATUS, ['id', 'currentStatus'])
+// export const loadScheduleDetail = promiseActionCreator(LOAD_SHEDULE_DETAIL, ['id'])
+
+export function loadSchedules () {
+  return {
+    type: LOAD_SCHEDULES
+  }
+}
 
 export function schedulesLoaded (schedules) {
   return {
@@ -37,11 +42,43 @@ export function schedulesLoaded (schedules) {
   }
 }
 
+export function loadSchedulesFail () {
+  return {
+    type: LOAD_SCHEDULES_FAILUER
+  }
+}
+
+export function addSchedule (schedule, resolve) {
+  return {
+    type: ADD_SCHEDULES,
+    payload: {
+      schedule,
+      resolve
+    }
+  }
+}
+
 export function scheduleAdded (result) {
   return {
     type: ADD_SCHEDULES_SUCCESS,
     payload: {
       result
+    }
+  }
+}
+
+export function addScheduleFail () {
+  return {
+    type: ADD_SCHEDULES_FAILURE
+  }
+}
+
+export function updateSchedule (schedule, resolve) {
+  return {
+    type: UPDATE_SCHEDULES,
+    payload: {
+      schedule,
+      resolve
     }
   }
 }
@@ -61,11 +98,36 @@ export function updateScheduleFail () {
   }
 }
 
+export function deleteSchedule (id) {
+  return {
+    type: DELETE_SCHEDULES,
+    payload: {
+      id
+    }
+  }
+}
+
 export function scheduleDeleted (id) {
   return {
     type: DELETE_SCHEDULES_SUCCESS,
     payload: {
       id
+    }
+  }
+}
+
+export function deleteScheduleFail () {
+  return {
+    type: DELETE_SCHEDULES_FAILURE
+  }
+}
+
+export function changeSchedulesStatus (id, currentStatus) {
+  return {
+    type: CHANGE_SCHEDULE_STATUS,
+    payload: {
+      id,
+      currentStatus
     }
   }
 }
@@ -77,6 +139,12 @@ export function currentScheduleStatusChanged (id, schedules) {
       id,
       schedules
     }
+  }
+}
+
+export function changeSchedulesStatusFail () {
+  return {
+    type: CHANGE_SCHEDULE_STATUS_FAILURE
   }
 }
 

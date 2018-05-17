@@ -27,7 +27,19 @@ const makeSelectUsers = () => createSelector(
   (userState) => userState.get('users')
 )
 
+const makeSelectTableLoading = () => createSelector(
+  selectUser,
+  (userState) => userState.get('tableLoading')
+)
+
+const makeSelectFormLoading = () => createSelector(
+  selectUser,
+  (userState) => userState.get('formLoading')
+)
+
 export {
   selectUser,
-  makeSelectUsers
+  makeSelectUsers,
+  makeSelectTableLoading,
+  makeSelectFormLoading
 }

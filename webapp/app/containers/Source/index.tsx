@@ -132,7 +132,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
   public componentWillMount () {
     this.props.onLoadSources()
-
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -200,7 +199,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       if (!err) {
         const { id, name, type, url, user, password, desc, config } = values
         if (this.state.formType === 'add') {
-          const addParameter = {
+          this.props.onAddSource({
             name,
             type,
             connection_url: JSON.stringify({
@@ -210,13 +209,11 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
             }),
             desc,
             config
-          }
-          new Promise((resolve) => {
-            this.props.onAddSource(addParameter, () => {console.log('')})
-            resolve()
-          }).then(() => this.hideForm())
+          }, () => {
+            this.hideForm()
+          })
         } else {
-          const editParameter = {
+          this.props.onEditSource({
             id,
             name,
             type,
@@ -227,11 +224,9 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
             }),
             desc,
             config
-          }
-          new Promise((resolve) => {
-            this.props.onEditSource(editParameter, () => {console.log('')})
-            resolve()
-          }).then(() => this.hideForm())
+          }, () => {
+            this.hideForm()
+          })
         }
       }
     })

@@ -33,100 +33,106 @@ import {
 } from '../Bizlogic/constants'
 import {
   widgetsLoaded,
+  widgetsLoadedFail,
   widgetAdded,
+  addWidgetFail,
   widgetDeleted,
-  widgetDetailLoaded,
+  deleteWidgetFail,
+  // widgetDetailLoaded,
   widgetEdited,
+  editWidgetFail,
   bizlogicsLoaded,
+  loadBizlogicsFail,
   bizdatasLoaded,
   loadBizdatasFail
 } from './actions'
 
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import resultsetConverter from '../../utils/resultsetConverter'
 
-
-export const getWidgets = promiseSagaCreator(
-  function* () {
+export function* getWidgets () {
+  try {
     const asyncData = yield call(request, api.widget)
     const widgets = readListAdapter(asyncData)
     yield put(widgetsLoaded(widgets))
-    return widgets
-  },
-  function (err) {
-    console.log('getWidgets', err)
+  } catch (err) {
+    yield put(widgetsLoadedFail())
+    message.error('加载 Widget 列表失败')
   }
-)
+}
 
-export const addWidget = promiseSagaCreator(
-  function* ({ widget }) {
+export function* addWidget ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.widget,
-      data: writeAdapter(widget)
+      data: writeAdapter(payload.widget)
     })
+
     const result = readObjectAdapter(asyncData)
     yield put(widgetAdded(result))
-    return result
-  },
-  function (err) {
-    console.log('addWidget', err)
+    payload.resolve()
+  } catch (err) {
+    yield put(addWidgetFail())
+    message.error('新增失败')
   }
-)
+}
 
-export const deleteWidget = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteWidget ({ payload }) {
+  try {
     yield call(request, {
       method: 'delete',
-      url: `${api.widget}/${id}`
+      url: `${api.widget}/${payload.id}`
     })
-    yield put(widgetDeleted(id))
-  },
-  function (err) {
-    console.log('deleteWidget', err)
+    yield put(widgetDeleted(payload.id))
+  } catch (err) {
+    yield put(deleteWidgetFail())
+    message.error('删除失败')
   }
-)
+}
 
-export const getWidgetDetail = promiseSagaCreator(
-  function* (payload) {
-    const widget = yield call(request, `${api.widget}/${payload.id}`)
-    yield put(widgetDetailLoaded(widget))
-    return widget
-  },
-  function (err) {
-    console.log('getWidgetDetail', err)
-  }
-)
+// export const getWidgetDetail = promiseSagaCreator(
+//   function* (payload) {
+//     const widget = yield call(request, `${api.widget}/${payload.id}`)
+//     yield put(widgetDetailLoaded(widget))
+//     return widget
+//   },
+//   function (err) {
+//     console.log('getWidgetDetail', err)
+//   }
+// )
 
-export const editWidget = promiseSagaCreator(
-  function* ({ widget }) {
+export function* editWidget ({ payload }) {
+  try {
     yield call(request, {
       method: 'put',
       url: api.widget,
-      data: writeAdapter(widget)
+      data: writeAdapter(payload.widget)
     })
-    yield put(widgetEdited(widget))
-  },
-  function (err) {
-    console.log('editWidget', err)
+    yield put(widgetEdited(payload.widget))
+    payload.resolve()
+  } catch (err) {
+    yield put(editWidgetFail())
+    message.error('修改失败')
   }
-)
+}
 
 // bizlogics
-export const getBizlogics = promiseSagaCreator(
-  function* () {
+export function* getBizlogics () {
+  try {
     const asyncData = yield call(request, api.bizlogic)
     const bizlogics = readListAdapter(asyncData)
     yield put(bizlogicsLoaded(bizlogics))
-    return bizlogics
-  },
-  function (err) {
-    console.log('getBizlogics', err)
+  } catch (err) {
+    yield put(loadBizlogicsFail())
+    message.error('加载 View 列表失败')
   }
-)
+}
+
 
 export function* getBizdatas ({ payload }) {
   try {
@@ -158,10 +164,10 @@ export function* getBizdatas ({ payload }) {
 export default function* rootWidgetSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_WIDGETS, getWidgets),
-    takeEvery(ADD_WIDGET, addWidget),
-    takeEvery(DELETE_WIDGET, deleteWidget),
-    takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
-    takeEvery(EDIT_WIDGET, editWidget),
+    takeEvery(ADD_WIDGET, addWidget as any),
+    takeEvery(DELETE_WIDGET, deleteWidget as any),
+    // takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
+    takeEvery(EDIT_WIDGET, editWidget as any),
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(LOAD_BIZDATAS, getBizdatas as any)
   ]
