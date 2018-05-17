@@ -1,29 +1,43 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 
-import LinkageForm from './LinkageForm'
-import Table from 'antd/lib/table'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
+import LinkageForm, { ILinkageForm } from './LinkageForm'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Table = require('antd/lib/table')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Modal = require('antd/lib/modal')
 
 import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../../../globalConstants'
-import utilStyles from '../../../../assets/less/util.less'
-import styles from './Linkage.less'
+const utilStyles = require('../../../../assets/less/util.less')
+const styles = require('./Linkage.less')
 
-export class LinkagePanel extends PureComponent {
+interface ILinkagePanelProps {
+  cascaderSource: any[]
+  tableSource: any[]
+  onAddToTable: (values: ILinkageForm) => void
+  onDeleteFromTable: (key: string) => (e: React.MouseEvent<HTMLAnchorElement>) => void
+  onGetWidgetInfo: (itemId: number) => void
+}
+
+interface ILinkagePanelStates {
+  formVisible: boolean
+}
+
+export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinkagePanelStates> {
   constructor (props) {
     super(props)
     this.state = {
       formVisible: false
     }
-    this.chart = null
   }
 
-  componentDidMount () {
+  private chart: echarts.ECharts = null
+  private linkageForm: WrappedFormUtils = null
+
+  public componentDidMount () {
     const { tableSource, onGetWidgetInfo } = this.props
 
     if (tableSource.length) {
@@ -31,7 +45,7 @@ export class LinkagePanel extends PureComponent {
     }
   }
 
-  componentDidUpdate (prevProps) {
+  public componentDidUpdate (prevProps) {
     const { tableSource, onGetWidgetInfo } = this.props
 
     if (tableSource.length && tableSource !== prevProps.tableSource) {
@@ -39,13 +53,13 @@ export class LinkagePanel extends PureComponent {
     }
   }
 
-  renderChart = (tableSource, onGetWidgetInfo) => {
-    let nodes = {}
-    let links = []
+  private renderChart = (tableSource, onGetWidgetInfo) => {
+    const nodes = {}
+    const links = []
 
-    tableSource.forEach(ts => {
-      let triggerId = ts.trigger[0]
-      let linkagerId = ts.linkager[0]
+    tableSource.forEach((ts) => {
+      const triggerId = ts.trigger[0]
+      const linkagerId = ts.linkager[0]
 
       if (!nodes[triggerId]) {
         nodes[triggerId] = onGetWidgetInfo(triggerId)
@@ -62,7 +76,7 @@ export class LinkagePanel extends PureComponent {
     })
 
     if (!this.chart) {
-      this.chart = echarts.init(document.getElementById('linkageChart'), 'default')
+      this.chart = echarts.init(document.getElementById('linkageChart') as HTMLDivElement, 'default')
     }
 
     this.chart.setOption({
@@ -88,12 +102,12 @@ export class LinkagePanel extends PureComponent {
 
             }
           },
-          data: Object.values(nodes).map(info => ({
+          data: Object.values(nodes).map((info: any) => ({
             name: info.name,
             category: info.type
           })),
-          links: links,
-          categories: Object.values(Object.values(nodes).reduce((categories, info) => {
+          links,
+          categories: Object.values(Object.values(nodes).reduce((categories, info: any) => {
             if (!categories[info.type]) {
               categories[info.type] = {
                 name: info.type
@@ -112,23 +126,23 @@ export class LinkagePanel extends PureComponent {
     })
   }
 
-  showForm = () => {
+  private showForm = () => {
     this.setState({
       formVisible: true
     })
   }
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
       formVisible: false
     })
   }
 
-  resetForm = () => {
+  private resetForm = () => {
     this.linkageForm.resetFields()
   }
 
-  addToTable = () => {
+  private addToTable = () => {
     this.linkageForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.props.onAddToTable(values)
@@ -137,11 +151,10 @@ export class LinkagePanel extends PureComponent {
     })
   }
 
-  render () {
+  public render () {
     const {
       cascaderSource,
       tableSource,
-      onAddToTable,
       onDeleteFromTable
     } = this.props
 
@@ -177,8 +190,8 @@ export class LinkagePanel extends PureComponent {
                 dataIndex: 'trigger',
                 render: (val) => {
                   const { cascaderSource } = this.props
-                  const triggerData = cascaderSource.find(ts => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.find(c => c.value === val[1])
+                  const triggerData = cascaderSource.find((ts) => ts.value === val[0])
+                  const triggerColumnData = triggerData.children.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {
@@ -188,7 +201,7 @@ export class LinkagePanel extends PureComponent {
                 dataIndex: 'linkager',
                 render: (val) => {
                   const { cascaderSource } = this.props
-                  const linkagerData = cascaderSource.find(fs => fs.value === val[0])
+                  const linkagerData = cascaderSource.find((fs) => fs.value === val[0])
                   const linkagerColumnData = val[1].split(DEFAULT_SPLITER)
                   const linkagerColumnText = `${linkagerColumnData[0]}[${linkagerColumnData[2] === 'parameter' ? '参数' : '变量'}]`
                   return `${linkagerData.label} - ${linkagerColumnText}`
@@ -232,21 +245,12 @@ export class LinkagePanel extends PureComponent {
         >
           <LinkageForm
             cascaderSource={cascaderSource}
-            onAddToTable={onAddToTable}
-            ref={f => { this.linkageForm = f }}
+            ref={(f) => { this.linkageForm = f }}
           />
         </Modal>
       </Row>
     )
   }
-}
-
-LinkagePanel.propTypes = {
-  cascaderSource: PropTypes.array,
-  tableSource: PropTypes.array,
-  onAddToTable: PropTypes.func,
-  onDeleteFromTable: PropTypes.func,
-  onGetWidgetInfo: PropTypes.func
 }
 
 export default LinkagePanel

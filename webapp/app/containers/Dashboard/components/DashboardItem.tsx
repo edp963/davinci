@@ -18,9 +18,9 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
-import Animate from 'rc-animate'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as Animate from 'rc-animate'
+import * as classnames from 'classnames'
 
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
@@ -28,17 +28,58 @@ import SharePanel from '../../../components/SharePanel'
 import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Popover from 'antd/lib/popover'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
+const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
+const Popconfirm = require('antd/lib/popconfirm')
+const Popover = require('antd/lib/popover')
+const Dropdown = require('antd/lib/dropdown')
+const Menu = require('antd/lib/menu')
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
-import styles from '../Dashboard.less'
+const styles = require('../Dashboard.less')
 
-export class DashboardItem extends PureComponent {
+interface IDashboardItemProps {
+  w: number
+  h: number
+  itemId: number
+  widget: any
+  chartInfo: any
+  data: any
+  loading: boolean
+  isReadOnly: boolean
+  triggerType: string
+  triggerParams: string
+  isAdmin: boolean
+  isShared: boolean
+  isShare: boolean
+  isDownload: boolean
+  shareInfo: string
+  secretInfo: string
+  shareInfoLoading: boolean
+  downloadCsvLoading: boolean
+  isInteractive: boolean
+  interactId: string
+  cascadeSources: any
+  onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
+  onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
+  onShowEdit: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onShowWorkbench: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onShowFiltersForm: (itemId: number, keys: any[], types: any[]) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onDeleteDashboardItem: (itemId: number) => () => void
+  onDownloadCsv: (itemId: number) => (shareInfo: string) => void
+  onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onShowFullScreen: (chartData: any) => void
+  onCheckTableInteract: (itemId: number) => object
+  onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
+  onGetCascadeSource: (itemId: number, controlId: number, flatTableId: number, column: string, parents?: any[]) => void
+}
+
+interface IDashboardItemStates {
+  controlPanelVisible: boolean
+  sharePanelAuthorized: boolean
+}
+
+export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -47,11 +88,18 @@ export class DashboardItem extends PureComponent {
     }
   }
 
-  componentWillMount () {
+  public static defaultProps = {
+    onShowEdit: () => void 0,
+    onShowWorkbench: () => void 0,
+    onDeleteDashboardItem: () => void 0
+  }
+  private frequent: NodeJS.Timer = void 0
+
+  public componentWillMount () {
     this.initControlCascadeSource(this.props)
   }
 
-  componentDidMount () {
+  public componentDidMount () {
     const {
       itemId,
       widget,
@@ -63,7 +111,7 @@ export class DashboardItem extends PureComponent {
     this.setFrequent(this.props)
   }
 
-  componentWillUpdate (nextProps) {
+  public componentWillUpdate (nextProps) {
     const {
       itemId,
       widget,
@@ -85,11 +133,11 @@ export class DashboardItem extends PureComponent {
     }
   }
 
-  componentWillUnmount () {
+  public componentWillUnmount () {
     clearInterval(this.frequent)
   }
 
-  setFrequent = (props) => {
+  private setFrequent = (props) => {
     const {
       triggerType,
       triggerParams,
@@ -107,7 +155,7 @@ export class DashboardItem extends PureComponent {
     }
   }
 
-  onSyncBizdatas = () => {
+  private onSyncBizdatas = () => {
     const {
       itemId,
       widget,
@@ -117,11 +165,11 @@ export class DashboardItem extends PureComponent {
     onGetChartData('refresh', itemId, widget.id)
   }
 
-  onControlSearch = (queryParams) => {
+  private onControlSearch = (queryParams) => {
     this.onSearch('rerender', queryParams)
   }
 
-  onSearch = (renderType, queryParams) => {
+  private onSearch = (renderType, queryParams) => {
     const {
       itemId,
       widget,
@@ -131,13 +179,13 @@ export class DashboardItem extends PureComponent {
     onGetChartData(renderType, itemId, widget.id, queryParams)
   }
 
-  toggleControlPanel = () => {
+  private toggleControlPanel = () => {
     this.setState({
       controlPanelVisible: !this.state.controlPanelVisible
     })
   }
 
-  onFullScreen = () => {
+  private onFullScreen = () => {
     const {
       onShowFullScreen,
       itemId,
@@ -155,7 +203,7 @@ export class DashboardItem extends PureComponent {
     }
   }
 
-  sharePanelDownloadCsv = () => {
+  private sharePanelDownloadCsv = () => {
     const {
       itemId,
       shareInfo,
@@ -164,29 +212,29 @@ export class DashboardItem extends PureComponent {
 
     onDownloadCsv(itemId)(shareInfo)
   }
-  changeSharePanelAuthorizeState = (state) => () => {
+  private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
       sharePanelAuthorized: state
     })
   }
 
-  initControlCascadeSource = (props) => {
+  private initControlCascadeSource = (props) => {
     const { itemId, widget, onGetCascadeSource } = props
     const { query_params } = widget
 
-    JSON.parse(query_params).forEach(c => {
+    JSON.parse(query_params).forEach((c) => {
       if (c.type === 'cascadeSelect' && !c.parentColumn) {
         onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
       }
     })
   }
 
-  onCascadeSelectChange = (controlId, column, parents) => {
+  private onCascadeSelectChange = (controlId, column, parents) => {
     const { itemId, widget, onGetCascadeSource } = this.props
     onGetCascadeSource(itemId, controlId, widget.flatTable_id, column, parents)
   }
 
-  render () {
+  public render () {
     const {
       w,
       h,
@@ -240,16 +288,13 @@ export class DashboardItem extends PureComponent {
 
     const menu = (
       <Menu>
-        {
-          isReadOnly ? <Menu.Item className={styles.menuItem}>
+        {isReadOnly ? <Menu.Item className={styles.menuItem}>
             <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
-          </Menu.Item> : ''
-        }
+          </Menu.Item> : ''}
         <Menu.Item className={styles.menuItem}>
           <span className={styles.menuText} onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])}>条件查询</span>
         </Menu.Item>
-        {
-          isReadOnly ? <Menu.Item className={styles.menuItem}>
+        {isReadOnly ? <Menu.Item className={styles.menuItem}>
             <Popconfirm
               title="确定删除？"
               placement="bottom"
@@ -257,78 +302,82 @@ export class DashboardItem extends PureComponent {
             >
               <span className={styles.menuText}>删除</span>
             </Popconfirm>
-          </Menu.Item> : ''
-        }
+          </Menu.Item> : ''}
       </Menu>
     )
 
     const userDownloadButton = isDownload
-      ? <Tooltip title="下载数据">
-        <Popover
-          placement="bottomRight"
-          trigger="click"
-          content={
-            <DownLoadCsv
-              id={widget.id}
-              type="widget"
-              itemId={itemId}
-              shareInfo={shareInfo}
-              shareInfoLoading={shareInfoLoading}
-              downloadCsvLoading={downloadCsvLoading}
-              onDownloadCsv={this.sharePanelDownloadCsv}
-            />
-          }
-        >
-          <Icon type="download" />
-        </Popover>
-      </Tooltip>
-      : ''
+      ? (
+        <Tooltip title="下载数据">
+          <Popover
+            placement="bottomRight"
+            trigger="click"
+            content={
+              <DownLoadCsv
+                id={widget.id}
+                type="widget"
+                itemId={itemId}
+                shareInfo={shareInfo}
+                shareInfoLoading={shareInfoLoading}
+                downloadCsvLoading={downloadCsvLoading}
+                onDownloadCsv={this.sharePanelDownloadCsv}
+              />
+            }
+          >
+            <Icon type="download" />
+          </Popover>
+        </Tooltip>
+      ) : void 0
 
     const shareButton = isShare
-      ? <Tooltip title="分享">
-        <Popover
-          placement="bottomRight"
-          trigger="click"
-          content={
-            <SharePanel
-              id={widget.id}
-              type="widget"
-              itemId={itemId}
-              shareInfo={shareInfo}
-              secretInfo={secretInfo}
-              shareInfoLoading={shareInfoLoading}
-              downloadCsvLoading={downloadCsvLoading}
-              onDownloadCsv={onDownloadCsv(itemId)}
-              authorized={sharePanelAuthorized}
-              afterAuthorization={this.changeSharePanelAuthorizeState(true)}
-            />
-          }
-        >
-          <Icon type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
-        </Popover>
-      </Tooltip>
-      : ''
+      ? (
+        <Tooltip title="分享">
+          <Popover
+            placement="bottomRight"
+            trigger="click"
+            content={
+              <SharePanel
+                id={widget.id}
+                type="widget"
+                itemId={itemId}
+                shareInfo={shareInfo}
+                secretInfo={secretInfo}
+                shareInfoLoading={shareInfoLoading}
+                downloadCsvLoading={downloadCsvLoading}
+                onDownloadCsv={onDownloadCsv(itemId)}
+                authorized={sharePanelAuthorized}
+                afterAuthorization={this.changeSharePanelAuthorizeState(true)}
+              />
+            }
+          >
+            <Icon type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
+          </Popover>
+        </Tooltip>
+      ) : void 0
 
     const widgetButton = isAdmin && isReadOnly
-      ? <Tooltip title="编辑widget">
-        <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
-      </Tooltip>
-      : ''
+      ? (
+        <Tooltip title="编辑widget">
+          <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
+        </Tooltip>
+      ) : void 0
 
     const filterButton = !isAdmin || isShared
-      ? <Tooltip title="条件查询">
-        <Icon type="search" onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])} />
-      </Tooltip>
-      : ''
+      ? (
+        <Tooltip title="条件查询">
+          <Icon type="search" onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])} />
+        </Tooltip>
+      ) : void 0
 
     const dropdownMenu = isAdmin
-      ? <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
-        <Icon type="ellipsis" />
-      </Dropdown>
-      : ''
+      ? (
+        <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+          <Icon type="ellipsis" />
+        </Dropdown>
+      ) : void 0
 
     const controls = widget.query_params
-      ? JSON.parse(widget.query_params).filter(c => c.type)
+      ? JSON.parse(widget.query_params).filter((c) => c.type)
       : []
     const controlPanelHandle = controls.length
       ? (
@@ -422,7 +471,6 @@ export class DashboardItem extends PureComponent {
           id={`${itemId}`}
           w={w}
           h={h}
-          title={widget.name}
           data={data || {}}
           loading={loading}
           chartInfo={chartInfo}
@@ -438,48 +486,6 @@ export class DashboardItem extends PureComponent {
       </div>
     )
   }
-}
-
-DashboardItem.propTypes = {
-  w: PropTypes.number,
-  h: PropTypes.number,
-  itemId: PropTypes.number,
-  widget: PropTypes.object,
-  chartInfo: PropTypes.object,
-  data: PropTypes.object,
-  loading: PropTypes.bool,
-  isReadOnly: PropTypes.bool,
-  triggerType: PropTypes.string,
-  triggerParams: PropTypes.string,
-  isAdmin: PropTypes.bool,
-  isShared: PropTypes.bool,
-  isShare: PropTypes.bool,
-  isDownload: PropTypes.bool,
-  shareInfo: PropTypes.string,
-  secretInfo: PropTypes.string,
-  shareInfoLoading: PropTypes.bool,
-  downloadCsvLoading: PropTypes.bool,
-  isInteractive: PropTypes.bool,
-  interactId: PropTypes.string,
-  cascadeSources: PropTypes.object,
-  onGetChartData: PropTypes.func,
-  onRenderChart: PropTypes.func,
-  onShowEdit: PropTypes.func,
-  onShowWorkbench: PropTypes.func,
-  onShowFiltersForm: PropTypes.func,
-  onDeleteDashboardItem: PropTypes.func,
-  onDownloadCsv: PropTypes.func,
-  onTurnOffInteract: PropTypes.func,
-  onShowFullScreen: PropTypes.func,
-  onCheckTableInteract: PropTypes.func,
-  onDoTableInteract: PropTypes.func,
-  onGetCascadeSource: PropTypes.func
-}
-// FIXME
-DashboardItem.defaultProps = {
-  onShowEdit: () => {},
-  onShowWorkbench: () => {},
-  onDeleteDashboardItem: () => {}
 }
 
 export default DashboardItem

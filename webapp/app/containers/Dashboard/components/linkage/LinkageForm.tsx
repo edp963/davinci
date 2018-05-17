@@ -1,28 +1,44 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Cascader from 'antd/lib/cascader'
-import Select from 'antd/lib/select'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Cascader = require('antd/lib/cascader')
+const Select = require('antd/lib/select')
 const FormItem = Form.Item
 const Option = Select.Option
 
-import {DEFAULT_SPLITER} from '../../../../globalConstants'
-import styles from './Linkage.less'
+import { DEFAULT_SPLITER } from '../../../../globalConstants'
+const styles = require('./Linkage.less')
 
-export class LinkageForm extends PureComponent {
+interface ILinkageFormProps {
+  form: WrappedFormUtils
+  cascaderSource: any[]
+}
+
+export interface ILinkageForm {
+  trigger: string
+  linkager: string
+  relation: string
+}
+
+export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
+  private displayRenderHandles = {
+    trigger: (labels) => labels.join(' - '),
+    linkager: (labels) => labels.join(' - ')
+  }
+
   // FIXME 解决循环联动问题
-  checkRepeatAndType = (rule, value, callback) => {
+  private checkRepeatAndType = (rule, value, callback) => {
     const form = this.props.form
     const linkagerValue = form.getFieldValue('linkager')
 
     if (value && linkagerValue && value.length && linkagerValue.length) {
-      let triggerValueArr = value[1].split(DEFAULT_SPLITER)
-      let linkagerValueArr = linkagerValue[1].split(DEFAULT_SPLITER)
-      let triggerColumnType = triggerValueArr[1]
-      let linkagerColumnType = linkagerValueArr[1]
+      const triggerValueArr = value[1].split(DEFAULT_SPLITER)
+      const linkagerValueArr = linkagerValue[1].split(DEFAULT_SPLITER)
+      const triggerColumnType = triggerValueArr[1]
+      const linkagerColumnType = linkagerValueArr[1]
 
       if (value[0] === linkagerValue[0]) {
         callback('不能联动自身')
@@ -42,19 +58,19 @@ export class LinkageForm extends PureComponent {
     }
   }
 
-  confirmCheck = (rule, value, callback) => {
+  private confirmCheck = (rule, value, callback) => {
     if (value) {
-      this.props.form.validateFields(['trigger'], { force: true })
+      this.props.form.validateFields(['trigger'], { force: true }, () => void 0)
     }
     callback()
   }
 
-  render () {
+  public render () {
     const { form, cascaderSource } = this.props
     const { getFieldDecorator } = form
 
     const relations = ['=', 'like', '>', '<', '>=', '<=', '!=']
-    const relationOptions = relations.map(r => (
+    const relationOptions = relations.map((r) => (
       <Option key={r} value={r}>{r}</Option>
     ))
 
@@ -84,7 +100,7 @@ export class LinkageForm extends PureComponent {
                   placeholder="请选择"
                   options={cascaderSource}
                   expandTrigger="hover"
-                  displayRender={(labels) => labels.join(' - ')}
+                  displayRender={this.displayRenderHandles.trigger}
                 />
               )}
             </FormItem>
@@ -107,7 +123,7 @@ export class LinkageForm extends PureComponent {
                   placeholder="请选择"
                   options={cascaderSource}
                   expandTrigger="hover"
-                  displayRender={(labels) => labels.join(' - ')}
+                  displayRender={this.displayRenderHandles.linkager}
                 />
               )}
             </FormItem>
@@ -129,11 +145,6 @@ export class LinkageForm extends PureComponent {
       </Form>
     )
   }
-}
-
-LinkageForm.propTypes = {
-  form: PropTypes.any,
-  cascaderSource: PropTypes.array
 }
 
 export default Form.create()(LinkageForm)

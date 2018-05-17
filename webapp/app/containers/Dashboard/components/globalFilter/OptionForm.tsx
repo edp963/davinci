@@ -1,17 +1,26 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Table from 'antd/lib/table'
-import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Table = require('antd/lib/table')
+const Input = require('antd/lib/input')
+const Button = require('antd/lib/button')
 const FormItem = Form.Item
 
-import styles from './GlobalFilter.less'
-import utilStyles from '../../../../assets/less/util.less'
+const styles = require('./GlobalFilter.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
-export class OptionForm extends PureComponent {
-  render () {
+interface IOptionFormProps {
+  form: WrappedFormUtils
+  dataSource: any[]
+  onAddOpiton: () => any
+  onChangeStatus: (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => void
+  onUpdateOption: (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => void
+  onDeleteOption: (id: string) => (e: React.MouseEvent<HTMLAnchorElement>) => void
+}
+
+export class OptionForm extends React.PureComponent<IOptionFormProps, {}> {
+  public render () {
     const {
       form,
       dataSource,
@@ -100,15 +109,6 @@ export class OptionForm extends PureComponent {
       </Form>
     )
   }
-}
-
-OptionForm.propTypes = {
-  form: PropTypes.any,
-  dataSource: PropTypes.array,
-  onAddOpiton: PropTypes.func,
-  onChangeStatus: PropTypes.func,
-  onUpdateOption: PropTypes.func,
-  onDeleteOption: PropTypes.func
 }
 
 export default Form.create()(OptionForm)

@@ -18,33 +18,39 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Radio = require('antd/lib/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 import { checkNameAction } from '../../App/actions'
-import utilStyles from '../../../assets/less/util.less'
 
-export class DashboardForm extends React.PureComponent {
-  checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'dashboard'
+const utilStyles = require('../../../assets/less/util.less')
+
+interface IDashboardFormProps {
+  type: string
+  form: any
+  onCheckName: (id, name, type, resolve, reject) => void
+}
+
+export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> {
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckName, type, form } = this.props
+    const { id } = form.getFieldsValue()
+    const idName = type === 'add' ? '' : id
+    const typeName = 'dashboard'
     onCheckName(idName, value, typeName,
-      res => {
+      () => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
-  render () {
+  public render () {
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 6 },
@@ -141,16 +147,10 @@ export class DashboardForm extends React.PureComponent {
   }
 }
 
-DashboardForm.propTypes = {
-  type: PropTypes.string,
-  form: PropTypes.any,
-  onCheckName: PropTypes.func
-}
-
 function mapDispatchToProps (dispatch) {
   return {
     onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
   }
 }
 
-export default Form.create()(connect(null, mapDispatchToProps)(DashboardForm))
+export default Form.create()(connect<{}, {}, IDashboardFormProps>(null, mapDispatchToProps)(DashboardForm))

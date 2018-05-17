@@ -241,6 +241,7 @@
     "warning": "3.0.0"
   },
   "devDependencies": {
+    "@types/echarts": "0.0.12",
     "@types/react": "15.6.15",
     "@types/react-dom": "15.5.7",
     "@types/react-helmet": "5.0.1",

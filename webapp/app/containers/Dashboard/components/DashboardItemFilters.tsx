@@ -18,17 +18,18 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import DatePicker from 'antd/lib/date-picker'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const DatePicker = require('antd/lib/date-picker')
+const Select = require('antd/lib/select')
+const Radio = require('antd/lib/radio')
+const Button = require('antd/lib/button')
+const Icon = require('antd/lib/icon')
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
@@ -37,9 +38,23 @@ const RadioButton = Radio.Button
 import { uuid } from '../../../utils/util'
 import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
 
-import styles from '../Dashboard.less'
+const styles = require('../Dashboard.less')
 
-export class DashboardItemFilters extends PureComponent {
+interface IDashboardItemFiltersProps {
+  form: WrappedFormUtils
+  keys: any[]
+  types: any[]
+  loginUser: { id: number }
+  itemId: number
+  onQuery: (sql: string) => void
+}
+
+interface IDashboardItemFiltersStates {
+  filterTree: object
+  flattenTree: object
+}
+
+export class DashboardItemFilters extends React.PureComponent<IDashboardItemFiltersProps, IDashboardItemFiltersStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -48,39 +63,41 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  componentWillMount () {
+  public componentWillMount () {
     this.initTree(this.props)
   }
 
-  componentWillUpdate (nextProps) {
+  public componentWillReceiveProps (nextProps) {
     if (nextProps.itemId && nextProps.itemId !== this.props.itemId) {
       this.initTree(nextProps)
     }
   }
 
-  initTree = (props) => {
+  private initTree = (props) => {
     const { loginUser, itemId } = props
     if (loginUser) {
       const filterTreeStr = localStorage.getItem(`${loginUser.id}_${itemId}_filterTree`)
       if (filterTreeStr) {
         const filterTree = JSON.parse(filterTreeStr)
-        this.state.filterTree = filterTree
-        this.state.flattenTree = this.initFlattenTree(filterTree, {})
+        this.setState({
+          filterTree,
+          flattenTree: this.initFlattenTree(filterTree, {})
+        })
       }
     }
   }
 
-  initFlattenTree = (tree, flatten) => {
+  private initFlattenTree = (tree, flatten) => {
     flatten[tree.id] = tree
     if (tree.children) {
-      tree.children.forEach(c => {
+      tree.children.forEach((c) => {
         this.initFlattenTree(c, flatten)
       })
     }
     return flatten
   }
 
-  renderFilterList = (filter, items) => {
+  private renderFilterList = (filter, items) => {
     const { getFieldDecorator } = this.props.form
     const itemClass = classnames({
       [styles.filterItem]: true,
@@ -103,15 +120,15 @@ export class DashboardItemFilters extends PureComponent {
               )}
             </FormItem>
           </div>
-          <list className={styles.filterList}>
+          <div className={styles.filterList}>
             {items}
-          </list>
+          </div>
         </div>
       </div>
     )
   }
 
-  renderFilterItem = (filter) => {
+  private renderFilterItem = (filter) => {
     const {
       form,
       keys,
@@ -183,9 +200,9 @@ export class DashboardItemFilters extends PureComponent {
     )
   }
 
-  renderFilters (filter) {
+  private renderFilters (filter) {
     if (filter.type === 'link') {
-      const items = filter.children.map(c => this.renderFilters(c))
+      const items = filter.children.map((c) => this.renderFilters(c))
       return this.renderFilterList(filter, items)
     } else if (filter.type === 'node') {
       return this.renderFilterItem(filter)
@@ -200,17 +217,17 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  generateFilterOperatorOptions = (type) => {
+  private generateFilterOperatorOptions = (type) => {
     const operators = [
       ['=', 'like', '>', '<', '>=', '<=', '!='],
       ['=', '>', '<', '>=', '<=', '!=']
     ]
 
-    const stringOptions = operators[0].slice().map(o => (
+    const stringOptions = operators[0].slice().map((o) => (
       <Option key={o} value={o}>{o}</Option>
     ))
 
-    const numbersAndDateOptions = operators[1].slice().map(o => (
+    const numbersAndDateOptions = operators[1].slice().map((o) => (
       <Option key={o} value={o}>{o}</Option>
     ))
 
@@ -221,7 +238,7 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  generateFilterValueInput = (filter) => {
+  private generateFilterValueInput = (filter) => {
     const stringInput = (
       <Input onChange={this.changeStringFilterValue(filter)} />
     )
@@ -249,7 +266,7 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  addTreeRoot = () => {
+  private addTreeRoot = () => {
     const rootId = uuid(8, 16)
     const root = {
       id: rootId,
@@ -264,26 +281,27 @@ export class DashboardItemFilters extends PureComponent {
     })
   }
 
-  addParallelNode = (nodeId) => () => {
+  private addParallelNode = (nodeId) => () => {
     const { flattenTree } = this.state
 
-    let currentNode = flattenTree[nodeId]
-    let newNode = {
+    const currentNode = flattenTree[nodeId]
+    const newNode = {
       id: uuid(8, 16),
-      type: 'node'
+      type: 'node',
+      parent: void 0
     }
 
     if (currentNode.parent) {
-      let parent = flattenTree[currentNode.parent]
+      const parent = flattenTree[currentNode.parent]
       newNode.parent = parent.id
       parent.children.push(newNode)
       flattenTree[newNode.id] = newNode
 
       this.setState({
-        flattenTree: Object.assign({}, flattenTree)
+        flattenTree: {...flattenTree}
       })
     } else {
-      let parent = {
+      const parent = {
         id: uuid(8, 16),
         root: true,
         type: 'link',
@@ -306,54 +324,57 @@ export class DashboardItemFilters extends PureComponent {
 
       this.setState({
         filterTree: parent,
-        flattenTree: Object.assign({}, flattenTree)
+        flattenTree: {...flattenTree}
       })
     }
   }
 
-  forkNode = (nodeId) => () => {
+  private forkNode = (nodeId) => () => {
     const { flattenTree } = this.state
 
     let currentNode = flattenTree[nodeId]
-    let cloneNode = Object.assign({}, currentNode, {
+    const cloneNode = {
+      ...currentNode,
       id: uuid(8, 16),
       parent: currentNode.id
-    })
-    let newNode = {
+    }
+    const newNode = {
       id: uuid(8, 16),
       type: 'node',
       parent: currentNode.id
     }
 
-    currentNode = Object.assign(currentNode, {
+    currentNode = {
+      ...currentNode,
       type: 'link',
       rel: 'and',
       children: [cloneNode, newNode]
-    })
+    }
 
     flattenTree[cloneNode.id] = cloneNode
     flattenTree[newNode.id] = newNode
 
     this.setState({
-      flattenTree: Object.assign({}, flattenTree)
+      flattenTree: {...flattenTree}
     })
   }
 
-  deleteNode = (nodeId) => () => {
+  private deleteNode = (nodeId) => () => {
     const { flattenTree } = this.state
 
-    let currentNode = flattenTree[nodeId]
+    const currentNode = flattenTree[nodeId]
     delete flattenTree[nodeId]
 
     if (currentNode.parent) {
       let parent = flattenTree[currentNode.parent]
-      parent.children = parent.children.filter(c => c.id !== nodeId)
+      parent.children = parent.children.filter((c) => c.id !== nodeId)
 
       if (parent.children.length === 1) {
-        let onlyChild = parent.children[0]
+        const onlyChild = parent.children[0]
         this.refreshTreeId(onlyChild)
 
-        parent = Object.assign(parent, {
+        parent = {
+          ...parent,
           id: onlyChild.id,
           type: onlyChild.type,
           rel: onlyChild.rel,
@@ -362,14 +383,14 @@ export class DashboardItemFilters extends PureComponent {
           filterOperator: onlyChild.filterOperator,
           filterValue: onlyChild.filterValue,
           children: onlyChild.children
-        })
+        }
 
         delete flattenTree[parent.id]
         flattenTree[onlyChild.id] = parent
       }
 
       this.setState({
-        flattenTree: Object.assign({}, flattenTree)
+        flattenTree: {...flattenTree}
       })
     } else {
       this.setState({
@@ -379,7 +400,7 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  refreshTreeId = (treeNode) => {
+  private refreshTreeId = (treeNode) => {
     const { flattenTree } = this.state
     const oldId = treeNode.id
     delete flattenTree[oldId]
@@ -388,18 +409,18 @@ export class DashboardItemFilters extends PureComponent {
     flattenTree[treeNode.id] = treeNode
 
     if (treeNode.children) {
-      treeNode.children.forEach(c => {
+      treeNode.children.forEach((c) => {
         c.parent = treeNode.id
         this.refreshTreeId(c)
       })
     }
   }
 
-  changeLinkRel = (filter) => (e) => {
+  private changeLinkRel = (filter) => (e) => {
     filter.rel = e.target.value
   }
 
-  changeFilterKey = (filter) => (val) => {
+  private changeFilterKey = (filter) => (val) => {
     const keyAndType = val.split(':')
     filter.filterKey = keyAndType[0]
     filter.filterType = keyAndType[1]
@@ -407,23 +428,23 @@ export class DashboardItemFilters extends PureComponent {
     filter.inputUuid = uuid(8, 16)
   }
 
-  changeFilterOperator = (filter) => (val) => {
+  private changeFilterOperator = (filter) => (val) => {
     filter.filterOperator = val
   }
 
-  changeStringFilterValue = (filter) => (event) => {
+  private changeStringFilterValue = (filter) => (event) => {
     filter.filterValue = event.target.value
   }
 
-  changeNumberFilterValue = (filter) => (val) => {
+  private changeNumberFilterValue = (filter) => (val) => {
     filter.filterValue = val
   }
 
-  changeDateFilterValue = (filter) => (date) => {
+  private changeDateFilterValue = (filter) => (date) => {
     filter.filterValue = date
   }
 
-  doQuery = () => {
+  private doQuery = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { loginUser, itemId, onQuery } = this.props
@@ -439,17 +460,17 @@ export class DashboardItemFilters extends PureComponent {
     })
   }
 
-  resetTree = () => {
+  private resetTree = () => {
     this.setState({
       filterTree: {},
       flattenTree: null
     })
   }
 
-  getSqlExpresstions = (tree) => {
+  private getSqlExpresstions = (tree) => {
     if (Object.keys(tree).length) {
       if (tree.type === 'link') {
-        const partials = tree.children.map(c => {
+        const partials = tree.children.map((c) => {
           if (c.type === 'link') {
             return this.getSqlExpresstions(c)
           } else {
@@ -466,7 +487,7 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  getFilterValue = (val, type) => {
+  private getFilterValue = (val, type) => {
     if (typeof val === 'object') {
       return type === 'DATE'
         ? `'${val.format('YYYY-MM-DD')}'`
@@ -480,7 +501,7 @@ export class DashboardItemFilters extends PureComponent {
     }
   }
 
-  render () {
+  public render () {
     const {
       filterTree
     } = this.state
@@ -496,15 +517,6 @@ export class DashboardItemFilters extends PureComponent {
       </div>
     )
   }
-}
-
-DashboardItemFilters.propTypes = {
-  form: PropTypes.any,
-  keys: PropTypes.array,
-  types: PropTypes.array,
-  loginUser: PropTypes.object,
-  itemId: PropTypes.number,
-  onQuery: PropTypes.func
 }
 
 export default Form.create()(DashboardItemFilters)

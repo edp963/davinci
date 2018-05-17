@@ -204,7 +204,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
         }
         this.setState({
-          emailConfig: emailConfig
+          emailConfig
         }, () => {
           for (const i in emailConfig) {
             if (!emailConfig[i]) {
@@ -234,12 +234,12 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     const result = arr.map((a) => {
       if (a.indexOf('(w)') > -1) {
         return {
-          id: parseInt(a.replace('(w)', '')),
+          id: parseInt(a.replace('(w)', ''), 10),
           type: 'widget'
         }
       } else {
         return {
-          id: parseInt(a.replace('(d)', '')),
+          id: parseInt(a.replace('(d)', ''), 10),
           type: 'dashboard'
         }
       }

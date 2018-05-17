@@ -18,13 +18,18 @@
  * >>
  */
 
-import React, { Component, PropTypes } from 'react'
-import classnames from 'classnames'
+import * as React from 'react'
+import * as classnames from 'classnames'
 
-import styles from '../Dashboard.less'
+const styles = require('../Dashboard.less')
 
-export class DashboardItemControlPanel extends Component {
-  render () {
+interface IDashboardItemControlPanelProps {
+  show: boolean
+  children: React.ReactNode
+}
+
+export class DashboardItemControlPanel extends React.PureComponent<IDashboardItemControlPanelProps, {}> {
+  public render () {
     const panelClass = classnames({
       [styles.controlPanel]: true,
       [styles.show]: this.props.show
@@ -43,11 +48,6 @@ export class DashboardItemControlPanel extends Component {
       </div>
     )
   }
-}
-
-DashboardItemControlPanel.propTypes = {
-  show: PropTypes.bool,
-  children: PropTypes.node
 }
 
 export default DashboardItemControlPanel

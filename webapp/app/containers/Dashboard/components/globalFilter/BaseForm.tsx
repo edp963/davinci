@@ -1,19 +1,38 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
 const FormItem = Form.Item
 const Option = Select.Option
 
-import styles from './GlobalFilter.less'
-import utilStyles from '../../../../assets/less/util.less'
+const styles = require('./GlobalFilter.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
-export class BaseForm extends PureComponent {
-  render () {
+interface IBaseFormProps {
+  form: WrappedFormUtils
+  filterTypes: Array<{ text: string, value: string }>
+  bizlogics: any[]
+  isCascadeSelect: boolean
+  flatTableColumns: any[]
+  onTypeSelectChange: () => any
+  onFlatTableSelectChange: () => any
+}
+
+export interface IBaseForm {
+  name: string
+  key: string
+  type: string
+  flatTableId?: number
+  cascadeColumn?: string
+  parentColumn?: string
+}
+
+export class BaseForm extends React.PureComponent<IBaseFormProps, {}> {
+  public render () {
     const {
       form,
       filterTypes,
@@ -26,7 +45,7 @@ export class BaseForm extends PureComponent {
 
     const { getFieldDecorator } = form
 
-    const filterTypeOptions = filterTypes.map(o => (
+    const filterTypeOptions = filterTypes.map((o) => (
       <Option key={o.value} value={o.value}>{o.text}</Option>
     ))
 
@@ -53,7 +72,7 @@ export class BaseForm extends PureComponent {
                 allowClear
               >
                 {
-                  bizlogics.map(b => (
+                  bizlogics.map((b) => (
                     <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
                   ))
                 }
@@ -80,7 +99,7 @@ export class BaseForm extends PureComponent {
                 allowClear
               >
                 {
-                  flatTableColumns.map(c => (
+                  flatTableColumns.map((c) => (
                     <Option key={c} value={c}>{c}</Option>
                   ))
                 }
@@ -102,7 +121,7 @@ export class BaseForm extends PureComponent {
                 allowClear
               >
                 {
-                  flatTableColumns.map(c => (
+                  flatTableColumns.map((c) => (
                     <Option key={c} value={c}>{c}</Option>
                   ))
                 }
@@ -166,16 +185,6 @@ export class BaseForm extends PureComponent {
       </Form>
     )
   }
-}
-
-BaseForm.propTypes = {
-  form: PropTypes.any,
-  filterTypes: PropTypes.array,
-  bizlogics: PropTypes.array,
-  isCascadeSelect: PropTypes.bool,
-  flatTableColumns: PropTypes.array,
-  onTypeSelectChange: PropTypes.func,
-  onFlatTableSelectChange: PropTypes.func
 }
 
 export default Form.create()(BaseForm)

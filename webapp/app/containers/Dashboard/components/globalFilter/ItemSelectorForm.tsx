@@ -1,29 +1,33 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Select from 'antd/lib/select'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Select = require('antd/lib/select')
 const FormItem = Form.Item
 const Option = Select.Option
 
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
+const styles = require('./GlobalFilter.less')
 
-import styles from './GlobalFilter.less'
+interface IItemSelectorFormProps {
+  form: WrappedFormUtils
+  items: any[]
+}
 
-export class ItemSelectorForm extends PureComponent {
-  render () {
+export class ItemSelectorForm extends React.PureComponent<IItemSelectorFormProps, {}> {
+  public render () {
     const { form, items } = this.props
     const { getFieldDecorator } = form
 
-    const itemSelectors = items.map(i => {
+    const itemSelectors = items.map((i) => {
       const Options = i.keys
         .map((k, index) => {
           const itemType = i.types[index]
           return (<Option key={k} value={`${k}${DEFAULT_SPLITER}${itemType}`}>{k}</Option>)
         })
-        .concat(i.params.map(v => (
+        .concat(i.params.map((v) => (
           <Option key={v} value={`${v}${DEFAULT_SPLITER}`}>{`${v}[变量]`}</Option>
         )))
 
@@ -49,11 +53,6 @@ export class ItemSelectorForm extends PureComponent {
       </Form>
     )
   }
-}
-
-ItemSelectorForm.propTypes = {
-  form: PropTypes.any,
-  items: PropTypes.array
 }
 
 export default Form.create()(ItemSelectorForm)

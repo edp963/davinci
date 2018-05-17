@@ -1,26 +1,34 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-// import InputNumber from 'antd/lib/input-number'
 import NumberRange from '../../../../components/NumberRange'
-import Select from 'antd/lib/select'
-import DatePicker from 'antd/lib/date-picker'
 import MultiDatePicker from '../../../../components/MultiDatePicker'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+// const InputNumber = require('antd/lib/input-number')
+const Select = require('antd/lib/select')
+const DatePicker = require('antd/lib/date-picker')
 const FormItem = Form.Item
 const Option = Select.Option
 const Search = Input.Search
 const RangePicker = DatePicker.RangePicker
 
-import styles from './GlobalFilter.less'
+const styles = require('./GlobalFilter.less')
 import { KEY_COLUMN } from '../../../../globalConstants'
 
-export class GlobalFilters extends PureComponent {
-  getCascadeChildrenControlId = (column, chilrenArr) => {
-    const nearest = this.props.filters.find(c => c.parentColumn === column.cascadeColumn)
+interface IGlobalFiltersProps {
+  form: WrappedFormUtils
+  filters: any[]
+  cascadeSources: object
+  onChange: (filter: any) => (value: string) => void
+  onCascadeSelectChange: (key: string, flatTableId: number, column: string, parents: any[]) => void
+}
+
+export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> {
+  private getCascadeChildrenControlId = (column, chilrenArr) => {
+    const nearest = this.props.filters.find((c) => c.parentColumn === column.cascadeColumn)
     if (nearest) {
       return this.getCascadeChildrenControlId(nearest, chilrenArr.concat(nearest.key))
     } else {
@@ -28,20 +36,20 @@ export class GlobalFilters extends PureComponent {
     }
   }
 
-  getCascadeParents = (column, parentsArr) => {
+  private getCascadeParents = (column, parentsArr) => {
     if (column.parent) {
-      const parent = this.props.filters.find(c => c.cascadeColumn === column.parent)
+      const parent = this.props.filters.find((c) => c.cascadeColumn === column.parent)
       return this.getCascadeParents(parent, parentsArr.concat(parent.cascadeColumn))
     } else {
       return parentsArr
     }
   }
 
-  render () {
+  public render () {
     const { form, filters, cascadeSources, onChange, onCascadeSelectChange } = this.props
     const { getFieldDecorator } = form
 
-    const filterItems = filters.map(f => {
+    const filterItems = filters.map((f) => {
       switch (f.type) {
         // case 'inputNumber':
         //   return (
@@ -83,17 +91,17 @@ export class GlobalFilters extends PureComponent {
           )
         case 'select':
         case 'multiSelect':
-          let mode = f.type === 'multiSelect'
+          const mode = f.type === 'multiSelect'
             ? { mode: 'multiple' }
             : { allowClear: true }
-          let selProperties = Object.assign({
+          const selProperties = {
+            mode,
             placeholder: f.name,
             onChange: onChange(f)
-          }, mode)
-
-          let options = f.options
-            .filter(o => o.status)
-            .map(o => (
+          }
+          const options = f.options
+            .filter((o) => o.status)
+            .map((o) => (
               <Option key={o.id} value={o.value}>{o.text}</Option>
             ))
 
@@ -116,10 +124,10 @@ export class GlobalFilters extends PureComponent {
           )
         case 'cascadeSelect':
           const column = f.cascadeColumn
-          const nearestChild = filters.find(fr => fr.parentColumn === column)
+          const nearestChild = filters.find((fr) => fr.parentColumn === column)
           const dataSource = cascadeSources && cascadeSources[f.key]
           const cascadeOptions = dataSource
-            ? dataSource.map(s => (
+            ? dataSource.map((s) => (
               <Option key={s[KEY_COLUMN]} value={s[column]}>{s[column]}</Option>
             ))
             : ''
@@ -132,7 +140,7 @@ export class GlobalFilters extends PureComponent {
                   const childColumn = nearestChild.cascadeColumn
                   const parentColumns = this.getCascadeParents(f, [column])
                   const parents = parentColumns.length &&
-                    Object.entries(form.getFieldsValue(parentColumns)).map(arr => ({
+                    Object.entries(form.getFieldsValue(parentColumns)).map((arr) => ({
                       fieldName: arr[0],
                       fieldValue: arr[0] === column ? val : arr[1]  // onChange未完成，不能获取到当前control的值
                     }))
@@ -143,10 +151,11 @@ export class GlobalFilters extends PureComponent {
             }
           }
 
-          const cascadeProperties = Object.assign({
+          const cascadeProperties = {
             placeholder: f.name,
-            allowClear: true
-          }, changeCallback)
+            allowClear: true,
+            changeCallback
+          }
 
           return (
             <Col
@@ -167,7 +176,7 @@ export class GlobalFilters extends PureComponent {
           )
         case 'date':
         case 'datetime':
-          let dateFormat = f.type === 'datetime'
+          const dateFormat = f.type === 'datetime'
             ? {
               format: 'YYYY-MM-DD HH:mm:ss',
               showTime: true,
@@ -182,10 +191,11 @@ export class GlobalFilters extends PureComponent {
               format: 'YYYY-MM-DD',
               onChange: onChange(f)
             }
-          let dateProperties = Object.assign({
+          const dateProperties = {
             placeholder: f.name,
-            className: styles.input
-          }, dateFormat)
+            className: styles.input,
+            dateFormat
+          }
 
           return (
             <Col
@@ -222,7 +232,7 @@ export class GlobalFilters extends PureComponent {
           )
         case 'dateRange':
         case 'datetimeRange':
-          let rangeFormat = f.type === 'datetimeRange'
+          const rangeFormat = f.type === 'datetimeRange'
             ? {
               format: 'YYYY-MM-DD HH:mm:ss',
               showTime: true,
@@ -237,10 +247,11 @@ export class GlobalFilters extends PureComponent {
               format: 'YYYY-MM-DD',
               onChange: onChange(f)
             }
-          let rangeProperties = Object.assign({
+          const rangeProperties = {
             placeholder: [`${f.name}从`, '到'],
-            className: styles.input
-          }, rangeFormat)
+            className: styles.input,
+            rangeFormat
+          }
 
           return (
             <Col
@@ -283,14 +294,6 @@ export class GlobalFilters extends PureComponent {
       </Form>
     )
   }
-}
-
-GlobalFilters.propTypes = {
-  form: PropTypes.any,
-  filters: PropTypes.array,
-  cascadeSources: PropTypes.object,
-  onChange: PropTypes.func,
-  onCascadeSelectChange: PropTypes.func
 }
 
 export default Form.create()(GlobalFilters)
