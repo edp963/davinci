@@ -1,8 +1,7 @@
 import * as React from 'react'
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu/')
-console.log(Menu)
-import classnames from 'classnames'
+import * as classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
@@ -12,7 +11,7 @@ const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {
   visible: boolean
-  isVisible: () => any
+  isVisible: (currentChartData?: any) => any
   currentDataInFullScreen: {
     w?: any
     h?: any
@@ -72,7 +71,9 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     const {currentDatasources, visible} = this.props
     const data = currentDatasources[itemId]
     const chartInstanceId = 'fsChartsWrapper'
-    if (chartInfo && chartInfo.renderer !== ECHARTS_RENDERER) return
+    if (chartInfo && chartInfo.renderer !== ECHARTS_RENDERER) {
+      return false
+    }
     if (itemId && visible) {
       if (this.chartInstance) {
         this.chartInstance.dispose()
@@ -87,14 +88,12 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       dataSource,
       chartInfo,
       chartParams: {
-        ...{
-          id: widget.id,
-          name: widget.name,
-          desc: widget.desc,
-          flatTable_id: widget.flatTable_id,
-          widgetlib_id: widget.widgetlib_id
-        },
-        ...JSON.parse(widget.chart_params)
+        ...JSON.parse(widget.chart_params),
+        id: widget.id,
+        name: widget.name,
+        desc: widget.desc,
+        flatTable_id: widget.flatTable_id,
+        widgetlib_id: widget.widgetlib_id
       },
       interactIndex
     })

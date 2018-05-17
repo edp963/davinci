@@ -1,22 +1,43 @@
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
-import BaseForm from './BaseForm'
+import BaseForm, { IBaseForm } from './BaseForm'
 import ItemSelectorForm from './ItemSelectorForm'
 import OptionForm from './OptionForm'
-import Table from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
-import Tooltip from 'antd/lib/tooltip'
-import Tabs from 'antd/lib/tabs'
+import AntdFormType from 'antd/lib/form/Form'
+const Table = require('antd/lib/table')
+const Button = require('antd/lib/button')
+const Modal = require('antd/lib/modal')
+const Tooltip = require('antd/lib/tooltip')
+const Tabs = require('antd/lib/tabs')
 const TabPane = Tabs.TabPane
 
-import {uuid} from '../../../../utils/util'
+import { uuid } from '../../../../utils/util'
 
-import styles from './GlobalFilter.less'
-import utilStyles from '../../../../assets/less/util.less'
+const styles = require('./GlobalFilter.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
-export class GlobalFilterPanel extends PureComponent {
+interface IGlobalFilterPanelProps {
+  items: any[]
+  widgets: any[]
+  bizlogics: any[]
+  dataSources: object
+  tableSource: any[]
+  onSaveToTable: (baseForm: IBaseForm) => void
+  onDeleteFromTable: (key: string) => () => void
+  onLoadBizdataSchema: (flatTableId: number, resolve: (schema: any[]) => void) => void
+}
+
+interface IGlobalFilterPanelStates {
+  formVisible: boolean
+  activeTabKey: 'widget' | 'select'
+  isCascadeSelect: boolean
+  optionFormDisabled: boolean
+  optionTableSource: any[]
+  flatTableColumns: any[]
+  filterTypes: Array<{ text: string, value: string }>
+}
+
+export class GlobalFilterPanel extends React.PureComponent<IGlobalFilterPanelProps, IGlobalFilterPanelStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -42,20 +63,29 @@ export class GlobalFilterPanel extends PureComponent {
     }
   }
 
-  typeSelectChange = (val) => {
+  private baseForm: AntdFormType = null
+  private itemSelectorForm: AntdFormType = null
+  private optionForm: AntdFormType = null
+  private refHandles = {
+    baseForm: (f) => { this.baseForm = f },
+    itemSelectorForm: (f) => { this.itemSelectorForm = f },
+    optionForm: (f) => { this.optionForm = f }
+  }
+
+  private typeSelectChange = (val) => {
     this.setState({
       optionFormDisabled: !['select', 'multiSelect'].includes(val),
       isCascadeSelect: ['cascadeSelect'].includes(val)
     })
   }
 
-  tabChange = (key) => {
+  private tabChange = (key) => {
     this.setState({
       activeTabKey: key
     })
   }
 
-  showForm = () =>
+  private showForm = () =>
     new Promise((resolve) => {
       this.setState({
         formVisible: true
@@ -64,22 +94,24 @@ export class GlobalFilterPanel extends PureComponent {
       })
     })
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
       formVisible: false
     })
   }
 
-  resetForm = () => {
+  private resetForm = () => {
     this.baseForm.props.form.resetFields()
     this.itemSelectorForm.props.form.resetFields()
-    this.state.activeTabKey = 'widget'
-    this.state.optionFormDisabled = true
-    this.state.isCascadeSelect = false
-    this.state.optionTableSource = []
+    this.setState({
+      activeTabKey: 'widget',
+      optionFormDisabled: true,
+      isCascadeSelect: false,
+      optionTableSource: []
+    })
   }
 
-  saveToTable = () => {
+  private saveToTable = () => {
     this.baseForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.props.onSaveToTable({
@@ -92,8 +124,8 @@ export class GlobalFilterPanel extends PureComponent {
     })
   }
 
-  editItem = (key) => () => {
-    const item = this.props.tableSource.find(ts => ts.key === key)
+  private editItem = (key) => () => {
+    const item = this.props.tableSource.find((ts) => ts.key === key)
     const { relatedItems, options, ...base } = item
 
     this.showForm().then(() => {
@@ -111,7 +143,7 @@ export class GlobalFilterPanel extends PureComponent {
     })
   }
 
-  addOption = () => {
+  private addOption = () => {
     const { optionTableSource } = this.state
     this.setState({
       optionTableSource: optionTableSource.concat({
@@ -123,19 +155,19 @@ export class GlobalFilterPanel extends PureComponent {
     })
   }
 
-  changeOptionStatus = (id) => () => {
+  private changeOptionStatus = (id) => () => {
     const { optionTableSource } = this.state
-    optionTableSource.find(t => t.id === id).status = 0
+    optionTableSource.find((t) => t.id === id).status = 0
     this.setState({
       optionTableSource: optionTableSource.slice()
     })
   }
 
-  updateOption = (id) => () => {
+  private updateOption = (id) => () => {
     this.optionForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { optionTableSource } = this.state
-        let config = optionTableSource.find(t => t.id === id)
+        const config = optionTableSource.find((t) => t.id === id)
 
         config.text = values[`${id}Text`]
         config.value = values[`${id}Value`]
@@ -148,15 +180,15 @@ export class GlobalFilterPanel extends PureComponent {
     })
   }
 
-  deleteOption = (id) => () => {
+  private deleteOption = (id) => () => {
     const { optionTableSource } = this.state
 
     this.setState({
-      optionTableSource: optionTableSource.filter(t => t.id !== id)
+      optionTableSource: optionTableSource.filter((t) => t.id !== id)
     })
   }
 
-  flatTableSelectChange = (val, stayColumnValue) => {
+  private flatTableSelectChange = (val, stayColumnValue) => {
     if (val) {
       this.props.onLoadBizdataSchema(Number(val), (schema) => {
         this.setState({
@@ -173,7 +205,7 @@ export class GlobalFilterPanel extends PureComponent {
     }
   }
 
-  render () {
+  public render () {
     const {
       items,
       widgets,
@@ -194,9 +226,9 @@ export class GlobalFilterPanel extends PureComponent {
       filterTypes
     } = this.state
 
-    const itemSelectorSource = items.map(i => {
-      const widget = widgets.find(w => w.id === i.widget_id)
-      const flattable = bizlogics.find(bl => bl.id === widget.flatTable_id)
+    const itemSelectorSource = items.map((i) => {
+      const widget = widgets.find((w) => w.id === i.widget_id)
+      const flattable = bizlogics.find((bl) => bl.id === widget.flatTable_id)
 
       return {
         id: i.id,
@@ -204,7 +236,7 @@ export class GlobalFilterPanel extends PureComponent {
         keys: dataSources[i.id].keys,
         types: dataSources[i.id].types,
         params: (flattable.sql_tmpl.match(/query@var\s\$\w+\$/g) || [])
-          .map(qv => qv.substring(qv.indexOf('$') + 1, qv.lastIndexOf('$')))
+          .map((qv) => qv.substring(qv.indexOf('$') + 1, qv.lastIndexOf('$')))
       }
     })
 
@@ -221,7 +253,7 @@ export class GlobalFilterPanel extends PureComponent {
           }, {
             key: 'type',
             title: '类型',
-            render: (val, record) => filterTypes.find(ft => ft.value === record.type).text
+            render: (val, record) => filterTypes.find((ft) => ft.value === record.type).text
           }, {
             title: '操作',
             width: 100,
@@ -257,7 +289,7 @@ export class GlobalFilterPanel extends PureComponent {
               onTypeSelectChange={this.typeSelectChange}
               onFlatTableSelectChange={this.flatTableSelectChange}
               onLoadBizdataSchema={onLoadBizdataSchema}
-              wrappedComponentRef={f => { this.baseForm = f }}
+              wrappedComponentRef={this.refHandles.baseForm}
             />
             <Tabs
               activeKey={activeTabKey}
@@ -268,7 +300,7 @@ export class GlobalFilterPanel extends PureComponent {
                 <div className={styles.tabPane}>
                   <ItemSelectorForm
                     items={itemSelectorSource}
-                    wrappedComponentRef={f => { this.itemSelectorForm = f }}
+                    wrappedComponentRef={this.refHandles.itemSelectorForm}
                   />
                 </div>
               </TabPane>
@@ -280,7 +312,7 @@ export class GlobalFilterPanel extends PureComponent {
                     onChangeStatus={this.changeOptionStatus}
                     onUpdateOption={this.updateOption}
                     onDeleteOption={this.deleteOption}
-                    wrappedComponentRef={f => { this.optionForm = f }}
+                    wrappedComponentRef={this.refHandles.optionForm}
                   />
                 </div>
               </TabPane>
@@ -290,17 +322,6 @@ export class GlobalFilterPanel extends PureComponent {
       </div>
     )
   }
-}
-
-GlobalFilterPanel.propTypes = {
-  items: PropTypes.array,
-  widgets: PropTypes.array,
-  bizlogics: PropTypes.array,
-  dataSources: PropTypes.object,
-  tableSource: PropTypes.array,
-  onSaveToTable: PropTypes.func,
-  onDeleteFromTable: PropTypes.func,
-  onLoadBizdataSchema: PropTypes.func
 }
 
 export default GlobalFilterPanel

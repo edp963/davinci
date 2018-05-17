@@ -23,8 +23,8 @@ export function initializePosition (loginUser, dashboard, items) {
     const posInStorage = localStorage.getItem(`${loginUser.id}_${dashboard.id}_position`)
     if (posInStorage) {
       const localPos = JSON.parse(posInStorage)
-      return items.map(i => {
-        const itemInLocal = localPos.find(p => p.i === `${i.id}`)
+      return items.map((i) => {
+        const itemInLocal = localPos.find((p) => p.i === `${i.id}`)
         if (!itemInLocal) {
           return {
             x: i.position_x,
@@ -34,12 +34,12 @@ export function initializePosition (loginUser, dashboard, items) {
             i: `${i.id}`
           }
         } else {
-          return Object.assign({}, itemInLocal)
+          return {...itemInLocal}
         }
       })
     }
   }
-  return items.map(i => ({
+  return items.map((i) => ({
     x: i.position_x,
     y: i.position_y,
     w: i.width,

@@ -18,23 +18,33 @@
  * >>
  */
 
-import React, { PureComponent } from 'react'
-import {connect} from 'react-redux'
-import PropTypes from 'prop-types'
-import Icon from 'antd/lib/icon'
+import * as React from 'react'
+const Icon = require('antd/lib/icon')
 
-import styles from '../Dashboard.less'
+const styles = require('../Dashboard.less')
 
-export class ScorecardChart extends PureComponent {
-  prettifyContent = (content) => {
+interface IScorecardChartProps {
+  id: string
+  data: any
+  loading: boolean
+  className: string
+  width: number
+  height: number
+  chartParams: any
+}
+
+export class ScorecardChart extends React.PureComponent<IScorecardChartProps, {}> {
+  public static defaultProps = {
+    chartParams: {}
+  }
+
+  private prettifyContent = (content) => {
     if (!isNaN(Number(content))) {
-      let arr = content.split('.')
+      const arr = content.split('.')
       arr[0] = arr[0].split('').reduceRight((formatted, str, index, oarr) => {
-        if (index % 3 === 2 && index !== oarr.length - 1) {
-          formatted = `,${str}${formatted}`
-        } else {
-          formatted = `${str}${formatted}`
-        }
+        formatted = index % 3 === 2 && index !== oarr.length - 1
+          ? `,${str}${formatted}`
+          : `${str}${formatted}`
         return formatted
       }, '')
       return arr.join('.')
@@ -43,7 +53,7 @@ export class ScorecardChart extends PureComponent {
     return ''
   }
 
-  render () {
+  public render () {
     const {
       id,
       data,
@@ -155,24 +165,4 @@ export class ScorecardChart extends PureComponent {
   }
 }
 
-ScorecardChart.propTypes = {
-  id: PropTypes.string,
-  data: PropTypes.object,
-  loading: PropTypes.bool,
-  className: PropTypes.string,
-  width: PropTypes.number,
-  height: PropTypes.number,
-  chartParams: PropTypes.object
-}
-
-ScorecardChart.defaultProps = {
-  chartParams: {}
-}
-
-export function mapDispatchToProps (dispatch) {
-  return {
-
-  }
-}
-
-export default connect(null, mapDispatchToProps)(ScorecardChart)
+export default ScorecardChart

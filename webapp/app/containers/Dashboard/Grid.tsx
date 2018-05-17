@@ -19,12 +19,12 @@
  */
 
 import * as React from 'react'
-import {findDOMNode} from 'react-dom'
+import { findDOMNode } from 'react-dom'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import classnames from 'classnames'
-import moment from 'moment'
+import * as classnames from 'classnames'
+import * as moment from 'moment'
 import { Link } from 'react-router'
 import * as echarts from 'echarts/lib/echarts'
 
@@ -39,16 +39,16 @@ import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfi
 import GlobalFilters from './components/globalFilter/GlobalFilters'
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Popover from 'antd/lib/popover'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Modal = require('antd/lib/modal')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const Popover = require('antd/lib/popover')
+const Tooltip = require('antd/lib/tooltip')
+const Icon = require('antd/lib/icon')
+const Dropdown = require('antd/lib/dropdown')
+const Menu = require('antd/lib/menu')
 
 import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
@@ -295,14 +295,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
   private resizeSign: NodeJS.Timer
-  private dashboardItemForm: IDashboardItemForm
-  private dashboardItemFilters: IDashboardItemFilters
+  private dashboardItemForm: IDashboardItemForm = null
+  private dashboardItemFilters: IDashboardItemFilters = null
   private refHandles = {
     dashboardItemForm: (f) => { this.dashboardItemForm = f },
     dashboardItemFilters: (f) => { this.dashboardItemFilters = f }
   }
 
-  private workbenchWrapper: { refs: { wrappedInstance: { resetWorkbench: () => void } } } = null
+  private workbenchWrapper: any = null
 
   public componentWillMount () {
     const {
@@ -453,7 +453,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             currentChart.dispose()
           }
 
-          currentChart = echarts.init(document.getElementById(chartInstanceId), 'default')
+          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
           this.charts[chartInstanceId] = currentChart       // todo  赋值 {domId: chartsInstance}
           currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
@@ -776,7 +776,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private afterWorkbenchModalClose = () => {
-    this.workbenchWrapper.refs.wrappedInstance.resetWorkbench()
+    this.workbenchWrapper.getWrappedInstance().resetWorkbench()
   }
 
   private onWorkbenchClose = () => {
@@ -1161,7 +1161,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         ...this.state.interactiveItems,
         [itemId]: {
           isInteractive: false,
-          interactId: null
+          interactId: ''
         }
       }
     })
@@ -1642,7 +1642,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         itemblocks.push((
           <div key={pos.i}>
             <DashboardItem
-              ref={(f) => this[`widgetId_${widget.id}`] = f}  // todo  feature
+              ref={(f) => this[`widgetId_${widget.id}`] = f}
               w={modifiedPosition ? modifiedPosition.w : 0}
               h={modifiedPosition ? modifiedPosition.h : 0}
               itemId={itemId}
@@ -2029,7 +2029,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           currentDatasources={currentDatasources}
           visible={allowFullScreen}
           isVisible={this.visibleFullScreen}
-          onRenderChart={this.renderChart}
           currentDataInFullScreen={this.state.currentDataInFullScreen}
           onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
         />

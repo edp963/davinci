@@ -18,8 +18,7 @@
  * >>
  */
 
-import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 
 import TableChart from './TableChart'
 import ScorecardChart from './ScorecardChart'
@@ -27,7 +26,32 @@ import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
 
-export class Chart extends PureComponent {
+interface IChartProps {
+  id: string
+  w: number
+  h: number
+  data: any
+  loading: boolean
+  chartInfo: any
+  updateConfig: any
+  chartParams: any
+  updateParams: any[]
+  classNames: any
+  interactId: string
+  onCheckTableInteract: (itemId: number) => object
+  onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
+  currentBizlogicId: number
+  onTextEditorChange?: () => void
+}
+
+interface IChartStates {
+  tableWidth: number
+  tableHeight: number
+  blockWidth: number
+  blockHeight: number
+}
+
+export class Chart extends React.PureComponent<IChartProps, IChartStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -38,24 +62,27 @@ export class Chart extends PureComponent {
     }
   }
 
-  componentDidMount () {
+  private block: HTMLDivElement = null
+
+  public componentDidMount () {
     this.updateTableSize()
   }
 
-  componentDidUpdate () {
+  public componentDidUpdate () {
     this.updateTableSize()
   }
 
-  updateTableSize () {
+  private updateTableSize () {
+    const { offsetWidth, offsetHeight } = this.block
     this.setState({
-      tableWidth: this.refs.block.offsetWidth,
-      tableHeight: this.refs.block.offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT,
-      blockWidth: this.refs.block.offsetWidth,
-      blockHeight: this.refs.block.offsetHeight
+      tableWidth: offsetWidth,
+      tableHeight: offsetHeight - TABLE_HEADER_HEIGHT - TABLE_PAGINATION_HEIGHT,
+      blockWidth: offsetWidth,
+      blockHeight: offsetHeight
     })
   }
 
-  render () {
+  public render () {
     const {
       id,
       data,
@@ -120,7 +147,6 @@ export class Chart extends PureComponent {
         case 'text':
           chartContent = (
             <TextChart
-              id={id}
               className={classNames.chart}
               data={data}
               loading={loading}
@@ -134,32 +160,11 @@ export class Chart extends PureComponent {
     }
 
     return (
-      <div className={classNames.container} ref="block">
+      <div className={classNames.container} ref={(f) => {this.block = f}}>
         {chartContent}
       </div>
     )
   }
-}
-
-Chart.propTypes = {
-  id: PropTypes.string,
-  w: PropTypes.number,  // eslint-disable-line
-  h: PropTypes.number,  // eslint-disable-line
-  data: PropTypes.object,
-  loading: PropTypes.bool,
-  chartInfo: PropTypes.object,
-  updateConfig: PropTypes.any,
-  chartParams: PropTypes.object,
-  updateParams: PropTypes.array,
-  classNames: PropTypes.object,
-  interactId: PropTypes.string,
-  onCheckTableInteract: PropTypes.func,
-  onDoTableInteract: PropTypes.func,
-  currentBizlogicId: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.number
-  ]),
-  onTextEditorChange: PropTypes.func
 }
 
 export default Chart

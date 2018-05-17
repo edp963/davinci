@@ -87,6 +87,7 @@ function dashboardReducer (state = initialState, action) {
   let queryParams = state.get('currentItemsQueryParams')
   let itemsShareInfo = state.get('currentItemsShareInfo')
   let itemsShareInfoLoading = state.get('currentItemsShareInfoLoading')
+  let itemsSecretInfo = state.get('currentItemsSecretInfo')
   let itemsDownloadCsvLoading = state.get('currentItemsDownloadCsvLoading')
   let itemsCascadeSources = state.get('currentItemsCascadeSources')
 
@@ -160,6 +161,10 @@ function dashboardReducer (state = initialState, action) {
           obj[w.id] = false
           return obj
         }, {}))
+        .set('currentItemsSecretInfo', payload.dashboard.widgets.reduce((obj, w) => {
+          obj[w.id] = ''
+          return obj
+        }, {}))
         .set('currentItemsDownloadCsvLoading', payload.dashboard.widgets.reduce((obj, w) => {
           obj[w.id] = false
           return obj
@@ -205,6 +210,10 @@ function dashboardReducer (state = initialState, action) {
           ...itemsShareInfoLoading,
           [payload.result.id]: false
         })
+        .set('currentItemsSecretInfo', {
+          ...itemsSecretInfo,
+          [payload.result.id]: ''
+        })
         .set('currentItemsDownloadCsvLoading', {
           ...itemsDownloadCsvLoading,
           [payload.result.id]: false
@@ -233,13 +242,14 @@ function dashboardReducer (state = initialState, action) {
     case CLEAR_CURRENT_DASHBOARD:
       return state
         .set('currentDashboard', null)
-        .set('currentItems', false)
-        .set('currentDatasources', false)
-        .set('currentItemsLoading', false)
-        .set('currentItemsShareInfo', false)
-        .set('currentItemsShareInfoLoading', false)
-        .set('currentItemsDownloadCsvLoading', false)
-        .set('currentItemsCascadeSources', false)
+        .set('currentItems', null)
+        .set('currentDatasources', null)
+        .set('currentItemsLoading', null)
+        .set('currentItemsShareInfo', null)
+        .set('currentItemsShareInfoLoading', null)
+        .set('currentItemsSecretInfo', null)
+        .set('currentItemsDownloadCsvLoading', null)
+        .set('currentItemsCascadeSources', null)
 
     case LOAD_BIZDATAS_FROM_ITEM:
       return state
@@ -311,7 +321,7 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_WIDGET_SECRET_LINK_SUCCESS:
       return state
         .set('currentItemsSecretInfo', {
-          ...itemsShareInfo,
+          ...itemsSecretInfo,
           [payload.itemId]: payload.shareInfo
         })
         .set('currentItemsShareInfoLoading', {
