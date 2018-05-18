@@ -29,7 +29,8 @@ import SplitView from './SplitView'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 const Modal = require('antd/lib/modal')
 
-import { loadBizdatas, clearBizdatas, addWidget, editWidget } from '../actions'
+import { addWidget, editWidget } from '../actions'
+import { loadBizdatas, clearBizdatas } from '../../Bizlogic/actions'
 import { makeSelectBizdatas, makeSelectBizdatasLoading } from '../selectors'
 import { uuid } from '../../../utils/util'
 
