@@ -50,8 +50,10 @@ const Select = require('antd/lib/select')
 const Search = Input.Search
 
 import widgetlibs from '../../assets/json/widgetlib'
-import { loadWidgets, deleteWidget, addWidget, loadBizlogics } from './actions'
-import { makeSelectWidgets, makeSelectBizlogics } from './selectors'
+import { loadWidgets, deleteWidget, addWidget } from './actions'
+import { loadBizlogics } from '../Bizlogic/actions'
+import { makeSelectWidgets } from './selectors'
+import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { iconMapping } from './components/chartUtil'
 

@@ -28,9 +28,9 @@ import {
   EDIT_WIDGET
 } from './constants'
 import {
-  LOAD_BIZLOGICS,
   LOAD_BIZDATAS
 } from '../Bizlogic/constants'
+
 import {
   widgetsLoaded,
   widgetsLoadedFail,
@@ -40,11 +40,7 @@ import {
   deleteWidgetFail,
   // widgetDetailLoaded,
   widgetEdited,
-  editWidgetFail,
-  bizlogicsLoaded,
-  loadBizlogicsFail,
-  bizdatasLoaded,
-  loadBizdatasFail
+  editWidgetFail
 } from './actions'
 
 const message = require('antd/lib/message')
@@ -52,7 +48,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import resultsetConverter from '../../utils/resultsetConverter'
+import { getBizdatas } from '../Bizlogic/sagas'
 
 export function* getWidgets () {
   try {
@@ -121,46 +117,6 @@ export function* editWidget ({ payload }) {
   }
 }
 
-// bizlogics
-export function* getBizlogics () {
-  try {
-    const asyncData = yield call(request, api.bizlogic)
-    const bizlogics = readListAdapter(asyncData)
-    yield put(bizlogicsLoaded(bizlogics))
-  } catch (err) {
-    yield put(loadBizlogicsFail())
-    message.error('加载 View 列表失败')
-  }
-}
-
-
-export function* getBizdatas ({ payload }) {
-  try {
-    const { id, sql, sorts, offset, limit } = payload
-
-    let queries: string[] | string = []
-
-    if (offset !== undefined && limit !== undefined) {
-      queries = queries
-        .concat(`sortby=${sorts}`)
-        .concat(`offset=${offset}`)
-        .concat(`limit=${limit}`)
-    }
-    queries = queries.concat('usecache=false').concat('expired=0')
-    queries = `?${queries.join('&')}`
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/resultset${queries}`,
-      data: sql || {}
-    })
-    const bizdatas = resultsetConverter(readListAdapter(asyncData))
-    yield put(bizdatasLoaded(bizdatas))
-  } catch (err) {
-    yield put(loadBizdatasFail(err))
-  }
-}
-
 export default function* rootWidgetSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_WIDGETS, getWidgets),
@@ -168,7 +124,6 @@ export default function* rootWidgetSaga (): IterableIterator<any> {
     takeEvery(DELETE_WIDGET, deleteWidget as any),
     // takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
     takeEvery(EDIT_WIDGET, editWidget as any),
-    takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(LOAD_BIZDATAS, getBizdatas as any)
   ]
 }

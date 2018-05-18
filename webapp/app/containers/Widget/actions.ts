@@ -35,16 +35,6 @@ import {
   DELETE_WIDGET_FAILURE
 } from './constants'
 
-import {
-  LOAD_BIZLOGICS,
-  LOAD_BIZLOGICS_SUCCESS,
-  LOAD_BIZLOGICS_FAILURE,
-  LOAD_BIZDATAS,
-  LOAD_BIZDATAS_SUCCESS,
-  LOAD_BIZDATAS_FAILURE,
-  CLEAR_BIZDATAS
-} from '../Bizlogic/constants'
-
 // import { promiseActionCreator } from '../../utils/reduxPromisation'
 
 // export const loadWidgetDetail = promiseActionCreator(LOAD_WIDGET_DETAIL, ['id'])
@@ -150,64 +140,5 @@ export function widgetDeleted (id) {
 export function deleteWidgetFail () {
   return {
     type: DELETE_WIDGET_FAILURE
-  }
-}
-
-// Bizlogic
-export function loadBizlogics () {
-  return {
-    type: LOAD_BIZLOGICS
-  }
-}
-
-export function bizlogicsLoaded (bizlogics) {
-  return {
-    type: LOAD_BIZLOGICS_SUCCESS,
-    payload: {
-      bizlogics
-    }
-  }
-}
-
-export function loadBizlogicsFail () {
-  return {
-    type: LOAD_BIZLOGICS_FAILURE
-  }
-}
-
-export function loadBizdatas (id, sql, sorts, offset, limit) {
-  return {
-    type: LOAD_BIZDATAS,
-    payload: {
-      id,
-      sql,
-      sorts,
-      offset,
-      limit
-    }
-  }
-}
-
-export function bizdatasLoaded (bizdatas) {
-  return {
-    type: LOAD_BIZDATAS_SUCCESS,
-    payload: {
-      bizdatas
-    }
-  }
-}
-
-export function loadBizdatasFail (error) {
-  return {
-    type: LOAD_BIZDATAS_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function clearBizdatas () {
-  return {
-    type: CLEAR_BIZDATAS
   }
 }
