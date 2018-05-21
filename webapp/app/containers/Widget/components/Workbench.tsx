@@ -153,10 +153,11 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         if (widget && widget.config) {
           const updateParams = JSON.parse(widget.config)['update_params']
           const updateFields = JSON.parse(widget.config)['update_fields']
+          // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
           this.setState({
-            updateParams: updateParams ? JSON.parse(updateParams) : [],
-            updateFields: updateFields ? JSON.parse(updateFields) : {},
-            updateConfig: updateFields ? JSON.parse(updateFields) : {}
+            updateParams: (typeof updateParams === 'string' ? JSON.parse(updateParams) : updateParams) || [],
+            updateFields: (typeof updateFields === 'string' ? JSON.parse(updateFields) : updateFields) || {},
+            updateConfig: (typeof updateFields === 'string' ? JSON.parse(updateFields) : updateFields) || {}
           })
         }
 
