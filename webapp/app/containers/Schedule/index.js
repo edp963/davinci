@@ -151,7 +151,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
             minute = values.hour
             hour = '*'
           }
-          cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
+          cronPatten = `0 ${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
         }
         this.setState({
           emailConfig: emailConfig
