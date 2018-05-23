@@ -151,7 +151,17 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
             minute = values.hour
             hour = '*'
           }
-          cronPatten = `0 ${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'}`   // '0 * * * * ?'
+          if (values.week === undefined && values.month === undefined) {
+            values.month = '*'
+            values.week = '?'
+          }
+          if (values.month && '*?'.indexOf(values.month) < 0 && values.week === undefined) {
+            values.week = '?'
+          }
+          if (values.week && '*?'.indexOf(values.week) < 0 && values.month === undefined) {
+            values.month = '?'
+          }
+          cronPatten = `0 ${minute} ${hour} ${values.month} * ${values.week}`   // '0 * * * * ?'
         }
         this.setState({
           emailConfig: emailConfig
@@ -294,7 +304,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       if (range === 'time') {
       } else {
         this.scheduleForm.setFieldsValue({
-          [range]: ''
+          [range]: undefined
         })
       }
     })
