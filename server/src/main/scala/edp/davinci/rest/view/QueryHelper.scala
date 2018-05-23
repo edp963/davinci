@@ -137,13 +137,13 @@ class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate = Pagi
     */
 
   def getProjectSql(querySql: String): String = {
-    val projectSqlWithFilter = if (filterIsValid) s"SELECT * FROM ($querySql) AS PROFILTER WHERE ${manualInfo.manualFilters.get}" else querySql
+    val projectSqlWithFilter = if (filterIsValid) s"SELECT * FROM ($querySql) PROFILTER WHERE ${manualInfo.manualFilters.get}" else querySql
     val mixinSql = if (adHocIsValid) {
       try {
         val sqlArr = manualInfo.adHoc.get.toLowerCase.split(flatTable)
         val tableName = source.head.result_table
-        if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName` ${sqlArr(1)}"
-        else sqlArr(0) + s" ($projectSqlWithFilter) as `$tableName`"
+        if (sqlArr.size == 2) sqlArr(0) + s" ($projectSqlWithFilter) `$tableName` ${sqlArr(1)}"
+        else sqlArr(0) + s" ($projectSqlWithFilter) `$tableName`"
       } catch {
         case e: Throwable => logger.error("adHoc sql is not in right format", e)
           throw e
@@ -155,7 +155,7 @@ class QueryHelper(session: SessionClass, viewId: Long, paginate: Paginate = Pagi
     val paginateStr = FileUtils.getPageInfo(paginate)
     val sourceConfig = JsonUtils.json2caseClass[SourceConfig](source.head.url)
     if (paginateStr != "" && !QueryHelper.isES(sourceConfig.url))
-      s"SELECT * FROM ($mixinSql) AS PAGINATE $paginateStr"
+      s"SELECT * FROM ($mixinSql) PAGINATE $paginateStr"
     else mixinSql
   }
 
@@ -212,7 +212,8 @@ object QueryHelper extends Directives {
       case e: Throwable => logger.error("get result exception", e)
         throw e
     } finally {
-      if (dbConnection != null) dbConnection.close()
+      if (dbConnection != null)
+        dbConnection.close()
     }
   }
 

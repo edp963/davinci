@@ -244,7 +244,7 @@ object SqlUtils extends Serializable {
 
   def s2dbValue(strType: String, value: String): Any = if (value == null || value == "") null
   else strType.toUpperCase match {
-    case "INT" => value.trim.toInt
+    case "INT" |"TINYINT" => value.trim.toInt
     case "BIGINT" => value.trim.toLong
     case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" | "CHAR" => value.trim
     case "FLOAT" => value.trim.toFloat
