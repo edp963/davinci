@@ -181,6 +181,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         const endDate = values.range && values.range[1] ? values.range[1] : ''
         if (values && values.config) {
           emailConfig['time_range'] = values.time_range
+          emailConfig['minute'] = values.minute
           emailConfig['month'] = values.month
           emailConfig['hour'] = values.hour
           emailConfig['week'] = values.week
@@ -204,7 +205,20 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
             minute = values.hour
             hour = '*'
           }
-          cronPatten = `0 ${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'}`   // '0 * * * * ?'
+          if (values.week === undefined && values.month === undefined) {
+            values.month = '*'
+            values.week = '?'
+          }
+          if (values.month && '*?'.indexOf(values.month) < 0 && values.week === undefined) {
+            values.week = '?'
+          }
+          if (values.week && '*?'.indexOf(values.week) < 0 && values.month === undefined) {
+            values.month = '?'
+          }
+          if (values.minute) {
+            minute = `*/${values.minute}`
+          }
+          cronPatten = `0 ${minute} ${hour} ${values.month} * ${values.week}`   // '0 * * * * ?'
         }
         this.setState({
           emailConfig
@@ -354,7 +368,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         return range
       } else {
         this.scheduleForm.setFieldsValue({
-          [range]: ''
+          [range]: undefined
         })
       }
     })
