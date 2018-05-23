@@ -291,3 +291,8 @@ CREATE TABLE `cron_job` (
  ALTER TABLE `dashboard` ADD COLUMN `linkage_detail` VARCHAR(1000) DEFAULT '[]';
  ALTER TABLE `view` ADD COLUMN `update_sql` text DEFAULT null;
  ALTER TABLE `rel_group_view` ADD COLUMN `config` text DEFAULT null;
+ALTER TABLE `davinci`.`widget`
+CHANGE COLUMN `chart_params` `chart_params` TEXT CHARACTER SET 'utf8' COLLATE 'utf8_unicode_ci' NULL DEFAULT NULL ;
+ALTER TABLE `davinci`.`cron_job`
+CHANGE COLUMN `start_date` `start_date` DATETIME NOT NULL ,
+CHANGE COLUMN `end_date` `end_date` DATETIME NOT NULL ;

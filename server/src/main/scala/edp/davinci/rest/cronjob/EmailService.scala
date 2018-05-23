@@ -62,7 +62,6 @@ object EmailService {
     to.foreach(email.addTo)
     if (emailCronJobConfig.cc.get != "") emailCronJobConfig.cc.get.split(";").foreach(email.addCc)
     if (emailCronJobConfig.bcc.get != "") emailCronJobConfig.bcc.get.split(";").foreach(email.addBcc)
-    to.foreach(email.addTo)
     emailCronJobConfig.contentList.foreach(content => {
       val imgName = UUID.randomUUID() + ".png"
       val imgPath = FileUtils.dir + "/tempFiles/" + imgName
@@ -85,7 +84,7 @@ object EmailService {
     lazy val host = modules.config.getString("httpServer.host")
     lazy val port = modules.config.getInt("httpServer.port")
     val shareInfo = ShareService.getShareURL(userId, contentId, "")
-    val url = s"""http://$host:$port/share/#share?shareInfo=$shareInfo&type=$contentType"""
+    val url = s"""http://$host:$port/share/#/share?shareInfo=$shareInfo&type=$contentType"""
     logger.info(s"content url : $url")
     url
   }
