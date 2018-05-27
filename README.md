@@ -3,7 +3,7 @@ Davinci
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 
-> 来自[宜信](https://www.creditease.cn/)[技术研发中心](http://crdc.creditease.cn/)的可视洞察平台
+> 来自[宜信](https://www.creditease.cn/)[技术研发中心](http://crdc.creditease.cn/)的可视应用平台
 
 **Davinci是一个DVAAS（Data Visualization as a Service）平台解决方案。**
 
