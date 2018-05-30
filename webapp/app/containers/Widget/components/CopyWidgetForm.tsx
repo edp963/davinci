@@ -46,7 +46,7 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'widget'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)

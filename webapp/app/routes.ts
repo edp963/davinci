@@ -19,7 +19,7 @@
  */
 
 // import { getAsyncInjectors } from './utils/asyncInjectors'
-import { Route, RouteProps } from 'react-router'
+import { RouteProps } from 'react-router'
 
 import Report from './containers/Report'
 import Group from './containers/Group'

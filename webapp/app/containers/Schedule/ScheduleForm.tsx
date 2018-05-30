@@ -52,7 +52,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
     const idName = type === 'add' ? '' : id
     const typeName = 'cronjob'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)

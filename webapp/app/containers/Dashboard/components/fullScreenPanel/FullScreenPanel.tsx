@@ -78,7 +78,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       if (this.chartInstance) {
         this.chartInstance.dispose()
       }
-      this.chartInstance = echarts.init(document.getElementById(chartInstanceId), 'default')
+      this.chartInstance = echarts.init(document.getElementById(chartInstanceId) as any, 'default')
       this.renderChart(this.chartInstance, itemId, widget, data.dataSource, chartInfo)
     }
   }

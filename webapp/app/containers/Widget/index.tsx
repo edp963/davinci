@@ -118,7 +118,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  public componentWillReceiveProps (props) {
+  public componentWillReceiveProps () {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 

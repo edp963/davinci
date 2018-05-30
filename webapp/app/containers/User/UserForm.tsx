@@ -68,7 +68,7 @@ export class UserForm extends React.PureComponent<IUserFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'user'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)

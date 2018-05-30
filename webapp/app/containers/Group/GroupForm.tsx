@@ -44,7 +44,7 @@ export class GroupForm extends React.PureComponent<IGroupFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'group'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)
