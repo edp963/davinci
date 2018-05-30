@@ -1,218 +1,184 @@
-/*
- *
- * Display
- *
- */
-
 import * as React from 'react'
-import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
+import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import makeSelectDisplay from './selectors'
-import Draggable from '../../components/Draggable/react-draggable'
+import { Link } from 'react-router'
 
-import DisplayHeader from './components/DisplayHeader'
-import DisplayBody from './components/DisplayBody'
-import DisplayEditor from './components/DisplayEditor'
-import DisplayBottom from './components/DisplayBottom'
-import DisplaySidebar from './components/DisplaySidebar'
+import { compose } from 'redux'
+import reducer from './reducer'
+import reducerWidget from '../Widget/reducer'
+import saga from './sagas'
+import sagaWidget from '../Widget/sagas'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
 
-import SettingForm from './components/SettingForm'
+import Container from '../../components/Container'
+import Editor from './components/Editor'
 
-import { hideNavigator } from '../App/actions'
-import { DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT } from '../../globalConstants'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
+const Modal = require('antd/lib/modal')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const Popconfirm = require('antd/lib/popconfirm')
+const Input = require('antd/lib/input')
+const Pagination = require('antd/lib/pagination')
+
+const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')
 
+import { loadDisplays, deleteDisplay } from './actions'
+import { makeSelectDisplays } from './selectors'
 
 interface IDisplayProps {
-  onHideNavigator: () => void
+  displays: any[]
+  onLoadDisplays: () => void,
+  onDeleteDisplay: (id: any) => void
 }
 
 interface IDisplayStates {
-  editorWidth: number,
-  editorHeight: number,
-  editorPadding: string,
-  scale: number,
-  sliderValue: number,
-  displayWidth: number,
-  displayHeight: number,
-  displayScale: string,
-  gridDistance: number
+  currentDisplay: object,
+  displayVisible: boolean
 }
 
-export class Display extends React.Component<IDisplayProps, IDisplayStates> {
+export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> {
   constructor (props) {
     super(props)
     this.state = {
-      editorWidth: 0,
-      editorHeight: 0,
-      editorPadding: '',
-      scale: 1,
-      sliderValue: 20,
-
-      displayWidth: DEFAULT_DISPLAY_WIDTH,
-      displayHeight: DEFAULT_DISPLAY_HEIGHT,
-      displayScale: 'auto',
-      gridDistance: 10
+      currentDisplay: null,
+      displayVisible: false
     }
   }
 
-  private editor: any
-
-  public componentDidMount () {
-    this.props.onHideNavigator()
-    window.addEventListener('resize', this.containerResize, false)
-    // onHideNavigator 导致页面渲染
-    setTimeout(() => {
-      this.doScale(1)
-    })
+  public componentWillMount () {
+    const {
+      onLoadDisplays
+    } = this.props
+    onLoadDisplays()
   }
 
-  public componentWillUnmount () {
-    window.removeEventListener('resize', this.containerResize, false)
-  }
-
-  private containerResize = () => {
-    this.sliderChange(this.state.sliderValue)
-  }
-
-  private sliderChange = (value) => {
-    this.doScale(value / 40 + 0.5)
+  private showDisplay = (type, display?: any) => () => {
     this.setState({
-      sliderValue: value
+      currentDisplay: display,
+      displayVisible: true
     })
+    console.log('showDisplay: ', type)
   }
 
-  private zoomIn = () => {
-    if (this.state.sliderValue) {
-      this.sliderChange(Math.max(this.state.sliderValue - 10, 0))
-    }
-  }
-
-  private zoomOut = () => {
-    if (this.state.sliderValue !== 100) {
-      this.sliderChange(Math.min(this.state.sliderValue + 10, 100))
-    }
-  }
-
-  private doScale = (times) => {
-    const { displayWidth, displayHeight } = this.state
-    const { offsetWidth, offsetHeight } = this.editor.container
-
-    const editorWidth = Math.max(offsetWidth * times, offsetWidth)
-    const editorHeight = Math.max(offsetHeight * times, offsetHeight)
-
-    const scale = (displayWidth / displayHeight > editorWidth / editorHeight) ?
-      // landscape
-      (editorWidth - 64) / displayWidth * times :
-      // portrait
-      (editorHeight - 64) / displayHeight * times
-
-    const leftRightPadding = Math.max((offsetWidth - displayWidth * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - displayHeight * scale) / 2, 32)
-
+  private hideDisplay = () => {
     this.setState({
-      editorWidth: Math.max(editorWidth, displayWidth * scale + 64),
-      editorHeight: Math.max(editorHeight, displayHeight * scale + 64),
-      editorPadding: `${topBottomPadding}px ${leftRightPadding}px`,
-      scale
+      displayVisible: false
     })
   }
 
-  private displaySizeChange = (width, height) => {
-    this.setState({
-      displayWidth: width,
-      displayHeight: height
-    }, () => {
-      this.sliderChange(this.state.sliderValue)
-    })
+  private stopPPG = (e) => {
+    e.stopPropagation()
   }
 
-  private displayScaleChange = (event) => {
-    this.setState({
-      displayScale: event.target.value
-    })
-  }
-
-  private gridDistanceChange = (distance) => {
-    this.setState({
-      gridDistance: distance
-    })
-  }
-
-  private abc = (e, d) => {
-    console.log(e, d)
+  private onCopy = (display) => (e) => {
+    console.log(e)
   }
 
   public render () {
     const {
-      editorWidth,
-      editorHeight,
-      editorPadding,
-      scale,
-      sliderValue,
-      displayWidth,
-      displayHeight,
-      displayScale,
-      gridDistance
+      displays,
+      onDeleteDisplay
+    } = this.props
+
+    const {
+      currentDisplay,
+      displayVisible
     } = this.state
-    return (
-      <div className={styles.display}>
-        <Helmet
-          title="Display"
-        />
-        <DisplayHeader widgets={[]}/>
-        <DisplayBody>
-          <DisplayEditor
-            key="editor"
-            width={editorWidth}
-            height={editorHeight}
-            padding={editorPadding}
-            scale={scale}
-            displayWidth={displayWidth}
-            displayHeight={displayHeight}
-            ref={(f) => { this.editor = f }}
-          >
-            <Draggable
-              grid={[gridDistance * scale, gridDistance * scale]}
-              bounds="parent"
-              scale={scale}
-              onStop={this.abc}
+
+    const cols = displays.map(((d, index) => {
+      return (
+        <Col
+          xl={4}
+          lg={6}
+          md={8}
+          sm={12}
+          xs={24}
+          key={d.id}
+          onClick={this.showDisplay('edit', d)}
+        >
+          <div className={styles.display}>
+            <h3 className={styles.title}>{d.name}</h3>
+            <p className={styles.content}>{d.desc}</p>
+            <i className={`${styles.pic} iconfont`} />
+            <Tooltip title="复制">
+              <Icon className={styles.copy} type="copy" onClick={this.onCopy(d)} />
+            </Tooltip>
+            <Popconfirm
+              title="确定删除？"
+              placement="bottom"
+              onConfirm={onDeleteDisplay(d.id)}
             >
-              <div style={{width: '192px', height: '192px', border: '1px solid #000'}}/>
-            </Draggable>
-          </DisplayEditor>
-          <DisplayBottom
-            sliderValue={sliderValue}
-            onZoomIn={this.zoomIn}
-            onZoomOut={this.zoomOut}
-            onSliderChange={this.sliderChange}
-          />
-          <DisplaySidebar>
-            <SettingForm
-              screenWidth={displayWidth}
-              screenHeight={displayHeight}
-              scale={displayScale}
-              gridDistance={gridDistance}
-              onDisplaySizeChange={this.displaySizeChange}
-              onDisplayScaleChange={this.displayScaleChange}
-              onGridDistanceChange={this.gridDistanceChange}
-            />
-          </DisplaySidebar>
-        </DisplayBody>
-      </div>
+              <Tooltip title="删除">
+                <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+              </Tooltip>
+            </Popconfirm>
+          </div>
+        </Col>
+      )
+    }))
+
+    return (
+      <Container>
+        <Helmet title="Display" />
+        <Container.Title>
+          <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+              <Breadcrumb className={utilStyles.breadcrumb}>
+                <Breadcrumb.Item>
+                  <Link to="/">
+                    Display
+                  </Link>
+                </Breadcrumb.Item>
+              </Breadcrumb>
+            </Col>
+        </Container.Title>
+        <Container.Body card>
+          <Row gutter={20}>
+            {cols}
+          </Row>
+        </Container.Body>
+        <Modal
+          wrapClassName={`ant-modal-xlarge ${styles.workbenchWrapper}`}
+          visible={displayVisible}
+          onCancel={this.hideDisplay}
+          footer={false}
+          maskClosable={false}
+        >
+          <Editor display={currentDisplay}/>
+        </Modal>
+      </Container>
     )
   }
 }
 
 const mapStateToProps = createStructuredSelector({
-  Display: makeSelectDisplay()
+  displays: makeSelectDisplays()
 })
 
-function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps (dispatch) {
   return {
-    onHideNavigator: () => dispatch(hideNavigator())
+    onLoadDisplays: () => dispatch(loadDisplays()),
+    onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id))
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Display)
+const withReducer = injectReducer({ key: 'display', reducer })
+const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
+
+const withSaga = injectSaga({ key: 'display', saga })
+const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
+
+const withConnect = connect<{}, {}, IDisplayProps>(mapStateToProps, mapDispatchToProps)
+
+export default compose(
+  withReducer,
+  withReducerWidget,
+  withSaga,
+  withSagaWidget,
+  withConnect)(DisplayList)

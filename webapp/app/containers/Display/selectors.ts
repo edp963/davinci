@@ -1,24 +1,71 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 import { createSelector } from 'reselect'
 
-/**
- * Direct selector to the display state domain
- */
-const selectDisplayDomain = () => (state) => state.get('display')
+const selectDisplay = (state) => state.get('display')
 
-/**
- * Other specific selectors
- */
-
-/**
- * Default selector used by Display
- */
-
-const makeSelectDisplay = () => createSelector(
-  selectDisplayDomain(),
-  (substate) => substate.toJS()
+const makeSelectDisplays = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('displays')
 )
 
-export default makeSelectDisplay
+const makeSelectLayers = () => createSelector(
+  selectDisplay,
+  (displayState) =>  displayState.get('editingLayers')
+)
+
+const makeSelectCurrentItems = () => createSelector(
+  selectDisplay,
+  (displayState) =>  displayState.get('currentItems')
+)
+
+const makeSelectCurrentDatasources = () => createSelector(
+  selectDisplay,
+  (displayState) =>  displayState.get('currentDatasources')
+)
+
+const makeSelectCurrentItemsLoading = () => createSelector(
+  selectDisplay,
+  (displayState) =>  displayState.get('currentItemsLoading')
+)
+
+const makeSelectCurrentItemsQueryParams = () => createSelector(
+  selectDisplay,
+  (displayState) =>  displayState.get('currentItemsQueryParams')
+)
+
+const makeSelectLayerStatus = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('layersStatus')
+)
+
 export {
-  selectDisplayDomain
+  selectDisplay,
+  makeSelectDisplays,
+  makeSelectLayers,
+
+  makeSelectCurrentItems,
+  makeSelectCurrentDatasources,
+  makeSelectCurrentItemsLoading,
+  makeSelectCurrentItemsQueryParams,
+
+  makeSelectLayerStatus
 }

@@ -18,23 +18,12 @@
  * >>
  */
 
-import config, { env } from '../globalConfig'
+ import display from './display.json'
+ import rectangle from './rectangle.json'
+ import chart from './chart.json'
 
-const host = config[env].host
-
-export default {
-  login: `${host}/login`,
-  group: `${host}/groups`,
-  user: `${host}/users`,
-  changepwd: `${host}/changepwd`,
-  source: `${host}/sources`,
-  bizlogic: `${host}/flattables`,
-  // bizdata: `${host}/bizdatas`,
-  widget: `${host}/widgets`,
-  dashboard: `${host}/dashboards`,
-  share: `${host}/shares`,
-  checkName: `${host}/check/name`,
-  uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`,
-  display: `http://localhost:3000/displays`
-}
+ export default [
+   display,
+   rectangle,
+   chart
+ ]

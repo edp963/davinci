@@ -8,7 +8,7 @@ interface IDisplaySidebarProps {
 
 export function DisplaySidebar (props: IDisplaySidebarProps) {
   return (
-    <div className={styles.sidebar}>
+    <div className={`${styles.sidebar} ${styles.right}`}>
       {props.children}
     </div>
   )

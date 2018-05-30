@@ -1,0 +1,80 @@
+{
+  "name": "display",
+  "title": "背景设置",
+  "params": [{
+    "name": "displaySize",
+    "title": "屏幕尺寸",
+    "items": [{
+      "name": "width",
+      "title": "宽度（像素）",
+      "component": "inputnumber",
+      "default": 1920,
+      "span": 24
+    }, {
+      "name": "height",
+      "title": "高度（像素）",
+      "component": "inputnumber",
+      "default": 1080,
+      "span": 24
+    }]
+  }, {
+    "name": "background",
+    "title": "背景颜色",
+    "items": [{
+      "name": "backgroundColor",
+      "title": "背景颜色",
+      "component": "colorPicker",
+      "default": "#fff",
+      "span": 12
+    }, {
+      "name": "opacity",
+      "title": "透明度",
+      "component": "inputnumber",
+      "default": 100,
+      "min": 0,
+      "max": 100,
+      "span": 12
+    }]
+  }, {
+    "name": "scale",
+    "title": "缩放",
+    "items": [{
+      "name": "scaleMode",
+      "title": "缩放方式",
+      "component": "radio",
+      "values": [{
+        "name": "自动缩放",
+        "value": "auto"
+      }, {
+        "name": "实际尺寸",
+        "value": "noScale"
+      }],
+      "default": "auto",
+      "span": 24
+    }]
+  }, {
+    "name": "grid",
+    "title": "栅格",
+    "items": [{
+      "name": "gridDistance",
+      "title": "栅格间距",
+      "component": "inputnumber",
+      "default": 10,
+      "span": 24
+    }]
+  }, {
+    "name": "image",
+    "title": "图片",
+    "items": [{
+      "name": "backgroundImage",
+      "title": "背景图片",
+      "component": "upload",
+      "span": 24
+    }, {
+      "name": "coverImage",
+      "title": "截取封面",
+      "component": "upload",
+      "span": 24
+    }]
+  }]
+}

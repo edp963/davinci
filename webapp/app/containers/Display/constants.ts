@@ -1,7 +1,68 @@
 /*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * Display constants
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
  */
 
-export const DEFAULT_ACTION = 'app/Display/DEFAULT_ACTION'
+export enum ActionTypes {
+  LOAD_DISPLAYS = 'davinci/Display/LOAD_DISPLAYS',
+  LOAD_DISPLAYS_SUCCESS = 'davinci/Display/LOAD_DISPLAYS_SUCCESS',
+  LOAD_DISPLAYS_FAILURE = 'davinci/Display/LOAD_DISPLAYS_FAILURE',
+
+  ADD_DISPLAY = 'davinci/Display/ADD_DISPLAY',
+  ADD_DISPLAY_SUCCESS = 'davinci/Display/ADD_DISPLAY_SUCCESS',
+  ADD_DISPLAY_FAILURE = 'davinci/Display/ADD_DISPLAY_FAILURE',
+
+  EDIT_DISPLAY = 'davinci/Display/EDIT_DISPLAY',
+  EDIT_DISPLAY_SUCCESS = 'davinci/Display/EDIT_DISPLAY_SUCCESS',
+  EDIT_DISPLAY_FAILURE = 'davinci/Display/EDIT_DISPLAY_FAILURE',
+
+  DELETE_DISPLAY = 'davinci/Display/DELETE_DISPLAY',
+  DELETE_DISPLAY_SUCCESS = 'davinci/Display/DELETE_DISPLAY_SUCCESS',
+  DELETE_DISPLAY_FAILURE = 'davinci/Display/DELETE_DISPLAY_FAILURE',
+
+  LOAD_DISPLAY_DETAIL = 'davinci/Display/LOAD_DISPLAY_DETAIL',
+  LOAD_DISPLAY_DETAIL_SUCCESS = 'davinci/Display/LOAD_DISPLAY_DETAIL_SUCCESS',
+  LOAD_DISPLAY_DETAIL_FAILURE = 'davinci/Display/LOAD_DISPLAY_DETAIL_FAILURE',
+
+  ADD_DISPLAY_ITEM = 'davinci/Display/ADD_DISPLAY_ITEM',
+  ADD_DISPLAY_ITEM_SUCCESS = 'davinci/Display/ADD_DISPLAY_ITEM_SUCCESS',
+  ADD_DISPLAY_ITEM_FAILURE = 'davinci/Display/ADD_DISPLAY_ITEM_FAILURE',
+
+  EDIT_DISPLAY_ITEM = 'davinci/Display/EDIT_DISPLAY_ITEM',
+  EDIT_DISPLAY_ITEM_SUCCESS = 'davinci/Display/EDIT_DISPLAY_ITEM_SUCCESS',
+  EDIT_DISPLAY_ITEM_FAILURE = 'davinci/Display/EDIT_DISPLAY_ITEM_FAILURE',
+
+  DELETE_DISPLAY_ITEM = 'davinci/Display/DELETE_DISPLAY_ITEM',
+  DELETE_DISPLAY_ITEM_SUCCESS = 'davinci/Display/DELETE_DISPLAY_ITEM_SUCCESS',
+  DELETE_DISPLAY_ITEM_FAILURE = 'davinci/Display/DELETE_DISPLAY_ITEM_FAILURE',
+
+  SELECT_WIDGET_LAYERS = 'davinci/Display/SELECT_WIDGET_LAYERS',
+  ADD_SECONDARY_GRAPH_LAYER = 'davinci/Display/ADD_SECONDARY_GRAPH_LAYER',
+  DELETE_LAYERS = 'davinci/Display/DELETE_LAYERS',
+
+  UPDATE_LAYER_SELECTION_STATUS = 'davinci/Display/UPDATE_LAYER_SELECTION_STATUS'
+}
+
+export enum SecondaryGraphTypes {
+  Rectangle = 'Rectangle'
+}
+
+export enum GraphTypes {
+  Chart = 'Chart',
+  Secondary = 'Secondary'
+}
