@@ -28,6 +28,16 @@ import * as moment from 'moment'
 import { Link } from 'react-router'
 import * as echarts from 'echarts/lib/echarts'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+import reducerWidget from '../Widget/reducer'
+import sagaWidget from '../Widget/sagas'
+import reducerBizlogic from '../Bizlogic/reducer'
+import sagaBizlogic from '../Bizlogic/sagas'
+
 import Container from '../../components/Container'
 import DashboardItemForm from './components/DashboardItemForm'
 import Workbench from '../Widget/components/Workbench'
@@ -2061,17 +2071,17 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
-    onLoadDashboardDetail: (id) => promiseDispatcher(dispatch, loadDashboardDetail, id),
-    onAddDashboardItem: (item) => promiseDispatcher(dispatch, addDashboardItem, item),
+    onLoadDashboards: () => dispatch(loadDashboards()),
+    onLoadDashboardDetail: (id) => dispatch(loadDashboardDetail(id)),
+    onAddDashboardItem: (item) => dispatch(addDashboardItem(item)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items, resolve) => dispatch(editDashboardItems(items, resolve)),
-    onDeleteDashboardItem: (id) => promiseDispatcher(dispatch, deleteDashboardItem, id),
-    onLoadWidgets: () => promiseDispatcher(dispatch, loadWidgets),
-    onLoadBizlogics: () => promiseDispatcher(dispatch, loadBizlogics),
+    onDeleteDashboardItem: (id) => dispatch(deleteDashboardItem(id)),
+    onLoadWidgets: () => dispatch(loadWidgets()),
+    onLoadBizlogics: () => dispatch(loadBizlogics()),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
-    onClearCurrentDashboard: () => promiseDispatcher(dispatch, clearCurrentDashboard),
+    onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
     onLoadCascadeSourceFromDashboard: (controlId, id, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, column, parents)),
@@ -2079,4 +2089,23 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<{}, {}, IGridProps>(mapStateToProps, mapDispatchToProps)(Grid)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+
+const withReducerDashboard = injectReducer({ key: 'dashboard', reducer })
+const withSagaDashboard = injectSaga({ key: 'dashboard', saga })
+
+const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
+const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
+
+const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
+const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+
+export default compose(
+  withReducerDashboard,
+  withReducerWidget,
+  withReducerBizlogic,
+  withSagaDashboard,
+  withSagaWidget,
+  withSagaBizlogic,
+  withConnect
+)(Grid)

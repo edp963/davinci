@@ -61,15 +61,38 @@ import {
   UPDATE_MARK_ERROR
 } from './constants'
 
-import { promiseActionCreator } from '../../utils/reduxPromisation'
+export function loadDashboardDetail (id) {
+  return {
+    type: LOAD_DASHBOARD_DETAIL,
+    payload: {
+      id
+    }
+  }
+}
 
-export const loadDashboardDetail = promiseActionCreator(LOAD_DASHBOARD_DETAIL, ['id'])
+export function addDashboardItem (item) {
+  return {
+    type: ADD_DASHBOARD_ITEM,
+    payload: {
+      item
+    }
+  }
+}
 
-export const addDashboardItem = promiseActionCreator(ADD_DASHBOARD_ITEM, ['item'])
+export function deleteDashboardItem (id) {
+  return {
+    type: DELETE_DASHBOARD_ITEM,
+    payload: {
+      id
+    }
+  }
+}
 
-export const deleteDashboardItem = promiseActionCreator(DELETE_DASHBOARD_ITEM, ['id'])
-
-export const clearCurrentDashboard = promiseActionCreator(CLEAR_CURRENT_DASHBOARD)
+export function clearCurrentDashboard () {
+  return {
+    type: CLEAR_CURRENT_DASHBOARD
+  }
+}
 
 export function loadDashboards () {
   return {

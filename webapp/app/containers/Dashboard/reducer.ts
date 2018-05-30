@@ -87,7 +87,7 @@ function dashboardReducer (state = initialState, action) {
   let queryParams = state.get('currentItemsQueryParams')
   let itemsShareInfo = state.get('currentItemsShareInfo')
   let itemsShareInfoLoading = state.get('currentItemsShareInfoLoading')
-  let itemsSecretInfo = state.get('currentItemsSecretInfo')
+  const itemsSecretInfo = state.get('currentItemsSecretInfo')
   let itemsDownloadCsvLoading = state.get('currentItemsDownloadCsvLoading')
   let itemsCascadeSources = state.get('currentItemsCascadeSources')
 

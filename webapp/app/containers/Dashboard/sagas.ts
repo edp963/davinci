@@ -68,7 +68,6 @@ import {
 import message from 'antd/lib/message'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
@@ -82,10 +81,6 @@ export function* getDashboards () {
     yield put(loadDashboardsFail())
     message.error('获取 Dashboards 失败，请稍后再试')
   }
-}
-
-export function* getDashboardsWatcher () {
-  yield takeLatest(LOAD_DASHBOARDS, getDashboards)
 }
 
 export function* addDashboard (action) {
@@ -105,10 +100,6 @@ export function* addDashboard (action) {
   }
 }
 
-export function* addDashboardWatcher () {
-  yield takeEvery(ADD_DASHBOARD, addDashboard)
-}
-
 export function* editDashboard (action) {
   const { dashboard, resolve } = action.payload
   try {
@@ -123,10 +114,6 @@ export function* editDashboard (action) {
     yield put(editDashboardFail())
     message.error('修改 Dashboard 失败，请稍后再试')
   }
-}
-
-export function* editDashboardWatcher () {
-  yield takeEvery(EDIT_DASHBOARD, editDashboard)
 }
 
 export function* editCurrentDashboard (action) {
@@ -145,10 +132,6 @@ export function* editCurrentDashboard (action) {
   }
 }
 
-export function* editCurrentDashboardWatcher () {
-  yield takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard)
-}
-
 export function* deleteDashboard (action) {
   const { id } = action.payload
   try {
@@ -163,44 +146,30 @@ export function* deleteDashboard (action) {
   }
 }
 
-export function* deleteDashboardWatcher () {
-  yield takeEvery(DELETE_DASHBOARD, deleteDashboard)
-}
-
-export const getDashboardDetail = promiseSagaCreator(
-  function* (payload) {
+export function* getDashboardDetail ({ payload }) {
+  try {
     const asyncData = yield call(request, `${api.dashboard}/${payload.id}`)
     const dashboard = readListAdapter(asyncData) // FIXME 返回格式不标准
     yield put(dashboardDetailLoaded(dashboard))
     return dashboard
-  },
-  function (err) {
+  } catch (err) {
     console.log('getDashboardDetail', err)
   }
-)
-
-export function* getDashboardDetailWatcher () {
-  yield takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail)
 }
 
-export const addDashboardItem = promiseSagaCreator(
-  function* ({ item }) {
+export function* addDashboardItem ({ payload }) {
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.dashboard}/widgets`,
-      data: writeAdapter(item)
+      data: writeAdapter(payload.item)
     })
     const result = readObjectAdapter(asyncData)
     yield put(dashboardItemAdded(result))
     return result
-  },
-  function (err) {
+  } catch (err) {
     console.log('addDashboardItem', err)
   }
-)
-
-export function* addDashboardItemWatcher () {
-  yield takeEvery(ADD_DASHBOARD_ITEM, addDashboardItem)
 }
 
 export function* editDashboardItem (action) {
@@ -216,10 +185,6 @@ export function* editDashboardItem (action) {
   } catch (err) {
     console.log('editDashboardItem', err)
   }
-}
-
-export function* editDashboardItemWatcher () {
-  yield takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem)
 }
 
 export function* editDashboardItems (action) {
@@ -239,25 +204,16 @@ export function* editDashboardItems (action) {
   }
 }
 
-export function* editDashboardItemsWatcher () {
-  yield takeEvery(EDIT_DASHBOARD_ITEMS, editDashboardItems)
-}
-
-export const deleteDashboardItem = promiseSagaCreator(
-  function* ({ id }) {
+export function* deleteDashboardItem ({ payload }) {
+  try {
     yield call(request, {
       method: 'delete',
-      url: `${api.dashboard}/widgets/${id}`
+      url: `${api.dashboard}/widgets/${payload.id}`
     })
-    yield put(dashboardItemDeleted(id))
-  },
-  function (err) {
+    yield put(dashboardItemDeleted(payload.id))
+  } catch (err) {
     console.log('deleteDashboardItem', err)
   }
-)
-
-export function* deleteDashboardItemWatcher () {
-  yield takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem)
 }
 
 export function* getDashboardShareLink (action) {
@@ -280,10 +236,6 @@ export function* getDashboardShareLink (action) {
   }
 }
 
-export function* getDashboardShareLinkWatcher () {
-  yield takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink)
-}
-
 export function* getWidgetShareLink (action) {
   const { id, authName, itemId } = action.payload
   try {
@@ -302,10 +254,6 @@ export function* getWidgetShareLink (action) {
     yield put(loadWidgetShareLinkFail(itemId))
     message.error('获取 Widget 分享链接失败，请稍后再试')
   }
-}
-
-export function* getWidgetShareLinkWatcher () {
-  yield takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink)
 }
 
 export function* getWidgetCsv (action) {
@@ -332,10 +280,6 @@ export function* getWidgetCsv (action) {
   }
 }
 
-export function* getWidgetCsvWatcher () {
-  yield takeLatest(LOAD_WIDGET_CSV, getWidgetCsv)
-}
-
 export function* updateMarkRepos (action) {
   const {id, params, resolve, reject} = action.payload
   try {
@@ -351,23 +295,21 @@ export function* updateMarkRepos (action) {
   }
 }
 
-export function* updateMarkRepoWatcher () {
-  yield takeLatest(UPDAATE_MARK, updateMarkRepos)
+export default function* rootDashboardSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_DASHBOARDS, getDashboards),
+    takeEvery(ADD_DASHBOARD, addDashboard),
+    takeEvery(EDIT_DASHBOARD, editDashboard),
+    takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
+    takeEvery(DELETE_DASHBOARD, deleteDashboard),
+    takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail as any),
+    takeEvery(ADD_DASHBOARD_ITEM, addDashboardItem as any),
+    takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem),
+    takeEvery(EDIT_DASHBOARD_ITEMS, editDashboardItems),
+    takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem as any),
+    takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
+    takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
+    takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
+    takeLatest(UPDAATE_MARK, updateMarkRepos)
+  ]
 }
-
-export default [
-  getDashboardsWatcher,
-  addDashboardWatcher,
-  editDashboardWatcher,
-  editCurrentDashboardWatcher,
-  deleteDashboardWatcher,
-  getDashboardDetailWatcher,
-  addDashboardItemWatcher,
-  editDashboardItemWatcher,
-  editDashboardItemsWatcher,
-  deleteDashboardItemWatcher,
-  getDashboardShareLinkWatcher,
-  getWidgetShareLinkWatcher,
-  getWidgetCsvWatcher,
-  updateMarkRepoWatcher
-]
