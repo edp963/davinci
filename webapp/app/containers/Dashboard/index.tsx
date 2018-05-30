@@ -25,6 +25,12 @@ import { createStructuredSelector } from 'reselect'
 import { Link, InjectedRouter } from 'react-router'
 import * as classnames from 'classnames'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
@@ -384,4 +390,13 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Dashboard)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+
+const withReducer = injectReducer({ key: 'dashboard', reducer })
+const withSaga = injectSaga({ key: 'dashboard', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Dashboard)
