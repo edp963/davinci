@@ -37,6 +37,11 @@ const makeSelectLoginLoading = () => createSelector(
   (globalState) => globalState.get('loginLoading')
 )
 
+const makeSelectSignupLoading = () => createSelector(
+  selectGlobal,
+  (globalState) => globalState.get('signupLoading')
+)
+
 const makeSelectNavigator = () => createSelector(
   selectGlobal,
   (globalState) => globalState.get('navigator')
@@ -64,5 +69,6 @@ export {
   makeSelectLoginUser,
   makeSelectLoginLoading,
   makeSelectNavigator,
-  makeSelectLocationState
+  makeSelectLocationState,
+  makeSelectSignupLoading
 }

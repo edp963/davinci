@@ -28,7 +28,10 @@ import {
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
-  CHECK_NAME
+  CHECK_NAME,
+  SIGNUP,
+  SIGNUP_SUCCESS,
+  SIGNUP_ERROR
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -60,6 +63,29 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function signup (username, password, resolve) {
+  return {
+    type: SIGNUP,
+    payload: {
+      username,
+      password,
+      resolve
+    }
+  }
+}
+
+export function signupSuccess () {
+  return {
+    type: SIGNUP_SUCCESS
+  }
+}
+
+export function signupError () {
+  return {
+    type: SIGNUP_ERROR
   }
 }
 

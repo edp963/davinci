@@ -29,6 +29,7 @@ import Bizlogic from './containers/Bizlogic'
 import Widget from './containers/Widget'
 import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
+import Register from './containers/Register'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
@@ -55,6 +56,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
     {
       path: '/login',
       component: Login
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: Register
     },
     {
       component: Main,

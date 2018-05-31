@@ -35,5 +35,6 @@ export default {
   share: `${host}/shares`,
   checkName: `${host}/check/name`,
   uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`
+  schedule: `${host}/cronjobs`,
+  signup: `${host}/signup`
 }
