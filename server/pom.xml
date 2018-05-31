@@ -177,31 +177,31 @@
         </dependency>
         <!-- redis-->
         <!--<dependency>-->
-        <!--<groupId>org.apache.hive</groupId>-->
-        <!--<artifactId>hive-jdbc</artifactId>-->
-        <!--<version>1.2.1000.2.6.1.0-129</version>-->
-        <!--<exclusions>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.apache.logging.log4j</groupId>-->
-        <!--<artifactId>log4j-slf4j-impl</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.apache.logging.log4j</groupId>-->
-        <!--<artifactId>log4j-1.2-api</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.apache.logging.log4j</groupId>-->
-        <!--<artifactId>log4j-core</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.apache.logging.log4j</groupId>-->
-        <!--<artifactId>log4j-api</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-        <!--<groupId>org.apache.logging.log4j</groupId>-->
-        <!--<artifactId>log4j-web</artifactId>-->
-        <!--</exclusion>-->
-        <!--</exclusions>-->
+            <!--<groupId>org.apache.hive</groupId>-->
+            <!--<artifactId>hive-jdbc</artifactId>-->
+            <!--<version>1.2.1000.2.6.1.0-129</version>-->
+            <!--<exclusions>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.logging.log4j</groupId>-->
+                    <!--<artifactId>log4j-slf4j-impl</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.logging.log4j</groupId>-->
+                    <!--<artifactId>log4j-1.2-api</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.logging.log4j</groupId>-->
+                    <!--<artifactId>log4j-core</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.logging.log4j</groupId>-->
+                    <!--<artifactId>log4j-api</artifactId>-->
+                <!--</exclusion>-->
+                <!--<exclusion>-->
+                    <!--<groupId>org.apache.logging.log4j</groupId>-->
+                    <!--<artifactId>log4j-web</artifactId>-->
+                <!--</exclusion>-->
+            <!--</exclusions>-->
         <!--</dependency>-->
 
 
@@ -215,6 +215,12 @@
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.43</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.3</version>
         </dependency>
 
         <dependency>
@@ -232,6 +238,13 @@
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
             <version>${elasticsearch-sql.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>ru.yandex.clickhouse</groupId>
+            <artifactId>clickhouse-jdbc</artifactId>
+            <version>0.1.39</version>
         </dependency>
 
         <dependency>
@@ -263,22 +276,22 @@
 
 
     <!--<build>-->
-    <!--<plugins>-->
-    <!--<plugin>-->
-    <!--<groupId>org.apache.maven.plugins</groupId>-->
-    <!--<artifactId>maven-jar-plugin</artifactId>-->
-    <!--<version>2.6</version>-->
-    <!--<configuration>-->
-    <!--<archive>-->
-    <!--<manifest>-->
-    <!--<addClasspath>true</addClasspath>-->
-    <!--<classpathPrefix>${project.parent.basedir}/lib/</classpathPrefix>-->
-    <!--<mainClass>edp.davinci.DavinciStarter</mainClass>-->
-    <!--</manifest>-->
-    <!--</archive>-->
-    <!--</configuration>-->
-    <!--</plugin>-->
-    <!--</plugins>-->
+        <!--<plugins>-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<addClasspath>true</addClasspath>-->
+                            <!--<classpathPrefix>${project.parent.basedir}/lib/</classpathPrefix>-->
+                            <!--<mainClass>edp.davinci.DavinciStarter</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+        <!--</plugins>-->
     <!--</build>-->
 
 </project>
