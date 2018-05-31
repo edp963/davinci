@@ -105,11 +105,20 @@ export class Workbench extends React.Component {
         const params = JSON.parse(widget.chart_params)
 
         if (widget && widget.config) {
-          let updateParams = JSON.parse(widget.config)['update_params']
-          let updateFields = JSON.parse(widget.config)['update_fields']
-          this.state.updateParams = updateParams ? JSON.parse(updateParams) : []
-          this.state.updateFields = updateFields ? JSON.parse(updateFields) : {}
-          this.state.updateConfig = updateFields ? JSON.parse(updateFields) : {}
+          let config = JSON.parse(widget.config)
+          let updateParams
+          let updateConfig
+          // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
+          updateParams = typeof config['update_params'] === 'string'
+            ? JSON.parse(config['update_params'])
+            : config['update_params']
+          updateConfig = typeof config['update_fields'] === 'string'
+            ? JSON.parse(config['update_fields'])
+            : config['update_fields']
+
+          this.state.updateParams = updateParams
+          this.state.updateFields = updateConfig
+          this.state.updateConfig = updateConfig
         }
 
         delete params.widgetName

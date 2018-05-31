@@ -19,8 +19,6 @@
  */
 
 import React, { PropTypes } from 'react'
-import {connect} from 'react-redux'
-import {checkNameAction} from '../App/actions'
 import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -140,7 +138,9 @@ export class ConfigForm extends React.PureComponent {
           </Col>
         </Row>
         <Row>
-          <div className="ant-col-2 ant-form-item-label"><label className="" title="发送项">发送项</label></div>
+          <div className="ant-col-2 ant-form-item-label">
+            <label className="" title="发送项">发送项</label>
+          </div>
           <Col span={21}>
             <TreeSelect {...treeSelectProps} />
           </Col>

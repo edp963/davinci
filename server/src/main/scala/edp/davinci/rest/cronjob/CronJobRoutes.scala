@@ -192,6 +192,7 @@ class CronJobRoutes(modules: ConfigurationModule with PersistenceModule with Bus
                 complete(OK, ResponseSeqJson[CronJob](getHeader(200, session), Seq(refreshStatusJob)))
               } catch {
                 case ex: Throwable =>
+                  logger.error("start job route ",ex)
                   Await.result(updateCronJobStatus(job.id, FAILED, ResponseUtils.currentTime, ex.getStackTrace.toString), new FiniteDuration(30, SECONDS))
                   complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, session), ""))
               }
