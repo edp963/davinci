@@ -103,6 +103,9 @@ object SqlUtils extends Serializable {
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
+    } else if (tmpJdbcUrl.indexOf("clickhouse") > -1) {
+      println("clickhouse")
+      config.setDriverClassName("ru.yandex.clickhouse.ClickHouseDriver")
     } else if (tmpJdbcUrl.indexOf("kylin") > -1) {
       println("kylin")
       config.setDriverClassName("org.apache.kylin.jdbc.Driver")

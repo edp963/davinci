@@ -240,6 +240,13 @@
             <version>${elasticsearch-sql.version}</version>
         </dependency>
 
+
+        <dependency>
+            <groupId>ru.yandex.clickhouse</groupId>
+            <artifactId>clickhouse-jdbc</artifactId>
+            <version>0.1.39</version>
+        </dependency>
+
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
@@ -269,22 +276,22 @@
 
 
     <!--<build>-->
-    <!--<plugins>-->
-    <!--<plugin>-->
-    <!--<groupId>org.apache.maven.plugins</groupId>-->
-    <!--<artifactId>maven-jar-plugin</artifactId>-->
-    <!--<version>2.6</version>-->
-    <!--<configuration>-->
-    <!--<archive>-->
-    <!--<manifest>-->
-    <!--<addClasspath>true</addClasspath>-->
-    <!--<classpathPrefix>${project.parent.basedir}/lib/</classpathPrefix>-->
-    <!--<mainClass>edp.davinci.DavinciStarter</mainClass>-->
-    <!--</manifest>-->
-    <!--</archive>-->
-    <!--</configuration>-->
-    <!--</plugin>-->
-    <!--</plugins>-->
+        <!--<plugins>-->
+            <!--<plugin>-->
+                <!--<groupId>org.apache.maven.plugins</groupId>-->
+                <!--<artifactId>maven-jar-plugin</artifactId>-->
+                <!--<version>2.6</version>-->
+                <!--<configuration>-->
+                    <!--<archive>-->
+                        <!--<manifest>-->
+                            <!--<addClasspath>true</addClasspath>-->
+                            <!--<classpathPrefix>${project.parent.basedir}/lib/</classpathPrefix>-->
+                            <!--<mainClass>edp.davinci.DavinciStarter</mainClass>-->
+                        <!--</manifest>-->
+                    <!--</archive>-->
+                <!--</configuration>-->
+            <!--</plugin>-->
+        <!--</plugins>-->
     <!--</build>-->
 
 </project>
