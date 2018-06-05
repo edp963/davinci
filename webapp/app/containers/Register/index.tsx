@@ -25,7 +25,8 @@ import { createStructuredSelector } from 'reselect'
 
 import Background from '../Login/Background'
 const Icon = require('antd/lib/icon')
-import RegisterForm from '../Register/RegisterForm'
+import RegisterForm from './RegisterForm'
+import SendEmailTips from './SendEmailTips'
 // import checkLogin from '../../utils/checkLogin'
 // import { setToken } from '../../utils/request'
 const styles = require('../Login/Login.less')
@@ -39,6 +40,7 @@ interface IRegisterProps {
 }
 
 interface IRegisterStates {
+  step: string
   username: string
   password: string
   password2: string
@@ -49,6 +51,7 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
   constructor (props) {
     super(props)
     this.state = {
+      step: 'first',
       username: '',
       password: '',
       password2: ''
@@ -73,25 +76,29 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
     })
   }
 
+  // public signUp = () => {
+  //   const { onSignup } = this.props
+  //   const { username, password} = this.state
+  //   if (username && password) {
+  //     onSignup(username, password, (res) => {
+  //       console.log(res)
+         // this.props.router.replace('/activate')
+  //     })
+  //   }
+  // }
+
   public signUp = () => {
-    const { onSignup } = this.props
-    const { username, password} = this.state
-    if (username && password) {
-      onSignup(username, password, (res) => {
-        console.log(res)
-        // this.props.router.replace('/activate')
-      })
-    }
+    this.setState({
+      step: 'second'
+    })
   }
 
+
   public render () {
-    const signupLoading = true
+    const signupLoading = false
+    const { step, username } = this.state
     const { onCheckName } = this.props
-    return (
-      <div className={styles.login}>
-        <Helmet title="Register" />
-        <Background />
-        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
+    const firstStep = (
         <div className={styles.window}>
           <RegisterForm
             username={this.state.username}
@@ -115,6 +122,23 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
             注册
           </button>
         </div>
+      )
+    const secondStep = (
+        <div className={styles.window}>
+            <SendEmailTips
+              username={username}
+            />
+        </div>
+      )
+
+    return (
+      <div className={styles.login}>
+        <Helmet title="Register" />
+        <Background />
+        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
+        {
+          step === 'first' ? firstStep : secondStep
+        }
       </div>
     )
   }

@@ -25,7 +25,8 @@ import { Link } from 'react-router'
 import classnames from 'classnames'
 
 import Icon from 'antd/lib/icon'
-
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 import { makeSelectLoginUser } from '../../containers/App/selectors'
 
 import styles from './Navigator.less'
@@ -35,6 +36,20 @@ export function Navigator (props) {
     [styles.header]: true,
     [styles.hide]: !props.show
   })
+  const menu = (
+    <Menu>
+      <Menu.Item key="0">
+        <a href="JavaScript:;">用户设置</a>
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="3">
+        <a href="javascript:;" onClick={props.onLogout}>
+          退出登陆
+        </a>
+      </Menu.Item>
+    </Menu>
+  )
+
   return (
     <nav className={headerClass}>
       <div className={styles.logoPc}>
@@ -57,7 +72,12 @@ export function Navigator (props) {
           <p>{props.loginUser.email}</p>
         </li>
         <li>
-          <Icon type="logout" onClick={props.onLogout} />
+          <Icon type="github" />  
+        </li>  
+        <li>
+          <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+            <Icon type="user" />
+          </Dropdown>
         </li>
       </ul>
     </nav>
