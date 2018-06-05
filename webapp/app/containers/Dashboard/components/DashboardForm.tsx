@@ -24,7 +24,7 @@ const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio')
+const Radio = require('antd/lib/radio/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 import { checkNameAction } from '../../App/actions'
