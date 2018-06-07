@@ -82,7 +82,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'widget'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)
@@ -350,7 +350,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
           <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
             <div className={styles.unitContent}>
               {
-                updateInfo.map((info, index) => (
+                updateInfo.map((info) => (
                   <Row key={info} style={{marginBottom: '8px'}}>
                     <Col span={9}>
                       {info}

@@ -19,7 +19,7 @@
  */
 
 import { takeLatest, throttle } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
 import { LOGIN, GET_LOGIN_USER, CHECK_NAME } from './constants'

@@ -20,8 +20,8 @@ import reducer from './reducer'
 import saga from './sagas'
 import widgetReducer from '../Widget/reducer'
 import widgetSaga from '../Widget/sagas'
-import dashboardReducer from '../Dashboard/reducer'
-import dashboardSaga from '../Dashboard/sagas'
+// import dashboardReducer from '../Dashboard/reducer'
+// import dashboardSaga from '../Dashboard/sagas'
 
 import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
@@ -399,8 +399,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       formVisible,
       configVisible,
       dashboardTree,
-      dashboardTreeValue,
-      screenWidth
+      dashboardTreeValue
+      // screenWidth
     } = this.state
     const {
       onDeleteSchedule,

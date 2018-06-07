@@ -19,7 +19,7 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, put } from 'redux-saga/effects'
 import {
   LOAD_BIZLOGICS,
   ADD_BIZLOGIC,
@@ -63,11 +63,11 @@ import {
 const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { promiseSagaCreator } from '../../utils/reduxPromisation'
+// import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import resultsetConverter from '../../utils/resultsetConverter'
-import messages from '../Display/messages'
-import { resolve } from 'path'
+// import messages from '../Display/messages'
+// import { resolve } from 'path'
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object

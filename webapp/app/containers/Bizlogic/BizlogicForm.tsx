@@ -75,7 +75,7 @@ export class BizlogicForm extends React.Component<IBizlogicFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'view'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)
@@ -287,7 +287,7 @@ export class BizlogicForm extends React.Component<IBizlogicFormProps, {}> {
       </Form>
     )
   }
-  public componentDidUpdate (prevProps) {
+  public componentDidUpdate () {
     const {onCodeMirrorChange} = this.props
     const queryTextarea = document.querySelector('#sql_tmpl')
     const updateTextarea = document.querySelector('#update_sql')

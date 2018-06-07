@@ -56,7 +56,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
     const idName = type === 'add' ? '' : id
     const typeName = 'source'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)

@@ -22,7 +22,7 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+// import { Link } from 'react-router'
 
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
