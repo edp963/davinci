@@ -214,11 +214,12 @@ export function deleteDashboardFail () {
   }
 }
 
-export function dashboardDetailLoaded (dashboard) {
+export function dashboardDetailLoaded (dashboard, widgets) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
-      dashboard
+      dashboard,
+      widgets
     }
   }
 }

@@ -23,27 +23,21 @@ import * as classnames from 'classnames'
 
 const styles = require('./Container.less')
 
-import Title from './Title'
-import Body from './Body'
-
 interface IContainerProps {
   grid?: boolean
   card?: boolean
-  children: React.ReactNode
+  children: React.ReactNode,
+  align?: any
 }
 
-export class Container extends React.Component<IContainerProps, {}> {
-  public static Title = Title
-
-  public static Body = Body
-
+export class Title extends React.Component<IContainerProps, {}> {
   public render () {
     return (
-      <div className={styles.container}>
+      <div className={styles.title}>
         {this.props.children}
       </div>
     )
   }
 }
 
-export default Container
+export default Title
