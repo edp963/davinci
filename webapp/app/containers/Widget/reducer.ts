@@ -34,6 +34,7 @@ import {
   LOAD_WIDGETS_FAILURE,
   ADD_WIDGET_FAILURE
 } from './constants'
+import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import {
   LOAD_BIZDATAS,
   LOAD_BIZDATAS_SUCCESS,
@@ -105,6 +106,8 @@ function widgetReducer (state = initialState, action) {
       return state.set('bizdatasLoading', false)
     case CLEAR_BIZDATAS:
       return state.set('bizdatas', false)
+    case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      return state.set('widgets', payload.widgets)
     default:
       return state
   }

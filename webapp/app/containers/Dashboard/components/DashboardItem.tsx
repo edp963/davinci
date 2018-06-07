@@ -60,6 +60,7 @@ interface IDashboardItemProps {
   isInteractive: boolean
   interactId: string
   cascadeSources: any
+  rendered: boolean
   onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
   onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
   onShowEdit: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
@@ -106,9 +107,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = this.props
 
-    onGetChartData('rerender', itemId, widget.id)
+    // onGetChartData('rerender', itemId, widget.id)
 
-    this.setFrequent(this.props)
+    // this.setFrequent(this.props)
   }
 
   public componentWillUpdate (nextProps) {
@@ -118,9 +119,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       data,
       chartInfo,
       triggerType,
-      onRenderChart
+      onRenderChart,
+      rendered
     } = nextProps
-    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER) {
+
+    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER && rendered) {
+      console.log('rendered', rendered)
       onRenderChart(itemId, widget, data.dataSource, chartInfo)
     }
 
