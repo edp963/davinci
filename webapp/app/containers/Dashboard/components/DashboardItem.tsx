@@ -124,7 +124,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     } = nextProps
 
     if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER && rendered) {
-      console.log('rendered', rendered)
       onRenderChart(itemId, widget, data.dataSource, chartInfo)
     }
 

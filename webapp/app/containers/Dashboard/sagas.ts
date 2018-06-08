@@ -60,9 +60,7 @@ import {
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
   widgetCsvLoaded,
-  loadWidgetCsvFail,
-  updateMarkSuccess,
-  updateMarkError
+  loadWidgetCsvFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -160,15 +158,17 @@ export function* getDashboardDetail ({ payload }) {
   }
 }
 
-export function* addDashboardItem ({ payload }) {
+export function* addDashboardItem (action) {
+  const { item, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.dashboard}/widgets`,
-      data: writeAdapter(payload.item)
+      data: writeAdapter(item)
     })
     const result = readObjectAdapter(asyncData)
     yield put(dashboardItemAdded(result))
+    resolve(result)
   } catch (err) {
     console.log('addDashboardItem', err)
   }
@@ -206,13 +206,15 @@ export function* editDashboardItems (action) {
   }
 }
 
-export function* deleteDashboardItem ({ payload }) {
+export function* deleteDashboardItem (action) {
+  const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.dashboard}/widgets/${payload.id}`
+      url: `${api.dashboard}/widgets/${id}`
     })
-    yield put(dashboardItemDeleted(payload.id))
+    yield put(dashboardItemDeleted(id))
+    resolve()
   } catch (err) {
     console.log('deleteDashboardItem', err)
   }

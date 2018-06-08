@@ -26,6 +26,8 @@ export const DEFAULT_SECONDARY_COLOR = '#223151'
 export const ADMIN_GRID_BREAKPOINTS = { lg: 1136, md: 932, sm: 704, xs: 416, xxs: 0 }
 export const USER_GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }
 export const GRID_COLS = { lg: 12, md: 12, sm: 12, xs: 2, xxs: 2 }
+export const GRID_ITEM_MARGIN = 16
+export const GRID_ROW_HEIGHT = 30
 
 export const TABLE_HEADER_HEIGHT = 50
 export const TABLE_PAGINATION_HEIGHT = 61
