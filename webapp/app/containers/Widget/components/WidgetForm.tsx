@@ -40,7 +40,7 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { iconMapping } from './chartUtil'
-import { KEY_COLUMN } from '../../../globalConstants'
+import { KEY_COLUMN, DEFAULT_SPLITER } from '../../../globalConstants'
 
 const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Widget.less')
@@ -55,7 +55,6 @@ interface IWidgetFormProps {
   queryParams: any[],
   updateInfo: any,
   updateParams: any[],
-  // updateFields: any,
   segmentControlActiveIndex: number,
   queryInfo: any,
   updateConfig: object,
@@ -122,9 +121,8 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
       <Option key={w.id} value={`${w.id}`}>
         {w.title}
         {`${w.id}` !== form.getFieldValue('widgetlib_id')
-            ? (
-              <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-          ) : ''}
+            ? (<i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />)
+            : ''}
       </Option>
     ))
 
@@ -208,14 +206,15 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
     if (chartInfo) {
       chartConfigElements = chartInfo.params.map((info) => {
         const formItems = info.items.map((item) => {
+          const uniqueName = `${chartInfo.name}${DEFAULT_SPLITER}${item.name}`
           let formItem: any = ''
 
           switch (item.component) {
             case 'select':
               formItem = (
-                <Col key={item.name} span={item.span || 24}>
+                <Col key={uniqueName} span={item.span || 24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || undefined
                     })(
                       <Select
@@ -240,9 +239,9 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
               break
             case 'multiSelect':
               formItem = (
-                <Col key={item.name} span={24}>
+                <Col key={uniqueName} span={24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {})(
+                    {getFieldDecorator(uniqueName, {})(
                       <Select
                         placeholder={item.tip || item.placeholder || item.name}
                         mode="multiple"
@@ -257,9 +256,9 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
               break
             case 'checkbox':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label="">
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || []
                     })(
                       <CheckboxGroup
@@ -273,9 +272,9 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
               break
             case 'inputnumber':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || 0
                     })(
                       <InputNumber
@@ -291,9 +290,9 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
               break
             case 'input':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: ''
                     })(
                       <Input
@@ -307,9 +306,9 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
               break
             case 'radio':
               formItem = (
-                <Col key={item.name} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(item.name, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || ''
                     })(
                       <RadioGroup
@@ -358,7 +357,6 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
                     <Col span={15}>
                       <Select
                         placeholder="关联变量"
-                        //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
                         onChange={onMarkFieldsOptionsChange.bind(this, info)}
                       >
                         {
