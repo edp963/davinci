@@ -100,18 +100,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.initControlCascadeSource(this.props)
   }
 
-  public componentDidMount () {
-    const {
-      itemId,
-      widget,
-      onGetChartData
-    } = this.props
-
-    // onGetChartData('rerender', itemId, widget.id)
-
-    // this.setFrequent(this.props)
-  }
-
   public componentWillUpdate (nextProps) {
     const {
       itemId,
@@ -119,9 +107,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       data,
       chartInfo,
       triggerType,
+      onGetChartData,
       onRenderChart,
       rendered
     } = nextProps
+
+    if (!this.props.rendered && rendered) {
+      onGetChartData('rerender', itemId, widget.id)
+      this.setFrequent(this.props)
+    }
 
     if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER && rendered) {
       onRenderChart(itemId, widget, data.dataSource, chartInfo)
@@ -149,12 +143,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onGetChartData
     } = props
 
+    clearInterval(this.frequent)
+
     if (triggerType === 'frequent') {
       this.frequent = setInterval(() => {
         onGetChartData('dynamic', itemId, widget.id)
       }, Number(triggerParams) * 1000)
-    } else {
-      clearInterval(this.frequent)
     }
   }
 

@@ -472,18 +472,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (!this.containerBodyScrollThrottle) {
       requestAnimationFrame(() => {
         const { currentItemsRendered, modifiedPositions } = this.state
-        const { currentItems } = this.props
 
         const waitingItems = Object.entries(currentItemsRendered).filter(([id, rendered]) => !rendered)
 
         if (waitingItems.length) {
           waitingItems.forEach(([id]) => {
-            const currentItem = currentItems.find((k) => k.id === Number(id))
             const itemTop = this.calcItemTop(modifiedPositions.find((mp) => mp.i === id).y)
             const { offsetHeight, scrollTop } = this.containerBody
 
             if (itemTop - scrollTop < offsetHeight) {
-              this.getChartData('rerender', Number(id), currentItem.widget_id)
               currentItemsRendered[id] = true
             }
           })
