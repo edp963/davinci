@@ -505,6 +505,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsQueryParams,
       onLoadBizdatasFromItem
     } = this.props
+    const { currentItemsRendered } = this.state
+    if (!currentItemsRendered[itemId]) {
+      return
+    }
+
     const widget = widgets.find((w) => w.id === widgetId)
     const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     const chartInstanceId = `widget_${itemId}`
