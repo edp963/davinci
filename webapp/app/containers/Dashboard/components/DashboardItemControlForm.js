@@ -216,7 +216,9 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             format: 'YYYY-MM-DD'
           }
-        const dateProperties = Object.assign({}, dateFormat)
+        const dateProperties = Object.assign({
+          placeholder: c.variables[0]
+        }, dateFormat)
 
         return (
           <Col
@@ -240,7 +242,7 @@ export class DashboardItemControlForm extends PureComponent {
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
-                <MultiDatePicker />
+                <MultiDatePicker placeholder={c.variables[0]} />
               )}
             </FormItem>
           </Col>
@@ -256,7 +258,7 @@ export class DashboardItemControlForm extends PureComponent {
             format: 'YYYY-MM-DD'
           }
         const rangeProperties = Object.assign({
-          placeholder: c.variables[0]
+          placeholder: c.variables
         }, rangeFormat)
 
         return (
@@ -336,37 +338,37 @@ export class DashboardItemControlForm extends PureComponent {
       valControl.type = valControl.variableType || valControl.type
 
       if (Object.prototype.toString.call(val) === '[object Array]') {
-        switch (valControl.type) {
-          case 'dateRange':
-            val = val.map(v => v.format('YYYY-MM-DD'))
-            arr = arr.concat({
-              k: valControl.variables[0],
-              v: `'${val[0]}'`
-            }).concat({
-              k: valControl.variables[1],
-              v: `'${val[1]}'`
-            })
-            break
-          case 'datetimeRange':
-            val = val.map(v => v.format('YYYY-MM-DD HH:mm:ss'))
-            arr = arr.concat({
-              k: valControl.variables[0],
-              v: `'${val[0]}'`
-            }).concat({
-              k: valControl.variables[1],
-              v: `'${val[1]}'`
-            })
-            break
-          case 'multiSelect':
-            val.forEach(v => {
+        if (val.length) {
+          switch (valControl.type) {
+            case 'dateRange':
+              val = val.map(v => v.format('YYYY-MM-DD'))
               arr = arr.concat({
                 k: valControl.variables[0],
-                v: `${v}`
+                v: `'${val[0]}'`
+              }).concat({
+                k: valControl.variables[1],
+                v: `'${val[1]}'`
               })
-            })
-            break
-          default:
-            break
+              break
+            case 'datetimeRange':
+              val = val.map(v => v.format('YYYY-MM-DD HH:mm:ss'))
+              arr = arr.concat({
+                k: valControl.variables[0],
+                v: `'${val[0]}'`
+              }).concat({
+                k: valControl.variables[1],
+                v: `'${val[1]}'`
+              })
+              break
+            case 'multiSelect':
+              arr = arr.concat({
+                k: valControl.variables[0],
+                v: val.join(',')
+              })
+              break
+            default:
+              break
+          }
         }
       } else {
         if (val) {
