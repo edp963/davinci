@@ -92,7 +92,7 @@ trait CronJobService {
   }
 
   def getAllCronJob() = {
-    db.run(modules.cronJobQuery.filter(_.job_status =!= STOPPED).result).mapTo[Seq[CronJob]]
+    db.run(modules.cronJobQuery.filter(c =>c.job_status =!= STOPPED && c.job_status =!= FAILED).result).mapTo[Seq[CronJob]]
   }
 
   def getJobById(sessionClass: SessionClass, id: Long): Future[CronJob] = {

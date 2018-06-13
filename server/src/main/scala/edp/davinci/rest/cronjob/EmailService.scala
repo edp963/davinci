@@ -45,7 +45,7 @@ object EmailService {
   private lazy val SMTP_PASSWORD = ConfigurationModuleImpl.config.getString("mail.pass")
 
   private lazy val phantomHome = ConfigurationModuleImpl.config.getString("phantomjs_home")
-  private lazy val phantomJsFile = new File(this.getClass.getResource("/phantom.js").getFile).getPath
+  private lazy val phantomJsFile = FileUtils.dir+"/bin/phantom.js"
 
 
   def sendEmailWithImage(cronJob: CronJob): Unit = {
@@ -62,7 +62,6 @@ object EmailService {
     to.foreach(email.addTo)
     if (emailCronJobConfig.cc.get != "") emailCronJobConfig.cc.get.split(";").foreach(email.addCc)
     if (emailCronJobConfig.bcc.get != "") emailCronJobConfig.bcc.get.split(";").foreach(email.addBcc)
-    to.foreach(email.addTo)
     emailCronJobConfig.contentList.foreach(content => {
       val imgName = UUID.randomUUID() + ".png"
       val imgPath = FileUtils.dir + "/tempFiles/" + imgName

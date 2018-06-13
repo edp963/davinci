@@ -32,7 +32,6 @@ export const addSchedules = promiseSagaCreator(
       data: writeAdapter(schedule)
     })
     const result = readObjectAdapter(asyncData)
-    console.log(result)
     yield put(scheduleAdded(result))
     return result
   },
@@ -105,7 +104,6 @@ export const updateSchedule = promiseSagaCreator(
       data: writeAdapter(schedule)
     })
     const result = readObjectAdapter(asyncData)
-    console.log(result)
     yield put(scheduleUpdated(result))
     return result
   },

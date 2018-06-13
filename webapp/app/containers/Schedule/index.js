@@ -8,7 +8,6 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import { Link } from 'react-router'
-
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import Modal from 'antd/lib/modal'
@@ -48,12 +47,9 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       modalLoading: false,
       configVisible: false,
       dashboardTreeValue: [],
-      rangeTime: 'Minute'
+      rangeTime: 'Minute',
+      screenWidth: 0
     }
-  }
-
-  handleTableChange = () => {
-
   }
 
   componentWillMount () {
@@ -70,7 +66,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         }
       }))
       this.setState({
-        dashboardTree: initDashboardTree
+        dashboardTree: initDashboardTree,
+        screenWidth: document.documentElement.clientWidth
       })
     })
     this.setState({ tableLoading: true })
@@ -80,6 +77,8 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       })
   }
   componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.schedule) {
       this.state.tableSource = props.schedule.map(s => {
         s.key = s.id
@@ -102,7 +101,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }, () => {
       const { id, name, desc, config } = this.props.schedule.find(s => s.id === scheduleId)
       const config2json = JSON.parse(config)
-      const {time_range, range, contentList, month, hour, week } = config2json
+      const { time_range, range, contentList, month, hour, week, time } = config2json
       let formatterContentList = this.json2arr(contentList)
       this.setState({
         emailConfig: config2json,
@@ -112,7 +111,10 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       if (range) {
         momentRange = range.map(ra => moment(ra))
       }
-      this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week })
+      this.setState({
+        rangeTime: time_range
+      }, () => this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week, time: moment(time) })
+      )
     })
   }
 
@@ -126,6 +128,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         let endDate = values.range && values.range[1] ? values.range[1] : ''
         if (values && values.config) {
           emailConfig['time_range'] = values.time_range
+          emailConfig['minute'] = values.minute
           emailConfig['month'] = values.month
           emailConfig['hour'] = values.hour
           emailConfig['week'] = values.week
@@ -141,15 +144,28 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         if (values) {
           let minute = '0'
           let hour = '*'
-          if (values.time && mm !== '00' && HH !== '00') {
-            minute = mm
-            hour = HH
+          if (values.time) {
+            minute = mm.replace(/\b(0)/gi, '')
+            hour = HH.replace(/\b(0)/gi, '')
           }
           if (values.hour) {
             minute = values.hour
             hour = '*'
           }
-          cronPatten = `${minute} ${hour} ${values.month ? values.month : '*'} * ${values.week ? values.week : '*'} ?`   // '0 * * * * ?'
+          if (values.week === undefined && values.month === undefined) {
+            values.month = '*'
+            values.week = '?'
+          }
+          if (values.month && '*?'.indexOf(values.month) < 0 && values.week === undefined) {
+            values.week = '?'
+          }
+          if (values.week && '*?'.indexOf(values.week) < 0 && values.month === undefined) {
+            values.month = '?'
+          }
+          if (values.minute) {
+            minute = `*/${values.minute}`
+          }
+          cronPatten = `0 ${minute} ${hour} ${values.month} * ${values.week}`   // '0 * * * * ?'
         }
         this.setState({
           emailConfig: emailConfig
@@ -168,7 +184,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
           if (this.state.formType === 'add') {
             onAddSchedule(params).then(() => this.hideForm())
           } else {
-            console.log('onUpdateSchedule')
             onUpdateSchedule(params).then(() => this.hideForm())
           }
         })
@@ -293,7 +308,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       if (range === 'time') {
       } else {
         this.scheduleForm.setFieldsValue({
-          [range]: ''
+          [range]: undefined
         })
       }
     })
@@ -314,6 +329,16 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
     }
   }
 
+  formatStatusText = (status) => {
+    let emunObj = {
+      'new': '启动',
+      'failed': '重启',
+      'started': '暂停',
+      'stopped': '启动'
+    }
+    return emunObj[status]
+  }
+
   changeStatus = (record) => {
     const { id, job_status } = record
     const { onChangeCurrentJobStatus } = this.props
@@ -330,12 +355,14 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
       tableLoading,
       configVisible,
       dashboardTree,
-      dashboardTreeValue
+      dashboardTreeValue,
+      screenWidth
     } = this.state
     const {
       onDeleteSchedule
     } = this.props
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }
@@ -373,7 +400,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         className: `${utilStyles.textAlignCenter}`,
         render: (text, record) => (
           <span className="ant-table-action-column">
-            <Tooltip title="状态">
+            <Tooltip title={`${this.formatStatusText(record.job_status)}`}>
               <Button icon={this.formatStatusIcon(record.job_status)} shape="circle" type="ghost" onClick={() => this.changeStatus(record)} />
             </Tooltip>
             <Tooltip title="修改">
@@ -460,7 +487,6 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
                     columns={columns}
                     pagination={pagination}
                     loading={tableLoading}
-                    onChange={this.handleTableChange}
                     bordered
                   />
                 </Col>

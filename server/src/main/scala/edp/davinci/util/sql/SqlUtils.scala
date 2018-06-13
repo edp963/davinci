@@ -32,7 +32,7 @@ import edp.davinci.persistence.entities.PostUploadMeta
 import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
 import edp.davinci.util.common.DateUtils
 import edp.davinci.util.common.DavinciConstants._
-import edp.davinci.util.jdbc.ESConnection
+import edp.davinci.util.jdbc.{ESConnection, HiveConnection}
 import org.apache.log4j.Logger
 
 import scala.collection.mutable
@@ -51,14 +51,18 @@ object SqlUtils extends Serializable {
     if (tmpJdbcUrl.indexOf("elasticsearch") > -1)
       ESConnection.getESJDBCConnection(tmpJdbcUrl, username)
     else {
-      if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-        synchronized {
-          if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-            initJdbc(jdbcUrl, username, password, maxPoolSize)
+      if (tmpJdbcUrl.indexOf("hive") > -1 && tmpJdbcUrl.indexOf("presto") == -1)
+        HiveConnection.getConnection(tmpJdbcUrl, username, password)
+      else {
+        if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+          synchronized {
+            if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+              initJdbc(jdbcUrl, username, password, maxPoolSize)
+            }
           }
         }
+        dataSourceMap((tmpJdbcUrl, username)).getConnection
       }
-      dataSourceMap((tmpJdbcUrl, username)).getConnection
     }
   }
 
@@ -94,10 +98,17 @@ object SqlUtils extends Serializable {
       TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
     } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
+      println("moonbox")
       config.setDriverClassName("moonbox.jdbc.MbDriver")
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
+    } else if (tmpJdbcUrl.indexOf("clickhouse") > -1) {
+      println("clickhouse")
+      config.setDriverClassName("ru.yandex.clickhouse.ClickHouseDriver")
+    } else if (tmpJdbcUrl.indexOf("kylin") > -1) {
+      println("kylin")
+      config.setDriverClassName("org.apache.kylin.jdbc.Driver")
     }
 
     if (tmpJdbcUrl.indexOf("sql4es") > -1)
@@ -236,7 +247,7 @@ object SqlUtils extends Serializable {
 
   def s2dbValue(strType: String, value: String): Any = if (value == null || value == "") null
   else strType.toUpperCase match {
-    case "INT" => value.trim.toInt
+    case "INT" |"TINYINT" => value.trim.toInt
     case "BIGINT" => value.trim.toLong
     case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" | "CHAR" => value.trim
     case "FLOAT" => value.trim.toFloat
