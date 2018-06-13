@@ -1093,18 +1093,18 @@ export class Grid extends Component {
           case 'select':
           case 'cascadeSelect':
             if (formValue) {
-              currentParam = [{
+              currentParam = {
                 k: columnAndType[0],
                 v: `${formValue}`
-              }]
+              }
             }
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentParam = formValue.map(fv => ({
+              currentParam = {
                 k: columnAndType[0],
-                v: `${fv}`
-              }))
+                v: formValue.join(',')
+              }
             }
             break
           case 'date':
@@ -1125,10 +1125,10 @@ export class Grid extends Component {
             break
           case 'multiDate':
             if (formValue) {
-              currentParam = formValue.split(',').map(fv => ({
+              currentParam = {
                 k: columnAndType[0],
-                v: `'${fv}'`
-              }))
+                v: formValue.split(',').map(fv => `'${fv}'`).join(',')
+              }
             }
             break
           case 'dateRange':
@@ -1193,7 +1193,7 @@ export class Grid extends Component {
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
+              currentFilter = `${columnAndType[0]} in (${formValue.join(',')})`
             }
             break
           case 'date':
@@ -1208,7 +1208,7 @@ export class Grid extends Component {
             break
           case 'multiDate':
             if (formValue) {
-              currentFilter = formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
+              currentFilter = `${columnAndType[0]} in (${formValue.split(',').map(val => getValidValue(val, columnAndType[1])).join(',')})`
             }
             break
           case 'dateRange':
