@@ -127,9 +127,6 @@ export class Workbench extends React.Component {
           this.state.updateParams = updateParams
           this.state.updateFields = updateFields
           this.state.updateConfig = updateFields
-          // this.state.updateParams = config['update_params'] || []
-          // this.state.updateFields = config['update_fields'] || {}
-          // this.state.updateConfig = config['update_fields'] || {}
         }
 
         this.state.chartParams = params

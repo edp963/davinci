@@ -33,7 +33,7 @@ import {makeSelectCurrentDashboard, makeSelectDashboards} from '../Dashboard/sel
 import {loadWidgets} from '../Widget/actions'
 import {makeSelectWidgets} from '../Widget/selectors'
 
-export class Schedule extends React.Component { // eslint-disable-line react/prefer-stateless-function
+export class Schedule extends React.Component {
   constructor (props) {
     super(props)
     this.state = {
@@ -394,6 +394,11 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
         key: 'end_date'
       },
       {
+        title: '状态',
+        dataIndex: 'job_status',
+        key: 'job_status'
+      },
+      {
         title: '操作',
         key: 'action',
         width: 135,
@@ -416,7 +421,7 @@ export class Schedule extends React.Component { // eslint-disable-line react/pre
               </Tooltip>
             </Popconfirm>
           </span>
-      )
+        )
       }]
 
     const scheduleButtons = ([

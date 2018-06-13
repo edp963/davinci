@@ -310,7 +310,7 @@ export class WidgetForm extends React.Component {
         })
 
         return (
-          <div className={styles.formUnit} key={info.name}>
+          <div className={`${styles.formUnit} ${info.name === 'richText' ? utilStyles.hide : ''}`} key={info.name}>
             <h4 className={styles.unitTitle}>{info.title}</h4>
             <Row className={styles.unitContent} gutter={8}>
               {formItems}
@@ -334,7 +334,7 @@ export class WidgetForm extends React.Component {
                     <Col span={15}>
                       <Select
                         placeholder="关联变量"
-                      //  defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
+                        // defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
                         onChange={(e) => onMarkFieldsOptionsChange(e, info)}
                       >
                         {
