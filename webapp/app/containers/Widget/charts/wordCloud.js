@@ -22,6 +22,9 @@
  * WordCloud chart options generator
  */
 
+import defaultEchartsTheme from '../../../assets/json/echartsThemes/default.project.json'
+const colors = defaultEchartsTheme.theme.color
+
 export default function (dataSource, flatInfo, chartParams) {
   const {
     title,
@@ -64,11 +67,13 @@ export default function (dataSource, flatInfo, chartParams) {
     type: 'wordCloud',
     textStyle: {
       normal: {
-        color: '#509af2'
+        color: function () {
+          return colors[Math.floor(Math.random() * colors.length)]
+        }
       },
       emphasis: {
         shadowBlur: 10,
-        shadowColor: '#509af2'
+        shadowColor: 'rgba(0,0,0,.15)'
       }
     },
     data: Object.keys(grouped).map(k => grouped[k]),
