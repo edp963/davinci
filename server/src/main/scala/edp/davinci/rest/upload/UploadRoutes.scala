@@ -143,8 +143,10 @@ class UploadRoutes(modules: ConfigurationModule with PersistenceModule with Busi
         complete(OK, ResponseJson[String](getHeader(200, null), s"file upload successful"))
       case Failure(ex) =>
         logger.error("upload stream error", ex)
-        if (null != conn)
+        if (null != conn) {
+          conn.rollback()
           conn.close()
+        }
         complete(BadRequest, ResponseJson[String](getHeader(400, ex.getMessage, null), "write to db exception"))
     }
   }

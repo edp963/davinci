@@ -7,7 +7,7 @@
     <parent>
         <groupId>edp.davinci</groupId>
         <artifactId>davinci-parent_2.11</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>0.2.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -29,6 +29,7 @@
         <json4s.version>3.2.11</json4s.version>
         <joda-time.version>2.4</joda-time.version>
         <slf4j.version>1.7.21</slf4j.version>
+        <elasticsearch-sql.version>5.3.2</elasticsearch-sql.version>
     </properties>
 
     <dependencies>
@@ -175,33 +176,33 @@
             <version>0.188</version>
         </dependency>
         <!-- redis-->
-        <!--<dependency>-->
-            <!--<groupId>org.apache.hive</groupId>-->
-            <!--<artifactId>hive-jdbc</artifactId>-->
-            <!--<version>1.2.1000.2.6.1.0-129</version>-->
-            <!--<exclusions>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.logging.log4j</groupId>-->
-                    <!--<artifactId>log4j-slf4j-impl</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.logging.log4j</groupId>-->
-                    <!--<artifactId>log4j-1.2-api</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.logging.log4j</groupId>-->
-                    <!--<artifactId>log4j-core</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.logging.log4j</groupId>-->
-                    <!--<artifactId>log4j-api</artifactId>-->
-                <!--</exclusion>-->
-                <!--<exclusion>-->
-                    <!--<groupId>org.apache.logging.log4j</groupId>-->
-                    <!--<artifactId>log4j-web</artifactId>-->
-                <!--</exclusion>-->
-            <!--</exclusions>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.hive</groupId>
+            <artifactId>hive-jdbc</artifactId>
+            <version>1.2.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-slf4j-impl</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-1.2-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-web</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
 
         <dependency>
@@ -217,6 +218,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc6</artifactId>
+            <version>11.2.0.3</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.nlpcn</groupId>
             <artifactId>elasticsearch-sql</artifactId>
             <version>5.3.2.0</version>
@@ -224,13 +231,20 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>transport</artifactId>
-            <version>5.3.2</version>
+            <version>${elasticsearch-sql.version}</version>
         </dependency>
 
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch</artifactId>
-            <version>5.3.2</version>
+            <version>${elasticsearch-sql.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>ru.yandex.clickhouse</groupId>
+            <artifactId>clickhouse-jdbc</artifactId>
+            <version>0.1.39</version>
         </dependency>
 
         <dependency>

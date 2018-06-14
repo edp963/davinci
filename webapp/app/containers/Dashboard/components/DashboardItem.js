@@ -25,6 +25,7 @@ import classnames from 'classnames'
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
+import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
 import Icon from 'antd/lib/icon'
@@ -263,7 +264,23 @@ export class DashboardItem extends PureComponent {
 
     const userDownloadButton = isDownload
       ? <Tooltip title="下载数据">
-        <Icon type="download" onClick={this.sharePanelDownloadCsv} />
+        <Popover
+          placement="bottomRight"
+          trigger="click"
+          content={
+            <DownLoadCsv
+              id={widget.id}
+              type="widget"
+              itemId={itemId}
+              shareInfo={shareInfo}
+              shareInfoLoading={shareInfoLoading}
+              downloadCsvLoading={downloadCsvLoading}
+              onDownloadCsv={this.sharePanelDownloadCsv}
+            />
+          }
+        >
+          <Icon type="download" />
+        </Popover>
       </Tooltip>
       : ''
 
@@ -351,32 +368,35 @@ export class DashboardItem extends PureComponent {
 
     return (
       <div className={gridItemClass}>
-        {
-          chartInfo.name !== 'text'
-            ? (
-              <div className={styles.title}>
-                {controlPanelHandle}
-                <h4>{widget.name}</h4>
-                {descPanelHandle}
-              </div>
+        <div className={styles.header}>
+          {
+            chartInfo.name !== 'text'
+              ? (
+                <div className={styles.title}>
+                  {controlPanelHandle}
+                  <h4>{widget.name}</h4>
+                  {descPanelHandle}
+                </div>
             )
-            : (
-              <div className={styles.title} />
+              : (
+                <div className={styles.title} />
             )
-        }
-        <div className={styles.tools}>
-          <Tooltip title="同步数据">
-            <Icon type="reload" onClick={this.onSyncBizdatas} />
-          </Tooltip>
-          {widgetButton}
-          <Tooltip title="全屏">
-            <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
-          </Tooltip>
-          {shareButton}
-          {filterButton}
-          {userDownloadButton}
-          {dropdownMenu}
+          }
+          <div className={styles.tools}>
+            <Tooltip title="同步数据">
+              <Icon type="reload" onClick={this.onSyncBizdatas} />
+            </Tooltip>
+            {widgetButton}
+            <Tooltip title="全屏">
+              <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
+            </Tooltip>
+            {shareButton}
+            {filterButton}
+            {userDownloadButton}
+            {dropdownMenu}
+          </div>
         </div>
+
         <div
           className={styles.offInteract}
           onClick={onTurnOffInteract(itemId)}

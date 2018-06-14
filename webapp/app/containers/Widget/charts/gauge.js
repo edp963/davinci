@@ -44,7 +44,8 @@ export default function (dataSource, flatInfo, chartParams) {
     metrics,
     prefix,
     suffix,
-    gaugeName
+    gaugeName,
+    upperLimitGraduation
   } = chartParams
   let metricOptions,
     tooltipOptions,
@@ -63,12 +64,17 @@ export default function (dataSource, flatInfo, chartParams) {
 
   let prefixOption = prefix && prefix.length ? prefix : ''
   let suffixOption = suffix && suffix.length ? suffix : ''
-
   if (dataSource && dataSource[0] && dataSource[0][metrics]) {
     let metric = dataSource[0][metrics]
     let first = parseInt(metric[0]) + 1
     let length = parseInt(metric).toString().length
     subsectionMax = first * Math.pow(10, length - 1)
+  }
+
+  if (typeof upperLimitGraduation !== 'number') {
+    if (upperLimitGraduation >= subsectionMax) {
+      subsectionMax = upperLimitGraduation
+    }
   }
 
   let serieObj = {

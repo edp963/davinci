@@ -73,18 +73,24 @@ export class User extends React.PureComponent {
       passwordFormVisible: false,
       groupFormVisible: false,
 
-      userFormStep: 0
+      userFormStep: 0,
+      screenWidth: 0
     }
   }
 
   componentWillMount () {
-    this.setState({ tableLoading: true })
+    this.setState({
+      tableLoading: true,
+      screenWidth: document.documentElement.clientWidth
+    })
     this.props.onLoadGroups()
     this.props.onLoadUsers()
       .then(() => { this.setState({ tableLoading: false }) })
   }
 
   componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+
     if (props.users) {
       this.state.tableSource = props.users.map(g => {
         g.key = g.id
@@ -282,7 +288,8 @@ export class User extends React.PureComponent {
       groupTransfer,
       groupFormVisible,
       userFormStep,
-      formType
+      formType,
+      screenWidth
     } = this.state
 
     const {
@@ -365,6 +372,7 @@ export class User extends React.PureComponent {
     }]
 
     const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
       showSizeChanger: true
     }

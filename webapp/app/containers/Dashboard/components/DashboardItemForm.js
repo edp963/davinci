@@ -49,8 +49,17 @@ export class DashboardItemForm extends React.PureComponent {
       triggerType: 'manual',
       filteredWidgets: null,
       pageSize: 24,
-      currentPage: 1
+      currentPage: 1,
+      screenWidth: 0
     }
+  }
+
+  componentWillMount () {
+    this.setState({ screenWidth: document.documentElement.clientWidth })
+  }
+
+  componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   onSearchWidgetItem = (value) => {
@@ -96,7 +105,8 @@ export class DashboardItemForm extends React.PureComponent {
     const {
       filteredWidgets,
       pageSize,
-      currentPage
+      currentPage,
+      screenWidth
     } = this.state
 
     let {widgets} = this.props
@@ -191,6 +201,7 @@ export class DashboardItemForm extends React.PureComponent {
         </Row>
         <Row className={selectWidgetStep}>
           <Pagination
+            simple={screenWidth < 768 || screenWidth === 768}
             className={widgetStyles.paginationPosition}
             showSizeChanger
             onShowSizeChange={this.onShowSizeChange}

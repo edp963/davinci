@@ -18,12 +18,16 @@
  * >>
  */
 
-/*
- * Pie chart options generator
- */
+import message from 'antd/lib/message'
 
+/*
+ * Sankey chart options generator
+ */
 export default function (dataSource, flatInfo, chartParams) {
   const {
+    source,
+    target,
+    metrics,
     tooltip,
     toolbox
   } = chartParams
@@ -36,12 +40,43 @@ export default function (dataSource, flatInfo, chartParams) {
   // series 数据项
   let metricArr = []
 
+  // 节点列
+  let nodes = []
+  // 关系列
+  let links = []
+
+  if (source && target) {
+    links = dataSource.map(data => {
+      nodes.push(...[data[source], data[target]])
+      return {
+        source: data[source],
+        target: data[target],
+        value: data[metrics]
+      }
+    })
+
+    var graph = {}
+    links.forEach(link => {
+      if (!graph[link.source]) graph[link.source] = []
+      graph[link.source].push(link.target)
+    })
+
+    let cycle = getCycle(graph)
+    if (cycle && cycle.length) {
+      message.error(`节点 ${cycle.join()} 存在循环引用`)
+      links = []
+    }
+  }
+  nodes = nodes.filter((n, idx) => (
+    nodes.indexOf(n) === idx
+  )).map(n => ({ name: n }))
+
   let serieObj = {
     name: '数据',
     type: 'sankey',
     layout: 'none',
-    data: dataSource.nodes,
-    links: dataSource.links,
+    data: nodes,
+    links: links,
     itemStyle: {
       normal: {
         borderWidth: 1,
@@ -96,4 +131,22 @@ export default function (dataSource, flatInfo, chartParams) {
     toolboxOptions,
     gridOptions
   )
+}
+
+function getCycle (graph) {
+  // Copy the graph, converting all node references to String
+  graph = Object.assign(...Object.keys(graph).map(node => ({ [node]: graph[node].map(String) })))
+
+  let queue = Object.keys(graph).map(node => [node])
+  while (queue.length) {
+    const batch = []
+    for (const path of queue) {
+      const parents = graph[path[0]] || []
+      for (const node of parents) {
+        if (node === path[path.length - 1]) return [node, ...path]
+        batch.push([node, ...path])
+      }
+    }
+    queue = batch
+  }
 }

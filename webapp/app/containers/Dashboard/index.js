@@ -60,12 +60,18 @@ export class Dashboard extends React.Component {
 
       filteredDashboards: null,
       currentPage: 1,
-      pageSize: 24
+      pageSize: 24,
+      screenWidth: 0
     }
   }
 
   componentWillMount () {
     this.props.onLoadDashboards()
+    this.setState({ screenWidth: document.documentElement.clientWidth })
+  }
+
+  componentWillReceiveProps (props) {
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   toGrid = (dashboard) => () => {
@@ -149,7 +155,8 @@ export class Dashboard extends React.Component {
       formVisible,
       filteredDashboards,
       currentPage,
-      pageSize
+      pageSize,
+      screenWidth
     } = this.state
 
     const dashboardsArr = filteredDashboards || dashboards
@@ -241,15 +248,19 @@ export class Dashboard extends React.Component {
 
     const addButton = loginUser.admin
       ? (
-        <Tooltip placement="bottom" title="新增">
-          <Button
-            size="large"
-            type="primary"
-            icon="plus"
-            onClick={this.showDashboardForm('add')}
-          />
-        </Tooltip>
+        <Col xl={2} lg={2} md={2} sm={2} xs={24} className={styles.addCol}>
+          <Tooltip placement="bottom" title="新增">
+            <Button
+              size="large"
+              type="primary"
+              icon="plus"
+              onClick={this.showDashboardForm('add')}
+            />
+          </Tooltip>
+        </Col>
       ) : ''
+
+    const searchCol = loginUser.admin ? styles.searchAdmin : styles.searchUser
 
     return (
       <Container>
@@ -267,17 +278,15 @@ export class Dashboard extends React.Component {
             </Col>
             <Col xl={6} lg={6} md={8} sm={12} xs={24}>
               <Row>
-                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={utilStyles.searchCol}>
+                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
                   <Search
                     size="large"
-                    className={`${utilStyles.searchInput} ${loginUser.admin ? utilStyles.searchInputAdmin : ''}`}
+                    className={`${utilStyles.searchInput} ${loginUser.admin ? styles.searchInputAdmin : ''}`}
                     placeholder="Dashboard 名称"
                     onSearch={this.onSearchDashboard}
                   />
                 </Col>
-                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={utilStyles.addCol}>
-                  {addButton}
-                </Col>
+                {addButton}
               </Row>
             </Col>
           </Row>
@@ -288,6 +297,7 @@ export class Dashboard extends React.Component {
           </Row>
           <Row>
             <Pagination
+              simple={screenWidth < 768 || screenWidth === 768}
               className={widgetStyles.paginationPosition}
               showSizeChanger
               onShowSizeChange={this.onShowSizeChange}

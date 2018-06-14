@@ -127,9 +127,6 @@ export class Workbench extends React.Component {
           this.state.updateParams = updateParams
           this.state.updateFields = updateFields
           this.state.updateConfig = updateFields
-          // this.state.updateParams = config['update_params'] || []
-          // this.state.updateFields = config['update_fields'] || {}
-          // this.state.updateConfig = config['update_fields'] || {}
         }
 
         this.state.chartParams = params
@@ -207,6 +204,10 @@ export class Workbench extends React.Component {
       queryInfo: queryArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       updateInfo: updateArr.map(q => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       queryParams: []
+    })
+    this.widgetForm.props.form.setFieldsValue({
+      'richTextContent': '',
+      'richTextEdited': ''
     })
 
     this.getBizdatas(val, this.state.adhocSql)
@@ -436,8 +437,32 @@ export class Workbench extends React.Component {
   }
 
   textEditorChange = (content) => {
-    console.log(content)
-    // 将 content 保存到 widgetForm 的对应隐藏 input 中
+    const { chartParams } = this.state
+
+    const deleteHtml = content.replace(/<\/?.+?>/g, '')
+    const deleteSpace = deleteHtml.replace(/ /g, '')
+    this.widgetForm.props.form.setFieldsValue({
+      'richTextContent': deleteSpace,
+      'richTextEdited': content
+    })
+    const temp = {
+      colorList: chartParams.colorList,
+      create_by: chartParams.create_by,
+      desc: chartParams.desc,
+      expired: chartParams.expired,
+      flatTable_id: chartParams.flatTable_id,
+      id: chartParams.id,
+      name: chartParams.name,
+      useCache: chartParams.useCache,
+      widgetlib_id: chartParams.widgetlib_id
+    }
+    const richTextObj = {
+      richTextContent: deleteSpace,
+      richTextEdited: content
+    }
+    this.setState({
+      chartParams: Object.assign({}, temp, richTextObj)
+    })
   }
 
   render () {
