@@ -123,7 +123,7 @@ object EmailService {
 
     val task: TaskThread = new TaskThread(filePath)
     //实现Callable接口的任务线程类
-    val exec: ExecutorService = Executors.newFixedThreadPool(1)
+    val exec: ExecutorService = Executors.newFixedThreadPool(5)
     //对task对象进行各种set操作以初始化任务
     val future: Future[String] = exec.submit(task)
     var result: String = null

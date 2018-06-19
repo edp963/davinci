@@ -45,8 +45,9 @@ object CronJobService extends CronJobService {
     }
     catch {
       case ex: Throwable =>
-        logger.error("send email ", ex)
+        QuartzManager.removeJob(cronJob.id.toString, cronJob.id.toString)
         updateCronJobStatus(cronJob.id, FAILED, ResponseUtils.currentTime, ex.getMessage)
+        logger.error("send email ", ex)
     }
   }
 

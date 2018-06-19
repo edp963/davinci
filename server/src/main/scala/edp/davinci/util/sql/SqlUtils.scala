@@ -108,6 +108,7 @@ object SqlUtils extends Serializable {
       config.setDriverClassName("ru.yandex.clickhouse.ClickHouseDriver")
     } else if (tmpJdbcUrl.indexOf("kylin") > -1) {
       println("kylin")
+      config.setConnectionTestQuery("SELECT 1")
       config.setDriverClassName("org.apache.kylin.jdbc.Driver")
     }
 

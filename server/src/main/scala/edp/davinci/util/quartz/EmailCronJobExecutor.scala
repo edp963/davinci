@@ -33,7 +33,7 @@ class EmailCronJobExecutor extends Job {
       CronJobService.sendMail(context.getMergedJobDataMap.get("job").asInstanceOf[CronJob])
     } catch {
       case e: SchedulerException =>
-        logger.error("", e)
+        logger.error("SchedulerException", e)
     }
 
   }
