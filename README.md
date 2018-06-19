@@ -60,7 +60,8 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
   * 主要的配置项包括：mysqldb（请确保连接地址的正确性，初始化数据库时也会用到！！！）、httpServer。
 
-    注：如需接入ldap或者cache，可继续加入ldap、cache的相关配置。
+    注：1.如果将davinci部署在远程服务器上，httpServer的ip请填写真实的ip地址，不能使用localhost;
+       2.如需接入ldap或者cache，可继续加入ldap、cache的相关配置。
 
 ```unzip davinci-assembly_2.11-0.1.0-SNAPSHOT-dist.zip
 
@@ -84,6 +85,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
       }
     }
     httpServer {
+    #如果部署在远程服务器上，请使用ip地址，而不是localhost
       host = "localhost"
       port = 8080
     }
@@ -163,7 +165,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 #### 创建source，指定用户名、密码和jdbc url即可
 <img src="https://github.com/edp963/davinci/raw/master/docs/img/source.png" alt="" width="600"/>
 
-#### 创建view，选择对应的source，编写sql（可定义变量）
+#### 创建view，选择对应的source，编写sql（一定要用加{}!!!）
 <img src="https://github.com/edp963/davinci/raw/master/docs/img/view.png" alt="" width="600"/>
 
 #### 创建widget，选择对应的view，指定图表类型，配置样式
