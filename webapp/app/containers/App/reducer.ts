@@ -25,10 +25,7 @@ import {
   LOGOUT,
   SET_LOGIN_USER,
   SHOW_NAVIGATOR,
-  HIDE_NAVIGATOR,
-  SIGNUP,
-  SIGNUP_SUCCESS,
-  SIGNUP_ERROR
+  HIDE_NAVIGATOR
 } from './constants'
 import { fromJS } from 'immutable'
 
@@ -36,7 +33,6 @@ const initialState = fromJS({
   logged: false,
   loginUser: null,
   loginLoading: false,
-  signupLoading: false,
   navigator: true
 })
 
@@ -54,15 +50,6 @@ function appReducer (state = initialState, action) {
     case LOGIN_ERROR:
       return state
         .set('loginLoading', false)
-    case  SIGNUP:
-      return state
-        .set('signupLoading', false)
-    case SIGNUP_SUCCESS:
-      return state
-        .set('signupLoading', true)
-    case SIGNUP_ERROR:
-      return state
-        .set('signupLoading', false)
     case LOGOUT:
       return state
         .set('logged', false)

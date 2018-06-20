@@ -30,10 +30,19 @@ import Widget from './containers/Widget'
 import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
+import Activate from './containers/Register/Activate'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
 import Display from './containers/Display'
+import Account from './containers/Account'
+import Project from './containers/Project'
+import Profile from './containers/Profile'
+import ResetPassword from './containers/ResetPassword'
+import Organizations from './containers/Organizations/index'
+import Organization from './containers/Organizations/Organization'
+import Teams from './containers/Teams/index'
+import Team from './containers/Teams/Team'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -61,6 +70,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
       path: '/register',
       name: 'register',
       component: Register
+    },
+    {
+      path: '/activate',
+      name: 'activate',
+      component: Activate
     },
     {
       component: Main,
@@ -121,6 +135,53 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/display',
           name: 'display',
           component: Display
+        },
+        {
+          path: '/account',
+          name: 'account',
+          indexRoute: {
+            onEnter: (_, replace) => {
+              replace('/account/profile')
+            }
+          },
+          component: Account,
+          childRoutes: [
+            {
+              path: '/account/profile',
+              name: 'profile',
+              component: Profile
+            },
+            {
+              path: '/account/resetPassword',
+              name: 'resetPassword',
+              component: ResetPassword
+            },
+            {
+              path: '/account/organizations',
+              name: 'organizations',
+              component: Organizations
+            },
+            {
+              path: '/account/organization/:organizationId',
+              name: 'organization',
+              component: Organization
+            },
+            {
+              path: '/account/teams',
+              name: 'teams',
+              component: Teams
+            },
+            {
+              path: '/account/team/:teamId',
+              name: 'team',
+              component: Team
+            }
+          ]
+        },
+        {
+          path: '/project',
+          name: 'project',
+          component: Project
         }
       ]
     },

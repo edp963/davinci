@@ -39,7 +39,9 @@ export function Navigator (props) {
   const menu = (
     <Menu>
       <Menu.Item key="0">
-        <a href="JavaScript:;">用户设置</a>
+        <Link to="/account" >
+          用户设置
+        </Link>
       </Menu.Item>
       <Menu.Divider />
       <Menu.Item key="3">
@@ -72,8 +74,8 @@ export function Navigator (props) {
           <p>{props.loginUser.email}</p>
         </li>
         <li>
-          <Icon type="github" />  
-        </li>  
+          <Icon type="github" />
+        </li>
         <li>
           <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
             <Icon type="user" />

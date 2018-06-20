@@ -22,8 +22,8 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
-import { LOGIN, GET_LOGIN_USER, CHECK_NAME, SIGNUP } from './constants'
-import { logged, loginError, getLoginUserError, signupSuccess, signupError } from './actions'
+import { LOGIN, GET_LOGIN_USER, CHECK_NAME } from './constants'
+import { logged, loginError, getLoginUserError } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
@@ -66,44 +66,6 @@ export function* login (action): IterableIterator<any> {
 
 export function* loginWatcher (): IterableIterator<any> {
   yield takeLatest(LOGIN, login)
-}
-
-export function* signup (action): IterableIterator<any> {
-  const {username, password, resolve} = action.payload
-  try {
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: api.signup,
-      data: {
-        username,
-        password
-      }
-    })
-
-    // switch (asyncData.header.code) {
-    //   case 400:
-    //     message.error('密码错误')
-    //     yield put(loginError())
-    //     return null
-    //   case 404:
-    //     message.error('用户不存在')
-    //     yield put(loginError())
-    //     return null
-    //   default:
-    //     const loginUser = readListAdapter(asyncData)
-    //     yield put(logged(loginUser))
-    //     localStorage.setItem('loginUser', JSON.stringify(loginUser))
-    //     resolve()
-    //     return loginUser
-    // }
-  } catch (err) {
-    yield put(signupError())
-    message.error('注册失败')
-  }
-}
-
-export function* signupWatcher (): IterableIterator<any> {
-  yield takeLatest(SIGNUP, signup)
 }
 
 export function* getLoginUser (action): IterableIterator<any> {
@@ -155,6 +117,5 @@ export function* checkNameWatcher (): IterableIterator<any> {
 export default [
   loginWatcher,
   getLoginUserWatcher,
-  checkNameWatcher,
-  signupWatcher
+  checkNameWatcher
 ]

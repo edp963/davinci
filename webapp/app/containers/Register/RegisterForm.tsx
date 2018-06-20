@@ -24,9 +24,11 @@ const styles = require('../Login/Login.less')
 
 interface IRegisterFormProps {
   username: string
+  email: string
   password: string
   password2: string
   onChangeUsername: (e: any) => any
+  onChangeEmail: (e: any) => any
   onChangePassword: (e: any) => any
   onChangePassword2: (e: any) => any
   onSignup: () => any
@@ -61,9 +63,11 @@ export class RegisterForm extends React.PureComponent<IRegisterFormProps, {}> {
   public render () {
     const {
       username,
+      email,
       password,
       password2,
       onChangeUsername,
+      onChangeEmail,
       onChangePassword,
       onChangePassword2
     } = this.props
@@ -77,6 +81,16 @@ export class RegisterForm extends React.PureComponent<IRegisterFormProps, {}> {
             onFocus={this.bindDocumentKeypress}
             onBlur={this.unbindDocumentKeypress}
             onChange={onChangeUsername}
+          />
+        </div>
+        <div className={styles.input}>
+          <Icon type="mail" />
+          <input
+            placeholder="邮箱"
+            value={email}
+            onFocus={this.bindDocumentKeypress}
+            onBlur={this.unbindDocumentKeypress}
+            onChange={onChangeEmail}
           />
         </div>
         <div className={styles.input}>

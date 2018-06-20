@@ -18,23 +18,33 @@
  * >>
  */
 
-import config, { env } from '../globalConfig'
+import {
+  SIGNUP,
+  SIGNUP_ERROR,
+  SIGNUP_SUCCESS
+} from './constants'
 
-const host = config[env].host
+import { fromJS } from 'immutable'
 
-export default {
-  login: `${host}/login`,
-  group: `${host}/groups`,
-  user: `${host}/users`,
-  changepwd: `${host}/changepwd`,
-  source: `${host}/sources`,
-  bizlogic: `${host}/flattables`,
-  // bizdata: `${host}/bizdatas`,
-  widget: `${host}/widgets`,
-  dashboard: `${host}/dashboards`,
-  share: `${host}/shares`,
-  checkName: `${host}/check/name`,
-  uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`,
-  signup: `${host}/user`
+const initialState = fromJS({
+  signupLoading: false
+})
+
+function signupReducer (state = initialState, action) {
+  const { type, payload } = action
+  switch (type) {
+    case  SIGNUP:
+      return state
+        .set('signupLoading', false)
+    case SIGNUP_SUCCESS:
+      return state
+        .set('signupLoading', true)
+    case SIGNUP_ERROR:
+      return state
+        .set('signupLoading', false)
+    default:
+      return state
+  }
 }
+
+export default signupReducer

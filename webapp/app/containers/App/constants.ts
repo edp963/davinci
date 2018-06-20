@@ -29,7 +29,4 @@ export const GET_LOGIN_USER_ERROR = 'davinci/App/GET_LOGIN_USER_ERROR'
 export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'
 export const HIDE_NAVIGATOR = 'davinci/App/HIDE_NAVIGATOR'
 export const CHECK_NAME = 'davinci/App/CHECK_NAME'
-export const SIGNUP = 'davinci/App/SIGNUP'
-export const SIGNUP_SUCCESS = 'davinci/App/SIGNUP_SUCCESS'
-export const SIGNUP_ERROR = 'davinci/App/SIGNUP_ERROR'
 

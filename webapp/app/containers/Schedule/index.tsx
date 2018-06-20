@@ -315,7 +315,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
 
   private onTreeSelect = (f) => f
 
-  private onTreeChange = (value, label, extra) => {
+  private onTreeChange = (value) => {
    // let triggerData = extra.triggerNode.props
     this.setState({
       dashboardTreeValue: value
@@ -324,7 +324,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
 
   private onLoadTreeData = (treeNode) => {
     const eventKey = treeNode.props.eventKey
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this.props.onLoadDashboardDetail(eventKey).then(() => {
         const { currentDashboard, widgets } = this.props
         const { dashboardTree } = this.state
@@ -338,7 +338,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
             isLeaf: true
           }
         }))
-        const dashboardTreeChildren = dashboardTree.map((tree, index) => {
+        const dashboardTreeChildren = dashboardTree.map((tree) => {
           if (`${tree.key}` === eventKey) {
             return {
               ...tree,
