@@ -67,7 +67,7 @@ const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
 import { resolve } from 'url'
 
-interface IBizlogicProps  {
+interface IBizlogicsProps  {
   bizlogics: boolean | any[]
   groups: boolean | any[]
   sources: boolean | any[]
@@ -85,7 +85,7 @@ interface IBizlogicProps  {
   onValidateSql: (sourceId: number, sqlTmpl: any) => any
 }
 
-interface IBizlogicStates {
+interface IBizlogicsStates {
   tableSource: any[]
   tableSortedInfo: {columnKey?: string, order?: string}
   groupTableSource: any[]
@@ -108,7 +108,7 @@ declare interface IObjectConstructor {
   assign (...objects: object[]): object
 }
 
-export class Bizlogic extends React.PureComponent<IBizlogicProps, IBizlogicStates> {
+export class Bizlogics extends React.PureComponent<IBizlogicProps, IBizlogicStates> {
   private codeMirrorInstanceOfQuerySQL: any
   private codeMirrorInstanceOfUpdateSQL: any
   private asyncValidateResult: any
@@ -792,5 +792,5 @@ export default compose(
   withSagaGroup,
   withSagaSource,
   withConnect
-)(Bizlogic)
+)(Bizlogics)
 

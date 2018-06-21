@@ -18,35 +18,25 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
-import classnames from 'classnames'
-import { Link } from 'react-router'
+import * as React from 'react'
 
-import styles from '../Sidebar/Sidebar.less'
+const styles = require('./Container.less')
 
-export class SidebarOption extends React.PureComponent {
-  render () {
-    const optionClass = classnames(
-      { [styles.option]: true },
-      { [styles.active]: this.props.active }
-    )
+interface IContainerProps {
+  grid?: boolean
+  card?: boolean
+  children: React.ReactNode,
+  align?: any
+}
 
-    const linkRoute = `/report/${this.props.route[0]}`
-
+export class Title extends React.Component<IContainerProps, {}> {
+  public render () {
     return (
-      <div className={optionClass}>
-        <Link to={linkRoute}>
-          {this.props.children}
-        </Link>
+      <div className={styles.title}>
+        {this.props.children}
       </div>
     )
   }
 }
 
-SidebarOption.propTypes = {
-  route: PropTypes.array,
-  active: PropTypes.bool,
-  children: PropTypes.node
-}
-
-export default SidebarOption
+export default Title

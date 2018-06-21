@@ -35,6 +35,7 @@ export const apiConfig = {
   checkName: { env: production, url: '/check/name' },
   uploads: { env: production, url: '/uploads' },
   schedule: { env: production, url: '/cronjobs' },
+  signup: { env: dev, url: '/user' },
   display: { env: dev, url: '/displays' }
 }
 

@@ -19,12 +19,12 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, put } from 'redux-saga/effects'
 import {
   LOAD_WIDGETS,
   ADD_WIDGET,
   DELETE_WIDGET,
-  LOAD_WIDGET_DETAIL,
+  // LOAD_WIDGET_DETAIL,
   EDIT_WIDGET
 } from './constants'
 import {

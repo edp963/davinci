@@ -23,6 +23,9 @@ import * as classnames from 'classnames'
 
 const styles = require('./Container.less')
 
+import Title from './Title'
+import Body from './Body'
+
 interface IContainerProps {
   grid?: boolean
   card?: boolean
@@ -30,24 +33,9 @@ interface IContainerProps {
 }
 
 export class Container extends React.Component<IContainerProps, {}> {
-  public static Title = (props: IContainerProps) => (
-    <div className={styles.title}>
-      {props.children}
-    </div>
-  )
+  public static Title = Title
 
-  public static Body = (props: IContainerProps) => {
-    const bodyClass = classnames({
-      [styles.body]: true,
-      [styles.grid]: props.grid,
-      [styles.card]: props.card
-    })
-    return (
-      <div className={bodyClass}>
-        {props.children}
-      </div>
-    )
-  }
+  public static Body = Body
 
   public render () {
     return (

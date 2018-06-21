@@ -62,7 +62,6 @@ const Menu = require('antd/lib/menu')
 
 import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
 import { uuid } from '../../utils/util'
 import {
   loadDashboards,
@@ -108,6 +107,8 @@ import {
   ADMIN_GRID_BREAKPOINTS,
   USER_GRID_BREAKPOINTS,
   GRID_COLS,
+  GRID_ITEM_MARGIN,
+  GRID_ROW_HEIGHT,
   KEY_COLUMN
 } from '../../globalConstants'
 
@@ -141,11 +142,11 @@ interface IGridProps {
   currentDashboardCascadeSources: object
   onLoadDashboards: () => any
   onLoadDashboardDetail: (dashboardId: number) => any
-  onAddDashboardItem: (item: IDashboardItem) => any
+  onAddDashboardItem: (item: IDashboardItem, resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[], resolve: () => void) => void
-  onDeleteDashboardItem: (id: number) => any
+  onDeleteDashboardItem: (id: number, resolve: () => void) => void
   onLoadWidgets: () => any
   onLoadBizlogics: () => any
   onLoadBizdatasFromItem: (
@@ -189,6 +190,7 @@ interface IGridProps {
 
 interface IGridStates {
   mounted: boolean
+  layouts: any
   localPositions: any[]
   allowFullScreen: boolean
   currentDataInFullScreen: object
@@ -215,6 +217,7 @@ interface IGridStates {
   globalFilterTableSource: any[]
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
+  currentItemsRendered: object
 }
 
 interface IBizdataIncomeParamObject {
@@ -263,6 +266,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     this.state = {
       mounted: false,
+      layouts: { lg: [] },
 
       localPositions: [],
       allowFullScreen: false,
@@ -296,7 +300,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       dashboardSharePanelAuthorized: false,
 
-      nextMenuTitle: ''
+      nextMenuTitle: '',
+
+      currentItemsRendered: null
     }
   }
 
@@ -313,11 +319,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private workbenchWrapper: any = null
+  private containerBody: any = null
+  private containerBodyScrollThrottle: boolean = false
 
   public componentWillMount () {
     const {
       onLoadDashboards,
-      onLoadWidgets,
       onLoadBizlogics,
       onLoadDashboardDetail,
       params,
@@ -329,7 +336,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     onLoadDashboards()
-    onLoadWidgets()
     onLoadDashboardDetail(params.dashboardId)
   }
 
@@ -378,14 +384,32 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           })
         }
         this.setState({
+          mounted: true,
           localPositions,
+          layouts: {
+            lg: localPositions.map((pos) => ({
+              x: pos.x,
+              y: pos.y,
+              w: pos.w,
+              h: pos.h,
+              i: pos.i
+            }))
+          },
           interactiveItems: currentItems.reduce((acc, i) => {
             acc[i.id] = {
               isInteractive: false,
               interactId: null
             }
             return acc
+          }, {}),
+          currentItemsRendered: currentItems.reduce((acc, i) => {
+            acc[i.id] = false
+            return acc
           }, {})
+        }, () => {
+          this.lazyLoad()
+          this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          this.containerBody.addEventListener('scroll', this.lazyLoad, false)
         })
       }
 
@@ -401,7 +425,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         }
 
         if (currentItems &&
-            widgets &&
             bizlogics &&
             currentDatasources &&
             linkageCascaderSource) {
@@ -432,16 +455,49 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   public componentDidMount () {
     window.addEventListener('resize', this.onResize, false)
-    this.setState({ mounted: true })
   }
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.onResize, false)
+
+    this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+
     Object.keys(this.charts).forEach((k) => {
       this.charts[k].dispose()
     })
     this.props.onClearCurrentDashboard()
   }
+
+  private lazyLoad = () => {
+    if (!this.containerBodyScrollThrottle) {
+      requestAnimationFrame(() => {
+        const { currentItemsRendered, modifiedPositions } = this.state
+
+        const waitingItems = Object.entries(currentItemsRendered).filter(([id, rendered]) => !rendered)
+
+        if (waitingItems.length) {
+          waitingItems.forEach(([id]) => {
+            const itemTop = this.calcItemTop(modifiedPositions.find((mp) => mp.i === id).y)
+            const { offsetHeight, scrollTop } = this.containerBody
+
+            if (itemTop - scrollTop < offsetHeight) {
+              currentItemsRendered[id] = true
+            }
+          })
+
+          this.setState({
+            currentItemsRendered
+          })
+        } else {
+          this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+        }
+        this.containerBodyScrollThrottle = false
+      })
+      this.containerBodyScrollThrottle = true
+    }
+  }
+
+  private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
   private getChartData = (renderType: string, itemId: number, widgetId: number, queryParams?: any) => {
     const {
@@ -449,6 +505,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsQueryParams,
       onLoadBizdatasFromItem
     } = this.props
+    const { currentItemsRendered } = this.state
+    if (!currentItemsRendered[itemId]) {
+      return
+    }
+
     const widget = widgets.find((w) => w.id === widgetId)
     const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     const chartInstanceId = `widget_${itemId}`
@@ -690,22 +751,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         length: 4
       }
 
-      this.props.onAddDashboardItem({...newItem, ...positionInfo})
-        .then((dashboardItem) => {
-          modifiedPositions.push({
-            x: dashboardItem.position_x,
-            y: dashboardItem.position_y,
-            w: dashboardItem.width,
-            h: dashboardItem.length,
-            i: `${dashboardItem.id}`
-          })
-          linkageCascaderSource.push({
-            label: widgets.find((w) => w.id === dashboardItem.widget_id).name,
-            value: dashboardItem.id,
-            children: []
-          })
-          this.hideDashboardItemForm()
+      this.props.onAddDashboardItem({...newItem, ...positionInfo}, (dashboardItem) => {
+        modifiedPositions.push({
+          x: dashboardItem.position_x,
+          y: dashboardItem.position_y,
+          w: dashboardItem.width,
+          h: dashboardItem.length,
+          i: `${dashboardItem.id}`
         })
+        linkageCascaderSource.push({
+          label: widgets.find((w) => w.id === dashboardItem.widget_id).name,
+          value: dashboardItem.id,
+          children: []
+        })
+        this.hideDashboardItemForm()
+      })
     } else {
       const dashboardItem = currentItems.find((item) => item.id === Number(formdata.id))
       const modifiedDashboardItem = {...dashboardItem, ...newItem}
@@ -749,22 +809,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private deleteItem = (id) => () => {
-    this.props.onDeleteDashboardItem(id)
-      .then(() => {
-        const { modifiedPositions, linkageCascaderSource, linkageTableSource, globalFilterTableSource } = this.state
-        this.setState({
-          modifiedPositions: modifiedPositions.filter((mi) => Number(mi.i) !== id),
-          linkageCascaderSource: linkageCascaderSource.filter((lcs) => lcs.value !== id),
-          linkageTableSource: linkageTableSource.filter((lts) => lts.linkager[0] !== id && lts.trigger[0] !== id),
-          globalFilterTableSource: globalFilterTableSource.map((gfts) => {
-            delete gfts.relatedItems[id]
-            return gfts
-          })
+    this.props.onDeleteDashboardItem(id, () => {
+      const { modifiedPositions, linkageCascaderSource, linkageTableSource, globalFilterTableSource } = this.state
+      this.setState({
+        modifiedPositions: modifiedPositions.filter((mi) => Number(mi.i) !== id),
+        linkageCascaderSource: linkageCascaderSource.filter((lcs) => lcs.value !== id),
+        linkageTableSource: linkageTableSource.filter((lts) => lts.linkager[0] !== id && lts.trigger[0] !== id),
+        globalFilterTableSource: globalFilterTableSource.map((gfts) => {
+          delete gfts.relatedItems[id]
+          return gfts
         })
-        if (this.charts[`widget_${id}`]) {
-          this.charts[`widget_${id}`].dispose()
-        }
       })
+      if (this.charts[`widget_${id}`]) {
+        this.charts[`widget_${id}`].dispose()
+      }
+    })
   }
 
   private showWorkbench = (itemId, widget) => () => {
@@ -851,18 +910,20 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private navDropdownClick = (e) => {
-    this.props.router.push(`/report/dashboard/${e.key}`)
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/dashboard/${e.key}`)
   }
 
   private nextNavDropdownClick = (e) => {
     const {widgets} = this.props
+    const itemId = e.item && e.item.props && e.item.props.id
     const widgetId = e.item && e.item.props && e.item.props.widgetId
-    const widgetDOM = findDOMNode(this[`widgetId_${widgetId}`])
+    const widgetDOM = findDOMNode(this[`dashboardItem${itemId}`])
     if (widgetDOM) {
       const widgetParentDOM = widgetDOM.parentNode as HTMLElement
       const scrollCount = widgetParentDOM.style.transform && widgetParentDOM.style.transform.match(/\d+/g)[1]
       const containerBody = widgetParentDOM.parentNode.parentNode as HTMLElement
-      const scrollHeight = parseInt(scrollCount, 10) - 16
+      const scrollHeight = parseInt(scrollCount, 10) - GRID_ITEM_MARGIN
       containerBody.scrollTop = scrollHeight
     }
     this.setState({
@@ -1560,6 +1621,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     const {
       mounted,
+      layouts,
       localPositions,
       modifiedPositions,
       dashboardItemFormType,
@@ -1582,7 +1644,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       globalFilterTableSource,
       interactiveItems,
       allowFullScreen,
-      dashboardSharePanelAuthorized
+      dashboardSharePanelAuthorized,
+      currentItemsRendered
     } = this.state
 
     let navDropdown = (<span />)
@@ -1617,19 +1680,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     if (widgets) {
-      const layouts = {
-        lg: []
-      }
       const itemblocks = []
 
       localPositions.forEach((pos, index) => {
-        layouts.lg.push({
-          x: pos.x,
-          y: pos.y,
-          w: pos.w,
-          h: pos.h,
-          i: pos.i
-        })
         const dashboardItem = currentItems[index]
         const itemId = dashboardItem.id
         const modifiedPosition = modifiedPositions[index]
@@ -1644,6 +1697,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const sql = currentItemsQueryParams[itemId]
         const cascadeSources = currentItemsCascadeSources[itemId]
         const { isInteractive, interactId } = interactiveItems[itemId]
+        const rendered = currentItemsRendered[itemId]
         // isReadOnly 非原创用户不能对 widget进行写的操作
         const isReadOnly = (widget['create_by'] === loginUser.id)
         const permission = dashboardItem['permission']
@@ -1652,7 +1706,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         itemblocks.push((
           <div key={pos.i}>
             <DashboardItem
-              ref={(f) => this[`widgetId_${widget.id}`] = f}
+              ref={(f) => this[`dashboardItem${itemId}`] = f}
               w={modifiedPosition ? modifiedPosition.w : 0}
               h={modifiedPosition ? modifiedPosition.h : 0}
               itemId={itemId}
@@ -1686,6 +1740,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowFullScreen={this.visibleFullScreen}
               onGetCascadeSource={this.getCascadeSource({...sql, adHoc: widget.adhoc_sql})}
               isReadOnly={isReadOnly}
+              rendered={rendered}
             />
           </div>
         ))
@@ -1694,8 +1749,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         <ResponsiveReactGridLayout
           className="layout"
           style={{marginTop: '-14px'}}
-          rowHeight={30}
-          margin={[16, 16]}
+          rowHeight={GRID_ROW_HEIGHT}
+          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
           breakpoints={loginUser.admin ? ADMIN_GRID_BREAKPOINTS : USER_GRID_BREAKPOINTS}
           cols={GRID_COLS}
           layouts={layouts}
@@ -1878,7 +1933,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !globalFilterTableSource.length
     })
-
+    const { params } = this.props
     return (
       <Container>
         <Helmet title={currentDashboard && currentDashboard.name} />
@@ -1887,7 +1942,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             <Col sm={12}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link to="/report/dashboards">
+                  <Link to={`/project/${params.pid}/dashboards`}>
                     Dashboard
                   </Link>
                 </Breadcrumb.Item>
@@ -1940,7 +1995,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             </Col>
           </Row>
         </Container.Title>
-        <Container.Body grid>
+        <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
           {grids}
           <div className={styles.gridBottom} />
         </Container.Body>
@@ -2073,11 +2128,11 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboards: () => dispatch(loadDashboards()),
     onLoadDashboardDetail: (id) => dispatch(loadDashboardDetail(id)),
-    onAddDashboardItem: (item) => dispatch(addDashboardItem(item)),
+    onAddDashboardItem: (item, resolve) => dispatch(addDashboardItem(item, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items, resolve) => dispatch(editDashboardItems(items, resolve)),
-    onDeleteDashboardItem: (id) => dispatch(deleteDashboardItem(id)),
+    onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadWidgets: () => dispatch(loadWidgets()),
     onLoadBizlogics: () => dispatch(loadBizlogics()),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),

@@ -34,7 +34,6 @@ const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
 const Search = Input.Search
-import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { iconMapping } from '../../Widget/components/chartUtil'
 
@@ -43,7 +42,7 @@ const widgetStyles = require('../../Widget/Widget.less')
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemFormProps {
-  form: WrappedFormUtils
+  form: any
   type: string
   widgets: any[]
   selectedWidget: number
@@ -87,7 +86,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { widgets, loginUser } = this.props
+    const { widgets } = this.props
     if (nextProps.widgets !== widgets) {
       this.setAuthorizedWidgets(nextProps.widgets)
     }
@@ -143,11 +142,9 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const {
       type,
       form,
-      widgets,
       selectedWidget,
       triggerType,
       step,
-      loginUser,
       onWidgetSelect,
       onTriggerTypeSelect
     } = this.props
@@ -263,15 +260,13 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
         <div className={inputFormStep}>
           <Row gutter={8}>
             <Col sm={8}>
-              {
-                type === 'add'
-                  ? <FormItem className={utilStyles.hide}>
-                    {getFieldDecorator('id', {})(
-                      <Input />
-                    )}
-                  </FormItem>
-                  : void 0
-              }
+              <FormItem className={utilStyles.hide}>
+                {getFieldDecorator('id', {
+                  hidden: type === 'add'
+                })(
+                  <Input />
+                )}
+              </FormItem>
               <FormItem
                 label="数据刷新模式"
                 labelCol={{span: 10}}

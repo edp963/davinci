@@ -32,6 +32,7 @@ export default {
   },
   production: {
     host: '/api/v1',
+  //  host: '/api/v3',
     shareHost: '/share'
   }
 }

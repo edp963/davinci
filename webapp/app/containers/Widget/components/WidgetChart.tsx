@@ -59,7 +59,7 @@ export class WidgetChart extends React.PureComponent<IWidgetChartProps, {}> {
       if (this.chart) {
         this.chart.clear()
       } else {
-        this.chart = echarts.init(document.getElementById('widget_commonChart'), 'default')
+        this.chart = echarts.init(document.getElementById('widget_commonChart') as any, 'default')
       }
 
       echartsOptionsGenerator({

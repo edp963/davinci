@@ -33,6 +33,7 @@ import { addWidget, editWidget } from '../actions'
 import { loadBizdatas, clearBizdatas } from '../../Bizlogic/actions'
 import { makeSelectBizdatas, makeSelectBizdatasLoading } from '../selectors'
 import { uuid } from '../../../utils/util'
+import { DEFAULT_SPLITER } from '../../../globalConstants'
 
 const styles = require('../Widget.less')
 
@@ -112,7 +113,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   public componentDidMount () {
     this.setState({
-      chartParams: this.widgetForm.props.form.getFieldsValue()
+      chartParams: this.decodeFieldsName(this.widgetForm.props.form.getFieldsValue())
     })
   }
 
@@ -136,6 +137,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       .then(() => {
         this.bizlogicChange(widget.flatTable_id)
 
+        const { chartInfo } = this.state
         const configInfo = JSON.parse(widget.config)
         const info = {
           id: widget.id,
@@ -150,27 +152,33 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
         const params = JSON.parse(widget.chart_params)
 
-        if (widget && widget.config) {
-          const updateParams = JSON.parse(widget.config)['update_params']
-          const updateFields = JSON.parse(widget.config)['update_fields']
-          // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
-          this.setState({
-            updateParams: (typeof updateParams === 'string' ? JSON.parse(updateParams) : updateParams) || [],
-            updateFields: (typeof updateFields === 'string' ? JSON.parse(updateFields) : updateFields) || {},
-            updateConfig: (typeof updateFields === 'string' ? JSON.parse(updateFields) : updateFields) || {}
-          })
-        }
-
         delete params.widgetName
         delete params.widgetType
 
-        const formValues = {
-          ...info,
-          ...params
+        const formValues = {...info, ...this.encodeFieldsName(chartInfo, params)}
+
+        if (widget.config) {
+          const config = JSON.parse(widget.config)
+          // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
+          const updateParams = config['update_params']
+            ? typeof config['update_params'] === 'string'
+              ? JSON.parse(config['update_params'])
+              : config['update_params']
+            : []
+          const updateFields = config['update_fields']
+            ? typeof config['update_fields'] === 'string'
+              ? JSON.parse(config['update_fields'])
+              : config['update_fields']
+            : []
+          this.setState({
+            updateParams,
+            updateFields,
+            updateConfig: updateFields
+          })
         }
 
         this.setState({
-          chartParams: formValues,
+          chartParams: params,
           // FIXME
           queryParams: JSON.parse(widget.query_params)
         })
@@ -178,6 +186,41 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         this.widgetForm.props.form.setFieldsValue(formValues)
       })
   }
+
+  private getChartParamsFromChartInfo = (chartInfo) =>
+    chartInfo.params.reduce((params, section) => {
+      section.items.forEach((i) => {
+        if (i.default) {
+          params[i.name] = i.default
+        } else {
+          switch (i.component) {
+            case 'multiSelect':
+            case 'checkbox':
+              params[i.name] = []
+              break
+            case 'inputnumber':
+              params[i.name] = 0
+              break
+            default:
+              params[i.name] = void 0
+              break
+          }
+        }
+      })
+      return params
+    }, {})
+
+  private encodeFieldsName = (chartInfo, params) =>
+    Object.entries(params).reduce((p, arr) => {
+      p[`${chartInfo.name}${DEFAULT_SPLITER}${arr[0]}`] = arr[1]
+      return p
+    }, {})
+
+  private decodeFieldsName = (formValues) =>
+    Object.entries(formValues).reduce((params, arr) => {
+      params[arr[0].split(DEFAULT_SPLITER)[1]] = arr[1]
+      return params
+    }, {})
 
   private getBizdatas = (id, adhoc, queryParams?: any) => {
     let sql
@@ -210,8 +253,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       currentBizlogicId: sqlTemplate.id,
       queryInfo: queryArr.map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
       updateInfo: updateArr.map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$'))),
-      queryParams: [],
-      chartParams: {}
+      queryParams: []
     })
     this.widgetForm.props.form.setFieldsValue({
       richTextContent: '',
@@ -230,12 +272,11 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
+      const chartInfo = this.props.widgetlibs.find((wl) => wl.id === Number(val))
       this.setState({
-        chartInfo: this.props.widgetlibs.find((wl) => wl.id === Number(val))
+        chartInfo,
+        chartParams: this.getChartParamsFromChartInfo(chartInfo)
       }, () => {
-        this.setState({
-          chartParams: this.widgetForm.props.form.getFieldsValue()
-        })
         resolve()
       })
     })
@@ -281,6 +322,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         delete values.useCache
         delete values.expired
 
+        values = this.decodeFieldsName(values)
+
         const widget = {
           name,
           desc,
@@ -299,8 +342,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           config: JSON.stringify({
             useCache,
             expired,
-            update_params: JSON.stringify(updateParams),
-            update_fields: JSON.stringify(updateFields)
+            update_params: updateParams,
+            update_fields: updateFields
           })
         }
 

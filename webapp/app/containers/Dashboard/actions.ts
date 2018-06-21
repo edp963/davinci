@@ -70,20 +70,22 @@ export function loadDashboardDetail (id) {
   }
 }
 
-export function addDashboardItem (item) {
+export function addDashboardItem (item, resolve) {
   return {
     type: ADD_DASHBOARD_ITEM,
     payload: {
-      item
+      item,
+      resolve
     }
   }
 }
 
-export function deleteDashboardItem (id) {
+export function deleteDashboardItem (id, resolve) {
   return {
     type: DELETE_DASHBOARD_ITEM,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -214,11 +216,12 @@ export function deleteDashboardFail () {
   }
 }
 
-export function dashboardDetailLoaded (dashboard) {
+export function dashboardDetailLoaded (dashboard, widgets) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
-      dashboard
+      dashboard,
+      widgets
     }
   }
 }

@@ -95,7 +95,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
             ? { mode: 'multiple' }
             : { allowClear: true }
           const selProperties = {
-            mode,
+            ...mode,
             placeholder: f.name,
             onChange: onChange(f)
           }
@@ -154,7 +154,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
           const cascadeProperties = {
             placeholder: f.name,
             allowClear: true,
-            changeCallback
+            ...changeCallback
           }
 
           return (
@@ -194,7 +194,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
           const dateProperties = {
             placeholder: f.name,
             className: styles.input,
-            dateFormat
+            ...dateFormat
           }
 
           return (
@@ -250,7 +250,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
           const rangeProperties = {
             placeholder: [`${f.name}从`, '到'],
             className: styles.input,
-            rangeFormat
+            ...rangeFormat
           }
 
           return (

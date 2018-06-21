@@ -54,7 +54,7 @@ import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUse
 import { loadGroups, addGroup } from '../Group/actions'
 import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-import { resolve } from 'dns'
+// import { resolve } from 'dns'
 const utilStyles = require('../../assets/less/util.less')
 
 interface IUserProps {

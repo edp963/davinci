@@ -19,7 +19,7 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, all, put } from 'redux-saga/effects'
 import {
   LOAD_DASHBOARDS,
   ADD_DASHBOARD,
@@ -60,9 +60,7 @@ import {
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
   widgetCsvLoaded,
-  loadWidgetCsvFail,
-  updateMarkSuccess,
-  updateMarkError
+  loadWidgetCsvFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -148,25 +146,29 @@ export function* deleteDashboard (action) {
 
 export function* getDashboardDetail ({ payload }) {
   try {
-    const asyncData = yield call(request, `${api.dashboard}/${payload.id}`)
-    const dashboard = readListAdapter(asyncData) // FIXME 返回格式不标准
-    yield put(dashboardDetailLoaded(dashboard))
-    return dashboard
+    const asyncData = yield all({
+      dashboard: call(request, `${api.dashboard}/${payload.id}`),
+      widgets: call(request, api.widget)
+    })
+    const dashboard = readListAdapter(asyncData.dashboard)
+    const widgets = readListAdapter(asyncData.widgets)
+    yield put(dashboardDetailLoaded(dashboard, widgets))
   } catch (err) {
     console.log('getDashboardDetail', err)
   }
 }
 
-export function* addDashboardItem ({ payload }) {
+export function* addDashboardItem (action) {
+  const { item, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.dashboard}/widgets`,
-      data: writeAdapter(payload.item)
+      data: writeAdapter(item)
     })
     const result = readObjectAdapter(asyncData)
     yield put(dashboardItemAdded(result))
-    return result
+    resolve(result)
   } catch (err) {
     console.log('addDashboardItem', err)
   }
@@ -204,13 +206,15 @@ export function* editDashboardItems (action) {
   }
 }
 
-export function* deleteDashboardItem ({ payload }) {
+export function* deleteDashboardItem (action) {
+  const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.dashboard}/widgets/${payload.id}`
+      url: `${api.dashboard}/widgets/${id}`
     })
-    yield put(dashboardItemDeleted(payload.id))
+    yield put(dashboardItemDeleted(id))
+    resolve()
   } catch (err) {
     console.log('deleteDashboardItem', err)
   }

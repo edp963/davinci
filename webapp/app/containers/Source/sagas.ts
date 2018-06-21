@@ -19,7 +19,7 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, put } from 'redux-saga/effects'
 import {
   LOAD_SOURCES,
   ADD_SOURCE,
