@@ -25,14 +25,26 @@ import Report from './containers/Report'
 import Group from './containers/Group'
 import User from './containers/User'
 import Source from './containers/Source'
-import Bizlogic from './containers/Bizlogic'
+import Bizlogics from './containers/Bizlogic'
+import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
 import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
+import Register from './containers/Register'
+import Activate from './containers/Register/Activate'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
 import Display from './containers/Display'
+import Account from './containers/Account'
+import Projects from './containers/Projects'
+import Profile from './containers/Profile'
+import ResetPassword from './containers/ResetPassword'
+import Organizations from './containers/Organizations/index'
+import Organization from './containers/Organizations/Organization'
+import Teams from './containers/Teams/index'
+import Team from './containers/Teams/Team'
+import {replace} from 'react-router-redux'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -51,70 +63,269 @@ interface IExtendedRouteProps extends RouteProps {
 export default function createRoutes (store): IExtendedRouteProps[] {
   // const { injectReducer, injectSagas } = getAsyncInjectors(store)
 
+  // return [
+  //   {
+  //     path: '/login',
+  //     component: Login
+  //   },
+  //   {
+  //     path: '/register',
+  //     name: 'register',
+  //     component: Register
+  //   },
+  //   {
+  //     path: '/activate',
+  //     name: 'activate',
+  //     component: Activate
+  //   },
+  //   {
+  //     component: Main,
+  //     childRoutes: [
+  //       {
+  //         path: '/report',
+  //         name: 'report',
+  //         indexRoute: {
+  //           onEnter: (_, replace) => {
+  //             replace('/report/dashboards')
+  //           }
+  //         },
+  //         component: Report,
+  //         childRoutes: [
+  //           {
+  //             path: '/report/dashboards',
+  //             name: 'dashboards',
+  //             component: Dashboard
+  //           },
+  //           {
+  //             path: '/report/dashboard/:dashboardId',
+  //             name: 'dashboard',
+  //             component: Grid
+  //           },
+  //           {
+  //             path: '/report/widgets',
+  //             name: 'widgets',
+  //             component: Widget
+  //           },
+  //           {
+  //             path: '/report/bizlogics',
+  //             name: 'bizlogics',
+  //             component: Bizlogic
+  //           },
+  //           {
+  //             path: '/report/sources',
+  //             name: 'sources',
+  //             component: Source
+  //           },
+  //           {
+  //             path: '/report/users',
+  //             name: 'users',
+  //             component: User
+  //           },
+  //           {
+  //             path: '/report/groups',
+  //             name: 'groups',
+  //             component: Group
+  //           },
+  //           {
+  //             path: '/report/schedule',
+  //             name: 'schedule',
+  //             component: Schedule
+  //           }
+  //         ]
+  //       },
+  //       {
+  //         path: '/display',
+  //         name: 'display',
+  //         component: Display
+  //       },
+  //       {
+  //         path: '/account',
+  //         name: 'account',
+  //         indexRoute: {
+  //           onEnter: (_, replace) => {
+  //             replace('/account/profile')
+  //           }
+  //         },
+  //         component: Account,
+  //         childRoutes: [
+  //           {
+  //             path: '/account/profile',
+  //             name: 'profile',
+  //             component: Profile
+  //           },
+  //           {
+  //             path: '/account/resetPassword',
+  //             name: 'resetPassword',
+  //             component: ResetPassword
+  //           },
+  //           {
+  //             path: '/account/organizations',
+  //             name: 'organizations',
+  //             component: Organizations
+  //           },
+  //           {
+  //             path: '/account/organization/:organizationId',
+  //             name: 'organization',
+  //             component: Organization
+  //           },
+  //           {
+  //             path: '/account/teams',
+  //             name: 'teams',
+  //             component: Teams
+  //           },
+  //           {
+  //             path: '/account/team/:teamId',
+  //             name: 'team',
+  //             component: Team
+  //           }
+  //         ]
+  //       },
+  //       {
+  //         path: '/project',
+  //         name: 'project',
+  //         component: Projects
+  //       }
+  //     ]
+  //   },
+  //   {
+  //     path: '*',
+  //     name: 'notfound',
+  //     getComponent (nextState, cb) {
+  //       import('./containers/NotFoundPage')
+  //         .then(loadModule(cb))
+  //         .catch(errorLoading)
+  //     }
+  //   }
+  // ]
+
   return [
     {
       path: '/login',
       component: Login
     },
     {
+      path: '/register',
+      name: 'register',
+      component: Register
+    },
+    {
+      path: '/activate',
+      name: 'activate',
+      component: Activate
+    },
+    {
       component: Main,
       childRoutes: [
         {
-          path: '/report',
-          name: 'report',
+          path: '/projects',
+          name: 'projects',
+          component: Projects
+        },
+        {
+          path: '/project/:pid',
+          name: 'project',
+          component: Report,
           indexRoute: {
             onEnter: (_, replace) => {
-              replace('/report/dashboards')
+              const { params } = _
+              replace(`/project/${params.pid}/dashboards`)
             }
           },
-          component: Report,
           childRoutes: [
             {
-              path: '/report/dashboards',
+              path: '/project/:pid/dashboards',
               name: 'dashboards',
               component: Dashboard
             },
+            // {
+            //   path: '/project/:pid/dashboard/:did/portal/:pid',
+            //   name: 'dashboards',
+            //   component: Dashboard
+            // },
+            // todo 待dashboard portal完成后，删除此路由
             {
-              path: '/report/dashboard/:dashboardId',
+              path: '/project/:pid/dashboard/:dashboardId',
               name: 'dashboard',
               component: Grid
             },
             {
-              path: '/report/widgets',
+              path: '/project/:pid/widgets',
               name: 'widgets',
               component: Widget
             },
             {
-              path: '/report/bizlogics',
+              path: '/project/:pid/bizlogics',
               name: 'bizlogics',
+              component: Bizlogics
+            },
+            {
+              path: '/project/:pid/bizlogic/:bid',
+              name: 'bizlogic',
               component: Bizlogic
             },
             {
-              path: '/report/sources',
+              path: '/project/:pid/sources',
               name: 'sources',
               component: Source
             },
             {
-              path: '/report/users',
+              path: '/project/:pid/users',
               name: 'users',
               component: User
             },
             {
-              path: '/report/groups',
+              path: '/project/:pid/groups',
               name: 'groups',
               component: Group
             },
             {
-              path: '/report/schedule',
+              path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
             }
           ]
         },
         {
-          path: '/display',
-          name: 'display',
-          component: Display
+          path: '/account',
+          name: 'account',
+          indexRoute: {
+            onEnter: (_, replace) => {
+              replace('/account/profile')
+            }
+          },
+          component: Account,
+          childRoutes: [
+            {
+              path: '/account/profile',
+              name: 'profile',
+              component: Profile
+            },
+            {
+              path: '/account/resetPassword',
+              name: 'resetPassword',
+              component: ResetPassword
+            },
+            {
+              path: '/account/organizations',
+              name: 'organizations',
+              component: Organizations
+            },
+            {
+              path: '/account/organization/:organizationId',
+              name: 'organization',
+              component: Organization
+            },
+            {
+              path: '/account/teams',
+              name: 'teams',
+              component: Teams
+            },
+            {
+              path: '/account/team/:teamId',
+              name: 'team',
+              component: Team
+            }
+          ]
         }
       ]
     },

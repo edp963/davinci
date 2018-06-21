@@ -40,7 +40,7 @@ module.exports = {
     message: 'Do you want to load the component asynchronously?',
   }],
   actions: (data) => {
-    // Generate index.js and index.test.js
+    // Generate index.tsx and index.test.js
     let componentTemplate;
 
     switch (data.type) {
@@ -55,7 +55,7 @@ module.exports = {
 
     const actions = [{
       type: 'add',
-      path: '../../app/components/{{properCase name}}/index.js',
+      path: '../../app/components/{{properCase name}}/index.tsx',
       templateFile: componentTemplate,
       abortOnFail: true,
     }, {

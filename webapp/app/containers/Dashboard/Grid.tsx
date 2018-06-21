@@ -910,7 +910,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private navDropdownClick = (e) => {
-    this.props.router.push(`/report/dashboard/${e.key}`)
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/dashboard/${e.key}`)
   }
 
   private nextNavDropdownClick = (e) => {
@@ -1932,7 +1933,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !globalFilterTableSource.length
     })
-
+    const { params } = this.props
     return (
       <Container>
         <Helmet title={currentDashboard && currentDashboard.name} />
@@ -1941,7 +1942,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             <Col sm={12}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link to="/report/dashboards">
+                  <Link to={`/project/${params.pid}/dashboards`}>
                     Dashboard
                   </Link>
                 </Breadcrumb.Item>
