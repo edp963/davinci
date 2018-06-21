@@ -51,7 +51,7 @@ export class Main extends React.Component<IMainProps, {}> {
   private checkTokenLink = () => {
     const {
       router,
-      onGetLoginUser
+      onGetLoginUser,
     } = this.props
 
     const qs = this.getQs()
@@ -64,9 +64,11 @@ export class Main extends React.Component<IMainProps, {}> {
       localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
       onGetLoginUser(() => {
         if (dashboard) {
-          router.replace(`/report/dashboard/${dashboard}`)
+          //router.replace(`/report/dashboard/${dashboard}`)
+          router.replace(`/project/${this.props.params.pid}/dashboard/${dashboard}`)
         } else {
-          router.replace('/report')
+          //router.replace('/report')
+          router.replace('/projects')
         }
       })
     } else {

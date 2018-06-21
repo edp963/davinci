@@ -23,7 +23,7 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
 import Sidebar from '../../components/Sidebar'
-import SidebarOption from '../../components/SidebarOption'
+import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -34,6 +34,7 @@ interface IReportProps {
   sidebar: boolean | any[]
   loginUser: { admin: boolean }
   routes: any[]
+  params: any
   children: React.ReactNode
   onPageLoad: () => any
   onShowNavigator: () => any
@@ -52,7 +53,6 @@ export class Report extends React.Component<IReportProps, {}> {
       loginUser,
       routes
     } = this.props
-
     const sidebarOptions = sidebar && (sidebar as any[]).map((item) => {
       const isOptionActive = item.route.indexOf(routes[3].name) >= 0
       const iconClassName = `iconfont ${item.icon}`
@@ -61,6 +61,7 @@ export class Report extends React.Component<IReportProps, {}> {
           key={item.route}
           route={item.route}
           active={isOptionActive}
+          params={this.props.params}
         >
           <i className={iconClassName} />
         </SidebarOption>
@@ -96,7 +97,7 @@ export function mapDispatchToProps (dispatch) {
       const sidebarSource = [
         { icon: 'icon-dashboard', route: ['dashboards', 'dashboard', 'widgetPosition'] },
         { icon: 'icon-widget-gallery', route: ['widgets'] },
-        { icon: 'icon-custom-business', route: ['bizlogics'] },
+        { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'] },
         { icon: 'icon-datasource24', route: ['sources'] },
         { icon: 'icon-user1', route: ['users'] },
         { icon: 'icon-group', route: ['groups'] },

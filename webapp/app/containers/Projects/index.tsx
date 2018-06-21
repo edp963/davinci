@@ -40,21 +40,27 @@ const projectArr = [{
   id: 'add',
   type: 'add'
 }]
-
-export class Projects extends React.PureComponent<{}, {}> {
+interface IProjectsProps {
+  router: any
+}
+export class Projects extends React.PureComponent<IProjectsProps, {}> {
   constructor (props) {
     super(props)
   }
-  private showProjectForm = (type: string, d: any) => {
-    console.log(type, d)
+  private showProjectForm = (type: string, d: any) => () => {
     console.log('show')
+    console.log(type, d)
   }
-  private onDeleteProject = (id: number) => {
+  private onDeleteProject = (id: number) => () => {
     console.log(id)
   }
-  private toGrid = (d: any) => () => {
-    console.log(d)
+  private toProject = (d: any) => () => {
+    const pid = d.id
+    this.props.router.push(`/project/${pid}`)
   }
+  // private toGrid = (dashboard) => () => {
+  //   this.props.router.push(`/report/dashboard/${dashboard.id}`)
+  // }
   public render () {
     const projectItems = projectArr
       ? projectArr.map((d) => {
@@ -70,7 +76,7 @@ export class Projects extends React.PureComponent<{}, {}> {
             >
               <div
                 className={styles.unit}
-                onClick={this.toGrid(d)}
+                onClick={this.toProject(d)}
               >
                 <div className={styles.createNewWrapper}>
                   <div className={styles.createIcon}>
@@ -121,7 +127,7 @@ export class Projects extends React.PureComponent<{}, {}> {
               <div
                 className={itemClass}
                 style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
-                onClick={this.toGrid(d)}
+                onClick={this.toProject(d)}
               >
                 <header>
                   <h3 className={styles.title}>

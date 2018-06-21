@@ -56,8 +56,9 @@ const widgetStyles = require('../Widget/Widget.less')
 
 interface IDashboardProps {
   dashboards: IDashboard[]
-  loginUser: { id: number, admin: boolean },
+  loginUser: { id: number, admin: boolean }
   router: InjectedRouter
+  params: any
   onLoadDashboards: () => void
   onAddDashboard: (dashboard: IDashboard, resolve: () => void) => void
   onEditDashboard: (dashboard: IDashboard, resolve: () => void) => void
@@ -112,7 +113,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private toGrid = (dashboard) => () => {
-    this.props.router.push(`/report/dashboard/${dashboard.id}`)
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/dashboard/${dashboard.id}`)
   }
 
   private showDashboardForm = (formType, dashboard?: IDashboard) => (e) => {
