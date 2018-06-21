@@ -27,6 +27,7 @@ interface IDisplayContainerProps {
   width: number,
   height: number,
   padding: string,
+  scale: number
   children: JSX.Element[]
 }
 
@@ -36,23 +37,22 @@ interface IDisplayStyle {
   transform: string
   backgroundColor?: string
   backgroundImage?: string
-  opacity: number
 }
 
 export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
   private container: any
 
-  private getDisplayStyle = (displayParams) => {
+  private getDisplayStyle = (displayParams, scale) => {
     let displayStyle: IDisplayStyle
     displayStyle  = {
       width: `${displayParams.width}px`,
       height: `${displayParams.height}px`,
-      transform: `scale(${displayParams.scale})`,
-      opacity: displayParams.opacity
+      transform: `scale(${scale})`
     }
 
     if (displayParams.backgroundColor) {
-      displayStyle.backgroundColor = displayParams.backgroundColor
+      const rgb = [...displayParams.backgroundColor, (displayParams.opacity / 100)].join()
+      displayStyle.backgroundColor = `rgb(${rgb})`
     }
     if (displayParams.backgroundImage) {
       displayStyle.backgroundImage = `url("${displayParams.backgroundImage}")`
@@ -67,10 +67,11 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
       width,
       height,
       padding,
+      scale,
       children
     } = this.props
 
-    const displayStyle = this.getDisplayStyle(displayParams)
+    const displayStyle = this.getDisplayStyle(displayParams, scale)
 
     return (
       <div className={styles.editor}>

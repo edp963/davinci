@@ -20,7 +20,8 @@
 
 import { fromJS } from 'immutable'
 import {
-  ActionTypes
+  ActionTypes,
+  GraphTypes
 } from './constants'
 
 import {
@@ -33,52 +34,152 @@ import {
 
 const initialState = fromJS({
   displays: [],
-  editingLayers: [],
-  layersStatus: {},
-  currentDatasources: null,
-  currentItemsLoading: null,
-  currentItemsQueryParams: null
+  currentDisplay: null,
+  currentDisplayLoading: false,
+  currentDisplayCascadeSources: {},
+  currentLayers: [],
+  currentLayersStatus: {},
+  currentDatasources: {},
+  currentLayersLoading: {},
+  currentLayersQueryParams: {},
+  currentLayersCascadeSources: {}
 })
 
 function displayReducer (state = initialState, action) {
   const { type, payload } = action
 
-  const editingLayers = state.get('editingLayers')
+  const displays = state.get('displays')
+  const displayCascadeSources = state.get('currentDisplayCascadeSources')
+  const currentLayers = state.get('currentLayers')
 
   const datasources = state.get('currentDatasources')
-  const itemsLoading = state.get('currentItemsLoading')
-  const queryParams = state.get('currentItemQueryParams')
+  const layersLoading = state.get('currentLayersLoading')
+  const queryParams = state.get('currentLayersQueryParams')
+  const layersCascadeSources = state.get('currentLayersCascadeSources')
 
-  const layersStatus = state.get('layersStatus')
+  const layersStatus = state.get('currentLayersStatus')
 
-  switch (action.type) {
-    case ActionTypes.LOAD_DISPLAYS:
-      return state
+  switch (type) {
     case ActionTypes.LOAD_DISPLAYS_SUCCESS:
       return state.set('displays', payload.displays)
-    case ActionTypes.SELECT_WIDGET_LAYERS:
-      return state.set('editingLayers', editingLayers.concat(payload.layers))
-    case ActionTypes.ADD_SECONDARY_GRAPH_LAYER:
-      return state.set('editingLayers', editingLayers.concat(payload.layer))
-    case ActionTypes.DELETE_LAYERS:
+    case ActionTypes.LOAD_DISPLAYS_FAILURE:
       return state
-        .set('layerStatus', Object.keys(layersStatus).reduce((acc, key) => {
+
+    case ActionTypes.ADD_DISPLAY_SUCCESS:
+        displays.unshift(payload.result)
+        return state.set('displays', displays.slice())
+    case ActionTypes.ADD_DISPLAY_FAILURE:
+      return state
+
+    case ActionTypes.EDIT_DISPLAY_SUCCESS:
+      displays.splice(displays.findIndex(((d) => d.id === payload.result.id), 1, payload.result))
+      return state.set('displays', displays.slice())
+
+    case ActionTypes.EDIT_CURRENT_DISPLAY:
+      return state.set('currentDisplayLoading', true)
+    case ActionTypes.EDIT_CURRENT_DISPLAY_SUCCESS:
+      return state
+        .set('currentDisplay', payload.result)
+        .set('currentDisplayLoading', false)
+    case ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE:
+      return state.set('currentDisplayLoading', false)
+
+    case ActionTypes.LOAD_DISPLAY_DETAIL:
+      return state.set('currentDisplayLoading', true)
+    case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+      return state
+        .set('currentDisplayLoading', false)
+        .set('currentDisplay', payload.display)
+        .set('currentLayers', payload.display.layers || [])
+        .set('currentDatasources', {})
+        .set('currentLayersLoading', {})
+        .set('currentLayersQueryParams', payload.display.layers.reduce((obj, layer) => {
+          if (layer.graphType !== GraphTypes.Chart) { return obj }
+          obj[layer.id] = {
+            filters: '',
+            linkageFilters: '',
+            globalFilters: '',
+            params: [],
+            linkageParams: [],
+            globalParams: [],
+            pagination: {}
+          }
+          return obj
+        }, {}))
+        .set('currentLayersCascadeSources', payload.display.layers.reduce((obj, layer) => {
+          if (layer.graphType !== GraphTypes.Chart) { return obj }
+          obj[layer.id] = {}
+          return obj
+        }, {}))
+    case ActionTypes.LOAD_DISPLAY_DETAIL_FAILURE:
+      return state
+        .set('currentDisplayLoading', false)
+        .set('currentDisplay', null)
+
+    case ActionTypes.DELETE_DISPLAY_SUCCESS:
+      return state.set('displays', displays.filter((d) => d.id !== payload.id))
+
+    case ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS:
+      return state
+        .set('currentLayers', [...currentLayers, ...payload.result])
+        .set('currentLayersLoading', {
+          ...layersLoading,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = false
+            return obj
+          }, {})
+        })
+        .set('currentLayersQueryParams', {
+          ...queryParams,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {
+              filters: '',
+              linkageFilters: '',
+              globalFilters: '',
+              params: [],
+              linkageParams: [],
+              globalParams: [],
+              pagination: {}
+            }
+            return obj
+          })
+        })
+        .set('currentLayersCascadeSources', {
+          ...layersCascadeSources,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {}
+            return obj
+          })
+        })
+    case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
+      payload.ids.forEach((id) => {
+        delete datasources[id]
+        delete layersLoading[id]
+        delete queryParams[id]
+      })
+      return state
+        .set('currentLayersStatus', Object.keys(layersStatus).reduce((acc, key) => {
           if (payload.ids.indexOf(key) < 0) {
             acc[key] = layersStatus[key]
           }
           return acc
         }, {}))
-        .set('editingLayers', editingLayers.filter((layer) => payload.ids.indexOf(layer.id) < 0))
+        .set('currentLayers', currentLayers.filter((layer) => payload.ids.indexOf(layer.id) < 0))
+    case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
+        payload.result.forEach((layer) => {
+          currentLayers.splice(currentLayers.findIndex((l) => l.id === layer.id), 1, layer)
+        })
+        return state.set('currentLayers', currentLayers.slice())
 
     case LOAD_BIZDATAS_FROM_ITEM:
       return state
-        .set('currentItemsLoading', {
-          ...itemsLoading,
-          [payload.itemId]: true
+        .set('currentLayersLoading', {
+          ...layersLoading,
+          [payload.layerId]: true
         })
-        .set('currentItemsQueryParams', {
+        .set('currentLayersQueryParams', {
           ...queryParams,
-          [payload.itemId]: {
+          [payload.layerId]: {
             filters: payload.sql.filters,
             linkageFilters: payload.sql.linkageFilters,
             globalFilters: payload.sql.globalFilters,
@@ -94,8 +195,8 @@ function displayReducer (state = initialState, action) {
         })
     case LOAD_BIZDATAS_FROM_ITEM_SUCCESS:
       return state
-        .set('currentItemsLoading', {
-          ...itemsLoading,
+        .set('currentLayersLoading', {
+          ...layersLoading,
           [payload.itemId]: false
         })
         .set('currentDatasources', {
@@ -103,13 +204,16 @@ function displayReducer (state = initialState, action) {
           [payload.itemId]: payload.bizdatas
         })
     case LOAD_BIZDATAS_FROM_ITEM_FAILURE:
-      return state.set('currentItemsLoading', {
-        ...itemsLoading,
-        [payload.itemId]: false
+      return state.set('currentLayersLoading', {
+        ...layersLoading,
+        [payload.layerId]: false
       })
 
-    case ActionTypes.UPDATE_LAYER_SELECTION_STATUS:
-      return state.set('layersStatus', {
+    case ActionTypes.SELECT_LAYER:
+      if (payload.selected && payload.exclusive) {
+        Object.entries(layersStatus).forEach(([key]) => layersStatus[key] = false)
+      }
+      return state.set('currentLayersStatus', {
         ...layersStatus,
         [payload.id]: payload.selected
       })

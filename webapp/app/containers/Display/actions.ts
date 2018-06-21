@@ -28,7 +28,6 @@ export function loadDisplays () {
     type: ActionTypes.LOAD_DISPLAYS
   }
 }
-
 export function displaysLoaded (displays) {
   return {
     type: ActionTypes.LOAD_DISPLAYS_SUCCESS,
@@ -37,7 +36,6 @@ export function displaysLoaded (displays) {
     }
   }
 }
-
 export function loadDisplaysFail (error) {
   return {
     type: ActionTypes.LOAD_DISPLAYS_FAILURE,
@@ -47,21 +45,26 @@ export function loadDisplaysFail (error) {
   }
 }
 
-export function addDisplay (display) {
+export function addDisplay (display, resolve) {
   return {
     type: ActionTypes.ADD_DISPLAY,
     payload: {
-      display
+      display,
+      resolve
     }
   }
 }
-
 export function displayAdded (result) {
   return {
     type: ActionTypes.ADD_DISPLAY_SUCCESS,
     payload: {
       result
     }
+  }
+}
+export function addDisplayFail () {
+  return {
+    type: ActionTypes.ADD_DISPLAY_FAILURE
   }
 }
 
@@ -73,7 +76,6 @@ export function loadDisplayDetail (id) {
     }
   }
 }
-
 export function displayDetailLoaded (display) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
@@ -83,15 +85,15 @@ export function displayDetailLoaded (display) {
   }
 }
 
-export function editDisplay (display) {
+export function editDisplay (display, resolve) {
   return {
     type: ActionTypes.EDIT_DISPLAY,
     payload: {
-      display
+      display,
+      resolve
     }
   }
 }
-
 export function displayEdited (result) {
   return {
     type: ActionTypes.EDIT_DISPLAY_SUCCESS,
@@ -100,10 +102,35 @@ export function displayEdited (result) {
     }
   }
 }
-
 export function editDisplayFail (error) {
   return {
     type: ActionTypes.EDIT_DISPLAY_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function editCurrentDisplay (display, resolve) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_DISPLAY,
+    payload: {
+      display,
+      resolve
+    }
+  }
+}
+export function currentDisplayEdited (result) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_DISPLAY_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function editCurrentDisplayFail (error) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE,
     payload: {
       error
     }
@@ -118,7 +145,6 @@ export function deleteDisplay (id) {
     }
   }
 }
-
 export function displayDeleted (result) {
   return {
     type: ActionTypes.DELETE_DISPLAY_SUCCESS,
@@ -127,40 +153,85 @@ export function displayDeleted (result) {
     }
   }
 }
-
-export function selectWidgetLayers (widgetLayers) {
+export function deleteDisplayFail () {
   return {
-    type: ActionTypes.SELECT_WIDGET_LAYERS,
+    type: ActionTypes.DELETE_DISPLAY_FAILURE
+  }
+}
+
+export function selectLayer ({ id, selected, exclusive }) {
+  return {
+    type: ActionTypes.SELECT_LAYER,
     payload: {
-      layers: widgetLayers
+      id,
+      selected,
+      exclusive
     }
   }
 }
 
-export function addSecondaryGraphLayer (layer) {
+export function addDisplayLayers (layers: any[]) {
   return {
-    type: ActionTypes.ADD_SECONDARY_GRAPH_LAYER,
+    type: ActionTypes.ADD_DISPLAY_LAYERS,
     payload: {
-      layer
+      layers
     }
   }
 }
-
-export function deleteLayers (ids) {
+export function displayLayersAdded (result) {
   return {
-    type: ActionTypes.DELETE_LAYERS,
+    type: ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function addDisplayLayersFail () {
+  return {
+    type: ActionTypes.ADD_DISPLAY_LAYERS_FAILURE
+  }
+}
+
+export function editDisplayLayers (layers) {
+  return {
+    type: ActionTypes.EDIT_DISPLAY_LAYERS,
+    payload: {
+      layers
+    }
+  }
+}
+export function displayLayersEdited (result) {
+  return {
+    type: ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function editDisplayLayersFail () {
+  return {
+    type: ActionTypes.EDIT_DISPLAY_LAYERS_FAILURE
+  }
+}
+
+export function deleteDisplayLayers (ids) {
+  return {
+    type: ActionTypes.DELETE_DISPLAY_LAYERS,
     payload: {
       ids
     }
   }
 }
-
-export function updateLayerStatus ({ id, selected }) {
+export function displayLayersDeleted (ids) {
   return {
-    type: ActionTypes.UPDATE_LAYER_SELECTION_STATUS,
+    type: ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS,
     payload: {
-      id,
-      selected
+      ids
     }
+  }
+}
+export function deleteDisplayLayersFail () {
+  return {
+    type: ActionTypes.DELETE_DISPLAY_LAYERS_FAILURE
   }
 }

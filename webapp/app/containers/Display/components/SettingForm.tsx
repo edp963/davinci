@@ -20,12 +20,12 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { makeSelectLayerStatus } from '../selectors'
+import { FormComponentProps } from 'antd/lib/form/Form'
 
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
 const Radio = require('antd/lib/radio/radio')
 const Button = require('antd/lib/button')
@@ -42,26 +42,33 @@ import { SketchPicker } from 'react-color'
 const styles = require('../Display.less')
 
 interface ISettingFormProps {
-  settingInfo: any,
-  form: any,
-  screenWidth: number,
-  screenHeight: number,
-  scale: string,
-  gridDistance: number,
-  onDisplaySizeChange: (val: number, height: number) => void,
-  onDisplayScaleChange: (width: number, val: number) => void,
-  onGridDistanceChange: () => void,
-  onFormItemChange: (name: any) => any
+  settingInfo: any
+  settingParams: any
+  onFormItemChange: (field: any, value: any) => any
 }
 
-export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
+export class SettingForm extends React.PureComponent<ISettingFormProps & FormComponentProps> {
 
-  private changeWidth = (val) => {
-    this.props.onDisplaySizeChange(parseInt(val, 10), this.props.screenHeight)
+  constructor (props: ISettingFormProps & FormComponentProps) {
+    super(props)
   }
 
-  private changeHeight = (val) => {
-    this.props.onDisplaySizeChange(this.props.screenWidth, parseInt(val, 10))
+  public componentDidMount () {
+    const {
+      form,
+      settingParams
+    } = this.props
+    form.setFieldsValue({...settingParams})
+  }
+
+  public componentWillReceiveProps (nextProps: ISettingFormProps) {
+    const {
+      form,
+      settingParams
+    } = this.props
+    if (settingParams !== nextProps.settingParams) {
+      form.setFieldsValue({...nextProps.settingParams})
+    }
   }
 
   private renderSetting = (setting) => {
@@ -72,28 +79,35 @@ export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
     )
   }
 
+  private formItemChange = (field) => (val) => {
+    this.props.onFormItemChange(field, val)
+  }
+
   private renderItem = (param) => {
-    const { form, onFormItemChange } = this.props
+    const { form, settingParams } = this.props
     const { getFieldDecorator } = form
 
     const title = <h3 className={styles.formBlockTitle}>{param.title}</h3>
     const content = param.items.map((item) => {
       let control
       switch (item.component) {
+        case 'input':
+          control = renderInput(item, this.formItemChange)
+          break
         case 'inputnumber':
-          control = renderInputNumber(item, onFormItemChange)
+          control = renderInputNumber(item, this.formItemChange)
           break
         case 'colorPicker':
-          control = renderColorPicker(item, onFormItemChange)
+          control = renderColorPicker(item, this.formItemChange, settingParams[item.name])
           break
         case 'select':
-          control = renderSelect(item, onFormItemChange)
+          control = renderSelect(item, this.formItemChange)
           break
         case 'radio':
-          control = renderRadio(item, onFormItemChange)
+          control = renderRadio(item, this.formItemChange)
           break
         case 'upload':
-          control = renderUpload(item, onFormItemChange)
+          control = renderUpload(item, this.formItemChange)
           break
         default:
           control = ''
@@ -105,7 +119,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
       return control
     })
     return (
-      <Row gutter={16} className={styles.formBlock}>
+      <Row gutter={16} className={styles.formBlock} key={param.name}>
         {title}
         {content}
       </Row>
@@ -115,14 +129,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
   public render () {
     const {
       settingInfo,
-      form,
-      screenWidth,
-      screenHeight,
-      scale,
-      gridDistance,
-      onDisplayScaleChange,
-      onGridDistanceChange,
-      onFormItemChange
+      form
     } = this.props
     const { getFieldDecorator } = form
 
@@ -130,29 +137,25 @@ export class SettingForm extends React.PureComponent<ISettingFormProps, {}> {
   }
 }
 
-const mapStateToProps = createStructuredSelector({
-  layerStatus: makeSelectLayerStatus()
-})
-
 export default Form.create()(SettingForm)
 
-function wrapFormItem (content, item, getFieldDecorator) {
+function wrapFormItem (control, item, getFieldDecorator) {
   return (
     <Col key={item.name} span={item.span || 12}>
       <FormItem label={item.title}>
         {getFieldDecorator(item.name, {
           initialValue: item.default || ''
-        })(content)}
+        })(control)}
       </FormItem>
     </Col>
   )
 }
 
-function renderSelect (item, onFormItemChange) {
+function renderSelect (item, formItemChange) {
   return (
     <Select
       placeholder={item.tip || item.placeholder || item.name}
-      onChange={onFormItemChange(item.name)}
+      onChange={formItemChange(item.name)}
     >
       {
         Array.isArray(item.values)
@@ -165,20 +168,32 @@ function renderSelect (item, onFormItemChange) {
   )
 }
 
-function renderInputNumber (item, onFormItemChange) {
+function renderInput (item, formItemChange) {
+  const onFormInputItemChange = (e) => {
+    formItemChange(item.name)(e.target.value)
+  }
+  return (
+    <Input
+      placeholder={item.tip || item.placeholder || item.name}
+      onChange={onFormInputItemChange}
+    />
+  )
+}
+
+function renderInputNumber (item, formItemChange) {
   return (
     <InputNumber
       placeholder={item.tip || item.placeholder || item.name}
       min={item.min === undefined ? -Infinity : item.min}
       max={item.max === undefined ? Infinity : item.max}
-      onChange={onFormItemChange(item.name)}
+      onChange={formItemChange(item.name)}
     />
   )
 }
 
-function renderRadio (item, onFormItemChange) {
+function renderRadio (item, formItemChange) {
   return (
-    <RadioGroup onChange={onFormItemChange(item.name)}>
+    <RadioGroup onChange={formItemChange(item.name)}>
       {
         item.values.map((val) => (
           <Radio key={val.value} value={val.value}>{val.name}</Radio>
@@ -188,25 +203,33 @@ function renderRadio (item, onFormItemChange) {
   )
 }
 
-function renderColorPicker (item, onFormItemChange) {
+function renderColorPicker (item, formItemChange, rgb) {
+  const onChangeComplete = (e) => {
+    const { r, g, b } = e.rgb
+    formItemChange(item.name)([r, g, b])
+  }
+
+  const color = rgb ? `rgb(${rgb.join()}` : `rgb(0,0,0,1)`
   const colorPicker = (
-    <div><SketchPicker onChangeComplete={onFormItemChange(item.name)}/></div>
+    <SketchPicker
+      color={color}
+      disableAlpha={true}
+      onChangeComplete={onChangeComplete}
+    />
   )
   return (
-    <Popover placement="bottomCenter" trigger="click" content={colorPicker}>
-      <Button type="primary" shape="circle">
-        <i className="iconfont icon-palette"/>
-      </Button>
+    <Popover placement="bottom" trigger="click" content={colorPicker}>
+      <i className="iconfont icon-palette" style={{color}}/>
     </Popover>
   )
 }
 
-function renderUpload (item, onFormItemChange) {
+function renderUpload (item, formItemChange) {
   return (
     <Upload
       className={styles.upload}
       name={item.name}
-      onChange={onFormItemChange(item.name)}
+      onChange={formItemChange(item.name)}
     >
       <Icon type="plus" />
     </Upload>

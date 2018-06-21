@@ -31,18 +31,23 @@ import { checkNameAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
 
-interface IDashboardFormProps {
+interface IDisplayFormProps {
   type: string
   form: any
   onCheckName: (id, name, type, resolve, reject) => void
 }
 
-export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> {
+export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
+
+  constructor (props) {
+    super(props)
+  }
+
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type, form } = this.props
     const { id } = form.getFieldsValue()
     const idName = type === 'add' ? '' : id
-    const typeName = 'dashboard'
+    const typeName = 'dashboard' // @TODO change to 'display'
     onCheckName(idName, value, typeName,
       () => {
         callback()
@@ -50,6 +55,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
         callback(err)
       })
   }
+
   public render () {
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
@@ -71,16 +77,6 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
               {getFieldDecorator('create_by', {
                 hidden: this.props.type === 'add'
               })(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('pic', {})(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('linkage_detail', {})(
                 <Input />
               )}
             </FormItem>
@@ -153,4 +149,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default Form.create()(connect<{}, {}, IDashboardFormProps>(null, mapDispatchToProps)(DashboardForm))
+export default Form.create()(connect<{}, {}, IDisplayFormProps>(null, mapDispatchToProps)(DisplayForm))

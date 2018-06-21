@@ -20,10 +20,23 @@
 
  import display from './display.json'
  import rectangle from './rectangle.json'
+ import label from './label.json'
  import chart from './chart.json'
 
  export default [
    display,
    rectangle,
+   label,
    chart
  ]
+
+ export function getDefaultDisplayParams () {
+  const params = display.params
+  const defaultDisplayParams = {}
+  params.forEach((param) => {
+    param.items.forEach((item) => {
+      defaultDisplayParams[item.name] = item.default || null
+    })
+  })
+  return  JSON.stringify(defaultDisplayParams)
+}

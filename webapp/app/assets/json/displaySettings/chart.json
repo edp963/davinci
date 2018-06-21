@@ -24,7 +24,7 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": "#fff",
+      "default": [255,255,255],
       "span": 12
     }, {
       "name": "opacity",
@@ -42,7 +42,7 @@
       "name": "borderColor",
       "title": "边框颜色",
       "component": "colorPicker",
-      "default": "#fff",
+      "default": [0,0,0],
       "span": 12
     }, {
       "name": "borderWidth",

@@ -2,13 +2,6 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { iconMapping } from './chartUtil'
 
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { makeSelectWidgets } from '../selectors'
-import { makeSelectLoginUser } from '../../App/selectors'
-import { promiseDispatcher } from 'utils/reduxPromisation'
-import { loadWidgets } from '../actions'
-
 const Icon = require('antd/lib/icon')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -19,14 +12,15 @@ const Search = Input.Search
 const styles = require('../Widget.less')
 
 interface IWidgetSelectorProps {
-  widgets?: any[],
-  loginUser?: any,
+  className: any,
+  widgets: any[],
+  loginUser: { id: number, admin: boolean },
   multiple: boolean,
   onWidgetsSelect: (widgets) => void,
-  onLoadWidgets?: () => void
 }
 
 interface IWidgetSelectorStates {
+  authorizedWidgets: any[],
   screenWidth: number,
   kwWidget: string,
   pageSize: number,
@@ -39,6 +33,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
   constructor (props) {
     super(props)
     this.state = {
+      authorizedWidgets: [],
       screenWidth: 0,
       kwWidget: '',
       pageSize: 24,
@@ -49,15 +44,41 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
   }
 
   public componentWillMount () {
+    this.getScreenWidth()
+  }
+
+  public componentDidMount () {
     const {
-      onLoadWidgets
+      widgets
     } = this.props
-    onLoadWidgets()
+    if (widgets.length > 0) {
+      this.setAuthorizedWidgets(widgets)
+    }
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const { widgets, loginUser } = this.props
+    if (nextProps.widgets !== widgets) {
+      this.setAuthorizedWidgets(nextProps.widgets)
+    }
+    window.addEventListener('resize', this.getScreenWidth, false)
+  }
+
+  public componentWillUnmount () {
+    window.removeEventListener('resize', this.getScreenWidth, false)
+  }
+
+  private getScreenWidth = () => {
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  public componentWillReceiveProps (props) {
-    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
+  private setAuthorizedWidgets = (widgets) => {
+    const { loginUser } = this.props
+    if (loginUser.admin) {
+      this.setState({
+        authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
+      })
+    }
   }
 
   private onChange = (page) => {
@@ -151,6 +172,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   public render () {
     const {
+      className,
       widgets,
       loginUser
     } = this.props
@@ -197,7 +219,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
     })
 
     return (
-      <div>
+      <div className={className}>
         <Row gutter={20} className={`${styles.searchRow}`}>
           <Col span={17}>
             <Checkbox checked={showSelected} onChange={this.onShowTypeChange}>已选</Checkbox>
@@ -230,15 +252,4 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
   }
 }
 
-const mapStateToProps = createStructuredSelector({
-  widgets: makeSelectWidgets(),
-  loginUser: makeSelectLoginUser()
-})
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onLoadWidgets: () => promiseDispatcher(dispatch, loadWidgets)
-  }
-}
-
-export default connect<{}, {}, IWidgetSelectorProps>(mapStateToProps, mapDispatchToProps)(WidgetSelector)
+export default WidgetSelector

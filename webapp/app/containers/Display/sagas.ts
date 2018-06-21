@@ -19,11 +19,13 @@
  */
 
 import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { call, fork, put, all } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import { getDefaultDisplayParams } from '../../assets/json/displaySettings'
+import axios from 'axios' // FIXME
 
 const message = require('antd/lib/message')
 
@@ -38,52 +40,187 @@ import {
   loadDisplayDetail,
   displayDetailLoaded,
 
-  addDisplay,
   displayAdded,
-
+  addDisplayFail,
   displayEdited,
   editDisplayFail,
+  currentDisplayEdited,
+  editCurrentDisplayFail,
+  displayDeleted,
+  deleteDisplayFail,
 
-  deleteDisplay,
-  displayDeleted
+  displayLayersAdded,
+  addDisplayLayersFail,
+  displayLayersDeleted,
+  deleteDisplayLayersFail,
+  displayLayersEdited,
+  editDisplayLayersFail
 } from './actions'
 import messages from './messages'
 
+function* getToken () {
+  return yield call(axios, `/api/v3/login`, {
+    method: 'post',
+    data: {
+      username: 'Fangkun',
+      password: '123456qwerty'
+    }
+  })
+}
+
 export function* getDisplays (): IterableIterator<any> {
-  const asyncData = yield call(request, api.display)
+  // FIXME
+  const token = (yield getToken()).data.header.token
+
+  const asyncData = yield call(request, `${api.display}/1`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
   if (!asyncData.error) {
-    const displays = readListAdapter(asyncData)
+    const displays = readListAdapter(asyncData, 'display')
     yield put(displaysLoaded(displays))
   } else {
     yield put(loadDisplaysFail(asyncData.error))
   }
 }
 
-export function* getDisplayDetail (id): IterableIterator<any> {
+export function* addDisplay (action) {
+  const { display, resolve } = action.payload
+  display['display_params'] = getDefaultDisplayParams()
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: api.display,
+      data: writeAdapter(display, 'display')
+    })
+    const result = readObjectAdapter(asyncData, 'display')
+    yield put(displayAdded(display))
+    resolve()
+  } catch (err) {
+    yield put(addDisplayFail())
+    message.error('添加 Display 失败，请稍后再试')
+  }
+}
+
+export function* getDisplayDetail (action): IterableIterator<any> {
+  const { id } = action.payload
   const asyncData = yield call(request, `${api.display}/${id}`)
-  const display = readListAdapter(asyncData)
+  const display = readListAdapter(asyncData, 'display')
+  // FIXME
+  display.layers = yield call(request, `${api.display}/layers`)
   yield put(displayDetailLoaded(display))
   return display
 }
 
-export function* editDisplay (display): IterableIterator<any> {
+export function* editDisplay (action): IterableIterator<any> {
+  const { display, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: api.display,
-      data: writeAdapter(display)
+      url: `${api.display}/${display.id}`,
+      data: writeAdapter(display, 'display')
     })
     yield put(displayEdited(display))
+    resolve()
   } catch (err) {
     yield put(editDisplayFail(err))
     message.error(err)
   }
 }
 
+export function* editCurrentDisplay (action): IterableIterator<any> {
+  const { display, resolve } = action.payload
+  try {
+    yield call(request, {
+      method: 'put',
+      url: `${api.display}/${display.id}`,
+      data: writeAdapter(display, 'display')
+    })
+    yield put(currentDisplayEdited(display))
+    resolve()
+  } catch (err) {
+    yield put(editCurrentDisplayFail(err))
+    message.error(err)
+  }
+}
+
+export function* deleteDisplay (action) {
+  const { id } = action.payload
+  try {
+    yield call(request, {
+      method: 'delete',
+      url: `${api.display}/${id}`
+    })
+    yield put(displayDeleted(id))
+  } catch (err) {
+    yield put(deleteDisplayFail())
+    message.error('删除当前 Display 失败，请稍后再试')
+  }
+}
+
+export function* addDisplayLayers (action) {
+  const { layers } = action.payload
+  // FIXME
+  layers.forEach((l) => {
+    l.id = +require('../../utils/util').uuid(3, 10)
+  })
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.display}/layers`,
+      data: writeAdapter(layers[0], 'display') // FIXME
+    })
+    const result = readObjectAdapter(asyncData, 'display')
+    yield put(displayLayersAdded([result]))
+    return result
+  } catch (err) {
+    yield put(addDisplayLayersFail())
+    message.error('当前 Display 添加图层失败，请稍后再试')
+  }
+}
+
+export function* editDisplayLayers (action) {
+  const { layers } = action.payload
+  try {
+    // FIXME
+    yield all(layers.map((x) => call(request, {
+      method: 'put',
+      url: `${api.display.replace('displays', 'layers')}/${x.id}`,
+      data: writeAdapter(x, 'display')
+    })))
+    yield put(displayLayersEdited(layers))
+  } catch (err) {
+    yield put(editDisplayLayersFail())
+    message.error(err)
+  }
+}
+
+export function* deleteDisplayLayers (action) {
+  const { ids } = action.payload
+  try {
+    // FIXME
+    yield all(ids.map((id) => call(request, {
+      method: 'delete',
+      url: `${api.display.replace('displays', 'layers')}/${id}`
+    })))
+    yield put(displayLayersDeleted(ids))
+  } catch (err) {
+    yield put(deleteDisplayLayersFail())
+    message.error('当前 Display 删除图层失败，请稍后再试')
+  }
+}
+
 export default function* rootDisplaySaga (): IterableIterator<any> {
   yield [
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
+    takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
     takeLatest(ActionTypes.LOAD_DISPLAY_DETAIL, getDisplayDetail),
-    takeEvery(ActionTypes.EDIT_DISPLAY, editDisplay)
+    takeEvery(ActionTypes.EDIT_DISPLAY, editDisplay),
+    takeEvery(ActionTypes.EDIT_CURRENT_DISPLAY, editCurrentDisplay),
+    takeEvery(ActionTypes.DELETE_DISPLAY, deleteDisplay),
+    takeEvery(ActionTypes.ADD_DISPLAY_LAYERS, addDisplayLayers),
+    takeEvery(ActionTypes.EDIT_DISPLAY_LAYERS, editDisplayLayers),
+    takeEvery(ActionTypes.DELETE_DISPLAY_LAYERS, deleteDisplayLayers)
   ]
 }

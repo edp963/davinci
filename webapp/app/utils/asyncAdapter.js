@@ -18,10 +18,18 @@
  * >>
  */
 
-import { env } from '../globalConfig'
+import { env, envName } from '../globalConfig'
+import { apiConfig } from './api'
 
-export function readListAdapter (data) {
-  switch (env) {
+function getCurrentEnv (apiName) {
+  if (apiName && apiConfig[apiName]) {
+    return apiConfig[apiName].env
+  }
+  return env
+}
+
+export function readListAdapter (data, apiName) {
+  switch (getCurrentEnv(apiName)) {
     case 'production':
       return data.payload
     default:
@@ -29,8 +37,8 @@ export function readListAdapter (data) {
   }
 }
 
-export function readObjectAdapter (data) {
-  switch (env) {
+export function readObjectAdapter (data, apiName) {
+  switch (getCurrentEnv(apiName)) {
     case 'production':
       return data.payload[0]
     default:
@@ -38,8 +46,8 @@ export function readObjectAdapter (data) {
   }
 }
 
-export function writeAdapter (data) {
-  switch (env) {
+export function writeAdapter (data, apiName) {
+  switch (getCurrentEnv(apiName)) {
     case 'production':
       return {
         payload: [data]

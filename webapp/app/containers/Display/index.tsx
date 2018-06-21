@@ -1,8 +1,8 @@
 import * as React from 'react'
 import Helmet from 'react-helmet'
+import { Link, InjectedRouter } from 'react-router'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
 
 import { compose } from 'redux'
 import reducer from './reducer'
@@ -13,7 +13,9 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
 import Container from '../../components/Container'
-import Editor from './components/Editor'
+import DisplayForm from './components/DisplayForm'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+import Editor from './Editor'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -25,32 +27,47 @@ const Breadcrumb = require('antd/lib/breadcrumb')
 const Popconfirm = require('antd/lib/popconfirm')
 const Input = require('antd/lib/input')
 const Pagination = require('antd/lib/pagination')
+const Search = Input.Search
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')
+const stylesDashboard = require('../Dashboard/Dashboard.less')
 
-import { loadDisplays, deleteDisplay } from './actions'
+import { loadDisplays, deleteDisplay, addDisplay, editDisplay } from './actions'
 import { makeSelectDisplays } from './selectors'
+import { makeSelectLoginUser } from '../App/selectors'
 
 interface IDisplayProps {
+  router: InjectedRouter
   displays: any[]
+  loginUser: { id: number, admin: boolean }
   onLoadDisplays: () => void,
   onDeleteDisplay: (id: any) => void
+  onAddDisplay: (display: any, resolve: () => void) => void
+  onEditDisplay: (display: any, resolve: () => void) => void
 }
 
 interface IDisplayStates {
+  modalLoading: boolean
+  formType: 'add' | 'edit' | ''
+  formVisible: boolean
   currentDisplay: object,
-  displayVisible: boolean
+  kwDisplay: string
 }
 
 export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> {
   constructor (props) {
     super(props)
     this.state = {
+      modalLoading: false,
+      formType: '',
+      formVisible: false,
       currentDisplay: null,
-      displayVisible: false
+      kwDisplay: ''
     }
   }
+
+  private displayForm: WrappedFormUtils
 
   public componentWillMount () {
     const {
@@ -59,18 +76,8 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
     onLoadDisplays()
   }
 
-  private showDisplay = (type, display?: any) => () => {
-    this.setState({
-      currentDisplay: display,
-      displayVisible: true
-    })
-    console.log('showDisplay: ', type)
-  }
-
-  private hideDisplay = () => {
-    this.setState({
-      displayVisible: false
-    })
+  private goToDisplay = (display?: any) => () => {
+    this.props.router.push(`/display/${display ? display.id : -1}`)
   }
 
   private stopPPG = (e) => {
@@ -81,18 +88,83 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
     console.log(e)
   }
 
+  private onSearchDisplay = (value) => {
+    this.setState({
+      kwDisplay: value
+    })
+  }
+
+  private getDisplays () {
+    const {
+      loginUser,
+      displays
+    } = this.props
+
+    const {
+      kwDisplay
+    } = this.state
+
+    if (!Array.isArray(displays)) {
+      return []
+    }
+
+    const reg = new RegExp(kwDisplay, 'i')
+    const filteredDisplays = displays.filter((d) => reg.test(d.name))
+    return filteredDisplays
+  }
+
+  private showDisplayForm = (formType, display?) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formType,
+      formVisible: true
+    }, () => {
+      if (display) {
+        this.displayForm.setFieldsValue(display)
+      }
+    })
+  }
+
+  private hideDisplayForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.displayForm.resetFields()
+    })
+  }
+
+  private onModalOk = () => {
+    this.displayForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        if (this.state.formType === 'add') {
+          this.props.onAddDisplay({
+            ...values
+          }, () => { this.hideDisplayForm() })
+        } else {
+          this.props.onEditDisplay(values, () => { this.hideDisplayForm() })
+        }
+      }
+    })
+  }
+
   public render () {
     const {
       displays,
+      loginUser,
       onDeleteDisplay
     } = this.props
 
     const {
-      currentDisplay,
-      displayVisible
+      modalLoading,
+      formType,
+      formVisible,
+      currentDisplay
     } = this.state
 
-    const cols = displays.map(((d, index) => {
+    const displaysFiltered = this.getDisplays()
+    const cols = displaysFiltered.map(((d, index) => {
       return (
         <Col
           xl={4}
@@ -101,9 +173,8 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
           sm={12}
           xs={24}
           key={d.id}
-          onClick={this.showDisplay('edit', d)}
         >
-          <div className={styles.display}>
+          <div className={styles.display} onClick={this.goToDisplay(d)}>
             <h3 className={styles.title}>{d.name}</h3>
             <p className={styles.content}>{d.desc}</p>
             <i className={`${styles.pic} iconfont`} />
@@ -124,11 +195,49 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
       )
     }))
 
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideDisplayForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.onModalOk}
+      >
+        保 存
+      </Button>
+    )]
+
+    const addButton = loginUser.admin
+      ? (
+        <Col xl={2} lg={2} md={2} sm={2} xs={24} className={stylesDashboard.addCol}>
+          <Tooltip placement="bottom" title="新增">
+            <Button
+              size="large"
+              type="primary"
+              icon="plus"
+              onClick={this.showDisplayForm('add')}
+            />
+          </Tooltip>
+        </Col>
+      ) : ''
+
+    const searchCol = loginUser.admin ? stylesDashboard.searchAdmin : stylesDashboard.searchUser
+
     return (
       <Container>
         <Helmet title="Display" />
         <Container.Title>
-          <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+          <Row>
+            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="/">
@@ -137,6 +246,20 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
+            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+              <Row>
+                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
+                  <Search
+                    size="large"
+                    className={`${utilStyles.searchInput} ${loginUser.admin ? stylesDashboard.searchInputAdmin : ''}`}
+                    placeholder="Display 名称"
+                    onSearch={this.onSearchDisplay}
+                  />
+                </Col>
+                {addButton}
+              </Row>
+            </Col>
+          </Row>
         </Container.Title>
         <Container.Body card>
           <Row gutter={20}>
@@ -144,13 +267,16 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
           </Row>
         </Container.Body>
         <Modal
-          wrapClassName={`ant-modal-xlarge ${styles.workbenchWrapper}`}
-          visible={displayVisible}
-          onCancel={this.hideDisplay}
-          footer={false}
-          maskClosable={false}
+          title={`${formType === 'add' ? '新增' : '修改'} Display`}
+          wrapClassName="ant-modal-small"
+          visible={formVisible}
+          footer={modalButtons}
+          onCancel={this.hideDisplayForm}
         >
-          <Editor display={currentDisplay}/>
+          <DisplayForm
+            type={formType}
+            ref={(f) => { this.displayForm = f }}
+          />
         </Modal>
       </Container>
     )
@@ -158,13 +284,16 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
 }
 
 const mapStateToProps = createStructuredSelector({
-  displays: makeSelectDisplays()
+  displays: makeSelectDisplays(),
+  loginUser: makeSelectLoginUser()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplays: () => dispatch(loadDisplays()),
-    onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id))
+    onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id)),
+    onAddDisplay: (display, resolve) => dispatch(addDisplay(display, resolve)),
+    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve))
   }
 }
 

@@ -1,11 +1,8 @@
 import * as React from 'react'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { makeSelectLayers, makeSelectLayerStatus } from '../selectors'
 import {
-  updateLayerStatus,
-  deleteLayers
+  selectLayer
 } from '../actions'
+import { OrderDirection } from '../../../utils/util'
 
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
@@ -17,9 +14,10 @@ const styles = require('../Display.less')
 
 interface ILayerListProps {
   layers: any[]
-  layerStatus: object,
-  onUpdateLayerStatus?: (obj: { id: any, selected: boolean }) => void,
-  onDeleteLayers?: (ids: any[]) => void
+  layersStatus: object,
+  selectedLayers: any[]
+  onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
+  onEditDisplayLayers: (layers: any[]) => void
 }
 
 export class LayerList extends React.Component <ILayerListProps, {}> {
@@ -27,59 +25,161 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
     super(props)
   }
 
-  private deleteLayers = () => {
-    const { layerStatus, onDeleteLayers } = this.props
-    const ids = Object.keys(layerStatus).filter((id) => layerStatus[id])
-    onDeleteLayers(ids)
+  private sortLayers = (layers, orderDirection: OrderDirection): any[] => {
+    if (!Array.isArray(layers)) { return [] }
+
+    const sortedLayers = [...layers]
+    switch (orderDirection) {
+      case OrderDirection.Asc:
+        sortedLayers.sort((item1, item2) => (item1.layerIndex - item2.layerIndex))
+        break
+      case OrderDirection.Desc:
+        sortedLayers.sort((item1, item2) => (item2.layerIndex - item1.layerIndex))
+        break
+      default:
+        break
+    }
+    return sortedLayers
+  }
+
+  private swapLayerIndex = (orderedSelectedLayers: any[], orderedLayers: any[]) => {
+    const updateLayers = []
+    orderedSelectedLayers.forEach((layer) => {
+      const idx = orderedLayers.findIndex((l) => l.id === layer.id)
+      if (idx === 0 || orderedSelectedLayers.findIndex((l) => l.id === orderedLayers[idx - 1].id) >= 0) {
+        return
+      }
+
+      const tempIndex = orderedLayers[idx].layerIndex
+      orderedLayers[idx].layerIndex = orderedLayers[idx - 1].layerIndex
+      orderedLayers[idx - 1].layerIndex = tempIndex
+      const temp = orderedLayers[idx]
+      orderedLayers[idx] = orderedLayers[idx - 1]
+      orderedLayers[idx - 1] = temp
+
+      const currentLayers = [orderedLayers[idx], orderedLayers[idx - 1]]
+      currentLayers.forEach((item) => {
+        const exists = updateLayers.findIndex((l) => l.id === item.id)
+        if (exists < 0) {
+          updateLayers.push({ ...item })
+        } else {
+          updateLayers.splice(exists, 1, { ...item })
+        }
+      })
+    })
+
+    if (updateLayers.length <= 0) { return }
+
+    this.props.onEditDisplayLayers(updateLayers)
+  }
+
+  private bringToUpper = () => {
+    const {
+      selectedLayers,
+      layers } = this.props
+    const descSelectedLayers = this.sortLayers(selectedLayers, OrderDirection.Desc)
+    const descLayers = this.sortLayers(layers, OrderDirection.Desc)
+    this.swapLayerIndex(descSelectedLayers, descLayers)
+  }
+
+  private sendToNext = () => {
+    const {
+      selectedLayers,
+      layers
+    } = this.props
+    const ascSelectedLayers = this.sortLayers(selectedLayers, OrderDirection.Asc)
+    const ascLayers = this.sortLayers(layers, OrderDirection.Asc)
+    this.swapLayerIndex(ascSelectedLayers, ascLayers)
+  }
+
+  private bringToFront = () => {
+    const {
+      selectedLayers,
+      layers,
+      onEditDisplayLayers
+    } = this.props
+    if (selectedLayers.length <= 0) { return }
+
+    const maxLayerIndex = layers.reduce((acc, layer) => Math.max(layer.layerIndex, acc), -Infinity)
+    const updateLayers = this.sortLayers(selectedLayers, OrderDirection.Asc).map((layer, idx) => ({
+      ...layer,
+      layerIndex: maxLayerIndex + idx + 1
+    }))
+    onEditDisplayLayers(updateLayers)
+  }
+
+  private sendToBottom = () => {
+    const {
+      selectedLayers,
+      layers,
+      onEditDisplayLayers
+    } = this.props
+    if (selectedLayers.length <= 0) { return }
+
+    const minLayerIndex = layers.reduce((acc, layer) => Math.min(layer.layerIndex, acc), Infinity)
+    const updateLayers = this.sortLayers(selectedLayers, OrderDirection.Desc).map((layer, idx) => ({
+      ...layer,
+      layerIndex: minLayerIndex - idx - 1
+    }))
+    onEditDisplayLayers(updateLayers)
   }
 
   private commands = [{
     title: '上移一层',
-    icon: 'icon-bring-upper'
+    icon: 'icon-bring-upper',
+    handler: this.bringToUpper
   }, {
     title: '下移一层',
-    icon: 'icon-send-next'
+    icon: 'icon-send-next',
+    handler: this.sendToNext
   }, {
     title: '置顶',
-    icon: 'icon-bring-front'
+    icon: 'icon-bring-front',
+    handler: this.bringToFront
   }, {
     title: '置底',
-    icon: 'icon-send-bottom'
+    icon: 'icon-send-bottom',
+    handler: this.sendToBottom
   }]
 
-  private changeLayerStatus = (layerId) => () => {
-    const { layerStatus, onUpdateLayerStatus } = this.props
-    onUpdateLayerStatus({ id: layerId, selected: !layerStatus[layerId]})
+  private changeLayerStatus = (layerId) => (e: React.MouseEvent<HTMLElement>) => {
+    const { ctrlKey, metaKey } = e
+    const { layersStatus, onSelectLayer } = this.props
+    const exclusive = !ctrlKey && !metaKey
+    onSelectLayer({ id: layerId, selected: !layersStatus[layerId], exclusive})
+    e.stopPropagation()
+  }
+
+  private getLayersByIndexDesc = (layers: any[]) => {
+    if (!Array.isArray(layers)) { return [] }
+
+    return [...layers].sort((item1, item2) => (item2.layerIndex - item1.layerIndex))
   }
 
   public render () {
     const {
       layers,
-      layerStatus
+      layersStatus
     } = this.props
 
     const header = <div>图层</div>
     const  cmds = this.commands.map((cmd, idx) => (
-      <li key={idx}><Tooltip placement="bottom" title={cmd.title}><i className={`iconfont ${cmd.icon}`}/></Tooltip></li>))
+      <li key={idx} onClick={cmd.handler}>
+        <Tooltip placement="bottom" title={cmd.title}>
+          <i className={`iconfont ${cmd.icon}`}/>
+        </Tooltip>
+      </li>))
 
-    const layerItems = layers.map((layer) => (
-      <li key={layer.id}>
-        <i onClick={this.changeLayerStatus(layer.id)} className={`iconfont ${layerStatus[layer.id] ? 'icon-selected' : 'icon-unselected'}`}/>
-        <span>{layer.name}</span>
-      </li>
-    ))
-    const footer = (
-      <div className={styles.footer}>
-        <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={this.deleteLayers}
-        >
-          <Tooltip title="删除" placement="right">
-            <Icon className={styles.delete} type="delete" />
-          </Tooltip>
-        </Popconfirm>
-      </div>)
+    const layerItems = this.getLayersByIndexDesc(layers)
+      .map((layer) => (
+        <li key={layer.id}>
+          <i
+            onClick={this.changeLayerStatus(layer.id)}
+            className={`iconfont ${layersStatus[layer.id] ? 'icon-selected' : 'icon-unselected'}`}
+          />
+          <span>{layer.name}</span>
+        </li>
+      ))
     return (
       <div className={`${styles.sidebar} ${styles.left}`}>
         <h2 className={styles.formTitle}>图层</h2>
@@ -89,22 +189,10 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
         <div className={styles.layerList}>
           <ul>{layerItems}</ul>
         </div>
-        {footer}
       </div>
     )
   }
 }
 
-const mapStateToProps = createStructuredSelector({
-  layers: makeSelectLayers(),
-  layerStatus: makeSelectLayerStatus()
-})
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onUpdateLayerStatus: ({ id, selected }) => dispatch(updateLayerStatus({ id, selected })),
-    onDeleteLayers: (ids) => dispatch(deleteLayers(ids))
-  }
-}
-
-export default connect<{}, {}, ILayerListProps>(mapStateToProps, mapDispatchToProps)(LayerList)
+export default LayerList

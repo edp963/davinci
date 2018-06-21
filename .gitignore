@@ -28,3 +28,4 @@ swagger-ui/
 lib/
 tempFiles/
 .vscode
+node_modules/

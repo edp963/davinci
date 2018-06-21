@@ -10,7 +10,7 @@
     "only-arrow-functions": false,
     "no-var-requires": false,
     "ordered-imports": false,
-    "no-unused-variable": true,
+    "no-unused-variable": [false],
     "member-ordering": [false],
     "object-literal-sort-keys": false,
     "no-shadowed-variable": false,
@@ -19,6 +19,7 @@
     "no-consecutive-blank-lines": [false],
     "no-string-literal": false,
     "jsx-no-multiline-js": false,
-    "jsx-boolean-value": false
+    "jsx-boolean-value": false,
+    "no-implicit-dependencies": false
   }
 }

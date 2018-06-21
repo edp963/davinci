@@ -19,10 +19,7 @@
  */
 
 import * as React from 'react'
-
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { uuid } from '../../../utils/util'
+import { Link } from 'react-router'
 
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
@@ -34,26 +31,24 @@ const Modal = require('antd/lib/modal')
 const styles = require('../Display.less')
 
 import displaySettings from '../../../assets/json/displaySettings'
-import WidgetSelector from '../../Widget/components/WidgetSelector'
+import LayerSelector from './LayerSelector'
 
 import {
   GraphTypes,
   SecondaryGraphTypes } from '../constants'
-import { makeSelectLayers, makeSelectLayerStatus } from '../selectors'
-import {
-  selectWidgetLayers,
-  addSecondaryGraphLayer,
-  deleteLayers } from '../actions'
+
 interface IDisplayHeaderProps {
-  layerStatus: object,
-  onSelectWidgetLayers: (widgetLayers: any[]) => void,
-  onAddSecondaryGraphLayer: (layer: any) => void,
-  onDeleteLayers?: (ids: any[]) => void
+  widgets: any[],
+  currentLayersStatus: object
+  loginUser: any
+  onAddLayers: (layers: any[]) => void
+  onDeleteLayers: (ids: number[]) => void
 }
 
 interface IDisplayHeaderStates {
   widgetSelectorVisible: boolean,
-  widgets: any[]
+  widgetSelectorLoading: boolean,
+  widgetsSelected: any[]
 }
 
 export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplayHeaderStates> {
@@ -61,7 +56,8 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     super(props)
     this.state = {
       widgetSelectorVisible: false,
-      widgets: []
+      widgetSelectorLoading: false,
+      widgetsSelected: []
     }
   }
 
@@ -73,12 +69,9 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
 
   private hideWidgetSelector = () => {
     this.setState({
+      widgetSelectorLoading: false,
       widgetSelectorVisible: false
     })
-  }
-
-  private onWidgetsSelect = (widgets) => {
-    this.setState({ widgets })
   }
 
   private getDefaultSetting = (graphType: GraphTypes, secondaryGraphType?: SecondaryGraphTypes) => {
@@ -96,18 +89,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     return defaultSetting
   }
 
-  private onWidgetsSelectDone = () => {
-    const widgets = this.state.widgets
-    const layers = widgets.map((w) => ({
-      ...w,
-      id: uuid(6, 10),
+  private onWidgetsSelectDone = (selectedWidgets, fieldValues) => {
+    const { trigger_type, trigger_params  } = fieldValues
+    const layers = selectedWidgets.map((w) => ({
+      widget_id: w.id,
+      name: w.name,
       graphType: GraphTypes.Chart,
-      layer_params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart))
+      layer_params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart)),
+      trigger_type,
+      trigger_params
     }))
 
-    this.props.onSelectWidgetLayers(layers)
+    this.props.onAddLayers(layers)
     this.setState({
-      widgets: [],
+      widgetsSelected: [],
       widgetSelectorVisible: false
     })
   }
@@ -115,13 +110,13 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   private addSecondaryGraph = (secondaryGraphType: SecondaryGraphTypes) => () => {
     switch (secondaryGraphType) {
       case SecondaryGraphTypes.Rectangle:
-        this.props.onAddSecondaryGraphLayer({
-          id: uuid(6, 10),
+      case SecondaryGraphTypes.Label:
+        this.props.onAddLayers([{
           name: secondaryGraphType,
           graphType: GraphTypes.Secondary,
           secondaryGraphType,
           layer_params: JSON.stringify(this.getDefaultSetting(GraphTypes.Secondary, secondaryGraphType))
-        })
+        }])
         break
       default:
         break
@@ -129,16 +124,22 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private deleteLayers = () => {
-    const { layerStatus, onDeleteLayers } = this.props
-    const ids = Object.keys(layerStatus).filter((id) => layerStatus[id])
+    const { currentLayersStatus, onDeleteLayers } = this.props
+    const ids = Object.keys(currentLayersStatus).filter((id) => currentLayersStatus[id]).map((id) => +id)
     onDeleteLayers(ids)
   }
 
   public render () {
     const {
       widgetSelectorVisible,
-      widgets
+      widgetSelectorLoading,
+      widgetsSelected
     } = this.state
+
+    const {
+      loginUser,
+      widgets
+    } = this.props
 
     const menu = (
       <Menu>
@@ -147,6 +148,13 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
             className="iconfont icon-rounded-rect"
             onClick={this.addSecondaryGraph(SecondaryGraphTypes.Rectangle)}
           > 矩形
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-rect-text"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Label)}
+          > 标签
           </i>
         </Menu.Item>
       </Menu>
@@ -158,7 +166,9 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.historyBack}>
             <li>
               <Tooltip placement="bottom" title="返回">
-                <Icon type="left-circle-o" />
+                <Link to="/displays">
+                  <Icon type="left-circle-o"/>
+                </Link>
               </Tooltip>
             </li>
           </ul>
@@ -204,36 +214,25 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
                   onConfirm={this.deleteLayers}
               >
                 <Tooltip title="删除" placement="right">
-                  <Icon type="delete" onClick={this.deleteLayers}/>
+                  <Icon type="delete"/>
                 </Tooltip>
               </Popconfirm>
             </li>
           </ul>
         </div>
-        <Modal
-          title="选择 Widgets"
-          wrapClassName="ant-modal-large"
+        <LayerSelector
           visible={widgetSelectorVisible}
+          multiple={true}
+          modalLoading={widgetSelectorLoading}
+          widgets={widgets}
+          selectedWidgets={[]}
+          loginUser={loginUser}
+          onSelectDone={this.onWidgetsSelectDone}
           onCancel={this.hideWidgetSelector}
-          onOk={this.onWidgetsSelectDone}
-        >
-          <WidgetSelector multiple={true} onWidgetsSelect={this.onWidgetsSelect}/>
-        </Modal>
+        />
       </div>
     )
   }
 }
 
-const mapStateToProps = createStructuredSelector({
-  layerStatus: makeSelectLayerStatus()
-})
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onSelectWidgetLayers: (widgets) => dispatch(selectWidgetLayers(widgets)),
-    onAddSecondaryGraphLayer: (layer) => dispatch(addSecondaryGraphLayer(layer)),
-    onDeleteLayers: (ids) => dispatch(deleteLayers(ids))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(DisplayHeader)
+export default DisplayHeader

@@ -77,6 +77,15 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
   }
 
+  public componentDidMount () {
+    const {
+      widgets
+    } = this.props
+    if (widgets.length > 0) {
+      this.setAuthorizedWidgets(this.props.widgets)
+    }
+  }
+
   public componentWillReceiveProps (nextProps) {
     const { widgets, loginUser } = this.props
     if (nextProps.widgets !== widgets) {

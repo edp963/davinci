@@ -27,6 +27,8 @@ import notification from 'antd/lib/notification'
  * @returns {string}
  */
 export const uuid = (len, radix) => {
+  /* tslint:disable:no-bitwise */
+
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
   const uuid = []
   let i
@@ -34,7 +36,9 @@ export const uuid = (len, radix) => {
 
   if (len) {
     // Compact form
-    for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix]
+    for (i = 0; i < len; i++) {
+      uuid[i] = chars[0 | Math.random() * radix]
+    }
   } else {
     // rfc4122, version 4 form
     let r
@@ -52,6 +56,9 @@ export const uuid = (len, radix) => {
       }
     }
   }
+
+  /* tslint:enable:no-bitwise */
+
   return uuid.join('')
 }
 
@@ -88,4 +95,9 @@ export function notifyError (err, title) {
  */
 export function notifySagasError (err, prefix) {
   notifyError(err, `${prefix} sagas or reducer 异常`)
+}
+
+export enum OrderDirection {
+  Asc,
+  Desc
 }

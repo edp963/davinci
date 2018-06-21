@@ -18,23 +18,28 @@
  * >>
  */
 
-import config, { env } from '../globalConfig'
+import config, { env, envName } from '../globalConfig'
 
-const host = config[env].host
+const { dev, production } = envName
 
-export default {
-  login: `${host}/login`,
-  group: `${host}/groups`,
-  user: `${host}/users`,
-  changepwd: `${host}/changepwd`,
-  source: `${host}/sources`,
-  bizlogic: `${host}/flattables`,
-  // bizdata: `${host}/bizdatas`,
-  widget: `${host}/widgets`,
-  dashboard: `${host}/dashboards`,
-  share: `${host}/shares`,
-  checkName: `${host}/check/name`,
-  uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`,
-  display: `http://localhost:3000/displays`
+export const apiConfig = {
+  login: { env: production, url: '/login' },
+  group: { env: production, url: '/groups' },
+  user: { env: production, url: '/users' },
+  changepwd: { env: production, url: '/changepwd' },
+  source: { env: production, url: '/sources' },
+  bizlogic: { env: production, url: '/flattables' },
+  widget: { env: production, url: '/widgets' },
+  dashboard: { env: production, url: '/dashboards' },
+  share: { env: production, url: '/shares' },
+  checkName: { env: production, url: '/check/name' },
+  uploads: { env: production, url: '/uploads' },
+  schedule: { env: production, url: '/cronjobs' },
+  display: { env: dev, url: '/displays' }
 }
+
+export default Object.keys(apiConfig).reduce((acc, key) => {
+  const { env, url } = apiConfig[key]
+  acc[key] = config[env].host + url
+  return acc
+}, {})

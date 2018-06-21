@@ -31,7 +31,7 @@ function parseJSON (response) {
 }
 
 function refreshToken (response) {
-  const token = response.data.header.token
+  const token = response.data.header && response.data.header.token
   if (token) {
     setToken(token)
     localStorage.setItem('TOKEN', token)
@@ -54,10 +54,12 @@ function checkStatus (response) {
 }
 
 export default function request (url, options) {
-  return axios(url, options)
-    .then(checkStatus)
-    .then(refreshToken)
-    .then(parseJSON)
+  // FIXME
+  let result = axios(url, options).then(checkStatus)
+  if (!options || !options.headers.Authorization) {
+    result = result.then(refreshToken)
+  }
+  return result.then(parseJSON)
 }
 
 export function setToken (token) {

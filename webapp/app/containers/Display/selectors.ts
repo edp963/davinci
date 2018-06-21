@@ -27,14 +27,14 @@ const makeSelectDisplays = () => createSelector(
   (displayState) => displayState.get('displays')
 )
 
-const makeSelectLayers = () => createSelector(
+const makeSelectCurrentDisplay = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('editingLayers')
+  (displayState) => displayState.get('currentDisplay')
 )
 
-const makeSelectCurrentItems = () => createSelector(
+const makeSelectCurrentLayers = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentItems')
+  (displayState) =>  displayState.get('currentLayers')
 )
 
 const makeSelectCurrentDatasources = () => createSelector(
@@ -42,30 +42,40 @@ const makeSelectCurrentDatasources = () => createSelector(
   (displayState) =>  displayState.get('currentDatasources')
 )
 
-const makeSelectCurrentItemsLoading = () => createSelector(
+const makeSelectCurrentLayersLoading = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentItemsLoading')
+  (displayState) =>  displayState.get('currentLayersLoading')
 )
 
-const makeSelectCurrentItemsQueryParams = () => createSelector(
+const makeSelectCurrentLayersQueryParams = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentItemsQueryParams')
+  (displayState) =>  displayState.get('currentLayersQueryParams')
 )
 
-const makeSelectLayerStatus = () => createSelector(
+const makeSelectCurrentLayersStatus = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('layersStatus')
+  (displayState) => displayState.get('currentLayersStatus')
+)
+
+const makeSelectCurrentSelectedLayers = () => createSelector(
+  selectDisplay,
+  (displayState) => {
+    const layerStatus = displayState.get('currentLayersStatus')
+    const layers = displayState.get('currentLayers')
+    return layers.filter((layer) => layerStatus[layer.id])
+  }
 )
 
 export {
   selectDisplay,
   makeSelectDisplays,
-  makeSelectLayers,
+  makeSelectCurrentDisplay,
+  makeSelectCurrentLayers,
 
-  makeSelectCurrentItems,
   makeSelectCurrentDatasources,
-  makeSelectCurrentItemsLoading,
-  makeSelectCurrentItemsQueryParams,
+  makeSelectCurrentLayersLoading,
+  makeSelectCurrentLayersQueryParams,
 
-  makeSelectLayerStatus
+  makeSelectCurrentLayersStatus,
+  makeSelectCurrentSelectedLayers
 }
