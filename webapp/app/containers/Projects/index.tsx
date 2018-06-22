@@ -6,6 +6,7 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Icon = require('antd/lib/icon')
 const styles = require('./Project.less')
 import * as classnames from 'classnames'
+import {InjectedRouter} from 'react-router/lib/Router'
 const projectArr = [{
   id : 1,
   publish: true,
@@ -41,7 +42,7 @@ const projectArr = [{
   type: 'add'
 }]
 interface IProjectsProps {
-  router: any
+  router: InjectedRouter
 }
 export class Projects extends React.PureComponent<IProjectsProps, {}> {
   constructor (props) {

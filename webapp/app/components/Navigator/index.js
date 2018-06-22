@@ -71,9 +71,9 @@ export function Navigator (props) {
       </div>
 
       <ul className={styles.tools}>
-        <li className={styles.emailHide}>
-          <p>{props.loginUser.email}</p>
-        </li>
+        {/*<li className={styles.emailHide}>*/}
+          {/*<p>{props.loginUser.email}</p>*/}
+        {/*</li>*/}
         <li>
           <Icon type="github" />
         </li>

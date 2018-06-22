@@ -111,6 +111,7 @@ import {
   GRID_ROW_HEIGHT,
   KEY_COLUMN
 } from '../../globalConstants'
+import {InjectedRouter} from 'react-router/lib/Router'
 
 const utilStyles = require('../../assets/less/util.less')
 const widgetStyles = require('../Widget/Widget.less')
@@ -123,7 +124,7 @@ interface IGridProps {
   widgets: any[]
   bizlogics: any[]
   loginUser: { id: number, admin: boolean }
-  router: any
+  router: InjectedRouter
   params: any
   currentDashboard: ICurrentDashboard,
   currentDashboardLoading: boolean

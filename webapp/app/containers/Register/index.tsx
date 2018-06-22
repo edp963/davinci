@@ -38,9 +38,10 @@ const styles = require('../Login/Login.less')
 import { checkNameAction } from '../App/actions'
 import { signup, sendMailAgain } from './actions'
 import { makeSelectSignupLoading } from './selectors'
+import {InjectedRouter} from 'react-router/lib/Router'
 
 interface IRegisterProps {
-  router: any
+  router: InjectedRouter
   onSendEmailOnceMore: (email: string, resolve?: (res: any) => any) => any
   onSignup: (username: string, email: string, password: string, resolve?: (res: any) => any) => any
   onCheckName: (id: number, name: string, type: string, resolve?: (res: any) => any, reject?: (error: any) => any) => any
@@ -109,6 +110,11 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
     })
   }
 
+  private toLogin = () => {
+    const { router } = this.props
+    router.replace('/login')
+  }
+
   private sendEmailOnceMore = () => {
     const { onSendEmailOnceMore } = this.props
     const { email } = this.state
@@ -146,6 +152,10 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
             }
             注册
           </button>
+          <p className={styles.tips}>
+            <span>已有davinci账号， </span>
+            <a href="javascript:;" onClick={this.toLogin}>点击登录</a>
+          </p>
         </div>
       )
     const secondStep = (

@@ -28,10 +28,14 @@ import {
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
-  CHECK_NAME
+  CHECK_NAME,
+  ACTIVE,
+  ACTIVE_SUCCESS,
+  ACTIVE_ERROR
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
+
 
 export const logout = promiseActionCreator(LOGOUT)
 
@@ -60,6 +64,31 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function active (token, resolve) {
+  return {
+    type: ACTIVE,
+    payload: {
+      token,
+      resolve
+    }
+  }
+}
+
+export function activeSuccess (user) {
+  return {
+    type: ACTIVE_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function activeError () {
+  return {
+    type: ACTIVE_ERROR
   }
 }
 
