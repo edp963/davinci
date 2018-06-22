@@ -11,7 +11,12 @@ interface ISendEmailTipsProps {
 export class SendEmailTips extends React.PureComponent<ISendEmailTipsProps, {}> {
   private goEmailNet = () => {
     const { email } = this.props
-    console.log(email)
+    let suffixNet = ''
+    if (email) {
+      suffixNet = email.split('@')[1]
+      const net = email.indexOf('creditease') > 0 ? `https://email.${suffixNet}` : `https://mail.${suffixNet}`
+      window.open(net)
+    }
   }
   public render () {
       const { email } = this.props

@@ -1,4 +1,4 @@
-import { SIGNUP, SEND_MAIL_AGAIN } from './constants'
+import {SIGNUP, SEND_MAIL_AGAIN} from './constants'
 import { signupSuccess, signupError, sendMailAgainSuccess, sendMailAgainFail } from './actions'
 const message = require('antd/lib/message')
 import request from '../../utils/request'
@@ -48,18 +48,20 @@ export function* sendMailAgain (action): IterableIterator<any> {
     const msg = asyncData.header.msg
     switch (asyncData.header.code) {
       case 200:
-        yield put(signupSuccess())
+        yield put(sendMailAgainSuccess())
         resolve(msg)
         return null
       default:
-        yield put(signupError())
+        yield put(sendMailAgainFail())
         message.error(msg)
     }
   } catch (err) {
-    yield put(signupError())
+    yield put(sendMailAgainFail())
     message.error('重发邮件失败')
   }
 }
+
+
 
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [

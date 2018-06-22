@@ -22,12 +22,13 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
-import { LOGIN, GET_LOGIN_USER, CHECK_NAME } from './constants'
-import { logged, loginError, getLoginUserError } from './actions'
+import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE } from './constants'
+import { logged, loginError, getLoginUserError, activeSuccess, activeError } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -64,8 +65,30 @@ export function* login (action): IterableIterator<any> {
   }
 }
 
-export function* loginWatcher (): IterableIterator<any> {
-  yield takeLatest(LOGIN, login)
+
+export function* activeUser (action): IterableIterator<any> {
+  const {token, resolve} = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.signup}/active/${token}`
+    })
+    switch (asyncData.header.code) {
+      case 200:
+        const loginUser = readListAdapter(asyncData)
+        yield put(activeSuccess(loginUser))
+        localStorage.setItem('loginUser', JSON.stringify(loginUser))
+        resolve()
+        return loginUser
+      default:
+        yield put(activeError())
+        message.error(asyncData.header.msg)
+        return null
+    }
+  } catch (err) {
+    yield put(activeError())
+    message.error('认证失败')
+  }
 }
 
 export function* getLoginUser (action): IterableIterator<any> {
@@ -79,10 +102,6 @@ export function* getLoginUser (action): IterableIterator<any> {
     yield put(getLoginUserError())
     message.error('获取登录用户失败')
   }
-}
-
-export function* getLoginUserWatcher (): IterableIterator<any> {
-  yield takeLatest(GET_LOGIN_USER, getLoginUser)
 }
 
 export function* checkName (action): IterableIterator<any> {
@@ -110,12 +129,12 @@ export function* checkName (action): IterableIterator<any> {
   }
 }
 
-export function* checkNameWatcher (): IterableIterator<any> {
-  yield throttle(1000, CHECK_NAME, checkName)
+export default function* rootGroupSaga (): IterableIterator<any> {
+  yield [
+    throttle(1000, CHECK_NAME, checkName as any),
+    takeLatest(GET_LOGIN_USER, getLoginUser as any),
+    takeLatest(ACTIVE, activeUser as any),
+    takeLatest(LOGIN, login as any)
+  ]
 }
 
-export default [
-  loginWatcher,
-  getLoginUserWatcher,
-  checkNameWatcher
-]

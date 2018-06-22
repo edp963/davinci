@@ -19,224 +19,131 @@
  */
 
 import * as React from 'react'
-import * as classnames from 'classnames'
 import { connect } from 'react-redux'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
-const Steps = require('antd/lib/steps')
-const Transfer = require('antd/lib/transfer')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-const Step = Steps.Step
-
 import { checkNameAction } from '../App/actions'
 
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('../../../assets/less/util.less')
 
-interface IUserFormProps {
-  form: any
+interface IProjectsFormProps {
   type: string
-  step: number
-  groupSource: any[]
-  groupTarget: any[]
-  onGroupChange: () => any
-  onCheckName: (
-    id: number,
-    name: string,
-    type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
-  ) => any
+  form: any
+  onCheckName: (id, name, type, resolve, reject) => void
 }
 
-export class UserForm extends React.PureComponent<IUserFormProps, {}> {
-  private checkPasswordConfirm = (rule, value, callback) => {
-    if (value && value !== this.props.form.getFieldValue('password')) {
-      callback('两次输入的密码不一致')
-    } else {
-      callback()
-    }
-  }
-
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
+    const { onCheckName, type, form } = this.props
+    const { id } = form.getFieldsValue()
     const idName = type === 'add' ? '' : id
-    const typeName = 'user'
+    const typeName = 'dashboard'
     onCheckName(idName, value, typeName,
-      (res) => {
+      () => {
         callback()
       }, (err) => {
         callback(err)
       })
   }
-
-  private forceCheckConfirm = (rule, value, callback) => {
-    const { form } = this.props
-    if (form.getFieldValue('confirmPassword')) {
-      form.validateFields(['confirmPassword'], { force: true })
-    }
-    callback()
-  }
-
-  private getTransferRowKey = (g) => g.id
-  private transferRender = (item) => item.name
-  private onTransferChange = (cb) => (nextTargetKeys, direction, moveKeys) => {
-    cb(nextTargetKeys)
-  }
-
   public render () {
-    const {
-      form,
-      type,
-      step,
-      groupSource,
-      groupTarget,
-      onGroupChange
-    } = this.props
-    const { getFieldDecorator } = form
-
+    const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 6 },
-      wrapperCol: { span: 15 }
+      wrapperCol: { span: 16 }
     }
-
-    const baseInfoStyle = classnames({
-      [utilStyles.hide]: !!step
-    })
-    const groupInfoStyle = classnames({
-      [utilStyles.hide]: !step
-    })
-    const passwordStyle = classnames({
-      [utilStyles.hide]: type === 'edit'
-    })
-    // Transfer 初次渲染如果在 display:none 情况下，列表文字会不渲染
-    const groupTransfer = step
-      ? (
-        <Transfer
-          titles={['列表', '已选']}
-          listStyle={{width: '220px'}}
-          dataSource={groupSource}
-          rowKey={this.getTransferRowKey}
-          targetKeys={groupTarget}
-          render={this.transferRender}
-          onChange={this.onTransferChange(onGroupChange)}
-        />
-  )
-  : ''
-
     return (
       <Form>
-        <Row className={utilStyles.formStepArea}>
-    <Col span={24}>
-    <Steps current={step}>
-    <Step title="基本信息" />
-    <Step title="用户组" />
-    <Step title="完成" />
-      </Steps>
-      </Col>
-      </Row>
-      <Row className={baseInfoStyle}>
-    <Col span={24}>
-    <FormItem className={utilStyles.hide}>
-    {getFieldDecorator('id', {
-      hidden: type === 'add'
-    })(
-      <Input />
-    )}
-    </FormItem>
-    <FormItem label="Email" {...commonFormItemStyle}>
-    {getFieldDecorator('email', {
-      rules: [{
-        required: true,
-        message: 'Email 不能为空'
-      }, {
-        type: 'email',
-        message: '请输入正确的 Email 格式'
-      }, {
-        validator: this.checkNameUnique
-      }]
-    })(
-      <Input placeholder="Email" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24} className={passwordStyle}>
-    <FormItem label="密码" {...commonFormItemStyle}>
-    {getFieldDecorator('password', {
-      rules: [{
-        required: true,
-        message: '密码不能为空'
-      }, {
-        min: 6,
-        max: 20,
-        message: '密码长度为6-20位'
-      }, {
-        validator: this.forceCheckConfirm
-      }],
-      hidden: type === 'edit'
-    })(
-      <Input type="password" placeholder="Password" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24} className={passwordStyle}>
-    <FormItem label="确认密码" {...commonFormItemStyle}>
-    {getFieldDecorator('confirmPassword', {
-      rules: [{
-        required: true,
-        message: '请确认密码'
-      }, {
-        validator: this.checkPasswordConfirm
-      }],
-      hidden: type === 'edit'
-    })(
-      <Input type="password" placeholder="Confirm Password" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="姓名" {...commonFormItemStyle}>
-    {getFieldDecorator('name', {
-      initialValue: ''
-    })(
-      <Input placeholder="Name" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="职位" {...commonFormItemStyle}>
-    {getFieldDecorator('title', {
-      initialValue: ''
-    })(
-      <Input placeholder="Title" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="用户类型" {...commonFormItemStyle}>
-    {getFieldDecorator('admin', {
-      initialValue: false
-    })(
-      <RadioGroup>
-        <Radio value={false}>普通用户</Radio>
-        <Radio value>管理员</Radio>
-    </RadioGroup>
-    )}
-    </FormItem>
-    </Col>
-    </Row>
-    <Row className={groupInfoStyle}>
-    <Col span={24}>
-      {groupTransfer}
-      </Col>
-      </Row>
+        <Row gutter={8}>
+          <Col span={24}>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('id', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('create_by', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('pic', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('linkage_detail', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('config', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem label="名称" {...commonFormItemStyle}>
+              {getFieldDecorator('name', {
+                rules: [{
+                  required: true,
+                  message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
+                }]
+              })(
+                <Input placeholder="Name" />
+              )}
+            </FormItem>
+          </Col>
+          <Col span={24}>
+            <FormItem label="描述" {...commonFormItemStyle}>
+              {getFieldDecorator('desc', {
+                initialValue: ''
+              })(
+                <Input
+                  placeholder="Description"
+                  type="textarea"
+                  autosize={{minRows: 2, maxRows: 6}}
+                />
+              )}
+            </FormItem>
+          </Col>
+          <Col span={24}>
+            <FormItem label="是否发布" {...commonFormItemStyle}>
+              {getFieldDecorator('publish', {
+                initialValue: true
+              })(
+                <RadioGroup>
+                  <Radio value>发布</Radio>
+                  <Radio value={false}>编辑</Radio>
+                </RadioGroup>
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('active', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('pic', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
+          </Col>
+        </Row>
       </Form>
-  )
+    )
   }
 }
 
@@ -246,4 +153,4 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-export default Form.create()(connect(null, mapDispatchToProps)(UserForm))
+export default Form.create()(connect<{}, {}, IProjectsFormProps>(null, mapDispatchToProps)(DashboardForm))

@@ -72,3 +72,5 @@ export function sendMailAgainFail () {
     type: SEND_MAIL_AGAIN_ERROR
   }
 }
+
+
