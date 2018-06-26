@@ -37,6 +37,7 @@ import Main from './containers/Main'
 import Schedule from './containers/Schedule'
 import Display from './containers/Display'
 import Editor from './containers/Display/Editor'
+import Preview from './containers/Display/Preview'
 import Account from './containers/Account'
 import Projects from './containers/Projects'
 import Profile from './containers/Profile'
@@ -283,6 +284,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
+            },
+            {
+              path: '/project/:pid/displays',
+              name: 'displays',
+              component: Display
             }
           ]
         },
@@ -329,16 +335,16 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           ]
         },
         {
-          path: '/displays',
-          name: 'displays',
-          component: Display
-        },
-        {
-          path: '/display/:displayId',
+          path: '/project/:pid/display/:displayId',
           name: 'display',
           component: Editor
         }
       ]
+    },
+    {
+      path: '/project/:pid/display/preview/:displayId',
+      name: 'displayPreview',
+      component: Preview
     },
     {
       path: '*',

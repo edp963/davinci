@@ -67,21 +67,16 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
         <Row gutter={8}>
           <Col span={24}>
             <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('projectId', {
+                hidden: this.props.type === 'add'
+              })(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
               {getFieldDecorator('id', {
                 hidden: this.props.type === 'add'
               })(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('create_by', {
-                hidden: this.props.type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('config', {})(
                 <Input />
               )}
             </FormItem>
@@ -91,7 +86,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
                   required: true,
                   message: 'Name 不能为空'
                 }, {
-                  validator: this.checkNameUnique
+                  // validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Name" />
@@ -100,7 +95,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
           </Col>
           <Col span={24}>
             <FormItem label="描述" {...commonFormItemStyle}>
-              {getFieldDecorator('desc', {
+              {getFieldDecorator('description', {
                 initialValue: ''
               })(
                 <Input
@@ -123,14 +118,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
               )}
             </FormItem>
             <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('active', {
-                hidden: this.props.type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('pic', {
+              {getFieldDecorator('avatar', {
                 hidden: this.props.type === 'add'
               })(
                 <Input />

@@ -59,7 +59,7 @@ export enum ActionTypes {
 }
 
 export enum SecondaryGraphTypes {
-  Rectangle = 'Rectangle'
+  Rectangle = 'Rectangle',
   Label = 'Label'
 }
 

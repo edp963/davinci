@@ -22,7 +22,7 @@ const stylesDashboard = require('../../Dashboard/Dashboard.less')
 
 interface ILayerItemProps {
   scale: number
-  displayParams: any
+  slideParams: any
   layer: any
   layersStatus: object
   itemId: number,
@@ -51,7 +51,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   constructor (props) {
     super(props)
     const { layer } = this.props
-    const layerParams = JSON.parse(layer['layer_params'])
+    const layerParams = JSON.parse(layer.params)
     const { width, height } = layerParams
     console.log('ctor: ', width, height)
     this.state = {
@@ -84,7 +84,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { layer } = this.props
     if (layer !== nextProps.layer) {
       this.setState({
-        layerParams: JSON.parse(nextProps.layer['layer_params'])
+        layerParams: JSON.parse(nextProps.layer.params)
       })
     }
 
@@ -411,14 +411,14 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   public render () {
     const {
       scale,
-      displayParams,
+      slideParams,
       layer,
       layersStatus
     } = this.props
 
     const {
       gridDistance
-    } = displayParams
+    } = slideParams
 
     const {
       layerParams,
@@ -447,7 +447,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           onResizeStop={this.onResizeStop}
           draggableOpts={{grid: [gridDistance * scale, gridDistance * scale]}}
           minConstraints={[50, 50]}
-          maxConstraints={[displayParams.width - defaultPosition.x, displayParams.height - defaultPosition.y]}
+          maxConstraints={[slideParams.width - defaultPosition.x, slideParams.height - defaultPosition.y]}
           handleSize={[20, 20]}
         >
           {this.renderLayer(layer)}

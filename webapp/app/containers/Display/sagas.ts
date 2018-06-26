@@ -23,8 +23,8 @@ import { call, fork, put, all } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import { getDefaultDisplayParams } from '../../assets/json/displaySettings'
+import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import { getDefaultSlideParams } from '../../assets/json/SlideSettings'
 import axios from 'axios' // FIXME
 
 const message = require('antd/lib/message')
@@ -63,22 +63,23 @@ function* getToken () {
     method: 'post',
     data: {
       username: 'Fangkun',
-      password: '123456qwerty'
+      password: 'qwerty'
     }
   })
 }
 
-export function* getDisplays (): IterableIterator<any> {
+export function* getDisplays (action): IterableIterator<any> {
+  const { projectId } = action.payload
   // FIXME
   const token = (yield getToken()).data.header.token
 
-  const asyncData = yield call(request, `${api.display}/1`, {
+  const asyncData = yield call(request, `${api.display}?projectId=${projectId}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
   })
   if (!asyncData.error) {
-    const displays = readListAdapter(asyncData, 'display')
+    const displays = readListAdapter(asyncData)
     yield put(displaysLoaded(displays))
   } else {
     yield put(loadDisplaysFail(asyncData.error))
@@ -87,14 +88,35 @@ export function* getDisplays (): IterableIterator<any> {
 
 export function* addDisplay (action) {
   const { display, resolve } = action.payload
-  display['display_params'] = getDefaultDisplayParams()
   try {
-    const asyncData = yield call(request, {
+    // FIXME
+    const token = (yield getToken()).data.header.token
+
+    const asyncDisplayData = yield call(request, {
       method: 'post',
       url: api.display,
-      data: writeAdapter(display, 'display')
+      data: display,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
-    const result = readObjectAdapter(asyncData, 'display')
+    const resultDisplay = readObjectAdapter(asyncDisplayData)
+    const { id } = resultDisplay
+    const slide = {
+      displayId: id,
+      index: 0,
+      config: JSON.stringify({ slideParams: getDefaultSlideParams() })
+    }
+    const asyncSlideData = yield call(request, {
+      method: 'post',
+      url: `${api.display}/${id}/slides`,
+      data: slide,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const resultSlide = readObjectAdapter(asyncSlideData)
+    display.slides = [resultSlide]
     yield put(displayAdded(display))
     resolve()
   } catch (err) {
@@ -104,11 +126,26 @@ export function* addDisplay (action) {
 }
 
 export function* getDisplayDetail (action): IterableIterator<any> {
-  const { id } = action.payload
-  const asyncData = yield call(request, `${api.display}/${id}`)
-  const display = readListAdapter(asyncData, 'display')
   // FIXME
-  display.layers = yield call(request, `${api.display}/layers`)
+  const token = (yield getToken()).data.header.token
+
+  const { id } = action.payload
+  const asyncDataSlides = yield call(request, {
+    url: `${api.display}/${id}/slides`,
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  const slides = readListAdapter(asyncDataSlides)
+  // FIXME
+  const display = { ...slides[0] }
+  const asyncDataWidgets = yield call(request, {
+    url: `${api.display}/${id}/slides/${slides[0].id}/widgets`,
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  })
+  display.layers = readListAdapter(asyncDataWidgets)
   yield put(displayDetailLoaded(display))
   return display
 }
@@ -119,7 +156,7 @@ export function* editDisplay (action): IterableIterator<any> {
     yield call(request, {
       method: 'put',
       url: `${api.display}/${display.id}`,
-      data: writeAdapter(display, 'display')
+      data: display
     })
     yield put(displayEdited(display))
     resolve()
@@ -135,7 +172,7 @@ export function* editCurrentDisplay (action): IterableIterator<any> {
     yield call(request, {
       method: 'put',
       url: `${api.display}/${display.id}`,
-      data: writeAdapter(display, 'display')
+      data: display
     })
     yield put(currentDisplayEdited(display))
     resolve()
@@ -148,9 +185,15 @@ export function* editCurrentDisplay (action): IterableIterator<any> {
 export function* deleteDisplay (action) {
   const { id } = action.payload
   try {
+    // FIXME
+    const token = (yield getToken()).data.header.token
+
     yield call(request, {
       method: 'delete',
-      url: `${api.display}/${id}`
+      url: `${api.display}/${id}`,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
     yield put(displayDeleted(id))
   } catch (err) {
@@ -160,19 +203,20 @@ export function* deleteDisplay (action) {
 }
 
 export function* addDisplayLayers (action) {
-  const { layers } = action.payload
-  // FIXME
-  layers.forEach((l) => {
-    l.id = +require('../../utils/util').uuid(3, 10)
-  })
+  const { displayId, slideId, layers } = action.payload
   try {
+    // FIXME
+    const token = (yield getToken()).data.header.token
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.display}/layers`,
-      data: writeAdapter(layers[0], 'display') // FIXME
+      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
+      data: layers, // FIXME
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
-    const result = readObjectAdapter(asyncData, 'display')
-    yield put(displayLayersAdded([result]))
+    const result = readListAdapter(asyncData)
+    yield put(displayLayersAdded(result))
     return result
   } catch (err) {
     yield put(addDisplayLayersFail())
@@ -181,14 +225,18 @@ export function* addDisplayLayers (action) {
 }
 
 export function* editDisplayLayers (action) {
-  const { layers } = action.payload
+  const { displayId, slideId, layers } = action.payload
   try {
     // FIXME
-    yield all(layers.map((x) => call(request, {
+    const token = (yield getToken()).data.header.token
+    yield call(request, {
       method: 'put',
-      url: `${api.display.replace('displays', 'layers')}/${x.id}`,
-      data: writeAdapter(x, 'display')
-    })))
+      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
+      data: layers,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
     yield put(displayLayersEdited(layers))
   } catch (err) {
     yield put(editDisplayLayersFail())
@@ -197,13 +245,18 @@ export function* editDisplayLayers (action) {
 }
 
 export function* deleteDisplayLayers (action) {
-  const { ids } = action.payload
+  const { displayId, slideId, ids } = action.payload
   try {
     // FIXME
-    yield all(ids.map((id) => call(request, {
-      method: 'delete',
-      url: `${api.display.replace('displays', 'layers')}/${id}`
-    })))
+    const token = (yield getToken()).data.header.token
+    yield call(request, {
+      method: 'put',
+      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
+      data: ids,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
     yield put(displayLayersDeleted(ids))
   } catch (err) {
     yield put(deleteDisplayLayersFail())

@@ -15,7 +15,6 @@ import injectSaga from '../../utils/injectSaga'
 import Container from '../../components/Container'
 import DisplayForm from './components/DisplayForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-import Editor from './Editor'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -39,9 +38,10 @@ import { makeSelectLoginUser } from '../App/selectors'
 
 interface IDisplayProps {
   router: InjectedRouter
+  params: any
   displays: any[]
   loginUser: { id: number, admin: boolean }
-  onLoadDisplays: () => void,
+  onLoadDisplays: (projectId: string) => void,
   onDeleteDisplay: (id: any) => void
   onAddDisplay: (display: any, resolve: () => void) => void
   onEditDisplay: (display: any, resolve: () => void) => void
@@ -71,13 +71,16 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
 
   public componentWillMount () {
     const {
+      params,
       onLoadDisplays
     } = this.props
-    onLoadDisplays()
+    const { pid } = params
+    onLoadDisplays(pid)
   }
 
   private goToDisplay = (display?: any) => () => {
-    this.props.router.push(`/display/${display ? display.id : -1}`)
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/display/${display ? display.id : -1}`)
   }
 
   private stopPPG = (e) => {
@@ -139,8 +142,11 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
       if (!err) {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
+          const { params } = this.props
+          const projectId = params.pid
           this.props.onAddDisplay({
-            ...values
+            ...values,
+            projectId
           }, () => { this.hideDisplayForm() })
         } else {
           this.props.onEditDisplay(values, () => { this.hideDisplayForm() })
@@ -290,7 +296,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDisplays: () => dispatch(loadDisplays()),
+    onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
     onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id)),
     onAddDisplay: (display, resolve) => dispatch(addDisplay(display, resolve)),
     onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve))

@@ -185,7 +185,7 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
                   labelCol={{span: 10}}
                   wrapperCol={{span: 14}}
                 >
-                  {getFieldDecorator('trigger_type', {
+                  {getFieldDecorator('triggerType', {
                     initialValue: tempTriggerType
                   })(
                     <Select onSelect={this.onTriggerTypeSelect}>
@@ -201,7 +201,7 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
                   labelCol={{span: 12}}
                   wrapperCol={{span: 12}}
                 >
-                  {getFieldDecorator('trigger_params', {
+                  {getFieldDecorator('triggerParams', {
                     rules: [{
                       required: true,
                       message: '不能为空'

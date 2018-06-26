@@ -1,8 +1,8 @@
 {
-  "name": "display",
+  "name": "slide",
   "title": "背景设置",
   "params": [{
-    "name": "displaySize",
+    "name": "slideSize",
     "title": "屏幕尺寸",
     "items": [{
       "name": "width",

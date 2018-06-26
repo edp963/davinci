@@ -23,9 +23,12 @@ import {
   SecondaryGraphTypes
 } from './constants'
 
-export function loadDisplays () {
+export function loadDisplays (projectId) {
   return {
-    type: ActionTypes.LOAD_DISPLAYS
+    type: ActionTypes.LOAD_DISPLAYS,
+    payload: {
+      projectId
+    }
   }
 }
 export function displaysLoaded (displays) {
@@ -145,11 +148,11 @@ export function deleteDisplay (id) {
     }
   }
 }
-export function displayDeleted (result) {
+export function displayDeleted (id) {
   return {
     type: ActionTypes.DELETE_DISPLAY_SUCCESS,
     payload: {
-      result
+      id
     }
   }
 }
@@ -170,10 +173,12 @@ export function selectLayer ({ id, selected, exclusive }) {
   }
 }
 
-export function addDisplayLayers (layers: any[]) {
+export function addDisplayLayers (displayId: any, slideId: any, layers: any[]) {
   return {
     type: ActionTypes.ADD_DISPLAY_LAYERS,
     payload: {
+      displayId,
+      slideId,
       layers
     }
   }
@@ -192,10 +197,12 @@ export function addDisplayLayersFail () {
   }
 }
 
-export function editDisplayLayers (layers) {
+export function editDisplayLayers (displayId: any, slideId: any, layers: any[]) {
   return {
     type: ActionTypes.EDIT_DISPLAY_LAYERS,
     payload: {
+      displayId,
+      slideId,
       layers
     }
   }
@@ -214,10 +221,12 @@ export function editDisplayLayersFail () {
   }
 }
 
-export function deleteDisplayLayers (ids) {
+export function deleteDisplayLayers (displayId: any, slideId: any, ids: any[]) {
   return {
     type: ActionTypes.DELETE_DISPLAY_LAYERS,
     payload: {
+      displayId,
+      slideId,
       ids
     }
   }

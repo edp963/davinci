@@ -23,7 +23,7 @@ import * as React from 'react'
 const styles = require('../Display.less')
 
 interface IDisplayContainerProps {
-  displayParams: any
+  slideParams: any
   width: number,
   height: number,
   padding: string,
@@ -42,20 +42,20 @@ interface IDisplayStyle {
 export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
   private container: any
 
-  private getDisplayStyle = (displayParams, scale) => {
+  private getSlideStyle = (slideParams, scale) => {
     let displayStyle: IDisplayStyle
     displayStyle  = {
-      width: `${displayParams.width}px`,
-      height: `${displayParams.height}px`,
+      width: `${slideParams.width}px`,
+      height: `${slideParams.height}px`,
       transform: `scale(${scale})`
     }
 
-    if (displayParams.backgroundColor) {
-      const rgb = [...displayParams.backgroundColor, (displayParams.opacity / 100)].join()
+    if (slideParams.backgroundColor) {
+      const rgb = [...slideParams.backgroundColor, (slideParams.opacity / 100)].join()
       displayStyle.backgroundColor = `rgb(${rgb})`
     }
-    if (displayParams.backgroundImage) {
-      displayStyle.backgroundImage = `url("${displayParams.backgroundImage}")`
+    if (slideParams.backgroundImage) {
+      displayStyle.backgroundImage = `url("${slideParams.backgroundImage}")`
     }
 
     return displayStyle
@@ -63,7 +63,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
 
   public render () {
     const {
-      displayParams,
+      slideParams,
       width,
       height,
       padding,
@@ -71,7 +71,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
       children
     } = this.props
 
-    const displayStyle = this.getDisplayStyle(displayParams, scale)
+    const slideStyle = this.getSlideStyle(slideParams, scale)
 
     return (
       <div className={styles.editor}>
@@ -87,7 +87,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
             <div className={styles.displayPanelWrapper}>
               <div
                 className={styles.displayPanel}
-                style={displayStyle}
+                style={slideStyle}
               >
                 {children}
               </div>

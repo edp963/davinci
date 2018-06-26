@@ -45,7 +45,7 @@ import {
   makeSelectCurrentLayersQueryParams } from './selectors'
 import { makeSelectLoginUser } from '../../containers/App/selectors'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
-import displaySettings from '../../assets/json/displaySettings'
+import slideSettings from '../../assets/json/slideSettings'
 
 import DisplayHeader from './components/DisplayHeader'
 import DisplayBody from './components/DisplayBody'
@@ -104,9 +104,9 @@ interface IEditorProps {
   onEditCurrentDisplay: (display: any, resolve: any) => void
   onLoadDisplayDetail: (id: any) => void
   onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
-  onAddDisplayLayers: (layers: any[]) => void
-  onDeleteDisplayLayers: (ids: any[]) => void,
-  onEditDisplayLayers: (layers: any[]) => void
+  onAddDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
+  onDeleteDisplayLayers: (displayId: any, slideId: any, ids: any[]) => void,
+  onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onHideNavigator: () => void,
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
@@ -129,7 +129,7 @@ interface IEditorProps {
 }
 
 interface IEditorStates {
-  displayParams: any,
+  slideParams: any,
   editorWidth: number,
   editorHeight: number,
   editorPadding: string,
@@ -144,7 +144,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     super(props)
 
     this.state = {
-      displayParams: {},
+      slideParams: {},
       editorWidth: 0,
       editorHeight: 0,
       editorPadding: '',
@@ -179,7 +179,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   public componentDidMount () {
     const {
-      displayParams,
+      slideParams,
       scale
     } = this.state
 
@@ -195,9 +195,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentDisplay } = nextProps
     if (currentDisplay !== this.props.currentDisplay) {
-      const displayParams = JSON.parse(currentDisplay['display_params'])
+      const slideParams = JSON.parse(currentDisplay.slideParams)
       this.setState({
-        displayParams
+        slideParams
       }, () => {
         this.doScale(this.state.scale)
       })
@@ -229,42 +229,42 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private doScale = (times) => {
-    const { displayParams } = this.state
+    const { slideParams } = this.state
     const { offsetWidth, offsetHeight } = this.editor.container
 
     const editorWidth = Math.max(offsetWidth * times, offsetWidth)
     const editorHeight = Math.max(offsetHeight * times, offsetHeight)
 
-    let scale = (displayParams.width / displayParams.height > editorWidth / editorHeight) ?
+    let scale = (slideParams.width / slideParams.height > editorWidth / editorHeight) ?
       // landscape
-      (editorWidth - 64) / displayParams.width * times :
+      (editorWidth - 64) / slideParams.width * times :
       // portrait
-      (editorHeight - 64) / displayParams.height * times
+      (editorHeight - 64) / slideParams.height * times
     scale = +(Math.floor(scale / 0.05) * 0.05).toFixed(2)
 
-    const leftRightPadding = Math.max((offsetWidth - displayParams.width * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - displayParams.height * scale) / 2, 32)
+    const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
+    const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
 
     console.log(scale)
     console.log({
-      editorWidth: Math.max(editorWidth, displayParams.width * scale + 64),
-      editorHeight: Math.max(editorHeight, displayParams.height * scale + 64),
+      editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
+      editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
       editorPadding: `${topBottomPadding}px ${leftRightPadding}px`
     })
 
     this.setState({
-      editorWidth: Math.max(editorWidth, displayParams.width * scale + 64),
-      editorHeight: Math.max(editorHeight, displayParams.height * scale + 64),
+      editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
+      editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
       editorPadding: `${topBottomPadding}px ${leftRightPadding}px`,
       scale
     })
   }
 
   private displaySizeChange = (width, height) => {
-    const { displayParams } = this.state
+    const { slideParams } = this.state
     this.setState({
-      displayParams: {
-        ...displayParams,
+      slideParams: {
+        ...slideParams,
         width,
         height
       }
@@ -274,10 +274,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private gridDistanceChange = (gridDistance) => {
-    const { displayParams } = this.state
+    const { slideParams } = this.state
     this.setState({
-      displayParams: {
-        ...displayParams,
+      slideParams: {
+        ...slideParams,
         gridDistance
       }
     })
@@ -370,12 +370,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   private resizeLayerStop = (layer: any, size: any, itemId: any) => {
     const { onEditDisplayLayers } = this.props
     const layerParams = {
-      ...JSON.parse(layer['layer_params']),
+      ...JSON.parse(layer.params),
       ...size
     }
     onEditDisplayLayers([{
       ...layer,
-      layer_params: JSON.stringify(layerParams)
+      params: JSON.stringify(layerParams)
     }])
     const chartInstance = this.charts[`widget_${itemId}`]
     if (chartInstance) { chartInstance.resize() }
@@ -406,7 +406,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private formItemChange = (field, val) => {
     const {
-      displayParams,
+      slideParams,
       currentSettingInfoIdx
     } = this.state
 
@@ -417,29 +417,27 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       onEditDisplayLayers } = this.props
 
     if (currentSettingInfoIdx === 0) {
-      // this.setState({
-      //   displayParams: {
-      //     ...displayParams,
-      //     [field]: val
-      //   }
-      // })
-      const newDisplayParams = {
-        ...displayParams,
+      const newSlideParams = {
+        ...slideParams,
         [field]: val
+      }
+      const newConfig = {
+        ...JSON.parse(currentDisplay.config),
+        slideParams: newSlideParams
       }
       onEditCurrentDisplay({
         ...currentDisplay,
-        display_params: JSON.stringify(newDisplayParams)
+        config: JSON.stringify(newConfig)
       }, () => {})
     } else {
       const selectedLayer = currentSelectedLayers[0]
       const layerParams = {
-        ...JSON.parse(selectedLayer['layer_params']),
+        ...JSON.parse(selectedLayer['params']),
         [field]: val
       }
       onEditDisplayLayers([{
         ...selectedLayer,
-        layer_params: JSON.stringify(layerParams)
+        params: JSON.stringify(layerParams)
       }])
     }
   }
@@ -447,14 +445,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   private getSettingInfo = (nextProps: IEditorProps) => {
     const { currentSelectedLayers } = nextProps
     const {
-      displayParams
+      slideParams
     } = this.state
 
     let idx = 0
     if (currentSelectedLayers.length === 1) {
       const selectedLayer = currentSelectedLayers[0]
       const name = (selectedLayer.secondaryGraphType || selectedLayer.graphType).toLowerCase()
-      idx = displaySettings.findIndex((ds) => ds.name === name)
+      idx = slideSettings.findIndex((ds) => ds.name === name)
       // this.settingForm.props.form.setFieldsValue(JSON.parse(selectedLayer['layer_params']))
     } else {
       // this.settingForm.props.form.setFieldsValue({ ...displayParams })
@@ -476,15 +474,15 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentLayers,
       onAddDisplayLayers
     } = this.props
-    const { displayParams } = this.state
-    const { gridDistance } = displayParams
+    const { slideParams } = this.state
+    const { gridDistance } = slideParams
     let maxLayerIndex = currentLayers.reduce((acc, layer) => Math.max(acc, layer.layerIndex), -Infinity)
     layers.forEach((layer) => {
       layer.layerIndex = ++maxLayerIndex
-      layer['layer_params'] = JSON.stringify({
-        ...JSON.parse(layer['layer_params']),
-        width: displayParams.width / 4,
-        height: displayParams.height / 4,
+      layer['params'] = JSON.stringify({
+        ...JSON.parse(layer['params']),
+        width: slideParams.width / 4,
+        height: slideParams.height / 4,
         positionX: gridDistance,
         positionY: gridDistance
       })
@@ -508,7 +506,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     } = this.props
 
     const {
-      displayParams,
+      slideParams,
       editorWidth,
       editorHeight,
       editorPadding,
@@ -517,7 +515,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentSettingInfoIdx
     } = this.state
 
-    const currentSettingInfo = displaySettings[currentSettingInfoIdx]
+    const currentSettingInfo = slideSettings[currentSettingInfoIdx]
 
     const layerItems =  !Array.isArray(widgets) ? null : currentLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widget_id)
@@ -536,7 +534,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           data={data}
           key={layer.id}
           scale={scale}
-          displayParams={displayParams}
+          displayParams={slideParams}
           layer={layer}
           loading={loading}
           layersStatus={currentLayersStatus}
@@ -570,7 +568,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             width={editorWidth}
             height={editorHeight}
             padding={editorPadding}
-            displayParams={displayParams}
+            displayParams={slideParams}
             scale={scale}
             ref={(f) => { this.editor = f }}
           >
@@ -587,7 +585,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             <SettingForm
               key={currentSettingInfoIdx === 0 ? 'display' : `layer_${currentSelectedLayers[0].id}`}
               settingInfo={currentSettingInfo}
-              settingParams={currentSettingInfoIdx === 0 ? displayParams : JSON.parse(currentSelectedLayers[0]['layer_params'])}
+              settingParams={currentSettingInfoIdx === 0 ? slideParams : JSON.parse(currentSelectedLayers[0]['params'])}
               onDisplaySizeChange={this.displaySizeChange}
               onGridDistanceChange={this.gridDistanceChange}
               onFormItemChange={this.formItemChange}
@@ -622,9 +620,9 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentDisplay: (display, resolve) => dispatch(editCurrentDisplay(display, resolve)),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
-    onAddDisplayLayers: (layers) => dispatch(addDisplayLayers(layers)),
-    onDeleteDisplayLayers: (ids) => dispatch(deleteDisplayLayers(ids)),
-    onEditDisplayLayers: (layers) => dispatch(editDisplayLayers(layers)),
+    onAddDisplayLayers: (displayId, slideId, layers) => dispatch(addDisplayLayers(displayId, slideId, layers)),
+    onDeleteDisplayLayers: (displayId, slideId, ids) => dispatch(deleteDisplayLayers(displayId, slideId, ids)),
+    onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
     onHideNavigator: () => dispatch(hideNavigator())
   }
 }

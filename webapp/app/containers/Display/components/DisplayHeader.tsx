@@ -30,7 +30,7 @@ const Modal = require('antd/lib/modal')
 
 const styles = require('../Display.less')
 
-import displaySettings from '../../../assets/json/displaySettings'
+import slideSettings from '../../../assets/json/slideSettings'
 import LayerSelector from './LayerSelector'
 
 import {
@@ -76,7 +76,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
 
   private getDefaultSetting = (graphType: GraphTypes, secondaryGraphType?: SecondaryGraphTypes) => {
     const name = secondaryGraphType ? secondaryGraphType.toLowerCase() : graphType.toLowerCase()
-    const setting = displaySettings.find((ds) => ds.name === name)
+    const setting = slideSettings.find((ds) => ds.name === name)
     if (!setting) {
       return {}
     }
@@ -90,14 +90,14 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private onWidgetsSelectDone = (selectedWidgets, fieldValues) => {
-    const { trigger_type, trigger_params  } = fieldValues
+    const { triggerType, triggerParams  } = fieldValues
     const layers = selectedWidgets.map((w) => ({
-      widget_id: w.id,
+      widgetId: w.id,
       name: w.name,
       graphType: GraphTypes.Chart,
-      layer_params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart)),
-      trigger_type,
-      trigger_params
+      params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart)),
+      triggerType,
+      triggerParams
     }))
 
     this.props.onAddLayers(layers)
@@ -115,7 +115,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           name: secondaryGraphType,
           graphType: GraphTypes.Secondary,
           secondaryGraphType,
-          layer_params: JSON.stringify(this.getDefaultSetting(GraphTypes.Secondary, secondaryGraphType))
+          params: JSON.stringify(this.getDefaultSetting(GraphTypes.Secondary, secondaryGraphType))
         }])
         break
       default:

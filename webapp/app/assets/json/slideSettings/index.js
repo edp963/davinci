@@ -18,25 +18,25 @@
  * >>
  */
 
- import display from './display.json'
+ import slide from './slide.json'
  import rectangle from './rectangle.json'
  import label from './label.json'
  import chart from './chart.json'
 
  export default [
-   display,
+   slide,
    rectangle,
    label,
    chart
  ]
 
- export function getDefaultDisplayParams () {
-  const params = display.params
-  const defaultDisplayParams = {}
+ export function getDefaultSlideParams () {
+  const params = slide.params
+  const defaultSlideParams = {}
   params.forEach((param) => {
     param.items.forEach((item) => {
-      defaultDisplayParams[item.name] = item.default || null
+      defaultSlideParams[item.name] = item.default || null
     })
   })
-  return  JSON.stringify(defaultDisplayParams)
+  return defaultSlideParams
 }

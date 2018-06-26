@@ -40,7 +40,7 @@ export function readListAdapter (data, apiName) {
 export function readObjectAdapter (data, apiName) {
   switch (getCurrentEnv(apiName)) {
     case 'production':
-      return data.payload[0]
+      return data.payload[0] || data.payload // FIXME
     default:
       return data
   }
