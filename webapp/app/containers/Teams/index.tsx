@@ -1,6 +1,12 @@
+// Team Project
+// team project
+// TEAM PROJECT
 import * as React from 'react'
 import { Link } from 'react-router'
 const Icon = require('antd/lib/icon')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
 const styles = require('./Team.less')
@@ -39,13 +45,17 @@ export class Teams extends React.PureComponent <ITeamProps> {
       <Box>
         <Box.Header>
           <Box.Title>
-            <Breadcrumb className={utilStyles.breadcrumb}>
-              <Breadcrumb.Item>
-                <Link to="/account/teams">
-                  <Icon type="bars" />我的团队
-                </Link>
-              </Breadcrumb.Item>
-            </Breadcrumb>
+            <Row>
+              <Col span={20}>
+                <Breadcrumb className={utilStyles.breadcrumb}>
+                  <Breadcrumb.Item>
+                    <Link to="/account/teams">
+                      <Icon type="bars" />我的团队
+                    </Link>
+                  </Breadcrumb.Item>
+                </Breadcrumb>
+              </Col>
+            </Row>
           </Box.Title>
         </Box.Header>
         {teams}

@@ -33,3 +33,11 @@ export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'
 export const HIDE_NAVIGATOR = 'davinci/App/HIDE_NAVIGATOR'
 export const CHECK_NAME = 'davinci/App/CHECK_NAME'
 
+export const UPDATE_PROFILE = 'davinci/App/UPDATE_PROFILE'
+export const UPDATE_PROFILE_SUCCESS = 'davinci/App/UPDATE_PROFILE_SUCCESS'
+export const UPDATE_PROFILE_ERROR = 'davinci/App/UPDATE_PROFILE_ERROR'
+
+export const CHANGE_USER_PASSWORD = 'davinci/User/CHANGE_USER_PASSWORD'
+export const CHANGE_USER_PASSWORD_SUCCESS = 'davinci/User/CHANGE_USER_PASSWORD_SUCCESS'
+export const CHANGE_USER_PASSWORD_FAILURE = 'davinci/User/CHANGE_USER_PASSWORD_FAILURE'
+

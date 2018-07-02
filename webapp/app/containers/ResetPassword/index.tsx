@@ -20,8 +20,20 @@ interface IResetPasswordProps {
 
 
 export class ResetPassword extends React.PureComponent<IResetPasswordProps> {
-  private checkNameUnique = () => {
-    console.log('checkNameUnique')
+  private checkPasswordConfirm = (rule, value, callback) => {
+    if (value && value !== this.props.form.getFieldValue('newPass')) {
+      callback('两次输入的密码不一致')
+    } else {
+      callback()
+    }
+  }
+
+  private forceCheckConfirm = (rule, value, callback) => {
+    const { form } = this.props
+    if (form.getFieldValue('confirmPassword')) {
+      form.validateFields(['confirmPassword'], { force: true })
+    }
+    callback()
   }
   private submit = () => {
     console.log('submit')
@@ -58,46 +70,56 @@ export class ResetPassword extends React.PureComponent<IResetPasswordProps> {
                         <Input />
                       )}
                     </FormItem>
-                    <FormItem
-                      {...commonFormItemStyle}
-                      label="旧密码"
-                    >
-                      {getFieldDecorator('password', {
-                        initialValue: '',
-                        rules: [{ required: true }, {validator: this.checkNameUnique}]
+
+                    <FormItem label="旧密码" {...commonFormItemStyle}>
+                      {getFieldDecorator('oldPass', {
+                        rules: [{
+                          required: true,
+                          message: '旧密码不能为空'
+                        }, {
+                          min: 6,
+                          max: 20,
+                          message: '密码长度为6-20位'
+                        }]
                       })(
-                        <Input/>
+                        <Input type="password" placeholder="Your Password" />
                       )}
                     </FormItem>
                   </Col>
                   <Col>
-                    <FormItem
-                      {...commonFormItemStyle}
-                      label="新密码"
-                    >
-                      {getFieldDecorator('newPassword', {
-                        initialValue: '',
-                        rules: [{ required: true }]
+                    <FormItem label="新密码" {...commonFormItemStyle}>
+                      {getFieldDecorator('newPass', {
+                        rules: [{
+                          required: true,
+                          message: '新密码不能为空'
+                        }, {
+                          min: 6,
+                          max: 20,
+                          message: '密码长度为6-20位'
+                        }, {
+                          validator: this.forceCheckConfirm
+                        }]
                       })(
-                        <Input/>
+                        <Input type="password" placeholder="New Password" />
                       )}
                     </FormItem>
                   </Col>
                   <Col>
-                    <FormItem
-                      {...commonFormItemStyle}
-                      label="确认密码"
-                    >
-                      {getFieldDecorator('newPassword2', {
-                        initialValue: '',
-                        rules: [{ required: true }]
+                    <FormItem label="确认新密码" {...commonFormItemStyle}>
+                      {getFieldDecorator('confirmPassword', {
+                        rules: [{
+                          required: true,
+                          message: '请确认密码'
+                        }, {
+                          validator: this.checkPasswordConfirm
+                        }]
                       })(
-                        <Input/>
+                        <Input type="password" placeholder="Confirm Password" />
                       )}
                     </FormItem>
                   </Col>
                   <Col offset={4}>
-                    <Button size="large" onClick={this.submit}>确认修改</Button>
+                    <Button size="large" type="primary" onClick={this.submit}>确认修改</Button>
                   </Col>
                 </Row>
               </Form>

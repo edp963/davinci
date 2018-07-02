@@ -6,11 +6,31 @@ const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const styles = require('../Organization.less')
 const Select = require('antd/lib/select')
+const Modal = require('antd/lib/modal')
 import ProjectItem from './ProjectItem'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
+import ProjectForm from '../../Projects/ProjectForm'
 
-export class ProjectList extends React.PureComponent {
-  private showProjectForm = (type: string) => () => {
-    console.log(type)
+interface IProjectsState {
+  formType?: string
+  formVisible: boolean
+  modalLoading: boolean
+}
+export class ProjectList extends React.PureComponent<{}, IProjectsState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      formType: '',
+      formVisible: false,
+      modalLoading: false
+    }
+  }
+  private ProjectForm: WrappedFormUtils
+  private showProjectForm = (type: string) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formVisible: true
+    })
   }
   private onSearchProject = () => {
     console.log(1)
@@ -18,9 +38,18 @@ export class ProjectList extends React.PureComponent {
   private onSearchProjectType = () => {
     console.log(1)
   }
+  private hideProjectForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.ProjectForm.resetFields()
+    })
+  }
   public render () {
+    const { formVisible, formType, modalLoading } = this.state
     const addButton =  (
-          <Tooltip placement="bottom" title="新增">
+          <Tooltip placement="bottom" title="创建">
             <Button
               size="large"
               type="primary"
@@ -44,6 +73,26 @@ export class ProjectList extends React.PureComponent {
         options={lists}
       />
     ))
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideTeamForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.onModalOk}
+      >
+        保 存
+      </Button>
+    )]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -75,6 +124,17 @@ export class ProjectList extends React.PureComponent {
             {ProjectItems}
           </Col>
         </Row>
+        <Modal
+          title={null}
+          visible={formVisible}
+          footer={null}
+          onCancel={this.hideProjectForm}
+        >
+          <ProjectForm
+            type={formType}
+            ref={(f) => { this.ProjectForm = f }}
+          />
+        </Modal>
       </div>
     )
   }
