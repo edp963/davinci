@@ -1,25 +1,54 @@
 import * as React from 'react'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
+const Modal = require('antd/lib/modal')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
 const styles = require('../Organization.less')
+import MemberForm from '../../Teams/component/AddForm'
 
-
-export class MemberList extends React.PureComponent {
+interface IMembersState {
+  formType?: string
+  formVisible: boolean
+  modalLoading: boolean
+}
+export class MemberList extends React.PureComponent<{}, IMembersState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      formType: '',
+      formVisible: false,
+      modalLoading: false
+    }
+  }
   const onSearchMember = () => {
 
   }
-  const showMemberForm = (type: string) => () => {
-
+  private MemberForm: WrappedFormUtils
+  private showMemberForm = (type: string) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formType: type,
+      formVisible: true
+    })
+  }
+  private hideMemberForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.MemberForm.resetFields()
+    })
   }
   public render () {
+    const { formVisible, formType, modalLoading } = this.state
     const addButton =  (
-      <Tooltip placement="bottom" title="新增">
+      <Tooltip placement="bottom" title="创建">
         <Button
           size="large"
           type="primary"
@@ -69,6 +98,26 @@ export class MemberList extends React.PureComponent {
       role: 32,
       team: 'Sidney No. 1 Lake Park'
     }]
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideMemberForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.onModalOk}
+      >
+        保 存
+      </Button>
+    )]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -105,6 +154,17 @@ export class MemberList extends React.PureComponent {
             />
           </div>
         </Row>
+        <Modal
+          title={null}
+          visible={formVisible}
+          footer={null}
+          onCancel={this.hideMemberForm}
+        >
+          <MemberForm
+            type={formType}
+            ref={(f) => { this.MemberForm = f }}
+          />
+        </Modal>
       </div>
     )
   }

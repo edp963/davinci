@@ -108,7 +108,7 @@ declare interface IObjectConstructor {
   assign (...objects: object[]): object
 }
 
-export class Bizlogics extends React.PureComponent<IBizlogicProps, IBizlogicStates> {
+export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsStates> {
   private codeMirrorInstanceOfQuerySQL: any
   private codeMirrorInstanceOfUpdateSQL: any
   private asyncValidateResult: any

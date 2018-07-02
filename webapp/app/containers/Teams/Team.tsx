@@ -38,7 +38,7 @@ export class Teams extends React.PureComponent<ITeamsProps> {
         <Box.Body>
           <Tabs onChange={this.callback} >
             <TabPane tab={<span><Icon type="api" />项目</span>} key="projects">
-              <ProjectList/>
+              <ProjectList />
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员</span>} key="members">
               <MemberList/>

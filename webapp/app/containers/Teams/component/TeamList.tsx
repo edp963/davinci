@@ -7,23 +7,54 @@ const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
+const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
+import AddForm from './AddForm'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
 
-export class TeamList extends React.PureComponent {
+interface ITeamListState {
+  modalLoading: boolean,
+  formType: string,
+  formVisible: boolean
+}
+export class TeamList extends React.PureComponent <{}, ITeamListState> {
+
+  constructor (props) {
+    super(props)
+    this.state = {
+      modalLoading: false,
+      formType: '',
+      formVisible: false
+    }
+  }
   private onSearchTeam = () => {
 
   }
-  private showTeamForm = () => {
+  private AddForm: WrappedFormUtils
+  private showAddForm = (type: string) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formType: type,
+      formVisible: true
+    })
+  }
+  private hideAddForm = () => {
+    this.setState({
+      formVisible: false
+    })
+  }
+  private onModalOk = () => {
 
   }
   public render () {
+    const {modalLoading, formType, formVisible} = this.state
     const addButton =  (
-      <Tooltip placement="bottom" title="新增">
+      <Tooltip placement="bottom" title="添加">
         <Button
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showTeamForm('add')}
+          onClick={this.showAddForm('team')}
         />
       </Tooltip>
     )
@@ -131,6 +162,17 @@ export class TeamList extends React.PureComponent {
             />
           </div>
         </Row>
+        <Modal
+          title={null}
+          footer={null}
+          visible={formVisible}
+          onCancel={this.hideAddForm}
+        >
+          <AddForm
+            type={formType}
+            ref={(f) => { this.AddForm = f }}
+          />
+        </Modal>
       </div>
     )
   }

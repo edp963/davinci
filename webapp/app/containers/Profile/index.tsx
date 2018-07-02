@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { connect } from 'react-redux'
 import { Link } from 'react-router'
 const Icon = require('antd/lib/icon')
 const Col = require('antd/lib/col')
@@ -10,20 +11,53 @@ const styles = require('./profile.less')
 const Button = require('antd/lib/button')
 import Box from '../../components/Box'
 import UploadAvatar from '../../components/UploadAvatar'
+import {createStructuredSelector} from 'reselect'
+import {makeSelectLoginUser} from '../App/selectors'
+import {compose} from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import {updateProfile, checkNameUniqueAction} from '../App/actions'
+import injectSaga from '../../utils/injectSaga'
+import reducer from '../App/reducer'
+import saga from '../App/sagas'
 const utilStyles = require('../../assets/less/util.less')
 const Breadcrumb = require('antd/lib/breadcrumb')
 
 interface IProfileProps {
   form: any
   type: string
+  loginUser: any
+  profileForm: any,
+  onUpdateProfile: (id: number, name: string, description: string, department: string, resolve: () => any) => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class Profile extends React.PureComponent<IProfileProps> {
-  private checkNameUnique = () => {
-    console.log('checkNameUnique')
+export class Profile extends React.PureComponent<IProfileProps, {}> {
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckUniqueName, loginUser: {id} } = this.props
+    // const { getFieldsValue } = this.props.form
+    // const { id } = getFieldsValue()
+    const data = {
+      username: value,
+      id
+    }
+    onCheckUniqueName('user', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
   }
   private submit = () => {
-    console.log('submit')
+    const { onUpdateProfile, loginUser: {id} } = this.props
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if(!err) {
+        console.log(values)
+      }
+    })
+  }
+  public componentDidMount () {
+    const { name, description, department } = this.props.loginUser
+    this.props.form.setFieldsValue({name, description, department })
   }
   public render () {
     const {getFieldDecorator} = this.props.form
@@ -49,7 +83,9 @@ export class Profile extends React.PureComponent<IProfileProps> {
             <UploadAvatar/>
             <hr/>
             <div className={styles.form}>
-              <Form className={styles.formView}>
+              <Form
+                className={styles.formView}
+              >
                 <Row>
                   <Col>
                     <FormItem
@@ -62,6 +98,7 @@ export class Profile extends React.PureComponent<IProfileProps> {
                     </FormItem>
                     <FormItem
                       {...commonFormItemStyle}
+                      hasFeedback
                       label="姓名"
                     >
                       {getFieldDecorator('name', {
@@ -109,6 +146,23 @@ export class Profile extends React.PureComponent<IProfileProps> {
   }
 }
 
-export default Form.create()(Profile)
+export function mapDispatchToProps (dispatch) {
+  return {
+    onUpdateProfile: (id, name, description, department, resolve) => dispatch(updateProfile(id, name, description, department, resolve)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+  }
+}
 
+const mapStateToProps = createStructuredSelector({
+  loginUser: makeSelectLoginUser()
+})
 
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+const withReducerApp = injectReducer({key: 'app', reducer})
+const withSagaAccount = injectSaga({key: 'account', saga})
+
+export default compose(
+  withReducerApp,
+  withSagaAccount,
+  withConnect
+)(Form.create()(Profile))

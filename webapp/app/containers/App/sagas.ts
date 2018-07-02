@@ -22,13 +22,23 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
-import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE } from './constants'
-import { logged, loginError, getLoginUserError, activeSuccess, activeError } from './actions'
+import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD } from './constants'
+import {
+  logged,
+  loginError,
+  getLoginUserError,
+  activeSuccess,
+  activeError,
+  updateProfileSuccess,
+  updateProfileError,
+  userPasswordChanged,
+  changeUserPasswordFail
+} from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-
+import {} from '../User/actions'
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -129,12 +139,92 @@ export function* checkName (action): IterableIterator<any> {
   }
 }
 
+export function* checkNameUnique (action): IterableIterator<any> {
+  const { pathname, data, resolve, reject } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.checkNameUnique}/${pathname}`,
+      params: data
+    })
+    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
+    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    if (code && code === 400) {
+      reject(msg)
+    }
+    if (code && code === 200) {
+      resolve(msg)
+    }
+  } catch (err) {
+    console.log(err)
+  }
+}
+
+export function* updateProfile (action): IterableIterator<any> {
+  const {  id, name, description, department, resolve } = action.payload
+
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.signup}/${id}`,
+      data: {
+        name,
+        description,
+        department
+      }
+    })
+    console.log(asyncData)
+    // switch (asyncData.header.code) {
+    //   case 400:
+    //     message.error('密码错误')
+    //     yield put(updateProfileError())
+    //     return null
+    //   case 404:
+    //     message.error('用户不存在')
+    //     yield put(updateProfileError())
+    //     return null
+    //   default:
+    //     const loginUser = readListAdapter(asyncData)
+    //     yield put(updateProfileSuccess(loginUser))
+    //     resolve()
+    //     return loginUser
+    // }
+  } catch (err) {
+    yield put(updateProfileError())
+    message.error('登录失败')
+  }
+}
+
+export function* changeUserPassword ({ payload }) {
+  try {
+    const result = yield call(request, {
+      method: 'post',
+      url: `${api.changepwd}/users`,
+      data: payload.info
+    })
+
+    if (result.header.code === 400) {
+      payload.reject(result.header.msg)
+    }
+    if (result.header.code === 200) {
+      yield put(userPasswordChanged(payload.info))
+      payload.resolve()
+    }
+  } catch (err) {
+    yield put(changeUserPasswordFail())
+    message.error('修改失败')
+  }
+}
+
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [
     throttle(1000, CHECK_NAME, checkName as any),
+    throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
-    takeLatest(LOGIN, login as any)
+    takeLatest(LOGIN, login as any),
+    takeLatest(UPDATE_PROFILE, updateProfile as any),
+    takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any)
   ]
 }
 

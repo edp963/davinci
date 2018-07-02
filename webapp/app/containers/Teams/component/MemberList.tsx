@@ -7,24 +7,54 @@ const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
+const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
+import AddForm from './AddForm'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
 
+interface IMemberListState {
+  modalLoading: boolean,
+  formType: string,
+  formVisible: boolean
+}
+export class MemberList extends React.PureComponent<{}, IMemberListState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      modalLoading: false,
+      formType: '',
+      formVisible: false
+    }
+  }
 
-export class MemberList extends React.PureComponent {
-  const onSearchMember = () => {
+  private onSearchMember = () => {
 
   }
-  const showMemberForm = (type: string) => () => {
+  private AddForm: WrappedFormUtils
+  private showAddForm = (type: string) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formType: type,
+      formVisible: true
+    })
+  }
+  private hideAddForm = () => {
+    this.setState({
+      formVisible: false
+    })
+  }
+  private onModalOk = () => {
 
   }
   public render () {
+    const { formVisible, formType, modalLoading} = this.state
     const addButton =  (
-      <Tooltip placement="bottom" title="新增">
+      <Tooltip placement="bottom" title="添加">
         <Button
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showMemberForm('add')}
+          onClick={this.showAddForm('member')}
         />
       </Tooltip>
     )
@@ -105,6 +135,17 @@ export class MemberList extends React.PureComponent {
             />
           </div>
         </Row>
+        <Modal
+          title={null}
+          footer={null}
+          visible={formVisible}
+          onCancel={this.hideAddForm}
+        >
+          <AddForm
+            type={formType}
+            ref={(f) => { this.AddForm = f }}
+          />
+        </Modal>
       </div>
     )
   }

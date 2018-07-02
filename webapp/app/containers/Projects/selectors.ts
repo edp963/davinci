@@ -18,26 +18,16 @@
  * >>
  */
 
-import config, { env } from '../globalConfig'
+import { createSelector } from 'reselect'
 
-const host = config[env].host
+const selectProject = (state) => state.get('project')
 
-export default {
-  login: `${host}/login`,
-  group: `${host}/groups`,
-  user: `${host}/users`,
-  changepwd: `${host}/changepwd`,
-  source: `${host}/sources`,
-  bizlogic: `${host}/flattables`,
-  // bizdata: `${host}/bizdatas`,
-  widget: `${host}/widgets`,
-  dashboard: `${host}/dashboards`,
-  share: `${host}/shares`,
-  checkName: `${host}/check/name`,
-  uploads: `${host}/uploads`,
-  schedule: `${host}/cronjobs`,
-  signup: `${host}/users`,
-  organization: `${host}/organizations`,
-  checkNameUnique: `${host}/check`,
-  projects: `${host}/projects`
+const makeSelectProjects = () => createSelector(
+  selectProject,
+  (projectState) => projectState.get('projects')
+)
+
+export {
+  selectProject,
+  makeSelectProjects
 }

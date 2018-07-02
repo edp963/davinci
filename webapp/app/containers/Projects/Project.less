@@ -106,6 +106,49 @@
   color: #a6a6a6;
 }
 
+.formWrapper {
+  padding: 16px;
+  text-align: left;
+  .header {
+    .title{
+      font-size: 24px;
+      color:@rich-text;
+      font-weight: 600;
+    }
+    .desc{
+      margin-top: 4px;
+      font-size: 14px;
+      color:@description-text;
+    }
+  }
+  .body {
+    margin: 16px auto;
+  }
+  .footer{
+    button {
+      margin-right: 6px;
+    }
+  }
+}
+
+.selectOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .title{
+    display: flex;
+    align-items: center;
+  }
+  .owner{
+    color: @rich-text;
+    font-size: 18px;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+}
+
+
+
 
 @media only screen and (min-width: 1200px) {
   .container {

@@ -25,38 +25,37 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
-const Tag = require('antd/lib/tag')
 const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
-const Option = Select.Option
+const styles = require('../Organization.less')
 const FormItem = Form.Item
-const styles = require('./Project.less')
-import Avatar from '../../components/Avatar'
-const utilStyles = require('../../assets/less/util.less')
+const RadioGroup = Radio.Group
+import { checkNameUniqueAction } from '../../App/actions'
+
+const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectsFormProps {
   type: string
   form: any
   onCheckName: (id, name, type, resolve, reject) => void
-  organizations: any
-  onModalOk: () => any
-  modalLoading: boolean
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-interface IProjectsFormState {
-
-}
-
-export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProjectsFormState> {
-  constructor (props) {
-    super(props)
-    this.state = {
-
-    }
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
+  private checkNameUnique = (rule, value = '', callback) => {
+    // const { onCheckUniqueName, loginUser: {id} } = this.props
+    // // const { getFieldsValue } = this.props.form
+    // // const { id } = getFieldsValue()
+    // const data = {
+    //   username: value,
+    //   id
+    // }
+    // onCheckUniqueName('user', data,
+    //   () => {
+    //     callback()
+    //   }, (err) => {
+    //     callback(err)
+    //   })
   }
   public render () {
-    const { organizations, modalLoading, onCheckUniqueName } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 3 },
@@ -67,27 +66,13 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
         key="submit"
         size="large"
         type="primary"
-        onClick={this.props.onModalOk}
-        loading={modalLoading}
-        disabled={modalLoading}
+        // loading={modalLoading}
+        // disabled={modalLoading}
+        // onClick={this.onModalOk}
       >
         保 存
       </Button>
     )]
-
-    const organizationOptions = organizations ? organizations.map((o) => (
-      <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
-        <div className={styles.title}>
-          <span className={styles.owner}>{o.name}</span>
-          {`${o.id}` !== this.props.form.getFieldValue('orgId')
-            ? (<Tag color="#108ee9">Owner</Tag>)
-            : ''}
-        </div>
-        {`${o.id}` !== this.props.form.getFieldValue('orgId')
-          ? (<Avatar size="small" path={o.avatar}/>)
-          : ''}
-      </Option>
-    )) : ''
     return (
       <div className={styles.formWrapper}>
         <div className={styles.header}>
@@ -109,16 +94,28 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                     <Input />
                   )}
                 </FormItem>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('create_by', {
+                    hidden: this.props.type === 'add'
+                  })(
+                    <Input />
+                  )}
+                </FormItem>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('visibility', {})(
+                    <Input />
+                  )}
+                </FormItem>
                 <FormItem label="组织" {...commonFormItemStyle}>
                   {getFieldDecorator('orgId', {
                     rules: [{
                       required: true,
                       message: 'Name 不能为空'
+                    }, {
+                      validator: this.checkNameUnique
                     }]
                   })(
-                    <Select placeholder="Please select a organization" >
-                      {organizationOptions}
-                    </Select>
+                    <Input placeholder="Name" />
                   )}
                 </FormItem>
                 <FormItem label="名称" {...commonFormItemStyle}>
@@ -127,7 +124,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                       required: true,
                       message: 'Name 不能为空'
                     }, {
-                      validator: onCheckUniqueName
+                      validator: this.checkNameUnique
                     }]
                   })(
                     <Input placeholder="Name" />
@@ -136,7 +133,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
               </Col>
               <Col span={24}>
                 <FormItem label="描述" {...commonFormItemStyle}>
-                  {getFieldDecorator('description', {
+                  {getFieldDecorator('desc', {
                     initialValue: ''
                   })(
                     <Input
@@ -167,8 +164,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
   }
 }
 
-export default Form.create()(ProjectsForm)
+function mapDispatchToProps (dispatch) {
+  return {
+    onCheckName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+  }
+}
 
-
-
-
+export default Form.create()(connect<{}, {}, IProjectsFormProps>(null, mapDispatchToProps)(ProjectsForm))

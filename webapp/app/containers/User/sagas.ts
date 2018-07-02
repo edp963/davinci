@@ -129,10 +129,11 @@ export function* editUserInfo ({ payload }) {
 }
 
 export function* changeUserPassword ({ payload }) {
+  const { id } = payload
   try {
     const result = yield call(request, {
-      method: 'post',
-      url: `${api.changepwd}/users`,
+      method: 'put',
+      url: `${api.signup}/${id}/changepassword`,
       data: payload.info
     })
 
