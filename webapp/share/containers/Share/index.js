@@ -674,43 +674,57 @@ export class Share extends React.Component {
           case 'select':
           case 'cascadeSelect':
             if (formValue) {
-              currentParam = [{
+              currentParam = {
                 k: columnAndType[0],
                 v: `${formValue}`
-              }]
+              }
             }
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentParam = formValue.map(fv => ({
+              currentParam = {
                 k: columnAndType[0],
-                v: `${fv}`
-              }))
+                v: formValue.join(',')
+              }
             }
             break
           case 'date':
+            if (formValue) {
+              currentParam = {
+                k: columnAndType[0],
+                v: `'${moment(formValue).format('YYYY-MM-DD')}'`
+              }
+            }
+            break
           case 'datetime':
             if (formValue) {
               currentParam = {
                 k: columnAndType[0],
-                v: `'${formValue}'`
+                v: `'${moment(formValue).format('YYYY-MM-DD HH:mm:ss')}'`
               }
             }
             break
           case 'multiDate':
             if (formValue) {
-              currentParam = formValue.split(',').map(fv => ({
+              currentParam = {
                 k: columnAndType[0],
-                v: `'${fv}'`
-              }))
+                v: formValue.split(',').map(fv => `'${fv}'`).join(',')
+              }
             }
             break
           case 'dateRange':
+            if (formValue.length) {
+              currentParam = formValue.map(fv => ({
+                k: columnAndType[0],
+                v: `'${moment(fv).format('YYYY-MM-DD')}'`
+              }))
+            }
+            break
           case 'datetimeRange':
             if (formValue.length) {
               currentParam = formValue.map(fv => ({
                 k: columnAndType[0],
-                v: `'${fv}'`
+                v: `'${moment(fv).format('YYYY-MM-DD HH:mm:ss')}'`
               }))
             }
             break
@@ -760,7 +774,7 @@ export class Share extends React.Component {
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
+              currentFilter = `${columnAndType[0]} in (${formValue.join(',')})`
             }
             break
           case 'date':
@@ -775,7 +789,7 @@ export class Share extends React.Component {
             break
           case 'multiDate':
             if (formValue) {
-              currentFilter = formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
+              currentFilter = `${columnAndType[0]} in (${formValue.split(',').map(val => getValidValue(val, columnAndType[1])).join(',')})`
             }
             break
           case 'dateRange':
