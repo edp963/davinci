@@ -119,6 +119,9 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   private onSearchTeam = () => {
 
   }
+  private toThatTeam = () => {
+
+  }
   public render () {
     const { formVisible, modalLoading } = this.state
     const { organizations, organizationTeams } = this.props
@@ -138,7 +141,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       dataIndex: 'name',
       key: 'name',
       width: '40%',
-      render: (text) => <a href="javascript:;" className={styles.avatarName}>{text}</a>
+      render: (text) => <a href="javascript:;" onClick={this.toThatTeam} className={styles.avatarName}>{text}</a>
     }, {
       title: 'Member',
       dataIndex: 'users',

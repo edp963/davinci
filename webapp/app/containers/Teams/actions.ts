@@ -30,17 +30,17 @@ import {
   DELETE_TEAM_FAILURE,
   LOAD_TEAM_DETAIL,
   LOAD_TEAM_DETAIL_SUCCESS,
-  LOAD_TEAM_DETAIL_FAILURE
+  LOAD_TEAM_DETAIL_FAILURE,
+  LOAD_TEAM_PROJECTS,
+  LOAD_TEAM_PROJECTS_SUCCESS,
+  LOAD_TEAM_PROJECTS_FAILURE,
+  LOAD_TEAM_MEMBERS,
+  LOAD_TEAM_MEMBERS_SUCCESS,
+  LOAD_TEAM_MEMBERS_FAILURE,
+  LOAD_TEAM_TEAMS,
+  LOAD_TEAM_TEAMS_SUCCESS,
+  LOAD_TEAM_TEAMS_FAILURE
 } from './constants'
-
-export function loadTeamDetail (id) {
-  return {
-    type: LOAD_TEAM_DETAIL,
-    payload: {
-      id
-    }
-  }
-}
 
 
 
@@ -64,7 +64,6 @@ export function loadTeamsFail () {
     type: LOAD_TEAMS_FAILURE
   }
 }
-
 
 
 export function editTeam (team, resolve) {
@@ -116,16 +115,24 @@ export function deleteTeamFail () {
   }
 }
 
-export function teamDetailLoaded (team, widgets) {
+
+export function loadTeamDetail (id) {
   return {
-    type: LOAD_TEAM_DETAIL_SUCCESS,
+    type: LOAD_TEAM_DETAIL,
     payload: {
-      team,
-      widgets
+      id
     }
   }
 }
 
+export function teamDetailLoaded (team) {
+  return {
+    type: LOAD_TEAM_DETAIL_SUCCESS,
+    payload: {
+      team
+    }
+  }
+}
 
 export function loadTeamDetailFail (team, widgets) {
   return {
@@ -138,7 +145,77 @@ export function loadTeamDetailFail (team, widgets) {
 }
 
 
+export function loadTeamProjects (id) {
+  return {
+    type: LOAD_TEAM_PROJECTS,
+    payload: {
+      id
+    }
+  }
+}
 
+export function teamProjectsLoaded (projects) {
+  return {
+    type: LOAD_TEAM_PROJECTS_SUCCESS,
+    payload: {
+      projects
+    }
+  }
+}
+
+export function loadTeamProjectsFail () {
+  return {
+    type: LOAD_TEAM_PROJECTS_FAILURE
+  }
+}
+
+export function loadTeamMembers (id) {
+  return {
+    type: LOAD_TEAM_MEMBERS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function teamMembersLoaded (members) {
+  return {
+    type: LOAD_TEAM_MEMBERS_SUCCESS,
+    payload: {
+      members
+    }
+  }
+}
+
+export function loadTeamMembersFail () {
+  return {
+    type: LOAD_TEAM_MEMBERS_FAILURE
+  }
+}
+
+export function loadTeamTeams (id) {
+  return {
+    type: LOAD_TEAM_TEAMS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function teamTeamsLoaded (teams) {
+  return {
+    type: LOAD_TEAM_TEAMS_SUCCESS,
+    payload: {
+      teams
+    }
+  }
+}
+
+export function loadTeamTeamsFail () {
+  return {
+    type: LOAD_TEAM_TEAMS_FAILURE
+  }
+}
 
 
 
