@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {compose} from 'redux'
-import reducer from '../reducer'
+import teamReducer from '../../Teams/reducer'
 import {makeSelectLoginUser} from '../../App/selectors'
 import injectReducer from '../../../utils/injectReducer'
 import {loadTeams} from '../../Teams/actions'
@@ -11,7 +11,7 @@ import {makeSelectTeams} from '../../Teams/selectors'
 import {connect} from 'react-redux'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {InjectedRouter} from 'react-router/lib/Router'
-import saga from '../sagas'
+import teamSaga from '../../Teams/sagas'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
@@ -22,15 +22,23 @@ const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
 const styles = require('../Organization.less')
+import * as Organization from '../Organization'
+import { checkNameUniqueAction } from '../../App/actions'
+import { addTeam } from '../actions'
+import { editTeam, deleteTeam } from '../../Teams/actions'
+import Avatar from '../../../components/Avatar'
 
 
 interface ITeamsState {
-  formType?: string
   formVisible: boolean
   modalLoading: boolean
 }
 interface ITeamsProps {
   router: InjectedRouter
+  currentOrganization: Organization.IOrganization
+  organizationTeams: Organization.IOrganizationTeams
+  organizations: any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 interface ITeam {
   name?: string
@@ -39,36 +47,60 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   constructor (props) {
     super(props)
     this.state = {
-      formType: '',
       formVisible: false,
       modalLoading: false
     }
   }
 
   private TeamForm: WrappedFormUtils
-  private showTeamForm = (formType, team?: ITeam) => (e) => {
+  private showTeamForm = () => (e) => {
     e.stopPropagation()
     this.setState({
-      formType,
       formVisible: true
     }, () => {
-      if (team) {
-        this.TeamForm.setFieldsValue(team)
-      }
+      // if (team) {
+      //   const {orgId, id, name, pic, description} = team
+      //   this.organizationTypeChange(`${orgId}`).then(
+      //     () => this.TeamForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description})
+      //   )
+      // }
     })
   }
+
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckUniqueName, currentOrganization: {id} } = this.props
+    const data = {
+      name: value,
+      orgId: id,
+      id: null
+    }
+    onCheckUniqueName('team', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
+  }
+
   private onModalOk = () => {
+    const {currentOrganization} = this.props
     this.TeamForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-        if (this.state.formType === 'add') {
-          this.props.onAddTeam({
-            ...values,
-            pic: `${Math.ceil(Math.random() * 19)}`,
-            linkage_detail: '[]',
-            config: '{}'
-          }, () => { this.hideTeamForm() })
-        }
+        // orgId: number
+        // name: string,
+        // description: string,
+        // parentTeamId: number,
+        // visibility: boolean
+        this.props.onAddTeam({
+          ...values,
+          ...{
+            visibility: !!values.visibility
+          },
+          orgId: currentOrganization.id,
+          pic: `${Math.ceil(Math.random() * 19)}`,
+          config: '{}'
+        }, () => { this.hideTeamForm() })
       }
     })
   }
@@ -80,19 +112,23 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       this.TeamForm.resetFields()
     })
   }
-
+  private organizationTypeChange = (val) =>
+    new Promise((resolve) => {
+      this.forceUpdate(() => resolve())
+    })
   private onSearchTeam = () => {
 
   }
   public render () {
-    const { formVisible, formType, modalLoading } = this.state
+    const { formVisible, modalLoading } = this.state
+    const { organizations, organizationTeams } = this.props
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
         <Button
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showTeamForm('add')}
+          onClick={this.showTeamForm()}
         />
       </Tooltip>
     )
@@ -101,101 +137,28 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
-      width: '40%'
+      width: '40%',
+      render: (text) => <a href="javascript:;" className={styles.avatarName}>{text}</a>
     }, {
-      title: 'Age',
-      dataIndex: 'age',
-      key: 'age',
-      width: '30%'
-    }, {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address'
-    }]
-
-    const data = [{
-      key: 1,
-      name: 'John Brown sr.',
-      age: 60,
-      address: 'New York No. 1 Lake Park',
-      children: [{
-        key: 11,
-        name: 'John Brown',
-        age: 42,
-        address: 'New York No. 2 Lake Park'
-      }, {
-        key: 12,
-        name: 'John Brown jr.',
-        age: 30,
-        address: 'New York No. 3 Lake Park',
-        children: [{
-          key: 121,
-          name: 'Jimmy Brown',
-          age: 16,
-          address: 'New York No. 3 Lake Park'
-        }],
-      }, {
-        key: 13,
-        name: 'Jim Green sr.',
-        age: 72,
-        address: 'London No. 1 Lake Park',
-        children: [{
-          key: 131,
-          name: 'Jim Green',
-          age: 42,
-          address: 'London No. 2 Lake Park',
-          children: [{
-            key: 1311,
-            name: 'Jim Green jr.',
-            age: 25,
-            address: 'London No. 3 Lake Park',
-          }, {
-            key: 1312,
-            name: 'Jimmy Green sr.',
-            age: 18,
-            address: 'London No. 4 Lake Park',
-          }],
-        }],
-      }],
-    }, {
-      key: 2,
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sidney No. 1 Lake Park',
-    }]
-
-    const rowSelection = {
-      onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-      },
-      onSelect: (record, selected, selectedRows) => {
-        console.log(record, selected, selectedRows);
-      },
-      onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
+      title: 'Member',
+      dataIndex: 'users',
+      key: 'users',
+      width: '30%',
+      render: (users) => {
+        return (
+          <div className={styles.avatarWrapper}>
+            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span><Avatar key={index} path={user.avatar} size="small" enlarge={true}/></span></Tooltip>)}
+            <span className={styles.avatarName}>{`${ users ? users.length : 0 }menbers`}</span>
+          </div>
+        )
       }
-    }
+    }, {
+      title: 'Visibility',
+      dataIndex: 'visibility',
+      key: 'visibility',
+      render: text => text ? '公开（可见）' : '私密（不可见）'
+    }]
 
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideTeamForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -216,7 +179,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
               bordered
               columns={columns}
               //  rowSelection={rowSelection}
-              dataSource={data}
+              dataSource={organizationTeams}
             />
           </div>
         </Row>
@@ -227,7 +190,12 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           onCancel={this.hideTeamForm}
         >
           <TeamForm
-            type={formType}
+            onModalOk={this.onModalOk}
+            modalLoading={modalLoading}
+            onOrganizationTypeChange={this.organizationTypeChange}
+            organizations={organizations}
+            organizationTeams={organizationTeams}
+            onCheckUniqueName={this.checkNameUnique}
             ref={(f) => { this.TeamForm = f }}
           />
         </Modal>
@@ -247,14 +215,15 @@ export function mapDispatchToProps (dispatch) {
     onLoadTeams: () => dispatch(loadTeams()),
     onAddTeam: (team, resolve) => dispatch(addTeam(team, resolve)),
     onEditTeam: (team, resolve) => dispatch(editTeam(team, resolve)),
-    onDeleteTeam: (id) => () => dispatch(deleteTeam(id))
+    onDeleteTeam: (id) => () => dispatch(deleteTeam(id)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducer = injectReducer({ key: 'teams', reducer })
-const withSaga = injectSaga({ key: 'teams', saga })
+const withReducer = injectReducer({ key: 'team', reducer: teamReducer })
+const withSaga = injectSaga({ key: 'team', saga: teamSaga })
 
 export default compose(
   withReducer,

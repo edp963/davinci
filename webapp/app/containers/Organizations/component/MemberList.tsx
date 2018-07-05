@@ -11,13 +11,20 @@ const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
 const styles = require('../Organization.less')
 import MemberForm from '../../Teams/component/AddForm'
+import Avatar from '../../../components/Avatar'
+import * as Organization from '../Organization'
 
 interface IMembersState {
   formType?: string
   formVisible: boolean
   modalLoading: boolean
 }
-export class MemberList extends React.PureComponent<{}, IMembersState> {
+
+interface IMembersProps {
+  organizationMembers: Organization.IOrganizationMembers[]
+}
+
+export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -47,6 +54,8 @@ export class MemberList extends React.PureComponent<{}, IMembersState> {
   }
   public render () {
     const { formVisible, formType, modalLoading } = this.state
+    const { organizationMembers } = this.props
+    console.log(organizationMembers)
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
         <Button
@@ -59,19 +68,21 @@ export class MemberList extends React.PureComponent<{}, IMembersState> {
     )
     const columns = [{
       title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text) => <a href="#">{text}</a>
+      dataIndex: 'user',
+      key: 'user',
+      render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
     }, {
       title: 'role',
-      dataIndex: 'role',
-      key: 'role'
+      dataIndex: 'user',
+      key: 'userKey',
+      render: (text) => <span>{text.role}</span>
     }, {
       title: 'team',
-      dataIndex: 'team',
-      key: 'team'
+      dataIndex: 'teamNum',
+      key: 'teamNum'
     }, {
       title: 'settings',
+      dataIndex: 'user',
       key: 'settings',
       render: (text, record) => (
         <span>
@@ -82,22 +93,6 @@ export class MemberList extends React.PureComponent<{}, IMembersState> {
       )
     }]
 
-    const data = [{
-      key: '1',
-      name: 'John Brown',
-      role: 32,
-      team: 'New York No. 1 Lake Park'
-    }, {
-      key: '2',
-      name: 'Jim Green',
-      role: 42,
-      team: 'London No. 1 Lake Park'
-    }, {
-      key: '3',
-      name: 'Joe Black',
-      role: 32,
-      team: 'Sidney No. 1 Lake Park'
-    }]
     const modalButtons = [(
       <Button
         key="back"
@@ -150,7 +145,7 @@ export class MemberList extends React.PureComponent<{}, IMembersState> {
             <Table
               bordered
               columns={columns}
-              dataSource={data}
+              dataSource={organizationMembers}
             />
           </div>
         </Row>

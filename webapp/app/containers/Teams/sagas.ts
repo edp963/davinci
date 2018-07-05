@@ -47,29 +47,12 @@ import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/as
 
 export function* getTeams () {
   try {
-    const asyncData = yield call(request, api.project)
+    const asyncData = yield call(request, api.teams)
     const projects = readListAdapter(asyncData)
     yield put(projectsLoaded(projects))
   } catch (err) {
     yield put(loadTeamsFail())
     message.error('获取 Teams 失败，请稍后再试')
-  }
-}
-
-export function* addTeam (action) {
-  const { project, resolve } = action.payload
-  try {
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: api.project,
-      data: writeAdapter(project)
-    })
-    const result = readObjectAdapter(asyncData)
-    yield put(projectAdded(result))
-    resolve()
-  } catch (err) {
-    yield put(addTeamFail())
-    message.error('添加 Team 失败，请稍后再试')
   }
 }
 
@@ -122,7 +105,6 @@ export function* getTeamDetail ({ payload }) {
 export default function* rootTeamSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_TEAMS, getTeams),
-    takeEvery(ADD_TEAM, addTeam),
     takeEvery(EDIT_TEAM, editTeam),
     takeEvery(DELETE_TEAM, deleteTeam),
     takeLatest(LOAD_TEAM_DETAIL, getTeamDetail as any)

@@ -28,42 +28,6 @@ import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
 
-
-const projectArr = [{
-  id : 1,
-  publish: true,
-  pic: 7,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 2,
-  publish: true,
-  pic: 6,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 3,
-  publish: true,
-  pic: 2,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 4,
-  publish: true,
-  pic: 1,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 5,
-  publish: true,
-  pic: 3,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id: 'add',
-  type: 'add'
-}]
-
 interface IProjectsProps {
   router: InjectedRouter
   organizations: any
@@ -108,8 +72,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     }, () => {
       if (project) {
         const {orgId, id, name, pic, description} = project
-       // this.ProjectForm.setFieldsValue({orgId, id, name, pic, description})
-        this.ProjectForm.setFieldsValue({orgId: 'default', id, name, pic, description})
+        this.widgetTypeChange(`${orgId}`).then(
+          () => this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description})
+        )
       }
     })
   }
@@ -139,13 +104,20 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             ...values,
             pic: `${Math.ceil(Math.random() * 19)}`,
             config: '{}'
-          }, () => { this.hideProjectForm() })
+          }, () => {
+            this.hideProjectForm() })
         } else {
-           this.props.onEditPropject(values, () => { this.hideProjectForm() })
+          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
         }
       }
     })
   }
+
+  private widgetTypeChange = (val) =>
+    new Promise((resolve) => {
+      this.forceUpdate(() => resolve())
+    })
+
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName } = this.props
     const { getFieldsValue } = this.ProjectForm
@@ -187,7 +159,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             >
               <div
                 className={styles.unit}
-                onClick={this.showProjectForm('add', d)}
+                onClick={this.showProjectForm('add')}
               >
                 <div className={styles.createNewWrapper}>
                   <div className={styles.createIcon}>
@@ -280,6 +252,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
               organizations={organizations}
               onModalOk={this.onModalOk}
               onCheckUniqueName={this.checkNameUnique}
+              onWidgetTypeChange={this.widgetTypeChange}
             />
           </Modal>
         </div>

@@ -25,7 +25,11 @@ import {
   ADD_ORGANIZATION,
   EDIT_ORGANIZATION,
   DELETE_ORGANIZATION,
-  LOAD_ORGANIZATION_DETAIL
+  LOAD_ORGANIZATION_DETAIL,
+  LOAD_ORGANIZATIONS_TEAMS,
+  LOAD_ORGANIZATIONS_PROJECTS,
+  LOAD_ORGANIZATIONS_MEMBERS,
+  ADD_TEAM
 } from './constants'
 
 import {
@@ -37,17 +41,25 @@ import {
   editOrganizationFail,
   organizationDeleted,
   deleteOrganizationFail,
-  organizationDetailLoaded
+  organizationDetailLoaded,
+  organizationsMembersLoaded,
+  organizationsProjectsLoaded,
+  organizationsTeamsLoaded,
+  loadOrganizationsProjectsFail,
+  loadOrganizationsMembersFail,
+  loadOrganizationsTeamsFail,
+  addTeamFail,
+  teamAdded
 } from './actions'
 
 import message from 'antd/lib/message'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getOrganizations () {
   try {
-    const asyncData = yield call(request, api.organization)
+    const asyncData = yield call(request, api.organizations)
     const organizations = readListAdapter(asyncData)
     yield put(organizationsLoaded(organizations))
   } catch (err) {
@@ -61,10 +73,10 @@ export function* addOrganization (action) {
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: api.organization,
-      data: writeAdapter(organization)
+      url: api.organizations,
+      data: organization
     })
-    const result = readObjectAdapter(asyncData)
+    const result = readListAdapter(asyncData)
     yield put(organizationAdded(result))
     resolve()
   } catch (err) {
@@ -78,7 +90,7 @@ export function* editOrganization (action) {
   try {
     yield call(request, {
       method: 'put',
-      url: api.organization,
+      url: api.organizations,
       data: writeAdapter(organization)
     })
     yield put(organizationEdited(organization))
@@ -94,7 +106,7 @@ export function* deleteOrganization (action) {
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.organization}/${id}`
+      url: `${api.organizations}/${id}`
     })
     yield put(organizationDeleted(id))
   } catch (err) {
@@ -105,18 +117,67 @@ export function* deleteOrganization (action) {
 
 export function* getOrganizationDetail ({ payload }) {
   try {
-    const asyncData = yield all({
-      organization: call(request, `${api.organization}/${payload.id}`),
-      widgets: call(request, api.widget)
-    })
-    const organization = readListAdapter(asyncData.organization)
-    const widgets = readListAdapter(asyncData.widgets)
-    yield put(organizationDetailLoaded(organization, widgets))
+    const asyncData = yield call(request, `${api.organizations}/${payload.id}`)
+    const organization = readListAdapter(asyncData)
+    yield put(organizationDetailLoaded(organization))
   } catch (err) {
     console.log('getOrganizationDetail', err)
   }
 }
 
+export function* getOrganizationsProjects ({payload}) {
+  const {id} = payload
+  try {
+    const asyncData = yield call(request, `${api.organizations}/${id}/projects`)
+    const organizations = readListAdapter(asyncData)
+    yield put(organizationsProjectsLoaded(organizations))
+  } catch (err) {
+    yield put(loadOrganizationsProjectsFail())
+    message.error('获取 Organizations 失败，请稍后再试')
+  }
+}
+
+export function* getOrganizationsMembers ({payload}) {
+  const {id} = payload
+  try {
+    const asyncData = yield call(request, `${api.organizations}/${id}/members`)
+    const organizations = readListAdapter(asyncData)
+    yield put(organizationsMembersLoaded(organizations))
+  } catch (err) {
+    yield put(loadOrganizationsMembersFail())
+    message.error('获取 Organizations 失败，请稍后再试')
+  }
+}
+
+export function* getOrganizationsTeams ({payload}) {
+  const {id} = payload
+  try {
+    const asyncData = yield call(request, `${api.organizations}/${id}/teams`)
+    const organizations = readListAdapter(asyncData)
+    yield put(organizationsTeamsLoaded(organizations))
+  } catch (err) {
+    yield put(loadOrganizationsTeamsFail())
+    message.error('获取 Organizations 失败，请稍后再试')
+  }
+}
+
+export function* addTeam (action) {
+  const { team, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: api.teams,
+      data: team
+      // data: writeAdapter(project)
+    })
+    const result = readListAdapter(asyncData)
+    yield put(teamAdded(result))
+    resolve()
+  } catch (err) {
+    yield put(addTeamFail())
+    message.error('添加 Team 失败，请稍后再试')
+  }
+}
 
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
@@ -125,6 +186,10 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeEvery(ADD_ORGANIZATION, addOrganization),
     takeEvery(EDIT_ORGANIZATION, editOrganization),
     takeEvery(DELETE_ORGANIZATION, deleteOrganization),
-    takeLatest(LOAD_ORGANIZATION_DETAIL, getOrganizationDetail as any)
+    takeLatest(LOAD_ORGANIZATION_DETAIL, getOrganizationDetail as any),
+    takeLatest(LOAD_ORGANIZATIONS_MEMBERS, getOrganizationsMembers as any),
+    takeLatest(LOAD_ORGANIZATIONS_PROJECTS, getOrganizationsProjects as any),
+    takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
+    takeEvery(ADD_TEAM, addTeam)
   ]
 }

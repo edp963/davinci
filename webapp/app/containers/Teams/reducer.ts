@@ -47,17 +47,6 @@ function teamReducer (state = initialState, action) {
       return state.set('teams', payload.teams)
     case LOAD_TEAMS_FAILURE:
       return state
-
-    case ADD_TEAM_SUCCESS:
-      if (teams) {
-        teams.unshift(payload.result)
-        return state.set('teams', teams.slice())
-      } else {
-        return state.set('teams', [payload.result])
-      }
-    case ADD_TEAM_FAILURE:
-      return state
-
     case EDIT_TEAM_SUCCESS:
       teams.splice(teams.findIndex((d) => d.id === payload.result.id), 1, payload.result)
       return state.set('teams', teams.slice())

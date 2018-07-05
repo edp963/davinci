@@ -22,9 +22,6 @@ import {
   LOAD_TEAMS,
   LOAD_TEAMS_SUCCESS,
   LOAD_TEAMS_FAILURE,
-  ADD_TEAM,
-  ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE,
   EDIT_TEAM,
   EDIT_TEAM_SUCCESS,
   EDIT_TEAM_FAILURE,
@@ -68,30 +65,7 @@ export function loadTeamsFail () {
   }
 }
 
-export function addTeam (team, resolve) {
-  return {
-    type: ADD_TEAM,
-    payload: {
-      team,
-      resolve
-    }
-  }
-}
 
-export function teamAdded (result) {
-  return {
-    type: ADD_TEAM_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function addTeamFail () {
-  return {
-    type: ADD_TEAM_FAILURE
-  }
-}
 
 export function editTeam (team, resolve) {
   return {

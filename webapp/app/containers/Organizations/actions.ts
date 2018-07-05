@@ -33,12 +33,48 @@ import {
   DELETE_ORGANIZATION_FAILURE,
   LOAD_ORGANIZATION_DETAIL,
   LOAD_ORGANIZATION_DETAIL_SUCCESS,
-  LOAD_ORGANIZATION_DETAIL_FAILURE
+  LOAD_ORGANIZATION_DETAIL_FAILURE,
+  LOAD_ORGANIZATIONS_MEMBERS,
+  LOAD_ORGANIZATIONS_MEMBERS_FAILURE,
+  LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
+  LOAD_ORGANIZATIONS_PROJECTS,
+  LOAD_ORGANIZATIONS_PROJECTS_FAILURE,
+  LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
+  LOAD_ORGANIZATIONS_TEAMS,
+  LOAD_ORGANIZATIONS_TEAMS_FAILURE,
+  LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
+  ADD_TEAM,
+  ADD_TEAM_SUCCESS,
+  ADD_TEAM_FAILURE,
 } from './constants'
 
-export function loadOrganizationDetail (id) {
+export function loadOrganizationProjects (id) {
   return {
-    type: LOAD_ORGANIZATION_DETAIL,
+    type: LOAD_ORGANIZATIONS_PROJECTS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function organizationsProjectsLoaded (projects) {
+  return {
+    type: LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
+    payload: {
+      projects
+    }
+  }
+}
+
+export function loadOrganizationsProjectsFail () {
+  return {
+    type: LOAD_ORGANIZATIONS_PROJECTS_FAILURE
+  }
+}
+
+export function loadOrganizationMembers (id) {
+  return {
+    type: LOAD_ORGANIZATIONS_MEMBERS,
     payload: {
       id
     }
@@ -46,6 +82,44 @@ export function loadOrganizationDetail (id) {
 }
 
 
+export function organizationsMembersLoaded (members) {
+  return {
+    type: LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
+    payload: {
+      members
+    }
+  }
+}
+
+export function loadOrganizationsMembersFail () {
+  return {
+    type: LOAD_ORGANIZATIONS_MEMBERS_FAILURE
+  }
+}
+
+export function loadOrganizationTeams (id) {
+  return {
+    type: LOAD_ORGANIZATIONS_TEAMS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function organizationsTeamsLoaded (teams) {
+  return {
+    type: LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
+    payload: {
+      teams
+    }
+  }
+}
+
+export function loadOrganizationsTeamsFail () {
+  return {
+    type: LOAD_ORGANIZATIONS_TEAMS_FAILURE
+  }
+}
 
 export function loadOrganizations () {
   return {
@@ -142,16 +216,23 @@ export function deleteOrganizationFail () {
   }
 }
 
-export function organizationDetailLoaded (organization, widgets) {
+export function loadOrganizationDetail (id) {
   return {
-    type: LOAD_ORGANIZATION_DETAIL_SUCCESS,
+    type: LOAD_ORGANIZATION_DETAIL,
     payload: {
-      organization,
-      widgets
+      id
     }
   }
 }
 
+export function organizationDetailLoaded (organization) {
+  return {
+    type: LOAD_ORGANIZATION_DETAIL_SUCCESS,
+    payload: {
+      organization
+    }
+  }
+}
 
 export function loadOrganizationDetailFail (organization, widgets) {
   return {
@@ -163,7 +244,30 @@ export function loadOrganizationDetailFail (organization, widgets) {
   }
 }
 
+export function addTeam (team, resolve) {
+  return {
+    type: ADD_TEAM,
+    payload: {
+      team,
+      resolve
+    }
+  }
+}
 
+export function teamAdded (result) {
+  return {
+    type: ADD_TEAM_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function addTeamFail () {
+  return {
+    type: ADD_TEAM_FAILURE
+  }
+}
 
 
 

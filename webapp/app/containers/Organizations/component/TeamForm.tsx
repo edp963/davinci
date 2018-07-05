@@ -26,49 +26,54 @@ const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
 const Button = require('antd/lib/button')
+const Select = require('antd/lib/select')
+const Option = Select.Option
+const Tag = require('antd/lib/tag')
+import Avatar from '../../../components/Avatar'
 const styles = require('../Organization.less')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { checkNameUniqueAction } from '../../App/actions'
+
 
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectsFormProps {
   type: string
   form: any
-  onCheckName: (id, name, type, resolve, reject) => void
+  modalLoading: boolean
+  organizations: any
+  onModalOk: () => any
+  organizationTeams: any
+  onWidgetTypeChange: () => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
-  private checkNameUnique = (rule, value = '', callback) => {
-    // const { onCheckUniqueName, loginUser: {id} } = this.props
-    // // const { getFieldsValue } = this.props.form
-    // // const { id } = getFieldsValue()
-    // const data = {
-    //   username: value,
-    //   id
-    // }
-    // onCheckUniqueName('user', data,
-    //   () => {
-    //     callback()
-    //   }, (err) => {
-    //     callback(err)
-    //   })
-  }
   public render () {
+    const { organizations, onOrganizationTypeChange, organizationTeams, modalLoading } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 3 },
       wrapperCol: { span: 24 }
     }
+    const organizationTeamsOptions = organizationTeams ? organizationTeams.map((o) => (
+      <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
+        <div className={styles.title}>
+          <span className={styles.owner}>{o.name}</span>
+        </div>
+        {`${o.id}` !== this.props.form.getFieldValue('parentTeamId')
+          ? (<Avatar size="small" path={o.avatar}/>)
+          : ''}
+      </Option>
+    )) : ''
     const modalButtons = [(
       <Button
         key="submit"
         size="large"
         type="primary"
-        // loading={modalLoading}
-        // disabled={modalLoading}
-        // onClick={this.onModalOk}
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.props.onModalOk}
       >
         保 存
       </Button>
@@ -77,54 +82,28 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            Create New Projects
+            创建团队
           </div>
           <div className={styles.desc}>
-            create new project
+            团队隶属于组织，在团队中可以制定项目的权限。
           </div>
         </div>
         <div className={styles.body}>
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('id', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('create_by', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('visibility', {})(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem label="组织" {...commonFormItemStyle}>
-                  {getFieldDecorator('orgId', {
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }, {
-                      validator: this.checkNameUnique
-                    }]
-                  })(
-                    <Input placeholder="Name" />
-                  )}
-                </FormItem>
+                {/*<FormItem className={utilStyles.hide}>*/}
+                  {/*{getFieldDecorator('orgId', {})(*/}
+                    {/*<Input />*/}
+                  {/*)}*/}
+                {/*</FormItem>*/}
                 <FormItem label="名称" {...commonFormItemStyle}>
                   {getFieldDecorator('name', {
                     rules: [{
                       required: true,
                       message: 'Name 不能为空'
                     }, {
-                      validator: this.checkNameUnique
+                      validator: this.props.onCheckUniqueName
                     }]
                   })(
                     <Input placeholder="Name" />
@@ -133,7 +112,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
               </Col>
               <Col span={24}>
                 <FormItem label="描述" {...commonFormItemStyle}>
-                  {getFieldDecorator('desc', {
+                  {getFieldDecorator('description', {
                     initialValue: ''
                   })(
                     <Input
@@ -145,11 +124,28 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('pic', {
-                    hidden: this.props.type === 'add'
+                <FormItem label="上级" {...commonFormItemStyle}>
+                  {getFieldDecorator('parentTeamId', {
+                    initialValue: ''
                   })(
-                    <Input />
+                    <Select
+                      placeholder="Please select a team"
+                      onChange={onOrganizationTypeChange}
+                    >
+                      {organizationTeamsOptions}
+                    </Select>
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="" {...commonFormItemStyle}>
+                  {getFieldDecorator('visibility', {
+                    initialValue: ''
+                  })(
+                    <RadioGroup>
+                      <Radio value="0" className={styles.radioStyle}>私密（只对该团队成员可见）</Radio>
+                      <Radio value="1" className={styles.radioStyle}>公开 <Tag>推荐</Tag>（对该组织内所有成员可见）</Radio>
+                    </RadioGroup>
                   )}
                 </FormItem>
               </Col>
@@ -164,10 +160,4 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
-  }
-}
-
-export default Form.create()(connect<{}, {}, IProjectsFormProps>(null, mapDispatchToProps)(ProjectsForm))
+export default Form.create()(ProjectsForm)

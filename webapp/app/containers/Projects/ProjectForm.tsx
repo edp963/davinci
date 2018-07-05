@@ -41,6 +41,7 @@ interface IProjectsFormProps {
   organizations: any
   onModalOk: () => any
   modalLoading: boolean
+  onWidgetTypeChange: () => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -56,7 +57,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
     }
   }
   public render () {
-    const { organizations, modalLoading, onCheckUniqueName } = this.props
+    const { organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 3 },
@@ -92,7 +93,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            Create New Projects
+            { this.props.type === 'add' ? '创建' : '修改'}项目
           </div>
           <div className={styles.desc}>
             create new project
@@ -116,7 +117,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                       message: 'Name 不能为空'
                     }]
                   })(
-                    <Select placeholder="Please select a organization" >
+                    <Select
+                      placeholder="Please select a organization"
+                      onChange={onWidgetTypeChange}
+                    >
                       {organizationOptions}
                     </Select>
                   )}
