@@ -22,9 +22,11 @@ import OrganizationForm from './component/OrganizationForm'
 const utilStyles = require('../../assets/less/util.less')
 const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
+import sagaApp from '../App/sagas'
+import reducerApp from '../App/reducer'
+import {checkNameUniqueAction} from '../App/actions'
 
 interface IOrganizationsState {
-  formType?: string
   formVisible: boolean
   modalLoading: boolean
 }
@@ -32,35 +34,46 @@ interface IOrganizationsProps {
   router: InjectedRouter
   organizations: IOrganization[]
   onLoadOrganizations: () => any
+  onAddOrganization: (organization: any, resolve: () => any) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 interface IOrganization {
   id?: number
   name?: string
   description?: string
-  avatar?:any
+  avatar?: any
 }
 export class Organizations extends React.PureComponent<IOrganizationsProps, IOrganizationsState> {
   constructor (props) {
     super(props)
     this.state = {
-      formType: '',
       formVisible: false,
       modalLoading: false
     }
+  }
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckUniqueName } = this.props
+    const { getFieldsValue } = this.OrganizationForm
+    const { id } = getFieldsValue()
+    const data = {
+      name: value,
+      id
+    }
+    onCheckUniqueName('organization', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
   }
   private toOrganization = (organization) => () => {
     this.props.router.push(`/account/organization/${organization.id}`)
   }
   private OrganizationForm: WrappedFormUtils
-  private showOrganizationForm = (formType, organization?: IOrganization) => (e) => {
+  private showOrganizationForm = () => (e) => {
     e.stopPropagation()
     this.setState({
-      formType,
       formVisible: true
-    }, () => {
-      if (organization) {
-        this.OrganizationForm.setFieldsValue(organization)
-      }
     })
   }
   public componentWillMount () {
@@ -71,14 +84,10 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
     this.OrganizationForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-        if (this.state.formType === 'add') {
-          this.props.onAddOrganization({
-            ...values,
-            pic: `${Math.ceil(Math.random() * 19)}`,
-            linkage_detail: '[]',
-            config: '{}'
-          }, () => { this.hideOrganizationForm() })
-        }
+        this.props.onAddOrganization({
+          ...values,
+          config: '{}'
+        }, () => { this.hideOrganizationForm() })
       }
     })
   }
@@ -126,7 +135,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
                 </Breadcrumb>
               </Col>
               <Col span={1} offset={3}>
-                <Icon type="plus-circle-o"  className={styles.create} onClick={this.showOrganizationForm('add')}/>
+                <Icon type="plus-circle-o"  className={styles.create} onClick={this.showOrganizationForm()}/>
               </Col>
             </Row>
           </Box.Title>
@@ -141,6 +150,9 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
           <OrganizationForm
             type={formType}
             ref={(f) => { this.OrganizationForm = f }}
+            modalLoading={modalLoading}
+            onModalOk={this.onModalOk}
+            onCheckUniqueName={this.checkNameUnique}
           />
         </Modal>
       </Box>
@@ -159,7 +171,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddOrganization: (organization, resolve) => dispatch(addOrganization(organization, resolve)),
     onEditOrganization: (organization, resolve) => dispatch(editOrganization(organization, resolve)),
-    onDeleteOrganization: (id) => () => dispatch(deleteOrganization(id))
+    onDeleteOrganization: (id) => () => dispatch(deleteOrganization(id)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 
@@ -168,8 +181,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'organization', reducer })
 const withSaga = injectSaga({ key: 'organization', saga })
 
+const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+
 export default compose(
   withReducer,
+  withAppReducer,
+  withAppSaga,
   withSaga,
   withConnect
 )(Organizations)

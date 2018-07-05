@@ -10,13 +10,19 @@ const Modal = require('antd/lib/modal')
 import ProjectItem from './ProjectItem'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
+import * as Organization from '../Organization'
 
 interface IProjectsState {
   formType?: string
   formVisible: boolean
   modalLoading: boolean
 }
-export class ProjectList extends React.PureComponent<{}, IProjectsState> {
+
+interface IProjectsProps {
+  organizationProjects: Organization.IOrganizationProjects[]
+  toProject: (id: number) => any
+}
+export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -48,6 +54,7 @@ export class ProjectList extends React.PureComponent<{}, IProjectsState> {
   }
   public render () {
     const { formVisible, formType, modalLoading } = this.state
+    const { organizationProjects } = this.props
     const addButton =  (
           <Tooltip placement="bottom" title="创建">
             <Button
@@ -67,12 +74,14 @@ export class ProjectList extends React.PureComponent<{}, IProjectsState> {
         updateTime: '2018-06-13'
       }
     ]
-    const ProjectItems = projectLists.map((lists, index) => (
+    const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
         key={index}
+        loginUser={this.props.loginUser}
         options={lists}
+        toProject={this.props.toProject}
       />
-    ))
+    )) : ''
     const modalButtons = [(
       <Button
         key="back"

@@ -20,7 +20,7 @@
 
 import { createSelector } from 'reselect'
 
-const selectTeam = (state) => state.get('teams')
+const selectTeam = (state) => state.get('team')
 
 const makeSelectTeams = () => createSelector(
   selectTeam,

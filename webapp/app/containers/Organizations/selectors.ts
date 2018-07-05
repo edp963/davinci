@@ -27,7 +27,31 @@ const makeSelectOrganizations = () => createSelector(
   (organizationState) => organizationState.get('organizations')
 )
 
+const makeSelectCurrentOrganizations = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('currentOrganization')
+)
+
+const makeSelectCurrentOrganizationProjects = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('currentOrganizationProjects')
+)
+
+const makeSelectCurrentOrganizationTeams = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('currentOrganizationTeams')
+)
+
+const makeSelectCurrentOrganizationMembers = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('currentOrganizationMembers')
+)
+
 export {
   selectOrganization,
-  makeSelectOrganizations
+  makeSelectOrganizations,
+  makeSelectCurrentOrganizations,
+  makeSelectCurrentOrganizationProjects,
+  makeSelectCurrentOrganizationTeams,
+  makeSelectCurrentOrganizationMembers
 }

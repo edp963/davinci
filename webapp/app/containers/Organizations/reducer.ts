@@ -28,26 +28,38 @@ import {
   EDIT_ORGANIZATION_SUCCESS,
   DELETE_ORGANIZATION_SUCCESS,
   LOAD_ORGANIZATION_DETAIL,
-  LOAD_ORGANIZATION_DETAIL_SUCCESS
+  LOAD_ORGANIZATION_DETAIL_SUCCESS,
+  LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
+  LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
+  LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
+  ADD_TEAM_FAILURE,
+  ADD_TEAM_SUCCESS
 } from './constants'
 
-
 const initialState = fromJS({
-  organizations: null,
-  currentOrganization: null,
-  currentOrganizationLoading: false
+  organizations: [],
+  currentOrganization: {},
+  currentOrganizationLoading: false,
+  currentOrganizationProjects: [],
+  currentOrganizationTeams: [],
+  currentOrganizationMembers: []
 })
 
 function organizationReducer (state = initialState, action) {
   const { type, payload } = action
   const organizations = state.get('organizations')
-
+  const currentOrganizationTeams = state.get('currentOrganizationTeams')
   switch (type) {
+    case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
+      return state.set('currentOrganizationProjects', payload.projects)
+    case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
+      return state.set('currentOrganizationMembers', payload.members)
+    case LOAD_ORGANIZATIONS_TEAMS_SUCCESS:
+      return state.set('currentOrganizationTeams', payload.teams)
     case LOAD_ORGANIZATIONS_SUCCESS:
       return state.set('organizations', payload.organizations)
     case LOAD_ORGANIZATIONS_FAILURE:
       return state
-
     case ADD_ORGANIZATION_SUCCESS:
       if (organizations) {
         organizations.unshift(payload.result)
@@ -73,6 +85,15 @@ function organizationReducer (state = initialState, action) {
       return state
         .set('currentOrganizationLoading', false)
         .set('currentOrganization', payload.organization)
+    case ADD_TEAM_SUCCESS:
+      if (currentOrganizationTeams) {
+        currentOrganizationTeams.unshift(payload.result)
+        return state.set('currentOrganizationTeams', currentOrganizationTeams.slice())
+      } else {
+        return state.set('currentOrganizationTeams', [payload.result])
+      }
+    case ADD_TEAM_FAILURE:
+      return state
     default:
       return state
   }

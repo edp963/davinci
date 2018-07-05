@@ -37,7 +37,8 @@ export default {
   uploads: `${host}/uploads`,
   schedule: `${host}/cronjobs`,
   signup: `${host}/users`,
-  organization: `${host}/organizations`,
+  organizations: `${host}/organizations`,
   checkNameUnique: `${host}/check`,
-  projects: `${host}/projects`
+  projects: `${host}/projects`,
+  teams: `${host}/teams`
 }

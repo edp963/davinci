@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { connect } from 'react-redux'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -29,34 +28,19 @@ const Radio = require('antd/lib/radio/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
-import { checkNameUniqueAction } from '../../App/actions'
-
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectsFormProps {
-  type: string
   form: any
-  onCheckName: (id, name, type, resolve, reject) => void
+  modalLoading: boolean
+  onModalOk: () => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}> {
-  private checkNameUnique = (rule, value = '', callback) => {
-    // const { onCheckUniqueName, loginUser: {id} } = this.props
-    // // const { getFieldsValue } = this.props.form
-    // // const { id } = getFieldsValue()
-    // const data = {
-    //   username: value,
-    //   id
-    // }
-    // onCheckUniqueName('user', data,
-    //   () => {
-    //     callback()
-    //   }, (err) => {
-    //     callback(err)
-    //   })
-  }
   public render () {
     const { getFieldDecorator } = this.props.form
+    const { modalLoading } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 3 },
       wrapperCol: { span: 24}
@@ -66,7 +50,9 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
         key="submit"
         size="large"
         type="primary"
-       // onClick={this.onModalOk}
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.props.onModalOk}
       >
         保 存
       </Button>
@@ -75,54 +61,37 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            Create New Projects
+            创建组织
           </div>
           <div className={styles.desc}>
-            create new project
+            在组织下可以创建若干团队
           </div>
         </div>
         <div className={styles.body}>
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('id', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('create_by', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('visibility', {})(
-                    <Input />
-                  )}
-                </FormItem>
-                <FormItem label="组织" {...commonFormItemStyle}>
-                  {getFieldDecorator('orgId', {
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }, {
-                      validator: this.checkNameUnique
-                    }]
-                  })(
-                    <Input placeholder="Name" />
-                  )}
-                </FormItem>
+                {/*<FormItem className={utilStyles.hide}>*/}
+                  {/*{getFieldDecorator('id', {*/}
+                    {/*hidden: this.props.type === 'add'*/}
+                  {/*})(*/}
+                    {/*<Input />*/}
+                  {/*)}*/}
+                {/*</FormItem>*/}
+                {/*<FormItem className={utilStyles.hide}>*/}
+                  {/*{getFieldDecorator('create_by', {*/}
+                    {/*hidden: this.props.type === 'add'*/}
+                  {/*})(*/}
+                    {/*<Input />*/}
+                  {/*)}*/}
+                {/*</FormItem>*/}
                 <FormItem label="名称" {...commonFormItemStyle}>
                   {getFieldDecorator('name', {
                     rules: [{
                       required: true,
                       message: 'Name 不能为空'
                     }, {
-                      validator: this.checkNameUnique
+                      validator: this.props.onCheckUniqueName
                     }]
                   })(
                     <Input placeholder="Name" />
@@ -131,7 +100,7 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
               </Col>
               <Col span={24}>
                 <FormItem label="描述" {...commonFormItemStyle}>
-                  {getFieldDecorator('desc', {
+                  {getFieldDecorator('description', {
                     initialValue: ''
                   })(
                     <Input
@@ -139,15 +108,6 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
                       type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
-                  )}
-                </FormItem>
-              </Col>
-              <Col span={24}>
-                <FormItem className={utilStyles.hide}>
-                  {getFieldDecorator('pic', {
-                    hidden: this.props.type === 'add'
-                  })(
-                    <Input />
                   )}
                 </FormItem>
               </Col>
@@ -162,10 +122,5 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
-  }
-}
 
-export default Form.create()(connect<{}, {}, IProjectsFormProps>(null, mapDispatchToProps)(OrganizationForm))
+export default Form.create()((OrganizationForm))

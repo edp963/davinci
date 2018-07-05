@@ -63,9 +63,8 @@ export function* addProject (action) {
       method: 'post',
       url: api.projects,
       data: project
-     // data: writeAdapter(project)
     })
-    const result = readObjectAdapter(asyncData)
+    const result = readListAdapter(asyncData)
     yield put(projectAdded(result))
     resolve()
   } catch (err) {
@@ -76,11 +75,13 @@ export function* addProject (action) {
 
 export function* editProject (action) {
   const { project, resolve } = action.payload
+  const {id} = project
   try {
     yield call(request, {
       method: 'put',
-      url: api.project,
-      data: writeAdapter(project)
+      url: `${api.projects}/${id}`,
+      data: project
+     // data: writeAdapter(project)
     })
     yield put(projectEdited(project))
     resolve()
@@ -95,7 +96,7 @@ export function* deleteProject (action) {
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.project}/${id}`
+      url: `${api.projects}/${id}`
     })
     yield put(projectDeleted(id))
   } catch (err) {

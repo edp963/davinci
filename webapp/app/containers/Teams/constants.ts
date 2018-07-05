@@ -21,9 +21,7 @@
 export const LOAD_TEAMS = 'davinci/Team/LOAD_TEAMS'
 export const LOAD_TEAMS_SUCCESS = 'davinci/Team/LOAD_TEAMS_SUCCESS'
 export const LOAD_TEAMS_FAILURE = 'davinci/Team/LOAD_TEAMS_FAILURE'
-export const ADD_TEAM = 'davinci/Team/ADD_TEAM'
-export const ADD_TEAM_SUCCESS = 'davinci/Team/ADD_TEAM_SUCCESS'
-export const ADD_TEAM_FAILURE = 'davinci/Team/ADD_TEAM_FAILURE'
+
 export const EDIT_TEAM = 'davinci/Team/EDIT_TEAM'
 export const EDIT_TEAM_SUCCESS = 'davinci/Team/EDIT_TEAM_SUCCESS'
 export const EDIT_TEAM_FAILURE = 'davinci/Team/EDIT_TEAM_FAILURE'
