@@ -30,7 +30,12 @@ import {
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
-  SQL_VALIDATE_SUCCESS
+  LOAD_SCHEMA,
+  LOAD_SCHEMA_SUCCESS,
+  LOAD_SCHEMA_FAILURE,
+  EXECUTE_SQL,
+  EXECUTE_SQL_SUCCESS,
+  EXECUTE_SQL_FAILURE
 } from './constants'
 import { fromJS } from 'immutable'
 
@@ -39,7 +44,8 @@ const initialState = fromJS({
   sqlValidateCode: false,
   sqlValidateMessage: false,
   tableLoading: false,
-  formLoading: false
+  modalLoading: false,
+  schemaData: []
 })
 
 function bizlogicReducer (state = initialState, action) {
@@ -53,20 +59,20 @@ function bizlogicReducer (state = initialState, action) {
         .set('bizlogics', payload.bizlogics)
         .set('tableLoading', false)
     case ADD_BIZLOGIC:
-      return state.set('formLoading', true)
+      return state.set('modalLoading', true)
     case ADD_BIZLOGIC_SUCCESS:
-      if (bizlogics) {
-        bizlogics.unshift(payload.result)
-        return state
-          .set('bizlogics', bizlogics.slice())
-          .set('formLoading', false)
-      } else {
+      // if (bizlogics) {
+      //   bizlogics.unshift(payload.result)
+      //   return state
+      //     .set('bizlogics', bizlogics.slice())
+      //     .set('modalLoading', false)
+      // } else {
         return state
           .set('bizlogics', [payload.result])
-          .set('formLoading', false)
-      }
+          .set('modalLoading', false)
+      // }
     case ADD_BIZLOGIC_FAILURE:
-      return state.set('formLoading', false)
+      return state.set('modalLoading', false)
     case DELETE_BIZLOGIC:
       return state
     case DELETE_BIZLOGIC_SUCCESS:
@@ -74,17 +80,29 @@ function bizlogicReducer (state = initialState, action) {
     case DELETE_BIZLOGIC_FAILURE:
       return state
     case EDIT_BIZLOGIC:
-      return state.set('formLoading', true)
+      return state.set('modalLoading', true)
     case EDIT_BIZLOGIC_SUCCESS:
       bizlogics.splice(bizlogics.findIndex((g) => g.id === payload.result.id), 1, payload.result)
       return state
         .set('bizlogics', bizlogics.slice())
-        .set('formLoading', false)
+        .set('modalLoading', false)
     case EDIT_BIZLOGIC_FAILURE:
-      return state.set('formLoading', false)
-    case SQL_VALIDATE_SUCCESS:
-      return state.set('sqlValidateMessage', payload && payload.msg ? payload.msg : undefined)
-            .set('sqlValidateCode', payload && payload.code ? payload.code : undefined)
+      return state.set('modalLoading', false)
+    case LOAD_SCHEMA:
+      return state
+    case LOAD_SCHEMA_SUCCESS:
+      return state
+    case LOAD_SCHEMA_FAILURE:
+      return state
+    case EXECUTE_SQL:
+      return state.set('executeLoading', true)
+    case EXECUTE_SQL_SUCCESS:
+      const { code, msg } = payload.result
+      return state.set('executeLoading', false)
+            .set('sqlValidateMessage', code === 400 ? msg : undefined)
+            .set('sqlValidateCode', code === 200 ? code : 1)
+    case EXECUTE_SQL_FAILURE:
+      return state.set('executeLoading', false)
     default:
       return state
   }

@@ -29,13 +29,15 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
+import appReducer from '../App/reducer'
+import appSaga from '../App/sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import AntdFormType from 'antd/lib/form/Form'
 
 const message = require('antd/lib/message')
 const Modal = require('antd/lib/modal')
@@ -65,13 +67,15 @@ import {
 const utilStyles = require('../../assets/less/util.less')
 import api from '../../utils/api'
 import { uuid } from '../../utils/util'
+import { checkNameAction } from '../App/actions'
 
 interface ISourceProps {
+  routeParams: any
   sources: boolean | any[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
-  onLoadSources: () => any
+  onLoadSources: (projectId: number) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
@@ -91,7 +95,7 @@ interface ISourceStates {
   formType: string
   uploadFormVisible: boolean
   formStep: number
-  metaId: any
+  metaObj: any
   isUploadDisabled: boolean
   newUploadModalKey: string
   screenWidth: number
@@ -101,6 +105,10 @@ interface ISourceObject {
   user: string
   password: string
   url: string
+}
+
+declare interface IObjectConstructor {
+  assign (...objects: object[]): object
 }
 
 export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
@@ -118,7 +126,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
       uploadFormVisible: false,
       formStep: 0,
-      metaId: false,
+      metaObj: {},
       isUploadDisabled: false,
 
       newUploadModalKey: '1',
@@ -126,11 +134,18 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     }
   }
 
-  private sourceForm: WrappedFormUtils = null
-  private uploadForm: WrappedFormUtils = null
+  private sourceForm: AntdFormType = null
+  private uploadForm: AntdFormType = null
+  private refHandlers = {
+    sourceForm: (ref) => this.sourceForm = ref,
+    uploadForm: (ref) => this.uploadForm = ref
+  }
 
   public componentWillMount () {
-    this.props.onLoadSources()
+    // todo: projectId
+    // const projectId = Number(this.props.routeParams.pid)
+    const projectId = 20
+    this.props.onLoadSources(projectId)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -163,20 +178,23 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
         id,
         name,
         type,
-        connection_url,
-        desc,
+        username,
+        password,
+        jdbcUrl,
+        description,
         config
       } = (this.props.sources as any[]).find((g) => g.id === sourceId)
-      const connectionUrl = JSON.parse(connection_url)
-      this.sourceForm.setFieldsValue({
+
+      const configObj = JSON.parse(config)
+      this.sourceForm.props.form.setFieldsValue({
         id,
         name,
         type,
-        user: connectionUrl.user,
-        password: connectionUrl.password,
-        url: connectionUrl.url,
-        desc,
-        config
+        user: username,
+        password,
+        url: jdbcUrl,
+        desc: description,
+        config: configObj.parameters
       })
     })
   }
@@ -187,43 +205,36 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       newUploadModalKey: redrawKey,
       uploadFormVisible: true
     }, () => {
-      this.uploadForm.setFieldsValue({
+      this.uploadForm.props.form.setFieldsValue({
         source_id: sourceId
       })
     })
   }
 
   private onModalOk = () => {
-    this.sourceForm.validateFieldsAndScroll((err, values) => {
+    this.sourceForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
+        // todo: projectId
+        // const projectId = Number(this.props.routeParams.pid)
+        const projectId = 20
         const { id, name, type, url, user, password, desc, config } = values
+        const requestValue = {
+          config: {
+            parameters: config,
+            password,
+            url,
+            username: user
+          },
+          description: desc,
+          name,
+          type
+        }
         if (this.state.formType === 'add') {
-          this.props.onAddSource({
-            name,
-            type,
-            connection_url: JSON.stringify({
-              url,
-              user,
-              password
-            }),
-            desc,
-            config
-          }, () => {
+          this.props.onAddSource((Object as IObjectConstructor).assign({}, requestValue, { projectId }), () => {
             this.hideForm()
           })
         } else {
-          this.props.onEditSource({
-            id,
-            name,
-            type,
-            connection_url: JSON.stringify({
-              url,
-              user,
-              password
-            }),
-            desc,
-            config
-          }, () => {
+          this.props.onEditSource((Object as IObjectConstructor).assign({}, requestValue, { id }), () => {
             this.hideForm()
           })
         }
@@ -234,19 +245,24 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   private changeFormStep = (step) => () => {
     const { onGetCsvMetaId } = this.props
     if (step) {
-      this.uploadForm.validateFieldsAndScroll((err, values) => {
+      this.uploadForm.props.form.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { table_name, source_id, primary_keys, index_keys, replace_mode } = values
+          // const csvMeta = {
+          //   table_name,
+          //   source_id,
+          //   primary_keys,
+          //   index_keys,
+          //   replace_mode
+          // }
           const csvMeta = {
             table_name,
             source_id,
-            primary_keys,
-            index_keys,
             replace_mode
           }
-          onGetCsvMetaId(csvMeta, (res) => {
+          onGetCsvMetaId(csvMeta, () => {
             this.setState({
-              metaId: res && res.payload,
+              metaObj: csvMeta,
               formStep: step
             })
           }, (error) => {
@@ -265,7 +281,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     this.setState({
       formVisible: false
     })
-    this.sourceForm.resetFields()
+    this.sourceForm.props.form.resetFields()
   }
 
   private hideUploadForm = () => {
@@ -273,7 +289,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       uploadFormVisible: false
     }, () => {
       this.setState({formStep: 0})
-      this.uploadForm.resetFields()
+      this.uploadForm.props.form.resetFields()
     })
   }
 
@@ -322,12 +338,12 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   }
 
   private testSourceConnection = () => {
-    const formValues = this.sourceForm.getFieldsValue() as ISourceObject
+    const formValues = this.sourceForm.props.form.getFieldsValue() as ISourceObject
     const { user, password, url } = formValues
 
     if (user && password && url) {
       this.props.onTestSourceConnection({
-        user,
+        username: user,
         password,
         url
       })
@@ -366,7 +382,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       uploadFormVisible,
       formType,
       formStep,
-      metaId,
+      metaObj,
       isUploadDisabled,
       newUploadModalKey,
       screenWidth
@@ -379,11 +395,15 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       onDeleteSource
     } = this.props
 
+    const { table_name, source_id, replace_mode } = metaObj
     const uploadProps = {
-      name: 'csv',
+      name: 'file',
       disabled: isUploadDisabled,
-      action: `${api.uploads}/csv/${metaId}`,
-      onChange: this.uploadOnchange
+      action: `${api.source}/${source_id}/uploadcsv?tableName=${table_name}&mode=${replace_mode}`,
+      onChange: this.uploadOnchange,
+      headers: {
+        authorization: `Bearer ${localStorage.getItem('TOKEN')}`
+      }
       // onRemove: this.uploadOnRemove
     }
 
@@ -407,8 +427,8 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
     }, {
       title: '描述',
-      dataIndex: 'desc',
-      key: 'desc'
+      dataIndex: 'description',
+      key: 'description'
     }, {
       title: '类型',
       dataIndex: 'type',
@@ -559,7 +579,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
                   type={formType}
                   testLoading={testLoading}
                   onTestSourceConnection={this.testSourceConnection}
-                  ref={(f) => { this.sourceForm = f }}
+                  wrappedComponentRef={this.refHandlers.sourceForm}
                 />
               </Modal>
               <Modal
@@ -573,7 +593,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
                 <UploadCsvForm
                   step={formStep}
                   uploadProps={uploadProps}
-                  ref={(f) => { this.uploadForm = f }}
+                  wrappedComponentRef={this.refHandlers.uploadForm}
                 />
               </Modal>
             </Box.Body>
@@ -586,12 +606,13 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadSources: () => dispatch(loadSources()),
+    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onAddSource: (source, resolve) => dispatch(addSource(source, resolve)),
     onDeleteSource: (id) => () => dispatch(deleteSource(id)),
     onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
     onTestSourceConnection: (url) => dispatch(testSourceConnection(url)),
-    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject))
+    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject)),
+    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
   }
 }
 
@@ -606,8 +627,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'source', reducer })
 const withSaga = injectSaga({ key: 'source', saga })
 
+const withAppReducer = injectReducer({ key: 'global', reducer: appReducer })
+const withAppSaga = injectSaga({ key: 'global', saga: appSaga })
+
 export default compose(
   withReducer,
+  withAppReducer,
   withSaga,
+  withAppSaga,
   withConnect
 )(Source)

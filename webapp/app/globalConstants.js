@@ -40,6 +40,7 @@ export const DEFAULT_TABLE_PAGE_SIZE = 20
 export const SQL_STRING_TYPES = ['CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT', 'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'BINARY', 'VARBINARY', 'ENUM', 'SET']
 export const SQL_NUMBER_TYPES = ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT', 'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL', 'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC']
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
+export const SQL_FIELD_TYPES = ['type1', 'type2', 'type3', 'type4', 'type5', 'type6','type7', 'type8']
 
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'

@@ -29,6 +29,7 @@ import {
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   CHECK_NAME,
+  PROJECTS_CHECK_NAME,
   ACTIVE,
   ACTIVE_SUCCESS,
   ACTIVE_ERROR,
@@ -151,6 +152,19 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
   }
 }
 
+export function projectsCheckName (projectId, id, name, type, resolve, reject) {
+  return {
+    type: PROJECTS_CHECK_NAME,
+    payload: {
+      projectId,
+      id,
+      name,
+      type,
+      resolve,
+      reject
+    }
+  }
+}
 
 export function updateProfile (id, name, description, department, resolve) {
   return {
