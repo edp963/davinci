@@ -3,14 +3,23 @@ const Collapse = require('antd/lib/collapse')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Select = require('antd/lib/select')
+const Table = require('antd/lib/table')
+const Icon = require('antd/lib/icon')
+const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Modal = require('antd/lib/modal')
 const Input = require('antd/lib/input')
 const styles = require('../Team.less')
+const Checkbox = require('antd/lib/checkbox')
+const Radio = require('antd/lib/radio')
+const RadioButton = Radio.Button
+const RadioGroup = Radio.Group
 import PermissionLevel from './PermissionLevel'
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
+import {ITeamProjects} from '../Team'
+
 
 
 interface ITag {
@@ -27,13 +36,17 @@ interface IprojectOptions {
 
 interface IProjectListProps {
   projects: IprojectOptions
+  currentTeam: any
+  currentTeamProjects: ITeamProjects[]
+  currentOrganizationProjects: any
+  pullProjectInTeam: (projectId: number) => any
 }
 interface IProjectListState {
   modalLoading: boolean,
   formType: string,
   formVisible: boolean
 }
-export class ProjectList extends React.Component<IProjectListProps, IProjectListState> {
+export class ProjectList extends React.PureComponent<IProjectListProps, IProjectListState> {
 
   constructor (props) {
     super(props)
@@ -64,12 +77,39 @@ export class ProjectList extends React.Component<IProjectListProps, IProjectList
     })
   }
 
-  private onModalOk = () => {
+  private add = () => {
+    this.AddForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const {projectId} = values
+        this.props.pullProjectInTeam(projectId)
+        this.hideAddForm()
+      }
+    })
+  }
 
+  private selectChanged = (targetStr: string) => (val) => {
+    console.log(targetStr)
+    console.log(val)
+    this.forceUpdate(() => {
+      console.log(this[targetStr].getFieldsValue())
+    })
   }
 
   public render () {
     const { formVisible, formType, modalLoading} = this.state
+    const {currentTeam, currentOrganizationProjects, currentTeamProjects} = this.props
+    const projectList = <Collapse  defaultActiveKey={['project0']}>
+      {
+        currentTeamProjects ? currentTeamProjects.map((project, index) =>
+          (<Collapse.Panel header={project.project.name} key={`project${index}`}>
+            <PermissionLevel
+              param={project}
+              selectChanged={this.selectChanged(`${project.project.id}permissionForm`)}
+              ref={(f) => { this[`${project.project.id}permissionForm`] = f }}
+            />
+          </Collapse.Panel>)) : ''
+      }
+    </Collapse>
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <Button
@@ -80,7 +120,6 @@ export class ProjectList extends React.Component<IProjectListProps, IProjectList
         />
       </Tooltip>
     )
-    const text = 'halo'
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -108,17 +147,7 @@ export class ProjectList extends React.Component<IProjectListProps, IProjectList
           </Col>
         </Row>
         <div style={{height: '24px'}}/>
-        <Collapse defaultActiveKey={['1']}>
-          <Collapse.Panel header="This is panel header 1" key="1">
-            <PermissionLevel/>
-          </Collapse.Panel>
-          <Collapse.Panel header="This is panel header 2" key="2">
-            <p>{text}</p>
-          </Collapse.Panel>
-          <Collapse.Panel header="This is panel header 3" key="3">
-            <p>{text}</p>
-          </Collapse.Panel>
-        </Collapse>
+        {projectList}
         <Modal
           title={null}
           footer={null}
@@ -126,8 +155,11 @@ export class ProjectList extends React.Component<IProjectListProps, IProjectList
           onCancel={this.hideAddForm}
         >
           <AddForm
-            type={formType}
+            category={formType}
+            organizationOrTeam={currentTeam}
+            currentOrganizationProjects={currentOrganizationProjects}
             ref={(f) => { this.AddForm = f }}
+            addHandler={this.add}
           />
         </Modal>
       </div>

@@ -45,7 +45,7 @@ import {
   LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
   ADD_TEAM,
   ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE,
+  ADD_TEAM_FAILURE
 } from './constants'
 
 export function loadOrganizationProjects (id) {

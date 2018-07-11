@@ -48,7 +48,7 @@ interface IOrganizationProps {
   currentOrganizationMembers: IOrganizationMembers[]
 }
 
-interface IOrganization {
+export interface IOrganization {
   id: number
   name: string
   description: string
@@ -85,6 +85,11 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
   }
   private toProject = (id: number) => () => {
     this.props.router.push(`/project/${id}`)
+  }
+  private toThatTeam = (url) => {
+    if (url) {
+      this.props.router.push(url)
+    }
   }
   public componentWillMount () {
     const {
@@ -138,10 +143,12 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
                 organizationMembers={currentOrganizationMembers}
+                currentOrganization={currentOrganization}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
               <TeamList
+                toThatTeam={this.toThatTeam}
                 organizations={organizations}
                 currentOrganization={this.props.currentOrganization}
                 organizationTeams={currentOrganizationTeams}

@@ -27,7 +27,31 @@ const makeSelectTeams = () => createSelector(
   (teamState) => teamState.get('teams')
 )
 
+const makeSelectCurrentTeams = () => createSelector(
+  selectTeam,
+  (teamState) => teamState.get('currentTeam')
+)
+
+const makeSelectCurrentTeamProjects = () => createSelector(
+  selectTeam,
+  (teamState) => teamState.get('currentTeamProjects')
+)
+
+const makeSelectCurrentTeamTeams = () => createSelector(
+  selectTeam,
+  (teamState) => teamState.get('currentTeamTeams')
+)
+
+const makeSelectCurrentTeamMembers = () => createSelector(
+  selectTeam,
+  (teamState) => teamState.get('currentTeamMembers')
+)
+
 export {
   selectTeam,
-  makeSelectTeams
+  makeSelectTeams,
+  makeSelectCurrentTeams,
+  makeSelectCurrentTeamProjects,
+  makeSelectCurrentTeamTeams,
+  makeSelectCurrentTeamMembers
 }

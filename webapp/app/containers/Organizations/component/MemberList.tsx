@@ -13,22 +13,24 @@ const styles = require('../Organization.less')
 import MemberForm from '../../Teams/component/AddForm'
 import Avatar from '../../../components/Avatar'
 import * as Organization from '../Organization'
+import {IOrganization} from '../Organization'
 
 interface IMembersState {
-  formType?: string
+  category?: string
   formVisible: boolean
   modalLoading: boolean
 }
 
 interface IMembersProps {
   organizationMembers: Organization.IOrganizationMembers[]
+  currentOrganization: Organization.IOrganization
 }
 
 export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
   constructor (props) {
     super(props)
     this.state = {
-      formType: '',
+      category: '',
       formVisible: false,
       modalLoading: false
     }
@@ -40,7 +42,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   private showMemberForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
-      formType: type,
+      category: type,
       formVisible: true
     })
   }
@@ -53,16 +55,15 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
   public render () {
-    const { formVisible, formType, modalLoading } = this.state
+    const { formVisible, category, modalLoading } = this.state
     const { organizationMembers } = this.props
-    console.log(organizationMembers)
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
         <Button
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showMemberForm('add')}
+          onClick={this.showMemberForm('member')}
         />
       </Tooltip>
     )
@@ -93,26 +94,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       )
     }]
 
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideMemberForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -156,7 +137,8 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           onCancel={this.hideMemberForm}
         >
           <MemberForm
-            type={formType}
+            category={category}
+            organizationOrTeam={this.props.currentOrganization}
             ref={(f) => { this.MemberForm = f }}
           />
         </Modal>
