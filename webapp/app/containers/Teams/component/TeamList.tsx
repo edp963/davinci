@@ -11,13 +11,22 @@ const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
+import * as Team from '../Team'
+import Avatar from '../../../components/Avatar'
 
 interface ITeamListState {
   modalLoading: boolean,
   formType: string,
   formVisible: boolean
 }
-export class TeamList extends React.PureComponent <{}, ITeamListState> {
+
+interface ITeamListProps {
+  currentTeam: any
+  toThatTeam: (url: string) => any
+  currentTeamTeams: Team.ITeamMembers[]
+}
+
+export class TeamList extends React.PureComponent <ITeamListProps, ITeamListState> {
 
   constructor (props) {
     super(props)
@@ -46,8 +55,39 @@ export class TeamList extends React.PureComponent <{}, ITeamListState> {
   private onModalOk = () => {
 
   }
+  private toThatTeam = (text, record) => () => {
+    const {id} = record
+    console.log(id)
+    if (id) {
+      this.props.toThatTeam(`account/team/${id}`)
+    }
+  }
+  private isEmptyObj =  (obj) => {
+    for (let attr in obj) {
+      return false
+    }
+    return true
+  }
+
+  private filter = (array) => {
+    if (!Array.isArray(array)) return array
+    array.forEach((d) => {
+      if (!this.isEmptyObj(d)) {
+        d.key = `key${d.id}`
+      }
+      if (d.children && d.children.length > 0) {
+        this.filter(d.children)
+      }
+      if (d.children && d.children.length === 0) {
+        delete d.children
+      }
+    })
+    return array
+  }
   public render () {
-    const {modalLoading, formType, formVisible} = this.state
+    const { formVisible } = this.state
+    const { currentTeamTeams } = this.props
+    this.filter(currentTeamTeams)
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <Button
@@ -64,79 +104,27 @@ export class TeamList extends React.PureComponent <{}, ITeamListState> {
       dataIndex: 'name',
       key: 'name',
       width: '40%',
+      render: (text, record) => <a href="javascript:;" onClick={this.toThatTeam(text, record)} className={styles.avatarName}>{text}</a>
     }, {
-      title: 'Age',
-      dataIndex: 'age',
-      key: 'age',
+      title: 'Member',
+      dataIndex: 'users',
+      key: 'users',
       width: '30%',
+      render: (users) => {
+        return (
+          <div className={styles.avatarWrapper}>
+            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}>
+              <span><Avatar key={index} path={user.avatar} size="small" enlarge={true}/></span></Tooltip>)}
+            <span className={styles.avatarName}>{`${ users ? users.length : 0 }menbers`}</span>
+          </div>
+        )
+      }
     }, {
-      title: 'Address',
-      dataIndex: 'address',
-      key: 'address',
-    }];
-
-    const data = [{
-      key: 1,
-      name: 'John Brown sr.',
-      age: 60,
-      address: 'New York No. 1 Lake Park',
-      children: [{
-        key: 11,
-        name: 'John Brown',
-        age: 42,
-        address: 'New York No. 2 Lake Park',
-      }, {
-        key: 12,
-        name: 'John Brown jr.',
-        age: 30,
-        address: 'New York No. 3 Lake Park',
-        children: [{
-          key: 121,
-          name: 'Jimmy Brown',
-          age: 16,
-          address: 'New York No. 3 Lake Park',
-        }],
-      }, {
-        key: 13,
-        name: 'Jim Green sr.',
-        age: 72,
-        address: 'London No. 1 Lake Park',
-        children: [{
-          key: 131,
-          name: 'Jim Green',
-          age: 42,
-          address: 'London No. 2 Lake Park',
-          children: [{
-            key: 1311,
-            name: 'Jim Green jr.',
-            age: 25,
-            address: 'London No. 3 Lake Park',
-          }, {
-            key: 1312,
-            name: 'Jimmy Green sr.',
-            age: 18,
-            address: 'London No. 4 Lake Park',
-          }],
-        }],
-      }],
-    }, {
-      key: 2,
-      name: 'Joe Black',
-      age: 32,
-      address: 'Sidney No. 1 Lake Park',
-    }];
-
-    const rowSelection = {
-      onChange: (selectedRowKeys, selectedRows) => {
-        console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
-      },
-      onSelect: (record, selected, selectedRows) => {
-        console.log(record, selected, selectedRows);
-      },
-      onSelectAll: (selected, selectedRows, changeRows) => {
-        console.log(selected, selectedRows, changeRows);
-      },
-    };
+      title: 'Visibility',
+      dataIndex: 'visibility',
+      key: 'visibility',
+      render: (text) => text ? '公开（可见）' : '私密（不可见）'
+    }]
 
     return (
       <div className={styles.listWrapper}>
@@ -157,8 +145,7 @@ export class TeamList extends React.PureComponent <{}, ITeamListState> {
             <Table
               bordered
               columns={columns}
-              //  rowSelection={rowSelection}
-              dataSource={data}
+              dataSource={currentTeamTeams}
             />
           </div>
         </Row>
@@ -169,7 +156,6 @@ export class TeamList extends React.PureComponent <{}, ITeamListState> {
           onCancel={this.hideAddForm}
         >
           <AddForm
-            type={formType}
             ref={(f) => { this.AddForm = f }}
           />
         </Modal>

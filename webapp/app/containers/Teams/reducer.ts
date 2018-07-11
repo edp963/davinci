@@ -31,8 +31,10 @@ import {
   LOAD_TEAM_DETAIL_SUCCESS,
   LOAD_TEAM_PROJECTS_SUCCESS,
   LOAD_TEAM_MEMBERS_SUCCESS,
-  LOAD_TEAM_TEAMS_SUCCESS
+  LOAD_TEAM_TEAMS_SUCCESS,
+  PULL_PROJECT_IN_TEAM_SUCCESS
 } from './constants'
+import {LOAD_ORGANIZATIONS_MEMBERS_SUCCESS, LOAD_ORGANIZATIONS_PROJECTS_SUCCESS, LOAD_ORGANIZATIONS_TEAMS_SUCCESS} from '../Organizations/constants'
 
 
 const initialState = fromJS({
@@ -41,12 +43,16 @@ const initialState = fromJS({
   currentTeamLoading: false,
   currentTeamProjects: [],
   currentTeamTeams: [],
-  currentTeamMembers: []
+  currentTeamMembers: [],
+  currentOrganizationProjects: [],
+  currentOrganizationTeams: [],
+  currentOrganizationMembers: []
 })
 
 function teamReducer (state = initialState, action) {
   const { type, payload } = action
   const teams = state.get('teams')
+  const currentTeamProjects = state.get('currentTeamProjects')
   const currentTeamTeams = state.get('currentTeamTeams')
   switch (type) {
     case LOAD_TEAMS_SUCCESS:
@@ -67,10 +73,24 @@ function teamReducer (state = initialState, action) {
         .set('currentTeam', payload.team)
     case LOAD_TEAM_PROJECTS_SUCCESS:
       return state.set('currentTeamProjects', payload.projects)
+    case PULL_PROJECT_IN_TEAM_SUCCESS:
+      if (currentTeamProjects) {
+        currentTeamProjects.unshift(payload.result)
+        state.set('currentTeamProjects', currentTeamProjects.slice())
+      } else {
+        state.set('currentTeamProjects', [payload.result])
+      }
+      return state
     case LOAD_TEAM_MEMBERS_SUCCESS:
       return state.set('currentTeamMembers', payload.members)
     case LOAD_TEAM_TEAMS_SUCCESS:
       return state.set('currentTeamTeams', payload.teams)
+    case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
+      return state.set('currentOrganizationProjects', payload.projects)
+    case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
+      return state.set('currentOrganizationMembers', payload.members)
+    case LOAD_ORGANIZATIONS_TEAMS_SUCCESS:
+      return state.set('currentOrganizationTeams', payload.teams)
     default:
       return state
   }

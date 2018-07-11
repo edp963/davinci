@@ -11,13 +11,21 @@ const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
+import * as Team from '../Team'
+import Avatar from '../../../components/Avatar'
 
 interface IMemberListState {
   modalLoading: boolean,
   formType: string,
   formVisible: boolean
 }
-export class MemberList extends React.PureComponent<{}, IMemberListState> {
+
+interface IMemberListProps {
+  currentTeam: any
+  currentTeamMembers: Team.ITeamMembers[]
+}
+
+export class MemberList extends React.PureComponent<IMemberListProps, IMemberListState> {
   constructor (props) {
     super(props)
     this.state = {
@@ -43,11 +51,16 @@ export class MemberList extends React.PureComponent<{}, IMemberListState> {
       formVisible: false
     })
   }
-  private onModalOk = () => {
-
+  private add = () => {
+    this.AddForm.validateFieldsAndScroll((err, values) => {
+      if(!err) {
+        console.log(values)
+      }
+    })
   }
   public render () {
-    const { formVisible, formType, modalLoading} = this.state
+    const { formVisible, formType} = this.state
+    const { currentTeamMembers, currentTeam} = this.props
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <Button
@@ -60,19 +73,17 @@ export class MemberList extends React.PureComponent<{}, IMemberListState> {
     )
     const columns = [{
       title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text) => <a href="#">{text}</a>
+      dataIndex: 'user',
+      key: 'user',
+      render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
     }, {
       title: 'role',
-      dataIndex: 'role',
-      key: 'role'
-    }, {
-      title: 'team',
-      dataIndex: 'team',
-      key: 'team'
-    }, {
+      dataIndex: 'user',
+      key: 'userKey',
+      render: (text) => <span>{text.role}</span>
+    },{
       title: 'settings',
+      dataIndex: 'user',
       key: 'settings',
       render: (text, record) => (
         <span>
@@ -83,22 +94,6 @@ export class MemberList extends React.PureComponent<{}, IMemberListState> {
       )
     }]
 
-    const data = [{
-      key: '1',
-      name: 'John Brown',
-      role: 32,
-      team: 'New York No. 1 Lake Park'
-    }, {
-      key: '2',
-      name: 'Jim Green',
-      role: 42,
-      team: 'London No. 1 Lake Park'
-    }, {
-      key: '3',
-      name: 'Joe Black',
-      role: 32,
-      team: 'Sidney No. 1 Lake Park'
-    }]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -131,7 +126,7 @@ export class MemberList extends React.PureComponent<{}, IMemberListState> {
             <Table
               bordered
               columns={columns}
-              dataSource={data}
+              dataSource={Array.isArray(currentTeamMembers) ? currentTeamMembers : []}
             />
           </div>
         </Row>
@@ -142,7 +137,9 @@ export class MemberList extends React.PureComponent<{}, IMemberListState> {
           onCancel={this.hideAddForm}
         >
           <AddForm
-            type={formType}
+            category={formType}
+            organizationOrTeam={currentTeam}
+            addHandler={this.add}
             ref={(f) => { this.AddForm = f }}
           />
         </Modal>

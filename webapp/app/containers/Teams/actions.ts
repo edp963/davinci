@@ -39,7 +39,10 @@ import {
   LOAD_TEAM_MEMBERS_FAILURE,
   LOAD_TEAM_TEAMS,
   LOAD_TEAM_TEAMS_SUCCESS,
-  LOAD_TEAM_TEAMS_FAILURE
+  LOAD_TEAM_TEAMS_FAILURE,
+  PULL_PROJECT_IN_TEAM,
+  PULL_PROJECT_IN_TEAM_SUCCESS,
+  PULL_PROJECT_IN_TEAM_FAILURE
 } from './constants'
 
 
@@ -116,11 +119,12 @@ export function deleteTeamFail () {
 }
 
 
-export function loadTeamDetail (id) {
+export function loadTeamDetail (id, resolve) {
   return {
     type: LOAD_TEAM_DETAIL,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -216,6 +220,31 @@ export function loadTeamTeamsFail () {
     type: LOAD_TEAM_TEAMS_FAILURE
   }
 }
+
+export function pullProjectInTeam (id, projectId, resolve) {
+  return {
+    type: PULL_PROJECT_IN_TEAM,
+    payload: {
+      id,
+      projectId,
+      resolve
+    }
+  }
+}
+
+export function projectInTeamPulled (result) {
+  return {
+    type: PULL_PROJECT_IN_TEAM_SUCCESS,
+    payload: {result}
+  }
+}
+
+export function pullProjectInTeamFail () {
+  return {
+    type: PULL_PROJECT_IN_TEAM_FAILURE
+  }
+}
+
 
 
 

@@ -12,6 +12,7 @@ import {connect} from 'react-redux'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {InjectedRouter} from 'react-router/lib/Router'
 import teamSaga from '../../Teams/sagas'
+
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
@@ -23,26 +24,32 @@ const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
 const styles = require('../Organization.less')
 import * as Organization from '../Organization'
-import { checkNameUniqueAction } from '../../App/actions'
-import { addTeam } from '../actions'
-import { editTeam, deleteTeam } from '../../Teams/actions'
+import {checkNameUniqueAction} from '../../App/actions'
+import {addTeam} from '../actions'
+import {editTeam, deleteTeam} from '../../Teams/actions'
 import Avatar from '../../../components/Avatar'
+import sagaApp from '../../App/sagas'
+import reducerApp from '../../App/reducer'
 
 
 interface ITeamsState {
   formVisible: boolean
   modalLoading: boolean
 }
+
 interface ITeamsProps {
   router: InjectedRouter
+  toThatTeam: (url: string) => any
   currentOrganization: Organization.IOrganization
   organizationTeams: Organization.IOrganizationTeams
   organizations: any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
+
 interface ITeam {
   name?: string
 }
+
 export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   constructor (props) {
     super(props)
@@ -68,7 +75,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckUniqueName, currentOrganization: {id} } = this.props
+    const {onCheckUniqueName, currentOrganization: {id}} = this.props
     const data = {
       name: value,
       orgId: id,
@@ -86,7 +93,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
     const {currentOrganization} = this.props
     this.TeamForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.setState({ modalLoading: true })
+        this.setState({modalLoading: true})
         // orgId: number
         // name: string,
         // description: string,
@@ -100,7 +107,9 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           orgId: currentOrganization.id,
           pic: `${Math.ceil(Math.random() * 19)}`,
           config: '{}'
-        }, () => { this.hideTeamForm() })
+        }, () => {
+          this.hideTeamForm()
+        })
       }
     })
   }
@@ -119,13 +128,41 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   private onSearchTeam = () => {
 
   }
-  private toThatTeam = () => {
-
+  private toThatTeam = (text, record) => () => {
+    const {id} = record
+    if (id) {
+      this.props.toThatTeam(`account/team/${id}`)
+    }
   }
+
+  private isEmptyObj =  (obj) => {
+    for (let attr in obj) {
+      return false
+    }
+    return true
+  }
+
+  private filter = (array) => {
+    if (!Array.isArray(array)) return array
+    array.forEach((d) => {
+      if (!this.isEmptyObj(d)) {
+        d.key = `key${d.id}`
+      }
+      if (d.children && d.children.length > 0) {
+        this.filter(d.children)
+      }
+      if (d.children && d.children.length === 0) {
+        delete d.children
+      }
+    })
+    return array
+  }
+
   public render () {
-    const { formVisible, modalLoading } = this.state
-    const { organizations, organizationTeams } = this.props
-    const addButton =  (
+    const {formVisible, modalLoading} = this.state
+    const {organizations, organizationTeams} = this.props
+    this.filter(organizationTeams)
+    const addButton = (
       <Tooltip placement="bottom" title="创建">
         <Button
           size="large"
@@ -135,13 +172,12 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
         />
       </Tooltip>
     )
-
     const columns = [{
       title: 'Name',
       dataIndex: 'name',
       key: 'name',
       width: '40%',
-      render: (text) => <a href="javascript:;" onClick={this.toThatTeam} className={styles.avatarName}>{text}</a>
+      render: (text, record) => <a href="javascript:;" onClick={this.toThatTeam(text, record)} className={styles.avatarName}>{text}</a>
     }, {
       title: 'Member',
       dataIndex: 'users',
@@ -150,7 +186,8 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       render: (users) => {
         return (
           <div className={styles.avatarWrapper}>
-            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span><Avatar key={index} path={user.avatar} size="small" enlarge={true}/></span></Tooltip>)}
+            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span><Avatar key={index} path={user.avatar} size="small"
+                                                                                                                                  enlarge={true}/></span></Tooltip>)}
             <span className={styles.avatarName}>{`${ users ? users.length : 0 }menbers`}</span>
           </div>
         )
@@ -159,7 +196,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       title: 'Visibility',
       dataIndex: 'visibility',
       key: 'visibility',
-      render: text => text ? '公开（可见）' : '私密（不可见）'
+      render: (text) => text ? '公开（可见）' : '私密（不可见）'
     }]
 
     return (
@@ -199,7 +236,9 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
             organizations={organizations}
             organizationTeams={organizationTeams}
             onCheckUniqueName={this.checkNameUnique}
-            ref={(f) => { this.TeamForm = f }}
+            ref={(f) => {
+              this.TeamForm = f
+            }}
           />
         </Modal>
       </div>
@@ -225,11 +264,16 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducer = injectReducer({ key: 'team', reducer: teamReducer })
-const withSaga = injectSaga({ key: 'team', saga: teamSaga })
+const withReducer = injectReducer({key: 'team', reducer: teamReducer})
+const withSaga = injectSaga({key: 'team', saga: teamSaga})
+
+const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
 
 export default compose(
   withReducer,
+  withAppReducer,
+  withAppSaga,
   withSaga,
   withConnect
 )(TeamList)
