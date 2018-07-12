@@ -19,6 +19,8 @@ interface IAddFormProps {
   category: string
   organizationOrTeam: { name?: string }
   currentOrganizationProjects?: any
+  handleSearchMember?: () => any
+  inviteMemberList?: any
   addHandler: () => any
 }
 
@@ -36,12 +38,14 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
 
   private tips = (type: string) => {
     switch (type) {
+      case 'teamMember':
+        return '添加一个组织成员到当前团队'
       case 'project':
         return '只能添加您具有管理员权限的项目'
       case 'member':
-        return '邀请一个成员加入您的组织'
+        return '邀请一个成员加入当前组织'
       case 'team':
-        return '添加一个团队到当前团队下级'
+        return '邀请一个团队到当前团队下级'
       default:
         return ''
     }
@@ -61,12 +65,22 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private selectOption = (target) => () => {
-    const { name, id } = target
+    const { name, id, username } = target
     this.setState({
       visible: false
     }, () => {
-      this.props.form.setFieldsValue({'searchValue': name, 'projectId': id})
+      this.props.form.setFieldsValue({
+        'searchValue': name ? name : username,
+        'projectId': id
+      })
     })
+  }
+
+  private inputChange = () => {
+    const {category} = this.props
+    if (category === 'member') {
+      this.props.handleSearchMember()
+    }
   }
 
   private bootstrapOptionsLi = (data) => {
@@ -78,19 +92,22 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
               <span className={styles.main}>
                 <img className={styles.avatar} src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1531136772764&di=00b0fb008e0b547a3668f1045beea070&imgtype=0&src=http%3A%2F%2Fimg3.duitang.com%2Fuploads%2Fitem%2F201505%2F25%2F20150525110536_i4XhB.thumb.700_0.jpeg" alt=""/>
                 <span className={styles.mainText}>
-                  {o.name}
+                  {o.name ? o.name : o.username}
                 </span>
               </span>
               <Icon type="plus" className={styles.iconPlus}/>
             </li>
           )) : ''
         }
-        <li key="createNew" className={styles.searchLi} onClick={this.props.addHandler}>
-            <span className={styles.create}>
-              创建
-            </span>
-          <Icon type="plus" className={styles.iconPlus}/>
-        </li>
+        {
+          this.props.category === 'team' ?
+            <li key="createNew" className={styles.searchLi} onClick={this.props.addHandler}>
+              <span className={styles.create}>
+                创建
+              </span>
+              <Icon type="plus" className={styles.iconPlus}/>
+            </li> : ''
+        }
       </ul>
     )
   }
@@ -98,6 +115,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   public render () {
     const {
       category,
+      inviteMemberList,
       organizationOrTeam,
       currentOrganizationProjects
     } = this.props
@@ -107,7 +125,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     } else if (category === 'team') {
       optionList = this.bootstrapOptionsLi()
     } else if (category === 'member') {
-      optionList = this.bootstrapOptionsLi()
+      optionList = this.bootstrapOptionsLi(inviteMemberList)
     }
     const orgOrTeamName = organizationOrTeam ? organizationOrTeam.name : ''
     const {getFieldDecorator} = this.props.form
@@ -135,7 +153,8 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
             <FormItem>
               <InputGroup size="large" compact>
                 {getFieldDecorator('searchValue', {
-                  initialValue: ''
+                  initialValue: '',
+                  onChange: this.inputChange
                 })(
                   <Input style={{width: '65%'}}/>
                 )}

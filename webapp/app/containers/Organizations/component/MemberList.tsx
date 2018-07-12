@@ -24,6 +24,9 @@ interface IMembersState {
 interface IMembersProps {
   organizationMembers: Organization.IOrganizationMembers[]
   currentOrganization: Organization.IOrganization
+  inviteMemberList: any
+  onInviteMember: (ordId: number, memId: number) => any
+  handleSearchMember: (keywords: string) => any
 }
 
 export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
@@ -35,9 +38,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       modalLoading: false
     }
   }
-  const onSearchMember = () => {
 
-  }
   private MemberForm: WrappedFormUtils
   private showMemberForm = (type: string) => (e) => {
     e.stopPropagation()
@@ -54,9 +55,38 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       this.MemberForm.resetFields()
     })
   }
+
+  private add = () => {
+    const { currentOrganization } = this.props
+    this.MemberForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+         const { projectId } = values
+         const orgId = currentOrganization.id
+         console.log(orgId, projectId)
+         this.props.onInviteMember(currentOrganization.id, projectId)
+        // this.MemberForm()
+      }
+    })
+  }
+
+  private search = (val) => {
+
+  }
+
+  private searchMember = () => {
+    this.forceUpdate(() => {
+      this.MemberForm.validateFieldsAndScroll((err, values) => {
+        if (!err) {
+          const { searchValue } = values
+          this.props.handleSearchMember(searchValue)
+        }
+      })
+    })
+  }
+
   public render () {
     const { formVisible, category, modalLoading } = this.state
-    const { organizationMembers } = this.props
+    const { organizationMembers, inviteMemberList } = this.props
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
         <Button
@@ -101,7 +131,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
             <Select
               size="large"
               placeholder="placeholder"
-              onChange={this.onSearchMember}
+              onChange={this.search}
               style={{ width: 120 }}
               allowClear
             >
@@ -114,7 +144,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
             <Input.Search
               size="large"
               placeholder="placeholder"
-              onSearch={this.onSearchMember}
+              onSearch={this.search}
             />
           </Col>
           <Col span={1} offset={2}>
@@ -138,8 +168,11 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         >
           <MemberForm
             category={category}
+            inviteMemberList={inviteMemberList}
+            handleSearchMember={this.searchMember}
             organizationOrTeam={this.props.currentOrganization}
             ref={(f) => { this.MemberForm = f }}
+            addHandler={this.add}
           />
         </Modal>
       </div>

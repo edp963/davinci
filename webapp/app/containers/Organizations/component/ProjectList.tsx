@@ -19,9 +19,15 @@ interface IProjectsState {
 }
 
 interface IProjectsProps {
-  organizationProjects: Organization.IOrganizationProjects[]
+  loginUser: any
+  organizationId: number
   toProject: (id: number) => any
+  deleteProject: (id: number) => any
+  onAddProject: (project: any, resolve: () => any) => any
+  organizationProjects: Organization.IOrganizationProjects[]
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
+
 export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
   constructor (props) {
     super(props)
@@ -35,7 +41,8 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   private showProjectForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
-      formVisible: true
+      formVisible: true,
+      formType: type
     })
   }
   private onSearchProject = () => {
@@ -52,6 +59,39 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       this.ProjectForm.resetFields()
     })
   }
+  private checkUniqueName = (rule, value = '', callback) => {
+    const { onCheckUniqueName, organizationId } = this.props
+    const { getFieldsValue } = this.ProjectForm
+    const { id } = getFieldsValue()
+    const data = {
+      name: value,
+      orgId: organizationId,
+      id
+    }
+    onCheckUniqueName('project', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
+  }
+  private onModalOk = () => {
+    const { organizationId } = this.props
+    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        if (this.state.formType === 'organizationProject') {
+          this.props.onAddProject({
+            ...values,
+            ...{orgId: organizationId},
+            pic: `${Math.ceil(Math.random() * 19)}`,
+            config: '{}'
+          }, () => {
+            this.hideProjectForm() })
+        }
+      }
+    })
+  }
   public render () {
     const { formVisible, formType, modalLoading } = this.state
     const { organizationProjects } = this.props
@@ -61,47 +101,19 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
               size="large"
               type="primary"
               icon="plus"
-              onClick={this.showProjectForm('add')}
+              onClick={this.showProjectForm('organizationProject')}
             />
           </Tooltip>
       )
-    const projectLists = [
-      {
-        title: 'davinci',
-        desc: 'Wormhole is a SPaaS (Stream Processing as a Service) Platform',
-        tags: [{description: '我创建的'}, {description: '我收藏的'}],
-        stars : 170,
-        updateTime: '2018-06-13'
-      }
-    ]
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
         key={index}
         loginUser={this.props.loginUser}
         options={lists}
         toProject={this.props.toProject}
+        deleteProject={this.props.deleteProject}
       />
     )) : ''
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideTeamForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -141,6 +153,9 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         >
           <ProjectForm
             type={formType}
+            modalLoading={modalLoading}
+            onModalOk={this.onModalOk}
+            onCheckUniqueName={this.checkUniqueName}
             ref={(f) => { this.ProjectForm = f }}
           />
         </Modal>

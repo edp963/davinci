@@ -7,13 +7,14 @@ import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 
 interface IAccountProps {
-  loginUser: any
+  loginUser: any,
+  routes: any
 }
 
 const styles = require('./Account.less')
 export class Account extends React.PureComponent<IAccountProps, {}> {
     public render () {
-      const { loginUser } = this.props
+      const { loginUser, routes } = this.props
       return (
         <div className={styles.wrapper}>
           <div className={styles.container}>
@@ -30,7 +31,9 @@ export class Account extends React.PureComponent<IAccountProps, {}> {
                     </div>
                   </div>
                   <div className={styles.menu}>
-                    <Menus/>
+                    <Menus
+                      active={routes[3]['name']}
+                    />
                   </div>
                 </Box>
               </div>

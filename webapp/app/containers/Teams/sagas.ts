@@ -20,7 +20,6 @@
 
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
-import axios from 'axios'
 import {
   LOAD_TEAMS,
   EDIT_TEAM,
@@ -29,7 +28,8 @@ import {
   LOAD_TEAM_MEMBERS,
   LOAD_TEAM_PROJECTS,
   LOAD_TEAM_TEAMS,
-  PULL_PROJECT_IN_TEAM
+  PULL_PROJECT_IN_TEAM,
+  UPDATE_TEAM_PROJECT_PERMISSION
 } from './constants'
 
 import {
@@ -47,7 +47,9 @@ import {
   teamTeamsLoaded,
   loadTeamTeamsFail,
   projectInTeamPulled,
-  pullProjectInTeamFail
+  pullProjectInTeamFail,
+  teamProjectPermissionUpdated,
+  updateTeamProjectPermissionFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -102,7 +104,7 @@ export function* getTeamDetail ({ payload }) {
     const asyncData = yield  call(request, `${api.teams}/${payload.id}`)
     const detail = readListAdapter(asyncData)
     yield put(teamDetailLoaded(detail))
-    yield payload.resolve&&payload.resolve(detail)
+    yield payload.resolve && payload.resolve(detail)
   } catch (err) {
     console.log('getTeamDetail', err)
   }
@@ -161,6 +163,23 @@ export function* pullProjectInTeam ({payload}) {
   }
 }
 
+export function* updateTeamProjectPermission ({payload}) {
+  const {relationId, relTeamProjectDto, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.teams}/project/${relationId}`,
+      method: 'put',
+      data: relTeamProjectDto
+    })
+    const projects = readListAdapter(asyncData)
+    yield put(teamProjectPermissionUpdated(projects))
+    resolve(projects)
+  } catch (err) {
+    yield put(updateTeamProjectPermissionFail())
+    message.error('更新 project permission 失败，请稍后再试')
+  }
+}
+
 export default function* rootTeamSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_TEAMS, getTeams),
@@ -170,6 +189,7 @@ export default function* rootTeamSaga (): IterableIterator<any> {
     takeLatest(LOAD_TEAM_MEMBERS, getTeamMembers as any),
     takeLatest(LOAD_TEAM_PROJECTS, getTeamProjects as any),
     takeLatest(LOAD_TEAM_TEAMS, getTeamTeams as any),
-    takeLatest(PULL_PROJECT_IN_TEAM, pullProjectInTeam as any)
+    takeLatest(PULL_PROJECT_IN_TEAM, pullProjectInTeam as any),
+    takeLatest(UPDATE_TEAM_PROJECT_PERMISSION, updateTeamProjectPermission as any)
   ]
 }

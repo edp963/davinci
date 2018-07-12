@@ -33,8 +33,11 @@ import {
   LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
   LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
   ADD_TEAM_FAILURE,
-  ADD_TEAM_SUCCESS
+  ADD_TEAM_SUCCESS,
+  INVITE_MEMBER_SUCCESS,
+  SEARCH_MEMBER_SUCCESS
 } from './constants'
+import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
 
 const initialState = fromJS({
   organizations: [],
@@ -42,13 +45,15 @@ const initialState = fromJS({
   currentOrganizationLoading: false,
   currentOrganizationProjects: [],
   currentOrganizationTeams: [],
-  currentOrganizationMembers: []
+  currentOrganizationMembers: [],
+  inviteMemberLists: []
 })
 
 function organizationReducer (state = initialState, action) {
   const { type, payload } = action
   const organizations = state.get('organizations')
   const currentOrganizationTeams = state.get('currentOrganizationTeams')
+  const currentOrganizationProjects = state.get('currentOrganizationProjects')
   switch (type) {
     case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
       return state.set('currentOrganizationProjects', payload.projects)
@@ -58,6 +63,18 @@ function organizationReducer (state = initialState, action) {
       return state.set('currentOrganizationTeams', payload.teams)
     case LOAD_ORGANIZATIONS_SUCCESS:
       return state.set('organizations', payload.organizations)
+    case ADD_PROJECT_SUCCESS:
+      if (currentOrganizationProjects) {
+        currentOrganizationProjects.unshift(payload.result)
+        return state.set('currentOrganizationProjects', currentOrganizationProjects.slice())
+      } else {
+        return state.set('currentOrganizationProjects', [payload.result])
+      }
+    case DELETE_PROJECT_SUCCESS:
+      if (currentOrganizationProjects) {
+        return state.set('currentOrganizationProjects', currentOrganizationProjects.filter((d) => d.id !== payload.id))
+      }
+      return state
     case LOAD_ORGANIZATIONS_FAILURE:
       return state
     case ADD_ORGANIZATION_SUCCESS:
@@ -69,7 +86,6 @@ function organizationReducer (state = initialState, action) {
       }
     case ADD_ORGANIZATION_FAILURE:
       return state
-
     case EDIT_ORGANIZATION_SUCCESS:
       organizations.splice(organizations.findIndex((d) => d.id === payload.result.id), 1, payload.result)
       return state.set('organizations', organizations.slice())
@@ -94,6 +110,8 @@ function organizationReducer (state = initialState, action) {
       }
     case ADD_TEAM_FAILURE:
       return state
+    case SEARCH_MEMBER_SUCCESS:
+      return state.set('inviteMemberLists', payload.result)
     default:
       return state
   }

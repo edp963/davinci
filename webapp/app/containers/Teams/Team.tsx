@@ -21,7 +21,7 @@ import injectSaga from '../../utils/injectSaga'
 import saga from './sagas'
 import reducerApp from '../App/reducer'
 import sagaApp from '../App/sagas'
-import { loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam } from './actions'
+import { loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission } from './actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 import {
@@ -56,6 +56,7 @@ interface ITeamsProps {
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onPullProjectInTeam: (id: number, projectId: number, resolve: () => any) => any
+  onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any) => any
 }
 
 export interface ITeam {
@@ -202,6 +203,7 @@ export class Teams extends React.Component<ITeamsProps> {
                 currentTeamProjects={currentTeamProjects}
                 currentOrganizationProjects={currentOrganizationProjects}
                 pullProjectInTeam={this.pullProjectInTeam}
+                onUpdateTeamProjectPermission={this.props.onUpdateTeamProjectPermission}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
@@ -242,7 +244,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
-    onPullProjectInTeam: (id, projectId, resolve) => dispatch(pullProjectInTeam(id, projectId, resolve))
+    onPullProjectInTeam: (id, projectId, resolve) => dispatch(pullProjectInTeam(id, projectId, resolve)),
+    onUpdateTeamProjectPermission: (relationId, relTeamProjectDto, resolve) => dispatch(updateTeamProjectPermission(relationId, relTeamProjectDto, resolve))
   }
 }
 

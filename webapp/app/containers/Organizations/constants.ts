@@ -49,3 +49,11 @@ export const LOAD_ORGANIZATIONS_TEAMS_FAILURE = 'davinci/Organization/LOAD_ORGAN
 export const ADD_TEAM = 'davinci/Team/ADD_TEAM'
 export const ADD_TEAM_SUCCESS = 'davinci/Team/ADD_TEAM_SUCCESS'
 export const ADD_TEAM_FAILURE = 'davinci/Team/ADD_TEAM_FAILURE'
+
+export const SEARCH_MEMBER = 'davinci/Team/SEARCH_MEMBER'
+export const SEARCH_MEMBER_SUCCESS = 'davinci/Team/SEARCH_MEMBER_SUCCESS'
+export const SEARCH_MEMBER_FAILURE = 'davinci/Team/SEARCH_MEMBER_FAILURE'
+
+export const INVITE_MEMBER = 'davinci/Team/INVITE_MEMBER'
+export const INVITE_MEMBER_SUCCESS = 'davinci/Team/INVITE_MEMBER_SUCCESS'
+export const INVITE_MEMBER_FAILURE = 'davinci/Team/INVITE_MEMBER_FAILURE'

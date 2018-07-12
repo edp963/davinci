@@ -27,6 +27,11 @@ const makeSelectOrganizations = () => createSelector(
   (organizationState) => organizationState.get('organizations')
 )
 
+const makeSelectInviteMemberList = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('inviteMemberLists')
+)
+
 const makeSelectCurrentOrganizations = () => createSelector(
   selectOrganization,
   (organizationState) => organizationState.get('currentOrganization')
@@ -53,5 +58,6 @@ export {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationTeams,
-  makeSelectCurrentOrganizationMembers
+  makeSelectCurrentOrganizationMembers,
+  makeSelectInviteMemberList
 }
