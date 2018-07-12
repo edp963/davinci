@@ -45,9 +45,11 @@ import {
   PULL_PROJECT_IN_TEAM_FAILURE,
   UPDATE_TEAM_PROJECT_PERMISSION,
   UPDATE_TEAM_PROJECT_PERMISSION_SUCCESS,
-  UPDATE_TEAM_PROJECT_PERMISSION_FAILURE
+  UPDATE_TEAM_PROJECT_PERMISSION_FAILURE,
+  DELETE_TEAM_PROJECT,
+  DELETE_TEAM_PROJECT_FAILURE,
+  DELETE_TEAM_PROJECT_SUCCESS
 } from './constants'
-
 
 
 export function loadTeams () {
@@ -272,7 +274,29 @@ export function updateTeamProjectPermissionFail () {
   }
 }
 
+export function deleteTeamProject (relationId) {
+  return {
+    type: DELETE_TEAM_PROJECT,
+    payload: {
+      relationId
+    }
+  }
+}
 
+export function teamProjectDeleted (id) {
+  return {
+    type: DELETE_TEAM_PROJECT_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function deleteTeamProjectFail () {
+  return {
+    type: DELETE_TEAM_PROJECT_FAILURE
+  }
+}
 
 
 

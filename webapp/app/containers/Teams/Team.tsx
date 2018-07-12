@@ -21,7 +21,7 @@ import injectSaga from '../../utils/injectSaga'
 import saga from './sagas'
 import reducerApp from '../App/reducer'
 import sagaApp from '../App/sagas'
-import { loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission } from './actions'
+import { loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject } from './actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 import {
@@ -29,7 +29,8 @@ import {
   makeSelectCurrentTeamProjects,
   makeSelectCurrentTeams,
   makeSelectCurrentTeamTeams,
-  makeSelectTeams
+  makeSelectTeams,
+  makeSelectTeamRouter
 } from './selectors'
 import {makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjects, makeSelectCurrentOrganizationTeams} from '../Organizations/selectors'
 import {loadOrganizationMembers, loadOrganizationProjects, loadOrganizationTeams} from '../Organizations/actions'
@@ -40,6 +41,7 @@ interface ITeamsProps {
   router: InjectedRouter
   loginUser: any
   teams: any
+  teamRouter: any
   currentOrganizationProjects: any,
   currentOrganizationTeams: any,
   currentOrganizationMembers: any,
@@ -55,6 +57,7 @@ interface ITeamsProps {
   onLoadOrganizationProjects: (id: number) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
+  onDeleteTeamProject: (id: number) => any
   onPullProjectInTeam: (id: number, projectId: number, resolve: () => any) => any
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any) => any
 }
@@ -135,7 +138,6 @@ export class Teams extends React.Component<ITeamsProps> {
 
   private toThatTeam = (url) => {
     if (url) {
-      console.log(url)
       this.props.router.push(url)
     }
   }
@@ -150,6 +152,12 @@ export class Teams extends React.Component<ITeamsProps> {
       }
     }
   }
+  private deleteProject = (e, id) => () => {
+    e.stopPropagation()
+    if (id) {
+      this.props.onDeleteTeamProject(id)
+    }
+  }
 
   private pullProjectInTeam = (target) => {
     const { params: {teamId} } = this.props.router
@@ -160,8 +168,26 @@ export class Teams extends React.Component<ITeamsProps> {
       })
     }
   }
+  private createTeamRouter = (source) => {
+    let arr = []
+    function find (wrapper, data) {
+      if (data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
+        wrapper.push({
+          id: data['id'],
+          name: data['name']
+        })
+        if (data.hasOwnProperty('child') && data['child'] !== ''){
+          find(wrapper, data['child'])
+        }
+      }
+      return wrapper
+    }
+    find(arr, source)
+    return arr
+  }
   public render () {
     const {
+      teamRouter,
       currentTeam,
       currentTeamProjects,
       currentTeamTeams,
@@ -172,6 +198,7 @@ export class Teams extends React.Component<ITeamsProps> {
     const  projectNum = currentTeamProjects.length
     const  memberNum = currentTeamMembers.length
     const teamNum = this.teamTeams.length
+    const teamRouterSource = this.createTeamRouter(teamRouter)
     return (
       <Box>
         <Box.Header>
@@ -182,6 +209,15 @@ export class Teams extends React.Component<ITeamsProps> {
                   <Icon type="left-circle-o" />返回我的团队
                 </Link>
               </Breadcrumb.Item>
+              {
+                teamRouterSource ? teamRouterSource.map((team) => (
+                  <Breadcrumb.Item>
+                    <Link to={`/account/team/${team.id}`}>
+                      {team.name}
+                    </Link>
+                  </Breadcrumb.Item>
+                )) : ''
+              }
             </Breadcrumb>
           </Box.Title>
         </Box.Header>
@@ -199,6 +235,7 @@ export class Teams extends React.Component<ITeamsProps> {
             </TabPane>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
+                deleteProject={this.deleteProject}
                 currentTeam={currentTeam}
                 currentTeamProjects={currentTeamProjects}
                 currentOrganizationProjects={currentOrganizationProjects}
@@ -226,6 +263,7 @@ export class Teams extends React.Component<ITeamsProps> {
 const mapStateToProps = createStructuredSelector({
   loginUser: makeSelectLoginUser(),
   teams: makeSelectTeams(),
+  teamRouter: makeSelectTeamRouter(),
   currentTeam: makeSelectCurrentTeams(),
   currentTeamProjects: makeSelectCurrentTeamProjects(),
   currentTeamTeams: makeSelectCurrentTeamTeams(),
@@ -240,12 +278,14 @@ export function mapDispatchToProps (dispatch) {
     onLoadTeamProjects: (id) => dispatch(loadTeamProjects(id)),
     onLoadTeamMembers: (id) => dispatch(loadTeamMembers(id)),
     onLoadTeamTeams: (id) => dispatch(loadTeamTeams(id)),
+    onDeleteTeamProject: (id) => dispatch(deleteTeamProject(id)),
     onLoadTeamDetail: (id, resolve) => dispatch(loadTeamDetail(id, resolve)),
     onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onPullProjectInTeam: (id, projectId, resolve) => dispatch(pullProjectInTeam(id, projectId, resolve)),
     onUpdateTeamProjectPermission: (relationId, relTeamProjectDto, resolve) => dispatch(updateTeamProjectPermission(relationId, relTeamProjectDto, resolve))
+
   }
 }
 
