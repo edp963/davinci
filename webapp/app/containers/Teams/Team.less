@@ -63,7 +63,29 @@
   }
 }
 
-
+.headerPanel {
+  height:40px;
+  display: flex;
+  justify-content: space-between;
+  .titleWrapper {
+    display: flex;
+    .avatar {
+      margin-right: 16px;
+      vertical-align: top;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 40px;
+      color: @blue;
+      cursor: pointer;
+    }
+  }
+  .delete {
+    line-height: 40px;
+    padding-right: 16px;
+  }
+}
 
 .container {
   display: flex;
@@ -255,5 +277,15 @@
     margin-right: 8px;
   }
 }
+
+
+
+//.ant-collapse > .ant-collapse-item > .ant-collapse-header .arrow {
+//  color: white;
+//}
+//.ant-collapse > .ant-collapse-item > .ant-collapse-header[aria-expanded="true"] .arrow {
+//  color: white;
+//}
+
 
 

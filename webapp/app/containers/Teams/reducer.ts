@@ -32,13 +32,15 @@ import {
   LOAD_TEAM_PROJECTS_SUCCESS,
   LOAD_TEAM_MEMBERS_SUCCESS,
   LOAD_TEAM_TEAMS_SUCCESS,
-  PULL_PROJECT_IN_TEAM_SUCCESS
+  PULL_PROJECT_IN_TEAM_SUCCESS,
+  DELETE_TEAM_PROJECT_SUCCESS
 } from './constants'
 import {LOAD_ORGANIZATIONS_MEMBERS_SUCCESS, LOAD_ORGANIZATIONS_PROJECTS_SUCCESS, LOAD_ORGANIZATIONS_TEAMS_SUCCESS} from '../Organizations/constants'
 
 
 const initialState = fromJS({
   teams: [],
+  teamRouter: {},
   currentTeam: {},
   currentTeamLoading: false,
   currentTeamProjects: [],
@@ -71,6 +73,7 @@ function teamReducer (state = initialState, action) {
       return state
         .set('currentTeamLoading', false)
         .set('currentTeam', payload.team)
+        .set('teamRouter', payload.team.parents)
     case LOAD_TEAM_PROJECTS_SUCCESS:
       return state.set('currentTeamProjects', payload.projects)
     case PULL_PROJECT_IN_TEAM_SUCCESS:
@@ -79,6 +82,11 @@ function teamReducer (state = initialState, action) {
         state.set('currentTeamProjects', currentTeamProjects.slice())
       } else {
         state.set('currentTeamProjects', [payload.result])
+      }
+      return state
+    case DELETE_TEAM_PROJECT_SUCCESS:
+      if (currentTeamProjects) {
+        return state.set('currentTeamProjects', currentTeamProjects.filter((d) => d.id !== payload.id))
       }
       return state
     case LOAD_TEAM_MEMBERS_SUCCESS:

@@ -29,7 +29,8 @@ import {
   LOAD_TEAM_PROJECTS,
   LOAD_TEAM_TEAMS,
   PULL_PROJECT_IN_TEAM,
-  UPDATE_TEAM_PROJECT_PERMISSION
+  UPDATE_TEAM_PROJECT_PERMISSION,
+  DELETE_TEAM_PROJECT
 } from './constants'
 
 import {
@@ -49,7 +50,9 @@ import {
   projectInTeamPulled,
   pullProjectInTeamFail,
   teamProjectPermissionUpdated,
-  updateTeamProjectPermissionFail
+  updateTeamProjectPermissionFail,
+  teamProjectDeleted,
+  deleteTeamProjectFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -180,6 +183,20 @@ export function* updateTeamProjectPermission ({payload}) {
   }
 }
 
+export function* deleteTeamProject ({payload}) {
+  const {relationId} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.teams}/project/${relationId}`,
+      method: 'delete'
+    })
+    yield put(teamProjectDeleted(relationId))
+  } catch (err) {
+    yield put(deleteTeamProjectFail())
+    message.error('删除 team project 失败，请稍后再试')
+  }
+}
+
 export default function* rootTeamSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_TEAMS, getTeams),
@@ -190,6 +207,7 @@ export default function* rootTeamSaga (): IterableIterator<any> {
     takeLatest(LOAD_TEAM_PROJECTS, getTeamProjects as any),
     takeLatest(LOAD_TEAM_TEAMS, getTeamTeams as any),
     takeLatest(PULL_PROJECT_IN_TEAM, pullProjectInTeam as any),
-    takeLatest(UPDATE_TEAM_PROJECT_PERMISSION, updateTeamProjectPermission as any)
+    takeLatest(UPDATE_TEAM_PROJECT_PERMISSION, updateTeamProjectPermission as any),
+    takeLatest(DELETE_TEAM_PROJECT, deleteTeamProject as any)
   ]
 }
