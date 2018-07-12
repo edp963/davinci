@@ -65,29 +65,29 @@
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>
         </fileSet>
-        <!--<fileSet>-->
-            <!--<directory>-->
-                <!--${project.parent.basedir}/swagger-ui-->
-            <!--</directory>-->
-            <!--<outputDirectory>swagger-ui</outputDirectory>-->
-        <!--</fileSet>-->
+        <fileSet>
+            <directory>
+                ${project.parent.basedir}/server/target/lib
+            </directory>
+            <outputDirectory>lib</outputDirectory>
+        </fileSet>
 
     </fileSets>
 
-    <dependencySets>
-        <dependencySet>
-            <outputDirectory>lib</outputDirectory>
-            <useTransitiveDependencies>true</useTransitiveDependencies>
-            <unpack>false</unpack>
-            <scope>runtime</scope>
-            <useProjectArtifact>false</useProjectArtifact>
-        </dependencySet>
-    </dependencySets>
+    <!--<dependencySets>-->
+        <!--<dependencySet>-->
+            <!--<outputDirectory>lib</outputDirectory>-->
+            <!--<useTransitiveDependencies>true</useTransitiveDependencies>-->
+            <!--<unpack>false</unpack>-->
+            <!--<scope>runtime</scope>-->
+            <!--<useProjectArtifact>false</useProjectArtifact>-->
+        <!--</dependencySet>-->
+    <!--</dependencySets>-->
 
-    <!--<files>
+    <files>
         <file>
-            <source>${project.parent.basedir}/server/target/davinci-server_2.11-${project.parent.version}-jar-with-dependencies.jar</source>
-            <outputDirectory>plugin</outputDirectory>
+            <source>${project.parent.basedir}/server/target/davinci-server_2.11-${project.parent.version}.jar</source>
+            <outputDirectory>/</outputDirectory>
         </file>
-    </files>-->
+    </files>
 </assembly>

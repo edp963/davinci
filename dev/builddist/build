@@ -2,6 +2,19 @@ davinci
 ======
 [![Apache-2.0 license](https://img.shields.io/hexpm/l/plug.svg)](https://opensource.org/licenses/Apache-2.0)
 
+how to package a zip
+--------------------------
+cd server
+
+mvn clean install -DskipTests package
+
+cd ..
+
+cd assembly
+
+mvn clean package -DskipTests
+
+
 how to make a dist package
 --------------------------
 `mvn clean install package -Pdist`
