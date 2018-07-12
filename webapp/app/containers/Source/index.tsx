@@ -70,7 +70,7 @@ import { uuid } from '../../utils/util'
 import { checkNameAction } from '../App/actions'
 
 interface ISourceProps {
-  routeParams: any
+  params: any
   sources: boolean | any[]
   listLoading: boolean
   formLoading: boolean
@@ -142,10 +142,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   }
 
   public componentWillMount () {
-    // todo: projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
-    this.props.onLoadSources(projectId)
+    this.props.onLoadSources(this.props.params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -214,9 +211,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   private onModalOk = () => {
     this.sourceForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        // todo: projectId
-        // const projectId = Number(this.props.routeParams.pid)
-        const projectId = 20
         const { id, name, type, url, user, password, desc, config } = values
         const requestValue = {
           config: {
@@ -230,7 +224,9 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
           type
         }
         if (this.state.formType === 'add') {
-          this.props.onAddSource((Object as IObjectConstructor).assign({}, requestValue, { projectId }), () => {
+          this.props.onAddSource((Object as IObjectConstructor).assign({}, requestValue, {
+            projectId: this.props.params.pid
+          }), () => {
             this.hideForm()
           })
         } else {
@@ -389,6 +385,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     } = this.state
 
     const {
+      params,
       listLoading,
       formLoading,
       testLoading,
@@ -577,6 +574,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
               >
                 <SourceForm
                   type={formType}
+                  projectId={params.pid}
                   testLoading={testLoading}
                   onTestSourceConnection={this.testSourceConnection}
                   wrappedComponentRef={this.refHandlers.sourceForm}

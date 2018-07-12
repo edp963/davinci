@@ -29,7 +29,6 @@ import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
 import Dashboard from './containers/Dashboard'
-import DashboardTest from './containers/Dashboard/DashboardTest'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
 import Activate from './containers/Register/Activate'
@@ -237,11 +236,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/dashboards',
               name: 'dashboards',
               component: Dashboard
-            },
-            {
-              path: '/project/:pid/dashboardsTest',
-              name: 'dashboardsTest',
-              component: DashboardTest
             },
             // {
             //   path: '/project/:pid/dashboard/:did/portal/:pid',

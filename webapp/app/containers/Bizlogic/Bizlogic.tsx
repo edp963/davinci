@@ -19,10 +19,8 @@
  */
 
 import * as React from 'react'
-import * as classnames from 'classnames'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
-import { Record } from 'immutable'
 import { InjectedRouter } from 'react-router/lib/Router'
 
 import { compose } from 'redux'
@@ -32,6 +30,8 @@ import reducer from '../App/reducer'
 import saga from '../App/sagas'
 import bizlogicReducer from './reducer'
 import bizlogicSaga from './sagas'
+import sourceReducer from '../Source/reducer'
+import sourceSaga from '../Source/sagas'
 
 import 'codemirror/lib/codemirror.css'
 import '../../assets/override/codemirror_theme.css'
@@ -82,6 +82,7 @@ import {
 import { projectsCheckName, hideNavigator } from '../App/actions'
 import { loadSchema, executeSql, addBizlogic, editBizlogic } from './actions'
 import { makeSelectSources } from '../Source/selectors'
+import { loadSources } from '../Source/actions'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -96,7 +97,6 @@ interface IBizlogicFormProps {
   form: any
   route: any
   params: any
-  routeParams: any
   onCheckName: (
     projectId: number,
     id: number,
@@ -113,6 +113,7 @@ interface IBizlogicFormProps {
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
   onHideNavigator: () => void
+  onLoadSources: (projectId: number) => any
 }
 
 interface IBizlogicFormState {
@@ -156,8 +157,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.codeMirrorInstanceOfQuerySQL = false
   }
 
-  public componentWillReceiveProps (obj) {
-    const { route, sources, onLoadSchema } = this.props
+  public componentWillMount () {
+    this.props.onLoadSources(this.props.params.pid)
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const { route, onLoadSchema } = this.props
+    const { sources } = nextProps
     if ((sources as any[]).length) {
       onLoadSchema(sources[0].id, (result) => {
         this.setState({
@@ -237,15 +243,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, route } = this.props
-    // todo: projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
+    const { onCheckName, type, route, params } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
     const idName = route.path === '/project/:pid/bizlogic' ? '' : id
     const typeName = 'view'
-    onCheckName(projectId, idName, value, typeName,
+    onCheckName(params.pid, idName, value, typeName,
       () => {
         callback()
       }, (err) => {
@@ -434,10 +437,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { executeColumns, isDeclarate } = this.state
-        const { sqlValidateCode, route } = this.props
-        // todo: projectId
-        // const projectId = Number(this.props.routeParams.pid)
-        const projectId = 20
+        const { sqlValidateCode, route, params } = this.props
+
         const { id, name, desc, source_id } = values
         const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
         let querySql = ''
@@ -472,7 +473,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           }
 
           if (route.path === '/project/:pid/bizlogic') {
-            this.props.onAddBizlogic((Object as IObjectConstructor).assign({}, requestValue, { projectId }), () => {
+            this.props.onAddBizlogic((Object as IObjectConstructor).assign({}, requestValue, { projectId: params.pid }), () => {
               this.hideForm()
             })
           } else {
@@ -499,11 +500,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     this.props.form.resetFields()
-
-    // todo: projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
-    this.props.router.push(`/project/${projectId}/bizlogics`)
+    this.props.router.push(`/project/${this.props.params.pid}/bizlogics`)
   }
 
   public componentWillUnmount () {
@@ -550,9 +547,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
       : []
 
-    const sourceOptions = (sources as any[]).map((s) => (
-      <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>
-    ))
+    console.log('source', sources)
+    let sourceOptions = []
+    if (sources) {
+      sourceOptions = (sources as any[]).map((s) => (
+        <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>
+      ))
+    }
 
     const tableDataKey = []
     for (const key in tableData[0]) {
@@ -857,7 +858,8 @@ function mapDispatchToProps (dispatch) {
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
-    onHideNavigator: () => dispatch(hideNavigator())
+    onHideNavigator: () => dispatch(hideNavigator()),
+    onLoadSources: (projectId) => dispatch(loadSources(projectId))
   }
 }
 
@@ -868,10 +870,15 @@ const withSaga = injectSaga({ key: 'global', saga })
 const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
 const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
 
+const withReducerSource = injectReducer({ key: 'source', reducer: sourceReducer })
+const withSagaSource = injectSaga({ key: 'source', saga: sourceSaga })
+
 export default compose(
   withReducer,
   withReducerBizlogic,
+  withReducerSource,
   withSaga,
   withSagaBizlogic,
+  withSagaSource,
   withConnect
 )(Form.create()(Bizlogic))

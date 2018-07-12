@@ -30,8 +30,6 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import sourceReducer from '../Source/reducer'
-import sourceSaga from '../Source/sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
@@ -48,22 +46,18 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Breadcrumb = require('antd/lib/breadcrumb')
 
 import { loadBizlogics, deleteBizlogic } from './actions'
-import { loadSources } from '../Source/actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
-import { makeSelectSources } from '../Source/selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
 
 interface IBizlogicsProps  {
-  routeParams: any
+  params: any
   bizlogics: boolean | any[]
-  sources: boolean | any[]
   loginUser: object
   tableLoading: false
   router: InjectedRouter
   onLoadBizlogics: (projectId: number) => any
   onDeleteBizlogic: (id: number) => any
-  onLoadSources: (projectId: number) => any
 }
 
 interface IBizlogicsStates {
@@ -92,17 +86,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
   }
 
   public componentWillMount () {
-    const {
-      onLoadBizlogics,
-      onLoadSources
-    } = this.props
-
-    // todo:projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
-    onLoadBizlogics(projectId)
-    onLoadSources(projectId)
-
+    this.props.onLoadBizlogics(this.props.params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -122,17 +106,12 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
   }
 
   private showAdd = () => {
-    // todo: projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
-    this.props.router.push(`/project/${projectId}/bizlogic`)
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/bizlogic`)
   }
 
   private showDetail = (id) => () => {
-    // todo: projectId
-    // const projectId = Number(this.props.routeParams.pid)
-    const projectId = 20
-    this.props.router.push(`/project/${projectId}/bizlogic/${id}`)
+    this.props.router.push(`/project/${this.props.params.pid}/bizlogic/${id}`)
   }
 
   private handleTableChange = (pagination, filters, sorter) => {
@@ -180,7 +159,6 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
     } = this.state
 
     const {
-      sources,
       onDeleteBizlogic,
       tableLoading
     } = this.props
@@ -209,10 +187,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       title: 'Source',
       dataIndex: 'sourceId',
       key: 'sourceId',
-      render: (text, record) => {
-        const source = sources && (sources as any[]).find((s) => s.id === record.sourceId)
-        return source && source.name
-      }
+      render: (text, record) => record.source.name
     }, {
       title: '操作',
       key: 'action',
@@ -292,14 +267,12 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
-    onDeleteBizlogic: (id) => () => dispatch(deleteBizlogic(id)),
-    onLoadSources: (projectId) => dispatch(loadSources(projectId))
+    onDeleteBizlogic: (id) => () => dispatch(deleteBizlogic(id))
   }
 }
 
 const mapStateToProps = createStructuredSelector({
   bizlogics: makeSelectBizlogics(),
-  sources: makeSelectSources(),
   loginUser: makeSelectLoginUser(),
   tableLoading: makeSelectTableLoading()
 })
@@ -309,14 +282,9 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer })
 const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga })
 
-const withReducerSource = injectReducer({ key: 'source', reducer: sourceReducer })
-const withSagaSource = injectSaga({ key: 'source', saga: sourceSaga })
-
 export default compose(
   withReducerBizlogic,
-  withReducerSource,
   withSagaBizlogic,
-  withSagaSource,
   withConnect
 )(Bizlogics)
 
