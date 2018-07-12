@@ -1,4 +1,1 @@
-@echo start
-path %path%  
-start davinci -Xmx256m -Djava.ext.dirs=%JAVA_HOME%\jre\lib\ext:..\lib edp.davinci.DavinciStarter 
-pause
+java -jar ../davinci-server_2.11-0.2.1-SNAPSHOT.jar edp.davinci.DavinciStarter
