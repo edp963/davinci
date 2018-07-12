@@ -67,7 +67,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showAddForm('member')}
+          onClick={this.showAddForm('teamMember')}
         />
       </Tooltip>
     )

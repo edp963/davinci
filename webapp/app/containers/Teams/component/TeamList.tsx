@@ -136,9 +136,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
               onSearch={this.onSearchTeam}
             />
           </Col>
-          <Col span={1} offset={7}>
-            {addButton}
-          </Col>
         </Row>
         <Row>
           <div className={styles.tableWrap}>

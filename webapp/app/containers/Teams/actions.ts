@@ -42,7 +42,10 @@ import {
   LOAD_TEAM_TEAMS_FAILURE,
   PULL_PROJECT_IN_TEAM,
   PULL_PROJECT_IN_TEAM_SUCCESS,
-  PULL_PROJECT_IN_TEAM_FAILURE
+  PULL_PROJECT_IN_TEAM_FAILURE,
+  UPDATE_TEAM_PROJECT_PERMISSION,
+  UPDATE_TEAM_PROJECT_PERMISSION_SUCCESS,
+  UPDATE_TEAM_PROJECT_PERMISSION_FAILURE
 } from './constants'
 
 
@@ -242,6 +245,30 @@ export function projectInTeamPulled (result) {
 export function pullProjectInTeamFail () {
   return {
     type: PULL_PROJECT_IN_TEAM_FAILURE
+  }
+}
+
+export function updateTeamProjectPermission (relationId, relTeamProjectDto, resolve) {
+  return {
+    type: UPDATE_TEAM_PROJECT_PERMISSION,
+    payload: {
+      relationId, relTeamProjectDto, resolve
+    }
+  }
+}
+
+export function teamProjectPermissionUpdated (result) {
+  return {
+    type: UPDATE_TEAM_PROJECT_PERMISSION_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function updateTeamProjectPermissionFail () {
+  return {
+    type: UPDATE_TEAM_PROJECT_PERMISSION_FAILURE
   }
 }
 

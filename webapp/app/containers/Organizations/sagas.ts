@@ -18,7 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
+import { takeLatest, takeEvery, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 import {
   LOAD_ORGANIZATIONS,
@@ -29,7 +29,9 @@ import {
   LOAD_ORGANIZATIONS_TEAMS,
   LOAD_ORGANIZATIONS_PROJECTS,
   LOAD_ORGANIZATIONS_MEMBERS,
-  ADD_TEAM
+  ADD_TEAM,
+  SEARCH_MEMBER,
+  INVITE_MEMBER
 } from './constants'
 
 import {
@@ -49,7 +51,11 @@ import {
   loadOrganizationsMembersFail,
   loadOrganizationsTeamsFail,
   addTeamFail,
-  teamAdded
+  teamAdded,
+  inviteMemberSuccess,
+  inviteMemberFail,
+  memberSearched,
+  searchMemberFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -179,6 +185,39 @@ export function* addTeam (action) {
   }
 }
 
+export function* searchMember ({payload}) {
+  const {keyword} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.user}?keyword=${keyword}`
+    })
+    const result = readListAdapter(asyncData)
+    yield put(memberSearched(result))
+  } catch (err) {
+    yield put(searchMemberFail())
+    message.error('查找用户失败， 请稍后再试')
+  }
+}
+
+export function* inviteMember ({payload}) {
+  const {orgId, memId} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.organizations}/${orgId}/member/${memId}`,
+      data: {
+        orgId,
+        memId
+      }
+    })
+    const result = readListAdapter(asyncData)
+    yield put(inviteMemberSuccess(result))
+  } catch (err) {
+    yield put(inviteMemberFail())
+    message.error('邀请用户失败， 请稍后再试')
+  }
+}
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
   yield [
@@ -190,6 +229,8 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(LOAD_ORGANIZATIONS_MEMBERS, getOrganizationsMembers as any),
     takeLatest(LOAD_ORGANIZATIONS_PROJECTS, getOrganizationsProjects as any),
     takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
-    takeEvery(ADD_TEAM, addTeam)
+    takeEvery(ADD_TEAM, addTeam),
+    takeLatest(INVITE_MEMBER, inviteMember as any),
+    throttle(600, SEARCH_MEMBER, searchMember as any)
   ]
 }

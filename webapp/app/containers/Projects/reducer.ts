@@ -63,8 +63,10 @@ function projectReducer (state = initialState, action) {
       return state.set('projects', projects.slice())
 
     case DELETE_PROJECT_SUCCESS:
-      return state.set('projects', projects.filter((d) => d.id !== payload.id))
-
+      if (projects) {
+        return state.set('projects', projects.filter((d) => d.id !== payload.id))
+      }
+      return state
     case LOAD_PROJECT_DETAIL:
       return state
         .set('currentProjectLoading', true)

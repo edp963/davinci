@@ -40,6 +40,7 @@ interface IProjectListProps {
   currentTeamProjects: ITeamProjects[]
   currentOrganizationProjects: any
   pullProjectInTeam: (projectId: number) => any
+  onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any)=>any
 }
 interface IProjectListState {
   modalLoading: boolean,
@@ -88,10 +89,27 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
   }
 
   private selectChanged = (targetStr: string) => (val) => {
-    console.log(targetStr)
-    console.log(val)
+    const { onUpdateTeamProjectPermission } = this.props
     this.forceUpdate(() => {
-      console.log(this[targetStr].getFieldsValue())
+      const {
+        id,
+        downloadPermisstion,
+        schedulePermisstion,
+        sharePermisstion,
+        sourcePermisstion,
+        viewPermisstion,
+        vizPermisstion,
+        widgetPermisstion
+      } = this[targetStr].getFieldsValue()
+      onUpdateTeamProjectPermission(id, {
+        downloadPermisstion,
+        schedulePermisstion,
+        sharePermisstion,
+        sourcePermisstion,
+        viewPermisstion,
+        vizPermisstion,
+        widgetPermisstion
+      }, (data) => {console.log(data)})
     })
   }
 

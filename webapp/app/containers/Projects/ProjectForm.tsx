@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-import { connect } from 'react-redux'
+import * as classnames from 'classnames'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -38,23 +38,17 @@ interface IProjectsFormProps {
   type: string
   form: any
   onCheckName: (id, name, type, resolve, reject) => void
-  organizations: any
+  organizations?: any
   onModalOk: () => any
   modalLoading: boolean
   onWidgetTypeChange: () => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-interface IProjectsFormState {
 
-}
-
-export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProjectsFormState> {
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   constructor (props) {
     super(props)
-    this.state = {
-
-    }
   }
   public render () {
     const { organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
@@ -89,14 +83,17 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
           : ''}
       </Option>
     )) : ''
+    const isShowOrganization = classnames({
+      [utilStyles.hide]: this.props.type === 'organizationProject'
+    })
     return (
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            { this.props.type === 'add' ? '创建' : '修改'}项目
+            创建项目
           </div>
           <div className={styles.desc}>
-            create new project
+            项目属于组织，在项目中可以通过配置source，生成可视化图表
           </div>
         </div>
         <div className={styles.body}>
@@ -110,8 +107,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                     <Input />
                   )}
                 </FormItem>
-                <FormItem label="组织" {...commonFormItemStyle}>
+                <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
                   {getFieldDecorator('orgId', {
+                    hidden: this.props.type === 'organizationProject',
                     rules: [{
                       required: true,
                       message: 'Name 不能为空'

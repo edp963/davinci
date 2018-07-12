@@ -45,7 +45,13 @@ import {
   LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
   ADD_TEAM,
   ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE
+  ADD_TEAM_FAILURE,
+  SEARCH_MEMBER,
+  SEARCH_MEMBER_SUCCESS,
+  SEARCH_MEMBER_FAILURE,
+  INVITE_MEMBER,
+  INVITE_MEMBER_SUCCESS,
+  INVITE_MEMBER_FAILURE
 } from './constants'
 
 export function loadOrganizationProjects (id) {
@@ -266,6 +272,55 @@ export function teamAdded (result) {
 export function addTeamFail () {
   return {
     type: ADD_TEAM_FAILURE
+  }
+}
+
+export function searchMember (keyword) {
+  return {
+    type: SEARCH_MEMBER,
+    payload: {
+      keyword
+    }
+  }
+}
+
+export function memberSearched (result) {
+  return {
+    type: SEARCH_MEMBER_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function searchMemberFail () {
+  return {
+    type: SEARCH_MEMBER_FAILURE
+  }
+}
+
+export function inviteMember (orgId, memId) {
+  return {
+    type: INVITE_MEMBER,
+    payload: {
+      orgId,
+      memId
+    }
+  }
+}
+
+export function inviteMemberSuccess (result) {
+  return {
+    type: INVITE_MEMBER_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function inviteMemberFail () {
+  return {
+    type: INVITE_MEMBER_FAILURE
   }
 }
 
