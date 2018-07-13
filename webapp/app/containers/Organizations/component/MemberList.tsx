@@ -1,48 +1,119 @@
 import * as React from 'react'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
+const Modal = require('antd/lib/modal')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
 const styles = require('../Organization.less')
+import MemberForm from '../../Teams/component/AddForm'
+import Avatar from '../../../components/Avatar'
+import * as Organization from '../Organization'
+import {IOrganization} from '../Organization'
 
+interface IMembersState {
+  category?: string
+  formVisible: boolean
+  modalLoading: boolean
+}
 
-export class MemberList extends React.PureComponent {
-  const onSearchMember = () => {
+interface IMembersProps {
+  organizationMembers: Organization.IOrganizationMembers[]
+  currentOrganization: Organization.IOrganization
+  inviteMemberList: any
+  onInviteMember: (ordId: number, memId: number) => any
+  handleSearchMember: (keywords: string) => any
+}
+
+export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      category: '',
+      formVisible: false,
+      modalLoading: false
+    }
+  }
+
+  private MemberForm: WrappedFormUtils
+  private showMemberForm = (type: string) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      category: type,
+      formVisible: true
+    })
+  }
+  private hideMemberForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.MemberForm.resetFields()
+    })
+  }
+
+  private add = () => {
+    const { currentOrganization } = this.props
+    this.MemberForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+         const { projectId } = values
+         const orgId = currentOrganization.id
+         console.log(orgId, projectId)
+         this.props.onInviteMember(currentOrganization.id, projectId)
+        // this.MemberForm()
+      }
+    })
+  }
+
+  private search = (val) => {
 
   }
-  const showMemberForm = (type: string) => () => {
 
+  private searchMember = () => {
+    this.forceUpdate(() => {
+      this.MemberForm.validateFieldsAndScroll((err, values) => {
+        if (!err) {
+          const { searchValue } = values
+          this.props.handleSearchMember(searchValue)
+        }
+      })
+    })
   }
+
   public render () {
+    const { formVisible, category, modalLoading } = this.state
+    const { organizationMembers, inviteMemberList } = this.props
     const addButton =  (
-      <Tooltip placement="bottom" title="新增">
+      <Tooltip placement="bottom" title="创建">
         <Button
           size="large"
           type="primary"
           icon="plus"
-          onClick={this.showMemberForm('add')}
+          onClick={this.showMemberForm('member')}
         />
       </Tooltip>
     )
     const columns = [{
       title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      render: (text) => <a href="#">{text}</a>
+      dataIndex: 'user',
+      key: 'user',
+      render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
     }, {
       title: 'role',
-      dataIndex: 'role',
-      key: 'role'
+      dataIndex: 'user',
+      key: 'userKey',
+      render: (text) => <span>{text.role}</span>
     }, {
       title: 'team',
-      dataIndex: 'team',
-      key: 'team'
+      dataIndex: 'teamNum',
+      key: 'teamNum'
     }, {
       title: 'settings',
+      dataIndex: 'user',
       key: 'settings',
       render: (text, record) => (
         <span>
@@ -53,22 +124,6 @@ export class MemberList extends React.PureComponent {
       )
     }]
 
-    const data = [{
-      key: '1',
-      name: 'John Brown',
-      role: 32,
-      team: 'New York No. 1 Lake Park'
-    }, {
-      key: '2',
-      name: 'Jim Green',
-      role: 42,
-      team: 'London No. 1 Lake Park'
-    }, {
-      key: '3',
-      name: 'Joe Black',
-      role: 32,
-      team: 'Sidney No. 1 Lake Park'
-    }]
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -76,7 +131,7 @@ export class MemberList extends React.PureComponent {
             <Select
               size="large"
               placeholder="placeholder"
-              onChange={this.onSearchMember}
+              onChange={this.search}
               style={{ width: 120 }}
               allowClear
             >
@@ -89,7 +144,7 @@ export class MemberList extends React.PureComponent {
             <Input.Search
               size="large"
               placeholder="placeholder"
-              onSearch={this.onSearchMember}
+              onSearch={this.search}
             />
           </Col>
           <Col span={1} offset={2}>
@@ -101,10 +156,25 @@ export class MemberList extends React.PureComponent {
             <Table
               bordered
               columns={columns}
-              dataSource={data}
+              dataSource={organizationMembers}
             />
           </div>
         </Row>
+        <Modal
+          title={null}
+          visible={formVisible}
+          footer={null}
+          onCancel={this.hideMemberForm}
+        >
+          <MemberForm
+            category={category}
+            inviteMemberList={inviteMemberList}
+            handleSearchMember={this.searchMember}
+            organizationOrTeam={this.props.currentOrganization}
+            ref={(f) => { this.MemberForm = f }}
+            addHandler={this.add}
+          />
+        </Modal>
       </div>
     )
   }

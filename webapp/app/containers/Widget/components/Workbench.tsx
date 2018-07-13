@@ -494,34 +494,20 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private textEditorChange = (content) => {
-    const { chartParams } = this.state
+    const { chartInfo } = this.state
 
     const deleteHtml = content.replace(/<\/?.+?>/g, '')
     const deleteSpace = deleteHtml.replace(/ /g, '')
-    this.widgetForm.props.form.setFieldsValue({
+    this.widgetForm.props.form.setFieldsValue(this.encodeFieldsName(chartInfo, {
       richTextContent: deleteSpace,
       richTextEdited: content
-    })
-    const temp = {
-      colorList: chartParams.colorList,
-      create_by: chartParams.create_by,
-      desc: chartParams.desc,
-      expired: chartParams.expired,
-      flatTable_id: chartParams.flatTable_id,
-      id: chartParams.id,
-      name: chartParams.name,
-      useCache: chartParams.useCache,
-      widgetlib_id: chartParams.widgetlib_id
-    }
+    }))
     const richTextObj = {
       richTextContent: deleteSpace,
       richTextEdited: content
     }
     this.setState({
-      chartParams: {
-        ...temp,
-        ...richTextObj
-      }
+      chartParams: richTextObj
     })
   }
 

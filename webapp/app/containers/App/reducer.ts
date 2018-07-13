@@ -25,9 +25,11 @@ import {
   LOGOUT,
   SET_LOGIN_USER,
   SHOW_NAVIGATOR,
-  HIDE_NAVIGATOR
+  HIDE_NAVIGATOR,
+  ACTIVE_SUCCESS
 } from './constants'
 import { fromJS } from 'immutable'
+
 
 const initialState = fromJS({
   logged: false,
@@ -50,6 +52,10 @@ function appReducer (state = initialState, action) {
     case LOGIN_ERROR:
       return state
         .set('loginLoading', false)
+    case ACTIVE_SUCCESS:
+      return state
+        .set('logged', true)
+        .set('loginUser', payload.user)
     case LOGOUT:
       return state
         .set('logged', false)

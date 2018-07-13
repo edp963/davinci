@@ -28,10 +28,22 @@ import {
   GET_LOGIN_USER_ERROR,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
-  CHECK_NAME
+  CHECK_NAME,
+  PROJECTS_CHECK_NAME,
+  ACTIVE,
+  ACTIVE_SUCCESS,
+  ACTIVE_ERROR,
+  UPDATE_PROFILE,
+  UPDATE_PROFILE_SUCCESS,
+  UPDATE_PROFILE_ERROR,
+  CHANGE_USER_PASSWORD,
+  CHANGE_USER_PASSWORD_FAILURE,
+  CHANGE_USER_PASSWORD_SUCCESS
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
+
+
 
 export const logout = promiseActionCreator(LOGOUT)
 
@@ -60,6 +72,31 @@ export function logged (user) {
 export function loginError () {
   return {
     type: LOGIN_ERROR
+  }
+}
+
+export function active (token, resolve) {
+  return {
+    type: ACTIVE,
+    payload: {
+      token,
+      resolve
+    }
+  }
+}
+
+export function activeSuccess (user) {
+  return {
+    type: ACTIVE_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function activeError () {
+  return {
+    type: ACTIVE_ERROR
   }
 }
 
@@ -101,6 +138,87 @@ export function checkNameAction (id, name, type, params, resolve, reject) {
       resolve,
       reject
     }
+  }
+}
+
+export function checkNameUniqueAction (pathname, data, resolve, reject) {
+  return {
+    type: CHECK_NAME,
+    payload: {
+      pathname,
+      data,
+      resolve,
+      reject
+    }
+  }
+}
+
+export function projectsCheckName (projectId, id, name, type, resolve, reject) {
+  return {
+    type: PROJECTS_CHECK_NAME,
+    payload: {
+      projectId,
+      id,
+      name,
+      type,
+      resolve,
+      reject
+    }
+  }
+}
+
+export function updateProfile (id, name, description, department, resolve) {
+  return {
+    type: UPDATE_PROFILE,
+    payload: {
+      id,
+      name,
+      description,
+      department,
+      resolve
+    }
+  }
+}
+
+export function updateProfileSuccess (user) {
+  return {
+    type: UPDATE_PROFILE_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function updateProfileError () {
+  return {
+    type: UPDATE_PROFILE_ERROR
+  }
+}
+
+
+export function changeUserPassword (info, resolve, reject) {
+  return {
+    type: CHANGE_USER_PASSWORD,
+    payload: {
+      info,
+      resolve,
+      reject
+    }
+  }
+}
+
+export function userPasswordChanged (result) {
+  return {
+    type: CHANGE_USER_PASSWORD_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function changeUserPasswordFail () {
+  return {
+    type: CHANGE_USER_PASSWORD_FAILURE
   }
 }
 

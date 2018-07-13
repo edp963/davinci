@@ -31,6 +31,7 @@ import { makeSelectLoginUser } from '../../containers/App/selectors'
 
 import styles from './Navigator.less'
 
+const goGithub = () => window.open('https://github.com/edp963/davinci')
 export function Navigator (props) {
   const headerClass = classnames({
     [styles.header]: true,
@@ -71,11 +72,11 @@ export function Navigator (props) {
       </div>
 
       <ul className={styles.tools}>
-        <li className={styles.emailHide}>
-          <p>{props.loginUser.email}</p>
-        </li>
+        {/*<li className={styles.emailHide}>*/}
+          {/*<p>{props.loginUser.email}</p>*/}
+        {/*</li>*/}
         <li>
-          <Icon type="github" />
+          <Icon type="github" onClick={goGithub}/>
         </li>
         <li>
           <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">

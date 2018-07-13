@@ -1,0 +1,108 @@
+@import "../../assets/less/variable";
+
+.bizlogic {
+  // width: 100%;
+  height: 100%;
+  // max-width: 1200px;
+  // margin: 20px;
+  background-color: white;
+ 
+  flex-shrink: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+
+  .header {
+    border-radius: 4px 4px 0 0;
+    background: #fff;
+    color: rgba(0,0,0,.65);
+    border-bottom: 1px solid #e9e9e9;
+    height: 40px;
+
+    .title {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 40px;
+    }
+
+    .historyBack {
+      padding: 0 13px;
+      line-height: 40px;
+      cursor: pointer;
+      .backIcon:before {
+        font-size: 18px !important;
+      }
+    }
+  }
+
+  .formView {
+    width: 100%;
+    // max-width: 1200px;
+    height: 100%;
+    // margin: 24px auto;
+   
+    display: flex;
+    flex-direction: row;
+    flex: 1 1 auto;
+    border-bottom: 1px solid @border-color-base;
+  
+    .formLeft {
+      width: 320px;
+      flex-shrink: 0;
+      overflow: auto;
+      padding: 0 16px;
+      border-right: 1px solid @border-color-base;
+      display: flex;
+      flex-direction: column;
+  
+      .leftInput {
+        height: 212px;
+        flex-shrink: 0;
+        margin-top: 16px
+      }
+      .sourceTree {
+        flex-shrink: 1;
+        height: 100%;
+        overflow: auto;
+        margin-top: 16px;
+        background-color: @light-bg;
+      }
+      .treeSearch {
+        margin-bottom: -16px;
+      }
+    }
+    
+    .formRight {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+  
+      .formTop {
+        height: 46%;
+        overflow-y: auto;
+        padding: 16px 16px 0 16px;
+  
+        .noDeclaration {
+          display: none;
+        }
+      }
+      .formBottom {
+        height: 50%;
+        overflow-y: auto;
+        border-top: 1px solid @border-color-base;
+        padding-left: 16px;
+      }
+      .fromSqlAlert {
+        margin-top: 10px;
+      }
+      .fromBtn {
+        margin: 10px 16px;
+        text-align: right;
+      }
+    }
+  }
+  .footBtn {
+    flex-shrink: 0;
+    margin: 10px 16px 16px auto;
+  }
+}

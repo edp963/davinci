@@ -42,9 +42,14 @@ const makeSelectTableLoading = () => createSelector(
   (bizlogicState) => bizlogicState.get('tableLoading')
 )
 
-const makeSelectFormLoading = () => createSelector(
+const makeSelectModalLoading = () => createSelector(
   selectBizlogic,
-  (bizlogicState) => bizlogicState.get('formLoading')
+  (bizlogicState) => bizlogicState.get('modalLoading')
+)
+
+const makeSelectExecuteLoading = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('executeLoading')
 )
 
 export {
@@ -53,5 +58,6 @@ export {
   makeSelectSqlValidateMsg,
   makeSelectSqlValidateCode,
   makeSelectTableLoading,
-  makeSelectFormLoading
+  makeSelectModalLoading,
+  makeSelectExecuteLoading
 }

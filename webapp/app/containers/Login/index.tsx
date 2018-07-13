@@ -27,11 +27,18 @@ import Background from './Background'
 import LoginForm from './LoginForm'
 const Icon = require('antd/lib/icon')
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from '../App/reducer'
+import saga from '../App/sagas'
+
 import { login, logged, setLoginUser } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import checkLogin from '../../utils/checkLogin'
 import { setToken } from '../../utils/request'
+
 
 const styles = require('./Login.less')
 
@@ -85,6 +92,11 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     })
   }
 
+  private toSignUp = () => {
+    const { router } = this.props
+    router.replace('/register')
+  }
+
   private doLogin = () => {
     const { onLogin, router } = this.props
     const { username, password } = this.state
@@ -121,6 +133,10 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
             }
             登 录
           </button>
+          <p className={styles.tips}>
+            <span>还没有账号？ </span>
+            <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
+          </p>
         </div>
       </div>
     )
@@ -139,5 +155,16 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect<{}, {}, ILoginProps>(mapStateToProps, mapDispatchToProps)(Login)
+const withConnect = connect<{}, {}, ILoginProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'global', reducer })
+const withSaga = injectSaga({ key: 'global', saga })
+
+export default compose(
+ withReducer,
+ withSaga,
+ withConnect
+)(Login)
+
+
+
 

@@ -1,18 +1,37 @@
 @import "../../assets/less/variable";
 
 .groupList {
-  padding: 16px 24px;
+  padding: 8px 24px;
   box-shadow: 0 -1px 0 @grey-line-color;
   display: flex;
   justify-content: space-between;
   &:hover {
     color: @blue;
   }
-  .orgName {
-    font-size: 18px;
-    font-weight: 400;
+  .orgHeader {
+    display: flex;
+    flex-direction: column;
+    .avatar {
+      display: flex;
+      align-items: center;
+      img {
+        vertical-align: top;
+      }
+      .title {
+        margin-left: 16px;
+        font-weight: 400;
+        font-size: 18px;
+      }
+    }
+    .name {
+      .desc {
+        font-size: 12px;
+        color: @description-text;
+      }
+    }
   }
   .setting {
+    align-self: center;
     font-size: 18px;
     cursor: pointer;
   }
@@ -26,6 +45,21 @@
   }
 }
 
+.organizationLogo {
+  margin: 24px auto 24px 8px;
+  display: flex;
+  img {
+    vertical-align: top;
+  }
+  .title {
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 40px;
+    margin-left: 16px;
+    color: @rich-text;
+  }
+}
+
 .container {
   display: flex;
   padding-left: 40px;
@@ -33,6 +67,11 @@
   flex-direction: column;
   .form {
     flex: 1;
+  }
+  hr {
+    margin: 0 0 48px 0;
+    border: 0;
+    border-top: 1px solid @grey-line-color;
   }
 }
 
@@ -46,12 +85,19 @@
   border-bottom: 1px solid @grey-line-color;
   display: flex;
   flex-direction: column;
-  .title {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: @blue;
-    cursor: pointer;
+  .titleWrapper {
+    display: flex;
+    justify-content: space-between;
+    .title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: @blue;
+      cursor: pointer;
+    }
+    .delete {
+
+    }
   }
   .desc {
     font-size: 12px;
@@ -80,4 +126,113 @@
     }
   }
 }
+.create {
+  font-size: 24px;
+  line-height: 32px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.formWrapper {
+  padding: 16px;
+  text-align: left;
+  .header {
+    .title{
+      font-size: 24px;
+      color:@rich-text;
+      font-weight: 600;
+    }
+    .desc{
+      margin-top: 4px;
+      font-size: 14px;
+      color:@description-text;
+    }
+  }
+  .body {
+    margin: 16px auto;
+  }
+  .footer{
+    button {
+      margin-right: 6px;
+    }
+  }
+}
+
+.permissionZone {
+  margin:20px 20px;
+}
+.selectOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  .title{
+    display: flex;
+    align-items: center;
+  }
+  .owner{
+    color: @rich-text;
+    font-size: 18px;
+    font-weight: 600;
+    margin-right: 8px;
+  }
+}
+
+.dangerZone{
+  margin-left: 20px;
+  .title {
+    font-weight: 600;
+    font-size: 16px;
+    margin: 24px auto 16px auto;
+    color: crimson;
+  }
+  .titleDesc {
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid crimson;
+    width: 35%;
+    display: flex;
+    flex-direction: column;
+    .button {
+      font-weight: 600;
+      font-size: 18px;
+      color: @rich-text;
+    }
+    .desc{
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: crimson;
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  vertical-align: text-bottom;
+  padding: 2px 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  color: #586069;
+  background-color: rgba(27,31,35,0.08);
+  border-radius: 20px;
+  margin-left: 4px;
+}
+
+.avatarWrapper {
+  display: flex;
+}
+.avatarName {
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: @blue;
+  line-height: 40px;
+}
+
+.radioStyle {
+  display: block;
+  height: 30px;
+  line-Height: 30px;
+}
+
 

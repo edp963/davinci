@@ -21,6 +21,12 @@
 import * as React from 'react'
 import {connect} from 'react-redux'
 
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from '../App/reducer'
+import saga from '../App/sagas'
+
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -29,16 +35,19 @@ const Select = require('antd/lib/select')
 const Icon = require('antd/lib/icon')
 const FormItem = Form.Item
 const Option = Select.Option
-import {checkNameAction} from '../App/actions'
+
+import { projectsCheckName } from '../App/actions'
 
 const utilStyles = require('../../assets/less/util.less')
 
 interface ISourceFormProps {
+  projectId: number
   type: string
   testLoading: boolean
   form: any
   onTestSourceConnection: () => any
   onCheckName: (
+    projectId: number,
     id: number,
     name: string,
     type: string,
@@ -50,12 +59,12 @@ interface ISourceFormProps {
 export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
   public checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
+    const { onCheckName, type, projectId } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
     const idName = type === 'add' ? '' : id
     const typeName = 'source'
-    onCheckName(idName, value, typeName,
+    onCheckName(projectId, idName, value, typeName,
       () => {
         callback()
       }, (err) => {
@@ -188,8 +197,16 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (projectId, id, name, type, resolve, reject) => dispatch(projectsCheckName(projectId, id, name, type, resolve, reject))
   }
 }
 
-export default Form.create()(connect(null, mapDispatchToProps)(SourceForm))
+const withConnect = connect(null, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'global', reducer })
+const withSaga = injectSaga({ key: 'global', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Form.create()(SourceForm))

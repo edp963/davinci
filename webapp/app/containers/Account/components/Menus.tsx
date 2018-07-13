@@ -9,11 +9,15 @@ const defaultItems = [
   {icons: 'usergroup-add', key: '4', text: '我的团队', route: 'teams'}
 ]
 
-export class Menus extends React.PureComponent <{}, {}> {
+interface IMenusProps {
+  active: string
+}
+
+export class Menus extends React.PureComponent <IMenusProps, {}> {
 
   public render () {
     const menus = defaultItems.map((item) => (
-      <Menu.Item key={item.key} style={{ fontSize: '16px' }}>
+      <Menu.Item key={item.route} style={{ fontSize: '16px' }}>
         <Link to={`/account/${item.route}`}>
           <Icon type={item.icons}/>{item.text}
         </Link>
@@ -23,6 +27,7 @@ export class Menus extends React.PureComponent <{}, {}> {
       <div>
         <Menu
           style={{ padding: '16px 10px' }}
+          selectedKeys={[this.props.active, `${this.props.active}s`]}
         >
           {menus}
         </Menu>

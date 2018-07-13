@@ -79,7 +79,7 @@
     </header>
     <article>
       <div class="title">您好, <span th:text="${username}">username</span></div>
-      <a class="sure" th:href="@{http://localhost:5002/#/activate(token=${token})}">激活davinci</a>
+      <a class="sure" th:href="@{http://localhost:5002/(token=${token})#/activate}">激活davinci</a>
       <p class="detail">此邮件为注册davinci确认邮件。如非本人操作，只需删除此邮件即可。</p>
     </article>
   </div>

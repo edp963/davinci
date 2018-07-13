@@ -1,67 +1,150 @@
 import * as React from 'react'
+import {connect} from 'react-redux'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Icon = require('antd/lib/icon')
+const Modal = require('antd/lib/modal')
 const styles = require('./Project.less')
 import * as classnames from 'classnames'
-const projectArr = [{
-  id : 1,
-  publish: true,
-  pic: 7,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 2,
-  publish: true,
-  pic: 6,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 3,
-  publish: true,
-  pic: 2,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 4,
-  publish: true,
-  pic: 1,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id : 5,
-  publish: true,
-  pic: 3,
-  name: '演示文档',
-  desc: 'ssssss'
-}, {
-  id: 'add',
-  type: 'add'
-}]
+import {InjectedRouter} from 'react-router/lib/Router'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
+import {addProject, deleteProject, editProject, loadProjects} from './actions'
+import {compose} from 'redux'
+import {makeSelectLoginUser} from '../App/selectors'
+import {makeSelectProjects} from './selectors'
+import injectReducer from '../../utils/injectReducer'
+import {createStructuredSelector} from 'reselect'
+import injectSaga from '../../utils/injectSaga'
+import ProjectsForm from './ProjectForm'
+import saga from './sagas'
+import reducer from './reducer'
+import reducerOrganization from '../Organizations/reducer'
+import sagaOrganization from '../Organizations/sagas'
+import reducerApp from '../App/reducer'
+import sagaApp from '../App/sagas'
+import {loadOrganizations} from '../Organizations/actions'
+import {makeSelectOrganizations} from '../Organizations/selectors'
+import {checkNameUniqueAction} from '../App/actions'
+
 interface IProjectsProps {
-  router: any
+  router: InjectedRouter
+  organizations: any
+  onEditProject: (project: any, resolve: () => any) => any
+  onLoadProjects: () => any
+  onAddProject: (project: any, resolve: () => any) => any
+  onLoadOrganizations: () => any,
+  onDeleteProject: (id: number) => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
-export class Projects extends React.PureComponent<IProjectsProps, {}> {
+
+interface IProjectsState {
+  formType?: string
+  formVisible: boolean
+  modalLoading: boolean
+}
+interface IProject {
+  name?: string
+  id?: number
+  description?: string
+  pic?: number
+  orgId?: number
+  visibility?: boolean
+}
+
+export class Projects extends React.PureComponent<IProjectsProps, IProjectsState> {
   constructor (props) {
     super(props)
+    this.state = {
+      formType: '',
+      formVisible: false,
+      modalLoading: false
+    }
   }
-  private showProjectForm = (type: string, d: any) => () => {
-    console.log('show')
-    console.log(type, d)
+
+  private ProjectForm: WrappedFormUtils
+  private showProjectForm = (formType, project?: IProject) => (e) => {
+    this.stopPPG(e)
+    this.setState({
+      formType,
+      formVisible: true
+    }, () => {
+      if (project) {
+        const {orgId, id, name, pic, description} = project
+        this.widgetTypeChange(`${orgId}`).then(
+          () => this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description})
+        )
+      }
+    })
   }
-  private onDeleteProject = (id: number) => () => {
-    console.log(id)
+  public componentWillMount () {
+    this.props.onLoadProjects()
+    this.props.onLoadOrganizations()
+  }
+
+  private stopPPG = (e) => {
+    e.stopPropagation()
+  }
+  private hideProjectForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.ProjectForm.resetFields()
+    })
+  }
+
+  private onModalOk = () => {
+    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        if (this.state.formType === 'add') {
+          this.props.onAddProject({
+            ...values,
+            pic: `${Math.ceil(Math.random() * 19)}`,
+            config: '{}'
+          }, () => {
+            this.hideProjectForm() })
+        } else {
+          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
+        }
+      }
+    })
+  }
+
+  private widgetTypeChange = (val) =>
+    new Promise((resolve) => {
+      this.forceUpdate(() => resolve())
+    })
+
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckUniqueName } = this.props
+    const { getFieldsValue } = this.ProjectForm
+    const { orgId, id } = getFieldsValue()
+    const data = {
+      name: value,
+      orgId,
+      id
+    }
+    onCheckUniqueName('project', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
   }
   private toProject = (d: any) => () => {
     const pid = d.id
     this.props.router.push(`/project/${pid}`)
   }
-  // private toGrid = (dashboard) => () => {
-  //   this.props.router.push(`/report/dashboard/${dashboard.id}`)
-  // }
   public render () {
+    const { formType, formVisible, modalLoading } = this.state
+    const { onDeleteProject, organizations, projects } = this.props
+    const projectArr = Array.isArray(projects) ? [...projects, ...[{
+      id: 'add',
+      type: 'add'
+    }]] : []
     const projectItems = projectArr
       ? projectArr.map((d) => {
         if (d.type && d.type === 'add') {
@@ -76,7 +159,7 @@ export class Projects extends React.PureComponent<IProjectsProps, {}> {
             >
               <div
                 className={styles.unit}
-                onClick={this.toProject(d)}
+                onClick={this.showProjectForm('add')}
               >
                 <div className={styles.createNewWrapper}>
                   <div className={styles.createIcon}>
@@ -101,20 +184,20 @@ export class Projects extends React.PureComponent<IProjectsProps, {}> {
           <Popconfirm
             title="确定删除？"
             placement="bottom"
-            onConfirm={this.onDeleteProject(d.id)}
+            onConfirm={onDeleteProject(d.id)}
           >
             <Tooltip title="删除">
-              <Icon className={styles.delete} type="delete" />
+              <Icon className={styles.delete} type="delete" onClick={this.stopPPG}/>
             </Tooltip>
           </Popconfirm>
         )
 
         const itemClass = classnames({
           [styles.unit]: true,
-          [styles.editing]: !d.publish
+      //    [styles.editing]: !d.publish
         })
 
-        const editHint = !d.publish && '(编辑中…)'
+      //  const editHint = !d.publish && '(编辑中…)'
         const colItems = (
             <Col
               key={d.id}
@@ -131,7 +214,8 @@ export class Projects extends React.PureComponent<IProjectsProps, {}> {
               >
                 <header>
                   <h3 className={styles.title}>
-                    {d.name} {editHint}
+                    {d.name}
+                    {/*{editHint}*/}
                   </h3>
                   <p className={styles.content}>
                     {d.desc}
@@ -144,7 +228,6 @@ export class Projects extends React.PureComponent<IProjectsProps, {}> {
           )
         return colItems
       }) : ''
-
     return (
       <div className={styles.wrap}>
         <div className={styles.container}>
@@ -156,12 +239,65 @@ export class Projects extends React.PureComponent<IProjectsProps, {}> {
           <Row gutter={20}>
             {projectItems}
           </Row>
+          <Modal
+            title={null}
+            footer={null}
+            visible={formVisible}
+            onCancel={this.hideProjectForm}
+          >
+            <ProjectsForm
+              type={formType}
+              ref={(f) => { this.ProjectForm = f }}
+              modalLoading={modalLoading}
+              organizations={organizations}
+              onModalOk={this.onModalOk}
+              onCheckUniqueName={this.checkNameUnique}
+              onWidgetTypeChange={this.widgetTypeChange}
+            />
+          </Modal>
         </div>
       </div>
     )
   }
 }
 
-export default Projects
+
+const mapStateToProps = createStructuredSelector({
+  organizations: makeSelectOrganizations(),
+  projects: makeSelectProjects(),
+  loginUser: makeSelectLoginUser()
+})
+
+export function mapDispatchToProps (dispatch) {
+  return {
+    onLoadProjects: () => dispatch(loadProjects()),
+    onLoadOrganizations: () => dispatch(loadOrganizations()),
+    onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
+    onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
+    onDeleteProject: (id) => () => dispatch(deleteProject(id)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+  }
+}
+
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+
+const withReducer = injectReducer({ key: 'project', reducer })
+const withSaga = injectSaga({ key: 'project', saga })
+
+const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
+const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
+
+const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+
+export default compose(
+  withReducer,
+  withOrganizationReducer,
+  withAppReducer,
+  withAppSaga,
+  withSaga,
+  withOrganizationSaga,
+  withConnect
+)(Projects)
 
 

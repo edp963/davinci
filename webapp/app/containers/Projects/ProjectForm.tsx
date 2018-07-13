@@ -20,230 +20,157 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { connect } from 'react-redux'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
-const Steps = require('antd/lib/steps')
-const Transfer = require('antd/lib/transfer')
+const Tag = require('antd/lib/tag')
+const Button = require('antd/lib/button')
+const Select = require('antd/lib/select')
+const Option = Select.Option
 const FormItem = Form.Item
-const RadioGroup = Radio.Group
-const Step = Steps.Step
-
-import { checkNameAction } from '../App/actions'
-
+const styles = require('./Project.less')
+import Avatar from '../../components/Avatar'
 const utilStyles = require('../../assets/less/util.less')
 
-interface IUserFormProps {
-  form: any
+interface IProjectsFormProps {
   type: string
-  step: number
-  groupSource: any[]
-  groupTarget: any[]
-  onGroupChange: () => any
-  onCheckName: (
-    id: number,
-    name: string,
-    type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
-  ) => any
+  form: any
+  onCheckName: (id, name, type, resolve, reject) => void
+  organizations?: any
+  onModalOk: () => any
+  modalLoading: boolean
+  onWidgetTypeChange: () => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-export class UserForm extends React.PureComponent<IUserFormProps, {}> {
-  private checkPasswordConfirm = (rule, value, callback) => {
-    if (value && value !== this.props.form.getFieldValue('password')) {
-      callback('两次输入的密码不一致')
-    } else {
-      callback()
-    }
-  }
 
-  private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    const idName = type === 'add' ? '' : id
-    const typeName = 'user'
-    onCheckName(idName, value, typeName,
-      (res) => {
-        callback()
-      }, (err) => {
-        callback(err)
-      })
+export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
+  constructor (props) {
+    super(props)
   }
-
-  private forceCheckConfirm = (rule, value, callback) => {
-    const { form } = this.props
-    if (form.getFieldValue('confirmPassword')) {
-      form.validateFields(['confirmPassword'], { force: true })
-    }
-    callback()
-  }
-
-  private getTransferRowKey = (g) => g.id
-  private transferRender = (item) => item.name
-  private onTransferChange = (cb) => (nextTargetKeys, direction, moveKeys) => {
-    cb(nextTargetKeys)
-  }
-
   public render () {
-    const {
-      form,
-      type,
-      step,
-      groupSource,
-      groupTarget,
-      onGroupChange
-    } = this.props
-    const { getFieldDecorator } = form
-
+    const { organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
+    const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
-      labelCol: { span: 6 },
-      wrapperCol: { span: 15 }
+      labelCol: { span: 3 },
+      wrapperCol: { span: 24 }
     }
+    const modalButtons = [(
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        onClick={this.props.onModalOk}
+        loading={modalLoading}
+        disabled={modalLoading}
+      >
+        保 存
+      </Button>
+    )]
 
-    const baseInfoStyle = classnames({
-      [utilStyles.hide]: !!step
+    const organizationOptions = organizations ? organizations.map((o) => (
+      <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
+        <div className={styles.title}>
+          <span className={styles.owner}>{o.name}</span>
+          {`${o.id}` !== this.props.form.getFieldValue('orgId')
+            ? (<Tag color="#108ee9">Owner</Tag>)
+            : ''}
+        </div>
+        {`${o.id}` !== this.props.form.getFieldValue('orgId')
+          ? (<Avatar size="small" path={o.avatar}/>)
+          : ''}
+      </Option>
+    )) : ''
+    const isShowOrganization = classnames({
+      [utilStyles.hide]: this.props.type === 'organizationProject'
     })
-    const groupInfoStyle = classnames({
-      [utilStyles.hide]: !step
-    })
-    const passwordStyle = classnames({
-      [utilStyles.hide]: type === 'edit'
-    })
-    // Transfer 初次渲染如果在 display:none 情况下，列表文字会不渲染
-    const groupTransfer = step
-      ? (
-        <Transfer
-          titles={['列表', '已选']}
-          listStyle={{width: '220px'}}
-          dataSource={groupSource}
-          rowKey={this.getTransferRowKey}
-          targetKeys={groupTarget}
-          render={this.transferRender}
-          onChange={this.onTransferChange(onGroupChange)}
-        />
-  )
-  : ''
-
     return (
-      <Form>
-        <Row className={utilStyles.formStepArea}>
-    <Col span={24}>
-    <Steps current={step}>
-    <Step title="基本信息" />
-    <Step title="用户组" />
-    <Step title="完成" />
-      </Steps>
-      </Col>
-      </Row>
-      <Row className={baseInfoStyle}>
-    <Col span={24}>
-    <FormItem className={utilStyles.hide}>
-    {getFieldDecorator('id', {
-      hidden: type === 'add'
-    })(
-      <Input />
-    )}
-    </FormItem>
-    <FormItem label="Email" {...commonFormItemStyle}>
-    {getFieldDecorator('email', {
-      rules: [{
-        required: true,
-        message: 'Email 不能为空'
-      }, {
-        type: 'email',
-        message: '请输入正确的 Email 格式'
-      }, {
-        validator: this.checkNameUnique
-      }]
-    })(
-      <Input placeholder="Email" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24} className={passwordStyle}>
-    <FormItem label="密码" {...commonFormItemStyle}>
-    {getFieldDecorator('password', {
-      rules: [{
-        required: true,
-        message: '密码不能为空'
-      }, {
-        min: 6,
-        max: 20,
-        message: '密码长度为6-20位'
-      }, {
-        validator: this.forceCheckConfirm
-      }],
-      hidden: type === 'edit'
-    })(
-      <Input type="password" placeholder="Password" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24} className={passwordStyle}>
-    <FormItem label="确认密码" {...commonFormItemStyle}>
-    {getFieldDecorator('confirmPassword', {
-      rules: [{
-        required: true,
-        message: '请确认密码'
-      }, {
-        validator: this.checkPasswordConfirm
-      }],
-      hidden: type === 'edit'
-    })(
-      <Input type="password" placeholder="Confirm Password" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="姓名" {...commonFormItemStyle}>
-    {getFieldDecorator('name', {
-      initialValue: ''
-    })(
-      <Input placeholder="Name" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="职位" {...commonFormItemStyle}>
-    {getFieldDecorator('title', {
-      initialValue: ''
-    })(
-      <Input placeholder="Title" />
-    )}
-    </FormItem>
-    </Col>
-    <Col span={24}>
-    <FormItem label="用户类型" {...commonFormItemStyle}>
-    {getFieldDecorator('admin', {
-      initialValue: false
-    })(
-      <RadioGroup>
-        <Radio value={false}>普通用户</Radio>
-        <Radio value>管理员</Radio>
-    </RadioGroup>
-    )}
-    </FormItem>
-    </Col>
-    </Row>
-    <Row className={groupInfoStyle}>
-    <Col span={24}>
-      {groupTransfer}
-      </Col>
-      </Row>
-      </Form>
-  )
+      <div className={styles.formWrapper}>
+        <div className={styles.header}>
+          <div className={styles.title}>
+            创建项目
+          </div>
+          <div className={styles.desc}>
+            项目属于组织，在项目中可以通过配置source，生成可视化图表
+          </div>
+        </div>
+        <div className={styles.body}>
+          <Form>
+            <Row gutter={8}>
+              <Col span={24}>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('id', {
+                    hidden: this.props.type === 'add'
+                  })(
+                    <Input />
+                  )}
+                </FormItem>
+                <FormItem label="组织" {...commonFormItemStyle} className={isShowOrganization}>
+                  {getFieldDecorator('orgId', {
+                    hidden: this.props.type === 'organizationProject',
+                    rules: [{
+                      required: true,
+                      message: 'Name 不能为空'
+                    }]
+                  })(
+                    <Select
+                      placeholder="Please select a organization"
+                      onChange={onWidgetTypeChange}
+                    >
+                      {organizationOptions}
+                    </Select>
+                  )}
+                </FormItem>
+                <FormItem label="名称" {...commonFormItemStyle}>
+                  {getFieldDecorator('name', {
+                    rules: [{
+                      required: true,
+                      message: 'Name 不能为空'
+                    }, {
+                      validator: onCheckUniqueName
+                    }]
+                  })(
+                    <Input placeholder="Name" />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="描述" {...commonFormItemStyle}>
+                  {getFieldDecorator('description', {
+                    initialValue: ''
+                  })(
+                    <Input
+                      placeholder="Description"
+                      type="textarea"
+                      autosize={{minRows: 2, maxRows: 6}}
+                    />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('pic', {
+                    hidden: this.props.type === 'add'
+                  })(
+                    <Input />
+                  )}
+                </FormItem>
+              </Col>
+            </Row>
+          </Form>
+        </div>
+        <div className={styles.footer}>
+          {modalButtons}
+        </div>
+      </div>
+    )
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
-  }
-}
+export default Form.create()(ProjectsForm)
 
-export default Form.create()(connect(null, mapDispatchToProps)(UserForm))
+
+
+

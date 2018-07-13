@@ -118,3 +118,25 @@ export enum OrderDirection {
   Asc,
   Desc
 }
+
+/**
+ * View 组件
+ */
+export function generateData (sourceData) {
+  const tableArr = []
+  sourceData.forEach((i) => {
+    const children = []
+    i.columns.forEach((j) => {
+      children.push({
+        title: j.name,
+        key: j.name
+      })
+    })
+    tableArr.push({
+      title: i.tableName,
+      key: i.tableName,
+      children
+    })
+  })
+  return tableArr
+}
