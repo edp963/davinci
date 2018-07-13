@@ -157,10 +157,12 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
 
   public render () {
     const {
+      params,
       displays,
       loginUser,
       onDeleteDisplay
     } = this.props
+    const projectId = params.pid
 
     const {
       modalLoading,
@@ -171,6 +173,9 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
 
     const displaysFiltered = this.getDisplays()
     const cols = displaysFiltered.map(((d, index) => {
+      const coverStyle: React.CSSProperties = {
+        backgroundImage: `url(${d.avatar})`
+      }
       return (
         <Col
           xl={4}
@@ -180,22 +185,32 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
           xs={24}
           key={d.id}
         >
-          <div className={styles.display} onClick={this.goToDisplay(d)}>
-            <h3 className={styles.title}>{d.name}</h3>
-            <p className={styles.content}>{d.desc}</p>
-            <i className={`${styles.pic} iconfont`} />
-            <Tooltip title="复制">
-              <Icon className={styles.copy} type="copy" onClick={this.onCopy(d)} />
-            </Tooltip>
-            <Popconfirm
-              title="确定删除？"
-              placement="bottom"
-              onConfirm={onDeleteDisplay(d.id)}
-            >
-              <Tooltip title="删除">
-                <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+          <div
+            className={styles.display}
+            onClick={this.goToDisplay(d)}
+          >
+            <div>
+              <div>
+                <h3 className={styles.title}>{d.name}</h3>
+                <p className={styles.content}>{d.description}</p>
+              </div>
+              <Tooltip title="编辑">
+                <Icon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', d)} />
               </Tooltip>
-            </Popconfirm>
+              <Tooltip title="复制">
+                <Icon className={styles.copy} type="copy" onClick={this.onCopy(d)} />
+              </Tooltip>
+              <Popconfirm
+                title="确定删除？"
+                placement="bottom"
+                onConfirm={onDeleteDisplay(d.id)}
+              >
+                <Tooltip title="删除">
+                  <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+                </Tooltip>
+              </Popconfirm>
+              <div className={styles.cover} style={coverStyle}/>
+            </div>
           </div>
         </Col>
       )
@@ -280,6 +295,7 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
           onCancel={this.hideDisplayForm}
         >
           <DisplayForm
+            projectId={projectId}
             type={formType}
             ref={(f) => { this.displayForm = f }}
           />

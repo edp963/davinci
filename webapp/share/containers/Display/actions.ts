@@ -18,12 +18,35 @@
  * >>
  */
 
-import appSagas from './containers/App/sagas'
-import shareSagas from './containers/Share/sagas'
-import widgetSagas from '../app/containers/Widget/sagas'
+import { ActionTypes } from './constants'
 
-export default [
-  ...appSagas,
-  ...shareSagas,
-  ...widgetSagas
-]
+export function loadDisplay (token, resolve, reject) {
+  return {
+    type: ActionTypes.LOAD_SHARE_DISPLAY,
+    payload: {
+      token,
+      resolve,
+      reject
+    }
+  }
+}
+
+export function displayLoaded (display, slide, widgets) {
+  return {
+    type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
+    payload: {
+      display,
+      slide,
+      widgets
+    }
+  }
+}
+
+export function loadDisplayFail (error) {
+  return {
+    type: ActionTypes.LOAD_SHARE_DISPLAY_FAILURE,
+    payload: {
+      error
+    }
+  }
+}

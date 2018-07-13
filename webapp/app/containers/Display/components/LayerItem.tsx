@@ -11,33 +11,33 @@ import { ECHARTS_RENDERER } from '../../../globalConstants'
 import {
   GraphTypes,
   SecondaryGraphTypes
-} from '../constants'
+} from 'utils/util'
 import Chart from '../../Dashboard/components/Chart'
 
 const Resizable = require('react-resizable').Resizable
-const ResizableBox = require('react-resizable').ResizableBox
 
 const styles = require('../Display.less')
 const stylesDashboard = require('../../Dashboard/Dashboard.less')
 
 interface ILayerItemProps {
+  pure: boolean
   scale: number
-  slideParams: any
+  slideParams?: any
   layer: any
-  layersStatus: object
-  itemId: number,
+  layersStatus?: object
+  itemId: number
   widget: any
   chartInfo: any
   data: any
   loading: boolean
-  isInteractive: boolean
-  interactId: string
+  isInteractive?: boolean
+  interactId?: string
   onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
   onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
-  onCheckTableInteract: (itemId: number) => object
-  onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
-  onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
-  onResizeLayerStop: (layer: any, size: { width?: number, height?: number, positionX?: number, positionY?: number }, itemId: any) => void
+  onCheckTableInteract?: (itemId: number) => object
+  onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
+  onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
+  onResizeLayerStop?: (layer: any, size: { width?: number, height?: number, positionX?: number, positionY?: number }, itemId: any) => void
 }
 
 interface ILayerItemStates {
@@ -66,7 +66,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       layer
     } = this.props
-    if (layer.graphType !== GraphTypes.Chart) {
+    if (layer.type !== GraphTypes.Chart) {
       return
     }
 
@@ -88,7 +88,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       })
     }
 
-    if (layer.graphType !== GraphTypes.Chart) {
+    if (layer.type !== GraphTypes.Chart) {
       return
     }
 
@@ -112,7 +112,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       layer
     } = this.props
-    if (layer.graphType !== GraphTypes.Chart) {
+    if (layer.type !== GraphTypes.Chart) {
       return
     }
 
@@ -198,6 +198,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private onClickLayer = (e) => {
+    if (this.props.pure) { return }
     const mousePos = [e.pageX, e.pageY]
     const isSamePos = mousePos.every((pos, idx) => pos === this.state.mousePos[idx])
     if (!isSamePos) {
@@ -216,16 +217,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private renderLayer = (layer) => {
-    switch (layer.graphType) {
+    switch (layer.type) {
       case GraphTypes.Secondary:
-        return this.renderSecodaryGraphLayer(layer)
+        return this.renderSecondaryGraphLayer(layer)
       default:
         return this.renderChartLayer()
     }
   }
 
   private renderChartLayer = () => {
+    const { scale } = this.props
+    if (scale <= 0) { return null }
+
     const {
+      pure,
       layer,
       layersStatus,
       itemId,
@@ -245,7 +250,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     const layerClass = classnames({
       [styles.layer]: true,
-      [styles.selected]: layersStatus[layer.id]
+      [styles.view]: !pure,
+      [styles.selected]:  layersStatus && layersStatus[layer.id]
     })
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
@@ -272,6 +278,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         : config['update_fields']
     }
 
+    const exactScale = pure ? scale : 1
     return (
       <div
         className={layerClass}
@@ -284,8 +291,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         <div className={styles.body}>
           <Chart
             id={`${itemId}`}
-            w={width}
-            h={height}
+            w={width * exactScale}
+            h={height * exactScale}
             data={data || {}}
             loading={loading}
             chartInfo={chartInfo}
@@ -304,6 +311,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private getLayerStyle = (layer, layerParams) => {
+    const { pure, scale } = this.props
     const { width, height } = this.state
     const layerStyle: React.CSSProperties = {
       width: `${width}px`,
@@ -311,19 +319,26 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       backgroundColor: `rgb(${layerParams.backgroundColor.join()},${layerParams.opacity / 100})`,
       border: `${layerParams.borderWidth}px ${layerParams.borderStyle} rgb(${layerParams.borderColor.join()}`,
       borderRadius: `${layerParams.borderRadius}px`,
-      zIndex: layer.layerIndex
+      zIndex: layer.index
+    }
+    if (pure) {
+      layerStyle.position = 'absolute'
+      layerStyle.top = `${layerParams.positionY * scale}px`
+      layerStyle.left = `${layerParams.positionX * scale}px`
+      layerStyle.width = `${width * scale}px`
+      layerStyle.height = `${height * scale}px`
     }
     return layerStyle
   }
 
-  private renderSecodaryGraphLayer = (layer) => {
-    switch (layer.secondaryGraphType) {
+  private renderSecondaryGraphLayer = (layer) => {
+    switch (layer.subType) {
       case SecondaryGraphTypes.Rectangle:
         return this.renderRectangleLayer(layer)
       case SecondaryGraphTypes.Label:
         return this.renderLabelLayer(layer)
       default:
-        return ''
+        return null
     }
   }
 
@@ -333,13 +348,15 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.state
 
     const {
+      pure,
       layersStatus
     } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
+      [styles.view]: !pure,
       [styles.rect]: true,
-      [styles.selected]: layersStatus[layer.id]
+      [styles.selected]: layersStatus && layersStatus[layer.id]
     })
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
@@ -355,11 +372,12 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   private renderLabelLayer = (layer) => {
     const { layerParams } = this.state
-    const { layersStatus } = this.props
+    const { pure, scale, layersStatus } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
-      [styles.selected]: layersStatus[layer.id]
+      [styles.view]: !pure,
+      [styles.selected]: layersStatus && layersStatus[layer.id]
     })
     const layerStyle = this.getLayerStyle(layer, layerParams)
     const {
@@ -378,22 +396,23 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingRight
     } = layerParams
 
+    const exactScale = pure ? scale : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontFamily,
       color: `rgb(${fontColor.join()})`,
-      fontSize: `${fontSize}px`,
+      fontSize: `${fontSize * exactScale}px`,
       textAlign,
       fontWeight: bold ? 'bold' : 'normal',
       fontStyle: italic ? 'italic' : 'normal',
       textDecoration: underline ? 'underline' : 'none',
-      lineHeight: `${lineHeight}px`,
-      textIndent: `${textIndent}px`,
-      paddingTop: `${paddingTop}px`,
-      paddingRight: `${paddingRight}px`,
-      paddingBottom: `${paddingBottom}px`,
-      paddingLeft: `${paddingLeft}px`
+      lineHeight: `${lineHeight * exactScale}px`,
+      textIndent: `${textIndent * exactScale}px`,
+      paddingTop: `${paddingTop * exactScale}px`,
+      paddingRight: `${paddingRight * exactScale}px`,
+      paddingBottom: `${paddingBottom * exactScale}px`,
+      paddingLeft: `${paddingLeft * exactScale}px`
     }
     return (
       <div
@@ -410,15 +429,12 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   public render () {
     const {
+      pure,
       scale,
       slideParams,
       layer,
       layersStatus
     } = this.props
-
-    const {
-      gridDistance
-    } = slideParams
 
     const {
       layerParams,
@@ -429,6 +445,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       x: layerParams['positionX'],
       y: layerParams['positionY']
     }
+
+    const content = this.renderLayer(layer)
+    if (pure) { return content }
+
+    const {
+      gridDistance
+    } = slideParams
 
     return (
       <Draggable
@@ -450,7 +473,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           maxConstraints={[slideParams.width - defaultPosition.x, slideParams.height - defaultPosition.y]}
           handleSize={[20, 20]}
         >
-          {this.renderLayer(layer)}
+          {content}
         </Resizable>
       </Draggable>
     )

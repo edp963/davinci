@@ -48,3 +48,4 @@ export const DEFAULT_DISPLAY_WIDTH = 1920
 export const DEFAULT_DISPLAY_HEIGHT = 1080
 
 export const ECHARTS_RENDERER = 'echarts'
+export const BASE_URL = 'http://10.143.131.33:8080'

@@ -24,12 +24,11 @@
  */
 
 import { fromJS } from 'immutable'
+import { Reducer, ReducersMapObject } from 'redux'
 import { combineReducers } from 'redux-immutable'
 import { LOCATION_CHANGE } from 'react-router-redux'
 
 import globalReducer from './containers/App/reducer'
-import shareReducer from './containers/Share/reducer'
-import widgetReducer from '../app/containers/Widget/reducer'
 import languageProviderReducer from '../app/containers/LanguageProvider/reducer'
 
 /*
@@ -63,13 +62,10 @@ function routeReducer (state = routeInitialState, action) {
 /**
  * Creates the main reducer with the asynchronously loaded ones
  */
-export default function createReducer (asyncReducers) {
+export default function createReducer (injectedReducers: ReducersMapObject = {}): Reducer<any> {
   return combineReducers({
     route: routeReducer,
-    global: globalReducer,
     language: languageProviderReducer,
-    share: shareReducer,
-    widget: widgetReducer,
-    ...asyncReducers
+    ...injectedReducers
   })
 }

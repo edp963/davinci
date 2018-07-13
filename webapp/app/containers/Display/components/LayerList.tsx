@@ -31,10 +31,10 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
     const sortedLayers = [...layers]
     switch (orderDirection) {
       case OrderDirection.Asc:
-        sortedLayers.sort((item1, item2) => (item1.layerIndex - item2.layerIndex))
+        sortedLayers.sort((item1, item2) => (item1.index - item2.index))
         break
       case OrderDirection.Desc:
-        sortedLayers.sort((item1, item2) => (item2.layerIndex - item1.layerIndex))
+        sortedLayers.sort((item1, item2) => (item2.index - item1.index))
         break
       default:
         break
@@ -50,9 +50,9 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
         return
       }
 
-      const tempIndex = orderedLayers[idx].layerIndex
-      orderedLayers[idx].layerIndex = orderedLayers[idx - 1].layerIndex
-      orderedLayers[idx - 1].layerIndex = tempIndex
+      const tempIndex = orderedLayers[idx].index
+      orderedLayers[idx].index = orderedLayers[idx - 1].index
+      orderedLayers[idx - 1].index = tempIndex
       const temp = orderedLayers[idx]
       orderedLayers[idx] = orderedLayers[idx - 1]
       orderedLayers[idx - 1] = temp
@@ -100,10 +100,10 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
     } = this.props
     if (selectedLayers.length <= 0) { return }
 
-    const maxLayerIndex = layers.reduce((acc, layer) => Math.max(layer.layerIndex, acc), -Infinity)
+    const maxLayerIndex = layers.reduce((acc, layer) => Math.max(layer.index, acc), -Infinity)
     const updateLayers = this.sortLayers(selectedLayers, OrderDirection.Asc).map((layer, idx) => ({
       ...layer,
-      layerIndex: maxLayerIndex + idx + 1
+      index: maxLayerIndex + idx + 1
     }))
     onEditDisplayLayers(updateLayers)
   }
@@ -116,10 +116,10 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
     } = this.props
     if (selectedLayers.length <= 0) { return }
 
-    const minLayerIndex = layers.reduce((acc, layer) => Math.min(layer.layerIndex, acc), Infinity)
+    const minLayerIndex = layers.reduce((acc, layer) => Math.min(layer.index, acc), Infinity)
     const updateLayers = this.sortLayers(selectedLayers, OrderDirection.Desc).map((layer, idx) => ({
       ...layer,
-      layerIndex: minLayerIndex - idx - 1
+      index: minLayerIndex - idx - 1
     }))
     onEditDisplayLayers(updateLayers)
   }
@@ -153,7 +153,7 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
   private getLayersByIndexDesc = (layers: any[]) => {
     if (!Array.isArray(layers)) { return [] }
 
-    return [...layers].sort((item1, item2) => (item2.layerIndex - item1.layerIndex))
+    return [...layers].sort((item1, item2) => (item2.index - item1.index))
   }
 
   public render () {

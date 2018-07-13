@@ -3,6 +3,7 @@
 .display {
   height: 0;
   padding-bottom: 100%;
+
   background-color: @body-background;
   margin-bottom: 20px;
   border-radius: 2px;
@@ -11,6 +12,15 @@
   transition: all 200ms linear;
   position: relative;
   cursor: pointer;
+
+  & > div {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 
   &:hover {
     box-shadow: @block-active-box-shadow;
@@ -22,6 +32,7 @@
   }
 
   .title {
+    height: 33px;
     padding: 12px 40px 0 12px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -29,6 +40,7 @@
   }
 
   .content {
+    height: 34px;
     padding: 8px 12px;
     color: @light-text-color;
     white-space: nowrap;
@@ -36,7 +48,16 @@
     overflow: hidden;
   }
 
-  .delete, .copy {
+  .cover {
+    background-color: @light-bg;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    flex: 1;
+    margin: 0 12px 12px;
+  }
+
+  .delete, .copy, .edit {
     position: absolute;
     top: 8px;
     opacity: .5;
@@ -55,12 +76,27 @@
   .copy {
     right: 28px;
   }
+
+  .edit {
+    right: 48px;
+  }
 }
 
-.displayEdit {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.preview {
+  height: 100%;
+  width: 100%;
+  overflow: auto;
+
+  .board {
+    position: relative;
+    margin: auto;
+  }
+
+  &.edit {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
 
   .header {
     flex-shrink: 0;
@@ -186,13 +222,28 @@
   }
 
   .layer {
-    position: absolute;
-    top: 0;
-    height: 0;
-    height: 100%;
-    width: 100%;
     display: flex;
     flex-direction: column;
+
+    &.view {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+
+      &:hover:after {
+        content: ' ';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: rgba(0,192,222,.2);
+        z-index: 999998;
+      }
+    }
 
     &.selected:after {
       content: ' ';
@@ -209,18 +260,6 @@
 
     &:hover {
       border: 2px solid @border-color-base;
-    }
-
-    &:hover:after {
-      content: ' ';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: rgba(0,192,222,.2);
-      z-index: 999998;
     }
 
     .title {
@@ -363,6 +402,18 @@
     font-size: 36px;
     line-height: 180px;
     color: @light-text-color;
+  }
+}
+
+.uploadImg {
+  position: relative;
+  height: 180px;
+
+  i {
+    position: absolute;
+    height: 30px;
+    top: 8px;
+    left: 8px;
   }
 }
 

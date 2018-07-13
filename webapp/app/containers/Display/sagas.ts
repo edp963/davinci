@@ -24,7 +24,7 @@ import { call, fork, put, all } from 'redux-saga/effects'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import { getDefaultSlideParams } from '../../assets/json/SlideSettings'
+import { getDefaultSlideParams } from '../../assets/json/slideSettings'
 import axios from 'axios' // FIXME
 
 const message = require('antd/lib/message')
@@ -46,6 +46,10 @@ import {
   editDisplayFail,
   currentDisplayEdited,
   editCurrentDisplayFail,
+  currentSlideEdited,
+  editCurrentSlideFail,
+  currentSlideCoverUploaded,
+  uploadCurrentSlideCoverFail,
   displayDeleted,
   deleteDisplayFail,
 
@@ -54,24 +58,31 @@ import {
   displayLayersDeleted,
   deleteDisplayLayersFail,
   displayLayersEdited,
-  editDisplayLayersFail
+  editDisplayLayersFail,
+  displaySecretLinkLoaded,
+  displayShareLinkLoaded,
+  loadDisplayShareLinkFail
 } from './actions'
 import messages from './messages'
 
+// FIX ME
 function* getToken () {
-  return yield call(axios, `/api/v3/login`, {
+  const response = yield call(axios, `/api/v3/login`, {
     method: 'post',
     data: {
       username: 'Fangkun',
       password: 'qwerty'
     }
   })
+  const token = response.data.header.token
+  localStorage.setItem('TEMP_TOKEN', token)
+  return token
 }
 
 export function* getDisplays (action): IterableIterator<any> {
   const { projectId } = action.payload
   // FIXME
-  const token = (yield getToken()).data.header.token
+  const token = (yield getToken())
 
   const asyncData = yield call(request, `${api.display}?projectId=${projectId}`, {
     headers: {
@@ -90,11 +101,10 @@ export function* addDisplay (action) {
   const { display, resolve } = action.payload
   try {
     // FIXME
-    const token = (yield getToken()).data.header.token
+    const token = (yield getToken())
 
-    const asyncDisplayData = yield call(request, {
+    const asyncDisplayData = yield call(request, api.display, {
       method: 'post',
-      url: api.display,
       data: display,
       headers: {
         Authorization: `Bearer ${token}`
@@ -107,17 +117,14 @@ export function* addDisplay (action) {
       index: 0,
       config: JSON.stringify({ slideParams: getDefaultSlideParams() })
     }
-    const asyncSlideData = yield call(request, {
+    yield call(request, `${api.display}/${id}/slides`, {
       method: 'post',
-      url: `${api.display}/${id}/slides`,
       data: slide,
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
-    const resultSlide = readObjectAdapter(asyncSlideData)
-    display.slides = [resultSlide]
-    yield put(displayAdded(display))
+    yield put(displayAdded(resultDisplay))
     resolve()
   } catch (err) {
     yield put(addDisplayFail())
@@ -127,39 +134,42 @@ export function* addDisplay (action) {
 
 export function* getDisplayDetail (action): IterableIterator<any> {
   // FIXME
-  const token = (yield getToken()).data.header.token
+  const token = (yield getToken())
 
   const { id } = action.payload
-  const asyncDataSlides = yield call(request, {
-    url: `${api.display}/${id}/slides`,
+  const asyncDataDetail = yield call(request, `${api.display}/${id}/slides`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
   })
-  const slides = readListAdapter(asyncDataSlides)
-  // FIXME
-  const display = { ...slides[0] }
-  const asyncDataWidgets = yield call(request, {
-    url: `${api.display}/${id}/slides/${slides[0].id}/widgets`,
+  const display = readObjectAdapter(asyncDataDetail)
+  const slide = display.slides[0]
+  delete display.slides
+  const asyncDataWidgets = yield call(request, `${api.display}/${id}/slides/${slide.id}/widgets`, {
     headers: {
       Authorization: `Bearer ${token}`
     }
   })
-  display.layers = readListAdapter(asyncDataWidgets)
-  yield put(displayDetailLoaded(display))
+  const layers = readListAdapter(asyncDataWidgets)
+  yield put(displayDetailLoaded(display, slide, layers))
   return display
 }
 
 export function* editDisplay (action): IterableIterator<any> {
   const { display, resolve } = action.payload
   try {
-    yield call(request, {
+    // FIXME
+    const token = (yield getToken())
+
+    yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
-      url: `${api.display}/${display.id}`,
-      data: display
+      data: display,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
     yield put(displayEdited(display))
-    resolve()
+    if (resolve) { resolve() }
   } catch (err) {
     yield put(editDisplayFail(err))
     message.error(err)
@@ -169,15 +179,67 @@ export function* editDisplay (action): IterableIterator<any> {
 export function* editCurrentDisplay (action): IterableIterator<any> {
   const { display, resolve } = action.payload
   try {
-    yield call(request, {
+    // FIXME
+    const token = (yield getToken())
+
+    yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
-      url: `${api.display}/${display.id}`,
-      data: display
+      data: display,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
     yield put(currentDisplayEdited(display))
-    resolve()
+    if (resolve) { resolve() }
   } catch (err) {
     yield put(editCurrentDisplayFail(err))
+    message.error(err)
+  }
+}
+
+export function* editCurrentSlide (action): IterableIterator<any> {
+  const { displayId, slide, resolve } = action.payload
+  try {
+    // FIXME
+    const token = (yield getToken())
+
+    yield call(request, `${api.display}/${displayId}/slides`, {
+      method: 'put',
+      data: [{
+        ...slide,
+        displayId
+      }],
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    yield put(currentSlideEdited(slide))
+  } catch (err) {
+    yield put(editCurrentSlideFail(err))
+    message.error(err)
+  }
+}
+
+export function* uploadCurrentSlideCover (action): IterableIterator<any> {
+  const { cover, resolve } = action.payload
+  try {
+    // FIXME
+    const token = (yield getToken())
+    const formData = new FormData()
+    formData.append('coverImage', new File([cover], 'coverImage.png'))
+    const asyncData = yield call(request, `${api.display}/upload/coverImage`, {
+      method: 'post',
+      data: formData,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const coverPath = readObjectAdapter(asyncData)
+    console.log(asyncData)
+    yield put(currentSlideCoverUploaded(coverPath))
+    resolve(coverPath)
+  } catch (err) {
+    yield put(uploadCurrentSlideCoverFail(err))
     message.error(err)
   }
 }
@@ -186,11 +248,10 @@ export function* deleteDisplay (action) {
   const { id } = action.payload
   try {
     // FIXME
-    const token = (yield getToken()).data.header.token
+    const token = (yield getToken())
 
-    yield call(request, {
+    yield call(request, `${api.display}/${id}`, {
       method: 'delete',
-      url: `${api.display}/${id}`,
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -206,10 +267,9 @@ export function* addDisplayLayers (action) {
   const { displayId, slideId, layers } = action.payload
   try {
     // FIXME
-    const token = (yield getToken()).data.header.token
-    const asyncData = yield call(request, {
+    const token = (yield getToken())
+    const asyncData = yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'post',
-      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
       data: layers, // FIXME
       headers: {
         Authorization: `Bearer ${token}`
@@ -228,10 +288,9 @@ export function* editDisplayLayers (action) {
   const { displayId, slideId, layers } = action.payload
   try {
     // FIXME
-    const token = (yield getToken()).data.header.token
-    yield call(request, {
+    const token = (yield getToken())
+    yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'put',
-      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
       data: layers,
       headers: {
         Authorization: `Bearer ${token}`
@@ -248,10 +307,9 @@ export function* deleteDisplayLayers (action) {
   const { displayId, slideId, ids } = action.payload
   try {
     // FIXME
-    const token = (yield getToken()).data.header.token
-    yield call(request, {
-      method: 'put',
-      url: `${api.display}/${displayId}/slides/${slideId}/widgets`,
+    const token = (yield getToken())
+    yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+      method: 'delete',
       data: ids,
       headers: {
         Authorization: `Bearer ${token}`
@@ -264,6 +322,31 @@ export function* deleteDisplayLayers (action) {
   }
 }
 
+export function* getDisplayShareLink (action) {
+  const { id, authName } = action.payload
+  try {
+    // FIXME
+    const token = (yield getToken())
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.display}/${id}/share`,
+      params: { username: authName },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const shareInfo = readListAdapter(asyncData)
+    if (authName) {
+      yield put(displaySecretLinkLoaded(shareInfo))
+    } else {
+      yield put(displayShareLinkLoaded(shareInfo))
+    }
+  } catch (err) {
+    yield put(loadDisplayShareLinkFail())
+    message.error('获取 Display 分享链接失败，请稍后再试')
+  }
+}
+
 export default function* rootDisplaySaga (): IterableIterator<any> {
   yield [
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
@@ -271,9 +354,12 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_DISPLAY_DETAIL, getDisplayDetail),
     takeEvery(ActionTypes.EDIT_DISPLAY, editDisplay),
     takeEvery(ActionTypes.EDIT_CURRENT_DISPLAY, editCurrentDisplay),
+    takeEvery(ActionTypes.EDIT_CURRENT_SLIDE, editCurrentSlide),
+    takeEvery(ActionTypes.UPLOAD_CURRENT_SLIDE_COVER, uploadCurrentSlideCover),
     takeEvery(ActionTypes.DELETE_DISPLAY, deleteDisplay),
     takeEvery(ActionTypes.ADD_DISPLAY_LAYERS, addDisplayLayers),
     takeEvery(ActionTypes.EDIT_DISPLAY_LAYERS, editDisplayLayers),
-    takeEvery(ActionTypes.DELETE_DISPLAY_LAYERS, deleteDisplayLayers)
+    takeEvery(ActionTypes.DELETE_DISPLAY_LAYERS, deleteDisplayLayers),
+    takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink)
   ]
 }

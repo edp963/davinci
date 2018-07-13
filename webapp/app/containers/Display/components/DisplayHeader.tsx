@@ -19,11 +19,14 @@
  */
 
 import * as React from 'react'
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
+const Popover = require('antd/lib/popover')
 const Menu = require('antd/lib/menu')
 const Dropdown = require('antd/lib/dropdown')
 const Modal = require('antd/lib/modal')
@@ -32,13 +35,23 @@ const styles = require('../Display.less')
 
 import slideSettings from '../../../assets/json/slideSettings'
 import LayerSelector from './LayerSelector'
+import SharePanel from '../../../components/SharePanel'
 
 import {
+  makeSelectCurrentDisplayShareInfo,
+  makeSelectCurrentDisplaySecretInfo,
+  makeSelectCurrentDisplayShareInfoLoading
+} from '../selectors'
+
+import {
+  uuid,
   GraphTypes,
-  SecondaryGraphTypes } from '../constants'
+  SecondaryGraphTypes } from 'utils/util'
 
 interface IDisplayHeaderProps {
-  widgets: any[],
+  params: any
+  display: any
+  widgets: any[]
   currentLayersStatus: object
   loginUser: any
   onAddLayers: (layers: any[]) => void
@@ -48,7 +61,8 @@ interface IDisplayHeaderProps {
 interface IDisplayHeaderStates {
   widgetSelectorVisible: boolean,
   widgetSelectorLoading: boolean,
-  widgetsSelected: any[]
+  widgetsSelected: any[],
+  displaySharePanelAuthorized: boolean
 }
 
 export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplayHeaderStates> {
@@ -57,7 +71,8 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     this.state = {
       widgetSelectorVisible: false,
       widgetSelectorLoading: false,
-      widgetsSelected: []
+      widgetsSelected: [],
+      displaySharePanelAuthorized: false
     }
   }
 
@@ -75,8 +90,8 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private getDefaultSetting = (graphType: GraphTypes, secondaryGraphType?: SecondaryGraphTypes) => {
-    const name = secondaryGraphType ? secondaryGraphType.toLowerCase() : graphType.toLowerCase()
-    const setting = slideSettings.find((ds) => ds.name === name)
+    const type = secondaryGraphType || graphType
+    const setting = slideSettings[type]
     if (!setting) {
       return {}
     }
@@ -94,10 +109,10 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     const layers = selectedWidgets.map((w) => ({
       widgetId: w.id,
       name: w.name,
-      graphType: GraphTypes.Chart,
+      type: GraphTypes.Chart,
       params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart)),
-      triggerType,
-      triggerParams
+      // triggerType,
+      // triggerParams
     }))
 
     this.props.onAddLayers(layers)
@@ -108,25 +123,51 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private addSecondaryGraph = (secondaryGraphType: SecondaryGraphTypes) => () => {
-    switch (secondaryGraphType) {
-      case SecondaryGraphTypes.Rectangle:
-      case SecondaryGraphTypes.Label:
-        this.props.onAddLayers([{
-          name: secondaryGraphType,
-          graphType: GraphTypes.Secondary,
-          secondaryGraphType,
-          params: JSON.stringify(this.getDefaultSetting(GraphTypes.Secondary, secondaryGraphType))
-        }])
-        break
-      default:
-        break
-    }
+    const title = (slideSettings[secondaryGraphType] as any).title
+    this.props.onAddLayers([{
+      name: `${title}_${uuid(5)}`,
+      type: GraphTypes.Secondary,
+      subType: secondaryGraphType,
+      params: JSON.stringify(this.getDefaultSetting(GraphTypes.Secondary, secondaryGraphType))
+    }])
   }
 
   private deleteLayers = () => {
     const { currentLayersStatus, onDeleteLayers } = this.props
     const ids = Object.keys(currentLayersStatus).filter((id) => currentLayersStatus[id]).map((id) => +id)
     onDeleteLayers(ids)
+  }
+
+  private changeDisplaySharePanelAuthorizeState = (state) => () => {
+    this.setState({ displaySharePanelAuthorized: state })
+  }
+
+  public renderShare () {
+    const { display, currentDisplayShareInfo, currentDisplaySecretInfo, currentDisplayShareInfoLoading } = this.props
+    if (!display) { return null }
+
+    const { displaySharePanelAuthorized } = this.state
+    return (
+      <Popover
+        placement="bottomRight"
+        content={
+          <SharePanel
+            id={display.id}
+            shareInfo={currentDisplayShareInfo}
+            secretInfo={currentDisplaySecretInfo}
+            shareInfoLoading={currentDisplayShareInfoLoading}
+            authorized={displaySharePanelAuthorized}
+            afterAuthorization={this.changeDisplaySharePanelAuthorizeState(true)}
+            type="display"
+          />
+        }
+        trigger="click"
+      >
+        <Tooltip placement="bottom" title="分享">
+          <Icon type="share-alt" onClick={this.changeDisplaySharePanelAuthorizeState(false)}/>
+        </Tooltip>
+      </Popover>
+    )
   }
 
   public render () {
@@ -137,9 +178,12 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     } = this.state
 
     const {
+      params,
       loginUser,
       widgets
     } = this.props
+
+    const {pid, displayId} = params
 
     const menu = (
       <Menu>
@@ -166,7 +210,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.historyBack}>
             <li>
               <Tooltip placement="bottom" title="返回">
-                <Link to="/displays">
+                <Link to={`/project/${pid}/displays`}>
                   <Icon type="left-circle-o"/>
                 </Link>
               </Tooltip>
@@ -219,6 +263,18 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
               </Popconfirm>
             </li>
           </ul>
+          <ul className={styles.commandGroup}>
+            <li>
+              <Tooltip placement="bottom" title="预览">
+                <a href={`/#/project/${pid}/display/preview/${displayId}`} target="_blank">
+                  <i className="iconfont icon-preview" />
+                </a>
+              </Tooltip>
+            </li>
+            <li>
+              {this.renderShare()}
+            </li>
+          </ul>
         </div>
         <LayerSelector
           visible={widgetSelectorVisible}
@@ -235,4 +291,10 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 }
 
-export default DisplayHeader
+const mapStateToProps = createStructuredSelector({
+  currentDisplayShareInfo: makeSelectCurrentDisplayShareInfo(),
+  currentDisplaySecretInfo: makeSelectCurrentDisplaySecretInfo(),
+  currentDisplayShareInfoLoading: makeSelectCurrentDisplayShareInfoLoading()
+})
+
+export default connect<{}, {}, IDisplayHeaderProps>(mapStateToProps, null)(DisplayHeader)

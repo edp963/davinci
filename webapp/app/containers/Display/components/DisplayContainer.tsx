@@ -19,7 +19,8 @@
  */
 
 import * as React from 'react'
-
+import * as html2canvas from 'html2canvas'
+import { getBase64 } from 'utils/util'
 const styles = require('../Display.less')
 
 interface IDisplayContainerProps {
@@ -28,7 +29,8 @@ interface IDisplayContainerProps {
   height: number,
   padding: string,
   scale: number
-  children: JSX.Element[]
+  children: JSX.Element[],
+  onCoverCutCreated: (blob: Blob) => void
 }
 
 interface IDisplayStyle {
@@ -40,11 +42,28 @@ interface IDisplayStyle {
 }
 
 export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
-  private container: any
+
+  private container: HTMLDivElement
+  private content: HTMLDivElement
+  private refHandlers = {
+    container: (f) => { this.container = f },
+    content: (f) => { this.content = f }
+  }
+
+  public createCoverCut = () => {
+    const { onCoverCutCreated, scale } = this.props
+    this.content.style.transform = 'scale(1)'
+    html2canvas(this.content).then((canvas) => {
+      this.content.style.transform = `scale(${scale})`
+      canvas.toBlob((blob) => {
+        onCoverCutCreated(blob)
+      })
+    })
+  }
 
   private getSlideStyle = (slideParams, scale) => {
-    let displayStyle: IDisplayStyle
-    displayStyle  = {
+    let slideStyle: IDisplayStyle
+    slideStyle  = {
       width: `${slideParams.width}px`,
       height: `${slideParams.height}px`,
       transform: `scale(${scale})`
@@ -52,13 +71,13 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
 
     if (slideParams.backgroundColor) {
       const rgb = [...slideParams.backgroundColor, (slideParams.opacity / 100)].join()
-      displayStyle.backgroundColor = `rgb(${rgb})`
+      slideStyle.backgroundColor = `rgb(${rgb})`
     }
     if (slideParams.backgroundImage) {
-      displayStyle.backgroundImage = `url("${slideParams.backgroundImage}")`
+      slideStyle.backgroundImage = `url("${slideParams.backgroundImage}")`
     }
 
-    return displayStyle
+    return slideStyle
   }
 
   public render () {
@@ -75,7 +94,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
 
     return (
       <div className={styles.editor}>
-        <div ref={(f) => { this.container = f }} className={styles.editorContainer}>
+        <div ref={this.refHandlers.container} className={styles.editorContainer}>
           <div
             className={styles.displayContainer}
             style={{
@@ -86,9 +105,10 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
           >
             <div className={styles.displayPanelWrapper}>
               <div
+                ref={this.refHandlers.content}
                 className={styles.displayPanel}
                 style={slideStyle}
-              >
+                >
                 {children}
               </div>
             </div>

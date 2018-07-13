@@ -18,14 +18,21 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import classnames from 'classnames'
+import * as classnames from 'classnames'
 import moment from 'moment'
 import * as echarts from 'echarts/lib/echarts'
+
+import { compose } from 'redux'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from './reducer'
+import appReducer from '../App/reducer'
+import saga from './sagas'
+import appSaga from '../App/sagas'
 
 import Container from '../../../app/components/Container'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
@@ -33,9 +40,9 @@ import GlobalFilters from '../../../app/containers/Dashboard/components/globalFi
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import DashboardItemFilters from '../../../app/containers/Dashboard/components/DashboardItemFilters'
 import { Responsive, WidthProvider } from 'react-grid-layout'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Modal from 'antd/lib/modal'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Modal = require('antd/lib/modal')
 
 import {
   getDashboard,
@@ -65,20 +72,66 @@ import {
   USER_GRID_BREAKPOINTS
 } from '../../../app/globalConstants'
 
-import styles from '../../../app/containers/Dashboard/Dashboard.less'
-import utilStyles from '../../../app/assets/less/util.less'
+const styles = require('../../../app/containers/Dashboard/Dashboard.less')
+const utilStyles = require('../../../app/assets/less/util.less')
 
 import widgetlibs from '../../../app/assets/json/widgetlib'
 import Login from '../../components/Login/index'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
-export class Share extends React.Component {
+interface IDashboardProps {
+  title: string
+  config: string
+  currentItems: any[],
+  widgets: any[],
+  dataSources: any,
+  loadings: any,
+  itemQueryParams: any,
+  downloadCsvLoadings: any,
+  itemsCascadeSources: any,
+  dashboardCascadeSources: any,
+  onLoadDashboard: (shareInfo: any, success: (dashboard) => void, error: (err) => void) => void,
+  onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
+  onLoadResultset: (itemId, aesStr, sql, sorts, offset, limit, useCache, expired) => void,
+  onSetIndividualDashboard: (id, shareInfo) => void,
+  onLoadWidgetCsv: (itemId, token, sql) => void,
+  onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => void,
+  onLoadCascadeSourceFromDashboard: (key, flatTableId, shareInfo, cascadeColumn, parents) => void
+}
+
+interface IDashboardStates {
+  mounted: boolean,
+  modifiedPositions: any[],
+  type: string,
+  shareInfo: string,
+  modalLoading: boolean,
+  filtersVisible: boolean,
+  filtersDashboardItem: number,
+  filtersKeys: any,
+  filtersTypes: any,
+  allowFullScreen: boolean,
+  currentDataInFullScreen: any,
+  showLogin: boolean,
+  linkageTableSource: any[],
+  globalFilterTableSource: any[],
+  interactiveItems: any,
+  phantomRenderSign: boolean
+}
+
+export class Share extends React.Component<IDashboardProps, IDashboardStates> {
+  private charts
+  private interactCallbacks
+  private interactingLinkagers
+  private interactGlobalFilters
+  private resizeSign
+  private dashboardItemFilters
+
   constructor (props) {
     super(props)
     this.state = {
       mounted: false,
-      modifiedPositions: false,
+      modifiedPositions: [],
       type: '',
       shareInfo: '',
 
@@ -91,8 +144,8 @@ export class Share extends React.Component {
       allowFullScreen: false,
       currentDataInFullScreen: {},
       showLogin: false,
-      linkageTableSource: false,
-      globalFilterTableSource: false,
+      linkageTableSource: [],
+      globalFilterTableSource: [],
       interactiveItems: {},
 
       phantomRenderSign: false
@@ -112,7 +165,7 @@ export class Share extends React.Component {
    * }
    * @param qs
    */
-  loadShareContent = (qs) => {
+  private loadShareContent = (qs) => {
     const {
       onLoadDashboard,
       onLoadWidget,
@@ -121,15 +174,18 @@ export class Share extends React.Component {
     } = this.props
     if (qs.type === 'dashboard') {
       onLoadDashboard(qs.shareInfo, (dashboard) => {
-        dashboard.widgets.forEach(w => {
+        dashboard.widgets.forEach((w) => {
           onLoadWidget(w.aesStr)
         })
-        this.state.linkageTableSource = this.adjustLinkageTableSource(dashboard, dashboard.widgets)
-        this.state.globalFilterTableSource = this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
-        this.state.globalFilterTableSource.forEach(gft => {
-          if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
-            onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
-          }
+        this.setState({
+          linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
+          globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
+        }, () => {
+          this.state.globalFilterTableSource.forEach((gft) => {
+            if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
+              onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
+            }
+          })
         })
       }, (err) => {
         console.log(err)
@@ -140,8 +196,10 @@ export class Share extends React.Component {
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
-        this.state.linkageTableSource = []
-        this.state.globalFilterTableSource = []
+        this.setState({
+          linkageTableSource: [],
+          globalFilterTableSource: []
+        })
       }, (err) => {
         console.log(err)
         this.setState({
@@ -150,55 +208,63 @@ export class Share extends React.Component {
       })
     }
   }
-  componentWillMount () {
+  public componentWillMount () {
     const qs = this.getQs(location.href.substr(location.href.indexOf('?') + 1))
-    this.state.type = qs.type
-    this.state.shareInfo = qs.shareInfo
+    this.setState({
+      type: qs.type,
+      shareInfo: qs.shareInfo
+    })
     this.loadShareContent(qs)
   }
 
-  componentDidMount () {
+  public componentDidMount () {
     window.addEventListener('resize', this.onResize, false)
     this.setState({ mounted: true })
   }
 
-  componentWillUpdate (nextProps) {
+  public componentWillUpdate (nextProps) {
     const { currentItems, dataSources } = nextProps
     if (currentItems) {
-      if (!this.state.modifiedPositions) {
-        this.state.modifiedPositions = currentItems.map(ci => ({
-          x: ci.position_x,
-          y: ci.position_y,
-          w: ci.width,
-          h: ci.length,
-          i: `${ci.id}`
-        }))
+      if (this.state.modifiedPositions.length === 0) {
+        this.setState({
+          modifiedPositions: currentItems.map((ci) => ({
+            x: ci.position_x,
+            y: ci.position_y,
+            w: ci.width,
+            h: ci.length,
+            i: `${ci.id}`
+          }))
+        })
       }
 
       if (!Object.keys(this.state.interactiveItems).length) {
-        this.state.interactiveItems = currentItems.reduce((acc, i) => {
-          acc[i.id] = {
-            isInteractive: false,
-            interactId: null
-          }
-          return acc
-        }, {})
+        this.setState({
+          interactiveItems: currentItems.reduce((acc, i) => {
+            acc[i.id] = {
+              isInteractive: false,
+              interactId: null
+            }
+            return acc
+          }, {})
+        })
       }
 
-      if (currentItems.map(ci => ci.id).join(',') === Object.keys(dataSources).join(',')) {
-        this.state.phantomRenderSign = true
+      if (currentItems.map((ci) => ci.id).join(',') === Object.keys(dataSources).join(',')) {
+        this.setState({
+          phantomRenderSign: true
+        })
       }
     }
   }
 
-  componentWillUnmount () {
+  public componentWillUnmount () {
     window.removeEventListener('resize', this.onResize, false)
-    Object.keys(this.charts).forEach(k => {
+    Object.keys(this.charts).forEach((k) => {
       this.charts[k].dispose()
     })
   }
 
-  getQs = (qs) => {
+  private getQs = (qs) => {
     const qsArr = qs.split('&')
     return qsArr.reduce((acc, str) => {
       const arr = str.split('=')
@@ -207,7 +273,7 @@ export class Share extends React.Component {
     }, {})
   }
 
-  getChartData = (renderType, itemId, widgetId, queryParams) => {
+  private getChartData = (renderType, itemId, widgetId, queryParams) => {
     const {
       currentItems,
       widgets,
@@ -215,9 +281,9 @@ export class Share extends React.Component {
       onLoadResultset
     } = this.props
 
-    const dashboardItem = currentItems.find(c => c.id === Number(itemId))
-    const widget = widgets.find(w => w.id === widgetId)
-    const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+    const dashboardItem = currentItems.find((c) => c.id === Number(itemId))
+    const widget = widgets.find((w) => w.id === widgetId)
+    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     const chartInstanceId = `widget_${itemId}`
 
     let widgetConfig = JSON.parse(widget.config)
@@ -230,7 +296,7 @@ export class Share extends React.Component {
             currentChart.dispose()
           }
 
-          currentChart = echarts.init(document.getElementById(chartInstanceId), 'default')
+          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
           this.charts[chartInstanceId] = currentChart
           currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
           break
@@ -298,28 +364,30 @@ export class Share extends React.Component {
     )
   }
 
-  renderChart = (itemId, widget, dataSource, chartInfo, interactIndex) => {
+  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?) => {
     const chartInstance = this.charts[`widget_${itemId}`]
+    const { id, name, desc, flatTable_id, widgetlib_id } = widget
     echartsOptionsGenerator({
-      dataSource: dataSource,
-      chartInfo: chartInfo,
-      chartParams: Object.assign({
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.flatTable_id,
-        widgetlib_id: widget.widgetlib_id
-      }, JSON.parse(widget.chart_params)),
+      dataSource,
+      chartInfo,
+      chartParams: {
+        id,
+        name,
+        desc,
+        flatTable_id,
+        widgetlib_id,
+        ...JSON.parse(widget)
+      },
       interactIndex
     })
-      .then(chartOptions => {
+      .then((chartOptions) => {
         chartInstance.setOption(chartOptions)
         this.registerChartInteractListener(chartInstance, itemId)
         chartInstance.hideLoading()
       })
   }
 
-  registerChartInteractListener = (instance, itemId) => {
+  private registerChartInteractListener = (instance, itemId) => {
     instance.off('click')
     instance.on('click', (params) => {
       const linkagers = this.checkInteract(itemId)
@@ -330,16 +398,16 @@ export class Share extends React.Component {
     })
   }
 
-  onLayoutChange = (layout) => {
+  private onLayoutChange = (layout) => {
     setTimeout(() => {
       const { currentItems } = this.props
       const { modifiedPositions } = this.state
 
       const newModifiedItems = changePosition(modifiedPositions, layout, (pos) => {
-        const dashboardItem = currentItems.find(item => item.id === Number(pos.i))
+        const dashboardItem = currentItems.find((item) => item.id === Number(pos.i))
         const chartInstanceId = `widget_${dashboardItem.id}`
         const chartInstance = this.charts[chartInstanceId]
-        chartInstance && chartInstance.resize()
+        if (chartInstance) { chartInstance.resize() }
       })
 
       this.setState({
@@ -348,20 +416,20 @@ export class Share extends React.Component {
     })
   }
 
-  onResize = () => {
-    this.resizeSign === void 0 && clearTimeout(this.resizeSign)
+  private onResize = () => {
+    if (this.resizeSign === void 0) { clearTimeout(this.resizeSign) }
     this.resizeSign = setTimeout(() => {
-      this.props.currentItems.forEach(ci => {
+      this.props.currentItems.forEach((ci) => {
         const chartInstance = this.charts[`widget_${ci.id}`]
-        chartInstance && chartInstance.resize()
+        if (chartInstance) { chartInstance.resize() }
       })
       clearTimeout(this.resizeSign)
       this.resizeSign = void 0
     }, 500)
   }
 
-  showFiltersForm = (itemId, keys, types) => () => {
-    const dashboardItem = this.props.currentItems.find(c => c.id === itemId)
+  private showFiltersForm = (itemId, keys, types) => () => {
+    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
 
     this.setState({
       filtersVisible: true,
@@ -371,7 +439,7 @@ export class Share extends React.Component {
     })
   }
 
-  hideFiltersForm = () => {
+  private hideFiltersForm = () => {
     this.setState({
       filtersVisible: false,
       filtersDashboardItem: 0,
@@ -381,9 +449,9 @@ export class Share extends React.Component {
     this.dashboardItemFilters.resetTree()
   }
 
-  doFilterQuery = (sql) => {
+  private doFilterQuery = (sql) => {
     const itemId = this.state.filtersDashboardItem
-    const dashboardItem = this.props.currentItems.find(c => c.id === itemId)
+    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
 
     this.getChartData('clear', itemId, dashboardItem.widget_id, {
       filters: sql
@@ -391,7 +459,7 @@ export class Share extends React.Component {
     this.hideFiltersForm()
   }
 
-  downloadCsv = (itemId) => (token) => {
+  private downloadCsv = (itemId) => (token) => {
     const {
       currentItems,
       widgets,
@@ -399,13 +467,13 @@ export class Share extends React.Component {
       onLoadWidgetCsv
     } = this.props
 
-    const dashboardItem = currentItems.find(c => c.id === itemId)
-    const widget = widgets.find(w => w.id === dashboardItem.widget_id)
+    const dashboardItem = currentItems.find((c) => c.id === itemId)
+    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
 
     const cachedQueryParams = itemQueryParams[itemId]
 
-    let filters = cachedQueryParams.filters
-    let params = cachedQueryParams.params
+    const filters = cachedQueryParams.filters
+    const params = cachedQueryParams.params
 
     onLoadWidgetCsv(
       itemId,
@@ -417,7 +485,7 @@ export class Share extends React.Component {
       }
     )
   }
-  visibleFullScreen = (currentChartData) => {
+  private visibleFullScreen = (currentChartData) => {
     const {allowFullScreen} = this.state
     if (currentChartData) {
       this.setState({
@@ -428,13 +496,13 @@ export class Share extends React.Component {
       allowFullScreen: !allowFullScreen
     })
   }
-  currentWidgetInFullScreen = (id) => {
+  private currentWidgetInFullScreen = (id) => {
     const {currentItems, dataSources, loadings, widgets} = this.props
     const { modifiedPositions } = this.state
-    const item = currentItems.find(ci => ci.id === id)
+    const item = currentItems.find((ci) => ci.id === id)
     const modifiedPosition = modifiedPositions[currentItems.indexOf(item)]
-    const widget = widgets.find(w => w.id === item.widget_id)
-    const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+    const widget = widgets.find((w) => w.id === item.widget_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     const data = dataSources[id]
     const loading = loadings[id]
     this.setState({
@@ -443,15 +511,15 @@ export class Share extends React.Component {
         h: modifiedPosition ? modifiedPosition.h : 0,
         itemId: id,
         widgetId: widget.id,
-        widget: widget,
-        chartInfo: chartInfo,
-        data: data,
-        loading: loading,
+        widget,
+        chartInfo,
+        data,
+        loading,
         onGetChartData: this.getChartData
       }
     })
   }
-  handleLegitimateUser = () => {
+  private handleLegitimateUser = () => {
     const {type, shareInfo} = this.state
     this.setState({
       showLogin: false
@@ -460,16 +528,16 @@ export class Share extends React.Component {
     })
   }
 
-  checkInteract = (itemId) => {
+  private checkInteract = (itemId) => {
     const { currentItems, widgets } = this.props
     const { linkageTableSource } = this.state
-    const dashboardItem = currentItems.find(ci => ci.id === itemId)
-    const widget = widgets.find(w => w.id === dashboardItem.widget_id)
-    const widgetlib = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+    const dashboardItem = currentItems.find((ci) => ci.id === itemId)
+    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+    const widgetlib = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
 
-    let linkagers = {}
+    const linkagers = {}
 
-    linkageTableSource.forEach(lts => {
+    linkageTableSource.forEach((lts) => {
       const { trigger, linkager, relation } = lts
 
       const triggerId = trigger[0]
@@ -501,16 +569,16 @@ export class Share extends React.Component {
     return linkagers
   }
 
-  doInteract = (itemId, linkagers, interactIndexOrId) => {
+  private doInteract = (itemId, linkagers, interactIndexOrId) => {
     const {
       currentItems,
       widgets,
       dataSources
     } = this.props
 
-    const triggerItem = currentItems.find(ci => ci.id === itemId)
-    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
-    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const triggerItem = currentItems.find((ci) => ci.id === itemId)
+    const triggerWidget = widgets.find((w) => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
     const dataSource = dataSources[itemId].dataSource
     let triggeringData
 
@@ -518,24 +586,27 @@ export class Share extends React.Component {
       triggeringData = dataSource[interactIndexOrId]
       this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndexOrId)
     } else {
-      triggeringData = dataSource.find(ds => ds.antDesignTableId === interactIndexOrId)
+      triggeringData = dataSource.find((ds) => ds.antDesignTableId === interactIndexOrId)
     }
 
-    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
-      [itemId]: {
-        isInteractive: true,
-        interactId: `${interactIndexOrId}`
+    this.setState({
+      interactiveItems: {
+        ...this.state.interactiveItems,
+        [itemId]: {
+          isInteractive: true,
+          interactId: `${interactIndexOrId}`
+        }
       }
     })
 
-    Object.keys(linkagers).forEach(key => {
+    Object.keys(linkagers).forEach((key) => {
       const linkager = linkagers[key]
 
       let linkagerId
-      let linkageFilters = []
-      let linkageParams = []
+      const linkageFilters = []
+      const linkageParams = []
       // 合并单个 linkager 所接收的数据
-      linkager.forEach(lr => {
+      linkager.forEach((lr) => {
         linkagerId = lr.linkagerId
 
         const {
@@ -560,7 +631,7 @@ export class Share extends React.Component {
         }
       })
 
-      const linkagerItem = currentItems.find(ci => ci.id === linkagerId)
+      const linkagerItem = currentItems.find((ci) => ci.id === linkagerId)
       const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
       /*
        * 多个 trigger 联动同一个 linkager
@@ -568,8 +639,8 @@ export class Share extends React.Component {
        */
       if (alreadyInUseFiltersAndParams) {
         const { filters, params } = alreadyInUseFiltersAndParams
-        const mergedFilters = linkageFilters.length ? Object.assign(filters, {[itemId]: linkageFilters}) : filters
-        const mergedParams = linkageParams.length ? Object.assign(params, {[itemId]: linkageParams}) : params
+        const mergedFilters = linkageFilters.length ? { ...filters, [itemId]: linkageFilters } : filters
+        const mergedParams = linkageParams.length ? { ...params, [itemId]: linkageParams } : params
 
         this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
           linkageFilters: Object.values(mergedFilters)
@@ -616,56 +687,59 @@ export class Share extends React.Component {
     })
   }
 
-  turnOffInteract = (itemId) => () => {
+  private turnOffInteract = (itemId) => () => {
     const {
       currentItems,
       widgets,
       dataSources
     } = this.props
 
-    const triggerItem = currentItems.find(ci => ci.id === itemId)
-    const triggerWidget = widgets.find(w => w.id === triggerItem.widget_id)
-    const chartInfo = widgetlibs.find(wl => wl.id === triggerWidget.widgetlib_id)
+    const triggerItem = currentItems.find((ci) => ci.id === itemId)
+    const triggerWidget = widgets.find((w) => w.id === triggerItem.widget_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
     const dataSource = dataSources[itemId].dataSource
 
     if (chartInfo.renderer === ECHARTS_RENDERER) {
       this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
     }
 
-    this.state.interactiveItems = Object.assign({}, this.state.interactiveItems, {
-      [itemId]: {
-        isInteractive: false,
-        interactId: null
+    this.setState({
+      interactiveItems: {
+        ...this.state.interactiveItems,
+        [itemId]: {
+          isInteractive: false,
+          interactId: null
+        }
       }
     })
 
-    Object.keys(this.interactCallbacks[itemId]).map(linkagerId => {
+    Object.keys(this.interactCallbacks[itemId]).map((linkagerId) => {
       this.interactCallbacks[itemId][linkagerId]()
       delete this.interactCallbacks[itemId][linkagerId]
     })
   }
 
-  globalFilterChange = (filter) => (formValue) => {
+  private globalFilterChange = (filter) => (formValue) => {
     const { currentItems } = this.props
     const { key, type, relatedItems } = filter
 
-    Object.keys(relatedItems).forEach(itemId => {
+    Object.keys(relatedItems).forEach((itemId) => {
       const columnAndType = relatedItems[itemId].split(DEFAULT_SPLITER)
       const isParam = !columnAndType[1]  // 变量type为空
-      const item = currentItems.find(ci => ci.id === Number(itemId))
+      const item = currentItems.find((ci) => ci.id === Number(itemId))
 
       if (!this.interactGlobalFilters[itemId]) {
         this.interactGlobalFilters[itemId] = {}
       }
 
       if (isParam) {
-        let paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
+        const paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
         let currentParam
 
         switch (type) {
           case 'numberRange':
             if (formValue[0] || formValue[1]) {
-              currentParam = formValue.map(fv => ({
+              currentParam = formValue.map((fv) => ({
                 k: columnAndType[0],
                 v: fv
               }))
@@ -682,7 +756,7 @@ export class Share extends React.Component {
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentParam = formValue.map(fv => ({
+              currentParam = formValue.map((fv) => ({
                 k: columnAndType[0],
                 v: `${fv}`
               }))
@@ -699,7 +773,7 @@ export class Share extends React.Component {
             break
           case 'multiDate':
             if (formValue) {
-              currentParam = formValue.split(',').map(fv => ({
+              currentParam = formValue.split(',').map((fv) => ({
                 k: columnAndType[0],
                 v: `'${fv}'`
               }))
@@ -708,7 +782,7 @@ export class Share extends React.Component {
           case 'dateRange':
           case 'datetimeRange':
             if (formValue.length) {
-              currentParam = formValue.map(fv => ({
+              currentParam = formValue.map((fv) => ({
                 k: columnAndType[0],
                 v: `'${fv}'`
               }))
@@ -732,12 +806,12 @@ export class Share extends React.Component {
           delete paramsOnThisItem[key]
         }
       } else {
-        let filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
+        const filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
         let currentFilter
 
         switch (type) {
           case 'numberRange':
-            let numberFilters = []
+            const numberFilters = []
             if (formValue[0]) {
               numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
             }
@@ -760,7 +834,7 @@ export class Share extends React.Component {
             break
           case 'multiSelect':
             if (formValue.length) {
-              currentFilter = formValue.map(val => `${columnAndType[0]} = ${val}`).join(` and `)
+              currentFilter = formValue.map((val) => `${columnAndType[0]} = ${val}`).join(` and `)
             }
             break
           case 'date':
@@ -775,7 +849,7 @@ export class Share extends React.Component {
             break
           case 'multiDate':
             if (formValue) {
-              currentFilter = formValue.split(',').map(val => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
+              currentFilter = formValue.split(',').map((val) => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
             }
             break
           case 'dateRange':
@@ -819,15 +893,15 @@ export class Share extends React.Component {
     }
   }
 
-  getCascadeSource = (token, sql) => (itemId, controlId, flatTableId, column, parents) => {
+  private getCascadeSource = (token, sql) => (itemId, controlId, flatTableId, column, parents) => {
     this.props.onLoadCascadeSourceFromItem(itemId, controlId, token, sql, column, parents)
   }
 
-  adjustLinkageTableSource = (currentDashboard, currentItems) => {
+  private adjustLinkageTableSource = (currentDashboard, currentItems) => {
     const { linkage_detail } = currentDashboard
     const linkageTableSource = JSON.parse(linkage_detail)
 
-    return linkageTableSource.filter(lts => {
+    return linkageTableSource.filter((lts) => {
       let linkagerSign = false
       let triggerSign = false
 
@@ -844,24 +918,24 @@ export class Share extends React.Component {
     })
   }
 
-  adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
+  private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
     const { config } = currentDashboard
     const globalFilterTableSource = JSON.parse(config).globalFilters || []
 
-    return globalFilterTableSource.map(gfts => {
-      const deprecatedItems = Object.keys(gfts.relatedItems).filter(key => !currentItems.find(ci => ci.id === Number(key)))
-      deprecatedItems.forEach(di => {
+    return globalFilterTableSource.map((gfts) => {
+      const deprecatedItems = Object.keys(gfts.relatedItems).filter((key) => !currentItems.find((ci) => ci.id === Number(key)))
+      deprecatedItems.forEach((di) => {
         delete gfts.relatedItems[di]
       })
       return gfts
     })
   }
 
-  loadCascadeSourceInsideGlobalFilters = (token) => (key, flatTableId, column, parents) => {
+  private loadCascadeSourceInsideGlobalFilters = (token) => (key, flatTableId, column, parents) => {
     this.props.onLoadCascadeSourceFromDashboard(key, flatTableId, token, column, parents)
   }
 
-  render () {
+  public render () {
     const {
       title,
       currentItems,
@@ -889,14 +963,14 @@ export class Share extends React.Component {
       phantomRenderSign
     } = this.state
 
-    let grids = ''
-    let fullScreenComponent = ''
-    let loginPanel = ''
+    let grids = null
+    let fullScreenComponent = null
+    let loginPanel = null
 
-    let layouts = {
+    const layouts = {
       lg: []
     }
-    let itemblocks = []
+    const itemblocks = []
 
     if (currentItems && widgets) {
       if (widgets.length === currentItems.length) {
@@ -909,7 +983,7 @@ export class Share extends React.Component {
             i: `${item.id}`
           })
 
-          const widget = widgets.find(w => w.id === item.widget_id)
+          const widget = widgets.find((w) => w.id === item.widget_id)
           const data = dataSources[item.id]
           const loading = loadings[item.id]
           const modifiedPosition = modifiedPositions[index]
@@ -919,7 +993,7 @@ export class Share extends React.Component {
           const { isInteractive, interactId } = interactiveItems[item.id]
 
           if (widget) {
-            const chartInfo = widgetlibs.find(wl => wl.id === widget.widgetlib_id)
+            const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
             const permission = widget['permission']
             const isDownload = permission ? permission.indexOf('download') > -1 : false
 
@@ -951,7 +1025,7 @@ export class Share extends React.Component {
                   onCheckTableInteract={this.checkInteract}
                   onDoTableInteract={this.doInteract}
                   onShowFullScreen={this.visibleFullScreen}
-                  onGetCascadeSource={this.getCascadeSource(item.aesStr, Object.assign(sql, {adHoc: widget.adhoc_sql}))}
+                  onGetCascadeSource={this.getCascadeSource(item.aesStr, {...sql, adHoc: widget.adhoc_sql})}
                 />
               </div>
             ))
@@ -970,7 +1044,8 @@ export class Share extends React.Component {
             onLayoutChange={this.onLayoutChange}
             measureBeforeMount={false}
             draggableHandle={`.${styles.title}`}
-            useCSSTransforms={mounted}>
+            useCSSTransforms={mounted}
+          >
             {itemblocks}
           </ResponsiveReactGridLayout>
         )
@@ -1053,50 +1128,6 @@ export class Share extends React.Component {
   }
 }
 
-Share.propTypes = {
-  title: PropTypes.string,
-  config: PropTypes.string, // eslint-disable-line
-  currentItems: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  widgets: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  dataSources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  loadings: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  itemQueryParams: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  downloadCsvLoadings: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  itemsCascadeSources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  dashboardCascadeSources: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  onLoadDashboard: PropTypes.func,
-  onLoadWidget: PropTypes.func,
-  onLoadResultset: PropTypes.func,
-  onSetIndividualDashboard: PropTypes.func,
-  onLoadWidgetCsv: PropTypes.func,
-  onLoadCascadeSourceFromItem: PropTypes.func,
-  onLoadCascadeSourceFromDashboard: PropTypes.func
-}
-
 const mapStateToProps = createStructuredSelector({
   title: makeSelectTitle(),
   config: makeSelectConfig(),
@@ -1122,4 +1153,16 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Share)
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+const withAppReducer = injectReducer({ key: 'global', reducer: appReducer })
+const withReducer = injectReducer({ key: 'shareDashboard', reducer })
+const withAppSaga = injectSaga({ key: 'global', saga: appSaga })
+const withSaga = injectSaga({ key: 'shareDashboard', saga })
+
+export default compose(
+  withAppReducer,
+  withReducer,
+  withAppSaga,
+  withSaga,
+  withConnect
+)(Share)

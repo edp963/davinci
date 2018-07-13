@@ -32,6 +32,11 @@ const makeSelectCurrentDisplay = () => createSelector(
   (displayState) => displayState.get('currentDisplay')
 )
 
+const makeSelectCurrentSlide = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('currentSlide')
+)
+
 const makeSelectCurrentLayers = () => createSelector(
   selectDisplay,
   (displayState) =>  displayState.get('currentLayers')
@@ -66,10 +71,26 @@ const makeSelectCurrentSelectedLayers = () => createSelector(
   }
 )
 
+const makeSelectCurrentDisplayShareInfo = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('currentDisplayShareInfo')
+)
+
+const makeSelectCurrentDisplaySecretInfo = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('currentDisplaySecretInfo')
+)
+
+const makeSelectCurrentDisplayShareInfoLoading = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('currentDisplayShareInfoLoading')
+)
+
 export {
   selectDisplay,
   makeSelectDisplays,
   makeSelectCurrentDisplay,
+  makeSelectCurrentSlide,
   makeSelectCurrentLayers,
 
   makeSelectCurrentDatasources,
@@ -77,5 +98,9 @@ export {
   makeSelectCurrentLayersQueryParams,
 
   makeSelectCurrentLayersStatus,
-  makeSelectCurrentSelectedLayers
+  makeSelectCurrentSelectedLayers,
+
+  makeSelectCurrentDisplayShareInfo,
+  makeSelectCurrentDisplaySecretInfo,
+  makeSelectCurrentDisplayShareInfoLoading
 }

@@ -32,9 +32,10 @@ import { checkNameAction } from '../../App/actions'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IDisplayFormProps {
+  projectId: number
   type: string
   form: any
-  onCheckName: (id, name, type, resolve, reject) => void
+  onCheckName: (id, name, type, params, resolve, reject) => void
 }
 
 export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
@@ -44,11 +45,11 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, form } = this.props
+    const { projectId, onCheckName, type, form } = this.props
     const { id } = form.getFieldsValue()
     const idName = type === 'add' ? '' : id
-    const typeName = 'dashboard' // @TODO change to 'display'
-    onCheckName(idName, value, typeName,
+    const typeName = 'display'
+    onCheckName(idName, value, typeName, { projectId },
       () => {
         callback()
       }, (err) => {
@@ -86,7 +87,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
                   required: true,
                   message: 'Name 不能为空'
                 }, {
-                  // validator: this.checkNameUnique
+                  validator: this.checkNameUnique
                 }]
               })(
                 <Input placeholder="Name" />
@@ -133,7 +134,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, params, resolve, reject) => dispatch(checkNameAction(id, name, type, params, resolve, reject))
   }
 }
 

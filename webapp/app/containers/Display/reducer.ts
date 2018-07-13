@@ -19,11 +19,8 @@
  */
 
 import { fromJS } from 'immutable'
-import {
-  ActionTypes,
-  GraphTypes
-} from './constants'
-
+import { ActionTypes } from './constants'
+import { GraphTypes } from 'utils/util'
 import {
   LOAD_BIZDATAS_FROM_ITEM,
   LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
@@ -36,6 +33,10 @@ const initialState = fromJS({
   displays: [],
   currentDisplay: null,
   currentDisplayLoading: false,
+  currentDisplayShareInfo: '',
+  currentDisplaySecretInfo: '',
+  currentSlide: null,
+  currentSlideLoading: false,
   currentDisplayCascadeSources: {},
   currentLayers: [],
   currentLayersStatus: {},
@@ -50,6 +51,7 @@ function displayReducer (state = initialState, action) {
 
   const displays = state.get('displays')
   const displayCascadeSources = state.get('currentDisplayCascadeSources')
+  const currentDisplay = state.get('currentDisplay')
   const currentLayers = state.get('currentLayers')
 
   const datasources = state.get('currentDatasources')
@@ -72,7 +74,7 @@ function displayReducer (state = initialState, action) {
       return state
 
     case ActionTypes.EDIT_DISPLAY_SUCCESS:
-      displays.splice(displays.findIndex(((d) => d.id === payload.result.id), 1, payload.result))
+      displays.splice(displays.findIndex((d) => d.id === payload.result.id), 1, payload.result)
       return state.set('displays', displays.slice())
 
     case ActionTypes.EDIT_CURRENT_DISPLAY:
@@ -84,17 +86,30 @@ function displayReducer (state = initialState, action) {
     case ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE:
       return state.set('currentDisplayLoading', false)
 
+    case ActionTypes.EDIT_CURRENT_SLIDE:
+      return state.set('currentSlideLoading', true)
+    case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+      return state
+        .set('currentSlide', payload.result)
+        .set('currentSlideLoading', false)
+    case ActionTypes.EDIT_CURRENT_SLIDE_FAILURE:
+      return state.set('currentSlideLoading', false)
+
     case ActionTypes.LOAD_DISPLAY_DETAIL:
-      return state.set('currentDisplayLoading', true)
+      return state
+        .set('currentDisplayLoading', true)
+        .set('currentDisplayShareInfo', '')
+        .set('currentDisplaySecretInfo', '')
     case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state
         .set('currentDisplayLoading', false)
         .set('currentDisplay', payload.display)
-        .set('currentLayers', payload.display.layers || [])
+        .set('currentSlide', payload.slide)
+        .set('currentLayers', payload.layers || [])
         .set('currentDatasources', {})
         .set('currentLayersLoading', {})
-        .set('currentLayersQueryParams', payload.display.layers.reduce((obj, layer) => {
-          if (layer.graphType !== GraphTypes.Chart) { return obj }
+        .set('currentLayersQueryParams', payload.layers.reduce((obj, layer) => {
+          if (layer.type !== GraphTypes.Chart) { return obj }
           obj[layer.id] = {
             filters: '',
             linkageFilters: '',
@@ -106,8 +121,8 @@ function displayReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('currentLayersCascadeSources', payload.display.layers.reduce((obj, layer) => {
-          if (layer.graphType !== GraphTypes.Chart) { return obj }
+        .set('currentLayersCascadeSources', payload.layers.reduce((obj, layer) => {
+          if (layer.type !== GraphTypes.Chart) { return obj }
           obj[layer.id] = {}
           return obj
         }, {}))
@@ -217,6 +232,19 @@ function displayReducer (state = initialState, action) {
         ...layersStatus,
         [payload.id]: payload.selected
       })
+
+    case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
+      return state.set('currentDisplayShareInfoLoading', true)
+    case ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS:
+      return state
+        .set('currentDisplayShareInfo', payload.shareInfo)
+        .set('currentDisplayShareInfoLoading', false)
+    case ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS:
+      return state
+        .set('currentDisplaySecretInfo', payload.secretInfo)
+        .set('currentDisplayShareInfoLoading', false)
+    case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
+      return state.set('currentDisplayShareInfoLoading', false)
 
     default:
       return state

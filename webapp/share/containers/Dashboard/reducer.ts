@@ -47,13 +47,13 @@ const initialState = fromJS({
 })
 
 function shareReducer (state = initialState, { type, payload }) {
-  let dashboardCascadeSources = state.get('dashboardCascadeSources')
+  const dashboardCascadeSources = state.get('dashboardCascadeSources')
   let widgets = state.get('widgets')
-  let dataSources = state.get('dataSources')
-  let loadings = state.get('loadings')
-  let itemQueryParams = state.get('itemQueryParams')
-  let downloadCsvLoadings = state.get('downloadCsvLoadings')
-  let itemsCascadeSources = state.get('itemsCascadeSources')
+  const dataSources = state.get('dataSources')
+  const loadings = state.get('loadings')
+  const itemQueryParams = state.get('itemQueryParams')
+  const downloadCsvLoadings = state.get('downloadCsvLoadings')
+  const itemsCascadeSources = state.get('itemsCascadeSources')
 
   switch (type) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
@@ -135,33 +135,38 @@ function shareReducer (state = initialState, { type, payload }) {
         }
       }
       return state
-        .set('loadings', Object.assign({}, loadings))
-        .set('itemQueryParams', Object.assign({}, itemQueryParams))
+        .set('loadings', { ...loadings })
+        .set('itemQueryParams', { ...itemQueryParams })
     case LOAD_SHARE_RESULTSET_SUCCESS:
       loadings[payload.itemId] = false
       dataSources[payload.itemId] = payload.resultset
       return state
-        .set('loadings', Object.assign({}, loadings))
-        .set('dataSources', Object.assign({}, dataSources))
+        .set('loadings', { ...loadings })
+        .set('dataSources', { ...dataSources })
     case LOAD_WIDGET_CSV:
-      return state.set('downloadCsvLoadings', Object.assign({}, downloadCsvLoadings, {
+      return state.set('downloadCsvLoadings', {
+        ...downloadCsvLoadings,
         [payload.itemId]: true
-      }))
+      })
     case LOAD_WIDGET_CSV_SUCCESS:
     case LOAD_WIDGET_CSV_FAILURE:
-      return state.set('downloadCsvLoadings', Object.assign({}, downloadCsvLoadings, {
+      return state.set('downloadCsvLoadings', {
+        ...downloadCsvLoadings,
         [payload.itemId]: false
-      }))
+      })
     case LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS:
-      return state.set('itemsCascadeSources', Object.assign({}, itemsCascadeSources, {
-        [payload.itemId]: Object.assign({}, itemsCascadeSources[payload.itemId], {
+      return state.set('itemsCascadeSources', {
+        ...itemsCascadeSources,
+        [payload.itemId]: {
+          ...itemsCascadeSources[payload.itemId],
           [payload.controlId]: payload.values
-        })
-      }))
+        }
+      })
     case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
-      return state.set('dashboardCascadeSources', Object.assign({}, dashboardCascadeSources, {
+      return state.set('dashboardCascadeSources', {
+        ...dashboardCascadeSources,
         [payload.controlId]: payload.values
-      }))
+      })
     default:
       return state
   }

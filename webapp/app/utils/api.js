@@ -23,17 +23,17 @@ import config, { env, envName } from '../globalConfig'
 const { dev, production } = envName
 
 export const apiConfig = {
-  login: { env: production, url: '/login' },
-  group: { env: production, url: '/groups' },
-  user: { env: production, url: '/users' },
-  changepwd: { env: production, url: '/changepwd' },
-  source: { env: production, url: '/sources' },
-  bizlogic: { env: production, url: '/flattables' },
-  widget: { env: production, url: '/widgets' },
-  dashboard: { env: production, url: '/dashboards' },
-  share: { env: production, url: '/shares' },
-  checkName: { env: production, url: '/check/name' },
-  uploads: { env: production, url: '/uploads' },
+  login: { env: dev, url: '/login' },
+  group: { env: dev, url: '/groups' },
+  user: { env: dev, url: '/users' },
+  changepwd: { env: dev, url: '/changepwd' },
+  source: { env: dev, url: '/sources' },
+  bizlogic: { env: dev, url: '/flattables' },
+  widget: { env: dev, url: '/widgets' },
+  dashboard: { env: dev, url: '/dashboards' },
+  share: { env: dev, url: '/share' },
+  checkName: { env: dev, url: '/check' },
+  uploads: { env: dev, url: '/uploads' },
   schedule: { env: production, url: '/cronjobs' },
   signup: { env: dev, url: '/user' },
   display: { env: dev, url: '/displays' }

@@ -30,6 +30,7 @@ import {
 } from './constants'
 import {
   dashboardGetted,
+  loadDashboardFail,
   widgetGetted,
   resultsetGetted,
   widgetCsvLoaded,
@@ -40,7 +41,7 @@ import {
   loadCascadeSourceFromDashboardFail
 } from './actions'
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 import request from '../../../app/utils/request'
 import api from '../../../app/utils/api'
 import config, { env } from '../../../app/globalConfig'
@@ -48,7 +49,8 @@ import { readListAdapter } from '../../../app/utils/asyncAdapter'
 const shareHost = config[env].shareHost
 import resultsetConverter from '../../../app/utils/resultsetConverter'
 
-export function* getDashboard ({ payload }) {
+export function* getDashboard (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, `${api.share}/dashboard/${payload.token}`)
     const dashboard = asyncData.payload
@@ -57,15 +59,13 @@ export function* getDashboard ({ payload }) {
   } catch (err) {
     message.destroy()
     console.log('getDashboard', err)
+    yield put(loadDashboardFail())
     payload.reject(err)
   }
 }
 
-export function* getDashboardWatcher () {
-  yield fork(takeLatest, LOAD_SHARE_DASHBOARD, getDashboard)
-}
-
-export function* getWidget ({ payload }) {
+export function* getWidget (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, `${api.share}/widget/${payload.token}`)
     const widget = asyncData.payload
@@ -81,11 +81,8 @@ export function* getWidget ({ payload }) {
   }
 }
 
-export function* getWidgetWatcher () {
-  yield fork(takeEvery, LOAD_SHARE_WIDGET, getWidget)
-}
-
-export function* getResultset ({ payload }) {
+export function* getResultset (action) {
+  const { payload } = action
   const {
     itemId,
     token,
@@ -98,7 +95,7 @@ export function* getResultset ({ payload }) {
   } = payload
 
   try {
-    let queries = []
+    let queries: any[] | string = []
 
     if (offset !== undefined && limit !== undefined) {
       queries = queries
@@ -113,7 +110,7 @@ export function* getResultset ({ payload }) {
     const data = {
       adHoc,
       manualFilters: [filters, linkageFilters, globalFilters]
-        .filter(f => !!f)
+        .filter((f) => !!f)
         .join(' and '),
       params: [].concat(params).concat(linkageParams).concat(globalParams)
     }
@@ -130,11 +127,8 @@ export function* getResultset ({ payload }) {
   }
 }
 
-export function* getResultsetWatcher () {
-  yield fork(takeEvery, LOAD_SHARE_RESULTSET, getResultset)
-}
-
-export function* getWidgetCsv ({ payload }) {
+export function* getWidgetCsv (action) {
+  const { payload } = action
   const { token, sql, sorts, offset, limit } = payload
   let queries = ''
 
@@ -158,22 +152,20 @@ export function* getWidgetCsv ({ payload }) {
   }
 }
 
-export function* getWidgetCsvWatcher () {
-  yield fork(takeLatest, LOAD_WIDGET_CSV, getWidgetCsv)
-}
-
-export function* getCascadeSourceFromItem ({ payload }) {
+export function* getCascadeSourceFromItem (action) {
+  const { payload } = action
   try {
     const { itemId, controlId, token, sql, column, parents } = payload
     const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
-    const data = Object.assign({
+    const data = {
       adHoc,
       manualFilters: [filters, linkageFilters, globalFilters]
-        .filter(f => !!f)
+        .filter((f) => !!f)
         .join(' and '),
       params: [].concat(params).concat(linkageParams).concat(globalParams),
-      childFieldName: column
-    }, parents && { parents })
+      childFieldName: column,
+      parents
+    }
 
     const asyncData = yield call(request, {
       method: 'post',
@@ -187,20 +179,18 @@ export function* getCascadeSourceFromItem ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromItemWatcher () {
-  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem)
-}
-
-export function* getCascadeSourceFromDashboard ({ payload }) {
+export function* getCascadeSourceFromDashboard (action) {
   try {
+    const { payload } = action
     const { flatTableId, controlId, token, column, parents } = payload
 
-    const data = Object.assign({
+    const data = {
       adHoc: '',
       manualFilters: '',
       params: [],
-      childFieldName: column
-    }, parents && { parents })
+      childFieldName: column,
+      parents
+    }
 
     const asyncData = yield call(request, {
       method: 'post',
@@ -214,15 +204,13 @@ export function* getCascadeSourceFromDashboard ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromDashboardWatcher () {
-  yield fork(takeEvery, LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+export default function* rootDashboardSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOAD_SHARE_DASHBOARD, getDashboard),
+    takeEvery(LOAD_SHARE_WIDGET, getWidget),
+    takeEvery(LOAD_SHARE_RESULTSET, getResultset),
+    takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
+    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem),
+    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard)
+  ]
 }
-
-export default [
-  getDashboardWatcher,
-  getWidgetWatcher,
-  getResultsetWatcher,
-  getWidgetCsvWatcher,
-  getCascadeSourceFromItemWatcher,
-  getCascadeSourceFromDashboardWatcher
-]

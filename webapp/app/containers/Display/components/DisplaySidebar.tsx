@@ -3,7 +3,7 @@ import * as React from 'react'
 const styles = require('../Display.less')
 
 interface IDisplaySidebarProps {
-  children: JSX.Element
+  children: JSX.Element[]
 }
 
 export function DisplaySidebar (props: IDisplaySidebarProps) {

@@ -90,13 +90,14 @@ export function hideNavigator () {
   }
 }
 
-export function checkNameAction (id, name, type, resolve, reject) {
+export function checkNameAction (id, name, type, params, resolve, reject) {
   return {
     type: CHECK_NAME,
     payload: {
       id,
       name,
       type,
+      params,
       resolve,
       reject
     }

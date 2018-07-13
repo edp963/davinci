@@ -18,6 +18,52 @@
  * >>
  */
 
-module.exports = {
-  'primary-color': '#1B98E0'
+import {
+  LOGIN,
+  LOGGED,
+  LOGOUT,
+  SET_LOGIN_USER,
+  GET_LOGIN_USER
+} from './constants'
+
+export function login (username, password, shareInfo, resolve) {
+  return {
+    type: LOGIN,
+    payload: {
+      username,
+      password,
+      shareInfo,
+      resolve
+    }
+  }
+}
+
+export function logout () {
+  return {
+    type: LOGOUT
+  }
+}
+
+export function setLoginUser (user) {
+  return {
+    type: SET_LOGIN_USER,
+    payload: {
+      user
+    }
+  }
+}
+
+export function getLoginUser () {
+  return {
+    type: GET_LOGIN_USER
+  }
+}
+
+export function logged (user) {
+  return {
+    type: LOGGED,
+    payload: {
+      user
+    }
+  }
 }

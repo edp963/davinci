@@ -20,8 +20,8 @@
 
 import 'babel-polyfill'
 
-import React from 'react'
-import ReactDOM from 'react-dom'
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
@@ -29,9 +29,9 @@ import { useScroll } from 'react-router-scroll'
 
 import App from './containers/App/index'
 
-import { makeSelectLocationState } from 'containers/App/selectors'
+import { makeSelectLocationState } from '../app/containers/App/selectors'
 
-import LanguageProvider from 'containers/LanguageProvider'
+import LanguageProvider from '../app/containers/LanguageProvider'
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
 import '!file-loader?name=[name].[ext]!../app/manifest.json'
@@ -128,6 +128,12 @@ if (module.hot) {
   })
 }
 
+interface IWindow extends Window {
+  Intl: any
+  __REACT_DEVTOOLS_GLOBAL_HOOK__: any
+}
+declare const window: IWindow
+
 // Chunked polyfill for browsers without Intl support
 if (!window.Intl) {
   (new Promise((resolve) => {
@@ -151,7 +157,7 @@ if (!window.Intl) {
 if (process.env.NODE_ENV === 'production') {
   // disable react developer tools in production
   if (window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
-    window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = function () {}
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = () => void 0
   }
 }
 

@@ -18,29 +18,22 @@
  * >>
  */
 
-import {
-  LOGIN,
-  LOGGED,
-  LOGOUT,
-  SET_LOGIN_USER,
-  GET_LOGIN_USER
-} from './constants'
+import * as React from 'react'
+import Helmet from 'react-helmet'
 
-import { promiseActionCreator } from '../../../app/utils/reduxPromisation'
-
-export const login = promiseActionCreator(LOGIN, ['username', 'password', 'shareInfo'])
-
-export const logout = promiseActionCreator(LOGOUT)
-
-export const setLoginUser = promiseActionCreator(SET_LOGIN_USER, ['user'])
-
-export const getLoginUser = promiseActionCreator(GET_LOGIN_USER)
-
-export function logged (user) {
-  return {
-    type: LOGGED,
-    payload: {
-      user
-    }
-  }
+export function App (props) {
+  return (
+    <div>
+      <Helmet
+        titleTemplate="%s - Davinci"
+        defaultTitle="Davinci Web Application"
+        meta={[
+          { name: 'description', content: 'Davinci web application built for data visualization' }
+        ]}
+      />
+      {React.Children.toArray(props.children)}
+    </div>
+  )
 }
+
+export default App

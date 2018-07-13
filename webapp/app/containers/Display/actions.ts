@@ -18,10 +18,7 @@
  * >>
  */
 
-import {
-  ActionTypes,
-  SecondaryGraphTypes
-} from './constants'
+import { ActionTypes } from './constants'
 
 export function loadDisplays (projectId) {
   return {
@@ -79,11 +76,13 @@ export function loadDisplayDetail (id) {
     }
   }
 }
-export function displayDetailLoaded (display) {
+export function displayDetailLoaded (display, slide, layers) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     payload: {
-      display
+      display,
+      slide,
+      layers
     }
   }
 }
@@ -114,7 +113,7 @@ export function editDisplayFail (error) {
   }
 }
 
-export function editCurrentDisplay (display, resolve) {
+export function editCurrentDisplay (display, resolve?) {
   return {
     type: ActionTypes.EDIT_CURRENT_DISPLAY,
     payload: {
@@ -134,6 +133,59 @@ export function currentDisplayEdited (result) {
 export function editCurrentDisplayFail (error) {
   return {
     type: ActionTypes.EDIT_CURRENT_DISPLAY_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function editCurrentSlide (displayId, slide, resolve?) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_SLIDE,
+    payload: {
+      displayId,
+      slide,
+      resolve
+    }
+  }
+}
+export function currentSlideEdited (result) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function editCurrentSlideFail (error) {
+  return {
+    type: ActionTypes.EDIT_CURRENT_SLIDE_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function uploadCurrentSlideCover (cover, resolve) {
+  return {
+    type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER,
+    payload: {
+      cover,
+      resolve
+    }
+  }
+}
+export function currentSlideCoverUploaded (result) {
+  return {
+    type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function uploadCurrentSlideCoverFail (error) {
+  return {
+    type: ActionTypes.UPLOAD_CURRENT_SLIDE_COVER_FAILURE,
     payload: {
       error
     }
@@ -242,5 +294,39 @@ export function displayLayersDeleted (ids) {
 export function deleteDisplayLayersFail () {
   return {
     type: ActionTypes.DELETE_DISPLAY_LAYERS_FAILURE
+  }
+}
+
+export function loadDisplayShareLink (id, authName) {
+  return {
+    type: ActionTypes.LOAD_DISPLAY_SHARE_LINK,
+    payload: {
+      id,
+      authName
+    }
+  }
+}
+
+export function displayShareLinkLoaded (shareInfo) {
+  return {
+    type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS,
+    payload: {
+      shareInfo
+    }
+  }
+}
+
+export function displaySecretLinkLoaded (secretInfo) {
+  return {
+    type: ActionTypes.LOAD_DISPLAY_SECRET_LINK_SUCCESS,
+    payload: {
+      secretInfo
+    }
+  }
+}
+
+export function loadDisplayShareLinkFail () {
+  return {
+    type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE
   }
 }

@@ -338,13 +338,13 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid/display/:displayId',
           name: 'display',
           component: Editor
+        },
+        {
+          path: '/project/:pid/display/preview/:displayId',
+          name: 'displayPreview',
+          component: Preview
         }
       ]
-    },
-    {
-      path: '/project/:pid/display/preview/:displayId',
-      name: 'displayPreview',
-      component: Preview
     },
     {
       path: '*',

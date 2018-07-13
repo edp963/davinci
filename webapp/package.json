@@ -209,6 +209,7 @@
     "echarts-wordcloud": "^1.1.3",
     "express": "4.15.3",
     "hoist-non-react-statics": "2.1.1",
+    "html2canvas": "^1.0.0-alpha.12",
     "immutable": "3.8.1",
     "intl": "1.2.5",
     "invariant": "2.2.2",

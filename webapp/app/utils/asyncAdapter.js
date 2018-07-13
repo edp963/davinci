@@ -31,7 +31,7 @@ function getCurrentEnv (apiName) {
 export function readListAdapter (data, apiName) {
   switch (getCurrentEnv(apiName)) {
     case 'production':
-      return data.payload
+      return data.payload || []
     default:
       return data
   }
@@ -40,7 +40,7 @@ export function readListAdapter (data, apiName) {
 export function readObjectAdapter (data, apiName) {
   switch (getCurrentEnv(apiName)) {
     case 'production':
-      return data.payload[0] || data.payload // FIXME
+      return data.payload // FIXME
     default:
       return data
   }

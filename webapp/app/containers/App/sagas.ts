@@ -28,6 +28,7 @@ import { logged, loginError, getLoginUserError } from './actions'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import axios from 'axios' // FIXME
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -85,16 +86,35 @@ export function* getLoginUserWatcher (): IterableIterator<any> {
   yield takeLatest(GET_LOGIN_USER, getLoginUser)
 }
 
+// FIX ME
+function* getToken () {
+  const response = yield call(axios, `/api/v3/login`, {
+    method: 'post',
+    data: {
+      username: 'Fangkun',
+      password: 'qwerty'
+    }
+  })
+  const token = response.data.header.token
+  localStorage.setItem('TEMP_TOKEN', token)
+  return token
+}
+
 export function* checkName (action): IterableIterator<any> {
-  const { id, name, type, resolve, reject } = action.payload
+  // FIXME
+  const token = (yield getToken())
+
+  const { id, name, type, params, resolve, reject } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const asyncData = yield call(request, `${api.checkName}/${type}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
       method: 'get',
-      url: api.checkName,
       params: {
+        ...params,
         id,
-        name,
-        entity: type
+        name
       }
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''

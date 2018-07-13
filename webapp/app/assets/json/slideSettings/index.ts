@@ -18,20 +18,26 @@
  * >>
  */
 
- import slide from './slide.json'
- import rectangle from './rectangle.json'
- import label from './label.json'
- import chart from './chart.json'
+import {
+  GraphTypes,
+  SecondaryGraphTypes } from 'utils/util'
 
- export default [
-   slide,
-   rectangle,
-   label,
-   chart
- ]
+import * as slide from './slide.json'
+import * as chart from './chart.json'
+import * as rectangle from './rectangle.json'
+import * as label from './label.json'
 
- export function getDefaultSlideParams () {
-  const params = slide.params
+
+
+export default {
+  [GraphTypes.Slide]: slide,
+  [GraphTypes.Chart]: chart,
+  [SecondaryGraphTypes.Rectangle]: rectangle,
+  [SecondaryGraphTypes.Label]: label
+}
+
+export function getDefaultSlideParams () {
+  const params = (slide as any).params
   const defaultSlideParams = {}
   params.forEach((param) => {
     param.items.forEach((item) => {

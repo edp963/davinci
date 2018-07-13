@@ -24,13 +24,13 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [0,0,0],
+      "default": [255,255,255],
       "span": 12
     }, {
       "name": "opacity",
       "title": "透明度",
       "component": "inputnumber",
-      "default": 100,
+      "default": 50,
       "min": 0,
       "max": 100,
       "span": 12
@@ -43,8 +43,11 @@
       "title": "缩放方式",
       "component": "radio",
       "values": [{
-        "name": "自动缩放",
-        "value": "auto"
+        "name": "等比缩放宽度",
+        "value": "scaleWidth"
+      }, {
+        "name": "等比缩放高度",
+        "value": "scaleHeight"
       }, {
         "name": "实际尺寸",
         "value": "noScale"
@@ -69,11 +72,9 @@
       "name": "backgroundImage",
       "title": "背景图片",
       "component": "upload",
-      "span": 24
-    }, {
-      "name": "coverImage",
-      "title": "截取封面",
-      "component": "upload",
+      "action": "slide/{slideId}/upload/bgImage",
+      "accept": "image/*",
+      "autoUpdate": true,
       "span": 24
     }]
   }]

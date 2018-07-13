@@ -26,7 +26,7 @@ import notification from 'antd/lib/notification'
  * @param radix 随机数基数 number
  * @returns {string}
  */
-export const uuid = (len, radix) => {
+export const uuid = (len, radix?) => {
   /* tslint:disable:no-bitwise */
 
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
@@ -95,6 +95,23 @@ export function notifyError (err, title) {
  */
 export function notifySagasError (err, prefix) {
   notifyError(err, `${prefix} sagas or reducer 异常`)
+}
+
+export function getBase64 (img, callback) {
+  const reader = new FileReader()
+  reader.addEventListener('load', () => callback(reader.result))
+  reader.readAsDataURL(img)
+}
+
+export enum SecondaryGraphTypes {
+  Rectangle = 20,
+  Label = 21
+}
+
+export enum GraphTypes {
+  Slide,
+  Chart,
+  Secondary
 }
 
 export enum OrderDirection {
