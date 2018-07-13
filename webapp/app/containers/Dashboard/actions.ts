@@ -36,14 +36,19 @@ import {
   DELETE_DASHBOARD_FAILURE,
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
+  LOAD_DASHBOARD_DETAIL_FAILURE,
   ADD_DASHBOARD_ITEM,
   ADD_DASHBOARD_ITEM_SUCCESS,
+  ADD_DASHBOARD_ITEM_FAILURE,
   EDIT_DASHBOARD_ITEM,
   EDIT_DASHBOARD_ITEM_SUCCESS,
+  EDIT_DASHBOARD_ITEM_FAILURE,
   EDIT_DASHBOARD_ITEMS,
   EDIT_DASHBOARD_ITEMS_SUCCESS,
+  EDIT_DASHBOARD_ITEMS_FAILURE,
   DELETE_DASHBOARD_ITEM,
   DELETE_DASHBOARD_ITEM_SUCCESS,
+  DELETE_DASHBOARD_ITEM_FAILURE,
   CLEAR_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
@@ -226,12 +231,24 @@ export function dashboardDetailLoaded (dashboard, widgets) {
   }
 }
 
+export function loadDashboardDetailFail () {
+  return {
+    type: LOAD_DASHBOARD_DETAIL_FAILURE
+  }
+}
+
 export function dashboardItemAdded (result) {
   return {
     type: ADD_DASHBOARD_ITEM_SUCCESS,
     payload: {
       result
     }
+  }
+}
+
+export function addDashboardItemFail () {
+  return {
+    type: ADD_DASHBOARD_ITEM_FAILURE
   }
 }
 
@@ -254,6 +271,12 @@ export function dashboardItemEdited (result) {
   }
 }
 
+export function editDashboardItemFail () {
+  return {
+    type: EDIT_DASHBOARD_ITEM_FAILURE
+  }
+}
+
 export function editDashboardItems (items, resolve) {
   return {
     type: EDIT_DASHBOARD_ITEMS,
@@ -273,12 +296,24 @@ export function dashboardItemsEdited (result) {
   }
 }
 
+export function editDashboardItemsFail () {
+  return {
+    type: EDIT_DASHBOARD_ITEMS_FAILURE
+  }
+}
+
 export function dashboardItemDeleted (id) {
   return {
     type: DELETE_DASHBOARD_ITEM_SUCCESS,
     payload: {
       id
     }
+  }
+}
+
+export function deleteDashboardItemFail () {
+  return {
+    type: DELETE_DASHBOARD_ITEM_FAILURE
   }
 }
 

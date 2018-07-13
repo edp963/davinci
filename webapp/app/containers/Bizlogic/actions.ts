@@ -28,11 +28,6 @@ import {
   DELETE_BIZLOGIC,
   DELETE_BIZLOGIC_SUCCESS,
   DELETE_BIZLOGIC_FAILURE,
-  // LOAD_BIZLOGIC_DETAIL,
-  // LOAD_BIZLOGIC_DETAIL_SUCCESS,
-  LOAD_BIZLOGIC_GROUPS,
-  LOAD_BIZLOGIC_GROUPS_SUCCESS,
-  LOAD_BIZLOGIC_GROUPS_FAILURE,
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
@@ -43,9 +38,6 @@ import {
   LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
   LOAD_BIZDATAS_FROM_ITEM_FAILURE,
   CLEAR_BIZDATAS,
-  SQL_VALIDATE,
-  SQL_VALIDATE_SUCCESS,
-  SQL_VALIDATE_FAILURE,
   LOAD_CASCADESOURCE_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
   LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
@@ -54,14 +46,21 @@ import {
   LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
   LOAD_BIZDATA_SCHEMA,
   LOAD_BIZDATA_SCHEMA_SUCCESS,
-  LOAD_BIZDATA_SCHEMA_FAILURE
+  LOAD_BIZDATA_SCHEMA_FAILURE,
+  LOAD_SCHEMA,
+  LOAD_SCHEMA_SUCCESS,
+  LOAD_SCHEMA_FAILURE,
+  EXECUTE_SQL,
+  EXECUTE_SQL_SUCCESS,
+  EXECUTE_SQL_FAILURE
 } from './constants'
 
-// export const loadBizlogicDetail = promiseActionCreator(LOAD_BIZLOGIC_DETAIL, ['id'])
-
-export function loadBizlogics () {
+export function loadBizlogics (projectId) {
   return {
-    type: LOAD_BIZLOGICS
+    type: LOAD_BIZLOGICS,
+    payload: {
+      projectId
+    }
   }
 }
 
@@ -126,40 +125,6 @@ export function bizlogicDeleted (id) {
 export function deleteBizlogicFail () {
   return {
     type: DELETE_BIZLOGIC_FAILURE
-  }
-}
-
-// export function bizlogicDetailLoaded (bizlogic) {
-//   return {
-//     type: LOAD_BIZLOGIC_DETAIL_SUCCESS,
-//     payload: {
-//       bizlogic
-//     }
-//   }
-// }
-
-export function loadBizlogicGroups (id, resolve) {
-  return {
-    type: LOAD_BIZLOGIC_GROUPS,
-    payload: {
-      id,
-      resolve
-    }
-  }
-}
-
-export function bizlogicGroupsLoaded (groups) {
-  return {
-    type: LOAD_BIZLOGIC_GROUPS_SUCCESS,
-    payload: {
-      groups
-    }
-  }
-}
-
-export function loadBizlogicGroupsFail () {
-  return {
-    type: LOAD_BIZLOGIC_GROUPS_FAILURE
   }
 }
 
@@ -260,32 +225,6 @@ export function clearBizdatas () {
   }
 }
 
-export function sqlValidate (sourceId, sql) {
-  return {
-    type: SQL_VALIDATE,
-    payload: {
-      sourceId,
-      sql
-    }
-  }
-}
-
-export function validateSqlSuccess (payload) {
-  return {
-    type: SQL_VALIDATE_SUCCESS,
-    payload
-  }
-}
-
-export function validateSqlFailure (error) {
-  return {
-    type: SQL_VALIDATE_FAILURE,
-    Payload: {
-      error
-    }
-  }
-}
-
 export function loadCascadeSourceFromItem (itemId, controlId, id, sql, column, parents) {
   return {
     type: LOAD_CASCADESOURCE_FROM_ITEM,
@@ -378,5 +317,56 @@ export function loadBizdataSchemaFail (error) {
     payload: {
       error
     }
+  }
+}
+
+export function loadSchema (sourceId, resolve) {
+  return {
+    type: LOAD_SCHEMA,
+    payload: {
+      sourceId,
+      resolve
+    }
+  }
+}
+
+export function schemaLoaded (schema) {
+  return {
+    type: LOAD_SCHEMA_SUCCESS,
+    payload: {
+      schema
+    }
+  }
+}
+
+export function loadSchemaFail () {
+  return {
+    type: LOAD_SCHEMA_FAILURE
+  }
+}
+
+export function executeSql (sourceId, sql, resolve) {
+  return {
+    type: EXECUTE_SQL,
+    payload: {
+      sourceId,
+      sql,
+      resolve
+    }
+  }
+}
+
+export function sqlExecuted (result) {
+  return {
+    type: EXECUTE_SQL_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function executeSqlFail () {
+  return {
+    type: EXECUTE_SQL_FAILURE
   }
 }

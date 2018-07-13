@@ -18,7 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
+import { takeLatest, takeEvery, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 import {
   LOAD_SOURCES,
@@ -49,9 +49,9 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
-export function* getSources () {
+export function* getSources ({ payload }) {
   try {
-    const asyncData = yield call(request, api.source)
+    const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
     const sources = readListAdapter(asyncData)
     yield put(sourcesLoaded(sources))
   } catch (err) {
@@ -65,11 +65,10 @@ export function* addSource ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.source,
-      data: writeAdapter(payload.source)
+      data: payload.source
     })
-    const result = readObjectAdapter(asyncData)
     payload.resolve()
-    yield put(sourceAdded(result))
+    yield put(sourceAdded(asyncData.payload))
   } catch (err) {
     yield put(addSourceFail())
     message.error('新增失败')
@@ -78,11 +77,17 @@ export function* addSource ({ payload }) {
 
 export function* deleteSource ({ payload }) {
   try {
-    yield call(request, {
+    const result = yield call(request, {
       method: 'delete',
       url: `${api.source}/${payload.id}`
     })
-    yield put(sourceDeleted(payload.id))
+    const { code } = result.header
+    if (code === 200) {
+      yield put(sourceDeleted(payload.id))
+    } else if (code === 400) {
+      message.error(result.header.msg, 3)
+      yield put(deleteSourceFail())
+    }
   } catch (err) {
     yield put(deleteSourceFail())
     message.error('删除失败')
@@ -103,8 +108,8 @@ export function* editSource ({ payload }) {
   try {
     yield call(request, {
       method: 'put',
-      url: api.source,
-      data: writeAdapter(payload.source)
+      url: `${api.source}/${payload.source.id}`,
+      data: payload.source
     })
     yield put(sourceEdited(payload.source))
     payload.resolve()
@@ -118,7 +123,7 @@ export function* testSourceConnection ({ payload }) {
   try {
     const res = yield call(request, {
       method: 'post',
-      url: `${api.source}/test_connection`,
+      url: `${api.source}/test`,
       data: payload.url
     })
 
@@ -136,20 +141,18 @@ export function* testSourceConnection ({ payload }) {
 }
 
 export function* getCsvMetaId ({payload}) {
+  const { source_id, replace_mode, table_name } = payload.csvMeta
   try {
     const res = yield call(request, {
-      url: `${api.uploads}/meta`,
+      url: `${api.source}/${source_id}/csvmeta`,
       method: 'post',
       data: {
-        table_name: payload.csvMeta.table_name,
-        source_id: payload.csvMeta.source_id,
-        primary_keys: payload.csvMeta.primary_keys,
-        index_keys: payload.csvMeta.index_keys,
-        replace_mode: payload.csvMeta.replace_mode
+        mode: replace_mode,
+        tableName: table_name
       }
     })
     if (res && res.header && res.header.code === 200) {
-      payload.resolve(res)
+      payload.resolve()
     } else {
       payload.reject(res.header.msg)
     }
@@ -160,7 +163,7 @@ export function* getCsvMetaId ({payload}) {
 
 export default function* rootSourceSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_SOURCES, getSources),
+    takeLatest(LOAD_SOURCES, getSources as any),
     takeEvery(ADD_SOURCE, addSource as any),
     takeEvery(DELETE_SOURCE, deleteSource as any),
     takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail as any),

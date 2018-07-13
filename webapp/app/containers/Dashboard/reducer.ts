@@ -32,10 +32,15 @@ import {
   DELETE_DASHBOARD_SUCCESS,
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
+  LOAD_DASHBOARD_DETAIL_FAILURE,
   ADD_DASHBOARD_ITEM_SUCCESS,
+  ADD_DASHBOARD_ITEM_FAILURE,
   EDIT_DASHBOARD_ITEM_SUCCESS,
+  EDIT_DASHBOARD_ITEM_FAILURE,
   EDIT_DASHBOARD_ITEMS_SUCCESS,
+  EDIT_DASHBOARD_ITEMS_FAILURE,
   DELETE_DASHBOARD_ITEM_SUCCESS,
+  DELETE_DASHBOARD_ITEM_FAILURE,
   CLEAR_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_DASHBOARD_SHARE_LINK_SUCCESS,
@@ -173,6 +178,8 @@ function dashboardReducer (state = initialState, action) {
           obj[w.id] = {}
           return obj
         }, {}))
+    case LOAD_DASHBOARD_DETAIL_FAILURE:
+      return state
 
     case ADD_DASHBOARD_ITEM_SUCCESS:
       if (!items) {
@@ -222,13 +229,19 @@ function dashboardReducer (state = initialState, action) {
           ...itemsCascadeSources,
           [payload.result.id]: {}
         })
+    case ADD_DASHBOARD_ITEM_FAILURE:
+      return state
 
     case EDIT_DASHBOARD_ITEM_SUCCESS:
       items.splice(items.indexOf(items.find((i) => i.id === payload.result.id)), 1, payload.result)
       return state.set('currentItems', items.slice())
+    case EDIT_DASHBOARD_ITEM_FAILURE:
+      return state
 
     case EDIT_DASHBOARD_ITEMS_SUCCESS:
       return state.set('currentItems', payload.result)
+    case EDIT_DASHBOARD_ITEMS_FAILURE:
+      return state
 
     case DELETE_DASHBOARD_ITEM_SUCCESS:
       delete datasources[payload.id]
@@ -238,6 +251,8 @@ function dashboardReducer (state = initialState, action) {
       delete itemsShareInfoLoading[payload.id]
       delete itemsDownloadCsvLoading[payload.id]
       return state.set('currentItems', items.filter((i) => i.id !== payload.id))
+    case DELETE_DASHBOARD_ITEM_FAILURE:
+      return state
 
     case CLEAR_CURRENT_DASHBOARD:
       return state

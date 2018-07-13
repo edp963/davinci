@@ -49,10 +49,15 @@ import {
   dashboardDeleted,
   deleteDashboardFail,
   dashboardDetailLoaded,
+  loadDashboardDetailFail,
   dashboardItemAdded,
+  addDashboardItemFail,
   dashboardItemEdited,
+  editDashboardItemFail,
   dashboardItemsEdited,
+  editDashboardItemsFail,
   dashboardItemDeleted,
+  deleteDashboardItemFail,
   dashboardShareLinkLoaded,
   dashboardSecretLinkLoaded,
   widgetSecretLinkLoaded,
@@ -154,7 +159,8 @@ export function* getDashboardDetail ({ payload }) {
     const widgets = readListAdapter(asyncData.widgets)
     yield put(dashboardDetailLoaded(dashboard, widgets))
   } catch (err) {
-    console.log('getDashboardDetail', err)
+    yield put(loadDashboardDetailFail())
+    message.error('获取 Dashboard 详细信息失败，请稍后再试')
   }
 }
 
@@ -170,7 +176,8 @@ export function* addDashboardItem (action) {
     yield put(dashboardItemAdded(result))
     resolve(result)
   } catch (err) {
-    console.log('addDashboardItem', err)
+    yield put(addDashboardItemFail())
+    message.error('新增失败，请稍后再试')
   }
 }
 
@@ -185,7 +192,8 @@ export function* editDashboardItem (action) {
     yield put(dashboardItemEdited(item))
     resolve()
   } catch (err) {
-    console.log('editDashboardItem', err)
+    yield put(editDashboardItemFail())
+    message.error('修改失败，请稍后再试')
   }
 }
 
@@ -202,7 +210,8 @@ export function* editDashboardItems (action) {
     yield put(dashboardItemsEdited(items))
     resolve()
   } catch (err) {
-    console.log('editDashboardItems', err)
+    yield put(editDashboardItemsFail())
+    message.error('修改失败，请稍后再试')
   }
 }
 
@@ -216,7 +225,8 @@ export function* deleteDashboardItem (action) {
     yield put(dashboardItemDeleted(id))
     resolve()
   } catch (err) {
-    console.log('deleteDashboardItem', err)
+    yield put(deleteDashboardItemFail())
+    message.error('删除失败，请稍后再试')
   }
 }
 

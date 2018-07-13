@@ -51,7 +51,7 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
   constructor (props) {
     super(props)
     this.state = {
-      replaceModeState: 1
+      replaceModeState: 0
     }
   }
 
@@ -135,11 +135,12 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
             <FormItem label="导入方式" {...commonFormItemStyle}>
               {getFieldDecorator('replace_mode', {
                 valuePropName: 'checked',
-                initialValue: 1
+                initialValue: 0
               })(
                 <RadioGroup onChange={this.replaceModeChange} value={this.state.replaceModeState}>
+                  <Radio value={0}>新增</Radio>
                   <Radio value={1}>替换</Radio>
-                  <Radio value={0}>追加</Radio>
+                  <Radio value={2}>追加</Radio>
                 </RadioGroup>
               )}
               <Popover

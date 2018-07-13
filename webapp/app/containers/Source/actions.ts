@@ -40,9 +40,12 @@ import {
   GET_CSV_META_ID
 } from './constants'
 
-export function loadSources () {
+export function loadSources (projectId) {
   return {
-    type: LOAD_SOURCES
+    type: LOAD_SOURCES,
+    payload: {
+      projectId
+    }
   }
 }
 

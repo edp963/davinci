@@ -29,3 +29,12 @@
 
 .cm-s-3024-day .CodeMirror-activeline-background { background: #e8f2ff; }
 .cm-s-3024-day .CodeMirror-matchingbracket { text-decoration: underline; color: #a16a94 !important; }
+
+.CodeMirror-hints { z-index: 9999 !important; }
+
+.CodeMirror pre.CodeMirror-placeholder { color: #b9b9b9; }
+
+.CodeMirror {
+    border: 1px solid #eee;
+    height: auto;
+  }

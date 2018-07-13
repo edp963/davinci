@@ -259,11 +259,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Bizlogics
             },
             {
-              path: '/project/:pid/bizlogic/:bid',
-              name: 'bizlogic',
-              component: Bizlogic
-            },
-            {
               path: '/project/:pid/sources',
               name: 'sources',
               component: Source
@@ -326,6 +321,16 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Team
             }
           ]
+        },
+        {
+          path: '/project/:pid/bizlogic',
+          name: 'bizlogic',
+          component: Bizlogic
+        },
+        {
+          path: '/project/:pid/bizlogic/:bid',
+          name: 'bizlogic',
+          component: Bizlogic
         }
       ]
     },
