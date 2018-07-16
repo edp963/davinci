@@ -245,6 +245,12 @@
             <groupId>ru.yandex.clickhouse</groupId>
             <artifactId>clickhouse-jdbc</artifactId>
             <version>0.1.39</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-databind</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
