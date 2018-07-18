@@ -22,94 +22,73 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 
 import { compose } from 'redux'
-import injectReducer from '../../../utils/injectReducer'
-import injectSaga from '../../../utils/injectSaga'
-import reducer from '../../App/reducer'
-import saga from '../../App/sagas'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from '../App/reducer'
+import saga from '../App/sagas'
 
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
-const Select = require('antd/lib/select')
-const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { projectsCheckName } from '../../App/actions'
+import { projectsCheckName } from '../App/actions'
 
-const utilStyles = require('../../../assets/less/util.less')
+const utilStyles = require('../../assets/less/util.less')
 
 interface IDashboardFormProps {
-  portalId: number
+  projectId: number
   type: string
   form: any
-  dashboards: any[]
-  onCheckName: (portalId, id, name, type, resolve, reject) => void
+  params: any
+  onCheckName: (
+    projectId: number,
+    id: number,
+    name: string,
+    type: string,
+    resolve: (res: any) => void,
+    reject: (err: any) => void
+  ) => any
 }
 
-export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> {
+export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, form, portalId} = this.props
+    const { onCheckName, type, form, projectId } = this.props
     const { id } = form.getFieldsValue()
-    const idName = type === ('add' || 'copy') ? '' : id
-    const typeName = 'dashboard'
-    type === 'move'
-      ? callback()
-      : onCheckName(portalId, idName, value, typeName,
-        () => {
-          callback()
-        }, (err) => {
-          callback(err)
-        })
+    const idName = type === 'add' ? '' : id
+    const typeName = 'dashboardPortal'
+    onCheckName(projectId, idName, value, typeName,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
   }
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboards, type } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
     }
-
-    const dashboardsArr = (dashboards as any[]).filter((d) => d.type === 0)
-    const folderOptions = (dashboardsArr as any[]).map((s) => <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>)
-
     return (
       <Form>
         <Row gutter={8}>
           <Col span={24}>
             <FormItem className={utilStyles.hide}>
               {getFieldDecorator('id', {
-                hidden: type === 'add' && 'copy'
+                hidden: this.props.type === 'add'
               })(
                 <Input />
-              )}
-            </FormItem>
-            <FormItem label="所属文件夹" {...commonFormItemStyle}>
-              {getFieldDecorator('folder', {
-                rules: [{
-                  required: true,
-                  message: '请选择所属文件夹'
-                }],
-                // initialValue: (folderOptions as any[]).length ? `${dashboardsArr[0].name}` : ''
-                initialValue: '0'
-              })(
-                <Select>
-                  <Option key="0" value="0">根目录</Option>
-                  {folderOptions}
-                </Select>
               )}
             </FormItem>
             <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('config', {})(
+              {getFieldDecorator('avatar', {})(
                 <Input />
               )}
             </FormItem>
-            <FormItem
-              label={type === 'copy' ? '重命名' : '名称'}
-              {...commonFormItemStyle}
-              className={type === 'move' ? utilStyles.hide : ''}
-            >
+            <FormItem label="名称" {...commonFormItemStyle}>
               {getFieldDecorator('name', {
                 rules: [{
                   required: true,
@@ -122,9 +101,9 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
               )}
             </FormItem>
           </Col>
-          {/* <Col span={24}>
+          <Col span={24}>
             <FormItem label="描述" {...commonFormItemStyle}>
-              {getFieldDecorator('desc', {
+              {getFieldDecorator('description', {
                 initialValue: ''
               })(
                 <Input
@@ -134,19 +113,15 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
                 />
               )}
             </FormItem>
-          </Col> */}
+          </Col>
           <Col span={24}>
-            <FormItem
-              label="选择类型"
-              {...commonFormItemStyle}
-              className={type === 'move' ? utilStyles.hide : ''}
-            >
-              {getFieldDecorator('selectType', {
+            <FormItem label="是否发布" {...commonFormItemStyle}>
+              {getFieldDecorator('publish', {
                 initialValue: true
               })(
-                <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
-                  <Radio value={false}>文件夹</Radio>
-                  <Radio value>Dashboard</Radio>
+                <RadioGroup>
+                  <Radio value>发布</Radio>
+                  <Radio value={false}>编辑</Radio>
                 </RadioGroup>
               )}
             </FormItem>
@@ -163,7 +138,7 @@ function mapDispatchToProps (dispatch) {
   }
 }
 
-const withConnect = connect<{}, {}, IDashboardFormProps>(null, mapDispatchToProps)
+const withConnect = connect(null, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'global', reducer })
 const withSaga = injectSaga({ key: 'global', saga })
 
@@ -171,4 +146,4 @@ export default compose(
   withReducer,
   withSaga,
   withConnect
-)(Form.create()(DashboardForm))
+)(Form.create()(PortalForm))

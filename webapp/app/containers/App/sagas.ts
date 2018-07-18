@@ -217,13 +217,15 @@ export function* changeUserPassword ({ payload }) {
 }
 
 export function* projectsCheckName (action): IterableIterator<any> {
-  const { projectId, id, name, type, resolve, reject } = action.payload
+  const { pId, id, name, type, resolve, reject } = action.payload
+  const str = type === 'dashboard' ? 'portal' : 'projectId'
+
   try {
     const asyncData = yield call(request, {
       method: 'get',
-      url: id === ''
-        ? `${api.projectsCheckName}/${type}?name=${name}&projectId=${projectId}`
-        : `${api.projectsCheckName}/${type}?name=${name}&id=${id}&projectId=${projectId}`
+      url: !id
+        ? `${api.projectsCheckName}/${type}?name=${name}&${str}=${pId}`
+        : `${api.projectsCheckName}/${type}?name=${name}&id=${id}&${str}=${pId}`
     })
     const code = asyncData.header.code
     const msg = asyncData.header.msg

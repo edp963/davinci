@@ -547,7 +547,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
       : []
 
-    console.log('source', sources)
+    console.log('shema', generateData(schemaData))
     let sourceOptions = []
     if (sources) {
       sourceOptions = (sources as any[]).map((s) => (
@@ -853,7 +853,7 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (projectId, id, name, type, resolve, reject) => dispatch(projectsCheckName(projectId, id, name, type, resolve, reject)),
+    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),

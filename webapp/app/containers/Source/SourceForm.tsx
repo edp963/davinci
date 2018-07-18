@@ -197,7 +197,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (projectId, id, name, type, resolve, reject) => dispatch(projectsCheckName(projectId, id, name, type, resolve, reject))
+    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject))
   }
 }
 

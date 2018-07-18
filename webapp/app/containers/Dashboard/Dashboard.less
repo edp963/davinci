@@ -571,31 +571,80 @@
   font-size: 17px;
 }
 
-.searchAdmin, .addCol {
-  padding: 0 4px;
-  text-align: right;
-}
-
-@media (max-width: 768px) {
-  .searchAdmin {
-    margin-bottom: 8px;
-  }
-}
-
-.searchUser {
-  float: right;
-}
-
-.searchInputAdmin {
-  margin-right: 10px;
-}
-
 .size {
   width: 78px !important;
 }
 
-.more:before {
+.more {
+  cursor: pointer;
+  &:before {
+    padding: 0 8px;
+  }
+}
+
+.more:before, .swap:before {
   -moz-transform:rotate(-90deg);
   -webkit-transform:rotate(-90deg);
   filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);    
+}
+
+.portal {
+  .search, .plus {
+    cursor: pointer;
+  }
+  .search:before, .plus:before {
+    padding: 0 8px;
+  }
+}
+
+.dashboardSearch {
+  overflow-x: auto;
+  text-align: center;
+  ul {
+    max-height: 410px;
+    overflow-y: auto;
+    li {
+      cursor: pointer;
+      line-height: 26px;
+    }
+  }
+}
+
+.menu > li {
+  cursor: pointer;
+  line-height: 26px;
+}
+
+.dashboardBody {
+  display: flex;
+  flex-direction: row;
+
+  .dashboardTree {
+    width: 190px;
+    height: calc(100% - 64px);
+    left: 0;
+    flex-shrink: 0;
+    .portalTitle {
+      line-height: 32px;
+      font-weight: 700;
+      display: inline-block;
+      font-size: 14px;
+    }
+    .portalAction {
+      float: right;
+      margin-top: 7px;
+    }
+    .dashboardTitle {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      width: 130px;
+      display: inline-block;
+    }
+  }
+  .gridClass {
+    width: 100%;
+    // height: calc(100% - 64px);
+    flex-shrink: 1;
+  }
 }

@@ -34,12 +34,13 @@ export default {
   dashboard: `${host}/dashboards`,
   share: `${host}/shares`,
   checkName: `${host}/check/name`,
-  projectsCheckName: `${host}/check/`,
+  projectsCheckName: `${host}/check`,
   uploads: `${host}/uploads`,
   schedule: `${host}/cronjobs`,
   signup: `${host}/users`,
   organizations: `${host}/organizations`,
   checkNameUnique: `${host}/check`,
   projects: `${host}/projects`,
-  teams: `${host}/teams`
+  teams: `${host}/teams`,
+  portal: `${host}/dashboardPortals`
 }
