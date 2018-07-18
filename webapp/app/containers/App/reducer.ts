@@ -26,7 +26,8 @@ import {
   SET_LOGIN_USER,
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
-  ACTIVE_SUCCESS
+  ACTIVE_SUCCESS,
+  UPLOAD_AVATAR_SUCCESS
 } from './constants'
 import { fromJS } from 'immutable'
 
@@ -40,6 +41,7 @@ const initialState = fromJS({
 
 function appReducer (state = initialState, action) {
   const { type, payload } = action
+  const loginUser = state.get('loginUser')
   switch (type) {
     case LOGIN:
       return state
@@ -63,6 +65,11 @@ function appReducer (state = initialState, action) {
     case SET_LOGIN_USER:
       return state
         .set('loginUser', payload.user)
+    case UPLOAD_AVATAR_SUCCESS:
+      const newLoginUser = {...loginUser, ...{avatar: payload.path}}
+      localStorage.setItem('loginUser', JSON.stringify(newLoginUser))
+      return state
+        .set('loginUser', newLoginUser)
     case SHOW_NAVIGATOR:
       return state.set('navigator', true)
     case HIDE_NAVIGATOR:

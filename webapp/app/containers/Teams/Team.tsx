@@ -21,7 +21,10 @@ import injectSaga from '../../utils/injectSaga'
 import saga from './sagas'
 import reducerApp from '../App/reducer'
 import sagaApp from '../App/sagas'
-import { loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject } from './actions'
+import {
+  loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject, deleteTeamMember, changeTeamMemberRole,
+  editTeam, deleteTeam, loadTeams
+} from './actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 import {
@@ -50,6 +53,9 @@ interface ITeamsProps {
   currentTeamProjects: ITeamProjects[]
   currentTeamTeams: ITeamTeams[]
   currentTeamMembers: ITeamMembers[]
+  onLoadTeams: () => any
+  onEditTeam: (team: ITeam) => any
+  onDeleteTeam: (id: number, resolve: () => any) => any
   onLoadTeamProjects: (id: number) => any
   onLoadTeamMembers: (id: number) => any
   onLoadTeamTeams: (id: number) => any
@@ -58,6 +64,8 @@ interface ITeamsProps {
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onDeleteTeamProject: (id: number) => any
+  onDeleteTeamMember: (id: number) => any
+  onChangeTeamMemberRole: (id: number, role: string) => any
   onPullProjectInTeam: (id: number, projectId: number, resolve: () => any) => any
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any) => any
 }
@@ -101,6 +109,8 @@ export class Teams extends React.Component<ITeamsProps> {
 
   }
   public componentWillMount () {
+    const { onLoadTeams } = this.props
+    onLoadTeams()
     this.loadDatas()
   }
 
@@ -185,6 +195,17 @@ export class Teams extends React.Component<ITeamsProps> {
     find(arr, source)
     return arr
   }
+
+  private deleteTeam = (id) => () => {
+    this.props.onDeleteTeam(id, () => {
+      this.props.router.push(`/account/teams`)
+    })
+  }
+
+  private editTeam = (team) => () => {
+    this.props.onEditTeam(team)
+  }
+
   public render () {
     const {
       teamRouter,
@@ -204,14 +225,14 @@ export class Teams extends React.Component<ITeamsProps> {
         <Box.Header>
           <Box.Title>
             <Breadcrumb className={utilStyles.breadcrumb}>
-              <Breadcrumb.Item>
+              <Breadcrumb.Item key="accountTeams">
                 <Link to="/account/teams">
                   <Icon type="left-circle-o" />返回我的团队
                 </Link>
               </Breadcrumb.Item>
               {
                 teamRouterSource ? teamRouterSource.map((team) => (
-                  <Breadcrumb.Item>
+                  <Breadcrumb.Item key={`${team.name}@@@${team.id}`}>
                     <Link to={`/account/team/${team.id}`}>
                       {team.name}
                     </Link>
@@ -230,6 +251,8 @@ export class Teams extends React.Component<ITeamsProps> {
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
                 currentTeam={currentTeam}
+                deleteTeamMember={this.props.onDeleteTeamMember}
+                changeTeamMemberRole={this.props.onChangeTeamMemberRole}
                 currentTeamMembers={currentTeamMembers}
               />
             </TabPane>
@@ -251,7 +274,12 @@ export class Teams extends React.Component<ITeamsProps> {
               />
             </TabPane>
             <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
-              <Setting/>
+              <Setting
+                teams={this.props.teams}
+                currentTeam={currentTeam}
+                editTeam={this.editTeam}
+                deleteTeam={this.deleteTeam}
+              />
             </TabPane>
           </Tabs>
         </Box.Body>
@@ -275,17 +303,21 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
+    onEditTeam: (team) => dispatch(editTeam(team)),
+    onLoadTeams: () => dispatch(loadTeams()),
+    onDeleteTeam: (id, resolve) => dispatch(deleteTeam(id, resolve)),
     onLoadTeamProjects: (id) => dispatch(loadTeamProjects(id)),
     onLoadTeamMembers: (id) => dispatch(loadTeamMembers(id)),
     onLoadTeamTeams: (id) => dispatch(loadTeamTeams(id)),
     onDeleteTeamProject: (id) => dispatch(deleteTeamProject(id)),
+    onDeleteTeamMember: (id) => dispatch(deleteTeamMember(id)),
+    onChangeTeamMemberRole: (id, role) => dispatch(changeTeamMemberRole(id, role)),
     onLoadTeamDetail: (id, resolve) => dispatch(loadTeamDetail(id, resolve)),
     onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onPullProjectInTeam: (id, projectId, resolve) => dispatch(pullProjectInTeam(id, projectId, resolve)),
     onUpdateTeamProjectPermission: (relationId, relTeamProjectDto, resolve) => dispatch(updateTeamProjectPermission(relationId, relTeamProjectDto, resolve))
-
   }
 }
 

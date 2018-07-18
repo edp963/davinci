@@ -30,7 +30,9 @@ import {
   LOAD_TEAM_TEAMS,
   PULL_PROJECT_IN_TEAM,
   UPDATE_TEAM_PROJECT_PERMISSION,
-  DELETE_TEAM_PROJECT
+  DELETE_TEAM_PROJECT,
+  DELETE_TEAM_MEMBER,
+  CHANGE_MEMBER_ROLE_TEAM
 } from './constants'
 
 import {
@@ -52,7 +54,11 @@ import {
   teamProjectPermissionUpdated,
   updateTeamProjectPermissionFail,
   teamProjectDeleted,
-  deleteTeamProjectFail
+  deleteTeamProjectFail,
+  teamMemberDeleted,
+  deleteTeamMemberFail,
+  changeTeamMemberRoleFail,
+  teamMemberRoleChanged
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -73,14 +79,14 @@ export function* getTeams () {
 }
 
 export function* editTeam (action) {
-  const { project, resolve } = action.payload
+  const { team, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: api.teams,
-      data: writeAdapter(project)
+      url: `${api.teams}/${team.id}`,
+      data: team
     })
-    yield put(teamEdited(project))
+    yield put(teamEdited(team))
     resolve()
   } catch (err) {
     yield put(editTeamFail())
@@ -89,13 +95,14 @@ export function* editTeam (action) {
 }
 
 export function* deleteTeam (action) {
-  const { id } = action.payload
+  const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
       url: `${api.teams}/${id}`
     })
     yield put(teamDeleted(id))
+    resolve()
   } catch (err) {
     yield put(deleteTeamFail())
     message.error('删除当前 Team 失败，请稍后再试')
@@ -197,6 +204,36 @@ export function* deleteTeamProject ({payload}) {
   }
 }
 
+export function* deleteTeamMember ({payload}) {
+  const {relationId} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.teams}/member/${relationId}`,
+      method: 'delete'
+    })
+    yield put(teamMemberDeleted(relationId))
+  } catch (err) {
+    yield put(deleteTeamMemberFail())
+    message.error('删除 team member 失败，请稍后再试')
+  }
+}
+
+export function* changeTeamMemberRole ({payload}) {
+  const {relationId, newRole} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.teams}/member/${relationId}`,
+      method: 'delete',
+      data: newRole
+    })
+    const member = readListAdapter(asyncData)
+    yield put(teamMemberRoleChanged(relationId, member))
+  } catch (err) {
+    yield put(changeTeamMemberRoleFail())
+    message.error('删除 team member 失败，请稍后再试')
+  }
+}
+
 export default function* rootTeamSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_TEAMS, getTeams),
@@ -208,6 +245,8 @@ export default function* rootTeamSaga (): IterableIterator<any> {
     takeLatest(LOAD_TEAM_TEAMS, getTeamTeams as any),
     takeLatest(PULL_PROJECT_IN_TEAM, pullProjectInTeam as any),
     takeLatest(UPDATE_TEAM_PROJECT_PERMISSION, updateTeamProjectPermission as any),
-    takeLatest(DELETE_TEAM_PROJECT, deleteTeamProject as any)
+    takeLatest(DELETE_TEAM_PROJECT, deleteTeamProject as any),
+    takeLatest(DELETE_TEAM_MEMBER, deleteTeamMember as any),
+    takeLatest(CHANGE_MEMBER_ROLE_TEAM, changeTeamMemberRole as any)
   ]
 }

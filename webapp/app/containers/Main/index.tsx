@@ -33,6 +33,7 @@ import { setToken } from '../../utils/request'
 const styles = require('./Main.less')
 
 interface IMainProps {
+  params: {pid?: number}
   children: React.ReactNode
   router: any
   logged: boolean
@@ -51,7 +52,7 @@ export class Main extends React.Component<IMainProps, {}> {
   private checkTokenLink = () => {
     const {
       router,
-      onGetLoginUser,
+      onGetLoginUser
     } = this.props
 
     const qs = this.getQs()

@@ -48,7 +48,13 @@ import {
   UPDATE_TEAM_PROJECT_PERMISSION_FAILURE,
   DELETE_TEAM_PROJECT,
   DELETE_TEAM_PROJECT_FAILURE,
-  DELETE_TEAM_PROJECT_SUCCESS
+  DELETE_TEAM_PROJECT_SUCCESS,
+  DELETE_TEAM_MEMBER,
+  DELETE_TEAM_MEMBER_SUCCESS,
+  DELETE_TEAM_MEMBER_ERROR,
+  CHANGE_MEMBER_ROLE_TEAM,
+  CHANGE_MEMBER_ROLE_TEAM_ERROR,
+  CHANGE_MEMBER_ROLE_TEAM_SUCCESS
 } from './constants'
 
 
@@ -74,12 +80,11 @@ export function loadTeamsFail () {
 }
 
 
-export function editTeam (team, resolve) {
+export function editTeam (team) {
   return {
     type: EDIT_TEAM,
     payload: {
-      team,
-      resolve
+      team
     }
   }
 }
@@ -99,11 +104,12 @@ export function editTeamFail () {
   }
 }
 
-export function deleteTeam (id) {
+export function deleteTeam (id, resolve) {
   return {
     type: DELETE_TEAM,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -298,7 +304,55 @@ export function deleteTeamProjectFail () {
   }
 }
 
+export function deleteTeamMember (relationId) {
+  return {
+    type: DELETE_TEAM_MEMBER,
+    payload: {
+      relationId
+    }
+  }
+}
 
+export function teamMemberDeleted (id) {
+  return {
+    type: DELETE_TEAM_MEMBER_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function deleteTeamMemberFail () {
+  return {
+    type: DELETE_TEAM_MEMBER_ERROR
+  }
+}
+
+export function changeTeamMemberRole (relationId, newRole) {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM,
+    payload: {
+      relationId,
+      newRole
+    }
+  }
+}
+
+export function teamMemberRoleChanged (relationId, newRole) {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM_SUCCESS,
+    payload: {
+      relationId,
+      newRole
+    }
+  }
+}
+
+export function changeTeamMemberRoleFail () {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM_ERROR
+  }
+}
 
 
 

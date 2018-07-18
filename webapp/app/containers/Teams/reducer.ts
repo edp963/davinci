@@ -33,7 +33,9 @@ import {
   LOAD_TEAM_MEMBERS_SUCCESS,
   LOAD_TEAM_TEAMS_SUCCESS,
   PULL_PROJECT_IN_TEAM_SUCCESS,
-  DELETE_TEAM_PROJECT_SUCCESS
+  DELETE_TEAM_PROJECT_SUCCESS,
+  DELETE_TEAM_MEMBER_SUCCESS,
+  CHANGE_MEMBER_ROLE_TEAM_SUCCESS
 } from './constants'
 import {LOAD_ORGANIZATIONS_MEMBERS_SUCCESS, LOAD_ORGANIZATIONS_PROJECTS_SUCCESS, LOAD_ORGANIZATIONS_TEAMS_SUCCESS} from '../Organizations/constants'
 
@@ -56,6 +58,7 @@ function teamReducer (state = initialState, action) {
   const teams = state.get('teams')
   const currentTeamProjects = state.get('currentTeamProjects')
   const currentTeamTeams = state.get('currentTeamTeams')
+  const currentTeamMembers = state.get('currentTeamMembers')
   switch (type) {
     case LOAD_TEAMS_SUCCESS:
       return state.set('teams', payload.teams)
@@ -89,8 +92,16 @@ function teamReducer (state = initialState, action) {
         return state.set('currentTeamProjects', currentTeamProjects.filter((d) => d.id !== payload.id))
       }
       return state
+    case DELETE_TEAM_MEMBER_SUCCESS:
+      if (currentTeamMembers) {
+        return state.set('currentTeamMembers', currentTeamMembers.filter((d) => d.id !== payload.id))
+      }
+      return state
     case LOAD_TEAM_MEMBERS_SUCCESS:
       return state.set('currentTeamMembers', payload.members)
+    case CHANGE_MEMBER_ROLE_TEAM_SUCCESS:
+      currentTeamMembers.splice(currentTeamMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+      return state.set('currentTeamMembers', currentTeamMembers.slice())
     case LOAD_TEAM_TEAMS_SUCCESS:
       return state.set('currentTeamTeams', payload.teams)
     case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:

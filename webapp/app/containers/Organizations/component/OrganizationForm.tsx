@@ -71,20 +71,6 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                {/*<FormItem className={utilStyles.hide}>*/}
-                  {/*{getFieldDecorator('id', {*/}
-                    {/*hidden: this.props.type === 'add'*/}
-                  {/*})(*/}
-                    {/*<Input />*/}
-                  {/*)}*/}
-                {/*</FormItem>*/}
-                {/*<FormItem className={utilStyles.hide}>*/}
-                  {/*{getFieldDecorator('create_by', {*/}
-                    {/*hidden: this.props.type === 'add'*/}
-                  {/*})(*/}
-                    {/*<Input />*/}
-                  {/*)}*/}
-                {/*</FormItem>*/}
                 <FormItem label="名称" {...commonFormItemStyle}>
                   {getFieldDecorator('name', {
                     rules: [{

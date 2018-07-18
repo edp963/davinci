@@ -38,7 +38,8 @@ import {
   UPDATE_PROFILE_ERROR,
   CHANGE_USER_PASSWORD,
   CHANGE_USER_PASSWORD_FAILURE,
-  CHANGE_USER_PASSWORD_SUCCESS
+  CHANGE_USER_PASSWORD_SUCCESS,
+  UPLOAD_AVATAR_SUCCESS
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -175,6 +176,15 @@ export function updateProfile (id, name, description, department, resolve) {
       description,
       department,
       resolve
+    }
+  }
+}
+
+export function uploadAvatarSuccess (path) {
+  return {
+    type: UPLOAD_AVATAR_SUCCESS,
+    payload: {
+      path
     }
   }
 }

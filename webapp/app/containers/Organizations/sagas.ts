@@ -31,7 +31,9 @@ import {
   LOAD_ORGANIZATIONS_MEMBERS,
   ADD_TEAM,
   SEARCH_MEMBER,
-  INVITE_MEMBER
+  INVITE_MEMBER,
+  DELETE_ORGANIZATION_MEMBER,
+  CHANGE_MEMBER_ROLE_ORGANIZATION
 } from './constants'
 
 import {
@@ -55,10 +57,14 @@ import {
   inviteMemberSuccess,
   inviteMemberFail,
   memberSearched,
-  searchMemberFail
+  searchMemberFail,
+  organizationMemberDeleted,
+  deleteOrganizationMemberFail,
+  organizationMemberRoleChanged,
+  changeOrganizationMemberRoleFail
 } from './actions'
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
@@ -92,15 +98,14 @@ export function* addOrganization (action) {
 }
 
 export function* editOrganization (action) {
-  const { organization, resolve } = action.payload
+  const { organization } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: api.organizations,
-      data: writeAdapter(organization)
+      url: `${api.organizations}/${organization.id}`,
+      data: organization
     })
     yield put(organizationEdited(organization))
-    resolve()
   } catch (err) {
     yield put(editOrganizationFail())
     message.error('修改 Organization 失败，请稍后再试')
@@ -108,13 +113,14 @@ export function* editOrganization (action) {
 }
 
 export function* deleteOrganization (action) {
-  const { id } = action.payload
+  const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
       url: `${api.organizations}/${id}`
     })
     yield put(organizationDeleted(id))
+    resolve()
   } catch (err) {
     yield put(deleteOrganizationFail())
     message.error('删除当前 Organization 失败，请稍后再试')
@@ -219,6 +225,39 @@ export function* inviteMember ({payload}) {
   }
 }
 
+export function* deleteOrganizationMember ({payload}) {
+  const {relationId, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.organizations}/member/${relationId}`,
+      method: 'delete'
+    })
+    yield put(organizationMemberDeleted(relationId))
+    resolve()
+  } catch (err) {
+    yield put(deleteOrganizationMemberFail())
+    message.error('删除 team member 失败，请稍后再试')
+  }
+}
+
+export function* changeOrganizationMemberRole ({payload}) {
+  const {relationId, newRole, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.organizations}/member/${relationId}`,
+      method: 'put',
+      data: {role: newRole}
+    })
+    const member = readListAdapter(asyncData)
+    yield put(organizationMemberRoleChanged(relationId, member))
+    yield resolve()
+  } catch (err) {
+    console.log(err)
+    yield put(changeOrganizationMemberRoleFail())
+    message.error('删除 team member 失败，请稍后再试')
+  }
+}
+
 export default function* rootOrganizationSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_ORGANIZATIONS, getOrganizations),
@@ -231,6 +270,8 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
     takeEvery(ADD_TEAM, addTeam),
     takeLatest(INVITE_MEMBER, inviteMember as any),
-    throttle(600, SEARCH_MEMBER, searchMember as any)
+    throttle(600, SEARCH_MEMBER, searchMember as any),
+    takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
+    takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
   ]
 }

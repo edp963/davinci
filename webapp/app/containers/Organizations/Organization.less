@@ -189,9 +189,7 @@
     padding: 16px;
     border-radius: 6px;
     border: 1px solid crimson;
-    width: 35%;
-    display: flex;
-    flex-direction: column;
+    display: inline-block;
     .button {
       font-weight: 600;
       font-size: 18px;
@@ -233,6 +231,27 @@
   display: block;
   height: 30px;
   line-Height: 30px;
+}
+
+.radioWrapper {
+  display: flex;
+  margin-bottom: 8px;
+  .radio {
+
+  }
+  .labelWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    .label{
+      font-size: 14px;
+      color: @rich-text;
+      font-weight: 600;
+    }
+    .labelDesc {
+
+    }
+  }
 }
 
 
