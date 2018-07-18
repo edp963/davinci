@@ -6,25 +6,54 @@ const Form = require('antd/lib/form')
 const FormItem = Form.Item
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
+const Radio = require('antd/lib/radio')
+const RadioButton = Radio.Button
 import UploadAvatar from '../../../components/UploadAvatar'
+import {IOrganization} from '../Organization'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface ISettingProps {
   form: any
+  currentOrganization: IOrganization
+  editOrganization: (oranization: IOrganization) => () => any
+  deleteOrganization: (id: number) => () => any
 }
 
 export class Setting extends React.PureComponent <ISettingProps> {
+  public componentWillMount () {
+    const { currentOrganization } = this.props
+    const {
+      id,
+      name,
+      description,
+      allowCreateProject,
+      allowDeleteOrTransferProject,
+      allowChangeVisibility,
+      memberPermission
+    } = currentOrganization
+    this.forceUpdate(() => {
+      this.props.form.setFieldsValue({
+        id,
+        name,
+        description,
+        allowCreateProject,
+        allowDeleteOrTransferProject,
+        allowChangeVisibility,
+        memberPermission
+      })
+    })
+  }
   public render () {
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 2 },
       wrapperCol: { span: 18 }
     }
+    const {name, avatar, id} = this.props.currentOrganization
     return (
       <div className={styles.listWrapper}>
         <div className={styles.container}>
-          <UploadAvatar/>
+          <UploadAvatar type="organization" path={avatar} xhrParams={{id}} />
           <hr/>
           <div className={styles.form}>
             <Form>
@@ -71,47 +100,69 @@ export class Setting extends React.PureComponent <ISettingProps> {
               </Row>
               <Row className={styles.permissionZone}>
                 <Col>
-                  <FormItem>
+                  <FormItem
+                    label="组织成员创建项目"
+                  //  {...commonFormItemStyle}
+                  >
                     {getFieldDecorator('allowCreateProject', {
-                      valuePropName: 'checked',
                       initialValue: true
                     })(
-                      <Checkbox>allowCreateProject</Checkbox>
+                      <Radio.Group size="small">
+                        <RadioButton value={false}>禁止</RadioButton>
+                        <RadioButton value={true}>允许</RadioButton>
+                      </Radio.Group>
                     )}
                   </FormItem>
                 </Col>
                 <Col>
-                  <FormItem>
+                  <FormItem
+                    label="删除和移交项目"
+                 //   {...commonFormItemStyle}
+                  >
                     {getFieldDecorator('allowDeleteOrTransferProject', {
-                      valuePropName: 'checked',
                       initialValue: true
                     })(
-                      <Checkbox>allowDeleteOrTransferProject</Checkbox>
+                      <Radio.Group size="small">
+                        <RadioButton value={false}>禁止</RadioButton>
+                        <RadioButton value={true}>允许</RadioButton>
+                      </Radio.Group>
                     )}
                   </FormItem>
                 </Col>
                 <Col>
-                  <FormItem>
+                  <FormItem
+                 //   {...commonFormItemStyle}
+                    label="修改项目是否可见"
+                  >
                     {getFieldDecorator('allowChangeVisibility', {
-                      valuePropName: 'checked',
                       initialValue: true
                     })(
-                      <Checkbox>allowChangeVisibility</Checkbox>
+                      <Radio.Group size="small">
+                        <RadioButton value={false}>禁止</RadioButton>
+                        <RadioButton value={true}>允许</RadioButton>
+                      </Radio.Group>
                     )}
                   </FormItem>
                 </Col>
                 <Col>
-                  <FormItem>
+                  <FormItem
+                 //   {...commonFormItemStyle}
+                    label="项目默认权限"
+                  >
                     {getFieldDecorator('memberPermission', {
-                      valuePropName: 'checked',
-                      initialValue: true
+                      initialValue: 1
                     })(
-                      <Checkbox>memberPermission</Checkbox>
+                      <Radio.Group size="small">
+                        <RadioButton value={0}>隐藏</RadioButton>
+                        <RadioButton value={1}>只读</RadioButton>
+                        <RadioButton value={2}>修改</RadioButton>
+                        <RadioButton value={3}>删除</RadioButton>
+                      </Radio.Group>
                     )}
                   </FormItem>
                 </Col>
                 <Col>
-                  <Button size="large">保存修改</Button>
+                  <Button size="large" onClick={this.props.editOrganization(this.props.form.getFieldsValue())}>保存修改</Button>
                 </Col>
               </Row>
               <Row className={styles.dangerZone}>
@@ -121,7 +172,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <div className={styles.titleDesc}>
                   <p className={styles.desc}>删除后无法恢复，请确定此次操作</p>
                   <p className={styles.button}>
-                    <Button size="large" type="danger">删除{}</Button>
+                    <Button size="large" type="danger" onClick={this.props.deleteOrganization(this.props.form.getFieldsValue().id)}>删除{name}</Button>
                   </p>
                 </div>
               </Row>

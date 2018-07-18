@@ -24,12 +24,15 @@ export const LOAD_ORGANIZATIONS_FAILURE = 'davinci/Organization/LOAD_ORGANIZATIO
 export const ADD_ORGANIZATION = 'davinci/Organization/ADD_ORGANIZATION'
 export const ADD_ORGANIZATION_SUCCESS = 'davinci/Organization/ADD_ORGANIZATION_SUCCESS'
 export const ADD_ORGANIZATION_FAILURE = 'davinci/Organization/ADD_ORGANIZATION_FAILURE'
+
 export const EDIT_ORGANIZATION = 'davinci/Organization/EDIT_ORGANIZATION'
 export const EDIT_ORGANIZATION_SUCCESS = 'davinci/Organization/EDIT_ORGANIZATION_SUCCESS'
 export const EDIT_ORGANIZATION_FAILURE = 'davinci/Organization/EDIT_ORGANIZATION_FAILURE'
+
 export const DELETE_ORGANIZATION = 'davinci/Organization/DELETE_ORGANIZATION'
 export const DELETE_ORGANIZATION_SUCCESS = 'davinci/Organization/DELETE_ORGANIZATION_SUCCESS'
 export const DELETE_ORGANIZATION_FAILURE = 'davinci/Organization/DELETE_ORGANIZATION_FAILURE'
+
 export const LOAD_ORGANIZATION_DETAIL = 'davinci/Organization/LOAD_ORGANIZATION_DETAIL'
 export const LOAD_ORGANIZATION_DETAIL_SUCCESS = 'davinci/Organization/LOAD_ORGANIZATION_DETAIL_SUCCESS'
 export const LOAD_ORGANIZATION_DETAIL_FAILURE = 'davinci/Organization/LOAD_ORGANIZATION_DETAIL_FAILURE'
@@ -46,14 +49,22 @@ export const LOAD_ORGANIZATIONS_TEAMS = 'davinci/Organization/LOAD_ORGANIZATIONS
 export const LOAD_ORGANIZATIONS_TEAMS_SUCCESS = 'davinci/Organization/LOAD_ORGANIZATIONS_TEAMS_SUCCESS'
 export const LOAD_ORGANIZATIONS_TEAMS_FAILURE = 'davinci/Organization/LOAD_ORGANIZATIONS_TEAMS_FAILURE'
 
-export const ADD_TEAM = 'davinci/Team/ADD_TEAM'
-export const ADD_TEAM_SUCCESS = 'davinci/Team/ADD_TEAM_SUCCESS'
-export const ADD_TEAM_FAILURE = 'davinci/Team/ADD_TEAM_FAILURE'
+export const ADD_TEAM = 'davinci/Organization/ADD_TEAM'
+export const ADD_TEAM_SUCCESS = 'davinci/Organization/ADD_TEAM_SUCCESS'
+export const ADD_TEAM_FAILURE = 'davinci/Organization/ADD_TEAM_FAILURE'
 
-export const SEARCH_MEMBER = 'davinci/Team/SEARCH_MEMBER'
-export const SEARCH_MEMBER_SUCCESS = 'davinci/Team/SEARCH_MEMBER_SUCCESS'
-export const SEARCH_MEMBER_FAILURE = 'davinci/Team/SEARCH_MEMBER_FAILURE'
+export const SEARCH_MEMBER = 'davinci/Organization/SEARCH_MEMBER'
+export const SEARCH_MEMBER_SUCCESS = 'davinci/Organization/SEARCH_MEMBER_SUCCESS'
+export const SEARCH_MEMBER_FAILURE = 'davinci/Organization/SEARCH_MEMBER_FAILURE'
 
-export const INVITE_MEMBER = 'davinci/Team/INVITE_MEMBER'
-export const INVITE_MEMBER_SUCCESS = 'davinci/Team/INVITE_MEMBER_SUCCESS'
-export const INVITE_MEMBER_FAILURE = 'davinci/Team/INVITE_MEMBER_FAILURE'
+export const INVITE_MEMBER = 'davinci/Organization/INVITE_MEMBER'
+export const INVITE_MEMBER_SUCCESS = 'davinci/Organization/INVITE_MEMBER_SUCCESS'
+export const INVITE_MEMBER_FAILURE = 'davinci/Organization/INVITE_MEMBER_FAILURE'
+
+export const DELETE_ORGANIZATION_MEMBER = 'davinci/Organization/DELETE_ORGANIZATION_MEMBER'
+export const DELETE_ORGANIZATION_MEMBER_SUCCESS = 'davinci/Organization/DELETE_ORGANIZATION_MEMBER_SUCCESS'
+export const DELETE_ORGANIZATION_MEMBER_ERROR = 'davinci/Organization/DELETE_ORGANIZATION_MEMBER_ERROR'
+
+export const CHANGE_MEMBER_ROLE_ORGANIZATION = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION'
+export const CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS'
+export const CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR = 'davinci/Organization/CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR'

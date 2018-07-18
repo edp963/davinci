@@ -122,8 +122,6 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     let optionList = void 0
     if (category === 'project') {
       optionList = this.bootstrapOptionsLi(currentOrganizationProjects)
-    } else if (category === 'team') {
-      optionList = this.bootstrapOptionsLi()
     } else if (category === 'member') {
       optionList = this.bootstrapOptionsLi(inviteMemberList)
     }

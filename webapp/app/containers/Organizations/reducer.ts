@@ -34,10 +34,12 @@ import {
   LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
   ADD_TEAM_FAILURE,
   ADD_TEAM_SUCCESS,
-  INVITE_MEMBER_SUCCESS,
-  SEARCH_MEMBER_SUCCESS
+  SEARCH_MEMBER_SUCCESS,
+  DELETE_ORGANIZATION_MEMBER_SUCCESS,
+  CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS
 } from './constants'
 import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
+
 
 const initialState = fromJS({
   organizations: [],
@@ -53,8 +55,18 @@ function organizationReducer (state = initialState, action) {
   const { type, payload } = action
   const organizations = state.get('organizations')
   const currentOrganizationTeams = state.get('currentOrganizationTeams')
+  const currentOrganizationMembers = state.get('currentOrganizationMembers')
   const currentOrganizationProjects = state.get('currentOrganizationProjects')
   switch (type) {
+    case DELETE_ORGANIZATION_MEMBER_SUCCESS:
+      if (currentOrganizationMembers) {
+        return state.set('currentTeamMembers', currentOrganizationMembers.filter((d) => d.id !== payload.id))
+      }
+      return state
+    // case CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS:
+    //   return state
+      // currentOrganizationMembers.splice(currentOrganizationMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+      // return state.set('currentTeamMembers', currentOrganizationMembers.slice())
     case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
       return state.set('currentOrganizationProjects', payload.projects)
     case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:

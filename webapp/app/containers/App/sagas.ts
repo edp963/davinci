@@ -165,7 +165,7 @@ export function* updateProfile (action): IterableIterator<any> {
 
   try {
     const asyncData = yield call(request, {
-      method: 'post',
+      method: 'put',
       url: `${api.signup}/${id}`,
       data: {
         name,
@@ -173,25 +173,10 @@ export function* updateProfile (action): IterableIterator<any> {
         department
       }
     })
-    console.log(asyncData)
-    // switch (asyncData.header.code) {
-    //   case 400:
-    //     message.error('密码错误')
-    //     yield put(updateProfileError())
-    //     return null
-    //   case 404:
-    //     message.error('用户不存在')
-    //     yield put(updateProfileError())
-    //     return null
-    //   default:
-    //     const loginUser = readListAdapter(asyncData)
-    //     yield put(updateProfileSuccess(loginUser))
-    //     resolve()
-    //     return loginUser
-    // }
+    resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
-    message.error('登录失败')
+    message.error(' 更新 profile 失败')
   }
 }
 

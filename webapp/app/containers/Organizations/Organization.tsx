@@ -11,7 +11,6 @@ import TeamList from './component/TeamList'
 const utilStyles = require('../../assets/less/util.less')
 const Tabs = require('antd/lib/tabs')
 const TabPane = Tabs.TabPane
-const Badge = require('antd/lib/badge')
 const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
 import {connect} from 'react-redux'
@@ -25,12 +24,17 @@ import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
 import {compose} from 'redux'
 import {
+  editOrganization,
+  deleteOrganization,
   loadOrganizationProjects,
   loadOrganizationMembers,
   loadOrganizationTeams,
   loadOrganizationDetail,
   searchMember,
-  inviteMember} from './actions'
+  inviteMember,
+  deleteOrganizationMember,
+  changeOrganizationMemberRole,
+} from './actions'
 import {makeSelectLoginUser} from '../App/selectors'
 import {
   makeSelectOrganizations,
@@ -44,6 +48,7 @@ import {createStructuredSelector} from 'reselect'
 import {addProject, deleteProject} from '../Projects/actions'
 import {checkNameUniqueAction} from '../App/actions'
 
+
 interface IOrganizationProps {
   loginUser: any
   router: InjectedRouter
@@ -55,6 +60,8 @@ interface IOrganizationProps {
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onLoadOrganizationDetail: (id: number) => any
+  onDeleteOrganizationMember: (id: number, resolve: () => any) => any
+  onChangeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
   currentOrganizationProjects: IOrganizationProjects[]
   currentOrganizationTeams: IOrganizationTeams[]
   currentOrganizationMembers: IOrganizationMembers[]
@@ -62,6 +69,8 @@ interface IOrganizationProps {
   onSearchMember: (keywords: string) => any
   onAddProject: (project: any, resolve: () => any) => any
   onDeleteProject: (id: number) => any
+  onEditOrganization: (organization: IOrganization) => any
+  onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -126,6 +135,15 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
     onLoadOrganizationTeams(Number(organizationId))
     onLoadOrganizationDetail(Number(organizationId))
   }
+  private deleteOrganization = (id) => () => {
+    this.props.onDeleteOrganization(id, () => {
+      this.props.router.push(`/account/organizations`)
+    })
+  }
+
+  private editOrganization = (oranization) => () => {
+    this.props.onEditOrganization(oranization)
+  }
   public render () {
     const {
       loginUser,
@@ -134,7 +152,8 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
       currentOrganizationProjects,
       currentOrganizationMembers,
       currentOrganizationTeams,
-      inviteMemberList
+      inviteMemberList,
+      params: {organizationId}
     } = this.props
     const {avatar, name, projectNum, memberNum, teamNum} = currentOrganization as IOrganization
     return (
@@ -169,11 +188,15 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
+                organizationId={organizationId}
+                loadOrganizationsMembers={this.props.onLoadOrganizationMembers}
                 organizationMembers={currentOrganizationMembers}
                 currentOrganization={currentOrganization}
                 inviteMemberList={inviteMemberList}
                 onInviteMember={this.props.onInviteMember}
                 handleSearchMember={this.props.onSearchMember}
+                deleteOrganizationMember={this.props.onDeleteOrganizationMember}
+                changeOrganizationMemberRole={this.props.onChangeOrganizationMemberRole}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
@@ -185,7 +208,11 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
               />
             </TabPane>
             <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
-              <Setting/>
+              <Setting
+                currentOrganization={this.props.currentOrganization}
+                editOrganization={this.editOrganization}
+                deleteOrganization={this.deleteOrganization}
+              />
             </TabPane>
           </Tabs>
         </Box.Body>
@@ -210,9 +237,13 @@ export function mapDispatchToProps (dispatch) {
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onLoadOrganizationDetail: (id) => dispatch(loadOrganizationDetail(id)),
+    onEditOrganization: (organization) => dispatch(editOrganization(organization)),
+    onDeleteOrganization: (id, resolve) => dispatch(deleteOrganization(id, resolve)),
     onSearchMember: (keyword) => dispatch(searchMember(keyword)),
     onInviteMember: (orgId, memId) => dispatch(inviteMember(orgId, memId)),
     onDeleteProject: (id) => dispatch(deleteProject(id)),
+    onDeleteOrganizationMember: (id, resolve) => dispatch(deleteOrganizationMember(id, resolve)),
+    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve)),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }

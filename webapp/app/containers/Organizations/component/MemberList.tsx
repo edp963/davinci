@@ -6,6 +6,7 @@ const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
+const Popconfirm = require('antd/lib/popconfirm')
 const Modal = require('antd/lib/modal')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
@@ -13,15 +14,23 @@ const styles = require('../Organization.less')
 import MemberForm from '../../Teams/component/AddForm'
 import Avatar from '../../../components/Avatar'
 import * as Organization from '../Organization'
-import {IOrganization} from '../Organization'
+import ChangeRoleForm from './ChangeRoleForm'
 
 interface IMembersState {
   category?: string
   formVisible: boolean
   modalLoading: boolean
+  currentMember: {id?: number, name?: string}
+  changeRoleFormCategory: string
+  changeRoleFormVisible: boolean
+  changeRoleModalLoading: boolean
 }
 
 interface IMembersProps {
+  organizationId: number
+  loadOrganizationsMembers: (id: number) => any
+  deleteOrganizationMember: (id: number, resolve: () => any) => any
+  changeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
   organizationMembers: Organization.IOrganizationMembers[]
   currentOrganization: Organization.IOrganization
   inviteMemberList: any
@@ -34,12 +43,18 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     super(props)
     this.state = {
       category: '',
+      changeRoleFormCategory: '',
+      currentMember: {},
       formVisible: false,
-      modalLoading: false
+      modalLoading: false,
+      changeRoleFormVisible: false,
+      changeRoleModalLoading: false
     }
   }
 
   private MemberForm: WrappedFormUtils
+  private ChangeRoleForm: WrappedFormUtils
+
   private showMemberForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
@@ -47,6 +62,19 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       formVisible: true
     })
   }
+
+  private showChangeRoleForm = (type: string, obj: { id?: number}) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      currentMember: obj,
+      changeRoleFormVisible: true,
+      changeRoleFormCategory: type
+    }, () => {
+      const {user: {role}, id} = obj
+      this.ChangeRoleForm.setFieldsValue({id, role})
+    })
+  }
+
   private hideMemberForm = () => {
     this.setState({
       formVisible: false,
@@ -56,15 +84,37 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
+  private removeMemberForm = (text, obj) => () => {
+    this.props.deleteOrganizationMember(obj.id, () => {
+      const { organizationId } = this.props
+      if (this.props.loadOrganizationsMembers) {
+        this.props.loadOrganizationsMembers(Number(organizationId))
+      }
+    })
+  }
+
+  private changRole = () => {
+    this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const { id, role } = values
+        this.props.changeOrganizationMemberRole(id, role, () => {
+          const { organizationId } = this.props
+          if (this.props.loadOrganizationsMembers) {
+            this.props.loadOrganizationsMembers(Number(organizationId))
+          }
+          this.hideChangeRoleForm()
+        })
+      }
+    })
+  }
+
   private add = () => {
     const { currentOrganization } = this.props
     this.MemberForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
          const { projectId } = values
          const orgId = currentOrganization.id
-         console.log(orgId, projectId)
-         this.props.onInviteMember(currentOrganization.id, projectId)
-        // this.MemberForm()
+         this.props.onInviteMember(orgId, projectId)
       }
     })
   }
@@ -84,8 +134,24 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
+  private hideChangeRoleForm = () => {
+    this.setState({
+      changeRoleFormVisible: false,
+      changeRoleModalLoading: false
+    }, () => {
+      this.ChangeRoleForm.resetFields()
+    })
+  }
+
   public render () {
-    const { formVisible, category, modalLoading } = this.state
+    const {
+      formVisible,
+      category,
+      modalLoading,
+      changeRoleFormVisible,
+      changeRoleModalLoading,
+      changeRoleFormCategory
+    } = this.state
     const { organizationMembers, inviteMemberList } = this.props
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
@@ -106,8 +172,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       title: 'role',
       dataIndex: 'user',
       key: 'userKey',
-      render: (text) => <span>{text.role}</span>
-    }, {
+      render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+    },
+    {
       title: 'team',
       dataIndex: 'teamNum',
       key: 'teamNum'
@@ -117,9 +184,17 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       key: 'settings',
       render: (text, record) => (
         <span>
-          <a href="javascript:;">从组织里移除</a>
+          <Popconfirm
+            title="确定删除此成员吗？"
+            placement="bottom"
+            onConfirm={ this.removeMemberForm(text, record)}
+          >
+            <Tooltip title="删除">
+              <a href="javascript:;">从组织里移除</a>
+            </Tooltip>
+          </Popconfirm>
           <span className="ant-divider" />
-          <a href="javascript:;">改变角色</a>
+          <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
         </span>
       )
     }]
@@ -168,11 +243,26 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         >
           <MemberForm
             category={category}
+            submitLoading={modalLoading}
             inviteMemberList={inviteMemberList}
             handleSearchMember={this.searchMember}
             organizationOrTeam={this.props.currentOrganization}
             ref={(f) => { this.MemberForm = f }}
             addHandler={this.add}
+          />
+        </Modal>
+        <Modal
+          title={null}
+          visible={changeRoleFormVisible}
+          footer={null}
+          onCancel={this.hideChangeRoleForm}
+        >
+          <ChangeRoleForm
+            category={changeRoleFormCategory}
+            organizationOrTeam={this.props.currentOrganization}
+            submitLoading={changeRoleModalLoading}
+            ref={(f) => { this.ChangeRoleForm = f }}
+            changeHandler={this.changRole}
           />
         </Modal>
       </div>

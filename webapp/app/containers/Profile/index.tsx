@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { Link } from 'react-router'
 const Icon = require('antd/lib/icon')
 const Col = require('antd/lib/col')
+const Message = require('antd/lib/message')
 const Row = require('antd/lib/row')
 const Input = require('antd/lib/input')
 const Form = require('antd/lib/Form')
@@ -15,7 +16,7 @@ import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 import {compose} from 'redux'
 import injectReducer from '../../utils/injectReducer'
-import {updateProfile, checkNameUniqueAction} from '../App/actions'
+import {updateProfile, checkNameUniqueAction, uploadAvatarSuccess} from '../App/actions'
 import injectSaga from '../../utils/injectSaga'
 import reducer from '../App/reducer'
 import saga from '../App/sagas'
@@ -27,7 +28,8 @@ interface IProfileProps {
   type: string
   loginUser: any
   profileForm: any,
-  onUpdateProfile: (id: number, name: string, description: string, department: string, resolve: () => any) => any
+  onUploadAvatarSuccess: (path: string) => any,
+  onUpdateProfile: (id: number, name: string, description: string, department: string, resolve: (data: any) => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -51,7 +53,10 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
     const { onUpdateProfile, loginUser: {id} } = this.props
     this.props.form.validateFieldsAndScroll((err, values) => {
       if(!err) {
-        console.log(values)
+        const {name, description, department} = values
+        onUpdateProfile(id, name, description, department, (data) => {
+          Message.success(data.header && data.header.msg)
+        })
       }
     })
   }
@@ -61,6 +66,7 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
   }
   public render () {
     const {getFieldDecorator} = this.props.form
+    const { id, avatar } = this.props.loginUser
     const commonFormItemStyle = {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 }
@@ -80,7 +86,7 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
         </Box.Header>
         <Box.Body>
           <div className={styles.container}>
-            <UploadAvatar/>
+            <UploadAvatar type="profile" xhrParams={{id, callback: this.props.onUploadAvatarSuccess}} path={avatar}/>
             <hr/>
             <div className={styles.form}>
               <Form
@@ -149,7 +155,8 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
 export function mapDispatchToProps (dispatch) {
   return {
     onUpdateProfile: (id, name, description, department, resolve) => dispatch(updateProfile(id, name, description, department, resolve)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onUploadAvatarSuccess: (path) => dispatch(uploadAvatarSuccess(path))
   }
 }
 
