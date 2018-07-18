@@ -23,6 +23,7 @@ import { fromJS } from 'immutable'
 import {
   LOAD_DASHBOARDS_SUCCESS,
   LOAD_DASHBOARDS_FAILURE,
+  ADD_DASHBOARD,
   ADD_DASHBOARD_SUCCESS,
   ADD_DASHBOARD_FAILURE,
   EDIT_DASHBOARD_SUCCESS,
@@ -52,7 +53,10 @@ import {
   LOAD_WIDGET_SHARE_LINK_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE
+  LOAD_WIDGET_CSV_FAILURE,
+  LOAD_WIDGET_POSITION,
+  LOAD_WIDGET_POSITION_SUCCESS,
+  LOAD_WIDGET_POSITION_ERROR
 } from './constants'
 
 import {
@@ -79,8 +83,13 @@ const initialState = fromJS({
   currentItemsSecretInfo: null,
   currentItemsShareInfoLoading: null,
   currentItemsDownloadCsvLoading: null,
-  currentItemsCascadeSources: null
+  currentItemsCascadeSources: null,
+  modalLoading: false
 })
+
+declare interface IObjectConstructor {
+  assign (...objects: object[]): object
+}
 
 function dashboardReducer (state = initialState, action) {
   const { type, payload } = action
@@ -102,20 +111,35 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_DASHBOARDS_FAILURE:
       return state
 
+    case ADD_DASHBOARD:
+      return state.set('modalLoading', true)
     case ADD_DASHBOARD_SUCCESS:
       if (dashboards) {
-        dashboards.unshift(payload.result)
-        return state.set('dashboards', dashboards.slice())
+        dashboards.push(payload.result)
+        return state
+          .set('dashboards', dashboards.slice())
+          .set('modalLoading', false)
       } else {
-        return state.set('dashboards', [payload.result])
+        return state
+          .set('dashboards', [payload.result])
+          .set('modalLoading', false)
       }
     case ADD_DASHBOARD_FAILURE:
-      return state
+      return state.set('modalLoading', false)
 
     case EDIT_DASHBOARD_SUCCESS:
-      dashboards.splice(dashboards.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+      const { result, formType } = payload
+      if (formType === 'edit') {
+        result.forEach((r) => {
+          dashboards.splice(dashboards.findIndex((d) => d.id === r.id), 1, r)
+        })
+      } else if (formType === 'move') {
+        result.forEach((r) => {
+          dashboards.splice(dashboards.findIndex((d) => d.id === r.id), 1)
+        })
+        Array.prototype.push.apply(dashboards, result)
+      }
       return state.set('dashboards', dashboards.slice())
-
     case EDIT_CURRENT_DASHBOARD:
       return state.set('currentDashboardLoading', true)
     case EDIT_CURRENT_DASHBOARD_SUCCESS:
@@ -127,7 +151,7 @@ function dashboardReducer (state = initialState, action) {
       return state.set('currentDashboardLoading', false)
 
     case DELETE_DASHBOARD_SUCCESS:
-      return state.set('dashboards', dashboards.filter((d) => d.id !== payload.id))
+      return state.set('dashboards', dashboards.filter((i) => i.id !== payload.id))
 
     case LOAD_DASHBOARD_DETAIL:
       return state
@@ -373,6 +397,14 @@ function dashboardReducer (state = initialState, action) {
         ...dashboardCascadeSources,
         [payload.controlId]: payload.values
       })
+
+    case LOAD_WIDGET_POSITION:
+      return state
+    case LOAD_WIDGET_POSITION_SUCCESS:
+      console.log('reducer', payload)
+      return state
+    case LOAD_WIDGET_POSITION_ERROR:
+      return state
     default:
       return state
   }

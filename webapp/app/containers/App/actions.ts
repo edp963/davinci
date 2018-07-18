@@ -152,11 +152,11 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
   }
 }
 
-export function projectsCheckName (projectId, id, name, type, resolve, reject) {
+export function projectsCheckName (pId, id, name, type, resolve, reject) {
   return {
     type: PROJECTS_CHECK_NAME,
     payload: {
-      projectId,
+      pId,
       id,
       name,
       type,
