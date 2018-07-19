@@ -43,13 +43,13 @@ import sagaOrganization from '../Organizations/sagas'
 interface ITeamsProps {
   router: InjectedRouter
   loginUser: any
-  teams: any
   teamRouter: any
   currentOrganizationProjects: any,
   currentOrganizationTeams: any,
   currentOrganizationMembers: any,
   params: {teamId: number}
-  currentTeam: ITeam[]
+  currentTeam: ITeam
+  teams: ITeam[]
   currentTeamProjects: ITeamProjects[]
   currentTeamTeams: ITeamTeams[]
   currentTeamMembers: ITeamMembers[]

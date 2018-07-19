@@ -39,15 +39,18 @@ interface ITeamsState {
 
 interface ITeamsProps {
   router: InjectedRouter
+  teams: ITeam[]
   toThatTeam: (url: string) => any
+  onAddTeam: (team: ITeam, resolve: () => any) => any
   currentOrganization: Organization.IOrganization
   organizationTeams: Organization.IOrganizationTeams
   organizations: any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-interface ITeam {
+export interface ITeam {
   name?: string
+  visibility?: boolean
 }
 
 export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
@@ -121,10 +124,11 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       this.TeamForm.resetFields()
     })
   }
-  private organizationTypeChange = (val) =>
+  private organizationTypeChange = () =>
     new Promise((resolve) => {
       this.forceUpdate(() => resolve())
     })
+
   private onSearchTeam = () => {
 
   }
@@ -160,7 +164,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
 
   public render () {
     const {formVisible, modalLoading} = this.state
-    const {organizations, organizationTeams} = this.props
+    const {organizations, organizationTeams, currentOrganization:{id}} = this.props
     this.filter(organizationTeams)
     const addButton = (
       <Tooltip placement="bottom" title="创建">
@@ -230,11 +234,11 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           onCancel={this.hideTeamForm}
         >
           <TeamForm
+            orgId={id}
+            teams={this.props.teams}
             onModalOk={this.onModalOk}
             modalLoading={modalLoading}
             onOrganizationTypeChange={this.organizationTypeChange}
-            organizations={organizations}
-            organizationTeams={organizationTeams}
             onCheckUniqueName={this.checkNameUnique}
             ref={(f) => {
               this.TeamForm = f
@@ -256,8 +260,8 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadTeams: () => dispatch(loadTeams()),
     onAddTeam: (team, resolve) => dispatch(addTeam(team, resolve)),
-    onEditTeam: (team, resolve) => dispatch(editTeam(team, resolve)),
-    onDeleteTeam: (id) => () => dispatch(deleteTeam(id)),
+    onEditTeam: (team) => dispatch(editTeam(team)),
+    onDeleteTeam: (id, resolve) => () => dispatch(deleteTeam(id, resolve)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

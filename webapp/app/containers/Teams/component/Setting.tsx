@@ -19,6 +19,7 @@ import {ITeam} from '../Team'
 interface ISettingProps {
   form: any
   currentTeam: any
+  teams: ITeam[]
   editTeam: (team: ITeam) => () => any
   deleteTeam: (id: number) => () => any
 }
