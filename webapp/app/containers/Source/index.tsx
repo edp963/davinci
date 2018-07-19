@@ -75,7 +75,7 @@ interface ISourceProps {
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
-  onLoadSources: (projectId: number) => any
+  onLoadSources: (projectId: number, resolve: any) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
@@ -142,7 +142,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   }
 
   public componentWillMount () {
-    this.props.onLoadSources(this.props.params.pid)
+    this.props.onLoadSources(this.props.params.pid, () => {console.log('')})
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -604,7 +604,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
+    onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
     onAddSource: (source, resolve) => dispatch(addSource(source, resolve)),
     onDeleteSource: (id) => () => dispatch(deleteSource(id)),
     onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
