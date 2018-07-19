@@ -40,11 +40,12 @@ import {
   GET_CSV_META_ID
 } from './constants'
 
-export function loadSources (projectId) {
+export function loadSources (projectId, resolve) {
   return {
     type: LOAD_SOURCES,
     payload: {
-      projectId
+      projectId,
+      resolve
     }
   }
 }
