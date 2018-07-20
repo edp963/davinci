@@ -23,7 +23,7 @@ import reducerApp from '../App/reducer'
 import sagaApp from '../App/sagas'
 import {
   loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject, deleteTeamMember, changeTeamMemberRole,
-  editTeam, deleteTeam, loadTeams
+  editTeam, deleteTeam, loadTeams, pullMemberInTeam
 } from './actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
@@ -43,13 +43,13 @@ import sagaOrganization from '../Organizations/sagas'
 interface ITeamsProps {
   router: InjectedRouter
   loginUser: any
-  teams: any
   teamRouter: any
   currentOrganizationProjects: any,
   currentOrganizationTeams: any,
   currentOrganizationMembers: any,
   params: {teamId: number}
-  currentTeam: ITeam[]
+  currentTeam: ITeam
+  teams: ITeam[]
   currentTeamProjects: ITeamProjects[]
   currentTeamTeams: ITeamTeams[]
   currentTeamMembers: ITeamMembers[]
@@ -67,6 +67,7 @@ interface ITeamsProps {
   onDeleteTeamMember: (id: number) => any
   onChangeTeamMemberRole: (id: number, role: string) => any
   onPullProjectInTeam: (id: number, projectId: number, resolve: () => any) => any
+  onPullMemberInTeam: (teamId: number, memberId: number, resolve: () => any) => any
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any) => any
 }
 
@@ -213,7 +214,8 @@ export class Teams extends React.Component<ITeamsProps> {
       currentTeamProjects,
       currentTeamTeams,
       currentTeamMembers,
-      currentOrganizationProjects
+      currentOrganizationProjects,
+      currentOrganizationMembers
     } = this.props
     const { avatar, name } = currentTeam
     const  projectNum = currentTeamProjects.length
@@ -252,8 +254,10 @@ export class Teams extends React.Component<ITeamsProps> {
               <MemberList
                 currentTeam={currentTeam}
                 deleteTeamMember={this.props.onDeleteTeamMember}
+                pullMemberInTeam={this.props.onPullMemberInTeam}
                 changeTeamMemberRole={this.props.onChangeTeamMemberRole}
                 currentTeamMembers={currentTeamMembers}
+                currentOrganizationMembers={currentOrganizationMembers}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
@@ -317,6 +321,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onPullProjectInTeam: (id, projectId, resolve) => dispatch(pullProjectInTeam(id, projectId, resolve)),
+    onPullMemberInTeam: (teamId, memberId, resolve) => dispatch(pullMemberInTeam(teamId, memberId, resolve)),
     onUpdateTeamProjectPermission: (relationId, relTeamProjectDto, resolve) => dispatch(updateTeamProjectPermission(relationId, relTeamProjectDto, resolve))
   }
 }

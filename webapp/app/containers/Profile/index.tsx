@@ -36,8 +36,6 @@ interface IProfileProps {
 export class Profile extends React.PureComponent<IProfileProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName, loginUser: {id} } = this.props
-    // const { getFieldsValue } = this.props.form
-    // const { id } = getFieldsValue()
     const data = {
       username: value,
       id

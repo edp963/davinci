@@ -1,5 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
+import {IOrganizationMembers} from '../../Organizations/Organization'
 const Button = require('antd/lib/button')
 const Col = require('antd/lib/col')
 const Form = require('antd/lib/form')
@@ -22,6 +23,7 @@ interface IAddFormProps {
   handleSearchMember?: () => any
   inviteMemberList?: any
   addHandler: () => any
+  currentOrganizationMembers: IOrganizationMembers[]
 }
 
 interface IAddFormStates {
@@ -57,6 +59,8 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
         return '添加项目'
       case 'member':
         return '邀请成员'
+      case 'teamMember':
+        return '添加成员'
       case 'team':
         return '添加团队'
       default:
@@ -65,14 +69,21 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private selectOption = (target) => () => {
-    const { name, id, username } = target
+    const { name, id, username, user } = target
     this.setState({
       visible: false
     }, () => {
-      this.props.form.setFieldsValue({
-        'searchValue': name ? name : username,
-        'projectId': id
-      })
+      if (user && user.username) {
+        this.props.form.setFieldsValue({
+          searchValue: user.username,
+          projectId: user.id
+        })
+      } else {
+        this.props.form.setFieldsValue({
+          searchValue: name ? name : username,
+          projectId: id
+        })
+      }
     })
   }
 
@@ -84,10 +95,22 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private bootstrapOptionsLi = (data) => {
-    return (
-      <ul className={styles.searchItems}>
-        {
-          data ? data.map((o) => (
+    const Options =  data ? data.map((o) => {
+      if (o && o.user) {
+        return (
+          <li key={o.id} className={styles.searchLi} onClick={this.selectOption(o)}>
+              <span className={styles.main}>
+                <img className={styles.avatar} src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1531136772764&di=00b0fb008e0b547a3668f1045beea070&imgtype=0&src=http%3A%2F%2Fimg3.duitang.com%2Fuploads%2Fitem%2F201505%2F25%2F20150525110536_i4XhB.thumb.700_0.jpeg" alt=""/>
+                <span className={styles.mainText}>
+                  {o.user.username}
+                </span>
+              </span>
+            <Icon type="plus" className={styles.iconPlus}/>
+          </li>
+        )
+      } else {
+        return (
+          (
             <li key={o.id} className={styles.searchLi} onClick={this.selectOption(o)}>
               <span className={styles.main}>
                 <img className={styles.avatar} src="https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1531136772764&di=00b0fb008e0b547a3668f1045beea070&imgtype=0&src=http%3A%2F%2Fimg3.duitang.com%2Fuploads%2Fitem%2F201505%2F25%2F20150525110536_i4XhB.thumb.700_0.jpeg" alt=""/>
@@ -97,8 +120,13 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
               </span>
               <Icon type="plus" className={styles.iconPlus}/>
             </li>
-          )) : ''
-        }
+          )
+        )
+      }
+    }) : ''
+    return (
+      <ul className={styles.searchItems}>
+        {Options}
         {
           this.props.category === 'team' ?
             <li key="createNew" className={styles.searchLi} onClick={this.props.addHandler}>
@@ -117,6 +145,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       category,
       inviteMemberList,
       organizationOrTeam,
+      currentOrganizationMembers,
       currentOrganizationProjects
     } = this.props
     let optionList = void 0
@@ -124,6 +153,8 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       optionList = this.bootstrapOptionsLi(currentOrganizationProjects)
     } else if (category === 'member') {
       optionList = this.bootstrapOptionsLi(inviteMemberList)
+    } else if (category === 'teamMember') {
+      optionList = this.bootstrapOptionsLi(currentOrganizationMembers)
     }
     const orgOrTeamName = organizationOrTeam ? organizationOrTeam.name : ''
     const {getFieldDecorator} = this.props.form
