@@ -42,7 +42,8 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 
-export function* getPortals ({ payload }) {
+export function* getPortals (action) {
+  const { payload } = action
   try {
       const asyncData = yield call(request, `${api.portal}?projectId=${payload.projectId}`)
       const portals = readListAdapter(asyncData)
@@ -53,7 +54,8 @@ export function* getPortals ({ payload }) {
   }
 }
 
-export function* addPortal ({ payload }) {
+export function* addPortal (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -68,7 +70,8 @@ export function* addPortal ({ payload }) {
   }
 }
 
-export function* deletePortal ({ payload }) {
+export function* deletePortal (action) {
+  const { payload } = action
   try {
     yield call(request, {
       method: 'delete',
@@ -81,7 +84,8 @@ export function* deletePortal ({ payload }) {
   }
 }
 
-export function* editPortal ({ payload }) {
+export function* editPortal (action) {
+  const { payload } = action
   try {
     yield call(request, {
       method: 'put',
@@ -98,9 +102,9 @@ export function* editPortal ({ payload }) {
 
 export default function* rootPortalSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_PORTALS as any, getPortals),
-    takeEvery(ADD_PORTAL, addPortal as any),
-    takeEvery(DELETE_PORTAL, deletePortal as any),
-    takeEvery(EDIT_PORTAL, editPortal as any)
+    takeLatest(LOAD_PORTALS, getPortals),
+    takeEvery(ADD_PORTAL, addPortal),
+    takeEvery(DELETE_PORTAL, deletePortal),
+    takeEvery(EDIT_PORTAL, editPortal)
   ]
 }

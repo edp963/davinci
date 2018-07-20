@@ -79,7 +79,7 @@ import {
   makeSelectModalLoading,
   makeSelectBizlogics
  } from './selectors'
-import { projectsCheckName, hideNavigator } from '../App/actions'
+import { checkNameUniqueAction, hideNavigator } from '../App/actions'
 import { loadSchema, executeSql, addBizlogic, editBizlogic } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
@@ -97,14 +97,7 @@ interface IBizlogicFormProps {
   form: any
   route: any
   params: any
-  onCheckName: (
-    projectId: number,
-    id: number,
-    name: string,
-    type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
-  ) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadSchema: (sourceId: number, resolve: any) => any
   bizlogics: boolean | any[]
   executeLoading: boolean
@@ -243,12 +236,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, route, params } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    const idName = route.path === '/project/:pid/bizlogic' ? '' : id
-    const typeName = 'view'
-    onCheckName(params.pid, idName, value, typeName,
+    const { onCheckUniqueName, route, params, form } = this.props
+    const { id } = form.getFieldsValue()
+
+    const data = {
+      projectId: params.pid,
+      id: route.path === '/project/:pid/bizlogic' ? '' : id,
+      name: value
+    }
+    onCheckUniqueName('view', data,
       () => {
         callback()
       }, (err) => {
@@ -708,7 +704,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 <Input />
               )}
             </FormItem>
-            <FormItem label="名称" >
+            <FormItem label="名称" hasFeedback >
               {getFieldDecorator('name', {
                 rules: [{
                   required: true,
@@ -856,7 +852,7 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),

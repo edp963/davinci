@@ -22,7 +22,7 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
-import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, PROJECTS_CHECK_NAME } from './constants'
+import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD } from './constants'
 import {
   logged,
   loginError,
@@ -202,35 +202,10 @@ export function* changeUserPassword ({ payload }) {
   }
 }
 
-export function* projectsCheckName (action): IterableIterator<any> {
-  const { pId, id, name, type, resolve, reject } = action.payload
-  const str = type === 'dashboard' ? 'portal' : 'projectId'
-
-  try {
-    const asyncData = yield call(request, {
-      method: 'get',
-      url: !id
-        ? `${api.projectsCheckName}/${type}?name=${name}&${str}=${pId}`
-        : `${api.projectsCheckName}/${type}?name=${name}&id=${id}&${str}=${pId}`
-    })
-    const code = asyncData.header.code
-    const msg = asyncData.header.msg
-    if (code && code === 400) {
-      reject(msg)
-    }
-    if (code && code === 200) {
-      resolve(msg)
-    }
-  } catch (err) {
-    reject(err)
-  }
-}
-
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [
     throttle(1000, CHECK_NAME, checkName as any),
     throttle(1000, CHECK_NAME, checkNameUnique as any),
-    throttle(1000, PROJECTS_CHECK_NAME, projectsCheckName as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
     takeLatest(LOGIN, login as any),

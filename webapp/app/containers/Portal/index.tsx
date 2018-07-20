@@ -69,7 +69,7 @@ interface IPortalProps {
   onAddPortal: (portal: IPortal, resolve: () => void) => void
   onEditPortal: (portal: IPortal, resolve: () => void) => void
   onDeletePortal: (id: number) => void
-  onLoadDashboards: (portalId: number) => void
+  onLoadDashboards: (portalId: number, resolve: any) => void
 }
 
 interface IPortalStates {
@@ -202,16 +202,19 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
   }
 
   private toDashboard = (d) => (e) => {
-    const { params, dashboards } = this.props
-    this.props.onLoadDashboards(d.id)
-    // console.log('dashboards', dashboards)
+    const { params } = this.props
 
-    // todo：
-    if (dashboards) {
-    this.props.router.push(`/project/${params.pid}/portal/${d.id}/dashboard/${dashboards[0].id}`)
-    } else {
-      this.props.router.push(`/project/${params.pid}/portal/${d.id}`)
-    }
+    new Promise((resolve) => {
+      this.props.onLoadDashboards(d.id, (result) => {
+        resolve(result)
+      })
+    }).then((result) => {
+      if (result) {
+        this.props.router.push(`/project/${params.pid}/portal/${d.id}/dashboard/${result[0].id}`)
+      } else {
+        this.props.router.push(`/project/${params.pid}/portal/${d.id}`)
+      }
+    })
   }
 
   public render () {
@@ -407,7 +410,7 @@ export function mapDispatchToProps (dispatch) {
     onAddPortal: (values, resolve) => dispatch(addPortal(values, resolve)),
     onEditPortal: (values, resolve) => dispatch(editPortal(values, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onLoadDashboards: (portalId) => dispatch(loadDashboards(portalId))
+    onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve))
   }
 }
 

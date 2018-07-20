@@ -29,7 +29,6 @@ import {
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   CHECK_NAME,
-  PROJECTS_CHECK_NAME,
   ACTIVE,
   ACTIVE_SUCCESS,
   ACTIVE_ERROR,
@@ -147,20 +146,6 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
     payload: {
       pathname,
       data,
-      resolve,
-      reject
-    }
-  }
-}
-
-export function projectsCheckName (pId, id, name, type, resolve, reject) {
-  return {
-    type: PROJECTS_CHECK_NAME,
-    payload: {
-      pId,
-      id,
-      name,
-      type,
       resolve,
       reject
     }
