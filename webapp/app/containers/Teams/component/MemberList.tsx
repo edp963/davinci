@@ -15,6 +15,7 @@ import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
 import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
+import {IOrganizationMembers} from '../../Organizations/Organization'
 
 interface IMemberListState {
   modalLoading: boolean
@@ -30,8 +31,10 @@ interface IMemberListState {
 interface IMemberListProps {
   currentTeam: any
   deleteTeamMember: (id: number) => any
+  pullMemberInTeam: (teamId: number, memberId: number, resolve: () => any) => any
   changeTeamMemberRole: (id: number, role: string) => any
   currentTeamMembers: Team.ITeamMembers[]
+  currentOrganizationMembers: IOrganizationMembers[]
 }
 
 export class MemberList extends React.PureComponent<IMemberListProps, IMemberListState> {
@@ -67,21 +70,38 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     })
   }
   private add = () => {
+    const { currentTeam } = this.props
     this.AddForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        console.log(values)
+        const memberId = values.projectId
+        const teamId = currentTeam.id
+        this.props.pullMemberInTeam(teamId, memberId, () => {
+          this.hideAddForm()
+        })
       }
     })
   }
 
   private removeMemberForm = (text, obj) => () => {
-    console.log(text, obj)
-    // this.props.deleteTeamMember()
+    this.props.deleteTeamMember(obj.id)
   }
 
   private changRole = () => {
     console.log('changeRole')
    // this.props.changeTeamMemberRole()
+
+    // this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
+    //   if (!err) {
+    //     const { id, role } = values
+    //     this.props.changeOrganizationMemberRole(id, role, () => {
+    //       const { organizationId } = this.props
+    //       if (this.props.loadOrganizationsMembers) {
+    //         this.props.loadOrganizationsMembers(Number(organizationId))
+    //       }
+    //       this.hideChangeRoleForm()
+    //     })
+    //   }
+    // })
   }
 
   private hideChangeRoleForm = () => {
@@ -110,6 +130,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormCategory
     } = this.state
     const { currentTeamMembers, currentTeam} = this.props
+    const currentTeamMember = Array.isArray(currentTeamMembers) ? currentTeamMembers : []
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <Button
@@ -152,7 +173,6 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         </span>
       )
     }]
-
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -185,7 +205,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <Table
               bordered
               columns={columns}
-              dataSource={Array.isArray(currentTeamMembers) ? currentTeamMembers : []}
+              dataSource={currentTeamMember}
             />
           </div>
         </Row>
@@ -200,6 +220,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             organizationOrTeam={currentTeam}
             addHandler={this.add}
             ref={(f) => { this.AddForm = f }}
+            currentOrganizationMembers={this.props.currentOrganizationMembers}
           />
         </Modal>
         <Modal

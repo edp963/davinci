@@ -96,22 +96,22 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     this.forceUpdate(() => {
       const {
         id,
-        downloadPermisstion,
-        schedulePermisstion,
-        sharePermisstion,
-        sourcePermisstion,
-        viewPermisstion,
-        vizPermisstion,
-        widgetPermisstion
+        downloadPermission,
+        schedulePermission,
+        sharePermission,
+        sourcePermission,
+        viewPermission,
+        vizPermission,
+        widgetPermission
       } = this[targetStr].getFieldsValue()
       onUpdateTeamProjectPermission(id, {
-        downloadPermisstion,
-        schedulePermisstion,
-        sharePermisstion,
-        sourcePermisstion,
-        viewPermisstion,
-        vizPermisstion,
-        widgetPermisstion
+        downloadPermission,
+        schedulePermission,
+        sharePermission,
+        sourcePermission,
+        viewPermission,
+        vizPermission,
+        widgetPermission
       }, (data) => {console.log(data)})
     })
   }

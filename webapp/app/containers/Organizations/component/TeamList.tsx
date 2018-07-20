@@ -40,6 +40,7 @@ interface ITeamsState {
 interface ITeamsProps {
   router: InjectedRouter
   teams: ITeam[]
+  onLoadTeams: () => any
   toThatTeam: (url: string) => any
   onAddTeam: (team: ITeam, resolve: () => any) => any
   currentOrganization: Organization.IOrganization
@@ -48,9 +49,16 @@ interface ITeamsProps {
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
+
 export interface ITeam {
+  id?: number
+  role?: number
+  avatar?: string
+  organization?: Organization.IOrganization
   name?: string
   visibility?: boolean
+  description: string
+  parentTeamId: number
 }
 
 export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
@@ -61,19 +69,15 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       modalLoading: false
     }
   }
-
+  public componentWillMount () {
+    const { onLoadTeams } = this.props
+    onLoadTeams()
+  }
   private TeamForm: WrappedFormUtils
   private showTeamForm = () => (e) => {
     e.stopPropagation()
     this.setState({
       formVisible: true
-    }, () => {
-      // if (team) {
-      //   const {orgId, id, name, pic, description} = team
-      //   this.organizationTypeChange(`${orgId}`).then(
-      //     () => this.TeamForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description})
-      //   )
-      // }
     })
   }
 
@@ -97,11 +101,6 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
     this.TeamForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({modalLoading: true})
-        // orgId: number
-        // name: string,
-        // description: string,
-        // parentTeamId: number,
-        // visibility: boolean
         this.props.onAddTeam({
           ...values,
           ...{

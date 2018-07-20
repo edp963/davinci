@@ -46,6 +46,10 @@ export const LOAD_TEAM_TEAMS = 'davinci/Organization/LOAD_TEAM_TEAMS'
 export const LOAD_TEAM_TEAMS_SUCCESS = 'davinci/Organization/LOAD_TEAM_TEAMS_SUCCESS'
 export const LOAD_TEAM_TEAMS_FAILURE = 'davinci/Organization/LOAD_TEAM_TEAMS_FAILURE'
 
+export const PULL_MEMBER_IN_TEAM = 'davinci/Organization/PULL_MEMBER_IN_TEAM'
+export const PULL_MEMBER_IN_TEAM_SUCCESS = 'davinci/Organization/PULL_MEMBER_IN_TEAM_SUCCESS'
+export const PULL_MEMBRE_IN_TEAM_FAILURE = 'davinci/Organization/PULL_MEMBRE_IN_TEAM_FAILURE'
+
 export const PULL_PROJECT_IN_TEAM = 'davinci/Organization/PULL_PROJECT_IN_TEAM'
 export const PULL_PROJECT_IN_TEAM_SUCCESS = 'davinci/Organization/PULL_PROJECT_IN_TEAM_SUCCESS'
 export const PULL_PROJECT_IN_TEAM_FAILURE = 'davinci/Organization/PULL_PROJECT_IN_TEAM_FAILURE'

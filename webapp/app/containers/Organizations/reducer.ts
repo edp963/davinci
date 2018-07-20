@@ -113,6 +113,7 @@ function organizationReducer (state = initialState, action) {
       return state
         .set('currentOrganizationLoading', false)
         .set('currentOrganization', payload.organization)
+    // todo bug 没考虑teams的层级关系
     case ADD_TEAM_SUCCESS:
       if (currentOrganizationTeams) {
         currentOrganizationTeams.unshift(payload.result)

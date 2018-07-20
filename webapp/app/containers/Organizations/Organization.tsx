@@ -81,13 +81,13 @@ export interface IOrganization {
   name: string
   description: string
   avatar: string
-  allowCreateProject: number
-  allowDeleteOrTransferProject: number
-  allowChangeVisibility: number
-  memberPermission: number
-  projectNum: number
-  memberNum: number
-  teamNum: number
+  allowCreateProject?: number
+  allowDeleteOrTransferProject?: number
+  allowChangeVisibility?: number
+  memberPermission?: number
+  projectNum?: number
+  memberNum?: number
+  teamNum?: number
 }
 
 export interface IOrganizationProjects {
@@ -105,6 +105,13 @@ export interface IOrganizationTeams {
 }
 export interface IOrganizationMembers {
   id: number
+  teamNum?: number
+  user?: {
+    id?: number
+    role?: number
+    avatar?: string
+    username?: string
+  }
 }
 
 export class Organization extends React.PureComponent <IOrganizationProps> {

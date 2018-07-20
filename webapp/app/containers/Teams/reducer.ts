@@ -23,8 +23,6 @@ import { fromJS } from 'immutable'
 import {
   LOAD_TEAMS_SUCCESS,
   LOAD_TEAMS_FAILURE,
-  ADD_TEAM_SUCCESS,
-  ADD_TEAM_FAILURE,
   EDIT_TEAM_SUCCESS,
   DELETE_TEAM_SUCCESS,
   LOAD_TEAM_DETAIL,
@@ -34,6 +32,7 @@ import {
   LOAD_TEAM_TEAMS_SUCCESS,
   PULL_PROJECT_IN_TEAM_SUCCESS,
   DELETE_TEAM_PROJECT_SUCCESS,
+  PULL_MEMBER_IN_TEAM_SUCCESS,
   DELETE_TEAM_MEMBER_SUCCESS,
   CHANGE_MEMBER_ROLE_TEAM_SUCCESS
 } from './constants'
@@ -57,7 +56,6 @@ function teamReducer (state = initialState, action) {
   const { type, payload } = action
   const teams = state.get('teams')
   const currentTeamProjects = state.get('currentTeamProjects')
-  const currentTeamTeams = state.get('currentTeamTeams')
   const currentTeamMembers = state.get('currentTeamMembers')
   switch (type) {
     case LOAD_TEAMS_SUCCESS:
@@ -90,6 +88,14 @@ function teamReducer (state = initialState, action) {
     case DELETE_TEAM_PROJECT_SUCCESS:
       if (currentTeamProjects) {
         return state.set('currentTeamProjects', currentTeamProjects.filter((d) => d.id !== payload.id))
+      }
+      return state
+    case PULL_MEMBER_IN_TEAM_SUCCESS:
+      if (currentTeamMembers) {
+        currentTeamMembers.unshift(payload.result)
+        state.set('currentTeamMembers', currentTeamMembers.slice())
+      } else {
+        state.set('currentTeamMembers', [payload.result])
       }
       return state
     case DELETE_TEAM_MEMBER_SUCCESS:

@@ -52,11 +52,7 @@ interface IProjectsFormProps {
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   private filterTeamsByOrg = (teams) => {
     if (teams) {
-      const id = this.props.orgId
-      const teamObj = teams.find((team) => {
-        return team.id === Number(id)
-      })
-      const orgId = teamObj.organization.id
+      const { orgId } = this.props
       const result =  teams.filter((team) => {
         if (team.organization.id === orgId) {
           return team

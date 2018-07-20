@@ -13,6 +13,7 @@ import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
+import {IOrganizationMembers} from '../../Organizations/Organization'
 
 interface ITeamListState {
   modalLoading: boolean,
@@ -113,7 +114,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       key: 'visibility',
       render: (text) => text ? '公开（可见）' : '私密（不可见）'
     }]
-
     return (
       <div className={styles.listWrapper}>
         <Row>

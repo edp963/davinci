@@ -40,6 +40,9 @@ import {
   LOAD_TEAM_TEAMS,
   LOAD_TEAM_TEAMS_SUCCESS,
   LOAD_TEAM_TEAMS_FAILURE,
+  PULL_MEMBER_IN_TEAM,
+  PULL_MEMBER_IN_TEAM_SUCCESS,
+  PULL_MEMBRE_IN_TEAM_FAILURE,
   PULL_PROJECT_IN_TEAM,
   PULL_PROJECT_IN_TEAM_SUCCESS,
   PULL_PROJECT_IN_TEAM_FAILURE,
@@ -325,6 +328,32 @@ export function teamMemberDeleted (id) {
 export function deleteTeamMemberFail () {
   return {
     type: DELETE_TEAM_MEMBER_ERROR
+  }
+}
+
+export function pullMemberInTeam (teamId, memberId, resolve) {
+  return {
+    type: PULL_MEMBER_IN_TEAM,
+    payload: {
+      teamId,
+      memberId,
+      resolve
+    }
+  }
+}
+
+export function memberInTeamPulled (result) {
+  return {
+    type: PULL_MEMBER_IN_TEAM_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function pullMemberInTeamFail () {
+  return {
+    type: PULL_MEMBRE_IN_TEAM_FAILURE
   }
 }
 
