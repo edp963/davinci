@@ -19,16 +19,13 @@
  */
 
 
-
-
-
 package edp.davinci.util.common
 
 import java.util.Properties
-import javax.naming.directory.{InitialDirContext, SearchControls, SearchResult}
-import javax.naming.{Context, NamingEnumeration}
 
 import edp.davinci.ModuleInstance
+import javax.naming.directory.{InitialDirContext, SearchControls, SearchResult}
+import javax.naming.{Context, NamingEnumeration}
 import org.apache.log4j.Logger
 
 import scala.util.{Failure, Success, Try}
@@ -38,40 +35,43 @@ object LdapValidate extends LdapValidate
 trait LdapValidate {
   private lazy val logger = Logger.getLogger(this.getClass)
   private lazy val config = ModuleInstance.getModule.config
-  private val ldapUser = config.getString("ldap.user")
+  private val ldapManager = config.getString("ldap.bind_dn")
   private val ldapPwd = config.getString("ldap.pwd")
   private val ldapUrl = config.getString("ldap.url")
-  private val ldapDc = config.getString("ldap.dc")
+  private val ldapSearchBaseDn = config.getString("ldap.search_base_dn")
+  private val ldapSearchFilter = config.getString("ldap.search_filter")
   private val readTimeout = config.getString("ldap.read.timeout")
   private val connectTimeout = config.getString("ldap.connect.timeout")
   private val isEnable = config.getString("ldap.connect.pool")
   private var context: InitialDirContext = _
 
   def validate(username: String, password: String): Boolean = {
+
+    propsSet(ldapUrl + ldapSearchBaseDn, ldapManager, ldapPwd)
+    val controls: SearchControls = new SearchControls
+    controls.setSearchScope(SearchControls.SUBTREE_SCOPE)
+    val answers: NamingEnumeration[SearchResult] = context.search("", s"$ldapSearchFilter=$username", controls)
     try {
-      propsSet(ldapUrl + ldapDc, ldapUser, ldapPwd)
-      val controls: SearchControls = new SearchControls
-      controls.setSearchScope(SearchControls.SUBTREE_SCOPE)
-      val answers: NamingEnumeration[SearchResult] = context.search("", s"userPrincipalName=$username", controls)
       val nsName: String = answers.nextElement.getNameInNamespace
+      logger.info("ns Name is " + nsName)
       val result = Try {
-        this.propsSet(ldapUrl, nsName, password)
+        propsSet(ldapUrl, nsName, password)
       }
       result match {
         case Success(_) => true
         case Failure(_) => false
       }
     } catch {
-      case e: Throwable =>
+      case _: Throwable =>
         logger.error("LdapValidate failed===" + username + "," + password)
-        logger.error("LdapValidate failed===", e)
         false
     } finally {
-      context.close()
+      if (null != context)
+        context.close()
     }
   }
 
-  private def propsSet(url: String, nsName: String, pwd: String) = {
+  private def propsSet(url: String, nsName: String, pwd: String): Unit = {
     val props = new Properties
     props.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory")
     props.put(Context.PROVIDER_URL, url)

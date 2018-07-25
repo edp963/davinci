@@ -60,10 +60,11 @@ aes {
 
 ldap {
   isEnable = false
-  url = ""
-  dc = ""
-  user = ""
-  pwd = ""
+  url = "ldap://ip:port/"
+  search_filter = "mail" //邮箱登录 chenchen.ming@qq.com
+  search_base_dns = "ou=users,dc=abc,dc=com"
+  bind_dn = "cn=admin,dc=abc,dc=com"
+  pwd = "***"
   read.timeout = "5000"
   connect {
     timeout = "5000"
