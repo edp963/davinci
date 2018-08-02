@@ -54,12 +54,10 @@ function checkStatus (response) {
 }
 
 export default function request (url, options) {
-  // FIXME
-  let result = axios(url, options).then(checkStatus)
-  if (!options || !options.headers.Authorization) {
-    result = result.then(refreshToken)
-  }
-  return result.then(parseJSON)
+  return axios(url, options)
+    .then(checkStatus)
+    .then(refreshToken)
+    .then(parseJSON)
 }
 
 export function setToken (token) {

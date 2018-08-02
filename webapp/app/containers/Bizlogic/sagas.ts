@@ -132,23 +132,11 @@ export function* getBizdatas ({ payload }) {
   try {
     const { id, sql, sorts, offset, limit } = payload
 
-    let queries = []
-
-    if (offset !== undefined && limit !== undefined) {
-      queries = queries
-        .concat(`sortby=${sorts}`)
-        .concat(`offset=${offset}`)
-        .concat(`limit=${limit}`)
-    }
-    queries = queries.concat('usecache=false').concat('expired=0')
-    queries = `?${queries.join('&')}` as any
-
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.bizlogic}/${id}/resultset${queries}`,
-      data: sql || {}
+      url: `${api.bizlogic}/${id}/getdata`
     })
-    const bizdatas = resultsetConverter(readListAdapter(asyncData))
+    const bizdatas =  resultsetConverter(readListAdapter(asyncData))
     yield put(bizdatasLoaded(bizdatas))
   } catch (err) {
     yield put(loadBizdatasFail(err))
@@ -159,32 +147,13 @@ export function* getBizdatasFromItem ({ payload }) {
   try {
     const { itemId, id, sql, sorts, offset, limit, useCache, expired } = payload
 
-    let queries = []
-
-    if (offset !== undefined && limit !== undefined) {
-      queries = queries
-        .concat(`sortby=${sorts}`)
-        .concat(`offset=${offset}`)
-        .concat(`limit=${limit}`)
-    }
-    queries = queries.concat(`usecache=${useCache}`).concat(`expired=${useCache === 'false' ? 0 : expired}`)
-    queries = `?${queries.join('&')}` as any
-
-    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
-    const data = {
-      adHoc,
-      manualFilters: [filters, linkageFilters, globalFilters]
-        .filter((f) => !!f)
-        .join(' and '),
-      params: [].concat(params).concat(linkageParams).concat(globalParams)
-    }
-
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.bizlogic}/${id}/resultset${queries}`,
-      data
+      url: `${api.bizlogic}/${id}/getdata`,
+      data: {}
     })
     const bizdatas = resultsetConverter(readListAdapter(asyncData))
+    // const bizdatas = readListAdapter(asyncData)
     yield put(bizdatasFromItemLoaded(itemId, bizdatas))
   } catch (err) {
     yield put(loadBizdatasFromItemFail(err))

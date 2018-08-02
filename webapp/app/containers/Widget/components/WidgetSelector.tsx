@@ -14,13 +14,11 @@ const styles = require('../Widget.less')
 interface IWidgetSelectorProps {
   className: any,
   widgets: any[],
-  loginUser: { id: number, admin: boolean },
   multiple: boolean,
   onWidgetsSelect: (widgets) => void,
 }
 
 interface IWidgetSelectorStates {
-  authorizedWidgets: any[],
   screenWidth: number,
   kwWidget: string,
   pageSize: number,
@@ -33,7 +31,6 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
   constructor (props) {
     super(props)
     this.state = {
-      authorizedWidgets: [],
       screenWidth: 0,
       kwWidget: '',
       pageSize: 24,
@@ -45,22 +42,6 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   public componentWillMount () {
     this.getScreenWidth()
-  }
-
-  public componentDidMount () {
-    const {
-      widgets
-    } = this.props
-    if (widgets.length > 0) {
-      this.setAuthorizedWidgets(widgets)
-    }
-  }
-
-  public componentWillReceiveProps (nextProps) {
-    const { widgets, loginUser } = this.props
-    if (nextProps.widgets !== widgets) {
-      this.setAuthorizedWidgets(nextProps.widgets)
-    }
     window.addEventListener('resize', this.getScreenWidth, false)
   }
 
@@ -70,15 +51,6 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   private getScreenWidth = () => {
     this.setState({ screenWidth: document.documentElement.clientWidth })
-  }
-
-  private setAuthorizedWidgets = (widgets) => {
-    const { loginUser } = this.props
-    if (loginUser.admin) {
-      this.setState({
-        authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
-      })
-    }
   }
 
   private onChange = (page) => {
@@ -95,13 +67,11 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   private getWidgets () {
     const {
-      widgets,
-      loginUser
+      widgets
     } = this.props
 
     const {
       kwWidget,
-      currentPage,
       showSelected,
       widgetsSelected
     } = this.state
@@ -116,9 +86,6 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
       let valid = true
       if (showSelected) {
         valid = valid && widgetsSelected.findIndex((ws) => ws.id === w.id) >= 0
-      }
-      if (valid && loginUser && loginUser.admin) {
-        valid = valid && w['create_by'] === loginUser.id
       }
       if (valid && kwWidget) {
         valid = valid && reg.test(w.name)
@@ -172,9 +139,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   public render () {
     const {
-      className,
-      widgets,
-      loginUser
+      className
     } = this.props
 
     const {
@@ -192,7 +157,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
     const widgetsCurrent = widgetsFiltered.slice(startCol, endCol)
 
     const widgetsList = widgetsCurrent.map((w, idx) => {
-      const widgetType = JSON.parse(w.chart_params).widgetType
+      const widgetType = JSON.parse(w.config).chartParams.widgetType
       const widgetClassName = classnames({
         [styles.widget]: true,
         [styles.selector]: true,

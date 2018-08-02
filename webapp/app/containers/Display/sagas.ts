@@ -25,7 +25,6 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import { getDefaultSlideParams } from '../../assets/json/slideSettings'
-import axios from 'axios' // FIXME
 
 const message = require('antd/lib/message')
 
@@ -59,56 +58,32 @@ import {
   deleteDisplayLayersFail,
   displayLayersEdited,
   editDisplayLayersFail,
+
+  slideLayersPasted,
+  pasteSlideLayersFail,
+
   displaySecretLinkLoaded,
   displayShareLinkLoaded,
   loadDisplayShareLinkFail
 } from './actions'
-import messages from './messages'
-
-// FIX ME
-function* getToken () {
-  const response = yield call(axios, `/api/v3/login`, {
-    method: 'post',
-    data: {
-      username: 'Fangkun',
-      password: 'qwerty'
-    }
-  })
-  const token = response.data.header.token
-  localStorage.setItem('TEMP_TOKEN', token)
-  return token
-}
 
 export function* getDisplays (action): IterableIterator<any> {
   const { projectId } = action.payload
-  // FIXME
-  const token = (yield getToken())
-
-  const asyncData = yield call(request, `${api.display}?projectId=${projectId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-  if (!asyncData.error) {
+  try {
+    const asyncData = yield call(request, `${api.display}?projectId=${projectId}`)
     const displays = readListAdapter(asyncData)
     yield put(displaysLoaded(displays))
-  } else {
-    yield put(loadDisplaysFail(asyncData.error))
+  } catch (err) {
+    yield put(loadDisplaysFail(err))
   }
 }
 
 export function* addDisplay (action) {
   const { display, resolve } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
-
     const asyncDisplayData = yield call(request, api.display, {
       method: 'post',
-      data: display,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: display
     })
     const resultDisplay = readObjectAdapter(asyncDisplayData)
     const { id } = resultDisplay
@@ -119,10 +94,7 @@ export function* addDisplay (action) {
     }
     yield call(request, `${api.display}/${id}/slides`, {
       method: 'post',
-      data: slide,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: slide
     })
     yield put(displayAdded(resultDisplay))
     resolve()
@@ -133,40 +105,27 @@ export function* addDisplay (action) {
 }
 
 export function* getDisplayDetail (action): IterableIterator<any> {
-  // FIXME
-  const token = (yield getToken())
-
   const { id } = action.payload
-  const asyncDataDetail = yield call(request, `${api.display}/${id}/slides`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-  const display = readObjectAdapter(asyncDataDetail)
-  const slide = display.slides[0]
-  delete display.slides
-  const asyncDataWidgets = yield call(request, `${api.display}/${id}/slides/${slide.id}/widgets`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  })
-  const layers = readListAdapter(asyncDataWidgets)
-  yield put(displayDetailLoaded(display, slide, layers))
-  return display
+  try {
+    const asyncDataDetail = yield call(request, `${api.display}/${id}/slides`)
+    const display = readObjectAdapter(asyncDataDetail)
+    const slide = display.slides[0]
+    delete display.slides
+    const asyncDataWidgets = yield call(request, `${api.display}/${id}/slides/${slide.id}/widgets`)
+    const layers = readListAdapter(asyncDataWidgets)
+    yield put(displayDetailLoaded(display, slide, layers))
+    return display
+  } catch (err) {
+    yield put(loadDisplaysFail(err))
+  }
 }
 
 export function* editDisplay (action): IterableIterator<any> {
   const { display, resolve } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
-
     yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
-      data: display,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: display
     })
     yield put(displayEdited(display))
     if (resolve) { resolve() }
@@ -179,15 +138,9 @@ export function* editDisplay (action): IterableIterator<any> {
 export function* editCurrentDisplay (action): IterableIterator<any> {
   const { display, resolve } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
-
     yield call(request, `${api.display}/${display.id}`, {
       method: 'put',
-      data: display,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: display
     })
     yield put(currentDisplayEdited(display))
     if (resolve) { resolve() }
@@ -200,18 +153,12 @@ export function* editCurrentDisplay (action): IterableIterator<any> {
 export function* editCurrentSlide (action): IterableIterator<any> {
   const { displayId, slide, resolve } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
-
     yield call(request, `${api.display}/${displayId}/slides`, {
       method: 'put',
       data: [{
         ...slide,
         displayId
-      }],
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      }]
     })
     yield put(currentSlideEdited(slide))
   } catch (err) {
@@ -223,19 +170,13 @@ export function* editCurrentSlide (action): IterableIterator<any> {
 export function* uploadCurrentSlideCover (action): IterableIterator<any> {
   const { cover, resolve } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
     const formData = new FormData()
     formData.append('coverImage', new File([cover], 'coverImage.png'))
     const asyncData = yield call(request, `${api.display}/upload/coverImage`, {
       method: 'post',
-      data: formData,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: formData
     })
     const coverPath = readObjectAdapter(asyncData)
-    console.log(asyncData)
     yield put(currentSlideCoverUploaded(coverPath))
     resolve(coverPath)
   } catch (err) {
@@ -247,14 +188,8 @@ export function* uploadCurrentSlideCover (action): IterableIterator<any> {
 export function* deleteDisplay (action) {
   const { id } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
-
     yield call(request, `${api.display}/${id}`, {
-      method: 'delete',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      method: 'delete'
     })
     yield put(displayDeleted(id))
   } catch (err) {
@@ -266,14 +201,9 @@ export function* deleteDisplay (action) {
 export function* addDisplayLayers (action) {
   const { displayId, slideId, layers } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
     const asyncData = yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'post',
-      data: layers, // FIXME
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: layers
     })
     const result = readListAdapter(asyncData)
     yield put(displayLayersAdded(result))
@@ -287,14 +217,9 @@ export function* addDisplayLayers (action) {
 export function* editDisplayLayers (action) {
   const { displayId, slideId, layers } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
     yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'put',
-      data: layers,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: layers
     })
     yield put(displayLayersEdited(layers))
   } catch (err) {
@@ -306,14 +231,9 @@ export function* editDisplayLayers (action) {
 export function* deleteDisplayLayers (action) {
   const { displayId, slideId, ids } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
     yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
       method: 'delete',
-      data: ids,
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      data: ids
     })
     yield put(displayLayersDeleted(ids))
   } catch (err) {
@@ -322,18 +242,29 @@ export function* deleteDisplayLayers (action) {
   }
 }
 
+export function* pasteSlideLayers (action) {
+  const { displayId, slideId, layers } = action.payload
+  try {
+    const asyncData = yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+      method: 'post',
+      data: layers
+    })
+    const result = readListAdapter(asyncData)
+    yield put(slideLayersPasted(result))
+    return result
+  } catch (err) {
+    yield put(pasteSlideLayersFail())
+    message.error('当前 Display 粘贴图层失败，请稍后再试')
+  }
+}
+
 export function* getDisplayShareLink (action) {
   const { id, authName } = action.payload
   try {
-    // FIXME
-    const token = (yield getToken())
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.display}/${id}/share`,
-      params: { username: authName },
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+      params: { username: authName }
     })
     const shareInfo = readListAdapter(asyncData)
     if (authName) {
@@ -360,6 +291,7 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeEvery(ActionTypes.ADD_DISPLAY_LAYERS, addDisplayLayers),
     takeEvery(ActionTypes.EDIT_DISPLAY_LAYERS, editDisplayLayers),
     takeEvery(ActionTypes.DELETE_DISPLAY_LAYERS, deleteDisplayLayers),
+    takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink)
   ]
 }

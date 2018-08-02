@@ -28,6 +28,7 @@ import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
+import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
@@ -234,6 +235,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
             }
           },
           childRoutes: [
+            {
+              path: '/project/:pid/vizs',
+              name: 'vizs',
+              components: Viz
+            },
             {
               path: '/project/:pid/dashboards',
               name: 'dashboards',

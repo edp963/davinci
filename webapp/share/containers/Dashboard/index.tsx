@@ -30,9 +30,7 @@ import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
-import appReducer from '../App/reducer'
 import saga from './sagas'
-import appSaga from '../App/sagas'
 
 import Container from '../../../app/components/Container'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
@@ -1154,15 +1152,11 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-const withAppReducer = injectReducer({ key: 'global', reducer: appReducer })
 const withReducer = injectReducer({ key: 'shareDashboard', reducer })
-const withAppSaga = injectSaga({ key: 'global', saga: appSaga })
 const withSaga = injectSaga({ key: 'shareDashboard', saga })
 
 export default compose(
-  withAppReducer,
   withReducer,
-  withAppSaga,
   withSaga,
   withConnect
 )(Share)

@@ -18,11 +18,19 @@ interface ILayerListProps {
   selectedLayers: any[]
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
   onEditDisplayLayers: (layers: any[]) => void
+  onCollapseChange: () => void
 }
 
-export class LayerList extends React.Component <ILayerListProps, {}> {
+interface ILayerListStates {
+  collapse: boolean
+}
+
+export class LayerList extends React.Component <ILayerListProps, ILayerListStates> {
   constructor (props) {
     super(props)
+    this.state = {
+      collapse: false
+    }
   }
 
   private sortLayers = (layers, orderDirection: OrderDirection): any[] => {
@@ -156,14 +164,37 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
     return [...layers].sort((item1, item2) => (item2.index - item1.index))
   }
 
+  private toggleCollapse = () => {
+    const { onCollapseChange } = this.props
+    const { collapse } = this.state
+    this.setState({ collapse: !collapse }, () => {
+      onCollapseChange()
+    })
+  }
+
   public render () {
     const {
       layers,
       layersStatus
     } = this.props
+    const { collapse } = this.state
 
-    const header = <div>图层</div>
-    const  cmds = this.commands.map((cmd, idx) => (
+    if (collapse) {
+      return (
+        <div className={styles.collapse}>
+          <h2 className={styles.formTitle}>
+            <Tooltip title="显示/隐藏图层">
+              <Icon onClick={this.toggleCollapse} type="left-square-o" />
+            </Tooltip>
+          </h2>
+          <div className={styles.title}>
+            <label>图层</label>
+          </div>
+        </div>
+      )
+    }
+
+    const cmds = this.commands.map((cmd, idx) => (
       <li key={idx} onClick={cmd.handler}>
         <Tooltip placement="bottom" title={cmd.title}>
           <i className={`iconfont ${cmd.icon}`}/>
@@ -177,12 +208,17 @@ export class LayerList extends React.Component <ILayerListProps, {}> {
             onClick={this.changeLayerStatus(layer.id)}
             className={`iconfont ${layersStatus[layer.id] ? 'icon-selected' : 'icon-unselected'}`}
           />
-          <span>{layer.name}</span>
+          <span title={layer.name}>{layer.name}</span>
         </li>
       ))
     return (
-      <div className={`${styles.sidebar} ${styles.left}`}>
-        <h2 className={styles.formTitle}>图层</h2>
+      <div className={styles.left}>
+        <h2 className={styles.formTitle}>
+          <span>图层</span>
+          <Tooltip title="显示/隐藏图层">
+            <Icon onClick={this.toggleCollapse} type="right-square-o" />
+          </Tooltip>
+        </h2>
         <div className={styles.commands}>
           <ul className={styles.commandGroup}>{cmds}</ul>
         </div>

@@ -214,6 +214,28 @@ export function deleteDisplayFail () {
   }
 }
 
+export function dragSelectedLayer ({ id, deltaX, deltaY }) {
+  return {
+    type: ActionTypes.DRAG_SELECT_LAYER,
+    payload: {
+      id,
+      deltaX,
+      deltaY
+    }
+  }
+}
+
+export function resizeSelectedLayer ({ id, deltaWidth, deltaHeight }) {
+  return {
+    type: ActionTypes.RESIZE_SELECT_LAYER,
+    payload: {
+      id,
+      deltaWidth,
+      deltaHeight
+    }
+  }
+}
+
 export function selectLayer ({ id, selected, exclusive }) {
   return {
     type: ActionTypes.SELECT_LAYER,
@@ -222,6 +244,40 @@ export function selectLayer ({ id, selected, exclusive }) {
       selected,
       exclusive
     }
+  }
+}
+
+export function copySlideLayers (slideId, layers: any[]) {
+  return {
+    type: ActionTypes.COPY_SLIDE_LAYERS,
+    payload: {
+      slideId,
+      layers
+    }
+  }
+}
+
+export function pasteSlideLayers (displayId: number, slideId: number, layers: any[]) {
+  return {
+    type: ActionTypes.PASTE_SLIDE_LAYERS,
+    payload: {
+      displayId,
+      slideId,
+      layers
+    }
+  }
+}
+export function slideLayersPasted (result) {
+  return {
+    type: ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+export function pasteSlideLayersFail () {
+  return {
+    type: ActionTypes.PASTE_SLIDE_LAYERS_FAILURE
   }
 }
 

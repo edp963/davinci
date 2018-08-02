@@ -71,6 +71,11 @@ const makeSelectCurrentSelectedLayers = () => createSelector(
   }
 )
 
+const makeSelectClipboardLayers = () => createSelector(
+  selectDisplay,
+  (displayState) => displayState.get('clipboardLayers')
+)
+
 const makeSelectCurrentDisplayShareInfo = () => createSelector(
   selectDisplay,
   (displayState) => displayState.get('currentDisplayShareInfo')
@@ -99,6 +104,8 @@ export {
 
   makeSelectCurrentLayersStatus,
   makeSelectCurrentSelectedLayers,
+
+  makeSelectClipboardLayers,
 
   makeSelectCurrentDisplayShareInfo,
   makeSelectCurrentDisplaySecretInfo,

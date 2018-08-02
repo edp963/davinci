@@ -48,7 +48,6 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
     if (username && password) {
       onLogin(username, password, shareInfo, (res) => {
-        debugger
         if (res && res.header && res.header.code && res.header.code === 200) {
           legitimateUser()
         } else {

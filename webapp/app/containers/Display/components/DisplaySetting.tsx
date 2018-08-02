@@ -50,32 +50,41 @@ export class DisplaySetting extends React.PureComponent<IDisplaySettingProps, ID
     const { avatar, name } = display
     const tip = `${name} 封面`
     const headers = {
-      authorization: `Bearer ${localStorage.getItem('TEMP_TOKEN')}` // FIX ME
+      authorization: `Bearer ${localStorage.getItem('TOKEN')}`
+    }
+    const formItemlayout =  {
+      labelCol: {
+        xs: { span: 6 }
+      },
+      wrapperCol: {
+        xs: { span: 24 }
+      }
     }
 
     return (
       <Row gutter={16} className={styles.formBlock} key="coverImage">
         <Col span={24}>
-          <FormItem label="封面">
-            <Row gutter={16}>
-              <Col span={24}>
-                <Button onClick={onCoverCut}>截取封面</Button>
-              </Col>
-            </Row>
-            <Row gutter={16}>
-              <Col span={24}>
-                <Upload
-                  className={styles.upload}
-                  name="coverImage"
-                  disabled={true}
-                  action={DisplaySetting.uploadUrl}
-                  headers={headers}
-                  onChange={this.onChange}
-                >
-                  {avatar ? <img src={avatar} style={{ width: '100%' }} alt={tip}/> : <Icon type="plus" />}
-                </Upload>
-              </Col>
-            </Row>
+          <h3 className={styles.formBlockTitle}>封面</h3>
+        </Col>
+        <Col span={24}>
+          <Button onClick={onCoverCut}>截取封面</Button>
+        </Col>
+        <Col span={24}>
+          <FormItem label="封面图片" {...formItemlayout}>
+            <Upload
+              className={styles.upload}
+              name="coverImage"
+              disabled={true}
+              action={DisplaySetting.uploadUrl}
+              headers={headers}
+              onChange={this.onChange}
+            >
+              {avatar ? (
+                <div className={styles.img}>
+                  <img src={avatar} alt={tip}/>
+                </div>
+              ) : <Icon type="plus" />}
+            </Upload>
           </FormItem>
         </Col>
       </Row>

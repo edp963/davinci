@@ -2,7 +2,7 @@
 
 .display {
   height: 0;
-  padding-bottom: 100%;
+  padding-bottom: 80%;
 
   background-color: @body-background;
   margin-bottom: 20px;
@@ -13,7 +13,7 @@
   position: relative;
   cursor: pointer;
 
-  & > div {
+  .container {
     height: 100%;
     position: absolute;
     width: 100%;
@@ -80,12 +80,44 @@
   .edit {
     right: 48px;
   }
+
+  .moreContainer {
+    width: 90px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate3d(-50%, -50%, 0);
+    display: table;
+
+    .more {
+      width: 32px;
+      height: 32px;
+      display: table-cell;
+      position: relative;
+    }
+
+    .more:after {
+      width: 16px;
+      height: 16px;
+      background-color: #1B98E0;
+      border-radius: 50%;
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      content: '';
+    }
+  }
 }
 
 .preview {
   height: 100%;
   width: 100%;
   overflow: auto;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   .board {
     position: relative;
@@ -161,15 +193,32 @@
     }
 
     .sidebar {
+      display: flex;
+      flex-direction: row;
       background-color: @light-bg;
       box-shadow: @right-side-box-shadow;
       flex-shrink: 0;
-      overflow-y: auto;
 
-      &.left {
+      .collapse {
+        width: 50px;
+        border-right: 1px solid @border-color-base;
+
+        .title {
+          padding-top: 22px;
+          text-align: center;
+          label {
+            font-size: 18px;
+            text-orientation: upright;
+            writing-mode: vertical-rl;
+          }
+        }
+      }
+
+      .left {
         width: 160px;
         display: flex;
         flex-direction: column;
+        border-right: 1px solid @border-color-base;
 
         .commands {
           flex: none;
@@ -177,6 +226,7 @@
 
         .layerList {
           flex: 1;
+          overflow-y: auto;
 
           li {
             // margin-top: -1px;
@@ -184,6 +234,10 @@
             align-items: center;
             padding: 4px 16px;
             border-bottom: 1px solid @border-color-base;
+          }
+
+          ul:last-child {
+            margin-bottom: 8px;
           }
 
           i {
@@ -203,19 +257,44 @@
         }
 
         .footer {
-          padding: 8px 16px;
+          padding: 8px 16px
         }
       }
 
-      &.right {
+      .right {
         width: 320px;
+        display: flex;
+        flex-direction: column;
 
-        i {
-          font-size: 30px;
+        .items {
+          flex: 1;
+          overflow-y: auto;
 
-          &:hover {
-            cursor: pointer;
+          i {
+            font-size: 30px;
           }
+        }
+
+        .alignList {
+          display: flex;
+          flex-direction: column;
+          margin-top: 16px;
+
+          .category {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            margin-bottom: 8px;
+
+            i + i {
+              margin-left: 16px;
+            }
+          }
+        }
+
+        i:hover {
+          cursor: pointer;
         }
       }
     }
@@ -231,6 +310,7 @@
       left: 0;
       height: 100%;
       width: 100%;
+      user-select: none;
 
       &:hover:after {
         content: ' ';
@@ -350,16 +430,29 @@
   color: @black;
   font-size: 18px;
   font-weight: normal;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+
+  i {
+    line-height: 27px;
+    color: @light-text-color;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
 }
 
 .formBlockTitle {
-  padding: 16px 16px 10px;
+  padding: 16px 16px 10px 0;
   font-size: 14px;
   font-weight: normal;
 }
 
 .formBlock {
-  padding: 0 16px 0 32px;
+  padding: 0 16px;
   border-bottom: 1px solid @border-color-base;
 }
 
@@ -390,30 +483,46 @@
 }
 
 .upload {
-  margin-bottom: 16px;
-  border: 1px dashed @border-color-base;
-  border-radius: 3px;
-  text-align: center;
   display: block;
+  padding-bottom: 75%;
+  border: 1px dashed @border-color-base;
+  box-sizing: border-box;
+  border-radius: 3px;
   cursor: pointer;
 
   i {
-    height: 180px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     font-size: 36px;
-    line-height: 180px;
     color: @light-text-color;
   }
-}
 
-.uploadImg {
-  position: relative;
-  height: 180px;
-
-  i {
+  .img {
     position: absolute;
-    height: 30px;
-    top: 8px;
-    left: 8px;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    img {
+      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    i {
+      display: none;
+    }
+
+    &:hover i {
+      display: block;
+    }
   }
 }
 

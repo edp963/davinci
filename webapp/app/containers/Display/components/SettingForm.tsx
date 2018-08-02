@@ -21,7 +21,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { BASE_URL } from '../../../globalConstants'
 import api from 'utils/api'
 import { getBase64 } from 'utils/util'
 
@@ -36,6 +35,7 @@ const Select = require('antd/lib/select')
 const Upload = require('antd/lib/upload')
 const Icon = require('antd/lib/icon')
 const Popover = require('antd/lib/popover')
+const Tooltip = require('antd/lib/tooltip')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const Option = Select.Option
@@ -45,14 +45,16 @@ import { SketchPicker } from 'react-color'
 const styles = require('../Display.less')
 
 interface ISettingFormProps {
-  slideId: number,
+  id: number
   settingInfo: any
   settingParams: any
   onFormItemChange: (field: any, value: any) => any
+  onCollapseChange: () => void
 }
 
 interface ISettingFormStates {
   loading: object
+  collapse: boolean
 }
 
 export class SettingForm extends React.PureComponent<ISettingFormProps & FormComponentProps, ISettingFormStates> {
@@ -60,7 +62,8 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   constructor (props: ISettingFormProps & FormComponentProps) {
     super(props)
     this.state = {
-      loading: {}
+      loading: {},
+      collapse: false
     }
   }
 
@@ -82,11 +85,46 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     }
   }
 
+  private getFormItemLayout = (item) => {
+    const { labelCol, wrapperCol } = item
+    return {
+      labelCol: {
+        xs: { span: labelCol || 12 }
+      },
+      wrapperCol: {
+        xs: { span: wrapperCol || 12 }
+      }
+    }
+  }
+
+  private toggleCollapse = () => {
+    const { onCollapseChange } = this.props
+    const { collapse } = this.state
+    this.setState({ collapse: !collapse }, () => {
+      onCollapseChange()
+    })
+  }
+
   private renderSetting = (setting) => {
-    const title = <h2 className={styles.formTitle}>{setting.title}</h2>
+    const title = (
+      <h2 className={styles.formTitle}>
+        <span>{setting.title}</span>
+        <Tooltip title="显示/隐藏设置">
+          <Icon onClick={this.toggleCollapse} type="right-square-o" />
+        </Tooltip>
+      </h2>
+    )
     const formItems = setting.params.map((param) => this.renderItem(param))
     return (
-      <div>{title}{formItems}</div>
+      <div className={styles.right}>
+        {title}
+        <div className={styles.items}>
+          <Form>
+            {formItems}
+            {this.props.children}
+          </Form>
+        </div>
+      </div>
     )
   }
 
@@ -130,7 +168,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       return control
     })
     return (
-      <Row gutter={16} className={styles.formBlock} key={param.name}>
+      <Row className={styles.formBlock} key={param.name}>
         {title}
         {content}
       </Row>
@@ -139,18 +177,32 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
 
   public render () {
     const {
-      settingInfo,
-      form
+      settingInfo
     } = this.props
-    const { getFieldDecorator } = form
+
+    const { collapse } = this.state
+    if (collapse) {
+      return (
+        <div className={styles.collapse}>
+          <h2 className={styles.formTitle}>
+            <Tooltip title="显示/隐藏设置">
+              <Icon onClick={this.toggleCollapse} type="left-square-o" />
+            </Tooltip>
+          </h2>
+          <div className={styles.title}>
+            <label>{settingInfo.title}</label>
+          </div>
+        </div>
+      )
+    }
 
     return this.renderSetting(settingInfo)
   }
 
   private wrapFormItem = (control, item, getFieldDecorator) => {
     return (
-      <Col key={item.name} span={item.span || 12}>
-        <FormItem label={item.title}>
+      <Col key={item.name} span={item.span || 24}>
+        <FormItem label={item.title} {...this.getFormItemLayout(item)}>
           {getFieldDecorator(item.name, {
             initialValue: item.default || ''
           })(control)}
@@ -236,10 +288,10 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderUpload = (item, formItemChange, img) => {
-    const { slideId } = this.props
-    const action = `${api.display}/${item.action}`.replace(/({slideId})/, slideId.toString())
+    const { id } = this.props
+    const action = `${api.display}/${item.action}`.replace(/({id})/, id.toString())
     const headers = {
-      authorization: `Bearer ${localStorage.getItem('TEMP_TOKEN')}` // FIX ME
+      authorization: `Bearer ${localStorage.getItem('TOKEN')}`
     }
     const { loading } = this.state
 
@@ -267,23 +319,32 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       }
     }
 
+    const deleteUpload = (e: MouseEvent) => {
+      formItemChange(item.name)(null)
+      e.stopPropagation()
+    }
+
     return (
-      <Upload
-        className={styles.upload}
-        showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
-        name={item.name}
-        disabled={loading[item.name]}
-        action={action}
-        headers={headers}
-        onChange={onChange}
-      >
-        {img ? (
-          <div className={styles.uploadImg}>
-            <Icon type="delete"/>
-            <img src={img} style={{ maxWidth: '100%', maxHeight: '100%' }} alt={item.title}/>
-          </div>
-        ) : <Icon type="plus" />}
-      </Upload>
+      <Row>
+        <Col span={24}>
+          <Upload
+            className={styles.upload}
+            showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
+            name={item.name}
+            disabled={loading[item.name]}
+            action={action}
+            headers={headers}
+            onChange={onChange}
+          >
+            {img ? (
+              <div className={styles.img}>
+                <img src={img} alt={item.title}/>
+                <Icon type="delete" onClick={deleteUpload}/>
+              </div>
+            ) : <Icon type="plus" />}
+          </Upload>
+        </Col>
+      </Row>
     )
   }
 }

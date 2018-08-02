@@ -30,7 +30,6 @@ export function loadDisplay (token, resolve, reject) {
     }
   }
 }
-
 export function displayLoaded (display, slide, widgets) {
   return {
     type: ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS,
@@ -41,7 +40,6 @@ export function displayLoaded (display, slide, widgets) {
     }
   }
 }
-
 export function loadDisplayFail (error) {
   return {
     type: ActionTypes.LOAD_SHARE_DISPLAY_FAILURE,
@@ -50,3 +48,31 @@ export function loadDisplayFail (error) {
     }
   }
 }
+
+export function loadLayerData (layerId, token) {
+  return {
+    type: ActionTypes.LOAD_LAYER_DATA,
+    payload: {
+      layerId,
+      token
+    }
+  }
+}
+export function layerDataLoaded (layerId, data) {
+  return {
+    type: ActionTypes.LOAD_LAYER_DATA_SUCCESS,
+    payload: {
+      layerId,
+      data
+    }
+  }
+}
+export function loadLayerDataFail (error) {
+  return {
+    type: ActionTypes.LOAD_LAYER_DATA_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+

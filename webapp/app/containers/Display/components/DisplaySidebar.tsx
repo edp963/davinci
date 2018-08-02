@@ -1,5 +1,9 @@
 import * as React from 'react'
 
+import LayerList from './LayerList'
+import SettingForm from './SettingForm'
+import LayerAlign from './LayerAlign'
+
 const styles = require('../Display.less')
 
 interface IDisplaySidebarProps {
@@ -7,9 +11,21 @@ interface IDisplaySidebarProps {
 }
 
 export function DisplaySidebar (props: IDisplaySidebarProps) {
+  let layerList
+  let settingContent
+
+  props.children.forEach(((c) => {
+    if (c.type === LayerList) {
+      layerList = c
+    } else {
+      settingContent = c
+    }
+  }))
+
   return (
-    <div className={`${styles.sidebar} ${styles.right}`}>
-      {props.children}
+    <div className={styles.sidebar}>
+      {layerList}
+      {settingContent}
     </div>
   )
 }

@@ -41,23 +41,24 @@ import {
   makeSelectCurrentLayers,
   makeSelectCurrentLayersStatus,
   makeSelectCurrentSelectedLayers,
+  makeSelectClipboardLayers,
   makeSelectCurrentLayersLoading,
   makeSelectCurrentDatasources,
   makeSelectCurrentLayersQueryParams } from './selectors'
-import { makeSelectLoginUser } from '../../containers/App/selectors'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 import slideSettings from '../../assets/json/slideSettings'
 
 import DisplayHeader from './components/DisplayHeader'
 import DisplayBody from './components/DisplayBody'
 import LayerList from './components/LayerList'
-import DisplayContainer from './components/DisplayContainer'
+import DisplayContainer, { Keys } from './components/DisplayContainer'
 import DisplayBottom from './components/DisplayBottom'
 import DisplaySidebar from './components/DisplaySidebar'
 
 import LayerItem from './components/LayerItem'
 import SettingForm from './components/SettingForm'
 import DisplaySetting from './components/DisplaySetting'
+import LayerAlign from './components/LayerAlign'
 
 import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
@@ -67,9 +68,13 @@ import {
   uploadCurrentSlideCover,
   loadDisplayDetail,
   selectLayer,
+  dragSelectedLayer,
+  resizeSelectedLayer,
   addDisplayLayers,
   deleteDisplayLayers,
-  editDisplayLayers } from './actions'
+  editDisplayLayers,
+  copySlideLayers,
+  pasteSlideLayers  } from './actions'
 import {
   DEFAULT_DISPLAY_WIDTH,
   DEFAULT_DISPLAY_HEIGHT,
@@ -79,6 +84,9 @@ import {
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import widgetlibs from '../../assets/json/widgetlib'
+const message = require('antd/lib/message')
+const Modal = require('antd/lib/modal')
+const confirm = Modal.confirm
 const styles = require('./Display.less')
 
 import {
@@ -90,34 +98,40 @@ import {
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GraphTypes } from 'utils/util'
+import { dashboardItemEdited } from '../Dashboard/actions';
+import { LayerContextMenu } from './components/LayerContextMenu';
 
 interface IEditorProps {
   params: any
-  loginUser: any
   widgets: any[]
   bizlogics: any[]
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
+  clipboardLayers: any[]
   currentLayersStatus: object
   currentSelectedLayers: any[]
   currentDatasources: object
   currentLayersLoading: object
   currentLayersQueryParams: object
-  onLoadWidgets: () => void
-  onLoadBizlogics: () => any
+  onLoadWidgets: (projectId) => void
+  onLoadBizlogics: (projectId) => any
   onEditCurrentDisplay: (display: any, resolve?: any) => void
   onEditCurrentSlide: (displayId: number, slide: any, resolve?: any) => void
   onUploadCurrentSlideCover: (cover: Blob, resolve: any) => void
   onLoadDisplayDetail: (id: number) => void
   onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
+  onDragSelectedLayer: (id: number, deltaX: number, deltaY: number) => void
+  onResizeSelectedLayer: (id: number, deltaWidth: number, deltaHeight: number) => void
   onAddDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onDeleteDisplayLayers: (displayId: any, slideId: any, ids: any[]) => void,
   onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
+  onCopySlideLayers: (slideId, layers) => void
+  onPasteSlideLayers: (displayId, slideId, layers) => void
   onHideNavigator: () => void,
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
-    flatTableId: number,
+    viewId: number,
     sql: {
       adHoc: string
       filters: string
@@ -177,10 +191,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       onLoadBizlogics,
       onLoadDisplayDetail
     } = this.props
+    const projectId = +params.pid
     const displayId = +params.displayId
-    onLoadBizlogics()
+    // onLoadBizlogics(projectId)
     onLoadDisplayDetail(displayId)
-    onLoadWidgets()
+    onLoadWidgets(projectId)
   }
 
   public componentDidMount () {
@@ -296,7 +311,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       onLoadBizdatasFromItem
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
     const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig = JSON.parse(widget.config)
@@ -354,7 +369,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     onLoadBizdatasFromItem(
       itemId,
-      widget.flatTable_id,
+      widget.viewId,
       {
         adHoc: widget.adhoc_sql,
         filters,
@@ -372,15 +387,36 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     )
   }
 
+  private dragLayer = (itemId, delta) => {
+    const { deltaX, deltaY } = delta
+    const { currentLayersStatus, onDragSelectedLayer } = this.props
+    if (currentLayersStatus[itemId]) {
+      onDragSelectedLayer(itemId, deltaX, deltaY)
+    }
+  }
+
+  private resizeLayer = (itemId, delta) => {
+    const { deltaWidth, deltaHeight } = delta
+    const { currentLayersStatus, onResizeSelectedLayer } = this.props
+    if (currentLayersStatus[itemId]) {
+      onResizeSelectedLayer(itemId, deltaWidth, deltaHeight)
+    }
+  }
+
   private resizeLayerStop = (layer: any, size: any, itemId: any) => {
+    const { currentLayersStatus, currentSelectedLayers } = this.props
     const layerParams = {
       ...JSON.parse(layer.params),
       ...size
     }
+    let attached = []
+    if (currentLayersStatus[layer.id]) {
+      attached = currentSelectedLayers.filter((l) => l.id !== layer.id)
+    }
     this.onEditLayers([{
       ...layer,
       params: JSON.stringify(layerParams)
-    }])
+    }, ...attached])
     const chartInstance = this.charts[`widget_${itemId}`]
     if (chartInstance) { chartInstance.resize() }
   }
@@ -395,9 +431,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         id: widget.id,
         name: widget.name,
         desc: widget.desc,
-        flatTable_id: widget.flatTable_id,
-        widgetlib_id: widget.widgetlib_id,
-        ...JSON.parse(widget.chart_params)
+        flatTable_id: widget.viewId,
+        widgetlib_id: widget.type,
+        ...JSON.parse(widget.config).chartParams
       },
       interactIndex
     })
@@ -444,7 +480,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private getSettingInfo = () => {
-    const { currentSelectedLayers } = this.props
+    const { currentSlide, currentSelectedLayers } = this.props
     const { slideParams } = this.state
 
     if (currentSelectedLayers.length === 1) {
@@ -452,21 +488,26 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       const type = selectedLayer.subType || selectedLayer.type
       return {
         key: `layer_${selectedLayer.id}`,
+        id: selectedLayer.id,
         setting: slideSettings[type],
         param: JSON.parse(selectedLayer['params'])
       }
-      // this.settingForm.props.form.setFieldsValue(JSON.parse(selectedLayer['layer_params']))
     }
-    // this.settingForm.props.form.setFieldsValue({ ...displayParams })
     return {
       key: 'slide',
+      id: currentSlide.id,
       setting: slideSettings[GraphTypes.Slide],
       param: slideParams
     }
   }
 
-  private onDeleteLayers = (ids) => {
-    const { currentDisplay, currentSlide } = this.props
+  private deleteLayers = () => {
+    const { currentDisplay, currentSlide, currentLayersStatus } = this.props
+    const ids = Object.keys(currentLayersStatus).filter((id) => currentLayersStatus[id])
+    if (ids.length <= 0) {
+      message.warning('请选择图层')
+      return
+    }
     this.props.onDeleteDisplayLayers(currentDisplay.id, currentSlide.id, ids)
   }
 
@@ -475,7 +516,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onEditDisplayLayers(currentDisplay.id, currentSlide.id, layers)
   }
 
-  private onAddLayers = (layers: any[]) => {
+  private addLayers = (layers: any[]) => {
     if (!Array.isArray(layers)) { return }
 
     const {
@@ -503,6 +544,36 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onAddDisplayLayers(currentDisplay.id, currentSlide.id, layers)
   }
 
+  private copyLayers = () => {
+    const { currentSlide, currentSelectedLayers, onCopySlideLayers } = this.props
+    if (!currentSelectedLayers.length) {
+      message.warning('请选择图层')
+      return
+    }
+    const { slideParams } = this.state
+    const { gridDistance } = slideParams
+    const copyLayers = currentSelectedLayers.map((layer) => {
+      const layerParams = JSON.parse(layer.params)
+      const { positionX, positionY } = layerParams
+      return {
+        ...layer,
+        params: JSON.stringify({
+          ...layerParams,
+          positionX: positionX + gridDistance,
+          positionY: positionY + gridDistance
+        }),
+        id: null
+      }
+    })
+    onCopySlideLayers(currentSlide.id, copyLayers)
+  }
+
+  private pasteLayers = () => {
+    const { currentDisplay, currentSlide, clipboardLayers, onPasteSlideLayers } = this.props
+    if (!clipboardLayers.length) { return }
+    onPasteSlideLayers(currentDisplay.id, currentSlide.id, clipboardLayers)
+  }
+
   private coverCut = () => {
     this.editor.createCoverCut()
   }
@@ -525,10 +596,71 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
+  private collapseChange = () => {
+    const { sliderValue } = this.state
+    this.doScale(sliderValue / 40 + 0.5)
+  }
+
+  private keyDown = (key: Keys) => {
+    const { slideParams } = this.state
+    const { gridDistance } = slideParams
+    switch (key) {
+      case Keys.Up:
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: -gridDistance })
+        break
+      case Keys.Down:
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: gridDistance })
+        break
+      case Keys.Left:
+        this.moveSelectedLayersPosition({ positionXD: -gridDistance, positionYD: 0 })
+        break
+      case Keys.Right:
+        this.moveSelectedLayersPosition({ positionXD: gridDistance, positionYD: 0 })
+        break
+      case Keys.Delete:
+        confirm({
+          title: '删除图层',
+          content: '确认删除选中的图层？',
+          onOk: () => {
+            this.deleteLayers()
+          },
+          onCancel: () => { /* */ }
+        })
+        break
+      case Keys.Copy:
+        this.copyLayers()
+        break
+      case Keys.Paste:
+        this.pasteLayers()
+        break
+    }
+  }
+
+  private moveSelectedLayersPosition = (direction: { positionXD: number, positionYD: number }) => {
+    const { currentSelectedLayers } = this.props
+    if (currentSelectedLayers.length <= 0) { return }
+    const { positionXD, positionYD } = direction
+    const { currentDisplay, currentSlide, onEditDisplayLayers } = this.props
+    const { slideParams } = this.state
+    const { gridDistance } = slideParams
+    const layers = currentSelectedLayers.map((layer) => {
+      const layerParams = JSON.parse(layer.params)
+      const { positionX, positionY } = layerParams
+      return {
+        ...layer,
+        params: JSON.stringify({
+          ...layerParams,
+          positionX: positionX - positionX % gridDistance + positionXD,
+          positionY: positionY - positionY % gridDistance + positionYD
+        })
+      }
+    })
+    onEditDisplayLayers(currentDisplay.id, currentSlide.id, layers)
+  }
+
   public render () {
     const {
       params,
-      loginUser,
       currentLayersStatus,
       currentLayersLoading,
       currentSelectedLayers,
@@ -536,7 +668,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentDatasources,
       widgets,
       currentDisplay,
-      currentSlide,
       currentLayers,
       onSelectLayer
     } = this.props
@@ -554,13 +685,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     const layerItems =  !Array.isArray(widgets) ? null : currentLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
       const data = currentDatasources[layerId]
       const loading = currentLayersLoading[layerId]
       const sql = currentLayersQueryParams[layerId]
 
       return (
+        <LayerContextMenu key={layer.id}>
         <LayerItem
           pure={false}
           ref={(f) => this[`layerId_${layer.id}`]}
@@ -568,8 +700,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           widget={widget}
           chartInfo={chartInfo}
           data={data}
-          key={layer.id}
-          scale={scale}
+
+          scaleHeight={scale}
+          scaleWidth={scale}
           slideParams={slideParams}
           layer={layer}
           loading={loading}
@@ -577,12 +710,49 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onSelectLayer={onSelectLayer}
           onGetChartData={this.getChartData}
           onRenderChart={this.renderChart}
+          onDragLayer={this.dragLayer}
+          onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
         />
+        </LayerContextMenu>
       )
     })
 
     const settingInfo = this.getSettingInfo()
+
+    let settingContent = null
+    if (currentSelectedLayers.length > 1) {
+      settingContent = (
+        <LayerAlign
+          layers={currentSelectedLayers}
+          onEditDisplayLayers={this.onEditLayers}
+          onCollapseChange={this.collapseChange}
+        />
+      )
+    } else {
+      settingContent = (
+        <SettingForm
+          key={settingInfo.key}
+          id={settingInfo.id}
+          settingInfo={settingInfo.setting}
+          settingParams={settingInfo.param}
+          onDisplaySizeChange={this.displaySizeChange}
+          onGridDistanceChange={this.gridDistanceChange}
+          onFormItemChange={this.formItemChange}
+          wrappedComponentRef={this.refHandlers.settingForm}
+          onCollapseChange={this.collapseChange}
+        >
+          {currentSelectedLayers.length === 0 ? (
+            <DisplaySetting
+              key="displaySetting"
+              display={currentDisplay}
+              onCoverCut={this.coverCut}
+              onCoverUploaded={this.coverUploaded}
+            />
+          ) : null}
+        </SettingForm>
+      )
+    }
 
     return (
       <div className={`${styles.preview} ${styles.edit}`}>
@@ -591,19 +761,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           display={currentDisplay}
           widgets={widgets}
           params={params}
-          currentLayersStatus={currentLayersStatus}
-          loginUser={loginUser}
-          onAddLayers={this.onAddLayers}
-          onDeleteLayers={this.onDeleteLayers}
+          onAddLayers={this.addLayers}
+          onDeleteLayers={this.deleteLayers}
+          onCopyLayers={this.copyLayers}
+          onPasteLayers={this.pasteLayers}
         />
         <DisplayBody>
-          <LayerList
-            layers={currentLayers}
-            layersStatus={currentLayersStatus}
-            selectedLayers={currentSelectedLayers}
-            onSelectLayer={onSelectLayer}
-            onEditDisplayLayers={this.onEditLayers}
-          />
           <DisplayContainer
             key="editor"
             width={editorWidth}
@@ -612,6 +775,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             slideParams={slideParams}
             scale={scale}
             onCoverCutCreated={this.coverCutCreated}
+            onKeyDown={this.keyDown}
             ref={this.refHandlers.editor}
           >
             {layerItems}
@@ -624,24 +788,15 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             onSliderChange={this.sliderChange}
           />
           <DisplaySidebar>
-            <SettingForm
-              key={settingInfo.key}
-              slideId={currentSlide.id}
-              settingInfo={settingInfo.setting}
-              settingParams={settingInfo.param}
-              onDisplaySizeChange={this.displaySizeChange}
-              onGridDistanceChange={this.gridDistanceChange}
-              onFormItemChange={this.formItemChange}
-              wrappedComponentRef={this.refHandlers.settingForm}
+            <LayerList
+              layers={currentLayers}
+              layersStatus={currentLayersStatus}
+              selectedLayers={currentSelectedLayers}
+              onSelectLayer={onSelectLayer}
+              onEditDisplayLayers={this.onEditLayers}
+              onCollapseChange={this.collapseChange}
             />
-            {currentSelectedLayers.length !== 1 ? (
-              <DisplaySetting
-                key="displaySetting"
-                display={currentDisplay}
-                onCoverCut={this.coverCut}
-                onCoverUploaded={this.coverUploaded}
-              />
-            ) : null}
+            {settingContent}
           </DisplaySidebar>
         </DisplayBody>
       </div>
@@ -650,13 +805,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 }
 
 const mapStateToProps = createStructuredSelector({
-  loginUser: makeSelectLoginUser(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
   displays: makeSelectDisplays(),
   currentDisplay: makeSelectCurrentDisplay(),
   currentSlide: makeSelectCurrentSlide(),
   currentLayers: makeSelectCurrentLayers(),
+  clipboardLayers: makeSelectClipboardLayers(),
   currentLayersStatus: makeSelectCurrentLayersStatus(),
   currentSelectedLayers: makeSelectCurrentSelectedLayers(),
   currentDatasources: makeSelectCurrentDatasources(),
@@ -667,16 +822,20 @@ const mapStateToProps = createStructuredSelector({
 function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
-    onLoadWidgets: () => dispatch(loadWidgets()),
-    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
+    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
+    onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
+    onResizeSelectedLayer: (id, deltaWidth, deltaHeight) => dispatch(resizeSelectedLayer({ id, deltaWidth, deltaHeight })),
     onAddDisplayLayers: (displayId, slideId, layers) => dispatch(addDisplayLayers(displayId, slideId, layers)),
     onDeleteDisplayLayers: (displayId, slideId, ids) => dispatch(deleteDisplayLayers(displayId, slideId, ids)),
     onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
+    onCopySlideLayers: (slideId, layers) => dispatch(copySlideLayers(slideId, layers)),
+    onPasteSlideLayers: (displayId, slideId, layers) => dispatch(pasteSlideLayers(displayId, slideId, layers)),
     onHideNavigator: () => dispatch(hideNavigator())
   }
 }

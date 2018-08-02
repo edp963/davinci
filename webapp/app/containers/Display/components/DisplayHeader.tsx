@@ -52,10 +52,13 @@ interface IDisplayHeaderProps {
   params: any
   display: any
   widgets: any[]
-  currentLayersStatus: object
-  loginUser: any
+  currentDisplayShareInfo?: string
+  currentDisplaySecretInfo?: string
+  currentDisplayShareInfoLoading?: boolean
   onAddLayers: (layers: any[]) => void
-  onDeleteLayers: (ids: number[]) => void
+  onDeleteLayers: () => void
+  onCopyLayers: () => void
+  onPasteLayers: () => void
 }
 
 interface IDisplayHeaderStates {
@@ -133,9 +136,8 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private deleteLayers = () => {
-    const { currentLayersStatus, onDeleteLayers } = this.props
-    const ids = Object.keys(currentLayersStatus).filter((id) => currentLayersStatus[id]).map((id) => +id)
-    onDeleteLayers(ids)
+    const { onDeleteLayers } = this.props
+    onDeleteLayers()
   }
 
   private changeDisplaySharePanelAuthorizeState = (state) => () => {
@@ -179,8 +181,10 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
 
     const {
       params,
-      loginUser,
-      widgets
+      widgets,
+      onDeleteLayers,
+      onCopyLayers,
+      onPasteLayers
     } = this.props
 
     const {pid, displayId} = params
@@ -233,12 +237,12 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.commandGroup}>
             <li>
               <Tooltip placement="bottom" title="复制">
-                <i className="iconfont icon-fuzhi" />
+                <i className="iconfont icon-fuzhi" onClick={onCopyLayers} />
               </Tooltip>
             </li>
             <li>
               <Tooltip placement="bottom" title="粘贴">
-                <i className="iconfont icon-niantie" />
+                <i className="iconfont icon-niantie" onClick={onPasteLayers} />
               </Tooltip>
             </li>
             <li>
@@ -255,7 +259,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
               <Popconfirm
                   title="确定删除？"
                   placement="bottom"
-                  onConfirm={this.deleteLayers}
+                  onConfirm={onDeleteLayers}
               >
                 <Tooltip title="删除" placement="right">
                   <Icon type="delete"/>
@@ -282,7 +286,6 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           modalLoading={widgetSelectorLoading}
           widgets={widgets}
           selectedWidgets={[]}
-          loginUser={loginUser}
           onSelectDone={this.onWidgetsSelectDone}
           onCancel={this.hideWidgetSelector}
         />

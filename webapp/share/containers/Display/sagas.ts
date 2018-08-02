@@ -25,25 +25,51 @@ const message = require('antd/lib/message')
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
-import { displayLoaded, loadDisplayFail } from './actions'
+import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
+import { readListAdapter } from 'utils/asyncAdapter'
+import resultsetConverter from 'utils/resultsetConverter'
 
 export function* getDisplay (action) {
   const { token, resolve, reject } = action.payload
   try {
     const asyncData = yield call(request, `${api.share}/display/${token}`)
-    const display = asyncData.payload
+    const { header, payload } = asyncData
+    if (header.code === 401) {
+      reject(header.msg)
+      yield put(loadDisplayFail(header.msg))
+      return
+    }
+    const display = payload
     const { slides, widgets } = display
     yield put(displayLoaded(display, slides[0], widgets))
-    resolve()
+    resolve(display, slides[0], widgets)
   } catch (err) {
+    message.destroy()
     yield put(loadDisplayFail(err))
-    reject()
     message.error('获取 Display 信息失败，请刷新重试')
+    reject(err)
+  }
+}
+
+export function* getData (action) {
+  const { payload } = action
+  const { layerId, token } = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.share}/data/${token}`,
+      data: {} // FIXME executeParam
+    })
+    const resultset = resultsetConverter(readListAdapter(asyncData))
+    yield put(layerDataLoaded(layerId, resultset))
+  } catch (err) {
+    yield put(loadLayerDataFail(err))
   }
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
   yield [
-    takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay)
+    takeLatest(ActionTypes.LOAD_SHARE_DISPLAY, getDisplay),
+    takeEvery(ActionTypes.LOAD_LAYER_DATA, getData)
   ]
 }

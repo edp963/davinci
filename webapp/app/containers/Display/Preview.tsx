@@ -75,12 +75,12 @@ interface IPreviewProps {
   currentLayersLoading: object
   currentLayersQueryParams: object
   onHideNavigator: () => void
-  onLoadWidgets: () => void
+  onLoadWidgets: (projectId: number) => void
   onLoadBizlogics: () => any
   onLoadDisplayDetail: (id: any) => void
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
-    flatTableId: number,
+    viewId: number,
     sql: {
       adHoc: string
       filters: string
@@ -99,7 +99,8 @@ interface IPreviewProps {
 }
 
 interface IPreviewStates {
-  scale: number
+  scaleHeight: number
+  scaleWidth: number
 }
 
 export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
@@ -109,7 +110,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public constructor (props) {
     super(props)
     this.state = {
-      scale: 1
+      scaleHeight: 1,
+      scaleWidth: 1
     }
   }
 
@@ -120,9 +122,9 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       onLoadBizlogics,
       onLoadDisplayDetail
     } = this.props
-    const { displayId } = params
-    onLoadWidgets()
-    onLoadBizlogics()
+    const projectId = +params.pid
+    const displayId = +params.displayId
+    onLoadWidgets(projectId)
     onLoadDisplayDetail(displayId)
   }
 
@@ -132,21 +134,26 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
   public componentWillReceiveProps (nextProps: IPreviewProps) {
     const { currentSlide } = nextProps
+    const { scaleHeight, scaleWidth } = this.state
     if (currentSlide && this.props.currentSlide !== currentSlide) {
       const { slideParams } = JSON.parse(currentSlide.config)
       const { scaleMode, width, height } = slideParams
       const { clientHeight, clientWidth } = document.body
-      let nextScale = 1
+      let nextScaleHeight = 1
+      let nextScaleWidth = 1
       switch (scaleMode) {
         case 'scaleHeight':
-          nextScale = clientHeight / height
+          nextScaleWidth = nextScaleHeight = clientHeight / height
           break
         case 'scaleWidth':
-          nextScale = clientWidth / width
+          nextScaleHeight = nextScaleWidth = clientWidth / width
           break
+        case 'scaleFull':
+          nextScaleHeight = clientHeight / height
+          nextScaleWidth = clientWidth / width
       }
-      if (this.state.scale !== nextScale) {
-        this.setState({ scale: nextScale })
+      if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
+        this.setState({ scaleHeight: nextScaleHeight, scaleWidth: nextScaleWidth })
       }
     }
   }
@@ -159,7 +166,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       onLoadBizdatasFromItem
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
     const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig = JSON.parse(widget.config)
@@ -217,7 +224,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
     onLoadBizdatasFromItem(
       itemId,
-      widget.flatTable_id,
+      widget.viewId,
       {
         adHoc: widget.adhoc_sql,
         filters,
@@ -245,9 +252,9 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         id: widget.id,
         name: widget.name,
         desc: widget.desc,
-        flatTable_id: widget.flatTable_id,
-        widgetlib_id: widget.widgetlib_id,
-        ...JSON.parse(widget.chart_params)
+        flatTable_id: widget.viewId,
+        widgetlib_id: widget.type,
+        ...JSON.parse(widget.config).chartParams
       },
       interactIndex
     })
@@ -259,7 +266,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   }
 
   private getSlideStyle = (slideParams) => {
-    const { scale } = this.state
+    const { scaleHeight, scaleWidth } = this.state
 
     const {
       width,
@@ -272,8 +279,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     let slideStyle: React.CSSProperties
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scale}px`,
-      height: `${height * scale}px`
+      width: `${width * scaleWidth}px`,
+      height: `${height * scaleHeight}px`
     }
 
     if (backgroundColor) {
@@ -297,11 +304,11 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       currentLayersQueryParams } = this.props
     if (!currentDisplay) { return null }
 
-    const { scale } = this.state
+    const { scaleHeight, scaleWidth } = this.state
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
       const data = currentDatasources[layerId]
       const loading = currentLayersLoading[layerId]
@@ -310,7 +317,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       return (
         <LayerItem
           pure={true}
-          scale={scale}
+          scaleHeight={scaleHeight}
+          scaleWidth={scaleWidth}
           ref={(f) => this[`layerId_${layer.id}`]}
           itemId={layerId}
           widget={widget}
@@ -352,8 +360,8 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
-    onLoadWidgets: () => dispatch(loadWidgets()),
-    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onLoadWidgets: (projectId: number) => dispatch(loadWidgets(projectId)),
+    onLoadBizlogics: (projectId: number) => dispatch(loadBizlogics(projectId)),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired))
   }
 }

@@ -1,6 +1,5 @@
 import * as React from 'react'
 
-import LayerList from './LayerList'
 import DisplayContainer from './DisplayContainer'
 import DisplayBottom from './DisplayBottom'
 import DisplaySidebar from './DisplaySidebar'
@@ -12,15 +11,11 @@ interface IDisplayBodyProps {
 }
 
 export function DisplayBody (props: IDisplayBodyProps) {
-  let layer
   let editor
   let bottom
   let sidebar
 
   props.children.forEach((c) => {
-    if (c.type === LayerList) {
-      layer = c
-    }
     if (c.type === DisplayContainer) {
       editor = c
     }
@@ -34,7 +29,6 @@ export function DisplayBody (props: IDisplayBodyProps) {
 
   return (
     <div className={styles.body}>
-      {layer}
       <div className={styles.main}>
         {editor}
         {bottom}

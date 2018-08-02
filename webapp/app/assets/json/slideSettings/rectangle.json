@@ -8,14 +8,24 @@
       "name": "width",
       "title": "宽度（像素）",
       "component": "inputnumber",
-      "default": 200,
-      "span": 12
+      "default": 200
     }, {
       "name": "height",
       "title": "高度（像素）",
       "component": "inputnumber",
-      "default": 120,
-      "span": 12
+      "default": 120
+    }]
+  }, {
+    "name": "position",
+    "title": "矩形位置",
+    "items": [{
+      "name": "positionX",
+      "title": "x轴位置（像素）",
+      "component": "inputnumber"
+    }, {
+      "name": "positionY",
+      "title": "y轴位置（像素）",
+      "component": "inputnumber"
     }]
   }, {
     "name": "background",
@@ -24,16 +34,24 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255],
-      "span": 12
+      "default": [255,255,255]
     }, {
       "name": "opacity",
+      "tip": "0-100",
       "title": "透明度",
       "component": "inputnumber",
       "default": 100,
       "min": 0,
-      "max": 100,
-      "span": 12
+      "max": 100
+    }, {
+      "name": "backgroundImage",
+      "title": "背景图片",
+      "component": "upload",
+      "action": "slide/widget/{id}/bgImage",
+      "accept": "image/*",
+      "autoUpdate": true,
+      "labelCol": 6,
+      "wrapperCol": 24
     }]
   }, {
     "name": "border",
@@ -42,14 +60,12 @@
       "name": "borderColor",
       "title": "边框颜色",
       "component": "colorPicker",
-      "default": [0,0,0],
-      "span": 12
+      "default": [0,0,0]
     }, {
       "name": "borderWidth",
       "title": "边框粗细",
       "component": "inputnumber",
-      "default": 1,
-      "span": 12
+      "default": 1
     }, {
       "name": "borderStyle",
       "title": "边框样式",
@@ -70,10 +86,10 @@
       "default": "solid"
     }, {
       "name": "borderRadius",
+      "tip": "",
       "title": "圆角半径",
       "component": "inputnumber",
-      "default": 0,
-      "span": 12
+      "default": 0
     }]
   }]
 }

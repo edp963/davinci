@@ -13,6 +13,7 @@ import {
   SecondaryGraphTypes
 } from 'utils/util'
 import Chart from '../../Dashboard/components/Chart'
+import LayerContextMenu from './LayerContextMenu'
 
 const Resizable = require('react-resizable').Resizable
 
@@ -21,7 +22,8 @@ const stylesDashboard = require('../../Dashboard/Dashboard.less')
 
 interface ILayerItemProps {
   pure: boolean
-  scale: number
+  scaleHeight: number
+  scaleWidth: number
   slideParams?: any
   layer: any
   layersStatus?: object
@@ -37,6 +39,8 @@ interface ILayerItemProps {
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
+  onDragLayer?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
+  onResizeLayer?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
   onResizeLayerStop?: (layer: any, size: { width?: number, height?: number, positionX?: number, positionY?: number }, itemId: any) => void
 }
 
@@ -53,7 +57,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { layer } = this.props
     const layerParams = JSON.parse(layer.params)
     const { width, height } = layerParams
-    console.log('ctor: ', width, height)
     this.state = {
       layerParams,
       mousePos: [-1, -1],
@@ -82,9 +85,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
     const { layer } = this.props
-    if (layer !== nextProps.layer) {
+    if (layer.params !== nextProps.layer.params) {
+      const layerParams = JSON.parse(nextProps.layer.params)
+      const { width, height } = layerParams
       this.setState({
-        layerParams: JSON.parse(nextProps.layer.params)
+        layerParams,
+        width,
+        height
       })
     }
 
@@ -158,7 +165,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     this.setState({
       mousePos: [e.pageX, e.pageY]
     })
-    console.log('start: ', e.target !== data.node.lastElementChild)
     return e.target !== data.node.lastElementChild
   }
 
@@ -166,12 +172,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       itemId,
       layer,
+      slideParams,
       onResizeLayerStop } = this.props
     const { x, y } = data
     const { layerParams } = this.state
     const params = {
-      positionX:  Math.floor(x),
-      positionY: Math.floor(y)
+      positionX:  x,
+      positionY: y
     }
     this.setState({
       layerParams: {
@@ -183,18 +190,36 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     })
   }
 
+  private drag = (e, data) => {
+    const { lastX, lastY, x, y } = data
+    const delta = { deltaX: x - lastX, deltaY: y - lastY }
+    const { itemId, onDragLayer } = this.props
+    if (onDragLayer) { onDragLayer(itemId, delta) }
+  }
+
   private onResize = (e, { size }) => {
     const { width, height } = size
+    const delta = {
+      deltaWidth: width - this.state.width,
+      deltaHeight: height - this.state.height
+    }
+    const { itemId, onResizeLayer } = this.props
+    if (onResizeLayer) { onResizeLayer(itemId, delta) }
     this.setState({
       width,
       height
-    })
+    }
   }
 
   private onResizeStop = () => {
     const { itemId, layer, onResizeLayerStop } = this.props
-    const { layerParams, width, height } = this.state
-    onResizeLayerStop(layer, { width, height }, itemId)
+    const { width, height } = this.state
+    this.setState({
+      width,
+      height
+    }, () => {
+      onResizeLayerStop(layer, { width, height }, itemId)
+    })
   }
 
   private onClickLayer = (e) => {
@@ -226,8 +251,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private renderChartLayer = () => {
-    const { scale } = this.props
-    if (scale <= 0) { return null }
+    const { scaleHeight, scaleWidth } = this.props
+    if (scaleHeight <= 0 || scaleWidth <= 0) { return null }
 
     const {
       pure,
@@ -278,9 +303,12 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         : config['update_fields']
     }
 
-    const exactScale = pure ? scale : 1
+    const exactScaleHeight = pure ? scaleHeight : 1
+    const exactScaleWidth = pure ? scaleWidth : 1
+    const { chartParams } = JSON.parse(widget.config)
     return (
       <div
+        id={`layer_${itemId}`}
         className={layerClass}
         style={layerStyle}
         onClick={this.onClickLayer}
@@ -291,15 +319,15 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         <div className={styles.body}>
           <Chart
             id={`${itemId}`}
-            w={width * exactScale}
-            h={height * exactScale}
+            w={width * exactScaleWidth}
+            h={height * exactScaleHeight}
             data={data || {}}
             loading={loading}
             chartInfo={chartInfo}
             updateConfig={updateConfig}
-            chartParams={JSON.parse(widget['chart_params'])}
+            chartParams={chartParams}
             updateParams={updateParams}
-            currentBizlogicId={widget['flatTable_id']}
+            currentBizlogicId={widget.viewId}
             classNames={chartClass}
             interactId={interactId}
             onCheckTableInteract={onCheckTableInteract}
@@ -311,7 +339,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private getLayerStyle = (layer, layerParams) => {
-    const { pure, scale } = this.props
+    const { pure, scaleHeight, scaleWidth } = this.props
     const { width, height } = this.state
     const layerStyle: React.CSSProperties = {
       width: `${width}px`,
@@ -321,12 +349,15 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       borderRadius: `${layerParams.borderRadius}px`,
       zIndex: layer.index
     }
+    if (layerParams.backgroundImage) {
+      layerStyle.backgroundImage = `url("${layerParams.backgroundImage}")`
+    }
     if (pure) {
       layerStyle.position = 'absolute'
-      layerStyle.top = `${layerParams.positionY * scale}px`
-      layerStyle.left = `${layerParams.positionX * scale}px`
-      layerStyle.width = `${width * scale}px`
-      layerStyle.height = `${height * scale}px`
+      layerStyle.top = `${layerParams.positionY * scaleHeight}px`
+      layerStyle.left = `${layerParams.positionX * scaleWidth}px`
+      layerStyle.width = `${width * scaleWidth}px`
+      layerStyle.height = `${height * scaleHeight}px`
     }
     return layerStyle
   }
@@ -372,7 +403,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   private renderLabelLayer = (layer) => {
     const { layerParams } = this.state
-    const { pure, scale, layersStatus } = this.props
+    const { pure, scaleHeight, scaleWidth, layersStatus } = this.props
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -396,23 +427,24 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingRight
     } = layerParams
 
-    const exactScale = pure ? scale : 1
+    const exactScaleHeight = pure ? scaleHeight : 1
+    const exactScaleWidth = pure ? scaleWidth : 1
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontFamily,
       color: `rgb(${fontColor.join()})`,
-      fontSize: `${fontSize * exactScale}px`,
+      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
       textAlign,
       fontWeight: bold ? 'bold' : 'normal',
       fontStyle: italic ? 'italic' : 'normal',
       textDecoration: underline ? 'underline' : 'none',
-      lineHeight: `${lineHeight * exactScale}px`,
-      textIndent: `${textIndent * exactScale}px`,
-      paddingTop: `${paddingTop * exactScale}px`,
-      paddingRight: `${paddingRight * exactScale}px`,
-      paddingBottom: `${paddingBottom * exactScale}px`,
-      paddingLeft: `${paddingLeft * exactScale}px`
+      lineHeight: `${lineHeight * exactScaleHeight}px`,
+      textIndent: `${textIndent * exactScaleWidth}px`,
+      paddingTop: `${paddingTop * exactScaleHeight}px`,
+      paddingRight: `${paddingRight * exactScaleWidth}px`,
+      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
+      paddingLeft: `${paddingLeft * exactScaleWidth}px`
     }
     return (
       <div
@@ -430,7 +462,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   public render () {
     const {
       pure,
-      scale,
+      scaleHeight,
+      scaleWidth,
       slideParams,
       layer,
       layersStatus
@@ -441,7 +474,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       width,
       height } = this.state
 
-    const defaultPosition = {
+    const position = {
       x: layerParams['positionX'],
       y: layerParams['positionY']
     }
@@ -455,25 +488,26 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     return (
       <Draggable
-        grid={[gridDistance * scale, gridDistance * scale]}
+        grid={[gridDistance, gridDistance]}
         bounds="parent"
-        scale={scale}
+        scale={Math.min(scaleHeight, scaleWidth)}
         onStart={this.dragOnStart}
         onStop={this.dragOnStop}
+        onDrag={this.drag}
         handle={`.${styles.layer}`}
-        defaultPosition={defaultPosition}
+        position={position}
       >
         <Resizable
           width={layerParams.width}
           height={layerParams.height}
           onResize={this.onResize}
           onResizeStop={this.onResizeStop}
-          draggableOpts={{grid: [gridDistance * scale, gridDistance * scale]}}
+          draggableOpts={{grid: [gridDistance, gridDistance]}}
           minConstraints={[50, 50]}
-          maxConstraints={[slideParams.width - defaultPosition.x, slideParams.height - defaultPosition.y]}
+          maxConstraints={[slideParams.width - position.x, slideParams.height - position.y]}
           handleSize={[20, 20]}
         >
-          {content}
+            {content}
         </Resizable>
       </Draggable>
     )

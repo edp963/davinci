@@ -13,6 +13,7 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
 import Container from '../../components/Container'
+import DisplayList from './components/DisplayList'
 import DisplayForm from './components/DisplayForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
@@ -55,7 +56,7 @@ interface IDisplayStates {
   kwDisplay: string
 }
 
-export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> {
+export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -81,10 +82,6 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
   private goToDisplay = (display?: any) => () => {
     const { params } = this.props
     this.props.router.push(`/project/${params.pid}/display/${display ? display.id : -1}`)
-  }
-
-  private stopPPG = (e) => {
-    e.stopPropagation()
   }
 
   private onCopy = (display) => (e) => {
@@ -160,6 +157,7 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
       params,
       displays,
       loginUser,
+      onAddDisplay,
       onDeleteDisplay
     } = this.props
     const projectId = params.pid
@@ -172,49 +170,6 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
     } = this.state
 
     const displaysFiltered = this.getDisplays()
-    const cols = displaysFiltered.map(((d, index) => {
-      const coverStyle: React.CSSProperties = {
-        backgroundImage: `url(${d.avatar})`
-      }
-      return (
-        <Col
-          xl={4}
-          lg={6}
-          md={8}
-          sm={12}
-          xs={24}
-          key={d.id}
-        >
-          <div
-            className={styles.display}
-            onClick={this.goToDisplay(d)}
-          >
-            <div>
-              <div>
-                <h3 className={styles.title}>{d.name}</h3>
-                <p className={styles.content}>{d.description}</p>
-              </div>
-              <Tooltip title="编辑">
-                <Icon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', d)} />
-              </Tooltip>
-              <Tooltip title="复制">
-                <Icon className={styles.copy} type="copy" onClick={this.onCopy(d)} />
-              </Tooltip>
-              <Popconfirm
-                title="确定删除？"
-                placement="bottom"
-                onConfirm={onDeleteDisplay(d.id)}
-              >
-                <Tooltip title="删除">
-                  <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
-                </Tooltip>
-              </Popconfirm>
-              <div className={styles.cover} style={coverStyle}/>
-            </div>
-          </div>
-        </Col>
-      )
-    }))
 
     const modalButtons = [(
       <Button
@@ -283,9 +238,15 @@ export class DisplayList extends React.Component<IDisplayProps, IDisplayStates> 
           </Row>
         </Container.Title>
         <Container.Body card>
-          <Row gutter={20}>
-            {cols}
-          </Row>
+          <DisplayList
+            projectId={projectId}
+            displays={displaysFiltered}
+            onDisplayClick={this.goToDisplay}
+            onAdd={onAddDisplay}
+            onEdit={this.showDisplayForm}
+            onCopy={this.onCopy}
+            onDelete={onDeleteDisplay}
+          />
         </Container.Body>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Display`}
@@ -332,4 +293,5 @@ export default compose(
   withReducerWidget,
   withSaga,
   withSagaWidget,
-  withConnect)(DisplayList)
+  withConnect)(Display)
+

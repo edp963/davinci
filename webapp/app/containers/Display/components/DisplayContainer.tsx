@@ -23,6 +23,16 @@ import * as html2canvas from 'html2canvas'
 import { getBase64 } from 'utils/util'
 const styles = require('../Display.less')
 
+export enum Keys {
+  Up,
+  Down,
+  Left,
+  Right,
+  Delete,
+  Copy,
+  Paste
+}
+
 interface IDisplayContainerProps {
   slideParams: any
   width: number,
@@ -31,6 +41,7 @@ interface IDisplayContainerProps {
   scale: number
   children: JSX.Element[],
   onCoverCutCreated: (blob: Blob) => void
+  onKeyDown: (key: Keys) => void
 }
 
 interface IDisplayStyle {
@@ -48,6 +59,14 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
   private refHandlers = {
     container: (f) => { this.container = f },
     content: (f) => { this.content = f }
+  }
+
+  public componentDidMount () {
+    document.addEventListener('keydown', this.keyDown, false)
+  }
+
+  public componentWillUnmount () {
+    document.removeEventListener('keydown', this.keyDown, false)
   }
 
   public createCoverCut = () => {
@@ -80,6 +99,42 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     return slideStyle
   }
 
+  private keyDown = (e: KeyboardEvent) => {
+    e.stopPropagation()
+    const { key, ctrlKey, metaKey } = e
+    const { onKeyDown } = this.props
+    switch (key) {
+      case 'ArrowUp':
+        onKeyDown(Keys.Up)
+        break
+      case 'ArrowDown':
+        onKeyDown(Keys.Down)
+        break
+      case 'ArrowLeft':
+        onKeyDown(Keys.Left)
+        break
+      case 'ArrowRight':
+        onKeyDown(Keys.Right)
+        break
+      case 'Delete':
+      case 'Backspace':
+        onKeyDown(Keys.Delete)
+        break
+      case 'c':
+      case 'C':
+        if (ctrlKey || metaKey) {
+          onKeyDown(Keys.Copy)
+        }
+        break
+      case 'v':
+      case 'V':
+        if (ctrlKey || metaKey) {
+          onKeyDown(Keys.Paste)
+        }
+        break
+    }
+  }
+
   public render () {
     const {
       slideParams,
@@ -102,13 +157,14 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
               height: `${height}px`,
               padding
             }}
+            tabIndex={0}
           >
             <div className={styles.displayPanelWrapper}>
               <div
                 ref={this.refHandlers.content}
                 className={styles.displayPanel}
                 style={slideStyle}
-                >
+              >
                 {children}
               </div>
             </div>

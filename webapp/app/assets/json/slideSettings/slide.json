@@ -8,14 +8,12 @@
       "name": "width",
       "title": "宽度（像素）",
       "component": "inputnumber",
-      "default": 1920,
-      "span": 24
+      "default": 1920
     }, {
       "name": "height",
       "title": "高度（像素）",
       "component": "inputnumber",
-      "default": 1080,
-      "span": 24
+      "default": 1080
     }]
   }, {
     "name": "background",
@@ -24,16 +22,14 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255],
-      "span": 12
+      "default": [255,255,255]
     }, {
       "name": "opacity",
       "title": "透明度",
       "component": "inputnumber",
       "default": 50,
       "min": 0,
-      "max": 100,
-      "span": 12
+      "max": 100
     }]
   }, {
     "name": "scale",
@@ -49,11 +45,13 @@
         "name": "等比缩放高度",
         "value": "scaleHeight"
       }, {
+        "name": "全屏铺满",
+        "value": "scaleFull"
+      }, {
         "name": "实际尺寸",
         "value": "noScale"
       }],
-      "default": "auto",
-      "span": 24
+      "default": "scaleWidth"
     }]
   }, {
     "name": "grid",
@@ -62,8 +60,7 @@
       "name": "gridDistance",
       "title": "栅格间距",
       "component": "inputnumber",
-      "default": 10,
-      "span": 24
+      "default": 10
     }]
   }, {
     "name": "image",
@@ -72,10 +69,11 @@
       "name": "backgroundImage",
       "title": "背景图片",
       "component": "upload",
-      "action": "slide/{slideId}/upload/bgImage",
+      "action": "slide/{id}/upload/bgImage",
       "accept": "image/*",
       "autoUpdate": true,
-      "span": 24
+      "labelCol": 6,
+      "wrapperCol": 24
     }]
   }]
 }

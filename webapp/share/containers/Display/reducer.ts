@@ -34,6 +34,8 @@ const initialState = fromJS({
 })
 
 function displayReducer (state = initialState, { type, payload }) {
+  const datasources = state.get('datasources')
+  const loadings = state.get('loadings')
 
   switch (type) {
     case ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS:
@@ -65,7 +67,29 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('layers', [])
         .set('widgets', [])
         .set('datasources', {})
-     default:
+    case ActionTypes.LOAD_LAYER_DATA:
+      return state
+        .set('loadings', {
+          ...loadings,
+          [payload.layerId]: true
+        })
+    case ActionTypes.LOAD_LAYER_DATA_SUCCESS:
+      return state
+        .set('datasources', {
+          ...datasources,
+          [payload.layerId]: payload.data
+        })
+        .set('loadings', {
+          ...loadings,
+          [payload.layerId]: false
+        })
+    case ActionTypes.LOAD_LAYER_DATA_FAILURE:
+      return state
+        .set('loadings', {
+          ...loadings,
+          [payload.layerId]: false
+        })
+    default:
         return state
   }
 }

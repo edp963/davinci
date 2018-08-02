@@ -40,6 +40,8 @@ const initialState = fromJS({
   currentDisplayCascadeSources: {},
   currentLayers: [],
   currentLayersStatus: {},
+  clipboardLayers: [],
+
   currentDatasources: {},
   currentLayersLoading: {},
   currentLayersQueryParams: {},
@@ -157,14 +159,14 @@ function displayReducer (state = initialState, action) {
               pagination: {}
             }
             return obj
-          })
+          }, {})
         })
         .set('currentLayersCascadeSources', {
           ...layersCascadeSources,
           ...payload.result.reduce((obj, layer) => {
             obj[layer.id] = {}
             return obj
-          })
+          }, {})
         })
     case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
       payload.ids.forEach((id) => {
@@ -179,7 +181,7 @@ function displayReducer (state = initialState, action) {
           }
           return acc
         }, {}))
-        .set('currentLayers', currentLayers.filter((layer) => payload.ids.indexOf(layer.id) < 0))
+        .set('currentLayers', currentLayers.filter((layer) => payload.ids.indexOf(layer.id.toString()) < 0))
     case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
         payload.result.forEach((layer) => {
           currentLayers.splice(currentLayers.findIndex((l) => l.id === layer.id), 1, layer)
@@ -224,6 +226,34 @@ function displayReducer (state = initialState, action) {
         [payload.layerId]: false
       })
 
+    case ActionTypes.DRAG_SELECT_LAYER:
+      return state.set('currentLayers', currentLayers.map((layer) => {
+        if (!layersStatus[layer.id] || layer.id === payload.id) { return layer }
+        const layerParams = JSON.parse(layer.params)
+        const { positionX, positionY } = layerParams
+        return {
+          ...layer,
+          params: JSON.stringify({
+            ...layerParams,
+            positionX: positionX + payload.deltaX,
+            positionY: positionY + payload.deltaY
+          })
+        }
+      }))
+    case ActionTypes.RESIZE_SELECT_LAYER:
+      return state.set('currentLayers', currentLayers.map((layer) => {
+        if (!layersStatus[layer.id] || layer.id === payload.id) { return layer }
+        const layerParams = JSON.parse(layer.params)
+        const { width, height } = layerParams
+        return {
+          ...layer,
+          params: JSON.stringify({
+            ...layerParams,
+            width: width + payload.deltaWidth,
+            height: height + payload.deltaHeight
+          })
+        }
+      }))
     case ActionTypes.SELECT_LAYER:
       if (payload.selected && payload.exclusive) {
         Object.entries(layersStatus).forEach(([key]) => layersStatus[key] = false)
@@ -232,6 +262,41 @@ function displayReducer (state = initialState, action) {
         ...layersStatus,
         [payload.id]: payload.selected
       })
+
+    case ActionTypes.COPY_SLIDE_LAYERS:
+      return state.set('clipboardLayers', payload.layers)
+    case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+      return state
+        .set('currentLayers', [...currentLayers, ...payload.result])
+        .set('currentLayersLoading', {
+          ...layersLoading,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = false
+            return obj
+          }, {})
+        })
+        .set('currentLayersQueryParams', {
+          ...queryParams,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {
+              filters: '',
+              linkageFilters: '',
+              globalFilters: '',
+              params: [],
+              linkageParams: [],
+              globalParams: [],
+              pagination: {}
+            }
+            return obj
+          }, {})
+        })
+        .set('currentLayersCascadeSources', {
+          ...layersCascadeSources,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {}
+            return obj
+          }, {})
+        })
 
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
       return state.set('currentDisplayShareInfoLoading', true)

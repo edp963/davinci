@@ -39,9 +39,12 @@ import {
 
 // export const loadWidgetDetail = promiseActionCreator(LOAD_WIDGET_DETAIL, ['id'])
 
-export function loadWidgets () {
+export function loadWidgets (projectId) {
   return {
-    type: LOAD_WIDGETS
+    type: LOAD_WIDGETS,
+    payload: {
+      projectId
+    }
   }
 }
 

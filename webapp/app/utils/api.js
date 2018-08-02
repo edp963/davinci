@@ -18,29 +18,29 @@
  * >>
  */
 
-import config, { env, envName } from '../globalConfig'
+import config, { env } from '../globalConfig'
 
-const { dev, production } = envName
+const host = config[env].host
 
-export const apiConfig = {
-  login: { env: dev, url: '/login' },
-  group: { env: dev, url: '/groups' },
-  user: { env: dev, url: '/users' },
-  changepwd: { env: dev, url: '/changepwd' },
-  source: { env: dev, url: '/sources' },
-  bizlogic: { env: dev, url: '/flattables' },
-  widget: { env: dev, url: '/widgets' },
-  dashboard: { env: dev, url: '/dashboards' },
-  share: { env: dev, url: '/share' },
-  checkName: { env: dev, url: '/check' },
-  uploads: { env: dev, url: '/uploads' },
-  schedule: { env: production, url: '/cronjobs' },
-  signup: { env: dev, url: '/user' },
-  display: { env: dev, url: '/displays' }
+export default {
+  login: `${host}/login`,
+  group: `${host}/groups`,
+  user: `${host}/users`,
+  changepwd: `${host}/changepwd`,
+  source: `${host}/sources`,
+  bizlogic: `${host}/views`,
+  // bizdata: `${host}/bizdatas`,
+  widget: `${host}/widgets`,
+  dashboard: `${host}/dashboards`,
+  display: `${host}/displays`,
+  share: `${host}/share`,
+  checkName: `${host}/check`,
+  projectsCheckName: `${host}/check/`,
+  uploads: `${host}/uploads`,
+  schedule: `${host}/cronjobs`,
+  signup: `${host}/users`,
+  organizations: `${host}/organizations`,
+  checkNameUnique: `${host}/check`,
+  projects: `${host}/projects`,
+  teams: `${host}/teams`
 }
-
-export default Object.keys(apiConfig).reduce((acc, key) => {
-  const { env, url } = apiConfig[key]
-  acc[key] = config[env].host + url
-  return acc
-}, {})

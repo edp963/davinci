@@ -50,7 +50,6 @@ interface ILayerSelectorProps {
   modalLoading: boolean
   widgets: any[]
   selectedWidgets: any[]
-  loginUser: { id: number, admin: boolean }
   triggerType: string
   onSelectDone: (widgets: any[], values: any) => void
   onCancel: () => void
@@ -107,7 +106,6 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
       modalLoading,
       form,
       widgets,
-      loginUser,
       triggerType
     } = this.props
 
@@ -173,7 +171,6 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
           <WidgetSelector
             className={selectWidgetStep}
             widgets={widgets}
-            loginUser={loginUser}
             multiple={multiple}
             onWidgetsSelect={this.onWidgetsSelect}
           />
