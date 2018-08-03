@@ -63,17 +63,17 @@ import {
   LOAD_WIDGET_CSV_FAILURE,
   UPDAATE_MARK,
   UPDATE_MARK_SUCCESS,
-  UPDATE_MARK_ERROR,
-  LOAD_WIDGET_POSITION,
-  LOAD_WIDGET_POSITION_SUCCESS,
-  LOAD_WIDGET_POSITION_ERROR
+  UPDATE_MARK_ERROR
 } from './constants'
 
-export function loadDashboardDetail (id) {
+export function loadDashboardDetail (selectedDashboard, projectId, portalId, dashboardId) {
   return {
     type: LOAD_DASHBOARD_DETAIL,
     payload: {
-      id
+      selectedDashboard,
+      projectId,
+      portalId,
+      dashboardId
     }
   }
 }
@@ -104,11 +104,12 @@ export function clearCurrentDashboard () {
   }
 }
 
-export function loadDashboards (portalId) {
+export function loadDashboards (portalId, resolve) {
   return {
     type: LOAD_DASHBOARDS,
     payload: {
-      portalId
+      portalId,
+      resolve
     }
   }
 }
@@ -205,10 +206,11 @@ export function editCurrentDashboardFail () {
   }
 }
 
-export function deleteDashboard (id) {
+export function deleteDashboard (id, resolve) {
   return {
     type: DELETE_DASHBOARD,
     payload: {
+      resolve,
       id
     }
   }
@@ -458,31 +460,5 @@ export function updateMarkError (id) {
     payload: {
       id
     }
-  }
-}
-
-export function loadWidgetPosition (portalId, dashboardId, resolve) {
-  return {
-    type: LOAD_WIDGET_POSITION,
-    payload: {
-      portalId,
-      dashboardId,
-      resolve
-    }
-  }
-}
-
-export function widgetPositionLoaded (result) {
-  return {
-    type: LOAD_WIDGET_POSITION_SUCCESS,
-    payload: {
-      result
-    }
-  }
-}
-
-export function loadWidgetPositionFail () {
-  return {
-    type: LOAD_WIDGET_POSITION_ERROR
   }
 }

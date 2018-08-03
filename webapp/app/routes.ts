@@ -335,13 +335,13 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           component: Bizlogic
         },
         {
-          path: '/project/:pid/portal/:portalId',
-          name: 'dashboards',
+          path: '/project/:pid/portal/:portalId/portalName/:portalName',
+          name: 'dashboard',
           component: Dashboard,
           childRoutes: [
             {
-              path: '/project/:pid/portal/:portalId/dashboard/:dashboardId',
-              name: 'dashboard',
+              path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
+              name: 'grid',
               component: Grid
             }
           ]

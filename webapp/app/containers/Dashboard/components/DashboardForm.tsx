@@ -36,36 +36,42 @@ const Select = require('antd/lib/select')
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { projectsCheckName } from '../../App/actions'
+import { checkNameUniqueAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
+import { listToTree } from './localPositionUtil'
 
 interface IDashboardFormProps {
   portalId: number
   type: string
+  itemId: number
   form: any
   dashboards: any[]
-  onCheckName: (portalId, id, name, type, resolve, reject) => void
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, form, portalId} = this.props
+    const { onCheckUniqueName, type, form, portalId} = this.props
     const { id } = form.getFieldsValue()
-    const idName = type === ('add' || 'copy') ? '' : id
-    const typeName = 'dashboard'
+    const data = {
+      portal: portalId,
+      id: type === ('add' || 'copy') ? '' : id,
+      name: value
+    }
     type === 'move'
       ? callback()
-      : onCheckName(portalId, idName, value, typeName,
-        () => {
-          callback()
+      : onCheckUniqueName('dashboard', data,
+          () => {
+            callback()
         }, (err) => {
           callback(err)
         })
   }
+
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboards, type } = this.props
+    const { dashboards, type, itemId } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
@@ -74,17 +80,25 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
     const dashboardsArr = (dashboards as any[]).filter((d) => d.type === 0)
     const folderOptions = (dashboardsArr as any[]).map((s) => <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>)
 
+    const deleteItem = (dashboards as any[]).find((d) => d.id === Number(itemId))
+    let deleteType = ''
+    let deleteName = ''
+    if (deleteItem) {
+      deleteType = deleteItem.type === 0 ? '文件夹' : 'Dashboard'
+      deleteName = deleteItem.name
+    }
+
     return (
       <Form>
-        <Row gutter={8}>
+        <FormItem className={utilStyles.hide}>
+          {getFieldDecorator('id', {
+            hidden: type === 'add' && 'copy'
+          })(
+            <Input />
+          )}
+        </FormItem>
+        <Row gutter={8} className={type === 'delete' ? utilStyles.hide : ''}>
           <Col span={24}>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('id', {
-                hidden: type === 'add' && 'copy'
-              })(
-                <Input />
-              )}
-            </FormItem>
             <FormItem label="所属文件夹" {...commonFormItemStyle}>
               {getFieldDecorator('folder', {
                 rules: [{
@@ -105,9 +119,15 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
                 <Input />
               )}
             </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('index', {})(
+                <Input />
+              )}
+            </FormItem>
             <FormItem
               label={type === 'copy' ? '重命名' : '名称'}
               {...commonFormItemStyle}
+              hasFeedback
               className={type === 'move' ? utilStyles.hide : ''}
             >
               {getFieldDecorator('name', {
@@ -152,6 +172,9 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
             </FormItem>
           </Col>
         </Row>
+        <p className={type === 'delete' ? '' : utilStyles.hide}>
+          你确定要删除{deleteType}: {deleteName} ?
+        </p>
       </Form>
     )
   }
@@ -159,7 +182,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 

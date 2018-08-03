@@ -64,7 +64,6 @@ import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { uuid } from '../../utils/util'
 import {
-  loadDashboards,
   loadDashboardDetail,
   addDashboardItem,
   editCurrentDashboard,
@@ -141,15 +140,14 @@ interface IGridProps {
   currentItemsDownloadCsvLoading: object
   currentItemsCascadeSources: object
   currentDashboardCascadeSources: object
-  onLoadDashboards: () => any
-  onLoadDashboardDetail: (dashboardId: number) => any
+  onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItem: (item: IDashboardItem, resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[], resolve: () => void) => void
   onDeleteDashboardItem: (id: number, resolve: () => void) => void
-  onLoadWidgets: () => any
-  onLoadBizlogics: () => any
+  onLoadWidgets: (projectId: number) => any
+  onLoadBizlogics: (projectId: number) => any
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
     flatTableId: number,
@@ -325,19 +323,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   public componentWillMount () {
     const {
-      onLoadDashboards,
       onLoadBizlogics,
       onLoadDashboardDetail,
       params,
-      loginUser
+      loginUser,
+      onLoadWidgets,
+      dashboards
     } = this.props
+    const { pid, portalId, dashboardId } = params
 
-    if (loginUser.admin) {
-      onLoadBizlogics()
-    }
-
-    onLoadDashboards()
-    onLoadDashboardDetail(params.dashboardId)
+    // if (loginUser.admin) {
+    onLoadBizlogics(pid)
+    // }
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -349,7 +346,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentDatasources,
       params,
       widgets,
-      bizlogics
+      bizlogics,
+      dashboards
     } = nextProps
     const { onLoadDashboardDetail, onLoadCascadeSourceFromDashboard } = this.props
     const { modifiedPositions, linkageCascaderSource, globalFilterTableSource } = this.state
@@ -360,7 +358,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         modifiedPositions: null,
         linkageCascaderSource: null
       })
-      onLoadDashboardDetail(params.dashboardId)
+      const selectedDashboard = dashboards.find((r) => r.id === Number(params.dashboardId))
+      onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, params.dashboardId)
     }
 
     if (!currentDashboardLoading) {
@@ -1686,7 +1685,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       localPositions.forEach((pos, index) => {
         const dashboardItem = currentItems[index]
         const itemId = dashboardItem.id
-        const modifiedPosition = modifiedPositions[index]
+        // const modifiedPosition = modifiedPositions[index]
+        const modifiedPosition = modifiedPositions ? modifiedPositions[index] : {}
         const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
         const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
         const data = currentDatasources[itemId]
@@ -1859,18 +1859,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       )
     }
 
+    addButton = (
+      <Tooltip placement="bottom" title="新增">
+        <Button
+          size="large"
+          type="primary"
+          icon="plus"
+          style={{marginLeft: '8px'}}
+          onClick={this.showAddDashboardItemForm}
+        />
+      </Tooltip>
+    )
+
     if (isOwner && loginUser.admin) {
-      addButton = (
-        <Tooltip placement="bottom" title="新增">
-          <Button
-            size="large"
-            type="primary"
-            icon="plus"
-            style={{marginLeft: '8px'}}
-            onClick={this.showAddDashboardItemForm}
-          />
-        </Tooltip>
-      )
+      // addButton = (
+      //   <Tooltip placement="bottom" title="新增">
+      //     <Button
+      //       size="large"
+      //       type="primary"
+      //       icon="plus"
+      //       style={{marginLeft: '8px'}}
+      //       onClick={this.showAddDashboardItemForm}
+      //     />
+      //   </Tooltip>
+      // )
 
       shareButton = currentDashboard
         ? (
@@ -2127,15 +2139,14 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboards: () => dispatch(loadDashboards()),
-    onLoadDashboardDetail: (id) => dispatch(loadDashboardDetail(id)),
+    onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
     onAddDashboardItem: (item, resolve) => dispatch(addDashboardItem(item, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items, resolve) => dispatch(editDashboardItems(items, resolve)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadWidgets: () => dispatch(loadWidgets()),
-    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
+    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
@@ -2147,9 +2158,6 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducerDashboard = injectReducer({ key: 'dashboard', reducer })
-const withSagaDashboard = injectSaga({ key: 'dashboard', saga })
-
 const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
@@ -2157,10 +2165,8 @@ const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBiz
 const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
 
 export default compose(
-  withReducerDashboard,
   withReducerWidget,
   withReducerBizlogic,
-  withSagaDashboard,
   withSagaWidget,
   withSagaBizlogic,
   withConnect

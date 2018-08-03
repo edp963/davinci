@@ -24,6 +24,7 @@ export function initializePosition (loginUser, dashboard, items) {
     if (posInStorage) {
       const localPos = JSON.parse(posInStorage)
       return items.map((i) => {
+        console.log('i0000000', i)
         const itemInLocal = localPos.find((p) => p.i === `${i.id}`)
         if (!itemInLocal) {
           return {
@@ -76,4 +77,54 @@ export function diffPosition (origin, current) {
     }
   }
   return sign
+}
+
+// list 转成树形json
+export function listToTree (list, parentId) {
+  const ret = []
+  for (const i in list) {
+    if (list[i].parentId === parentId) {
+      list[i].children = this.listToTree(list, list[i].id)
+      ret.push(list[i])
+    }
+  }
+  return ret
+}
+
+// list 转成树选择json
+declare interface IObjectConstructor {
+  assign (...objects: object[]): object
+}
+export function listToTreeSelect (list, parentId) {
+  const ret = []
+  for (const i in list) {
+    if (list[i].parentId === parentId) {
+      list[i].children = this.listToTreeSelect(list, list[i].id)
+      const listObj = (Object as IObjectConstructor).assign({}, list[i], {
+        title: list[i].name,
+        value: `${list[i].id}`,
+        key: list[i].id
+      })
+      ret.push(listObj)
+    }
+  }
+  return ret
+}
+
+// 获取第一个dashboard的id
+export function findFirstLeaf (tree) {
+  if (tree.children.length === 0) {
+    return -1
+  }
+  for (const child of tree.children) {
+    if (child.type === 1) {
+      return child.id
+    } else {
+      const leafId = this.findFirstLeaf(child)
+      if (leafId > 0) {
+        return leafId
+      }
+    }
+  }
+  return -1
 }
