@@ -32,7 +32,6 @@ export const GET_LOGIN_USER_ERROR = 'davinci/App/GET_LOGIN_USER_ERROR'
 export const SHOW_NAVIGATOR = 'davinci/App/SHOW_NAVIGATOR'
 export const HIDE_NAVIGATOR = 'davinci/App/HIDE_NAVIGATOR'
 export const CHECK_NAME = 'davinci/App/CHECK_NAME'
-export const PROJECTS_CHECK_NAME = 'davinci/App/PROJECTS_CHECK_NAME'
 
 export const UPDATE_PROFILE = 'davinci/App/UPDATE_PROFILE'
 export const UPDATE_PROFILE_SUCCESS = 'davinci/App/UPDATE_PROFILE_SUCCESS'

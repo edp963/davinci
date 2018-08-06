@@ -577,12 +577,14 @@
 
 .more {
   cursor: pointer;
+  vertical-align: middle;
+  font-weight: 900;
   &:before {
     padding: 0 8px;
   }
 }
 
-.more:before, .swap:before {
+.more:before, .swap:before, .itemAction:before {
   -moz-transform:rotate(-90deg);
   -webkit-transform:rotate(-90deg);
   filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);    
@@ -618,33 +620,94 @@
 .dashboardBody {
   display: flex;
   flex-direction: row;
+  margin-top: -5px;
+  height: 100%;
+
+  .dashboardTreeNode {
+    height: 100%;
+    overflow-y: auto;
+  }
 
   .dashboardTree {
     width: 190px;
-    height: calc(100% - 64px);
     left: 0;
     flex-shrink: 0;
+    overflow: hidden;
+    border-right: 1px solid #d9d9d9;
     .portalTitle {
       line-height: 32px;
       font-weight: 700;
       display: inline-block;
       font-size: 14px;
+      width: 100px;
     }
     .portalAction {
       float: right;
       margin-top: 7px;
+      margin-right: 2px;
     }
-    .dashboardTitle {
+    .dashboardTitle, .portalTitle {
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
-      width: 130px;
       display: inline-block;
+      vertical-align: middle;
     }
   }
   .gridClass {
     width: 100%;
-    // height: calc(100% - 64px);
     flex-shrink: 1;
   }
 }
+
+.header {
+  border-radius: 4px 4px 0 0;
+  background: #fff;
+  color: rgba(0,0,0,.65);
+  border-bottom: 1px solid #e9e9e9;
+  height: 40px;
+
+  .title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 40px;
+  }
+
+  .historyBack {
+    padding-left: 13px;
+    line-height: 40px;
+    cursor: pointer;
+    .backIcon:before {
+      font-size: 18px !important;
+    }
+  }
+}
+
+.noDashboard {
+  top: 40%;
+  left: 50%;
+  position: fixed;
+  p {
+    text-align: center;
+    color: rgba(10,18,32,.46);
+  }
+}
+
+.dashboardItem {
+  .itemAction {
+    display: none !important;
+  }
+
+  &:hover {
+    .itemAction {
+      display: inline-block !important;
+      cursor: pointer;
+      vertical-align: middle;
+      font-weight: 900;
+      &:before {
+        padding: 0 8px;
+      }
+    }
+  }
+}
+

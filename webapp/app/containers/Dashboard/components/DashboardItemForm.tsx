@@ -101,9 +101,14 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const { loginUser } = this.props
     if (loginUser.admin) {
       this.setState({
-        authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
+        authorizedWidgets: widgets
       })
     }
+    // if (loginUser.admin) {
+    //   this.setState({
+    //     authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
+    //   })
+    // }
   }
 
   private getScreenWidth = () => {

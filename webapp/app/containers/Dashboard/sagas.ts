@@ -20,6 +20,8 @@
 
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, all, put } from 'redux-saga/effects'
+import { mockData } from './mock'
+
 import {
   LOAD_DASHBOARDS,
   ADD_DASHBOARD,
@@ -34,8 +36,7 @@ import {
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK,
   LOAD_WIDGET_CSV,
-  UPDAATE_MARK,
-  LOAD_WIDGET_POSITION
+  UPDAATE_MARK
 } from './constants'
 
 import {
@@ -66,10 +67,7 @@ import {
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
   widgetCsvLoaded,
-  loadWidgetCsvFail,
-  loadWidgetPosition,
-  loadWidgetPositionFail,
-  widgetPositionLoaded
+  loadWidgetCsvFail
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -84,6 +82,7 @@ export function* getDashboards ({ payload }) {
     const asyncData = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
     const dashboards = readListAdapter(asyncData)
     yield put(dashboardsLoaded(dashboards))
+    payload.resolve(dashboards)
   } catch (err) {
     yield put(loadDashboardsFail())
     message.error('获取 Dashboards 失败，请稍后再试')
@@ -98,8 +97,9 @@ export function* addDashboard ({ payload }) {
       url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
       data: dashboard
     })
+    console.log({asyncData})
     yield put(dashboardAdded(asyncData.payload))
-    resolve()
+    resolve(asyncData.payload.id)
   } catch (err) {
     yield put(addDashboardFail())
     message.error('添加 Dashboard 失败，请稍后再试')
@@ -145,6 +145,7 @@ export function* deleteDashboard ({ payload }) {
       url: `${api.portal}/dashboards/${payload.id}`
     })
     yield put(dashboardDeleted(payload.id))
+    payload.resolve()
   } catch (err) {
     yield put(deleteDashboardFail())
     message.error('删除当前 Dashboard 失败，请稍后再试')
@@ -152,14 +153,71 @@ export function* deleteDashboard ({ payload }) {
 }
 
 export function* getDashboardDetail ({ payload }) {
+  // const { projectId, portalId, dashboardId, selectedDashboard } = payload
+  const { projectId, portalId, dashboardId } = payload
+  const clonedData = {
+    config: mockData.config,
+    linkage_detail: {},
+    widgets: []
+  }
+  for (const key in mockData) {
+    if (mockData.hasOwnProperty(key)) {
+      clonedData[key] = mockData[key]
+    }
+  }
+  const selectedDashboard = clonedData
+
+  const { globalFilters, linkage_detail} = JSON.parse(selectedDashboard.config)
+  selectedDashboard.config = JSON.stringify({ globalFilters })
+
+  selectedDashboard.linkage_detail = JSON.stringify(linkage_detail)
+
   try {
     const asyncData = yield all({
-      dashboard: call(request, `${api.dashboard}/${payload.id}`),
-      widgets: call(request, api.widget)
+      selectedWidgets: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}/widgets`),
+      allWidgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    const dashboard = readListAdapter(asyncData.dashboard)
-    const widgets = readListAdapter(asyncData.widgets)
-    yield put(dashboardDetailLoaded(dashboard, widgets))
+
+    const selectedWidgets = readListAdapter(asyncData.selectedWidgets)
+    const allWidgets = readListAdapter(asyncData.allWidgets).map((widget) => {
+      const { description, id, name, projectId, publish, type, viewId, config } = widget
+
+      const newWidget = {
+        adhoc_sql: '',
+        chart_params: JSON.stringify({}),
+        config: JSON.stringify({}),
+        create_by: 101,
+        desc: description,
+        flatTable_id: 224,
+        id,
+        name,
+        publish,
+        query_params: JSON.stringify([]),
+        widgetlib_id: 16
+      }
+      return newWidget
+    })
+    selectedDashboard.widgets = selectedWidgets.map((widget) => {
+      const { widgetId, x, y, frequency, height, id, polling, width } = widget
+      const newWidget = {
+        widget_id: widgetId,
+        dashboard_id: dashboardId,
+        position_x: x,
+        position_y: y,
+        width,
+        height,
+        id,
+        aesStr: '',
+        create_by: 101,
+        flatTableId: 58,
+        length: 7,
+        permission: ['share', 'download'],
+        trigger_params: '60',
+        trigger_type: 'manual'
+      }
+      return newWidget
+    })
+    yield put(dashboardDetailLoaded(selectedDashboard, allWidgets))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     message.error('获取 Dashboard 详细信息失败，请稍后再试')
@@ -311,25 +369,10 @@ export function* updateMarkRepos (action) {
   }
 }
 
-export function* getWidgetPosition ({ payload }) {
-  const { portalId, dashboardId, resolve } = payload
-  try {
-    const asyncData = yield call(request, {
-      method: 'get',
-      url: `${api.portal}/${portalId}/dashboards/${dashboardId}/widgets`
-    })
-    widgetPositionLoaded(asyncData.payload)
-    resolve(asyncData.payload)
-  } catch (err) {
-    yield put(loadWidgetPositionFail())
-    message.error('获取 Widget 信息失败，请稍后再试')
-  }
-}
-
 export default function* rootDashboardSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_DASHBOARDS, getDashboards as any),
-    takeEvery(ADD_DASHBOARD, addDashboard as any),
+    takeLatest(ADD_DASHBOARD, addDashboard as any),
     takeEvery(EDIT_DASHBOARD, editDashboard as any),
     takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
     takeEvery(DELETE_DASHBOARD, deleteDashboard as any),
@@ -341,8 +384,6 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
-    takeLatest(UPDAATE_MARK, updateMarkRepos),
-
-    takeLatest(LOAD_WIDGET_POSITION, getWidgetPosition as any)
+    takeLatest(UPDAATE_MARK, updateMarkRepos)
   ]
 }
