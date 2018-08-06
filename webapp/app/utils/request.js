@@ -23,7 +23,8 @@ import message from 'antd/lib/message'
 // import { notifyError } from './util'
 
 axios.defaults.validateStatus = function (status) {
-  return status < 500
+   return status < 500
+   // return status >= 200 && status < 300
 }
 
 function parseJSON (response) {

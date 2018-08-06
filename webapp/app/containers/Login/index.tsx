@@ -60,7 +60,7 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     super(props)
     this.state = {
       username: 'hanruan',
-      password: '123'
+      password: '123456'
     }
   }
 

@@ -25,7 +25,8 @@ import {
   ADD_PROJECT,
   EDIT_PROJECT,
   DELETE_PROJECT,
-  LOAD_PROJECT_DETAIL
+  LOAD_PROJECT_DETAIL,
+  TRANSFER_PROJECT
 } from './constants'
 
 import {
@@ -37,10 +38,12 @@ import {
   editProjectFail,
   projectDeleted,
   deleteProjectFail,
-  projectDetailLoaded
+  projectDetailLoaded,
+  transferProjectFail,
+  projectTransfered
 } from './actions'
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
@@ -67,7 +70,7 @@ export function* addProject (action) {
     const result = readListAdapter(asyncData)
     yield put(projectAdded(result))
     resolve()
-  } catch (err) {
+  } catch (error) {
     yield put(addProjectFail())
     message.error('添加 Project 失败，请稍后再试')
   }
@@ -104,22 +107,31 @@ export function* deleteProject (action) {
     message.error('删除当前 Project 失败，请稍后再试')
   }
 }
-
 export function* getProjectDetail ({ payload }) {
   try {
-    const asyncData = yield all({
-      project: call(request, `${api.project}/${payload.id}`),
-      widgets: call(request, api.widget)
-    })
-    const project = readListAdapter(asyncData.project)
-    const widgets = readListAdapter(asyncData.widgets)
-    yield put(projectDetailLoaded(project, widgets))
+    const asyncData = yield  call(request, `${api.projects}/${payload.id}`)
+    const project = readListAdapter(asyncData)
+    yield put(projectDetailLoaded(project))
   } catch (err) {
     console.log('getProjectDetail', err)
   }
 }
 
-
+export function* transferProject ({payload}) {
+  const {id, orgId} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'put',
+      url: `${api.projects}/${id}/transfer`,
+      data: {orgId}
+    })
+    const result = readListAdapter(asyncData)
+    yield put(projectTransfered(result))
+  } catch (err) {
+    yield put(transferProjectFail())
+    message.error('移交当前 Project 失败，请稍后再试')
+  }
+}
 
 export default function* rootProjectSaga (): IterableIterator<any> {
   yield [
@@ -127,6 +139,7 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(ADD_PROJECT, addProject as any),
     takeEvery(EDIT_PROJECT, editProject as any),
     takeEvery(DELETE_PROJECT, deleteProject as any),
-    takeLatest(LOAD_PROJECT_DETAIL, getProjectDetail as any)
+    takeLatest(LOAD_PROJECT_DETAIL, getProjectDetail as any),
+    takeEvery(TRANSFER_PROJECT, transferProject as any)
   ]
 }

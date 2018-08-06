@@ -1,5 +1,5 @@
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put } from 'redux-saga/effects'
+import { takeEvery } from 'redux-saga'
+import { call, put } from 'redux-saga/effects'
 
 import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES} from './constants'
 import {
@@ -17,7 +17,6 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-import messages from '../Display/messages'
 const message = require('antd/lib/message')
 
 export function* getSchedules () {

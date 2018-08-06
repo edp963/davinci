@@ -205,11 +205,11 @@ export function updateProfileError () {
 }
 
 
-export function changeUserPassword (info, resolve, reject) {
+export function changeUserPassword (user, resolve, reject) {
   return {
     type: CHANGE_USER_PASSWORD,
     payload: {
-      info,
+      user,
       resolve,
       reject
     }

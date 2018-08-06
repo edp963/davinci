@@ -181,11 +181,12 @@ export function* updateProfile (action): IterableIterator<any> {
 }
 
 export function* changeUserPassword ({ payload }) {
+  const {user} = payload
   try {
     const result = yield call(request, {
-      method: 'post',
-      url: `${api.changepwd}/users`,
-      data: payload.info
+      method: 'put',
+      url: `${api.user}/${user.id}/changepassword`,
+      data: user
     })
 
     if (result.header.code === 400) {

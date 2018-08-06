@@ -15,9 +15,11 @@ import MemberForm from '../../Teams/component/AddForm'
 import Avatar from '../../../components/Avatar'
 import * as Organization from '../Organization'
 import ChangeRoleForm from './ChangeRoleForm'
+import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 interface IMembersState {
   category?: string
+  formKey?: number
   formVisible: boolean
   modalLoading: boolean
   currentMember: {id?: number, name?: string}
@@ -36,12 +38,14 @@ interface IMembersProps {
   inviteMemberList: any
   onInviteMember: (ordId: number, memId: number) => any
   handleSearchMember: (keywords: string) => any
+  toThatUserProfile: (url: string) => any
 }
 
 export class MemberList extends React.PureComponent<IMembersProps, IMembersState> {
   constructor (props) {
     super(props)
     this.state = {
+      formKey: 0,
       category: '',
       changeRoleFormCategory: '',
       currentMember: {},
@@ -77,6 +81,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
 
   private hideMemberForm = () => {
     this.setState({
+      formKey: this.state.formKey + 10,
       formVisible: false,
       modalLoading: false
     }, () => {
@@ -142,7 +147,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       this.ChangeRoleForm.resetFields()
     })
   }
-
+  private toUserProfile = (obj) => () => {
+    const {id} = obj
+    if (id) {
+      this.props.toThatUserProfile(`account/profile/${id}`)
+    }
+  }
   public render () {
     const {
       formVisible,
@@ -152,10 +162,14 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleModalLoading,
       changeRoleFormCategory
     } = this.state
-    const { organizationMembers, inviteMemberList } = this.props
+    const { organizationMembers, inviteMemberList, currentOrganization } = this.props
+    let CreateButton = void 0
+    if (currentOrganization) {
+      CreateButton = ComponentPermission(currentOrganization, '')(Button)
+    }
     const addButton =  (
       <Tooltip placement="bottom" title="创建">
-        <Button
+        <CreateButton
           size="large"
           type="primary"
           icon="plus"
@@ -163,27 +177,34 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         />
       </Tooltip>
     )
-    const columns = [{
-      title: 'Name',
-      dataIndex: 'user',
-      key: 'user',
-      render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
-    }, {
-      title: 'role',
-      dataIndex: 'user',
-      key: 'userKey',
-      render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
-    },
-    {
-      title: 'team',
-      dataIndex: 'teamNum',
-      key: 'teamNum'
-    }, {
-      title: 'settings',
-      dataIndex: 'user',
-      key: 'settings',
-      render: (text, record) => (
-        <span>
+    let columns = []
+    if (currentOrganization && currentOrganization.role === 1) {
+      columns = [{
+        title: 'Name',
+        dataIndex: 'user',
+        key: 'user',
+        render: (text) => (
+          <div className={styles.avatarWrapper}>
+            <Avatar path={text.avatar} size="small" enlarge={true}/>
+            <span className={styles.avatarName} onClick={this.toUserProfile(text)}>{text.username}</span>
+          </div>
+        )
+      }, {
+        title: 'role',
+        dataIndex: 'user',
+        key: 'userKey',
+        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+      },
+        {
+          title: 'team',
+          dataIndex: 'teamNum',
+          key: 'teamNum'
+        }, {
+          title: 'settings',
+          dataIndex: 'user',
+          key: 'settings',
+          render: (text, record) => (
+            <span>
           <Popconfirm
             title="确定删除此成员吗？"
             placement="bottom"
@@ -196,33 +217,43 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           <span className="ant-divider" />
           <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
         </span>
-      )
-    }]
+          )
+        }]
+    } else {
+      columns = [{
+        title: 'Name',
+        dataIndex: 'user',
+        key: 'user',
+        render: (text) => (
+          <div className={styles.avatarWrapper}>
+            <Avatar path={text.avatar} size="small" enlarge={true}/>
+            <span className={styles.avatarName} onClick={this.toUserProfile(text)}>{text.username}</span>
+          </div>
+        )
+      }, {
+        title: 'role',
+        dataIndex: 'user',
+        key: 'userKey',
+        render: (text) => <span>{text.role === 1 ? 'Owner' : 'Member'}</span>
+      },
+        {
+          title: 'team',
+          dataIndex: 'teamNum',
+          key: 'teamNum'
+        }]
+    }
 
     return (
       <div className={styles.listWrapper}>
         <Row>
-          <Col span={4}>
-            <Select
-              size="large"
-              placeholder="placeholder"
-              onChange={this.search}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Select.Option value="everyone">所有人</Select.Option>
-              <Select.Option value="Owners">Owners</Select.Option>
-              <Select.Option value="Members">Members</Select.Option>
-            </Select>
-          </Col>
-          <Col span={16} offset={1}>
+          <Col span={16}>
             <Input.Search
               size="large"
               placeholder="placeholder"
               onSearch={this.search}
             />
           </Col>
-          <Col span={1} offset={2}>
+          <Col span={1} offset={7}>
             {addButton}
           </Col>
         </Row>
@@ -236,6 +267,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           </div>
         </Row>
         <Modal
+          key={this.state.formKey}
           title={null}
           visible={formVisible}
           footer={null}

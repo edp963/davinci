@@ -50,7 +50,6 @@ import {createStructuredSelector} from 'reselect'
 import {addProject, deleteProject} from '../Projects/actions'
 import {checkNameUniqueAction} from '../App/actions'
 
-
 interface IOrganizationProps {
   loginUser: any
   router: InjectedRouter
@@ -88,12 +87,14 @@ export interface IOrganization {
   projectNum?: number
   memberNum?: number
   teamNum?: number
+  role?: number
 }
 
 export interface IOrganizationProjects {
   id: number
   description: string
   name: string
+  createBy: number
 }
 export interface IOrganizationTeams {
   id: number
@@ -186,6 +187,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
           <Tabs onChange={this.callback} >
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
+                currentOrganization={currentOrganization}
                 deleteProject={this.delete}
                 onCheckUniqueName={this.props.onCheckUniqueName}
                 onAddProject={this.props.onAddProject}
@@ -197,6 +199,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
+                toThatUserProfile={this.toThatTeam}
                 organizationId={organizationId}
                 loadOrganizationsMembers={this.props.onLoadOrganizationMembers}
                 organizationMembers={currentOrganizationMembers}
@@ -211,18 +214,21 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
               <TeamList
                 toThatTeam={this.toThatTeam}
+                loadOrganizationTeams={this.props.onLoadOrganizationTeams}
                 organizations={organizations}
                 currentOrganization={this.props.currentOrganization}
                 organizationTeams={currentOrganizationTeams}
               />
             </TabPane>
-            <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
-              <Setting
-                currentOrganization={this.props.currentOrganization}
-                editOrganization={this.editOrganization}
-                deleteOrganization={this.deleteOrganization}
-              />
-            </TabPane>
+            {
+              currentOrganization && currentOrganization.role === 1 ? <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
+                <Setting
+                  currentOrganization={this.props.currentOrganization}
+                  editOrganization={this.editOrganization}
+                  deleteOrganization={this.deleteOrganization}
+                />
+              </TabPane> : ''
+            }
           </Tabs>
         </Box.Body>
       </Box>

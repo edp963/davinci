@@ -59,6 +59,7 @@ interface ICurrentDashboard {
 
 interface IScheduleProps {
   widgets: boolean | any[]
+  params: any
   schedule: boolean | any[]
   dashboards: boolean | any[]
   tableLoading: boolean
@@ -173,6 +174,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private onScheduleOk = () => {
+    const { projectId } = this.props.params
     const { onAddSchedule, onUpdateSchedule } = this.props
     this.scheduleForm.validateFieldsAndScroll((err, values) => {
       const { emailConfig } = this.state
@@ -232,9 +234,10 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           const params = {
             ...values,
             ...{
-              start_date: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
-              end_date: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
-              cron_pattern: cronPatten
+              projectId,
+              startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
+              endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
+              cronExpression: cronPatten
             }
           }
           if (this.state.formType === 'add') {
@@ -604,7 +607,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
                   ref={(f) => { this.configForm = f }}
                 />
               </Modal>
-
             </Box.Body>
           </Box>
         </Container.Body>

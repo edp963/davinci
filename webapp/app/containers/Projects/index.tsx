@@ -10,7 +10,7 @@ const styles = require('./Project.less')
 import * as classnames from 'classnames'
 import {InjectedRouter} from 'react-router/lib/Router'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {addProject, deleteProject, editProject, loadProjects} from './actions'
+import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail, transferProject} from './actions'
 import {compose} from 'redux'
 import {makeSelectLoginUser} from '../App/selectors'
 import {makeSelectProjects} from './selectors'
@@ -27,15 +27,19 @@ import sagaApp from '../App/sagas'
 import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
+import ComponentPermission from '../Account/components/checkMemberPermission'
 
 interface IProjectsProps {
   router: InjectedRouter
+  projects: IProject[]
   organizations: any
+  onTransferProject: (id: number, orgId: number) => any
   onEditProject: (project: any, resolve: () => any) => any
   onLoadProjects: () => any
   onAddProject: (project: any, resolve: () => any) => any
-  onLoadOrganizations: () => any,
+  onLoadOrganizations: () => any
   onDeleteProject: (id: number) => any
+  onLoadProjectDetail: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -45,6 +49,7 @@ interface IProjectsState {
   modalLoading: boolean
 }
 interface IProject {
+  type?: string
   name?: string
   id?: number
   description?: string
@@ -71,9 +76,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       formVisible: true
     }, () => {
       if (project) {
-        const {orgId, id, name, pic, description} = project
+        const {orgId, id, name, pic, description, visibility} = project
         this.widgetTypeChange(`${orgId}`).then(
-          () => this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description})
+          () => {
+            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility ? '1' : '0'}`})
+          }
         )
       }
     })
@@ -107,8 +114,19 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           }, () => {
             this.hideProjectForm() })
         } else {
-          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
+          this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
         }
+      }
+    })
+  }
+
+  private onTransfer = () => {
+    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        const {id, orgId} = values
+        this.props.onTransferProject(id, Number(orgId))
+        this.hideProjectForm()
       }
     })
   }
@@ -137,6 +155,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   private toProject = (d: any) => () => {
     const pid = d.id
     this.props.router.push(`/project/${pid}`)
+    this.props.onLoadProjectDetail(pid)
   }
   public render () {
     const { formType, formVisible, modalLoading } = this.state
@@ -146,7 +165,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       type: 'add'
     }]] : []
     const projectItems = projectArr
-      ? projectArr.map((d) => {
+      ? projectArr.map((d: IProject) => {
+        let CreateButton = void 0
+        let belongWhichOrganization = void 0
         if (d.type && d.type === 'add') {
           return (
             <Col
@@ -173,11 +194,21 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             </Col>
           )
         }
+        if (organizations) {
+          belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
+          CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
+        }
         let editButton = void 0
         let deleteButton = void 0
+        let transfer = void 0
+        transfer = (
+          <Tooltip title="移交项目">
+            <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
+          </Tooltip>
+        )
         editButton =  (
           <Tooltip title="编辑">
-            <Icon className={styles.edit} type="setting" onClick={this.showProjectForm('edit', d)} />
+            <CreateButton className={styles.edit} type="setting" onClick={this.showProjectForm('edit', d)} />
           </Tooltip>
         )
         deleteButton = (
@@ -187,7 +218,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             onConfirm={onDeleteProject(d.id)}
           >
             <Tooltip title="删除">
-              <Icon className={styles.delete} type="delete" onClick={this.stopPPG}/>
+              <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
             </Tooltip>
           </Popconfirm>
         )
@@ -218,9 +249,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                     {/*{editHint}*/}
                   </h3>
                   <p className={styles.content}>
-                    {d.desc}
+                    {d.description}
                   </p>
                 </header>
+                {transfer}
                 {editButton}
                 {deleteButton}
               </div>
@@ -251,6 +283,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
               modalLoading={modalLoading}
               organizations={organizations}
               onModalOk={this.onModalOk}
+              onTransfer={this.onTransfer}
               onCheckUniqueName={this.checkNameUnique}
               onWidgetTypeChange={this.widgetTypeChange}
             />
@@ -271,9 +304,11 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadProjects: () => dispatch(loadProjects()),
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
     onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
+    onTransferProject: (id, orgId) => dispatch(transferProject(id, orgId)),
     onDeleteProject: (id) => () => dispatch(deleteProject(id)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }

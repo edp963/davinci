@@ -64,7 +64,7 @@ import {
   teamMemberRoleChanged
 } from './actions'
 
-import message from 'antd/lib/message'
+const message =  require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
@@ -242,11 +242,17 @@ export function* changeTeamMemberRole ({payload}) {
   try {
     const asyncData = yield call(request, {
       url: `${api.teams}/member/${relationId}`,
-      method: 'delete',
-      data: newRole
+      method: 'put',
+      data:  {role: newRole}
     })
-    const member = readListAdapter(asyncData)
-    yield put(teamMemberRoleChanged(relationId, member))
+    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
+    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    if (code && code === 400) {
+      message.error(msg)
+    }
+    if (code && code === 200) {
+      yield put(teamMemberRoleChanged(relationId, newRole))
+    }
   } catch (err) {
     yield put(changeTeamMemberRoleFail())
     message.error('删除 team member 失败，请稍后再试')

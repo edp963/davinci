@@ -5,9 +5,7 @@ const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
 const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
 import AddForm from './AddForm'
@@ -16,10 +14,12 @@ import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
 import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
 import {IOrganizationMembers} from '../../Organizations/Organization'
+import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 interface IMemberListState {
   modalLoading: boolean
   formType: string
+  formKey?: number
   formVisible: boolean
   category?: string
   currentMember: {id?: number, name?: string}
@@ -41,6 +41,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
   constructor (props) {
     super(props)
     this.state = {
+      formKey: 0,
       formType: '',
       category: '',
       modalLoading: false,
@@ -66,7 +67,8 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
   }
   private hideAddForm = () => {
     this.setState({
-      formVisible: false
+      formVisible: false,
+      formKey: this.state.formKey + 11
     })
   }
   private add = () => {
@@ -87,21 +89,13 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
   }
 
   private changRole = () => {
-    console.log('changeRole')
-   // this.props.changeTeamMemberRole()
-
-    // this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
-    //   if (!err) {
-    //     const { id, role } = values
-    //     this.props.changeOrganizationMemberRole(id, role, () => {
-    //       const { organizationId } = this.props
-    //       if (this.props.loadOrganizationsMembers) {
-    //         this.props.loadOrganizationsMembers(Number(organizationId))
-    //       }
-    //       this.hideChangeRoleForm()
-    //     })
-    //   }
-    // })
+    this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const { id, role } = values
+        this.props.changeTeamMemberRole(id, role)
+        this.hideChangeRoleForm()
+      }
+    })
   }
 
   private hideChangeRoleForm = () => {
@@ -113,12 +107,15 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     })
   }
 
-  private showChangeRoleForm = (type: string, obj: {name?: string, id?: number}) => (e) => {
+  private showChangeRoleForm = (type: string, obj: { id?: number}) => (e) => {
     e.stopPropagation()
     this.setState({
       currentMember: obj,
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
+    }, () => {
+      const {user: {role}, id} = obj
+      this.ChangeRoleForm.setFieldsValue({id, role})
     })
   }
   public render () {
@@ -131,9 +128,13 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     } = this.state
     const { currentTeamMembers, currentTeam} = this.props
     const currentTeamMember = Array.isArray(currentTeamMembers) ? currentTeamMembers : []
+    let CreateButton = void 0
+    if (currentTeam) {
+      CreateButton = ComponentPermission(currentTeam, '')(Button)
+    }
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
-        <Button
+        <CreateButton
           size="large"
           type="primary"
           icon="plus"
@@ -141,24 +142,29 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         />
       </Tooltip>
     )
-    const columns = [{
-      title: 'Name',
-      dataIndex: 'user',
-      key: 'user',
-      render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
-    },
-      {
-      title: 'role',
-      dataIndex: 'user',
-      key: 'userKey',
-      render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+    let columns = []
+    if (currentTeam && currentTeam.role === 1) {
+      columns = [{
+        title: 'Name',
+        dataIndex: 'user',
+        key: 'user',
+        render: (text) => <div className={styles.avatarWrapper}>
+          <Avatar path={text.avatar} size="small" enlarge={true}/>
+          <span className={styles.avatarName}>{text.username}</span>
+        </div>
       },
-      {
-      title: 'settings',
-      dataIndex: 'user',
-      key: 'settings',
-      render: (text, record) => (
-        <span>
+        {
+          title: 'role',
+          dataIndex: 'user',
+          key: 'userKey',
+          render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+        },
+        {
+          title: 'settings',
+          dataIndex: 'user',
+          key: 'settings',
+          render: (text, record) => (
+            <span>
           <Popconfirm
             title="确定删除此成员吗？"
             placement="bottom"
@@ -171,32 +177,36 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
           <span className="ant-divider" />
           <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
         </span>
-      )
-    }]
+          )
+        }]
+    } else {
+      columns = [{
+        title: 'Name',
+        dataIndex: 'user',
+        key: 'user',
+        render: (text) => <div className={styles.avatarWrapper}>
+          <Avatar path={text.avatar} size="small" enlarge={true}/>
+          <span className={styles.avatarName}>{text.username}</span>
+        </div>
+      },
+        {
+          title: 'role',
+          dataIndex: 'user',
+          key: 'userKey',
+          render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+        }]
+    }
     return (
       <div className={styles.listWrapper}>
         <Row>
-          <Col span={4}>
-            <Select
-              size="large"
-              placeholder="placeholder"
-              onChange={this.onSearchMember}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Select.Option value="everyone">所有人</Select.Option>
-              {/*<Select.Option value="Owners">Owners</Select.Option>*/}
-              {/*<Select.Option value="Members">Members</Select.Option>*/}
-            </Select>
-          </Col>
-          <Col span={16} offset={1}>
+          <Col span={16}>
             <Input.Search
               size="large"
               placeholder="placeholder"
               onSearch={this.onSearchMember}
             />
           </Col>
-          <Col span={1} offset={2}>
+          <Col span={1} offset={7}>
             {addButton}
           </Col>
         </Row>
@@ -210,6 +220,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
           </div>
         </Row>
         <Modal
+          key={this.state.formKey}
           title={null}
           footer={null}
           visible={formVisible}

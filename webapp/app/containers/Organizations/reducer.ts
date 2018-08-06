@@ -33,10 +33,8 @@ import {
   LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
   LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
   ADD_TEAM_FAILURE,
-  ADD_TEAM_SUCCESS,
   SEARCH_MEMBER_SUCCESS,
-  DELETE_ORGANIZATION_MEMBER_SUCCESS,
-  CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS
+  DELETE_ORGANIZATION_MEMBER_SUCCESS
 } from './constants'
 import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
 
@@ -54,7 +52,6 @@ const initialState = fromJS({
 function organizationReducer (state = initialState, action) {
   const { type, payload } = action
   const organizations = state.get('organizations')
-  const currentOrganizationTeams = state.get('currentOrganizationTeams')
   const currentOrganizationMembers = state.get('currentOrganizationMembers')
   const currentOrganizationProjects = state.get('currentOrganizationProjects')
   switch (type) {
@@ -114,13 +111,13 @@ function organizationReducer (state = initialState, action) {
         .set('currentOrganizationLoading', false)
         .set('currentOrganization', payload.organization)
     // todo bug 没考虑teams的层级关系
-    case ADD_TEAM_SUCCESS:
-      if (currentOrganizationTeams) {
-        currentOrganizationTeams.unshift(payload.result)
-        return state.set('currentOrganizationTeams', currentOrganizationTeams.slice())
-      } else {
-        return state.set('currentOrganizationTeams', [payload.result])
-      }
+    // case ADD_TEAM_SUCCESS:
+    //   if (currentOrganizationTeams) {
+    //     currentOrganizationTeams.unshift(payload.result)
+    //     return state.set('currentOrganizationTeams', currentOrganizationTeams.slice())
+    //   } else {
+    //     return state.set('currentOrganizationTeams', [payload.result])
+    //   }
     case ADD_TEAM_FAILURE:
       return state
     case SEARCH_MEMBER_SUCCESS:

@@ -19,9 +19,10 @@ const permissions = [
 ]
 
 interface IPermissionLevelProps {
+  role: number
   form: any
   param: any
-  selectChanged: (val:any) => any
+  selectChanged: (val: any) => any
 }
 
 export class PermissionLevel extends React.PureComponent <IPermissionLevelProps, {}> {
@@ -35,23 +36,23 @@ export class PermissionLevel extends React.PureComponent <IPermissionLevelProps,
     const {param} = this.props
     const {
       id,
-      vizPermisstion,
-      viewPermisstion,
-      sharePermisstion,
-      sourcePermisstion,
-      widgetPermisstion,
-      downloadPermisstion,
-      schedulePermisstion
+      vizPermission,
+      viewPermission,
+      sharePermission,
+      sourcePermission,
+      widgetPermission,
+      downloadPermission,
+      schedulePermission
     } = param
     this.props.form.setFieldsValue({
       id,
-      vizPermisstion,
-      viewPermisstion,
-      sharePermisstion,
-      sourcePermisstion,
-      widgetPermisstion,
-      downloadPermisstion,
-      schedulePermisstion
+      vizPermission,
+      viewPermission,
+      sharePermission,
+      sourcePermission,
+      widgetPermission,
+      downloadPermission,
+      schedulePermission
     })
   }
   public render () {
@@ -64,6 +65,7 @@ export class PermissionLevel extends React.PureComponent <IPermissionLevelProps,
         offset: 1
       }
     }
+    const { role } = this.props
     const { getFieldDecorator } = this.props.form
     const permission = permissions.map((per) => {
       switch (per) {
@@ -76,11 +78,11 @@ export class PermissionLevel extends React.PureComponent <IPermissionLevelProps,
                 label={per}
                 {...formItemLayout}
               >
-                {getFieldDecorator(`${per}Permisstion`, {
+                {getFieldDecorator(`${per}Permission`, {
                   rules: [],
                   initialValue: false
                 })(
-                  <Radio.Group size="small" onChange={this.handleSelectChange}>
+                  <Radio.Group size="small" disabled={!role} onChange={this.handleSelectChange}>
                     <RadioButton value={false}>禁止</RadioButton>
                     <RadioButton value={true}>允许</RadioButton>
                   </Radio.Group>
@@ -96,10 +98,10 @@ export class PermissionLevel extends React.PureComponent <IPermissionLevelProps,
                 label={per}
                 {...formItemLayout}
               >
-                {getFieldDecorator(`${per}Permisstion`, {
+                {getFieldDecorator(`${per}Permission`, {
                   rules: []
                 })(
-                  <Radio.Group size="small" onChange={this.handleSelectChange}>
+                  <Radio.Group size="small" disabled={!role} onChange={this.handleSelectChange}>
                     <RadioButton value={0}>隐藏</RadioButton>
                     <RadioButton value={1}>只读</RadioButton>
                     <RadioButton value={2}>修改</RadioButton>

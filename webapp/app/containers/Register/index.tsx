@@ -94,8 +94,17 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
 
   private signUp = () => {
     const { onSignup } = this.props
-    const { username, email, password} = this.state
-    if (username && password && email) {
+    const { username, email, password, password2} = this.state
+    const emailRep = /^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$/
+    if (username && password && email && password2) {
+      if (!emailRep.test(email)) {
+        Message.error('无效的邮箱地址')
+        return
+      }
+      if (password !== password2) {
+        Message.error('两次输入的密码不一致')
+        return
+      }
       onSignup(username, email, password, () => {
         this.setState({
           step: 'second'
