@@ -111,7 +111,6 @@ function dashboardReducer (state = initialState, action) {
     case ADD_DASHBOARD:
       return state.set('modalLoading', true)
     case ADD_DASHBOARD_SUCCESS:
-      console.log('0001', payload)
       if (dashboards) {
         dashboards.push(payload.result)
         return state

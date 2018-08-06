@@ -97,7 +97,6 @@ export function* addDashboard ({ payload }) {
       url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
       data: dashboard
     })
-    console.log({asyncData})
     yield put(dashboardAdded(asyncData.payload))
     resolve(asyncData.payload.id)
   } catch (err) {
@@ -153,6 +152,7 @@ export function* deleteDashboard ({ payload }) {
 }
 
 export function* getDashboardDetail ({ payload }) {
+  // TODO: mockData 为模拟数据，待与真实数据联调时删除
   // const { projectId, portalId, dashboardId, selectedDashboard } = payload
   const { projectId, portalId, dashboardId } = payload
   const clonedData = {
