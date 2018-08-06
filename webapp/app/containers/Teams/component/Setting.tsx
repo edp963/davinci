@@ -27,10 +27,24 @@ interface ISettingProps {
 export class Setting extends React.PureComponent <ISettingProps> {
   public componentDidMount () {
     const { currentTeam } = this.props
-    this.forceUpdate(() => {
-      const { id, name, description, parentTeamId, visibility } = currentTeam
-      this.props.form.setFieldsValue({id, name, description, parentTeamId, visibility})
+    this.setFieldData(currentTeam)
+  }
+  private parentTeamChange = (val) =>
+    new Promise((resolve) => {
+      this.forceUpdate(() => resolve())
     })
+  private setFieldData = (currentTeam) => {
+    const { id, name, description, parentTeamId, visibility } = currentTeam
+    this.parentTeamChange(`${parentTeamId}`).then(() => {
+      this.props.form.setFieldsValue({id, name, description, parentTeamId: `${parentTeamId}`, visibility})
+    })
+  }
+  public componentWillReceiveProps (nextProps) {
+    const {id} = this.props.currentTeam
+    const nextId = nextProps.currentTeam.id
+    if (id !== nextId) {
+      this.setFieldData(nextProps.currentTeam)
+    }
   }
   private filterTeamsByOrg = (teams) => {
     if (teams) {
@@ -83,13 +97,11 @@ export class Setting extends React.PureComponent <ISettingProps> {
                   <FormItem
                     {...commonFormItemStyle}
                     hasFeedback
-                    label="姓名"
+                    label="名称"
                   >
                     {getFieldDecorator('name', {
                       initialValue: '',
-                      rules: [{ required: true }, {
-                        // validator: this.checkNameUnique
-                      }]
+                      rules: [{ required: true }, {}]
                     })(
                       <Input size="large" placeholder="Name"/>
                     )}
@@ -105,9 +117,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                       rules: [{
                         required: true,
                         message: 'description 不能为空'
-                      }, {
-                        //  validator: this.checkNameUnique
-                      }]
+                      }, {}]
                     })(
                       <Input placeholder="description" />
                     )}
@@ -116,9 +126,10 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <Col>
                   <FormItem label="上级" {...commonFormItemStyle}>
                     {getFieldDecorator('parentTeamId', {
-                      initialValue: ''
-                    })(
+                      })(
                       <Select
+                        disabled
+                        onChange={this.parentTeamChange}
                         placeholder="Please select a team"
                       >
                         {teamsOptions}

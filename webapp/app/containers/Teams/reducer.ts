@@ -62,9 +62,9 @@ function teamReducer (state = initialState, action) {
       return state.set('teams', payload.teams)
     case LOAD_TEAMS_FAILURE:
       return state
-    case EDIT_TEAM_SUCCESS:
-      teams.splice(teams.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      return state.set('teams', teams.slice())
+    // case EDIT_TEAM_SUCCESS:
+    //   teams.splice(teams.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+    //   return state.set('teams', teams.slice())
     case DELETE_TEAM_SUCCESS:
       return state.set('teams', teams.filter((d) => d.id !== payload.id))
     case LOAD_TEAM_DETAIL:
@@ -106,7 +106,10 @@ function teamReducer (state = initialState, action) {
     case LOAD_TEAM_MEMBERS_SUCCESS:
       return state.set('currentTeamMembers', payload.members)
     case CHANGE_MEMBER_ROLE_TEAM_SUCCESS:
-      currentTeamMembers.splice(currentTeamMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+      const targetIndex = currentTeamMembers.findIndex((d) => d.id === payload.relationId)
+      const newTarget = {...currentTeamMembers[targetIndex]}
+      newTarget.user.role = payload.newRole
+      currentTeamMembers.splice(targetIndex, 1, newTarget)
       return state.set('currentTeamMembers', currentTeamMembers.slice())
     case LOAD_TEAM_TEAMS_SUCCESS:
       return state.set('currentTeamTeams', payload.teams)

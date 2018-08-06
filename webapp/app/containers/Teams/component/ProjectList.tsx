@@ -21,8 +21,8 @@ import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {ITeamProjects} from '../Team'
 import Avatar from '../../../components/Avatar'
-
-
+import ComponentPermission from '../../Account/components/checkMemberPermission'
+import {CREATE_ORGANIZATION_PROJECT} from '../../App/constants'
 
 interface ITag {
   description: string
@@ -46,8 +46,9 @@ interface IProjectListProps {
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any)=>any
 }
 interface IProjectListState {
-  modalLoading: boolean,
-  formType: string,
+  modalLoading: boolean
+  formKey?: number
+  formType: string
   formVisible: boolean
 }
 export class ProjectList extends React.PureComponent<IProjectListProps, IProjectListState> {
@@ -55,6 +56,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
   constructor (props) {
     super(props)
     this.state = {
+      formKey: 0,
       modalLoading: false,
       formType: '',
       formVisible: false
@@ -77,7 +79,8 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
 
   private hideAddForm = () => {
     this.setState({
-      formVisible: false
+      formVisible: false,
+      formKey: this.state.formKey + 30
     })
   }
 
@@ -119,6 +122,11 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     e.stopPropagation()
   }
   private headerPanel = (props) => {
+    const {currentTeam} = this.props
+    let CreateButton = void 0
+    if (currentTeam) {
+      CreateButton = ComponentPermission(currentTeam, '')(Button)
+    }
     return (
       <div className={styles.headerPanel}>
         <div className={styles.titleWrapper}>
@@ -134,7 +142,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
             onConfirm={this.props.deleteProject(event, props.id)}
           >
             <Tooltip title="删除">
-              <Button shape="circle" onClick={this.stopPPG}><Icon type="close"/></Button>
+              <CreateButton shape="circle" icon="close" onClick={this.stopPPG}/>
             </Tooltip>
           </Popconfirm>
         </div>
@@ -145,12 +153,17 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
   public render () {
     const { formVisible, formType, modalLoading} = this.state
     const {currentTeam, currentOrganizationProjects, currentTeamProjects} = this.props
-    const projectList = <Collapse  bordered={false}  defaultActiveKey={['project0']}>
+    let CreateButton = void 0
+    if (currentTeam) {
+      CreateButton = ComponentPermission(currentTeam, '')(Button)
+    }
+    const projectList = <Collapse  defaultActiveKey={['project0']}>
       {
         currentTeamProjects ? currentTeamProjects.map((project, index) =>
           (<Collapse.Panel header={this.headerPanel(project)} key={`project${index}`}>
             <PermissionLevel
               param={project}
+              role={currentTeam.role}
               selectChanged={this.selectChanged(`${project.project.id}permissionForm`)}
               ref={(f) => { this[`${project.project.id}permissionForm`] = f }}
             />
@@ -159,7 +172,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     </Collapse>
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
-        <Button
+        <CreateButton
           size="large"
           type="primary"
           icon="plus"
@@ -170,32 +183,21 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     return (
       <div className={styles.listWrapper}>
         <Row>
-          <Col span={4}>
-            <Select
-              size="large"
-              placeholder="placeholder"
-              onChange={this.onSearchProjectType}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Select.Option value="rmb">我收藏的</Select.Option>
-              <Select.Option value="dollar">Dollar</Select.Option>
-            </Select>
-          </Col>
-          <Col span={16} offset={1}>
+          <Col span={16}>
             <Input.Search
               size="large"
               placeholder="Dashboard 名称"
               onSearch={this.onSearchProject}
             />
           </Col>
-          <Col span={1} offset={2}>
+          <Col span={1} offset={7}>
             {addButton}
           </Col>
         </Row>
         <div style={{height: '24px'}}/>
         {projectList}
         <Modal
+          key={this.state.formKey}
           title={null}
           footer={null}
           visible={formVisible}

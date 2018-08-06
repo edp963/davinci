@@ -5,13 +5,14 @@ const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const styles = require('../Organization.less')
-const Select = require('antd/lib/select')
 const Modal = require('antd/lib/modal')
 import ProjectItem from './ProjectItem'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
-
+import ComponentPermission from '../../Account/components/checkMemberPermission'
+import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
+import {IOrganization} from '../Organization'
 interface IProjectsState {
   formType?: string
   formVisible: boolean
@@ -21,6 +22,7 @@ interface IProjectsState {
 interface IProjectsProps {
   loginUser: any
   organizationId: number
+  currentOrganization: IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
   onAddProject: (project: any, resolve: () => any) => any
@@ -94,10 +96,14 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   }
   public render () {
     const { formVisible, formType, modalLoading } = this.state
-    const { organizationProjects } = this.props
+    const { organizationProjects, currentOrganization } = this.props
+    let CreateButton = void 0
+    if (currentOrganization) {
+       CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
+    }
     const addButton =  (
           <Tooltip placement="bottom" title="创建">
-            <Button
+            <CreateButton
               size="large"
               type="primary"
               icon="plus"
@@ -107,6 +113,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       )
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
+        currentOrganization={currentOrganization}
         key={index}
         loginUser={this.props.loginUser}
         options={lists}
@@ -117,27 +124,15 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     return (
       <div className={styles.listWrapper}>
         <Row>
-          <Col span={4}>
-            <Select
-              size="large"
-              placeholder="placeholder"
-              onChange={this.onSearchProjectType}
-              style={{ width: 120 }}
-              allowClear
-            >
-              <Select.Option value="rmb">我收藏的</Select.Option>
-              <Select.Option value="dollar">Dollar</Select.Option>
-            </Select>
-          </Col>
-          <Col span={16} offset={1}>
+          <Col span={16}>
             <Input.Search
               size="large"
               placeholder="Dashboard 名称"
               onSearch={this.onSearchProject}
             />
           </Col>
-          <Col span={1} offset={2}>
-            {addButton}
+          <Col span={1} offset={7}>
+              {addButton}
           </Col>
         </Row>
         <Row>

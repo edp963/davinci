@@ -28,6 +28,9 @@ import {
   EDIT_PROJECT,
   EDIT_PROJECT_SUCCESS,
   EDIT_PROJECT_FAILURE,
+  TRANSFER_PROJECT,
+  TRANSFER_PROJECT_SUCCESS,
+  TRANSFER_PROJECT_FAILURE,
   DELETE_PROJECT,
   DELETE_PROJECT_SUCCESS,
   DELETE_PROJECT_FAILURE,
@@ -118,6 +121,31 @@ export function editProjectFail () {
   }
 }
 
+export function transferProject (id, orgId) {
+  return {
+    type: TRANSFER_PROJECT,
+    payload: {
+      id,
+      orgId
+    }
+  }
+}
+
+export function projectTransfered (result) {
+  return {
+    type: TRANSFER_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function transferProjectFail () {
+  return {
+    type: TRANSFER_PROJECT_f
+  }
+}
+
 export function deleteProject (id) {
   return {
     type: DELETE_PROJECT,
@@ -142,24 +170,19 @@ export function deleteProjectFail () {
   }
 }
 
-export function projectDetailLoaded (project, widgets) {
+export function projectDetailLoaded (project) {
   return {
     type: LOAD_PROJECT_DETAIL_SUCCESS,
     payload: {
-      project,
-      widgets
+      project
     }
   }
 }
 
 
-export function loadProjectDetailFail (project, widgets) {
+export function loadProjectDetailFail () {
   return {
-    type: LOAD_PROJECT_DETAIL_FAILURE,
-    payload: {
-      project,
-      widgets
-    }
+    type: LOAD_PROJECT_DETAIL_FAILURE
   }
 }
 

@@ -68,6 +68,7 @@ const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import {userPasswordChanged} from '../App/actions'
 
 export function* getOrganizations () {
   try {
@@ -198,8 +199,15 @@ export function* searchMember ({payload}) {
       method: 'get',
       url: `${api.user}?keyword=${keyword}`
     })
-    const result = readListAdapter(asyncData)
-    yield put(memberSearched(result))
+    const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
+    const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
+    if (code && code === 400) {
+      message.error(msg)
+    }
+    if (code && code === 200) {
+      const result = readListAdapter(asyncData)
+      yield put(memberSearched(result))
+    }
   } catch (err) {
     yield put(searchMemberFail())
     message.error('查找用户失败， 请稍后再试')

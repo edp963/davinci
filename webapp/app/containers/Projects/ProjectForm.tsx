@@ -39,6 +39,7 @@ interface IProjectsFormProps {
   form: any
   onCheckName: (id, name, type, resolve, reject) => void
   organizations?: any
+  onTransfer: () => any
   onModalOk: () => any
   modalLoading: boolean
   onWidgetTypeChange: () => any
@@ -51,7 +52,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     super(props)
   }
   public render () {
-    const { organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
+    const { type, organizations, modalLoading, onCheckUniqueName, onWidgetTypeChange } = this.props
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
       labelCol: { span: 3 },
@@ -70,12 +71,24 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
       </Button>
     )]
 
+    const transferButtons = [(
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        onClick={this.props.onTransfer}
+        loading={modalLoading}
+        disabled={modalLoading}
+      >
+        移交
+      </Button>
+    )]
     const organizationOptions = organizations ? organizations.map((o) => (
-      <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
+      <Option key={o.id} value={`${o.id}`} disabled={o.allowCreateProject === false} className={styles.selectOption}>
         <div className={styles.title}>
-          <span className={styles.owner}>{o.name}</span>
+          <span className={styles.owner} style={{color: o.allowCreateProject === false ? '#ccc' : '#444444'}}>{o.name}</span>
           {`${o.id}` !== this.props.form.getFieldValue('orgId')
-            ? (<Tag color="#108ee9">Owner</Tag>)
+            ? <Tag color={`${ o.allowCreateProject === false ? '#ccc' : '#108ee9'}`}>Owner</Tag>
             : ''}
         </div>
         {`${o.id}` !== this.props.form.getFieldValue('orgId')
@@ -84,13 +97,25 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
       </Option>
     )) : ''
     const isShowOrganization = classnames({
-      [utilStyles.hide]: this.props.type === 'organizationProject'
+      [utilStyles.hide]: (this.props.type === 'organizationProject') || (this.props.type === 'edit')
     })
+    const isShowDesc = classnames({
+      [utilStyles.hide]: this.props.type === 'transfer'
+    })
+    const isShowVisibility = classnames({
+      [utilStyles.hide]: this.props.type !== 'edit'
+    })
+    let modalTitle = '创建'
+    if (type === 'edit') {
+      modalTitle = '修改'
+    } else if (type === 'transfer') {
+      modalTitle = '移交'
+    }
     return (
       <div className={styles.formWrapper}>
         <div className={styles.header}>
           <div className={styles.title}>
-            创建项目
+            {modalTitle}项目
           </div>
           <div className={styles.desc}>
             项目属于组织，在项目中可以通过配置source，生成可视化图表
@@ -123,8 +148,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     </Select>
                   )}
                 </FormItem>
-                <FormItem label="名称" {...commonFormItemStyle}>
+                <FormItem label="名称" {...commonFormItemStyle} className={isShowDesc}>
                   {getFieldDecorator('name', {
+                    hidden: this.props.type === 'transfer',
                     rules: [{
                       required: true,
                       message: 'Name 不能为空'
@@ -137,8 +163,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem label="描述" {...commonFormItemStyle}>
+                <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
                   {getFieldDecorator('description', {
+                    hidden: this.props.type === 'transfer',
                     initialValue: ''
                   })(
                     <Input
@@ -150,9 +177,26 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
+                <FormItem label="可见性" {...commonFormItemStyle} className={isShowVisibility}>
+                  {getFieldDecorator('visibility', {
+                    hidden: this.props.type !== 'edit',
+                    initialValue: ''
+                  })(
+                    <Select>
+                      <Option key="visibility" value="1">
+                        可见
+                      </Option>
+                      <Option key="hidden" value="0">
+                        隐藏
+                      </Option>
+                    </Select>
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
                 <FormItem className={utilStyles.hide}>
                   {getFieldDecorator('pic', {
-                    hidden: this.props.type === 'add'
+                    hidden: (this.props.type === 'add') || (this.props.type === 'transfer')
                   })(
                     <Input />
                   )}
@@ -162,7 +206,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           </Form>
         </div>
         <div className={styles.footer}>
-          {modalButtons}
+          {type === 'transfer' ? transferButtons : modalButtons}
         </div>
       </div>
     )

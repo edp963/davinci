@@ -6,7 +6,6 @@ import { Link } from 'react-router'
 const Icon = require('antd/lib/icon')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
 const Tag = require('antd/lib/tag')
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -56,11 +55,11 @@ export class Teams extends React.PureComponent <ITeamProps> {
   public render () {
     const { teams } = this.props
     const teamArr = teams ? teams.map((team) => (
-        <div className={styles.groupList} key={team.id}>
+        <div className={styles.groupList} key={`team${team.id}`}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
               <Avatar path={team.avatar} enlarge={false} size="small"/>
-              <Tag className={styles.orgName}>{team.organization.name}</Tag>/
+              <Tag className={styles.orgName} color="#2db7f5">{team.organization.name}</Tag>/
               &nbsp;<div className={styles.title}>{team.name}</div>
             </div>
           </div>

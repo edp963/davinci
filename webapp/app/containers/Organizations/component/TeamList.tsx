@@ -1,9 +1,8 @@
 import * as React from 'react'
 import {compose} from 'redux'
-import teamReducer from '../../Teams/reducer'
+// import teamReducer from '../../Teams/reducer'
 import {makeSelectLoginUser} from '../../App/selectors'
 import injectReducer from '../../../utils/injectReducer'
-import {loadTeams} from '../../Teams/actions'
 import {createStructuredSelector} from 'reselect'
 import injectSaga from '../../../utils/injectSaga'
 import TeamForm from './TeamForm'
@@ -11,26 +10,24 @@ import {makeSelectTeams} from '../../Teams/selectors'
 import {connect} from 'react-redux'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {InjectedRouter} from 'react-router/lib/Router'
-import teamSaga from '../../Teams/sagas'
+// import teamSaga from '../../Teams/sagas'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
 const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
 const styles = require('../Organization.less')
 import * as Organization from '../Organization'
 import {checkNameUniqueAction} from '../../App/actions'
 import {addTeam} from '../actions'
-import {editTeam, deleteTeam} from '../../Teams/actions'
+import {loadTeams, editTeam, deleteTeam} from '../../Teams/actions'
 import Avatar from '../../../components/Avatar'
 import sagaApp from '../../App/sagas'
 import reducerApp from '../../App/reducer'
-
+import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 interface ITeamsState {
   formVisible: boolean
@@ -46,6 +43,7 @@ interface ITeamsProps {
   currentOrganization: Organization.IOrganization
   organizationTeams: Organization.IOrganizationTeams
   organizations: any
+  loadOrganizationTeams: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -110,6 +108,10 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           pic: `${Math.ceil(Math.random() * 19)}`,
           config: '{}'
         }, () => {
+          const { id } = currentOrganization
+          if (this.props.loadOrganizationTeams) {
+            this.props.loadOrganizationTeams(Number(id))
+          }
           this.hideTeamForm()
         })
       }
@@ -163,11 +165,15 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
 
   public render () {
     const {formVisible, modalLoading} = this.state
-    const {organizations, organizationTeams, currentOrganization:{id}} = this.props
+    const {organizationTeams, currentOrganization, currentOrganization: {id}} = this.props
     this.filter(organizationTeams)
+    let CreateButton = void 0
+    if (currentOrganization) {
+      CreateButton = ComponentPermission(currentOrganization, '')(Button)
+    }
     const addButton = (
       <Tooltip placement="bottom" title="创建">
-        <Button
+        <CreateButton
           size="large"
           type="primary"
           icon="plus"
@@ -221,7 +227,6 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
             <Table
               bordered
               columns={columns}
-              //  rowSelection={rowSelection}
               dataSource={organizationTeams}
             />
           </div>
@@ -267,17 +272,17 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducer = injectReducer({key: 'team', reducer: teamReducer})
-const withSaga = injectSaga({key: 'team', saga: teamSaga})
+// const withReducer = injectReducer({key: 'team', reducer: teamReducer})
+// const withSaga = injectSaga({key: 'team', saga: teamSaga})
 
 const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
 const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
 
 export default compose(
-  withReducer,
+//  withReducer,
   withAppReducer,
   withAppSaga,
-  withSaga,
+ // withSaga,
   withConnect
 )(TeamList)
 
