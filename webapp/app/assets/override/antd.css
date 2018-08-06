@@ -177,3 +177,7 @@
 .ant-calendar-picker-input {
   line-height: 1;
 }
+
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher {
+  background: inherit;
+}

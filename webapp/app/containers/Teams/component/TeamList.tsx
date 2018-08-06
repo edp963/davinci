@@ -13,6 +13,7 @@ import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
+import {IOrganizationMembers} from '../../Organizations/Organization'
 
 interface ITeamListState {
   modalLoading: boolean,
@@ -57,7 +58,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
   }
   private toThatTeam = (text, record) => () => {
     const {id} = record
-    console.log(id)
     if (id) {
       this.props.toThatTeam(`account/team/${id}`)
     }
@@ -88,17 +88,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
     const { formVisible } = this.state
     const { currentTeamTeams } = this.props
     this.filter(currentTeamTeams)
-    const addButton =  (
-      <Tooltip placement="bottom" title="添加">
-        <Button
-          size="large"
-          type="primary"
-          icon="plus"
-          onClick={this.showAddForm('team')}
-        />
-      </Tooltip>
-    )
-
     const columns = [{
       title: 'Name',
       dataIndex: 'name',
@@ -125,7 +114,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       key: 'visibility',
       render: (text) => text ? '公开（可见）' : '私密（不可见）'
     }]
-
     return (
       <div className={styles.listWrapper}>
         <Row>

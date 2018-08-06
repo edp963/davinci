@@ -208,7 +208,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     this.setState({
       width,
       height
-    }
+    })
   }
 
   private onResizeStop = () => {

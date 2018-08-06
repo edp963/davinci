@@ -34,7 +34,6 @@ import saga from './sagas'
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
-import AntdFormType from 'antd/lib/form/Form'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -80,18 +79,13 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
     }
   }
 
-  private bizlogicForm: AntdFormType = null
-  private refHandlers = {
-    bizlogicForm: (ref) => this.bizlogicForm = ref
-  }
-
   public componentWillMount () {
     this.props.onLoadBizlogics(this.props.params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
   public componentWillReceiveProps (props) {
-    const { loginUser } = this.props
+    // const { loginUser } = this.props
 
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 

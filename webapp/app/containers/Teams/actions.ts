@@ -40,14 +40,25 @@ import {
   LOAD_TEAM_TEAMS,
   LOAD_TEAM_TEAMS_SUCCESS,
   LOAD_TEAM_TEAMS_FAILURE,
+  PULL_MEMBER_IN_TEAM,
+  PULL_MEMBER_IN_TEAM_SUCCESS,
+  PULL_MEMBRE_IN_TEAM_FAILURE,
   PULL_PROJECT_IN_TEAM,
   PULL_PROJECT_IN_TEAM_SUCCESS,
   PULL_PROJECT_IN_TEAM_FAILURE,
   UPDATE_TEAM_PROJECT_PERMISSION,
   UPDATE_TEAM_PROJECT_PERMISSION_SUCCESS,
-  UPDATE_TEAM_PROJECT_PERMISSION_FAILURE
+  UPDATE_TEAM_PROJECT_PERMISSION_FAILURE,
+  DELETE_TEAM_PROJECT,
+  DELETE_TEAM_PROJECT_FAILURE,
+  DELETE_TEAM_PROJECT_SUCCESS,
+  DELETE_TEAM_MEMBER,
+  DELETE_TEAM_MEMBER_SUCCESS,
+  DELETE_TEAM_MEMBER_ERROR,
+  CHANGE_MEMBER_ROLE_TEAM,
+  CHANGE_MEMBER_ROLE_TEAM_ERROR,
+  CHANGE_MEMBER_ROLE_TEAM_SUCCESS
 } from './constants'
-
 
 
 export function loadTeams () {
@@ -72,12 +83,11 @@ export function loadTeamsFail () {
 }
 
 
-export function editTeam (team, resolve) {
+export function editTeam (team) {
   return {
     type: EDIT_TEAM,
     payload: {
-      team,
-      resolve
+      team
     }
   }
 }
@@ -97,11 +107,12 @@ export function editTeamFail () {
   }
 }
 
-export function deleteTeam (id) {
+export function deleteTeam (id, resolve) {
   return {
     type: DELETE_TEAM,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -272,9 +283,105 @@ export function updateTeamProjectPermissionFail () {
   }
 }
 
+export function deleteTeamProject (relationId) {
+  return {
+    type: DELETE_TEAM_PROJECT,
+    payload: {
+      relationId
+    }
+  }
+}
 
+export function teamProjectDeleted (id) {
+  return {
+    type: DELETE_TEAM_PROJECT_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
 
+export function deleteTeamProjectFail () {
+  return {
+    type: DELETE_TEAM_PROJECT_FAILURE
+  }
+}
 
+export function deleteTeamMember (relationId) {
+  return {
+    type: DELETE_TEAM_MEMBER,
+    payload: {
+      relationId
+    }
+  }
+}
+
+export function teamMemberDeleted (id) {
+  return {
+    type: DELETE_TEAM_MEMBER_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function deleteTeamMemberFail () {
+  return {
+    type: DELETE_TEAM_MEMBER_ERROR
+  }
+}
+
+export function pullMemberInTeam (teamId, memberId, resolve) {
+  return {
+    type: PULL_MEMBER_IN_TEAM,
+    payload: {
+      teamId,
+      memberId,
+      resolve
+    }
+  }
+}
+
+export function memberInTeamPulled (result) {
+  return {
+    type: PULL_MEMBER_IN_TEAM_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function pullMemberInTeamFail () {
+  return {
+    type: PULL_MEMBRE_IN_TEAM_FAILURE
+  }
+}
+
+export function changeTeamMemberRole (relationId, newRole) {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM,
+    payload: {
+      relationId,
+      newRole
+    }
+  }
+}
+
+export function teamMemberRoleChanged (relationId, newRole) {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM_SUCCESS,
+    payload: {
+      relationId,
+      newRole
+    }
+  }
+}
+
+export function changeTeamMemberRoleFail () {
+  return {
+    type: CHANGE_MEMBER_ROLE_TEAM_ERROR
+  }
+}
 
 
 

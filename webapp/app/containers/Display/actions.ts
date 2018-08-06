@@ -281,6 +281,22 @@ export function pasteSlideLayersFail () {
   }
 }
 
+export function recordOperationData () {
+  return {
+    type: ActionTypes.RECORD_OPERATION_DATA
+  }
+}
+export function undoOperation () {
+  return {
+    type: ActionTypes.UNDO_OPERATION
+  }
+}
+export function redoOperation () {
+  return {
+    type: ActionTypes.REDO_OPERATION
+  }
+}
+
 export function addDisplayLayers (displayId: any, slideId: any, layers: any[]) {
   return {
     type: ActionTypes.ADD_DISPLAY_LAYERS,

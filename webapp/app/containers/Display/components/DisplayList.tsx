@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
-const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
 const Tooltip = require('antd/lib/tooltip')
@@ -11,6 +10,7 @@ const Modal = require('antd/lib/modal')
 
 const styles = require('../Display.less')
 
+import EllipsisList from '../../../components/EllipsisList'
 import DisplayForm from './DisplayForm'
 
 export interface IDisplay {
@@ -32,76 +32,26 @@ export interface IDisplayEvent {
 
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
-  displays: IDisplay[],
-  rows?: number
+  displays: IDisplay[]
 }
 
 interface IDisplayListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
-  formVisible: boolean,
-  screenWidth: number,
-  withEllipsis: boolean
+  formVisible: boolean
 }
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
 
   private displayForm: WrappedFormUtils
 
-  private layoutSetting = {
-    xs: {
-      minWidth: 0,
-      cols: 1
-    },
-    sm: {
-      minWidth: 768,
-      cols: 2
-    },
-    md: {
-      minWidth: 992,
-      cols: 3
-    },
-    lg: {
-      minWidth: 1200,
-      cols: 4
-    },
-    xl: {
-      minWidth: 1600,
-      cols: 6
-    }
-  }
-
   constructor (props: IDisplayListProps) {
     super(props)
     this.state = {
       modalLoading: false,
       formType: 'add',
-      formVisible: false,
-      screenWidth: 0,
-      withEllipsis: true
+      formVisible: false
     }
-  }
-
-  public componentWillMount () {
-    this.setState({ screenWidth: document.documentElement.clientWidth })
-  }
-
-  public componentWillReceiveProps (nextProps: IDisplayListProps) {
-    if (nextProps.rows) {
-      window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
-    }
-  }
-
-  private getColumns = () => {
-    const { screenWidth } = this.state
-    let cols = 0
-    Object.keys(this.layoutSetting).every((item) => {
-      const setting = this.layoutSetting[item]
-      const pass = screenWidth >= setting.minWidth
-      if (pass) { cols = setting.cols }
-      return pass
-    })
-    return cols
   }
 
   private stopPPG = (e) => {
@@ -150,35 +100,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
-  private renderEmpty = () => {
-    return (
-      <Col
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
-        key="empty"
-      >
-        <div className={styles.display}>
-          <Tooltip title="点击查看全部">
-            <div onClick={this.showAll} className={styles.moreContainer}>
-              <div className={styles.more}/>
-              <div className={styles.more}/>
-              <div className={styles.more}/>
-            </div>
-          </Tooltip>
-        </div>
-      </Col>
-    )
-  }
-
-  private showAll = () => {
-    this.setState({
-      withEllipsis: false
-    })
-  }
-
   private renderDisplay (display: IDisplay) {
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
@@ -224,10 +145,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, rows } = this.props
+    const { displays, projectId } = this.props
     if (!Array.isArray(displays)) { return null }
 
-    const { formType, formVisible, modalLoading, withEllipsis } = this.state
+    const { formType, formVisible, modalLoading } = this.state
 
     const modalButtons = [(
       <Button
@@ -250,16 +171,11 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       </Button>
     )]
 
-    let shownDisplays = [...displays]
-    if (rows && withEllipsis) {
-      const cols = this.getColumns()
-      shownDisplays = shownDisplays.slice(0, rows * cols - 1)
-    }
-
     return (
-      <Row gutter={20}>
-        {shownDisplays.map((d) => this.renderDisplay(d))}
-        {rows && withEllipsis ? this.renderEmpty() : null}
+      <div>
+        <EllipsisList rows={2}>
+          {displays.map((d) => this.renderDisplay(d))}
+        </EllipsisList>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Display`}
           wrapClassName="ant-modal-small"
@@ -273,7 +189,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
             ref={(f) => { this.displayForm = f }}
           />
         </Modal>
-      </Row>
+      </div>
     )
   }
 }

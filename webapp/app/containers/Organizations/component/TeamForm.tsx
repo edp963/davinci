@@ -33,30 +33,39 @@ import Avatar from '../../../components/Avatar'
 const styles = require('../Organization.less')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
+import {ITeam} from './TeamList'
 
 
-const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectsFormProps {
   type: string
   form: any
+  orgId: number
+  teams: ITeam[]
   modalLoading: boolean
-  organizations: any
   onModalOk: () => any
-  organizationTeams: any
   onWidgetTypeChange: () => any
+  onOrganizationTypeChange: () => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
-  public render () {
-    const { organizations, onOrganizationTypeChange, organizationTeams, modalLoading } = this.props
-    const { getFieldDecorator } = this.props.form
-    const commonFormItemStyle = {
-      labelCol: { span: 3 },
-      wrapperCol: { span: 24 }
+  private filterTeamsByOrg = (teams) => {
+    if (teams) {
+      const { orgId } = this.props
+      const result =  teams.filter((team) => {
+        if (team.organization.id === orgId) {
+          return team
+        }
+      })
+      return result
     }
-    const organizationTeamsOptions = organizationTeams ? organizationTeams.map((o) => (
+  }
+  public render () {
+    const { onOrganizationTypeChange, modalLoading, teams } = this.props
+    const { getFieldDecorator } = this.props.form
+    const filterTeams = this.filterTeamsByOrg(teams)
+    const teamsOptions = filterTeams ? filterTeams.map((o) => (
       <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
         <div className={styles.title}>
           <span className={styles.owner}>{o.name}</span>
@@ -66,6 +75,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           : ''}
       </Option>
     )) : ''
+    const commonFormItemStyle = {
+      labelCol: { span: 3 },
+      wrapperCol: { span: 24 }
+    }
     const modalButtons = [(
       <Button
         key="submit"
@@ -92,11 +105,6 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           <Form>
             <Row gutter={8}>
               <Col span={24}>
-                {/*<FormItem className={utilStyles.hide}>*/}
-                  {/*{getFieldDecorator('orgId', {})(*/}
-                    {/*<Input />*/}
-                  {/*)}*/}
-                {/*</FormItem>*/}
                 <FormItem label="名称" {...commonFormItemStyle}>
                   {getFieldDecorator('name', {
                     rules: [{
@@ -132,7 +140,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                       placeholder="Please select a team"
                       onChange={onOrganizationTypeChange}
                     >
-                      {organizationTeamsOptions}
+                      {teamsOptions}
                     </Select>
                   )}
                 </FormItem>

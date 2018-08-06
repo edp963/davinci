@@ -19,12 +19,18 @@
  */
 
 import { createSelector } from 'reselect'
+import {create} from 'domain'
 
 const selectTeam = (state) => state.get('team')
 
 const makeSelectTeams = () => createSelector(
   selectTeam,
   (teamState) => teamState.get('teams')
+)
+
+const makeSelectTeamRouter = () => createSelector(
+  selectTeam,
+  (teamState) => teamState.get('teamRouter')
 )
 
 const makeSelectCurrentTeams = () => createSelector(
@@ -50,6 +56,7 @@ const makeSelectCurrentTeamMembers = () => createSelector(
 export {
   selectTeam,
   makeSelectTeams,
+  makeSelectTeamRouter,
   makeSelectCurrentTeams,
   makeSelectCurrentTeamProjects,
   makeSelectCurrentTeamTeams,

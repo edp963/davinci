@@ -113,7 +113,7 @@ interface IBizlogicFormProps {
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
   onHideNavigator: () => void
-  onLoadSources: (projectId: number) => any
+  onLoadSources: (projectId: number, resolve: any) => any
 }
 
 interface IBizlogicFormState {
@@ -158,29 +158,29 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   public componentWillMount () {
-    this.props.onLoadSources(this.props.params.pid)
-  }
-
-  public componentWillReceiveProps (nextProps) {
-    const { route, onLoadSchema } = this.props
-    const { sources } = nextProps
-    if ((sources as any[]).length) {
-      onLoadSchema(sources[0].id, (result) => {
-        this.setState({
-          schemaData: result,
-          sourceIdGeted: sources[0].id
-        }, () => {
-          this.promptCodeMirror(generateData(this.state.schemaData))
-        })
+    new Promise((resolve) => {
+      this.props.onLoadSources(this.props.params.pid, (result) => {
+        resolve(result)
       })
-    } else {
-      return
-    }
+    }).then((result) => {
+      if ((result as any[]).length) {
+        this.props.onLoadSchema(result[0].id, (res) => {
+          this.setState({
+            schemaData: res,
+            sourceIdGeted: result[0].id
+          }, () => {
+            this.promptCodeMirror(generateData(this.state.schemaData))
+          })
+        })
+      } else {
+        return
+      }
+    })
   }
 
   public componentDidMount () {
-    const { params, sources, bizlogics } = this.props
-    const { isDeclarate, schemaData } = this.state
+    const { params } = this.props
+    const { schemaData } = this.state
 
     this.props.onHideNavigator()
 
@@ -360,6 +360,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       this.setState({
         schemaData: result,
         sourceIdGeted: Number(sourceId)
+      }, () => {
+        this.promptCodeMirror(generateData(this.state.schemaData))
       })
     })
   }
@@ -547,7 +549,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
       : []
 
-    console.log('source', sources)
     let sourceOptions = []
     if (sources) {
       sourceOptions = (sources as any[]).map((s) => (
@@ -828,15 +829,17 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Row>
         </Row>
       </Form>
-        <Button
-          className={styles.footBtn}
-          size="large"
-          type="primary"
-          loading={modalLoading}
-          onClick={this.onModalOk}
-        >
-          保存
-        </Button>
+        <div className={styles.footBtn}>
+          <Button
+            className={styles.btn}
+            size="large"
+            type="primary"
+            loading={modalLoading}
+            onClick={this.onModalOk}
+          >
+            保存
+          </Button>
+        </div>
       </div>
     )
   }
@@ -853,13 +856,13 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (projectId, id, name, type, resolve, reject) => dispatch(projectsCheckName(projectId, id, name, type, resolve, reject)),
+    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadSources: (projectId) => dispatch(loadSources(projectId))
+    onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve))
   }
 }
 

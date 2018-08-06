@@ -9,9 +9,13 @@ import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
 import displayReducer from '../Display/reducer'
 import displaySaga from '../Display/sagas'
+import portalSaga from '../Portal/sagas'
+import portalReducer from '../Portal/reducer'
 
 import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
+import { loadPortals, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
+import { makeSelectPortals } from '../Portal/selectors'
 
 const Icon = require('antd/lib/icon')
 const Collapse = require('antd/lib/collapse')
@@ -19,6 +23,7 @@ const Panel = Collapse.Panel
 const styles = require('./Viz.less')
 
 import Container from '../../components/Container'
+import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 
 interface IParams {
@@ -27,10 +32,13 @@ interface IParams {
 
 interface IVizProps extends RouteComponentProps<{}, IParams> {
   displays: any[]
+  portals: any[]
   onLoadDisplays: (projectId) => void
   onAddDisplay: (display: IDisplay, resolve: () => void) => void
   onEditDisplay: (display: IDisplay, resolve: () => void) => void
   onDeleteDisplay: (displayId: number) => void
+  onLoadPortals: (projectId) => void
+  onDeletePortal: (portalId: number) => void
 }
 
 interface IVizStates {
@@ -50,9 +58,15 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   }
 
   public componentWillMount () {
-    const { params, onLoadDisplays } = this.props
+    const { params, onLoadDisplays, onLoadPortals } = this.props
     const projectId = params.pid
     onLoadDisplays(projectId)
+    onLoadPortals(projectId)
+  }
+
+  private goToDashboard = (portal?: any) => () => {
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/portal/${portal ? portal.id : -1}`)
   }
 
   private goToDisplay = (display?: any) => () => {
@@ -88,16 +102,29 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   }
 
   public render () {
-    const { displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay } = this.props
+    const {
+      displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
+      portals, onDeletePortal
+    } = this.props
     const projectId = params.pid
     return (
       <Container>
         <Container.Body card>
           <div className={styles.spliter11}/>
+          <Collapse bordered={false} defaultActiveKey="dashboard" onChange={this.onCollapseChange('dashboard')}>
+            <Panel showArrow={false} header={this.renderHeader('Dashboard')} key="dashboard">
+              <PortalList
+                projectId={projectId}
+                portals={portals}
+                onPortalClick={this.goToDashboard}
+                onDelete={onDeletePortal}
+              />
+            </Panel>
+          </Collapse>
+          <div className={styles.spliter16}/>
           <Collapse bordered={false} defaultActiveKey="display" onChange={this.onCollapseChange('display')}>
             <Panel showArrow={false} header={this.renderHeader('Display')} key="display">
               <DisplayList
-                rows={2}
                 projectId={projectId}
                 displays={displays}
                 onDisplayClick={this.goToDisplay}
@@ -108,7 +135,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
               />
             </Panel>
           </Collapse>
-          <div className={styles.spliter16}/>
         </Container.Body>
       </Container>
     )
@@ -116,7 +142,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 }
 
 const mapStateToProps = createStructuredSelector({
-  displays: makeSelectDisplays()
+  displays: makeSelectDisplays(),
+  portals: makeSelectPortals()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -124,16 +151,22 @@ export function mapDispatchToProps (dispatch) {
     onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
     onAddDisplay: (display: IDisplay, resolve) => dispatch(addDisplay(display, resolve)),
     onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
-    onDeleteDisplay: (id) => dispatch(deleteDisplay(id))
+    onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
+    onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
+    onDeletePortal: (id) => dispatch(deletePortal(id))
   }
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withDisplayReducer = injectReducer({ key: 'display', reducer: displayReducer })
-const withDisplaySaga = injectSaga({ key: 'saga', saga: displaySaga })
+const withDisplaySaga = injectSaga({ key: 'display', saga: displaySaga })
+const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
+const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
 
 export default compose(
   withDisplayReducer,
   withDisplaySaga,
+  withPortalReducer,
+  withPortalSaga,
   withConnect
 )(Viz)

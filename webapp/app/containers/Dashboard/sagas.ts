@@ -34,7 +34,8 @@ import {
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK,
   LOAD_WIDGET_CSV,
-  UPDAATE_MARK
+  UPDAATE_MARK,
+  LOAD_WIDGET_POSITION
 } from './constants'
 
 import {
@@ -65,7 +66,10 @@ import {
   widgetShareLinkLoaded,
   loadWidgetShareLinkFail,
   widgetCsvLoaded,
-  loadWidgetCsvFail
+  loadWidgetCsvFail,
+  loadWidgetPosition,
+  loadWidgetPositionFail,
+  widgetPositionLoaded
 } from './actions'
 
 import message from 'antd/lib/message'
@@ -75,9 +79,9 @@ import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/as
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
 
-export function* getDashboards () {
+export function* getDashboards ({ payload }) {
   try {
-    const asyncData = yield call(request, api.dashboard)
+    const asyncData = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
     const dashboards = readListAdapter(asyncData)
     yield put(dashboardsLoaded(dashboards))
   } catch (err) {
@@ -86,16 +90,15 @@ export function* getDashboards () {
   }
 }
 
-export function* addDashboard (action) {
-  const { dashboard, resolve } = action.payload
+export function* addDashboard ({ payload }) {
+  const { dashboard, resolve } = payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: api.dashboard,
-      data: writeAdapter(dashboard)
+      url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
+      data: dashboard
     })
-    const result = readObjectAdapter(asyncData)
-    yield put(dashboardAdded(result))
+    yield put(dashboardAdded(asyncData.payload))
     resolve()
   } catch (err) {
     yield put(addDashboardFail())
@@ -103,16 +106,16 @@ export function* addDashboard (action) {
   }
 }
 
-export function* editDashboard (action) {
-  const { dashboard, resolve } = action.payload
+export function* editDashboard ({ payload }) {
+  const { formType, dashboard, resolve } = payload
   try {
     yield call(request, {
       method: 'put',
-      url: api.dashboard,
-      data: writeAdapter(dashboard)
+      url: `${api.portal}/${dashboard[0].dashboardPortalId}/dashboards`,
+      data: dashboard
     })
-    yield put(dashboardEdited(dashboard))
-    resolve()
+    yield put(dashboardEdited(dashboard, formType))
+    resolve(dashboard)
   } catch (err) {
     yield put(editDashboardFail())
     message.error('修改 Dashboard 失败，请稍后再试')
@@ -135,14 +138,13 @@ export function* editCurrentDashboard (action) {
   }
 }
 
-export function* deleteDashboard (action) {
-  const { id } = action.payload
+export function* deleteDashboard ({ payload }) {
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.dashboard}/${id}`
+      url: `${api.portal}/dashboards/${payload.id}`
     })
-    yield put(dashboardDeleted(id))
+    yield put(dashboardDeleted(payload.id))
   } catch (err) {
     yield put(deleteDashboardFail())
     message.error('删除当前 Dashboard 失败，请稍后再试')
@@ -309,13 +311,28 @@ export function* updateMarkRepos (action) {
   }
 }
 
+export function* getWidgetPosition ({ payload }) {
+  const { portalId, dashboardId, resolve } = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.portal}/${portalId}/dashboards/${dashboardId}/widgets`
+    })
+    widgetPositionLoaded(asyncData.payload)
+    resolve(asyncData.payload)
+  } catch (err) {
+    yield put(loadWidgetPositionFail())
+    message.error('获取 Widget 信息失败，请稍后再试')
+  }
+}
+
 export default function* rootDashboardSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_DASHBOARDS, getDashboards),
-    takeEvery(ADD_DASHBOARD, addDashboard),
-    takeEvery(EDIT_DASHBOARD, editDashboard),
+    takeLatest(LOAD_DASHBOARDS, getDashboards as any),
+    takeEvery(ADD_DASHBOARD, addDashboard as any),
+    takeEvery(EDIT_DASHBOARD, editDashboard as any),
     takeEvery(EDIT_CURRENT_DASHBOARD, editCurrentDashboard),
-    takeEvery(DELETE_DASHBOARD, deleteDashboard),
+    takeEvery(DELETE_DASHBOARD, deleteDashboard as any),
     takeLatest(LOAD_DASHBOARD_DETAIL, getDashboardDetail as any),
     takeEvery(ADD_DASHBOARD_ITEM, addDashboardItem as any),
     takeEvery(EDIT_DASHBOARD_ITEM, editDashboardItem),
@@ -324,6 +341,8 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
-    takeLatest(UPDAATE_MARK, updateMarkRepos)
+    takeLatest(UPDAATE_MARK, updateMarkRepos),
+
+    takeLatest(LOAD_WIDGET_POSITION, getWidgetPosition as any)
   ]
 }

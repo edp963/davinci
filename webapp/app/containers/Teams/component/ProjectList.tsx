@@ -1,5 +1,6 @@
 import * as React from 'react'
 const Collapse = require('antd/lib/collapse')
+const Popconfirm = require('antd/lib/popconfirm')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
 const Select = require('antd/lib/select')
@@ -19,6 +20,7 @@ import PermissionLevel from './PermissionLevel'
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {ITeamProjects} from '../Team'
+import Avatar from '../../../components/Avatar'
 
 
 
@@ -37,6 +39,7 @@ interface IprojectOptions {
 interface IProjectListProps {
   projects: IprojectOptions
   currentTeam: any
+  deleteProject: (event:any, id: number) => any
   currentTeamProjects: ITeamProjects[]
   currentOrganizationProjects: any
   pullProjectInTeam: (projectId: number) => any
@@ -93,33 +96,59 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     this.forceUpdate(() => {
       const {
         id,
-        downloadPermisstion,
-        schedulePermisstion,
-        sharePermisstion,
-        sourcePermisstion,
-        viewPermisstion,
-        vizPermisstion,
-        widgetPermisstion
+        downloadPermission,
+        schedulePermission,
+        sharePermission,
+        sourcePermission,
+        viewPermission,
+        vizPermission,
+        widgetPermission
       } = this[targetStr].getFieldsValue()
       onUpdateTeamProjectPermission(id, {
-        downloadPermisstion,
-        schedulePermisstion,
-        sharePermisstion,
-        sourcePermisstion,
-        viewPermisstion,
-        vizPermisstion,
-        widgetPermisstion
+        downloadPermission,
+        schedulePermission,
+        sharePermission,
+        sourcePermission,
+        viewPermission,
+        vizPermission,
+        widgetPermission
       }, (data) => {console.log(data)})
     })
+  }
+  private stopPPG = (e) => {
+    e.stopPropagation()
+  }
+  private headerPanel = (props) => {
+    return (
+      <div className={styles.headerPanel}>
+        <div className={styles.titleWrapper}>
+          <div className={styles.avatar}>
+            <Avatar size="small" path={props.project.path}/>
+          </div>
+          <div className={styles.title}>{props.project.name}</div>
+        </div>
+        <div className={styles.delete}>
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={this.props.deleteProject(event, props.id)}
+          >
+            <Tooltip title="删除">
+              <Button shape="circle" onClick={this.stopPPG}><Icon type="close"/></Button>
+            </Tooltip>
+          </Popconfirm>
+        </div>
+      </div>
+    )
   }
 
   public render () {
     const { formVisible, formType, modalLoading} = this.state
     const {currentTeam, currentOrganizationProjects, currentTeamProjects} = this.props
-    const projectList = <Collapse  defaultActiveKey={['project0']}>
+    const projectList = <Collapse  bordered={false}  defaultActiveKey={['project0']}>
       {
         currentTeamProjects ? currentTeamProjects.map((project, index) =>
-          (<Collapse.Panel header={project.project.name} key={`project${index}`}>
+          (<Collapse.Panel header={this.headerPanel(project)} key={`project${index}`}>
             <PermissionLevel
               param={project}
               selectChanged={this.selectChanged(`${project.project.id}permissionForm`)}

@@ -30,6 +30,7 @@ import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
 import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
+import Portal from './containers/Portal'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
 import Activate from './containers/Register/Activate'
@@ -99,11 +100,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
   //             name: 'dashboards',
   //             component: Dashboard
   //           },
-  //           {
-  //             path: '/report/dashboard/:dashboardId',
-  //             name: 'dashboard',
-  //             component: Grid
-  //           },
+            // {
+            //   path: '/report/dashboard/:dashboardId',
+            //   name: 'dashboard',
+            //   component: Grid
+            // },
   //           {
   //             path: '/report/widgets',
   //             name: 'widgets',
@@ -231,7 +232,7 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           indexRoute: {
             onEnter: (_, replace) => {
               const { params } = _
-              replace(`/project/${params.pid}/dashboards`)
+              replace(`/project/${params.pid}/portals`)
             }
           },
           childRoutes: [
@@ -241,9 +242,9 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               components: Viz
             },
             {
-              path: '/project/:pid/dashboards',
-              name: 'dashboards',
-              component: Dashboard
+              path: '/project/:pid/portals',
+              name: 'portals',
+              component: Portal
             },
             // {
             //   path: '/project/:pid/dashboard/:did/portal/:pid',
@@ -251,11 +252,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
             //   component: Dashboard
             // },
             // todo 待dashboard portal完成后，删除此路由
-            {
-              path: '/project/:pid/dashboard/:dashboardId',
-              name: 'dashboard',
-              component: Grid
-            },
             {
               path: '/project/:pid/widgets',
               name: 'widgets',
@@ -354,6 +350,18 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid/bizlogic/:bid',
           name: 'bizlogic',
           component: Bizlogic
+        },
+        {
+          path: '/project/:pid/portal/:portalId',
+          name: 'dashboards',
+          component: Dashboard,
+          childRoutes: [
+            {
+              path: '/project/:pid/portal/:portalId/dashboard/:dashboardId',
+              name: 'dashboard',
+              component: Grid
+            }
+          ]
         }
       ]
     },

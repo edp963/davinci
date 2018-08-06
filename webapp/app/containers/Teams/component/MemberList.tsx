@@ -2,6 +2,7 @@ import * as React from 'react'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
+const Popconfirm = require('antd/lib/popconfirm')
 const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
@@ -13,25 +14,41 @@ import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
+import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
+import {IOrganizationMembers} from '../../Organizations/Organization'
 
 interface IMemberListState {
-  modalLoading: boolean,
-  formType: string,
+  modalLoading: boolean
+  formType: string
   formVisible: boolean
+  category?: string
+  currentMember: {id?: number, name?: string}
+  changeRoleFormCategory: string
+  changeRoleFormVisible: boolean
+  changeRoleModalLoading: boolean
 }
 
 interface IMemberListProps {
   currentTeam: any
+  deleteTeamMember: (id: number) => any
+  pullMemberInTeam: (teamId: number, memberId: number, resolve: () => any) => any
+  changeTeamMemberRole: (id: number, role: string) => any
   currentTeamMembers: Team.ITeamMembers[]
+  currentOrganizationMembers: IOrganizationMembers[]
 }
 
 export class MemberList extends React.PureComponent<IMemberListProps, IMemberListState> {
   constructor (props) {
     super(props)
     this.state = {
-      modalLoading: false,
       formType: '',
-      formVisible: false
+      category: '',
+      modalLoading: false,
+      formVisible: false,
+      changeRoleFormCategory: '',
+      currentMember: {},
+      changeRoleFormVisible: false,
+      changeRoleModalLoading: false
     }
   }
 
@@ -39,6 +56,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
 
   }
   private AddForm: WrappedFormUtils
+  private ChangeRoleForm: WrappedFormUtils
   private showAddForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
@@ -52,15 +70,67 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     })
   }
   private add = () => {
+    const { currentTeam } = this.props
     this.AddForm.validateFieldsAndScroll((err, values) => {
-      if(!err) {
-        console.log(values)
+      if (!err) {
+        const memberId = values.projectId
+        const teamId = currentTeam.id
+        this.props.pullMemberInTeam(teamId, memberId, () => {
+          this.hideAddForm()
+        })
       }
     })
   }
+
+  private removeMemberForm = (text, obj) => () => {
+    this.props.deleteTeamMember(obj.id)
+  }
+
+  private changRole = () => {
+    console.log('changeRole')
+   // this.props.changeTeamMemberRole()
+
+    // this.ChangeRoleForm.validateFieldsAndScroll((err, values) => {
+    //   if (!err) {
+    //     const { id, role } = values
+    //     this.props.changeOrganizationMemberRole(id, role, () => {
+    //       const { organizationId } = this.props
+    //       if (this.props.loadOrganizationsMembers) {
+    //         this.props.loadOrganizationsMembers(Number(organizationId))
+    //       }
+    //       this.hideChangeRoleForm()
+    //     })
+    //   }
+    // })
+  }
+
+  private hideChangeRoleForm = () => {
+    this.setState({
+      changeRoleFormVisible: false,
+      changeRoleModalLoading: false
+    }, () => {
+      this.ChangeRoleForm.resetFields()
+    })
+  }
+
+  private showChangeRoleForm = (type: string, obj: {name?: string, id?: number}) => (e) => {
+    e.stopPropagation()
+    this.setState({
+      currentMember: obj,
+      changeRoleFormVisible: true,
+      changeRoleFormCategory: type
+    })
+  }
   public render () {
-    const { formVisible, formType} = this.state
+    const {
+      formVisible,
+      formType,
+      changeRoleFormVisible,
+      changeRoleModalLoading,
+      changeRoleFormCategory
+    } = this.state
     const { currentTeamMembers, currentTeam} = this.props
+    const currentTeamMember = Array.isArray(currentTeamMembers) ? currentTeamMembers : []
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <Button
@@ -76,24 +146,33 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       dataIndex: 'user',
       key: 'user',
       render: (text) => <div className={styles.avatarWrapper}><Avatar path={text.avatar} size="small" enlarge={true}/><span className={styles.avatarName}>{text.username}</span></div>
-    }, {
+    },
+      {
       title: 'role',
       dataIndex: 'user',
       key: 'userKey',
-      render: (text) => <span>{text.role}</span>
-    },{
+      render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+      },
+      {
       title: 'settings',
       dataIndex: 'user',
       key: 'settings',
       render: (text, record) => (
         <span>
-          <a href="javascript:;">从组织里移除</a>
+          <Popconfirm
+            title="确定删除此成员吗？"
+            placement="bottom"
+            onConfirm={ this.removeMemberForm(text, record)}
+          >
+            <Tooltip title="删除">
+              <a href="javascript:;">从团队里移除</a>
+            </Tooltip>
+          </Popconfirm>
           <span className="ant-divider" />
-          <a href="javascript:;">改变角色</a>
+          <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
         </span>
       )
     }]
-
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -106,8 +185,8 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
               allowClear
             >
               <Select.Option value="everyone">所有人</Select.Option>
-              <Select.Option value="Owners">Owners</Select.Option>
-              <Select.Option value="Members">Members</Select.Option>
+              {/*<Select.Option value="Owners">Owners</Select.Option>*/}
+              {/*<Select.Option value="Members">Members</Select.Option>*/}
             </Select>
           </Col>
           <Col span={16} offset={1}>
@@ -126,7 +205,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <Table
               bordered
               columns={columns}
-              dataSource={Array.isArray(currentTeamMembers) ? currentTeamMembers : []}
+              dataSource={currentTeamMember}
             />
           </div>
         </Row>
@@ -141,6 +220,21 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             organizationOrTeam={currentTeam}
             addHandler={this.add}
             ref={(f) => { this.AddForm = f }}
+            currentOrganizationMembers={this.props.currentOrganizationMembers}
+          />
+        </Modal>
+        <Modal
+          title={null}
+          visible={changeRoleFormVisible}
+          footer={null}
+          onCancel={this.hideChangeRoleForm}
+        >
+          <ChangeRoleForm
+            category={changeRoleFormCategory}
+            organizationOrTeam={this.props.currentTeam}
+            submitLoading={changeRoleModalLoading}
+            ref={(f) => { this.ChangeRoleForm = f }}
+            changeHandler={this.changRole}
           />
         </Modal>
       </div>

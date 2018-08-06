@@ -54,6 +54,7 @@ export function* getSources ({ payload }) {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
     const sources = readListAdapter(asyncData)
     yield put(sourcesLoaded(sources))
+    payload.resolve(sources)
   } catch (err) {
     yield put(loadSourceFail())
     message.error('加载 Source 列表失败')

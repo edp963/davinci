@@ -38,7 +38,8 @@ import {
   UPDATE_PROFILE_ERROR,
   CHANGE_USER_PASSWORD,
   CHANGE_USER_PASSWORD_FAILURE,
-  CHANGE_USER_PASSWORD_SUCCESS
+  CHANGE_USER_PASSWORD_SUCCESS,
+  UPLOAD_AVATAR_SUCCESS
 } from './constants'
 
 import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -153,11 +154,11 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
   }
 }
 
-export function projectsCheckName (projectId, id, name, type, resolve, reject) {
+export function projectsCheckName (pId, id, name, type, resolve, reject) {
   return {
     type: PROJECTS_CHECK_NAME,
     payload: {
-      projectId,
+      pId,
       id,
       name,
       type,
@@ -176,6 +177,15 @@ export function updateProfile (id, name, description, department, resolve) {
       description,
       department,
       resolve
+    }
+  }
+}
+
+export function uploadAvatarSuccess (path) {
+  return {
+    type: UPLOAD_AVATAR_SUCCESS,
+    payload: {
+      path
     }
   }
 }

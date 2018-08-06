@@ -42,5 +42,6 @@ export default {
   organizations: `${host}/organizations`,
   checkNameUnique: `${host}/check`,
   projects: `${host}/projects`,
-  teams: `${host}/teams`
+  teams: `${host}/teams`,
+  portal: `${host}/dashboardPortals`
 }

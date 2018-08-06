@@ -51,7 +51,13 @@ import {
   SEARCH_MEMBER_FAILURE,
   INVITE_MEMBER,
   INVITE_MEMBER_SUCCESS,
-  INVITE_MEMBER_FAILURE
+  INVITE_MEMBER_FAILURE,
+  CHANGE_MEMBER_ROLE_ORGANIZATION,
+  CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR,
+  CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS,
+  DELETE_ORGANIZATION_MEMBER,
+  DELETE_ORGANIZATION_MEMBER_ERROR,
+  DELETE_ORGANIZATION_MEMBER_SUCCESS
 } from './constants'
 
 export function loadOrganizationProjects (id) {
@@ -173,12 +179,11 @@ export function addOrganizationFail () {
   }
 }
 
-export function editOrganization (organization, resolve) {
+export function editOrganization (organization) {
   return {
     type: EDIT_ORGANIZATION,
     payload: {
-      organization,
-      resolve
+      organization
     }
   }
 }
@@ -198,11 +203,12 @@ export function editOrganizationFail () {
   }
 }
 
-export function deleteOrganization (id) {
+export function deleteOrganization (id, resolve) {
   return {
     type: DELETE_ORGANIZATION,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -325,6 +331,57 @@ export function inviteMemberFail () {
 }
 
 
+export function deleteOrganizationMember (relationId, resolve) {
+  return {
+    type: DELETE_ORGANIZATION_MEMBER,
+    payload: {
+      relationId,
+      resolve
+    }
+  }
+}
+
+export function organizationMemberDeleted (id) {
+  return {
+    type: DELETE_ORGANIZATION_MEMBER_SUCCESS,
+    payload: {
+      id
+    }
+  }
+}
+
+export function deleteOrganizationMemberFail () {
+  return {
+    type: DELETE_ORGANIZATION_MEMBER_ERROR
+  }
+}
+
+export function changeOrganizationMemberRole (relationId, newRole, resolve) {
+  return {
+    type: CHANGE_MEMBER_ROLE_ORGANIZATION,
+    payload: {
+      relationId,
+      newRole,
+      resolve
+    }
+  }
+}
+
+export function organizationMemberRoleChanged (relationId, newRole) {
+  return {
+    type: CHANGE_MEMBER_ROLE_ORGANIZATION_SUCCESS,
+    payload: {
+      relationId,
+      newRole
+    }
+  }
+}
+
+export function changeOrganizationMemberRoleFail () {
+  return {
+    type: CHANGE_MEMBER_ROLE_ORGANIZATION_ERROR
+  }
+}
 
 
 
