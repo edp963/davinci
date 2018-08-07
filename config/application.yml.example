@@ -15,15 +15,13 @@
 #  >>
 
 
-
 server:
   address: 127.0.0.1
   port: 8080
 
 jwtToken:
-  secret: your secret
-  timeout: 180000000
-#  timeout: 1800000
+  secret:                   # your secret
+  timeout: 1800000
   algorithm: HS512
 
 #your datasouce config
@@ -41,8 +39,8 @@ spring:
   # davinci datasouce config
   datasource:
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-    username: root
-    password: root
+    username: # your datasource user
+    password: # your datasource password
     driver-class-name: com.mysql.jdbc.Driver
     initial-size: 2
     min-idle: 1
@@ -53,10 +51,12 @@ spring:
 
     isEnable: false
     # standalone config
+
     host: 127.0.0.1
     port: 6379
 
   #  cluster config
+
   #  cluster:
   #       nodes:
 
@@ -71,11 +71,11 @@ spring:
         min-idle: 0
 
   mail:
-    host: email.creditease.cn
-    port: 25
-    username: it.edp.support@creditease.cn
-    password: edp#fasong963
-    nickname: Davinci
+    host:                         # 邮件服务器的SMTP地址
+    port:                         # 邮件服务器的SMTP端口
+    username:                     # 发件人邮箱地址（必须正确，否则发送失败）
+    password:                     # 密码（注意，某些邮箱需要为SMTP服务单独设置密码，详情查看相关帮助）
+    nickname:                     # 发件人昵称
 
     properties:
       smtp:
@@ -88,10 +88,4 @@ spring:
           ssl:
             enable: false
 
-phantomjs_home: /usr/local/bin/phantomjs
-
-logging:
-  level:
-    edp:
-      davinci:
-        dao: debug
+phantomjs_home: "/$your_path$/bin/phantomjs"

@@ -9,6 +9,12 @@
     <version>0.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.0.2.RELEASE</version>
+    </parent>
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
@@ -198,7 +204,6 @@
                 <artifactId>maven-notice-plugin</artifactId>
                 <version>1.0.6.1</version>
                 <configuration>
-                    <generateChildNotices>false</generateChildNotices>
                     <noticeTemplate>https://source.jasig.org/licenses/NOTICE.template</noticeTemplate>
                     <licenseMapping>
                         <param>https://source.jasig.org/licenses/license-mappings.xml</param>

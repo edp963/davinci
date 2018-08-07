@@ -11,7 +11,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>davinci-assembly_3.01</artifactId>
+    <artifactId>davinci-assembly_3.0.1</artifactId>
     <packaging>pom</packaging>
 
     <licenses>
@@ -29,13 +29,13 @@
         <build.copyDependenciesPhase>package</build.copyDependenciesPhase>
     </properties>
 
-    <!--<dependencies>-->
-        <!--<dependency>-->
-            <!--<groupId>edp.davinci</groupId>-->
-            <!--<artifactId>davinci-server_${scala.binary.version}</artifactId>-->
-            <!--<version>${project.version}</version>-->
-        <!--</dependency>-->
-    <!--</dependencies>-->
+    <dependencies>
+        <dependency>
+            <groupId>edp.davinci</groupId>
+            <artifactId>davinci-server_3.01</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

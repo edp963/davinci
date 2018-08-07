@@ -3,30 +3,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>davinci-server-0.3</artifactId>
+    <groupId>edp.davinci</groupId>
+    <artifactId>davinci-server_3.01</artifactId>
     <packaging>jar</packaging>
 
-    <!--<parent>-->
-        <!--<groupId>edp.davinci</groupId>-->
-        <!--<artifactId>davinci-parent_3.01</artifactId>-->
-        <!--<version>0.3.0-SNAPSHOT</version>-->
-        <!--<relativePath>../pom.xml</relativePath>-->
-    <!--</parent>-->
-
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.0.2.RELEASE</version>
+        <groupId>edp.davinci</groupId>
+        <artifactId>davinci-parent_3.01</artifactId>
+        <version>0.3.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>1.8</java.version>
-        <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <skipTests>true</skipTests>
-
         <elasticsearch-sql.version>5.3.2</elasticsearch-sql.version>
     </properties>
 
@@ -118,6 +107,16 @@
             <groupId>com.alibaba</groupId>
             <artifactId>druid</artifactId>
             <version>1.0.18</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>jconsole</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.alibaba</groupId>
+                    <artifactId>tools</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>
@@ -197,11 +196,11 @@
         </dependency>
 
         <!--oracle-->
-        <dependency>
-            <groupId>com.oracle</groupId>
-            <artifactId>ojdbc6</artifactId>
-            <version>11.2.0.3</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.oracle</groupId>-->
+            <!--<artifactId>ojdbc6</artifactId>-->
+            <!--<version>11.2.0.3</version>-->
+        <!--</dependency>-->
 
         <!--prosto-->
         <!--<dependency>-->

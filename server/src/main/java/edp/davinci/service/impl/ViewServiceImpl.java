@@ -18,6 +18,7 @@ import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dao.*;
+import edp.davinci.dto.sourceDto.SourceBaseInfo;
 import edp.davinci.dto.sourceDto.SourceWithProject;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
@@ -186,7 +187,13 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             int insert = viewMapper.insert(view);
             if (insert > 0) {
-                return resultMap.successAndRefreshToken(request).payload(view);
+                SourceBaseInfo sourceBaseInfo = new SourceBaseInfo();
+                BeanUtils.copyProperties(source, sourceBaseInfo);
+
+                ViewWithSourceBaseInfo viewWithSource = new ViewWithSourceBaseInfo();
+                BeanUtils.copyProperties(view, viewWithSource);
+                viewWithSource.setSource(sourceBaseInfo);
+                return resultMap.successAndRefreshToken(request).payload(viewWithSource);
             } else {
                 return resultMap.failAndRefreshToken(request).message("create view fail");
             }

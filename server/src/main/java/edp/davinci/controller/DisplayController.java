@@ -1,3 +1,21 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2018 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ * >>
+ */
+
 package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
@@ -350,7 +368,7 @@ public class DisplayController extends BaseController {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid display slide id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
-            if (1 == slideWidgetCreate.getType()&& invalidId(slideWidgetCreate.getWidgetId())) {
+            if (1 == slideWidgetCreate.getType() && invalidId(slideWidgetCreate.getWidgetId())) {
                 ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid widget id");
                 return ResponseEntity.status(resultMap.getCode()).body(resultMap);
             }
@@ -598,7 +616,6 @@ public class DisplayController extends BaseController {
     }
 
 
-
     /**
      * 上传slide背景图
      *
@@ -646,9 +663,9 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "upload subwidget bgImage")
     @PostMapping(value = "/slide/widget/{relationId}/bgImage")
     public ResponseEntity uploadSlideSubWidgetBGImage(@PathVariable Long relationId,
-                                             @RequestParam("backgroundImage") MultipartFile file,
-                                             @ApiIgnore @CurrentUser User user,
-                                             HttpServletRequest request) {
+                                                      @RequestParam("backgroundImage") MultipartFile file,
+                                                      @ApiIgnore @CurrentUser User user,
+                                                      HttpServletRequest request) {
 
         if (invalidId(relationId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid relation id");
@@ -671,6 +688,7 @@ public class DisplayController extends BaseController {
 
     /**
      * 共享display
+     *
      * @param id
      * @param username
      * @param user
