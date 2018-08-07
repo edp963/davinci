@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.SourceMapper">
+    <insert id="insert" parameterType="edp.davinci.model.Source">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert into source
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `name`,
+            <if test="description != null">
+                description,
+            </if>
+            `type`,
+            project_id,
+            config
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{name,jdbcType=VARCHAR},
+            <if test="description != null">
+                #{description,jdbcType=VARCHAR},
+            </if>
+            #{type,jdbcType=VARCHAR},
+            #{projectId,jdbcType=BIGINT},
+            #{config,jdbcType=LONGVARCHAR}
+        </trim>
+    </insert>
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert ignore into source
+        (`id`,`name`,description, `project_id`, `type`, config)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.id,jdbcType=BIGINT},
+            #{record.name,jdbcType=VARCHAR},
+            #{record.description,jdbcType=VARCHAR},
+            #{record.projectId,jdbcType=BIGINT},
+            #{record.type,jdbcType=VARCHAR},
+            #{record.config,jdbcType=LONGVARCHAR}
+            )
+        </foreach>
+    </insert>
+</mapper>

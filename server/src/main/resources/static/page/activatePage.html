@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>激活</title>
+</head>
+<script src="/webjars/jquery/1.11.3/jquery.js"></script>
+<script type="text/javascript">
+    function getParam(name) {
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) return unescape(r[2]);
+        return null;
+    }
+
+    var authToken = '';
+
+    $(function () {
+        var token = getParam("token");
+        $.ajax({
+            type: 'GET',
+            url: "/hello/authToken/" + token,
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+                console.log(data)
+                authToken = data.payload
+            }
+        })
+    })
+
+
+    $(function () {
+        var token = getParam("token");
+        $.ajax({
+            type: 'POST',
+            url: "/api/v3/users/active/" + token,
+            contentType: 'application/json',
+            headers: {
+                Authorization: 'Bearer ' + authToken,
+            },
+            async: false,
+            dataType: 'json',
+            success: function (data) {
+                console.log(data)
+                if (data.header.code == 200) {
+                    $('body').html("激活成功！！！")
+                    alert("激活成功")
+                } else if (data.header.code == 400) {
+                    $('body').html(data.header.msg)
+                    alert(data.header.msg)
+                }
+            }
+        })
+    })
+
+</script>
+<body>
+正在激活。。。
+</body>
+</html>

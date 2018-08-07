@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.RelTeamProjectMapper" >
+    <insert id="insert" parameterType="edp.davinci.model.RelTeamProject">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert rel_team_project
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            `team_id`,
+            `project_id`,
+            `source_permission`,
+            `view_permission`,
+            `widget_permission`,
+            `viz_permission`,
+            `schedule_permission`,
+            `share_permission`,
+            `download_permission`
+        </trim>
+        values
+        <trim prefix=" (" suffix=")" suffixOverrides="," >
+          #{teamId, jdbcType=BIGINT},
+          #{projectId, jdbcType=BIGINT},
+          #{sourcePermission, jdbcType=SMALLINT},
+          #{viewPermission, jdbcType=SMALLINT},
+          #{widgetPermission, jdbcType=SMALLINT},
+          #{vizPermission, jdbcType=SMALLINT},
+          #{schedulePermission, jdbcType=SMALLINT},
+          #{sharePermission, jdbcType=TINYINT},
+          #{downloadPermission, jdbcType=TINYINT}
+        </trim>
+    </insert>
+</mapper>

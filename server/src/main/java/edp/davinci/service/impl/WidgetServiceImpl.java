@@ -1,0 +1,288 @@
+package edp.davinci.service.impl;
+
+import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ServerException;
+import edp.core.utils.TokenUtils;
+import edp.davinci.common.service.CommonService;
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.UserTeamRoleEnum;
+import edp.davinci.dao.ProjectMapper;
+import edp.davinci.dao.ViewMapper;
+import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dto.widgetDto.WidgetCreate;
+import edp.davinci.dto.widgetDto.WidgetUpdate;
+import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
+import edp.davinci.model.*;
+import edp.davinci.service.ShareService;
+import edp.davinci.service.WidgetService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Iterator;
+import java.util.List;
+
+@Service("widgetService")
+@Slf4j
+public class WidgetServiceImpl extends CommonService<Widget> implements WidgetService {
+
+    @Autowired
+    private WidgetMapper widgetMapper;
+
+    @Autowired
+    private TokenUtils tokenUtils;
+
+    @Autowired
+    private ProjectMapper projectMapper;
+
+    @Autowired
+    private ViewMapper viewMapper;
+
+    @Autowired
+    private ShareService shareService;
+
+    @Override
+    public boolean isExist(String name, Long id, Long projectId) {
+        Long widgetId = widgetMapper.getByNameWithProjectId(name, projectId);
+        if (null != id && null != widgetId) {
+            return !id.equals(widgetId);
+        }
+        return null != widgetId && widgetId.longValue() > 0L;
+    }
+
+    /**
+     * 获取widgets列表
+     *
+     * @param projectId
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getWidgets(Long projectId, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        Project project = projectMapper.getById(projectId);
+
+        if (null == project) {
+            log.info("project {} not found", project);
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        if (!allowRead(project, user)) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        }
+
+        List<Widget> widgets = widgetMapper.getByProject(projectId);
+
+        if (null != widgets && widgets.size() > 0) {
+
+            //获取当前用户在organization的role
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+            //当前用户是project的创建者和organization的owner，直接返回
+            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                //查询project所属team中当前用户最高角色
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
+
+                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+
+                    //查询当前用户在的 project所属team对project view的最高权限
+                    short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(projectId, user.getId());
+
+                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        //隐藏
+                        widgets = null;
+                    } else if (maxSourcePermission == UserPermissionEnum.READ.getPermission()) {
+                        //只读, remove未发布的
+                        Iterator<Widget> iterator = widgets.iterator();
+                        while (iterator.hasNext()) {
+                            Widget widget = iterator.next();
+                            if (!widget.getPublish()) {
+                                iterator.remove();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(widgets);
+    }
+
+    /**
+     * 创建widget
+     *
+     * @param widgetCreate
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultMap createWidget(WidgetCreate widgetCreate, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        Project project = projectMapper.getById(widgetCreate.getProjectId());
+        if (null == project) {
+            log.info("project (:{}) not found", widgetCreate.getProjectId());
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //校验权限
+        if (!allowWrite(project, user)) {
+            log.info("user {} have not permisson to create widget", user.getUsername());
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to create widget");
+        }
+
+        if (isExist(widgetCreate.getName(), null, widgetCreate.getProjectId())) {
+            log.info("the widget {} name is already taken", widgetCreate.getName());
+            return resultMap.failAndRefreshToken(request).message("the widget name is already taken");
+        }
+
+        View view = viewMapper.getById(widgetCreate.getViewId());
+        if (null == view) {
+            log.info("view not found");
+            return resultMap.failAndRefreshToken(request).message("view not found");
+        }
+
+        Widget widget = new Widget();
+        BeanUtils.copyProperties(widgetCreate, widget);
+
+        int insert = widgetMapper.insert(widget);
+        if (insert > 0) {
+            return resultMap.successAndRefreshToken(request).payload(widget);
+        } else {
+            return resultMap.failAndRefreshToken(request).message("create widget fail");
+        }
+    }
+
+    /**
+     * 修改widget
+     *
+     * @param widgetUpdate
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultMap updateWidget(WidgetUpdate widgetUpdate, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(widgetUpdate.getId());
+        if (null == widgetWithProjectAndView) {
+            return resultMap.failAndRefreshToken(request).message("view not found");
+        }
+
+        Project project = widgetWithProjectAndView.getProject();
+        if (null == project) {
+            log.info("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //校验权限
+        if (!allowWrite(project, user)) {
+            log.info("user {} have not permisson to update widget", user.getUsername());
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to update widget");
+        }
+
+        if (isExist(widgetUpdate.getName(), widgetUpdate.getId(), project.getId())) {
+            log.info("the view {} name is already taken", widgetUpdate.getName());
+            return resultMap.failAndRefreshToken(request).message("the widget name is already taken");
+        }
+
+        View view = widgetWithProjectAndView.getView();
+        if (null == view) {
+            log.info("view not found");
+            return resultMap.failAndRefreshToken(request).message("view not found");
+        }
+
+        Widget widget = new Widget();
+        BeanUtils.copyProperties(widgetUpdate, widget);
+        widget.setProjectId(project.getId());
+        widgetMapper.update(widget);
+        return resultMap.successAndRefreshToken(request);
+    }
+
+    /**
+     * 删除widget
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultMap deleteWidget(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+
+        if (null == widgetWithProjectAndView) {
+            log.info("widget (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("widget not found");
+        }
+
+        if (null == widgetWithProjectAndView.getProject()) {
+            log.info("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //校验权限
+        if (!allowDelete(widgetWithProjectAndView.getProject(), user)) {
+            log.info("user {} have not permisson to delete the widget {}", user.getUsername(), id);
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete the widget");
+        }
+
+        widgetMapper.deleteById(id);
+
+        return resultMap.successAndRefreshToken(request);
+    }
+
+
+    /**
+     * 共享widget
+     *
+     * @param id
+     * @param user
+     * @param username
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap shareWidget(Long id, User user, String username, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+
+        if (null == widgetWithProjectAndView) {
+            log.info("widget (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("widget not found");
+        }
+
+        if (null == widgetWithProjectAndView.getProject()) {
+            log.info("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //校验权限
+        if (!allowShare(widgetWithProjectAndView.getProject(), user)) {
+            log.info("user {} have not permisson to share the widget {}", user.getUsername(), id);
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to share the widget");
+        }
+
+        try {
+            return resultMap.successAndRefreshToken(request).payload(shareService.generateShareToken(id, username, user.getId()));
+        } catch (ServerException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+    }
+}

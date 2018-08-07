@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<h3>Hi,
+    <span th:text="${username}">username</span>:
+</h3>
+<h4>
+
+    <span th:text="${inviter}">inviter</span> has invited you to join the <span th:text="${orgName}">organization</span>
+    organization on Davinci.
+
+    <br><br>
+    please click this link
+    <a th:href="@{{host}/page/joinOrganization.html(token=${token},host=${host})}">Join <span th:text="${orgName}">organization</span></a>
+
+    <br><br>
+
+    And before that, please make sure you’re signed in as <span th:text="${username}">username</span>
+</h4>
+</body>
+</html>

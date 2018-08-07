@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.CronJobMapper" >
+
+  <insert id="insert" parameterType="edp.davinci.model.CronJob">
+    <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+      SELECT LAST_INSERT_ID() AS id
+    </selectKey>
+    insert into cron_job
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      `name`,
+      project_id,
+      job_type,
+      job_status,
+      cron_expression,
+      start_date,
+      end_date,
+      `config`,
+      description,
+      create_by,
+      create_time
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      #{name,jdbcType=VARCHAR},
+      #{projectId,jdbcType=BIGINT},
+      #{jobType,jdbcType=VARCHAR},
+      #{jobStatus,jdbcType=BIT},
+      #{cronExpression,jdbcType=VARCHAR},
+      #{startDate,jdbcType=TIMESTAMP},
+      #{endDate,jdbcType=TIMESTAMP},
+      #{config,jdbcType=LONGVARCHAR},
+      #{description,jdbcType=VARCHAR},
+      #{createBy,jdbcType=BIGINT},
+      #{createTime,jdbcType=TIMESTAMP}
+    </trim>
+  </insert>
+
+</mapper>

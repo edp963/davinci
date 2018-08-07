@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.MemDashboardWidgetMapper">
+
+    <insert id="insert" parameterType="edp.davinci.model.MemDashboardWidget">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert into mem_dashboard_widget
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            dashboard_id,
+            widget_Id,
+            `x`,
+            `y`,
+            width,
+            height,
+            <if test="frequency != null">
+                frequency,
+            </if>
+            polling
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{dashboardId,jdbcType=BIGINT},
+            #{widgetId,jdbcType=BIGINT},
+            #{x,jdbcType=INTEGER},
+            #{y,jdbcType=INTEGER},
+            #{width,jdbcType=INTEGER},
+            #{height,jdbcType=INTEGER},
+            <if test="frequency != null">
+                #{frequency,jdbcType=INTEGER},
+            </if>
+            #{polling,jdbcType=BIT}
+        </trim>
+    </insert>
+</mapper>

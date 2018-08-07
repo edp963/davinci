@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edp.davinci</groupId>
-    <artifactId>davinci-parent_2.11</artifactId>
-    <version>0.2.0-SNAPSHOT</version>
+    <artifactId>davinci-parent_3.01</artifactId>
+    <version>0.3.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <licenses>
@@ -18,8 +18,8 @@
     </licenses>
 
     <modules>
-        <module>server</module>
         <module>assembly</module>
+        <module>server</module>
     </modules>
 
     <properties>
@@ -27,9 +27,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>1.8</java.version>
-        <scala.version>2.11.8</scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
-        <scalatest.version>2.2.5</scalatest.version>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
     </properties>
 
@@ -46,7 +43,7 @@
             </snapshots>
         </repository>
 
-         </repositories>
+    </repositories>
 
     <pluginRepositories>
         <pluginRepository>
@@ -61,65 +58,11 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_${scala.binary.version}</artifactId>
-            <version>${scalatest.version}</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <!-- ========================================================== -->
-            <!-- compile scala and java -->
+            <!-- compile -->
             <!-- ========================================================== -->
-            <plugin>
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>3.2.2</version>
-                <configuration>
-                    <scalaVersion>${scala.version}</scalaVersion>
-                    <scalaCompatVersion>${scala.binary.version}</scalaCompatVersion>
-                    <recompileMode>incremental</recompileMode>
-                    <useZincServer>false</useZincServer>
-                    <args>
-                        <arg>-unchecked</arg>
-                        <arg>-deprecation</arg>
-                        <arg>-feature</arg>
-                    </args>
-                    <jvmArgs>
-                        <jvmArg>-Xms1024m</jvmArg>
-                        <jvmArg>-Xmx1024m</jvmArg>
-                        <jvmArg>-XX:+CMSClassUnloadingEnabled</jvmArg>
-                    </jvmArgs>
-                    <javacArgs>
-                        <javacArg>-source</javacArg>
-                        <javacArg>${java.version}</javacArg>
-                        <javacArg>-target</javacArg>
-                        <javacArg>${java.version}</javacArg>
-                        <javacArg>-Xlint:all,-serial,-path</javacArg>
-                    </javacArgs>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>scala-compile-first</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>add-source</goal>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>scala-test-compile</id>
-                        <phase>process-test-resources</phase>
-                        <goals>
-                            <goal>testCompile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -147,72 +90,8 @@
             </plugin>
 
             <!-- ========================================================== -->
-            <!-- test and report -->
-            <!-- ========================================================== -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.19.1</version>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.scalatest</groupId>
-                <artifactId>scalatest-maven-plugin</artifactId>
-                <!-- The ScalaTest Maven plugin allows you to run ScalaTest tests through Maven -->
-                <!-- To use the ScalaTest Maven plugin, you need to disable SureFire and enable ScalaTest -->
-                <version>1.0</version>
-                <configuration>
-                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
-                    <junitxml>.</junitxml>
-                    <filereports>EDPTestSuite.txt</filereports>
-                    <argLine>-Xms512M -Xmx2048M -XX:+CMSClassUnloadingEnabled</argLine>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>test</id>
-                        <goals>
-                            <goal>test</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <!-- ========================================================== -->
             <!-- license -->
             <!-- ========================================================== -->
-            <!-- mycila conflicts with codehaus -->
-            <!--<plugin>-->
-            <!--<groupId>com.mycila</groupId>-->
-            <!--<artifactId>license-maven-plugin</artifactId>-->
-            <!--<version>3.0</version>-->
-            <!--<configuration>-->
-            <!--<header>${main.basedir}/HEADER</header>-->
-            <!--<properties>-->
-            <!--<name>Davinci</name>-->
-            <!--</properties>-->
-            <!--<includes>-->
-            <!--<include>src/**/*.java</include>-->
-            <!--<include>src/**/*.scala</include>-->
-            <!--<include>src/**/*.xml</include>-->
-            <!--</includes>-->
-            <!--<excludes>-->
-            <!--<exclude>**/README</exclude>-->
-            <!--<exclude>**/src/main/resources/**</exclude>-->
-            <!--<exclude>**/src/test/resources/**</exclude>-->
-            <!--</excludes>-->
-            <!--</configuration>-->
-            <!--<executions>-->
-            <!--<execution>-->
-            <!--<id>check-license-header</id>-->
-            <!--<phase>initialize</phase>-->
-            <!--<goals>-->
-            <!--<goal>check</goal>-->
-            <!--</goals>-->
-            <!--</execution>-->
-            <!--</executions>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>license-maven-plugin</artifactId>
@@ -270,38 +149,35 @@
                     <projectName>Davinci</projectName>
                     <roots>
                         <root>src/main/java</root>
-                        <root>src/main/scala</root>
-                        <root>src/main/assembly</root>
                         <root>src/test/java</root>
-                        <root>src/test/scala</root>
 
                     </roots>
                     <includes>
                         <include>**/*.java</include>
-                        <include>**/*.scala</include>
                         <include>**/*.xml</include>
                         <include>**/*.sh</include>
                         <include>**/*.py</include>
                         <include>**/*.properties</include>
                         <include>**/*.sql</include>
+                        <include>**/*.yml</include>
                         <!--<include>**/*.html</include>-->
                         <!--<include>**/*.less</include>-->
                         <!--<include>**/*.css</include>-->
                         <!--<include>**/*.js</include>-->
                     </includes>
-                    <excludes>
-                        <exclude>**/CSVFormat.scala</exclude>
-                        <exclude>**/CSVWriter.scala</exclude>
-                        <exclude>**/Formats.scala</exclude>
-                        <exclude>**/Quoting.scala</exclude>
-                        <exclude>**/csv/package.scala</exclude>
-                        <exclude>**/CSVParser.scala</exclude>
-                        <exclude>**/CSVReader.scala</exclude>
-                        <exclude>**/LineReader.java</exclude>
-                        <exclude>**/MalformedCSVException.scala</exclude>
-                        <exclude>**/ReaderLineReader.java</exclude>
-                        <exclude>**/SourceLineReader.java</exclude>
-                    </excludes>
+                    <!--<excludes>-->
+                        <!--<exclude>**/CSVFormat.scala</exclude>-->
+                        <!--<exclude>**/CSVWriter.scala</exclude>-->
+                        <!--<exclude>**/Formats.scala</exclude>-->
+                        <!--<exclude>**/Quoting.scala</exclude>-->
+                        <!--<exclude>**/csv/package.scala</exclude>-->
+                        <!--<exclude>**/CSVParser.scala</exclude>-->
+                        <!--<exclude>**/CSVReader.scala</exclude>-->
+                        <!--<exclude>**/LineReader.java</exclude>-->
+                        <!--<exclude>**/MalformedCSVException.scala</exclude>-->
+                        <!--<exclude>**/ReaderLineReader.java</exclude>-->
+                        <!--<exclude>**/SourceLineReader.java</exclude>-->
+                    <!--</excludes>-->
                     <extraExtensions>
                         <scala>java</scala>
                     </extraExtensions>
@@ -331,4 +207,6 @@
             </plugin>
         </plugins>
     </build>
+
+
 </project>

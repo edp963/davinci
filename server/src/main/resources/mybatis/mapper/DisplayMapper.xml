@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.DisplayMapper">
+
+    <insert id="insert" parameterType="edp.davinci.model.Display">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert into `display`
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `name`,
+            project_id,
+            <if test="description != null">
+                description,
+            </if>
+            <if test="avatar != null">
+                avatar,
+            </if>
+            publish
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{name,jdbcType=VARCHAR},
+            #{projectId,jdbcType=BIGINT},
+            <if test="description != null">
+                #{description,jdbcType=VARCHAR},
+            </if>
+            <if test="avatar != null">
+                #{avatar,jdbcType=VARCHAR},
+            </if>
+            #{publish,jdbcType=BIT}
+        </trim>
+    </insert>
+</mapper>

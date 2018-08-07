@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.TeamMapper" >
+    <insert id="insert" parameterType="edp.davinci.model.Team">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert team
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            `name`,
+            description,
+            org_id,
+            visibility,
+            <if test='parentTeamId != null and parentTeamId != "" '>
+                parent_team_id,
+            </if>
+            <if test='avatar != null and avatar != "" '>
+                avatar
+            </if>
+        </trim>
+        values
+        <trim prefix=" (" suffix=")" suffixOverrides="," >
+            #{name, jdbcType=VARCHAR},
+            #{description, jdbcType=VARCHAR},
+            #{orgId, jdbcType=BIGINT},
+            #{visibility, jdbcType=TINYINT},
+            <if test='parentTeamId != null and parentTeamId != "" '>
+                #{parentTeamId, jdbcType=BIGINT},
+            </if>
+            <if test='avatar != null and avatar != "" '>
+                #{avatar, jdbcType=VARCHAR}
+            </if>
+        </trim>
+    </insert>
+</mapper>

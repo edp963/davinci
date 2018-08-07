@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.ProjectMapper" >
+
+    <insert id="insert" parameterType="edp.davinci.model.Project">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert project
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            `name`,
+            description,
+            <if test='pic != null and pic != "" '>
+                pic,
+            </if>
+            org_id,
+            user_id,
+            visibility
+        </trim>
+        values
+        <trim prefix=" (" suffix=")" suffixOverrides="," >
+            #{name, jdbcType=VARCHAR},
+            #{description, jdbcType=VARCHAR},
+            <if test='pic != null and pic != "" '>
+                #{pic, jdbcType=VARCHAR},
+            </if>
+            #{orgId, jdbcType=BIGINT},
+            #{userId, jdbcType=BIGINT},
+            #{visibility, jdbcType=TINYINT}
+        </trim>
+    </insert>
+</mapper>

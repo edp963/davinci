@@ -1,0 +1,67 @@
+createTable(tableName, fields, primaryKeys, indexKeys)
+::=<<
+CREATE TABLE `<tableName>` (
+    <fields:{field|`<field.name>` <field.type>};separator=",\n">
+    <if(primaryKeys)>
+    ,
+    PRIMARY KEY (<primaryKeys:{pk| `<pk>`};separator=",">)
+    <endif>
+    <if(indexKeys)>
+    ,
+    <indexKeys:{idx|<idx.keys:{k|KEY `<k>` (`<idx.(k)>`)}>};separator=",\n">
+    <endif>
+) DEFAULT CHARSET=utf8;
+>>
+
+insertData(tableName, columns)
+::=<<
+<if(columns)>
+INSERT INTO <tableName>
+(<columns:{item|<if(item.name)>`<item.name>`<endif>};separator=",">)
+VALUES
+(<columns:{item|<if(item.name)>?<endif>};separator=",">)
+<endif>
+>>
+
+/*
+insertData(tableName, values)
+::=<<
+<if(values)>
+INSERT INTO `<tableName>`
+(<first(values):{item|`<item>`};separator=",">)
+VALUES
+<values:{item|(<item.keys:{k|<item.(k)>};separator=","> )};separator=",\n">;
+<endif>
+>>
+*/
+
+
+
+querySql(groups, aggregators, filters, orders, sql)
+::=<<
+<if(!groups && !aggregators && !filters && !orders)>
+<sql>
+<else>
+SELECT
+<if(!groups && !aggregators)>
+ *
+<endif>
+<if(groups)>
+ <groups:{group|<group>}; separator=",">
+<endif>
+<if(groups && aggregators)>,<endif>
+<if(aggregators)>
+ <aggregators:{agg|<if(agg)><agg><endif>}; separator=",">
+<endif>
+FROM (<sql>) AS T
+<if(filters)>
+WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
+<endif>
+<if(groups)>
+GROUP BY <groups:{group|<if(group)><group><endif>}; separator=",">
+<endif>
+<if(orders)>
+ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=",">
+<endif>
+<endif>
+>>
