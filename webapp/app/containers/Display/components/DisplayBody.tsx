@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import DisplayEditor from './DisplayEditor'
+import DisplayContainer from './DisplayContainer'
 import DisplayBottom from './DisplayBottom'
 import DisplaySidebar from './DisplaySidebar'
 
@@ -16,7 +16,7 @@ export function DisplayBody (props: IDisplayBodyProps) {
   let sidebar
 
   props.children.forEach((c) => {
-    if (c.type === DisplayEditor) {
+    if (c.type === DisplayContainer) {
       editor = c
     }
     if (c.type === DisplayBottom) {

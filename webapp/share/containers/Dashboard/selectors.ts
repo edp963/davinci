@@ -20,7 +20,7 @@
 
 import { createSelector } from 'reselect'
 
-const selectShare = (state) => state.get('share')
+const selectShare = (state) => state.get('shareDashboard')
 
 const makeSelectTitle = () => createSelector(
   selectShare,

@@ -32,7 +32,7 @@ function parseJSON (response) {
 }
 
 function refreshToken (response) {
-  const token = response.data.header.token
+  const token = response.data.header && response.data.header.token
   if (token) {
     setToken(token)
     localStorage.setItem('TOKEN', token)

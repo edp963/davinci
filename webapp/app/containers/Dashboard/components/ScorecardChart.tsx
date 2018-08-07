@@ -40,7 +40,7 @@ export class ScorecardChart extends React.PureComponent<IScorecardChartProps, {}
 
   private prettifyContent = (content) => {
     if (!isNaN(Number(content))) {
-      const arr = content.split('.')
+      const arr = content.toString().split('.')
       arr[0] = arr[0].split('').reduceRight((formatted, str, index, oarr) => {
         formatted = index % 3 === 2 && index !== oarr.length - 1
           ? `,${str}${formatted}`

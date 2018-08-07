@@ -26,10 +26,13 @@ export class ShareForm extends PureComponent {
 
     switch (type) {
       case 'dashboard':
-        linkValue = `${shareHost}/#share?shareInfo=${encodeURI(shareInfo)}&type=dashboard`
+        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=dashboard`
         break
       case 'widget':
-        linkValue = `${shareHost}/#share?shareInfo=${encodeURI(shareInfo)}&type=widget`
+        linkValue = `${shareHost}#share/dashboard?shareInfo=${encodeURI(shareInfo)}&type=widget`
+        break
+      case 'display':
+        linkValue = `${shareHost}#share/display?shareInfo=${encodeURI(shareInfo)}`
         break
       default:
         break
@@ -59,7 +62,7 @@ export class ShareForm extends PureComponent {
           </Col>
         </Row>
         {
-          type !== 'dashboard'
+          type === 'widget'
             ? <div>
               <Row className={styles.shareRow}>
                 <Col span={5}>

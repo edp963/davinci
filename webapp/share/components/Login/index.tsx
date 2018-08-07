@@ -1,16 +1,27 @@
-import React, { PropTypes } from 'react'
-import {connect} from 'react-redux'
+import * as React from 'react'
+import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import LoginForm from '../../../app/containers/Login/LoginForm'
-import styles from '../../../app/containers/Login/Login.less'
+const styles = require('../../../app/containers/Login/Login.less')
 
 import { login } from '../../containers/App/actions'
-import { promiseDispatcher } from '../../../app/utils/reduxPromisation'
 
-import Icon from 'antd/lib/icon'
-import Message from 'antd/lib/message'
+const Icon = require('antd/lib/icon')
+const Message = require('antd/lib/message')
 
-class Login extends React.PureComponent {
+interface ILoginProps {
+  loginLoading: boolean
+  shareInfo: any,
+  legitimateUser: () => void
+  onLogin: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
+}
+
+interface ILoginStates {
+  username: string
+  password: string
+}
+
+class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -19,24 +30,24 @@ class Login extends React.PureComponent {
     }
   }
 
-  changeUsername = (e) => {
+  private changeUsername = (e) => {
     this.setState({
       username: e.target.value.trim()
     })
   }
 
-  changePassword = (e) => {
+  private changePassword = (e) => {
     this.setState({
       password: e.target.value
     })
   }
 
-  doLogin = () => {
+  private doLogin = () => {
     const { onLogin, shareInfo, legitimateUser } = this.props
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareInfo).then(res => {
+      onLogin(username, password, shareInfo, (res) => {
         if (res && res.header && res.header.code && res.header.code === 200) {
           legitimateUser()
         } else {
@@ -47,7 +58,7 @@ class Login extends React.PureComponent {
     }
   }
 
-  render () {
+  public render () {
     const { loginLoading } = this.props
     const { username, password } = this.state
     return (
@@ -79,17 +90,10 @@ class Login extends React.PureComponent {
   }
 }
 
-Login.propTypes = {
-  onLogin: PropTypes.func,
-  shareInfo: PropTypes.string,
-  loginLoading: PropTypes.bool,
-  legitimateUser: PropTypes.func
-}
-
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogin: (username, password, shareInfo) => promiseDispatcher(dispatch, login, username, password, shareInfo)
+    onLogin: (username: string, password: string, shareInfo: any, resolve: (res) => void) => dispatch(login(username, password, shareInfo, resolve))
   }
 }
 
-export default connect(null, mapDispatchToProps)(Login)
+export default connect<{}, {}, ILoginProps>(null, mapDispatchToProps)(Login)

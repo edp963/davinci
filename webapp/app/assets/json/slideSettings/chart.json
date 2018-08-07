@@ -1,0 +1,84 @@
+{
+  "name": "chart",
+  "title": "图表",
+  "params": [{
+    "name": "size",
+    "title": "图表尺寸",
+    "items": [{
+      "name": "width",
+      "title": "宽度（像素）",
+      "component": "inputnumber",
+      "default": 200
+    }, {
+      "name": "height",
+      "title": "高度（像素）",
+      "component": "inputnumber",
+      "default": 120
+    }]
+  }, {
+    "name": "position",
+    "title": "图表位置",
+    "items": [{
+      "name": "positionX",
+      "title": "x轴位置（像素）",
+      "component": "inputnumber"
+    }, {
+      "name": "positionY",
+      "title": "y轴位置（像素）",
+      "component": "inputnumber"
+    }]
+  }, {
+    "name": "background",
+    "title": "背景",
+    "items": [{
+      "name": "backgroundColor",
+      "title": "背景颜色",
+      "component": "colorPicker",
+      "default": [255,255,255]
+    }, {
+      "name": "opacity",
+      "title": "透明度",
+      "component": "inputnumber",
+      "default": 100,
+      "min": 0,
+      "max": 100
+    }]
+  }, {
+    "name": "border",
+    "title": "边框",
+    "items": [{
+      "name": "borderColor",
+      "title": "边框颜色",
+      "component": "colorPicker",
+      "default": [0,0,0]
+    }, {
+      "name": "borderWidth",
+      "title": "边框粗细",
+      "component": "inputnumber",
+      "default": 1
+    }, {
+      "name": "borderStyle",
+      "title": "边框样式",
+      "component": "select",
+      "values": [{
+        "name": "实线",
+        "value": "solid"
+      }, {
+        "name": "虚线",
+        "value": "dashed"
+      }, {
+        "name": "点线",
+        "value": "dotted"
+      }, {
+        "name": "双框",
+        "value": "double"
+      }],
+      "default": "solid"
+    }, {
+      "name": "borderRadius",
+      "title": "圆角半径",
+      "component": "inputnumber",
+      "default": 0
+    }]
+  }]
+}

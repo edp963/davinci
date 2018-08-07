@@ -28,6 +28,7 @@ import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
+import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
 import Portal from './containers/Portal'
 import Grid from './containers/Dashboard/Grid'
@@ -37,6 +38,8 @@ import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
 import Display from './containers/Display'
+import Editor from './containers/Display/Editor'
+import Preview from './containers/Display/Preview'
 import Account from './containers/Account'
 import Projects from './containers/Projects'
 import Profile from './containers/Profile'
@@ -235,6 +238,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           },
           childRoutes: [
             {
+              path: '/project/:pid/vizs',
+              name: 'vizs',
+              components: Viz
+            },
+            {
               path: '/project/:pid/portals',
               name: 'portals',
               component: Portal
@@ -274,6 +282,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
+            },
+            {
+              path: '/project/:pid/displays',
+              name: 'displays',
+              component: Display
             }
           ]
         },
@@ -323,6 +336,16 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Team
             }
           ]
+        },
+        {
+          path: '/project/:pid/display/:displayId',
+          name: 'display',
+          component: Editor
+        },
+        {
+          path: '/project/:pid/display/preview/:displayId',
+          name: 'displayPreview',
+          component: Preview
         },
         {
           path: '/project/:pid/bizlogic',

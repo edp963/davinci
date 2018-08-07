@@ -20,7 +20,8 @@
 
 // import { getAsyncInjectors } from './utils/asyncInjectors'
 
-import Share from './containers/Share'
+import Dashboard from './containers/Dashboard'
+import Display from './containers/Display'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -35,8 +36,12 @@ export default function createRoutes (store) {
 
   return [
     {
-      path: '/share',
-      component: Share
+      path: '/share/dashboard',
+      component: Dashboard
+    },
+    {
+      path: '/share/display',
+      component: Display
     },
     {
       path: '*',

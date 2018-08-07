@@ -14,12 +14,10 @@
     "typeRoots": ["node_modules/@types"],
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "*"
-      ]
+      "utils/*": [ "app/utils/*" ]
     },
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true
   },
   "exclude": [
     "node_modules"

@@ -26,15 +26,38 @@ import {
   GET_LOGIN_USER
 } from './constants'
 
-import { promiseActionCreator } from '../../../app/utils/reduxPromisation'
+export function login (username, password, shareInfo, resolve) {
+  return {
+    type: LOGIN,
+    payload: {
+      username,
+      password,
+      shareInfo,
+      resolve
+    }
+  }
+}
 
-export const login = promiseActionCreator(LOGIN, ['username', 'password', 'shareInfo'])
+export function logout () {
+  return {
+    type: LOGOUT
+  }
+}
 
-export const logout = promiseActionCreator(LOGOUT)
+export function setLoginUser (user) {
+  return {
+    type: SET_LOGIN_USER,
+    payload: {
+      user
+    }
+  }
+}
 
-export const setLoginUser = promiseActionCreator(SET_LOGIN_USER, ['user'])
-
-export const getLoginUser = promiseActionCreator(GET_LOGIN_USER)
+export function getLoginUser () {
+  return {
+    type: GET_LOGIN_USER
+  }
+}
 
 export function logged (user) {
   return {

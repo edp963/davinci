@@ -21,6 +21,7 @@
 import {
   LOAD_SHARE_DASHBOARD,
   LOAD_SHARE_DASHBOARD_SUCCESS,
+  LOAD_SHARE_DASHBOARD_FAILURE,
   LOAD_SHARE_WIDGET,
   LOAD_SHARE_WIDGET_SUCCESS,
   LOAD_SHARE_RESULTSET,
@@ -54,6 +55,12 @@ export function dashboardGetted (dashboard) {
     payload: {
       dashboard
     }
+  }
+}
+
+export function loadDashboardFail () {
+  return {
+    type: LOAD_SHARE_DASHBOARD_FAILURE
   }
 }
 

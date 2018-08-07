@@ -1,218 +1,297 @@
-/*
- *
- * Display
- *
- */
-
 import * as React from 'react'
-import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
+import { Link, InjectedRouter } from 'react-router'
+import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import makeSelectDisplay from './selectors'
-import Draggable from '../../components/Draggable/react-draggable'
 
-import DisplayHeader from './components/DisplayHeader'
-import DisplayBody from './components/DisplayBody'
-import DisplayEditor from './components/DisplayEditor'
-import DisplayBottom from './components/DisplayBottom'
-import DisplaySidebar from './components/DisplaySidebar'
+import { compose } from 'redux'
+import reducer from './reducer'
+import reducerWidget from '../Widget/reducer'
+import saga from './sagas'
+import sagaWidget from '../Widget/sagas'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
 
-import SettingForm from './components/SettingForm'
+import Container from '../../components/Container'
+import DisplayList from './components/DisplayList'
+import DisplayForm from './components/DisplayForm'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 
-import { hideNavigator } from '../App/actions'
-import { DEFAULT_DISPLAY_WIDTH, DEFAULT_DISPLAY_HEIGHT } from '../../globalConstants'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Button = require('antd/lib/button')
+const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
+const Modal = require('antd/lib/modal')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const Popconfirm = require('antd/lib/popconfirm')
+const Input = require('antd/lib/input')
+const Pagination = require('antd/lib/pagination')
+const Search = Input.Search
+
+const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')
+const stylesDashboard = require('../Dashboard/Dashboard.less')
 
+import { loadDisplays, deleteDisplay, addDisplay, editDisplay } from './actions'
+import { makeSelectDisplays } from './selectors'
+import { makeSelectLoginUser } from '../App/selectors'
 
 interface IDisplayProps {
-  onHideNavigator: () => void
+  router: InjectedRouter
+  params: any
+  displays: any[]
+  loginUser: { id: number, admin: boolean }
+  onLoadDisplays: (projectId: string) => void,
+  onDeleteDisplay: (id: any) => void
+  onAddDisplay: (display: any, resolve: () => void) => void
+  onEditDisplay: (display: any, resolve: () => void) => void
 }
 
 interface IDisplayStates {
-  editorWidth: number,
-  editorHeight: number,
-  editorPadding: string,
-  scale: number,
-  sliderValue: number,
-  displayWidth: number,
-  displayHeight: number,
-  displayScale: string,
-  gridDistance: number
+  modalLoading: boolean
+  formType: 'add' | 'edit' | ''
+  formVisible: boolean
+  currentDisplay: object,
+  kwDisplay: string
 }
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   constructor (props) {
     super(props)
     this.state = {
-      editorWidth: 0,
-      editorHeight: 0,
-      editorPadding: '',
-      scale: 1,
-      sliderValue: 20,
-
-      displayWidth: DEFAULT_DISPLAY_WIDTH,
-      displayHeight: DEFAULT_DISPLAY_HEIGHT,
-      displayScale: 'auto',
-      gridDistance: 10
+      modalLoading: false,
+      formType: '',
+      formVisible: false,
+      currentDisplay: null,
+      kwDisplay: ''
     }
   }
 
-  private editor: any
+  private displayForm: WrappedFormUtils
 
-  public componentDidMount () {
-    this.props.onHideNavigator()
-    window.addEventListener('resize', this.containerResize, false)
-    // onHideNavigator 导致页面渲染
-    setTimeout(() => {
-      this.doScale(1)
-    })
+  public componentWillMount () {
+    const {
+      params,
+      onLoadDisplays
+    } = this.props
+    const { pid } = params
+    onLoadDisplays(pid)
   }
 
-  public componentWillUnmount () {
-    window.removeEventListener('resize', this.containerResize, false)
+  private goToDisplay = (display?: any) => () => {
+    const { params } = this.props
+    this.props.router.push(`/project/${params.pid}/display/${display ? display.id : -1}`)
   }
 
-  private containerResize = () => {
-    this.sliderChange(this.state.sliderValue)
+  private onCopy = (display) => (e) => {
+    console.log(e)
   }
 
-  private sliderChange = (value) => {
-    this.doScale(value / 40 + 0.5)
+  private onSearchDisplay = (value) => {
     this.setState({
-      sliderValue: value
+      kwDisplay: value
     })
   }
 
-  private zoomIn = () => {
-    if (this.state.sliderValue) {
-      this.sliderChange(Math.max(this.state.sliderValue - 10, 0))
+  private getDisplays () {
+    const {
+      loginUser,
+      displays
+    } = this.props
+
+    const {
+      kwDisplay
+    } = this.state
+
+    if (!Array.isArray(displays)) {
+      return []
     }
+
+    const reg = new RegExp(kwDisplay, 'i')
+    const filteredDisplays = displays.filter((d) => reg.test(d.name))
+    return filteredDisplays
   }
 
-  private zoomOut = () => {
-    if (this.state.sliderValue !== 100) {
-      this.sliderChange(Math.min(this.state.sliderValue + 10, 100))
-    }
-  }
-
-  private doScale = (times) => {
-    const { displayWidth, displayHeight } = this.state
-    const { offsetWidth, offsetHeight } = this.editor.container
-
-    const editorWidth = Math.max(offsetWidth * times, offsetWidth)
-    const editorHeight = Math.max(offsetHeight * times, offsetHeight)
-
-    const scale = (displayWidth / displayHeight > editorWidth / editorHeight) ?
-      // landscape
-      (editorWidth - 64) / displayWidth * times :
-      // portrait
-      (editorHeight - 64) / displayHeight * times
-
-    const leftRightPadding = Math.max((offsetWidth - displayWidth * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - displayHeight * scale) / 2, 32)
-
+  private showDisplayForm = (formType, display?) => (e) => {
+    e.stopPropagation()
     this.setState({
-      editorWidth: Math.max(editorWidth, displayWidth * scale + 64),
-      editorHeight: Math.max(editorHeight, displayHeight * scale + 64),
-      editorPadding: `${topBottomPadding}px ${leftRightPadding}px`,
-      scale
-    })
-  }
-
-  private displaySizeChange = (width, height) => {
-    this.setState({
-      displayWidth: width,
-      displayHeight: height
+      formType,
+      formVisible: true
     }, () => {
-      this.sliderChange(this.state.sliderValue)
+      if (display) {
+        this.displayForm.setFieldsValue(display)
+      }
     })
   }
 
-  private displayScaleChange = (event) => {
+  private hideDisplayForm = () => {
     this.setState({
-      displayScale: event.target.value
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.displayForm.resetFields()
     })
   }
 
-  private gridDistanceChange = (distance) => {
-    this.setState({
-      gridDistance: distance
+  private onModalOk = () => {
+    this.displayForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        if (this.state.formType === 'add') {
+          const { params } = this.props
+          const projectId = params.pid
+          this.props.onAddDisplay({
+            ...values,
+            projectId
+          }, () => { this.hideDisplayForm() })
+        } else {
+          this.props.onEditDisplay(values, () => { this.hideDisplayForm() })
+        }
+      }
     })
-  }
-
-  private abc = (e, d) => {
-    console.log(e, d)
   }
 
   public render () {
     const {
-      editorWidth,
-      editorHeight,
-      editorPadding,
-      scale,
-      sliderValue,
-      displayWidth,
-      displayHeight,
-      displayScale,
-      gridDistance
+      params,
+      displays,
+      loginUser,
+      onAddDisplay,
+      onDeleteDisplay
+    } = this.props
+    const projectId = params.pid
+
+    const {
+      modalLoading,
+      formType,
+      formVisible,
+      currentDisplay
     } = this.state
-    return (
-      <div className={styles.display}>
-        <Helmet
-          title="Display"
-        />
-        <DisplayHeader widgets={[]}/>
-        <DisplayBody>
-          <DisplayEditor
-            key="editor"
-            width={editorWidth}
-            height={editorHeight}
-            padding={editorPadding}
-            scale={scale}
-            displayWidth={displayWidth}
-            displayHeight={displayHeight}
-            ref={(f) => { this.editor = f }}
-          >
-            <Draggable
-              grid={[gridDistance * scale, gridDistance * scale]}
-              bounds="parent"
-              scale={scale}
-              onStop={this.abc}
-            >
-              <div style={{width: '192px', height: '192px', border: '1px solid #000'}}/>
-            </Draggable>
-          </DisplayEditor>
-          <DisplayBottom
-            sliderValue={sliderValue}
-            onZoomIn={this.zoomIn}
-            onZoomOut={this.zoomOut}
-            onSliderChange={this.sliderChange}
-          />
-          <DisplaySidebar>
-            <SettingForm
-              screenWidth={displayWidth}
-              screenHeight={displayHeight}
-              scale={displayScale}
-              gridDistance={gridDistance}
-              onDisplaySizeChange={this.displaySizeChange}
-              onDisplayScaleChange={this.displayScaleChange}
-              onGridDistanceChange={this.gridDistanceChange}
+
+    const displaysFiltered = this.getDisplays()
+
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideDisplayForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.onModalOk}
+      >
+        保 存
+      </Button>
+    )]
+
+    const addButton = loginUser.admin
+      ? (
+        <Col xl={2} lg={2} md={2} sm={2} xs={24} className={stylesDashboard.addCol}>
+          <Tooltip placement="bottom" title="新增">
+            <Button
+              size="large"
+              type="primary"
+              icon="plus"
+              onClick={this.showDisplayForm('add')}
             />
-          </DisplaySidebar>
-        </DisplayBody>
-      </div>
+          </Tooltip>
+        </Col>
+      ) : ''
+
+    const searchCol = loginUser.admin ? stylesDashboard.searchAdmin : stylesDashboard.searchUser
+
+    return (
+      <Container>
+        <Helmet title="Display" />
+        <Container.Title>
+          <Row>
+            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+              <Breadcrumb className={utilStyles.breadcrumb}>
+                <Breadcrumb.Item>
+                  <Link to="/">
+                    Display
+                  </Link>
+                </Breadcrumb.Item>
+              </Breadcrumb>
+            </Col>
+            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+              <Row>
+                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
+                  <Search
+                    size="large"
+                    className={`${utilStyles.searchInput} ${loginUser.admin ? stylesDashboard.searchInputAdmin : ''}`}
+                    placeholder="Display 名称"
+                    onSearch={this.onSearchDisplay}
+                  />
+                </Col>
+                {addButton}
+              </Row>
+            </Col>
+          </Row>
+        </Container.Title>
+        <Container.Body card>
+          <DisplayList
+            projectId={projectId}
+            displays={displaysFiltered}
+            onDisplayClick={this.goToDisplay}
+            onAdd={onAddDisplay}
+            onEdit={this.showDisplayForm}
+            onCopy={this.onCopy}
+            onDelete={onDeleteDisplay}
+          />
+        </Container.Body>
+        <Modal
+          title={`${formType === 'add' ? '新增' : '修改'} Display`}
+          wrapClassName="ant-modal-small"
+          visible={formVisible}
+          footer={modalButtons}
+          onCancel={this.hideDisplayForm}
+        >
+          <DisplayForm
+            projectId={projectId}
+            type={formType}
+            ref={(f) => { this.displayForm = f }}
+          />
+        </Modal>
+      </Container>
     )
   }
 }
 
 const mapStateToProps = createStructuredSelector({
-  Display: makeSelectDisplay()
+  displays: makeSelectDisplays(),
+  loginUser: makeSelectLoginUser()
 })
 
-function mapDispatchToProps (dispatch) {
+export function mapDispatchToProps (dispatch) {
   return {
-    onHideNavigator: () => dispatch(hideNavigator())
+    onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
+    onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id)),
+    onAddDisplay: (display, resolve) => dispatch(addDisplay(display, resolve)),
+    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve))
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Display)
+const withReducer = injectReducer({ key: 'display', reducer })
+const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
+
+const withSaga = injectSaga({ key: 'display', saga })
+const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
+
+const withConnect = connect<{}, {}, IDisplayProps>(mapStateToProps, mapDispatchToProps)
+
+export default compose(
+  withReducer,
+  withReducerWidget,
+  withSaga,
+  withSagaWidget,
+  withConnect)(Display)
+

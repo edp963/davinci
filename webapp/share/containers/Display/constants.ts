@@ -18,12 +18,14 @@
  * >>
  */
 
-import appSagas from './containers/App/sagas'
-import shareSagas from './containers/Share/sagas'
-import widgetSagas from '../app/containers/Widget/sagas'
+export enum ActionTypes {
+  LOAD_SHARE_DISPLAY = 'davinci/Share/LOAD_SHARE_DISPLAY',
+  LOAD_SHARE_DISPLAY_SUCCESS = 'davinci/Share/LOAD_SHARE_DISPLAY_SUCCESS',
+  LOAD_SHARE_DISPLAY_FAILURE = 'davinci/Share/LOAD_SHARE_DISPLAY_FAILURE',
 
-export default [
-  ...appSagas,
-  ...shareSagas,
-  ...widgetSagas
-]
+  LOAD_LAYER_DATA = 'davinci/Share/LOAD_LAYER_DATA',
+  LOAD_LAYER_DATA_SUCCESS = 'davinci/Share/LOAD_LAYER_DATA_SUCCESS',
+  LOAD_LAYER_DATA_FAILURE = 'davinci/Share/LOAD_LAYER_DATA_FAILURE'
+}
+
+export default ActionTypes

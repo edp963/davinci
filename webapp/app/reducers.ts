@@ -38,7 +38,7 @@ import reportReducer from './containers/Report/reducer'
 // import widgetReducer from './containers/Widget/reducer'
 // import dashboardReducer from './containers/Dashboard/reducer'
 import scheduleReducer from './containers/Schedule/reducer'
-import displayReducer from './containers/Display/reducer'
+// import displayReducer from './containers/Display/reducer'
 
 /*
  * routeReducer
@@ -84,7 +84,7 @@ export default function createReducer (injectedReducers: ReducersMapObject = {})
     // widget: widgetReducer,
     // dashboard: dashboardReducer,
     schedule: scheduleReducer,
-    display: displayReducer,
+    // display: displayReducer,
     ...injectedReducers
   })
 }

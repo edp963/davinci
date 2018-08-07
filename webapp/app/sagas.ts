@@ -18,7 +18,7 @@
  * >>
  */
 
-import appSagas from './containers/App/sagas'
+// import appSagas from './containers/App/sagas'
 // import groupSagas from './containers/Group/sagas'
 // import userSagas from './containers/User/sagas'
 // import sourceSagas from './containers/Source/sagas'
@@ -26,10 +26,10 @@ import appSagas from './containers/App/sagas'
 // import widgetSagas from './containers/Widget/sagas'
 // import dashboardSagas from './containers/Dashboard/sagas'
 // import scheduleSagas from './containers/Schedule/sagas'
-import displaySagas from './containers/Display/sagas'
+// import displaySagas from './containers/Display/sagas'
 
 export default [
-  ...appSagas,
+  // ...appSagas
   // ...groupSagas,
   // ...userSagas,
   // ...sourceSagas,
@@ -37,5 +37,5 @@ export default [
   // ...widgetSagas,
   // ...dashboardSagas,
   // ...scheduleSagas,
-  ...displaySagas
+  // ...displaySagas
 ]

@@ -23,16 +23,15 @@ import { call, fork, put } from 'redux-saga/effects'
 
 import { LOGIN, GET_LOGIN_USER } from './constants'
 import { logged } from './actions'
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 
 import request from '../../../app/utils/request'
 import api from '../../../app/utils/api'
-import { notifySagasError } from '../../../app/utils/util'
-import { promiseSagaCreator } from '../../../app/utils/reduxPromisation'
 import { readObjectAdapter } from '../../../app/utils/asyncAdapter'
 
-export const login = promiseSagaCreator(
-  function* ({ username, password, shareInfo }) {
+export function* login (action) {
+  const { username, password, shareInfo, resolve } = action.payload
+  try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/login/${shareInfo}`,
@@ -41,7 +40,6 @@ export const login = promiseSagaCreator(
         password
       }
     })
-
     switch (asyncData.header.code) {
       case 400:
         message.error('密码错误')
@@ -50,36 +48,29 @@ export const login = promiseSagaCreator(
         message.error('用户不存在')
         return null
       default:
+        resolve(asyncData)
         return asyncData
     }
-  },
-  function (err) {
-    notifySagasError(err, 'login')
+  } catch (err) {
+    message.error(err)
   }
-)
-
-export function* loginWatcher () {
-  yield fork(takeLatest, LOGIN, login)
 }
 
-export const getLoginUser = promiseSagaCreator(
-  function* () {
+export function* getLoginUser (action) {
+  try {
     const asyncData = yield call(request, `${api.user}/token`)
     const loginUser = readObjectAdapter(asyncData)
     yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
     return loginUser
-  },
-  function (err) {
-    notifySagasError(err, 'getLoginUser')
+  } catch (err) {
+    message.error(err)
   }
-)
-
-export function* getLoginUserWatcher () {
-  yield fork(takeLatest, GET_LOGIN_USER, getLoginUser)
 }
 
-export default [
-  loginWatcher,
-  getLoginUserWatcher
-]
+export default function* rootAppSaga (): IterableIterator<any> {
+  yield [
+    takeLatest(LOGIN, login),
+    takeLatest(GET_LOGIN_USER, getLoginUser)
+  ]
+}

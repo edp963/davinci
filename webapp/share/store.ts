@@ -22,26 +22,33 @@
  * Create the store with asynchronously loaded reducers
  */
 
-import { createStore, applyMiddleware, compose } from 'redux'
+import { createStore, applyMiddleware, compose, Store, Middleware, ReducersMapObject } from 'redux'
 import { fromJS } from 'immutable'
 import { routerMiddleware } from 'react-router-redux'
-import createSagaMiddleware from 'redux-saga'
+import createSagaMiddleware, { Task, SagaIterator } from 'redux-saga'
 import createReducer from './reducers'
-import sagas from './sagas'
 
 const sagaMiddleware = createSagaMiddleware()
 
-export default function configureStore (initialState = {}, history) {
+export interface IStore<T> extends Store<T> {
+  runSaga?: (saga: (...args: any[]) => SagaIterator, ...args: any[]) => Task
+  // asyncReducers?: ReducersMapObject,
+  injectedReducers?: ReducersMapObject,
+  injectedSagas?: ReducersMapObject
+}
+
+declare interface IWindow extends Window {
+  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose
+}
+declare const window: IWindow
+
+export default function configureStore<T> (initialState: object = {}, history): IStore<T> {
   // Create the store with two middlewares
   // 1. sagaMiddleware: Makes redux-sagas work
   // 2. routerMiddleware: Syncs the location/URL path to the state
   const middlewares = [
     sagaMiddleware,
     routerMiddleware(history)
-  ]
-
-  const enhancers = [
-    applyMiddleware(...middlewares)
   ]
 
   // If Redux DevTools Extension is installed use it, otherwise use Redux compose
@@ -53,27 +60,29 @@ export default function configureStore (initialState = {}, history) {
       : compose
   /* eslint-enable */
 
-  const store = createStore(
+  const store: IStore<T> = createStore(
     createReducer(),
     fromJS(initialState),
-    composeEnhancers(...enhancers)
+    composeEnhancers(applyMiddleware(...middlewares))
   )
 
   // Extensions
   store.runSaga = sagaMiddleware.run
-  sagas.map(store.runSaga)
-  store.asyncReducers = {} // Async reducer registry
+  // store.asyncReducers = {} // Async reducer registry
+  store.injectedReducers = {} // Reducer registry
+  store.injectedSagas = {} // Saga registry
 
   // Make reducers hot reloadable, see http://mxs.is/googmo
   /* istanbul ignore next */
   if (module.hot) {
     module.hot.accept('./reducers', () => {
-      import('./reducers').then((reducerModule) => {
-        const createReducers = reducerModule.default
-        const nextReducers = createReducers(store.asyncReducers)
+      store.replaceReducer(createReducer(store.injectedReducers))
+      // import('./reducers').then((reducerModule) => {
+      //   const createReducers = reducerModule.default
+      //   const nextReducers = createReducers(store.asyncReducers)
 
-        store.replaceReducer(nextReducers)
-      })
+      //   store.replaceReducer(nextReducers)
+      // })
     })
   }
 

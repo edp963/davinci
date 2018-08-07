@@ -32,7 +32,7 @@ import reducer from './reducer'
 import saga from './sagas'
 
 import Container from '../../components/Container'
-import PortalForm from './PortalForm'
+import PortalForm from './components/PortalForm'
 import AntdFormType from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')

@@ -38,7 +38,6 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-import {} from '../User/actions'
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -115,15 +114,14 @@ export function* getLoginUser (action): IterableIterator<any> {
 }
 
 export function* checkName (action): IterableIterator<any> {
-  const { id, name, type, resolve, reject } = action.payload
+  const { id, name, type, params, resolve, reject } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const asyncData = yield call(request, `${api.checkName}/${type}`, {
       method: 'get',
-      url: api.checkName,
       params: {
+        ...params,
         id,
-        name,
-        entity: type
+        name
       }
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
