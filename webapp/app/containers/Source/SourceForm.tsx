@@ -36,7 +36,7 @@ const Icon = require('antd/lib/icon')
 const FormItem = Form.Item
 const Option = Select.Option
 
-import { projectsCheckName } from '../App/actions'
+import { checkNameUniqueAction } from '../App/actions'
 
 const utilStyles = require('../../assets/less/util.less')
 
@@ -46,25 +46,21 @@ interface ISourceFormProps {
   testLoading: boolean
   form: any
   onTestSourceConnection: () => any
-  onCheckName: (
-    projectId: number,
-    id: number,
-    name: string,
-    type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
-  ) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
   public checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, projectId } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    const idName = type === 'add' ? '' : id
-    const typeName = 'source'
-    onCheckName(projectId, idName, value, typeName,
+    const { onCheckUniqueName, type, projectId, form } = this.props
+    const { id } = form.getFieldsValue()
+
+    const data = {
+      projectId,
+      id: type === 'add' ? '' : id,
+      name: value
+    }
+    onCheckUniqueName('source', data,
       () => {
         callback()
       }, (err) => {
@@ -92,7 +88,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
                 <Input />
               )}
             </FormItem>
-            <FormItem label="名称" {...commonFormItemStyle}>
+            <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
               {getFieldDecorator('name', {
                 rules: [{
                   required: true,
@@ -197,7 +193,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 

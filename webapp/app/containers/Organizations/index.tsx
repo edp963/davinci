@@ -101,7 +101,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
   }
 
   public render () {
-    const { formVisible, formType, modalLoading } = this.state
+    const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
     const organizationArr = organizations ? organizations.map((org) => (
         <div className={styles.groupList} key={org.id}>
@@ -148,7 +148,6 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
           onCancel={this.hideOrganizationForm}
         >
           <OrganizationForm
-            type={formType}
             ref={(f) => { this.OrganizationForm = f }}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}

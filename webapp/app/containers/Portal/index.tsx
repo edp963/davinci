@@ -30,8 +30,6 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import dashboardReducer from '../Dashboard/reducer'
-import dashboardSaga from '../Dashboard/sagas'
 
 import Container from '../../components/Container'
 import PortalForm from './components/PortalForm'
@@ -50,10 +48,7 @@ const Pagination = require('antd/lib/pagination')
 const Search = Input.Search
 
 import { loadPortals, addPortal, editPortal, deletePortal } from './actions'
-import { loadDashboards } from '../Dashboard/actions'
-import { makeSelectDashboards } from '../Dashboard/selectors'
 import { makeSelectPortals } from './selectors'
-import {  } from '../App/selectors'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Portal.less')
@@ -61,7 +56,6 @@ const widgetStyles = require('../Widget/Widget.less')
 
 interface IPortalProps {
   portals: IPortal[]
-  dashboards: any[]
   loginUser: { id: number, admin: boolean }
   router: InjectedRouter
   params: any
@@ -69,7 +63,6 @@ interface IPortalProps {
   onAddPortal: (portal: IPortal, resolve: () => void) => void
   onEditPortal: (portal: IPortal, resolve: () => void) => void
   onDeletePortal: (id: number) => void
-  onLoadDashboards: (portalId: number) => void
 }
 
 interface IPortalStates {
@@ -80,7 +73,6 @@ interface IPortalStates {
   currentPage: number
   pageSize: number
   screenWidth: number
-  searchValue: any
 }
 
 export interface IPortal {
@@ -107,8 +99,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
       filteredPortals: null,
       currentPage: 1,
       pageSize: 24,
-      screenWidth: 0,
-      searchValue: ''
+      screenWidth: 0
     }
   }
 
@@ -202,16 +193,8 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
   }
 
   private toDashboard = (d) => (e) => {
-    const { params, dashboards } = this.props
-    this.props.onLoadDashboards(d.id)
-    // console.log('dashboards', dashboards)
-
-    // todo：
-    if (dashboards) {
-    this.props.router.push(`/project/${params.pid}/portal/${d.id}/dashboard/${dashboards[0].id}`)
-    } else {
-      this.props.router.push(`/project/${params.pid}/portal/${d.id}`)
-    }
+    const { params, router } = this.props
+    router.push(`/project/${params.pid}/portal/${d.id}/portalName/${d.name}`)
   }
 
   public render () {
@@ -300,8 +283,6 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
         onShowSizeChange={this.onShowSizeChange}
         onChange={this.onChange}
         total={portalsArr.length}
-        // defaultPageSize={2}
-        // pageSizeOptions={['2', '4', '6', '8']}
         defaultPageSize={24}
         pageSizeOptions={['24', '48', '72', '96']}
         current={currentPage}
@@ -397,8 +378,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
 }
 
 const mapStateToProps = createStructuredSelector({
-  portals: makeSelectPortals(),
-  dashboards: makeSelectDashboards()
+  portals: makeSelectPortals()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -406,8 +386,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onAddPortal: (values, resolve) => dispatch(addPortal(values, resolve)),
     onEditPortal: (values, resolve) => dispatch(editPortal(values, resolve)),
-    onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onLoadDashboards: (portalId) => dispatch(loadDashboards(portalId))
+    onDeletePortal: (id) => dispatch(deletePortal(id))
   }
 }
 
@@ -416,13 +395,8 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'portal', reducer })
 const withSaga = injectSaga({ key: 'portal', saga })
 
-const withReducerDashboard = injectReducer({ key: 'dashboard', reducer: dashboardReducer })
-const withSagaDashboard = injectSaga({ key: 'dashboard', saga: dashboardSaga })
-
 export default compose(
   withReducer,
-  withReducerDashboard,
   withSaga,
-  withSagaDashboard,
   withConnect
 )(Portal)

@@ -63,6 +63,3 @@ export const LOAD_WIDGET_CSV_FAILURE = 'davinci/Dashboard/LOAD_WIDGET_CSV_FAILUR
 export const UPDAATE_MARK = 'davinci/Dashboard/UPDAATE_MARK'
 export const UPDATE_MARK_SUCCESS = 'davinci/Dashboard/UPDATE_MARK_SUCCESS'
 export const UPDATE_MARK_ERROR = 'davinci/Dashboard/UPDATE_MARK_ERROR'
-export const LOAD_WIDGET_POSITION = 'davinci/Dashboard/LOAD_WIDGET_POSITION'
-export const LOAD_WIDGET_POSITION_SUCCESS = 'davinci/Dashboard/LOAD_WIDGET_POSITION_SUCCESS'
-export const LOAD_WIDGET_POSITION_ERROR = 'davinci/Dashboard/LOAD_WIDGET_POSITION_ERROR'

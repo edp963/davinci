@@ -34,7 +34,7 @@ const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { projectsCheckName } from '../../App/actions'
+import { checkNameUniqueAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -43,29 +43,27 @@ interface IDashboardFormProps {
   type: string
   form: any
   params: any
-  onCheckName: (
-    projectId: number,
-    id: number,
-    name: string,
-    type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
-  ) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type, form, projectId } = this.props
+    const { onCheckUniqueName, type, form, projectId } = this.props
     const { id } = form.getFieldsValue()
-    const idName = type === 'add' ? '' : id
-    const typeName = 'dashboardPortal'
-    onCheckName(projectId, idName, value, typeName,
+
+    const data = {
+      projectId,
+      id: type === 'add' ? '' : id,
+      name: value
+    }
+    onCheckUniqueName('dashboardPortal', data,
       () => {
         callback()
       }, (err) => {
         callback(err)
       })
   }
+
   public render () {
     const { getFieldDecorator } = this.props.form
     const commonFormItemStyle = {
@@ -88,7 +86,7 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
                 <Input />
               )}
             </FormItem>
-            <FormItem label="名称" {...commonFormItemStyle}>
+            <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
               {getFieldDecorator('name', {
                 rules: [{
                   required: true,
@@ -134,8 +132,7 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (pId, id, name, type, resolve, reject) => dispatch(projectsCheckName(pId, id, name, type, resolve, reject))
-  }
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))  }
 }
 
 const withConnect = connect(null, mapDispatchToProps)

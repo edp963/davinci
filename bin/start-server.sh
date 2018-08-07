@@ -1,8 +1,30 @@
 #!/bin/bash
 
+#  <<
+#  Davinci
+#  ==
+#  Copyright (C) 2016 - 2018 EDP
+#  ==
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#  >>
+
+
 #start server
 
-current_dir=`pwd`
+Server=`ps -ef | grep java | grep davinci-server-0.3-0.0.1-SNAPSHOT | grep -v grep | awk '{print $2}'`
+if [[ $Server -gt 0 ]]; then
+  echo "[Davinci Server] is already started"
+  exit
+fi
+
 script_dir=$(cd `dirname $0`; pwd)
-cd $script_dir
-java -cp ../lib/davinci-server_2.11-0.2.0-SNAPSHOT.jar:../lib/* edp.davinci.DavinciStarter &
+cd $script_dir/../
+nohup java -cp lib/*:davinci-server-0.3-0.0.1-SNAPSHOT.jar edp.DavinciServerApplication  >/dev/null  2>&1 &

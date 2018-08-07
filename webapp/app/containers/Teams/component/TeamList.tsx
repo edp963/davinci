@@ -2,18 +2,14 @@ import * as React from 'react'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
 const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
 const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
 const styles = require('../Team.less')
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
-import {IOrganizationMembers} from '../../Organizations/Organization'
 
 interface ITeamListState {
   modalLoading: boolean,
@@ -53,9 +49,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       formVisible: false
     })
   }
-  private onModalOk = () => {
 
-  }
   private toThatTeam = (text, record) => () => {
     const {id} = record
     if (id) {

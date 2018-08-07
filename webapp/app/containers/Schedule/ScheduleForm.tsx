@@ -67,11 +67,17 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 }
     }
-    let index = 0
+    let minuteIndex = 0
+    let monthIndex = 0
     const minuteOptions = []
-    while (index < 60) {
-      minuteOptions.push(<Option value={index}>{index}</Option>)
-      index++
+    const monthOptions = []
+    while (minuteIndex < 60) {
+      minuteOptions.push(<Option key={minuteIndex} value={minuteIndex}>{minuteIndex}</Option>)
+      minuteIndex++
+    }
+    while (monthIndex < 32) {
+      monthOptions.push(<Option key={monthIndex} value={monthIndex}>{monthIndex}</Option>)
+      monthIndex++
     }
     return (
       <Form>
@@ -104,7 +110,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
         <Row>
           <Col span={24}>
             <FormItem label="描述" {...commonFormItemStyle}>
-              {getFieldDecorator('desc', {
+              {getFieldDecorator('description', {
                 initialValue: ''
               })(
                 <Input
@@ -120,7 +126,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
               label="类型"
               {...commonFormItemStyle}
             >
-              {getFieldDecorator('job_type', {
+              {getFieldDecorator('jobType', {
                 initialValue: 'email'
               })(
                 <Select>
@@ -181,11 +187,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                   initialValue: ''
                 })(
                   <Select onChange={this.props.changeRange}>
-                    <Option value="Minute">Minute</Option>
-                    <Option value="Hour">Hour</Option>
-                    <Option value="Day">Day</Option>
-                    <Option value="Week">Week</Option>
-                    <Option value="Month">Month</Option>
+                    {['Minute', 'Hour', 'Day', 'Week', 'Month'].map((dimensions) => <Option key={dimensions} value={dimensions}>{dimensions}</Option>)}
                   </Select>
                 )
               }
@@ -219,17 +221,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="1">1st</Option><Option value="2">2nd</Option><Option value="3">3rd</Option>
-                      <Option value="4">4th</Option><Option value="5">5th</Option><Option value="6">6th</Option>
-                      <Option value="7">7th</Option><Option value="8">8th</Option><Option value="9">9th</Option>
-                      <Option value="10">10th</Option><Option value="11">11th</Option><Option value="12">12th</Option>
-                      <Option value="13">13th</Option><Option value="14">14th</Option><Option value="15">15th</Option>
-                      <Option value="16">16th</Option><Option value="17">17th</Option><Option value="18">18th</Option>
-                      <Option value="19">19th</Option><Option value="20">20th</Option><Option value="21">21st</Option>
-                      <Option value="22">22nd</Option><Option value="23">23rd</Option><Option value="24">24th</Option>
-                      <Option value="25">25th</Option><Option value="26">26th</Option><Option value="27">27th</Option>
-                      <Option value="28">28th</Option><Option value="29">29th</Option><Option value="30">30th</Option>
-                      <Option value="31">31st</Option>
+                      {monthOptions}
                     </Select>
                   )
                 }
@@ -269,13 +261,8 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                     initialValue: ''
                   })(
                     <Select>
-                      <Option value="0">Sunday</Option>
-                      <Option value="1">Monday</Option>
-                      <Option value="2">Tuesday</Option>
-                      <Option value="3">Wednesday</Option>
-                      <Option value="4">Thursday</Option>
-                      <Option value="5">Friday</Option>
-                      <Option value="6">Saturday</Option>
+                      {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                        .map((dimensions, index) => <Option key={index} value={`${index}`}>{dimensions}</Option>)}
                     </Select>
                   )
                 }

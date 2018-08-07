@@ -53,10 +53,7 @@ import {
   LOAD_WIDGET_SHARE_LINK_FAILURE,
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
-  LOAD_WIDGET_CSV_FAILURE,
-  LOAD_WIDGET_POSITION,
-  LOAD_WIDGET_POSITION_SUCCESS,
-  LOAD_WIDGET_POSITION_ERROR
+  LOAD_WIDGET_CSV_FAILURE
 } from './constants'
 
 import {
@@ -397,14 +394,6 @@ function dashboardReducer (state = initialState, action) {
         ...dashboardCascadeSources,
         [payload.controlId]: payload.values
       })
-
-    case LOAD_WIDGET_POSITION:
-      return state
-    case LOAD_WIDGET_POSITION_SUCCESS:
-      console.log('reducer', payload)
-      return state
-    case LOAD_WIDGET_POSITION_ERROR:
-      return state
     default:
       return state
   }

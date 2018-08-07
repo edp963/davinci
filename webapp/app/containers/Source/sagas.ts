@@ -47,9 +47,10 @@ import {
 const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import { readListAdapter } from '../../utils/asyncAdapter'
 
-export function* getSources ({ payload }) {
+export function* getSources (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
     const sources = readListAdapter(asyncData)
@@ -61,7 +62,8 @@ export function* getSources ({ payload }) {
   }
 }
 
-export function* addSource ({ payload }) {
+export function* addSource (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -76,7 +78,8 @@ export function* addSource ({ payload }) {
   }
 }
 
-export function* deleteSource ({ payload }) {
+export function* deleteSource (action) {
+  const { payload } = action
   try {
     const result = yield call(request, {
       method: 'delete',
@@ -95,7 +98,8 @@ export function* deleteSource ({ payload }) {
   }
 }
 
-export function* getSourceDetail ({ payload }) {
+export function* getSourceDetail (action) {
+  const { payload } = action
   try {
     const source = yield call(request, `${api.source}/${payload.id}`)
     yield put(sourceDetailLoaded(source))
@@ -105,7 +109,8 @@ export function* getSourceDetail ({ payload }) {
   }
 }
 
-export function* editSource ({ payload }) {
+export function* editSource (action) {
+  const { payload } = action
   try {
     yield call(request, {
       method: 'put',
@@ -120,7 +125,8 @@ export function* editSource ({ payload }) {
   }
 }
 
-export function* testSourceConnection ({ payload }) {
+export function* testSourceConnection (action) {
+  const { payload } = action
   try {
     const res = yield call(request, {
       method: 'post',
@@ -141,8 +147,9 @@ export function* testSourceConnection ({ payload }) {
   }
 }
 
-export function* getCsvMetaId ({payload}) {
-  const { source_id, replace_mode, table_name } = payload.csvMeta
+export function* getCsvMetaId (action) {
+  const { resolve, reject } = action.payload
+  const { source_id, replace_mode, table_name } = action.payload.csvMeta
   try {
     const res = yield call(request, {
       url: `${api.source}/${source_id}/csvmeta`,
@@ -153,23 +160,23 @@ export function* getCsvMetaId ({payload}) {
       }
     })
     if (res && res.header && res.header.code === 200) {
-      payload.resolve()
+      resolve()
     } else {
-      payload.reject(res.header.msg)
+      reject(res.header.msg)
     }
   } catch (err) {
-    payload.reject(err)
+    reject(err)
   }
 }
 
 export default function* rootSourceSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_SOURCES, getSources as any),
-    takeEvery(ADD_SOURCE, addSource as any),
-    takeEvery(DELETE_SOURCE, deleteSource as any),
-    takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail as any),
-    takeEvery(EDIT_SOURCE, editSource as any),
-    takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection as any),
-    takeEvery(GET_CSV_META_ID, getCsvMetaId as any)
+    takeLatest(LOAD_SOURCES, getSources),
+    takeEvery(ADD_SOURCE, addSource),
+    takeEvery(DELETE_SOURCE, deleteSource),
+    takeLatest(LOAD_SOURCE_DETAIL, getSourceDetail),
+    takeEvery(EDIT_SOURCE, editSource),
+    takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection),
+    takeEvery(GET_CSV_META_ID, getCsvMetaId)
   ]
 }

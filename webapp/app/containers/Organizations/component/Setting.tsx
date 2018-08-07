@@ -21,6 +21,9 @@ interface ISettingProps {
 
 export class Setting extends React.PureComponent <ISettingProps> {
   public componentWillMount () {
+    this.initData()
+  }
+  private initData = () => {
     const { currentOrganization } = this.props
     const {
       id,
@@ -66,8 +69,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                   </FormItem>
                   <FormItem
                     {...commonFormItemStyle}
-                    hasFeedback
-                    label="姓名"
+                    label="名称"
                   >
                     {getFieldDecorator('name', {
                       initialValue: '',
@@ -82,7 +84,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <Col>
                   <FormItem
                     {...commonFormItemStyle}
-                    hasFeedback
                     label="描述"
                   >
                     {getFieldDecorator('description', {
@@ -90,7 +91,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                         required: true,
                         message: 'description 不能为空'
                       }, {
-                        //  validator: this.checkNameUnique
                       }]
                     })(
                       <Input placeholder="description" />
@@ -102,7 +102,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <Col>
                   <FormItem
                     label="组织成员创建项目"
-                  //  {...commonFormItemStyle}
                   >
                     {getFieldDecorator('allowCreateProject', {
                       initialValue: true
@@ -114,53 +113,53 @@ export class Setting extends React.PureComponent <ISettingProps> {
                     )}
                   </FormItem>
                 </Col>
-                <Col>
-                  <FormItem
-                    label="删除和移交项目"
-                 //   {...commonFormItemStyle}
-                  >
-                    {getFieldDecorator('allowDeleteOrTransferProject', {
-                      initialValue: true
-                    })(
-                      <Radio.Group size="small">
-                        <RadioButton value={false}>禁止</RadioButton>
-                        <RadioButton value={true}>允许</RadioButton>
-                      </Radio.Group>
-                    )}
-                  </FormItem>
-                </Col>
-                <Col>
-                  <FormItem
-                 //   {...commonFormItemStyle}
-                    label="修改项目是否可见"
-                  >
-                    {getFieldDecorator('allowChangeVisibility', {
-                      initialValue: true
-                    })(
-                      <Radio.Group size="small">
-                        <RadioButton value={false}>禁止</RadioButton>
-                        <RadioButton value={true}>允许</RadioButton>
-                      </Radio.Group>
-                    )}
-                  </FormItem>
-                </Col>
-                <Col>
-                  <FormItem
-                 //   {...commonFormItemStyle}
-                    label="项目默认权限"
-                  >
-                    {getFieldDecorator('memberPermission', {
-                      initialValue: 1
-                    })(
-                      <Radio.Group size="small">
-                        <RadioButton value={0}>隐藏</RadioButton>
-                        <RadioButton value={1}>只读</RadioButton>
-                        <RadioButton value={2}>修改</RadioButton>
-                        <RadioButton value={3}>删除</RadioButton>
-                      </Radio.Group>
-                    )}
-                  </FormItem>
-                </Col>
+                {/*<Col>*/}
+                  {/*<FormItem*/}
+                    {/*label="删除和移交项目"*/}
+                 {/*//   {...commonFormItemStyle}*/}
+                  {/*>*/}
+                    {/*{getFieldDecorator('allowDeleteOrTransferProject', {*/}
+                      {/*initialValue: true*/}
+                    {/*})(*/}
+                      {/*<Radio.Group size="small">*/}
+                        {/*<RadioButton value={false}>禁止</RadioButton>*/}
+                        {/*<RadioButton value={true}>允许</RadioButton>*/}
+                      {/*</Radio.Group>*/}
+                    {/*)}*/}
+                  {/*</FormItem>*/}
+                {/*</Col>*/}
+                {/*<Col>*/}
+                  {/*<FormItem*/}
+                 {/*//   {...commonFormItemStyle}*/}
+                    {/*label="修改项目是否可见"*/}
+                  {/*>*/}
+                    {/*{getFieldDecorator('allowChangeVisibility', {*/}
+                      {/*initialValue: true*/}
+                    {/*})(*/}
+                      {/*<Radio.Group size="small">*/}
+                        {/*<RadioButton value={false}>禁止</RadioButton>*/}
+                        {/*<RadioButton value={true}>允许</RadioButton>*/}
+                      {/*</Radio.Group>*/}
+                    {/*)}*/}
+                  {/*</FormItem>*/}
+                {/*</Col>*/}
+                {/*<Col>*/}
+                  {/*<FormItem*/}
+                 {/*//   {...commonFormItemStyle}*/}
+                    {/*label="项目默认权限"*/}
+                  {/*>*/}
+                    {/*{getFieldDecorator('memberPermission', {*/}
+                      {/*initialValue: 1*/}
+                    {/*})(*/}
+                      {/*<Radio.Group size="small">*/}
+                        {/*<RadioButton value={0}>隐藏</RadioButton>*/}
+                        {/*<RadioButton value={1}>只读</RadioButton>*/}
+                        {/*<RadioButton value={2}>修改</RadioButton>*/}
+                        {/*<RadioButton value={3}>删除</RadioButton>*/}
+                      {/*</Radio.Group>*/}
+                    {/*)}*/}
+                  {/*</FormItem>*/}
+                {/*</Col>*/}
                 <Col>
                   <Button size="large" onClick={this.props.editOrganization(this.props.form.getFieldsValue())}>保存修改</Button>
                 </Col>

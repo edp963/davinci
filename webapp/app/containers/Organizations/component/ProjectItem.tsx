@@ -1,31 +1,35 @@
 import * as React from 'react'
+import {IOrganization} from '../Organization'
 const Button = require('antd/lib/button')
 const styles = require('../Organization.less')
 const Tag = require('antd/lib/tag')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
 const Tooltip = require('antd/lib/tooltip')
+import ComponentPermission from '../../Account/components/checkMemberPermission'
 
-
-interface IprojectOptions {
+interface IProjectItemProps {
+  key: number
+  options: IProjectOptions
+  toProject: (id: number) => any
+  loginUser: any
+  deleteProject: (id: number) => any
+  currentOrganization: IOrganization
+}
+interface IProjectOptions {
   id: number
   name: string
   description: string
   createBy: number
- // stars: number
- // updateTime: string
-}
-interface IProjectItemProps {
-  key: number
-  options: IprojectOptions
-  toProject: (id: number) => any
-  loginUser: any
-  deleteProject: (id: number) => any
 }
 export class ProjectItem extends React.PureComponent<IProjectItemProps> {
   public render () {
-    const {options, loginUser} = this.props
-    const tags = (<div className={styles.tag}><Tag size="small" key="small">{options.createBy === loginUser.id ? '我' : options.createBy}创建的</Tag></div>)
+    const {options, loginUser, currentOrganization} = this.props
+    const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
+    let CreateButton = void 0
+    if (currentOrganization) {
+      CreateButton = ComponentPermission(currentOrganization, '')(Button)
+    }
     return (
       <div className={styles.projectItemWrap}>
         <div className={styles.titleWrapper}>
@@ -37,7 +41,10 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
               onConfirm={this.props.deleteProject(options.id)}
             >
               <Tooltip title="删除">
-                <Button shape="circle"><Icon type="close"/></Button>
+                <CreateButton
+                  shape="circle"
+                  icon="close"
+                />
               </Tooltip>
             </Popconfirm>
           </div>

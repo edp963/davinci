@@ -29,7 +29,6 @@ import {
   SHOW_NAVIGATOR,
   HIDE_NAVIGATOR,
   CHECK_NAME,
-  PROJECTS_CHECK_NAME,
   ACTIVE,
   ACTIVE_SUCCESS,
   ACTIVE_ERROR,
@@ -154,20 +153,6 @@ export function checkNameUniqueAction (pathname, data, resolve, reject) {
   }
 }
 
-export function projectsCheckName (pId, id, name, type, resolve, reject) {
-  return {
-    type: PROJECTS_CHECK_NAME,
-    payload: {
-      pId,
-      id,
-      name,
-      type,
-      resolve,
-      reject
-    }
-  }
-}
-
 export function updateProfile (id, name, description, department, resolve) {
   return {
     type: UPDATE_PROFILE,
@@ -206,11 +191,11 @@ export function updateProfileError () {
 }
 
 
-export function changeUserPassword (info, resolve, reject) {
+export function changeUserPassword (user, resolve, reject) {
   return {
     type: CHANGE_USER_PASSWORD,
     payload: {
-      info,
+      user,
       resolve,
       reject
     }

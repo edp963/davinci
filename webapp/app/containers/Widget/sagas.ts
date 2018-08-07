@@ -119,7 +119,7 @@ export function* editWidget ({ payload }) {
 
 export default function* rootWidgetSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_WIDGETS, getWidgets),
+    takeLatest(LOAD_WIDGETS, getWidgets as any),
     takeEvery(ADD_WIDGET, addWidget as any),
     takeEvery(DELETE_WIDGET, deleteWidget as any),
     // takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),

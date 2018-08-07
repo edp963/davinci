@@ -48,6 +48,7 @@ import Organizations from './containers/Organizations/index'
 import Organization from './containers/Organizations/Organization'
 import Teams from './containers/Teams/index'
 import Team from './containers/Teams/Team'
+import UserProfile from './containers/Profile/UserProfile'
 import {replace} from 'react-router-redux'
 
 const errorLoading = (err) => {
@@ -305,6 +306,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Profile
             },
             {
+              path: '/account/profile/:uid',
+              name: 'userProfile',
+              component: UserProfile
+            },
+            {
               path: '/account/resetPassword',
               name: 'resetPassword',
               component: ResetPassword
@@ -352,13 +358,13 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           component: Bizlogic
         },
         {
-          path: '/project/:pid/portal/:portalId',
-          name: 'dashboards',
+          path: '/project/:pid/portal/:portalId/portalName/:portalName',
+          name: 'dashboard',
           component: Dashboard,
           childRoutes: [
             {
-              path: '/project/:pid/portal/:portalId/dashboard/:dashboardId',
-              name: 'dashboard',
+              path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
+              name: 'grid',
               component: Grid
             }
           ]

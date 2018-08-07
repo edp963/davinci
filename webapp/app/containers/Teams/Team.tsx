@@ -59,7 +59,7 @@ interface ITeamsProps {
   onLoadTeamProjects: (id: number) => any
   onLoadTeamMembers: (id: number) => any
   onLoadTeamTeams: (id: number) => any
-  onLoadTeamDetail: (id: number, resolve?: () => any) => any
+  onLoadTeamDetail: (id: number, resolve?: (data: any) => any) => any
   onLoadOrganizationProjects: (id: number) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
@@ -77,14 +77,14 @@ export interface ITeam {
 
 export interface ITeamProjects {
   id: number
-  downloadPermisstion: boolean
-  sharePermisstion: boolean
+  downloadPermission: boolean
+  sharePermission: boolean
   project: {id: number, name: string}
-  schedulePermisstion: number
-  sourcePermisstion: number
-  viewPermisstion: number
-  vizPermisstion: number
-  widgetPermisstion: number
+  schedulePermission: number
+  sourcePermission: number
+  viewPermission: number
+  vizPermission: number
+  widgetPermission: number
 }
 
 export interface ITeamTeams {
@@ -106,9 +106,10 @@ export class Teams extends React.Component<ITeamsProps> {
     super(props)
     this.teamTeams = []
   }
-  private callback = () => {
+  private tabChange = () => {
 
   }
+
   public componentWillMount () {
     const { onLoadTeams } = this.props
     onLoadTeams()
@@ -129,9 +130,9 @@ export class Teams extends React.Component<ITeamsProps> {
     onLoadTeamMembers(Number(id))
     onLoadTeamTeams(Number(id))
     onLoadTeamDetail(Number(id), (data) => {
-        const { organization:{id} } = data
-        onLoadOrganizationProjects(Number(id)),
-        onLoadOrganizationMembers(Number(id)),
+        const { organization: {id} } = data
+        onLoadOrganizationProjects(Number(id))
+        onLoadOrganizationMembers(Number(id))
         onLoadOrganizationTeams(Number(id))
       })
   }
@@ -180,7 +181,7 @@ export class Teams extends React.Component<ITeamsProps> {
     }
   }
   private createTeamRouter = (source) => {
-    let arr = []
+    const arr = []
     function find (wrapper, data) {
       if (data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
         wrapper.push({
@@ -204,7 +205,11 @@ export class Teams extends React.Component<ITeamsProps> {
   }
 
   private editTeam = (team) => () => {
-    this.props.onEditTeam(team)
+    const obj = {
+      ...team
+    }
+    delete obj.parentTeamId
+    this.props.onEditTeam(obj)
   }
 
   public render () {
@@ -249,7 +254,7 @@ export class Teams extends React.Component<ITeamsProps> {
             <Avatar path={avatar} enlarge={false} size="small"/>
             <div className={styles.title}>{name}</div>
           </div>
-          <Tabs onChange={this.callback} >
+          <Tabs onChange={this.tabChange} >
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
                 currentTeam={currentTeam}
@@ -277,14 +282,16 @@ export class Teams extends React.Component<ITeamsProps> {
                 currentTeamTeams={currentTeamTeams}
               />
             </TabPane>
-            <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
-              <Setting
-                teams={this.props.teams}
-                currentTeam={currentTeam}
-                editTeam={this.editTeam}
-                deleteTeam={this.deleteTeam}
-              />
-            </TabPane>
+            {
+              currentTeam && currentTeam.role === 1 ? <TabPane tab={<span><Icon type="setting" />设置</span>} key="settings">
+                <Setting
+                  teams={this.props.teams}
+                  currentTeam={currentTeam}
+                  editTeam={this.editTeam}
+                  deleteTeam={this.deleteTeam}
+                />
+              </TabPane> : ''
+            }
           </Tabs>
         </Box.Body>
       </Box>

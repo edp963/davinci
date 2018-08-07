@@ -68,7 +68,8 @@ declare interface IObjectConstructor {
   assign (...objects: object[]): object
 }
 
-export function* getBizlogics ({ payload }) {
+export function* getBizlogics (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, `${api.bizlogic}?projectId=${payload.projectId}`)
     const bizlogics = readListAdapter(asyncData)
@@ -79,7 +80,8 @@ export function* getBizlogics ({ payload }) {
   }
 }
 
-export function* addBizlogic ({ payload }) {
+export function* addBizlogic (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -94,7 +96,8 @@ export function* addBizlogic ({ payload }) {
   }
 }
 
-export function* deleteBizlogic ({ payload }) {
+export function* deleteBizlogic (action) {
+  const { payload } = action
   try {
     const result = yield call(request, {
       method: 'delete',
@@ -113,7 +116,8 @@ export function* deleteBizlogic ({ payload }) {
   }
 }
 
-export function* editBizlogic ({ payload }) {
+export function* editBizlogic (action) {
+  const { payload } = action
   try {
     yield call(request, {
       method: 'put',
@@ -128,7 +132,8 @@ export function* editBizlogic ({ payload }) {
   }
 }
 
-export function* getBizdatas ({ payload }) {
+export function* getBizdatas (action) {
+  const { payload } = action
   try {
     const { id, sql, sorts, offset, limit } = payload
 
@@ -143,7 +148,8 @@ export function* getBizdatas ({ payload }) {
   }
 }
 
-export function* getBizdatasFromItem ({ payload }) {
+export function* getBizdatasFromItem (action) {
+  const { payload } = action
   try {
     const { itemId, id, sql, sorts, offset, limit, useCache, expired } = payload
 
@@ -160,7 +166,8 @@ export function* getBizdatasFromItem ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromItem ({ payload }) {
+export function* getCascadeSourceFromItem (action) {
+  const  { payload } = action
   try {
     const { itemId, controlId, id, sql, column, parents } = payload
     const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
@@ -185,7 +192,8 @@ export function* getCascadeSourceFromItem ({ payload }) {
   }
 }
 
-export function* getCascadeSourceFromDashboard ({ payload }) {
+export function* getCascadeSourceFromDashboard (action) {
+  const { payload } = action
   try {
     const { controlId, id, column, parents } = payload
 
@@ -208,7 +216,8 @@ export function* getCascadeSourceFromDashboard ({ payload }) {
   }
 }
 
-export function* getBizdataSchema ({ payload }) {
+export function* getBizdataSchema (action) {
+  const { payload } = action
   try {
     const { id, resolve } = payload
 
@@ -225,7 +234,8 @@ export function* getBizdataSchema ({ payload }) {
   }
 }
 
-export function* getSchema ({ payload }) {
+export function* getSchema (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, `${api.bizlogic}/database?sourceId=${payload.sourceId}`)
     const schema = readListAdapter(asyncData)
@@ -237,7 +247,8 @@ export function* getSchema ({ payload }) {
   }
 }
 
-export function* executeSql ({ payload }) {
+export function* executeSql (action) {
+  const { payload } = action
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -258,16 +269,16 @@ export function* executeSql ({ payload }) {
 
 export default function* rootBizlogicSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOAD_BIZLOGICS, getBizlogics as any),
-    takeEvery(ADD_BIZLOGIC, addBizlogic as any),
-    takeEvery(DELETE_BIZLOGIC, deleteBizlogic as any),
-    takeEvery(EDIT_BIZLOGIC, editBizlogic as any),
-    takeEvery(LOAD_BIZDATAS, getBizdatas as any),
-    takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem as any),
-    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem as any),
-    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard as any),
-    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema as any),
-    takeLatest(LOAD_SCHEMA, getSchema as any),
-    takeLatest(EXECUTE_SQL, executeSql as any)
+    takeLatest(LOAD_BIZLOGICS, getBizlogics),
+    takeEvery(ADD_BIZLOGIC, addBizlogic),
+    takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
+    takeEvery(EDIT_BIZLOGIC, editBizlogic),
+    takeEvery(LOAD_BIZDATAS, getBizdatas),
+    takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem),
+    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem),
+    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard),
+    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
+    takeLatest(LOAD_SCHEMA, getSchema),
+    takeLatest(EXECUTE_SQL, executeSql)
   ]
 }
