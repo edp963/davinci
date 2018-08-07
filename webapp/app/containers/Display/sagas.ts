@@ -62,6 +62,11 @@ import {
   slideLayersPasted,
   pasteSlideLayersFail,
 
+  undoOperationDone,
+  undoOperationFail,
+  redoOperationDone,
+  redoOperationFail,
+
   displaySecretLinkLoaded,
   displayShareLinkLoaded,
   loadDisplayShareLinkFail
@@ -278,6 +283,12 @@ export function* getDisplayShareLink (action) {
   }
 }
 
+export function* undoOperation (action) {
+}
+
+export function* redoOperation (action) {
+}
+
 export default function* rootDisplaySaga (): IterableIterator<any> {
   yield [
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
@@ -292,6 +303,8 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeEvery(ActionTypes.EDIT_DISPLAY_LAYERS, editDisplayLayers),
     takeEvery(ActionTypes.DELETE_DISPLAY_LAYERS, deleteDisplayLayers),
     takeEvery(ActionTypes.PASTE_SLIDE_LAYERS, pasteSlideLayers),
-    takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink)
+    takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
+    takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
+    takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
   ]
 }

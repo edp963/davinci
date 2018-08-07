@@ -281,19 +281,34 @@ export function pasteSlideLayersFail () {
   }
 }
 
-export function recordOperationData () {
-  return {
-    type: ActionTypes.RECORD_OPERATION_DATA
-  }
-}
 export function undoOperation () {
   return {
     type: ActionTypes.UNDO_OPERATION
   }
 }
+export function undoOperationDone () {
+  return {
+    type: ActionTypes.UNDO_OPERATION_SUCCESS
+  }
+}
+export function undoOperationFail () {
+  return {
+    type: ActionTypes.UNDO_OPERATION_FAILURE
+  }
+}
 export function redoOperation () {
   return {
     type: ActionTypes.REDO_OPERATION
+  }
+}
+export function redoOperationDone () {
+  return {
+    type: ActionTypes.REDO_OPERATION_SUCCESS
+  }
+}
+export function redoOperationFail () {
+  return {
+    type: ActionTypes.REDO_OPERATION_FAILURE
   }
 }
 

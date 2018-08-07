@@ -24,71 +24,71 @@ const selectDisplay = (state) => state.get('display')
 
 const makeSelectDisplays = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('displays')
+  ({ present }) => present.get('displays')
 )
 
 const makeSelectCurrentDisplay = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentDisplay')
+  ({ present }) => present.get('currentDisplay')
 )
 
 const makeSelectCurrentSlide = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentSlide')
+  ({ present }) => present.get('currentSlide')
 )
 
 const makeSelectCurrentLayers = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentLayers')
+  ({ present }) =>  present.get('currentLayers')
 )
 
 const makeSelectCurrentDatasources = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentDatasources')
+  ({ present }) =>  present.get('currentDatasources')
 )
 
 const makeSelectCurrentLayersLoading = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentLayersLoading')
+  ({ present }) =>  present.get('currentLayersLoading')
 )
 
 const makeSelectCurrentLayersQueryParams = () => createSelector(
   selectDisplay,
-  (displayState) =>  displayState.get('currentLayersQueryParams')
+  ({ present }) =>  present.get('currentLayersQueryParams')
 )
 
 const makeSelectCurrentLayersStatus = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentLayersStatus')
+  ({ present }) => present.get('currentLayersStatus')
 )
 
 const makeSelectCurrentSelectedLayers = () => createSelector(
   selectDisplay,
-  (displayState) => {
-    const layerStatus = displayState.get('currentLayersStatus')
-    const layers = displayState.get('currentLayers')
+  ({ present }) => {
+    const layerStatus = present.get('currentLayersStatus')
+    const layers = present.get('currentLayers')
     return layers.filter((layer) => layerStatus[layer.id])
   }
 )
 
 const makeSelectClipboardLayers = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('clipboardLayers')
+  ({ present }) => present.get('clipboardLayers')
 )
 
 const makeSelectCurrentDisplayShareInfo = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentDisplayShareInfo')
+  ({ present }) => present.get('currentDisplayShareInfo')
 )
 
 const makeSelectCurrentDisplaySecretInfo = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentDisplaySecretInfo')
+  ({ present }) => present.get('currentDisplaySecretInfo')
 )
 
 const makeSelectCurrentDisplayShareInfoLoading = () => createSelector(
   selectDisplay,
-  (displayState) => displayState.get('currentDisplayShareInfoLoading')
+  ({ present }) => present.get('currentDisplayShareInfoLoading')
 )
 
 export {

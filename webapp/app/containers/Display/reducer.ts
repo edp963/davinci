@@ -19,6 +19,8 @@
  */
 
 import { fromJS } from 'immutable'
+import undoable, { includeAction } from 'redux-undo'
+
 import { ActionTypes } from './constants'
 import { GraphTypes } from 'utils/util'
 import {
@@ -298,6 +300,13 @@ function displayReducer (state = initialState, action) {
           }, {})
         })
 
+    case ActionTypes.RECORD_OPERATION_DATA:
+        const operationRecords = state.get('operationRecords')
+        return state.set('operationRecords', [...operationRecords, payload.operation])
+    case ActionTypes.UNDO_OPERATION_SUCCESS:
+    case ActionTypes.REDO_OPERATION_SUCCESS:
+        return state.set('currentOperationCursor', payload.operationCursor)
+
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
       return state.set('currentDisplayShareInfoLoading', true)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS:
@@ -316,4 +325,11 @@ function displayReducer (state = initialState, action) {
   }
 }
 
-export default displayReducer
+export default undoable(displayReducer, {
+  filter: includeAction([
+    ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS
+  ]),
+  debug: true,
+  undoType: ActionTypes.UNDO_OPERATION,
+  redoType: ActionTypes.REDO_OPERATION
+})

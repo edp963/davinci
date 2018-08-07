@@ -74,7 +74,9 @@ import {
   deleteDisplayLayers,
   editDisplayLayers,
   copySlideLayers,
-  pasteSlideLayers  } from './actions'
+  pasteSlideLayers,
+  undoOperation,
+  redoOperation  } from './actions'
 import {
   DEFAULT_DISPLAY_WIDTH,
   DEFAULT_DISPLAY_HEIGHT,
@@ -128,6 +130,8 @@ interface IEditorProps {
   onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onCopySlideLayers: (slideId, layers) => void
   onPasteSlideLayers: (displayId, slideId, layers) => void
+  onUndo: () => void
+  onRedo: () => void
   onHideNavigator: () => void,
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
@@ -669,7 +673,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       widgets,
       currentDisplay,
       currentLayers,
-      onSelectLayer
+      onSelectLayer,
+      onUndo,
+      onRedo
     } = this.props
 
     const {
@@ -765,6 +771,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onDeleteLayers={this.deleteLayers}
           onCopyLayers={this.copyLayers}
           onPasteLayers={this.pasteLayers}
+          onUndo={onUndo}
+          onRedo={onRedo}
         />
         <DisplayBody>
           <DisplayContainer
@@ -836,6 +844,8 @@ function mapDispatchToProps (dispatch) {
     onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
     onCopySlideLayers: (slideId, layers) => dispatch(copySlideLayers(slideId, layers)),
     onPasteSlideLayers: (displayId, slideId, layers) => dispatch(pasteSlideLayers(displayId, slideId, layers)),
+    onUndo: () => dispatch(undoOperation()),
+    onRedo: () => dispatch(redoOperation()),
     onHideNavigator: () => dispatch(hideNavigator())
   }
 }

@@ -59,6 +59,8 @@ interface IDisplayHeaderProps {
   onDeleteLayers: () => void
   onCopyLayers: () => void
   onPasteLayers: () => void
+  onUndo: () => void
+  onRedo: () => void
 }
 
 interface IDisplayHeaderStates {
@@ -184,7 +186,9 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
       widgets,
       onDeleteLayers,
       onCopyLayers,
-      onPasteLayers
+      onPasteLayers,
+      onUndo,
+      onRedo
     } = this.props
 
     const {pid, displayId} = params
@@ -247,12 +251,12 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
             </li>
             <li>
               <Tooltip placement="bottom" title="撤销">
-                <i className="iconfont icon-chexiao" />
+                <i className="iconfont icon-chexiao" onClick={onUndo} />
               </Tooltip>
             </li>
             <li>
               <Tooltip placement="bottom" title="前进">
-                <i className="iconfont icon-qianjin" />
+                <i className="iconfont icon-qianjin" onClick={onRedo} />
               </Tooltip>
             </li>
             <li>

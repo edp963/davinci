@@ -1,6 +1,5 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 const Icon = require('antd/lib/icon')
 const Col = require('antd/lib/col')
@@ -11,6 +10,7 @@ const Modal = require('antd/lib/modal')
 
 const styles = require('../Portal.less')
 
+import AntdFormType from 'antd/lib/form/Form'
 import EllipsisList from '../../../components/EllipsisList'
 import PortalForm from './PortalForm'
 
@@ -18,6 +18,8 @@ interface IPortalListProps {
   projectId: number
   portals: any[]
   onPortalClick: (portal: any) => void
+  onAdd: (portal, resolve) => void
+  onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
 }
 
@@ -29,7 +31,19 @@ interface IPortalListStates {
 
 export class PortalList extends React.Component<IPortalListProps, IPortalListStates> {
 
-  private portalForm: WrappedFormUtils
+  private portalForm: AntdFormType
+  private refHandlers = {
+    portalForm: (ref) => this.portalForm = ref
+  }
+
+  constructor (props: IPortalListProps) {
+    super(props)
+    this.state = {
+      modalLoading: false,
+      formType: 'add',
+      formVisible: false
+    }
+  }
 
   private stopPPG = (e) => {
     e.stopPropagation()
@@ -40,13 +54,51 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     e.stopPropagation()
   }
 
+  private hidePortalForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.portalForm.props.form.resetFields()
+    })
+  }
+
+  private onModalOk = () => {
+    this.portalForm.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const {  projectId, onAdd, onEdit } = this.props
+        const { formType } = this.state
+        const { id, name, description, publish, avatar } = values
+        const val = {
+          description,
+          name,
+          publish,
+          projectId,
+          avatar: formType === 'add' ? Math.ceil(Math.random() * 19) : Number(avatar)
+        }
+        if (formType === 'add') {
+          onAdd(val, () => {
+            this.hidePortalForm()
+          })
+        } else {
+          onEdit({
+            ...val,
+            id
+          }, () => {
+            this.hidePortalForm()
+          })
+        }
+      }
+    })
+  }
+
   private showPortalForm = (formType: 'edit' | 'add', portal?: any) => {
     this.setState({
       formType,
       formVisible: true
     }, () => {
       if (portal) {
-        this.portalForm.setFieldsValue(portal)
+        this.portalForm.props.form.setFieldsValue(portal)
       }
     })
   }
@@ -100,14 +152,50 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   public render () {
-    const { portals } = this.props
+    const { projectId, portals } = this.props
     if (!Array.isArray(portals)) { return null }
+
+    const { formType, formVisible, modalLoading } = this.state
+
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hidePortalForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.onModalOk}
+      >
+        保 存
+      </Button>
+    )]
 
     return (
       <div>
         <EllipsisList rows={2}>
-          {portals.map((d) => this.renderPortal(d))}
+          {portals.map((p) => this.renderPortal(p))}
         </EllipsisList>
+        <Modal
+          title={`${formType === 'add' ? '新增' : '修改'} Portal`}
+          wrapClassName="ant-modal-small"
+          visible={formVisible}
+          footer={modalButtons}
+          onCancel={this.hidePortalForm}
+        >
+          <PortalForm
+            projectId={projectId}
+            type={formType}
+            wrappedComponentRef={this.refHandlers.portalForm}
+          />
+        </Modal>
       </div>
     )
   }

@@ -13,7 +13,7 @@ import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
 
 import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
-import { loadPortals, deletePortal } from '../Portal/actions'
+import { loadPortals, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
 
@@ -25,6 +25,7 @@ const styles = require('./Viz.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
+import { Portal } from '../Portal';
 
 interface IParams {
   pid: number
@@ -38,6 +39,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onEditDisplay: (display: IDisplay, resolve: () => void) => void
   onDeleteDisplay: (displayId: number) => void
   onLoadPortals: (projectId) => void
+  onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
 }
 
@@ -104,7 +106,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   public render () {
     const {
       displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onDeletePortal
+      portals, onEditPortal, onDeletePortal
     } = this.props
     const projectId = params.pid
     return (
@@ -117,6 +119,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 projectId={projectId}
                 portals={portals}
                 onPortalClick={this.goToDashboard}
+                onEdit={onEditPortal}
                 onDelete={onDeletePortal}
               />
             </Panel>
@@ -153,6 +156,7 @@ export function mapDispatchToProps (dispatch) {
     onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
     onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
+    onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id))
   }
 }
