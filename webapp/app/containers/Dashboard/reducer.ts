@@ -84,10 +84,6 @@ const initialState = fromJS({
   modalLoading: false
 })
 
-declare interface IObjectConstructor {
-  assign (...objects: object[]): object
-}
-
 function dashboardReducer (state = initialState, action) {
   const { type, payload } = action
   const dashboards = state.get('dashboards')

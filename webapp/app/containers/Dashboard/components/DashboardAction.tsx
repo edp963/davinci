@@ -83,8 +83,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
             item.type === 0
               ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth}}>{item.name}</h4>
               : <span style={{width: titleWidth}} onClick={initChangeDashboard(item.id)} className={styles.dashboardTitle}>
-                  {/* <Icon type={item.type === 0 ? 'folder' : 'file'} /> */}
-                  {item.name}
+                  <Icon type="dot-chart" />
+                  <span className={styles.dashboardName}>{item.name}</span>
                 </span>
           }
           <Popover

@@ -118,11 +118,20 @@ export function* deleteBizlogic (action) {
 
 export function* editBizlogic (action) {
   const { payload } = action
+  const { config, description, id, model, name, source, sql } = payload.bizlogic
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.bizlogic}/${payload.bizlogic.id}`,
-      data: payload.bizlogic
+      url: `${api.bizlogic}/${id}`,
+      data: {
+        config,
+        description,
+        id,
+        model,
+        name,
+        sourceId: source.id,
+        sql
+      }
     })
     yield put(bizlogicEdited(payload.bizlogic))
     payload.resolve()

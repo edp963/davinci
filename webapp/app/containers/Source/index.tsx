@@ -107,10 +107,6 @@ interface ISourceObject {
   url: string
 }
 
-declare interface IObjectConstructor {
-  assign (...objects: object[]): object
-}
-
 export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   constructor (props) {
     super(props)
@@ -224,13 +220,11 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
           type
         }
         if (this.state.formType === 'add') {
-          this.props.onAddSource((Object as IObjectConstructor).assign({}, requestValue, {
-            projectId: this.props.params.pid
-          }), () => {
+          this.props.onAddSource({...requestValue, projectId: this.props.params.pid}, () => {
             this.hideForm()
           })
         } else {
-          this.props.onEditSource((Object as IObjectConstructor).assign({}, requestValue, { id }), () => {
+          this.props.onEditSource({ ...requestValue, id }, () => {
             this.hideForm()
           })
         }

@@ -84,10 +84,6 @@ export interface IPortal {
   description?: string
 }
 
-declare interface IObjectConstructor {
-  assign (...objects: object[]): object
-}
-
 export class Portal extends React.Component<IPortalProps, IPortalStates> {
   constructor (props) {
     super(props)
@@ -159,7 +155,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
             this.hidePortalForm()
           })
         } else {
-          this.props.onEditPortal((Object as IObjectConstructor).assign({}, val, { id }), () => {
+          this.props.onEditPortal({ ...val, id }, () => {
             this.hidePortalForm()
           })
         }

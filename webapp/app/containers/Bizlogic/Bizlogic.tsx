@@ -185,6 +185,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       const {
         name,
         description,
+        source,
         sourceId,
         sql,
         model,
@@ -197,7 +198,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         const modelArr = []
         for (const o in modelObj) {
           if (modelObj.hasOwnProperty(o)) {
-            modelArr.push((Object as IObjectConstructor).assign({}, { name: o }, modelObj[o]))
+            modelArr.push({ name: o, ...modelObj[o]})
           }
         }
         this.setState({ executeColumns : modelArr })
@@ -216,6 +217,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         name,
         desc: description,
         source_id: `${sourceId}`,
+        source_name: source.name,
         isDeclarate: dec ? 'yes' : 'no'
       })
 
@@ -320,7 +322,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         if (change.origin === '+input') {
           this.codeMirrorInstanceOfQuerySQL.showHint({
             completeSingle: false,
-            tables: (Object as IObjectConstructor).assign({}, obj, tableDatas)
+            tables: {...obj, ...tableDatas}
           })
         }
       })
@@ -434,10 +436,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, isDeclarate } = this.state
+        const { executeColumns } = this.state
         const { sqlValidateCode, route, params } = this.props
 
-        const { id, name, desc, source_id } = values
+        const { id, name, desc, source_id, source_name } = values
         const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
         let querySql = ''
         if (this.codeMirrorInstanceOfDeclaration) {
@@ -464,18 +466,25 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           const requestValue = {
             name,
             description: desc,
-            sourceId: Number(source_id),
             sql: querySql,
             model: sqlValidateCode === 200 ? JSON.stringify(modelObj) : '',
-            config: ''
+            config: '',
+            projectId: params.pid
           }
 
           if (route.path === '/project/:pid/bizlogic') {
-            this.props.onAddBizlogic((Object as IObjectConstructor).assign({}, requestValue, { projectId: params.pid }), () => {
+            this.props.onAddBizlogic({ ...requestValue, sourceId: Number(source_id) }, () => {
               this.hideForm()
             })
           } else {
-            this.props.onEditBizlogic((Object as IObjectConstructor).assign({}, requestValue, { id }), () => {
+            this.props.onEditBizlogic({
+              ...requestValue,
+              id,
+              source: {
+                id: Number(source_id),
+                name: source_name
+              }
+            }, () => {
               this.hideForm()
             })
           }
@@ -732,6 +741,11 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 </Select>
               )}
             </FormItem>
+            <FormItem label="" className={utilStyles.hide}>
+              {getFieldDecorator('source_name', {})(
+                <Input />
+              )}
+            </FormItem>
           </Col>
           <Col span={24} className={styles.treeSearch}>
             <Search
@@ -741,7 +755,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Col>
           <Col span={24} className={styles.sourceTree}>
             <Tree
-              showLine
+              // showLine
               onExpand={this.onExpand}
               expandedKeys={expandedKeys}
               autoExpandParent={autoExpandParent}
