@@ -1,0 +1,97 @@
+#  <<
+#  Davinci
+#  ==
+#  Copyright (C) 2016 - 2018 EDP
+#  ==
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#  >>
+
+file:
+  userfiles-path: ${DAVINCI3_HOME}/userfiles/
+  web_resources: ${DAVINCI3_HOME}/davinci-ui/
+  phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
+
+spring:
+  servlet:
+      multipart:
+        max-request-size: 1024MB
+        max-file-size: 1024MB
+        enabled: true
+
+  config:
+      location: classpath:/, file:${DAVINCI3_HOME}/config/
+
+  datasource:
+      type: com.alibaba.druid.pool.DruidDataSource
+      time-between-eviction-runs-millis: 30000
+      min-evictable-idle-time-millis: 300000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      filters: stat
+
+  resources:
+    static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}
+
+  mvc:
+    static-path-pattern: /**
+
+
+  thymeleaf:
+    mode: HTML5
+    cache: true
+    prefix: classpath:/templates/
+    encoding: UTF-8
+    suffix: .html
+    check-template-location: true
+    template-resolver-order: 1
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+  cache:
+    caffeine:
+      type: caffeine
+
+logging:
+  config: file:${DAVINCI3_HOME}/config/logback.xml
+
+springfox:
+  documentation:
+    swagger:
+      v2:
+        path: /api-doc
+
+
+pagehelper:
+  supportMethodsArguments: true
+  reasonable: true
+  returnPageInfo: check
+  helperDialect: mysql
+  params: count=countSql
+
+mybatis:
+  mapper-locations: classpath:mybatis/mapper/*Mapper.xml
+  config-locations: classpath:mybatis/mybatis-config.xml
+  type-aliases-package: edp.davinci.model
+  configuration:
+    map-underscore-to-camel-case: true
+    use-generated-keys: true
+
+mapper:
+  identity: MYSQL
+  not-empty: false
+  mappers: edp.davinci.dao
+
+
+
+
