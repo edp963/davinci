@@ -23,7 +23,7 @@ export class Account extends React.PureComponent<IAccountProps, {}> {
                 <Box>
                   <div className={styles.userWrap}>
                     <div className={styles.userAvatar}>
-                      <Avatar size="default" path={`${loginUser.avatar}`} enlarge={true}/>
+                      <Avatar size="profile" path={`${loginUser.avatar}`} enlarge={true}/>
                     </div>
                     <div className={styles.userItems}>
                       <div className={styles.userName}>{loginUser.username}</div>

@@ -28,8 +28,6 @@ import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
-import Avatar from '../../components/Avatar'
-import Box from '../../components/Box'
 
 interface IProjectsProps {
   router: InjectedRouter
@@ -165,10 +163,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const projectArr = Array.isArray(projects) ? [...projects, ...[{
       id: 'add',
       type: 'add'
-    }]] : [...[{
-      id: 'add',
-      type: 'add'
-    }]]
+    }]] : []
     const projectItems = projectArr
       ? projectArr.map((d: IProject) => {
         let CreateButton = void 0
@@ -177,10 +172,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           return (
             <Col
               key={d.id}
-              xl={8}
-              lg={12}
-              md={24}
-              sm={24}
+              xl={6}
+              lg={6}
+              md={8}
+              sm={12}
               xs={24}
             >
               <div
@@ -229,131 +224,53 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
 
         const itemClass = classnames({
-          [styles.unit]: true
+          [styles.unit]: true,
+          //    [styles.editing]: !d.publish
         })
+
+        //  const editHint = !d.publish && '(编辑中…)'
         const colItems = (
-            <Col
-              key={d.id}
-              xl={8}
-              lg={12}
-              md={12}
-              sm={12}
-              xs={24}
+          <Col
+            key={d.id}
+            xl={6}
+            lg={6}
+            md={8}
+            sm={12}
+            xs={24}
+          >
+            <div
+              className={itemClass}
+              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+              onClick={this.toProject(d)}
             >
-              <div
-                className={itemClass}
-                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
-                onClick={this.toProject(d)}
-              >
-                <header>
-                  <h3 className={styles.title}>
-                    {d.name}
-                    {/*{editHint}*/}
-                  </h3>
-                  <p className={styles.content}>
-                    {d.description}
-                  </p>
-                </header>
-                {transfer}
-                {editButton}
-                {deleteButton}
-              </div>
-            </Col>
-          )
-        return colItems
-      }) : ''
-    const history =  projects
-      ? projects.map((d: IProject) => {
-        const path = require(`../../assets/images/bg${d.pic}.png`)
-        const colItems = (
-          <div className={styles.groupList} key={d.id}>
-            <div className={styles.orgHeader}>
-              <div className={styles.avatar}>
-                <Avatar path={path} enlarge={false} size="small"/>
-              </div>
-              <div className={styles.name}>
-                <div className={styles.title}>{d.name}</div>
-                <div className={styles.desc}>{d.description}</div>
-              </div>
+              <header>
+                <h3 className={styles.title}>
+                  {d.name}
+                  {/*{editHint}*/}
+                </h3>
+                <p className={styles.content}>
+                  {d.description}
+                </p>
+              </header>
+              {transfer}
+              {editButton}
+              {deleteButton}
             </div>
-          </div>
+          </Col>
         )
         return colItems
       }) : ''
     return (
-      <div className={styles.wrapper}>
-        <div className={styles.search}>
-          <div  className={styles.searchWrapper}>
-            <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
-            <input
-              id="newtab-search-text"
-              maxlength="256"
-              placeholder="Search the Davinci"
-              title="Search the Web"
-              autocomplete="off"
-              aria-autocomplete="true"
-              aria-controls="searchSuggestionTable"
-              aria-expanded="false" type="search"/>
-            <Icon id="searchSubmit" type="search" className={styles.searchButton}/>
-          </div>
-        </div>
-        <div className={styles.wrap}>
-          <div className={styles.container}>
-            <div className={styles.mainBox}>
-              <div className={styles.projects}>
-                <div className={styles.mime}>
-                  <Box>
-                    <Box.Header>
-                      <Box.Title>
-                        <Row>
-                          <Col span={20}>
-                            <Icon type="bars" />我创建的项目
-                          </Col>
-                        </Row>
-                      </Box.Title>
-                    </Box.Header>
-                    <div className={styles.listPadding}>
-                      <Row gutter={16}>
-                        {projectItems}
-                      </Row>
-                    </div>
-                  </Box>
-                </div>
-                <div className={styles.join}>
-                  <Box>
-                    <Box.Header>
-                      <Box.Title>
-                        <Row>
-                          <Col span={20}>
-                            <Icon type="bars" />我参与的项目
-                          </Col>
-                        </Row>
-                      </Box.Title>
-                    </Box.Header>
-                    <div className={styles.listPadding}>
-                      <Row gutter={16}>
-                        {projectItems}
-                      </Row>
-                    </div>
-                  </Box>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className={styles.sideBox}>
-            <Box>
-              <Box.Header>
-                <Box.Title>
-                  <Row>
-                    <Col span={20}>
-                      <Icon type="bars" />浏览历史
-                    </Col>
-                  </Row>
-                </Box.Title>
-              </Box.Header>
-              {history}
-            </Box>
-          </div>
+      <div className={styles.wrap}>
+        <div className={styles.container}>
+          <Row>
+            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+              <div className={styles.header}>我的项目</div>
+            </Col>
+          </Row>
+          <Row gutter={20}>
+            {projectItems}
+          </Row>
           <Modal
             title={null}
             footer={null}

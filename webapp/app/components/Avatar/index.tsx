@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 const styles = require('./Avatar.less')
-const logo = require('../../assets/images/logo.svg')
+const logo = require('../../assets/images/profile.png')
 const Modal = require('antd/lib/modal')
 
 interface IAvatarProps {
@@ -35,6 +35,7 @@ export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
     const src = path ? path : logo
     const itemClass = classnames({
       [styles.img]: true,
+      [styles.profile]: size === 'profile',
       [styles.large]: size === 'large',
       [styles.default]: size === 'default',
       [styles.small]: size === 'small',

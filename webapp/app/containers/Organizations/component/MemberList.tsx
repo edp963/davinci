@@ -208,7 +208,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           <Popconfirm
             title="确定删除此成员吗？"
             placement="bottom"
-            onConfirm={ this.removeMemberForm(text, record)}
+            onConfirm={this.removeMemberForm(text, record)}
           >
             <Tooltip title="删除">
               <a href="javascript:;">从组织里移除</a>
