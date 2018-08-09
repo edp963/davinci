@@ -45,7 +45,7 @@ public interface ViewService extends CheckEntityService {
 
     ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
 
-    List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam) throws ServerException;
+    List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
-    List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam) throws ServerException;
+    List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 }

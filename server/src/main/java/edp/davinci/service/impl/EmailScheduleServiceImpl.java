@@ -114,11 +114,11 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
                     attachments = generateImages(cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
-                    attachments = generateExcels(cronJobConfig);
+                    attachments = generateExcels(cronJobConfig, user);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
                     attachments = new ArrayList<>();
                     attachments.addAll(generateImages(cronJobConfig, cronJob.getCreateBy()));
-                    attachments.addAll(generateExcels(cronJobConfig));
+                    attachments.addAll(generateExcels(cronJobConfig, user));
                 }
 
                 String[] cc = null, bcc = null;
@@ -244,7 +244,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
      * @return
      * @throws Exception
      */
-    private List<File> generateExcels(CronJobConfig cronJobConfig) throws Exception {
+    private List<File> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
         List<File> files = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getType().trim())) {
@@ -254,7 +254,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                     if (widgets != null && widgets.size() > 0) {
                         String filePath = fileBasePath + baseUrl + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + ".xlsx";
 
-                        File file = writeExcel(widgets, filePath);
+                        File file = writeExcel(widgets, filePath, user);
                         files.add(file);
                     }
                 }
@@ -266,7 +266,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
 
                         String filePath = fileBasePath + baseUrl + File.separator + display.getName() + "-" + UUID.randomUUID() + ".xlsx";
 
-                        File file = writeExcel(widgets, filePath);
+                        File file = writeExcel(widgets, filePath, user);
                         files.add(file);
                     }
                 }
@@ -292,7 +292,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
      * @return
      * @throws Exception
      */
-    private File writeExcel(Set<Widget> widgets, String excelFilePath) throws Exception {
+    private File writeExcel(Set<Widget> widgets, String excelFilePath, User user) throws Exception {
         if (StringUtils.isEmpty(excelFilePath)) {
             throw new ServerException("excel file path is empty");
         }
@@ -320,8 +320,8 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                     //TODO 组装查询条件
                     ViewExecuteParam executeParam = null;
 
-                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam);
-                    List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam);
+                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+                    List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName + "_" + widget.getName());
                     writeSheet(sheet, columns, dataList, cellStyle);

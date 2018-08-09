@@ -39,5 +39,5 @@ public class TeamCreate {
 
     private Long parentTeamId;
 
-    private Boolean visibility = true;
+//    private Boolean visibility = true;
 }

@@ -28,6 +28,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface RelUserTeamMapper {
@@ -50,6 +51,12 @@ public interface RelUserTeamMapper {
 
     @Select({"select * from rel_user_team where team_id = #{teamId}"})
     List<RelUserTeam> getRelByTeamId(@Param("teamId") Long teamId);
+
+
+    @Select({
+        "SELECT team_id FROM rel_user_team WHERE user_id = 30"
+    })
+    Set<Long> getUserTeamId(@Param("userId") Long userId);
 
 
     @Select({

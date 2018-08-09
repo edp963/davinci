@@ -28,7 +28,7 @@ jwtToken:
 source:
   initial-size: 2
   min-idle: 1
-  max-wait: 60000
+  max-wait: 6000
   max-active: 10
 
 spring:
@@ -48,14 +48,13 @@ spring:
     max-active: 10
 
   redis:
-
     isEnable: false
-    # standalone config
 
+  ## standalone config
     host: 127.0.0.1
     port: 6379
 
-  #  cluster config
+  ##  cluster config
 
   #  cluster:
   #       nodes:

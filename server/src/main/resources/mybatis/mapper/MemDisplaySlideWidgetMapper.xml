@@ -51,10 +51,18 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         insert into mem_display_slide_widget
-        (display_slide_id, widget_id, `name`, `type`, params,sub_type, `index`)
+        (id,display_slide_id, widget_id, `name`, `type`, params,sub_type, `index`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
+                <choose>
+                    <when test="record.id != null and record.id > 0">
+                        #{record.id,jdbcType=BIGINT},
+                    </when>
+                    <otherwise>
+                        null,
+                    </otherwise>
+                </choose>
                 #{record.displaySlideId,jdbcType=BIGINT},
                 #{record.widgetId,jdbcType=BIGINT},
                 #{record.name,jdbcType=VARCHAR},

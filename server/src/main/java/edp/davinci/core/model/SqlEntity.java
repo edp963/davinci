@@ -32,14 +32,17 @@ public class SqlEntity {
     //执行sql
     private List<String> executeSql;
 
-    private Map<String, String> params;
+    private Map<String, String> quaryParams;
+
+    private Map<String, List<String>> teamParams;
 
     public SqlEntity() {
     }
 
-    public SqlEntity(List<String> querySql, List<String> executeSql, Map<String, String> params) {
+    public SqlEntity(List<String> querySql, List<String> executeSql, Map<String, String> quaryParams, Map<String, List<String>> teamParams) {
         this.querySql = querySql;
         this.executeSql = executeSql;
-        this.params = params;
+        this.quaryParams = quaryParams;
+        this.teamParams = teamParams;
     }
 }

@@ -29,6 +29,8 @@ import javax.validation.constraints.NotNull;
 @NotNull(message = "display slide widget info cannot be null")
 public class MemDisplaySlideWidgetCreate {
 
+    private Long id;
+
     @NotBlank(message = "name cannot be empty")
     private String name;
 
