@@ -10,25 +10,45 @@
   }
   .orgHeader {
     display: flex;
-    flex-direction: column;
+    //flex-direction: column;
     .avatar {
       display: flex;
       align-items: center;
       img {
         vertical-align: top;
       }
-      .title {
-        margin-left: 16px;
-        font-weight: 400;
-        font-size: 18px;
-      }
     }
     .name {
+      display: flex;
+      flex-direction: column;
+      margin-left: 16px;
+      .title {
+        font-weight: 400;
+        font-size: 16px;
+      }
       .desc {
         font-size: 12px;
         color: @description-text;
       }
     }
+    //.avatar {
+    //  display: flex;
+    //  align-items: center;
+    //  img {
+    //    vertical-align: top;
+    //  }
+    //  .title {
+    //    margin-left: 16px;
+    //    font-weight: 400;
+    //    font-size: 18px;
+    //  }
+    //}
+    //.name {
+    //  .desc {
+    //    font-size: 12px;
+    //    color: @description-text;
+    //  }
+    //}
   }
   .setting {
     align-self: center;
@@ -81,13 +101,34 @@
 }
 
 .projectItemWrap{
-  padding: 24px 0px 8px 8px;
-  border-bottom: 1px solid @grey-line-color;
+  padding: 8px 8px;
+  margin-top: 16px;
+  border-radius: 4px;
   display: flex;
-  flex-direction: column;
-  .titleWrapper {
+  &:hover {
+    background-size: 110%;
+    box-shadow: @block-active-box-shadow;
+    transform: translate3d(0, -5px, 0);
+  }
+  .avatarWrapper{
+    width: 260px;
+    height: 120px;
+    margin-right: 20px;
+    background-color: @body-background;
+    background-repeat: no-repeat;
+    background-size: 100%;
+    background-position: center center;
+    border-radius: 2px;
+    box-shadow: @block-box-shadow;
+    transform: translate3d(0, 0, 0);
+    transition: transform 200ms linear,
+    box-shadow 200ms linear,
+    background-size 500ms linear;
+    position: relative;
+  }
+  .detailWrapper {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     .title {
       font-size: 18px;
       font-weight: 600;
@@ -95,34 +136,35 @@
       color: @blue;
       cursor: pointer;
     }
-    .delete {
-
-    }
-  }
-  .desc {
-    font-size: 12px;
-    color: @description-text;
-    margin-bottom: 8px;
-  }
-  .tag {
-    margin-bottom: 8px;
-    span {
+    .desc {
       font-size: 12px;
+      color: @description-text;
+      margin-bottom: 8px;
     }
-  }
-  .others {
-    display: flex;
-    .updateTime {
-      color: @rich-text;
-      margin-right: 32px;
-      .label {
-        color: @description-text;
-        margin-right: 8px;
+    .tag {
+      margin-bottom: 8px;
+      span {
+        font-size: 12px;
       }
     }
-    .stars {
-      cursor: pointer;
-      color: @rich-text;
+    .others {
+      display: flex;
+      .updateTime {
+        color: @rich-text;
+        margin-right: 32px;
+        .label {
+          color: @description-text;
+          margin-right: 8px;
+        }
+      }
+      .stars {
+        margin-right: 32px;
+        cursor: pointer;
+        color: @rich-text;
+      }
+      .delete {
+        cursor: pointer;
+      }
     }
   }
 }

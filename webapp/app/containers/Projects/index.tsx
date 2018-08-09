@@ -28,6 +28,8 @@ import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
+import Avatar from '../../components/Avatar'
+import Box from '../../components/Box'
 
 interface IProjectsProps {
   router: InjectedRouter
@@ -47,6 +49,8 @@ interface IProjectsState {
   formType?: string
   formVisible: boolean
   modalLoading: boolean
+  mimeOrder: number
+  joinOrder: number
 }
 interface IProject {
   type?: string
@@ -64,7 +68,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.state = {
       formType: '',
       formVisible: false,
-      modalLoading: false
+      modalLoading: false,
+      mimeOrder: 0,
+      joinOrder: 1
     }
   }
 
@@ -89,7 +95,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.props.onLoadProjects()
     this.props.onLoadOrganizations()
   }
+  public componentDidMount () {
 
+  }
   private stopPPG = (e) => {
     e.stopPropagation()
   }
@@ -117,6 +125,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
         }
       }
+    })
+  }
+
+  private moveOrder = () => {
+    const {joinOrder, mimeOrder} = this.state
+    this.setState({
+      joinOrder: joinOrder === 1 ? 0 : 1,
+      mimeOrder: mimeOrder === 0 ? 1 : 0
     })
   }
 
@@ -163,7 +179,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const projectArr = Array.isArray(projects) ? [...projects, ...[{
       id: 'add',
       type: 'add'
-    }]] : []
+    }]] : [...[{
+      id: 'add',
+      type: 'add'
+    }]]
     const projectItems = projectArr
       ? projectArr.map((d: IProject) => {
         let CreateButton = void 0
@@ -173,7 +192,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             <Col
               key={d.id}
               xl={6}
-              lg={6}
+              lg={8}
               md={8}
               sm={12}
               xs={24}
@@ -224,16 +243,13 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
 
         const itemClass = classnames({
-          [styles.unit]: true,
-      //    [styles.editing]: !d.publish
+          [styles.unit]: true
         })
-
-      //  const editHint = !d.publish && '(编辑中…)'
         const colItems = (
             <Col
               key={d.id}
               xl={6}
-              lg={6}
+              lg={8}
               md={8}
               sm={12}
               xs={24}
@@ -260,16 +276,113 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           )
         return colItems
       }) : ''
+    const history =  projects
+      ? projects.map((d: IProject) => {
+        const path = require(`../../assets/images/bg${d.pic}.png`)
+        const colItems = (
+          <div className={styles.groupList} key={d.id}>
+            <div className={styles.orgHeader}>
+              <div className={styles.avatar}>
+                <Avatar path={path} enlarge={false} size="small"/>
+              </div>
+              <div className={styles.name}>
+                <div className={styles.title}>{d.name}</div>
+                <div className={styles.desc}>{d.description}</div>
+              </div>
+            </div>
+          </div>
+        )
+        return colItems
+      }) : ''
     return (
-      <div className={styles.wrap}>
-        <div className={styles.container}>
-          <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
-              <div className={styles.header}>我的项目</div>
+      <div className={styles.wrapper}>
+        <div className={styles.search}>
+          <div  className={styles.searchWrapper}>
+            <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
+            <input
+              id="newtab-search-text"
+              placeholder="Search the Davinci"
+              title="Search the Web"
+              autoComplete="off"
+              type="search"
+            />
+            <span className={styles.searchButton}>
+              <i className="iconfont icon-forward"/>
+            </span>
+          </div>
+        </div>
+        <div className={styles.wrap}>
+          <Row gutter={16}>
+            <Col
+             xl={18}
+             lg={18}
+             md={24}
+             sm={24}
+             xs={24}
+            >
+              <div className={styles.container}>
+                  <div className={styles.projects}>
+                    <div className={styles.mime} id="mime" style={{order: this.state.mimeOrder}} draggable={true} onClick={this.moveOrder}>
+                      <Box>
+                        <Box.Header>
+                          <Box.Title>
+                            <Row>
+                              <Col span={20}>
+                                <Icon type="bars" />我创建的项目
+                              </Col>
+                            </Row>
+                          </Box.Title>
+                        </Box.Header>
+                        <div className={styles.listPadding}>
+                          <Row gutter={16}>
+                            {projectItems}
+                          </Row>
+                        </div>
+                      </Box>
+                    </div>
+                    <div className={styles.join} id="join" style={{order: this.state.joinOrder}} draggable={true} onClick={this.moveOrder}>
+                      <Box>
+                        <Box.Header>
+                          <Box.Title>
+                            <Row>
+                              <Col span={20}>
+                                <Icon type="bars" />我参与的项目
+                              </Col>
+                            </Row>
+                          </Box.Title>
+                        </Box.Header>
+                        <div className={styles.listPadding}>
+                          <Row gutter={16}>
+                            {projectItems}
+                          </Row>
+                        </div>
+                      </Box>
+                    </div>
+                  </div>
+              </div>
             </Col>
-          </Row>
-          <Row gutter={20}>
-            {projectItems}
+            <Col
+              xl={6}
+              lg={6}
+              md={24}
+              sm={24}
+              xs={24}
+            >
+              <div className={styles.sideBox}>
+                <Box>
+                  <Box.Header>
+                    <Box.Title>
+                      <Row>
+                        <Col span={20}>
+                          <Icon type="bars" />浏览历史
+                        </Col>
+                      </Row>
+                    </Box.Title>
+                  </Box.Header>
+                  {history}
+                </Box>
+              </div>
+            </Col>
           </Row>
           <Modal
             title={null}
