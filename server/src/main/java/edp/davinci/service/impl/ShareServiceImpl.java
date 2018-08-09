@@ -369,7 +369,7 @@ public class ShareServiceImpl implements ShareService {
 
                 ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
 
-                list = viewService.getResultDataList(viewWithProjectAndSource, executeParam);
+                list = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
             }
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
@@ -406,9 +406,9 @@ public class ShareServiceImpl implements ShareService {
 
                 ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
 
-                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam);
+                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
 
-                List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam);
+                List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
 
                 if (null != columns && columns.size() > 0) {
                     String csvPath = fileUtils.fileBasePath + File.separator + "csv";

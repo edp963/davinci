@@ -24,8 +24,10 @@ spark-warehouse
 *.bak
 *.log
 *.conf
+config/application.yml
 swagger-ui/
 lib/
 tempFiles/
 userfiles/
 .vscode
+*yarn.lock

@@ -1,6 +1,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -72,6 +74,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     private static final String viewDataCacheKey = "view_data_";
 
     private static final String viewMetaCacheKey = "view_meta_";
+
+    private static final String viewTeamVarKey = "team";
 
 
     @Override
@@ -407,14 +411,15 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql());
             SqlUtils sqlUtils = this.sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword());
             if (null != sqlUtils && null != sqlEntity) {
+                //执行sql时 team@var 只运行默认值
                 if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getParams());
+                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams());
                     for (String sql : sqlList) {
                         sqlUtils.execute(sql);
                     }
                 }
                 if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getParams());
+                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams());
                     for (String sql : sqlEntity.getQuerySql()) {
                         resultList = sqlUtils.syncQuery4List(sql);
                     }
@@ -477,7 +482,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         try {
-            list = getResultDataList(viewWithProjectAndSource, executeParam);
+            list = getResultDataList(viewWithProjectAndSource, executeParam, user);
         } catch (ServerException e) {
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
@@ -499,7 +504,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 //构造参数， 原有的被传入的替换
                 if (null != executeParam.getParams() && executeParam.getParams().size() > 0) {
                     for (Param param : executeParam.getParams()) {
-                        sqlEntity.getParams().put(SqlParseUtils.dollarDelimiter + param.getName().trim() + SqlParseUtils.dollarDelimiter, param.getValue());
+                        sqlEntity.getQuaryParams().put(SqlParseUtils.dollarDelimiter + param.getName().trim() + SqlParseUtils.dollarDelimiter, param.getValue());
                     }
                 }
 
@@ -530,11 +535,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      *
      * @param viewWithProjectAndSource
      * @param executeParam
+     * @param user
      * @return
      * @throws ServerException
      */
     @Override
-    public List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam) throws ServerException {
+    public List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
         List<Map<String, Object>> list = null;
 
         try {
@@ -555,8 +561,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 }
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
                 if (null != sqlUtils && null != sqlEntity) {
+
+                    //解析team@var查询参数
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
+
                     if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getParams());
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
                         for (String sql : sqlList) {
                             sqlUtils.execute(sql);
                         }
@@ -564,7 +574,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
                         list = new ArrayList<>();
                         buildQuerySql(sqlEntity, executeParam);
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getParams());
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
                         for (String sql : sqlList) {
                             list = sqlUtils.syncQuery4List(sql);
                         }
@@ -592,11 +602,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      *
      * @param viewWithProjectAndSource
      * @param executeParam
+     * @param user
      * @return
      * @throws ServerException
      */
     @Override
-    public List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam) throws ServerException {
+    public List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
         List<QueryColumn> columns = null;
 
         try {
@@ -618,15 +629,19 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 }
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
                 if (null != sqlUtils && null != sqlEntity) {
+
+                    //解析team@var查询参数
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
+
                     if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getParams());
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
                         for (String sql : sqlList) {
                             sqlUtils.execute(sql);
                         }
                     }
                     if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
                         buildQuerySql(sqlEntity, executeParam);
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getParams());
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
                         //逐条查询的目的是为了执行用户sql中的变量定义
                         for (String sql : sqlList) {
                             sqlUtils.syncQuery4List(sql);
@@ -651,6 +666,40 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         return columns;
+    }
+
+
+    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user) {
+        if (null != view && !StringUtils.isEmpty(view.getConfig())) {
+            JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
+            if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
+                String teamVarString = jsonObject.getString(viewTeamVarKey);
+                if (!StringUtils.isEmpty(teamVarString)) {
+                    List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
+                    if (null != varList && varList.size() > 0) {
+                        Set<Long> tIds = relUserTeamMapper.getUserTeamId(user.getId());
+                        for (String key : paramMap.keySet()) {
+                            List<String> params = new ArrayList<>();
+                            for (TeamVar teamVar : varList) {
+                                if (tIds.contains(teamVar.getId())) {
+                                    for (TeamParam teamParam : teamVar.getParams()) {
+                                        String k = key.replace(String.valueOf(SqlParseUtils.dollarDelimiter), "");
+                                        if (teamParam.getK().equals(k)) {
+                                            params.add(teamParam.getV());
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (params.size() > 0) {
+                                paramMap.put(key, params);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return paramMap;
     }
 }
 

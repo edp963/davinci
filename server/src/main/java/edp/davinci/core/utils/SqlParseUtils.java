@@ -21,6 +21,7 @@ package edp.davinci.core.utils;
 import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.ServerException;
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.enums.SqlOperatorEnum;
 import edp.davinci.core.model.SqlEntity;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -34,12 +35,10 @@ import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import net.sf.jsqlparser.statement.select.SubSelect;
 
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class SqlParseUtils {
@@ -52,15 +51,21 @@ public class SqlParseUtils {
 
     private static final String conditionSeparator = ",";
 
+    private static final String space = " ";
+
     private static final String sqlSeparator = ";";
 
     private static final String sqlUrlSeparator = "&";
 
-    private static final char newLineChar = '\n';
+    private static final String newLineChar = "\n";
 
     private static final char CSVHeaderSeparator = ':';
 
     private static final char delimiterStartChar = '<';
+
+    private static final String parenthesesStart = "(";
+
+    private static final String parenthesesEnd = ")";
 
     private static final char delimiterEndChar = '>';
 
@@ -76,9 +81,13 @@ public class SqlParseUtils {
 
     private static final String select = "select";
 
-    private static final String paramKey = "query@var";
+    private static final String queryVarKey = "query@var";
+
+    private static final String teamVarKey = "team@var";
 
     private static final String REG_PLACEHOLDER = "\\$.+\\$";
+
+    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?\\$\\w+\\$\\)?\\s?\\)";
 
     /**
      * 解析sql
@@ -109,7 +118,6 @@ public class SqlParseUtils {
 
             //sql体
             if (!StringUtils.isEmpty(sqlStruct.trim())) {
-//                sqlStruct = sqlStruct.replaceAll(String.valueOf(newLineChar), " ").trim();
                 sqlStruct = sqlStruct.trim();
 
                 if (sqlStruct.startsWith(String.valueOf(STStartChar))) {
@@ -143,24 +151,36 @@ public class SqlParseUtils {
                 }
             }
 
-            Map<String, String> paramMap = new HashMap<>();
+            Map<String, String> queryParamMap = new HashMap<>();
+            Map<String, List<String>> teamParamMap = new HashMap<>();
             //参数
             if (!StringUtils.isEmpty(queryParam)) {
-//                queryParam = queryParam.replaceAll(String.valueOf(newLineChar), " ").trim();
-                queryParam = queryParam.trim();
+                queryParam = queryParam.replaceAll(newLineChar, "").trim();
                 if (queryParam.endsWith(sqlSeparator)) {
                     queryParam = queryParam.substring(0, queryParam.length() - 1);
                 }
-                queryParam = queryParam.replaceAll(paramKey, "");
                 String[] split = queryParam.split(sqlSeparator);
                 if (null != split && split.length > 0) {
                     for (String param : split) {
-                        String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
-                        if (null != paramArray && paramArray.length > 0) {
-                            String k = paramArray[0].trim();
-                            String v = paramArray.length > 1 ? paramArray[1].trim() : "";
-                            log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(dollarDelimiter), ""), v);
-                            paramMap.put(k, v);
+                        param = param.trim();
+                        if (param.startsWith(queryVarKey)) {
+                            param = param.replaceAll(queryVarKey, "");
+                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
+                            if (null != paramArray && paramArray.length > 0) {
+                                String k = paramArray[0].trim();
+                                String v = paramArray.length > 1 ? paramArray[1].trim() : "";
+                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(dollarDelimiter), ""), v);
+                                queryParamMap.put(k, v);
+                            }
+                        } else if (param.startsWith(teamVarKey)) {
+                            param = param.replaceAll(teamVarKey, "");
+                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
+                            if (null != paramArray && paramArray.length > 0) {
+                                String k = paramArray[0].trim();
+                                String v = paramArray.length > 1 ? paramArray[1].trim() : "";
+                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(dollarDelimiter), ""), v);
+                                teamParamMap.put(k, Arrays.asList(v));
+                            }
                         }
                     }
                 }
@@ -173,8 +193,9 @@ public class SqlParseUtils {
             SqlEntity sqlEntity = new SqlEntity(
                     querySqlList,
                     executeSqlList,
-                    paramMap
-                    );
+                    queryParamMap,
+                    teamParamMap
+            );
             return sqlEntity;
         }
         return null;
@@ -185,24 +206,128 @@ public class SqlParseUtils {
      * 替换参数
      *
      * @param sqlList
-     * @param paramMap
+     * @param queryParamMap
      * @return
      */
-    public static List<String> replaceParams(List<String> sqlList, Map<String, String> paramMap) {
-        if (null != sqlList && sqlList.size() > 0 && null != paramMap && paramMap.size() > 0) {
-            Pattern p = Pattern.compile(REG_PLACEHOLDER);
-            for (String sql : sqlList) {
-                Matcher matcher = p.matcher(sql);
-                if (matcher.find()) {
-                    for (String key : paramMap.keySet()) {
-                        int position = sqlList.indexOf(sql);
-                        sql = sql.replace(key, paramMap.get(key));
-                        sqlList.set(position, sql);
+    public static List<String> replaceParams(List<String> sqlList, Map<String, String> queryParamMap, Map<String, List<String>> teamParamMap) {
+        if (null != sqlList && sqlList.size() > 0) {
+            //替换team@var
+            if (null != teamParamMap && teamParamMap.size() > 0) {
+                Pattern p = Pattern.compile(REG_TEAMVAR);
+                Set<String> expSet = new HashSet<>();
+                for (String sql : sqlList) {
+                    Matcher matcher = p.matcher(sql);
+                    while (matcher.find()) {
+                        expSet.add(matcher.group());
+                    }
+                }
+                if (expSet.size() > 0) {
+                    Map<String, String> parsedMap = getParsedExpression(expSet, teamParamMap);
+                    for (String sql : sqlList) {
+                        for (String key : parsedMap.keySet()) {
+                            if (sql.indexOf(key) > -1) {
+                                int position = sqlList.indexOf(sql);
+                                sql = sql.replace(key, parsedMap.get(key));
+                                sqlList.set(position, sql);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //替换query@var
+            if (null != queryParamMap && queryParamMap.size() > 0) {
+                Pattern p = Pattern.compile(REG_PLACEHOLDER);
+                for (String sql : sqlList) {
+                    Matcher matcher = p.matcher(sql);
+                    if (matcher.find()) {
+                        for (String key : queryParamMap.keySet()) {
+                            int position = sqlList.indexOf(sql);
+                            sql = sql.replace(key, queryParamMap.get(key));
+                            sqlList.set(position, sql);
+                        }
                     }
                 }
             }
         }
         return sqlList;
+    }
+
+
+    private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> teamParamMap) {
+        Iterator<String> iterator = expSet.iterator();
+        Map<String, String> map = new HashMap<>();
+        while (iterator.hasNext()) {
+            String exp = iterator.next().trim();
+            SqlOperatorEnum sqlOperator = SqlOperatorEnum.getSqlOperator(exp);
+            String expression = getTeamVarExpression(sqlOperator, exp, teamParamMap);
+            map.put(exp, expression);
+        }
+        if (map.size() > 0) {
+            return map;
+        } else {
+            return null;
+        }
+    }
+
+    private static String getTeamVarExpression(SqlOperatorEnum sqlOperator, String srcExpression, Map<String, List<String>> teamParamMap) {
+        String originExpression = srcExpression;
+        if (!StringUtils.isEmpty(srcExpression)) {
+            srcExpression = srcExpression.trim();
+            if (srcExpression.startsWith(parenthesesStart) && srcExpression.endsWith(parenthesesEnd)) {
+                srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
+            }
+            String[] split = srcExpression.split(sqlOperator.getValue());
+            if (split.length == 2) {
+                String left = split[0].trim();
+                String right = split[1].trim();
+                if (teamParamMap.containsKey(right)) {
+                    StringBuilder expBuilder = new StringBuilder();
+                    List<String> list = teamParamMap.get(right);
+                    if (null != list && list.size() > 0) {
+                        if (list.size() == 1) {
+                            expBuilder
+                                    .append(left).append(space)
+                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                        } else {
+                            switch (sqlOperator) {
+                                case IN:
+                                case EQUALSTO:
+                                    expBuilder
+                                            .append(left).append(space)
+                                            .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                            .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                    break;
+
+                                case NOTEQUALSTO:
+                                    expBuilder
+                                            .append(left).append(space)
+                                            .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
+                                            .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                    break;
+
+                                case BETWEEN:
+                                case GREATERTHAN:
+                                case GREATERTHANEQUALS:
+                                case MINORTHAN:
+                                case MINORTHANEQUALS:
+                                    expBuilder.append(list.stream()
+                                            .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
+                                            .collect(Collectors.joining("or", "(", ")")));
+                                    break;
+
+                                default:
+                                    expBuilder.append(originExpression);
+                                    break;
+                            }
+                        }
+                    }
+                    return expBuilder.toString();
+                }
+            }
+        }
+        return originExpression;
     }
 
     /**
@@ -223,19 +348,10 @@ public class SqlParseUtils {
         return null;
     }
 
-//    public static String buildSelectWhere(String sql, List<Param> )
-//            throws JSQLParserException {
-//        CCJSqlParserManager parserManager = new CCJSqlParserManager();
-//        Select select = (Select) parserManager.parse(new StringReader(sql));
-//        PlainSelect plain = (PlainSelect) select.getSelectBody();
-//        Expression where_expression = (Expression) (CCJSqlParserUtil
-//                .parseCondExpression(str_where));
-//        plain.setWhere(where_expression);
-//        return select.toString();
-//    }
 
     /**
      * 构造子查询
+     *
      * @param sql
      * @return
      * @throws JSQLParserException
@@ -253,6 +369,7 @@ public class SqlParseUtils {
 
     /**
      * 构建查询列
+     *
      * @param plainSelect
      * @param fields
      * @return
@@ -270,6 +387,7 @@ public class SqlParseUtils {
 
     /**
      * 构建group
+     *
      * @param plainSelect
      * @param groups
      * @return
@@ -277,7 +395,7 @@ public class SqlParseUtils {
      */
     public static PlainSelect buildSelectGroupby(PlainSelect plainSelect, List<String> groups) throws JSQLParserException {
         List<Expression> GroupByColumnReferences = new ArrayList<>();
-        for (String group: groups) {
+        for (String group : groups) {
             GroupByColumnReferences.add(CCJSqlParserUtil.parseExpression(group));
         }
         plainSelect.setGroupByColumnReferences(GroupByColumnReferences);

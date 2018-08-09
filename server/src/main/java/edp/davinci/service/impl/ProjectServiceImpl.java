@@ -23,10 +23,8 @@ import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.dao.*;
-import edp.davinci.dto.projectDto.ProjectCreat;
-import edp.davinci.dto.projectDto.ProjectInfo;
-import edp.davinci.dto.projectDto.ProjectUpdate;
-import edp.davinci.dto.projectDto.UserMaxProjectPermission;
+import edp.davinci.dto.projectDto.*;
+import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.Organization;
 import edp.davinci.model.Project;
 import edp.davinci.model.RelUserOrganization;
@@ -101,14 +99,13 @@ public class ProjectServiceImpl implements ProjectService {
     public ResultMap getProjects(User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        List<Project> projects = projectMapper.getProejctsByUser(user.getId());
+        List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
         List<ProjectInfo> projectInfoList = new ArrayList<>();
         if (null != projects && projects.size() > 0) {
             List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
-            for (Project project : projects) {
+            for (ProjectWithCreateBy project : projects) {
                 ProjectInfo projectInfo = new ProjectInfo();
                 BeanUtils.copyProperties(project, projectInfo);
-                projectInfo.setCreateBy(project.getUserId());
                 for (UserMaxProjectPermission maxProjectPermission : permissions) {
                     if (maxProjectPermission.getProjectId().equals(project.getId())) {
                         BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
@@ -160,7 +157,9 @@ public class ProjectServiceImpl implements ProjectService {
             organizationMapper.updateProjectNum(organization);
 
             ProjectInfo projectInfo = new ProjectInfo();
-            projectInfo.setCreateBy(user.getId());
+            UserBaseInfo userBaseInfo = new UserBaseInfo();
+            BeanUtils.copyProperties(user, userBaseInfo);
+            projectInfo.setCreateBy(userBaseInfo);
             BeanUtils.copyProperties(project, projectInfo);
             return resultMap.successAndRefreshToken(request).payload(projectInfo);
         } else {

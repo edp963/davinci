@@ -18,6 +18,8 @@
 
 package edp.davinci.dto.projectDto;
 
+import edp.davinci.dto.userDto.UserBaseInfo;
+import edp.davinci.model.User;
 import lombok.Data;
 
 @Data
@@ -36,5 +38,5 @@ public class ProjectInfo {
 
     private ProjectPermission permission = new ProjectPermission();
 
-    private Long createBy;
+    private UserBaseInfo createBy;
 }
