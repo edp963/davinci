@@ -49,6 +49,8 @@ interface IProjectsState {
   formType?: string
   formVisible: boolean
   modalLoading: boolean
+  mimeOrder: number
+  joinOrder: number
 }
 interface IProject {
   type?: string
@@ -66,7 +68,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.state = {
       formType: '',
       formVisible: false,
-      modalLoading: false
+      modalLoading: false,
+      mimeOrder: 0,
+      joinOrder: 1
     }
   }
 
@@ -91,7 +95,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.props.onLoadProjects()
     this.props.onLoadOrganizations()
   }
+  public componentDidMount () {
 
+  }
   private stopPPG = (e) => {
     e.stopPropagation()
   }
@@ -119,6 +125,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
         }
       }
+    })
+  }
+
+  private moveOrder = () => {
+    const {joinOrder, mimeOrder} = this.state
+    this.setState({
+      joinOrder: joinOrder === 1 ? 0 : 1,
+      mimeOrder: mimeOrder === 0 ? 1 : 0
     })
   }
 
@@ -177,10 +191,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           return (
             <Col
               key={d.id}
-              xl={8}
-              lg={12}
-              md={24}
-              sm={24}
+              xl={6}
+              lg={8}
+              md={8}
+              sm={12}
               xs={24}
             >
               <div
@@ -234,9 +248,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         const colItems = (
             <Col
               key={d.id}
-              xl={8}
-              lg={12}
-              md={12}
+              xl={6}
+              lg={8}
+              md={8}
               sm={12}
               xs={24}
             >
@@ -287,73 +301,89 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
             <input
               id="newtab-search-text"
-              maxlength="256"
               placeholder="Search the Davinci"
               title="Search the Web"
-              autocomplete="off"
-              aria-autocomplete="true"
-              aria-controls="searchSuggestionTable"
-              aria-expanded="false" type="search"/>
-            <Icon id="searchSubmit" type="search" className={styles.searchButton}/>
+              autoComplete="off"
+              type="search"
+            />
+            <span className={styles.searchButton}>
+              <i className="iconfont icon-forward"/>
+            </span>
           </div>
         </div>
         <div className={styles.wrap}>
-          <div className={styles.container}>
-            <div className={styles.mainBox}>
-              <div className={styles.projects}>
-                <div className={styles.mime}>
-                  <Box>
-                    <Box.Header>
-                      <Box.Title>
-                        <Row>
-                          <Col span={20}>
-                            <Icon type="bars" />我创建的项目
-                          </Col>
-                        </Row>
-                      </Box.Title>
-                    </Box.Header>
-                    <div className={styles.listPadding}>
-                      <Row gutter={16}>
-                        {projectItems}
-                      </Row>
+          <Row gutter={16}>
+            <Col
+             xl={18}
+             lg={18}
+             md={24}
+             sm={24}
+             xs={24}
+            >
+              <div className={styles.container}>
+                  <div className={styles.projects}>
+                    <div className={styles.mime} id="mime" style={{order: this.state.mimeOrder}} draggable={true} onClick={this.moveOrder}>
+                      <Box>
+                        <Box.Header>
+                          <Box.Title>
+                            <Row>
+                              <Col span={20}>
+                                <Icon type="bars" />我创建的项目
+                              </Col>
+                            </Row>
+                          </Box.Title>
+                        </Box.Header>
+                        <div className={styles.listPadding}>
+                          <Row gutter={16}>
+                            {projectItems}
+                          </Row>
+                        </div>
+                      </Box>
                     </div>
-                  </Box>
-                </div>
-                <div className={styles.join}>
-                  <Box>
-                    <Box.Header>
-                      <Box.Title>
-                        <Row>
-                          <Col span={20}>
-                            <Icon type="bars" />我参与的项目
-                          </Col>
-                        </Row>
-                      </Box.Title>
-                    </Box.Header>
-                    <div className={styles.listPadding}>
-                      <Row gutter={16}>
-                        {projectItems}
-                      </Row>
+                    <div className={styles.join} id="join" style={{order: this.state.joinOrder}} draggable={true} onClick={this.moveOrder}>
+                      <Box>
+                        <Box.Header>
+                          <Box.Title>
+                            <Row>
+                              <Col span={20}>
+                                <Icon type="bars" />我参与的项目
+                              </Col>
+                            </Row>
+                          </Box.Title>
+                        </Box.Header>
+                        <div className={styles.listPadding}>
+                          <Row gutter={16}>
+                            {projectItems}
+                          </Row>
+                        </div>
+                      </Box>
                     </div>
-                  </Box>
-                </div>
+                  </div>
               </div>
-            </div>
-          </div>
-          <div className={styles.sideBox}>
-            <Box>
-              <Box.Header>
-                <Box.Title>
-                  <Row>
-                    <Col span={20}>
-                      <Icon type="bars" />浏览历史
-                    </Col>
-                  </Row>
-                </Box.Title>
-              </Box.Header>
-              {history}
-            </Box>
-          </div>
+            </Col>
+            <Col
+              xl={6}
+              lg={6}
+              md={24}
+              sm={24}
+              xs={24}
+            >
+              <div className={styles.sideBox}>
+                <Box>
+                  <Box.Header>
+                    <Box.Title>
+                      <Row>
+                        <Col span={20}>
+                          <Icon type="bars" />浏览历史
+                        </Col>
+                      </Row>
+                    </Box.Title>
+                  </Box.Header>
+                  {history}
+                </Box>
+              </div>
+            </Col>
+          </Row>
           <Modal
             title={null}
             footer={null}

@@ -8,13 +8,11 @@
   .search{
     height: 60px;
     border-bottom: 1px solid #eee;
-    width: 964px;
     margin: 48px auto;
     .searchWrapper {
       cursor: default;
       display: flex;
       height: 42px;
-      margin-bottom: 20px;
       position: relative;
       width: 100%;
       input {
@@ -70,34 +68,33 @@
         &:active {
           background-color: rgba(12, 12, 13, 0.2);
         }
+        i{
+          display: inline-block;
+          line-height: 42px;
+          margin-left: 8px;
+        }
       }
     }
   }
   .wrap {
+    margin: 0 auto;
     display: flex;
     .container {
-      width: 79%;
       border-right: 1px solid #eee;
-      .mainBox{
+      .projects{
         width: 100%;
         display: flex;
         flex-direction: column;
-        .projects{
-          display: flex;
-          .mime{
-            margin-left: 12px;
-            width: 50%;
-            border-right: 1px solid #eee;
-            .listPadding{
-              padding: 0 12px 12px 12px;
-            }
+        .mime{
+          margin-bottom: 16px;
+          .listPadding{
+            padding: 0 12px 12px 12px;
           }
-          .join{
-            width: 49%;
-            margin:0 12px;
-            .listPadding{
-              padding: 0 12px 12px 12px;
-            }
+        }
+        .join{
+          margin-bottom: 16px;
+          .listPadding{
+            padding: 0 12px 12px 12px;
           }
         }
       }
@@ -195,7 +192,7 @@
       }
     }
     .sideBox{
-      width: 20%;
+      margin-bottom: 16px;
     }
   }
 }
@@ -252,7 +249,7 @@
 }
 
 .groupList {
-  padding: 8px 24px 8px 8px;
+  padding: 8px 24px 8px 18px;
   box-shadow: 0 -1px 0 @grey-line-color;
   display: flex;
   justify-content: space-between;
@@ -290,29 +287,55 @@
 }
 
 
-
-
-@media only screen and (min-width: 1200px) {
-  .container {
+@media only screen and (max-width: 1900px) {
+  .wrap {
+    width: 1600px;
+  }
+  .search{
+    width: 1570px;
+  }
+}
+@media only screen and (max-width: 1600px) and (min-width: 1400px) {
+  .wrap {
+    width: 1250px;
+  }
+  .search{
+    width: 1246px;
+  }
+}
+@media only screen and (min-width: 1200px) and (max-width: 1400px) {
+  .wrap {
     width: 1100px;
+  }
+  .search{
+    width: 1096px;
   }
 }
 @media only screen and (max-width: 1199px) and (min-width: 991px) {
-  .container {
+  .wrap {
     width: 944px;
     padding: 0 20px;
   }
+  .search{
+    width: 900px;
+  }
 }
 @media only screen and (max-width: 990px) and (min-width: 768px) {
-  .container {
+  .wrap {
     width: 640px;
+  }
+  .search{
+    width: 636px;
   }
 }
 
 @media only screen and (max-width: 767px) and (min-width: 300px) {
-  .container {
+  .wrap {
     width: 365px;
     padding: 0 6px;
+  }
+  .search{
+    width: 348px;
   }
 }
 

@@ -70,17 +70,18 @@ export function Navigator (props) {
           </Link>
         </div>
       </div>
-
       <ul className={styles.tools}>
         {/*<li className={styles.emailHide}>*/}
           {/*<p>{props.loginUser.email}</p>*/}
         {/*</li>*/}
         <li>
-          <Icon type="github" onClick={goGithub}/>
+          {/*<Icon type="github" onClick={goGithub}/>*/}
+          <i className="iconfont icon-GitHub" onClick={goGithub} style={{lineHeight: '38px'}}/>
         </li>
         <li>
           <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
-            <Icon type="user" />
+            {/*<Icon type="user" />*/}
+            <i className="iconfont icon-user_circle" style={{fontSize:'26px'}}/>
           </Dropdown>
         </li>
       </ul>
