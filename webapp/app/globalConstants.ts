@@ -18,7 +18,7 @@
  * >>
  */
 
-import defaultEchartsTheme from './assets/json/echartsThemes/default.project.json'
+const defaultEchartsTheme = require('./assets/json/echartsThemes/default.project.json')
 export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'
@@ -37,8 +37,28 @@ export const DASHBOARD_ITEM_FILTER_HEIGHT = 40
 export const DEFAULT_TABLE_PAGE = 1
 export const DEFAULT_TABLE_PAGE_SIZE = 20
 
-export const SQL_STRING_TYPES = ['CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT', 'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'BINARY', 'VARBINARY', 'ENUM', 'SET']
-export const SQL_NUMBER_TYPES = ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT', 'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL', 'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC']
+export const PIVOT_CELL_PADDING = 4
+export const PIVOT_CELL_BORDER = 1
+export const PIVOT_LINE_HEIGHT = 18
+export const PIVOT_BORDER = 1
+export const PIVOT_CONTAINER_PADDING = 16
+export const PIVOT_CHART_MIN_SIZE = 100
+export const PIVOT_CHART_SPLIT_SIZE = 40
+export const PIVOT_CHART_POINT_LIMIT = 500
+export const PIVOT_XAXIS_SIZE = 50
+export const PIVOT_YAXIS_SIZE = 64
+export const PIVOT_TITLE_SIZE = 27
+
+export const SQL_STRING_TYPES = [
+  'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
+  'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB',
+  'BINARY', 'VARBINARY', 'ENUM', 'SET'
+]
+export const SQL_NUMBER_TYPES = [
+  'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT',
+  'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
+  'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
+]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 export const SQL_FIELD_TYPES = ['type1', 'type2', 'type3', 'type4', 'type5', 'type6','type7', 'type8']
 
@@ -46,3 +66,7 @@ export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
 export const ECHARTS_RENDERER = 'echarts'
+
+export const DEFAULT_FONT_WEIGHT = 'normal'
+export const DEFAULT_FONT_SIZE = '12px'
+export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'

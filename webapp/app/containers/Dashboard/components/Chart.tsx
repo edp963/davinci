@@ -33,15 +33,15 @@ interface IChartProps {
   data: any
   loading: boolean
   chartInfo: any
-  updateConfig: any
+  updateConfig?: any
   chartParams: any
-  updateParams: any[]
+  updateParams?: any[]
   classNames: any
-  interactId: string
-  onCheckTableInteract: (itemId: number) => object
-  onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
-  currentBizlogicId: number
-  onTextEditorChange?: () => void
+  interactId?: string
+  onCheckTableInteract?: (itemId: number) => object
+  onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
+  currentBizlogicId?: number
+  onTextEditorChange?: (content: any) => void
 }
 
 interface IChartStates {

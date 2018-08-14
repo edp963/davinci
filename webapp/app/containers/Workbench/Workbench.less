@@ -1,0 +1,592 @@
+@import "../../assets/less/variable";
+
+.workbench {
+  background-color: @body-bg;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    height: 48px;
+    background-color: @white;
+    box-shadow: @header-box-shadow;
+    z-index: @header-index;
+    flex-shrink: 0;
+  }
+
+  .body {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+
+    .model {
+      width: 200px;
+      background-color: @light-bg;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .config {
+      width: 241px;
+      background-color: @white;
+      border-left: 1px solid @border-color-base;
+      box-shadow: @left-side-box-shadow;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table {
+      min-width: 0;
+      padding: 16px;
+      flex: 1;
+    }
+  }
+}
+
+.source {
+  padding: 8px;
+  line-height: 24px;
+  flex-shrink: 0;
+}
+
+.columnContainer {
+  min-height: 0;
+  border-top: 1px solid @border-color-base;
+  list-style-type: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  h4 {
+    padding: 0 8px;
+    margin-top: 4px;
+    color: @light-text-color;
+    line-height: 30px;
+    flex-shrink: 0;
+  }
+
+  .columnList {
+    flex: 1;
+    overflow-y: auto;
+
+    li {
+      padding: 0 8px;
+      line-height: 24px;
+      display: flex;
+      flex-direction: row;
+      cursor: pointer;
+
+      &:hover {
+        i {
+          color: @text-color;
+        }
+      }
+
+      i {
+        width: 36px;
+        font-size: 0.8em;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .iconDate {
+        font-size: 1.75em;
+      }
+
+      p {
+        flex: 1;
+        .ellipsis;
+      }
+    }
+  }
+}
+
+.categories {
+  li {
+    &:hover {
+      background-color: lighten(@primary-color, 30%);
+    }
+
+    i {
+      color: @primary-color;
+    }
+  }
+}
+
+.values {
+  li {
+    &:hover {
+      background-color: lighten(@light-green, 30%);
+    }
+
+    i {
+      color: @light-green;
+    }
+  }
+}
+
+.charts {
+  padding: 4px 5px 4px 4px;
+  border-bottom: 1px solid @border-color-base;
+  flex-shrink: 0;
+  display: flex;
+  flex-flow: row wrap;
+
+  i {
+    width: 33px;
+    height: 33px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    font-size: 1.8em;
+    color: @disabled-icon-color;
+    text-align: center;
+    line-height: 33px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @body-bg;
+    }
+
+    &.enabled {
+      color: @primary-color;
+    }
+
+    &.selected {
+      border-bottom-color: @primary-color;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+}
+
+.props {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .propsTitle {
+    border-bottom: 1px solid @border-color-base;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+
+    li {
+      padding: 0 16px;
+      margin-top: 2px;
+      border-bottom: 2px solid @primary-color;
+      font-size: 1.08em;
+      line-height: 24px;
+      color: @primary-color;
+      position: relative;
+      bottom: -1px;
+
+      &:last-child {
+        color: @light-text-color;
+        border-bottom: 0;
+      }
+    }
+  }
+
+  .propsBody {
+    padding: 4px 8px;
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+
+    .toggleRowsAndCols {
+      right: 10px; 
+    }
+
+    .switchRowsAndCols {
+      right: 90px;
+    }
+
+    .toggleRowsAndCols,
+    .switchRowsAndCols {
+      position: absolute;
+      top: 8px;
+      font-weight: bold;
+      color: @disabled-text-color;
+      cursor: pointer;
+
+      &:hover {
+        color: @light-text-color;
+      }
+
+      i {
+        font-size: 1.125em;
+      }
+    }
+  }
+}
+
+.dropbox {
+  .title {
+    margin-top: 4px;
+    color: @light-text-color;
+    line-height: 18px;
+    font-weight: bold;
+  }
+
+  .dropContainer {
+    height: 32px;
+    padding: 4px;
+    border: 1px dashed @border-color-base;
+    border-radius: 2px;
+    line-height: 22px;
+    position: relative;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+
+    &.large {
+      height: auto;
+      min-height: 54px;
+      transition: all 100ms ease;
+    }
+
+    .placeholder {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      color: @disabled-text-color;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      i {
+        margin-right: 4px;
+      }
+    }
+
+    &.dragOver {
+      border-color: transparent;
+    }
+
+    .mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      display: none;
+
+      &.onTop {
+        border-radius: 2px;
+        display: block;
+
+        &.category {
+          background-color: fade(@primary-color, 20);
+        }
+        &.value {
+          background-color: fade(@light-green, 20); 
+        }
+      }
+
+      &.enter {
+        border: 1px dashed;
+
+        &.category {
+          border-color: @primary-color;
+        }
+        &.value {
+          border-color: @light-green; 
+        }
+      }
+    }
+  }
+}
+
+.dropItem {
+  width: 100%;
+  background-color: transparent;
+  padding: 2px;
+  flex-shrink: 0;
+
+  .dropItemContent {
+    padding: 0 24px 0 12px;
+    border-radius: 3px;
+    color: @white;
+    text-align: center;
+    line-height: 22px;
+    position: relative;
+    cursor: pointer;
+    .ellipsis;
+
+    &.category {
+      background-color: lighten(@primary-color, 5%);
+      border: 1px solid lighten(@primary-color, 5%);
+    }
+    &.value {
+      background-color: lighten(@light-green, 5%); 
+      border: 1px solid lighten(@light-green, 5%); 
+    }
+    &.add {
+      background-color: @white;
+      border: 1px dashed @border-color-base;
+      color: @light-text-color;
+    }
+    &.dragging {
+      position: relative;
+      z-index: 1;
+    }
+    &.dragged {
+      transform: translateX(-9999px);
+    }
+
+    .sort {
+      font-size: 1.08em;
+    }
+
+    .remove {
+      position: absolute;
+      top: 5px;
+      right: 4px;
+      color: @white;
+      font-size: 1.125em;
+      display: none;
+    }
+
+    &:hover {
+      .remove {
+        display: block;
+      }
+    }
+  }
+}
+
+.valueDropDown {
+  li:hover,
+  li > div:hover {
+    background-color: color(~`colorPalette("@{light-green}", 1)`);
+  }
+}
+
+.block {
+  height: 100%;
+  background-color: @white;
+  padding: 16px;
+  box-shadow: @block-box-shadow;
+  display: flex;
+  flex-direction: row;
+
+  .leftSide {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+
+    .corner {
+      flex-shrink: 0;
+    }
+
+    .rowHeader {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+
+      .rowTitle {
+        flex-shrink: 0;
+        max-height: 100%;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+
+        p {
+          transform-origin: 0 center;
+          white-space: nowrap;
+        }
+      }
+
+      .rowBody {
+        flex-shrink: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: row;
+
+        overflow: -moz-scrollbars-none;
+        -ms-overflow-style: none;
+        &::-webkit-scrollbar { 
+          display: none; 
+        }
+
+        .yAxis {
+          flex-shrink: 0;
+          width: 64px;
+        }
+      }
+    }
+
+    .rowFooter {
+      flex-shrink: 0;
+      height: 50px;
+    }
+  }
+
+  .rightSide {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .columnTitle {
+      max-width: 100%;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 27px;
+    }
+
+    .columnHeader {
+      flex-shrink: 0;
+      overflow-x: auto;
+
+      overflow: -moz-scrollbars-none;
+      -ms-overflow-style: none;
+      &::-webkit-scrollbar { 
+        display: none; 
+      }
+    }
+
+    .columnBody {
+      flex: 1;
+      overflow: auto;
+
+      &.bodyCollapsed {
+        flex: none;
+      }
+    }
+
+    .columnFooter {
+      flex-shrink: 0;
+      height: 50px;
+      overflow-x: auto;
+
+      .container {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      overflow: -moz-scrollbars-none;
+      -ms-overflow-style: none;
+      &::-webkit-scrollbar { 
+        display: none; 
+      }
+    }
+  }
+}
+
+.pivot {
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  tr {
+    &:nth-child(even) > td {
+      background-color: @body-bg;
+    }
+  }
+
+  th {
+    line-height: 26px;
+
+    p {
+      overflow: hidden;
+
+      &.colContent {
+        height: 26px;
+      }
+
+      &.auxiliaryLines {
+        position: relative;
+        overflow: visible;
+
+        &:after {
+          width: 64px;
+          border-top: 1px solid @border-color-base;
+          position: absolute;
+          top: -1px;
+          left: 100%;
+          z-index: 1;
+          content: '';
+        }
+      }
+    }
+  }
+
+  td {
+    padding: 4px;
+    line-height: 18px;
+  }
+
+  .topBorder {
+    border-top: 1px solid @border-color-base;
+  }
+
+  .bottomBorder {
+    border-top: 1px solid @border-color-base;
+  }
+
+  .leftBorder {
+    border-left: 1px solid @border-color-base;
+  }
+
+  .rightBorder {
+    border-right: 1px solid @border-color-base;
+  }
+
+  .chartCell {
+    padding: 0;
+
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+.columnHeader,
+.rowBody,
+.columnBody {
+  &.raw {
+    th, td {
+      border: 1px solid @border-color-base;
+    }
+    th {
+      background-color: @light-bg;
+    }
+  }
+}
+
+.corner.raw {
+  background-color: @light-bg;
+  border-top: 1px solid @border-color-base;
+  border-left: 1px solid @border-color-base;
+}
+
+.columnHeader {
+  &.raw {
+    position: relative;
+    top: 1px;
+  }
+}
+
+.rowBody {
+  &.raw {
+    position: relative;
+    left: 1px;
+  }
+}

@@ -36,22 +36,22 @@ import { updateMark } from '../actions'
 const styles = require('../Dashboard.less')
 
 interface ITableChartProps {
-  id: string
+  id?: string
   data: any
   loading: boolean
-  chartParams: any
-  updateConfig: any
-  updateParams: any[]
-  className: string
+  chartParams?: any
+  updateConfig?: any
+  updateParams?: any[]
+  className?: string
   filterable?: boolean
   sortable?: boolean
   width: number
   height: number
-  interactId: string,
-  onCheckInteract: (itemId: number) => object
-  onDoInteract: (itemId: number, linkagers: any, value: any) => void
+  interactId?: string,
+  onCheckInteract?: (itemId: number) => object
+  onDoInteract?: (itemId: number, linkagers: any, value: any) => void
   onUpdateMark?: (bizlogicId: number, paramsArr: any[], resolve: (res: any) => void, reject: (err: any) => void) => void
-  currentBizlogicId: number
+  currentBizlogicId?: number
 }
 
 interface ITableChartStates {

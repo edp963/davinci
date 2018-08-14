@@ -205,6 +205,14 @@ export default function createRoutes (store): IExtendedRouteProps[] {
 
   return [
     {
+      path: '/workbench',
+      getComponent (nextState, cb) {
+        import('./containers/Workbench')
+          .then(loadModule(cb))
+          .catch(errorLoading)
+      }
+    },
+    {
       path: '/login',
       component: Login
     },
