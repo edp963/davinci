@@ -28,14 +28,16 @@ import {
   EDIT_PROJECT_SUCCESS,
   DELETE_PROJECT_SUCCESS,
   LOAD_PROJECT_DETAIL,
-  LOAD_PROJECT_DETAIL_SUCCESS
+  LOAD_PROJECT_DETAIL_SUCCESS,
+  SEARCH_PROJECT_SUCCESS
 } from './constants'
 
 
 const initialState = fromJS({
   projects: null,
   currentProject: null,
-  currentProjectLoading: false
+  currentProjectLoading: false,
+  searchProject: false
 })
 
 function projectReducer (state = initialState, action) {
@@ -75,6 +77,9 @@ function projectReducer (state = initialState, action) {
       return state
         .set('currentProjectLoading', false)
         .set('currentProject', payload.project)
+    case SEARCH_PROJECT_SUCCESS:
+      return state
+        .set('searchProject', payload.result)
     default:
       return state
   }
