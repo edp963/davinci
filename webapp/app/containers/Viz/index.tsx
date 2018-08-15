@@ -69,7 +69,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
   private goToDashboard = (portal?: any) => () => {
     const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/portal/${portal ? portal.id : -1}`)
+    const { id, name } = portal
+    this.props.router.push(`/project/${params.pid}/portal/${id}/portalName/${name}`)
   }
 
   private goToDisplay = (display?: any) => () => {

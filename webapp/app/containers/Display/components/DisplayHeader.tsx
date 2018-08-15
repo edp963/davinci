@@ -242,7 +242,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.historyBack}>
             <li>
               <Tooltip placement="bottom" title="返回">
-                <Link to={`/project/${pid}/displays`}>
+                <Link to={`/project/${pid}/vizs`}>
                   <Icon type="left-circle-o"/>
                 </Link>
               </Tooltip>
