@@ -32,7 +32,7 @@ interface ITextChartProps {
   editing: boolean
   className: string
   chartParams: any
-  onTextEditorChange: () => void
+  onTextEditorChange: (content: any) => void
 }
 
 interface ITextChartStates {

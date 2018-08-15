@@ -111,13 +111,12 @@ export class WidgetChart extends React.PureComponent<IWidgetChartProps, {}> {
         id="commonChart"
         w={0}
         h={0}
-        title={chartParams.name}
         data={data}
         loading={loading}
         chartInfo={chartInfo}
         updateConfig={updateConfig}
         chartParams={chartParams}
-        currentBizlogicId={currentBizlogicId}
+        currentBizlogicId={currentBizlogicId as number}
         updateParams={updateParams}
         classNames={chartClass}
         onTextEditorChange={onTextEditorChange}

@@ -18,9 +18,8 @@
  * >>
  */
 
-import axios from 'axios'
+import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
 import message from 'antd/lib/message'
-// import { notifyError } from './util'
 
 axios.defaults.validateStatus = function (status) {
    return status < 500
@@ -36,7 +35,7 @@ function refreshToken (response) {
   if (token) {
     setToken(token)
     localStorage.setItem('TOKEN', token)
-    localStorage.setItem('TOKEN_EXPIRE', new Date().getTime() + 3600000)
+    localStorage.setItem('TOKEN_EXPIRE', `${new Date().getTime() + 3600000}`)
   }
   return response
 }
@@ -53,8 +52,9 @@ function checkStatus (response) {
   }
   return response
 }
-
-export default function request (url, options) {
+export function request (config: AxiosRequestConfig): AxiosPromise
+export function request (url: string, options?: AxiosRequestConfig): AxiosPromise
+export default function request (url: any, options?: AxiosRequestConfig): AxiosPromise {
   return axios(url, options)
     .then(checkStatus)
     .then(refreshToken)

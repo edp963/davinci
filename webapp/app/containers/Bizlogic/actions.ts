@@ -31,9 +31,6 @@ import {
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
-  LOAD_BIZDATAS,
-  LOAD_BIZDATAS_SUCCESS,
-  LOAD_BIZDATAS_FAILURE,
   LOAD_BIZDATAS_FROM_ITEM,
   LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
   LOAD_BIZDATAS_FROM_ITEM_FAILURE,
@@ -52,7 +49,10 @@ import {
   LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
-  EXECUTE_SQL_FAILURE
+  EXECUTE_SQL_FAILURE,
+  LOAD_DATA,
+  LOAD_DATA_SUCCESS,
+  LOAD_DATA_FAILURE
 } from './constants'
 
 export function loadBizlogics (projectId) {
@@ -150,37 +150,6 @@ export function bizlogicEdited (result) {
 export function editBizlogicFail () {
   return {
     type: EDIT_BIZLOGIC_FAILURE
-  }
-}
-
-export function loadBizdatas (id, sql, sorts, offset, limit) {
-  return {
-    type: LOAD_BIZDATAS,
-    payload: {
-      id,
-      sql,
-      sorts,
-      offset,
-      limit
-    }
-  }
-}
-
-export function bizdatasLoaded (bizdatas) {
-  return {
-    type: LOAD_BIZDATAS_SUCCESS,
-    payload: {
-      bizdatas
-    }
-  }
-}
-
-export function loadBizdatasFail (error) {
-  return {
-    type: LOAD_BIZDATAS_FAILURE,
-    payload: {
-      error
-    }
   }
 }
 
@@ -368,5 +337,31 @@ export function sqlExecuted (result) {
 export function executeSqlFail () {
   return {
     type: EXECUTE_SQL_FAILURE
+  }
+}
+
+export function loadData (id, params, resolve) {
+  return {
+    type: LOAD_DATA,
+    payload: {
+      id,
+      params,
+      resolve
+    }
+  }
+}
+
+export function dataLoaded () {
+  return {
+    type: LOAD_DATA_SUCCESS
+  }
+}
+
+export function loadDataFail (error) {
+  return {
+    type: LOAD_DATA_FAILURE,
+    payload: {
+      error
+    }
   }
 }

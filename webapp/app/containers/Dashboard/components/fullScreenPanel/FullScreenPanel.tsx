@@ -178,7 +178,6 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
             id={`${c.itemId}`}
             w={c.w}
             h={c.h}
-            title={c.widget.name}
             data={data || {}}
             loading={c.loading}
             chartInfo={c.chartInfo}
