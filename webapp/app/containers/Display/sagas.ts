@@ -284,9 +284,89 @@ export function* getDisplayShareLink (action) {
 }
 
 export function* undoOperation (action) {
+  const { currentState } = action.payload
+  const { displayId, slide, lastOperationType, lastLayers } = currentState
+  const slideId = slide.id
+  try {
+    switch (lastOperationType) {
+      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides`, {
+          method: 'put',
+          data: [{
+            ...slide,
+            displayId
+          }]
+        })
+        break
+      case ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS:
+      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+        const deleteLayerIds = lastLayers.map((l) => l.id)
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'delete',
+          data: deleteLayerIds
+        })
+        break
+      case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'post',
+          data: lastLayers
+        })
+        break
+      case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'put',
+          data: lastLayers
+        })
+        break
+    }
+    yield put(undoOperationDone())
+  } catch (err) {
+    yield put(undoOperationFail())
+    message.error(err)
+  }
 }
 
 export function* redoOperation (action) {
+  const { nextState } = action.payload
+  const { displayId, slide, lastOperationType, lastLayers } = nextState
+  const slideId = slide.id
+  try {
+    switch (lastOperationType) {
+      case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides`, {
+          method: 'put',
+          data: [{
+            ...slide,
+            displayId
+          }]
+        })
+        break
+      case ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS:
+      case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'post',
+          data: lastLayers
+        })
+        break
+      case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
+        const deleteLayerIds = lastLayers.map((l) => l.id)
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'delete',
+          data: deleteLayerIds
+        })
+        break
+      case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
+        yield call(request, `${api.display}/${displayId}/slides/${slideId}/widgets`, {
+          method: 'put',
+          data: lastLayers
+        })
+        break
+    }
+    yield put(redoOperationDone())
+  } catch (err) {
+    yield put(redoOperationFail())
+    message.error(err)
+  }
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {

@@ -107,17 +107,20 @@
       }],
       "default": "justify"
     }, {
-      "name": "bold",
-      "title": "加粗",
-      "component": "checkbox"
-    }, {
-      "name": "italic",
-      "title": "斜体",
-      "component": "checkbox"
-    }, {
-      "name": "underline",
-      "title": "下划线",
-      "component": "checkbox"
+      "name": "textStyle",
+      "title": "样式",
+      "component": "checkbox",
+      "values": [{
+        "label": "粗体",
+        "value": "bold"
+      }, {
+        "label": "斜体",
+        "value": "italic"
+      }, {
+        "label": "下划线",
+        "value": "underline"
+      }],
+      "default": []
     }, {
       "name": "lineHeight",
       "title": "行高（像素）",

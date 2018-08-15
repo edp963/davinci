@@ -101,6 +101,9 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
 
   private keyDown = (e: KeyboardEvent) => {
     e.stopPropagation()
+    if (['button', 'input', 'select'].indexOf((e.target as HTMLElement).tagName.toLowerCase()) > 0) {
+      return
+    }
     const { key, ctrlKey, metaKey } = e
     const { onKeyDown } = this.props
     switch (key) {

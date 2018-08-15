@@ -281,9 +281,12 @@ export function pasteSlideLayersFail () {
   }
 }
 
-export function undoOperation () {
+export function undoOperation (currentState) {
   return {
-    type: ActionTypes.UNDO_OPERATION
+    type: ActionTypes.UNDO_OPERATION,
+    payload: {
+      currentState
+    }
   }
 }
 export function undoOperationDone () {
@@ -296,9 +299,12 @@ export function undoOperationFail () {
     type: ActionTypes.UNDO_OPERATION_FAILURE
   }
 }
-export function redoOperation () {
+export function redoOperation (nextState) {
   return {
-    type: ActionTypes.REDO_OPERATION
+    type: ActionTypes.REDO_OPERATION,
+    payload: {
+      nextState
+    }
   }
 }
 export function redoOperationDone () {

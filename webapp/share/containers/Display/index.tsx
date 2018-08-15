@@ -53,8 +53,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
 }
 
 interface IDisplayStates {
-  scaleHeight: number
-  scaleWidth: number
+  scale: [number, number]
   showLogin: boolean
   shareInfo: string
 }
@@ -66,8 +65,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   public constructor (props) {
     super(props)
     this.state = {
-      scaleHeight: 1,
-      scaleWidth: 1,
+      scale: [1, 1],
       showLogin: false,
       shareInfo: ''
     }
@@ -84,7 +82,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
   public componentWillReceiveProps (nextProps: IDisplayProps) {
     const { slide } = nextProps
-    const { scaleHeight, scaleWidth } = this.state
+    const { scale } = this.state
+    const [scaleWidth, scaleHeight] = scale
     if (slide && this.props.slide !== slide) {
       const { slideParams } = JSON.parse(slide.config)
       const { scaleMode, width, height } = slideParams
@@ -103,7 +102,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        this.setState({ scaleHeight: nextScaleHeight, scaleWidth: nextScaleWidth })
+        this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
       }
     }
   }
@@ -199,7 +198,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   }
 
   private getSlideStyle = (slideParams) => {
-    const { scaleHeight, scaleWidth } = this.state
+    const { scale } = this.state
 
     const {
       width,
@@ -212,8 +211,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     let slideStyle: React.CSSProperties
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scaleWidth}px`,
-      height: `${height * scaleHeight}px`
+      width: `${width * scale[0]}px`,
+      height: `${height * scale[1]}px`
     }
 
     if (backgroundColor) {
@@ -229,7 +228,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   private loadShareContent = () => {
     const { onLoadDisplay } = this.props
     const { shareInfo } = this.state
-    onLoadDisplay(shareInfo, () => {}, () => {
+    onLoadDisplay(shareInfo, () => {
+      console.log('share page need login...')
+    }, () => {
       this.setState({
         showLogin: true
       })
@@ -256,7 +257,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       layersQueryParams
     } = this.props
 
-    const { scaleHeight, scaleWidth, showLogin, shareInfo } = this.state
+    const { scale, showLogin, shareInfo } = this.state
     const loginPanel = showLogin ? <Login shareInfo={shareInfo} legitimateUser={this.handleLegitimateUser} /> : null
 
     let content = null
@@ -273,8 +274,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         return (
           <LayerItem
             pure={true}
-            scaleHeight={scaleHeight}
-            scaleWidth={scaleWidth}
+            scale={scale}
             ref={(f) => this[`layerId_${layer.id}`]}
             itemId={layerId}
             widget={widget}

@@ -88,7 +88,7 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
   }
 
   private save = () => {
-    this.props.onSelectDone(this.state.tempSelectedWidgets, this.props.form.getFieldsValue())
+    this.props.onSelectDone([...this.state.tempSelectedWidgets], this.props.form.getFieldsValue())
   }
 
   private afterClose = () => {
@@ -172,6 +172,7 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
             className={selectWidgetStep}
             widgets={widgets}
             multiple={multiple}
+            widgetsSelected={tempSelectedWidgets}
             onWidgetsSelect={this.onWidgetsSelect}
           />
           <div className={inputFormStep}>

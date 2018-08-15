@@ -91,6 +91,45 @@ const makeSelectCurrentDisplayShareInfoLoading = () => createSelector(
   ({ present }) => present.get('currentDisplayShareInfoLoading')
 )
 
+const makeSelectCanUndo = () => createSelector(
+  selectDisplay,
+  ({ past }) => past.length > 0
+)
+
+const makeSelectCanRedo = () => createSelector(
+  selectDisplay,
+  ({ future }) => future.length > 0
+)
+
+const makeSelectCurrentState = () => createSelector(
+  selectDisplay,
+  ({ present }) => {
+    const display = present.get('currentDisplay')
+    return {
+      displayId: display && display.id,
+      slide: present.get('currentSlide'),
+      layers: present.get('currentLayers'),
+      lastOperationType: present.get('lastOperationType'),
+      lastLayers: present.get('lastLayers')
+    }
+  }
+)
+
+const makeSelectNextState = () => createSelector(
+  selectDisplay,
+  ({ future }) => {
+    if (future.length === 0) { return {} }
+    const item = future[0]
+    return {
+      displayId: item.get('currentDisplay').id,
+      slide: item.get('currentSlide'),
+      layers: item.get('currentLayers'),
+      lastOperationType: item.get('lastOperationType'),
+      lastLayers: item.get('lastLayers')
+    }
+  }
+)
+
 export {
   selectDisplay,
   makeSelectDisplays,
@@ -109,5 +148,10 @@ export {
 
   makeSelectCurrentDisplayShareInfo,
   makeSelectCurrentDisplaySecretInfo,
-  makeSelectCurrentDisplayShareInfoLoading
+  makeSelectCurrentDisplayShareInfoLoading,
+
+  makeSelectCanUndo,
+  makeSelectCanRedo,
+  makeSelectCurrentState,
+  makeSelectNextState
 }
