@@ -202,7 +202,7 @@ export function* changeUserPassword ({ payload }) {
 
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [
-    throttle(1000, CHECK_NAME, checkName as any),
+    // throttle(1000, CHECK_NAME, checkName as any),
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),

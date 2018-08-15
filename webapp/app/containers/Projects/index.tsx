@@ -36,11 +36,12 @@ const utilStyles = require('../../assets/less/util.less')
 interface IProjectsProps {
   router: InjectedRouter
   projects: IProject[]
-  searchProject: any[]
+  loginUser: any
+  searchProject?: {list: any[]}
   organizations: any
   onTransferProject: (id: number, orgId: number) => any
   onEditProject: (project: any, resolve: () => any) => any
-  onLoadProjects: () => any
+  onLoadProjects: (resolve?:()=>any) => any
   onAddProject: (project: any, resolve: () => any) => any
   onLoadOrganizations: () => any
   onDeleteProject: (id: number) => any
@@ -60,6 +61,7 @@ interface IProjectsState {
   keywords: string
 }
 interface IProject {
+  createBy?: { avatar?: string, id?: number, username?: string}
   type?: string
   name?: string
   id?: number
@@ -186,12 +188,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       pageNum: 1,
       pageSize: 10
     }
-    if (keywords) {
-      onSearchProject(param)
-    }
     this.setState({
-
-    })
+      searchMaskVisible: false
+    },() => onSearchProject(param))
   }
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
@@ -248,9 +247,20 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       searchKeywordsVisible: true
     }, () => this.props.onSearchProject(param))
   }
+  private computSearchListWrapperStyle = () => {
+    const {searchProject} = this.props
+    if (this.state.searchMaskVisible) {
+      return this.state.searchMaskVisible
+    } else {
+      if (searchProject && searchProject.list && searchProject.list.length !== 0) {
+        return this.state.searchMaskVisible
+      }
+      return true
+    }
+  }
   public render () {
     const { formType, formVisible, modalLoading } = this.state
-    const { onDeleteProject, organizations, projects, searchProject } = this.props
+    const { onDeleteProject, organizations, projects, searchProject, loginUser } = this.props
     const projectArr = Array.isArray(projects) ? [...projects, ...[{
       id: 'add',
       type: 'add'
@@ -258,7 +268,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       id: 'add',
       type: 'add'
     }]]
-    const projectItems = projectArr
+    const mimeProjects = projectArr
       ? projectArr.map((d: IProject) => {
         let CreateButton = void 0
         let belongWhichOrganization = void 0
@@ -287,6 +297,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
               </div>
             </Col>
           )
+        }
+        if (loginUser && loginUser.id !== d.createBy.id) {
+          return []
         }
         if (organizations) {
           belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
@@ -351,11 +364,84 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           )
         return colItems
       }) : ''
+    const joinProjects = projectArr
+      ? projectArr.map((d: IProject) => {
+        let CreateButton = void 0
+        let belongWhichOrganization = void 0
+        if (d.type && d.type === 'add') {
+          return []
+        }
+        if (loginUser && loginUser.id === d.createBy.id) {
+          return []
+        }
+        if (organizations) {
+          belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
+          CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
+        }
+        let editButton = void 0
+        let deleteButton = void 0
+        let transfer = void 0
+        transfer = (
+          <Tooltip title="移交项目">
+            <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
+          </Tooltip>
+        )
+        editButton =  (
+          <Tooltip title="编辑">
+            <CreateButton className={styles.edit} type="setting" onClick={this.showProjectForm('edit', d)} />
+          </Tooltip>
+        )
+        deleteButton = (
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={onDeleteProject(d.id)}
+          >
+            <Tooltip title="删除">
+              <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
+            </Tooltip>
+          </Popconfirm>
+        )
+
+        const itemClass = classnames({
+          [styles.unit]: true
+        })
+        const colItems = (
+          <Col
+            key={d.id}
+            xl={6}
+            lg={8}
+            md={8}
+            sm={12}
+            xs={24}
+          >
+            <div
+              className={itemClass}
+              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic || 9}.png`)})`}}
+              onClick={this.toProject(d)}
+            >
+              <header>
+                <h3 className={styles.title}>
+                  {d.name}
+                  {/*{editHint}*/}
+                </h3>
+                <p className={styles.content}>
+                  {d.description}
+                </p>
+              </header>
+              {transfer}
+              {editButton}
+              {deleteButton}
+            </div>
+          </Col>
+        )
+        return colItems
+      }) : ''
     const history =  projects
       ? projects.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic || 9}.png`)
         const colItems = (
-          <div className={styles.groupList} key={d.id}>
+          <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
             <div className={styles.orgHeader}>
               <div className={styles.avatar}>
                 <Avatar path={path} enlarge={false} size="small"/>
@@ -380,7 +466,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             xs={24}
             key={d.id}
           >
-            <div className={styles.searchList} key={d.id}>
+            <div className={styles.searchList} key={d.id} onClick={this.toProject(d)}>
               <div className={styles.orgHeader}>
                 <div className={styles.avatar}>
                   <Avatar path={path} enlarge={false} size="small"/>
@@ -432,9 +518,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     })
 
     const searchListWrapperStyle = classnames({
-      [utilStyles.hide]: this.state.searchMaskVisible,
+      [utilStyles.hide]: this.computSearchListWrapperStyle(),
       [styles.searchListWrapper]: true
     })
+
     return (
       <div className={styles.wrapper}>
         <div className={styles.search}>
@@ -502,7 +589,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       </Box.Header>
                       <div className={isHoldMimeStyle}>
                         <Row gutter={16}>
-                          {projectItems}
+                          {mimeProjects}
                         </Row>
                       </div>
                     </Box>
@@ -520,7 +607,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       </Box.Header>
                       <div className={isHoldJoinStyle}>
                         <Row gutter={16}>
-                          {projectItems}
+                          {joinProjects}
                         </Row>
                       </div>
                     </Box>
@@ -586,7 +673,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadProjects: () => dispatch(loadProjects()),
+    onLoadProjects: (resolve) => dispatch(loadProjects(resolve)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),

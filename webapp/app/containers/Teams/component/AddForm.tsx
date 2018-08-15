@@ -46,7 +46,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       case 'project':
         return '只能添加您具有管理员权限的项目'
       case 'member':
-        return '邀请一个成员加入当前组织'
+        return '邀请一个成员加入当前组织,需要该成员确认邮件。'
       case 'team':
         return '邀请一个团队到当前团队下级'
       default:
@@ -99,6 +99,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private bootstrapOptionsLi = (searchLi, data) => {
+    console.log(data)
     const Options =  data ? data.map((o) => {
       if (o && o.user) {
         return (
@@ -157,7 +158,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       [utilStyles.hide]: this.state.visible
     })
     let optionList = void 0
-    if (category === 'project') {
+    if (category === 'project' && currentOrganizationProjects) {
       optionList = this.bootstrapOptionsLi(searchLi, currentOrganizationProjects)
     } else if (category === 'member') {
       optionList = this.bootstrapOptionsLi(searchLi, inviteMemberList)

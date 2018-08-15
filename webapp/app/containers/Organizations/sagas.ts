@@ -143,7 +143,7 @@ export function* getOrganizationsProjects ({payload}) {
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/projects`)
     const organizations = readListAdapter(asyncData)
-    yield put(organizationsProjectsLoaded(organizations))
+    yield put(organizationsProjectsLoaded(organizations.list))
   } catch (err) {
     yield put(loadOrganizationsProjectsFail())
     message.error('获取 Organizations 失败，请稍后再试')
