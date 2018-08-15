@@ -83,8 +83,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
     const { layer } = this.props
-    console.log('nextProps: ', nextProps.layer.params)
-    console.log('props: ', layer.params)
     if (layer.params !== nextProps.layer.params) {
       const layerParams = JSON.parse(nextProps.layer.params)
       const { width, height } = layerParams

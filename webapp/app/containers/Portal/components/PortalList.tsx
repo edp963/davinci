@@ -92,7 +92,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     })
   }
 
-  private showPortalForm = (formType: 'edit' | 'add', portal?: any) => {
+  private showPortalForm = (formType: 'edit' | 'add', portal?: any) => (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
     this.setState({
       formType,
       formVisible: true
@@ -101,6 +102,26 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
         this.portalForm.props.form.setFieldsValue(portal)
       }
     })
+  }
+
+  private renderCreate () {
+    return (
+      <Col
+        key="createPortal"
+        xl={4}
+        lg={6}
+        md={8}
+        sm={12}
+        xs={24}
+      >
+        <div className={styles.unit} onClick={this.showPortalForm('add')}>
+            <div className={styles.central}>
+              <div className={`${styles.item} ${styles.add}`}><Icon type="plus-circle-o" /></div>
+              <div className={`${styles.item} ${styles.text}`}>创建新 Dashboard</div>
+            </div>
+        </div>
+      </Col>
+    )
   }
 
   private renderPortal = (portal: any) => {
@@ -135,7 +156,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
             </p>
           </header>
           <Tooltip title="编辑">
-            <Icon className={styles.edit} type="setting" onClick={this.delegate(this.showPortalForm, 'edit', portal)} />
+            <Icon className={styles.edit} type="setting" onClick={this.showPortalForm('edit', portal)} />
           </Tooltip>
           <Popconfirm
             title="确定删除？"
@@ -181,7 +202,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     return (
       <div>
         <EllipsisList rows={2}>
-          {portals.map((p) => this.renderPortal(p))}
+          {[this.renderCreate(), ...portals.map((p) => this.renderPortal(p))]}
         </EllipsisList>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Portal`}
