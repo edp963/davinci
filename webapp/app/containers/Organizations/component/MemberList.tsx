@@ -120,6 +120,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
          const { projectId } = values
          const orgId = currentOrganization.id
          this.props.onInviteMember(orgId, projectId)
+         this.hideMemberForm()
       }
     })
   }
