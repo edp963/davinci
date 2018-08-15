@@ -32,6 +32,7 @@ const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
 import { loadDashboardShareLink, loadWidgetShareLink } from '../../containers/Dashboard/actions'
+import { loadDisplayShareLink } from '../../containers/Display/actions'
 
 import styles from './SharePanel.less'
 
@@ -67,7 +68,8 @@ export class SharePanel extends PureComponent {
       type,
       itemId,
       onLoadDashboardShareLink,
-      onLoadWidgetShareLink
+      onLoadWidgetShareLink,
+      onLoadDisplayShareLink
     } = this.props
 
     let name = authName.target
@@ -81,6 +83,8 @@ export class SharePanel extends PureComponent {
       case 'widget':
         onLoadWidgetShareLink(id, itemId, name)
         break
+      case 'display':
+        onLoadDisplayShareLink(id, name)
       default:
         break
     }
@@ -209,6 +213,7 @@ SharePanel.propTypes = {
   authorized: PropTypes.bool,
   onLoadDashboardShareLink: PropTypes.func,
   onLoadWidgetShareLink: PropTypes.func,
+  onLoadDisplayShareLink: PropTypes.func,
   onDownloadCsv: PropTypes.func,
   afterAuthorization: PropTypes.func
 }
@@ -220,7 +225,8 @@ SharePanel.defaultProps = {
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
-    onLoadWidgetShareLink: (id, itemId, authName) => dispatch(loadWidgetShareLink(id, itemId, authName))
+    onLoadWidgetShareLink: (id, itemId, authName) => dispatch(loadWidgetShareLink(id, itemId, authName)),
+    onLoadDisplayShareLink: (id, authName) => dispatch(loadDisplayShareLink(id, authName))
   }
 }
 

@@ -84,7 +84,9 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
         </Box.Header>
         <Box.Body>
           <div className={styles.container}>
-            <UploadAvatar type="profile" xhrParams={{id, callback: this.props.onUploadAvatarSuccess}} path={avatar}/>
+            <div className={styles.uploadWrapper}>
+              <UploadAvatar type="profile" xhrParams={{id, callback: this.props.onUploadAvatarSuccess}} path={avatar}/>
+            </div>
             <hr/>
             <div className={styles.form}>
               <Form
@@ -102,7 +104,6 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
                     </FormItem>
                     <FormItem
                       {...commonFormItemStyle}
-                      hasFeedback
                       label="姓名"
                     >
                       {getFieldDecorator('name', {

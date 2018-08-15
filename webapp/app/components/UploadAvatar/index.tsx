@@ -108,7 +108,7 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
           >
             <Button size="large">选择图片</Button>
           </Upload>
-          <p className={styles.uploadDesc}>图片大小不超过300kb</p>
+          <p className={styles.uploadDesc}>图片大小不超过1MB</p>
         </div>
       </div>
     )

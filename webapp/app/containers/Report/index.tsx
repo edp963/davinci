@@ -95,13 +95,12 @@ export function mapDispatchToProps (dispatch) {
   return {
     onPageLoad: () => {
       const sidebarSource = [
-        { icon: 'icon-dashboard', route: ['portals'] },
-        // { icon: 'icon-dashboard', route: ['dashboards', 'dashboard', 'widgetPosition'] },
+        { icon: 'icon-dashboard', route: ['portals', 'vizs', 'dashboards', 'dashboard', 'widgetPosition'] },
         { icon: 'icon-widget-gallery', route: ['widgets'] },
         { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'] },
         { icon: 'icon-datasource24', route: ['sources'] },
-        { icon: 'icon-user1', route: ['users'] },
-        { icon: 'icon-group', route: ['groups'] },
+        // { icon: 'icon-user1', route: ['users'] },
+        // { icon: 'icon-group', route: ['groups'] },
         { icon: 'anticon anticon-clock-circle-o', route: ['schedule'] }
       ]
       dispatch(loadSidebar(sidebarSource))

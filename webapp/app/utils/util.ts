@@ -26,7 +26,9 @@ import notification from 'antd/lib/notification'
  * @param radix 随机数基数 number
  * @returns {string}
  */
-export const uuid = (len, radix) => {
+export const uuid = (len, radix?) => {
+  /* tslint:disable:no-bitwise */
+
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
   const uuid = []
   let i
@@ -34,7 +36,9 @@ export const uuid = (len, radix) => {
 
   if (len) {
     // Compact form
-    for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random() * radix]
+    for (i = 0; i < len; i++) {
+      uuid[i] = chars[0 | Math.random() * radix]
+    }
   } else {
     // rfc4122, version 4 form
     let r
@@ -52,6 +56,9 @@ export const uuid = (len, radix) => {
       }
     }
   }
+
+  /* tslint:enable:no-bitwise */
+
   return uuid.join('')
 }
 
@@ -88,6 +95,28 @@ export function notifyError (err, title) {
  */
 export function notifySagasError (err, prefix) {
   notifyError(err, `${prefix} sagas or reducer 异常`)
+}
+
+export function getBase64 (img, callback) {
+  const reader = new FileReader()
+  reader.addEventListener('load', () => callback(reader.result))
+  reader.readAsDataURL(img)
+}
+
+export enum SecondaryGraphTypes {
+  Rectangle = 20,
+  Label = 21
+}
+
+export enum GraphTypes {
+  Slide,
+  Chart,
+  Secondary
+}
+
+export enum OrderDirection {
+  Asc,
+  Desc
 }
 
 /**

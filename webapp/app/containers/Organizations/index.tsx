@@ -11,7 +11,7 @@ import reducer from './reducer'
 import {compose} from 'redux'
 import {makeSelectLoginUser} from '../App/selectors'
 import saga from './sagas'
-import {addOrganization, deleteOrganization, editOrganization, loadOrganizations} from './actions'
+import {addOrganization, loadOrganizations} from './actions'
 import injectReducer from '../../utils/injectReducer'
 import {createStructuredSelector} from 'reselect'
 import injectSaga from '../../utils/injectSaga'
@@ -54,7 +54,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
   private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckUniqueName } = this.props
     const { getFieldsValue } = this.OrganizationForm
-    const { id } = getFieldsValue()
+    const id = getFieldsValue()['id']
     const data = {
       name: value,
       id
@@ -101,16 +101,16 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
   }
 
   public render () {
-    const { formVisible, formType, modalLoading } = this.state
+    const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
     const organizationArr = organizations ? organizations.map((org) => (
         <div className={styles.groupList} key={org.id}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
               <Avatar path={org.avatar} enlarge={false} size="small"/>
-              <div className={styles.title}>{org.name}</div>
             </div>
             <div className={styles.name}>
+              <div className={styles.title}>{org.name}</div>
               <div className={styles.desc}>{org.description}</div>
             </div>
           </div>
@@ -148,7 +148,6 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
           onCancel={this.hideOrganizationForm}
         >
           <OrganizationForm
-            type={formType}
             ref={(f) => { this.OrganizationForm = f }}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
@@ -170,8 +169,6 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddOrganization: (organization, resolve) => dispatch(addOrganization(organization, resolve)),
-    onEditOrganization: (organization, resolve) => dispatch(editOrganization(organization, resolve)),
-    onDeleteOrganization: (id) => () => dispatch(deleteOrganization(id)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

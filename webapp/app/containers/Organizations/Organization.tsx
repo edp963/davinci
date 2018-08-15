@@ -35,7 +35,7 @@ import {
   searchMember,
   inviteMember,
   deleteOrganizationMember,
-  changeOrganizationMemberRole,
+  changeOrganizationMemberRole
 } from './actions'
 import {makeSelectLoginUser} from '../App/selectors'
 import {
@@ -116,9 +116,6 @@ export interface IOrganizationMembers {
 }
 
 export class Organization extends React.PureComponent <IOrganizationProps> {
-  private callback = () => {
-
-  }
   private toProject = (id: number) => () => {
     this.props.router.push(`/project/${id}`)
   }
@@ -184,7 +181,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
             <Avatar path={avatar} enlarge={false} size="small"/>
             <div className={styles.title}>{name}</div>
           </div>
-          <Tabs onChange={this.callback} >
+          <Tabs>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
                 currentOrganization={currentOrganization}
@@ -227,8 +224,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
                   editOrganization={this.editOrganization}
                   deleteOrganization={this.deleteOrganization}
                 />
-              </TabPane> : ''
-            }
+              </TabPane> : ''}
           </Tabs>
         </Box.Body>
       </Box>

@@ -36,6 +36,8 @@ export const DELETE_PROJECT_FAILURE = 'davinci/Project/DELETE_PROJECT_FAILURE'
 export const LOAD_PROJECT_DETAIL = 'davinci/Project/LOAD_PROJECT_DETAIL'
 export const LOAD_PROJECT_DETAIL_SUCCESS = 'davinci/Project/LOAD_PROJECT_DETAIL_SUCCESS'
 export const LOAD_PROJECT_DETAIL_FAILURE = 'davinci/Project/LOAD_PROJECT_DETAIL_FAILURE'
-
+export const SEARCH_PROJECT = 'davinci/Project/SEARCH_PROJECT'
+export const SEARCH_PROJECT_SUCCESS = 'davinci/Project/SEARCH_PROJECT_SUCCESS'
+export const SEARCH_PROJECT_FAILURE = 'davinci/Project/SEARCH_PROJECT_FAILURE'
 
 

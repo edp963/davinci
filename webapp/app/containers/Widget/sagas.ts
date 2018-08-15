@@ -49,9 +49,10 @@ import api from '../../utils/api'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import { getBizdatas } from '../Bizlogic/sagas'
 
-export function* getWidgets ({ payload }) {
+export function* getWidgets (action) {
+  const { projectId } = action.payload
   try {
-    const asyncData = yield call(request, `${api.widget}?projectId=${payload.projectId}`)
+    const asyncData = yield call(request, `${api.widget}?projectId=${projectId}`)
     const widgets = readListAdapter(asyncData)
     yield put(widgetsLoaded(widgets))
   } catch (err) {

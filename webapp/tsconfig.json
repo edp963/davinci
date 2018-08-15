@@ -16,10 +16,14 @@
     "paths": {
       "*": [
         "*"
-      ]
-    },
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+      ],
+      "utils/*": [ "app/utils/*" ]
+    }
+//    "paths": {
+//      "utils/*": [ "app/utils/*" ]
+//    },
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true
   },
   "exclude": [
     "node_modules"

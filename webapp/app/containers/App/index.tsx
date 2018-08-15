@@ -21,6 +21,12 @@
 import * as React from 'react'
 import Helmet from 'react-helmet'
 
+import { compose } from 'redux'
+import injectReducer from 'utils/injectReducer'
+import injectSaga from 'utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+
 interface IAppProps {
   children: React.ReactNode
 }
@@ -40,4 +46,10 @@ export function App (props: IAppProps) {
   )
 }
 
-export default App
+const withReducer = injectReducer({ key: 'global', reducer })
+const withSaga = injectSaga({ key: 'global', saga })
+
+export default compose(
+  withReducer,
+  withSaga
+)(App)

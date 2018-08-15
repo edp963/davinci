@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  <<
+  Davinci
+  ==
+  Copyright (C) 2016 - 2018 EDP
+  ==
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+  >>
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.ViewMapper" >
+  <insert id="insert" parameterType="edp.davinci.model.View" >
+    <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+      SELECT LAST_INSERT_ID() AS id
+    </selectKey>
+    insert into `view`
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      `name`,
+      project_id,
+      <if test="description != null" >
+        description,
+      </if>
+      <if test="sql != null" >
+        `sql`,
+      </if>
+      <if test="model != null" >
+        model,
+      </if>
+      <if test="config != null" >
+        config,
+      </if>
+      source_id
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      #{name,jdbcType=VARCHAR},
+      #{projectId,jdbcType=BIGINT},
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="sql != null" >
+        #{sql,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="model != null" >
+        #{model,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="config != null" >
+        #{config,jdbcType=LONGVARCHAR},
+      </if>
+      #{sourceId,jdbcType=BIGINT}
+    </trim>
+  </insert>
+
+
+  <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+    insert ignore into view
+    (`id`,`name`,description, source_id, `project_id`, `sql`, model,config)
+    VALUES
+    <foreach collection="list" item="record" index="index" separator=",">
+      (
+      #{record.id,jdbcType=BIGINT},
+      #{record.name,jdbcType=VARCHAR},
+      #{record.description,jdbcType=VARCHAR},
+      #{record.sourceId,jdbcType=BIGINT},
+      #{record.projectId,jdbcType=BIGINT},
+      #{record.sql,jdbcType=LONGVARCHAR},
+      #{record.model,jdbcType=LONGVARCHAR},
+      #{record.config,jdbcType=LONGVARCHAR}
+      )
+    </foreach>
+  </insert>
+</mapper>
