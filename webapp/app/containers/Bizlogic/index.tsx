@@ -241,7 +241,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
               <Row>
                 <Col span={24}>
                   <Table
-                    dataSource={tableSource}
+                    dataSource={tableSource || []}
                     columns={columns}
                     pagination={pagination}
                     onChange={this.handleTableChange}
