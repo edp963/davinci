@@ -1,9 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IChartInfo } from '../ChartIndicator'
+import { IChartInfo } from './Chart'
 import { getPivotCellWidth, getPivotCellHeight } from '../util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 interface ICornerProps {
   cols: string[]

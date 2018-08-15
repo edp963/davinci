@@ -1,11 +1,11 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import Yaxis from './Yaxis'
-import { IPivotMetric, IDrawingData } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
+import { IChartInfo } from './Chart'
 import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData } from '../util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 interface IRowHeaderProps {
   cols: string[]
@@ -19,12 +19,12 @@ interface IRowHeaderProps {
   chart: IChartInfo
   drawingData: IDrawingData
   metrics: IPivotMetric[]
-  metricAxisData: object
+  metricAxisConfig: IMetricAxisConfig
 }
 
 export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
   public render () {
-    const { cols, rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, chart, drawingData, metrics, metricAxisData } = this.props
+    const { cols, rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, chart, drawingData, metrics, metricAxisConfig } = this.props
     const { extraMetricCount, elementSize, unitMetricHeight } = drawingData
     const { dimetionAxis } = chart
 
@@ -118,7 +118,7 @@ export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
           metrics={metrics}
           data={data}
           extraMetricCount={extraMetricCount}
-          metricAxisData={metricAxisData}
+          metricAxisConfig={metricAxisConfig}
         />
       )
     }

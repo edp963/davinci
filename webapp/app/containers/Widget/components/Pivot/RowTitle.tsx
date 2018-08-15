@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { IDrawingData } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
-import { getTextWidth, getPivotCellHeight } from '../util'
+import { IChartInfo } from './Chart'
+import { getPivotContentTextWidth, getPivotCellHeight } from '../util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 interface IRowTitleProps {
   rows: string[]
@@ -27,7 +27,7 @@ export function RowTitle (props: IRowTitleProps) {
   }
 
   const content = rows.join(`  /  `)
-  const contentLength = getTextWidth(content)
+  const contentLength = getPivotContentTextWidth(content)
 
   return (
     <div

@@ -28,6 +28,7 @@ import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
+import Workbench from './containers/Widget/components/Workbench/index'
 import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
 // import Portal from './containers/Portal'
@@ -205,14 +206,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
 
   return [
     {
-      path: '/workbench',
-      getComponent (nextState, cb) {
-        import('./containers/Workbench')
-          .then(loadModule(cb))
-          .catch(errorLoading)
-      }
-    },
-    {
       path: '/login',
       component: Login
     },
@@ -377,6 +370,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Grid
             }
           ]
+        },
+        {
+          path: '/project/:pid/widget/:wid',
+          name: 'workbench',
+          component: Workbench
         }
       ]
     },

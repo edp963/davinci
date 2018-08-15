@@ -1,13 +1,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { DragType, DropboxItemType, ViewModelType, SortType, AggregatorType } from './Dropbox'
-import { getAggregatorLocale, decodeMetricName } from './util'
+import { getAggregatorLocale, decodeMetricName } from '../util'
 
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
 const Dropdown = require('antd/lib/dropdown')
-const styles = require('../Workbench.less')
+const styles = require('./Workbench.less')
 
 interface IDropboxItemProps {
   text: string

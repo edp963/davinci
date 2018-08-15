@@ -27,19 +27,13 @@ const makeSelectWidgets = () => createSelector(
   (widgetState) => widgetState.get('widgets')
 )
 
-const makeSelectBizdatas = () => createSelector(
+const makeSelectDataLoading = () => createSelector(
   selectWidget,
-  (widgetState) => widgetState.get('bizdatas')
-)
-
-const makeSelectBizdatasLoading = () => createSelector(
-  selectWidget,
-  (widgetState) => widgetState.get('bizdatasLoading')
+  (widgetState) => widgetState.get('dataLoading')
 )
 
 export {
   selectWidget,
   makeSelectWidgets,
-  makeSelectBizdatas,
-  makeSelectBizdatasLoading
+  makeSelectDataLoading
 }

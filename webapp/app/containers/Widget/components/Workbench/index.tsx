@@ -1,16 +1,52 @@
 import * as React from 'react'
+import { compose } from 'redux'
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
 import * as classnames from 'classnames'
-import Dropbox, { DragType, DropboxType, ViewModelType, DropboxSize, DropType, SortType, AggregatorType, IDataParamSource} from './components/Dropbox'
-import ChartIndicator, { IChartInfo } from './components/ChartIndicator'
-import { IPivotProps } from './components/Pivot/Pivot'
-import ScrollablePivot from './components/Pivot'
-import { encodeMetricName, decodeMetricName, checkChartEnable } from './components/util'
+
+import injectReducer from '../../../../utils/injectReducer'
+import injectSaga from '../../../../utils/injectSaga'
+import reducer from '../../reducer'
+import saga from '../../sagas'
+import bizlogicReducer from '../../../Bizlogic/reducer'
+import bizlogicSaga from '../../../Bizlogic/sagas'
+import { hideNavigator } from '../../../App/actions'
+import { loadBizlogics, loadData } from '../../../Bizlogic/actions'
+import { makeSelectDataLoading } from '../../selectors'
+import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
+
+import Dropbox, { DragType, DropboxType, ViewModelType, DropboxSize, DropType, SortType, AggregatorType, IDataParamSource} from './Dropbox'
+import ChartIndicator from './ChartIndicator'
+import { IChartInfo } from '../Pivot/Chart'
+import { IPivotProps } from '../Pivot/Pivot'
+import ScrollablePivot from '../Pivot'
+import { encodeMetricName, decodeMetricName, checkChartEnable } from '../util'
 
 const Icon = require('antd/lib/icon')
+const Menu = require('antd/lib/menu')
+const MenuItem = Menu.Item
+const Dropdown = require('antd/lib/dropdown')
 const styles = require('./Workbench.less')
-const utilStyles = require('../../assets/less/util.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
-import request from '../../utils/request'
+interface IView {
+  id: number
+  name: string
+  description: string
+  projectId: number
+  source: { id: number, name: string }
+  sourceId: number
+  sql: string
+  model: string
+  config: string
+}
+
+interface IModelProperty {
+  type: string
+  fieldType: string
+  modelType: string
+  isLocationInfo: boolean
+}
 
 interface IDataParamProperty {
   title: string
@@ -28,38 +64,33 @@ interface IDataParams {
   size?: IDataParamProperty
 }
 
+interface IWorkbenchProps {
+  views: IView[]
+  dataLoading: boolean
+  params: { pid: string, wid: string }
+  onHideNavigator: () => void
+  onLoadBizlogics: (projectId: number) => void
+  onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
+}
+
 interface IWorkbenchStates {
+  selectedView: IView
   dragged: IDataParamSource
   selectedChart: number
   showColsAndRows: boolean
-  categories: IDataParamSource[]
-  values: IDataParamSource[]
   dataParams: IDataParams
   charts: IChartInfo[]
   pivotProps: IPivotProps
 }
 
-export class Workbench extends React.Component<{}, IWorkbenchStates> {
+export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
   constructor (props) {
     super(props)
     this.state = {
+      selectedView: null,
       dragged: null,
       selectedChart: 1,
       showColsAndRows: false,
-      categories: [
-        { name: 'id', type: 'category', icon: 'category' },
-        { name: 'name', type: 'category', icon: 'category' },
-        { name: 'sex', type: 'category', icon: 'category' },
-        { name: 'birthday', type: 'category', icon: 'date' },
-        { name: 'nation', type: 'category', icon: 'category' },
-        { name: 'city', type: 'category', icon: 'category' },
-        { name: 'education', type: 'category', icon: 'category' },
-        { name: 'married', type: 'category', icon: 'category' }
-      ],
-      values: [
-        { name: 'age', type: 'value', icon: 'value' },
-        { name: 'salary', type: 'value', icon: 'value' }
-      ],
       dataParams: {
         cols: {
           title: '列',
@@ -151,14 +182,15 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
   private lastRequestParamString = null
 
   public componentWillMount () {
-    request({
-      method: 'post',
-      url: '/api/v3/login',
-      data: {
-        username: 'xiangxu6',
-        password: '123456'
-      }
-    })
+    const { params, onLoadBizlogics } = this.props
+    onLoadBizlogics(Number(params.pid))
+    // if (params.wid !== 'add' && !Number.isNaN(params.wid)) {
+
+    // }
+  }
+
+  public componentDidMount () {
+    this.props.onHideNavigator()
   }
 
   private getDragItemIconClass = (type: ViewModelType) => {
@@ -290,7 +322,8 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
 
   private getVisualData = (dataParams) => {
     const { cols, rows, metrics, filters } = dataParams
-    const { selectedChart, charts } = this.state
+    const { onLoadData } = this.props
+    const { selectedView, selectedChart, charts } = this.state
     let selectedChartInfo = charts.find(((c) => c.id === selectedChart))
     const groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name)).sort()
 
@@ -317,12 +350,7 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
         })
       }
       this.lastRequestParamString = requestParamString
-
-      request({
-        method: 'post',
-        url: '/api/v3/views/103/getdata',
-        data: requestParams
-      }).then((res) => {
+      onLoadData(selectedView.id, requestParams, (data) => {
         this.setState({
           dataParams: {...dataParams},
           pivotProps: {
@@ -332,7 +360,7 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
               name: decodeMetricName(i.name),
               agg: i.agg
             })),
-            data: res['payload'],
+            data,
             chart: selectedChartInfo
           }
         })
@@ -354,7 +382,7 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
     }
   }
 
-  private selectChart = (selectedChart: number) => {
+  private chartSelect = (selectedChart: number) => {
     if (selectedChart !== this.state.selectedChart) {
       this.setState({
         selectedChart
@@ -364,10 +392,46 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
     }
   }
 
+  private viewSelect = ({key}) => {
+    this.setState({
+      selectedView: this.props.views.find((v) => `${v.id}` === key)
+    })
+  }
+
   public render () {
-    const { dragged, selectedChart, showColsAndRows, categories, values, dataParams, charts, pivotProps } = this.state
+    const { views } = this.props
+    const { selectedView, dragged, selectedChart, showColsAndRows, dataParams, charts, pivotProps } = this.state
 
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
+    const viewSelect = (
+      <Menu onClick={this.viewSelect}>
+        {(views || []).map((v) => (
+          <MenuItem key={v.id}>{v.name}</MenuItem>
+        ))}
+      </Menu>
+    )
+
+    const categories = []
+    const values = []
+
+    if (selectedView) {
+      const model = JSON.parse(selectedView.model)
+      Object.entries(model).forEach(([key, m]: [string, IModelProperty]) => {
+        if (m.modelType === '维度') {
+          categories.push({
+            name: key,
+            type: 'category',
+            icon: 'category'
+          })
+        } else {
+          values.push({
+            name: key,
+            type: 'value',
+            icon: 'value'
+          })
+        }
+      })
+    }
 
     const dropboxes = Object.entries(dataParams).map(([k, v]) => {
       if (k === 'rows' && !showColsAndRows) {
@@ -422,7 +486,9 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
         <div className={styles.body}>
           <div className={styles.model}>
             <div className={styles.source}>
-              <a>选择一个View</a>
+              <Dropdown overlay={viewSelect} trigger={['click']} placement="bottomLeft">
+                <a>{selectedView ? selectedView.name : '选择一个View'}</a>
+              </Dropdown>
             </div>
             <div className={styles.columnContainer}>
               <h4>分类型</h4>
@@ -465,7 +531,7 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
                   dimetionsCount={dimetionsCount}
                   metricsCount={metricsCount}
                   selected={selectedChart}
-                  onSelect={this.selectChart}
+                  onSelect={this.chartSelect}
                   {...c}
                 />
               ))}
@@ -513,4 +579,31 @@ export class Workbench extends React.Component<{}, IWorkbenchStates> {
   }
 }
 
-export default Workbench
+const mapStateToProps = createStructuredSelector({
+  views: makeSelectBizlogics(),
+  dataLoading: makeSelectDataLoading()
+})
+
+export function mapDispatchToProps (dispatch) {
+  return {
+    onHideNavigator: () => dispatch(hideNavigator()),
+    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve))
+  }
+}
+
+const withConnect = connect<{}, {}>(mapStateToProps, mapDispatchToProps)
+
+const withReducerWidget = injectReducer({ key: 'widget', reducer })
+const withSagaWidget = injectSaga({ key: 'widget', saga })
+
+const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
+const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+
+export default compose(
+  withReducerWidget,
+  withReducerBizlogic,
+  withSagaBizlogic,
+  withSagaWidget,
+  withConnect
+)(Workbench)

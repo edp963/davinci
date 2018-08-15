@@ -1,12 +1,22 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import * as classnames from 'classnames'
-import { IPivotMetric } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
 import { metricAxisLabelFormatter } from '../util'
 import { uuid } from '../../../../utils/util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
+
+type DimetionType = 'row' | 'col'
+
+export interface IChartInfo {
+  id: number
+  name: string
+  icon: string
+  requireDimetions: number | number[],
+  requireMetrics: number | number[],
+  dimetionAxis?: DimetionType
+}
 
 export interface IChartUnit {
   key?: string
@@ -22,19 +32,39 @@ export interface IChartLine {
 }
 
 interface IChartProps {
-  width: number
-  height: number
+  dimetionAxisCount: number
+  metricAxisCount: number
   chart: IChartInfo
   metrics: IPivotMetric[]
   data: IChartLine[]
-  elementSize?: number
-  extraMetricCount: number
-  metricAxisData?: object
+  drawingData: IDrawingData
+  metricAxisConfig?: IMetricAxisConfig
   pieces: number
 }
 
-export class Chart extends React.PureComponent<IChartProps, {}> {
+interface IChartStates {
+  width: number
+  height: number
+}
+
+export class Chart extends React.PureComponent<IChartProps, IChartStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      width: 0,
+      height: 0
+    }
+  }
+
   private container: HTMLDivElement = null
+
+  public componentWillMount () {
+    this.calcChartSize(this.props)
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    this.calcChartSize(nextProps)
+  }
 
   public componentDidMount () {
     this.renderChart()
@@ -42,6 +72,22 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
 
   public componentDidUpdate () {
     this.renderChart()
+  }
+
+  private calcChartSize = (props: IChartProps) => {
+    const { dimetionAxisCount, metricAxisCount, chart, drawingData } = props
+    const { extraMetricCount, elementSize, unitMetricWidth, unitMetricHeight } = drawingData
+    const { dimetionAxis } = chart
+    let width
+    let height
+    if (dimetionAxis === 'col') {
+      width = dimetionAxisCount * elementSize
+      height = metricAxisCount * unitMetricHeight * (extraMetricCount + 1)
+    } else {
+      width = metricAxisCount * unitMetricWidth * (extraMetricCount + 1)
+      height = dimetionAxisCount * elementSize
+    }
+    this.setState({ width, height })
   }
 
   private getChartPieceData = (data, pieces) => {
@@ -60,7 +106,8 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
   }
 
   private renderChart = () => {
-    const { chart, metrics, data, elementSize, extraMetricCount, metricAxisData, pieces } = this.props
+    const { chart, metrics, data, drawingData, metricAxisConfig, pieces } = this.props
+    const { elementSize, extraMetricCount } = drawingData
     const { dimetionAxis } = chart
 
     const chartPieces = this.container.children as HTMLCollectionOf<HTMLDivElement>
@@ -96,7 +143,7 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
 
           combinedMetrics.forEach((m, l) => {
             grid.push({
-              top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,     //  与rowtable对齐
+              top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
               left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
               width,
               height
@@ -119,12 +166,12 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
               },
               axisTick: { show: false },
               axisLabel: { show: false },
-              ...metricAxisData[m.name]
+              ...metricAxisConfig[m.name]
             })
             series.push({
               xAxisIndex: index,
               yAxisIndex: index,
-              type: 'bar',
+              type: chart.id === 2 ? 'line' : 'bar',
               data: records.map((d) => d.value ? d.value[`${m.agg}(${m.name})`] : 0),
               barWidth: elementSize * .8,
               color: '#1B98E0'
@@ -183,7 +230,8 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
   }
 
   public render () {
-    const { width, height, pieces } = this.props
+    const { pieces } = this.props
+    const { width, height } = this.state
 
     const chartPieces = Array.from(Array(pieces), (o, i) => (
       <div key={uuid(8, 16)} />

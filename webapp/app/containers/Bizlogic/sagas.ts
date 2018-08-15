@@ -25,13 +25,13 @@ import {
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
-  LOAD_BIZDATAS,
   LOAD_BIZDATAS_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_DASHBOARD,
   LOAD_BIZDATA_SCHEMA,
   LOAD_SCHEMA,
-  EXECUTE_SQL
+  EXECUTE_SQL,
+  LOAD_DATA
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -42,8 +42,6 @@ import {
   deleteBizlogicFail,
   bizlogicEdited,
   editBizlogicFail,
-  bizdatasLoaded,
-  loadBizdatasFail,
   bizdatasFromItemLoaded,
   loadBizdatasFromItemFail,
   cascadeSourceFromItemLoaded,
@@ -55,7 +53,9 @@ import {
   schemaLoaded,
   loadSchemaFail,
   sqlExecuted,
-  executeSqlFail
+  executeSqlFail,
+  dataLoaded,
+  loadDataFail
 } from './actions'
 
 const message = require('antd/lib/message')
@@ -138,22 +138,6 @@ export function* editBizlogic (action) {
   } catch (err) {
     yield put(editBizlogicFail())
     message.error('修改失败')
-  }
-}
-
-export function* getBizdatas (action) {
-  const { payload } = action
-  try {
-    const { id, sql, sorts, offset, limit } = payload
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/getdata`
-    })
-    const bizdatas =  resultsetConverter(readListAdapter(asyncData))
-    yield put(bizdatasLoaded(bizdatas))
-  } catch (err) {
-    yield put(loadBizdatasFail(err))
   }
 }
 
@@ -276,18 +260,35 @@ export function* executeSql (action) {
   }
 }
 
+export function* getData (action) {
+  const { payload } = action
+  try {
+    const { id, params, resolve } = payload
+
+    const data = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${id}/getdata`,
+      data: params
+    })
+    yield put(dataLoaded())
+    resolve(data.payload)
+  } catch (err) {
+    yield put(loadDataFail(err))
+  }
+}
+
 export default function* rootBizlogicSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
-    takeEvery(LOAD_BIZDATAS, getBizdatas),
     takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem),
     takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem),
     takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard),
     takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
     takeLatest(LOAD_SCHEMA, getSchema),
-    takeLatest(EXECUTE_SQL, executeSql)
+    takeLatest(EXECUTE_SQL, executeSql),
+    takeEvery(LOAD_DATA, getData)
   ]
 }

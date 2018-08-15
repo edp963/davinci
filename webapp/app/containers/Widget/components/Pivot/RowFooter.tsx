@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 export function RowFooter () {
   return (

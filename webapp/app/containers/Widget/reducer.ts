@@ -36,9 +36,9 @@ import {
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import {
-  LOAD_BIZDATAS,
-  LOAD_BIZDATAS_SUCCESS,
-  LOAD_BIZDATAS_FAILURE,
+  LOAD_DATA,
+  LOAD_DATA_SUCCESS,
+  LOAD_DATA_FAILURE,
   CLEAR_BIZDATAS
 } from '../Bizlogic/constants'
 import { fromJS } from 'immutable'
@@ -46,14 +46,12 @@ import { fromJS } from 'immutable'
 
 const initialState = fromJS({
   widgets: false,
-  bizdatasLoading: false,
-  bizdatas: false
+  dataLoading: false
 })
 
 function widgetReducer (state = initialState, action) {
   const { type, payload } = action
   const widgets = state.get('widgets')
-  const bizdatas = state.get('bizdatas')
 
   switch (type) {
     case LOAD_WIDGETS:
@@ -90,20 +88,13 @@ function widgetReducer (state = initialState, action) {
       return state.set('widgets', widgets.slice())
     case EDIT_WIDGET_FAILURE:
       return state
-    case LOAD_BIZDATAS:
-      return state.set('bizdatasLoading', true)
-    case LOAD_BIZDATAS_SUCCESS:
-      // FIXME
-      if (bizdatas && bizdatas.total >= 0) {
-        if (payload.bizdatas.total < 0) {
-          payload.bizdatas.total = bizdatas.total
-        }
-      }
+    case LOAD_DATA:
+      return state.set('dataLoading', true)
+    case LOAD_DATA_SUCCESS:
       return state
-        .set('bizdatasLoading', false)
-        .set('bizdatas', payload.bizdatas)
-    case LOAD_BIZDATAS_FAILURE:
-      return state.set('bizdatasLoading', false)
+        .set('dataLoading', false)
+    case LOAD_DATA_FAILURE:
+      return state.set('dataLoading', false)
     case CLEAR_BIZDATAS:
       return state.set('bizdatas', false)
     case LOAD_DASHBOARD_DETAIL_SUCCESS:

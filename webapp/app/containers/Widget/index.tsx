@@ -32,7 +32,6 @@ import saga from './sagas'
 import bizlogicReducer from '../Bizlogic/reducer'
 import bizlogicSaga from '../Bizlogic/sagas'
 
-import Workbench from './components/Workbench'
 import CopyWidgetForm from './components/CopyWidgetForm'
 import Container from '../../components/Container'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
@@ -64,8 +63,10 @@ interface IWidgetProps {
   widgets: any[]
   bizlogics: any[]
   loginUser: any
-  onLoadWidgets: () => void
-  onLoadBizlogics: () => void
+  router: any
+  params: any
+  onLoadWidgets: (projectId: number) => void
+  onLoadBizlogics: (projectId: number) => void
   onDeleteWidget: (id: any) => void
   onAddWidget: (widget: object, resolve: any) => Promise<any>
 }
@@ -110,11 +111,12 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
   public componentWillMount () {
     const {
       onLoadWidgets,
-      onLoadBizlogics
+      onLoadBizlogics,
+      params
     } = this.props
 
-    onLoadWidgets()
-    onLoadBizlogics()
+    onLoadWidgets(params.pid)
+    onLoadBizlogics(params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
@@ -122,12 +124,14 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  private showWorkbench = (type, widget?: any) => () => {
-    this.setState({
-      workbenchType: type,
-      currentWidget: widget,
-      workbenchVisible: true
-    })
+  private toWorkbench = (widgetId) => () => {
+    const { router, params } = this.props
+    this.props.router.push(`/project/${params.pid}/widget/${widgetId}`)
+    // this.setState({
+    //   workbenchType: type,
+    //   currentWidget: widget,
+    //   workbenchVisible: true
+    // })
   }
 
   private hideWorkbench = () => {
@@ -299,7 +303,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
                 sm={12}
                 xs={24}
                 key={w.id}
-                onClick={this.showWorkbench('edit', w)}
+                onClick={this.toWorkbench(w.id)}
               >
                 <div className={styles.widget}>
                   <h3 className={styles.title}>{w.name}</h3>
@@ -375,7 +379,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
                       size="large"
                       type="primary"
                       icon="plus"
-                      onClick={this.showWorkbench('add')}
+                      onClick={this.toWorkbench('add')}
                     />
                   </Tooltip>
                 </Col>
@@ -401,7 +405,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
             />
           </Row>
         </Container.Body>
-        <Modal
+        {/* <Modal
           title={`${workbenchType === 'add' ? '新增' : '修改'} Widget`}
           wrapClassName={`ant-modal-xlarge ${styles.workbenchWrapper}`}
           visible={workbenchVisible}
@@ -418,7 +422,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
             onAfterSave={this.hideWorkbench}
             ref={(f) => { this.workbenchWrapper = f }}
           />
-        </Modal>
+        </Modal> */}
         <Modal
           title="复制 Widget"
           okText="保存"
@@ -464,8 +468,8 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadWidgets: () => dispatch(loadWidgets()),
-    onLoadBizlogics: () => dispatch(loadBizlogics()),
+    onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
+    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
     onDeleteWidget: (id) => () => dispatch(deleteWidget(id)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve))
   }

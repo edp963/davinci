@@ -1,19 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { checkChartEnable } from './util'
+import { IChartInfo } from '../Pivot/Chart'
+import { checkChartEnable } from '../util'
 const Tooltip = require('antd/lib/tooltip')
-const styles = require('../Workbench.less')
-
-type DimetionType = 'row' | 'col'
-
-export interface IChartInfo {
-  id: number
-  name: string
-  icon: string
-  requireDimetions: number | number[],
-  requireMetrics: number | number[],
-  dimetionAxis?: DimetionType
-}
+const styles = require('./Workbench.less')
 
 interface IChartIndicatorProps extends IChartInfo {
   dimetionsCount: number

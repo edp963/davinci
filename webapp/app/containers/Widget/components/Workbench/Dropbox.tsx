@@ -1,10 +1,10 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { decodeMetricName } from './util'
+import { decodeMetricName } from '../util'
 
 import DropboxItem from './DropboxItem'
 const Icon = require('antd/lib/icon')
-const styles = require('../Workbench.less')
+const styles = require('./Workbench.less')
 
 export type DragType = 'category' | 'value'
 export type DropboxType = DragType | 'all'

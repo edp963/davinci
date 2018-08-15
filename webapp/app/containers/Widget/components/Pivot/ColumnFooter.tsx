@@ -1,12 +1,11 @@
 import * as React from 'react'
-import { IPivotMetric, IDrawingData } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
-import { IChartUnit, IChartLine } from './Chart'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
+import { IChartInfo, IChartUnit, IChartLine } from './Chart'
 import Xaxis from './Xaxis'
 import { getAxisData } from '../util'
 import { uuid } from '../../../../utils/util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 interface IColumnFooterProps {
   rowKeys: string[][]
@@ -16,13 +15,13 @@ interface IColumnFooterProps {
   tree: object
   chart: IChartInfo
   metrics: IPivotMetric[]
-  metricAxisData: object
+  metricAxisConfig: IMetricAxisConfig
   drawingData: IDrawingData
 }
 
 export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
   public render () {
-    const { rowKeys, colKeys, rowTree, colTree, tree, chart, metrics, metricAxisData, drawingData } = this.props
+    const { rowKeys, colKeys, rowTree, colTree, tree, chart, metrics, metricAxisConfig, drawingData } = this.props
     const { dimetionAxis } = chart
     const { extraMetricCount } = drawingData
 
@@ -44,7 +43,7 @@ export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
             metrics={metrics}
             data={footers}
             extraMetricCount={extraMetricCount}
-            metricAxisData={metricAxisData}
+            metricAxisConfig={metricAxisConfig}
           />
         }
       </div>

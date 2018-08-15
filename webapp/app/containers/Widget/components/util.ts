@@ -6,8 +6,11 @@ import {
   PIVOT_CELL_PADDING,
   PIVOT_CELL_BORDER,
   PIVOT_LINE_HEIGHT,
+  PIVOT_MAX_CONTENT_WIDTH,
+  PIVOT_CHART_ELEMENT_MIN_WIDTH,
+  PIVOT_CHART_ELEMENT_MAX_WIDTH,
   PIVOT_CONTAINER_PADDING,
-  PIVOT_CHART_MIN_SIZE,
+  PIVOT_CHART_METRIC_AXIS_MIN_SIZE,
   PIVOT_CHART_POINT_LIMIT,
   PIVOT_BORDER,
   PIVOT_XAXIS_SIZE,
@@ -137,12 +140,26 @@ export function naturalSort (a, b): number {
   return ra.length - rb.length
 }
 
-export const getTextWidth = (text: string, fontWeight: string = DEFAULT_FONT_WEIGHT, fontSize: string = DEFAULT_FONT_SIZE, fontFamily: string = DEFAULT_FONT_FAMILY): number => {
+export const getTextWidth = (
+  text: string,
+  fontWeight: string = DEFAULT_FONT_WEIGHT,
+  fontSize: string = DEFAULT_FONT_SIZE,
+  fontFamily: string = DEFAULT_FONT_FAMILY
+): number => {
   const canvas = this.canvas || (this.canvas = document.createElement('canvas'))
   const context = canvas.getContext('2d')
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`
   const metrics = context.measureText(text)
   return Math.ceil(metrics.width)
+}
+
+export const getPivotContentTextWidth = (
+  text: string,
+  fontWeight: string = DEFAULT_FONT_WEIGHT,
+  fontSize: string = DEFAULT_FONT_SIZE,
+  fontFamily: string = DEFAULT_FONT_FAMILY
+): number => {
+  return Math.min(getTextWidth(text, fontWeight, fontSize, fontFamily), PIVOT_MAX_CONTENT_WIDTH)
 }
 
 export function getPivotCellWidth (width: number): number {
@@ -178,9 +195,6 @@ export function getChartElementSizeAndShouldCollapsed (
   rowHeaderWidths: number[],
   columnHeaderCount: number
 ): {elementSize: number, shouldCollapsed: boolean} {
-  const DEFAULT_MIN_WIDTH = 18
-  const DEFAULT_MAX_WIDTH = 72
-
   let chartElementCount
   let side
 
@@ -194,10 +208,10 @@ export function getChartElementSizeAndShouldCollapsed (
 
   const sizePerElement = side / chartElementCount
 
-  return sizePerElement > DEFAULT_MAX_WIDTH
-    ? { elementSize: DEFAULT_MAX_WIDTH, shouldCollapsed: direction === 'row' && true }
-    : sizePerElement < DEFAULT_MIN_WIDTH
-      ? { elementSize: DEFAULT_MIN_WIDTH, shouldCollapsed: false }
+  return sizePerElement > PIVOT_CHART_ELEMENT_MAX_WIDTH
+    ? { elementSize: PIVOT_CHART_ELEMENT_MAX_WIDTH, shouldCollapsed: direction === 'row' && true }
+    : sizePerElement < PIVOT_CHART_ELEMENT_MIN_WIDTH
+      ? { elementSize: PIVOT_CHART_ELEMENT_MIN_WIDTH, shouldCollapsed: false }
       : {
           elementSize: Math.round(sizePerElement),
           shouldCollapsed: direction === 'row' && side > chartElementCount * sizePerElement
@@ -205,12 +219,12 @@ export function getChartElementSizeAndShouldCollapsed (
 }
 
 export function getChartUnitMetricWidth (direction: 'row' | 'col', rowHeaderWidths: number[], colKeyCount: number, extraMetricCount: number): number {
-  const realContainerWidth = Math.max(getTableBodyContainerWidth(direction, rowHeaderWidths), colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_MIN_SIZE)
+  const realContainerWidth = Math.max(getTableBodyContainerWidth(direction, rowHeaderWidths), colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerWidth / colKeyCount / (extraMetricCount + 1)
 }
 
 export function getChartUnitMetricHeight (direction: 'row' | 'col', columnHeaderCount: number, rowKeyCount: number, extraMetricCount: number): number {
-  const realContainerHeight = Math.max(getTableBodyContainerHeight(direction, columnHeaderCount), rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_MIN_SIZE)
+  const realContainerHeight = Math.max(getTableBodyContainerHeight(direction, columnHeaderCount), rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerHeight / rowKeyCount / (extraMetricCount + 1)
 }
 

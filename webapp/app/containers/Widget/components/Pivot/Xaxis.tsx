@@ -1,23 +1,21 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
-import { IChartLine, IChartUnit } from './Chart'
+import { IPivotMetric, IMetricAxisConfig } from './Pivot'
+import { IChartInfo, IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter } from '../util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
-interface IYaxisProps {
-  height: number
-  rowKeys: string[][]
+interface IXaxisProps {
+  width: number
   chart: IChartInfo
   metrics: IPivotMetric[]
   data: any[]
   extraMetricCount: number
-  metricAxisData?: object
+  metricAxisConfig?: IMetricAxisConfig
 }
 
-export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
+export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
   private container: HTMLDivElement = null
 
   public componentDidMount () {
@@ -29,7 +27,7 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { rowKeys, chart, metrics, data, extraMetricCount, metricAxisData } = this.props
+    const { chart, metrics, data, extraMetricCount, metricAxisConfig } = this.props
     const { dimetionAxis } = chart
 
     const canvas = this.container.children[0] as HTMLDivElement
@@ -59,59 +57,19 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
 
         combinedMetrics.forEach((m, l) => {
           grid.push({
-            top: dimetionAxis === 'col' ? (xSum + l * width) : ySum,
-            left: dimetionAxis === 'col' ? ySum + 63 : xSum + 63,   // splitLine 对齐
-            width: 64,
-            height: width
+            top: dimetionAxis === 'col' ? xSum : ySum,
+            left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
+            width
           })
 
           if (dimetionAxis === 'col') {
             xAxis.push({
               gridIndex: index,
               type: 'category',
-              show: false
-            })
-            yAxis.push({
-              gridIndex: index,
-              type: 'value',
-              name: m.name,
-              nameLocation: 'middle',
-              nameGap: 45,
-              nameTextStyle: {
-                color: '#333'
-              },
-              axisLabel: {
-                color: '#333',
-                padding: 2,
-                formatter: metricAxisLabelFormatter,
-                showMaxLabel: false,
-                showMinLabel: false,
-                verticalAlign: 'top'
-              },
-              axisLine: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              },
-              axisTick: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              },
-              ...metricAxisData[m.name]
-            })
-          } else {
-            xAxis.push({
-              gridIndex: index,
-              type: 'value',
-              show: false
-            })
-            yAxis.push({
-              gridIndex: index,
-              type: 'category',
               data: records.map((r) => r.key),
               axisLabel: {
                 interval: 0,
+                rotate: -45,
                 color: '#333'
               },
               axisLine: {
@@ -125,13 +83,51 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                 }
               }
             })
+            yAxis.push({
+              gridIndex: index,
+              show: false,
+              type: 'value'
+            })
+          } else {
+            xAxis.push({
+              gridIndex: index,
+              type: 'value',
+              ...metricAxisConfig[m.name],
+              name: m.name,
+              nameLocation: 'center',
+              nameGap: 28,
+              nameTextStyle: {
+                color: '#333'
+              },
+              axisLabel: {
+                color: '#333',
+                showMinLabel: false,
+                showMaxLabel: false,
+                formatter: metricAxisLabelFormatter
+              },
+              axisLine: {
+                lineStyle: {
+                  color: '#d9d9d9'
+                }
+              },
+              axisTick: {
+                lineStyle: {
+                  color: '#d9d9d9'
+                }
+              }
+            })
+            yAxis.push({
+              gridIndex: index,
+              show: false,
+              type: 'category'
+            })
           }
           index += 1
         })
         if (dimetionAxis === 'col') {
-          xSum += width * (extraMetricCount + 1)
-        } else {
           ySum += width
+        } else {
+          xSum += width * (extraMetricCount + 1)
         }
       })
 
@@ -151,16 +147,18 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   public render () {
-    const { height, extraMetricCount } = this.props
+    const { width, extraMetricCount } = this.props
+
     return (
       <div
-        className={styles.yAxis}
+        className={styles.container}
+        style={{width: width * (extraMetricCount + 1)}}
         ref={(f) => this.container = f}
       >
-        <div style={{height: height * (extraMetricCount + 1)}} />
+        <div style={{height: 50}} />
       </div>
     )
   }
 }
 
-export default Yaxis
+export default Xaxis

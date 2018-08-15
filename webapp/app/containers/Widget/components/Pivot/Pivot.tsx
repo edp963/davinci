@@ -3,7 +3,7 @@ import { findDOMNode } from 'react-dom'
 import {
   naturalSort,
   decodeMetricName,
-  getTextWidth,
+  getPivotContentTextWidth,
   setContainerWidthAndHeight,
   getChartElementSizeAndShouldCollapsed,
   getChartUnitMetricWidth,
@@ -19,9 +19,9 @@ import ColumnTitle from './ColumnTitle'
 import ColumnHeader from './ColumnHeader'
 import TableBody from './TableBody'
 import ColumnFooter from './ColumnFooter'
-import { IChartInfo } from '../ChartIndicator'
+import { IChartInfo } from './Chart'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 export interface IPivotMetric {
   name: string
@@ -36,7 +36,7 @@ export interface IDrawingData {
   tableBodyCollapsed: boolean
 }
 
-export interface IMetricAxisData {
+export interface IMetricAxisConfig {
   min: number
   max: number
   interval: number
@@ -80,7 +80,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
   private min = []
   private max = []
-  private metricAxisData = {}
+  private metricAxisConfig: IMetricAxisConfig = void 0
 
   public rowHeader: HTMLElement = null
   public columnHeader: HTMLElement = null
@@ -108,7 +108,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     this.rowTree = {}
     this.colTree = {}
     this.tree = {}
-    this.rowHeaderWidths = rows.map((r) => getTextWidth(r, 'bold'))
+    this.rowHeaderWidths = rows.map((r) => getPivotContentTextWidth(r, 'bold'))
     this.drawingData = {
       extraMetricCount: 0,
       elementSize: 0,
@@ -119,7 +119,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
     this.min = []
     this.max = []
-    this.metricAxisData = {}
+    this.metricAxisConfig = void 0
 
     if (!cols.length && !rows.length) {
       this.tree[0] = data.slice()
@@ -147,7 +147,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       this.drawingData.extraMetricCount = Math.max(metrics.length - rmNum, 0)
       this.drawingData.unitMetricWidth = getChartUnitMetricWidth(dimetionAxis, this.rowHeaderWidths, this.colKeys.length || 1, this.drawingData.extraMetricCount)
       this.drawingData.unitMetricHeight = getChartUnitMetricHeight(dimetionAxis, cols.length, this.rowKeys.length || 1, this.drawingData.extraMetricCount)
-      this.metricAxisData = metrics.reduce((obj, m, i) => {
+      this.metricAxisConfig = metrics.reduce((obj: IMetricAxisConfig, m, i) => {
         const metricName = decodeMetricName(m.name)
         const min = this.min[i] >= 0 ? 0 : this.min[i]
         const max = this.max[i]
@@ -161,7 +161,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           interval
         }
         return obj
-      }, {})
+      }, { min: 0, max: 0, interval: 0 })
     }
 
     this.rowHeader.scrollTop = 0
@@ -177,7 +177,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
     rows.forEach((r, i) => {
       const value = record[r]
-      const textWidth = getTextWidth(value, 'bold')
+      const textWidth = getPivotContentTextWidth(value, 'bold')
       this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
       rowKey.push(value)
     })
@@ -197,7 +197,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
     if (colKey.length) {
       if (!this.colTree[flatColKey]) {
-        const width = !hasDimetionAxis && { width: Math.max(...colKey.map((c) => getTextWidth(c, 'bold'))) }
+        const width = !hasDimetionAxis && { width: Math.max(...colKey.map((c) => getPivotContentTextWidth(c, 'bold'))) }
         const height = !hasDimetionAxis && { height: PIVOT_LINE_HEIGHT }
         this.colTree[flatColKey] = { ...width, ...height, records: [] }
         this.colKeys.push(colKey)
@@ -214,7 +214,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       this.getMetricsMinAndMaxValue(metrics, record)
 
       if (!hasDimetionAxis) {
-        const maxTextWidth = Math.max(...metrics.map((m) => getTextWidth(record[`${m.agg}(${decodeMetricName(m.name)})`])))
+        const maxTextWidth = Math.max(...metrics.map((m) => getPivotContentTextWidth(record[`${m.agg}(${decodeMetricName(m.name)})`])))
         const cellHeight = (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
 
         if (rowKey.length) {
@@ -288,7 +288,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
               chart={chart}
               metrics={metrics}
               drawingData={this.drawingData}
-              metricAxisData={this.metricAxisData}
+              metricAxisConfig={this.metricAxisConfig}
               ref={(f) => this.rowHeader = findDOMNode(f)}
             />
           </div>
@@ -322,7 +322,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tree={this.tree}
             chart={chart}
             metrics={metrics}
-            metricAxisData={this.metricAxisData}
+            metricAxisConfig={this.metricAxisConfig}
             drawingData={this.drawingData}
             ref={(f) => this.tableBody = findDOMNode(f)}
           />
@@ -334,7 +334,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tree={this.tree}
             chart={chart}
             metrics={metrics}
-            metricAxisData={this.metricAxisData}
+            metricAxisConfig={this.metricAxisConfig}
             drawingData={this.drawingData}
             ref={(f) => this.columnFooter = findDOMNode(f)}
           />

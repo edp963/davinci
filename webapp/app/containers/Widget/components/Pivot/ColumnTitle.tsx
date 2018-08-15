@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { IDrawingData } from './Pivot'
-import { IChartInfo } from '../ChartIndicator'
+import { IChartInfo } from './Chart'
 import { getPivotCellWidth } from '../util'
 
-const styles = require('../../Workbench.less')
+const styles = require('./Pivot.less')
 
 interface IColumnTitleProps {
   cols: string[]

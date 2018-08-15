@@ -40,7 +40,6 @@ import sagaBizlogic from '../Bizlogic/sagas'
 
 import Container from '../../components/Container'
 import DashboardItemForm from './components/DashboardItemForm'
-import Workbench from '../Widget/components/Workbench'
 import DashboardItem from './components/DashboardItem'
 import DashboardItemFilters from './components/DashboardItemFilters'
 import SharePanel from '../../components/SharePanel'
@@ -2032,7 +2031,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
-        <Modal
+        {/* <Modal
           title="Widget 详情"
           wrapClassName={`ant-modal-xlarge ${widgetStyles.workbenchWrapper}`}
           visible={workbenchVisible}
@@ -2049,7 +2048,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onAfterSave={this.onWorkbenchClose}
             ref={(f) => { this.workbenchWrapper = f }}
           />
-        </Modal>
+        </Modal> */}
         <Modal
           title="条件查询"
           wrapClassName="ant-modal-xlarge"
