@@ -401,9 +401,17 @@ public class TeamServiceImpl implements TeamService {
             return resultMap.failAndRefreshToken(request).message("team is not found");
         }
 
+
+        RelUserOrganization relUserOrg = relUserOrganizationMapper.getRel(user.getId(), team.getOrgId());
+
+        RelUserTeam rel = relUserTeamMapper.getRel(user.getId(), id);
+        if ((null == relUserOrg || relUserOrg.getRole() == UserOrgRoleEnum.MEMBER.getRole()) &&
+                (null == rel || rel.getRole() == UserTeamRoleEnum.MEMBER.getRole())) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        }
+
         TeamDetail teamDetail = new TeamDetail();
         BeanUtils.copyProperties(team, teamDetail);
-        RelUserTeam rel = relUserTeamMapper.getRel(user.getId(), id);
         teamDetail.setRole(rel.getRole());
 
         Organization organization = organizationMapper.getById(team.getOrgId());
@@ -457,7 +465,7 @@ public class TeamServiceImpl implements TeamService {
             return resultMap.failAndRefreshToken(request).message("team is not found");
         }
 
-        List<TeamBaseInfoWithParent> childTeams = teamMapper.getChildTeams(id, user.getId());
+        List<TeamBaseInfoWithParent> childTeams = teamMapper.getChildTeams(id);
 
         if (null != childTeams && childTeams.size() > 0) {
             List<UserWithTeamId> childTeamMemberList = relUserTeamMapper.getChildTeamMembers(id);
@@ -747,7 +755,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public ResultMap getTeams(User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
-        Set<MyTeam> myTeams = teamMapper.getMyTeams(user.getId());
+        List<MyTeam> myTeams = teamMapper.getMyTeams(user.getId());
         return resultMap.successAndRefreshToken(request).payloads(myTeams);
     }
 

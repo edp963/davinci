@@ -144,7 +144,18 @@ public class SqlUtils {
                                 }
                             }
                             resultSet.close();
-                            String sql = "select * from `" + tableName + "`";
+                            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+                            String sql = "select * from " + tableName + "";
+                            switch (dataTypeEnum) {
+                                case MYSQL:
+                                    sql = "select * from `" + tableName + "`";
+                                    break;
+                                case ORACLE:
+                                    sql = "select * from '" + tableName + "'";
+                                    break;
+                                default:
+                                    break;
+                            }
                             List<QueryColumn> columns = getColumns(sql);
                             TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
                             tableInfoList.add(tableInfo);

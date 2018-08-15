@@ -31,9 +31,6 @@
             member_num,
             team_num,
             allow_create_project,
---             allow_delete_or_transfer_project,
---             allow_change_visibility,
---             member_permission,
             create_time,
             create_by,
             <if test='description != null and description != "" '>
@@ -51,9 +48,6 @@
             #{memberNum, jdbcType=INTEGER},
             #{teamNum, jdbcType=INTEGER},
             #{allowCreateProject, jdbcType=TINYINT},
---             #{allowDeleteOrTransferProject, jdbcType=TINYINT},
---             #{allowChangeVisibility, jdbcType=TINYINT},
---             #{memberPermission, jdbcType=SMALLINT},
             #{createTime, jdbcType=TIMESTAMP},
             #{createBy, jdbcType=BIGINT},
             <if test='description != null and description != "" '>

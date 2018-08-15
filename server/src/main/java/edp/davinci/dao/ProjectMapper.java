@@ -18,6 +18,7 @@
 
 package edp.davinci.dao;
 
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.model.Project;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -37,8 +38,13 @@ public interface ProjectMapper {
      * @return
      */
     @Select({
-            "SELECT * FROM project",
-            "   WHERE id IN (",
+            "SELECT ",
+            "    p.*, ",
+            "    u.id as 'createBy.id',",
+            "    u.username as 'createBy.username',",
+            "    u.avatar as 'createBy.avatar'",
+            "FROM project p left join user u on u.id = p.user_id",
+            "   WHERE p.id IN (",
             //用户创建
             "   SELECT id  FROM project WHERE user_id = #{userId}",
             "   UNION",
@@ -49,9 +55,9 @@ public interface ProjectMapper {
             "       LEFT JOIN team t ON t.id = rtp.team_id",
             "       LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
             "   WHERE rut.user_id = #{userId} AND p.visibility = 1",
-            ") order by id asc"
+            ") order by p.id asc ",
     })
-    List<Project> getProejctsByUser(Long userId);
+    List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
 
 
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})

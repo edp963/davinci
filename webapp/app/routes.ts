@@ -41,7 +41,7 @@ import Display from './containers/Display'
 import Editor from './containers/Display/Editor'
 import Preview from './containers/Display/Preview'
 import Account from './containers/Account'
-import Projects from './containers/Projects'
+import Projects from './containers/Projects/index'
 import Profile from './containers/Profile'
 import ResetPassword from './containers/ResetPassword'
 import Organizations from './containers/Organizations/index'
@@ -268,16 +268,16 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               name: 'sources',
               component: Source
             },
-            {
-              path: '/project/:pid/users',
-              name: 'users',
-              component: User
-            },
-            {
-              path: '/project/:pid/groups',
-              name: 'groups',
-              component: Group
-            },
+            // {
+            //   path: '/project/:pid/users',
+            //   name: 'users',
+            //   component: User
+            // },
+            // {
+            //   path: '/project/:pid/groups',
+            //   name: 'groups',
+            //   component: Group
+            // },
             {
               path: '/project/:pid/schedule',
               name: 'schedule',

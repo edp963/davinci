@@ -57,7 +57,7 @@ public interface MemDisplaySlideWidgetMapper {
             "`type` = #{type,jdbcType=SMALLINT},",
             "sub_type = #{subType,jdbcType=SMALLINT},",
             "`index` = #{index,jdbcType=INTEGER},",
-            "`params` = #{params,jdbcType=LONGVARCHAR}",
+            "`quaryParams` = #{quaryParams,jdbcType=LONGVARCHAR}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(MemDisplaySlideWidget memDisplaySlideWidget);

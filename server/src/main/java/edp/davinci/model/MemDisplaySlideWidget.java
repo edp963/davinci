@@ -47,7 +47,7 @@ public class MemDisplaySlideWidget {
 
     private Integer index = 0;
 
-    @NotBlank(message = "params cannot be empty")
+    @NotBlank(message = "quaryParams cannot be empty")
     private String params;
 
 }

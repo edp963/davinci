@@ -19,6 +19,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import edp.core.enums.DataTypeEnum;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
@@ -431,6 +432,13 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             log.info("user {} have not permisson to upload csv file in this source {}", user.getUsername(), source.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to upload csv file in this source");
         }
+
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
+        if (dataTypeEnum != DataTypeEnum.MYSQL) {
+            log.info("Unsupported data source， {}", source.getJdbcUrl());
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("Unsupported data source: " + source.getJdbcUrl());
+        }
+
 
         try {
             //解析csv文件

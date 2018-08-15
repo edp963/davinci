@@ -35,11 +35,18 @@ public interface TeamMapper {
     @Select({"select * from team where org_id= #{orgId}"})
     List<Team> getByOrgId(@Param("orgId") Long orgId);
 
+//    @Select({
+//            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t, rel_user_team rut",
+//            "where rut.team_id = t.id and t.org_id = #{orgId} and rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)"
+//    })
+//    List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId, @Param("userId") Long userId);
+
+
     @Select({
-            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t, rel_user_team rut",
-            "where rut.team_id = t.id and t.org_id = #{orgId} and rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)"
+            "select distinct t.id, t.`name`, t.description, t.parent_team_id from team t, rel_user_team rut",
+            "where rut.team_id = t.id and t.org_id = #{orgId}"
     })
-    List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId, @Param("userId") Long userId);
+    List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId);
 
     @Select({"select id from team where name = #{name} and org_id = #{orgId} "})
     Long getByNameWithOrgId(@Param("name") String name, @Param("orgId") Long orgId);
@@ -74,19 +81,29 @@ public interface TeamMapper {
     List<TeamMember> getTeamMembers(@Param("id") Long id);
 
 
+//    @Select({
+//            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
+//            "from team t, rel_user_team rut",
+//            "where ",
+//            "	rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id})) and ",
+//            "	rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)",
+//    })
+//    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id, @Param("userId") Long userId);
+
+
+
     @Select({
-            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
+            "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
             "from team t, rel_user_team rut",
-            "where ",
-            "	rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id})) and ",
-            "	rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)",
+            "where  rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id}))",
     })
-    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id, @Param("userId") Long userId);
+    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id);
+
 
 
     @Select({
             "select ",
-            "	t.id, t.`name`, t.description, t.visibility, rut.role, t.avatar,",
+            "	distinct t.id, t.`name`, t.description, t.visibility, rut.role, t.avatar,",
             "	o.`id`  'organization.id',",
             "	o.`name`  'organization.name',",
             "	o.`description`  'organization.description',",
@@ -95,9 +112,9 @@ public interface TeamMapper {
             "from (team t,rel_user_team rut)",
             "LEFT JOIN organization o on o.id = t.org_id",
             "LEFT JOIN rel_user_organization ruo on (ruo.org_id = o.id and ruo.user_id = #{userId})",
-            "where rut.team_id = t.id and rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)",
+            "where rut.team_id = t.id and rut.user_id = #{userId}",
     })
-    Set<MyTeam> getMyTeams(@Param("userId") Long userId);
+    List<MyTeam> getMyTeams(@Param("userId") Long userId);
 
 
     @Select({

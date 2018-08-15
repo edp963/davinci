@@ -360,7 +360,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         ResultMap resultMap = new ResultMap(tokenUtils);
         List<TeamBaseInfoWithParent> orgTeams = null;
         //当前用户在组织下能访问的所有team
-        List<TeamBaseInfoWithParent> teams = teamMapper.getTeamsByOrgId(orgId, user.getId());
+        List<TeamBaseInfoWithParent> teams = teamMapper.getTeamsByOrgId(orgId);
 
         if (null != teams && teams.size() > 0) {
             orgTeams = new ArrayList<>();
