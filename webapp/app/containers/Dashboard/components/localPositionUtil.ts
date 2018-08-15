@@ -24,7 +24,6 @@ export function initializePosition (loginUser, dashboard, items) {
     if (posInStorage) {
       const localPos = JSON.parse(posInStorage)
       return items.map((i) => {
-        console.log('i0000000', i)
         const itemInLocal = localPos.find((p) => p.i === `${i.id}`)
         if (!itemInLocal) {
           return {

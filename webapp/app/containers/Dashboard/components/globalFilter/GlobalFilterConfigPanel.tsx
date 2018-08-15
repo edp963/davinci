@@ -235,7 +235,7 @@ export class GlobalFilterPanel extends React.PureComponent<IGlobalFilterPanelPro
         name: widget.name,
         keys: dataSources[i.id].keys,
         types: dataSources[i.id].types,
-        params: (flattable.sql_tmpl.match(/query@var\s\$\w+\$/g) || [])
+        params: (flattable.sql_tmpl.match(/query@var\s+\$\w+\$/g) || [])
           .map((qv) => qv.substring(qv.indexOf('$') + 1, qv.lastIndexOf('$')))
       }
     })

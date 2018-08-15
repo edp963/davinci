@@ -1030,7 +1030,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
       const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
       const flattable = bizlogics.find((bl) => bl.id === widget.flatTable_id)
-      const variableArr = flattable.sql_tmpl.match(/query@var\s\$\w+\$/g) || []
+      const variableArr = flattable.sql_tmpl.match(/query@var\s+\$\w+\$/g) || []
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
       const params = currentDatasources[k].keys.map((pk, index) => ({
