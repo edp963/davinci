@@ -378,6 +378,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             md={8}
             sm={12}
             xs={24}
+            key={d.id}
           >
             <div className={styles.searchList} key={d.id}>
               <div className={styles.orgHeader}>
