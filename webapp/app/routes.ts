@@ -268,16 +268,16 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               name: 'sources',
               component: Source
             },
-            {
-              path: '/project/:pid/users',
-              name: 'users',
-              component: User
-            },
-            {
-              path: '/project/:pid/groups',
-              name: 'groups',
-              component: Group
-            },
+            // {
+            //   path: '/project/:pid/users',
+            //   name: 'users',
+            //   component: User
+            // },
+            // {
+            //   path: '/project/:pid/groups',
+            //   name: 'groups',
+            //   component: Group
+            // },
             {
               path: '/project/:pid/schedule',
               name: 'schedule',
