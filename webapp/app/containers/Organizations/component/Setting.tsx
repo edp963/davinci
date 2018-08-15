@@ -143,23 +143,23 @@ export class Setting extends React.PureComponent <ISettingProps> {
                     {/*)}*/}
                   {/*</FormItem>*/}
                 {/*</Col>*/}
-                {/*<Col>*/}
-                  {/*<FormItem*/}
-                 {/*//   {...commonFormItemStyle}*/}
-                    {/*label="项目默认权限"*/}
-                  {/*>*/}
-                    {/*{getFieldDecorator('memberPermission', {*/}
-                      {/*initialValue: 1*/}
-                    {/*})(*/}
-                      {/*<Radio.Group size="small">*/}
-                        {/*<RadioButton value={0}>隐藏</RadioButton>*/}
-                        {/*<RadioButton value={1}>只读</RadioButton>*/}
-                        {/*<RadioButton value={2}>修改</RadioButton>*/}
-                        {/*<RadioButton value={3}>删除</RadioButton>*/}
-                      {/*</Radio.Group>*/}
-                    {/*)}*/}
-                  {/*</FormItem>*/}
-                {/*</Col>*/}
+                <Col>
+                  <FormItem
+                 //   {...commonFormItemStyle}
+                    label="组织成员默认权限"
+                  >
+                    {getFieldDecorator('memberPermission', {
+                      initialValue: 1
+                    })(
+                      <Radio.Group size="small">
+                        <RadioButton value={0}>隐藏</RadioButton>
+                        <RadioButton value={1}>只读</RadioButton>
+                        <RadioButton value={2}>修改</RadioButton>
+                        <RadioButton value={3}>删除</RadioButton>
+                      </Radio.Group>
+                    )}
+                  </FormItem>
+                </Col>
                 <Col>
                   <Button size="large" onClick={this.props.editOrganization(this.props.form.getFieldsValue())}>保存修改</Button>
                 </Col>
