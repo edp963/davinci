@@ -107,10 +107,6 @@ export interface IDashboard {
   children?: any[]
 }
 
-declare interface IObjectConstructor {
-  assign (...objects: object[]): object
-}
-
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
   constructor (props) {
     super(props)
@@ -226,22 +222,26 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           type: selectType ? 1 : 0
         }
 
-        const addObj = (Object as IObjectConstructor).assign({}, obj, {
+        const addObj = {
+          ...obj,
           parentId: Number(folder),
           index: indexTemp
-        })
-        const editObj = [(Object as IObjectConstructor).assign({}, obj, {
+        }
+
+        const editObj = [{
+          ...obj,
           parentId: Number(folder),
           id,
           index
-        })]
+        }]
 
         const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
-        const moveObj = [(Object as IObjectConstructor).assign({}, obj, {
+        const moveObj = [{
+          ...obj,
           parentId: Number(folder),
           id,
           index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0
-        })]
+        }]
 
         switch (formType) {
           case 'add':
@@ -588,12 +588,12 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
       if (item.type === 0) {
         return (
-          <TreeNode key={item.id} title={dashboardAction} >
+          <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} >
             {loop(item.children, depth + 1)}
           </TreeNode>
         )
       }
-      return <TreeNode key={item.id} title={dashboardAction} />
+      return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
 
     return (
@@ -677,7 +677,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
               ? <div  className={styles.dashboardTreeNode}>
                 <Tree
                   // showIcon
-                  showLine
+                  // showLine
                   onExpand={this.onExpand}
                   expandedKeys={this.state.expandedKeys}
                   autoExpandParent={this.state.autoExpandParent}

@@ -77,7 +77,8 @@
       flex-direction: column;
   
       .formTop {
-        flex: 46;
+        // flex: 46;
+        flex: 36;
         overflow-y: auto;
         padding: 16px 16px 0 16px;
   
@@ -86,7 +87,8 @@
         }
       }
       .formBottom {
-        flex: 50;
+        // flex: 50;
+        flex: 60;
         overflow-y: auto;
         border-top: 1px solid @border-color-base;
         padding-left: 16px;
@@ -107,5 +109,18 @@
       flex-shrink: 0;
       margin: 10px 16px 16px auto;
     }
+  }
+}
+
+.teamTree {
+  display: flex;
+  direction: row;
+  .teamTreeTitle {
+    width: 100px;
+    flex-shrink: 0
+  }
+  .teamInput {
+    width: 90px;
+    margin-left: 10px;
   }
 }

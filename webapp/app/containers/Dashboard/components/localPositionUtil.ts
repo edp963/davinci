@@ -24,7 +24,6 @@ export function initializePosition (loginUser, dashboard, items) {
     if (posInStorage) {
       const localPos = JSON.parse(posInStorage)
       return items.map((i) => {
-        console.log('i0000000', i)
         const itemInLocal = localPos.find((p) => p.i === `${i.id}`)
         if (!itemInLocal) {
           return {
@@ -92,24 +91,24 @@ export function listToTree (list, parentId) {
 }
 
 // list 转成树选择json
-declare interface IObjectConstructor {
-  assign (...objects: object[]): object
-}
-export function listToTreeSelect (list, parentId) {
-  const ret = []
-  for (const i in list) {
-    if (list[i].parentId === parentId) {
-      list[i].children = this.listToTreeSelect(list, list[i].id)
-      const listObj = (Object as IObjectConstructor).assign({}, list[i], {
-        title: list[i].name,
-        value: `${list[i].id}`,
-        key: list[i].id
-      })
-      ret.push(listObj)
-    }
-  }
-  return ret
-}
+// declare interface IObjectConstructor {
+//   assign (...objects: object[]): object
+// }
+// export function listToTreeSelect (list, parentId) {
+//   const ret = []
+//   for (const i in list) {
+//     if (list[i].parentId === parentId) {
+//       list[i].children = this.listToTreeSelect(list, list[i].id)
+//       const listObj = (Object as IObjectConstructor).assign({}, list[i], {
+//         title: list[i].name,
+//         value: `${list[i].id}`,
+//         key: list[i].id
+//       })
+//       ret.push(listObj)
+//     }
+//   }
+//   return ret
+// }
 
 // 获取第一个dashboard的id
 export function findFirstLeaf (tree) {

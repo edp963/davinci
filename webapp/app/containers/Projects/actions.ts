@@ -50,9 +50,12 @@ export function loadProjectDetail (id) {
 
 
 
-export function loadProjects () {
+export function loadProjects (resolve) {
   return {
-    type: LOAD_PROJECTS
+    type: LOAD_PROJECTS,
+    payload: {
+      resolve
+    }
   }
 }
 
