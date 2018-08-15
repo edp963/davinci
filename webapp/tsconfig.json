@@ -14,8 +14,14 @@
     "typeRoots": ["node_modules/@types"],
     "baseUrl": ".",
     "paths": {
+      "*": [
+        "*"
+      ],
       "utils/*": [ "app/utils/*" ]
-    },
+    }
+//    "paths": {
+//      "utils/*": [ "app/utils/*" ]
+//    },
     // "noUnusedLocals": true,
     // "noUnusedParameters": true
   },

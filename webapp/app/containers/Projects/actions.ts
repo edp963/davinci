@@ -36,7 +36,7 @@ import {
   DELETE_PROJECT_FAILURE,
   LOAD_PROJECT_DETAIL,
   LOAD_PROJECT_DETAIL_SUCCESS,
-  LOAD_PROJECT_DETAIL_FAILURE
+  LOAD_PROJECT_DETAIL_FAILURE, SEARCH_PROJECT_SUCCESS, SEARCH_PROJECT_FAILURE, SEARCH_PROJECT
 } from './constants'
 
 export function loadProjectDetail (id) {
@@ -142,7 +142,7 @@ export function projectTransfered (result) {
 
 export function transferProjectFail () {
   return {
-    type: TRANSFER_PROJECT_f
+    type: TRANSFER_PROJECT_FAILURE
   }
 }
 
@@ -183,6 +183,30 @@ export function projectDetailLoaded (project) {
 export function loadProjectDetailFail () {
   return {
     type: LOAD_PROJECT_DETAIL_FAILURE
+  }
+}
+
+export function searchProject (param) {
+  return {
+    type: SEARCH_PROJECT,
+    payload: {
+      param
+    }
+  }
+}
+
+export function projectSearched (result) {
+  return {
+    type: SEARCH_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function searchProjectFail () {
+  return {
+    type: SEARCH_PROJECT_FAILURE
   }
 }
 
