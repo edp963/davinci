@@ -69,6 +69,33 @@
 
     .icon;
   }
+
+  .central {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      .add,.text {
+        color: @blue;
+        cursor: pointer;
+      }
+    }
+
+    .item {
+      color: @light-text-color;
+
+      &.add {
+        font-size: 28px;
+      }
+
+      &.text {
+        font-size: 16px;
+      }
+    }
+  }
 }
 
 .searchAdmin, .addCol {

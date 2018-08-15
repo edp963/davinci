@@ -58,7 +58,8 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
-  private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => {
+  private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
     this.setState({
       formType,
       formVisible: true
@@ -100,6 +101,28 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
+  private renderCreate () {
+    return (
+      <Col
+        xl={4}
+        lg={6}
+        md={8}
+        sm={12}
+        xs={24}
+        key="createDisplay"
+      >
+        <div className={styles.display}>
+          <div className={styles.container} onClick={this.showDisplayForm('add')}>
+            <div className={styles.central}>
+              <div className={`${styles.item} ${styles.icon}`}><Icon type="plus-circle-o" /></div>
+              <div className={`${styles.item} ${styles.text}`}>创建新 Display</div>
+            </div>
+          </div>
+        </div>
+      </Col>
+    )
+  }
+
   private renderDisplay (display: IDisplay) {
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
@@ -123,7 +146,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               <p className={styles.content}>{display.description}</p>
             </div>
             <Tooltip title="编辑">
-              <Icon className={styles.edit} type="setting" onClick={this.delegate(this.showDisplayForm, 'edit', display)} />
+              <Icon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
             </Tooltip>
             <Tooltip title="复制">
               <Icon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
@@ -174,7 +197,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     return (
       <div>
         <EllipsisList rows={2}>
-          {displays.map((d) => this.renderDisplay(d))}
+          {[this.renderCreate(), ...displays.map((d) => this.renderDisplay(d))]}
         </EllipsisList>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Display`}
