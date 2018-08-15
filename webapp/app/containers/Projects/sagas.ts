@@ -59,7 +59,9 @@ export function* getProjects (action) {
     const asyncData = yield call(request, api.projects)
     const projects = readListAdapter(asyncData)
     yield put(projectsLoaded(projects))
-    payload.resolve(projects)
+    if (payload.resolve) {
+      payload.resolve(projects)
+    }
   } catch (err) {
     yield put(loadProjectsFail())
     message.error('获取 Projects 失败，请稍后再试')
