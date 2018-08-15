@@ -186,12 +186,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       pageNum: 1,
       pageSize: 10
     }
-    if (keywords) {
-      onSearchProject(param)
-    }
     this.setState({
-
-    })
+      searchMaskVisible: false
+    },() => onSearchProject(param))
   }
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
@@ -247,6 +244,17 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       keywords: keyword,
       searchKeywordsVisible: true
     }, () => this.props.onSearchProject(param))
+  }
+  private computSearchListWrapperStyle = () => {
+    const {searchProject} = this.props
+    if (this.state.searchMaskVisible) {
+      return this.state.searchMaskVisible
+    } else {
+      if (searchProject && searchProject.list && searchProject.list.length !== 0) {
+        return this.state.searchMaskVisible
+      }
+      return true
+    }
   }
   public render () {
     const { formType, formVisible, modalLoading } = this.state
@@ -355,7 +363,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       ? projects.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic}.png`)
         const colItems = (
-          <div className={styles.groupList} key={d.id}>
+          <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
             <div className={styles.orgHeader}>
               <div className={styles.avatar}>
                 <Avatar path={path} enlarge={false} size="small"/>
@@ -380,7 +388,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             xs={24}
             key={d.id}
           >
-            <div className={styles.searchList} key={d.id}>
+            <div className={styles.searchList} key={d.id} onClick={this.toProject(d)}>
               <div className={styles.orgHeader}>
                 <div className={styles.avatar}>
                   <Avatar path={path} enlarge={false} size="small"/>
@@ -432,9 +440,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     })
 
     const searchListWrapperStyle = classnames({
-      [utilStyles.hide]: this.state.searchMaskVisible,
+      [utilStyles.hide]: this.computSearchListWrapperStyle(),
       [styles.searchListWrapper]: true
     })
+
     return (
       <div className={styles.wrapper}>
         <div className={styles.search}>
