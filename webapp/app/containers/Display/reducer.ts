@@ -342,7 +342,6 @@ export default undoable(displayReducer, {
     ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS,
     ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS
   ]),
-  debug: true,
   undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
   redoType: ActionTypes.REDO_OPERATION_SUCCESS
 })

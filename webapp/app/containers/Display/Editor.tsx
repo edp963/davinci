@@ -280,13 +280,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
     const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
 
-    console.log(scale)
-    console.log({
-      editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
-      editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
-      editorPadding: `${topBottomPadding}px ${leftRightPadding}px`
-    })
-
     this.setState({
       editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
       editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
@@ -717,7 +710,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     if (!currentDisplay) { return null }
 
     const layerItems =  !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
-      console.log('rerender: ', layer.name, layer.params)
       const widget = widgets.find((w) => w.id === layer.widgetId)
       const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id

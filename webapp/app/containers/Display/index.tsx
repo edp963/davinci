@@ -85,7 +85,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
   }
 
   private onCopy = (display) => (e) => {
-    console.log(e)
+    console.log(e) // @TODO
   }
 
   private onSearchDisplay = (value) => {
