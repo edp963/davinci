@@ -13,7 +13,7 @@ import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
 
 import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
-import { loadPortals, editPortal, deletePortal } from '../Portal/actions'
+import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
 
@@ -39,6 +39,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onEditDisplay: (display: IDisplay, resolve: () => void) => void
   onDeleteDisplay: (displayId: number) => void
   onLoadPortals: (projectId) => void
+  onAddPortal: (portal, resolve) => void
   onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
 }
@@ -68,7 +69,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
   private goToDashboard = (portal?: any) => () => {
     const { params } = this.props
-    this.props.router.push(`/project/${params.pid}/portal/${portal ? portal.id : -1}`)
+    const { id, name } = portal
+    this.props.router.push(`/project/${params.pid}/portal/${id}/portalName/${name}`)
   }
 
   private goToDisplay = (display?: any) => () => {
@@ -106,7 +108,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   public render () {
     const {
       displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onEditPortal, onDeletePortal
+      portals, onAddPortal, onEditPortal, onDeletePortal
     } = this.props
     const projectId = params.pid
     return (
@@ -119,6 +121,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 projectId={projectId}
                 portals={portals}
                 onPortalClick={this.goToDashboard}
+                onAdd={onAddPortal}
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
               />
@@ -156,6 +159,7 @@ export function mapDispatchToProps (dispatch) {
     onEditDisplay: (display: IDisplay, resolve) => dispatch(editDisplay(display, resolve)),
     onDeleteDisplay: (id) => dispatch(deleteDisplay(id)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
+    onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id))
   }

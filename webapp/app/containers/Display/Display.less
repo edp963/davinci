@@ -537,7 +537,15 @@
     justify-content: center;
     align-items: center;
 
-    &:hover {
+    &.disabled {
+      cursor: default;
+
+      i {
+        color: @body-bg;
+      }
+    }
+
+    &:not(.disabled):hover {
       background-color: darken(@light-bg, 10%);
     }
 

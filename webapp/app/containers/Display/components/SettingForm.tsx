@@ -30,6 +30,7 @@ const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
 const Radio = require('antd/lib/radio/radio')
+const Checkbox = require('antd/lib/checkbox')
 const Button = require('antd/lib/button')
 const Select = require('antd/lib/select')
 const Upload = require('antd/lib/upload')
@@ -38,9 +39,11 @@ const Popover = require('antd/lib/popover')
 const Tooltip = require('antd/lib/tooltip')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
+const CheckboxGroup = Checkbox.Group
 const Option = Select.Option
 
 import { SketchPicker } from 'react-color'
+import { ItemSelectorForm } from '../../Dashboard/components/globalFilter/ItemSelectorForm';
 
 const styles = require('../Display.less')
 
@@ -155,6 +158,9 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
         case 'radio':
           control = this.renderRadio(item, this.formItemChange)
           break
+        case 'checkbox':
+          control = this.renderCheckbox(item, this.formItemChange)
+          break
         case 'upload':
           control = this.renderUpload(item, this.formItemChange, settingParams[item.name])
           break
@@ -263,6 +269,12 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
           ))
         }
       </RadioGroup>
+    )
+  }
+
+  private renderCheckbox = (item, formItemChange) => {
+    return (
+      <CheckboxGroup onChange={formItemChange(item.name)} options={item.values} />
     )
   }
 

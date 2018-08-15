@@ -339,7 +339,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             >
               <div
                 className={itemClass}
-                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic || 9}.png`)})`}}
                 onClick={this.toProject(d)}
               >
                 <header>
@@ -361,7 +361,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }) : ''
     const history =  projects
       ? projects.map((d: IProject) => {
-        const path = require(`../../assets/images/bg${d.pic}.png`)
+        const path = require(`../../assets/images/bg${d.pic || 9}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
             <div className={styles.orgHeader}>
@@ -378,7 +378,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         return colItems
       }) : ''
     const projectSearchItems = searchProject && searchProject.list ? searchProject.list.map((d: IProject) => {
-      const path = require(`../../assets/images/bg${d.pic}.png`)
+      const path = require(`../../assets/images/bg${d.pic || 9}.png`)
       const colItems = (
           <Col
             xl={6}

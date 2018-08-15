@@ -52,11 +52,6 @@ import {
   deleteDisplayLayers,
   editDisplayLayers } from './actions'
 import {
-  DEFAULT_DISPLAY_WIDTH,
-  DEFAULT_DISPLAY_HEIGHT,
-  DEFAULT_DISPLAY_GRID_DISTANCE,
-  DEFAULT_DISPLAY_SCALE,
-  DEFAULT_DISPLAY_SCALE_MODE,
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import widgetlibs from '../../assets/json/widgetlib'
@@ -99,8 +94,7 @@ interface IPreviewProps {
 }
 
 interface IPreviewStates {
-  scaleHeight: number
-  scaleWidth: number
+  scale: [number, number]
 }
 
 export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
@@ -110,8 +104,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public constructor (props) {
     super(props)
     this.state = {
-      scaleHeight: 1,
-      scaleWidth: 1
+      scale: [1, 1]
     }
   }
 
@@ -134,7 +127,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
   public componentWillReceiveProps (nextProps: IPreviewProps) {
     const { currentSlide } = nextProps
-    const { scaleHeight, scaleWidth } = this.state
+    const { scale } = this.state
+    const [scaleWidth, scaleHeight] = scale
     if (currentSlide && this.props.currentSlide !== currentSlide) {
       const { slideParams } = JSON.parse(currentSlide.config)
       const { scaleMode, width, height } = slideParams
@@ -153,7 +147,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        this.setState({ scaleHeight: nextScaleHeight, scaleWidth: nextScaleWidth })
+        this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
       }
     }
   }
@@ -266,7 +260,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   }
 
   private getSlideStyle = (slideParams) => {
-    const { scaleHeight, scaleWidth } = this.state
+    const { scale } = this.state
 
     const {
       width,
@@ -279,8 +273,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     let slideStyle: React.CSSProperties
     slideStyle  = {
       overflow: 'visible',
-      width: `${width * scaleWidth}px`,
-      height: `${height * scaleHeight}px`
+      width: `${width * scale[0]}px`,
+      height: `${height * scale[1]}px`
     }
 
     if (backgroundColor) {
@@ -304,7 +298,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       currentLayersQueryParams } = this.props
     if (!currentDisplay) { return null }
 
-    const { scaleHeight, scaleWidth } = this.state
+    const { scale } = this.state
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
@@ -317,8 +311,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       return (
         <LayerItem
           pure={true}
-          scaleHeight={scaleHeight}
-          scaleWidth={scaleWidth}
+          scale={scale}
           ref={(f) => this[`layerId_${layer.id}`]}
           itemId={layerId}
           widget={widget}

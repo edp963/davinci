@@ -459,7 +459,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private backPortal = () => {
     const { router, params } = this.props
-    router.push(`/project/${params.pid}/portals`)
+    router.push(`/project/${params.pid}/vizs`)
   }
 
   private pickSearchDashboard = (dashboardId) => (e) => {

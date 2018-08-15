@@ -45,7 +45,4 @@ export const SQL_FIELD_TYPES = ['type1', 'type2', 'type3', 'type4', 'type5', 'ty
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
-export const DEFAULT_DISPLAY_WIDTH = 1920
-export const DEFAULT_DISPLAY_HEIGHT = 1080
-
 export const ECHARTS_RENDERER = 'echarts'

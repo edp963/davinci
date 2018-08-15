@@ -30,7 +30,7 @@ import Bizlogic from './containers/Bizlogic/Bizlogic'
 import Widget from './containers/Widget'
 import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
-import Portal from './containers/Portal'
+// import Portal from './containers/Portal'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
 import Activate from './containers/Register/Activate'
@@ -233,7 +233,8 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           indexRoute: {
             onEnter: (_, replace) => {
               const { params } = _
-              replace(`/project/${params.pid}/portals`)
+              // replace(`/project/${params.pid}/portals`)
+              replace(`/project/${params.pid}/vizs`)
             }
           },
           childRoutes: [
@@ -242,11 +243,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               name: 'vizs',
               components: Viz
             },
-            {
-              path: '/project/:pid/portals',
-              name: 'portals',
-              component: Portal
-            },
+            // {
+            //   path: '/project/:pid/portals',
+            //   name: 'portals',
+            //   component: Portal
+            // },
             // {
             //   path: '/project/:pid/dashboard/:did/portal/:pid',
             //   name: 'dashboards',
@@ -282,12 +283,12 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
-            },
-            {
-              path: '/project/:pid/displays',
-              name: 'displays',
-              component: Display
             }
+            // {
+            //   path: '/project/:pid/displays',
+            //   name: 'displays',
+            //   component: Display
+            // }
           ]
         },
         {

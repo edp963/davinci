@@ -47,7 +47,10 @@ const initialState = fromJS({
   currentDatasources: {},
   currentLayersLoading: {},
   currentLayersQueryParams: {},
-  currentLayersCascadeSources: {}
+  currentLayersCascadeSources: {},
+
+  lastOperationType: '',
+  lastLayers: []
 })
 
 function displayReducer (state = initialState, action) {
@@ -94,6 +97,7 @@ function displayReducer (state = initialState, action) {
       return state.set('currentSlideLoading', true)
     case ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS:
       return state
+        .set('lastOperationType', ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS)
         .set('currentSlide', payload.result)
         .set('currentSlideLoading', false)
     case ActionTypes.EDIT_CURRENT_SLIDE_FAILURE:
@@ -140,6 +144,8 @@ function displayReducer (state = initialState, action) {
 
     case ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS:
       return state
+        .set('lastOperationType', ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS)
+        .set('lastLayers', [...payload.result])
         .set('currentLayers', [...currentLayers, ...payload.result])
         .set('currentLayersLoading', {
           ...layersLoading,
@@ -177,6 +183,8 @@ function displayReducer (state = initialState, action) {
         delete queryParams[id]
       })
       return state
+        .set('lastOperationType', ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS)
+        .set('lastLayers', currentLayers.filter((layer) => payload.ids.indexOf(layer.id.toString()) >= 0))
         .set('currentLayersStatus', Object.keys(layersStatus).reduce((acc, key) => {
           if (payload.ids.indexOf(key) < 0) {
             acc[key] = layersStatus[key]
@@ -185,10 +193,16 @@ function displayReducer (state = initialState, action) {
         }, {}))
         .set('currentLayers', currentLayers.filter((layer) => payload.ids.indexOf(layer.id.toString()) < 0))
     case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
-        payload.result.forEach((layer) => {
-          currentLayers.splice(currentLayers.findIndex((l) => l.id === layer.id), 1, layer)
-        })
-        return state.set('currentLayers', currentLayers.slice())
+      const copyLayers = fromJS(currentLayers).toJS()
+      const lastLayers = []
+      payload.result.forEach((layer) => {
+        lastLayers.push(copyLayers.find((l) => l.id === layer.id))
+        copyLayers.splice(copyLayers.findIndex((l) => l.id === layer.id), 1, layer)
+      })
+      return state
+        .set('lastOperationType', ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS)
+        .set('lastLayers', lastLayers)
+        .set('currentLayers', copyLayers)
 
     case LOAD_BIZDATAS_FROM_ITEM:
       return state
@@ -269,6 +283,8 @@ function displayReducer (state = initialState, action) {
       return state.set('clipboardLayers', payload.layers)
     case ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS:
       return state
+        .set('lastOperationType', ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS)
+        .set('lastLayers', [...payload.result])
         .set('currentLayers', [...currentLayers, ...payload.result])
         .set('currentLayersLoading', {
           ...layersLoading,
@@ -300,13 +316,6 @@ function displayReducer (state = initialState, action) {
           }, {})
         })
 
-    case ActionTypes.RECORD_OPERATION_DATA:
-        const operationRecords = state.get('operationRecords')
-        return state.set('operationRecords', [...operationRecords, payload.operation])
-    case ActionTypes.UNDO_OPERATION_SUCCESS:
-    case ActionTypes.REDO_OPERATION_SUCCESS:
-        return state.set('currentOperationCursor', payload.operationCursor)
-
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK:
       return state.set('currentDisplayShareInfoLoading', true)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_SUCCESS:
@@ -327,9 +336,13 @@ function displayReducer (state = initialState, action) {
 
 export default undoable(displayReducer, {
   filter: includeAction([
-    ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS
+    ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
+    ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
+    ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
+    ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS,
+    ActionTypes.PASTE_SLIDE_LAYERS_SUCCESS
   ]),
   debug: true,
-  undoType: ActionTypes.UNDO_OPERATION,
-  redoType: ActionTypes.REDO_OPERATION
+  undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
+  redoType: ActionTypes.REDO_OPERATION_SUCCESS
 })

@@ -12,19 +12,19 @@ const Search = Input.Search
 const styles = require('../Widget.less')
 
 interface IWidgetSelectorProps {
-  className: any,
-  widgets: any[],
-  multiple: boolean,
-  onWidgetsSelect: (widgets) => void,
+  className: any
+  widgets: any[]
+  multiple: boolean
+  widgetsSelected: any[]
+  onWidgetsSelect: (widgets) => void
 }
 
 interface IWidgetSelectorStates {
-  screenWidth: number,
-  kwWidget: string,
-  pageSize: number,
-  currentPage: number,
-  showSelected: false,
-  widgetsSelected: any[]
+  screenWidth: number
+  kwWidget: string
+  pageSize: number
+  currentPage: number
+  showSelected: false
 }
 
 export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidgetSelectorStates> {
@@ -35,8 +35,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
       kwWidget: '',
       pageSize: 24,
       currentPage: 1,
-      showSelected: false,
-      widgetsSelected: []
+      showSelected: false
     }
   }
 
@@ -67,13 +66,13 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   private getWidgets () {
     const {
-      widgets
+      widgets,
+      widgetsSelected
     } = this.props
 
     const {
       kwWidget,
-      showSelected,
-      widgetsSelected
+      showSelected
     } = this.state
 
     if (!Array.isArray(widgets)) {
@@ -116,17 +115,15 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
     } else {
       const {
         widgetsSelected
-      } = this.state
+      } = this.props
       const idx = widgetsSelected.findIndex((ws) => ws.id === w.id)
       newWidgetsSelected = [...widgetsSelected]
       idx < 0 ? newWidgetsSelected.push(w) : newWidgetsSelected.splice(idx, 1)
-      this.setState({ widgetsSelected: newWidgetsSelected })
       if (widgetsSelected.length <= 0 && this.state.showSelected) {
         this.setState({ showSelected: false })
       }
     }
 
-    this.setState({ widgetsSelected: newWidgetsSelected })
     onWidgetsSelect(newWidgetsSelected)
   }
 
@@ -139,15 +136,15 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
 
   public render () {
     const {
-      className
+      className,
+      widgetsSelected
     } = this.props
 
     const {
       screenWidth,
       pageSize,
       currentPage,
-      showSelected,
-      widgetsSelected
+      showSelected
     } = this.state
 
     const widgetsFiltered = this.getWidgets()

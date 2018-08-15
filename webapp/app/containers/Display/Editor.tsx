@@ -19,10 +19,12 @@
  */
 
 import * as React from 'react'
+import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import * as echarts from 'echarts/lib/echarts'
 import { createStructuredSelector } from 'reselect'
+import { RouteComponentProps } from 'react-router'
 
 import { compose } from 'redux'
 import reducer from './reducer'
@@ -44,7 +46,11 @@ import {
   makeSelectClipboardLayers,
   makeSelectCurrentLayersLoading,
   makeSelectCurrentDatasources,
-  makeSelectCurrentLayersQueryParams } from './selectors'
+  makeSelectCurrentLayersQueryParams,
+  makeSelectCanUndo,
+  makeSelectCanRedo,
+  makeSelectCurrentState,
+  makeSelectNextState } from './selectors'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 import slideSettings from '../../assets/json/slideSettings'
 
@@ -78,17 +84,10 @@ import {
   undoOperation,
   redoOperation  } from './actions'
 import {
-  DEFAULT_DISPLAY_WIDTH,
-  DEFAULT_DISPLAY_HEIGHT,
-  DEFAULT_DISPLAY_GRID_DISTANCE,
-  DEFAULT_DISPLAY_SCALE,
-  DEFAULT_DISPLAY_SCALE_MODE,
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import widgetlibs from '../../assets/json/widgetlib'
 const message = require('antd/lib/message')
-const Modal = require('antd/lib/modal')
-const confirm = Modal.confirm
 const styles = require('./Display.less')
 
 import {
@@ -100,11 +99,14 @@ import {
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GraphTypes } from 'utils/util'
-import { dashboardItemEdited } from '../Dashboard/actions';
-import { LayerContextMenu } from './components/LayerContextMenu';
+import { LayerContextMenu } from './components/LayerContextMenu'
 
-interface IEditorProps {
-  params: any
+interface IParams {
+  pid: number
+  displayId: number
+}
+
+interface IEditorProps extends RouteComponentProps<{}, IParams> {
   widgets: any[]
   bizlogics: any[]
   currentDisplay: any
@@ -116,6 +118,10 @@ interface IEditorProps {
   currentDatasources: object
   currentLayersLoading: object
   currentLayersQueryParams: object
+  canUndo: boolean
+  canRedo: boolean
+  currentState
+  nextState
   onLoadWidgets: (projectId) => void
   onLoadBizlogics: (projectId) => any
   onEditCurrentDisplay: (display: any, resolve?: any) => void
@@ -130,8 +136,8 @@ interface IEditorProps {
   onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onCopySlideLayers: (slideId, layers) => void
   onPasteSlideLayers: (displayId, slideId, layers) => void
-  onUndo: () => void
-  onRedo: () => void
+  onUndo: (currentState) => void
+  onRedo: (nextState) => void
   onHideNavigator: () => void,
   onLoadBizdatasFromItem: (
     dashboardItemId: number,
@@ -154,11 +160,12 @@ interface IEditorProps {
 }
 
 interface IEditorStates {
-  slideParams: any,
-  editorWidth: number,
-  editorHeight: number,
-  editorPadding: string,
-  scale: number,
+  slideParams: any
+  currentLocalLayers: any[]
+  editorWidth: number
+  editorHeight: number
+  editorPadding: string
+  scale: number
   sliderValue: number
   triggerType: string
 }
@@ -169,6 +176,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     this.state = {
       slideParams: {},
+      currentLocalLayers: [],
       editorWidth: 0,
       editorHeight: 0,
       editorPadding: '',
@@ -218,7 +226,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   public componentWillReceiveProps (nextProps: IEditorProps) {
-    const { currentSlide } = nextProps
+    const { currentSlide, currentLayers } = nextProps
     if (currentSlide !== this.props.currentSlide) {
       const { slideParams } = JSON.parse(currentSlide.config)
       this.setState({
@@ -226,6 +234,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       }, () => {
         this.doScale(1)
       })
+    }
+    if (currentLayers !== this.props.currentLayers) {
+      this.setState({ currentLocalLayers: fromJS(currentLayers).toJS() })
     }
   }
 
@@ -310,7 +321,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   private getChartData = (renderType: string, itemId: number, widgetId: number, queryParams?: any) => {
     const {
       widgets,
-      currentLayers,
       currentLayersQueryParams,
       onLoadBizdatasFromItem
     } = this.props
@@ -401,21 +411,35 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private resizeLayer = (itemId, delta) => {
     const { deltaWidth, deltaHeight } = delta
-    const { currentLayersStatus, onResizeSelectedLayer } = this.props
-    if (currentLayersStatus[itemId]) {
-      onResizeSelectedLayer(itemId, deltaWidth, deltaHeight)
-    }
+    const { currentLayersStatus } = this.props
+    const { currentLocalLayers } = this.state
+    const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
+    copyCurrentLocalLayers.forEach((layer) => {
+      if (!currentLayersStatus[layer.id] || itemId === layer.id) { return }
+
+      const layerParams = JSON.parse(layer.params)
+      const { width, height } = layerParams
+      layer.params = JSON.stringify({
+        ...layerParams,
+        width: width + deltaWidth,
+        height: height + deltaHeight
+      })
+    })
+    this.setState({ currentLocalLayers: copyCurrentLocalLayers })
+    // const { onResizeSelectedLayer } = this.props
+    // onResizeSelectedLayer(itemId, deltaWidth, deltaHeight)
   }
 
   private resizeLayerStop = (layer: any, size: any, itemId: any) => {
-    const { currentLayersStatus, currentSelectedLayers } = this.props
+    const { currentLayersStatus } = this.props
+    const { currentLocalLayers } = this.state
     const layerParams = {
       ...JSON.parse(layer.params),
       ...size
     }
     let attached = []
     if (currentLayersStatus[layer.id]) {
-      attached = currentSelectedLayers.filter((l) => l.id !== layer.id)
+      attached = currentLocalLayers.filter((l) => currentLayersStatus[l.id] && l.id !== layer.id)
     }
     this.onEditLayers([{
       ...layer,
@@ -622,14 +646,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         this.moveSelectedLayersPosition({ positionXD: gridDistance, positionYD: 0 })
         break
       case Keys.Delete:
-        confirm({
-          title: '删除图层',
-          content: '确认删除选中的图层？',
-          onOk: () => {
-            this.deleteLayers()
-          },
-          onCancel: () => { /* */ }
-        })
+        this.deleteLayers()
         break
       case Keys.Copy:
         this.copyLayers()
@@ -662,6 +679,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onEditDisplayLayers(currentDisplay.id, currentSlide.id, layers)
   }
 
+  private undo = () => {
+    const { onUndo, currentState } = this.props
+    onUndo(currentState)
+  }
+
+  private redo = () => {
+    const { onRedo, nextState } = this.props
+    onRedo(nextState)
+  }
+
   public render () {
     const {
       params,
@@ -672,14 +699,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentDatasources,
       widgets,
       currentDisplay,
-      currentLayers,
       onSelectLayer,
-      onUndo,
-      onRedo
+      canUndo,
+      canRedo
     } = this.props
 
     const {
       slideParams,
+      currentLocalLayers,
       editorWidth,
       editorHeight,
       editorPadding,
@@ -689,7 +716,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     if (!currentDisplay) { return null }
 
-    const layerItems =  !Array.isArray(widgets) ? null : currentLayers.map((layer, idx) => {
+    const layerItems =  !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
+      console.log('rerender: ', layer.name, layer.params)
       const widget = widgets.find((w) => w.id === layer.widgetId)
       const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
@@ -707,12 +735,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           chartInfo={chartInfo}
           data={data}
 
-          scaleHeight={scale}
-          scaleWidth={scale}
+          scale={[scale, scale]}
           slideParams={slideParams}
           layer={layer}
           loading={loading}
-          layersStatus={currentLayersStatus}
+          selected={currentLayersStatus[layerId]}
           onSelectLayer={onSelectLayer}
           onGetChartData={this.getChartData}
           onRenderChart={this.renderChart}
@@ -771,8 +798,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onDeleteLayers={this.deleteLayers}
           onCopyLayers={this.copyLayers}
           onPasteLayers={this.pasteLayers}
-          onUndo={onUndo}
-          onRedo={onRedo}
+          onUndo={this.undo}
+          onRedo={this.redo}
+          canUndo={canUndo}
+          canRedo={canRedo}
         />
         <DisplayBody>
           <DisplayContainer
@@ -797,7 +826,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           />
           <DisplaySidebar>
             <LayerList
-              layers={currentLayers}
+              layers={currentLocalLayers}
               layersStatus={currentLayersStatus}
               selectedLayers={currentSelectedLayers}
               onSelectLayer={onSelectLayer}
@@ -824,7 +853,11 @@ const mapStateToProps = createStructuredSelector({
   currentSelectedLayers: makeSelectCurrentSelectedLayers(),
   currentDatasources: makeSelectCurrentDatasources(),
   currentLayersLoading: makeSelectCurrentLayersLoading(),
-  currentLayersQueryParams: makeSelectCurrentLayersQueryParams()
+  currentLayersQueryParams: makeSelectCurrentLayersQueryParams(),
+  canUndo: makeSelectCanUndo(),
+  canRedo: makeSelectCanRedo(),
+  currentState: makeSelectCurrentState(),
+  nextState: makeSelectNextState()
 })
 
 function mapDispatchToProps (dispatch) {
@@ -844,8 +877,8 @@ function mapDispatchToProps (dispatch) {
     onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
     onCopySlideLayers: (slideId, layers) => dispatch(copySlideLayers(slideId, layers)),
     onPasteSlideLayers: (displayId, slideId, layers) => dispatch(pasteSlideLayers(displayId, slideId, layers)),
-    onUndo: () => dispatch(undoOperation()),
-    onRedo: () => dispatch(redoOperation()),
+    onUndo: (currentState) => dispatch(undoOperation(currentState)),
+    onRedo: (nextState) => dispatch(redoOperation(nextState)),
     onHideNavigator: () => dispatch(hideNavigator())
   }
 }

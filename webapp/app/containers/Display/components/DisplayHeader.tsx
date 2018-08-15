@@ -19,6 +19,7 @@
  */
 
 import * as React from 'react'
+import * as classnames from 'classnames'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
@@ -55,6 +56,8 @@ interface IDisplayHeaderProps {
   currentDisplayShareInfo?: string
   currentDisplaySecretInfo?: string
   currentDisplayShareInfoLoading?: boolean
+  canUndo: boolean
+  canRedo: boolean
   onAddLayers: (layers: any[]) => void
   onDeleteLayers: () => void
   onCopyLayers: () => void
@@ -174,6 +177,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
     )
   }
 
+  private onUndoClick = () => {
+    const { canUndo, onUndo } = this.props
+    if (canUndo) {
+      onUndo()
+    }
+  }
+
+  private onRedoClick = () => {
+    const { canRedo, onRedo } = this.props
+    if (canRedo) {
+      onRedo()
+    }
+  }
+
   public render () {
     const {
       widgetSelectorVisible,
@@ -187,11 +204,18 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
       onDeleteLayers,
       onCopyLayers,
       onPasteLayers,
-      onUndo,
-      onRedo
+      canUndo,
+      canRedo
     } = this.props
 
     const {pid, displayId} = params
+
+    const undoClass = classnames({
+      [styles.disabled]: !canUndo
+    })
+    const redoClass = classnames({
+      [styles.disabled]: !canRedo
+    })
 
     const menu = (
       <Menu>
@@ -218,7 +242,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           <ul className={styles.historyBack}>
             <li>
               <Tooltip placement="bottom" title="返回">
-                <Link to={`/project/${pid}/displays`}>
+                <Link to={`/project/${pid}/vizs`}>
                   <Icon type="left-circle-o"/>
                 </Link>
               </Tooltip>
@@ -249,26 +273,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
                 <i className="iconfont icon-niantie" onClick={onPasteLayers} />
               </Tooltip>
             </li>
-            <li>
+            <li className={undoClass}>
               <Tooltip placement="bottom" title="撤销">
-                <i className="iconfont icon-chexiao" onClick={onUndo} />
+                <i className={`iconfont icon-chexiao`} onClick={this.onUndoClick} />
               </Tooltip>
             </li>
-            <li>
+            <li className={redoClass}>
               <Tooltip placement="bottom" title="前进">
-                <i className="iconfont icon-qianjin" onClick={onRedo} />
+                <i className="iconfont icon-qianjin" onClick={this.onRedoClick} />
               </Tooltip>
             </li>
             <li>
-              <Popconfirm
-                  title="确定删除？"
-                  placement="bottom"
-                  onConfirm={onDeleteLayers}
-              >
-                <Tooltip title="删除" placement="right">
-                  <Icon type="delete"/>
-                </Tooltip>
-              </Popconfirm>
+              <Tooltip placement="bottom" title="删除">
+                <Icon type="delete" onClick={this.deleteLayers}/>
+              </Tooltip>
             </li>
           </ul>
           <ul className={styles.commandGroup}>
