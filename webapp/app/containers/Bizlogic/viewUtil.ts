@@ -56,13 +56,21 @@ export function toListBF (tree) {
  */
 export const SQL_FIELD_TYPES = {
     date: ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR'],
-    number: ['TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'BIGINT',
-        'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL', 'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'],
-    string: ['CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT', 'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB', 'BINARY', 'VARBINARY', 'ENUM', 'SET'],
+    number: [
+        'TINYINT', 'SMALLINT', 'MEDIUMINT', 'INT', 'INTEGER', 'BIGINT',
+        'FLOAT', 'DOUBLE', 'DOUBLE PRECISION', 'REAL', 'DECIMAL',
+        'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
+    ],
+    string: [
+        'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
+        'JSON', 'LINESTRING', 'MULTILINESTRING',
+        'TINYBLOB', 'MEDIUMBLOB', 'BLOB', 'LONGBLOB',
+        'BINARY', 'VARBINARY', 'ENUM', 'SET'
+    ],
     geoCountry: [],
     geoProvince: [],
     geoCity: []
-  }
+}
 
 
 
