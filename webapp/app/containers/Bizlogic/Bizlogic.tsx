@@ -117,7 +117,7 @@ interface IBizlogicFormProps {
   onEditBizlogic: (values: object, resolve: any) => any
   onHideNavigator: () => void
   onLoadSources: (projectId: number, resolve: any) => any
-  onLoadProjects: (resolve: any) => any
+  onLoadProjects: (resolve?: any) => any
   onLoadOrganizationTeams: (id: number) => any
   onLoadBizlogics: (id: number) => any
   projects: any[]
@@ -616,12 +616,19 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (result) {
         const { resultset, columns } = result
 
-        // todo: fieldType判断
         columns.map((i) => {
-          console.log({i})
-          // i.fieldType = SQL_FIELD_TYPES.indexOf(i.type) < 0 ? 'type3' : 'type2'
-          i.modelType = SQL_NUMBER_TYPES.indexOf(i.type) < 0 ? '维度' : '度量'
-          i.isLocationInfo = false
+          const { date } = SQL_FIELD_TYPES
+          let iVisualType
+          for (const item in SQL_FIELD_TYPES) {
+            if (SQL_FIELD_TYPES.hasOwnProperty(item)) {
+              if (SQL_FIELD_TYPES[item].indexOf(i.type) >= 0) {
+                iVisualType = item
+              }
+            }
+          }
+
+          i.visualType = iVisualType || 'string'
+          i.modelType = SQL_NUMBER_TYPES.indexOf(i.type) < 0 ? 'category' : 'value'
           return i
         })
         this.setState({
@@ -639,11 +646,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { executeColumns } = this.state
     const obj = {
       name: record.name,
-      type: record.type,
+      sqlType: record.type,
       key: record.key,
-      fieldType: item === 'filedType' ? val : record.fieldType,
-      modelType: item === 'modelType' ? val.target.value : record.modelType,
-      isLocationInfo: item === 'isLocationInfo' ? !record.isLocationInfo : record.isLocationInfo
+      visualType: item === 'visualType' ? val : record.visualType,
+      modelType: item === 'modelType'
+        ? val.target.value === '维度' ? 'category' : 'value'
+        : record.modelType
     }
     executeColumns.splice(executeColumns.findIndex((c) => c.name === record.name), 1, obj)
     this.setState({
@@ -682,12 +690,11 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         } else {
           const modelObj = {}
           executeColumns.forEach((m) => {
-            const { name, type, fieldType, modelType, isLocationInfo  } = m
+            const { name, sqlType, visualType, modelType  } = m
             modelObj[name] = {
-              type,
-              fieldType,
-              modelType,
-              isLocationInfo
+              sqlType,
+              visualType,
+              modelType
             }
           })
 
@@ -876,13 +883,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       // }
     })
 
-    const sqlFieldTypes = []
+    const sqlVisualTypes = []
     for (const item in SQL_FIELD_TYPES) {
-      if (SQL_FIELD_TYPES.hasOwnProperty) {
-        sqlFieldTypes.push(item)
+      if (SQL_FIELD_TYPES.hasOwnProperty(item)) {
+        sqlVisualTypes.push(item)
       }
     }
-    const optionSource = sqlFieldTypes.map((opt) => <Option key={opt} value={opt}>{opt}</Option>)
+    const optionSource = sqlVisualTypes.map((opt) => <Option key={opt} value={opt}>{opt}</Option>)
 
     const modelColumns = [{
       title: '表名',
@@ -893,44 +900,34 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }, {
       title: '类型',
       dataIndex: 'modelType',
-      key: 'tmodelTypeype',
+      key: 'modelType',
       className: `${utilStyles.textAlignLeft}`,
       width: '25%',
-      render: (text, record) => (
+      render: (text, record) => {
+        return (
         <RadioGroup
-          options={['维度', '度量']}
-          value={record.modelType}
+          options={['维度', '指标']}
+          value={record.modelType === 'category' ? '维度' : '指标'}
           onChange={this.selectModelItem(record, 'modelType')}
-        />)
+        />)}
     }, {
       title: '字段类型',
-      dataIndex: 'filedType',
+      dataIndex: 'visualType',
       className: `${utilStyles.textAlignLeft}`,
-      key: 'filedType',
+      key: 'visualType',
       width: '25%',
       render: (text, record) => {
         return (
           <Select
             size="small"
             style={{ width: '50%' }}
-            value={record.fieldType}
-            onChange={this.selectModelItem(record, 'filedType')}
+            value={record.visualType}
+            onChange={this.selectModelItem(record, 'visualType')}
           >
             {optionSource}
           </Select>
         )
       }
-    }, {
-      title: '是否为地理位置信息',
-      dataIndex: 'isLocationInfo',
-      key: 'isLocationInfo',
-      className: `${utilStyles.textAlignLeft}`,
-      render: (text, record) => (
-        <Checkbox
-          onChange={this.selectModelItem(record, 'isLocationInfo')}
-          checked={record.isLocationInfo}
-        />
-      )
     }]
 
     let sqlValidatePanel
