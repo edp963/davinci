@@ -7,6 +7,7 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Tag = require('antd/lib/tag')
 const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
+const Pagination = require('antd/lib/pagination')
 const styles = require('./Project.less')
 import * as classnames from 'classnames'
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -32,16 +33,18 @@ import ComponentPermission from '../Account/components/checkMemberPermission'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 const utilStyles = require('../../assets/less/util.less')
+import HistoryStack from './historyStack'
+const  historyBrowser = new HistoryStack('historyBrowser')
 
 interface IProjectsProps {
   router: InjectedRouter
   projects: IProject[]
   loginUser: any
-  searchProject?: {list: any[]}
+  searchProject?: {list: any[], total: number, pageNum: number, pageSize: number}
   organizations: any
   onTransferProject: (id: number, orgId: number) => any
   onEditProject: (project: any, resolve: () => any) => any
-  onLoadProjects: (resolve?:()=>any) => any
+  onLoadProjects: (resolve?: () => any) => any
   onAddProject: (project: any, resolve: () => any) => any
   onLoadOrganizations: () => any
   onDeleteProject: (id: number) => any
@@ -59,6 +62,8 @@ interface IProjectsState {
   searchMaskVisible: boolean
   searchKeywordsVisible: boolean
   keywords: string
+  currentPage: number
+  pageSize: number
 }
 interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
@@ -82,7 +87,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       joinPanel: true,
       searchMaskVisible: true,
       searchKeywordsVisible: false,
-      keywords: ''
+      keywords: '',
+      currentPage: 1,
+      pageSize: 10
     }
   }
 
@@ -185,8 +192,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const { keywords } = this.state
     const param = {
       keywords,
-      pageNum: 1,
-      pageSize: 10
+      pageNum: this.state.currentPage,
+      pageSize: this.state.pageSize
     }
     this.setState({
       searchMaskVisible: false
@@ -215,11 +222,18 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         callback(err)
       })
   }
+
   private toProject = (d: any) => () => {
     const pid = d.id
     this.props.router.push(`/project/${pid}`)
     this.props.onLoadProjectDetail(pid)
+    this.saveHistory(d)
   }
+
+  private saveHistory = (d: any) => {
+    historyBrowser.pushNode(d)
+  }
+
   private hideSearchMask = () => {
     this.setState({
       searchMaskVisible: true,
@@ -229,8 +243,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   private onChangeKeywords = (e) => {
       const param = {
         keywords: e.target.value.trim(),
-        pageNum: 1,
-        pageSize: 10
+        pageNum: this.state.currentPage,
+        pageSize: this.state.pageSize
       }
       this.setState({
         keywords: e.target.value.trim()
@@ -239,8 +253,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   private selectKeywords = (keyword) => () => {
     const param = {
       keywords: keyword,
-      pageNum: 1,
-      pageSize: 10
+      pageNum: this.state.currentPage,
+      pageSize: this.state.pageSize
     }
     this.setState({
       keywords: keyword,
@@ -258,6 +272,32 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       return true
     }
   }
+  private onShowSizeChange = (current, pageSize) => {
+    this.setState({
+      currentPage: current,
+      pageSize
+    }, () => {
+      const param = {
+        keywords: this.state.keywords,
+        pageNum: this.state.currentPage,
+        pageSize: this.state.pageSize
+      }
+      this.props.onSearchProject(param)
+    })
+  }
+  private onPaginationChange = (page) => {
+    this.setState({
+      currentPage: page
+    }, () => {
+      const param = {
+        keywords: this.state.keywords,
+        pageNum: this.state.currentPage,
+        pageSize: this.state.pageSize
+      }
+      this.props.onSearchProject(param)
+    })
+  }
+
   public render () {
     const { formType, formVisible, modalLoading } = this.state
     const { onDeleteProject, organizations, projects, searchProject, loginUser } = this.props
@@ -437,8 +477,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
         return colItems
       }) : ''
-    const history =  projects
-      ? projects.map((d: IProject) => {
+    const historyBrowserAll = historyBrowser.getAll()
+    const history =  historyBrowserAll
+      ? historyBrowserAll.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic || 9}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
@@ -455,7 +496,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
         return colItems
       }) : ''
-    const projectSearchItems = searchProject && searchProject.list ? searchProject.list.map((d: IProject) => {
+    const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
       const path = require(`../../assets/images/bg${d.pic || 9}.png`)
       const colItems = (
           <Col
@@ -491,6 +532,21 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       )
       return colItems
     }) : ''
+    let projectSearchPagination = void 0
+    if (searchProject) {
+      projectSearchPagination =
+        <Pagination
+          //  simple={screenWidth < 768 || screenWidth === 768}
+          showSizeChanger
+          defaultCurrent={2}
+          total={searchProject.total}
+          onShowSizeChange={this.onShowSizeChange}
+          onChange={this.onPaginationChange}
+          defaultPageSize={10}
+          pageSizeOptions={['10', '15', '18']}
+          current={this.state.currentPage}
+        />
+    }
     const maskStyle = classnames({
       [utilStyles.hide]: this.state.searchMaskVisible,
       [styles.mask]: true
@@ -521,9 +577,12 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       [utilStyles.hide]: this.computSearchListWrapperStyle(),
       [styles.searchListWrapper]: true
     })
-
+    const wrapper = classnames({
+      [styles.wrapper]: true,
+      [styles.overflowY]: this.state.searchMaskVisible
+    })
     return (
-      <div className={styles.wrapper}>
+      <div className={wrapper}>
         <div className={styles.search}>
           <div  className={styles.searchWrapper}>
             <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
@@ -557,9 +616,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                 </Row>
               </Box.Title>
             </Box.Header>
-            <div className={styles.listPadding}>
+            <div className={styles.listPadding} style={{overflow: 'auto'}}>
               <Row gutter={16}>
                 {projectSearchItems}
+              </Row>
+              <Row type="flex" justify="end">
+                <Col>
+                  {projectSearchPagination}
+                </Col>
               </Row>
             </div>
           </Box>
