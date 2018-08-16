@@ -44,6 +44,7 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Breadcrumb = require('antd/lib/breadcrumb')
 const utilStyles = require('../../assets/less/util.less')
 import { PaginationProps } from 'antd/lib/pagination'
+import ModulePermission from '../Account/components/checkModulePermission'
 
 interface ICurrentDashboard {
   config: string
@@ -431,7 +432,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-
+    const ProviderButton = ModulePermission('schedule')(Button)
     const columns = [
       {
         title: '名称',
@@ -556,7 +557,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
               </Box.Title>
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
-                  <Button type="primary" icon="plus" onClick={this.showAdd} />
+                  <ProviderButton type="primary" icon="plus" onClick={this.showAdd} />
                 </Tooltip>
               </Box.Tools>
             </Box.Header>
