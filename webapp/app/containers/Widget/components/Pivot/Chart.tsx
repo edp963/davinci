@@ -74,6 +74,10 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
     this.renderChart()
   }
 
+  public componentWillUnmount () {
+    // dispose chart instances
+  }
+
   private calcChartSize = (props: IChartProps) => {
     const { dimetionAxisCount, metricAxisCount, chart, drawingData } = props
     const { extraMetricCount, elementSize, unitMetricWidth, unitMetricHeight } = drawingData

@@ -62,7 +62,7 @@ export function* addWidget ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.widget,
-      data: writeAdapter(payload.widget)
+      data: payload.widget
     })
 
     const result = readObjectAdapter(asyncData)

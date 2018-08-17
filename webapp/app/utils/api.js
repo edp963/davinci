@@ -31,7 +31,6 @@ export default {
   bizlogic: `${host}/views`,
   // bizdata: `${host}/bizdatas`,
   widget: `${host}/widgets`,
-  dashboard: `${host}/dashboards`,
   display: `${host}/displays`,
   share: `${host}/share`,
   checkName: `${host}/check`,

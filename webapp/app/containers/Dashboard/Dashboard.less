@@ -590,16 +590,7 @@
   filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);    
 }
 
-.portal {
-  .search, .plus {
-    cursor: pointer;
-  }
-  .search:before, .plus:before {
-    padding: 0 8px;
-  }
-}
-
-.dashboardSearch {
+.portalTreeSearch {
   overflow-x: auto;
   text-align: center;
   ul {
@@ -617,69 +608,84 @@
   line-height: 26px;
 }
 
-.dashboardBody {
-  display: flex;
-  flex-direction: row;
-  margin-top: -5px;
+.portal {
+  width: 100%;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 
-  .dashboardTreeNode {
-    height: 100%;
-    overflow-y: auto;
-    padding-bottom: 40px;
-  }
-
-  .dashboardTree {
-    width: 190px;
-    left: 0;
+  .portalHeader {
     flex-shrink: 0;
-    overflow: hidden;
-    border-right: 1px solid #d9d9d9;
-    .portalTitle {
-      line-height: 32px;
-      font-weight: 700;
-      display: inline-block;
-      font-size: 14px;
-      width: 100px;
+    height: 40px;
+    background: @white;
+    border-bottom: 1px solid @border-color-base;
+
+    .title {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 40px;
     }
-    .portalAction {
-      float: right;
-      margin-top: 7px;
-      margin-right: 2px;
+  
+    .historyBack {
+      padding-left: 13px;
+      line-height: 40px;
+      cursor: pointer;
+
+      .backIcon:before {
+        font-size: 18px !important;
+      }
     }
-    .dashboardTitle, .portalTitle {
+  }
+
+  .portalBody {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+  
+    .portalTree {
+      flex-shrink: 0;
+      width: 190px;
+      padding: 8px;
+      border-right: 1px solid #d9d9d9;
       overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      display: inline-block;
-      vertical-align: middle;
+      display: flex;
+      flex-direction: column;
+
+      .portalRow {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+      
+        .search, .plus {
+          cursor: pointer;
+        }
+        .search:before, .plus:before {
+          padding: 0 8px;
+        }
+      }
+
+      .portalTitle {
+        flex: 1;
+        line-height: 32px;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 14px;
+        .ellipsis;
+      }
+
+      .portalAction {
+        flex-shrink: 0;
+      }
+
+      .portalTreeNode {
+        flex: 1;
+        overflow-y: auto;
+      }
     }
-  }
-  .gridClass {
-    width: 100%;
-    flex-shrink: 1;
-  }
-}
 
-.header {
-  border-radius: 4px 4px 0 0;
-  background: #fff;
-  color: rgba(0,0,0,.65);
-  border-bottom: 1px solid #e9e9e9;
-  height: 40px;
-
-  .title {
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 40px;
-  }
-
-  .historyBack {
-    padding-left: 13px;
-    line-height: 40px;
-    cursor: pointer;
-    .backIcon:before {
-      font-size: 18px !important;
+    .gridClass {
+      flex: 1
     }
   }
 }
@@ -694,7 +700,7 @@
   }
 }
 
-.dashboardItem {
+.portalTreeItem {
   .itemAction {
     display: none !important;
   }
@@ -710,10 +716,10 @@
       }
     }
   }
-}
 
-.dashboardName {
-  margin-left:8px;
-  font-weight: 500;
+  .itemName {
+    margin-left:8px;
+    font-weight: 500;
+  }
 }
 

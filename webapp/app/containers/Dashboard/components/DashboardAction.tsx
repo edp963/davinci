@@ -77,14 +77,14 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const titleWidth = `${130 - 18 * depth}px`
 
     return (
-      <span className={styles.dashboardItem}>
+      <span className={styles.portalTreeItem}>
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth}}>{item.name}</h4>
+              ? <h4 className={styles.protalTitle} style={{ width: titleWidth}}>{item.name}</h4>
               : <span style={{width: titleWidth}} onClick={initChangeDashboard(item.id)} className={styles.dashboardTitle}>
                   <Icon type="dot-chart" />
-                  <span className={styles.dashboardName}>{item.name}</span>
+                  <span className={styles.itemName}>{item.name}</span>
                 </span>
           }
           <Popover

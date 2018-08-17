@@ -280,55 +280,48 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
 
     const widgetsArr = filteredWidgets || widgets
 
-    let {bizlogics} = this.props
-    bizlogics = bizlogics ? bizlogics.filter((widget) => widget['create_by'] === loginUser.id) : []
-    // filter 非用户原创widget 不予显示
     const cols = widgetsArr
-      ? widgetsArr
-        .filter((widget) => widget['create_by'] === loginUser.id)
-        .map((w, index) => {
-          const widgetType = JSON.parse(w.chart_params).widgetType
+      ? widgetsArr.map((w, index) => {
+        const startCol = (currentPage - 1) * pageSize + 1
+        const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
 
-          const startCol = (currentPage - 1) * pageSize + 1
-          const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
-
-          let colItems: any = ''
-          if ((index + 1 >= startCol && index + 1 <= endCol) ||
-            (startCol > widgetsArr.length)) {
-            colItems = (
-              <Col
-                xl={4}
-                lg={6}
-                md={8}
-                sm={12}
-                xs={24}
-                key={w.id}
-                onClick={this.toWorkbench(w.id)}
-              >
-                <div className={styles.widget}>
-                  <h3 className={styles.title}>{w.name}</h3>
-                  <p className={styles.content}>{w.desc}</p>
-                  <i className={`${styles.pic} iconfont ${iconMapping[widgetType]}`} />
-                  <Tooltip title="复制">
-                    <Icon className={styles.copy} type="copy" onClick={this.onCopy('copy', w)} />
+        let colItems: any = ''
+        if ((index + 1 >= startCol && index + 1 <= endCol) ||
+          (startCol > widgetsArr.length)) {
+          colItems = (
+            <Col
+              xl={4}
+              lg={6}
+              md={8}
+              sm={12}
+              xs={24}
+              key={w.id}
+              onClick={this.toWorkbench(w.id)}
+            >
+              <div className={styles.widget}>
+                <h3 className={styles.title}>{w.name}</h3>
+                <p className={styles.content}>{w.description}</p>
+                {/* <i className={`${styles.pic} iconfont ${iconMapping[widgetType]}`} /> */}
+                <Tooltip title="复制">
+                  <Icon className={styles.copy} type="copy" onClick={this.onCopy('copy', w)} />
+                </Tooltip>
+                <Popconfirm
+                  title="确定删除？"
+                  placement="bottom"
+                  onConfirm={onDeleteWidget(w.id)}
+                >
+                  <Tooltip title="删除">
+                    <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
                   </Tooltip>
-                  <Popconfirm
-                    title="确定删除？"
-                    placement="bottom"
-                    onConfirm={onDeleteWidget(w.id)}
-                  >
-                    <Tooltip title="删除">
-                      <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
-                    </Tooltip>
-                  </Popconfirm>
-                </div>
-              </Col>
-            )
-          }
+                </Popconfirm>
+              </div>
+            </Col>
+          )
+        }
 
-          return colItems
-        })
-      : ''
+        return colItems
+      })
+    : ''
 
     const widgetlibOptions = widgetlibs.map((w) => (
       <Select.Option key={w.id} value={`${w.id}`}>

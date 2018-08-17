@@ -48,7 +48,7 @@ module.exports = (options) => ({
       },
       {
         test: /\.css$/,
-        include: /app\/assets/,
+        include: [/app[\\\/]assets/],
         use: ['style-loader', 'css-loader', 'postcss-loader']
       },
       {

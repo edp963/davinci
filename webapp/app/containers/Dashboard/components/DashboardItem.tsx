@@ -28,12 +28,14 @@ import SharePanel from '../../../components/SharePanel'
 import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
+import Pivot from '../../Widget/components/Pivot'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Popover = require('antd/lib/popover')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
+import { decodeMetricName } from '../../Widget/components/util'
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
 const styles = require('../Dashboard.less')
@@ -46,13 +48,10 @@ interface IDashboardItemProps {
   chartInfo: any
   data: any
   loading: boolean
-  isReadOnly: boolean
   triggerType: string
   triggerParams: string
-  isAdmin: boolean
-  isShared: boolean
-  isShare: boolean
-  isDownload: boolean
+  shouldShare?: boolean
+  shouldDownload?: boolean
   shareInfo: string
   secretInfo: string
   shareInfoLoading: boolean
@@ -65,7 +64,6 @@ interface IDashboardItemProps {
   onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
   onShowEdit: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowWorkbench: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
-  onShowFiltersForm: (itemId: number, keys: any[], types: any[]) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem: (itemId: number) => () => void
   onDownloadCsv: (itemId: number) => (shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
@@ -97,7 +95,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private frequent: NodeJS.Timer = void 0
 
   public componentWillMount () {
-    this.initControlCascadeSource(this.props)
+    // this.initControlCascadeSource(this.props)
   }
 
   public componentWillUpdate (nextProps) {
@@ -125,9 +123,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       this.setFrequent(nextProps)
     }
 
-    if (nextProps.widget !== this.props.widget) {
-      this.initControlCascadeSource(nextProps)
-    }
+    // if (nextProps.widget !== this.props.widget) {
+    //   this.initControlCascadeSource(nextProps)
+    // }
   }
 
   public componentWillUnmount () {
@@ -215,16 +213,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  private initControlCascadeSource = (props) => {
-    const { itemId, widget, onGetCascadeSource } = props
-    const { query_params } = widget
+  // private initControlCascadeSource = (props) => {
+  //   const { itemId, widget, onGetCascadeSource } = props
+  //   const { query_params } = widget
 
-    JSON.parse(query_params).forEach((c) => {
-      if (c.type === 'cascadeSelect' && !c.parentColumn) {
-        onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
-      }
-    })
-  }
+  //   JSON.parse(query_params).forEach((c) => {
+  //     if (c.type === 'cascadeSelect' && !c.parentColumn) {
+  //       onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
+  //     }
+  //   })
+  // }
 
   private onCascadeSelectChange = (controlId, column, parents) => {
     const { itemId, widget, onGetCascadeSource } = this.props
@@ -240,10 +238,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       chartInfo,
       data,
       loading,
-      isAdmin,
-      isShared,
-      isShare,
-      isDownload,
+      shouldShare,
+      shouldDownload,
       shareInfo,
       secretInfo,
       shareInfoLoading,
@@ -252,9 +248,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       interactId,
       cascadeSources,
       onShowEdit,
-      isReadOnly,
       onShowWorkbench,
-      onShowFiltersForm,
       onDeleteDashboardItem,
       onDownloadCsv,
       onTurnOffInteract,
@@ -285,25 +279,22 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const menu = (
       <Menu>
-        {isReadOnly ? <Menu.Item className={styles.menuItem}>
-            <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
-          </Menu.Item> : ''}
         <Menu.Item className={styles.menuItem}>
-          <span className={styles.menuText} onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])}>条件查询</span>
+          <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
         </Menu.Item>
-        {isReadOnly ? <Menu.Item className={styles.menuItem}>
-            <Popconfirm
-              title="确定删除？"
-              placement="bottom"
-              onConfirm={onDeleteDashboardItem(itemId)}
-            >
-              <span className={styles.menuText}>删除</span>
-            </Popconfirm>
-          </Menu.Item> : ''}
+        <Menu.Item className={styles.menuItem}>
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={onDeleteDashboardItem(itemId)}
+          >
+            <span className={styles.menuText}>删除</span>
+          </Popconfirm>
+        </Menu.Item>
       </Menu>
     )
 
-    const userDownloadButton = isDownload
+    const userDownloadButton = shouldDownload
       ? (
         <Tooltip title="下载数据">
           <Popover
@@ -326,7 +317,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       ) : void 0
 
-    const shareButton = isShare
+    const shareButton = shouldShare
       ? (
         <Tooltip title="分享">
           <Popover
@@ -352,26 +343,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         </Tooltip>
       ) : void 0
 
-    const widgetButton = isAdmin && isReadOnly
-      ? (
-        <Tooltip title="编辑widget">
-          <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
-        </Tooltip>
-      ) : void 0
+    const widgetButton = (
+      <Tooltip title="编辑widget">
+        <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
+      </Tooltip>
+    )
 
-    const filterButton = !isAdmin || isShared
-      ? (
-        <Tooltip title="条件查询">
-          <Icon type="search" onClick={onShowFiltersForm(itemId, data && data.keys ? data.keys : [], data && data.types ? data.types : [])} />
-        </Tooltip>
-      ) : void 0
-
-    const dropdownMenu = isAdmin
-      ? (
-        <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
-          <Icon type="ellipsis" />
-        </Dropdown>
-      ) : void 0
+    const dropdownMenu = (
+      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+        <Icon type="ellipsis" />
+      </Dropdown>
+    )
 
     const controls = widget.query_params
       ? JSON.parse(widget.query_params).filter((c) => c.type)
@@ -412,6 +394,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       [styles.interact]: isInteractive
     })
 
+    const pivotProps = JSON.parse(widget.config)
+
     return (
       <div className={gridItemClass}>
         <div className={styles.header}>
@@ -437,7 +421,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
             </Tooltip>
             {shareButton}
-            {filterButton}
             {userDownloadButton}
             {dropdownMenu}
           </div>
@@ -464,7 +447,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             />
           </DashboardItemControlPanel>
         </Animate>
-        <Chart
+        {/* <Chart
           id={`${itemId}`}
           w={w}
           h={h}
@@ -479,7 +462,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           interactId={interactId}
           onCheckTableInteract={onCheckTableInteract}
           onDoTableInteract={onDoTableInteract}
-        />
+        /> */}
+        {data && <Pivot
+          data={data}
+          chart={chartInfo}
+          cols={pivotProps.cols.items.map((i) => i.name)}
+          rows={pivotProps.rows.items.map((i) => i.name)}
+          metrics={pivotProps.metrics.items.map((i) => ({
+            name: decodeMetricName(i.name),
+            agg: i.agg
+          }))}
+        />}
       </div>
     )
   }

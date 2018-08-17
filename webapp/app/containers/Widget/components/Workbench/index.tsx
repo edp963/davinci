@@ -7,12 +7,13 @@ import * as classnames from 'classnames'
 import injectReducer from '../../../../utils/injectReducer'
 import injectSaga from '../../../../utils/injectSaga'
 import reducer from '../../reducer'
-import saga from '../../sagas'
 import bizlogicReducer from '../../../Bizlogic/reducer'
+import saga from '../../sagas'
 import bizlogicSaga from '../../../Bizlogic/sagas'
 import { hideNavigator } from '../../../App/actions'
 import { loadBizlogics, loadData } from '../../../Bizlogic/actions'
-import { makeSelectDataLoading } from '../../selectors'
+import { addWidget } from '../../actions'
+import { makeSelectLoading, makeSelectDataLoading } from '../../selectors'
 import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
 import Dropbox, { DragType, DropboxType, ViewModelType, DropboxSize, DropType, SortType, AggregatorType, IDataParamSource} from './Dropbox'
@@ -26,11 +27,13 @@ const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
 const Dropdown = require('antd/lib/dropdown')
+const Button = require('antd/lib/button')
+const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 const utilStyles = require('../../../../assets/less/util.less')
 
 interface IView {
-  id: number
+  id?: number
   name: string
   description: string
   projectId: number
@@ -41,11 +44,24 @@ interface IView {
   config: string
 }
 
-interface IModelProperty {
-  type: string
-  fieldType: string
-  modelType: string
-  isLocationInfo: boolean
+interface IModel {
+  [key: string]: {
+    type: string
+    fieldType: string
+    modelType: string
+    isLocationInfo: boolean
+  }
+}
+
+interface IWidget {
+  id?: number
+  name: string
+  description: string
+  type: number
+  viewId: number
+  projectId: number
+  config: string
+  publish: boolean
 }
 
 interface IDataParamProperty {
@@ -66,14 +82,19 @@ interface IDataParams {
 
 interface IWorkbenchProps {
   views: IView[]
+  loading: boolean
   dataLoading: boolean
+  router: any
   params: { pid: string, wid: string }
   onHideNavigator: () => void
   onLoadBizlogics: (projectId: number) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
+  onAddWidget: (widget: IWidget, resolve: () => void) => void
 }
 
 interface IWorkbenchStates {
+  name: string
+  description: string
   selectedView: IView
   dragged: IDataParamSource
   selectedChart: number
@@ -87,6 +108,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   constructor (props) {
     super(props)
     this.state = {
+      name: '',
+      description: '',
       selectedView: null,
       dragged: null,
       selectedChart: 1,
@@ -179,6 +202,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     }
   }
 
+  private namePlaceholder = 'Widget名称'
+  private descPlaceholder = '描述…'
   private lastRequestParamString = null
 
   public componentWillMount () {
@@ -398,9 +423,57 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
+  private changeName = (e) => {
+    this.setState({
+      name: e.currentTarget.value
+    })
+  }
+
+  private changeDesc = (e) => {
+    this.setState({
+      description: e.currentTarget.value
+    })
+  }
+
+  private saveWidget = () => {
+    const { params, onAddWidget } = this.props
+    const { name, description, selectedView, selectedChart, dataParams } = this.state
+    if (!name.trim()) {
+      message.error('Widget名称不能为空')
+      return
+    }
+    const widget = {
+      name,
+      description,
+      type: selectedChart,
+      viewId: selectedView.id,
+      projectId: Number(params.pid),
+      config: JSON.stringify(dataParams),
+      publish: true
+    }
+    onAddWidget(widget, () => {
+      message.success('添加成功')
+      this.props.router.replace(`/project/${params.pid}/widgets`)
+    })
+  }
+
+  private cancel = () => {
+    this.props.router.goBack()
+  }
+
   public render () {
-    const { views } = this.props
-    const { selectedView, dragged, selectedChart, showColsAndRows, dataParams, charts, pivotProps } = this.state
+    const { views, loading } = this.props
+    const {
+      name,
+      description,
+      selectedView,
+      dragged,
+      selectedChart,
+      showColsAndRows,
+      dataParams,
+      charts,
+      pivotProps
+    } = this.state
 
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
     const viewSelect = (
@@ -415,8 +488,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const values = []
 
     if (selectedView) {
-      const model = JSON.parse(selectedView.model)
-      Object.entries(model).forEach(([key, m]: [string, IModelProperty]) => {
+      const model: IModel = JSON.parse(selectedView.model)
+      Object.entries(model).forEach(([key, m]) => {
         if (m.modelType === '维度') {
           categories.push({
             name: key,
@@ -482,7 +555,29 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
     return (
       <div className={styles.workbench}>
-        <div className={styles.header} />
+        <div className={styles.header}>
+          <div className={styles.title}>
+            <div className={styles.name}>
+              <input type="text" placeholder={this.namePlaceholder} onChange={this.changeName} />
+              <span>{name || this.namePlaceholder}</span>
+            </div>
+            <div className={styles.desc}>
+              <input type="text" placeholder={this.descPlaceholder} onChange={this.changeDesc} />
+              <span>{description || this.descPlaceholder}</span>
+            </div>
+          </div>
+          <div className={styles.actions}>
+            <Button
+              type="primary"
+              loading={loading}
+              disabled={loading}
+              onClick={this.saveWidget}
+            >
+              保存
+            </Button>
+            <Button onClick={this.cancel}>取消</Button>
+          </div>
+        </div>
         <div className={styles.body}>
           <div className={styles.model}>
             <div className={styles.source}>
@@ -581,6 +676,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
 const mapStateToProps = createStructuredSelector({
   views: makeSelectBizlogics(),
+  loading: makeSelectLoading(),
   dataLoading: makeSelectDataLoading()
 })
 
@@ -588,7 +684,8 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
-    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve))
+    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
+    onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve))
   }
 }
 

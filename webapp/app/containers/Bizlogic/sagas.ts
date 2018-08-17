@@ -25,13 +25,13 @@ import {
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
-  LOAD_BIZDATAS_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_DASHBOARD,
   LOAD_BIZDATA_SCHEMA,
   LOAD_SCHEMA,
   EXECUTE_SQL,
-  LOAD_DATA
+  LOAD_DATA,
+  LOAD_DATA_FROM_ITEM
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -42,8 +42,6 @@ import {
   deleteBizlogicFail,
   bizlogicEdited,
   editBizlogicFail,
-  bizdatasFromItemLoaded,
-  loadBizdatasFromItemFail,
   cascadeSourceFromItemLoaded,
   loadCascadeSourceFromItemFail,
   cascadeSourceFromDashboardLoaded,
@@ -55,7 +53,9 @@ import {
   sqlExecuted,
   executeSqlFail,
   dataLoaded,
-  loadDataFail
+  loadDataFail,
+  dataFromItemLoaded,
+  loadDataFromItemFail
 } from './actions'
 
 const message = require('antd/lib/message')
@@ -138,24 +138,6 @@ export function* editBizlogic (action) {
   } catch (err) {
     yield put(editBizlogicFail())
     message.error('修改失败')
-  }
-}
-
-export function* getBizdatasFromItem (action) {
-  const { payload } = action
-  try {
-    const { itemId, id, sql, sorts, offset, limit, useCache, expired } = payload
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/getdata`,
-      data: {}
-    })
-    const bizdatas = resultsetConverter(readListAdapter(asyncData))
-    // const bizdatas = readListAdapter(asyncData)
-    yield put(bizdatasFromItemLoaded(itemId, bizdatas))
-  } catch (err) {
-    yield put(loadBizdatasFromItemFail(err))
   }
 }
 
@@ -277,18 +259,42 @@ export function* getData (action) {
   }
 }
 
+export function* getDataFromItem (action) {
+  const { payload } = action
+  try {
+    const { itemId, viewId, groups, aggregators, sql, cache, expired } = payload
+
+    const data = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${viewId}/getdata`,
+      data: {
+        groups,
+        aggregators,
+        filters: [],
+        params: [],
+        orders: [],
+        cache,
+        expired
+      }
+    })
+    yield put(dataFromItemLoaded(itemId, data.payload))
+  } catch (err) {
+    yield put(loadDataFromItemFail(err))
+  }
+}
+
 export default function* rootBizlogicSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
-    takeEvery(LOAD_BIZDATAS_FROM_ITEM, getBizdatasFromItem),
     takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem),
     takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard),
     takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
     takeLatest(LOAD_SCHEMA, getSchema),
     takeLatest(EXECUTE_SQL, executeSql),
-    takeEvery(LOAD_DATA, getData)
+    takeEvery(LOAD_DATA, getData),
+    takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem)
   ]
 }

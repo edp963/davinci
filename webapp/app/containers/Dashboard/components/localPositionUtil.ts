@@ -18,43 +18,22 @@
  * >>
  */
 
-export function initializePosition (loginUser, dashboard, items) {
-  if (!loginUser.admin) {
-    const posInStorage = localStorage.getItem(`${loginUser.id}_${dashboard.id}_position`)
-    if (posInStorage) {
-      const localPos = JSON.parse(posInStorage)
-      return items.map((i) => {
-        const itemInLocal = localPos.find((p) => p.i === `${i.id}`)
-        if (!itemInLocal) {
-          return {
-            x: i.position_x,
-            y: i.position_y,
-            w: i.width,
-            h: i.length,
-            i: `${i.id}`
-          }
-        } else {
-          return {...itemInLocal}
-        }
-      })
-    }
-  }
+export function initializePosition (items) {
   return items.map((i) => ({
-    x: i.position_x,
-    y: i.position_y,
+    x: i.x,
+    y: i.y,
     w: i.width,
-    h: i.length,
+    h: i.height,
     i: `${i.id}`
   }))
 }
 
-export function changePosition (prev, current, rerender) {
+export function changePosition (prev, current) {
   current.forEach((item, index) => {
     const prevItem = prev[index]
     prevItem.x = item.x
     prevItem.y = item.y
     if (prevItem.w !== item.w || prevItem.h !== item.h) {
-      rerender(prevItem)
       prevItem.w = item.w
       prevItem.h = item.h
     }
