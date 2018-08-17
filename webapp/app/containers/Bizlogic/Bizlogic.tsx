@@ -1143,8 +1143,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 )}
               </FormItem>
             </Col>
-            <Col span={24} className="no-item-margin">
-              <FormItem label="">
+            <Col span={24} className={`no-item-margin ${styles.sqlText}`}>
+              <FormItem label="" className={styles.sqlForm}>
                 {getFieldDecorator('sql_tmpl', {
                   initialValue: ''
                 })(
@@ -1172,7 +1172,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             isFold
               ? (
               <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
-                <Col span={23} className={styles.tabCol}>
+                <Col span={24} className={styles.tabCol}>
                   <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab}>
                     <TabPane tab="Data" key="data">
                       <Table

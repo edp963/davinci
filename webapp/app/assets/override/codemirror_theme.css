@@ -36,5 +36,13 @@
 
 .CodeMirror {
   border: 1px solid #eee;
-  height: 536px;
+  height: 100%;
+}
+
+.ant-form-item-control-wrapper {
+  height: 100%;
+}
+
+.ant-form-item-control {
+  height: 100%;
 }
