@@ -22,10 +22,12 @@ import { LOAD_SIDEBAR } from './constants'
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
-  sidebar: false
+  sidebar: false,
+  currentProject: false
 })
 
 function reportReducer (state = initialState, action) {
+  const { payload } = action
   switch (action.type) {
     case LOAD_SIDEBAR:
       return state.set('sidebar', action.sidebar)

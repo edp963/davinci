@@ -28,6 +28,12 @@ import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
+import {loadProjectDetail} from '../Projects/actions'
+import reducer from '../Projects/reducer'
+import injectReducer from 'utils/injectReducer'
+import saga from '../Projects/sagas'
+import injectSaga from 'utils/injectSaga'
+import {compose} from 'redux'
 const styles = require('./Report.less')
 
 interface IReportProps {
@@ -38,13 +44,19 @@ interface IReportProps {
   children: React.ReactNode
   onPageLoad: () => any
   onShowNavigator: () => any
+  onLoadProjectDetail: (id) => any
 }
 
 export class Report extends React.Component<IReportProps, {}> {
 
   public componentDidMount () {
+    const { pid } = this.props.params
     this.props.onPageLoad()
     this.props.onShowNavigator()
+    if (pid) {
+      console.log(pid)
+      this.props.onLoadProjectDetail(pid)
+    }
   }
 
   public render () {
@@ -105,8 +117,17 @@ export function mapDispatchToProps (dispatch) {
       ]
       dispatch(loadSidebar(sidebarSource))
     },
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onShowNavigator: () => dispatch(showNavigator())
   }
 }
 
-export default connect<{}, {}, IReportProps>(mapStateToProps, mapDispatchToProps)(Report)
+const withReducer = injectReducer({ key: 'project', reducer })
+const withSaga = injectSaga({ key: 'project', saga })
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Report)
