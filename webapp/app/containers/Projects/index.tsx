@@ -7,6 +7,8 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Tag = require('antd/lib/tag')
 const Icon = require('antd/lib/icon')
 const Modal = require('antd/lib/modal')
+const Button = require('antd/lib/button')
+const ButtonGroup = Button.Group
 const Pagination = require('antd/lib/pagination')
 const styles = require('./Project.less')
 import * as classnames from 'classnames'
@@ -32,6 +34,7 @@ import {checkNameUniqueAction} from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
+import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
 const  historyBrowser = new HistoryStack('historyBrowser')
@@ -67,6 +70,7 @@ interface IProjectsState {
 }
 interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
+  isLike?: boolean
   type?: string
   name?: string
   id?: number
@@ -298,6 +302,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     })
   }
 
+  private starProject = (project: IProject) => {
+    console.log(project)
+  }
+
   public render () {
     const { formType, formVisible, modalLoading } = this.state
     const { onDeleteProject, organizations, projects, searchProject, loginUser } = this.props
@@ -308,6 +316,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       id: 'add',
       type: 'add'
     }]]
+
+    const starWrapperStyle = classnames({
+      [styles.starWrapperPosition]: true,
+      [styles.starWrapper]: true
+    })
     const mimeProjects = projectArr
       ? projectArr.map((d: IProject) => {
         let CreateButton = void 0
@@ -348,6 +361,16 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         let editButton = void 0
         let deleteButton = void 0
         let transfer = void 0
+        let star = void 0
+
+        star = (
+          <Tooltip title="点赞项目">
+            <div className={styles.starWrapperPosition}>
+              <Star d={d}/>
+            </div>
+          </Tooltip>
+        )
+
         transfer = (
           <Tooltip title="移交项目">
             <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
@@ -396,6 +419,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                     {d.description}
                   </p>
                 </header>
+                {star}
                 {transfer}
                 {editButton}
                 {deleteButton}
@@ -421,6 +445,16 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         let editButton = void 0
         let deleteButton = void 0
         let transfer = void 0
+        let star = void 0
+
+        star = (
+          <Tooltip title="点赞项目">
+            <div className={styles.starWrapperPosition}>
+              <Star d={d}/>
+            </div>
+          </Tooltip>
+        )
+
         transfer = (
           <Tooltip title="移交项目">
             <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
@@ -469,6 +503,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                   {d.description}
                 </p>
               </header>
+              {star}
               {transfer}
               {editButton}
               {deleteButton}
@@ -519,13 +554,15 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
               </div>
               <div className={styles.others}>
                 <div className={styles.star}>
-                  <Icon type="star"/>
-                  <span>1000</span>
+                  <Star d={d}/>
+                  {/*<div className={styles.starWrapperPosition}>*/}
+                    {/**/}
+                  {/*</div>*/}
                 </div>
-                <div className={styles.star}>
-                  <Icon type="save"/>
-                  <span>fork</span>
-                </div>
+                {/*<div className={styles.star}>*/}
+                  {/*<Icon type="save"/>*/}
+                  {/*<span>fork</span>*/}
+                {/*</div>*/}
               </div>
             </div>
           </Col>

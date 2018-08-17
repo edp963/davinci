@@ -7,6 +7,7 @@ const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
 const Tooltip = require('antd/lib/tooltip')
 import ComponentPermission from '../../Account/components/checkMemberPermission'
+import Star from '../../../components/StarPanel/Star'
 
 interface IProjectItemProps {
   key: number
@@ -22,6 +23,7 @@ interface IProjectOptions {
   description: string
   createBy: number
   pic: string
+  isLike: boolean
 }
 export class ProjectItem extends React.PureComponent<IProjectItemProps> {
   public render () {
@@ -45,13 +47,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
           <div className={styles.desc}>{options.description}</div>
           {tags}
           <div className={styles.others}>
-            <span className={styles.updateTime}>
-              <span className={styles.label}>最后更新时间 </span>
-              2018-8-16
-            </span>
-            <span className={styles.stars}>
-              <Icon type="star-o"/>  34
-            </span>
+            <Star d={options}/>
             <div className={styles.delete}>
               <Popconfirm
                 title="确定删除？"

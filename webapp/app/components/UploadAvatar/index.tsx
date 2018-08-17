@@ -33,7 +33,8 @@ export class UploadAvatar extends React.PureComponent<IUploadAvatarProps, IUploa
     reader.readAsDataURL(img)
   }
   private beforeUpload = (file) => {
-    const isJPG = file.type === 'image/jpeg'
+    const re = /image\/(png|jpg|jpeg|gif)/
+    const isJPG = re.test(file.type)
     if (!isJPG) {
       Message.error('You can only upload JPG file!')
     }
