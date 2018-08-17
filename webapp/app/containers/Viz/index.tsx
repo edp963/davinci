@@ -122,6 +122,10 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
       [styles.listPadding]: true,
       [utilStyles.hide]: !this.state.collapse.dashboard
     })
+    const isHideDisplayStyle = classnames({
+      [styles.listPadding]: true,
+      [utilStyles.hide]: !this.state.collapse.display
+    })
     return (
       <Container>
         <Helmet title="Viz" />
@@ -153,9 +157,9 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
           <Box>
             <Box.Header>
               <Box.Title>
-                <Row>
+                <Row onClick={this.onCollapseChange('dashboard')}>
                   <Col span={20}>
-                    <Icon type={`${this.state.collapse.dashboard ? 'down' : 'right'}`} onClick={this.onCollapseChange('dashboard')} />Dashboard
+                    <Icon type={`${this.state.collapse.dashboard ? 'down' : 'right'}`} />Dashboard
                   </Col>
                 </Row>
               </Box.Title>
@@ -188,14 +192,14 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
           <Box>
             <Box.Header>
               <Box.Title>
-                <Row>
+                <Row onClick={this.onCollapseChange('display')}>
                   <Col span={20}>
-                    <Icon type={`${this.state.collapse.display ? 'down' : 'right'}`} onClick={this.onCollapseChange('display')} />Display
+                    <Icon type={`${this.state.collapse.display ? 'down' : 'right'}`} />Display
                   </Col>
                 </Row>
               </Box.Title>
             </Box.Header>
-            <div className={isHideDashboardStyle}>
+            <div className={isHideDisplayStyle}>
               <DisplayList
                 projectId={projectId}
                 displays={displays}

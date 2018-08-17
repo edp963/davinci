@@ -17,7 +17,7 @@ export default (currentOrganization, code) => (WrapperComponent) => {
   class ComponentPermission extends React.PureComponent<IComponentPermissionProps, {}> {
     public render () {
       const { role } = currentOrganization
-      return role === 1
+      return role && role === 1
         ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
         : currentOrganization.allowCreateProject && code === CREATE_ORGANIZATION_PROJECT
           ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>

@@ -681,9 +681,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                     <Box>
                       <Box.Header>
                         <Box.Title>
-                          <Row>
+                          <Row onClick={this.foldPanel('mimePanel')}>
                             <Col span={20}>
-                              <Icon type={`${this.state.mimePanel ? 'down' : 'right'}`} onClick={this.foldPanel('mimePanel')} />我创建的项目
+                              <Icon type={`${this.state.mimePanel ? 'down' : 'right'}`} />我创建的项目
                             </Col>
                           </Row>
                         </Box.Title>
@@ -699,9 +699,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                     <Box>
                       <Box.Header>
                         <Box.Title>
-                          <Row>
+                          <Row onClick={this.foldPanel('joinPanel')}>
                             <Col span={20}>
-                              <Icon type={`${this.state.joinPanel ? 'down' : 'right'}`} onClick={this.foldPanel('joinPanel')}/>我参与的项目
+                              <Icon type={`${this.state.joinPanel ? 'down' : 'right'}`} />我参与的项目
                             </Col>
                           </Row>
                         </Box.Title>
