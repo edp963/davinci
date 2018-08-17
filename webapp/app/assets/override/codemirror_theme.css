@@ -35,6 +35,14 @@
 .CodeMirror pre.CodeMirror-placeholder { color: #b9b9b9; }
 
 .CodeMirror {
-    border: 1px solid #eee;
-    height: auto;
-  }
+  border: 1px solid #eee;
+  height: 100%;
+}
+
+.ant-form-item-control-wrapper {
+  height: 100%;
+}
+
+.ant-form-item-control {
+  height: 100%;
+}
