@@ -143,8 +143,11 @@ interface IBizlogicFormState {
   teamAutoExpandParent: boolean
   teamCheckedKeys: any[]
   selectedKeys: any[]
-  teamParams: [ITeamParams],
+  teamParams: [ITeamParams]
   configTeam: any[]
+  alertVisible: boolean
+  screenWidth: number
+  isFold: boolean
 }
 
 interface ITeamParams {
@@ -194,7 +197,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         k: '',
         v: ''
       }],
-      configTeam: []
+      configTeam: [],
+      alertVisible: true,
+      screenWidth: 0,
+      isFold: true
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
@@ -204,6 +210,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const {
       projects,
       params,
+      route,
       bizlogics,
       onLoadSources,
       onLoadSchema,
@@ -211,6 +218,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       onLoadOrganizationTeams,
       onLoadBizlogics
     } = this.props
+
+    this.setState({
+      screenWidth: document.documentElement.clientWidth,
+      isFold: route.path === '/project/:pid/bizlogic' ? false : true
+    })
+
     if (!bizlogics) {
       onLoadBizlogics(params.pid)
     }
@@ -253,6 +266,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { currentOrganizationTeams } =  nextProps
     const { listData, teamParams, teamCheckedKeys } = this.state
     const { route, params, bizlogics } = this.props
+
+    window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     let listDataFinal
     if (listData.length === 0) {
@@ -434,7 +449,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         lineNumbers: true,
         lineWrapping: true
       })
-      this.codeMirrorInstanceOfDeclaration.setSize('100%', 100)
+      this.codeMirrorInstanceOfDeclaration.setSize('100%', 180)
     }
   }
 
@@ -444,11 +459,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         mode: 'text/x-sql',
         theme: '3024-day',
         lineNumbers: true,
-        // width: '100%',
-        // height: '100%',
+        width: '100%',
+        height: '100%',
         lineWrapping: true
       })
-      this.codeMirrorInstanceOfQuerySQL.setSize('100%', 181)
     }
   }
 
@@ -613,6 +627,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
 
     this.props.onExecuteSql(sourceIdGeted, sql, (result) => {
+      this.setState({
+        alertVisible: true
+      })
       if (result) {
         const { resultset, columns } = result
 
@@ -633,12 +650,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         })
         this.setState({
           executeResultset: resultset,
-          executeColumns: columns
+          executeColumns: columns,
+          alertVisible: true
         })
       }
     })
     this.asyncValidateResult = setTimeout(() => {
-      this.setState({isShowSqlValidateAlert: true})
+      this.setState({
+        isShowSqlValidateAlert: true
+      })
     }, 100)
   }
 
@@ -815,6 +835,18 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
+  private handleClose = () => {
+    this.setState({
+      alertVisible: false
+    })
+  }
+
+  private foldBoard = () => {
+    this.setState({
+      isFold: !this.state.isFold
+    })
+  }
+
   public render () {
     const {
       form,
@@ -836,7 +868,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       executeResultset,
       executeColumns,
       schemaData,
-      treeData
+      treeData,
+      alertVisible,
+      screenWidth,
+      isFold
     } = this.state
 
     const itemStyle = {
@@ -933,15 +968,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     let sqlValidatePanel
     if (isShowSqlValidateAlert) {
       if (sqlValidateCode) {
-        sqlValidatePanel = (
-          <Col span={21} offset={2} className={styles.fromSqlAlert}>
-            <Alert
-              message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
-              description={`${sqlValidateMessage || ''}`}
-              type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
-              showIcon
-            />
-          </Col>)
+        sqlValidatePanel = alertVisible
+          ? (
+            <Col span={21} offset={2} className={styles.fromSqlAlert}>
+              <Alert
+                className={styles.sqlAlertText}
+                message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+                description={`${sqlValidateMessage || ''}`}
+                type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+                showIcon
+                closable
+                onClose={this.handleClose}
+              />
+            </Col>)
+          : null
       } else {
         sqlValidatePanel = ''
       }
@@ -989,6 +1029,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       }
       return <TreeNode key={item.key} title={item.key} />
     })
+
+    const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
+      defaultPageSize: 100,
+      showSizeChanger: true
+    }
+
+    const operations = (
+      <Icon
+        className={`${isFold ? styles.foldIcon : styles.noFoldIcon}`}
+        type={`${isFold ? 'down-circle-o' : 'left-circle-o'}`}
+        onClick={this.foldBoard}
+      />
+    )
 
     return (
       <div className={styles.bizlogic}>
@@ -1114,43 +1168,52 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               <Icon type="caret-right" />Execute
             </Button>
           </Row>
-          <Row className={styles.formBottom}>
-            <Col span={23}>
-              <Tabs defaultActiveKey="data">
-                <TabPane tab="Data" key="data">
-                  <Table
-                    dataSource={tableData}
-                    columns={tableColumns}
-                    pagination={false}
-                    // scroll={{ y:  }}
-                  />
-                </TabPane>
-                <TabPane tab="Model" key="model">
-                  <Table
-                    dataSource={modelData}
-                    columns={modelColumns}
-                    pagination={false}
-                    // scroll={{y: }}
-                  />
-                </TabPane>
-                <TabPane tab="Team" key="team">
-                  <Tree
-                    checkStrictly
-                    checkable
-                    onExpand={this.onTeamExpand}
-                    expandedKeys={this.state.teamExpandedKeys}
-                    autoExpandParent={this.state.teamAutoExpandParent}
-                    onCheck={this.onCheck}
-                    checkedKeys={this.state.teamCheckedKeys}
-                    onSelect={this.onSelect}
-                    selectedKeys={this.state.selectedKeys}
-                  >
-                    {this.renderTreeNodes(currentOrganizationTeams)}
-                  </Tree>
-                </TabPane>
-              </Tabs>
-            </Col>
-          </Row>
+          {
+            isFold
+              ? (
+              <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
+                <Col span={23} className={styles.tabCol}>
+                  <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab}>
+                    <TabPane tab="Data" key="data">
+                      <Table
+                        className={styles.viewTabPane}
+                        dataSource={tableData}
+                        columns={tableColumns}
+                        pagination={pagination}
+                        // scroll={{ y:  }}
+                      />
+                    </TabPane>
+                    <TabPane tab="Model" key="model">
+                      <Table
+                        className={styles.viewTabPane}
+                        dataSource={modelData}
+                        columns={modelColumns}
+                        pagination={pagination}
+                        // scroll={{y: }}
+                      />
+                    </TabPane>
+                    <TabPane tab="Team" key="team">
+                      <Tree
+                        className={styles.viewTabPane}
+                        checkStrictly
+                        checkable
+                        onExpand={this.onTeamExpand}
+                        expandedKeys={this.state.teamExpandedKeys}
+                        autoExpandParent={this.state.teamAutoExpandParent}
+                        onCheck={this.onCheck}
+                        checkedKeys={this.state.teamCheckedKeys}
+                        onSelect={this.onSelect}
+                        selectedKeys={this.state.selectedKeys}
+                      >
+                        {this.renderTreeNodes(currentOrganizationTeams)}
+                      </Tree>
+                    </TabPane>
+                  </Tabs>
+                </Col>
+              </Row>
+              )
+              : operations
+          }
         </Row>
       </Form>
         <div className={styles.footBtn}>
