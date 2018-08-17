@@ -230,7 +230,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   private toProject = (d: any) => () => {
     const pid = d.id
     this.props.router.push(`/project/${pid}`)
-    this.props.onLoadProjectDetail(pid)
+   // this.props.onLoadProjectDetail(pid)
     this.saveHistory(d)
   }
 
