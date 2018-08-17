@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as classnames from 'classnames'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 const Col = require('antd/lib/col')
@@ -129,6 +130,12 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     }
     const { onDisplayClick, onCopy, onDelete } = this.props
 
+    const editHint = !display.publish && '(编辑中…)'
+    const displayClass = classnames({
+      [styles.display]: true,
+      [styles.editing]: !display.publish
+    })
+
     return (
       <Col
         xl={4}
@@ -139,12 +146,12 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         key={display.id}
         onClick={onDisplayClick(display)}
       >
-        <div className={styles.display}>
+        <div className={displayClass} style={coverStyle}>
           <div className={styles.container}>
-            <div>
-              <h3 className={styles.title}>{display.name}</h3>
+            <header>
+              <h3 className={styles.title}>{display.name} {editHint}</h3>
               <p className={styles.content}>{display.description}</p>
-            </div>
+            </header>
             <Tooltip title="编辑">
               <Icon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
             </Tooltip>
@@ -160,7 +167,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
                 <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
               </Tooltip>
             </Popconfirm>
-            <div className={styles.cover} style={coverStyle}/>
           </div>
         </div>
       </Col>

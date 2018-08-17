@@ -27,7 +27,7 @@ const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { checkNameAction } from '../../App/actions'
+import { checkNameUniqueAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -35,7 +35,7 @@ interface IDisplayFormProps {
   projectId: number
   type: string
   form: any
-  onCheckName: (id, name, type, params, resolve, reject) => void
+  onCheckName: (type, data, resolve, reject) => void
 }
 
 export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
@@ -44,12 +44,15 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
     super(props)
   }
 
-  private checkNameUnique = (rule, value = '', callback) => {
+  private checkNameUnique = (_, value = '', callback) => {
     const { projectId, onCheckName, type, form } = this.props
     const { id } = form.getFieldsValue()
-    const idName = type === 'add' ? '' : id
     const typeName = 'display'
-    onCheckName(idName, value, typeName, { projectId },
+    onCheckName(typeName, {
+      projectId,
+      id,
+      name: value
+    },
       () => {
         callback()
       }, (err) => {
@@ -134,7 +137,7 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, params, resolve, reject) => dispatch(checkNameAction(id, name, type, params, resolve, reject))
+    onCheckName: (type, data, resolve, reject) => dispatch(checkNameUniqueAction(type, data, resolve, reject))
   }
 }
 

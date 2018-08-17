@@ -1,17 +1,31 @@
 @import "../../assets/less/variable";
 
 .display {
-  height: 0;
-  padding-bottom: 80%;
+  height: 120px;
 
   background-color: @body-background;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
+
   margin-bottom: 20px;
   border-radius: 2px;
   box-shadow: @block-box-shadow;
   transform: translate3d(0, 0, 0);
   transition: all 200ms linear;
-  position: relative;
+  transition: transform 200ms linear,
+              box-shadow 200ms linear,
+              background-size 500ms linear;
   cursor: pointer;
+
+  &.editing {
+    opacity: .3;
+  }
+
+  header {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 100%);
+    border-radius: 2px 2px 0 0;
+  }
 
   .container {
     position: absolute;
@@ -51,6 +65,7 @@
   }
 
   &:hover {
+    background-size: 110%;
     box-shadow: @block-active-box-shadow;
     transform: translate3d(0, -5px, 0);
 
@@ -60,32 +75,21 @@
   }
 
   .title {
-    height: 33px;
     padding: 12px 40px 0 12px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    color: @white;
+
+    .ellipsis;
   }
 
   .content {
-    height: 34px;
-    padding: 8px 12px;
-    color: @light-text-color;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
+    padding: 8px 12px 24px;
+    color: @white;
 
-  .cover {
-    background-color: @light-bg;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    flex: 1;
-    margin: 0 12px 12px;
+    .ellipsis;
   }
 
   .delete, .copy, .edit {
+    color: @white;
     position: absolute;
     top: 8px;
     opacity: .5;
