@@ -26,15 +26,6 @@ import java.sql.{Connection, ResultSet}
 import java.util.TimeZone
 import java.util.regex.Pattern
 
-import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
-import edp.davinci.module.ConfigurationModuleImpl
-import edp.davinci.persistence.entities.PostUploadMeta
-import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
-import edp.davinci.util.common.DateUtils
-import edp.davinci.util.common.DavinciConstants._
-import edp.davinci.util.jdbc.{ESConnection, HiveConnection}
-import org.apache.log4j.Logger
-
 import scala.collection.mutable
 
 
@@ -110,6 +101,15 @@ object SqlUtils extends Serializable {
       println("kylin")
       config.setConnectionTestQuery("SELECT 1")
       config.setDriverClassName("org.apache.kylin.jdbc.Driver")
+    } else if (tmpJdbcUrl.indexOf("jdbc:vertica") > -1) {
+      println("vertica")
+      config.setDriverClassName("com.vertica.jdbc.Driver")
+    } else if (tmpJdbcUrl.indexOf("jdbc:sap") > -1) {
+      println("sap hana")
+      config.setDriverClassName("com.sap.db.jdbc.Driver")
+    } else if (tmpJdbcUrl.indexOf("jdbc:impala") > -1) {
+      println("impala")
+      config.setDriverClassName("com.cloudera.impala.jdbc41.Driver")
     }
 
     if (tmpJdbcUrl.indexOf("sql4es") > -1)
@@ -248,7 +248,7 @@ object SqlUtils extends Serializable {
 
   def s2dbValue(strType: String, value: String): Any = if (value == null || value == "") null
   else strType.toUpperCase match {
-    case "INT" |"TINYINT" => value.trim.toInt
+    case "INT" | "TINYINT" => value.trim.toInt
     case "BIGINT" => value.trim.toLong
     case "VARCHAR" | "NVARCHAR" | "LONGVARCHAR" | "LONGNVARCHAR" | "BLOB" | "CLOB" | "CHAR" => value.trim
     case "FLOAT" => value.trim.toFloat
