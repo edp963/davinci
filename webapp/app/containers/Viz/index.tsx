@@ -1,5 +1,7 @@
 
 import * as React from 'react'
+import Helmet from 'react-helmet'
+import { Link } from 'react-router'
 import { RouteComponentProps } from 'react-router'
 
 import { compose } from 'redux'
@@ -19,13 +21,18 @@ import { makeSelectPortals } from '../Portal/selectors'
 
 const Icon = require('antd/lib/icon')
 const Collapse = require('antd/lib/collapse')
+import * as classnames from 'classnames'
+import Box from '../../components/Box'
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Breadcrumb = require('antd/lib/breadcrumb')
 const Panel = Collapse.Panel
 const styles = require('./Viz.less')
-
+const utilStyles = require('../../assets/less/util.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
-import { Portal } from '../Portal';
+import { Portal } from '../Portal'
 
 interface IParams {
   pid: number
@@ -45,7 +52,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
 }
 
 interface IVizStates {
-  collapse: object
+  collapse: {dashboard: boolean, display: boolean}
 }
 
 export class Viz extends React.Component<IVizProps, IVizStates> {
@@ -54,8 +61,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
     super(props)
     this.state = {
       collapse: {
-        dashboard: false,
-        display: false
+        dashboard: true,
+        display: true
       }
     }
   }
@@ -111,12 +118,49 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
       portals, onAddPortal, onEditPortal, onDeletePortal
     } = this.props
     const projectId = params.pid
+    const isHideDashboardStyle = classnames({
+      [styles.listPadding]: true,
+      [utilStyles.hide]: !this.state.collapse.dashboard
+    })
     return (
       <Container>
-        <Container.Body card>
-          <div className={styles.spliter11}/>
-          <Collapse bordered={false} defaultActiveKey="dashboard" onChange={this.onCollapseChange('dashboard')}>
-            <Panel showArrow={false} header={this.renderHeader('Dashboard')} key="dashboard">
+        <Helmet title="Viz" />
+        <Container.Title>
+          <Row>
+            <Col span={24}>
+              <Breadcrumb className={utilStyles.breadcrumb}>
+                <Breadcrumb.Item>
+                  <Link to="">Viz</Link>
+                </Breadcrumb.Item>
+              </Breadcrumb>
+            </Col>
+          </Row>
+        </Container.Title>
+        <Container.Body>
+          {/*<div className={styles.spliter11}/>*/}
+          {/*<Collapse bordered={false} defaultActiveKey="dashboard" onChange={this.onCollapseChange('dashboard')}>*/}
+            {/*<Panel showArrow={false} header={this.renderHeader('Dashboard')} key="dashboard">*/}
+              {/*<PortalList*/}
+                {/*projectId={projectId}*/}
+                {/*portals={portals}*/}
+                {/*onPortalClick={this.goToDashboard}*/}
+                {/*onAdd={onAddPortal}*/}
+                {/*onEdit={onEditPortal}*/}
+                {/*onDelete={onDeletePortal}*/}
+              {/*/>*/}
+            {/*</Panel>*/}
+          {/*</Collapse>*/}
+          <Box>
+            <Box.Header>
+              <Box.Title>
+                <Row>
+                  <Col span={20}>
+                    <Icon type={`${this.state.collapse.dashboard ? 'down' : 'right'}`} onClick={this.onCollapseChange('dashboard')} />Dashboard
+                  </Col>
+                </Row>
+              </Box.Title>
+            </Box.Header>
+            <div className={isHideDashboardStyle}>
               <PortalList
                 projectId={projectId}
                 portals={portals}
@@ -125,11 +169,33 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
               />
-            </Panel>
-          </Collapse>
+            </div>
+          </Box>
           <div className={styles.spliter16}/>
-          <Collapse bordered={false} defaultActiveKey="display" onChange={this.onCollapseChange('display')}>
-            <Panel showArrow={false} header={this.renderHeader('Display')} key="display">
+          {/*<Collapse bordered={false} defaultActiveKey="display" onChange={this.onCollapseChange('display')}>*/}
+            {/*<Panel showArrow={false} header={this.renderHeader('Display')} key="display">*/}
+              {/*<DisplayList*/}
+                {/*projectId={projectId}*/}
+                {/*displays={displays}*/}
+                {/*onDisplayClick={this.goToDisplay}*/}
+                {/*onAdd={onAddDisplay}*/}
+                {/*onEdit={onEditDisplay}*/}
+                {/*onCopy={this.onCopy}*/}
+                {/*onDelete={onDeleteDisplay}*/}
+              {/*/>*/}
+            {/*</Panel>*/}
+          {/*</Collapse>*/}
+          <Box>
+            <Box.Header>
+              <Box.Title>
+                <Row>
+                  <Col span={20}>
+                    <Icon type={`${this.state.collapse.display ? 'down' : 'right'}`} onClick={this.onCollapseChange('display')} />Display
+                  </Col>
+                </Row>
+              </Box.Title>
+            </Box.Header>
+            <div className={isHideDashboardStyle}>
               <DisplayList
                 projectId={projectId}
                 displays={displays}
@@ -139,8 +205,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onCopy={this.onCopy}
                 onDelete={onDeleteDisplay}
               />
-            </Panel>
-          </Collapse>
+            </div>
+          </Box>
         </Container.Body>
       </Container>
     )

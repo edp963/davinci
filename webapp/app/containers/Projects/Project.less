@@ -193,7 +193,6 @@
 
         .delete {
           right: 8px;
-
           .icon;
         }
         .createNewWrapper {
@@ -224,6 +223,12 @@
     }
   }
 }
+.starWrapperPosition {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+}
+
 .overflowY {
   overflow-y: auto;
 }
@@ -323,9 +328,6 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
-  &:hover {
-    color: @blue;
-  }
   .orgHeader {
     display: flex;
     .avatar {
@@ -348,20 +350,16 @@
         color: @description-text;
       }
     }
+    &:hover {
+      color: @blue;
+    }
   }
   .others{
-    display: flex;
-    align-self: center;
-    justify-content: space-between;
-    width: 58px;
+    position: relative;
     .star {
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      flex-direction: column;
-      span{
-        font-size: 12px;
-      }
+      position: absolute;
+      right: -9px;
+      top: 16px;
     }
   }
 }
