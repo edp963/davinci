@@ -31,9 +31,6 @@ import {
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
-  LOAD_BIZDATAS_FROM_ITEM,
-  LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
-  LOAD_BIZDATAS_FROM_ITEM_FAILURE,
   CLEAR_BIZDATAS,
   LOAD_CASCADESOURCE_FROM_ITEM,
   LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
@@ -52,7 +49,10 @@ import {
   EXECUTE_SQL_FAILURE,
   LOAD_DATA,
   LOAD_DATA_SUCCESS,
-  LOAD_DATA_FAILURE
+  LOAD_DATA_FAILURE,
+  LOAD_DATA_FROM_ITEM,
+  LOAD_DATA_FROM_ITEM_SUCCESS,
+  LOAD_DATA_FROM_ITEM_FAILURE
 } from './constants'
 
 export function loadBizlogics (projectId) {
@@ -150,41 +150,6 @@ export function bizlogicEdited (result) {
 export function editBizlogicFail () {
   return {
     type: EDIT_BIZLOGIC_FAILURE
-  }
-}
-
-export function loadBizdatasFromItem (itemId, id, sql, sorts, offset, limit, useCache, expired) {
-  return {
-    type: LOAD_BIZDATAS_FROM_ITEM,
-    payload: {
-      itemId,
-      id,
-      sql,
-      sorts,
-      offset,
-      limit,
-      useCache,
-      expired
-    }
-  }
-}
-
-export function bizdatasFromItemLoaded (itemId, bizdatas) {
-  return {
-    type: LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
-    payload: {
-      itemId,
-      bizdatas
-    }
-  }
-}
-
-export function loadBizdatasFromItemFail (error) {
-  return {
-    type: LOAD_BIZDATAS_FROM_ITEM_FAILURE,
-    payload: {
-      error
-    }
   }
 }
 
@@ -360,6 +325,40 @@ export function dataLoaded () {
 export function loadDataFail (error) {
   return {
     type: LOAD_DATA_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadDataFromItem (itemId, viewId, groups, aggregators, sql, cache, expired) {
+  return {
+    type: LOAD_DATA_FROM_ITEM,
+    payload: {
+      itemId,
+      viewId,
+      groups,
+      aggregators,
+      sql,
+      cache,
+      expired
+    }
+  }
+}
+
+export function dataFromItemLoaded (itemId, data) {
+  return {
+    type: LOAD_DATA_FROM_ITEM_SUCCESS,
+    payload: {
+      itemId,
+      data
+    }
+  }
+}
+
+export function loadDataFromItemFail (error) {
+  return {
+    type: LOAD_DATA_FROM_ITEM_FAILURE,
     payload: {
       error
     }

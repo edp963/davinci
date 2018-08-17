@@ -76,9 +76,9 @@ interface IDashboardProps {
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
-  onDeleteDashboard: (id: number, resolve: any) => any
+  onDeleteDashboard: (id: number, resolve: any) => void
   onHideNavigator: () => void
-  onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
+  // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
 interface IDashboardStates {
@@ -132,44 +132,49 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   public componentWillMount () {
-    this.props.onHideNavigator()
-    const { params, router } = this.props
+    // this.props.onHideNavigator()
+    const { params, router, dashboards } = this.props
+    const { pid, portalId, portalName, dashboardId } = params
+
+    this.props.onLoadDashboards(params.portalId, (result) => {
+      let defaultDashboardId = 0
+      const dashboardData = listToTree(result, 0)
+      const treeData = {
+        id: -1,
+        type: 2,
+        children: dashboardData
+      }
+      defaultDashboardId = findFirstLeaf(treeData)
+
+      if (defaultDashboardId >= 0) {
+        if (!dashboardId) {
+          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+        }
+      }
+
+      this.setState({
+        dashboardData,
+        isGrid: defaultDashboardId >= 0
+      })
+      this.expandAll(result)
+    })
 
     new Promise((resolve) => {
-      this.props.onLoadDashboards(params.portalId, (result) => {
-        let defaultDashboardId = 0
-        const dashboardData = listToTree(result, 0)
-        const treeData = {
-          id: -1,
-          type: 2,
-          children: dashboardData
-        }
-        defaultDashboardId = findFirstLeaf(treeData)
-
-        this.setState({
-          dashboardData
-        }, () => {
-          const { pid, portalId, portalName, dashboardId } = params
-          if (dashboardId) {
-            return
-          }
-          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
-        })
-        this.expandAll(result)
-        resolve({result, defaultDashboardId})
-      })
-    }).then(({result, defaultDashboardId}) => {
-      if (result.length !== 0 && defaultDashboardId !== -1) {
-        const { dashboardId } = params
-        const currentdashboardId = dashboardId ? Number(dashboardId) : defaultDashboardId
-        const selectedDashboard = (result as any).find((r) => r.id === currentdashboardId)
-        this.props.onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, currentdashboardId)
-      } else {
-        this.setState({
-          isGrid: false
-        })
-      }
+      
     })
+    // .then(({result, defaultDashboardId}) => {
+    //   if (result.length !== 0 && defaultDashboardId !== -1) {
+    //     const { dashboardId } = params
+    //     const currentdashboardId = dashboardId ? Number(dashboardId) : defaultDashboardId
+    //     const selectedDashboard = (result as any).find((r) => r.id === currentdashboardId)
+    //     console.log(selectedDashboard)
+    //     this.props.onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, currentdashboardId)
+    //   } else {
+    //     this.setState({
+    //       isGrid: false
+    //     })
+    //   }
+    // })
   }
 
   private initalDashboardData (dashboards) {
@@ -597,38 +602,24 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
 
     return (
-      <Container>
-        {/* <Helmet title="Dashboard" /> */}
-        {/* <Container.Title>
-          <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
-              <Breadcrumb className={utilStyles.breadcrumb}>
-                <Breadcrumb.Item>
-                  <Link to="">
-                    Dashboard
-                  </Link>
-                </Breadcrumb.Item>
-              </Breadcrumb>
-            </Col>
-          </Row>
-        </Container.Title> */}
-        <div className={styles.header}>
+      <div className={styles.portal}>
+        <Helmet title={params.portalName} />
+        {/* <div className={styles.portalHeader}>
           <span className={styles.historyBack}>
             <Tooltip placement="bottom" title="返回">
               <Icon type="left-circle-o" className={styles.backIcon} onClick={this.backPortal} />
             </Tooltip>
           </span>
-        </div>
-        <Container.Body card>
-          <div className={styles.dashboardBody}>
-            <div className={styles.dashboardTree}>
-              <Row className={styles.portal}>
+        </div> */}
+        <div className={styles.portalBody}>
+          <div className={styles.portalTree}>
+            <div className={styles.portalRow}>
               <span className={styles.portalTitle}>{params.portalName}</span>
               <span className={styles.portalAction}>
                 <Popover
                   placement="bottom"
                   content={
-                    <div className={styles.dashboardSearch}>
+                    <div className={styles.portalTreeSearch}>
                       <Search
                         placeholder="Search"
                         onChange={this.searchDashboard}
@@ -672,9 +663,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   </Tooltip>
                 </Popover>
               </span>
-            </Row>
+            </div>
             { dashboardData.length
-              ? <div  className={styles.dashboardTreeNode}>
+              ? <div  className={styles.portalTreeNode}>
                 <Tree
                   // showIcon
                   // showLine
@@ -690,23 +681,20 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
               </div>
               : isGrid ? <h3>Loading tree......</h3> : ''
             }
-            </div>
-            <div className={styles.gridClass}>
-              <Row gutter={20}>
-                {
-                  isGrid
-                  ? children
-                  : (
-                    <div className={styles.noDashboard}>
-                      <img src={require('../../assets/images/noDashboard.png')} />
-                      <p>请从左侧创建文件夹或 Dashboard</p>
-                    </div>
-                  )
-                }
-              </Row>
-            </div>
           </div>
-        </Container.Body>
+          <div className={styles.gridClass}>
+            {
+              isGrid
+              ? children
+              : (
+                <div className={styles.noDashboard}>
+                  <img src={require('../../assets/images/noDashboard.png')} />
+                  <p>请从左侧创建文件夹或 Dashboard</p>
+                </div>
+              )
+            }
+          </div>
+        </div>
         <Modal
           title={modalTitle}
           wrapClassName="ant-modal-small"
@@ -722,7 +710,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
-      </Container>
+      </div>
     )
   }
 }
@@ -735,7 +723,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
+    // onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
     onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve)),
     onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
     onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),

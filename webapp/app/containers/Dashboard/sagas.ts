@@ -20,7 +20,6 @@
 
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, all, put } from 'redux-saga/effects'
-import { mockData } from './mock'
 
 import {
   LOAD_DASHBOARDS,
@@ -152,72 +151,14 @@ export function* deleteDashboard ({ payload }) {
 }
 
 export function* getDashboardDetail ({ payload }) {
-  // TODO: mockData 为模拟数据，待与真实数据联调时删除
-  // const { projectId, portalId, dashboardId, selectedDashboard } = payload
   const { projectId, portalId, dashboardId } = payload
-  const clonedData = {
-    config: mockData.config,
-    linkage_detail: {},
-    widgets: []
-  }
-  for (const key in mockData) {
-    if (mockData.hasOwnProperty(key)) {
-      clonedData[key] = mockData[key]
-    }
-  }
-  const selectedDashboard = clonedData
-
-  const { globalFilters, linkage_detail} = JSON.parse(selectedDashboard.config)
-  selectedDashboard.config = JSON.stringify({ globalFilters })
-
-  selectedDashboard.linkage_detail = JSON.stringify(linkage_detail)
 
   try {
-    const asyncData = yield all({
-      selectedWidgets: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}/widgets`),
-      allWidgets: call(request, `${api.widget}?projectId=${projectId}`)
+    const result = yield all({
+      dashboardDetail: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}`),
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-
-    const selectedWidgets = readListAdapter(asyncData.selectedWidgets)
-    const allWidgets = readListAdapter(asyncData.allWidgets).map((widget) => {
-      const { description, id, name, projectId, publish, type, viewId, config } = widget
-
-      const newWidget = {
-        adhoc_sql: '',
-        chart_params: JSON.stringify({}),
-        config: JSON.stringify({}),
-        create_by: 101,
-        desc: description,
-        flatTable_id: 224,
-        id,
-        name,
-        publish,
-        query_params: JSON.stringify([]),
-        widgetlib_id: 16
-      }
-      return newWidget
-    })
-    selectedDashboard.widgets = selectedWidgets.map((widget) => {
-      const { widgetId, x, y, frequency, height, id, polling, width } = widget
-      const newWidget = {
-        widget_id: widgetId,
-        dashboard_id: dashboardId,
-        position_x: x,
-        position_y: y,
-        width,
-        height,
-        id,
-        aesStr: '',
-        create_by: 101,
-        flatTableId: 58,
-        length: 7,
-        permission: ['share', 'download'],
-        trigger_params: '60',
-        trigger_type: 'manual'
-      }
-      return newWidget
-    })
-    yield put(dashboardDetailLoaded(selectedDashboard, allWidgets))
+    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     message.error('获取 Dashboard 详细信息失败，请稍后再试')
@@ -225,14 +166,13 @@ export function* getDashboardDetail ({ payload }) {
 }
 
 export function* addDashboardItem (action) {
-  const { item, resolve } = action.payload
+  const { portalId, item, resolve } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const result = yield call(request, {
       method: 'post',
-      url: `${api.dashboard}/widgets`,
-      data: writeAdapter(item)
+      url: `${api.portal}/${portalId}/dashboards/${item.dashboardId}/widgets`,
+      data: item
     })
-    const result = readObjectAdapter(asyncData)
     yield put(dashboardItemAdded(result))
     resolve(result)
   } catch (err) {
@@ -262,10 +202,8 @@ export function* editDashboardItems (action) {
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.dashboard}/widgets`,
-      data: {
-        payload: items
-      }
+      url: `${api.portal}/dashboards/widgets`,
+      data: items
     })
     yield put(dashboardItemsEdited(items))
     resolve()
@@ -280,7 +218,7 @@ export function* deleteDashboardItem (action) {
   try {
     yield call(request, {
       method: 'delete',
-      url: `${api.dashboard}/widgets/${id}`
+      url: `${api.portal}/dashboards/widgets/${id}`
     })
     yield put(dashboardItemDeleted(id))
     resolve()

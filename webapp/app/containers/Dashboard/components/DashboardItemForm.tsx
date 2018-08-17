@@ -47,15 +47,13 @@ interface IDashboardItemFormProps {
   widgets: any[]
   selectedWidget: number
   loginUser: { id: number, admin: boolean }
-  triggerType: string,
+  polling: boolean,
   step: number
   onWidgetSelect: (id: number) => void
-  onTriggerTypeSelect: () => any
+  onPollingSelect: () => any
 }
 
 interface IDashboardItemFormStates {
-  triggerType: string
-  authorizedWidgets: any[]
   filteredWidgets: any[]
   pageSize: number
   currentPage: number
@@ -67,8 +65,6 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   constructor (props) {
     super(props)
     this.state = {
-      triggerType: 'manual',
-      authorizedWidgets: [],
       filteredWidgets: [],
       pageSize: 24,
       currentPage: 1,
@@ -76,39 +72,12 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
   }
 
-  public componentDidMount () {
-    const {
-      widgets
-    } = this.props
-    if (widgets.length > 0) {
-      this.setAuthorizedWidgets(this.props.widgets)
-    }
-  }
-
-  public componentWillReceiveProps (nextProps) {
-    const { widgets } = this.props
-    if (nextProps.widgets !== widgets) {
-      this.setAuthorizedWidgets(nextProps.widgets)
-    }
+  public componentWillReceiveProps () {
     window.addEventListener('resize', this.getScreenWidth, false)
   }
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.getScreenWidth, false)
-  }
-
-  private setAuthorizedWidgets = (widgets) => {
-    const { loginUser } = this.props
-    if (loginUser.admin) {
-      this.setState({
-        authorizedWidgets: widgets
-      })
-    }
-    // if (loginUser.admin) {
-    //   this.setState({
-    //     authorizedWidgets: widgets.filter((widget) => widget['create_by'] === loginUser.id)
-    //   })
-    // }
   }
 
   private getScreenWidth = () => {
@@ -118,7 +87,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   private onSearchWidgetItem = (value) => {
     const valReg = new RegExp(value, 'i')
     this.setState({
-      filteredWidgets: this.state.authorizedWidgets.filter((i) => valReg.test(i.name)),
+      filteredWidgets: this.props.widgets.filter((i) => valReg.test(i.name)),
       currentPage: 1
     })
   }
@@ -145,29 +114,28 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
 
   public render () {
     const {
+      widgets,
       type,
       form,
       selectedWidget,
-      triggerType,
+      polling,
       step,
       onWidgetSelect,
-      onTriggerTypeSelect
+      onPollingSelect
     } = this.props
 
     const {
-      authorizedWidgets,
       filteredWidgets,
       pageSize,
       currentPage,
       screenWidth
     } = this.state
 
-    const widgetsArr = filteredWidgets.length ? filteredWidgets : authorizedWidgets
+    const widgetsArr = filteredWidgets.length ? filteredWidgets : widgets
 
     const { getFieldDecorator } = form
 
     const widgetSelector = widgetsArr.map((w, index) => {
-      const widgetType = JSON.parse(w.chart_params).widgetType
 
       const widgetClassName = classnames({
         [widgetStyles.widget]: true,
@@ -199,8 +167,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
           >
             <div className={widgetClassName}>
               <h3 className={widgetStyles.title}>{w.name}</h3>
-              <p className={widgetStyles.content}>{w.desc}</p>
-              <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} />
+              <p className={widgetStyles.content}>{w.description}</p>
+              {/* <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} /> */}
               {checkmark}
             </div>
           </Col>
@@ -218,8 +186,8 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       [utilStyles.hide]: !step
     })
 
-    const triggerParamsClass = classnames({
-      [utilStyles.hide]: triggerType === 'manual'
+    const frequencyClass = classnames({
+      [utilStyles.hide]: !polling
     })
 
     return (
@@ -277,23 +245,23 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
                 labelCol={{span: 10}}
                 wrapperCol={{span: 14}}
               >
-                {getFieldDecorator('trigger_type', {
-                  initialValue: triggerType
+                {getFieldDecorator('polling', {
+                  initialValue: polling ? 'true' : 'false'
                 })(
-                  <Select onSelect={onTriggerTypeSelect}>
-                    <Option value="manual">手动刷新</Option>
-                    <Option value="frequent">定时刷新</Option>
+                  <Select onSelect={onPollingSelect}>
+                    <Option value="false">手动刷新</Option>
+                    <Option value="true">定时刷新</Option>
                   </Select>
                 )}
               </FormItem>
             </Col>
-            <Col sm={4} className={triggerParamsClass}>
+            <Col sm={4} className={frequencyClass}>
               <FormItem
                 label="时长"
                 labelCol={{span: 12}}
                 wrapperCol={{span: 12}}
               >
-                {getFieldDecorator('trigger_params', {
+                {getFieldDecorator('frequency', {
                   rules: [{
                     required: true,
                     message: '不能为空'

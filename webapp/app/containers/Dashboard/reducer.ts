@@ -57,15 +57,16 @@ import {
 } from './constants'
 
 import {
-  LOAD_BIZDATAS_FROM_ITEM,
-  LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
-  LOAD_BIZDATAS_FROM_ITEM_FAILURE,
+  LOAD_DATA_FROM_ITEM,
+  LOAD_DATA_FROM_ITEM_SUCCESS,
+  LOAD_DATA_FROM_ITEM_FAILURE,
   LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({
   dashboards: null,
+  widgets: null,
   currentDashboard: null,
   currentDashboardLoading: false,
   currentDashboardShareInfo: '',
@@ -155,15 +156,15 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       return state
         .set('currentDashboardLoading', false)
-        .set('currentDashboard', payload.dashboard)
+        .set('currentDashboard', payload.dashboardDetail)
         .set('currentDashboardCascadeSources', {})
-        .set('currentItems', payload.dashboard.widgets)
+        .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentDatasources', {})
-        .set('currentItemsLoading', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsLoading', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = false
           return obj
         }, {}))
-        .set('currentItemsQueryParams', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsQueryParams', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = {
             filters: '',
             linkageFilters: '',
@@ -175,28 +176,28 @@ function dashboardReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('currentItemsShareInfo', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsShareInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = ''
           return obj
         }, {}))
-        .set('currentItemsShareInfoLoading', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsShareInfoLoading', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = false
           return obj
         }, {}))
-        .set('currentItemsSecretInfo', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsSecretInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = ''
           return obj
         }, {}))
-        .set('currentItemsDownloadCsvLoading', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsDownloadCsvLoading', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = false
           return obj
         }, {}))
-        .set('currentItemsCascadeSources', payload.dashboard.widgets.reduce((obj, w) => {
+        .set('currentItemsCascadeSources', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = {}
           return obj
         }, {}))
     case LOAD_DASHBOARD_DETAIL_FAILURE:
-      return state
+      return state.set('currentDashboardLoading', false)
 
     case ADD_DASHBOARD_ITEM_SUCCESS:
       if (!items) {
@@ -283,7 +284,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItemsDownloadCsvLoading', null)
         .set('currentItemsCascadeSources', null)
 
-    case LOAD_BIZDATAS_FROM_ITEM:
+    case LOAD_DATA_FROM_ITEM:
       return state
         .set('currentItemsLoading', {
           ...itemsLoading,
@@ -306,7 +307,7 @@ function dashboardReducer (state = initialState, action) {
           }
         })
 
-    case LOAD_BIZDATAS_FROM_ITEM_SUCCESS:
+    case LOAD_DATA_FROM_ITEM_SUCCESS:
       return state
         .set('currentItemsLoading', {
           ...itemsLoading,
@@ -314,9 +315,9 @@ function dashboardReducer (state = initialState, action) {
         })
         .set('currentDatasources', {
           ...datasources,
-          [payload.itemId]: payload.bizdatas
+          [payload.itemId]: payload.data
         })
-    case LOAD_BIZDATAS_FROM_ITEM_FAILURE:
+    case LOAD_DATA_FROM_ITEM_FAILURE:
       return state.set('currentItemsLoading', {
         ...itemsLoading,
         [payload.itemId]: false

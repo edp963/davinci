@@ -18,48 +18,59 @@
  * >>
  */
 
-import area from './area.json'
-import bar from './bar.json'
-import funnel from './funnel.json'
-import line from './line.json'
-import pie from './pie.json'
-import sankey from './sankey.json'
-import scatter from './scatter.json'
-import wordCloud from './wordCloud.json'
-import table from './table.json'
-import scorecard from './scorecard.json'
-import text from './text.json'
-import map from './map.json'
-import doubleYAxis from './doubleYAxis.json'
-import boxplot from './boxplot.json'
-import graph from './graph.json'
-import markBoxplot from './markBoxplot.json'
-import waterfall from './waterfall.json'
-import gauge from './gauge.json'
-import radar from './radar.json'
-import parallel from './parallel.json'
-import confidenceBand from './confidenceBand.json'
+// import area from './area.json'
+// import bar from './bar.json'
+// import funnel from './funnel.json'
+// import line from './line.json'
+// import pie from './pie.json'
+// import sankey from './sankey.json'
+// import scatter from './scatter.json'
+// import wordCloud from './wordCloud.json'
+// import table from './table.json'
+// import scorecard from './scorecard.json'
+// import text from './text.json'
+// import map from './map.json'
+// import doubleYAxis from './doubleYAxis.json'
+// import boxplot from './boxplot.json'
+// import graph from './graph.json'
+// import markBoxplot from './markBoxplot.json'
+// import waterfall from './waterfall.json'
+// import gauge from './gauge.json'
+// import radar from './radar.json'
+// import parallel from './parallel.json'
+// import confidenceBand from './confidenceBand.json'
 
-export default [
-  area,
-  bar,
-  funnel,
-  line,
-  pie,
-  sankey,
-  scatter,
-  wordCloud,
-  table,
-  scorecard,
-  text,
-  map,
-  doubleYAxis,
-  boxplot,
-  graph,
-  markBoxplot,
-  waterfall,
-  gauge,
-  radar,
-  parallel,
-  confidenceBand
-]
+export default [{
+  id: 1,
+  name: '透视表',
+  icon: 'icon-table',
+  requireDimetions: [0, 9999, 9999],
+  requireMetrics: [0, 9999]
+}, {
+  id: 2,
+  name: '折线图',
+  icon: 'icon-chart-line',
+  requireDimetions: [1, 1, 9999],
+  requireMetrics: [1, 9999],
+  dimetionAxis: 'col'
+}, {
+  id: 3,
+  name: '柱状图',
+  icon: 'icon-chart-bar',
+  requireDimetions: [0, 1, 9999],
+  requireMetrics: [1, 9999],
+  dimetionAxis: 'col'
+}, {
+  id: 4,
+  name: '水平柱状图',
+  icon: 'icon-hbar',
+  requireDimetions: [0, 1, 9999],
+  requireMetrics: [1, 9999],
+  dimetionAxis: 'row'
+}, {
+  id: 5,
+  name: '散点图',
+  icon: 'icon-scatter-chart',
+  requireDimetions: [0, 0, 9999],
+  requireMetrics: 2
+}]

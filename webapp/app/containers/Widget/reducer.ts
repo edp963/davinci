@@ -46,6 +46,7 @@ import { fromJS } from 'immutable'
 
 const initialState = fromJS({
   widgets: false,
+  loading: false,
   dataLoading: false
 })
 
@@ -55,44 +56,41 @@ function widgetReducer (state = initialState, action) {
 
   switch (type) {
     case LOAD_WIDGETS:
-      return state
+      return state.set('loading', true)
     case LOAD_WIDGETS_SUCCESS:
-      return state.set('widgets', payload.widgets)
+      return state
+        .set('loading', false)
+        .set('widgets', payload.widgets)
     case LOAD_WIDGETS_FAILURE:
-      return state
+      return state.set('loading', false)
     case ADD_WIDGET:
-      return state
+      return state.set('loading', true)
     case ADD_WIDGET_SUCCESS:
-      if (widgets) {
-        widgets.unshift(payload.result)
-        return state.set('widgets', widgets.slice())
-      } else {
-        return state.set('widgets', [payload.result])
-      }
+      return state.set('loading', false)
     case ADD_WIDGET_FAILURE:
-      return state
+      return state.set('loading', false)
     case DELETE_WIDGET:
-      return state
+      return state.set('loading', true)
     case DELETE_WIDGET_SUCCESS:
-      return state.set('widgets', widgets.filter((g) => g.id !== payload.id))
-    case DELETE_WIDGET_FAILURE:
       return state
+        .set('widgets', widgets.filter((g) => g.id !== payload.id))
+        .set('loading', false)
+    case DELETE_WIDGET_FAILURE:
+      return state.set('loading', false)
     // case LOAD_WIDGET_DETAIL:
     //   return state
     // case LOAD_WIDGET_DETAIL_SUCCESS:
     //   return state
     case EDIT_WIDGET:
-      return state
+      return state.set('loading', true)
     case EDIT_WIDGET_SUCCESS:
-      widgets.splice(widgets.findIndex((g) => g.id === payload.result.id), 1, payload.result)
-      return state.set('widgets', widgets.slice())
+      return state.set('loading', false)
     case EDIT_WIDGET_FAILURE:
-      return state
+      return state.set('loading', false)
     case LOAD_DATA:
       return state.set('dataLoading', true)
     case LOAD_DATA_SUCCESS:
-      return state
-        .set('dataLoading', false)
+      return state.set('dataLoading', false)
     case LOAD_DATA_FAILURE:
       return state.set('dataLoading', false)
     case CLEAR_BIZDATAS:

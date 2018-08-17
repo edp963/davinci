@@ -61,6 +61,7 @@ const Menu = require('antd/lib/menu')
 
 import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
+import { decodeMetricName } from '../Widget/components/util'
 import { uuid } from '../../utils/util'
 import {
   loadDashboardDetail,
@@ -90,8 +91,7 @@ import {
   makeSelectCurrentItemsCascadeSources,
   makeSelectCurrentDashboardCascadeSources
 } from './selectors'
-import { loadWidgets } from '../Widget/actions'
-import { loadBizlogics, loadBizdatasFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema } from '../Bizlogic/actions'
+import { loadBizlogics, loadDataFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -139,19 +139,19 @@ interface IGridProps {
   currentItemsDownloadCsvLoading: object
   currentItemsCascadeSources: object
   currentDashboardCascadeSources: object
-  onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
-  onAddDashboardItem: (item: IDashboardItem, resolve: (item: IDashboardItem) => void) => any
+  onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
+  onAddDashboardItem: (portalId: number, item: IDashboardItem, resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[], resolve: () => void) => void
   onDeleteDashboardItem: (id: number, resolve: () => void) => void
-  onLoadWidgets: (projectId: number) => any
   onLoadBizlogics: (projectId: number) => any
-  onLoadBizdatasFromItem: (
+  onLoadDataFromItem: (
     dashboardItemId: number,
-    flatTableId: number,
+    viewId: number,
+    groups: string[],
+    aggregators: Array<{column: string, func: string}>,
     sql: {
-      adHoc: string
       filters: string
       linkageFilters: string
       globalFilters: string
@@ -159,10 +159,7 @@ interface IGridProps {
       linkageParams: IBizdataIncomeParamObject[]
       globalParams: IBizdataIncomeParamObject[]
     },
-    sorts: string,
-    offset: number,
-    limit: number,
-    useCache: string,
+    cache: boolean,
     expired: number
   ) => void
   onClearCurrentDashboard: () => any
@@ -199,7 +196,7 @@ interface IGridStates {
   dashboardItemFormStep: number
   modalLoading: boolean
   selectedWidget: number
-  triggerType: string
+  polling: boolean
   workbenchDashboardItem: number
   workbenchWidget: object
   workbenchVisible: boolean
@@ -229,14 +226,14 @@ interface IDashboardItemForm extends AntdFormType {
 
 interface IDashboardItem {
   id?: number
-  position_x?: number
-  position_y?: number
+  x?: number
+  y?: number
   width?: number
-  length?: number
-  widget_id?: number
-  dashboard_id?: number
-  trigger_type?: string
-  trigger_params?: string
+  height?: number
+  widgetId?: number
+  dashboardId?: number
+  polling?: boolean
+  frequency?: number
 }
 
 interface IDashboard {
@@ -277,7 +274,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormStep: 0,
       modalLoading: false,
       selectedWidget: 0,
-      triggerType: 'manual',
+      polling: false,
 
       workbenchDashboardItem: 0,
       workbenchWidget: null,
@@ -325,15 +322,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onLoadBizlogics,
       onLoadDashboardDetail,
       params,
-      loginUser,
-      onLoadWidgets,
       dashboards
     } = this.props
     const { pid, portalId, dashboardId } = params
-
-    // if (loginUser.admin) {
     onLoadBizlogics(pid)
-    // }
+    onLoadDashboardDetail(pid, portalId, Number(dashboardId))
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -357,8 +350,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         modifiedPositions: null,
         linkageCascaderSource: null
       })
-      const selectedDashboard = dashboards.find((r) => r.id === Number(params.dashboardId))
-      onLoadDashboardDetail(selectedDashboard, params.pid, params.portalId, params.dashboardId)
+      onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
     }
 
     if (!currentDashboardLoading) {
@@ -376,7 +368,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
 
       if (currentItems && currentItems !== this.props.currentItems) {
-        const localPositions = initializePosition(loginUser, currentDashboard, currentItems)
+        const localPositions = initializePosition(currentItems)
         if (!modifiedPositions) {
           this.setState({
             modifiedPositions: localPositions.map((item) => ({...item}))
@@ -416,38 +408,38 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         if (currentItems && widgets && !linkageCascaderSource) {
           this.setState({
             linkageCascaderSource: currentItems.map((ci) => ({
-              label: widgets.find((w) => w.id === ci.widget_id).name,
+              label: widgets.find((w) => w.id === ci.widgetId).name,
               value: ci.id,
               children: []
             }))
           })
         }
 
-        if (currentItems &&
-            bizlogics &&
-            currentDatasources &&
-            linkageCascaderSource) {
-          const itemKeys = Object.keys(currentDatasources)
+        // if (currentItems &&
+        //     bizlogics &&
+        //     currentDatasources &&
+        //     linkageCascaderSource) {
+        //   const itemKeys = Object.keys(currentDatasources)
 
-          if (itemKeys.join('') !== Object.keys(this.props.currentDatasources).join('')) {
-            // 当 datasources key 不同时刷新 linkageCascaderSource
-            this.refreshLinkageCascaderSource(nextProps)
-          } else {
-            // key 相同，引用有不同时也刷新 linkageCascaderSource
-            let changeSign = false
+        //   if (itemKeys.join('') !== Object.keys(this.props.currentDatasources).join('')) {
+        //     // 当 datasources key 不同时刷新 linkageCascaderSource
+        //     this.refreshLinkageCascaderSource(nextProps)
+        //   } else {
+        //     // key 相同，引用有不同时也刷新 linkageCascaderSource
+        //     let changeSign = false
 
-            for (let i = 0, il = itemKeys.length; i < il; i += 1) {
-              if (currentDatasources[itemKeys[i]] !== this.props.currentDatasources[itemKeys[i]]) {
-                changeSign = true
-                break
-              }
-            }
+        //     for (let i = 0, il = itemKeys.length; i < il; i += 1) {
+        //       if (currentDatasources[itemKeys[i]] !== this.props.currentDatasources[itemKeys[i]]) {
+        //         changeSign = true
+        //         break
+        //       }
+        //     }
 
-            if (changeSign) {
-              this.refreshLinkageCascaderSource(nextProps)
-            }
-          }
-        }
+        //     if (changeSign) {
+        //       this.refreshLinkageCascaderSource(nextProps)
+        //     }
+        //   }
+        // }
       }
     }
   }
@@ -502,7 +494,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const {
       widgets,
       currentItemsQueryParams,
-      onLoadBizdatasFromItem
+      onLoadDataFromItem
     } = this.props
     const { currentItemsRendered } = this.state
     if (!currentItemsRendered[itemId]) {
@@ -510,38 +502,41 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
     const chartInstanceId = `widget_${itemId}`
 
-    let widgetConfig = JSON.parse(widget.config)
-    let currentChart = this.charts[chartInstanceId]
+    const widgetConfig = JSON.parse(widget.config)
+    const { cols, rows, metrics } = widgetConfig
 
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      switch (renderType) {
-        case 'rerender':
-          if (currentChart) {
-            currentChart.dispose()
-          }
+    // let widgetConfig = JSON.parse(widget.config)
+    // let currentChart = this.charts[chartInstanceId]
 
-          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
-          this.charts[chartInstanceId] = currentChart       // todo  赋值 {domId: chartsInstance}
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'clear':
-          currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          widgetConfig = { // 点击"同步数据"按钮时强制不使用缓存
-            useCache: 'false',
-            expired: 0
-          }
-          break
-        default:
-          break
-      }
-    }
+    // if (chartInfo.renderer === ECHARTS_RENDERER) {
+    //   switch (renderType) {
+    //     case 'rerender':
+    //       if (currentChart) {
+    //         currentChart.dispose()
+    //       }
+
+    //       currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
+    //       this.charts[chartInstanceId] = currentChart       // todo  赋值 {domId: chartsInstance}
+    //       currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
+    //       break
+    //     case 'clear':
+    //       currentChart.clear()
+    //       currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
+    //       break
+    //     case 'refresh':
+    //       currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
+    //       widgetConfig = { // 点击"同步数据"按钮时强制不使用缓存
+    //         useCache: 'false',
+    //         expired: 0
+    //       }
+    //       break
+    //     default:
+    //       break
+    //   }
+    // }
 
     const cachedQueryParams = currentItemsQueryParams[itemId]
 
@@ -571,11 +566,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       pagination = cachedQueryParams.pagination
     }
 
-    onLoadBizdatasFromItem(
+    onLoadDataFromItem(
       itemId,
-      widget.flatTable_id,
+      widget.viewId,
+      cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name)).sort(),
+      metrics.items.map((m) => ({
+        column: decodeMetricName(m.name),
+        func: m.agg
+      })).sort(),
       {
-        adHoc: widget.adhoc_sql,
         filters,
         linkageFilters,
         globalFilters,
@@ -583,11 +582,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         linkageParams,
         globalParams
       },
-      pagination.sorts,
-      pagination.offset,
-      pagination.limit,
-      widgetConfig.useCache,
-      widgetConfig.expired
+      false,
+      0
     )
   }
 
@@ -630,18 +626,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     setTimeout(() => {
       const { currentItems } = this.props
       const { localPositions, modifiedPositions } = this.state
-
       if (modifiedPositions) {
-        const newModifiedItems = changePosition(modifiedPositions, layout, (pos) => {
-          const dashboardItem = currentItems.find((item) => item.id === Number(pos.i))
-          const chartInstanceId = `widget_${dashboardItem.id}`
-          const chartInstance = this.charts[chartInstanceId]
-
-          if (chartInstance) {
-            chartInstance.resize()
-          }
-        })
-
+        const newModifiedItems = changePosition(modifiedPositions, layout)
         this.setState({
           modifiedPositions: newModifiedItems,
           editPositionSign: diffPosition(localPositions, newModifiedItems)
@@ -679,13 +665,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.setState({
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
-      selectedWidget: dashboardItem.widget_id,
-      triggerType: dashboardItem.trigger_type
+      selectedWidget: dashboardItem.widgetId,
+      polling: dashboardItem.polling
     }, () => {
       this.dashboardItemForm.props.form.setFieldsValue({
         id: dashboardItem.id,
-        trigger_type: dashboardItem.trigger_type,
-        trigger_params: dashboardItem.trigger_params
+        polling: dashboardItem.polling ? 'true' : 'false',
+        frequency: dashboardItem.frequency
       })
     })
   }
@@ -700,7 +686,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private afterDashboardItemFormClose = () => {
     this.setState({
       selectedWidget: 0,
-      triggerType: 'manual',
+      polling: false,
       dashboardItemFormStep: 0
     })
     this.dashboardItemForm.onReset()
@@ -713,9 +699,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private triggerTypeSelect = (val) => {
+  private pollingSelect = (val) => {
     this.setState({
-      triggerType: val
+      polling: val === 'true'
     })
   }
 
@@ -726,40 +712,39 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private saveDashboardItem = () => {
-    const { currentDashboard, currentItems, widgets } = this.props
+    const { params, currentDashboard, currentItems, widgets } = this.props
     const { modifiedPositions, selectedWidget, dashboardItemFormType, linkageCascaderSource } = this.state
 
-    const formdata: IDashboardItem = this.dashboardItemForm.props.form.getFieldsValue()
+    const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
 
     const predictPosYArr = modifiedPositions.map((wi) => wi.y + wi.h)
 
     const newItem = {
-      widget_id: selectedWidget,
-      dashboard_id: currentDashboard.id,
-      trigger_type: formdata.trigger_type,
-      trigger_params: `${formdata.trigger_params}`
+      widgetId: selectedWidget,
+      dashboardId: currentDashboard.id,
+      polling: formdata.polling !== 'false',
+      frequency: formdata.frequency
     }
 
     this.setState({ modalLoading: true })
 
     if (dashboardItemFormType === 'add') {
       const positionInfo = {
-        position_x: 0,
-        position_y: predictPosYArr.length ? Math.max(...predictPosYArr) : 0,
+        x: 0,
+        y: predictPosYArr.length ? Math.max(...predictPosYArr) : 0,
         width: 4,
-        length: 4
+        height: 4
       }
-
-      this.props.onAddDashboardItem({...newItem, ...positionInfo}, (dashboardItem) => {
+      this.props.onAddDashboardItem(Number(params.portalId), {...newItem, ...positionInfo}, (dashboardItem: IDashboardItem) => {
         modifiedPositions.push({
-          x: dashboardItem.position_x,
-          y: dashboardItem.position_y,
+          x: dashboardItem.x,
+          y: dashboardItem.y,
           w: dashboardItem.width,
-          h: dashboardItem.length,
+          h: dashboardItem.height,
           i: `${dashboardItem.id}`
         })
         linkageCascaderSource.push({
-          label: widgets.find((w) => w.id === dashboardItem.widget_id).name,
+          label: widgets.find((w) => w.id === dashboardItem.widgetId).name,
           value: dashboardItem.id,
           children: []
         })
@@ -770,7 +755,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const modifiedDashboardItem = {...dashboardItem, ...newItem}
 
       this.props.onEditDashboardItem(modifiedDashboardItem, () => {
-        this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widget_id)
+        this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
         this.hideDashboardItemForm()
       })
     }
@@ -778,8 +763,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private editDashboardItemPositions = () => {
     const {
-      loginUser,
-      currentDashboard,
       currentItems,
       onEditDashboardItems
     } = this.props
@@ -789,22 +772,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const modifiedItem = modifiedPositions[index]
       return {
         ...item,
-        dashboard_id: currentDashboard.id,
-        position_x: modifiedItem.x,
-        position_y: modifiedItem.y,
+        x: modifiedItem.x,
+        y: modifiedItem.y,
         width: modifiedItem.w,
-        length: modifiedItem.h
+        height: modifiedItem.h
       }
     })
 
-    if (loginUser.admin) {
-      onEditDashboardItems(changedItems, () => {
-        this.setState({ editPositionSign: false })
-      })
-    } else {
-      localStorage.setItem(`${loginUser.id}_${currentDashboard.id}_position`, JSON.stringify(modifiedPositions))
+    onEditDashboardItems(changedItems, () => {
       this.setState({ editPositionSign: false })
-    }
+    })
   }
 
   private deleteItem = (id) => () => {
@@ -819,9 +796,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           return gfts
         })
       })
-      if (this.charts[`widget_${id}`]) {
-        this.charts[`widget_${id}`].dispose()
-      }
     })
   }
 
@@ -849,40 +823,40 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private onWorkbenchClose = () => {
     const dashboardItem = this.props.currentItems.find((item) => item.id === this.state.workbenchDashboardItem)
-    this.getChartData('rerender', dashboardItem.id, dashboardItem.widget_id)
+    this.getChartData('rerender', dashboardItem.id, dashboardItem.widgetId)
     this.hideWorkbench()
   }
 
-  private showFiltersForm = (itemId, keys, types) => () => {
-    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
+  // private showFiltersForm = (itemId, keys, types) => () => {
+  //   const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
 
-    this.setState({
-      filtersVisible: true,
-      filtersDashboardItem: dashboardItem.id,
-      filtersKeys: keys,
-      filtersTypes: types
-    })
-  }
+  //   this.setState({
+  //     filtersVisible: true,
+  //     filtersDashboardItem: dashboardItem.id,
+  //     filtersKeys: keys,
+  //     filtersTypes: types
+  //   })
+  // }
 
-  private hideFiltersForm = () => {
-    this.setState({
-      filtersVisible: false,
-      filtersDashboardItem: 0,
-      filtersKeys: [],
-      filtersTypes: []
-    })
-    this.dashboardItemFilters.resetTree()
-  }
+  // private hideFiltersForm = () => {
+  //   this.setState({
+  //     filtersVisible: false,
+  //     filtersDashboardItem: 0,
+  //     filtersKeys: [],
+  //     filtersTypes: []
+  //   })
+  //   this.dashboardItemFilters.resetTree()
+  // }
 
-  private doFilterQuery = (sql) => {
-    const itemId = this.state.filtersDashboardItem
-    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
+  // private doFilterQuery = (sql) => {
+  //   const itemId = this.state.filtersDashboardItem
+  //   const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
 
-    this.getChartData('clear', itemId, dashboardItem.widget_id, {
-      filters: sql
-    })
-    this.hideFiltersForm()
-  }
+  //   this.getChartData('clear', itemId, dashboardItem.widgetId, {
+  //     filters: sql
+  //   })
+  //   this.hideFiltersForm()
+  // }
 
   private downloadCsv = (itemId) => (token) => {
     const {
@@ -893,7 +867,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const dashboardItem = currentItems.find((c) => c.id === itemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+    const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
 
     const { filters, params } = currentItemsQueryParams[itemId]
 
@@ -973,7 +947,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     Object.keys(interactiveItems).forEach((itemId) => {
       if (interactiveItems[itemId].isInteractive) {
         const triggerItem = currentItems.find((ci) => `${ci.id}` === itemId)
-        const triggerWidget = widgets.find((w) => w.id === triggerItem.widget_id)
+        const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
         const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
         const dataSource = currentDatasources[itemId].dataSource
 
@@ -1027,7 +1001,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     Object.keys(currentDatasources).forEach((k) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
-      const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+      const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
       const flattable = bizlogics.find((bl) => bl.id === widget.flatTable_id)
       const variableArr = flattable.sql_tmpl.match(/query@var\s+\$\w+\$/g) || []
 
@@ -1055,7 +1029,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems, widgets } = this.props
     const { linkageTableSource } = this.state
     const dashboardItem = currentItems.find((ci) => ci.id === itemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+    const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
     const widgetlib = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
 
     const linkagers = {}
@@ -1100,7 +1074,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const triggerItem = currentItems.find((ci) => ci.id === itemId)
-    const triggerWidget = widgets.find((w) => w.id === triggerItem.widget_id)
+    const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
     const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
     const dataSource = currentDatasources[itemId].dataSource
     let triggeringData
@@ -1165,7 +1139,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const mergedFilters = linkageFilters.length ? { ...filters, [itemId]: linkageFilters } : filters
         const mergedParams = linkageParams.length ? { ...params, [itemId]: linkageParams } : params
 
-        this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+        this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
           linkageFilters: Object.values(mergedFilters)
             .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
             .join(' and '),
@@ -1177,7 +1151,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           params: mergedParams
         }
       } else {
-        this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+        this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
           linkageFilters: linkageFilters.join(' and '),
           linkageParams
         })
@@ -1199,7 +1173,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           delete filters[itemId]
           delete params[itemId]
 
-          this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
+          this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
             linkageFilters: Object.values(filters)
               .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
               .join(' and '),
@@ -1218,7 +1192,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const triggerItem = currentItems.find((ci) => ci.id === itemId)
-    const triggerWidget = widgets.find((w) => w.id === triggerItem.widget_id)
+    const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
     const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
     const dataSource = currentDatasources[itemId].dataSource
 
@@ -1489,7 +1463,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         }
       }
 
-      this.getChartData('rerender', Number(itemId), item.widget_id, {
+      this.getChartData('rerender', Number(itemId), item.widgetId, {
         globalFilters: this.interactGlobalFilters[itemId].filters
           ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
           : '',
@@ -1520,7 +1494,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { modifiedPositions } = this.state
     const item = currentItems.find((ci) => ci.id === id)
     const modifiedPosition = modifiedPositions[currentItems.indexOf(item)]
-    const widget = widgets.find((w) => w.id === item.widget_id)
+    const widget = widgets.find((w) => w.id === item.widgetId)
     const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     const data = currentDatasources[id]
     const loading = currentItemsLoading[id]
@@ -1547,7 +1521,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private getWidgetInfo = (dashboardItemId) => {
     const { currentItems, widgets } = this.props
     const dashboardItem = currentItems.find((ci) => ci.id === dashboardItemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+    const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
     const widgetlib = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
     return {
       name: widget.name,
@@ -1560,8 +1534,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private adjustLinkageTableSource = (currentDashboard, currentItems) => {
-    const { linkage_detail } = currentDashboard
-    const linkageTableSource = JSON.parse(linkage_detail)
+    const config = JSON.parse(currentDashboard.config || '{}')
+    const linkageTableSource = config.linkage || []
 
     return linkageTableSource.filter((lts) => {
       let linkagerSign = false
@@ -1581,8 +1555,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
-    const { config } = currentDashboard
-    const globalFilterTableSource = JSON.parse(config).globalFilters || []
+    const config = JSON.parse(currentDashboard.config || '{}')
+    const globalFilterTableSource = config.filters || []
 
     return globalFilterTableSource.map((gfts) => {
       const deprecatedItems = Object.keys(gfts.relatedItems).filter((key) => !currentItems.find((ci) => ci.id === Number(key)))
@@ -1627,7 +1601,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormVisible,
       modalLoading,
       selectedWidget,
-      triggerType,
+      polling,
       dashboardItemFormStep,
       editPositionSign,
       workbenchWidget,
@@ -1665,10 +1639,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     let nextNavDropdown = (<span />)
     if (currentDashboard && widgets) {
-      const currentWidgets = currentDashboard.widgets
-      const navDropdownItems = currentWidgets.map((d) => (
-        <Menu.Item key={d.id} widgetId={d.widget_id}>
-          {d.widget_id ? (widgets.find((widget) => widget.id === d.widget_id))['name'] : ''}
+      const navDropdownItems = currentItems.map((d) => (
+        <Menu.Item key={d.id} widgetId={d.widgetId}>
+          {d.widgetId ? (widgets.find((widget) => widget.id === d.widgetId))['name'] : ''}
         </Menu.Item>
       ))
       nextNavDropdown = (
@@ -1686,8 +1659,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const itemId = dashboardItem.id
         // const modifiedPosition = modifiedPositions[index]
         const modifiedPosition = modifiedPositions ? modifiedPositions[index] : {}
-        const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
-        const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+        const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
+        const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
         const data = currentDatasources[itemId]
         const loading = currentItemsLoading[itemId]
         const shareInfo = currentItemsShareInfo[itemId]
@@ -1698,11 +1671,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const cascadeSources = currentItemsCascadeSources[itemId]
         const { isInteractive, interactId } = interactiveItems[itemId]
         const rendered = currentItemsRendered[itemId]
-        // isReadOnly 非原创用户不能对 widget进行写的操作
-        const isReadOnly = (widget['create_by'] === loginUser.id)
-        const permission = dashboardItem['permission']
-        const isShare = permission.indexOf('share') > -1
-        const isDownload = permission.indexOf('download') > -1
+
         itemblocks.push((
           <div key={pos.i}>
             <DashboardItem
@@ -1716,10 +1685,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               loading={loading}
               triggerType={dashboardItem.trigger_type}
               triggerParams={dashboardItem.trigger_params}
-              isAdmin={loginUser.admin}
-              isShared={false}
-              isShare={isShare}
-              isDownload={isDownload}
               shareInfo={shareInfo}
               secretInfo={secretInfo}
               shareInfoLoading={shareInfoLoading}
@@ -1731,7 +1696,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onRenderChart={this.renderChart}
               onShowEdit={this.showEditDashboardItemForm}
               onShowWorkbench={this.showWorkbench}
-              onShowFiltersForm={this.showFiltersForm}
               onDeleteDashboardItem={this.deleteItem}
               onDownloadCsv={this.downloadCsv}
               onTurnOffInteract={this.turnOffInteract}
@@ -1739,7 +1703,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
               onGetCascadeSource={this.getCascadeSource({...sql, adHoc: widget.adhoc_sql})}
-              isReadOnly={isReadOnly}
               rendered={rendered}
             />
           </div>
@@ -1844,9 +1807,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let shareButton = void 0
     let linkageButton = void 0
     let globalFilterButton = void 0
-    const isOwner = currentDashboard && loginUser.id === currentDashboard.create_by
 
-    if (isOwner && editPositionSign) {
+    if (editPositionSign) {
       savePosButton = (
         <Tooltip placement="bottom" title="保存位置修改">
           <Button
@@ -1870,77 +1832,63 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       </Tooltip>
     )
 
-    if (isOwner && loginUser.admin) {
-      // addButton = (
-      //   <Tooltip placement="bottom" title="新增">
-      //     <Button
-      //       size="large"
-      //       type="primary"
-      //       icon="plus"
-      //       style={{marginLeft: '8px'}}
-      //       onClick={this.showAddDashboardItemForm}
-      //     />
-      //   </Tooltip>
-      // )
-
-      shareButton = currentDashboard
-        ? (
-          <Popover
-            placement="bottomRight"
-            content={
-              <SharePanel
-                id={currentDashboard.id}
-                shareInfo={currentDashboardShareInfo}
-                secretInfo={currentDashboardSecretInfo}
-                shareInfoLoading={currentDashboardShareInfoLoading}
-                authorized={dashboardSharePanelAuthorized}
-                afterAuthorization={this.changeDashboardSharePanelAuthorizeState(true)}
-                type="dashboard"
-              />
-            }
-            trigger="click"
-          >
-            <Tooltip placement="bottom" title="分享">
-              <Button
-                size="large"
-                type="primary"
-                icon="share-alt"
-                style={{marginLeft: '8px'}}
-                onClick={this.changeDashboardSharePanelAuthorizeState(false)}
-              />
-            </Tooltip>
-          </Popover>
-        )
-        : ''
-
-      linkageButton = currentDashboard
-        ? (
-          <Tooltip placement="bottom" title="联动关系配置">
+    shareButton = currentDashboard
+      ? (
+        <Popover
+          placement="bottomRight"
+          content={
+            <SharePanel
+              id={currentDashboard.id}
+              shareInfo={currentDashboardShareInfo}
+              secretInfo={currentDashboardSecretInfo}
+              shareInfoLoading={currentDashboardShareInfoLoading}
+              authorized={dashboardSharePanelAuthorized}
+              afterAuthorization={this.changeDashboardSharePanelAuthorizeState(true)}
+              type="dashboard"
+            />
+          }
+          trigger="click"
+        >
+          <Tooltip placement="bottom" title="分享">
             <Button
               size="large"
               type="primary"
-              icon="link"
+              icon="share-alt"
               style={{marginLeft: '8px'}}
-              onClick={this.showLinkagePanel}
+              onClick={this.changeDashboardSharePanelAuthorizeState(false)}
             />
           </Tooltip>
-        )
-        : ''
+        </Popover>
+      )
+      : ''
 
-      globalFilterButton = currentDashboard
-        ? (
-          <Tooltip placement="bottomRight" title="全局筛选器配置">
-            <Button
-              size="large"
-              type="primary"
-              icon="filter"
-              style={{marginLeft: '8px'}}
-              onClick={this.showGlobalFilterConfigPanel}
-            />
-          </Tooltip>
-        )
-        : ''
-    }
+    linkageButton = currentDashboard
+      ? (
+        <Tooltip placement="bottom" title="联动关系配置">
+          <Button
+            size="large"
+            type="primary"
+            icon="link"
+            style={{marginLeft: '8px'}}
+            onClick={this.showLinkagePanel}
+          />
+        </Tooltip>
+      )
+      : ''
+
+    globalFilterButton = currentDashboard
+      ? (
+        <Tooltip placement="bottomRight" title="全局筛选器配置">
+          <Button
+            size="large"
+            type="primary"
+            icon="filter"
+            style={{marginLeft: '8px'}}
+            onClick={this.showGlobalFilterConfigPanel}
+          />
+        </Tooltip>
+      )
+      : ''
 
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !globalFilterTableSource.length
@@ -1953,11 +1901,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           <Row>
             <Col sm={12}>
               <Breadcrumb className={utilStyles.breadcrumb}>
-                <Breadcrumb.Item>
-                  <Link to={`/project/${params.pid}/dashboards`}>
-                    Dashboard
-                  </Link>
-                </Breadcrumb.Item>
                 {
                   currentDashboard && (
                     <Breadcrumb.Item>
@@ -2024,32 +1967,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             loginUser={loginUser}
             widgets={widgets || []}
             selectedWidget={selectedWidget}
-            triggerType={triggerType}
+            polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
-            onTriggerTypeSelect={this.triggerTypeSelect}
+            onPollingSelect={this.pollingSelect}
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
         {/* <Modal
-          title="Widget 详情"
-          wrapClassName={`ant-modal-xlarge ${widgetStyles.workbenchWrapper}`}
-          visible={workbenchVisible}
-          onCancel={this.hideWorkbench}
-          afterClose={this.afterWorkbenchModalClose}
-          footer={false}
-          maskClosable={false}
-        >
-          <Workbench
-            type={workbenchVisible ? 'edit' : ''}
-            widget={workbenchWidget}
-            bizlogics={bizlogics || []}
-            widgetlibs={widgetlibs}
-            onAfterSave={this.onWorkbenchClose}
-            ref={(f) => { this.workbenchWrapper = f }}
-          />
-        </Modal> */}
-        <Modal
           title="条件查询"
           wrapClassName="ant-modal-xlarge"
           visible={filtersVisible}
@@ -2064,7 +1989,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onQuery={this.doFilterQuery}
             wrappedComponentRef={this.refHandles.dashboardItemFilters}
           />
-        </Modal>
+        </Modal> */}
         <Modal
           title="联动关系配置"
           wrapClassName="ant-modal-large"
@@ -2099,7 +2024,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onLoadBizdataSchema={onLoadBizdataSchema}
           />
         </Modal>
-        <FullScreenPanel
+        {/* <FullScreenPanel
           widgets={widgets}
           widgetlibs={widgetlibs}
           currentDashboard={currentDashboard}
@@ -2108,7 +2033,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           isVisible={this.visibleFullScreen}
           currentDataInFullScreen={this.state.currentDataInFullScreen}
           onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        />
+        /> */}
       </Container>
     )
   }
@@ -2138,15 +2063,14 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
-    onAddDashboardItem: (item, resolve) => dispatch(addDashboardItem(item, resolve)),
+    onLoadDashboardDetail: (projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
+    onAddDashboardItem: (portalId, item, resolve) => dispatch(addDashboardItem(portalId, item, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items, resolve) => dispatch(editDashboardItems(items, resolve)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
     onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
-    onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
+    onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),

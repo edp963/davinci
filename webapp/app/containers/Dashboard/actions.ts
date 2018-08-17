@@ -34,6 +34,7 @@ import {
   DELETE_DASHBOARD,
   DELETE_DASHBOARD_SUCCESS,
   DELETE_DASHBOARD_FAILURE,
+  SET_CURRENT_DASHBOARD,
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
   LOAD_DASHBOARD_DETAIL_FAILURE,
@@ -66,22 +67,11 @@ import {
   UPDATE_MARK_ERROR
 } from './constants'
 
-export function loadDashboardDetail (selectedDashboard, projectId, portalId, dashboardId) {
-  return {
-    type: LOAD_DASHBOARD_DETAIL,
-    payload: {
-      selectedDashboard,
-      projectId,
-      portalId,
-      dashboardId
-    }
-  }
-}
-
-export function addDashboardItem (item, resolve) {
+export function addDashboardItem (portalId, item, resolve) {
   return {
     type: ADD_DASHBOARD_ITEM,
     payload: {
+      portalId,
       item,
       resolve
     }
@@ -231,11 +221,23 @@ export function deleteDashboardFail () {
   }
 }
 
-export function dashboardDetailLoaded (dashboard, widgets) {
+export function loadDashboardDetail (projectId, portalId, dashboardId) {
+  return {
+    type: LOAD_DASHBOARD_DETAIL,
+    payload: {
+      projectId,
+      portalId,
+      dashboardId
+    }
+  }
+}
+
+export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
-      dashboard,
+      dashboardId,
+      dashboardDetail,
       widgets
     }
   }
