@@ -125,7 +125,7 @@ public class DashboardController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get dashboard widgets")
-    @GetMapping("/{portalId}/dashboards/{dashboardId}/widgets")
+    @GetMapping("/{portalId}/dashboards/{dashboardId}")
     public ResponseEntity getDashboardMemWidgets(@PathVariable("portalId") Long portalId,
                                                  @PathVariable("dashboardId") Long dashboardId,
                                                  @ApiIgnore @CurrentUser User user,
@@ -400,17 +400,14 @@ public class DashboardController extends BaseController {
     /**
      * 修改dashboard下的widget关联信息
      *
-     * @param relationId
-     * @param memDashboardWidget
      * @param bindingResult
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "update dashboard widget relation")
-    @PutMapping(value = "/dashboards/widgets/{relationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateMemDashboardWidget(@PathVariable Long relationId,
-                                                   @Valid @RequestBody MemDashboardWidget memDashboardWidget,
+    @PutMapping(value = "/dashboards/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity updateMemDashboardWidget(@Valid @RequestBody MemDashboardWidget[] memDashboardWidgets,
                                                    @ApiIgnore BindingResult bindingResult,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
@@ -419,13 +416,30 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(relationId) || !memDashboardWidget.getId().equals(relationId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid  id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        for (MemDashboardWidget memDashboardWidget : memDashboardWidgets) {
+            if (invalidId(memDashboardWidget.getId())) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
+
+            if (invalidId(memDashboardWidget.getDashboardId())) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
+
+            if (invalidId(memDashboardWidget.getWidgetId())) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid widget id");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
+
+            if (memDashboardWidget.getPolling() && memDashboardWidget.getFrequency() < 1) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid frequency");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
         }
 
         try {
-            ResultMap resultMap = dashboardService.updateMemDashboardWidget(memDashboardWidget, user, request);
+            ResultMap resultMap = dashboardService.updateMemDashboardWidgets(memDashboardWidgets, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -438,7 +452,6 @@ public class DashboardController extends BaseController {
      * 删除dashboard下的widget关联信息
      *
      * @param relationId
-     * @param bindingResult
      * @param user
      * @param request
      * @return
@@ -446,14 +459,8 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "delete dashboard widget relation")
     @DeleteMapping(value = "/dashboards/widgets/{relationId}")
     public ResponseEntity deleteMemDashboardWidget(@PathVariable Long relationId,
-                                                   @ApiIgnore BindingResult bindingResult,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
-        if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
         try {
             ResultMap resultMap = dashboardService.deleteMemDashboardWidget(relationId, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

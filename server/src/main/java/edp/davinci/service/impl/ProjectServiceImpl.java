@@ -18,17 +18,19 @@
 
 package edp.davinci.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.utils.PageUtils;
 import edp.core.utils.TokenUtils;
+import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.dao.*;
+import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
 import edp.davinci.dto.userDto.UserBaseInfo;
-import edp.davinci.model.Organization;
-import edp.davinci.model.Project;
-import edp.davinci.model.RelUserOrganization;
-import edp.davinci.model.User;
+import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.DisplayService;
 import edp.davinci.service.ProjectService;
@@ -79,6 +81,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Autowired
     private SourceMapper sourceMapper;
 
+    @Autowired
+    private StarMapper starMapper;
+
     @Override
     public boolean isExist(String name, Long id, Long orgId) {
         Long projectId = projectMapper.getByNameWithOrgId(name, orgId);
@@ -86,6 +91,42 @@ public class ProjectServiceImpl implements ProjectService {
             return !id.equals(projectId);
         }
         return null != projectId && projectId.longValue() > 0L;
+    }
+
+
+    @Override
+    public ResultMap getProjectInfo(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        ProjectWithCreateBy project = projectMapper.getProjectWithUserById(id);
+
+        if (null == project) {
+            log.info("project (:{}) is not found", id);
+            return resultMap.failAndRefreshToken(request).message("project is not found");
+        }
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+        if (!user.getId().equals(project.getUserId()) && null == rel) {
+            log.info("user[{}] don't have permission to get project info", user.getId(), project.getId());
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission");
+        }
+
+        Star star = starMapper.select(user.getId(), project.getId(), Constants.STAR_TARGET_PROJECT);
+        if (null != star) {
+            project.setIsStar(true);
+        }
+
+        ProjectInfo projectInfo = new ProjectInfo();
+        BeanUtils.copyProperties(project, projectInfo);
+
+        List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
+        for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
+            if (userMaxProjectPermission.getProjectId().equals(project.getId())) {
+                BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
+            }
+        }
+
+        return resultMap.successAndRefreshToken(request).payload(projectInfo);
     }
 
     /**
@@ -115,6 +156,36 @@ public class ProjectServiceImpl implements ProjectService {
             }
         }
         return resultMap.successAndRefreshToken(request).payloads(projectInfoList);
+    }
+
+    /**
+     * 搜索project
+     *
+     * @param keywords
+     * @param user
+     * @param pageNum
+     * @param pageSize
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap searchProjects(String keywords, User user, int pageNum, int pageSize, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        if (!PageUtils.checkPageInfo(pageNum, pageSize)) {
+            return resultMap.failAndRefreshToken(request).message("Invalid page info");
+        }
+
+        List<OrganizationInfo> orgs = organizationMapper.getOrganizationByUser(user.getId());
+        if (null == orgs || orgs.size() < 1) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        }
+
+        PageHelper.startPage(pageNum, pageSize);
+        List<ProjectWithCreateBy> projects = projectMapper.getProjectsByKewordsWithUser(keywords, user.getId(), orgs);
+        PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
+
+        return resultMap.successAndRefreshToken(request).payload(pageInfo);
     }
 
     /**

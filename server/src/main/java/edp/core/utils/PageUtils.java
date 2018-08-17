@@ -16,14 +16,19 @@
  * >>
  */
 
-package edp.davinci.dto.organizationDto;
+package edp.core.utils;
 
-import lombok.Data;
+public class PageUtils {
+    public static final int defaultPageNum = 1;
+    public static final int defaultPageSize = 10;
 
-@Data
-public class OrganizationProjectBaseInfo {
-    private Long id;
-    private String name;
-    private String description;
-    private Long createBy;
+    public static boolean checkPageInfo(int pageNum, int pageSize) {
+        if (pageNum < defaultPageNum) {
+            return false;
+        }
+        if (pageSize < defaultPageSize) {
+            return false;
+        }
+        return true;
+    }
 }

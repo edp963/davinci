@@ -47,4 +47,44 @@
             #{visibility, jdbcType=TINYINT}
         </trim>
     </insert>
+    
+    
+    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        SELECT
+            p.*,
+            IF(s.id is NULL, FALSE, TRUE) as 'isStar',
+            u.id as 'createBy.id',
+            u.username as 'createBy.username',
+            u.avatar as 'createBy.avatar'
+        from
+            (SELECT * FROM project WHERE
+              org_id  in
+                <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                    #{item.id}
+                </foreach>
+            ) p
+            LEFT JOIN `user` u on u.id = p.user_id
+            left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        where
+            (
+                p.user_id = #{userId}
+                or p.visibility = 1
+                or p.id in (
+                SELECT p.id
+                FROM project p
+                LEFT JOIN rel_team_project rtp on rtp.project_id = p.id
+                LEFT JOIN team t ON t.id = rtp.team_id
+                LEFT JOIN rel_user_team rut ON rut.team_id = t.id
+                WHERE  rut.user_id = #{userId} AND rut.role = 1
+                and p.org_id in
+                <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                    #{item.id}
+                </foreach>
+                )
+            )
+            <if test="keywords != null">
+                and LOWER(p.`name`) like CONCAT(CONCAT('%', LOWER(#{keywords})), '%')
+            </if>
+        order by p.id
+    </select>
 </mapper>

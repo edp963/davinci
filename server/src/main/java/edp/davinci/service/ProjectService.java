@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 
 public interface ProjectService extends CheckEntityService {
 
+    ResultMap getProjectInfo(Long id, User user, HttpServletRequest request);
 
     ResultMap getProjects(User user, HttpServletRequest request);
 
@@ -38,4 +39,7 @@ public interface ProjectService extends CheckEntityService {
     ResultMap deleteProject(Long id, User user, HttpServletRequest request);
 
     ResultMap transferPeoject(Long id, Long orgId, User user, HttpServletRequest request);
+
+    ResultMap searchProjects(String keywords, User user, int pageNum, int pageSize, HttpServletRequest request);
+
 }

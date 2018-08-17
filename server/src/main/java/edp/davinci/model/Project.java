@@ -34,6 +34,8 @@ public class Project {
 
     private Long userId;
 
+    private Integer starNum = 0;
+
     private Boolean visibility = true;
 
     public Project() {
@@ -42,18 +44,5 @@ public class Project {
     public Project(Long id, Long userId) {
         this.id = id;
         this.userId = userId;
-    }
-
-    @Override
-    public String toString() {
-        return "Project{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", pic='" + pic + '\'' +
-                ", orgId=" + orgId +
-                ", userId=" + userId +
-                ", visibility=" + visibility +
-                '}';
     }
 }

@@ -60,6 +60,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     private RelUserTeamMapper relUserTeamMapper;
 
     @Autowired
+    private WidgetMapper widgetMapper;
+
+    @Autowired
     private RelTeamProjectMapper relTeamProjectMapper;
 
     @Autowired
@@ -296,6 +299,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         if (!allowDelete(viewWithProjectAndSource.getProject(), user)) {
             log.info("user {} have not permisson to delete the view {}", user.getUsername(), id);
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete the view");
+        }
+
+        List<Widget> widgets = widgetMapper.getWidgetsByWiew(id);
+        if (null != widgets && widgets.size() > 0) {
+            return resultMap.failAndRefreshToken(request).message("The current view has been referenced, please delete the reference and then operate");
         }
 
         viewMapper.deleteById(id);

@@ -24,5 +24,8 @@ import lombok.Data;
 
 @Data
 public class ProjectWithCreateBy extends Project {
+
+    private Boolean isStar = false;
+
     private UserBaseInfo createBy;
 }

@@ -20,7 +20,6 @@ package edp.davinci.dao;
 
 
 import edp.davinci.dto.organizationDto.OrganizationInfo;
-import edp.davinci.dto.organizationDto.OrganizationProjectBaseInfo;
 import edp.davinci.model.Organization;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -92,18 +91,6 @@ public interface OrganizationMapper {
 
     @Delete({"delete from organization where id = #{id}"})
     int deleteById(@Param("id") Long id);
-
-
-    @Select({
-            "SELECT id, `name`, description, user_id 'createBy'  FROM project where id IN (",
-            "   SELECT id FROM project where user_id = #{userId} and org_id = #{orgId}",
-            "   UNION",
-            "   SELECT p.id FROM project p",
-            "   LEFT JOIN rel_user_organization ruo on p.org_id = ruo.org_id",
-            "   WHERE ruo.user_id = #{userId} and ruo.org_id = #{orgId} and (ruo.role = 1 or p.visibility = 1)",
-            ")"
-    })
-    List<OrganizationProjectBaseInfo> getOrgProjects(@Param("orgId") Long orgId, @Param("userId") Long userId);
 
 
     List<OrganizationInfo> getJointlyOrganization(@Param("list") List<Long> userIds, @Param("userId") Long userId);

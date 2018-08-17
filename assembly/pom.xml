@@ -23,6 +23,8 @@
     </licenses>
 
     <properties>
+        <skipTests>true</skipTests>
+
         <main.basedir>${project.parent.basedir}</main.basedir>
         <sbt.project.name>assembly</sbt.project.name>
         <build.testJarPhase>none</build.testJarPhase>

@@ -71,6 +71,52 @@ public class ProjectController extends BaseController {
         }
     }
 
+
+    /**
+     * 获取项目列表：用户创建和用户所在组可访问的
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get project info")
+    @GetMapping("/{id}")
+    public ResponseEntity getProjectInfo(@PathVariable Long id,
+                                         @ApiIgnore @CurrentUser User user,
+                                         @ApiIgnore HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = projectService.getProjectInfo(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    @ApiOperation(value = "search projects by keywords")
+    @GetMapping("/search")
+    public ResponseEntity searchProjects(@RequestParam(value = "keywords", required = false) String keywords,
+                                         @RequestParam(value = "pageNum", required = false, defaultValue = "1") int pageNum,
+                                         @RequestParam(value = "pageSize", required = false, defaultValue = "10") int pageSize,
+                                         @ApiIgnore @CurrentUser User user,
+                                         HttpServletRequest request) {
+
+        try {
+            ResultMap resultMap = projectService.searchProjects(keywords, user, pageNum, pageSize, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
     /**
      * 创建项目
      *

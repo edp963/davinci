@@ -238,6 +238,8 @@ public class OrganizationController extends BaseController {
     @ApiOperation(value = "get organization projects")
     @GetMapping("/{id}/projects")
     public ResponseEntity getOrgProjects(@PathVariable Long id,
+                                         @RequestParam(value = "pageNum", required = false, defaultValue = "1") int pageNum,
+                                         @RequestParam(value = "pageSize", required = false, defaultValue = "10") int pageSize,
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
         if (invalidId(id)) {
@@ -245,7 +247,7 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         try {
-            ResultMap resultMap = organizationService.getOrgProjects(id, user, request);
+            ResultMap resultMap = organizationService.getOrgProjects(id, user, pageNum, pageSize, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

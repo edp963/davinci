@@ -19,11 +19,11 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import edp.core.enums.HttpCodeEnum;
-import edp.core.utils.AESUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.MailUtils;
-import edp.core.utils.TokenUtils;
+import edp.core.utils.*;
 import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -31,6 +31,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.model.TokenEntity;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.*;
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.teamDto.TeamBaseInfoWithParent;
 import edp.davinci.dto.teamDto.TeamUserBaseInfo;
 import edp.davinci.dto.userDto.UserBaseInfo;
@@ -321,15 +322,25 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
      *
      * @param id
      * @param user
+     * @param pageNum
+     * @param pageSize
      * @param request
      * @return
      */
     @Override
-    public ResultMap getOrgProjects(Long id, User user, HttpServletRequest request) {
+    public ResultMap getOrgProjects(Long id, User user, int pageNum, int pageSize, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        List<OrganizationProjectBaseInfo> orgProjects = organizationMapper.getOrgProjects(id, user.getId());
-        return resultMap.successAndRefreshToken(request).payloads(orgProjects);
+        if (PageUtils.checkPageInfo(pageNum, pageSize)) {
+            PageHelper.startPage(pageNum, pageSize);
+            List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(id, user.getId());
+            PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
+
+            return resultMap.successAndRefreshToken(request).payload(pageInfo);
+        } else {
+            return resultMap.failAndRefreshToken(request).message("Invalid page info");
+        }
+
     }
 
     /**

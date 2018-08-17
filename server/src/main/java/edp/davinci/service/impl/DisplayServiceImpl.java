@@ -344,11 +344,18 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         Set<Long> ids = new HashSet<>();
         List<MemDisplaySlideWidget> list = new ArrayList<>();
+        List<MemDisplaySlideWidget> clist = new ArrayList<>();
         for (MemDisplaySlideWidgetCreate slideWidgetCreate : slideWidgetCreates) {
             ids.add(slideWidgetCreate.getWidgetId());
             MemDisplaySlideWidget memDisplaySlideWidget = new MemDisplaySlideWidget();
             BeanUtils.copyProperties(slideWidgetCreate, memDisplaySlideWidget);
             list.add(memDisplaySlideWidget);
+            //自定义主键，copy 一份修改内容作为返回值
+            if (null != slideWidgetCreate.getId() && slideWidgetCreate.getId().longValue() > 0L) {
+                MemDisplaySlideWidget cMemDisplaySlideWidget = new MemDisplaySlideWidget();
+                BeanUtils.copyProperties(slideWidgetCreate, cMemDisplaySlideWidget);
+                clist.add(cMemDisplaySlideWidget);
+            }
         }
 
         List<Widget> widgets = widgetMapper.getByIds(ids);
@@ -365,7 +372,13 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         int i = memDisplaySlideWidgetMapper.insertBatch(list);
         if (i > 0) {
-            return resultMap.successAndRefreshToken(request).payloads(list);
+            if (null != clist && clist.size() > 1) {
+                //自定义主键
+                return resultMap.successAndRefreshToken(request).payloads(clist);
+            } else {
+                //自增主键
+                return resultMap.successAndRefreshToken(request).payloads(list);
+            }
         } else {
             log.error("insert batch MemDisplaySlideWidget error");
             return resultMap.failAndRefreshToken(request).message("unkown fail");

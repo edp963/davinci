@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.StarMapper" >
+  <insert id="insert" parameterType="edp.davinci.model.Star" >
+    <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+      SELECT LAST_INSERT_ID() AS id
+    </selectKey>
+    insert into star
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+        target,
+        target_id,
+        user_id,
+        star_time,
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+        #{target,jdbcType=VARCHAR},
+        #{targetId,jdbcType=BIGINT},
+        #{userId,jdbcType=BIGINT},
+        #{starTime,jdbcType=TIMESTAMP},
+    </trim>
+  </insert>
+</mapper>
