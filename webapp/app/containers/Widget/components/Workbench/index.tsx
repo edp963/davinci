@@ -46,10 +46,8 @@ interface IView {
 
 interface IModel {
   [key: string]: {
-    type: string
-    fieldType: string
+    visualType: string
     modelType: string
-    isLocationInfo: boolean
   }
 }
 
@@ -202,8 +200,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     }
   }
 
-  private namePlaceholder = 'Widget名称'
-  private descPlaceholder = '描述…'
+  private namePlaceholder = '请输入Widget名称'
+  private descPlaceholder = '请输入描述…'
   private lastRequestParamString = null
 
   public componentWillMount () {
@@ -220,9 +218,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private getDragItemIconClass = (type: ViewModelType) => {
     switch (type) {
-      case 'category': return 'icon-categories'
+      case 'number': return 'icon-values'
       case 'date': return `icon-calendar ${styles.iconDate}`
-      case 'value': return 'icon-values'
+      case 'geoCountry':
+      case 'geoProvince':
+      case 'geoCity': return 'icon-china'
+      default: return 'icon-categories'
     }
   }
 
@@ -448,7 +449,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       type: selectedChart,
       viewId: selectedView.id,
       projectId: Number(params.pid),
-      config: JSON.stringify(dataParams),
+      config: JSON.stringify({
+        cols: dataParams.cols.items.map((i) => i.name),
+        rows: dataParams.rows.items.map((i) => i.name),
+        metrics: dataParams.metrics.items.map((i) => ({
+          name: decodeMetricName(i.name),
+          agg: i.agg
+        }))
+      }),
       publish: true
     }
     onAddWidget(widget, () => {
@@ -490,17 +498,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     if (selectedView) {
       const model: IModel = JSON.parse(selectedView.model)
       Object.entries(model).forEach(([key, m]) => {
-        if (m.modelType === '维度') {
+        if (m.modelType === 'category') {
           categories.push({
             name: key,
             type: 'category',
-            icon: 'category'
+            icon: m.visualType
           })
         } else {
           values.push({
             name: key,
             type: 'value',
-            icon: 'value'
+            icon: m.visualType
           })
         }
       })

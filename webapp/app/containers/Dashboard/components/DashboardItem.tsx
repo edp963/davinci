@@ -28,7 +28,8 @@ import SharePanel from '../../../components/SharePanel'
 import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
-import Pivot from '../../Widget/components/Pivot'
+import Pivot from '../../Widget/components/Pivot/PivotInViz'
+import { IPivotProps } from '../../Widget/components/Pivot/Pivot'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
@@ -76,6 +77,7 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
+  pivotProps: IPivotProps
 }
 
 export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
@@ -83,7 +85,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     super(props)
     this.state = {
       controlPanelVisible: false,
-      sharePanelAuthorized: false
+      sharePanelAuthorized: false,
+      pivotProps: null
     }
   }
 
@@ -96,6 +99,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public componentWillMount () {
     // this.initControlCascadeSource(this.props)
+    this.setState({
+      pivotProps: JSON.parse(this.props.widget.config)
+    })
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps.widget !== this.props.widget) {
+      this.setState({
+        pivotProps: JSON.parse(nextProps.widget.config)
+      })
+    }
   }
 
   public componentWillUpdate (nextProps) {
@@ -258,24 +272,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const {
       controlPanelVisible,
-      sharePanelAuthorized
+      sharePanelAuthorized,
+      pivotProps
     } = this.state
-
-    let updateParams
-    let updateConfig
-    let currentBizlogicId
-
-    if (widget.config) {
-      const config = JSON.parse(widget.config)
-      currentBizlogicId = widget.flatTable_id
-      // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
-      updateParams = typeof config['update_params'] === 'string'
-        ? JSON.parse(config['update_params'])
-        : config['update_params']
-      updateConfig = typeof config['update_fields'] === 'string'
-        ? JSON.parse(config['update_fields'])
-        : config['update_fields']
-    }
 
     const menu = (
       <Menu>
@@ -394,8 +393,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       [styles.interact]: isInteractive
     })
 
-    const pivotProps = JSON.parse(widget.config)
-
     return (
       <div className={gridItemClass}>
         <div className={styles.header}>
@@ -463,16 +460,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           onCheckTableInteract={onCheckTableInteract}
           onDoTableInteract={onDoTableInteract}
         /> */}
-        {data && <Pivot
-          data={data}
+        <Pivot
+          data={data || []}
           chart={chartInfo}
-          cols={pivotProps.cols.items.map((i) => i.name)}
-          rows={pivotProps.rows.items.map((i) => i.name)}
-          metrics={pivotProps.metrics.items.map((i) => ({
-            name: decodeMetricName(i.name),
-            agg: i.agg
-          }))}
-        />}
+          {...pivotProps}
+        />
       </div>
     )
   }

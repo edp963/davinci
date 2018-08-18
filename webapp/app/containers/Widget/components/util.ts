@@ -170,40 +170,34 @@ export function getPivotCellHeight (height?: number): number {
   return (height || PIVOT_LINE_HEIGHT) + PIVOT_CELL_PADDING * 2 + PIVOT_CELL_BORDER
 }
 
-export const setContainerWidthAndHeight = (width: number, height: number) => {
-  this.containerWidth = width
-  this.containerHeight = height
-}
-
-export const getTableBodyContainerWidth = (direction: 'row' | 'col', rowHeaderWidths) => {
+export const getTableBodyWidth = (direction: 'row' | 'col', containerWidth, rowHeaderWidths) => {
   const title = rowHeaderWidths.length && PIVOT_TITLE_SIZE
   const rowHeaderWidthSum = direction === 'row'
     ? rowHeaderWidths.slice(0, rowHeaderWidths.length - 1).reduce((sum, r) => sum + getPivotCellWidth(r), 0)
     : rowHeaderWidths.reduce((sum, r) => sum + getPivotCellWidth(r), 0)
-  return this.containerWidth - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
+  return containerWidth - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
 }
 
-export const getTableBodyContainerHeight = (direction: 'row' | 'col', columnHeaderCount) => {
+export const getTableBodyHeight = (direction: 'row' | 'col', containerHeight, columnHeaderCount) => {
   const title = columnHeaderCount && PIVOT_TITLE_SIZE
   const realColumnHeaderCount = direction === 'col' ? Math.max(columnHeaderCount - 1, 0) : columnHeaderCount
-  return this.containerHeight - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
+  return containerHeight - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
 }
 
 export function getChartElementSizeAndShouldCollapsed (
   direction: 'row' | 'col',
-  chartElementCountArr: number[],
-  rowHeaderWidths: number[],
-  columnHeaderCount: number
+  tableBodySideLength: number[],
+  chartElementCountArr: number[]
 ): {elementSize: number, shouldCollapsed: boolean} {
   let chartElementCount
   let side
 
   if (direction === 'col') {
     chartElementCount = Math.max(1, chartElementCountArr[0])
-    side = getTableBodyContainerWidth(direction, rowHeaderWidths)
+    side = tableBodySideLength[0]
   } else {
     chartElementCount = Math.max(1, chartElementCountArr[1])
-    side = getTableBodyContainerHeight(direction, columnHeaderCount)
+    side = tableBodySideLength[1]
   }
 
   const sizePerElement = side / chartElementCount
@@ -218,18 +212,16 @@ export function getChartElementSizeAndShouldCollapsed (
         }
 }
 
-export function getChartUnitMetricWidth (direction: 'row' | 'col', rowHeaderWidths: number[], colKeyCount: number, extraMetricCount: number): number {
-  const realContainerWidth = Math.max(getTableBodyContainerWidth(direction, rowHeaderWidths), colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, extraMetricCount: number): number {
+  console.log(tableBodyWidth)
+  const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerWidth / colKeyCount / (extraMetricCount + 1)
 }
 
-export function getChartUnitMetricHeight (direction: 'row' | 'col', columnHeaderCount: number, rowKeyCount: number, extraMetricCount: number): number {
-  const realContainerHeight = Math.max(getTableBodyContainerHeight(direction, columnHeaderCount), rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, extraMetricCount: number): number {
+  console.log(tableBodyHeight)
+  const realContainerHeight = Math.max(tableBodyHeight, rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerHeight / rowKeyCount / (extraMetricCount + 1)
-}
-
-export function chartOrRawPivot (chart) {
-  return chart.id === 1
 }
 
 export function checkChartEnable (dimetionsCount: number, metricsCount: number, requireDimetions: number | number[], requireMetrics: number | number[]): boolean {

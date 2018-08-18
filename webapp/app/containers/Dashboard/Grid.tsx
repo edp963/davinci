@@ -569,11 +569,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     onLoadDataFromItem(
       itemId,
       widget.viewId,
-      cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name)).sort(),
-      metrics.items.map((m) => ({
-        column: decodeMetricName(m.name),
-        func: m.agg
-      })).sort(),
+      cols.concat(rows),
+      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
         filters,
         linkageFilters,
