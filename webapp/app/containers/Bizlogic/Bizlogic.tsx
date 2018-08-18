@@ -119,7 +119,7 @@ interface IBizlogicFormProps {
   onLoadSources: (projectId: number, resolve: any) => any
   onLoadProjects: (resolve?: any) => any
   onLoadOrganizationTeams: (id: number) => any
-  onLoadBizlogics: (id: number) => any
+  onLoadBizlogics: (id: number, resolve?: any) => any
   projects: any[]
   currentOrganizationTeams: IOrganizationTeams[]
 }
@@ -265,7 +265,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   public componentWillReceiveProps (nextProps) {
     const { currentOrganizationTeams } =  nextProps
     const { listData, teamParams, teamCheckedKeys } = this.state
-    const { route, params, bizlogics } = this.props
+    const { route, params, bizlogics, projects } = this.props
+
+    const { schemaData } = this.state
 
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
@@ -328,10 +330,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
    }
 
   public componentDidMount () {
-    const { params, bizlogics } = this.props
+    const { params, bizlogics, onHideNavigator, onLoadBizlogics } = this.props
     const { schemaData, listData, teamParams } = this.state
 
-    this.props.onHideNavigator()
+    onHideNavigator()
 
     this.generateList(generateData(schemaData))
     const queryTextarea = document.querySelector('#sql_tmpl')
@@ -339,78 +341,90 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     if (params.bid) {
       if (bizlogics) {
-      const {
-        name,
-        description,
-        source,
-        sourceId,
-        sql,
-        model,
-        config
-      } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
-      const dec = (sql.includes('{') && sql.substring(0, sql.lastIndexOf('{')) !== '')
+        this.showViewInfo(bizlogics)
+      } else {
+        onLoadBizlogics(params.pid, (result) => {
+          this.showViewInfo(result)
+        })
+      }
+    }
+  }
 
-      if (model) {
-        const modelObj = JSON.parse(model)
-        const modelArr = []
-        for (const o in modelObj) {
-          if (modelObj.hasOwnProperty(o)) {
-            modelArr.push({ name: o, ...modelObj[o]})
-          }
+  private showViewInfo (bizlogics) {
+    const { params } = this.props
+    const { schemaData, listData, teamParams } = this.state
+
+    const {
+      name,
+      description,
+      source,
+      sourceId,
+      sql,
+      model,
+      config
+    } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
+    const dec = (sql.includes('{') && sql.substring(0, sql.lastIndexOf('{')) !== '')
+
+    if (model) {
+      const modelObj = JSON.parse(model)
+      const modelArr = []
+      for (const o in modelObj) {
+        if (modelObj.hasOwnProperty(o)) {
+          modelArr.push({ name: o, ...modelObj[o]})
         }
-        this.setState({ executeColumns : modelArr })
-      } else {
-        this.setState({ executeColumns : [] })
       }
+      this.setState({ executeColumns : modelArr })
+    } else {
+      this.setState({ executeColumns : [] })
+    }
 
-      this.props.onExecuteSql(sourceId, sql, (result) => {
-        this.setState({
-          executeResultset: result.resultset
-        })
-      })
-
-      const configTeam = config ? JSON.parse(config).team : ''
-
-      const listDataFinal = listData.map((ld) => {
-        const currentparam = configTeam.find((ct) => ld.id === ct.id)
-
-        ld.params = currentparam.params
-        return ld
-      })
-
+    this.props.onExecuteSql(sourceId, sql, (result) => {
       this.setState({
-        listData: listDataFinal,
-        teamParams: configTeam ? (configTeam[0].params).map((o) => {
-          return {
-            k: o.k,
-            v: o.v
-          }
-        }) : []
+        executeResultset: result.resultset
       })
+    })
 
-      this.props.form.setFieldsValue({
-        id: Number(params.bid),
-        name,
-        desc: description,
-        source_id: `${sourceId}`,
-        source_name: source.name,
-        isDeclarate: dec ? 'yes' : 'no'
+    const configTeam = config ? JSON.parse(config).team : ''
+
+    const listDataFinal = listData.map((ld) => {
+      const currentparam = configTeam.find((ct) => ld.id === ct.id)
+
+      ld.params = currentparam.params
+      return ld
+    })
+
+    this.setState({
+      listData: listDataFinal,
+      teamParams: configTeam ? (configTeam[0].params).map((o) => {
+        return {
+          k: o.k,
+          v: o.v
+        }
+      }) : []
+    })
+
+    this.props.form.setFieldsValue({
+      id: Number(params.bid),
+      name,
+      desc: description,
+      source_id: `${sourceId}`,
+      source_name: source.name,
+      isDeclarate: dec ? 'yes' : 'no'
+    })
+
+    if (dec) {
+      this.setState({
+        isDeclarate: 'yes'
+      }, () => {
+        const declareTextarea = document.querySelector('#declaration')
+        this.handleDelareCodeMirror(declareTextarea)
+        this.codeMirrorInstanceOfDeclaration.doc.setValue(sql.includes('{') ? sql.substring(0, sql.lastIndexOf('{')) : sql)
       })
+    } else {
+      this.codeMirrorInstanceOfDeclaration = false
+    }
 
-      if (dec) {
-        this.setState({
-          isDeclarate: 'yes'
-        }, () => {
-          const declareTextarea = document.querySelector('#declaration')
-          this.handleDelareCodeMirror(declareTextarea)
-          this.codeMirrorInstanceOfDeclaration.doc.setValue(sql.includes('{') ? sql.substring(0, sql.lastIndexOf('{')) : sql)
-        })
-      } else {
-        this.codeMirrorInstanceOfDeclaration = false
-      }
-
-      this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
-    }}
+    this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
@@ -1254,7 +1268,7 @@ function mapDispatchToProps (dispatch) {
     onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
     onLoadProjects: (resolve) => dispatch(loadProjects(resolve)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId))
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve))
   }
 }
 

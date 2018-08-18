@@ -66,7 +66,7 @@ interface IWidgetProps {
   router: any
   params: any
   onLoadWidgets: (projectId: number) => void
-  onLoadBizlogics: (projectId: number) => void
+  onLoadBizlogics: (projectId: number, resolve?: any) => void
   onDeleteWidget: (id: any) => void
   onAddWidget: (widget: object, resolve: any) => Promise<any>
 }
@@ -462,7 +462,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onDeleteWidget: (id) => () => dispatch(deleteWidget(id)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve))
   }

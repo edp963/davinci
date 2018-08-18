@@ -55,11 +55,12 @@ import {
   LOAD_DATA_FROM_ITEM_FAILURE
 } from './constants'
 
-export function loadBizlogics (projectId) {
+export function loadBizlogics (projectId, resolve) {
   return {
     type: LOAD_BIZLOGICS,
     payload: {
-      projectId
+      projectId,
+      resolve
     }
   }
 }

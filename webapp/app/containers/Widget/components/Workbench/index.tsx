@@ -85,7 +85,7 @@ interface IWorkbenchProps {
   router: any
   params: { pid: string, wid: string }
   onHideNavigator: () => void
-  onLoadBizlogics: (projectId: number) => void
+  onLoadBizlogics: (projectId: number, resolve?: any) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
 }
@@ -691,7 +691,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve))
   }
