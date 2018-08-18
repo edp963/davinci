@@ -18,25 +18,9 @@
 
 package edp.davinci.dto.projectDto;
 
-import edp.davinci.dto.userDto.UserBaseInfo;
-import edp.davinci.model.User;
 import lombok.Data;
 
 @Data
-public class ProjectInfo {
-    private Long id;
-
-    private String name;
-
-    private String description;
-
-    private String pic;
-
-    private Long orgId;
-
-    private Boolean visibility;
-
+public class ProjectInfo extends ProjectWithCreateBy {
     private ProjectPermission permission = new ProjectPermission();
-
-    private UserBaseInfo createBy;
 }

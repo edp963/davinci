@@ -100,4 +100,14 @@ public class Constants extends Consts {
      * 定时任务发送邮件模板
      */
     public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";
+
+    /**
+     * select 表达式
+     */
+    public static final String SELECT_EXEPRESSION = "SELECT * FROM TABLE WHERE %s";
+
+    /**
+     * 点赞project
+     */
+    public static final String STAR_TARGET_PROJECT = "project";
 }

@@ -26,9 +26,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
-import edp.davinci.dao.ProjectMapper;
-import edp.davinci.dao.ViewMapper;
-import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dao.*;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
@@ -60,6 +58,12 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
     @Autowired
     private ViewMapper viewMapper;
+
+    @Autowired
+    private MemDashboardWidgetMapper memDashboardWidgetMapper;
+
+    @Autowired
+    private MemDisplaySlideWidgetMapper memDisplaySlideWidgetMapper;
 
     @Autowired
     private ShareService shareService;
@@ -259,6 +263,12 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             log.info("user {} have not permisson to delete the widget {}", user.getUsername(), id);
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete the widget");
         }
+
+        //删除引用widget的dashboard
+        memDashboardWidgetMapper.deleteByWidget(id);
+
+        //删除引用widget的displayslide
+        memDisplaySlideWidgetMapper.deleteByWidget(id);
 
         widgetMapper.deleteById(id);
 

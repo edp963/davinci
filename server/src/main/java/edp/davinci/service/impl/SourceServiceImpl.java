@@ -107,7 +107,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
 
         if (null == project) {
             log.info("project {} not found", project);
-            return resultMap.successAndRefreshToken(request).message("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
         if (!allowRead(project, user)) {

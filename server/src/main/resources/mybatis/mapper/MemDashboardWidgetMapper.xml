@@ -50,4 +50,23 @@
             #{polling,jdbcType=BIT}
         </trim>
     </insert>
+
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update mem_dashboard_widget
+            <set>
+                dashboard_id = #{item.dashboardId,jdbcType=BIGINT},
+                widget_Id = #{item.widgetId,jdbcType=BIGINT},
+                x = #{item.x,jdbcType=INTEGER},
+                y = #{item.y,jdbcType=INTEGER},
+                width = #{item.width,jdbcType=INTEGER},
+                height = #{item.height,jdbcType=INTEGER},
+                polling = #{item.polling,jdbcType=BIT},
+                frequency = #{item.frequency,jdbcType=INTEGER}
+            </set>
+            <where>
+                id = #{item.id,jdbcType=BIGINT}
+            </where>
+        </foreach>
+    </update>
 </mapper>

@@ -63,4 +63,10 @@ public interface MemDashboardWidgetMapper {
             "(SELECT d.id FROM dashboard d LEFT JOIN dashboard_portal p on d.dashboard_portal_id = p.id where p.project_id = #{projectId})"
     })
     int deleteByProject(@Param("projectId") Long projectId);
+
+
+    int updateBatch(List<MemDashboardWidget> list);
+
+    @Delete("delete from mem_dashboard_widget where widget_Id = #{widgetId}")
+    int deleteByWidget(@Param("widgetId") Long widgetId);
 }

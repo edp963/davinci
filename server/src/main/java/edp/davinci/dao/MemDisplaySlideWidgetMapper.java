@@ -57,7 +57,7 @@ public interface MemDisplaySlideWidgetMapper {
             "`type` = #{type,jdbcType=SMALLINT},",
             "sub_type = #{subType,jdbcType=SMALLINT},",
             "`index` = #{index,jdbcType=INTEGER},",
-            "`quaryParams` = #{quaryParams,jdbcType=LONGVARCHAR}",
+            "`params` = #{params,jdbcType=LONGVARCHAR}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(MemDisplaySlideWidget memDisplaySlideWidget);
@@ -87,4 +87,7 @@ public interface MemDisplaySlideWidgetMapper {
             "WHERE s.display_id = #{displayId}",
     })
     List<MemDisplaySlideWidgetWithSlide> getMemWithSlideByDisplayId(@Param("displayId") Long displayId);
+
+    @Delete({"delete from mem_display_slide_widget where widget_id = #{widgetId}"})
+    int deleteByWidget(@Param("widgetId") Long widgetId);
 }

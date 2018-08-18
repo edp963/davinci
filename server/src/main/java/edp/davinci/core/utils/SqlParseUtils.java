@@ -19,8 +19,10 @@
 package edp.davinci.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import com.sun.tools.javac.util.ListBuffer;
 import edp.core.exception.ServerException;
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlOperatorEnum;
 import edp.davinci.core.model.SqlEntity;
 import lombok.extern.slf4j.Slf4j;
@@ -260,9 +262,14 @@ public class SqlParseUtils {
         Map<String, String> map = new HashMap<>();
         while (iterator.hasNext()) {
             String exp = iterator.next().trim();
-            SqlOperatorEnum sqlOperator = SqlOperatorEnum.getSqlOperator(exp);
-            String expression = getTeamVarExpression(sqlOperator, exp, teamParamMap);
-            map.put(exp, expression);
+            try {
+                map.put(exp, getTeamVarExpression(exp, teamParamMap));
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ServerException(e.getMessage());
+            } finally {
+                continue;
+            }
         }
         if (map.size() > 0) {
             return map;
@@ -271,59 +278,71 @@ public class SqlParseUtils {
         }
     }
 
-    private static String getTeamVarExpression(SqlOperatorEnum sqlOperator, String srcExpression, Map<String, List<String>> teamParamMap) {
+    private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> teamParamMap) throws Exception {
         String originExpression = srcExpression;
         if (!StringUtils.isEmpty(srcExpression)) {
             srcExpression = srcExpression.trim();
             if (srcExpression.startsWith(parenthesesStart) && srcExpression.endsWith(parenthesesEnd)) {
                 srcExpression = srcExpression.substring(1, srcExpression.length() - 1);
             }
-            String[] split = srcExpression.split(sqlOperator.getValue());
-            if (split.length == 2) {
-                String left = split[0].trim();
-                String right = split[1].trim();
-                if (teamParamMap.containsKey(right)) {
-                    StringBuilder expBuilder = new StringBuilder();
-                    List<String> list = teamParamMap.get(right);
-                    if (null != list && list.size() > 0) {
-                        if (list.size() == 1) {
-                            expBuilder
-                                    .append(left).append(space)
-                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
-                        } else {
-                            switch (sqlOperator) {
-                                case IN:
-                                case EQUALSTO:
-                                    expBuilder
-                                            .append(left).append(space)
-                                            .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                            .append(list.stream().collect(Collectors.joining(",", "(", ")")));
-                                    break;
 
-                                case NOTEQUALSTO:
-                                    expBuilder
-                                            .append(left).append(space)
-                                            .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
-                                            .append(list.stream().collect(Collectors.joining(",", "(", ")")));
-                                    break;
+            String sql = String.format(Constants.SELECT_EXEPRESSION, srcExpression);
+            Select select = (Select) CCJSqlParserUtil.parse(sql);
+            PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+            Expression where = plainSelect.getWhere();
 
-                                case BETWEEN:
-                                case GREATERTHAN:
-                                case GREATERTHANEQUALS:
-                                case MINORTHAN:
-                                case MINORTHANEQUALS:
-                                    expBuilder.append(list.stream()
-                                            .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
-                                            .collect(Collectors.joining("or", "(", ")")));
-                                    break;
+            ListBuffer<Map<SqlOperatorEnum, List<String>>> listBuffer = new ListBuffer<>();
+            where.accept(SqlOperatorEnum.getVisitor(listBuffer));
+            Map<SqlOperatorEnum, List<String>> operatorMap = listBuffer.toList().head;
 
-                                default:
-                                    expBuilder.append(originExpression);
-                                    break;
+            for (SqlOperatorEnum sqlOperator : operatorMap.keySet()) {
+                List<String> expList = operatorMap.get(sqlOperator);
+                if (null != expList && expList.size() > 0) {
+                    String left = operatorMap.get(sqlOperator).get(0);
+                    String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
+                    if (teamParamMap.containsKey(right)) {
+                        StringBuilder expBuilder = new StringBuilder();
+                        List<String> list = teamParamMap.get(right);
+                        if (null != list && list.size() > 0) {
+                            if (list.size() == 1) {
+                                expBuilder
+                                        .append(left).append(space)
+                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                            } else {
+                                switch (sqlOperator) {
+                                    case IN:
+                                    case EQUALSTO:
+                                        expBuilder
+                                                .append(left).append(space)
+                                                .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                        break;
+
+                                    case NOTEQUALSTO:
+                                        expBuilder
+                                                .append(left).append(space)
+                                                .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
+                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                        break;
+
+                                    case BETWEEN:
+                                    case GREATERTHAN:
+                                    case GREATERTHANEQUALS:
+                                    case MINORTHAN:
+                                    case MINORTHANEQUALS:
+                                        expBuilder.append(list.stream()
+                                                .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
+                                                .collect(Collectors.joining("or", "(", ")")));
+                                        break;
+
+                                    default:
+                                        expBuilder.append(originExpression);
+                                        break;
+                                }
                             }
                         }
+                        return expBuilder.toString();
                     }
-                    return expBuilder.toString();
                 }
             }
         }

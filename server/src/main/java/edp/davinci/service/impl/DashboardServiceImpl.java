@@ -30,10 +30,7 @@ import edp.davinci.dao.DashboardMapper;
 import edp.davinci.dao.DashboardPortalMapper;
 import edp.davinci.dao.MemDashboardWidgetMapper;
 import edp.davinci.dao.WidgetMapper;
-import edp.davinci.dto.dashboardDto.DashboardCreate;
-import edp.davinci.dto.dashboardDto.DashboardWithPortal;
-import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
-import edp.davinci.dto.dashboardDto.PortalWithProject;
+import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.ShareService;
@@ -180,7 +177,12 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
             }
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(memDashboardWidgets);
+        DashboardWithMem dashboardWithMem = new DashboardWithMem();
+        BeanUtils.copyProperties(dashboardWithPortalAndProject, dashboardWithMem);
+        dashboardWithMem.setWidgets(memDashboardWidgets);
+
+
+        return resultMap.successAndRefreshToken(request).payload(dashboardWithMem);
     }
 
 
@@ -362,37 +364,36 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
     /**
      * 修改dashboard下的widget关联信息
      *
-     * @param memDashboardWidget
+     * @param memDashboardWidgets
      * @param user
      * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateMemDashboardWidget(MemDashboardWidget memDashboardWidget, User user, HttpServletRequest request) {
+    public ResultMap updateMemDashboardWidgets(MemDashboardWidget[] memDashboardWidgets, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        DashboardWithPortal dashboardWithPortalAndProject = dashboardMapper.getDashboardWithPortalAndProject(memDashboardWidget.getDashboardId());
+        for (MemDashboardWidget memDashboardWidget : memDashboardWidgets) {
+            DashboardWithPortal dashboardWithPortalAndProject = dashboardMapper.getDashboardWithPortalAndProject(memDashboardWidget.getDashboardId());
 
-        if (null == dashboardWithPortalAndProject) {
-            return resultMap.failAndRefreshToken(request).message("Invalid dashboard id");
+            if (null == dashboardWithPortalAndProject) {
+                return resultMap.failAndRefreshToken(request).message("Invalid dashboard id");
+            }
+
+            if (!allowWrite(dashboardWithPortalAndProject.getProject(), user)) {
+                log.info("user (:{}) have not permission to update memDashboardWidget (:{})", user.getId(), memDashboardWidget.getId());
+                return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to do this operation");
+            }
+
+            Widget widget = widgetMapper.getById(memDashboardWidget.getWidgetId());
+            if (null == widget) {
+                return resultMap.failAndRefreshToken(request).message("widget not found");
+            }
         }
 
-        if (!allowWrite(dashboardWithPortalAndProject.getProject(), user)) {
-            log.info("user (:{}) have not permission to update memDashboardWidget (:{})", user.getId(), memDashboardWidget.getId());
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to do this operation");
-        }
-
-        Widget widget = widgetMapper.getById(memDashboardWidget.getWidgetId());
-        if (null == widget) {
-            return resultMap.failAndRefreshToken(request).message("widget not found");
-        }
-
-        if (memDashboardWidget.getPolling() && memDashboardWidget.getFrequency() < 1) {
-            return resultMap.failAndRefreshToken(request).message("Invalid frequency");
-        }
-
-        memDashboardWidgetMapper.update(memDashboardWidget);
+        List<MemDashboardWidget> list = Arrays.asList(memDashboardWidgets);
+        memDashboardWidgetMapper.updateBatch(list);
         return resultMap.successAndRefreshToken(request);
     }
 

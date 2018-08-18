@@ -74,15 +74,19 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.6.1</version>
                 <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                     <compilerVersion>${java.version}</compilerVersion>
-                    <encoding>${project.build.sourceEncoding}</encoding>
                     <optimize>true</optimize>
                     <maxmem>1024m</maxmem>
                     <fork>true</fork>
+                    <compilerArguments>
+                        <bootclasspath>${java.home}/lib/rt.jar:${java.home}/lib/jce.jar</bootclasspath>
+                    </compilerArguments>
                     <compilerArgs>
                         <arg>-Xlint:all,-serial,-path</arg>
+                        <arg>-XDignore.symbol.file</arg>
                     </compilerArgs>
                 </configuration>
                 <executions>

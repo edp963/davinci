@@ -25,6 +25,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Set;
@@ -105,4 +106,7 @@ public interface WidgetMapper {
 
     @Delete({"delete from widget where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
+
+    @Select({"select * from widget where view_id = #{viewId}"})
+    List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
 }
