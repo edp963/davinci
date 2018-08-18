@@ -145,7 +145,7 @@ interface IGridProps {
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[], resolve: () => void) => void
   onDeleteDashboardItem: (id: number, resolve: () => void) => void
-  onLoadBizlogics: (projectId: number) => any
+  onLoadBizlogics: (projectId: number, resolve?: any) => any
   onLoadDataFromItem: (
     dashboardItemId: number,
     viewId: number,
@@ -2066,7 +2066,7 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items, resolve) => dispatch(editDashboardItems(items, resolve)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),

@@ -74,6 +74,9 @@ export function* getBizlogics (action) {
     const asyncData = yield call(request, `${api.bizlogic}?projectId=${payload.projectId}`)
     const bizlogics = readListAdapter(asyncData)
     yield put(bizlogicsLoaded(bizlogics))
+    if (payload.resolve) {
+      payload.resolve(bizlogics)
+    }
   } catch (err) {
     yield put(loadBizlogicsFail())
     message.error('加载 View 列表失败')

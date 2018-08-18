@@ -55,7 +55,7 @@ interface IBizlogicsProps  {
   loginUser: object
   tableLoading: false
   router: InjectedRouter
-  onLoadBizlogics: (projectId: number) => any
+  onLoadBizlogics: (projectId: number, resolve?: any) => any
   onDeleteBizlogic: (id: number) => any
 }
 
@@ -260,7 +260,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onDeleteBizlogic: (id) => () => dispatch(deleteBizlogic(id))
   }
 }

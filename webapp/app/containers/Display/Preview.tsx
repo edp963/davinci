@@ -354,7 +354,7 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
     onLoadWidgets: (projectId: number) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId: number) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId: number, resolve?: any) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired))
   }
 }

@@ -123,7 +123,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   currentState
   nextState
   onLoadWidgets: (projectId) => void
-  onLoadBizlogics: (projectId) => any
+  onLoadBizlogics: (projectId, resolve?: any) => any
   onEditCurrentDisplay: (display: any, resolve?: any) => void
   onEditCurrentSlide: (displayId: number, slide: any, resolve?: any) => void
   onUploadCurrentSlideCover: (cover: Blob, resolve: any) => void
@@ -856,7 +856,7 @@ function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
     onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId) => dispatch(loadBizlogics(projectId)),
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
