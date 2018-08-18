@@ -35,6 +35,19 @@
         position: absolute;
         top: 0;
         cursor: pointer;
+
+        &::-webkit-input-placeholder {
+          color: @disabled-text-color;
+        }
+        &::-moz-placeholder {
+          color: @disabled-text-color;
+        }
+        &:-ms-input-placeholder {
+          color: @disabled-text-color;
+        }
+        &:-moz-placeholder {
+          color: @disabled-text-color;
+        }
       }
 
       .name {
@@ -47,13 +60,14 @@
       .desc {
         flex: 1;
         height: 1.65em;
+        line-height: 1.65em;
         color: @light-text-color;
-        padding: 0 8px;
+        padding: 0 16px;
         position: relative;
         .ellipsis;
 
         input {
-          left: 8px;
+          left: 16px;
         }
       }
 

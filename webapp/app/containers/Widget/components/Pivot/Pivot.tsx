@@ -4,7 +4,8 @@ import {
   naturalSort,
   decodeMetricName,
   getPivotContentTextWidth,
-  setContainerWidthAndHeight,
+  getTableBodyWidth,
+  getTableBodyHeight,
   getChartElementSizeAndShouldCollapsed,
   getChartUnitMetricWidth,
   getChartUnitMetricHeight,
@@ -64,6 +65,10 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
   }
 
+  private width = 0
+  private height = 0
+  private tableBodyWidth = 0
+  private tableBodyHeight = 0
   private rowKeys = []
   private colKeys = []
   private rowTree = {}
@@ -90,16 +95,13 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
   public componentDidMount () {
     const { offsetWidth, offsetHeight } = this.container
-    setContainerWidthAndHeight(offsetWidth, offsetHeight)
+    this.width = offsetWidth
+    this.height = offsetHeight
   }
 
   public componentWillReceiveProps (nextProps: IPivotProps) {
     const { cols, rows } = nextProps
     this.setState({ cols, rows })
-  }
-
-  public componentWillMount () {
-    this.getRenderData(this.props, this.props)
   }
 
   public componentWillUpdate (nextProps: IPivotProps, nextState: IPivotStates) {
@@ -139,7 +141,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       unitMetricHeight: 0,
       tableBodyCollapsed: false
     }
-
     this.min = []
     this.max = []
     this.metricAxisConfig = void 0
@@ -165,19 +166,20 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
 
     if (dimetionAxis) {
+      this.tableBodyWidth = getTableBodyWidth(dimetionAxis, this.width, this.rowHeaderWidths)
+      this.tableBodyHeight = getTableBodyHeight(dimetionAxis, this.height, cols.length)
       const { requireMetrics } = chart
       const rmNum = Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics
       const { elementSize, shouldCollapsed }  = getChartElementSizeAndShouldCollapsed(
         dimetionAxis,
-        [this.colKeys.length, this.rowKeys.length],
-        this.rowHeaderWidths,
-        cols.length
+        [this.tableBodyWidth, this.tableBodyHeight],
+        [this.colKeys.length, this.rowKeys.length]
       )
       this.drawingData.elementSize = elementSize
       this.drawingData.tableBodyCollapsed = shouldCollapsed
       this.drawingData.extraMetricCount = Math.max(metrics.length - rmNum, 0)
-      this.drawingData.unitMetricWidth = getChartUnitMetricWidth(dimetionAxis, this.rowHeaderWidths, this.colKeys.length || 1, this.drawingData.extraMetricCount)
-      this.drawingData.unitMetricHeight = getChartUnitMetricHeight(dimetionAxis, cols.length, this.rowKeys.length || 1, this.drawingData.extraMetricCount)
+      this.drawingData.unitMetricWidth = getChartUnitMetricWidth(this.tableBodyWidth, this.colKeys.length || 1, this.drawingData.extraMetricCount)
+      this.drawingData.unitMetricHeight = getChartUnitMetricHeight(this.tableBodyHeight, this.rowKeys.length || 1, this.drawingData.extraMetricCount)
       this.metricAxisConfig = metrics.reduce((obj: IMetricAxisConfig, m, i) => {
         const metricName = decodeMetricName(m.name)
         const min = this.min[i] >= 0 ? 0 : this.min[i]
