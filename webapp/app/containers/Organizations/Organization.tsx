@@ -154,9 +154,9 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
   }
 
   private starProject = (id)  => () => {
-    const { onStarProject } = this.props
+    const { onStarProject, params: { organizationId } } = this.props
     onStarProject(id, () => {
-      this.props.onLoadProjects()
+      this.props.onLoadOrganizationProjects(Number(organizationId))
     })
   }
 
@@ -165,8 +165,8 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
     onGetProjectStarUser(id)
   }
 
-  private editOrganization = (oranization) => () => {
-    this.props.onEditOrganization(oranization)
+  private editOrganization = (organization) => () => {
+    this.props.onEditOrganization(organization)
   }
   public render () {
     const {
@@ -266,7 +266,6 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadProjects: () => dispatch(loadProjects()),
     onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),

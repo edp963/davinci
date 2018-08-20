@@ -119,7 +119,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       <ProjectItem
         unStar={this.props.unStar}
         userList={this.props.userList}
-        starUser={this.props.starUserList}
+        starUser={this.props.starUser}
         currentOrganization={currentOrganization}
         key={index}
         loginUser={this.props.loginUser}

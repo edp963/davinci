@@ -17,7 +17,7 @@ interface IProjectItemProps {
   toProject: (id: number) => any
   loginUser: any
   deleteProject: (id: number) => any
-  starUserList: IStarUser[]
+  starUser: IStarUser[]
   currentOrganization: IOrganization
   unStar?: (id: number) => any
   userList?: (id: number) => any
@@ -32,7 +32,7 @@ interface IProjectOptions {
 }
 export class ProjectItem extends React.PureComponent<IProjectItemProps> {
   public render () {
-    const {options, loginUser, currentOrganization, starUserList} = this.props
+    const {options, loginUser, currentOrganization, starUser} = this.props
     const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
     if (currentOrganization) {
@@ -41,7 +41,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
    // const bg = require(`../../assets/images/bg${options.pic}.png`)
     let StarPanel = void 0
     if (options) {
-      StarPanel = <Star d={options} starUser={starUserList} unStar={this.props.unStar} userList={this.props.userList}/>
+      StarPanel = <Star d={options} starUser={starUser} unStar={this.props.unStar} userList={this.props.userList}/>
     }
     return (
       <div className={styles.projectItemWrap}>
