@@ -51,6 +51,8 @@ export const PIVOT_CHART_POINT_LIMIT = 500
 export const PIVOT_XAXIS_SIZE = 50
 export const PIVOT_YAXIS_SIZE = 64
 export const PIVOT_TITLE_SIZE = 27
+export const PIVOT_CANVAS_SIZE_LIMIT = 3000
+export const PIVOT_CANVAS_AXIS_SIZE_LIMIT = 8000
 
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',

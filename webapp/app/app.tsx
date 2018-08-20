@@ -47,6 +47,7 @@ import './assets/override/datepicker.css'
 import './assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'
+import 'zrender/lib/svg/svg'
 import 'echarts/lib/chart/bar'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/scatter'

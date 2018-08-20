@@ -8,6 +8,7 @@
     "space-before-function-paren": [true, "always"],
     "no-submodule-imports": false,
     "only-arrow-functions": false,
+    "prefer-for-of": false,
     "no-var-requires": false,
     "ordered-imports": false,
     "no-unused-variable": [false],

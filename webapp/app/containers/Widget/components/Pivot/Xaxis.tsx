@@ -30,7 +30,7 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
     const { chart, metrics, data, extraMetricCount, metricAxisConfig } = this.props
     const { dimetionAxis } = chart
 
-    const canvas = this.container.children[0] as HTMLDivElement
+    const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
     const metric = metrics[0]
     const extraMetrics = extraMetricCount > 0 ? metrics.slice(-extraMetricCount) : []
     const combinedMetrics = [metric].concat(extraMetrics)
@@ -42,120 +42,124 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
     let ySum = 0
     let index = 0
 
-    let instance = echarts.getInstanceByDom(canvas)
-    if (!instance) {
-      instance = echarts.init(canvas, 'default')
-    } else {
-      instance.clear()
-    }
+    data.forEach((block, i) => {
+      let instance = echarts.getInstanceByDom(doms[i])
+      if (!instance) {
+        instance = echarts.init(doms[i], 'default')
+      } else {
+        instance.clear()
+      }
 
-    data.forEach((line: IChartLine) => {
-      const { data: lineData } = line
+      block.data.forEach((line: IChartLine) => {
+        const { data: lineData } = line
 
-      lineData.forEach((unit: IChartUnit) => {
-        const { width, records } = unit
+        lineData.forEach((unit: IChartUnit) => {
+          const { width, records } = unit
 
-        combinedMetrics.forEach((m, l) => {
-          grid.push({
-            top: dimetionAxis === 'col' ? xSum : ySum,
-            left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
-            width
+          combinedMetrics.forEach((m, l) => {
+            grid.push({
+              top: dimetionAxis === 'col' ? xSum : ySum,
+              left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
+              width
+            })
+
+            if (dimetionAxis === 'col') {
+              xAxis.push({
+                gridIndex: index,
+                type: 'category',
+                data: records.map((r) => r.key),
+                axisLabel: {
+                  interval: 0,
+                  rotate: -45,
+                  color: '#333'
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#d9d9d9'
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#d9d9d9'
+                  }
+                }
+              })
+              yAxis.push({
+                gridIndex: index,
+                show: false,
+                type: 'value'
+              })
+            } else {
+              xAxis.push({
+                gridIndex: index,
+                type: 'value',
+                ...metricAxisConfig[m.name],
+                name: m.name,
+                nameLocation: 'center',
+                nameGap: 28,
+                nameTextStyle: {
+                  color: '#333'
+                },
+                axisLabel: {
+                  color: '#333',
+                  showMinLabel: false,
+                  showMaxLabel: false,
+                  formatter: metricAxisLabelFormatter
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: '#d9d9d9'
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: '#d9d9d9'
+                  }
+                }
+              })
+              yAxis.push({
+                gridIndex: index,
+                show: false,
+                type: 'category'
+              })
+            }
+            index += 1
           })
-
           if (dimetionAxis === 'col') {
-            xAxis.push({
-              gridIndex: index,
-              type: 'category',
-              data: records.map((r) => r.key),
-              axisLabel: {
-                interval: 0,
-                rotate: -45,
-                color: '#333'
-              },
-              axisLine: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              },
-              axisTick: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              }
-            })
-            yAxis.push({
-              gridIndex: index,
-              show: false,
-              type: 'value'
-            })
+            ySum += width
           } else {
-            xAxis.push({
-              gridIndex: index,
-              type: 'value',
-              ...metricAxisConfig[m.name],
-              name: m.name,
-              nameLocation: 'center',
-              nameGap: 28,
-              nameTextStyle: {
-                color: '#333'
-              },
-              axisLabel: {
-                color: '#333',
-                showMinLabel: false,
-                showMaxLabel: false,
-                formatter: metricAxisLabelFormatter
-              },
-              axisLine: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              },
-              axisTick: {
-                lineStyle: {
-                  color: '#d9d9d9'
-                }
-              }
-            })
-            yAxis.push({
-              gridIndex: index,
-              show: false,
-              type: 'category'
-            })
+            xSum += width * (extraMetricCount + 1)
           }
-          index += 1
         })
+
         if (dimetionAxis === 'col') {
-          ySum += width
+          ySum = 0
         } else {
-          xSum += width * (extraMetricCount + 1)
+          xSum = 0
         }
       })
-
-      if (dimetionAxis === 'col') {
-        ySum = 0
-      } else {
-        xSum = 0
-      }
+      instance.setOption({
+        grid,
+        xAxis,
+        yAxis
+      })
+      instance.resize()
     })
-
-    instance.setOption({
-      grid,
-      xAxis,
-      yAxis
-    })
-    instance.resize()
   }
 
   public render () {
-    const { width, extraMetricCount } = this.props
+    const { width, extraMetricCount, data } = this.props
+    const blocks = data.map((block) => (
+      <div key={block.key} style={{width: block.length}} />
+    ))
 
     return (
       <div
-        className={styles.container}
+        className={styles.xAxis}
         style={{width: width * (extraMetricCount + 1)}}
         ref={(f) => this.container = f}
       >
-        <div style={{height: 50}} />
+        {blocks}
       </div>
     )
   }
