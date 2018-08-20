@@ -83,9 +83,9 @@ import {
   makeSelectModalLoading,
   makeSelectBizlogics
  } from './selectors'
-import { makeSelectProjects } from '../Projects/selectors'
+import { makeSelectProjects, makeSelectCurrentProject } from '../Projects/selectors'
 import { makeSelectCurrentOrganizationTeams } from '../Organizations/selectors'
-import { checkNameUniqueAction, hideNavigator } from '../App/actions'
+import { checkNameUniqueAction } from '../App/actions'
 import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
@@ -115,12 +115,10 @@ interface IBizlogicFormProps {
   onExecuteSql: (sourceId: number, sql: any, resolve: any) => any
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
-  onHideNavigator: () => void
-  onLoadSources: (projectId: number, resolve: any) => any
-  onLoadProjects: (resolve?: any) => any
-  onLoadOrganizationTeams: (id: number) => any
+  onLoadSources: (projectId: number, resolve?: any) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
   projects: any[]
+  currentProject: any
   currentOrganizationTeams: IOrganizationTeams[]
 }
 
@@ -208,14 +206,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   public componentWillMount () {
     const {
+      currentProject,
       projects,
       params,
       route,
       bizlogics,
       onLoadSources,
       onLoadSchema,
-      onLoadProjects,
-      onLoadOrganizationTeams,
       onLoadBizlogics
     } = this.props
 
@@ -246,28 +243,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         return
       }
     })
-
-    if (projects) {
-      const currentProject = projects.find((p) => p.id === Number(params.pid))
-      onLoadOrganizationTeams(currentProject.orgId)
-    } else {
-      new Promise((resolve) => {
-        onLoadProjects((result) => {
-          resolve(result)
-        })
-      }).then((result) => {
-        const currentProject = (result as any[]).find((r) => r.id === Number(params.pid))
-        onLoadOrganizationTeams(currentProject.orgId)
-      })
-    }
   }
 
   public componentWillReceiveProps (nextProps) {
     const { currentOrganizationTeams } =  nextProps
-    const { listData, teamParams, teamCheckedKeys } = this.state
-    const { route, params, bizlogics, projects } = this.props
-
-    const { schemaData } = this.state
+    const { listData, teamParams, teamCheckedKeys, schemaData } = this.state
+    const { route, params, bizlogics, projects, currentProject } = this.props
 
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
@@ -330,10 +311,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
    }
 
   public componentDidMount () {
-    const { params, bizlogics, onHideNavigator, onLoadBizlogics } = this.props
+    const { params, bizlogics, onLoadBizlogics } = this.props
     const { schemaData, listData, teamParams } = this.state
-
-    onHideNavigator()
 
     this.generateList(generateData(schemaData))
     const queryTextarea = document.querySelector('#sql_tmpl')
@@ -709,61 +688,64 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         const { executeColumns, configTeam, listData, isDeclarate } = this.state
         const { sqlValidateCode, route, params } = this.props
 
-        const { id, name, desc, source_id, source_name } = values
-        const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
-        let querySql = ''
-        if (isDeclarate === 'yes' && this.codeMirrorInstanceOfDeclaration) {
-          const declaration = this.codeMirrorInstanceOfDeclaration.doc.getValue()
-          querySql = sqlTmpl ? `${declaration}{${sqlTmpl}}` : declaration
-        } else {
-          querySql = sqlTmpl ? `{${sqlTmpl}}` : ''
-        }
-
-        if (querySql && !executeColumns.length) {
-          message.warning('请先 Execute sql！', 3)
-        } else {
-          const modelObj = {}
-          executeColumns.forEach((m) => {
-            const { name, sqlType, visualType, modelType  } = m
-            modelObj[name] = {
-              sqlType,
-              visualType,
-              modelType
+        switch (sqlValidateCode) {
+          case 200:
+            const { id, name, desc, source_id, source_name } = values
+            const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
+            let querySql = ''
+            if (isDeclarate === 'yes' && this.codeMirrorInstanceOfDeclaration) {
+              const declaration = this.codeMirrorInstanceOfDeclaration.doc.getValue()
+              querySql = sqlTmpl ? `${declaration}{${sqlTmpl}}` : declaration
+            } else {
+              querySql = sqlTmpl ? `{${sqlTmpl}}` : ''
             }
-          })
 
-          const configTeamStr = listData
-          .filter((ld) => ld.checked)
-          .map((ld) => ({
-            id: ld.id,
-            params: ld.params
-          }))
-
-          const requestValue = {
-            name,
-            description: desc,
-            sql: querySql,
-            model: sqlValidateCode === 200 ? JSON.stringify(modelObj) : '',
-            config: configTeamStr.length !== 0 ? JSON.stringify({team: configTeamStr}) : '',
-            projectId: params.pid
-          }
-
-          if (route.path === '/project/:pid/bizlogic') {
-            this.props.onAddBizlogic({ ...requestValue, sourceId: Number(source_id) }, () => {
-              this.hideForm()
-            })
-          } else {
-            this.props.onEditBizlogic({
-              ...requestValue,
-              id,
-              source: {
-                id: Number(source_id),
-                name: source_name
+            const modelObj = {}
+            executeColumns.forEach((m) => {
+              const { name, sqlType, visualType, modelType  } = m
+              modelObj[name] = {
+                sqlType,
+                visualType,
+                modelType
               }
-            }, () => {
-              this.hideForm()
             })
-          }
+
+            const configTeamStr = listData
+            .filter((ld) => ld.checked)
+            .map((ld) => ({
+              id: ld.id,
+              params: ld.params
+            }))
+
+            const requestValue = {
+              name,
+              description: desc,
+              sql: querySql,
+              model: JSON.stringify(modelObj),
+              config: configTeamStr.length !== 0 ? JSON.stringify({team: configTeamStr}) : '',
+              projectId: params.pid
+            }
+
+            if (route.path === '/project/:pid/bizlogic') {
+              this.props.onAddBizlogic({ ...requestValue, sourceId: Number(source_id) }, () => {
+                this.hideForm()
+              })
+            } else {
+              this.props.onEditBizlogic({
+                ...requestValue,
+                id,
+                source: {
+                  id: Number(source_id),
+                  name: source_name
+                }
+              }, () => {
+                this.hideForm()
+              })
+            }
+            break
+          default:
+            message.error('请检查SQL语句是否正确！', 3)
+            break
         }
       }
     })
@@ -984,17 +966,22 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (sqlValidateCode) {
         sqlValidatePanel = alertVisible
           ? (
-            <Col span={21} offset={2} className={styles.fromSqlAlert}>
-              <Alert
-                className={styles.sqlAlertText}
-                message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
-                description={`${sqlValidateMessage || ''}`}
-                type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
-                showIcon
-                closable
-                onClose={this.handleClose}
-              />
-            </Col>)
+            <Row>
+              <Col span={2} />
+              <Col span={20} className={styles.fromSqlAlert}>
+                <Alert
+                  className={styles.sqlAlertText}
+                  message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+                  description={`${sqlValidateMessage || ''}`}
+                  type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+                  showIcon
+                  closable
+                  onClose={this.handleClose}
+                />
+              </Col>
+              <Col span={2} />
+            </Row>
+            )
           : null
       } else {
         sqlValidatePanel = ''
@@ -1254,6 +1241,7 @@ const mapStateToProps = createStructuredSelector({
   modalLoading: makeSelectModalLoading(),
   bizlogics: makeSelectBizlogics(),
   projects: makeSelectProjects(),
+  currentProject: makeSelectCurrentProject(),
   currentOrganizationTeams: makeSelectCurrentOrganizationTeams()
 })
 
@@ -1264,10 +1252,7 @@ function mapDispatchToProps (dispatch) {
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
-    onHideNavigator: () => dispatch(hideNavigator()),
     onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
-    onLoadProjects: (resolve) => dispatch(loadProjects(resolve)),
-    onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve))
   }
 }

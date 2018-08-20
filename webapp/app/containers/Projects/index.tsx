@@ -47,7 +47,7 @@ interface IProjectsProps {
   organizations: any
   onTransferProject: (id: number, orgId: number) => any
   onEditProject: (project: any, resolve: () => any) => any
-  onLoadProjects: (resolve?: () => any) => any
+  onLoadProjects: () => any
   onAddProject: (project: any, resolve: () => any) => any
   onLoadOrganizations: () => any
   onDeleteProject: (id: number) => any
@@ -774,7 +774,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadProjects: (resolve) => dispatch(loadProjects(resolve)),
+    onLoadProjects: () => dispatch(loadProjects()),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
