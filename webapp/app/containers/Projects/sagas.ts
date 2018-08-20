@@ -27,7 +27,9 @@ import {
   DELETE_PROJECT,
   LOAD_PROJECT_DETAIL,
   TRANSFER_PROJECT,
-  SEARCH_PROJECT
+  SEARCH_PROJECT,
+  GET_PROJECT_STAR_USER,
+  PROJECT_UNSTAR
 } from './constants'
 
 import {
@@ -43,7 +45,11 @@ import {
   transferProjectFail,
   projectTransfered,
   projectSearched,
-  searchProjectFail
+  searchProjectFail,
+  unStarProjectSuccess,
+  unStarProjectFail,
+  getProjectStarUserSuccess,
+  getProjectStarUserFail
 } from './actions'
 
 const message = require('antd/lib/message')
@@ -145,13 +151,45 @@ export function* searchProject ({payload}) {
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.projects}/search`,
-      params: param
+      data: param
     })
     const result = readListAdapter(asyncData)
     yield put(projectSearched(result))
   } catch (err) {
     yield put(searchProjectFail())
     message.error('查找 Project 失败，请稍后再试')
+  }
+}
+
+export function* unStarProject ({payload}) {
+  const {id, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.star}/project/${id}`,
+      data: {id}
+    })
+    const result = readListAdapter(asyncData)
+    yield put(unStarProjectSuccess(result))
+    yield resolve()
+  } catch (err) {
+    yield put(unStarProjectFail())
+    message.error(' 操作失败，请稍后再试')
+  }
+}
+
+export function* getProjectStarUser ({payload}) {
+  const {id} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.star}/project/${id}`
+    })
+    const result = readListAdapter(asyncData)
+    yield put(getProjectStarUserSuccess(result))
+  } catch (err) {
+    yield put(getProjectStarUserFail())
+    message.error('获取列表失败，请稍后再试')
   }
 }
 
@@ -163,6 +201,8 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(DELETE_PROJECT, deleteProject as any),
     takeLatest(LOAD_PROJECT_DETAIL, getProjectDetail as any),
     takeEvery(TRANSFER_PROJECT, transferProject as any),
+    takeEvery(PROJECT_UNSTAR, unStarProject as any),
+    takeEvery(GET_PROJECT_STAR_USER, getProjectStarUser as any),
     throttle(1000, SEARCH_PROJECT, searchProject as any)
   ]
 }

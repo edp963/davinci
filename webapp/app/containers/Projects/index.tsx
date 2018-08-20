@@ -14,10 +14,10 @@ const styles = require('./Project.less')
 import * as classnames from 'classnames'
 import {InjectedRouter} from 'react-router/lib/Router'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail, transferProject, searchProject} from './actions'
+import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail, transferProject, searchProject, unStarProject, getProjectStarUser} from './actions'
 import {compose} from 'redux'
 import {makeSelectLoginUser} from '../App/selectors'
-import {makeSelectProjects, makeSelectSearchProject} from './selectors'
+import {makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList} from './selectors'
 import injectReducer from '../../utils/injectReducer'
 import {createStructuredSelector} from 'reselect'
 import injectSaga from '../../utils/injectSaga'
@@ -45,6 +45,7 @@ interface IProjectsProps {
   loginUser: any
   searchProject?: {list: any[], total: number, pageNum: number, pageSize: number}
   organizations: any
+  starUserList: IStarUser[]
   onTransferProject: (id: number, orgId: number) => any
   onEditProject: (project: any, resolve: () => any) => any
   onLoadProjects: () => any
@@ -52,10 +53,17 @@ interface IProjectsProps {
   onLoadOrganizations: () => any
   onDeleteProject: (id: number) => any
   onLoadProjectDetail: (id: number) => any
+  onStarProject: (id: number, resolve: () => any) => any,
+  onGetProjectStarUser: (id: number) => any,
   onSearchProject: (param: {keywords: string, pageNum: number, pageSize: number }) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
-
+export interface IStarUser {
+  avatar: string
+  id: number
+  starTime: string
+  username: string
+}
 interface IProjectsState {
   formType?: string
   formVisible: boolean
@@ -70,7 +78,16 @@ interface IProjectsState {
 }
 export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
-  isLike?: boolean
+  permission: {
+    downloadPermission: boolean
+    schedulePermission: number
+    sharePermission: boolean
+    sourcePermission: number
+    viewPermission: number
+    vizPermission: number
+    widgetPermission: number
+  }
+  isStar?: boolean
   type?: string
   name?: string
   id?: number
@@ -78,6 +95,7 @@ export interface IProject {
   pic?: number
   orgId?: number
   visibility?: boolean
+  starNum?: number
 }
 
 export class Projects extends React.PureComponent<IProjectsProps, IProjectsState> {
@@ -301,14 +319,19 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       this.props.onSearchProject(param)
     })
   }
-
-  private starProject = (project: IProject) => {
-    console.log(project)
+  private starProject = (id)  => () => {
+    const { onStarProject } = this.props
+    onStarProject(id, () => {
+      this.props.onLoadProjects()
+    })
   }
-
+  private getStarProjectUserList = (id) => () => {
+    const { onGetProjectStarUser } = this.props
+    onGetProjectStarUser(id)
+  }
   public render () {
     const { formType, formVisible, modalLoading } = this.state
-    const { onDeleteProject, organizations, projects, searchProject, loginUser } = this.props
+    const { onDeleteProject, organizations, projects, searchProject, loginUser, starUserList } = this.props
     const projectArr = Array.isArray(projects) ? [...projects, ...[{
       id: 'add',
       type: 'add'
@@ -362,11 +385,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         let deleteButton = void 0
         let transfer = void 0
         let star = void 0
-
+        let StarPanel = void 0
+        if (d && d.id) {
+          StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
+        }
         star = (
           <Tooltip title="点赞项目">
             <div className={styles.starWrapperPosition}>
-              <Star d={d}/>
+              {StarPanel}
             </div>
           </Tooltip>
         )
@@ -442,6 +468,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
           CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
         }
+        let StarPanel = void 0
+        if (d && d.id) {
+          StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
+        }
         let editButton = void 0
         let deleteButton = void 0
         let transfer = void 0
@@ -450,7 +480,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         star = (
           <Tooltip title="点赞项目">
             <div className={styles.starWrapperPosition}>
-              <Star d={d}/>
+              {StarPanel}
             </div>
           </Tooltip>
         )
@@ -533,6 +563,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }) : ''
     const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
       const path = require(`../../assets/images/bg${d.pic || 9}.png`)
+      let StarPanel = void 0
+      if (d && d.id) {
+        StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
+      }
       const colItems = (
           <Col
             xl={6}
@@ -552,18 +586,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                   <div className={styles.desc}>{d.description}</div>
                 </div>
               </div>
-              <div className={styles.others}>
-                <div className={styles.star}>
-                  <Star d={d}/>
-                  {/*<div className={styles.starWrapperPosition}>*/}
-                    {/**/}
-                  {/*</div>*/}
-                </div>
+              {/*<div className={styles.others}>*/}
                 {/*<div className={styles.star}>*/}
-                  {/*<Icon type="save"/>*/}
-                  {/*<span>fork</span>*/}
+                  {/*{StarPanel}*/}
                 {/*</div>*/}
-              </div>
+              {/*</div>*/}
             </div>
           </Col>
       )
@@ -769,12 +796,15 @@ const mapStateToProps = createStructuredSelector({
   organizations: makeSelectOrganizations(),
   projects: makeSelectProjects(),
   loginUser: makeSelectLoginUser(),
-  searchProject: makeSelectSearchProject()
+  searchProject: makeSelectSearchProject(),
+  starUserList: makeSelectStarUserList()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadProjects: () => dispatch(loadProjects()),
+    onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
+    onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onLoadOrganizations: () => dispatch(loadOrganizations()),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),

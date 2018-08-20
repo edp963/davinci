@@ -68,7 +68,7 @@ interface IScheduleProps {
   formLoading: boolean
   currentProject: IProject[]
   onAddSchedule: (param: object, resolve: any) => any
-  onLoadWidgets: () => any
+  onLoadWidgets: (pid: number) => any
   onLoadSchedules: (pid: number) => any
   onLoadDashboards: () => any
   onDeleteSchedule: (id: number) => any
@@ -113,7 +113,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
 
   public componentWillMount () {
     const {pid} = this.props.params
-    this.props.onLoadWidgets()
+    this.props.onLoadWidgets(pid)
     this.props.onLoadDashboards().then(() => {
       const {dashboards} = this.props
       const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
@@ -436,7 +436,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-    const ProviderButton = ModulePermission(currentProject, 'schedule')(Button)
+    const ProviderButton = ModulePermission(currentProject, 'schedule', false)(Button)
     const columns = [
       {
         title: '名称',
@@ -632,7 +632,7 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadWidgets: () => dispatch(loadWidgets()),
+    onLoadWidgets: (pid) => dispatch(loadWidgets(pid)),
     onLoadSchedules: (pid) => dispatch(loadSchedules(pid)),
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
     onAddSchedule: (schedule, resolve) => dispatch(addSchedule(schedule, resolve)),

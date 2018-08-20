@@ -40,4 +40,12 @@ export const SEARCH_PROJECT = 'davinci/Project/SEARCH_PROJECT'
 export const SEARCH_PROJECT_SUCCESS = 'davinci/Project/SEARCH_PROJECT_SUCCESS'
 export const SEARCH_PROJECT_FAILURE = 'davinci/Project/SEARCH_PROJECT_FAILURE'
 
+export const GET_PROJECT_STAR_USER = 'davinci/Project/GET_PROJECT_STAR_USER'
+export const GET_PROJECT_STAR_USER_SUCCESS = 'davinci/Project/GET_PROJECT_STAR_USER_SUCCESS'
+export const GET_PROJECT_STAR_USER_FAILURE = 'davinci/Project/GET_PROJECT_STAR_USER_FAILURE'
+
+export const PROJECT_UNSTAR = 'davinci/Project/PROJECT_UNSTAR'
+export const PROJECT_UNSTAR_SUCCESS = 'davinci/Project/PROJECT_UNSTAR_SUCCESS'
+export const PROJECT_UNSTAR_FAILURE = 'davinci/Project/PROJECT_UNSTAR_FAILURE'
+
 

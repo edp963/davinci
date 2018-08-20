@@ -47,13 +47,16 @@ import {
   makeSelectInviteMemberList
 } from './selectors'
 import {createStructuredSelector} from 'reselect'
-import {addProject, deleteProject} from '../Projects/actions'
+import {addProject, deleteProject, getProjectStarUser, loadProjects, unStarProject} from '../Projects/actions'
 import {checkNameUniqueAction} from '../App/actions'
+import {makeSelectStarUserList} from '../Projects/selectors'
+import {IStarUser} from '../Projects'
 
 interface IOrganizationProps {
   loginUser: any
   router: InjectedRouter
   organizations: any
+  starUserList: IStarUser[]
   params: {organizationId: number}
   inviteMemberList: any
   currentOrganization: IOrganization
@@ -70,6 +73,8 @@ interface IOrganizationProps {
   onSearchMember: (keywords: string) => any
   onAddProject: (project: any, resolve: () => any) => any
   onDeleteProject: (id: number) => any
+  onStarProject: (id: number, resolve: () => any) => any,
+  onGetProjectStarUser: (id: number) => any,
   onEditOrganization: (organization: IOrganization) => any
   onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -148,6 +153,18 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
     })
   }
 
+  private starProject = (id)  => () => {
+    const { onStarProject } = this.props
+    onStarProject(id, () => {
+      this.props.onLoadProjects()
+    })
+  }
+
+  private getStarProjectUserList = (id) => () => {
+    const { onGetProjectStarUser } = this.props
+    onGetProjectStarUser(id)
+  }
+
   private editOrganization = (oranization) => () => {
     this.props.onEditOrganization(oranization)
   }
@@ -160,6 +177,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
       currentOrganizationMembers,
       currentOrganizationTeams,
       inviteMemberList,
+      starUserList,
       params: {organizationId}
     } = this.props
     const {avatar, name, projectNum, memberNum, teamNum} = currentOrganization as IOrganization
@@ -184,6 +202,8 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
           <Tabs>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
+                unStar={this.starProject}
+                userList={this.getStarProjectUserList}
                 currentOrganization={currentOrganization}
                 deleteProject={this.delete}
                 onCheckUniqueName={this.props.onCheckUniqueName}
@@ -192,6 +212,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
                 organizationProjects={currentOrganizationProjects}
                 toProject={this.toProject}
                 loginUser={loginUser}
+                starUser={starUserList}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
@@ -233,6 +254,7 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
 }
 
 const mapStateToProps = createStructuredSelector({
+  starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
   organizations: makeSelectOrganizations(),
   currentOrganization: makeSelectCurrentOrganizations(),
@@ -244,6 +266,9 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
+    onLoadProjects: () => dispatch(loadProjects()),
+    onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
+    onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),

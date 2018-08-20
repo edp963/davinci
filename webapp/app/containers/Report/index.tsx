@@ -54,7 +54,6 @@ export class Report extends React.Component<IReportProps, {}> {
     this.props.onPageLoad()
     this.props.onShowNavigator()
     if (pid) {
-      console.log(pid)
       this.props.onLoadProjectDetail(pid)
     }
   }

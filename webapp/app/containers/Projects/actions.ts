@@ -36,7 +36,16 @@ import {
   DELETE_PROJECT_FAILURE,
   LOAD_PROJECT_DETAIL,
   LOAD_PROJECT_DETAIL_SUCCESS,
-  LOAD_PROJECT_DETAIL_FAILURE, SEARCH_PROJECT_SUCCESS, SEARCH_PROJECT_FAILURE, SEARCH_PROJECT
+  LOAD_PROJECT_DETAIL_FAILURE,
+  SEARCH_PROJECT_SUCCESS,
+  SEARCH_PROJECT_FAILURE,
+  SEARCH_PROJECT,
+  GET_PROJECT_STAR_USER,
+  GET_PROJECT_STAR_USER_SUCCESS,
+  GET_PROJECT_STAR_USER_FAILURE,
+  PROJECT_UNSTAR,
+  PROJECT_UNSTAR_SUCCESS,
+  PROJECT_UNSTAR_FAILURE
 } from './constants'
 
 export function loadProjectDetail (id) {
@@ -210,7 +219,54 @@ export function searchProjectFail () {
   }
 }
 
+export function getProjectStarUser (id) {
+  return {
+    type: GET_PROJECT_STAR_USER,
+    payload: {
+      id
+    }
+  }
+}
 
+export function getProjectStarUserSuccess (result) {
+  return {
+    type: GET_PROJECT_STAR_USER_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function getProjectStarUserFail () {
+  return {
+    type: GET_PROJECT_STAR_USER_FAILURE
+  }
+}
+
+export function unStarProject (id, resolve) {
+  return {
+    type: PROJECT_UNSTAR,
+    payload: {
+      id,
+      resolve
+    }
+  }
+}
+
+export function unStarProjectSuccess (result) {
+  return {
+    type: PROJECT_UNSTAR_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function unStarProjectFail () {
+  return {
+    type: PROJECT_UNSTAR_FAILURE
+  }
+}
 
 
 

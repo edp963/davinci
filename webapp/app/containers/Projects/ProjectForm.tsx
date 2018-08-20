@@ -166,7 +166,11 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 <FormItem label="描述" {...commonFormItemStyle} className={isShowDesc}>
                   {getFieldDecorator('description', {
                     hidden: this.props.type === 'transfer',
-                    initialValue: ''
+                    initialValue: '',
+                    rules: [{
+                      required: true,
+                      message: 'description 不能为空'
+                    }]
                   })(
                     <Input
                       placeholder="Description"
