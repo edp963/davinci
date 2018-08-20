@@ -27,6 +27,11 @@ const makeSelectProjects = () => createSelector(
   (projectState) => projectState.get('projects')
 )
 
+const makeSelectCurrentProject = () => createSelector(
+  selectProject,
+  (projectState) => projectState.get('currentProject')
+)
+
 const makeSelectSearchProject = () => createSelector(
   selectProject,
   (projectState) => projectState.get('searchProject')
@@ -35,5 +40,6 @@ const makeSelectSearchProject = () => createSelector(
 export {
   selectProject,
   makeSelectProjects,
-  makeSelectSearchProject
+  makeSelectSearchProject,
+  makeSelectCurrentProject
 }

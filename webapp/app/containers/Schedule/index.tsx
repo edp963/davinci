@@ -22,7 +22,7 @@ import widgetReducer from '../Widget/reducer'
 import widgetSaga from '../Widget/sagas'
 // import dashboardReducer from '../Dashboard/reducer'
 // import dashboardSaga from '../Dashboard/sagas'
-
+import {makeSelectCurrentProject} from '../Projects/selectors'
 import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
@@ -45,6 +45,7 @@ const Breadcrumb = require('antd/lib/breadcrumb')
 const utilStyles = require('../../assets/less/util.less')
 import { PaginationProps } from 'antd/lib/pagination'
 import ModulePermission from '../Account/components/checkModulePermission'
+import {IProject} from '../Projects'
 
 interface ICurrentDashboard {
   config: string
@@ -65,9 +66,10 @@ interface IScheduleProps {
   dashboards: boolean | any[]
   tableLoading: boolean
   formLoading: boolean
+  currentProject: IProject[]
   onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: () => any
-  onLoadSchedules: () => any
+  onLoadSchedules: (pid: number) => any
   onLoadDashboards: () => any
   onDeleteSchedule: (id: number) => any
   onUpdateSchedule: (param: object, resolve: any) => any
@@ -110,6 +112,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   private configForm: WrappedFormUtils = null
 
   public componentWillMount () {
+    const {pid} = this.props.params
     this.props.onLoadWidgets()
     this.props.onLoadDashboards().then(() => {
       const {dashboards} = this.props
@@ -127,7 +130,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         screenWidth: document.documentElement.clientWidth
       })
     })
-    this.props.onLoadSchedules()
+    this.props.onLoadSchedules(pid)
   }
 
   public componentWillReceiveProps (props) {
@@ -422,6 +425,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     } = this.state
     const {
       onDeleteSchedule,
+      currentProject,
       tableLoading,
       formLoading
     } = this.props
@@ -432,7 +436,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-    const ProviderButton = ModulePermission('schedule')(Button)
+    const ProviderButton = ModulePermission(currentProject, 'schedule')(Button)
     const columns = [
       {
         title: '名称',
@@ -621,6 +625,7 @@ const mapStateToProps = createStructuredSelector({
   schedule: makeSelectSchedule(),
   dashboards: makeSelectDashboards(),
   currentDashboard: makeSelectCurrentDashboard(),
+  currentProject: makeSelectCurrentProject(),
   tableLoading: makeSelectTableLoading(),
   formLoading: makeSelectFormLoading()
 })
@@ -628,7 +633,7 @@ const mapStateToProps = createStructuredSelector({
 function mapDispatchToProps (dispatch) {
   return {
     onLoadWidgets: () => dispatch(loadWidgets()),
-    onLoadSchedules: () => dispatch(loadSchedules()),
+    onLoadSchedules: (pid) => dispatch(loadSchedules(pid)),
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),
     onAddSchedule: (schedule, resolve) => dispatch(addSchedule(schedule, resolve)),
     onUpdateSchedule: (schedule, resolve) => dispatch(updateSchedule(schedule, resolve)),

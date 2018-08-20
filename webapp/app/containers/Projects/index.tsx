@@ -68,7 +68,7 @@ interface IProjectsState {
   currentPage: number
   pageSize: number
 }
-interface IProject {
+export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
   isLike?: boolean
   type?: string
@@ -230,7 +230,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   private toProject = (d: any) => () => {
     const pid = d.id
     this.props.router.push(`/project/${pid}`)
-    this.props.onLoadProjectDetail(pid)
+   // this.props.onLoadProjectDetail(pid)
     this.saveHistory(d)
   }
 
