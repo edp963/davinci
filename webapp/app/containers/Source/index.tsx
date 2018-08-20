@@ -75,7 +75,7 @@ interface ISourceProps {
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
-  onLoadSources: (projectId: number, resolve: any) => any
+  onLoadSources: (projectId: number, resolve?: any) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
@@ -138,7 +138,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   }
 
   public componentWillMount () {
-    this.props.onLoadSources(this.props.params.pid, () => {console.log('')})
+    this.props.onLoadSources(this.props.params.pid)
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
