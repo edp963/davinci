@@ -8,14 +8,19 @@ const Popconfirm = require('antd/lib/popconfirm')
 const Tooltip = require('antd/lib/tooltip')
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import Star from '../../../components/StarPanel/Star'
+import {IProject, IStarUser} from '../../Projects'
 
 interface IProjectItemProps {
   key: number
-  options: IProjectOptions
+ // options: IProjectOptions
+  options: IProject,
   toProject: (id: number) => any
   loginUser: any
   deleteProject: (id: number) => any
+  starUser: IStarUser[]
   currentOrganization: IOrganization
+  unStar?: (id: number) => any
+  userList?: (id: number) => any
 }
 interface IProjectOptions {
   id: number
@@ -27,13 +32,17 @@ interface IProjectOptions {
 }
 export class ProjectItem extends React.PureComponent<IProjectItemProps> {
   public render () {
-    const {options, loginUser, currentOrganization} = this.props
+    const {options, loginUser, currentOrganization, starUser} = this.props
     const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Icon)
     }
    // const bg = require(`../../assets/images/bg${options.pic}.png`)
+    let StarPanel = void 0
+    if (options) {
+      StarPanel = <Star d={options} starUser={starUser} unStar={this.props.unStar} userList={this.props.userList}/>
+    }
     return (
       <div className={styles.projectItemWrap}>
         <div
@@ -47,7 +56,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
           <div className={styles.desc}>{options.description}</div>
           {tags}
           <div className={styles.others}>
-            <Star d={options}/>
+            {StarPanel}
             <div className={styles.delete}>
               <Popconfirm
                 title="确定删除？"

@@ -14,20 +14,8 @@ interface IModulePermissionProps {
   permission?: IOrganization
 }
 
-interface IModulePermissionStates {
-  disabled: boolean
-  visibility: boolean
-}
-
 export default (project?: IProject, route?: string, isDelete?: string) => (WrapperComponent) => {
   class ModulePermission extends React.PureComponent<IModulePermissionProps, {}> {
-    constructor (props) {
-      super(props)
-      this.state = {
-        disabled: false,
-        visibility: false
-      }
-    }
     private getPermissionByCurrentProject = () => {
       let permission = ''
       if (project) {
@@ -40,11 +28,36 @@ export default (project?: IProject, route?: string, isDelete?: string) => (Wrapp
       }
       return permission
     }
-    public render () {
+
+    private computePermission = () => {
+      const permission = this.getPermissionByCurrentProject()
       const defaultComponent = <div {...this.props}/>
-      return project
-        ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
-        : defaultComponent
+      if (!project) {
+        return defaultComponent
+      }
+      if (permission) {
+        switch (Number(permission)) {
+          case 0:
+            return defaultComponent
+          case 1:
+            return <WrapperComponent disabled  {...this.props}>{this.props.children}</WrapperComponent>
+          case 2:
+            if (isDelete) {
+              return defaultComponent
+            } else {
+              return <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
+            }
+          case 3:
+            return <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
+        }
+      } else {
+        return defaultComponent
+      }
+    }
+
+    public render () {
+      const result = this.computePermission()
+      return result
     }
   }
   return ModulePermission

@@ -29,7 +29,8 @@ import {
   DELETE_PROJECT_SUCCESS,
   LOAD_PROJECT_DETAIL,
   LOAD_PROJECT_DETAIL_SUCCESS,
-  SEARCH_PROJECT_SUCCESS
+  SEARCH_PROJECT_SUCCESS,
+  GET_PROJECT_STAR_USER_SUCCESS
 } from './constants'
 
 
@@ -37,7 +38,8 @@ const initialState = fromJS({
   projects: null,
   currentProject: null,
   currentProjectLoading: false,
-  searchProject: false
+  searchProject: false,
+  starUserList: false
 })
 
 function projectReducer (state = initialState, action) {
@@ -80,6 +82,9 @@ function projectReducer (state = initialState, action) {
     case SEARCH_PROJECT_SUCCESS:
       return state
         .set('searchProject', payload.result)
+    case GET_PROJECT_STAR_USER_SUCCESS:
+      return state
+        .set('starUserList', payload.result)
     default:
       return state
   }

@@ -13,6 +13,7 @@ import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
 import {IOrganization} from '../Organization'
+import {IStarUser} from '../../Projects'
 interface IProjectsState {
   formType?: string
   formVisible: boolean
@@ -25,8 +26,11 @@ interface IProjectsProps {
   currentOrganization: IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
+  starUserList: IStarUser[]
   onAddProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
+  unStar?: (id: number) => any
+  userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -113,6 +117,9 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       )
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
+        unStar={this.props.unStar}
+        userList={this.props.userList}
+        starUser={this.props.starUser}
         currentOrganization={currentOrganization}
         key={index}
         loginUser={this.props.loginUser}
