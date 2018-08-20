@@ -100,10 +100,10 @@
       height: 50px;
       overflow-x: auto;
 
-      .container {
+      .xAxis {
         height: 100%;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
       }
 
       overflow: -moz-scrollbars-none;
@@ -174,14 +174,19 @@
   .rightBorder {
     border-right: 1px solid @border-color-base;
   }
+}
 
-  .chartCell {
-    padding: 0;
+.chartContainer {
+  display: flex;
+  flex-direction: column;
 
-    .container {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
+  .chartRow {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+
+    .chartColumn {
+      flex-shrink: 0;
     }
   }
 }

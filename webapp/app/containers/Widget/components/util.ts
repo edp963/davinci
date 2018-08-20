@@ -15,7 +15,8 @@ import {
   PIVOT_BORDER,
   PIVOT_XAXIS_SIZE,
   PIVOT_YAXIS_SIZE,
-  PIVOT_TITLE_SIZE
+  PIVOT_TITLE_SIZE,
+  PIVOT_CANVAS_AXIS_SIZE_LIMIT
 } from '../../../globalConstants'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { uuid } from '../../../utils/util'
@@ -213,13 +214,11 @@ export function getChartElementSizeAndShouldCollapsed (
 }
 
 export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, extraMetricCount: number): number {
-  console.log(tableBodyWidth)
   const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerWidth / colKeyCount / (extraMetricCount + 1)
 }
 
 export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, extraMetricCount: number): number {
-  console.log(tableBodyHeight)
   const realContainerHeight = Math.max(tableBodyHeight, rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
   return realContainerHeight / rowKeyCount / (extraMetricCount + 1)
 }
@@ -365,7 +364,55 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
   }
 
   return {
-    data,
+    data: axisDataCutting(type, dimetionAxis, extraMetricCount, axisLength, data),
     length: axisLength
+  }
+}
+
+export function axisDataCutting (type: 'x' | 'y', dimetionAxis, extraMetricCount, axisLength, data) {
+  if (axisLength > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
+    const result = []
+    data.forEach((line) => {
+      let blockLine = {
+        key: line.key,
+        data: []
+      }
+      let block = {
+        key: '',
+        length: 0,
+        data: [blockLine]
+      }
+      line.data.forEach((unit, index) => {
+        const unitWidth = type === 'x' && dimetionAxis === 'row' || type === 'y' && dimetionAxis === 'col'
+          ? unit.width * (extraMetricCount + 1)
+          : unit.width
+        if (block.length + unitWidth > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
+          block.key = `${index}${block.data.map((d) => d.key).join(',')}`
+          result.push(block)
+          blockLine = {
+            key: line.key,
+            data: []
+          }
+          block = {
+            key: '',
+            length: 0,
+            data: [blockLine]
+          }
+        }
+        block.length += unitWidth
+        blockLine.data.push(unit)
+        if (index === line.data.length - 1) {
+          block.key = `${index}${block.data.map((d) => d.key).join(',')}`
+          result.push(block)
+        }
+      })
+    })
+    return result
+  } else {
+    return [{
+      key: 'block',
+      data,
+      length: axisLength
+    }]
   }
 }
