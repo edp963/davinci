@@ -120,7 +120,6 @@ export function* getProjectDetail ({ payload }) {
   try {
     const asyncData = yield  call(request, `${api.projects}/${payload.id}`)
     const project = readListAdapter(asyncData)
-    console.log(project)
     yield put(projectDetailLoaded(project))
   } catch (err) {
     console.log('getProjectDetail', err)

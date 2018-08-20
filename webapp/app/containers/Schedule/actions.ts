@@ -27,9 +27,12 @@ import {
 
 // export const loadScheduleDetail = promiseActionCreator(LOAD_SHEDULE_DETAIL, ['id'])
 
-export function loadSchedules () {
+export function loadSchedules (pid) {
   return {
-    type: LOAD_SCHEDULES
+    type: LOAD_SCHEDULES,
+    payload: {
+      pid
+    }
   }
 }
 

@@ -68,7 +68,7 @@ interface IProjectsState {
   currentPage: number
   pageSize: number
 }
-interface IProject {
+export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
   isLike?: boolean
   type?: string
