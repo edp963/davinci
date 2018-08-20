@@ -19,9 +19,9 @@ import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 const message = require('antd/lib/message')
 
-export function* getSchedules () {
+export function* getSchedules ({payload}) {
   try {
-    const asyncData = yield call(request, api.schedule)
+    const asyncData = yield call(request, `${api.schedule}?projectId=${payload.pid}`)
     const schedules = readListAdapter(asyncData)
     yield put(schedulesLoaded(schedules))
   } catch (err) {
@@ -108,7 +108,7 @@ export function* updateSchedule ({ payload }) {
 
 export default function* rootScheduleSaga (): IterableIterator<any> {
   yield [
-    takeEvery(LOAD_SCHEDULES, getSchedules),
+    takeEvery(LOAD_SCHEDULES, getSchedules as any),
     takeEvery(ADD_SCHEDULES, addSchedules as any),
     takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
     takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
