@@ -78,7 +78,7 @@ public class CommonService<T> {
     }
 
     /**
-     * TODO 获取分享链接
+     * 获取分享链接
      * @param userId
      * @param contentType
      * @param contengId
@@ -90,12 +90,12 @@ public class CommonService<T> {
         sb.append("http://")
                 .append(getHost())
                 .append("/share.html#/share/")
-                .append(contentType)
+                .append(contentType.equals("widget") ? "dashboard" : contentType)
                 .append("?shareInfo=")
-                .append(shareToken);
+                .append(shareToken)
+                .append(contentType.equals("widget") ? "?type=widget" : "");
 
-//        return sb.toString();
-        return "http://10.143.131.33:9080/share/#/share?shareInfo=A5C65EF452462494006F6BE7214A9A54639386860EE68C6EE6BF4DC47F9F29D79991510941951CA743A3BB1E0C668E55E32C8C86045804033ECE49A57B049EC55FD59A14FCD4B12F95325E4034724F7C232FB4ACA16D51BAAC9EED77C2AAF4FB&type=dashboard";
+        return sb.toString();
     }
 
 

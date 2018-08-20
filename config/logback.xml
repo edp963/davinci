@@ -28,7 +28,6 @@
     <property name="FILE_LOG_PATTERN"
               value="${FILE_LOG_PATTERN:-%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}} ${LOG_LEVEL_PATTERN:-%5p} ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
 
-    <!-- INFO log file -->
     <appender name="LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -43,7 +42,6 @@
     </appender>
 
     <root level="INFO">
-        <!--控制台日志使用默认格式， 文件日志使用自定义格式-->
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="LOG_FILE"/>
     </root>
