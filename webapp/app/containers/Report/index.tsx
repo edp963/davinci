@@ -34,7 +34,10 @@ import injectReducer from 'utils/injectReducer'
 import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
 import {compose} from 'redux'
+import {makeSelectCurrentProject} from '../Projects/selectors'
+import {IProject} from '../Projects'
 const styles = require('./Report.less')
+import MenuPermission from '../Account/components/checkMenuPermission'
 
 interface IReportProps {
   sidebar: boolean | any[]
@@ -42,6 +45,7 @@ interface IReportProps {
   routes: any[]
   params: any
   children: React.ReactNode
+  currentProject: IProject[]
   onPageLoad: () => any
   onShowNavigator: () => any
   onLoadProjectDetail: (id) => any
@@ -62,20 +66,23 @@ export class Report extends React.Component<IReportProps, {}> {
     const {
       sidebar,
       loginUser,
-      routes
+      routes,
+      currentProject
     } = this.props
     const sidebarOptions = sidebar && (sidebar as any[]).map((item) => {
       const isOptionActive = item.route.indexOf(routes[3].name) >= 0
       const iconClassName = `iconfont ${item.icon}`
+      const ProviderSidebar = MenuPermission(currentProject, item.permission)(SidebarOption)
+
       return (
-        <SidebarOption
+        <ProviderSidebar
           key={item.route}
           route={item.route}
           active={isOptionActive}
           params={this.props.params}
         >
           <i className={iconClassName} />
-        </SidebarOption>
+        </ProviderSidebar>
       )
     })
 
@@ -99,20 +106,21 @@ export class Report extends React.Component<IReportProps, {}> {
 
 const mapStateToProps = createStructuredSelector({
   sidebar: selectSidebar(),
-  loginUser: makeSelectLoginUser()
+  loginUser: makeSelectLoginUser(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onPageLoad: () => {
       const sidebarSource = [
-        { icon: 'icon-dashboard', route: ['vizs'] },
-        { icon: 'icon-widget-gallery', route: ['widgets'] },
-        { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'] },
-        { icon: 'icon-datasource24', route: ['sources'] },
+        { icon: 'icon-dashboard', route: ['vizs'], permission: 'viz' },
+        { icon: 'icon-widget-gallery', route: ['widgets'], permission: 'widget' },
+        { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'], permission: 'view' },
+        { icon: 'icon-datasource24', route: ['sources'], permission: 'source' },
         // { icon: 'icon-user1', route: ['users'] },
         // { icon: 'icon-group', route: ['groups'] },
-        { icon: 'anticon anticon-clock-circle-o', route: ['schedule'] }
+        { icon: 'anticon anticon-clock-circle-o', route: ['schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))
     },

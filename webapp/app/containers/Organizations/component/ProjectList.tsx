@@ -3,6 +3,7 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Tooltip = require('antd/lib/tooltip')
 const Button = require('antd/lib/button')
+const Pagination = require('antd/lib/pagination')
 const Input = require('antd/lib/input')
 const styles = require('../Organization.less')
 const Modal = require('antd/lib/modal')
@@ -14,10 +15,13 @@ import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
 import {IOrganization} from '../Organization'
 import {IStarUser} from '../../Projects'
+import {IOrganizationProjects} from '../Organization'
 interface IProjectsState {
   formType?: string
   formVisible: boolean
   modalLoading: boolean
+  pageNum: number
+  pageSize: number
 }
 
 interface IProjectsProps {
@@ -29,9 +33,11 @@ interface IProjectsProps {
   starUserList: IStarUser[]
   onAddProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
+  organizationProjectsDetail: {total?: number, list: IOrganizationProjects[]}
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  getOrganizationProjectsByPagination: (obj: {pageNum: number, pageSize: number}) => any
 }
 
 export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
@@ -40,7 +46,9 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     this.state = {
       formType: '',
       formVisible: false,
-      modalLoading: false
+      modalLoading: false,
+      pageNum: 1,
+      pageSize: 10
     }
   }
   private ProjectForm: WrappedFormUtils
@@ -98,9 +106,32 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       }
     })
   }
+  private onShowSizeChange = (current, pageSize) => {
+    this.setState({
+      pageNum: current,
+      pageSize
+    }, () => {
+      const param = {
+        pageNum: this.state.pageNum,
+        pageSize: this.state.pageSize
+      }
+      this.props.getOrganizationProjectsByPagination(param)
+    })
+  }
+  private onPaginationChange = (page) => {
+    this.setState({
+      pageNum: page
+    }, () => {
+      const param = {
+        pageNum: this.state.pageNum,
+        pageSize: this.state.pageSize
+      }
+      this.props.getOrganizationProjectsByPagination(param)
+    })
+  }
   public render () {
     const { formVisible, formType, modalLoading } = this.state
-    const { organizationProjects, currentOrganization } = this.props
+    const { organizationProjects, currentOrganization, organizationProjectsDetail } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -115,6 +146,21 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             />
           </Tooltip>
       )
+    let projectSearchPagination = void 0
+    if (organizationProjectsDetail) {
+      projectSearchPagination =
+        <Pagination
+          //  simple={screenWidth < 768 || screenWidth === 768}
+          showSizeChanger
+          defaultCurrent={2}
+          total={organizationProjectsDetail.total}
+          onShowSizeChange={this.onShowSizeChange}
+          onChange={this.onPaginationChange}
+          defaultPageSize={10}
+          pageSizeOptions={['10', '15', '20']}
+          current={this.state.pageNum}
+        />
+    }
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
         unStar={this.props.unStar}
@@ -145,6 +191,11 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         <Row>
           <Col span={24}>
             {ProjectItems}
+          </Col>
+        </Row>
+        <Row type="flex" justify="end" style={{marginTop: '16px'}}>
+          <Col>
+            {projectSearchPagination}
           </Col>
         </Row>
         <Modal

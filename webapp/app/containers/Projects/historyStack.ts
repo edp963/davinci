@@ -5,32 +5,71 @@ interface IHistory {
 }
 class HistoryStack  {
   private item: IHistory[]
-  private key: string
-  constructor (key) {
+  private wrap: {}
+  constructor () {
     this.item = []
-    this.key = key
-    this.init(key)
+    this.wrap = {}
+    this.init()
   }
-  private init (key: string) {
-    const store = localStorage.getItem(key)
+  private init () {
+    const store = localStorage.getItem('historyBrowser')
+    const user = this.getUser()
     if (store) {
       const result = this.parse(store)
-      if (result && Array.isArray(result)) {
-         this.item = result
+      this.wrap = result
+      const items = this.wrap[user]
+      if (items && items.length) {
+        this.item = this.wrap[user]
+        this.wrap[user] = this.item
+      } else {
+        this.item = []
+        this.wrap[user] = this.item
       }
     } else {
       this.item = []
+      this.wrap[user] = this.item
     }
   }
-  public pushNode (d: IHistory) {
+  public pushNode (d?: IHistory) {
+    const user = this.getUser()
+    const store = localStorage.getItem('historyBrowser')
+    if (store) {
+      const result = this.parse(store)
+      this.wrap = result
+      if (result && result[user]) {
+        const userArr = result[user]
+        if (userArr && Array.isArray(userArr)) {
+          this.item = userArr
+        } else {
+          this.item = []
+        }
+        this.wrap[user] = this.item
+      } else {
+        this.item = []
+        this.wrap[user] = this.item
+      }
+    } else {
+      this.item = []
+      this.wrap[user] = this.item
+    }
     if (d) {
       this.item = this.item.filter((t) => t.id !== d.id)
       this.item.unshift(d)
-      this.save(this.key)
+      console.log(this.item)
+      this.save()
     }
   }
-  private save (key: string) {
-    localStorage.setItem(key, this.stringify(this.item))
+  private getUser () {
+    const user = localStorage.getItem('loginUser')
+    const userObj = this.parse(user)
+    if (userObj && userObj.id) {
+      return userObj.id
+    }
+  }
+  private save () {
+    const user = this.getUser()
+    this.wrap[user] = this.item
+    localStorage.setItem('historyBrowser', this.stringify(this.wrap))
   }
   private parse (str: string) {
     try {
@@ -54,7 +93,8 @@ class HistoryStack  {
     this.item.length = 0
   }
   public getAll () {
-    return this.item
+    const user = this.getUser()
+    return this.wrap[user]
   }
 }
 
