@@ -129,8 +129,8 @@ public class ProjectController extends BaseController {
     @ApiOperation(value = "create project", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createProject(@Valid @RequestBody ProjectCreat projectCreat,
-                                        @ApiIgnore @CurrentUser User user,
                                         @ApiIgnore BindingResult bindingResult,
+                                        @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
