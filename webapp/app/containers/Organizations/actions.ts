@@ -60,11 +60,11 @@ import {
   DELETE_ORGANIZATION_MEMBER_SUCCESS
 } from './constants'
 
-export function loadOrganizationProjects (id) {
+export function loadOrganizationProjects (param) {
   return {
     type: LOAD_ORGANIZATIONS_PROJECTS,
     payload: {
-      id
+      param
     }
   }
 }

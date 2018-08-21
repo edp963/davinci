@@ -42,6 +42,7 @@ import {
   makeSelectOrganizations,
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
+  makeSelectCurrentOrganizationProjectsDetail,
   makeSelectCurrentOrganizationTeams,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
@@ -60,13 +61,14 @@ interface IOrganizationProps {
   params: {organizationId: number}
   inviteMemberList: any
   currentOrganization: IOrganization
-  onLoadOrganizationProjects: (id: number) => any
+  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onLoadOrganizationDetail: (id: number) => any
   onDeleteOrganizationMember: (id: number, resolve: () => any) => any
   onChangeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
   currentOrganizationProjects: IOrganizationProjects[]
+  currentOrganizationProjectsDetail: {total?: number, list: IOrganizationProjects[]}
   currentOrganizationTeams: IOrganizationTeams[]
   currentOrganizationMembers: IOrganizationMembers[]
   onInviteMember: (ordId: number, memId: number) => any
@@ -100,6 +102,7 @@ export interface IOrganizationProjects {
   description: string
   name: string
   createBy: number
+  total: number
 }
 export interface IOrganizationTeams {
   id: number
@@ -119,8 +122,19 @@ export interface IOrganizationMembers {
     username?: string
   }
 }
+interface IOrganizationStates {
+  pageNum: number
+  pageSize: number
+}
 
-export class Organization extends React.PureComponent <IOrganizationProps> {
+export class Organization extends React.PureComponent <IOrganizationProps, IOrganizationStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      pageNum: 1,
+      pageSize: 10
+    }
+  }
   private toProject = (id: number) => () => {
     this.props.router.push(`/project/${id}`)
   }
@@ -142,10 +156,23 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
       onLoadOrganizationDetail,
       params: { organizationId }
     } = this.props
-    onLoadOrganizationProjects(Number(organizationId))
+    onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadOrganizationMembers(Number(organizationId))
     onLoadOrganizationTeams(Number(organizationId))
     onLoadOrganizationDetail(Number(organizationId))
+  }
+  private getOrganizationProjectsByPagination = (obj) => {
+    const { onLoadOrganizationProjects, params: { organizationId }} = this.props
+    this.setState({
+      pageNum: obj.pageNum,
+      pageSize: obj.pageSize
+    })
+    const param = {
+      id: organizationId,
+      pageNum: obj.pageNum,
+      pageSize: obj.pageSize
+    }
+    onLoadOrganizationProjects(param)
   }
   private deleteOrganization = (id) => () => {
     this.props.onDeleteOrganization(id, () => {
@@ -155,8 +182,13 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
 
   private starProject = (id)  => () => {
     const { onStarProject, params: { organizationId } } = this.props
+    const param = {
+      id: Number(organizationId),
+      pageNum: this.state.pageNum,
+      pageSize: this.state.pageSize
+    }
     onStarProject(id, () => {
-      this.props.onLoadOrganizationProjects(Number(organizationId))
+      this.props.onLoadOrganizationProjects(param)
     })
   }
 
@@ -178,7 +210,8 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
       currentOrganizationTeams,
       inviteMemberList,
       starUserList,
-      params: {organizationId}
+      params: {organizationId},
+      currentOrganizationProjectsDetail
     } = this.props
     const {avatar, name, projectNum, memberNum, teamNum} = currentOrganization as IOrganization
     return (
@@ -204,12 +237,14 @@ export class Organization extends React.PureComponent <IOrganizationProps> {
               <ProjectList
                 unStar={this.starProject}
                 userList={this.getStarProjectUserList}
+                getOrganizationProjectsByPagination={this.getOrganizationProjectsByPagination}
                 currentOrganization={currentOrganization}
                 deleteProject={this.delete}
                 onCheckUniqueName={this.props.onCheckUniqueName}
                 onAddProject={this.props.onAddProject}
                 organizationId={this.props.params['organizationId']}
                 organizationProjects={currentOrganizationProjects}
+                organizationProjectsDetail={currentOrganizationProjectsDetail}
                 toProject={this.toProject}
                 loginUser={loginUser}
                 starUser={starUserList}
@@ -259,6 +294,7 @@ const mapStateToProps = createStructuredSelector({
   organizations: makeSelectOrganizations(),
   currentOrganization: makeSelectCurrentOrganizations(),
   currentOrganizationProjects: makeSelectCurrentOrganizationProjects(),
+  currentOrganizationProjectsDetail: makeSelectCurrentOrganizationProjectsDetail(),
   currentOrganizationTeams: makeSelectCurrentOrganizationTeams(),
   currentOrganizationMembers: makeSelectCurrentOrganizationMembers(),
   inviteMemberList: makeSelectInviteMemberList()
@@ -268,7 +304,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
-    onLoadOrganizationProjects: (id) => dispatch(loadOrganizationProjects(id)),
+    onLoadOrganizationProjects: (param) => dispatch(loadOrganizationProjects(param)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
     onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onLoadOrganizationDetail: (id) => dispatch(loadOrganizationDetail(id)),

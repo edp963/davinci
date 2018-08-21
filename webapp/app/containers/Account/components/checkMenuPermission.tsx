@@ -1,7 +1,4 @@
 import * as React from 'react'
-import {
-  CREATE_ORGANIZATION_PROJECT
-} from '../../App/constants'
 import {IOrganization} from '../../Organizations/Organization'
 import {IProject} from '../../Projects'
 
@@ -14,16 +11,16 @@ interface IModulePermissionProps {
   permission?: IOrganization
 }
 
-export default (project?: IProject, route?: string, isDelete?: string) => (WrapperComponent) => {
-  class ModulePermission extends React.PureComponent<IModulePermissionProps, {}> {
+export default (project?: IProject, item?: any) => (WrapperComponent) => {
+  class MenuPermission extends React.PureComponent<IModulePermissionProps, {}> {
     private getPermissionByCurrentProject = () => {
       let permission = ''
       if (project) {
         const projectPermission = project.permission
         for (const attr in projectPermission) {
-          if (`${route}Permission` === attr) {
+          const pStr = attr.slice(0, -10)
+          if (pStr === item) {
             permission = projectPermission [attr]
-            break
           }
         }
       }
@@ -40,15 +37,7 @@ export default (project?: IProject, route?: string, isDelete?: string) => (Wrapp
         switch (Number(permission)) {
           case 0:
             return defaultComponent
-          case 1:
-            return <WrapperComponent disabled  {...this.props}>{this.props.children}</WrapperComponent>
-          case 2:
-            if (isDelete) {
-              return defaultComponent
-            } else {
-              return <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
-            }
-          case 3:
+          default:
             return <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
         }
       } else {
@@ -61,8 +50,9 @@ export default (project?: IProject, route?: string, isDelete?: string) => (Wrapp
       return result
     }
   }
-  return ModulePermission
+  return MenuPermission
 }
+
 
 
 

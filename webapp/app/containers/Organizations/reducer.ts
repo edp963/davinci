@@ -44,6 +44,7 @@ const initialState = fromJS({
   currentOrganization: {},
   currentOrganizationLoading: false,
   currentOrganizationProjects: [],
+  currentOrganizationProjectsDetail: false,
   currentOrganizationTeams: [],
   currentOrganizationMembers: [],
   inviteMemberLists: []
@@ -65,7 +66,8 @@ function organizationReducer (state = initialState, action) {
       // currentOrganizationMembers.splice(currentOrganizationMembers.findIndex((d) => d.id === payload.result.id), 1, payload.result)
       // return state.set('currentTeamMembers', currentOrganizationMembers.slice())
     case LOAD_ORGANIZATIONS_PROJECTS_SUCCESS:
-      return state.set('currentOrganizationProjects', payload.projects)
+      return state.set('currentOrganizationProjects', payload.projects.list)
+        .set('currentOrganizationProjectsDetail', payload.projects)
     case LOAD_ORGANIZATIONS_MEMBERS_SUCCESS:
       return state.set('currentOrganizationMembers', payload.members)
     case LOAD_ORGANIZATIONS_TEAMS_SUCCESS:
