@@ -28,6 +28,7 @@ spring:
 
   config:
       location: classpath:/, file:${DAVINCI3_HOME}/config/
+      name: application
 
   datasource:
       type: com.alibaba.druid.pool.DruidDataSource
