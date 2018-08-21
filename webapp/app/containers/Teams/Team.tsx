@@ -60,7 +60,7 @@ interface ITeamsProps {
   onLoadTeamMembers: (id: number) => any
   onLoadTeamTeams: (id: number) => any
   onLoadTeamDetail: (id: number, resolve?: (data: any) => any) => any
-  onLoadOrganizationProjects: (id: number) => any
+  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onDeleteTeamProject: (id: number) => any
@@ -131,7 +131,7 @@ export class Teams extends React.Component<ITeamsProps> {
     onLoadTeamTeams(Number(id))
     onLoadTeamDetail(Number(id), (data) => {
         const { organization: {id} } = data
-        onLoadOrganizationProjects(Number(id))
+        onLoadOrganizationProjects({id: Number(id)})
         onLoadOrganizationMembers(Number(id))
         onLoadOrganizationTeams(Number(id))
       })

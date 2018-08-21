@@ -37,7 +37,7 @@ import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
-const  historyBrowser = new HistoryStack('historyBrowser')
+const  historyBrowser = new HistoryStack()
 
 interface IProjectsProps {
   router: InjectedRouter
@@ -78,7 +78,7 @@ interface IProjectsState {
 }
 export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
-  permission: {
+  permission?: {
     downloadPermission: boolean
     schedulePermission: number
     sharePermission: boolean
