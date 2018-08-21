@@ -34,18 +34,8 @@ public class ProjectCreat {
     @NotBlank(message = "project description cannot be empty")
     private String description;
 
-    private String pic;
-
     @Min(value = 1L, message = "orgId cannot be empty")
     private Long orgId;
 
-    @Override
-    public String toString() {
-        return "ProjectCreat{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", pic='" + pic + '\'' +
-                ", orgId=" + orgId +
-                '}';
-    }
+    private String pic;
 }
