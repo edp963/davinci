@@ -72,9 +72,7 @@ public interface OrganizationMapper {
             "avatar = #{avatar},",
             "user_id = #{userId},",
             "allow_create_project = #{allowCreateProject},",
-//            "allow_delete_or_transfer_project = #{allowDeleteOrTransferProject},",
-//            "allow_change_visibility = #{allowChangeVisibility},",
-//            "member_permission = #{memberPermission},",
+            "member_permission = #{memberPermission},",
             "update_time = #{updateTime},",
             "update_by = #{updateBy}",
             "where id = #{id}"

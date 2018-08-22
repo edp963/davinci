@@ -40,4 +40,6 @@ public class OrganizationPut {
     private String avatar;
 
     private Boolean allowCreateProject;
+
+    private Short memberPermission;
 }

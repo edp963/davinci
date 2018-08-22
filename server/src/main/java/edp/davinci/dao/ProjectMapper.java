@@ -49,7 +49,13 @@ public interface ProjectMapper {
             "FROM project p ",
             "left join user u on u.id = p.user_id",
             "left join star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
-            "   WHERE p.id IN (",
+            "left join (",
+            "   SELECT org.id, org.member_permission ",
+            "   FROM rel_user_organization ruo ",
+            "   LEFT JOIN organization org on ruo.org_id = org.id ",
+            "   WHERE ruo.user_id = #{userId} ",
+            ") o on o.id = p.org_id",
+            "WHERE p.id IN (",
             //用户创建
             "   SELECT id  FROM project WHERE user_id = #{userId}",
             "   UNION",
@@ -60,7 +66,10 @@ public interface ProjectMapper {
             "       LEFT JOIN team t ON t.id = rtp.team_id",
             "       LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
             "   WHERE rut.user_id = #{userId} AND (rut.role = 1 or p.visibility = 1)",
-            ") order by p.id asc ",
+            ") ",
+            //organization对成员可见
+            "or o.member_permission > 0",
+            "order by p.id asc",
     })
     List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
 
@@ -73,14 +82,20 @@ public interface ProjectMapper {
             "    u.username as 'createBy.username',",
             "    u.avatar as 'createBy.avatar'",
             "from (SELECT * FROM project WHERE org_id = #{orgId}) p",
-            "LEFT JOIN `user` u on u.id = p.user_id",
-            "LEFT JOIN star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
+            "   LEFT JOIN `user` u on u.id = p.user_id",
+            "   LEFT JOIN star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
+            "   LEFT JOIN (",
+            "      SELECT org.id, org.member_permission ",
+            "      FROM rel_user_organization ruo ",
+            "      LEFT JOIN organization org on ruo.org_id = org.id ",
+            "      where ruo.user_id = #{userId} and org.id = #{orgId}",
+            "   ) o on o.id = p.org_id",
             "where ",
             //用户创建
             "    p.user_id = #{userId} ",
             //公开的
             "    or p.visibility = 1",
-            //用户所在组可访问且用户是该组 maintainner的
+            //用户所在组可访问
             "    or p.id in (",
             "        SELECT p.id",
             "        FROM project p",
@@ -88,7 +103,10 @@ public interface ProjectMapper {
             "        LEFT JOIN team t ON t.id = rtp.team_id",
             "        LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
             "        WHERE p.org_id = #{orgId} and rut.user_id = #{userId} AND rut.role = 1",
-            "    ) order by p.id",
+            "    )",
+            //organization对成员可见
+            "   or o.member_permission > 0",
+            "order by p.id",
     })
     List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
 

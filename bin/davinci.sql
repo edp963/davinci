@@ -135,6 +135,7 @@ CREATE TABLE `organization` (
   `member_num` int(20) DEFAULT '0',
   `team_num` int(20) DEFAULT '0',
   `allow_create_project` tinyint(1) DEFAULT '1',
+  `member_permission` smallint(1) NOT NULL DEFAULT '0',
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `create_by` bigint(20) NOT NULL DEFAULT '0',
   `update_time` timestamp NULL DEFAULT NULL,
