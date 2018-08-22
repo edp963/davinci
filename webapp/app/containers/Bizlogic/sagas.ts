@@ -31,7 +31,8 @@ import {
   LOAD_SCHEMA,
   EXECUTE_SQL,
   LOAD_DATA,
-  LOAD_DATA_FROM_ITEM
+  LOAD_DATA_FROM_ITEM,
+  LOAD_VIEW_TEAM
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -55,7 +56,9 @@ import {
   dataLoaded,
   loadDataFail,
   dataFromItemLoaded,
-  loadDataFromItemFail
+  loadDataFromItemFail,
+  viewTeamLoaded,
+  loadViewTeamFail
 } from './actions'
 
 const message = require('antd/lib/message')
@@ -286,6 +289,19 @@ export function* getDataFromItem (action) {
   }
 }
 
+export function* getViewTeams (action) {
+  const { payload } = action
+  try {
+    const project = yield call(request, `${api.projects}/${payload.projectId}`)
+    const currentProject = readListAdapter(project)
+    const organization = yield call(request, `${api.organizations}/${currentProject.orgId}/teams`)
+    const orgTeam = readListAdapter(organization)
+    yield put(viewTeamLoaded(orgTeam))
+  } catch (err) {
+    yield put(loadViewTeamFail(err))
+  }
+}
+
 export default function* rootBizlogicSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
@@ -298,6 +314,7 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeLatest(LOAD_SCHEMA, getSchema),
     takeLatest(EXECUTE_SQL, executeSql),
     takeEvery(LOAD_DATA, getData),
-    takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem)
+    takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem),
+    takeLatest(LOAD_VIEW_TEAM, getViewTeams)
   ]
 }

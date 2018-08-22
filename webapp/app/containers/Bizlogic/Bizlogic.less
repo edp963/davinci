@@ -37,9 +37,7 @@
 
   .formView {
     width: 100%;
-    // max-width: 1200px;
     height: 100%;
-    // margin: 24px auto;
    
     display: flex;
     flex-direction: row;
@@ -56,18 +54,21 @@
       flex-direction: column;
   
       .leftInput {
-        height: 212px;
+        height: 208px;
         flex-shrink: 0;
-        margin-top: 16px
+        margin-top: 8px
       }
       .sourceTree {
         flex-shrink: 1;
         overflow: auto;
-        margin-top: 16px;
+        margin: 16px auto;
         background-color: @light-bg;
       }
       .treeSearch {
         margin-bottom: -16px;
+        .searchSource {
+          height: 32px;
+        }
       }
     }
     
@@ -75,19 +76,27 @@
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
+
+      .declareSelect {
+        margin-top: 16px;
+        margin-bottom: 6px;
+      }
   
       .formTop {
         flex: 2;
         overflow-y: auto;
-        padding: 16px 16px 0 16px;
+        padding: 0 16px;
   
         .noDeclaration {
           display: none;
         }
+
+        .declareText {
+          margin-bottom: -8px;
+        }
       }
       .formBottom {
         flex: 3;
-        // overflow-y: auto;
         border-top: 1px solid @border-color-base;
         padding-left: 16px;
       }
@@ -111,18 +120,27 @@
           }
         }
       }
-      .fromSqlAlert {
-        margin-top: 10px;
-        .sqlAlertText {
-          a {
-            top: 0 !important;
-            padding-bottom: 22px !important;
-          }
+      // .fromSqlAlert {
+      //   margin-top: 10px;
+      //   .sqlAlertText {
+      //     a {
+      //       top: 0 !important;
+      //       padding-bottom: 22px !important;
+      //     }
+      //   }
+      // }
+      .sqlAlertText {
+        margin-right: 16px;
+        a {
+          top: 0 !important;
+          padding-bottom: 22px !important;
         }
       }
       .fromBtn {
         margin: 10px 16px;
-        text-align: right;
+        .executeBtn {
+          float: right;
+        }
       }
     }
 
@@ -170,6 +188,7 @@
 .noFoldIcon {
   text-align: right;
   margin-right: 50px;
+  margin-top: -10px;
 }
 
 

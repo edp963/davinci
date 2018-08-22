@@ -21,7 +21,6 @@
 // import { getAsyncInjectors } from './utils/asyncInjectors'
 import { RouteProps } from 'react-router'
 
-import EditorWrapper from './containers/EditorWrapper'
 import Report from './containers/Report'
 import Group from './containers/Group'
 import User from './containers/User'
@@ -348,19 +347,14 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           ]
         },
         {
-          component: EditorWrapper,
-          childRoutes: [
-            {
-              path: '/project/:pid/bizlogic',
-              name: 'bizlogic',
-              component: Bizlogic
-            },
-            {
-              path: '/project/:pid/bizlogic/:bid',
-              name: 'bizlogic',
-              component: Bizlogic
-            }
-          ]
+          path: '/project/:pid/bizlogic',
+          name: 'bizlogic',
+          component: Bizlogic
+        },
+        {
+          path: '/project/:pid/bizlogic/:bid',
+          name: 'bizlogic',
+          component: Bizlogic
         },
         {
           path: '/project/:pid/display/:displayId',

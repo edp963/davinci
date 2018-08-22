@@ -52,6 +52,11 @@ const makeSelectExecuteLoading = () => createSelector(
   (bizlogicState) => bizlogicState.get('executeLoading')
 )
 
+const makeSelectViewTeam = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('viewTeam')
+)
+
 export {
   selectBizlogic,
   makeSelectBizlogics,
@@ -59,5 +64,6 @@ export {
   makeSelectSqlValidateCode,
   makeSelectTableLoading,
   makeSelectModalLoading,
-  makeSelectExecuteLoading
+  makeSelectExecuteLoading,
+  makeSelectViewTeam
 }

@@ -52,7 +52,10 @@ import {
   LOAD_DATA_FAILURE,
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE
+  LOAD_DATA_FROM_ITEM_FAILURE,
+  LOAD_VIEW_TEAM,
+  LOAD_VIEW_TEAM_SUCCESS,
+  LOAD_VIEW_TEAM_FAILURE
 } from './constants'
 
 export function loadBizlogics (projectId, resolve) {
@@ -360,6 +363,33 @@ export function dataFromItemLoaded (itemId, data) {
 export function loadDataFromItemFail (error) {
   return {
     type: LOAD_DATA_FROM_ITEM_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadViewTeam (projectId) {
+  return {
+    type: LOAD_VIEW_TEAM,
+    payload: {
+      projectId
+    }
+  }
+}
+
+export function viewTeamLoaded (result) {
+  return {
+    type: LOAD_VIEW_TEAM_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadViewTeamFail (error) {
+  return {
+    type: LOAD_VIEW_TEAM_FAILURE,
     payload: {
       error
     }
