@@ -26,4 +26,4 @@ if "%1" == "start" (
     echo please use "run.bat start" or "run.bat stop"
 )
 
-pauses
+pause

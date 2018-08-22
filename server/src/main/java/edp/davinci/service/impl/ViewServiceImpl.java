@@ -709,5 +709,97 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
         return paramMap;
     }
+
+    @Override
+    public ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        List<Map<String, Object>> list = null;
+
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(id);
+        if (null == viewWithProjectAndSource) {
+            log.info("view (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("view not found");
+        }
+
+        Project project = viewWithProjectAndSource.getProject();
+        if (null == project) {
+            log.info("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //获取当前用户在organization的role
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+        //当前用户是project的创建者和organization的owner，直接返回
+        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
+                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                    return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
+                }
+            }
+        }
+
+        try {
+            list = getDistinctValueDataList(viewWithProjectAndSource, param, user);
+        } catch (ServerException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(list);
+    }
+
+
+
+    private List<Map<String, Object>> getDistinctValueDataList(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
+        List<Map<String, Object>> list = null;
+        try {
+            if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
+                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql());
+                Source source = viewWithProjectAndSource.getSource();
+                if (null == viewWithProjectAndSource) {
+                    throw new ServerException("source not found");
+                }
+                SqlUtils sqlUtils = this.sqlUtils.init(source);
+                if (null != sqlUtils && null != sqlEntity) {
+                    //解析team@var查询参数
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
+
+                    if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
+                        for (String sql : sqlList) {
+                            sqlUtils.execute(sql);
+                        }
+                    }
+                    if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
+                        list = new ArrayList<>();
+                        if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
+                            if (null != param) {
+
+                                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                                ST st = stg.getInstanceOf("queryDistinctSql");
+                                st.add("column", param.getColumn());
+                                st.add("params", param.getParents());
+                                st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
+
+                                sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
+                            }
+                        }
+                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
+                        for (String sql : sqlList) {
+                            list = sqlUtils.query4List(sql);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
+        }
+
+        return list;
+    }
 }
 

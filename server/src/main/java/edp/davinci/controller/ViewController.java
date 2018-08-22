@@ -23,10 +23,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.viewDto.ViewCreate;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.dto.viewDto.ViewExecuteSql;
-import edp.davinci.dto.viewDto.ViewUpdate;
+import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.User;
 import edp.davinci.service.ViewService;
 import io.swagger.annotations.Api;
@@ -261,6 +258,32 @@ public class ViewController extends BaseController {
 
         try {
             ResultMap resultMap = viewService.getData(id, executeParam, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "get distinct value")
+    @PostMapping(value = "/{id}/getdistictvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getDistinctValue(@PathVariable Long id,
+                                           @Valid @RequestBody DistinctParam param,
+                                           @ApiIgnore BindingResult bindingResult,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = viewService.getDistinctValue(id, param, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

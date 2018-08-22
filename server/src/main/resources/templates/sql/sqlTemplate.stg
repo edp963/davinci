@@ -83,3 +83,14 @@ ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; sep
 <endif>
 <endif>
 >>
+
+
+queryDistinctSql(column, params, sql)
+::=<<
+<if(column && sql)>
+SELECT DISTINCT <column> FROM (<sql>) AS T
+<if(params)>
+WHERE <params:{param|<if(param)><param.column> = <param.value><endif>}; separator=" AND ">
+<endif>
+<endif>
+>>
