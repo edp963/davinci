@@ -186,7 +186,9 @@ export function* updateTeamProjectPermission ({payload}) {
     })
     const projects = readListAdapter(asyncData)
     yield put(teamProjectPermissionUpdated(projects))
-    resolve(projects)
+    if (resolve) {
+      resolve(projects)
+    }
   } catch (err) {
     yield put(updateTeamProjectPermissionFail())
     message.error('更新 project permission 失败，请稍后再试')

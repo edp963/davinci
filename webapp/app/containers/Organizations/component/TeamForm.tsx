@@ -121,7 +121,11 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
               <Col span={24}>
                 <FormItem label="描述" {...commonFormItemStyle}>
                   {getFieldDecorator('description', {
-                    initialValue: ''
+                    initialValue: '',
+                    rules:[{
+                      required: true,
+                      message: '描述不能为空'
+                    }]
                   })(
                     <Input
                       placeholder="Description"

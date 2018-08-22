@@ -43,7 +43,7 @@ interface IProjectListProps {
   currentTeamProjects: ITeamProjects[]
   currentOrganizationProjects: any
   pullProjectInTeam: (projectId: number) => any
-  onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any)=>any
+  onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve?: () => any) => any
 }
 interface IProjectListState {
   modalLoading: boolean
@@ -115,7 +115,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
         viewPermission,
         vizPermission,
         widgetPermission
-      }, (data) => {console.log(data)})
+      })
     })
   }
   private stopPPG = (e) => {

@@ -436,7 +436,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-    const ProviderButton = ModulePermission(currentProject, 'schedule', false)(Button)
+    const ProviderButton = ModulePermission(currentProject, 'schedule', true)(Button)
     const columns = [
       {
         title: '名称',

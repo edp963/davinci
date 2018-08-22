@@ -40,6 +40,7 @@ const styles = require('./Report.less')
 import MenuPermission from '../Account/components/checkMenuPermission'
 
 interface IReportProps {
+  router: any
   sidebar: boolean | any[]
   loginUser: { admin: boolean }
   routes: any[]
@@ -61,7 +62,25 @@ export class Report extends React.Component<IReportProps, {}> {
       this.props.onLoadProjectDetail(pid)
     }
   }
-
+  public componentWillReceiveProps (nextProps) {
+    const {location, currentProject} = nextProps
+    let permission = void 0
+    if (location && currentProject && currentProject.permission) {
+      const projectPermission = currentProject.permission
+      for (const attr in projectPermission) {
+        const pathname = location.pathname
+        const pStr = attr.slice(0, -10)
+        if (pathname.indexOf(pStr) > 0) {
+          permission = projectPermission[attr]
+        } else if (pathname.indexOf('bizlogics') > 0 && pathname.replace('bizlogics', 'view').indexOf(pStr) > 0) {
+          permission = projectPermission[attr]
+        }
+      }
+    }
+    if (permission === 0) {
+      this.props.router.replace(`/noAuthorization`)
+    }
+  }
   public render () {
     const {
       sidebar,
