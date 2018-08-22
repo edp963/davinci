@@ -201,6 +201,10 @@
                     <groupId>org.apache.logging.log4j</groupId>
                     <artifactId>log4j-web</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.json</groupId>
+                    <artifactId>json</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
