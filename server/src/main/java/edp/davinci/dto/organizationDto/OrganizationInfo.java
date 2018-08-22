@@ -30,4 +30,6 @@ public class OrganizationInfo extends OrganizationBaseInfo {
     private Integer teamNum;
 
     private Boolean allowCreateProject;
+
+    private Short memberPermission;
 }

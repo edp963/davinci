@@ -36,4 +36,16 @@ public class ProjectPermission {
     private Boolean sharePermission = false;
 
     private Boolean downloadPermission = false;
+
+
+    public ProjectPermission() {
+    }
+
+    public ProjectPermission(Short permission) {
+        this.sourcePermission = permission;
+        this.viewPermission = permission;
+        this.widgetPermission = permission;
+        this.vizPermission = permission;
+        this.schedulePermission = permission;
+    }
 }

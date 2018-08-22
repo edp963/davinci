@@ -84,6 +84,9 @@ public class ProjectServiceImpl implements ProjectService {
     @Autowired
     private StarMapper starMapper;
 
+    @Autowired
+    public RelUserTeamMapper relUserTeamMapper;
+
     @Override
     public boolean isExist(String name, Long id, Long orgId) {
         Long projectId = projectMapper.getByNameWithOrgId(name, orgId);
@@ -119,10 +122,16 @@ public class ProjectServiceImpl implements ProjectService {
         ProjectInfo projectInfo = new ProjectInfo();
         BeanUtils.copyProperties(project, projectInfo);
 
-        List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
-        for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
-            if (userMaxProjectPermission.getProjectId().equals(project.getId())) {
-                BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
+        Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+        if (teamNumOfOrgByUser > 0) {
+            Organization organization = organizationMapper.getById(project.getOrgId());
+            projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
+        } else {
+            List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
+            for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
+                if (userMaxProjectPermission.getProjectId().equals(project.getId())) {
+                    BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
+                }
             }
         }
 
@@ -147,9 +156,16 @@ public class ProjectServiceImpl implements ProjectService {
             for (ProjectWithCreateBy project : projects) {
                 ProjectInfo projectInfo = new ProjectInfo();
                 BeanUtils.copyProperties(project, projectInfo);
-                for (UserMaxProjectPermission maxProjectPermission : permissions) {
-                    if (maxProjectPermission.getProjectId().equals(project.getId())) {
-                        BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
+
+                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+                if (teamNumOfOrgByUser > 0) {
+                    Organization organization = organizationMapper.getById(project.getOrgId());
+                    projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
+                } else {
+                    for (UserMaxProjectPermission maxProjectPermission : permissions) {
+                        if (maxProjectPermission.getProjectId().equals(project.getId())) {
+                            BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
+                        }
                     }
                 }
                 projectInfoList.add(projectInfo);

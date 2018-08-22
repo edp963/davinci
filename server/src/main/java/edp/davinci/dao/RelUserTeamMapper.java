@@ -26,6 +26,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Set;
@@ -78,7 +79,7 @@ public interface RelUserTeamMapper {
 
     /**
      * 查询用户和project所在team结构中的最大权限
-     * <p>
+     *
      * project和用户所在team交集的 完整team结构
      *
      * @param projectId
@@ -115,4 +116,19 @@ public interface RelUserTeamMapper {
             "where rtp.project_id = #{projectId} and rut.user_id = #{userId}"
     })
     short getUserMaxRoleWithProjectId(@Param("projectId") Long projectId, @Param("userId") Long userId);
+
+
+    /**
+     * 查询用户在organization下参与的team数
+     * @param orgId
+     * @param userId
+     * @return
+     */
+    @Select({
+            "SELECT COUNT(rut.id) FROM rel_user_team rut ",
+            "LEFT JOIN team t on t.id = rut.team_id",
+            "LEFT JOIN organization o on t.org_id = o.id",
+            "WHERE org_id = #{orgId} and rut.user_id = #{userId}",
+    })
+    Integer getTeamNumOfOrgByUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
 }

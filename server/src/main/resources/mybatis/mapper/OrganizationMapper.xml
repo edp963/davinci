@@ -31,6 +31,7 @@
             member_num,
             team_num,
             allow_create_project,
+            member_permission,
             create_time,
             create_by,
             <if test='description != null and description != "" '>
@@ -48,6 +49,7 @@
             #{memberNum, jdbcType=INTEGER},
             #{teamNum, jdbcType=INTEGER},
             #{allowCreateProject, jdbcType=TINYINT},
+            #{memberPermission, jdbcType=SMALLINT},
             #{createTime, jdbcType=TIMESTAMP},
             #{createBy, jdbcType=BIGINT},
             <if test='description != null and description != "" '>
