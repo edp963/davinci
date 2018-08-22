@@ -41,7 +41,7 @@ mysqldb {
 
 
 httpServer {
-  host = "localhost"
+  host = "127.0.0.1" //必须为ip地址
   port = 8080
 }
 

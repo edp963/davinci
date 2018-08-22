@@ -26,6 +26,15 @@ import java.sql.{Connection, ResultSet}
 import java.util.TimeZone
 import java.util.regex.Pattern
 
+import com.zaxxer.hikari.{HikariConfig, HikariDataSource}
+import edp.davinci.module.ConfigurationModuleImpl
+import edp.davinci.persistence.entities.PostUploadMeta
+import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
+import edp.davinci.util.common.DateUtils
+import edp.davinci.util.jdbc.{ESConnection, HiveConnection}
+import org.apache.log4j.Logger
+import edp.davinci.util.common.DavinciConstants
+
 import scala.collection.mutable
 
 
@@ -61,7 +70,10 @@ object SqlUtils extends Serializable {
     println(jdbcUrl)
     val config = new HikariConfig()
     val tmpJdbcUrl = jdbcUrl.toLowerCase
-    if (tmpJdbcUrl.indexOf("mysql") > -1) {
+    if (tmpJdbcUrl.indexOf("moonbox") > -1) {
+      println("moonbox")
+      config.setDriverClassName("moonbox.jdbc.MbDriver")
+    } else if (tmpJdbcUrl.indexOf("mysql") > -1) {
       println("mysql")
       config.setConnectionTestQuery("SELECT 1")
       config.setDriverClassName("com.mysql.jdbc.Driver")
@@ -88,9 +100,6 @@ object SqlUtils extends Serializable {
       println("presto")
       TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
-    } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
-      println("moonbox")
-      config.setDriverClassName("moonbox.jdbc.MbDriver")
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
@@ -323,8 +332,8 @@ object SqlUtils extends Serializable {
   }
 
   def toArray(sql: String): Array[String] = {
-    if (sql.lastIndexOf(sqlSeparator) == sql.length - 1) sql.dropRight(1).split(sqlSeparator)
-    else sql.split(sqlSeparator)
+    if (sql.lastIndexOf(DavinciConstants.sqlSeparator) == sql.length - 1) sql.dropRight(1).split(DavinciConstants.sqlSeparator)
+    else sql.split(DavinciConstants.sqlSeparator)
   }
 
 
@@ -332,9 +341,9 @@ object SqlUtils extends Serializable {
     val sqlArray: Array[String] = toArray(sql)
     val defaultParams =
       if (varType == "group")
-        sqlArray.filter(_.contains(groupVar))
+        sqlArray.filter(_.contains(DavinciConstants.groupVar))
       else
-        sqlArray.filter(s => s.contains(queryVar) || s.contains(updateVar))
+        sqlArray.filter(s => s.contains(DavinciConstants.queryVar) || s.contains(DavinciConstants.updateVar))
     val kvMap = mutable.HashMap.empty[String, List[String]]
     try {
       if (defaultParams.nonEmpty)
@@ -353,15 +362,15 @@ object SqlUtils extends Serializable {
 
 
   private def getVarName(varDefined: String) = {
-    varDefined.substring(varDefined.indexOf(dollarDelimiter) + 1, varDefined.lastIndexOf(dollarDelimiter)).trim
+    varDefined.substring(varDefined.indexOf(DavinciConstants.dollarDelimiter) + 1, varDefined.lastIndexOf(DavinciConstants.dollarDelimiter)).trim
   }
 
   private def getVarValue(varDefined: String) = {
-    varDefined.substring(varDefined.indexOf(assignmentChar) + 1).trim
+    varDefined.substring(varDefined.indexOf(DavinciConstants.assignmentChar) + 1).trim
   }
 
   private def hasAssignmentChar(varDefined: String) = {
-    if (varDefined.indexOf(assignmentChar) > 0) true else false
+    if (varDefined.indexOf(DavinciConstants.assignmentChar) > 0) true else false
   }
 
 }

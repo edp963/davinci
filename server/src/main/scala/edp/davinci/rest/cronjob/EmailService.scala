@@ -45,7 +45,7 @@ object EmailService {
   private lazy val SMTP_PASSWORD = ConfigurationModuleImpl.config.getString("mail.pass")
 
   private lazy val phantomHome = ConfigurationModuleImpl.config.getString("phantomjs_home")
-  private lazy val phantomJsFile = FileUtils.dir+"/bin/phantom.js"
+  private lazy val phantomJsFile = FileUtils.dir + "/bin/phantom.js"
 
 
   def sendEmailWithImage(cronJob: CronJob): Unit = {
@@ -114,7 +114,6 @@ object EmailService {
     process.destroy()
     logger.info(System.currentTimeMillis() + "close>>>>>>>>>>>>>>>>>>>>>")
     result
-    //    process.destroy()
 
   }
 
@@ -129,6 +128,9 @@ object EmailService {
     var result: String = null
     try {
       result = future.get(10 * 60 * 1000, TimeUnit.MILLISECONDS)
+    } catch {
+      case e: Throwable => logger.error(" in checkFileExists ", e)
+        throw e
     }
     finally {
       if (result != "1") {
