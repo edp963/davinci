@@ -61,7 +61,10 @@ object SqlUtils extends Serializable {
     println(jdbcUrl)
     val config = new HikariConfig()
     val tmpJdbcUrl = jdbcUrl.toLowerCase
-    if (tmpJdbcUrl.indexOf("mysql") > -1) {
+    if (tmpJdbcUrl.indexOf("moonbox") > -1) {
+      println("moonbox")
+      config.setDriverClassName("moonbox.jdbc.MbDriver")
+    } else if (tmpJdbcUrl.indexOf("mysql") > -1) {
       println("mysql")
       config.setConnectionTestQuery("SELECT 1")
       config.setDriverClassName("com.mysql.jdbc.Driver")
@@ -88,9 +91,6 @@ object SqlUtils extends Serializable {
       println("presto")
       TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"))
       config.setDriverClassName("com.facebook.presto.jdbc.PrestoDriver")
-    } else if (tmpJdbcUrl.indexOf("moonbox") > -1) {
-      println("moonbox")
-      config.setDriverClassName("moonbox.jdbc.MbDriver")
     } else if (tmpJdbcUrl.indexOf("cassandra") > -1) {
       println("cassandra")
       config.setDriverClassName("com.github.adejanovski.cassandra.jdbc.CassandraDriver")
