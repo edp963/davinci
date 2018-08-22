@@ -55,7 +55,6 @@ class HistoryStack  {
     if (d) {
       this.item = this.item.filter((t) => t.id !== d.id)
       this.item.unshift(d)
-      console.log(this.item)
       this.save()
     }
   }

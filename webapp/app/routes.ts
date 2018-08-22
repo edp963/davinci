@@ -52,6 +52,7 @@ import Teams from './containers/Teams/index'
 import Team from './containers/Teams/Team'
 import UserProfile from './containers/Profile/UserProfile'
 import {replace} from 'react-router-redux'
+import NoAuthorization from './containers/NoAuthorization'
 
 const errorLoading = (err) => {
   console.error('Dynamic page loading failed', err) // eslint-disable-line no-console
@@ -383,6 +384,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           component: Workbench
         }
       ]
+    },
+    {
+      path: '/noAuthorization',
+      name: 'noAuthorization',
+      component: NoAuthorization
     },
     {
       path: '*',
