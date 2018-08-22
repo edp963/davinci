@@ -63,8 +63,8 @@ public class TeamController extends BaseController {
     @ApiOperation(value = "create team", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createTeam(@Valid @RequestBody TeamCreate teamCreate,
-                                     @ApiIgnore @CurrentUser User user,
                                      @ApiIgnore BindingResult bindingResult,
+                                     @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());

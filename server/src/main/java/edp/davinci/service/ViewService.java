@@ -48,4 +48,6 @@ public interface ViewService extends CheckEntityService {
     List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
     List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
+
+    ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request);
 }

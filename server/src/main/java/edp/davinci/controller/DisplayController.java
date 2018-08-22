@@ -281,9 +281,9 @@ public class DisplayController extends BaseController {
      */
     @ApiOperation(value = "add display slide widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/{displayId}/slides/{slideId}/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity addMemDisplaySlideWidgets(@Valid @RequestBody MemDisplaySlideWidgetCreate[] slideWidgetCreates,
-                                                    @PathVariable("displayId") Long displayId,
+    public ResponseEntity addMemDisplaySlideWidgets(@PathVariable("displayId") Long displayId,
                                                     @PathVariable("slideId") Long slideId,
+                                                    @Valid @RequestBody MemDisplaySlideWidgetCreate[] slideWidgetCreates,
                                                     @ApiIgnore BindingResult bindingResult,
                                                     @ApiIgnore @CurrentUser User user,
                                                     HttpServletRequest request) {
@@ -341,9 +341,9 @@ public class DisplayController extends BaseController {
      */
     @ApiOperation(value = "update display slide widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/{displayId}/slides/{slideId}/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateMemDisplaySlideWidgets(@Valid @RequestBody MemDisplaySlideWidget[] memDisplaySlideWidgets,
-                                                       @PathVariable("displayId") Long displayId,
+    public ResponseEntity updateMemDisplaySlideWidgets(@PathVariable("displayId") Long displayId,
                                                        @PathVariable("slideId") Long slideId,
+                                                       @Valid @RequestBody MemDisplaySlideWidget[] memDisplaySlideWidgets,
                                                        @ApiIgnore BindingResult bindingResult,
                                                        @ApiIgnore @CurrentUser User user,
                                                        HttpServletRequest request) {
@@ -401,9 +401,9 @@ public class DisplayController extends BaseController {
      */
     @ApiOperation(value = "update display slide widget", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/slides/widgets/{relationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateMemDisplaySlideWidget(@Valid @RequestBody MemDisplaySlideWidget memDisplaySlideWidget,
+    public ResponseEntity updateMemDisplaySlideWidget(@PathVariable("relationId") Long relationId,
+                                                      @Valid @RequestBody MemDisplaySlideWidget memDisplaySlideWidget,
                                                       @ApiIgnore BindingResult bindingResult,
-                                                      @PathVariable("relationId") Long relationId,
                                                       @ApiIgnore @CurrentUser User user,
                                                       HttpServletRequest request) {
 

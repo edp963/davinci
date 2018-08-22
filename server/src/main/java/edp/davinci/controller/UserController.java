@@ -318,8 +318,8 @@ public class UserController extends BaseController {
     @ApiOperation(value = "get user profile")
     @GetMapping("/profile/{id}")
     public ResponseEntity getUser(@PathVariable Long id,
-                                   @ApiIgnore @CurrentUser User user,
-                                   HttpServletRequest request) {
+                                  @ApiIgnore @CurrentUser User user,
+                                  HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid user id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

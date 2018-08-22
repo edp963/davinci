@@ -254,4 +254,24 @@ public class CheckController {
     }
 
 
+    /**
+     * 检查cronjob是否存在
+     *
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "check unique dashboard name")
+    @GetMapping("/cronjob")
+    public ResponseEntity checkCronJob(@RequestParam String name,
+                                       @RequestParam(required = false) Long id,
+                                       @RequestParam Long projectId, HttpServletRequest request) {
+        try {
+            ResultMap resultMap = checkService.checkSource(name, id, CheckEntityEnum.CRONJOB, projectId, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
 }
