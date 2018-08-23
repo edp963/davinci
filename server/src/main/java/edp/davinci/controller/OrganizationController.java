@@ -340,55 +340,55 @@ public class OrganizationController extends BaseController {
     }
 
 
-    /**
-     * 成员确认邀请
-     *
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "member confirm invite")
-    @AuthIgnore
-    @PostMapping("/confirminvite/{token}")
-    public ResponseEntity confirmInvite(@PathVariable("token") String token,
-                                        HttpServletRequest request) {
-        if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-        try {
-            ResultMap resultMap = organizationService.confirmInviteNoLogin(token);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
-
-
 //    /**
 //     * 成员确认邀请
 //     *
-//     * @param user
 //     * @param request
 //     * @return
 //     */
 //    @ApiOperation(value = "member confirm invite")
+//    @AuthIgnore
 //    @PostMapping("/confirminvite/{token}")
 //    public ResponseEntity confirmInvite(@PathVariable("token") String token,
-//                                        @ApiIgnore @CurrentUser User user,
 //                                        HttpServletRequest request) {
 //        if (StringUtils.isEmpty(token)) {
 //            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        }
 //        try {
-//            ResultMap resultMap = organizationService.confirmInvite(token, user, request);
+//            ResultMap resultMap = organizationService.confirmInviteNoLogin(token);
 //            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
 //        } catch (Exception e) {
 //            e.printStackTrace();
 //            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
 //        }
 //    }
+
+
+    /**
+     * 成员确认邀请
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "member confirm invite")
+    @PostMapping("/confirminvite/{token}")
+    public ResponseEntity confirmInvite(@PathVariable("token") String token,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("The invitation confirm token can not be empty");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = organizationService.confirmInvite(token, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
 
     /**
      * 删除组织成员

@@ -79,7 +79,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         if (StringUtils.isEmpty(token) || !token.startsWith(Constants.TOKEN_PREFIX)) {
             log.info("{} : Unknown token", request.getServletPath());
-            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("The resource requires authentication, which was not supplied with the request");
             new RuntimeException("The resource requires authentication, which was not supplied with the request ");
             return false;
@@ -88,7 +88,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         User user = userService.getByUsername(username);
         if (null == user) {
             log.info("{} : token user not found", request.getServletPath());
-            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("ERROR Permission denied");
             new RuntimeException("token user not found ");
             return false;
@@ -96,21 +96,21 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
         }
         if (!tokenUtils.validateToken(token, user)) {
             log.info("{} : token validation fails", request.getServletPath());
-            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("Invalid token ");
             new RuntimeException("token validation fails ");
             return false;
         }
 
         if (request.getServletPath().indexOf("/user/active") < 0 && !user.getActive()) {
-            if (request.getServletPath().indexOf("/user/sendmail") >= 0) {
+            if (request.getServletPath().indexOf("/user/sendmail") > -1) {
                 request.setAttribute(Constants.CURRENT_USER, user);
                 return true;
             }
             log.info("current user is not activated, username: {}", user.getUsername());
             response.setStatus(HttpCodeEnum.FAIL.getCode());
             ResultMap resultMap = new ResultMap(tokenUtils);
-            response.getWriter().print(JSONObject.toJSONString(resultMap.failAndRefreshToken(request).message("your account is not activated")));
+            response.getWriter().print(JSONObject.toJSONString(resultMap.failAndRefreshToken(request).message("Account not active yet. Please check your email to activate your account")));
             new RuntimeException("current user is not activated ");
             return false;
         }

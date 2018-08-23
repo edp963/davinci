@@ -97,7 +97,7 @@
         </header>
         <article>
             <div class="title">您好, <span th:text="${username}">username</span></div>
-            <a class="sure" th:href="@{{host}/page/activatePage.html(token=${token},host=${host})}">激活davinci</a>
+            <a class="sure" th:href="@{{host}/#/activate(token=${token},host=${host})}">激活davinci</a>
             <p class="detail">此邮件为注册davinci激活邮件。如非本人操作或已激活账号，请忽略。</p>
         </article>
     </div>

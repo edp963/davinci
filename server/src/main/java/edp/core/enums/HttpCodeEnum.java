@@ -23,6 +23,7 @@ public enum HttpCodeEnum {
     OK(200, "OK"),
     FAIL(400, "Bad Request"),
     UNAUTHORIZED(401, "Unauthorized"),
+    FORBIDDEN(403, "Forbidden"),
     NOT_FOUND(404, "Not Found"),
     SERVER_ERROR(500, "Internal Server Error");
 

@@ -19,8 +19,11 @@
 package edp.core.common.jdbc;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.DataTypeEnum;
 import edp.core.exception.SourceException;
+import edp.core.model.DataSourceDriver;
+import edp.core.utils.DataSourceDriverLoadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -63,22 +66,35 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${spring.datasource.test-on-return}")
     private boolean testOnReturn;
 
+
+    @Value("${custom-datasource-driver-path}")
+    private String dataSourceYamlPath;
+
     private static volatile Map<String, Object> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
         String url = jdbcUrl.toLowerCase();
         if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
             DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-            if (null == dataTypeEnum) {
-                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+
+            DataSourceDriver dataSourceDriver = null;
+            try {
+                dataSourceDriver = DataSourceDriverLoadUtils.loadFromYaml(dataSourceYamlPath,jdbcUrl);
+            } catch (Exception e) {
+                throw new SourceException(e.getMessage());
             }
 
             DruidDataSource instance = new JdbcDataSource();
+            if (null == dataTypeEnum && null == dataSourceDriver) {
+                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+            }
+
+            instance.setDriverClassName(StringUtils.isEmpty(dataTypeEnum.getDriver()) ? dataSourceDriver.getDriver().trim() : dataTypeEnum.getDriver());
+
             instance.setUrl(url);
             instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
             instance.setPassword((url.indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
                     null : password);
-            instance.setDriverClassName(dataTypeEnum.getDriver());
             instance.setInitialSize(initialSize);
             instance.setMinIdle(minIdle);
             instance.setMaxActive(maxActive);

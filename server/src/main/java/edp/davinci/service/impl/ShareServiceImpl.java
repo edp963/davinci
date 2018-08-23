@@ -165,7 +165,7 @@ public class ShareServiceImpl implements ShareService {
             if (shareInfo.containsKey(shareUserName)) {
                 useranme = (String) shareInfo.get(shareUserName);
                 if (!useranme.endsWith(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
                 }
             }
             Long widgetId = (Long) shareInfo.get(shareId);
@@ -182,7 +182,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
         return resultSuccess(user, request).payload(shareWidget);
@@ -214,7 +214,7 @@ public class ShareServiceImpl implements ShareService {
             if (shareInfo.containsKey(shareUserName)) {
                 useranme = (String) shareInfo.get(shareUserName);
                 if (!useranme.endsWith(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
                 }
             }
 
@@ -278,7 +278,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
         return resultSuccess(user, request).payload(shareDisplay);
@@ -305,7 +305,7 @@ public class ShareServiceImpl implements ShareService {
             if (shareInfo.containsKey(shareUserName)) {
                 useranme = (String) shareInfo.get(shareUserName);
                 if (!useranme.endsWith(user.getUsername())) {
-                    resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                    resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
                 }
             }
             Long dashboardId = (Long) shareInfo.get(shareId);
@@ -339,7 +339,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
         return resultSuccess(user, request).payload(shareDashboard);
     }
@@ -362,7 +362,7 @@ public class ShareServiceImpl implements ShareService {
                 if (shareInfo.containsKey(shareUserName)) {
                     String useranme = (String) shareInfo.get(shareUserName);
                     if (!useranme.endsWith(user.getUsername())) {
-                        resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                        resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
                     }
                 }
                 Long viewId = (Long) shareInfo.get(shareId);
@@ -374,7 +374,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
         return resultSuccess(user, request).payloads(list);
@@ -399,7 +399,7 @@ public class ShareServiceImpl implements ShareService {
                 if (shareInfo.containsKey(shareUserName)) {
                     String useranme = (String) shareInfo.get(shareUserName);
                     if (!useranme.endsWith(user.getUsername())) {
-                        resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
+                        resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
                     }
                 }
                 Long viewId = (Long) shareInfo.get(shareId);
@@ -421,7 +421,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
-            return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
+            return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
         return resultSuccess(user, request).payload(filePath);
     }

@@ -41,6 +41,7 @@
             <outputDirectory>config</outputDirectory>
             <includes>
                 <include>application.yml.example</include>
+                <include>datasource_driver.yml.example</include>
                 <include>logback.xml</include>
             </includes>
         </fileSet>
