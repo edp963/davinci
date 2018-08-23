@@ -14,7 +14,7 @@ interface IModulePermissionProps {
   permission?: IOrganization
 }
 
-export default (project?: IProject, route?: string, isDelete?: string) => (WrapperComponent) => {
+export default (project?: IProject, route?: string, isDelete?: boolean) => (WrapperComponent) => {
   class ModulePermission extends React.PureComponent<IModulePermissionProps, {}> {
     private getPermissionByCurrentProject = () => {
       let permission = ''
@@ -32,7 +32,7 @@ export default (project?: IProject, route?: string, isDelete?: string) => (Wrapp
 
     private computePermission = () => {
       const permission = this.getPermissionByCurrentProject()
-      const defaultComponent = <div/>
+      const defaultComponent = <span/>
       if (!project) {
         return defaultComponent
       }
