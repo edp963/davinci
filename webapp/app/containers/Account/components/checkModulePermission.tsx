@@ -12,6 +12,7 @@ interface IModulePermissionProps {
   onClick?: any
   className?: string
   permission?: IOrganization
+  shape?: string
 }
 
 export default (project?: IProject, route?: string, isDelete?: boolean) => (WrapperComponent) => {
