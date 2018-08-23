@@ -36,6 +36,7 @@ import Dashboard from './containers/Dashboard'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
 import Activate from './containers/Register/Activate'
+import JoinOrganization from './containers/Register/JoinOrganization'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
@@ -220,6 +221,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
       path: '/activate',
       name: 'activate',
       component: Activate
+    },
+    {
+      path: '/joinOrganization',
+      name: 'joinOrganization',
+      component: JoinOrganization
     },
     {
       component: Main,

@@ -32,6 +32,9 @@ import {
   ACTIVE,
   ACTIVE_SUCCESS,
   ACTIVE_ERROR,
+  JOIN_ORGANIZATION,
+  JOIN_ORGANIZATION_SUCCESS,
+  JOIN_ORGANIZATION_ERROR,
   UPDATE_PROFILE,
   UPDATE_PROFILE_SUCCESS,
   UPDATE_PROFILE_ERROR,
@@ -97,6 +100,31 @@ export function activeSuccess (user) {
 export function activeError () {
   return {
     type: ACTIVE_ERROR
+  }
+}
+
+export function joinOrganization (token, resolve) {
+  return {
+    type: JOIN_ORGANIZATION,
+    payload: {
+      token,
+      resolve
+    }
+  }
+}
+
+export function joinOrganizationSuccess (user) {
+  return {
+    type: JOIN_ORGANIZATION_SUCCESS,
+    payload: {
+      user
+    }
+  }
+}
+
+export function joinOrganizationError () {
+  return {
+    type: JOIN_ORGANIZATION_ERROR
   }
 }
 
