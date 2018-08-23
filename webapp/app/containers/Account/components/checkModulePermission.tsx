@@ -41,7 +41,8 @@ export default (project?: IProject, route?: string, isDelete?: boolean) => (Wrap
           case 0:
             return defaultComponent
           case 1:
-            return <WrapperComponent disabled  {...this.props}>{this.props.children}</WrapperComponent>
+            return defaultComponent
+           // return <WrapperComponent disabled  {...this.props}>{this.props.children}</WrapperComponent>
           case 2:
             if (isDelete) {
               return defaultComponent

@@ -28,7 +28,7 @@ import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
-import {loadProjectDetail} from '../Projects/actions'
+import {loadProjectDetail, killProjectDetail} from '../Projects/actions'
 import reducer from '../Projects/reducer'
 import injectReducer from 'utils/injectReducer'
 import saga from '../Projects/sagas'
@@ -50,6 +50,7 @@ interface IReportProps {
   onPageLoad: () => any
   onShowNavigator: () => any
   onLoadProjectDetail: (id) => any
+  onKillProjectDetail: () => any
 }
 
 export class Report extends React.Component<IReportProps, {}> {
@@ -80,6 +81,9 @@ export class Report extends React.Component<IReportProps, {}> {
     if (permission === 0) {
       this.props.router.replace(`/noAuthorization`)
     }
+  }
+  public componentWillUnmount () {
+    this.props.onKillProjectDetail()
   }
   public render () {
     const {
@@ -144,7 +148,8 @@ export function mapDispatchToProps (dispatch) {
       dispatch(loadSidebar(sidebarSource))
     },
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
-    onShowNavigator: () => dispatch(showNavigator())
+    onShowNavigator: () => dispatch(showNavigator()),
+    onKillProjectDetail: () => dispatch(killProjectDetail())
   }
 }
 

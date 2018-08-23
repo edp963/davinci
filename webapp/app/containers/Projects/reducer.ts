@@ -29,6 +29,7 @@ import {
   DELETE_PROJECT_SUCCESS,
   LOAD_PROJECT_DETAIL,
   LOAD_PROJECT_DETAIL_SUCCESS,
+  KILL_PROJECT_DETAIL,
   SEARCH_PROJECT_SUCCESS,
   GET_PROJECT_STAR_USER_SUCCESS
 } from './constants'
@@ -79,6 +80,9 @@ function projectReducer (state = initialState, action) {
       return state
         .set('currentProjectLoading', false)
         .set('currentProject', payload.project)
+    case KILL_PROJECT_DETAIL:
+      return state
+        .set('currentProject', false)
     case SEARCH_PROJECT_SUCCESS:
       return state
         .set('searchProject', payload.result)

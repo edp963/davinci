@@ -37,6 +37,7 @@ import {
   LOAD_PROJECT_DETAIL,
   LOAD_PROJECT_DETAIL_SUCCESS,
   LOAD_PROJECT_DETAIL_FAILURE,
+  KILL_PROJECT_DETAIL,
   SEARCH_PROJECT_SUCCESS,
   SEARCH_PROJECT_FAILURE,
   SEARCH_PROJECT,
@@ -57,6 +58,11 @@ export function loadProjectDetail (id) {
   }
 }
 
+export function killProjectDetail () {
+  return {
+    type: KILL_PROJECT_DETAIL
+  }
+}
 
 
 export function loadProjects () {

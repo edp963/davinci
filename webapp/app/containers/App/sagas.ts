@@ -200,6 +200,30 @@ export function* changeUserPassword ({ payload }) {
   }
 }
 
+export function* joinOrganization (action): IterableIterator<any> {
+  const {token, resolve} = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.signup}/active/${token}`
+    })
+    switch (asyncData.header.code) {
+      case 200:
+        const loginUser = readListAdapter(asyncData)
+        yield put(activeSuccess(loginUser))
+        localStorage.setItem('loginUser', JSON.stringify(loginUser))
+        resolve()
+        return loginUser
+      default:
+        yield put(activeError())
+        message.error(asyncData.header.msg)
+        return null
+    }
+  } catch (err) {
+    yield put(activeError())
+    message.error('认证失败')
+  }
+}
 export default function* rootGroupSaga (): IterableIterator<any> {
   yield [
     // throttle(1000, CHECK_NAME, checkName as any),

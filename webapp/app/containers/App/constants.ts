@@ -25,6 +25,11 @@ export const LOGIN_ERROR = 'davinci/App/LOGIN_ERROR'
 export const ACTIVE = 'davinci/App/ACTIVE'
 export const ACTIVE_SUCCESS = 'davinci/App/ACTIVE_SUCCESS'
 export const ACTIVE_ERROR = 'davinci/App/ACTIVE_ERROR'
+
+export const JOIN_ORGANIZATION = 'davinci/App/JOIN_ORGANIZATION'
+export const JOIN_ORGANIZATION_SUCCESS = 'davinci/App/JOIN_ORGANIZATION_SUCCESS'
+export const JOIN_ORGANIZATION_ERROR = 'davinci/App/JOIN_ORGANIZATION_ERROR'
+
 export const LOGOUT = 'davinci/App/LOGOUT'
 export const SET_LOGIN_USER = 'davinci/App/SET_LOGIN_USER'
 export const GET_LOGIN_USER = 'davinci/App/GET_LOGIN_USER'
