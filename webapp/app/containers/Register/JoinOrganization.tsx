@@ -6,7 +6,7 @@ import reducer from '../App/reducer'
 import saga from '../App/sagas'
 
 import {connect} from 'react-redux'
-import {active} from '../App/actions'
+import {joinOrganization} from '../App/actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectSignupLoading} from './selectors'
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -15,17 +15,20 @@ const styles = require('./register.less')
 
 
 interface IJoinOrganizationProps {
-  onActiveUser: (token: string, resolve: (err?: string) => any) => any
+  onJoinOrganization: (token: string, resolve?: (res?: string) => any, reject?: (err?: string) => any) => any
   router: InjectedRouter
 }
 
 export class JoinOrganization extends React.PureComponent <IJoinOrganizationProps, {}> {
-  private activeUser  = () => {
-    const { onActiveUser } = this.props
+  private joinOrganization  = () => {
+    const { onJoinOrganization } = this.props
     const token = this.getParamsByLocation('token')
-    onActiveUser(token, (res) => {
+    onJoinOrganization(token, (res) => {
       const path = `${window.location.protocol}//${window.location.host}/#projects`
       location.replace(path)
+    }, (err) => {
+     const path = `${window.location.protocol}//${window.location.host}/#login`
+     location.replace(path)
     })
   }
 
@@ -40,32 +43,27 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
   }
 
   public componentWillMount () {
-    this.activeUser()
+    this.joinOrganization()
   }
 
   public render () {
     return (
-      <div className={styles.joinOrganizationWrapper}>
+      <div className={styles.activeWrapper}>
         <Spin size="large"/>
       </div>
     )
   }
 }
 
-
-const mapStateToProps = createStructuredSelector({
-  activeLoading: makeSelectSignupLoading()
-})
-
 export function mapDispatchToProps (dispatch) {
   return {
-    onActiveUser: (token, resolve) => dispatch(active(token, resolve))
+    onJoinOrganization: (token, resolve, reject) => dispatch(joinOrganization(token, resolve, reject))
   }
 }
 
-const withConnect = connect<{}, {}, IJoinOrganizationProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
+const withConnect = connect<{}, {}, IJoinOrganizationProps>(null, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'app', reducer })
+const withSaga = injectSaga({ key: 'app', saga })
 
 export default compose(
   withReducer,

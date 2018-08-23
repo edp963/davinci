@@ -103,12 +103,13 @@ export function activeError () {
   }
 }
 
-export function joinOrganization (token, resolve) {
+export function joinOrganization (token, resolve, reject) {
   return {
     type: JOIN_ORGANIZATION,
     payload: {
       token,
-      resolve
+      resolve,
+      reject
     }
   }
 }

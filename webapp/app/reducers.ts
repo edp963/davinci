@@ -74,7 +74,7 @@ function routeReducer (state = routeInitialState, action) {
 export default function createReducer (injectedReducers: ReducersMapObject = {}): Reducer<any> {
   return combineReducers({
     route: routeReducer,
-    global: globalReducer,
+  //  global: globalReducer,
     language: languageProviderReducer,
     report: reportReducer,
     // group: groupReducer,
@@ -83,7 +83,7 @@ export default function createReducer (injectedReducers: ReducersMapObject = {})
     bizlogic: bizlogicReducer,
     widget: widgetReducer,
     // dashboard: dashboardReducer,
-    schedule: scheduleReducer,
+  //  schedule: scheduleReducer,
     // display: displayReducer,
     ...injectedReducers
   })
