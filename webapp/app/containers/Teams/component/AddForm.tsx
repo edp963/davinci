@@ -99,7 +99,6 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private bootstrapOptionsLi = (searchLi, data) => {
-    console.log(data)
     const Options =  data ? data.map((o) => {
       if (o && o.user) {
         return (

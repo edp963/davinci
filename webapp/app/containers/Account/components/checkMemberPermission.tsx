@@ -21,7 +21,7 @@ export default (currentOrganization, code) => (WrapperComponent) => {
         ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
         : currentOrganization.allowCreateProject && code === CREATE_ORGANIZATION_PROJECT
           ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
-          : (<div/>)
+          : (<span/>)
     }
   }
   return ComponentPermission
