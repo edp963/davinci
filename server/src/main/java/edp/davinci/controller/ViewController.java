@@ -266,7 +266,7 @@ public class ViewController extends BaseController {
     }
 
     @ApiOperation(value = "get distinct value")
-    @PostMapping(value = "/{id}/getdistictvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/getdistinctvalue", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable Long id,
                                            @Valid @RequestBody DistinctParam param,
                                            @ApiIgnore BindingResult bindingResult,

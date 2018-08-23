@@ -93,6 +93,8 @@ mapper:
   not-empty: false
   mappers: edp.davinci.dao
 
+custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml
+
 
 
 

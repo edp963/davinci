@@ -26,7 +26,6 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Set;
@@ -55,14 +54,14 @@ public interface RelUserTeamMapper {
 
 
     @Select({
-        "SELECT team_id FROM rel_user_team WHERE user_id = 30"
+            "SELECT team_id FROM rel_user_team WHERE user_id = #{userId}"
     })
     Set<Long> getUserTeamId(@Param("userId") Long userId);
 
 
     @Select({
             "SELECT u.id, u.username, u.avatar, t.id as 'teamId' FROM `user` u, rel_user_team rut, team t ",
-            "where rut.user_id = u.id and t.id = rut.team_id and FIND_IN_SET(t.id,childTeamIds(5))"
+            "where rut.user_id = u.id and t.id = rut.team_id and FIND_IN_SET(t.id,childTeamIds(#{teamId}))"
     })
     List<UserWithTeamId> getChildTeamMembers(@Param("teamId") Long teamId);
 
@@ -79,7 +78,7 @@ public interface RelUserTeamMapper {
 
     /**
      * 查询用户和project所在team结构中的最大权限
-     *
+     * <p>
      * project和用户所在team交集的 完整team结构
      *
      * @param projectId
@@ -120,15 +119,22 @@ public interface RelUserTeamMapper {
 
     /**
      * 查询用户在organization下参与的team数
+     *
      * @param orgId
      * @param userId
      * @return
      */
     @Select({
-            "SELECT COUNT(rut.id) FROM rel_user_team rut ",
+            "SELECT COUNT(distinct rut.id) FROM rel_user_team rut ",
             "LEFT JOIN team t on t.id = rut.team_id",
             "LEFT JOIN organization o on t.org_id = o.id",
             "WHERE org_id = #{orgId} and rut.user_id = #{userId}",
     })
     Integer getTeamNumOfOrgByUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
+
+    @Delete({
+            "DELETE FROM rel_user_team WHERE id IN ",
+            "(SELECT id FROM rel_user_team WHERE user_id = #{userId} and team_id IN (SELECT id from team WHERE org_id = #{orgId}))",
+    })
+    int deleteByUserAndOrg(@Param("userId") Long userId, @Param("orgId") Long orgId);
 }

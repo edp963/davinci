@@ -43,7 +43,7 @@ public class Organization {
     private Boolean allowCreateProject = true;
 
     //成员默认对project权限（隐藏/只读/修改/删除）
-    private Short memberPermission = (short) 0;
+    private Short memberPermission = (short) 1;
 
     private Date createTime = new Date();
 

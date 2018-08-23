@@ -79,6 +79,9 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
     @Autowired
     private TeamService teamService;
 
+    @Autowired
+    private RelUserTeamMapper relUserTeamMapper;
+
     @Override
     public boolean isExist(String name, Long id, Long scopeId) {
         Long orgId = organizationMapper.getIdByName(name);
@@ -541,7 +544,10 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         int i = organizationMapper.updateMemberNum(organization);
 
         if (insert > 0 && i >= 0) {
-            return resultMap.successAndRefreshToken(request);
+            OrganizationInfo organizationInfo = new OrganizationInfo();
+            BeanUtils.copyProperties(organization, organizationInfo);
+            organizationInfo.setRole(rel.getRole());
+            return resultMap.successAndRefreshToken(request).payload(organizationInfo);
         } else {
             return resultMap.failAndRefreshToken(request);
         }
@@ -648,8 +654,13 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         int i = relUserOrganizationMapper.deleteById(relationId);
 
         if (i > 0) {
+            //更新组织成员数量
             organization.setMemberNum(organization.getMemberNum() > 0 ? organization.getMemberNum() - 1 : organization.getMemberNum());
             organizationMapper.updateMemberNum(organization);
+
+            //删除该成员与组织中team的关联关系
+            relUserTeamMapper.deleteByUserAndOrg(rel.getUserId(), rel.getOrgId());
+
             return resultMap.successAndRefreshToken(request);
         } else {
             return resultMap.failAndRefreshToken(request);

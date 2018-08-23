@@ -46,7 +46,13 @@ public enum DataTypeEnum {
 
     CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver"),
 
-    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver");
+    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver"),
+
+    VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver"),
+
+    HANA("sap", "sap hana", "com.sap.db.jdbc.Driver"),
+
+    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver");
 
 
     private String feature;
@@ -62,7 +68,7 @@ public enum DataTypeEnum {
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase();
         for (DataTypeEnum dataTypeEnum : values()) {
-            if (url.toLowerCase().indexOf(dataTypeEnum.feature) > -1) {
+            if (url.indexOf(dataTypeEnum.feature) > -1) {
                 try {
                     Class<?> aClass = Class.forName(dataTypeEnum.getDriver());
                     if (null == aClass) {

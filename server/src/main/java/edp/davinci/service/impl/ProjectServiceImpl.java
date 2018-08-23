@@ -124,15 +124,15 @@ public class ProjectServiceImpl implements ProjectService {
 
         Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
         if (teamNumOfOrgByUser > 0) {
-            Organization organization = organizationMapper.getById(project.getOrgId());
-            projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
-        } else {
             List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
             for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
                 if (userMaxProjectPermission.getProjectId().equals(project.getId())) {
                     BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
                 }
             }
+        } else {
+            Organization organization = organizationMapper.getById(project.getOrgId());
+            projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
         }
 
         return resultMap.successAndRefreshToken(request).payload(projectInfo);
@@ -159,14 +159,14 @@ public class ProjectServiceImpl implements ProjectService {
 
                 Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
                 if (teamNumOfOrgByUser > 0) {
-                    Organization organization = organizationMapper.getById(project.getOrgId());
-                    projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
-                } else {
                     for (UserMaxProjectPermission maxProjectPermission : permissions) {
                         if (maxProjectPermission.getProjectId().equals(project.getId())) {
                             BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
                         }
                     }
+                } else {
+                    Organization organization = organizationMapper.getById(project.getOrgId());
+                    projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
                 }
                 projectInfoList.add(projectInfo);
             }
