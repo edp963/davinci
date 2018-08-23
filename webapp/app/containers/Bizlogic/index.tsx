@@ -48,6 +48,9 @@ import { loadBizlogics, deleteBizlogic } from './actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
+import {makeSelectCurrentProject} from '../Projects/selectors'
+import ModulePermission from '../Account/components/checkModulePermission'
+import {IProject} from '../Projects'
 
 interface IBizlogicsProps  {
   params: any
@@ -55,6 +58,7 @@ interface IBizlogicsProps  {
   loginUser: object
   tableLoading: false
   router: InjectedRouter
+  currentProject: IProject
   onLoadBizlogics: (projectId: number, resolve?: any) => any
   onDeleteBizlogic: (id: number) => any
 }
@@ -154,8 +158,12 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
 
     const {
       onDeleteBizlogic,
-      tableLoading
+      tableLoading,
+      currentProject
     } = this.props
+
+    const AdminButton = ModulePermission(currentProject, 'view', true)(Button)
+    const EditButton = ModulePermission(currentProject, 'view', false)(Button)
 
     const columns = [{
       title: '名称',
@@ -190,7 +198,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">
-            <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
+            <EditButton icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
           </Tooltip>
           <Popconfirm
             title="确定删除？"
@@ -198,7 +206,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
             onConfirm={onDeleteBizlogic(record.id)}
           >
             <Tooltip title="删除">
-              <Button icon="delete" shape="circle" type="ghost" />
+              <AdminButton icon="delete" shape="circle" type="ghost" />
             </Tooltip>
           </Popconfirm>
         </span>
@@ -233,7 +241,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
               </Box.Title>
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
-                  <Button type="primary" icon="plus" onClick={this.showAdd} />
+                  <AdminButton type="primary" icon="plus" onClick={this.showAdd} />
                 </Tooltip>
               </Box.Tools>
             </Box.Header>
@@ -268,7 +276,8 @@ export function mapDispatchToProps (dispatch) {
 const mapStateToProps = createStructuredSelector({
   bizlogics: makeSelectBizlogics(),
   loginUser: makeSelectLoginUser(),
-  tableLoading: makeSelectTableLoading()
+  tableLoading: makeSelectTableLoading(),
+  currentProject: makeSelectCurrentProject()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)

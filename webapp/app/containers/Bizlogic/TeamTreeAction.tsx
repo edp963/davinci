@@ -23,6 +23,7 @@ const Input = require('antd/lib/input')
 const styles = require('./Bizlogic.less')
 
 interface ITeamTreeActionProps {
+  depth: number
   currentItem: {
     id: number,
     name: string,
@@ -43,6 +44,7 @@ export class TeamTreeAction extends React.PureComponent<ITeamTreeActionProps, {}
 
   public render () {
     const {
+      depth,
       currentItem,
       teamParams,
       onTeamParamChange
@@ -63,10 +65,11 @@ export class TeamTreeAction extends React.PureComponent<ITeamTreeActionProps, {}
           )
       })
 
+    const titleWidth = `${-18 * depth}px`
     return (
       <div className={styles.teamTree}>
-        <span className={styles.teamTreeTitle}>{currentItem.name}</span>
-        {paramsInput}
+        <span className={styles.teamTreeTitle} title={currentItem.name}>{currentItem.name}</span>
+        <span style={{ marginLeft: titleWidth }}>{paramsInput}</span>
       </div>
     )
   }

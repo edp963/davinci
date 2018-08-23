@@ -807,12 +807,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.setState({ selectedKeys })
   }
 
-  private renderTreeNodes = (data) => {
+  private renderTreeNodes = (data, depth = 0) => {
     return data.map((item) => {
       const { listData, teamParams } = this.state
       const currentItem = listData.find((ld) => ld.id === item.id)
       const treeTitle = (
         <TeamTreeAction
+          depth={depth}
           onTeamParamChange={this.onTeamParamChange}
           teamParams={teamParams}
           currentItem={currentItem}
@@ -821,11 +822,11 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (item.children) {
         return (
           <TreeNode key={item.id} title={treeTitle} dataRef={item}>
-            {this.renderTreeNodes(item.children)}
+            {this.renderTreeNodes(item.children, depth + 1)}
           </TreeNode>
         )
       }
-      return <TreeNode key={item.id} title={treeTitle} />
+      return <TreeNode key={item.id} title={treeTitle} className={styles.test} />
     })
   }
 
@@ -1096,7 +1097,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           <Col span={24} className={styles.treeSearch}>
             <Search
               className={styles.searchSource}
-              placeholder="Search Source"
+              placeholder="Search the Source"
               onChange={this.searchSchema}
             />
           </Col>

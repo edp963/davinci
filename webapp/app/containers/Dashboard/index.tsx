@@ -66,6 +66,9 @@ import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
+import {makeSelectCurrentProject} from '../Projects/selectors'
+import ModulePermission from '../Account/components/checkModulePermission'
+import {IProject} from '../Projects'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -73,6 +76,7 @@ interface IDashboardProps {
   loginUser: { id: number, admin: boolean }
   router: InjectedRouter
   params: any
+  currentProject: IProject
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -523,7 +527,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       dashboards,
       loginUser,
       modalLoading,
-      children
+      children,
+      currentProject
     } = this.props
 
     const {
@@ -582,6 +587,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     const loop = (data, depth = 0) => data.map((item) => {
       const dashboardAction = (
         <DashboardAction
+          currentProject={currentProject}
           depth={depth}
           item={item}
           onInitOperateMore={this.onOperateMore}
@@ -600,6 +606,16 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       }
       return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
+
+    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
+
+    let isTreeDraggable
+    if (currentProject && currentProject.permission) {
+      const currentPermission = currentProject.permission.vizPermission
+      isTreeDraggable = (currentPermission === 0 || currentPermission === 1) ? false : true
+    } else {
+      isTreeDraggable = false
+    }
 
     return (
       <div className={styles.portal}>
@@ -640,7 +656,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   </Tooltip>
                 </Popover>
                 <Tooltip placement="top" title="新增">
-                  <Icon
+                  <AdminIcon
                     type="plus"
                     className={styles.plus}
                     onClick={this.onAddItem}
@@ -667,13 +683,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             { dashboardData.length
               ? <div  className={styles.portalTreeNode}>
                 <Tree
-                  // showIcon
-                  // showLine
                   onExpand={this.onExpand}
                   expandedKeys={this.state.expandedKeys}
                   autoExpandParent={this.state.autoExpandParent}
                   selectedKeys={[this.props.params.dashboardId]}
-                  draggable
+                  draggable={isTreeDraggable}
                   onDrop={this.onDrop}
                 >
                 {loop(dashboardData)}
@@ -718,7 +732,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   loginUser: makeSelectLoginUser(),
-  modalLoading: makeSelectModalLoading()
+  modalLoading: makeSelectModalLoading(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {

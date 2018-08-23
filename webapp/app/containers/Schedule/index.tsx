@@ -66,7 +66,7 @@ interface IScheduleProps {
   dashboards: boolean | any[]
   tableLoading: boolean
   formLoading: boolean
-  currentProject: IProject[]
+  currentProject: IProject
   onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: (pid: number) => any
   onLoadSchedules: (pid: number) => any

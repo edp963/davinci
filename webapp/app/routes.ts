@@ -291,12 +291,24 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
-            }
+            },
             // {
             //   path: '/project/:pid/displays',
             //   name: 'displays',
             //   component: Display
             // }
+            {
+              path: '/project/:pid/portal/:portalId/portalName/:portalName',
+              name: 'dashboard',
+              component: Dashboard,
+              childRoutes: [
+                {
+                  path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
+                  name: 'grid',
+                  component: Grid
+                }
+              ]
+            }
           ]
         },
         {
@@ -365,18 +377,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid/display/preview/:displayId',
           name: 'displayPreview',
           component: Preview
-        },
-        {
-          path: '/project/:pid/portal/:portalId/portalName/:portalName',
-          name: 'dashboard',
-          component: Dashboard,
-          childRoutes: [
-            {
-              path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
-              name: 'grid',
-              component: Grid
-            }
-          ]
         },
         {
           path: '/project/:pid/widget/:wid',

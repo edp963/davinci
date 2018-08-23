@@ -68,6 +68,9 @@ const utilStyles = require('../../assets/less/util.less')
 import api from '../../utils/api'
 import { uuid } from '../../utils/util'
 import { checkNameAction } from '../App/actions'
+import {makeSelectCurrentProject} from '../Projects/selectors'
+import ModulePermission from '../Account/components/checkModulePermission'
+import {IProject} from '../Projects'
 
 interface ISourceProps {
   params: any
@@ -75,6 +78,7 @@ interface ISourceProps {
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
+  currentProject: IProject
   onLoadSources: (projectId: number, resolve?: any) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
@@ -383,8 +387,12 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       listLoading,
       formLoading,
       testLoading,
-      onDeleteSource
+      onDeleteSource,
+      currentProject
     } = this.props
+
+    const AdminButton = ModulePermission(currentProject, 'source', true)(Button)
+    const EditButton = ModulePermission(currentProject, 'source', false)(Button)
 
     const { table_name, source_id, replace_mode } = metaObj
     const uploadProps = {
@@ -452,7 +460,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">
-            <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
+            <EditButton icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />
           </Tooltip>
           <Popconfirm
             title="确定删除？"
@@ -460,12 +468,12 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
             onConfirm={onDeleteSource(record.id)}
           >
             <Tooltip title="删除">
-              <Button icon="delete" shape="circle" type="ghost" />
+              <AdminButton icon="delete" shape="circle" type="ghost" />
             </Tooltip>
           </Popconfirm>
           {
             record && record.type === 'csv' ? <Tooltip title="上传">
-              <Button icon="upload" shape="circle" type="ghost" onClick={this.showUpload(record.id)} />
+              <EditButton icon="upload" shape="circle" type="ghost" onClick={this.showUpload(record.id)} />
             </Tooltip> : ''
           }
         </span>
@@ -542,7 +550,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
               </Box.Title>
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
-                  <Button type="primary" icon="plus" onClick={this.showAdd} />
+                  <AdminButton type="primary" icon="plus" onClick={this.showAdd} />
                 </Tooltip>
               </Box.Tools>
             </Box.Header>
@@ -611,7 +619,8 @@ const mapStateToProps = createStructuredSelector({
   sources: makeSelectSources(),
   listLoading: makeSelectListLoading(),
   formLoading: makeSelectFormLoading(),
-  testLoading: makeSelectTestLoading()
+  testLoading: makeSelectTestLoading(),
+  currentProject: makeSelectCurrentProject()
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
