@@ -118,17 +118,11 @@
             width: 100%;
             padding-bottom: 30px;
           }
+          // .ant-tree > li:first-child {
+          //   padding-top: 0 !important;
+          // }
         }
       }
-      // .fromSqlAlert {
-      //   margin-top: 10px;
-      //   .sqlAlertText {
-      //     a {
-      //       top: 0 !important;
-      //       padding-bottom: 22px !important;
-      //     }
-      //   }
-      // }
       .sqlAlertText {
         margin-right: 16px;
         a {
@@ -165,8 +159,12 @@
   display: flex;
   direction: row;
   .teamTreeTitle {
-    width: 100px;
-    flex-shrink: 0
+    width: 130px;
+    flex-shrink: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    padding-right: 25px;
   }
   .teamInput {
     width: 90px;
@@ -190,6 +188,3 @@
   margin-right: 50px;
   margin-top: -10px;
 }
-
-
-

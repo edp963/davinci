@@ -24,8 +24,10 @@ const Tooltip = require('antd/lib/tooltip')
 const Popover = require('antd/lib/popover')
 const Popconfirm = require('antd/lib/popconfirm')
 const styles = require('../Dashboard.less')
+import {IProject} from '../../Projects'
 
 interface IDashboardActionProps {
+  currentProject: IProject
   depth: number
   item: {
     id: number,
@@ -41,6 +43,7 @@ interface IDashboardActionProps {
 export class DashboardAction extends React.PureComponent<IDashboardActionProps, {}> {
   public render () {
     const {
+      currentProject,
       depth,
       item,
       actionItemVisible,
@@ -49,7 +52,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       initChangeDashboard
     } = this.props
 
-    const ulAction = (
+    const ulActionAll = (
       <ul className={styles.menu}>
         <li onClick={onInitOperateMore(item.id, 'edit')}>
           <Icon type="edit" /> 编辑
@@ -61,7 +64,18 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
           <Icon type="swap" className={styles.swap} /> 移动
         </li>
         <li onClick={onInitOperateMore(item.id, 'delete')}>
-            <Icon type="delete" /> 删除
+          <Icon type="delete" /> 删除
+        </li>
+      </ul>
+    )
+
+    const ulActionPart = (
+      <ul className={styles.menu}>
+        <li onClick={onInitOperateMore(item.id, 'edit')}>
+          <Icon type="edit" /> 编辑
+        </li>
+        <li onClick={onInitOperateMore(item.id, 'move')}>
+          <Icon type="swap" className={styles.swap} /> 移动
         </li>
       </ul>
     )
@@ -74,6 +88,25 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       />
     )
 
+    let ulPopover
+    if (currentProject && currentProject.permission) {
+      const currentPermission = currentProject.permission.vizPermission
+      if (currentPermission === 0 || currentPermission === 1) {
+        ulPopover = null
+      } else {
+        ulPopover = (
+          <Popover
+            placement="bottomRight"
+            content={currentPermission === 2 ? ulActionPart : ulActionAll}
+            trigger="click"
+            visible={actionItemVisible}
+            onVisibleChange={onHandleVisibleChange}
+          >
+            {icon}
+          </Popover>)
+      }
+    }
+
     const titleWidth = `${130 - 18 * depth}px`
 
     return (
@@ -81,21 +114,13 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.protalTitle} style={{ width: titleWidth}}>{item.name}</h4>
+              ? <h4 className={styles.protalTitle} style={{ width: titleWidth }}>{item.name}</h4>
               : <span style={{width: titleWidth}} onClick={initChangeDashboard(item.id)} className={styles.dashboardTitle}>
                   <Icon type="dot-chart" />
                   <span className={styles.itemName}>{item.name}</span>
                 </span>
           }
-          <Popover
-            placement="bottomRight"
-            content={ulAction}
-            trigger="click"
-            visible={actionItemVisible}
-            onVisibleChange={onHandleVisibleChange}
-          >
-            {icon}
-          </Popover>
+          {ulPopover}
         </Tooltip>
       </span>
     )
