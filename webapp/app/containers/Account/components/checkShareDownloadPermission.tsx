@@ -32,7 +32,7 @@ export default (project?: IProject, type?: string) => (WrapperComponent) => {
 
     private computePermission = () => {
       const permission = this.getPermissionByCurrentProject()
-      const defaultComponent = <div/>
+      const defaultComponent = <span/>
       if (!project) {
         return defaultComponent
       }
