@@ -32,10 +32,6 @@ import bizlogicReducer from './reducer'
 import bizlogicSaga from './sagas'
 import sourceReducer from '../Source/reducer'
 import sourceSaga from '../Source/sagas'
-import projectReducer from '../Projects/reducer'
-import projectSaga from '../Projects/sagas'
-import organizationReducer from '../Organizations/reducer'
-import organizationSaga from '../Organizations/sagas'
 
 import 'codemirror/lib/codemirror.css'
 import '../../assets/override/codemirror_theme.css'
@@ -81,16 +77,13 @@ import {
   makeSelectSqlValidateMsg,
   makeSelectExecuteLoading,
   makeSelectModalLoading,
-  makeSelectBizlogics
+  makeSelectBizlogics,
+  makeSelectViewTeam
  } from './selectors'
-import { makeSelectProjects, makeSelectCurrentProject } from '../Projects/selectors'
-import { makeSelectCurrentOrganizationTeams } from '../Organizations/selectors'
-import { checkNameUniqueAction } from '../App/actions'
-import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics } from './actions'
+import { checkNameUniqueAction, hideNavigator } from '../App/actions'
+import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
-import { loadOrganizationTeams } from '../Organizations/actions'
-import { loadProjects } from '../Projects/actions'
 import TeamTreeAction from './TeamTreeAction'
 import { toListBF, SQL_FIELD_TYPES } from './viewUtil'
 
@@ -98,6 +91,7 @@ interface IBizlogicFormProps {
   router: InjectedRouter
   type: string
   sources: boolean | any[]
+  onHideNavigator: () => void
   onInitExecuteSql: (sourceId: number) => any
   onModelChange: (record: string, item: string, value: string) => any
   onTmplCodeMirrorChange: (queryTextarea: any) => any
@@ -117,9 +111,8 @@ interface IBizlogicFormProps {
   onEditBizlogic: (values: object, resolve: any) => any
   onLoadSources: (projectId: number, resolve?: any) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
-  projects: any[]
-  currentProject: any
-  currentOrganizationTeams: IOrganizationTeams[]
+  onLoadViewTeam: (projectId: number) => any
+  viewTeam: IViewTeams[]
 }
 
 interface IBizlogicFormState {
@@ -153,7 +146,7 @@ interface ITeamParams {
   v: string
 }
 
-interface IOrganizationTeams {
+interface IViewTeams {
   id: number
   orgId: number
   name: string,
@@ -206,14 +199,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   public componentWillMount () {
     const {
-      currentProject,
-      projects,
       params,
       route,
       bizlogics,
       onLoadSources,
       onLoadSchema,
-      onLoadBizlogics
+      onLoadBizlogics,
+      onLoadViewTeam
     } = this.props
 
     this.setState({
@@ -243,19 +235,21 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         return
       }
     })
+
+    onLoadViewTeam(params.pid)
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { currentOrganizationTeams } =  nextProps
+    const { viewTeam } =  nextProps
     const { listData, teamParams, teamCheckedKeys, schemaData } = this.state
-    const { route, params, bizlogics, projects, currentProject } = this.props
+    const { route, params, bizlogics } = this.props
 
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     let listDataFinal
     if (listData.length === 0) {
 
-      listDataFinal = toListBF(currentOrganizationTeams).map((td) => {
+      listDataFinal = toListBF(viewTeam).map((td) => {
         const arr = [{
           k: '',
           v: ''
@@ -304,7 +298,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const teamKeyArr = listDataFinal.filter((ldf) => ldf.checked).map((arr) => `${arr.id}`)
 
     this.setState({
-      treeData: currentOrganizationTeams,
+      treeData: viewTeam,
       listData: listDataFinal,
       teamCheckedKeys: teamKeyArr
     })
@@ -313,6 +307,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   public componentDidMount () {
     const { params, bizlogics, onLoadBizlogics } = this.props
     const { schemaData, listData, teamParams } = this.state
+
+    this.props.onHideNavigator()
 
     this.generateList(generateData(schemaData))
     const queryTextarea = document.querySelector('#sql_tmpl')
@@ -442,7 +438,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         lineNumbers: true,
         lineWrapping: true
       })
-      this.codeMirrorInstanceOfDeclaration.setSize('100%', 180)
+      this.codeMirrorInstanceOfDeclaration.setSize('100%', 160)
     }
   }
 
@@ -557,6 +553,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private executeSql = () => {
     const { sourceIdGeted, listData, isDeclarate } = this.state
+
+    this.setState({ isFold: true })
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
@@ -852,7 +850,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       executeLoading,
       modalLoading,
       route,
-      currentOrganizationTeams
+      viewTeam
     } = this.props
     const { getFieldDecorator } = form
     const {
@@ -966,21 +964,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (sqlValidateCode) {
         sqlValidatePanel = alertVisible
           ? (
-            <Row>
-              <Col span={2} />
-              <Col span={20} className={styles.fromSqlAlert}>
-                <Alert
-                  className={styles.sqlAlertText}
-                  message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
-                  description={`${sqlValidateMessage || ''}`}
-                  type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
-                  showIcon
-                  closable
-                  onClose={this.handleClose}
-                />
-              </Col>
-              <Col span={2} />
-            </Row>
+            <Alert
+              className={styles.sqlAlertText}
+              message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+              description={`${sqlValidateMessage || ''}`}
+              type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+              showIcon
+              closable
+              onClose={this.handleClose}
+            />
             )
           : null
       } else {
@@ -1103,13 +1095,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Col>
           <Col span={24} className={styles.treeSearch}>
             <Search
-              placeholder="Search"
+              className={styles.searchSource}
+              placeholder="Search Source"
               onChange={this.searchSchema}
             />
           </Col>
           <Col span={24} className={styles.sourceTree}>
             <Tree
-              // showLine
               onExpand={this.onExpand}
               expandedKeys={expandedKeys}
               autoExpandParent={autoExpandParent}
@@ -1119,20 +1111,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Col>
         </Row>
         <Row className={styles.formRight}>
-          <Row className={`${styles.formTop} small-item-margin`}>
-            <Col span={24}>
-              <FormItem label="声明变量" {...itemStyle}>
-                {getFieldDecorator('isDeclarate', {
-                  initialValue: 'no'
-                })(
-                  <RadioGroup size="default" onChange={this.changeIsDeclarate}>
-                    <RadioButton value="yes">是</RadioButton>
-                    <RadioButton value="no">否</RadioButton>
-                  </RadioGroup>
-                )}
-              </FormItem>
-            </Col>
-            <Col span={24} className={isDeclarate === 'no' ? styles.noDeclaration : ''}>
+          <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
+            <FormItem label="声明变量" {...itemStyle}>
+              {getFieldDecorator('isDeclarate', {
+                initialValue: 'no'
+              })(
+                <RadioGroup size="default" onChange={this.changeIsDeclarate}>
+                  <RadioButton value="yes">是</RadioButton>
+                  <RadioButton value="no">否</RadioButton>
+                </RadioGroup>
+              )}
+            </FormItem>
+          </Col>
+          <Row className={styles.formTop}>
+            <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
               <FormItem label="">
                 {getFieldDecorator('declaration', {
                   initialValue: ''
@@ -1157,17 +1149,23 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               </FormItem>
             </Col>
           </Row>
-          {sqlValidatePanel}
+
           <Row className={styles.fromBtn}>
-            <Button
-              key="forward"
-              size="default"
-              type="primary"
-              loading={executeLoading}
-              onClick={this.executeSql}
-            >
-              <Icon type="caret-right" />Execute
-            </Button>
+            <Col span={22}>
+              {sqlValidatePanel}
+            </Col>
+            <Col span={2}>
+              <Button
+                className={styles.executeBtn}
+                key="forward"
+                size="default"
+                type="primary"
+                loading={executeLoading}
+                onClick={this.executeSql}
+              >
+                <Icon type="caret-right" />Execute
+              </Button>
+            </Col>
           </Row>
           {
             isFold
@@ -1201,12 +1199,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                         onExpand={this.onTeamExpand}
                         expandedKeys={this.state.teamExpandedKeys}
                         autoExpandParent={this.state.teamAutoExpandParent}
+                        defaultExpandAll={true}
                         onCheck={this.onCheck}
                         checkedKeys={this.state.teamCheckedKeys}
                         onSelect={this.onSelect}
                         selectedKeys={this.state.selectedKeys}
                       >
-                        {this.renderTreeNodes(currentOrganizationTeams)}
+                        {this.renderTreeNodes(viewTeam || [])}
                       </Tree>
                     </TabPane>
                   </Tabs>
@@ -1240,20 +1239,20 @@ const mapStateToProps = createStructuredSelector({
   sources: makeSelectSources(),
   modalLoading: makeSelectModalLoading(),
   bizlogics: makeSelectBizlogics(),
-  projects: makeSelectProjects(),
-  currentProject: makeSelectCurrentProject(),
-  currentOrganizationTeams: makeSelectCurrentOrganizationTeams()
+  viewTeam: makeSelectViewTeam()
 })
 
 function mapDispatchToProps (dispatch) {
   return {
+    onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
     onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve))
+    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadViewTeam: (projectId) => dispatch(loadViewTeam(projectId))
   }
 }
 
@@ -1267,22 +1266,12 @@ const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
 const withReducerSource = injectReducer({ key: 'source', reducer: sourceReducer })
 const withSagaSource = injectSaga({ key: 'source', saga: sourceSaga })
 
-const withReducerProject = injectReducer({ key: 'project', reducer: projectReducer })
-const withSagaProject = injectSaga({ key: 'project', saga: projectSaga })
-
-const withReducerOrganization = injectReducer({ key: 'organization', reducer: organizationReducer })
-const withSagaOrganization = injectSaga({ key: 'organization', saga: organizationSaga })
-
 export default compose(
   withReducer,
   withReducerBizlogic,
   withReducerSource,
-  withReducerProject,
-  withReducerOrganization,
   withSaga,
   withSagaBizlogic,
   withSagaSource,
-  withSagaProject,
-  withSagaOrganization,
   withConnect
 )(Form.create()(Bizlogic))

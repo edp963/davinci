@@ -35,7 +35,10 @@ import {
   LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
-  EXECUTE_SQL_FAILURE
+  EXECUTE_SQL_FAILURE,
+  LOAD_VIEW_TEAM,
+  LOAD_VIEW_TEAM_SUCCESS,
+  LOAD_VIEW_TEAM_FAILURE
 } from './constants'
 import { fromJS } from 'immutable'
 
@@ -45,7 +48,8 @@ const initialState = fromJS({
   sqlValidateMessage: false,
   tableLoading: false,
   modalLoading: false,
-  schemaData: []
+  schemaData: [],
+  viewTeam: []
 })
 
 function bizlogicReducer (state = initialState, action) {
@@ -103,6 +107,12 @@ function bizlogicReducer (state = initialState, action) {
             .set('sqlValidateCode', code === 200 ? code : 1)
     case EXECUTE_SQL_FAILURE:
       return state.set('executeLoading', false)
+    case LOAD_VIEW_TEAM:
+      return state
+    case LOAD_VIEW_TEAM_SUCCESS:
+      return state.set('viewTeam', payload.result)
+    case LOAD_VIEW_TEAM_FAILURE:
+      return state
     default:
       return state
   }
