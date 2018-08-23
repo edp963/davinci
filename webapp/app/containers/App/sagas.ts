@@ -22,19 +22,21 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
-import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD } from './constants'
+import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, JOIN_ORGANIZATION } from './constants'
 import {
   logged,
   loginError,
   getLoginUserError,
   activeSuccess,
   activeError,
+  joinOrganizationSuccess,
+  joinOrganizationError,
   updateProfileSuccess,
   updateProfileError,
   userPasswordChanged,
   changeUserPasswordFail
 } from './actions'
-
+import { removeToken } from '../../utils/request'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
@@ -201,27 +203,30 @@ export function* changeUserPassword ({ payload }) {
 }
 
 export function* joinOrganization (action): IterableIterator<any> {
-  const {token, resolve} = action.payload
+  const {token, resolve, reject} = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.signup}/active/${token}`
+      url: `${api.organizations}/confirminvite/${token}`
     })
     switch (asyncData.header.code) {
       case 200:
-        const loginUser = readListAdapter(asyncData)
-        yield put(activeSuccess(loginUser))
-        localStorage.setItem('loginUser', JSON.stringify(loginUser))
-        resolve()
-        return loginUser
+        const detail = readListAdapter(asyncData)
+        yield put(joinOrganizationSuccess(detail))
+        if (resolve) {
+          resolve(detail)
+        }
+        return token
       default:
-        yield put(activeError())
+        yield put(joinOrganizationError())
         message.error(asyncData.header.msg)
         return null
     }
   } catch (err) {
-    yield put(activeError())
-    message.error('认证失败')
+    yield put(joinOrganizationError())
+    if (reject) {
+      reject(err)
+    }
   }
 }
 export default function* rootGroupSaga (): IterableIterator<any> {
@@ -232,7 +237,8 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeLatest(ACTIVE, activeUser as any),
     takeLatest(LOGIN, login as any),
     takeLatest(UPDATE_PROFILE, updateProfile as any),
-    takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any)
+    takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
+    takeLatest(JOIN_ORGANIZATION, joinOrganization as any)
   ]
 }
 

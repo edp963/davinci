@@ -16,10 +16,13 @@ interface IComponentPermissionProps {
 export default (currentOrganization, code) => (WrapperComponent) => {
   class ComponentPermission extends React.PureComponent<IComponentPermissionProps, {}> {
     public render () {
-      const { role } = currentOrganization
+      let role = void 0
+      if (currentOrganization && currentOrganization.role) {
+        role = currentOrganization.role
+      }
       return role && role === 1
         ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
-        : currentOrganization.allowCreateProject && code === CREATE_ORGANIZATION_PROJECT
+        : currentOrganization && currentOrganization.allowCreateProject && code === CREATE_ORGANIZATION_PROJECT
           ? <WrapperComponent {...this.props}>{this.props.children}</WrapperComponent>
           : (<span/>)
     }

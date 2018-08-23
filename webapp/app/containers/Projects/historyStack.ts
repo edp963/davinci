@@ -14,20 +14,24 @@ class HistoryStack  {
   private init () {
     const store = localStorage.getItem('historyBrowser')
     const user = this.getUser()
-    if (store) {
+    if (store && store.length) {
       const result = this.parse(store)
       this.wrap = result
-      const items = this.wrap[user]
-      if (items && items.length) {
-        this.item = this.wrap[user]
-        this.wrap[user] = this.item
-      } else {
+      if (user) {
+        const items = this.wrap[user]
+        if (items && items.length) {
+          this.item = items
+          this.wrap[user] = this.item
+        } else {
+          this.item = []
+          this.wrap[user] = this.item
+        }
+      }
+    } else {
+      if (user) {
         this.item = []
         this.wrap[user] = this.item
       }
-    } else {
-      this.item = []
-      this.wrap[user] = this.item
     }
   }
   public pushNode (d?: IHistory) {
@@ -36,21 +40,25 @@ class HistoryStack  {
     if (store) {
       const result = this.parse(store)
       this.wrap = result
-      if (result && result[user]) {
-        const userArr = result[user]
-        if (userArr && Array.isArray(userArr)) {
-          this.item = userArr
+      if (user && user.length) {
+        if (result && result[user]) {
+          const userArr = result[user]
+          if (userArr && Array.isArray(userArr)) {
+            this.item = userArr
+          } else {
+            this.item = []
+          }
+          this.wrap[user] = this.item
         } else {
           this.item = []
+          this.wrap[user] = this.item
         }
-        this.wrap[user] = this.item
-      } else {
+      }
+    } else {
+      if (user) {
         this.item = []
         this.wrap[user] = this.item
       }
-    } else {
-      this.item = []
-      this.wrap[user] = this.item
     }
     if (d) {
       this.item = this.item.filter((t) => t.id !== d.id)
@@ -64,10 +72,13 @@ class HistoryStack  {
     if (userObj && userObj.id) {
       return userObj.id
     }
+    return false
   }
   private save () {
     const user = this.getUser()
-    this.wrap[user] = this.item
+    if (user) {
+      this.wrap[user] = this.item
+    }
     localStorage.setItem('historyBrowser', this.stringify(this.wrap))
   }
   private parse (str: string) {
@@ -93,7 +104,9 @@ class HistoryStack  {
   }
   public getAll () {
     const user = this.getUser()
-    return this.wrap[user]
+    if (user) {
+      return this.wrap[user]
+    }
   }
 }
 
