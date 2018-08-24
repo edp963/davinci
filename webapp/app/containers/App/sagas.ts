@@ -22,6 +22,7 @@ import { takeLatest, throttle } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
 const message = require('antd/lib/message')
+const notification = require('antd/lib/notification')
 import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, JOIN_ORGANIZATION } from './constants'
 import {
   logged,
@@ -216,6 +217,13 @@ export function* joinOrganization (action): IterableIterator<any> {
         if (resolve) {
           resolve(detail)
         }
+        if (asyncData.header && asyncData.header.msg) {
+          const args = {
+            message: 'Tips',
+            description: asyncData.header.msg
+          }
+          notification.open(args)
+        }
         return token
       default:
         yield put(joinOrganizationError())
@@ -223,7 +231,6 @@ export function* joinOrganization (action): IterableIterator<any> {
         return null
     }
   } catch (err) {
-    yield put(joinOrganizationError())
     if (reject) {
       reject(err)
     }
