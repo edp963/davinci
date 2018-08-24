@@ -34,36 +34,69 @@ interface IDashboardActionProps {
     type: number,
     name: string
   }
-  actionItemVisible: boolean
-  onHandleVisibleChange: (visible: boolean) => any
   onInitOperateMore: (id: number, type: string) => any
   initChangeDashboard: (id: number) => any
 }
 
-export class DashboardAction extends React.PureComponent<IDashboardActionProps, {}> {
+interface IDashboardActionState {
+  popoverVisible: boolean
+}
+
+export class DashboardAction extends React.PureComponent<IDashboardActionProps, IDashboardActionState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      popoverVisible: false
+    }
+  }
+
+  private handleVisibleChange = (visible) => {
+    this.setState({
+      popoverVisible: visible
+    })
+  }
+
+  private operateMore = (itemId, type) => (e) => {
+    const { popoverVisible } = this.state
+    const { onInitOperateMore } = this.props
+
+    if (this.state.popoverVisible) {
+      this.setState({
+        popoverVisible: false
+      })
+    }
+    onInitOperateMore(itemId, type)
+  }
+
   public render () {
     const {
       currentProject,
       depth,
       item,
-      actionItemVisible,
-      onHandleVisibleChange,
-      onInitOperateMore,
       initChangeDashboard
     } = this.props
+    const { popoverVisible } = this.state
+
+    const editAction = (
+      <li onClick={this.operateMore(item.id, 'edit')}>
+        <Icon type="edit" /> 编辑
+      </li>
+    )
+
+    const moveAction = (
+      <li onClick={this.operateMore(item.id, 'move')}>
+        <Icon type="swap" className={styles.swap} /> 移动
+      </li>
+    )
 
     const ulActionAll = (
       <ul className={styles.menu}>
-        <li onClick={onInitOperateMore(item.id, 'edit')}>
-          <Icon type="edit" /> 编辑
-        </li>
-        <li onClick={onInitOperateMore(item.id, 'copy')} className={item.type === 0 ? styles.popHide : ''}>
+        {editAction}
+        <li onClick={this.operateMore(item.id, 'copy')} className={item.type === 0 ? styles.popHide : ''}>
           <Icon type="copy" /> 复制
         </li>
-        <li onClick={onInitOperateMore(item.id, 'move')}>
-          <Icon type="swap" className={styles.swap} /> 移动
-        </li>
-        <li onClick={onInitOperateMore(item.id, 'delete')}>
+        {moveAction}
+        <li onClick={this.operateMore(item.id, 'delete')}>
           <Icon type="delete" /> 删除
         </li>
       </ul>
@@ -71,12 +104,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
 
     const ulActionPart = (
       <ul className={styles.menu}>
-        <li onClick={onInitOperateMore(item.id, 'edit')}>
-          <Icon type="edit" /> 编辑
-        </li>
-        <li onClick={onInitOperateMore(item.id, 'move')}>
-          <Icon type="swap" className={styles.swap} /> 移动
-        </li>
+        {editAction}
+        {moveAction}
       </ul>
     )
 
@@ -99,8 +128,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
             placement="bottomRight"
             content={currentPermission === 2 ? ulActionPart : ulActionAll}
             trigger="click"
-            visible={actionItemVisible}
-            onVisibleChange={onHandleVisibleChange}
+            visible={popoverVisible}
+            onVisibleChange={this.handleVisibleChange}
           >
             {icon}
           </Popover>)
@@ -114,7 +143,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.protalTitle} style={{ width: titleWidth }}>{item.name}</h4>
+              ? <h4 className={styles.portalTitle} style={{ width: titleWidth }}>{item.name}</h4>
               : <span style={{width: titleWidth}} onClick={initChangeDashboard(item.id)} className={styles.dashboardTitle}>
                   <Icon type="dot-chart" />
                   <span className={styles.itemName}>{item.name}</span>

@@ -97,7 +97,6 @@ interface IDashboardStates {
   isExpand: boolean
   searchVisible: boolean
   isGrid: boolean
-  actionItemVisible: boolean
 }
 
 export interface IDashboard {
@@ -125,8 +124,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       dataList: [],
       isExpand: true,
       searchVisible: false,
-      isGrid: true,
-      actionItemVisible: true
+      isGrid: true
     }
   }
 
@@ -449,10 +447,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
-  private onOperateMore = (itemId, type) => () => {
+  private onOperateMore = (itemId, type) => {
     this.setState({
-      formType: type,
-      actionItemVisible: false
+      formType: type
     }, () => {
       this.onShowDashboardForm(itemId, this.state.formType)
     })
@@ -494,8 +491,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     onDeleteDashboard(id, () => {
       const { pid, portalId, portalName } = params
       const remainDashboards = dashboardData
-                                .filter((d) => d.id !== id)
-                                .filter((r) => r.parentId !== id)
+        .filter((d) => d.id !== id)
+        .filter((r) => r.parentId !== id)
       const treeData = {
         id: -1,
         type: 2,
@@ -506,12 +503,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
       }
       this.hideDashboardForm()
-    })
-  }
-
-  private handleVisibleChange = (visible) => {
-    this.setState({
-      actionItemVisible: visible
     })
   }
 
@@ -537,8 +528,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       searchValue,
       dashboardData,
       isGrid,
-      searchVisible,
-      actionItemVisible
+      searchVisible
     } = this.state
 
     const items = searchValue.map((s) => {
@@ -592,8 +582,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           item={item}
           onInitOperateMore={this.onOperateMore}
           initChangeDashboard={this.changeDashboard}
-          actionItemVisible={actionItemVisible}
-          onHandleVisibleChange={this.handleVisibleChange}
         />
       )
 
