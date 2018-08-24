@@ -30,6 +30,7 @@ import edp.core.exception.SourceException;
 import edp.core.model.BaseSource;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
+import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -39,6 +40,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
@@ -116,6 +120,19 @@ public class SqlUtils {
     }
 
 
+    public Map<String, Object> query4Map(String sql) throws ServerException {
+        sql = filterAnnotate(sql);
+        checkSensitiveSql(sql);
+        Map<String, Object> map = null;
+        try {
+            map = jdbcTemplate().queryForMap(sql);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
+        }
+        return map;
+    }
+
     /**
      * 获取当前数据源表结构
      *
@@ -144,18 +161,16 @@ public class SqlUtils {
                                 }
                             }
                             resultSet.close();
+                            String keywordChar = null;
                             DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-                            String sql = "select * from " + tableName + "";
-                            switch (dataTypeEnum) {
-                                case MYSQL:
-                                    sql = "select * from `" + tableName + "`";
-                                    break;
-                                case ORACLE:
-                                    sql = "select * from '" + tableName + "'";
-                                    break;
-                                default:
-                                    break;
+                            if (null != dataTypeEnum) {
+                                keywordChar = dataTypeEnum.getKewordChar();
                             }
+                            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                            ST st = stg.getInstanceOf("queryAll");
+                            st.add("tableName", tableName);
+                            st.add("keywordChar", keywordChar);
+                            String sql = st.render();
                             List<QueryColumn> columns = getColumns(sql);
                             TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
                             tableInfoList.add(tableInfo);

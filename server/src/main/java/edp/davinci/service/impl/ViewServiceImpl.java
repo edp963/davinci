@@ -2,6 +2,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
+import edp.core.enums.DataTypeEnum;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
@@ -34,10 +35,7 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -714,7 +712,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        List<Map<String, Object>> list = null;
+        Map<String, Object> map = null;
 
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(id);
         if (null == viewWithProjectAndSource) {
@@ -743,18 +741,17 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         try {
-            list = getDistinctValueDataList(viewWithProjectAndSource, param, user);
+            map = getDistinctValueData(viewWithProjectAndSource, param, user);
         } catch (ServerException e) {
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(list);
+        return resultMap.successAndRefreshToken(request).payload(map);
     }
 
 
-
-    private List<Map<String, Object>> getDistinctValueDataList(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
-        List<Map<String, Object>> list = null;
+    private Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
+        Map<String, Object> map = null;
         try {
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql());
@@ -774,22 +771,40 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                     }
                     if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                        list = new ArrayList<>();
                         if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
                             if (null != param) {
 
+                                String keywordChar = null;
+                                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
+                                if (null != dataTypeEnum) {
+                                    keywordChar = dataTypeEnum.getKewordChar();
+                                }
                                 STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                                 ST st = stg.getInstanceOf("queryDistinctSql");
                                 st.add("column", param.getColumn());
                                 st.add("params", param.getParents());
                                 st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
+                                st.add("keywordChar", keywordChar);
 
                                 sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
                             }
                         }
                         List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
+                        List<Map<String, Object>> list = null;
                         for (String sql : sqlList) {
                             list = sqlUtils.query4List(sql);
+                        }
+                        if (null != list && list.size() > 0) {
+                            List<Object> objects = new ArrayList<>();
+                            for (Map<String, Object> objMap : list) {
+                                if (null != objMap.get(param.getColumn())) {
+                                    objects.add(objMap.get(param.getColumn()));
+                                }
+                            }
+                            if (null != objects) {
+                                map = new HashMap<>();
+                                map.put(param.getColumn(), objects);
+                            }
                         }
                     }
                 }
@@ -799,7 +814,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             throw new ServerException(e.getMessage());
         }
 
-        return list;
+        return map;
     }
 }
 

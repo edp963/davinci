@@ -16,6 +16,17 @@
     >>
  */
 
+queryAll(tableName, keywordChar)
+::=<<
+<if(tableName)>
+<if(keywordChar)>
+SELECT * FROM <keywordChar><tableName><keywordChar>
+<else>
+SELECT * FROM <tableName>
+<endif>
+<endif>
+>>
+
 createTable(tableName, fields, primaryKeys, indexKeys)
 ::=<<
 CREATE TABLE `<tableName>` (
@@ -85,12 +96,19 @@ ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; sep
 >>
 
 
-queryDistinctSql(column, params, sql)
+queryDistinctSql(column, params, sql, keywordChar)
 ::=<<
 <if(column && sql)>
-SELECT DISTINCT <column> FROM (<sql>) AS T
+<if(keywordChar)>
+SELECT DISTINCT <keywordChar><column><keywordChar> FROM (<sql>) AS T ORDER BY <keywordChar><column><keywordChar>
+<if(params)>
+WHERE <params:{param|<if(param)><keywordChar><param.column><keywordChar> = <param.value><endif>}; separator=" AND ">
+<endif>
+<else>
+SELECT DISTINCT <column> FROM (<sql>) AS T ORDER BY <column>
 <if(params)>
 WHERE <params:{param|<if(param)><param.column> = <param.value><endif>}; separator=" AND ">
+<endif>
 <endif>
 <endif>
 >>

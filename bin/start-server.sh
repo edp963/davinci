@@ -27,4 +27,4 @@ fi
 
 script_dir=$(cd `dirname $0`; pwd)
 cd $script_dir/../
-nohup java -cp lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication  >/dev/null  2>&1 &
+nohup java -cp $JAVA_HOME/lib/*:lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication  >/dev/null  2>&1 &

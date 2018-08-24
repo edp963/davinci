@@ -133,7 +133,6 @@ public class ResultMap extends HashMap<String, Object> {
     public ResultMap message(String message) {
         this.header.put("msg", message);
         this.put("header", header);
-        this.put("payload", "");
         return this;
     }
 

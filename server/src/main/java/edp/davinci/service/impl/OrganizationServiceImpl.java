@@ -536,16 +536,22 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             return resultMap.failAndRefreshToken(request).message("Invalid Token");
         }
 
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(inviter.getId(), orgId);
+        OrganizationInfo organizationInfo = new OrganizationInfo();
+        BeanUtils.copyProperties(organization, organizationInfo);
+
+        if (rel != null) {
+            organizationInfo.setRole(rel.getRole());
+            return resultMap.successAndRefreshToken(request).payload(organizationInfo).message("You have joined the organization and don't need to repeat.");
+        }
         //验证通过，建立关联
-        RelUserOrganization rel = new RelUserOrganization(orgId, user.getId(), UserOrgRoleEnum.MEMBER.getRole());
+        rel = new RelUserOrganization(orgId, inviter.getId(), UserOrgRoleEnum.MEMBER.getRole());
         int insert = relUserOrganizationMapper.insert(rel);
         //修改成员人数
         organization.setMemberNum(organization.getMemberNum() + 1);
         int i = organizationMapper.updateMemberNum(organization);
 
         if (insert > 0 && i >= 0) {
-            OrganizationInfo organizationInfo = new OrganizationInfo();
-            BeanUtils.copyProperties(organization, organizationInfo);
             organizationInfo.setRole(rel.getRole());
             return resultMap.successAndRefreshToken(request).payload(organizationInfo);
         } else {

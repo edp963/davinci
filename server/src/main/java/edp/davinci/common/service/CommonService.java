@@ -79,6 +79,7 @@ public class CommonService<T> {
 
     /**
      * 获取分享链接
+     *
      * @param userId
      * @param contentType
      * @param contengId
@@ -96,6 +97,40 @@ public class CommonService<T> {
                 .append(contentType.equals("widget") ? "?type=widget" : "");
 
         return sb.toString();
+    }
+
+
+    /**
+     * user是否project 的维护者
+     *
+     * @param project
+     * @param user
+     * @return
+     */
+    public boolean isMaintainer(Project project, User user) {
+        if (null == project || null == user) {
+            return false;
+        }
+
+        //当前project的creater
+        if (project.getUserId().equals(user.getId())) {
+            return true;
+        }
+
+        Organization organization = organizationMapper.getById(project.getOrgId());
+        if (null != organization && organization.getUserId().equals(user.getId())) {
+            return true;
+        }
+
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (null != orgRel) {
+            //当前project所属organization的owner
+            if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
@@ -433,6 +468,8 @@ public class CommonService<T> {
             maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, userId);
         } else if (clazz instanceof CronJob) {
             maxVizPermission = relTeamProjectMapper.getMaxSchedulePermission(projectId, userId);
+        } else {
+            maxVizPermission = (short) 0;
         }
 
         if (null != clazz) {
