@@ -24,45 +24,47 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public enum DataTypeEnum {
 
-    MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver"),
+    MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver", "`"),
 
-    ORACLE("oracle", "oracle", "oracle.jdbc.driver.OracleDriver"),
+    ORACLE("oracle", "oracle", "oracle.jdbc.driver.OracleDriver", "\""),
 
-    SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver"),
+    SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\""),
 
-    H2("h2", "h2", "org.h2.Driver"),
+    H2("h2", "h2", "org.h2.Driver", null),
 
-    PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver"),
+    PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", null),
 
-    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver"),
+    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", null),
 
-    ELASTICSEARCH("sql4es", "elasticSearch", "nl.anchormen.sql4es.jdbc.ESDriver"),
+    ELASTICSEARCH("sql4es", "elasticSearch", "nl.anchormen.sql4es.jdbc.ESDriver", null),
 
-    PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver"),
+    PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", null),
 
-    MOONBOX("moonbox", "moonbox", "moonbox.jdbc.MbDriver"),
+    MOONBOX("moonbox", "moonbox", "moonbox.jdbc.MbDriver", null),
 
-    CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver"),
+    CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver", null),
 
-    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver"),
+    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", null),
 
-    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver"),
+    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", null),
 
-    VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver"),
+    VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver", null),
 
-    HANA("sap", "sap hana", "com.sap.db.jdbc.Driver"),
+    HANA("sap", "sap hana", "com.sap.db.jdbc.Driver", null),
 
-    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver");
+    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", null);
 
 
     private String feature;
     private String desc;
     private String driver;
+    private String kewordChar;
 
-    DataTypeEnum(String feature, String desc, String driver) {
+    DataTypeEnum(String feature, String desc, String driver, String kewordChar) {
         this.feature = feature;
         this.desc = desc;
         this.driver = driver;
+        this.kewordChar = kewordChar;
     }
 
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
@@ -94,5 +96,9 @@ public enum DataTypeEnum {
 
     public String getDriver() {
         return driver;
+    }
+
+    public String getKewordChar() {
+        return kewordChar;
     }
 }

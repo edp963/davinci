@@ -23,6 +23,7 @@ import com.github.pagehelper.PageInfo;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.utils.PageUtils;
 import edp.core.utils.TokenUtils;
+import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
@@ -46,7 +47,7 @@ import java.util.List;
 
 @Slf4j
 @Service("projectService")
-public class ProjectServiceImpl implements ProjectService {
+public class ProjectServiceImpl extends CommonService implements ProjectService {
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -122,7 +123,10 @@ public class ProjectServiceImpl implements ProjectService {
         ProjectInfo projectInfo = new ProjectInfo();
         BeanUtils.copyProperties(project, projectInfo);
 
+
         Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+        // TODO org owner | project creater
+//        if (teamNumOfOrgByUser > 0 || isMaintainer(project, user)) {
         if (teamNumOfOrgByUser > 0) {
             List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
             for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
@@ -158,6 +162,9 @@ public class ProjectServiceImpl implements ProjectService {
                 BeanUtils.copyProperties(project, projectInfo);
 
                 Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+
+                //TODO： org owner | project creater
+//                if (teamNumOfOrgByUser > 0 || isMaintainer(project, user)) {
                 if (teamNumOfOrgByUser > 0) {
                     for (UserMaxProjectPermission maxProjectPermission : permissions) {
                         if (maxProjectPermission.getProjectId().equals(project.getId())) {

@@ -40,10 +40,10 @@
       align-items: center;
     }
     .wrapper {
+      margin: 48px auto;
       width: 420px;
       display: flex;
       flex-direction: column;
-      text-align: center;
     }
     header{
       flex:0;
@@ -59,7 +59,13 @@
       border-radius: 0 0 2px 2px;
       padding: 32px;
     }
+    .hi {
+      text-align: left;
+    }
     .title {
+      text-align: center;
+    }
+    .commonTitle {
       color: #444444;
       font-size: 18px;
       font-weight: 600;
@@ -82,10 +88,12 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
+      text-align: center;
     }
     .detail {
       font-size: 12px;
       color: rgba(0,0,0,.59);
+      text-align: center;
     }
   </style>
 </head>
@@ -96,8 +104,8 @@
       <h2>欢迎使用davinci</h2>
     </header>
     <article>
-      <div class="title">Hi,<span th:text="${username}">username</span>! <span th:text="${inviter}">inviter</span>邀请您加入<span th:text="${orgName}">organization</span></div>
-      <!--<a class="sure" th:href="@{http://localhost:5002/#/joinOrganization(token=${token})}">接受邀请<span th:text="${orgName}">organization</span></a>-->
+      <div class="hi commonTitle">Hi,<span th:text="${username}">username</span>!</div>
+      <div class="title commonTitle"> <span th:text="${inviter}">inviter</span>邀请您加入<span th:text="${orgName}">organization</span></div>
       <a class="sure" th:href="@{{host}/#/joinOrganization(token=${token},host=${host})}">接受邀请<span th:text="${orgName}">organization</span></a>
       <p class="detail">此邮件为确认邀请邮件。如拒绝加入或已加入该组织，请忽略。</p>
     </article>
