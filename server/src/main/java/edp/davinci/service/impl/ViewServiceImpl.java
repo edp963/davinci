@@ -504,7 +504,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @param executeParam
      * @return
      */
-    public void buildQuerySql(SqlEntity sqlEntity, ViewExecuteParam executeParam) {
+    public void buildQuerySql(SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
         if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
             if (null != executeParam) {
                 //构造参数， 原有的被传入的替换
@@ -525,9 +525,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                 ST st = stg.getInstanceOf("querySql");
                 st.add("groups", executeParam.getGroups());
-                st.add("aggregators", executeParam.getAggregators());
+                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
                 st.add("orders", executeParam.getOrders());
                 st.add("filters", executeParam.getFilters());
+                st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
+                st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
                 st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
 
                 sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
@@ -579,7 +581,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     }
                     if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
                         list = new ArrayList<>();
-                        buildQuerySql(sqlEntity, executeParam);
+                        buildQuerySql(sqlEntity, executeParam, source);
                         List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
                         for (String sql : sqlList) {
                             list = sqlUtils.syncQuery4List(sql);
@@ -646,7 +648,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                     }
                     if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                        buildQuerySql(sqlEntity, executeParam);
+                        buildQuerySql(sqlEntity, executeParam, source);
                         List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
                         //逐条查询的目的是为了执行用户sql中的变量定义
                         for (String sql : sqlList) {
@@ -774,17 +776,14 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
                             if (null != param) {
 
-                                String keywordChar = null;
-                                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
-                                if (null != dataTypeEnum) {
-                                    keywordChar = dataTypeEnum.getKewordChar();
-                                }
+
                                 STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                                 ST st = stg.getInstanceOf("queryDistinctSql");
                                 st.add("column", param.getColumn());
                                 st.add("params", param.getParents());
                                 st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
-                                st.add("keywordChar", keywordChar);
+                                st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
+                                st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
 
                                 sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
                             }

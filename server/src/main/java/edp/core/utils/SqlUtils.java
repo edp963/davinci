@@ -161,15 +161,11 @@ public class SqlUtils {
                                 }
                             }
                             resultSet.close();
-                            String keywordChar = null;
-                            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
-                            if (null != dataTypeEnum) {
-                                keywordChar = dataTypeEnum.getKewordChar();
-                            }
                             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                             ST st = stg.getInstanceOf("queryAll");
                             st.add("tableName", tableName);
-                            st.add("keywordChar", keywordChar);
+                            st.add("keywordStart", DataTypeEnum.getKeywordStart(this.jdbcUrl));
+                            st.add("keywordEnd", DataTypeEnum.getKeywordEnd(this.jdbcUrl));
                             String sql = st.render();
                             List<QueryColumn> columns = getColumns(sql);
                             TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);

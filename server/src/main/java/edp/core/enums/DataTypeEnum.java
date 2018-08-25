@@ -24,47 +24,49 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public enum DataTypeEnum {
 
-    MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver", "`"),
+    MYSQL("mysql", "mysql", "com.mysql.jdbc.Driver", "`", "`"),
 
-    ORACLE("oracle", "oracle", "oracle.jdbc.driver.OracleDriver", "\""),
+    ORACLE("oracle", "oracle", "oracle.jdbc.driver.OracleDriver", "\"", "\""),
 
-    SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\""),
+    SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\"", "\""),
 
-    H2("h2", "h2", "org.h2.Driver", null),
+    H2("h2", "h2", "org.h2.Driver", null, null),
 
-    PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", null),
+    PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", null, null),
 
-    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", null),
+    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", null, null),
 
-    ELASTICSEARCH("sql4es", "elasticSearch", "nl.anchormen.sql4es.jdbc.ESDriver", null),
+    ELASTICSEARCH("sql4es", "elasticSearch", "nl.anchormen.sql4es.jdbc.ESDriver", null, null),
 
-    PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", null),
+    PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", null, null),
 
-    MOONBOX("moonbox", "moonbox", "moonbox.jdbc.MbDriver", null),
+    MOONBOX("moonbox", "moonbox", "moonbox.jdbc.MbDriver", null, null),
 
-    CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver", null),
+    CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver", null, null),
 
-    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", null),
+    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", null, null),
 
-    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", null),
+    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", null, null),
 
-    VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver", null),
+    VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver", null, null),
 
-    HANA("sap", "sap hana", "com.sap.db.jdbc.Driver", null),
+    HANA("sap", "sap hana", "com.sap.db.jdbc.Driver", null, null),
 
-    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", null);
+    IMPALA("impala", "impala", "com.cloudera.impala.jdbc41.Driver", null, null);
 
 
     private String feature;
     private String desc;
     private String driver;
-    private String kewordChar;
+    private String keywordStart;
+    private String keywordEnd;
 
-    DataTypeEnum(String feature, String desc, String driver, String kewordChar) {
+    DataTypeEnum(String feature, String desc, String driver, String keywordStart, String keywordEnd) {
         this.feature = feature;
         this.desc = desc;
         this.driver = driver;
-        this.kewordChar = kewordChar;
+        this.keywordStart = keywordStart;
+        this.keywordEnd = keywordEnd;
     }
 
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
@@ -85,6 +87,30 @@ public enum DataTypeEnum {
         return null;
     }
 
+    public static String getKeywordStart(String jdbcUrl) {
+        DataTypeEnum dataTypeEnum = urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            return dataTypeEnum.keywordStart;
+        }
+        return null;
+    }
+
+    public static String getKeywordEnd(String jdbcUrl) {
+        DataTypeEnum dataTypeEnum = urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            return dataTypeEnum.keywordEnd;
+        }
+        return null;
+    }
+
+    public static String getField(String field, String jdbcUrl) {
+        DataTypeEnum dataTypeEnum = urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            return dataTypeEnum.keywordStart + field + dataTypeEnum.keywordEnd;
+        }
+        return field;
+    }
+
 
     public String getFeature() {
         return feature;
@@ -98,7 +124,6 @@ public enum DataTypeEnum {
         return driver;
     }
 
-    public String getKewordChar() {
-        return kewordChar;
-    }
+
+
 }

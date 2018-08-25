@@ -18,6 +18,8 @@
 
 package edp.davinci.dto.viewDto;
 
+import com.alibaba.druid.util.StringUtils;
+import edp.core.enums.DataTypeEnum;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -35,7 +37,7 @@ public class ViewExecuteParam {
     private Long expired;
 
 
-    public List<String> getAggregators() {
+    public List<String> getAggregators(String jdbcUrl) {
         List<String> list = null;
         if (null != this.aggregators && this.aggregators.size() > 0) {
             Iterator<Aggregator> iterator = this.aggregators.iterator();
@@ -44,12 +46,19 @@ public class ViewExecuteParam {
                 Aggregator next = iterator.next();
                 StringBuilder sb = new StringBuilder();
                 if ("DISTINCT".equals(next.getFunc().trim().toUpperCase())) {
-                    sb.append("COUNT(").append(next.getFunc().trim()).append(" ").append(next.getColumn()).append(")");
+                    sb.append("COUNT(").append(next.getFunc().trim()).append(" ");
+                    sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
+                    sb.append(")");
                     sb.append(" AS 'COUNTDISTINCT(");
                     sb.append(next.getColumn());
                     sb.append(")'");
                 } else {
-                    sb.append(next.getFunc()).append("(").append(next.getColumn()).append(")");
+                    sb.append(next.getFunc()).append("(");
+                    sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
+                    sb.append(")");
+                    sb.append(" AS '"+next.getFunc()+"(");
+                    sb.append(next.getColumn());
+                    sb.append(")'");
                 }
                 list.add(sb.toString());
             }
