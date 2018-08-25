@@ -16,16 +16,6 @@
     >>
  */
 
-queryAll(tableName, keywordChar)
-::=<<
-<if(tableName)>
-<if(keywordChar)>
-SELECT * FROM <keywordChar><tableName><keywordChar>
-<else>
-SELECT * FROM <tableName>
-<endif>
-<endif>
->>
 
 createTable(tableName, fields, primaryKeys, indexKeys)
 ::=<<
@@ -42,31 +32,31 @@ CREATE TABLE `<tableName>` (
 ) DEFAULT CHARSET=utf8;
 >>
 
+
 insertData(tableName, columns)
 ::=<<
 <if(columns)>
-INSERT INTO <tableName>
+INSERT INTO `<tableName>`
 (<columns:{item|<if(item.name)>`<item.name>`<endif>};separator=",">)
 VALUES
 (<columns:{item|<if(item.name)>?<endif>};separator=",">)
 <endif>
 >>
 
-/*
-insertData(tableName, values)
+
+queryAll(tableName, keywordStart, keywordEnd)
 ::=<<
-<if(values)>
-INSERT INTO `<tableName>`
-(<first(values):{item|`<item>`};separator=",">)
-VALUES
-<values:{item|(<item.keys:{k|<item.(k)>};separator=","> )};separator=",\n">;
+<if(tableName)>
+<if(keywordStart && keywordEnd)>
+SELECT * FROM <keywordStart><tableName><keywordEnd>
+<else>
+SELECT * FROM <tableName>
+<endif>
 <endif>
 >>
-*/
 
 
-
-querySql(groups, aggregators, filters, orders, sql)
+querySql(groups, aggregators, filters, orders, sql, keywordStart, keywordEnd)
 ::=<<
 <if(!groups && !aggregators && !filters && !orders)>
 <sql>
@@ -76,7 +66,7 @@ SELECT
  *
 <endif>
 <if(groups)>
- <groups:{group|<group>}; separator=",">
+ <groups:{group|<if(keywordStart && keywordEnd)><keywordStart><group><keywordEnd><else><group><endif>}; separator=",">
 <endif>
 <if(groups && aggregators)>,<endif>
 <if(aggregators)>
@@ -87,28 +77,30 @@ FROM (<sql>) AS T
 WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 <if(groups)>
-GROUP BY <groups:{group|<if(group)><group><endif>}; separator=",">
+GROUP BY <groups:{group|<if(keywordStart && keywordEnd)><keywordStart><group><keywordEnd><else><group><endif>}; separator=",">
 <endif>
 <if(orders)>
-ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=",">
+ORDER BY <orders:{order|<if(order)><if(keywordStart && keywordEnd)><keywordStart><order.column><keywordEnd><else><order.column><endif> <order.direction><endif>}; separator=",">
 <endif>
 <endif>
 >>
 
 
-queryDistinctSql(column, params, sql, keywordChar)
+queryDistinctSql(column, params, sql, keywordStart, keywordEnd)
 ::=<<
 <if(column && sql)>
-<if(keywordChar)>
-SELECT DISTINCT <keywordChar><column><keywordChar> FROM (<sql>) AS T ORDER BY <keywordChar><column><keywordChar>
+<if(keywordStart && keywordEnd)>
+SELECT DISTINCT <keywordStart><column><keywordEnd> FROM (<sql>) AS T
 <if(params)>
-WHERE <params:{param|<if(param)><keywordChar><param.column><keywordChar> = <param.value><endif>}; separator=" AND ">
+WHERE <params:{param|<if(param)><keywordStart><param.column><keywordEnd> = <param.value><endif>}; separator=" AND ">
 <endif>
+ORDER BY <keywordStart><column><keywordEnd>
 <else>
-SELECT DISTINCT <column> FROM (<sql>) AS T ORDER BY <column>
+SELECT DISTINCT <column> FROM (<sql>) AS T
 <if(params)>
 WHERE <params:{param|<if(param)><param.column> = <param.value><endif>}; separator=" AND ">
 <endif>
+ORDER BY <column>
 <endif>
 <endif>
 >>
