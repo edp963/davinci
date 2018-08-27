@@ -54,18 +54,22 @@ interface IDashboardItemProps {
   shouldShare?: boolean
   shouldDownload?: boolean
   shareInfo: string
-  secretInfo: string
-  shareInfoLoading: boolean
+  secretInfo?: string
+  shareInfoLoading?: boolean
   downloadCsvLoading: boolean
   isInteractive: boolean
   interactId: string
   cascadeSources: any
-  rendered: boolean
+  rendered?: boolean
+  isAdmin?: boolean
+  isShared?: boolean
+  isDownload?: boolean
+  onShowFiltersForm?: (itemId: number, keys: string, types: string) => any
   onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
   onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
-  onShowEdit: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
-  onShowWorkbench: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
-  onDeleteDashboardItem: (itemId: number) => () => void
+  onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onShowWorkbench?: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onDeleteDashboardItem?: (itemId: number) => () => void
   onDownloadCsv: (itemId: number) => (shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void

@@ -124,6 +124,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   private interactGlobalFilters
   private resizeSign
   private dashboardItemFilters
+  private refHandlers = {
+    dashboardItemFilters: (ref) => this.dashboardItemFilters = ref
+  }
 
   constructor (props) {
     super(props)
@@ -401,12 +404,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       const { currentItems } = this.props
       const { modifiedPositions } = this.state
 
-      const newModifiedItems = changePosition(modifiedPositions, layout, (pos) => {
-        const dashboardItem = currentItems.find((item) => item.id === Number(pos.i))
-        const chartInstanceId = `widget_${dashboardItem.id}`
-        const chartInstance = this.charts[chartInstanceId]
-        if (chartInstance) { chartInstance.resize() }
-      })
+      const newModifiedItems = changePosition(modifiedPositions, layout
+      //   (pos) => {
+      //   const dashboardItem = currentItems.find((item) => item.id === Number(pos.i))
+      //   const chartInstanceId = `widget_${dashboardItem.id}`
+      //   const chartInstance = this.charts[chartInstanceId]
+      //   if (chartInstance) { chartInstance.resize() }
+      // }
+    )
 
       this.setState({
         modifiedPositions: newModifiedItems
@@ -642,9 +647,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
         this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
           linkageFilters: Object.values(mergedFilters)
-            .reduce((arr, val) => arr.concat(...val), [])
+            .reduce((arr, val) => (arr as any).concat(...(val as any)), [])
             .join(' and '),
-          linkageParams: Object.values(mergedParams).reduce((arr, val) => arr.concat(...val), [])
+          linkageParams: Object.values(mergedParams).reduce((arr, val) => (arr as any).concat(...(val as any)), [])
         })
 
         this.interactingLinkagers[linkagerId] = {
@@ -676,9 +681,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
           this.getChartData('clear', linkagerId, linkagerItem.widget_id, {
             linkageFilters: Object.values(filters)
-              .reduce((arr, val) => arr.concat(...val), [])
+              .reduce((arr, val) => (arr as any).concat(...(val as any)), [])
               .join(' and '),
-            linkageParams: Object.values(params).reduce((arr, val) => arr.concat(...val), [])
+            linkageParams: Object.values(params).reduce((arr, val) => (arr as any).concat(...(val as any)), [])
           })
         }
       }
@@ -852,12 +857,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             break
           case 'dateRange':
             if (formValue.length) {
-              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'),
+              columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
             }
             break
           case 'datetimeRange':
             if (formValue.length) {
-              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
+              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'),
+              columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
             }
             break
           default:
@@ -881,7 +888,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
           : '',
         globalParams: this.interactGlobalFilters[itemId].params
-          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr, val) => arr.concat(val), [])
+          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr, val) => (arr as any).concat(val), [])
           : []
       })
     })
@@ -1078,7 +1085,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       [utilStyles.hide]: !globalFilterTableSource || !globalFilterTableSource.length
     })
 
-    const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign"></div>)
+    const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign" />)
 
     return (
       <Container>
@@ -1115,7 +1122,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             keys={filtersKeys}
             types={filtersTypes}
             onQuery={this.doFilterQuery}
-            wrappedComponentRef={f => { this.dashboardItemFilters = f }}
+            wrappedComponentRef={this.refHandlers.dashboardItemFilters}
           />
         </Modal>
         {fullScreenComponent}

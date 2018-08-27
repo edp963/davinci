@@ -645,8 +645,7 @@
     .portalTree {
       flex-shrink: 0;
       width: 190px;
-      padding: 8px;
-      border-right: 1px solid #d9d9d9;
+      margin-bottom: 16px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -685,7 +684,8 @@
     }
 
     .gridClass {
-      flex: 1
+      flex: 1;
+      border-left: 1px solid #d9d9d9;
     }
   }
 }
@@ -701,6 +701,12 @@
 }
 
 .portalTreeItem {
+  .dashboardTitle {
+    display: inline-block;
+    margin-bottom: -4px;
+    .ellipsis;
+  }
+
   .itemAction {
     display: none !important;
   }
@@ -709,8 +715,9 @@
     .itemAction {
       display: inline-block !important;
       cursor: pointer;
-      vertical-align: middle;
       font-weight: 900;
+      margin-bottom: 1px;
+      
       &:before {
         padding: 0 8px;
       }

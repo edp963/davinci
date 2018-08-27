@@ -143,8 +143,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
         <Tooltip placement="right" title={`名称：${item.name}`}>
           {
             item.type === 0
-              ? <h4 className={styles.portalTitle} style={{ width: titleWidth }}>{item.name}</h4>
-              : <span style={{width: titleWidth}} onClick={initChangeDashboard(item.id)} className={styles.dashboardTitle}>
+              ? <h4 className={styles.dashboardTitle} style={{ width: titleWidth }}>{item.name}</h4>
+              : <span className={styles.dashboardTitle} style={{width: titleWidth}} onClick={initChangeDashboard(item.id)}>
                   <Icon type="dot-chart" />
                   <span className={styles.itemName}>{item.name}</span>
                 </span>

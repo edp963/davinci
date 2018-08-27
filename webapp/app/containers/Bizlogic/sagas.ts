@@ -244,7 +244,9 @@ export function* executeSql (action) {
     })
     const result = asyncData && asyncData.header
     yield put(sqlExecuted(result))
-    payload.resolve(asyncData.payload)
+    if (payload.resolve) {
+      payload.resolve(asyncData.payload)
+    }
   } catch (err) {
     yield put(executeSqlFail())
     message.error('执行 SQL 失败')
