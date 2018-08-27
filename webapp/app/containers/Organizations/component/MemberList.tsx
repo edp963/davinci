@@ -67,7 +67,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
-  private showChangeRoleForm = (type: string, obj: { id?: number}) => (e) => {
+  private showChangeRoleForm = (type: string, obj: { id?: number, user?: {role?: number}}) => (e) => {
     e.stopPropagation()
     this.setState({
       currentMember: obj,
@@ -126,7 +126,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
   }
 
   private search = (val) => {
-
+    console.log(val)
   }
 
   private searchMember = () => {

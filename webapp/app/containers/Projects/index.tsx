@@ -193,9 +193,18 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   }
 
   private foldPanel = (flag) => () => {
-    this.setState({
-      [flag]: !this.state[flag]
-    })
+    // this.setState({
+    //   [flag]: !this.state[flag]
+    // })
+    if (flag === 'mimePanel') {
+      this.setState({
+        mimePanel: !this.state.mimePanel
+      })
+    } else if (flag === 'joinPanel') {
+      this.setState({
+        joinPanel: !this.state.joinPanel
+      })
+    }
   }
 
   private onTransfer = () => {
