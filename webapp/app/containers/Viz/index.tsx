@@ -1,8 +1,7 @@
 
 import * as React from 'react'
 import Helmet from 'react-helmet'
-import { Link } from 'react-router'
-import { RouteComponentProps } from 'react-router'
+import { Link, RouteComponentProps } from 'react-router'
 
 import { compose } from 'redux'
 import { connect } from 'react-redux'
@@ -89,19 +88,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
     console.log('onCopy: ', display)
   }
 
-  private renderHeader = (headerText: string) => {
-    const { collapse } = this.state
-    const key = headerText.toLowerCase()
-    const isCollapsed = collapse[key]
-    return (
-      <div className={styles.collapseHeader}>
-        <label>{headerText}</label>
-        <div className={styles.splitLine}/>
-        <Icon type={isCollapsed ? 'up-circle-o' : 'down-circle-o'}/>
-      </div>
-    )
-  }
-
   private onCollapseChange = (key: string) => () => {
     const { collapse } = this.state
     this.setState({
@@ -141,19 +127,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
           </Row>
         </Container.Title>
         <Container.Body>
-          {/*<div className={styles.spliter11}/>*/}
-          {/*<Collapse bordered={false} defaultActiveKey="dashboard" onChange={this.onCollapseChange('dashboard')}>*/}
-            {/*<Panel showArrow={false} header={this.renderHeader('Dashboard')} key="dashboard">*/}
-              {/*<PortalList*/}
-                {/*projectId={projectId}*/}
-                {/*portals={portals}*/}
-                {/*onPortalClick={this.goToDashboard}*/}
-                {/*onAdd={onAddPortal}*/}
-                {/*onEdit={onEditPortal}*/}
-                {/*onDelete={onDeletePortal}*/}
-              {/*/>*/}
-            {/*</Panel>*/}
-          {/*</Collapse>*/}
           <Box>
             <Box.Header>
               <Box.Title>
@@ -176,19 +149,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
             </div>
           </Box>
           <div className={styles.spliter16}/>
-          {/*<Collapse bordered={false} defaultActiveKey="display" onChange={this.onCollapseChange('display')}>*/}
-            {/*<Panel showArrow={false} header={this.renderHeader('Display')} key="display">*/}
-              {/*<DisplayList*/}
-                {/*projectId={projectId}*/}
-                {/*displays={displays}*/}
-                {/*onDisplayClick={this.goToDisplay}*/}
-                {/*onAdd={onAddDisplay}*/}
-                {/*onEdit={onEditDisplay}*/}
-                {/*onCopy={this.onCopy}*/}
-                {/*onDelete={onDeleteDisplay}*/}
-              {/*/>*/}
-            {/*</Panel>*/}
-          {/*</Collapse>*/}
           <Box>
             <Box.Header>
               <Box.Title>

@@ -49,12 +49,17 @@ export function loadDisplayFail (error) {
   }
 }
 
-export function loadLayerData (layerId, token) {
+export function loadLayerData (layerId, token, groups, aggregators, sql, cache, expired) {
   return {
     type: ActionTypes.LOAD_LAYER_DATA,
     payload: {
       layerId,
-      token
+      token,
+      groups,
+      aggregators,
+      sql,
+      cache,
+      expired
     }
   }
 }

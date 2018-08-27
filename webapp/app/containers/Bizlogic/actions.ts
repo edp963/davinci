@@ -50,6 +50,9 @@ import {
   LOAD_DATA,
   LOAD_DATA_SUCCESS,
   LOAD_DATA_FAILURE,
+  LOAD_DISTINCT_VALUE,
+  LOAD_DISTINCT_VALUE_SUCCESS,
+  LOAD_DISTINCT_VALUE_FAILURE,
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
   LOAD_DATA_FROM_ITEM_FAILURE,
@@ -329,6 +332,31 @@ export function dataLoaded () {
 export function loadDataFail (error) {
   return {
     type: LOAD_DATA_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadDistinctValue (viewId, fieldName, filters, resolve) {
+  return {
+    type: LOAD_DISTINCT_VALUE,
+    payload: {
+      viewId,
+      fieldName,
+      filters,
+      resolve
+    }
+  }
+}
+export function distinctValueLoaded () {
+  return {
+    type: LOAD_DISTINCT_VALUE_SUCCESS
+  }
+}
+export function loadDistinctValueFail (error) {
+  return {
+    type: LOAD_DISTINCT_VALUE_FAILURE,
     payload: {
       error
     }

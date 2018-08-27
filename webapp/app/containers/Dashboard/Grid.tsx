@@ -45,7 +45,11 @@ import DashboardItemFilters from './components/DashboardItemFilters'
 import SharePanel from '../../components/SharePanel'
 import DashboardLinkagePanel from './components/linkage/LinkagePanel'
 import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfigPanel'
-import GlobalFilters from './components/globalFilter/GlobalFilters'
+// import GlobalFilters from './components/globalFilter/GlobalFilters'
+import GlobalFilterPanel from './components/filters/FilterPanel'
+
+import GlobalFilterConfig from './components/filters/FilterConfig'
+
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
@@ -91,7 +95,7 @@ import {
   makeSelectCurrentItemsCascadeSources,
   makeSelectCurrentDashboardCascadeSources
 } from './selectors'
-import { loadBizlogics, loadDataFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema } from '../Bizlogic/actions'
+import { loadBizlogics, loadDataFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema, loadDistinctValue } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -181,6 +185,7 @@ interface IGridProps {
   ) => any
   onLoadCascadeSourceFromDashboard: (controlId: number, id: number, column: string, parents?: object[]) => void
   onLoadBizdataSchema: () => any
+  onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
 }
 
 interface IGridStates {
@@ -213,6 +218,7 @@ interface IGridStates {
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
   currentItemsRendered: object
+  filterOptions: any[]
 }
 
 interface IBizdataIncomeParamObject {
@@ -297,7 +303,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       nextMenuTitle: '',
 
-      currentItemsRendered: null
+      currentItemsRendered: null,
+      filterOptions: []
     }
   }
 
@@ -1255,7 +1262,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private saveGlobalFilters = () => {
+  private saveFilters = (filterItems) => {
     const {
       currentDashboard,
       onEditCurrentDashboard
@@ -1265,8 +1272,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       {
         ...currentDashboard,
         config: JSON.stringify({
-          ...JSON.parse(currentDashboard.config),
-          globalFilters: this.state.globalFilterTableSource
+          ...JSON.parse(currentDashboard.config || '{}'),
+          filters: filterItems
         }),
         // FIXME
         active: true
@@ -1564,6 +1571,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
+  private getFilterOptions = (viewId, fieldName, filterKey) => {
+    const { onLoadDistinctValue } = this.props
+    const { filterOptions } = this.state
+    onLoadDistinctValue(viewId, fieldName, (data) => {
+      this.setState({
+        filterOptions: {
+          ...filterOptions,
+          [filterKey]: data[fieldName] || []
+        }
+      })
+    })
+  }
+
   public render () {
     const {
       dashboards,
@@ -1615,7 +1635,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       interactiveItems,
       allowFullScreen,
       dashboardSharePanelAuthorized,
-      currentItemsRendered
+      currentItemsRendered,
+      filterOptions
     } = this.state
 
     let navDropdown = (<span />)
@@ -1793,7 +1814,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         type="primary"
         loading={currentDashboardLoading}
         disabled={currentDashboardLoading}
-        onClick={this.saveGlobalFilters}
+        onClick={this.saveFilters}
       >
         保 存
       </Button>
@@ -1938,11 +1959,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           </Row>
           <Row className={globalFilterContainerClass}>
             <Col span={24}>
-              <GlobalFilters
+              <GlobalFilterPanel
                 filters={globalFilterTableSource}
-                cascadeSources={currentDashboardCascadeSources || {}}
-                onChange={this.globalFilterChange}
-                onCascadeSelectChange={onLoadCascadeSourceFromDashboard}
+                onGetOptions={this.getFilterOptions}
+                filterOptions={filterOptions}
               />
             </Col>
           </Row>
@@ -2003,7 +2023,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onGetWidgetInfo={this.getWidgetInfo}
           />
         </Modal>
-        <Modal
+        {/* <Modal
           title="全局筛选配置"
           visible={globalFilterConfigPanelVisible}
           onCancel={this.hideGlobalFilterConfigPanel}
@@ -2019,6 +2039,23 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onSaveToTable={this.saveToGlobalFilterTable}
             onDeleteFromTable={this.deleteFromGlobalFilterTable}
             onLoadBizdataSchema={onLoadBizdataSchema}
+          />
+        </Modal> */}
+        <Modal
+          wrapClassName="ant-modal-large"
+          title="全局筛选配置"
+          visible={globalFilterConfigPanelVisible}
+          footer={false}
+        >
+          <GlobalFilterConfig
+            views={bizlogics}
+            widgets={widgets}
+            items={currentItems}
+            filters={globalFilterTableSource}
+            onCancel={this.hideGlobalFilterConfigPanel}
+            onOk={this.saveFilters}
+            onGetPreviewData={this.getFilterOptions}
+            previewData={filterOptions}
           />
         </Modal>
         {/* <FullScreenPanel
@@ -2072,7 +2109,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
     onLoadCascadeSourceFromDashboard: (controlId, id, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, column, parents)),
-    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve))
+    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
+    onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve))
   }
 }
 

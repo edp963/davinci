@@ -48,18 +48,19 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('datasources', {})
         .set('loadings', {})
         .set('layersQueryParams', payload.slide.relations.reduce((obj, layer) => {
-          if (layer.type !== GraphTypes.Chart) { return obj }
-          obj[layer.id] = {
-            filters: '',
-            linkageFilters: '',
-            globalFilters: '',
-            params: [],
-            linkageParams: [],
-            globalParams: [],
-            pagination: {}
+          if (layer.type === GraphTypes.Chart) {
+            obj[layer.id] = {
+              filters: '',
+              linkageFilters: '',
+              globalFilters: '',
+              params: [],
+              linkageParams: [],
+              globalParams: [],
+              pagination: {}
+            }
           }
           return obj
-        }))
+        }, {}))
     case ActionTypes.LOAD_SHARE_DISPLAY_FAILURE:
       return state
         .set('display', null)

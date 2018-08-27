@@ -92,18 +92,23 @@ const styles = require('./Display.less')
 
 import {
   loadBizlogics,
-  loadBizdatasFromItem,
+  loadDataFromItem,
   loadCascadeSourceFromItem,
   loadCascadeSourceFromDashboard,
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GraphTypes } from 'utils/util'
-import { LayerContextMenu } from './components/LayerContextMenu'
+// import { LayerContextMenu } from './components/LayerContextMenu'
 
 interface IParams {
   pid: number
   displayId: number
+}
+
+interface IBizdataIncomeParamObject {
+  k: string
+  v: string
 }
 
 interface IEditorProps extends RouteComponentProps<{}, IParams> {
@@ -138,23 +143,21 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onPasteSlideLayers: (displayId, slideId, layers) => void
   onUndo: (currentState) => void
   onRedo: (nextState) => void
-  onHideNavigator: () => void,
-  onLoadBizdatasFromItem: (
-    dashboardItemId: number,
+  onHideNavigator: () => void
+  onLoadDataFromItem: (
+    layerItemId: number,
     viewId: number,
+    groups: string[],
+    aggregators: Array<{column: string, func: string}>,
     sql: {
-      adHoc: string
       filters: string
       linkageFilters: string
       globalFilters: string
-      params: any[]
-      linkageParams: any[]
-      globalParams: any[]
+      params: IBizdataIncomeParamObject[]
+      linkageParams: IBizdataIncomeParamObject[]
+      globalParams: IBizdataIncomeParamObject[]
     },
-    sorts: string,
-    offset: number,
-    limit: number,
-    useCache: string,
+    cache: boolean,
     expired: number
   ) => void
 }
@@ -236,7 +239,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       })
     }
     if (currentLayers !== this.props.currentLayers) {
-      this.setState({ currentLocalLayers: fromJS(currentLayers).toJS() })
+      const currentLocalLayers = fromJS(currentLayers).toJS()
+      this.setState({
+        currentLocalLayers
+      })
     }
   }
 
@@ -315,36 +321,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const {
       widgets,
       currentLayersQueryParams,
-      onLoadBizdatasFromItem
+      onLoadDataFromItem
     } = this.props
+
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
-    const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig = JSON.parse(widget.config)
-    let currentChart = this.charts[chartInstanceId]
-
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      switch (renderType) {
-        case 'rerender':
-          if (currentChart) {
-            currentChart.dispose()
-          }
-          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
-          this.charts[chartInstanceId] = currentChart
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'clear':
-          currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        default:
-          break
-      }
-    }
+    const { cols, rows, metrics } = widgetConfig
 
     const cachedQueryParams = currentLayersQueryParams[itemId]
 
@@ -374,11 +357,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       pagination = cachedQueryParams.pagination
     }
 
-    onLoadBizdatasFromItem(
+    onLoadDataFromItem(
       itemId,
       widget.viewId,
+      cols.concat(rows),
+      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
-        adHoc: widget.adhoc_sql,
         filters,
         linkageFilters,
         globalFilters,
@@ -386,11 +370,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         linkageParams,
         globalParams
       },
-      pagination.sorts,
-      pagination.offset,
-      pagination.limit,
-      widgetConfig.useCache,
-      widgetConfig.expired
+      false,
+      0
     )
   }
 
@@ -718,8 +699,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       const sql = currentLayersQueryParams[layerId]
 
       return (
-        <LayerContextMenu key={layer.id}>
+        // <LayerContextMenu key={layer.id}>
         <LayerItem
+          key={layer.id}
           pure={false}
           ref={(f) => this[`layerId_${layer.id}`]}
           itemId={layerId}
@@ -739,7 +721,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
         />
-        </LayerContextMenu>
+        // </LayerContextMenu>
       )
     })
 
@@ -860,7 +842,7 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
-    onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired)),
+    onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired)),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
     onResizeSelectedLayer: (id, deltaWidth, deltaHeight) => dispatch(resizeSelectedLayer({ id, deltaWidth, deltaHeight })),
@@ -878,9 +860,9 @@ function mapDispatchToProps (dispatch) {
 const withConnect = connect<{}, {}, IEditorProps>(mapStateToProps, mapDispatchToProps)
 
 const withReducer = injectReducer({ key: 'display', reducer })
-const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
-
 const withSaga = injectSaga({ key: 'display', saga })
+
+const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
 const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
