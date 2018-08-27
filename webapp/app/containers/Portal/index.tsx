@@ -197,7 +197,6 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
     const {
       params,
       portals
-      // loginUser,
     } = this.props
 
     const {

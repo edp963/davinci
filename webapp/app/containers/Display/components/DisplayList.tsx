@@ -13,6 +13,9 @@ const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
 import DisplayForm from './DisplayForm'
+import {makeSelectCurrentProject} from '../../Projects/selectors'
+import ModulePermission from '../../Account/components/checkModulePermission'
+import {IProject} from '../../Projects'
 
 export interface IDisplay {
   id: number
@@ -33,7 +36,8 @@ export interface IDisplayEvent {
 
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
-  displays: IDisplay[]
+  displays: IDisplay[],
+  currentProject: IProject
 }
 
 interface IDisplayListStates {
@@ -128,13 +132,16 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     const coverStyle: React.CSSProperties = {
       backgroundImage: `url(${display.avatar})`
     }
-    const { onDisplayClick, onCopy, onDelete } = this.props
+    const { onDisplayClick, onCopy, onDelete, currentProject } = this.props
 
     const editHint = !display.publish && '(编辑中…)'
     const displayClass = classnames({
       [styles.display]: true,
       [styles.editing]: !display.publish
     })
+
+    const EditIcon = ModulePermission(currentProject, 'viz', false)(Icon)
+    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
 
     return (
       <Col
@@ -153,10 +160,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               <p className={styles.content}>{display.description}</p>
             </header>
             <Tooltip title="编辑">
-              <Icon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
+              <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
             </Tooltip>
             <Tooltip title="复制">
-              <Icon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
+              <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
             </Tooltip>
             <Popconfirm
               title="确定删除？"
@@ -164,7 +171,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               onConfirm={this.delegate(onDelete, display.id)}
             >
               <Tooltip title="删除">
-                <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+                <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
               </Tooltip>
             </Popconfirm>
           </div>
@@ -174,7 +181,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId } = this.props
+    const { displays, projectId, currentProject } = this.props
     if (!Array.isArray(displays)) { return null }
 
     const { formType, formVisible, modalLoading } = this.state
@@ -200,10 +207,18 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       </Button>
     )]
 
+    let addAction
+    if (currentProject && currentProject.permission) {
+      const vizPermission = currentProject.permission.vizPermission
+      addAction = vizPermission === 3
+        ? [this.renderCreate(), ...displays.map((d) => this.renderDisplay(d))]
+        : [...displays.map((d) => this.renderDisplay(d))]
+    }
+
     return (
       <div>
         <EllipsisList rows={2}>
-          {[this.renderCreate(), ...displays.map((d) => this.renderDisplay(d))]}
+          {addAction}
         </EllipsisList>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Display`}

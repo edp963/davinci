@@ -13,10 +13,14 @@ const styles = require('../Portal.less')
 import AntdFormType from 'antd/lib/form/Form'
 import EllipsisList from '../../../components/EllipsisList'
 import PortalForm from './PortalForm'
+import {makeSelectCurrentProject} from '../../Projects/selectors'
+import ModulePermission from '../../Account/components/checkModulePermission'
+import {IProject} from '../../Projects'
 
 interface IPortalListProps {
   projectId: number
   portals: any[]
+  currentProject: IProject
   onPortalClick: (portal: any) => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
@@ -125,13 +129,16 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   private renderPortal = (portal: any) => {
-    const { onPortalClick, onDelete } = this.props
+    const { onPortalClick, onDelete, currentProject } = this.props
 
     const editHint = !portal.publish && '(编辑中…)'
     const itemClass = classnames({
       [styles.unit]: true,
       [styles.editing]: !portal.publish
     })
+
+    const EditIcon = ModulePermission(currentProject, 'viz', false)(Icon)
+    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
 
     return (
       <Col
@@ -156,7 +163,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
             </p>
           </header>
           <Tooltip title="编辑">
-            <Icon className={styles.edit} type="setting" onClick={this.showPortalForm('edit', portal)} />
+            <EditIcon className={styles.edit} type="setting" onClick={this.showPortalForm('edit', portal)} />
           </Tooltip>
           <Popconfirm
             title="确定删除？"
@@ -164,7 +171,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
             onConfirm={this.delegate(onDelete, portal.id)}
           >
             <Tooltip title="删除">
-              <Icon className={styles.delete} type="delete" onClick={this.stopPPG} />
+              <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
             </Tooltip>
           </Popconfirm>
         </div>
@@ -173,7 +180,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   public render () {
-    const { projectId, portals } = this.props
+    const { projectId, portals, currentProject } = this.props
     if (!Array.isArray(portals)) { return null }
 
     const { formType, formVisible, modalLoading } = this.state
@@ -199,10 +206,18 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       </Button>
     )]
 
+    let addAction
+    if (currentProject && currentProject.permission) {
+      const vizPermission = currentProject.permission.vizPermission
+      addAction = vizPermission === 3
+        ? [this.renderCreate(), ...portals.map((p) => this.renderPortal(p))]
+        : [...portals.map((p) => this.renderPortal(p))]
+    }
+
     return (
       <div>
         <EllipsisList rows={2}>
-          {[this.renderCreate(), ...portals.map((p) => this.renderPortal(p))]}
+          {addAction}
         </EllipsisList>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Portal`}

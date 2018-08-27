@@ -32,6 +32,9 @@ import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { Portal } from '../Portal'
+import {makeSelectCurrentProject} from '../Projects/selectors'
+import ModulePermission from '../Account/components/checkModulePermission'
+import {IProject} from '../Projects'
 
 interface IParams {
   pid: number
@@ -40,6 +43,7 @@ interface IParams {
 interface IVizProps extends RouteComponentProps<{}, IParams> {
   displays: any[]
   portals: any[]
+  currentProject: IProject
   onLoadDisplays: (projectId) => void
   onAddDisplay: (display: IDisplay, resolve: () => void) => void
   onEditDisplay: (display: IDisplay, resolve: () => void) => void
@@ -101,7 +105,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   public render () {
     const {
       displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onAddPortal, onEditPortal, onDeletePortal
+      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject
     } = this.props
     const projectId = params.pid
     const isHideDashboardStyle = classnames({
@@ -139,6 +143,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
             </Box.Header>
             <div className={isHideDashboardStyle}>
               <PortalList
+                currentProject={currentProject}
                 projectId={projectId}
                 portals={portals}
                 onPortalClick={this.goToDashboard}
@@ -161,6 +166,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
             </Box.Header>
             <div className={isHideDisplayStyle}>
               <DisplayList
+                currentProject={currentProject}
                 projectId={projectId}
                 displays={displays}
                 onDisplayClick={this.goToDisplay}
@@ -179,7 +185,8 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 
 const mapStateToProps = createStructuredSelector({
   displays: makeSelectDisplays(),
-  portals: makeSelectPortals()
+  portals: makeSelectPortals(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
