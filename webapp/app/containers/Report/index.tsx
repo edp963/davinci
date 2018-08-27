@@ -46,7 +46,7 @@ interface IReportProps {
   routes: any[]
   params: any
   children: React.ReactNode
-  currentProject: IProject[]
+  currentProject: IProject
   onPageLoad: () => any
   onShowNavigator: () => any
   onLoadProjectDetail: (id) => any

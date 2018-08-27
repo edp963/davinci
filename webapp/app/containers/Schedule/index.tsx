@@ -539,6 +539,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         </Button>
       )
     ])
+    const currentProjectId = currentProject && currentProject.id ? currentProject.id : void 0
     return (
       <Container>
         <Helmet title="Schedule" />
@@ -586,6 +587,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
               >
                 <ScheduleForm
                   type={formType}
+                  projectId={currentProjectId}
                   rangeTime={this.state.rangeTime}
                   changeRange={this.onChangeRange}
                   configValue={JSON.stringify(this.state.emailConfig)}

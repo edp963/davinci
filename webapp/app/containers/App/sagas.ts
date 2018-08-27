@@ -36,8 +36,8 @@ import {
   userPasswordChanged,
   changeUserPasswordFail
 } from './actions'
-import { removeToken } from '../../utils/request'
-import request from '../../utils/request'
+import request, { removeToken } from '../../utils/request'
+// import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 

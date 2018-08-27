@@ -228,7 +228,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     }
     this.setState({
       searchMaskVisible: false
-    },() => onSearchProject(param))
+    }, () => onSearchProject(param))
   }
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
@@ -658,7 +658,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       <div className={wrapper}>
         <div className={styles.search}>
           <div  className={styles.searchWrapper}>
-            <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
+            <label htmlFor="newtab-search-text" className={styles.searchLabel}/>
             <input
               id="newtab-search-text"
               placeholder="Search the Davinci"

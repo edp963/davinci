@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 import {connect} from 'react-redux'
-import {checkNameAction} from '../App/actions'
+import {checkNameAction, checkNameUniqueAction} from '../App/actions'
 import moment from 'moment'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
@@ -38,20 +38,25 @@ interface IScheduleFormProps {
   type: string
   rangeTime: string
   form: any
+  projectId: number
   changeRange: () => any
   configValue: string
-  onCheckName: (name: string, val: string, type: string, resolve: (res: any) => any, reject: (err: any) => any) => any
+  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   onShowConfig: () => any
 }
 
 export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
-  private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
+
+  private checkUniqueName = (rule, value = '', callback) => {
+    const { onCheckUniqueName, projectId } = this.props
     const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    const idName = type === 'add' ? '' : id
-    const typeName = 'cronjob'
-    onCheckName(idName, value, typeName,
+    const id = getFieldsValue()['id']
+    const data = {
+      name: value,
+      projectId,
+      id
+    }
+    onCheckUniqueName('cronjob', data,
       () => {
         callback()
       }, (err) => {
@@ -99,7 +104,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                   required: true,
                   message: 'Name 不能为空'
                 }, {
-                  validator: this.checkNameUnique
+                  validator: this.checkUniqueName
                 }]
               })(
                 <Input placeholder="Name" />
@@ -196,7 +201,8 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
           <Col
             span={5}
             offset={1}
-            className={`${this.props.rangeTime === 'Minute' ? '' : utilStyles.hide}`}>
+            className={`${this.props.rangeTime === 'Minute' ? '' : utilStyles.hide}`}
+          >
             <FormItem>
               {
                 getFieldDecorator('minute', {
@@ -214,7 +220,8 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
           <Col
             span={5}
             offset={1}
-            className={`${this.props.rangeTime === 'Month' ? '' : utilStyles.hide}`}>
+            className={`${this.props.rangeTime === 'Month' ? '' : utilStyles.hide}`}
+          >
             <FormItem>
               {
                   getFieldDecorator('month', {
@@ -292,7 +299,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 

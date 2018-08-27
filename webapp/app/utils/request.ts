@@ -38,7 +38,7 @@ function refreshToken (response) {
   }
   return response
 }
-
+console.log(message)
 function checkStatus (response) {
   switch (response.status) {
     case 403:
