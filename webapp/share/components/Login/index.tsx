@@ -10,10 +10,10 @@ const Icon = require('antd/lib/icon')
 const Message = require('antd/lib/message')
 
 interface ILoginProps {
-  loginLoading: boolean
+  loginLoading?: boolean
   shareInfo: any,
   legitimateUser: () => void
-  onLogin: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
+  onLogin?: (username: string, password: string, shareInfo: any, resolve: (res) => void) => void
 }
 
 interface ILoginStates {

@@ -30,6 +30,8 @@ interface IFullScreenPanelProps {
     widgets?: any[]
   }
   onCurrentWidgetInFullScreen: (id: number) => any
+
+  onRenderChart?: any
 }
 
 interface IFullScreenPanelStates {
