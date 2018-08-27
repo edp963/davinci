@@ -95,7 +95,7 @@ interface IDashboardProps {
   onSetIndividualDashboard: (id, shareInfo) => void,
   onLoadWidgetCsv: (itemId, token, sql) => void,
   onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => void,
-  onLoadCascadeSourceFromDashboard: (key, flatTableId, shareInfo, cascadeColumn, parents) => void
+  onLoadCascadeSourceFromDashboard: (key, flatTableId, shareInfo, cascadeColumn, parents?) => void
 }
 
 interface IDashboardStates {

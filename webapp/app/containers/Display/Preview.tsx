@@ -40,7 +40,7 @@ import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
 import {
   loadBizlogics,
-  loadBizdatasFromItem,
+  loadDataFromItem,
   loadCascadeSourceFromItem,
   loadCascadeSourceFromDashboard,
   loadBizdataSchema  } from '../Bizlogic/actions'
@@ -59,6 +59,13 @@ import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
+
+
+interface IBizdataIncomeParamObject {
+  k: string
+  v: string
+}
+
 interface IPreviewProps {
   params: any
   widgets: any[]
@@ -73,22 +80,20 @@ interface IPreviewProps {
   onLoadWidgets: (projectId: number) => void
   onLoadBizlogics: () => any
   onLoadDisplayDetail: (id: any) => void
-  onLoadBizdatasFromItem: (
-    dashboardItemId: number,
+  onLoadDataFromItem: (
+    layerItemId: number,
     viewId: number,
+    groups: string[],
+    aggregators: Array<{column: string, func: string}>,
     sql: {
-      adHoc: string
       filters: string
       linkageFilters: string
       globalFilters: string
-      params: any[]
-      linkageParams: any[]
-      globalParams: any[]
+      params: IBizdataIncomeParamObject[]
+      linkageParams: IBizdataIncomeParamObject[]
+      globalParams: IBizdataIncomeParamObject[]
     },
-    sorts: string,
-    offset: number,
-    limit: number,
-    useCache: string,
+    cache: boolean,
     expired: number
   ) => void
 }
@@ -157,36 +162,12 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       widgets,
       currentLayers,
       currentLayersQueryParams,
-      onLoadBizdatasFromItem
+      onLoadDataFromItem
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
-    const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig = JSON.parse(widget.config)
-    let currentChart = this.charts[chartInstanceId]
-
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      switch (renderType) {
-        case 'rerender':
-          if (currentChart) {
-            currentChart.dispose()
-          }
-          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
-          this.charts[chartInstanceId] = currentChart
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'clear':
-          currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        default:
-          break
-      }
-    }
+    const { cols, rows, metrics } = widgetConfig
 
     const cachedQueryParams = currentLayersQueryParams[itemId]
 
@@ -216,11 +197,12 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       pagination = cachedQueryParams.pagination
     }
 
-    onLoadBizdatasFromItem(
+    onLoadDataFromItem(
       itemId,
       widget.viewId,
+      cols.concat(rows),
+      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
-        adHoc: widget.adhoc_sql,
         filters,
         linkageFilters,
         globalFilters,
@@ -228,11 +210,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         linkageParams,
         globalParams
       },
-      pagination.sorts,
-      pagination.offset,
-      pagination.limit,
-      widgetConfig.useCache,
-      widgetConfig.expired
+      false,
+      0
     )
   }
 
@@ -355,7 +334,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
     onLoadWidgets: (projectId: number) => dispatch(loadWidgets(projectId)),
     onLoadBizlogics: (projectId: number, resolve?: any) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadBizdatasFromItem: (itemId, id, sql, sorts, offset, limit, useCache, expired) => dispatch(loadBizdatasFromItem(itemId, id, sql, sorts, offset, limit, useCache, expired))
+    onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired))
   }
 }
 

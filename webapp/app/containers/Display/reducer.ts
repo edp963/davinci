@@ -24,9 +24,9 @@ import undoable, { includeAction } from 'redux-undo'
 import { ActionTypes } from './constants'
 import { GraphTypes } from 'utils/util'
 import {
-  LOAD_BIZDATAS_FROM_ITEM,
-  LOAD_BIZDATAS_FROM_ITEM_SUCCESS,
-  LOAD_BIZDATAS_FROM_ITEM_FAILURE,
+  LOAD_DATA_FROM_ITEM,
+  LOAD_DATA_FROM_ITEM_SUCCESS,
+  LOAD_DATA_FROM_ITEM_FAILURE,
   LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
 } from '../Bizlogic/constants'
@@ -204,7 +204,7 @@ function displayReducer (state = initialState, action) {
         .set('lastLayers', lastLayers)
         .set('currentLayers', copyLayers)
 
-    case LOAD_BIZDATAS_FROM_ITEM:
+    case LOAD_DATA_FROM_ITEM:
       return state
         .set('currentLayersLoading', {
           ...layersLoading,
@@ -226,7 +226,7 @@ function displayReducer (state = initialState, action) {
             }
           }
         })
-    case LOAD_BIZDATAS_FROM_ITEM_SUCCESS:
+    case LOAD_DATA_FROM_ITEM_SUCCESS:
       return state
         .set('currentLayersLoading', {
           ...layersLoading,
@@ -234,9 +234,9 @@ function displayReducer (state = initialState, action) {
         })
         .set('currentDatasources', {
           ...datasources,
-          [payload.itemId]: payload.bizdatas
+          [payload.itemId]: payload.data
         })
-    case LOAD_BIZDATAS_FROM_ITEM_FAILURE:
+    case LOAD_DATA_FROM_ITEM_FAILURE:
       return state.set('currentLayersLoading', {
         ...layersLoading,
         [payload.layerId]: false

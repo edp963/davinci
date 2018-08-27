@@ -49,7 +49,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
   loadings: any
   layersQueryParams: any
   onLoadDisplay: (token, resolve, reject) => void
-  onLoadLayerData: (layerId: number, token: string) => void
+  onLoadLayerData: (layerId: number, token: string, groups, aggregators, sql, cache, expired) => void
 }
 
 interface IDisplayStates {
@@ -115,33 +115,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       onLoadLayerData
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
-    const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig = JSON.parse(widget.config)
-    let currentChart = this.charts[chartInstanceId]
-
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      switch (renderType) {
-        case 'rerender':
-          if (currentChart) {
-            currentChart.dispose()
-          }
-          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
-          this.charts[chartInstanceId] = currentChart
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'clear':
-          currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        default:
-          break
-      }
-    }
+    const { cols, rows, metrics } = widgetConfig
 
     const cachedQueryParams = layersQueryParams[itemId]
 
@@ -171,7 +147,22 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       pagination = cachedQueryParams.pagination
     }
 
-    onLoadLayerData(itemId, widget.dataToken)
+    onLoadLayerData(
+      itemId,
+      widget.dataToken,
+      cols.concat(rows),
+      metrics.map((m) => ({ column: m.name, func: m.agg })),
+      {
+        filters,
+        linkageFilters,
+        globalFilters,
+        params,
+        linkageParams,
+        globalParams
+      },
+      false,
+      0
+    )
   }
 
   private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
@@ -319,7 +310,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplay: (token, resolve, reject) => dispatch(loadDisplay(token, resolve, reject)),
-    onLoadLayerData: (layerId: string, token: string) => dispatch(loadLayerData(layerId, token))
+    onLoadLayerData: (layerId: string, token: string, groups, aggregators, sql, cache, expired) => dispatch(loadLayerData(layerId, token, groups, aggregators, sql, cache, expired))
   }
 }
 

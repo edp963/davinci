@@ -125,8 +125,8 @@ export function* editCurrentDashboard (action) {
   try {
     yield call(request, {
       method: 'put',
-      url: api.dashboard,
-      data: writeAdapter(dashboard)
+      url: `${api.portal}/${dashboard.dashboardPortalId}/dashboards`,
+      data: [dashboard]
     })
     yield put(currentDashboardEdited(dashboard))
     resolve()

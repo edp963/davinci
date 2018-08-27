@@ -27,7 +27,6 @@ import api from 'utils/api'
 import { ActionTypes } from './constants'
 import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
 import { readListAdapter } from 'utils/asyncAdapter'
-import resultsetConverter from 'utils/resultsetConverter'
 
 export function* getDisplay (action) {
   const { token, resolve, reject } = action.payload
@@ -53,15 +52,22 @@ export function* getDisplay (action) {
 
 export function* getData (action) {
   const { payload } = action
-  const { layerId, token } = payload
+  const { layerId, token, groups, aggregators, sql, cache, expired } = payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${token}`,
-      data: {} // FIXME executeParam
+      data: {
+        groups,
+        aggregators,
+        filters: [],
+        params: [],
+        orders: [],
+        cache,
+        expired
+      }
     })
-    const resultset = resultsetConverter(readListAdapter(asyncData))
-    yield put(layerDataLoaded(layerId, resultset))
+    yield put(layerDataLoaded(layerId, readListAdapter(asyncData)))
   } catch (err) {
     yield put(loadLayerDataFail(err))
   }

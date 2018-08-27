@@ -31,6 +31,7 @@ import {
   LOAD_SCHEMA,
   EXECUTE_SQL,
   LOAD_DATA,
+  LOAD_DISTINCT_VALUE,
   LOAD_DATA_FROM_ITEM,
   LOAD_VIEW_TEAM
 } from './constants'
@@ -55,6 +56,8 @@ import {
   executeSqlFail,
   dataLoaded,
   loadDataFail,
+  distinctValueLoaded,
+  loadDistinctValueFail,
   dataFromItemLoaded,
   loadDataFromItemFail,
   viewTeamLoaded,
@@ -265,6 +268,25 @@ export function* getData (action) {
   }
 }
 
+export function* getDistinctValue (action) {
+  const { payload } = action
+  try {
+    const { viewId, fieldName, filters, resolve } = payload
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+      data: {
+        column: fieldName,
+        parents: Object.entries(filters).map(([column, value]) => ({ column, value }))
+      }
+    })
+    resolve(readListAdapter(asyncData))
+    yield put(distinctValueLoaded())
+  } catch (err) {
+    yield put(loadDistinctValueFail(err))
+  }
+}
+
 export function* getDataFromItem (action) {
   const { payload } = action
   try {
@@ -314,6 +336,7 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeLatest(LOAD_SCHEMA, getSchema),
     takeLatest(EXECUTE_SQL, executeSql),
     takeEvery(LOAD_DATA, getData),
+    takeEvery(LOAD_DISTINCT_VALUE, getDistinctValue),
     takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem),
     takeLatest(LOAD_VIEW_TEAM, getViewTeams)
   ]

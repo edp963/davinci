@@ -9,13 +9,13 @@ export class LayerContextMenu extends React.PureComponent {
 
   private getPopupContainer = () => {
     const { children } = this.props
-    const layer = children.props.layer
+    const layer = children[0].props.layer
     return document.getElementById(`layer_${layer.id}`)
   }
 
   public render () {
     const { children } = this.props
-    const layer = children.props.layer
+    const layer = children[0].props.layer
     const menu = (
       <Menu>
         <MenuItem key="name">{layer.name}</MenuItem>

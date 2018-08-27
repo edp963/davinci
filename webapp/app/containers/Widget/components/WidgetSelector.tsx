@@ -154,7 +154,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
     const widgetsCurrent = widgetsFiltered.slice(startCol, endCol)
 
     const widgetsList = widgetsCurrent.map((w, idx) => {
-      const widgetType = JSON.parse(w.config).chartParams.widgetType
+      const widgetType = w.type
       const widgetClassName = classnames({
         [styles.widget]: true,
         [styles.selector]: true,

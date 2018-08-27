@@ -4,9 +4,9 @@ import * as classnames from 'classnames'
 import Draggable from '../../../components/Draggable/react-draggable'
 
 // @TODO contentMenu
-const Dropdown = require('antd/lib/dropdown')
-const Menu = require('antd/lib/menu')
-import LayerContextMenu from './LayerContextMenu'
+// const Dropdown = require('antd/lib/dropdown')
+// const Menu = require('antd/lib/menu')
+// import LayerContextMenu from './LayerContextMenu'
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
 import {
@@ -14,6 +14,8 @@ import {
   SecondaryGraphTypes
 } from 'utils/util'
 import Chart from '../../Dashboard/components/Chart'
+import Pivot from '../../Widget/components/Pivot/PivotInViz'
+import { IPivotProps } from '../../Widget/components/Pivot/Pivot'
 
 const Resizable = require('react-resizable').Resizable
 
@@ -46,7 +48,8 @@ interface ILayerItemStates {
   layerParams: any
   mousePos: number[]
   width: number
-  height: number
+  height: number,
+  pivotProps: IPivotProps
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
@@ -59,8 +62,17 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerParams,
       mousePos: [-1, -1],
       width,
-      height
+      height,
+      pivotProps: null
     }
+  }
+
+  public componentWillMount () {
+    const { widget } = this.props
+    if (!widget) { return }
+    this.setState({
+      pivotProps: JSON.parse(widget.config)
+    })
   }
 
   public componentDidMount () {
@@ -90,6 +102,12 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         layerParams,
         width,
         height
+      })
+    }
+
+    if (this.props.widget !== nextProps.widget) {
+      this.setState({
+        pivotProps: JSON.parse(nextProps.widget.config)
       })
     }
 
@@ -141,7 +159,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     clearInterval(this.frequent)
   }
 
-  private frequent: NodeJS.Timer = void 0
+  private frequent: number
 
   private setFrequent = (props: ILayerItemProps) => {
     const {
@@ -151,7 +169,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       onGetChartData
     } = props
     if (layer.triggerType === 'frequent') {
-      this.frequent = setInterval(() => {
+      this.frequent = window.setInterval(() => {
         onGetChartData('dynamic', itemId, widget.id)
       }, Number(layer.triggerParams) * 1000)
     } else {
@@ -268,7 +286,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       layerParams,
       width,
-      height } = this.state
+      height,
+      pivotProps } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -314,7 +333,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           <h4>{layer.name}</h4>
         </div>
         <div className={styles.body}>
-          <Chart
+          {/* <Chart
             id={`${itemId}`}
             w={width * exactScaleWidth}
             h={height * exactScaleHeight}
@@ -329,6 +348,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             interactId={interactId}
             onCheckTableInteract={onCheckTableInteract}
             onDoTableInteract={onDoTableInteract}
+          /> */}
+          <Pivot
+            data={data || {}}
+            chart={chartInfo}
+            {...pivotProps}
           />
         </div>
       </div>
