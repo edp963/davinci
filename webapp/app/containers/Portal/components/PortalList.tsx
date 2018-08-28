@@ -139,7 +139,6 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
 
     const EditIcon = ModulePermission(currentProject, 'viz', false)(Icon)
     const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
-
     return (
       <Col
         key={portal.id}

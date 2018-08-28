@@ -26,9 +26,11 @@ export function* signup (action): IterableIterator<any> {
         yield put(signupSuccess())
         resolve(resPayload)
         return null
+      case 400:
+        message.error(asyncData.header.msg)
+        break
       default:
         yield put(signupError())
-        resolve(resPayload)
     }
   } catch (err) {
     yield put(signupError())

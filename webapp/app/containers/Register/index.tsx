@@ -42,6 +42,7 @@ import {InjectedRouter} from 'react-router/lib/Router'
 
 interface IRegisterProps {
   router: InjectedRouter
+  signupLoading: boolean
   onSendEmailOnceMore: (email: string, resolve?: (res: any) => any) => any
   onSignup: (username: string, email: string, password: string, resolve?: (res: any) => any) => any
   onCheckName: (id: number, name: string, type: string, param?: any, resolve?: (res: any) => any, reject?: (error: any) => any) => any
@@ -101,6 +102,10 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
         Message.error('无效的邮箱地址')
         return
       }
+      if (password.length < 6 || password.length > 20) {
+        Message.error('密码长度为6-20位')
+        return
+      }
       if (password !== password2) {
         Message.error('两次输入的密码不一致')
         return
@@ -133,9 +138,8 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
   }
 
   public render () {
-    const signupLoading = false
     const { step, email } = this.state
-    const { onCheckName } = this.props
+    const { onCheckName, signupLoading} = this.props
     const firstStep = (
         <div className={styles.window}>
           <RegisterForm
