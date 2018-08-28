@@ -465,9 +465,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           onDoTableInteract={onDoTableInteract}
         /> */}
         <Pivot
-          data={data || []}
-          chart={chartInfo}
           {...pivotProps}
+          data={data || []}
         />
       </div>
     )

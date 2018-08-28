@@ -1,22 +1,26 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
-import { PIVOT_CANVAS_SIZE_LIMIT } from '../../../../globalConstants'
-import { metricAxisLabelFormatter } from '../util'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType } from './Pivot'
+import chartOptionGenerator from '../../charts'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
+import { decodeMetricName } from '../util'
 import { uuid } from '../../../../utils/util'
-
+import { IDataParamProperty } from '../Workbench/OperatingPanel'
+const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Pivot.less')
-
-type DimetionType = 'row' | 'col'
 
 export interface IChartInfo {
   id: number
   name: string
+  title: string
   icon: string
+  coordinate: 'cartesian' | 'polar' | 'other'
   requireDimetions: number | number[],
   requireMetrics: number | number[],
   dimetionAxis?: DimetionType
+  data: object,
+  style: object
 }
 
 export interface IChartUnit {
@@ -50,14 +54,28 @@ interface IChartProps {
   height: number
   dimetionAxisCount: number
   metricAxisCount: number
-  chart: IChartInfo
   metrics: IPivotMetric[]
   data: IChartChunk[]
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
+  color?: IDataParamProperty
+  label?: IDataParamProperty
+  renderType: RenderType
 }
 
-export class Chart extends React.PureComponent<IChartProps, {}> {
+interface IChartStates {
+  renderSign: string
+}
+
+export class Chart extends React.PureComponent<IChartProps, IChartStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      renderSign: ''
+    }
+  }
+
   private containers: { [key: string]: HTMLDivElement } = {}
 
   public componentDidMount () {
@@ -66,6 +84,12 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
 
   public componentDidUpdate () {
     this.renderChart()
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps.renderType === 'rerender') {
+      this.setState({ renderSign: uuid(8, 16) })
+    }
   }
 
   public componentWillUnmount () {
@@ -88,44 +112,57 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
   }
 
   private renderChart = () => {
-    const { chart, metrics, data, drawingData, metricAxisConfig } = this.props
-    const { elementSize, extraMetricCount } = drawingData
-    const { dimetionAxis } = chart
-
-    const metric = metrics[0]
-    const extraMetrics = extraMetricCount > 0 ? metrics.slice(-extraMetricCount) : []
-    const combinedMetrics = [metric].concat(extraMetrics)
+    const { metrics, data, drawingData, metricAxisConfig, dimetionAxis, color, label } = this.props
+    const { elementSize } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
       chunk.data.forEach((block: IChartBlock) => {
         const chartPieces = this.containers[`${chunk.key}${block.key}`].children as HTMLCollectionOf<HTMLDivElement>
         const dataPieces = this.getChartPieceData(block.data, block.pieces)
-        dataPieces.forEach((dp, i) => {
-          const grid = []
-          const xAxis = []
-          const yAxis = []
-          const series = []
-          let xSum = 0
-          let ySum = 0
-          let index = 0
+        const containerWidth = block.width
 
+        dataPieces.forEach((dp, i) => {
           const chartPiece = chartPieces[i]
           chartPiece.style.height = `${dp.reduce((sum, line) => {
-            const lineHeight = line.height * (dimetionAxis === 'col' ? extraMetricCount + 1 : 1)
+            const lineHeight = line.height * (dimetionAxis === 'col' ? metrics.length : 1)
             return sum + lineHeight
           }, 0)}px`
           let instance = echarts.getInstanceByDom(chartPiece)
           if (!instance) {
             instance = echarts.init(chartPiece, 'default')
+          } else {
+            instance.clear()
           }
 
-          dp.forEach((line: IChartLine) => {
-            const { height, data: lineData } = line
+          const grid = []
+          const xAxis = []
+          const yAxis = []
+          const series = []
+          const s2 = []
+          let xSum = 0
+          let ySum = 0
+          let index = 0
 
-            lineData.forEach((unit: IChartUnit) => {
+          const verticalRecordCountOfRow = dp.reduce((s1, line) => s1 + line.data[0].records.length, 0)
+
+          dp.forEach((line: IChartLine, j) => {
+            const { height, data: lineData } = line
+            const horizontalRecordCountOfCol = lineData.reduce((sum, unit) => sum + unit.records.length, 0)
+            const containerHeight = height
+            let lineRecordSum = 0
+
+            lineData.forEach((unit: IChartUnit, k) => {
               const { width, records } = unit
 
-              combinedMetrics.forEach((m, l) => {
+              metrics.forEach((m, l) => {
+                const decodedMetricName = decodeMetricName(m.name)
+                const xAxisData = records.map((r) => r.key)
+                const {
+                  chartOption,
+                  stackOption,
+                  calcPieCenterAndRadius
+                } = chartOptionGenerator(m.chart.name, elementSize)
+
                 grid.push({
                   top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
                   left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
@@ -135,80 +172,187 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
                 xAxis.push({
                   gridIndex: index,
                   type: 'category',
-                  axisLine: { show: false },
+                  axisLine: {
+                    lineStyle: {
+                      color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    }
+                  },
                   axisTick: { show: false },
                   axisLabel: { show: false },
-                  data: records.map((r) => r.key)
+                  data: xAxisData
                 })
                 yAxis.push({
                   gridIndex: index,
                   type: 'value',
                   axisLine: {
                     lineStyle: {
-                      color: '#d9d9d9'
+                      color: PIVOT_DEFAULT_AXIS_LINE_COLOR
                     }
                   },
                   axisTick: { show: false },
                   axisLabel: { show: false },
-                  ...metricAxisConfig[m.name]
+                  splitLine: {
+                    lineStyle: {
+                      type: 'dotted'
+                    }
+                  },
+                  ...metricAxisConfig[decodedMetricName]
                 })
-                series.push({
+
+                const commonSeriesData = {
                   xAxisIndex: index,
                   yAxisIndex: index,
-                  type: chart.id === 2 ? 'line' : 'bar',
-                  data: records.map((d) => d.value ? d.value[`${m.agg}(${m.name})`] : 0),
-                  barWidth: elementSize * .8,
-                  color: '#1B98E0'
-                  // label: {
-                  //   show: true,
-                  //   formatter: (params) => {
-                  //     return metricAxisLabelFormatter(params.value)
-                  //   }
-                  // }
-                })
+                  ...chartOption
+                }
+
+                // 单次循环records做手动分类，判断条件color和label，tip只能是指标
+                const currentColorItem = color.items.find((i) => i.config.actOn === m.name) || color.items.find((i) => i.config.actOn === 'all')
+                const categroyLabelItems = label ? label.items.filter((i) => i.type === 'category') : []
+                // const currentLabelItem = categroyLabelItems.filter((i) => i.config.actOn === m.name || i.config.actOn === 'all')
+                const currentLabelItem = categroyLabelItems
+                const groupingItems = [].concat(currentColorItem).concat(currentLabelItem).filter((i) => !!i)
+
+                if (m.chart.coordinate === 'cartesian') {
+                  if (groupingItems.length) {
+                    const grouped = {}
+                    records.forEach((recordCollection) => {
+                      const { key: colKey, value: valueCollection } = recordCollection
+                      if (valueCollection) {
+                        valueCollection.forEach((record) => {
+                          const groupingKey = groupingItems.map((item) => record[item.name]).join(',')
+                          if (!grouped[groupingKey]) {
+                            grouped[groupingKey] = {}
+                          }
+                          if (!grouped[groupingKey][colKey]) {
+                            grouped[groupingKey][colKey] = []
+                          }
+                          grouped[groupingKey][colKey].push(record)
+                        })
+                      }
+                    })
+                    Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
+                      series.push({
+                        ...stackOption && {stack: `${unit.key}${m.name}`},
+                        data: xAxisData.map((colKey) => {
+                          return groupedRecords[colKey]
+                            ? groupedRecords[colKey].reduce((sum, record) => sum + record[`${m.agg}(${decodedMetricName})`], 0)
+                            : 0
+                        }),
+                        // data: groupedRecords.map((gr) => gr[`${m.agg}(${decodedMetricName})`]),
+                        color: currentColorItem
+                          ? currentColorItem.config.values[groupingKey.split(',')[0]]
+                          : (color.value[m.name] || defaultThemeColors[0]),
+                        ...currentLabelItem.length && {
+                          label: {
+                            show: true,
+                            formatter: (params) => {
+                              return params.value
+                            }
+                          }
+                        },
+                        ...commonSeriesData
+                      })
+                      s2.push(groupedRecords)
+                    })
+                    // console.log(s2)
+                  } else {
+                    series.push({
+                      data: records.map((recordCollection) => {
+                        return recordCollection.value
+                          ? recordCollection.value.reduce((sum, record) => sum + record[`${m.agg}(${decodedMetricName})`], 0)
+                          : 0
+                      }),
+                      color: color.value[m.name] || defaultThemeColors[0],
+                      ...commonSeriesData
+                    })
+                    s2.push(records)
+                  }
+                } else {
+                  records.forEach((recordCollection, r) => {
+                    const centerAndRadius = calcPieCenterAndRadius(
+                      dimetionAxis,
+                      containerWidth,
+                      containerHeight,
+                      horizontalRecordCountOfCol,
+                      verticalRecordCountOfRow,
+                      lineRecordSum,
+                      dp.length,
+                      lineData.length,
+                      metrics.length,
+                      records.length,
+                      j,
+                      k,
+                      l,
+                      r
+                    )
+                    series.push({
+                      data: groupingItems.length
+                        ? recordCollection.value
+                          ? recordCollection.value.map((record) => ({
+                              name: recordCollection.key,
+                              value: record[`${m.agg}(${decodedMetricName})`],
+                              itemStyle: {
+                                color: currentColorItem
+                                  ? currentColorItem.config.values[record[currentColorItem.name]]
+                                  : (color.value[m.name] || defaultThemeColors[0])
+                              }
+                            }))
+                          : []
+                        : [{
+                          name: recordCollection.key,
+                          value: recordCollection.value
+                            ? recordCollection.value.reduce((sum, record) => sum + record[`${m.agg}(${decodedMetricName})`], 0)
+                            : 0,
+                          itemStyle: {
+                            color: color.value[m.name] || defaultThemeColors[0]
+                          }
+                        }],
+                      ...centerAndRadius,
+                      ...commonSeriesData
+                    })
+                    s2.push(recordCollection)
+                  })
+                  s2.push(records)
+                }
                 index += 1
               })
+
+              lineRecordSum += records.length
 
               if (dimetionAxis === 'col') {
                 ySum += width
               } else {
-                xSum += width * (extraMetricCount + 1)
+                xSum += width * metrics.length
               }
             })
 
             if (dimetionAxis === 'col') {
-              xSum += height * (extraMetricCount + 1)
+              xSum += height * metrics.length
               ySum = 0
             } else {
               ySum += height
               xSum = 0
             }
           })
+          console.log(grid)
+          console.log(series)
 
-          if (chart.id === 4) {
-            instance.setOption({
-              tooltip: {},
-              grid,
-              yAxis: xAxis,
-              xAxis: yAxis,
-              series
-            })
-          } else {
-            instance.setOption({
-              tooltip: {
-                position (point, params, dom, rect, size) {
-                  return [point[0], point[1]]
-                }
-                // formatter (params) {
-                //   return `就是： ${params.value}`
-                // }
-              },
-              grid,
-              xAxis,
-              yAxis,
-              series
-            })
-          }
+          instance.setOption({
+            tooltip: {
+              position (point, params, dom, rect, size) {
+                return [point[0], point[1]]
+              }
+              // formatter (params) {
+              //   const { seriesIndex, dataIndex } = params
+              //   console.log(s2[seriesIndex][dataIndex])
+              //   return `就是： ${params.value}`
+              // }
+            },
+            grid,
+            xAxis,
+            yAxis,
+            series
+          })
           instance.resize()
         })
       })
@@ -217,10 +361,12 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
 
   public render () {
     const { width, height, data } = this.props
-    const chunks = data.map((chunk) => {
-      const blocks = chunk.data.map((block) => {
-        const pieces = Array.from(Array(block.pieces), () => (
-          <div key={uuid(8, 16)} />
+
+    const { renderSign } = this.state
+    const chunks = data.map((chunk, i) => {
+      const blocks = chunk.data.map((block, j) => {
+        const pieces = Array.from(Array(block.pieces), (u, k) => (
+          <div key={`${renderSign}${i}${j}${k}`} />
         ))
         return (
           <div

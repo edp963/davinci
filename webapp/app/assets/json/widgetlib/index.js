@@ -42,35 +42,121 @@
 
 export default [{
   id: 1,
-  name: '透视表',
+  name: 'pivot',
+  title: '透视表',
   icon: 'icon-table',
-  requireDimetions: [0, 9999, 9999],
-  requireMetrics: [0, 9999]
+  coordinate: 'cartesian',
+  requireDimetions: 0,
+  requireMetrics: 0,
+  data: {
+    color: {
+      title: '颜色',
+      type: 'category'
+    }
+  },
+  style: {
+    
+  }
 }, {
   id: 2,
-  name: '折线图',
+  name: 'line',
+  title: '折线图',
   icon: 'icon-chart-line',
-  requireDimetions: [1, 1, 9999],
-  requireMetrics: [1, 9999],
-  dimetionAxis: 'col'
+  coordinate: 'cartesian',
+  requireDimetions: 1,
+  requireMetrics: 1,
+  dimetionAxis: 'col',
+  data: {
+    color: {
+      title: '颜色',
+      type: 'category'
+    },
+    label: {
+      title: '标签',
+      type: 'all'
+    },
+    tip: {
+      title: '提示信息',
+      type: 'value'
+    }
+  }
 }, {
   id: 3,
-  name: '柱状图',
+  name: 'bar',
+  title: '柱状图',
   icon: 'icon-chart-bar',
-  requireDimetions: [0, 1, 9999],
-  requireMetrics: [1, 9999],
-  dimetionAxis: 'col'
+  coordinate: 'cartesian',
+  requireDimetions: 0,
+  requireMetrics: 1,
+  dimetionAxis: 'col',
+  data: {
+    color: {
+      title: '颜色',
+      type: 'category'
+    },
+    label: {
+      title: '标签',
+      type: 'all'
+    },
+    tip: {
+      title: '提示信息',
+      type: 'value'
+    }
+  }
 }, {
   id: 4,
-  name: '水平柱状图',
-  icon: 'icon-hbar',
-  requireDimetions: [0, 1, 9999],
-  requireMetrics: [1, 9999],
-  dimetionAxis: 'row'
+  name: 'scatter',
+  title: '散点图',
+  icon: 'icon-scatter-chart',
+  coordinate: 'cartesian',
+  requireDimetions: 0,
+  requireMetrics: 1,
+  data: {
+    xAxis: {
+      title: 'x数据轴',
+      type: 'value'
+    },
+    color: {
+      title: '颜色',
+      type: 'all'
+    },
+    size: {
+      title: '尺寸',
+      type: 'value'
+    },
+    label: {
+      title: '标签',
+      type: 'all'
+    },
+    tip: {
+      title: '提示信息',
+      type: 'value'
+    }
+  }
 }, {
   id: 5,
-  name: '散点图',
-  icon: 'icon-scatter-chart',
-  requireDimetions: [0, 0, 9999],
-  requireMetrics: 2
+  name: 'pie',
+  title: '饼图',
+  icon: 'icon-chartpie',
+  coordinate: 'polar',
+  requireDimetions: 0,
+  requireMetrics: 1,
+  data: {
+    color: {
+      title: '颜色',
+      type: 'all'
+    },
+    size: {
+      title: '尺寸',
+      type: 'value'
+    },
+    label: {
+      title: '标签',
+      type: 'all'
+    },
+    tip: {
+      title: '提示信息',
+      type: 'value'
+    }
+  }
 }]

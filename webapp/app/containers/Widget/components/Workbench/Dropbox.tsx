@@ -1,16 +1,15 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { decodeMetricName } from '../util'
 
 import DropboxItem from './DropboxItem'
-const Icon = require('antd/lib/icon')
+import { IChartInfo } from '../Pivot/Chart'
+import { decodeMetricName } from '../util'
 const styles = require('./Workbench.less')
 
 export type DragType = 'category' | 'value'
 export type DropboxType = DragType | 'all'
 export type DropboxItemType = DragType | 'add'
 export type ViewModelType = 'string' | 'number' | 'date' | 'geoCountry' | 'geoProvince' | 'geoCity'
-export type DropboxSize = 'normal' | 'large'
 export type DropType = 'outside' | 'inside' | 'unmoved'
 export type SortType = 'asc' | 'desc'
 export type AggregatorType = 'sum' | 'avg' | 'count' | 'distinct' | 'max' | 'min' | 'median' | 'var' | 'dev'
@@ -24,28 +23,42 @@ interface IDataColumn {
 
 export interface IDataParamSource extends IDataColumn {
   type: DragType
-  icon: ViewModelType
+  // icon: ViewModelType
+  chart?: IChartInfo
+  config?: IDataParamConfig
+}
+
+export interface IDataParamConfig {
+  actOn: string
+  values: {
+    [key: string]: string
+  }
 }
 
 export interface IDataParamSourceInBox extends IDataColumn {
   type: DropboxItemType
-  icon?: ViewModelType
+  // icon?: ViewModelType
+  chart?: IChartInfo
+  config?: IDataParamConfig
 }
 
 interface IDropboxProps {
   name: string
   title: string
-  placeholder: React.ReactNode
-  size: DropboxSize
   type: DropboxType
   items: IDataParamSource[]
   dragged: IDataParamSource
-  onItemDragStart: (name: string, type: DragType, icon: ViewModelType, agg: AggregatorType, sort: SortType, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
+  dimetionsCount: number
+  metricsCount: number
+  onItemDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onItemDragEnd: (dropType: DropType) => void
   onItemRemove: (name: string) => (e) => void
-  onItemSort: (item: IDataParamSource) => (sort: SortType) => void
-  onItemChangeAgg: (item: IDataParamSource) => (agg: AggregatorType) => void
-  onDrop: (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[]) => void
+  onItemSort: (item: IDataParamSource, sort: SortType) => void
+  onItemChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
+  onItemChangeColorConfig: (item: IDataParamSource) => void
+  onItemChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
+  beforeDrop: (name: string, cachedItem: IDataParamSource, resolve: (next: boolean) => void) => void
+  onDrop: (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[], config?: IDataParamConfig) => void
 }
 
 interface IDropboxStates {
@@ -111,17 +124,17 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
     if (!(dragged.type === 'category'
           && !dragged.from
           && items.find((i) => i.name === dragged.name))) {
-      if (this.props.size === 'large') {
-        const { clientX, clientY } = e
-        const physicalDropIndex = this.calcPhysicalDropIndex(clientX, clientY)
-        this.previewDropPosition(physicalDropIndex)
-      } else {
-        if (this.state.dropIndex === -1) {
-          this.setState({
-            dropIndex: 0
-          })
-        }
-      }
+      // if (this.props.size === 'large') {
+      const { clientX, clientY } = e
+      const physicalDropIndex = this.calcPhysicalDropIndex(clientX, clientY)
+      this.previewDropPosition(physicalDropIndex)
+      // } else {
+      //   if (this.state.dropIndex === -1) {
+      //     this.setState({
+      //       dropIndex: 0
+      //     })
+      //   }
+      // }
     }
   }
 
@@ -135,15 +148,19 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
   }
 
   private drop = () => {
-    const { name, items, dragged, onDrop } = this.props
+    const { name, items, dragged, beforeDrop, onDrop } = this.props
     const { items: itemsState, dropIndex, dropType } = this.state
 
     if (dropIndex >= 0) {
       const alreadyHaveIndex = items.findIndex((i) => i.name === dragged.name)
-      if (!(dragged.type === 'category'
-            && alreadyHaveIndex >= 0
-            && dragged.from !== name)) {
-        onDrop(name, dropIndex, dropType, itemsState as IDataParamSource[])
+      if (!(dragged.type === 'category' && alreadyHaveIndex >= 0 && dragged.from !== name)) {
+        beforeDrop(name, dragged, (data: boolean | IDataParamConfig) => {
+          if (data) {
+            onDrop(name, dropIndex, dropType, itemsState as IDataParamSource[], data as IDataParamConfig)
+          } else {
+            this.dragLeave()
+          }
+        })
       }
     }
     this.setState({
@@ -224,15 +241,19 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
 
   public render () {
     const {
+      name,
       title,
-      placeholder,
-      size,
       type,
       dragged,
+      dimetionsCount,
+      metricsCount,
       onItemDragStart,
       onItemSort,
       onItemChangeAgg,
-      onItemRemove
+      onItemChangeColorConfig,
+      onItemChangeChart,
+      onItemRemove,
+      children
     } = this.props
 
     const { entering, items } = this.state
@@ -251,7 +272,6 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
 
     const containerClass = classnames({
       [styles.dropContainer]: true,
-      [styles.large]: size === 'large',
       [styles.dragOver]: shouldResponse
     })
 
@@ -267,28 +287,26 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       ? items.map((item) => (
         <DropboxItem
           key={item.name}
-          text={item.name}
-          type={item.type}
-          icon={item.icon}
-          sort={item.sort}
-          agg={item.agg}
+          container={name}
+          item={item}
+          dimetionsCount={dimetionsCount}
+          metricsCount={metricsCount}
           onDragStart={onItemDragStart}
           onDragEnd={this.itemDragEnd}
-          onSort={onItemSort(item as IDataParamSource)}
-          onChangAgg={onItemChangeAgg(item as IDataParamSource)}
+          onSort={onItemSort}
+          onChangAgg={onItemChangeAgg}
+          onChangeColorConfig={onItemChangeColorConfig}
+          onChangeChart={onItemChangeChart}
           onRemove={onItemRemove(item.name)}
         />
       ))
-      : (
-        <p className={styles.placeholder}>
-          <Icon type="arrow-right" />
-          {placeholder}
-        </p>
-      )
+      : children
 
     return (
       <div className={styles.dropbox}>
-        <p className={styles.title}>{title}</p>
+        <p className={styles.title}>
+          {title}
+        </p>
         <div
           className={containerClass}
           ref={(f) => this.container = f}

@@ -1,16 +1,18 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType } from './Pivot'
 import Cell from './Cell'
-import Chart, { IChartInfo, IChartUnit, IChartLine, IChartBlock } from './Chart'
-import { PIVOT_CANVAS_SIZE_LIMIT } from '../../../../globalConstants'
+import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
+import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
 import {
   getPivotContentTextWidth,
   getPivotCellWidth,
   getPivotCellHeight,
-  getChartPieces
+  getChartPieces,
+  decodeMetricName
 } from '../util'
 import { uuid } from '../../../../utils/util'
+import { IDataParamProperty } from '../Workbench/OperatingPanel'
 
 const styles = require('./Pivot.less')
 
@@ -21,10 +23,13 @@ export interface ITableBodyProps {
   rowTree: object
   colTree: object
   tree: object
-  chart: IChartInfo
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
+  color?: IDataParamProperty
+  label?: IDataParamProperty
+  renderType: RenderType
 }
 
 export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
@@ -37,9 +42,9 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
   }
 
   private horizontalCutting = (height, chartGrid) => {
-    const { dimetionAxis } = this.props.chart
-    const { extraMetricCount } = this.props.drawingData
-    if (height > PIVOT_CANVAS_SIZE_LIMIT) {
+    const { metrics, dimetionAxis, drawingData: { multiCoordinate } } = this.props
+    const limit = multiCoordinate ? PIVOT_CANVAS_POLAR_SIZE_LIMIT : PIVOT_CANVAS_SIZE_LIMIT
+    if (height > limit) {
       const result = []
       let chunk = {
         key: '',
@@ -48,9 +53,9 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
       }
       chartGrid.forEach((cg, index) => {
         const lineHeight = dimetionAxis === 'col'
-          ? cg.height * (extraMetricCount + 1)
+          ? cg.height * metrics.length
           : cg.height
-        if (chunk.height + lineHeight > PIVOT_CANVAS_SIZE_LIMIT) {
+        if (chunk.height + lineHeight > limit) {
           chunk.key = `${index}${chunk.data.map((d) => d.key).join(',')}`
           result.push(chunk)
           chunk = {
@@ -77,32 +82,26 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
   }
 
   private verticalCutting = (width, chartLines: IChartLine[]) => {
-    const { dimetionAxis } = this.props.chart
-    const { extraMetricCount } = this.props.drawingData
-    if (width > PIVOT_CANVAS_SIZE_LIMIT) {
+    const { metrics, dimetionAxis, drawingData: { multiCoordinate }  } = this.props
+    const limit = multiCoordinate ? PIVOT_CANVAS_POLAR_SIZE_LIMIT : PIVOT_CANVAS_SIZE_LIMIT
+    if (width > limit) {
       const result = {}
-      // let block: IChartBlock = {
-      //   key: '',
-      //   width: 0,
-      //   data: [],
-      //   pieces: 0
-      // }
       chartLines.forEach((line: IChartLine) => {
         let blockLine: IChartLine = this.initBlockLine(line)
         let block: IChartBlock = this.initBlock(blockLine)
         line.data.forEach((cu: IChartUnit, index) => {
           const unitWidth = dimetionAxis === 'row'
-            ? cu.width * (extraMetricCount + 1)
+            ? cu.width * metrics.length
             : cu.width
-          if (block.width + unitWidth > PIVOT_CANVAS_SIZE_LIMIT) {
-            if (result[index]) {
-              const currentBlock = result[index]
+          if (block.width + unitWidth > limit) {
+            if (result[index - 1]) {
+              const currentBlock = result[index - 1]
               // currentBlock.width += block.width
               currentBlock.data = currentBlock.data.concat(block.data)
             } else {
-              result[index] = {
+              result[index - 1] = {
                 ...block,
-                key: `${index}${block.data.map((d) => d.key).join(',')}`
+                key: `${index - 1}${block.data.map((d) => d.key).join(',')}`
               }
             }
             blockLine = this.initBlockLine(line)
@@ -129,7 +128,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
         pieces: getChartPieces(
           block.data.reduce((lsum, line: IChartLine) =>
             lsum + line.data.reduce((usum, unit: IChartUnit) =>
-              usum + (dimetionAxis === 'col' ? unit.records.length * (extraMetricCount + 1) : unit.records.length)
+              usum + (dimetionAxis === 'col' ? unit.records.length * metrics.length : unit.records.length)
             , 0)
           , 0),
           block.data.length
@@ -143,7 +142,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
         pieces: getChartPieces(
           chartLines.reduce((lsum, line: IChartLine) =>
             lsum + line.data.reduce((usum, unit: IChartUnit) =>
-              usum + (dimetionAxis === 'col' ? unit.records.length * (extraMetricCount + 1) : unit.records.length)
+              usum + (dimetionAxis === 'col' ? unit.records.length * metrics.length : unit.records.length)
             , 0)
           , 0),
           chartLines.length
@@ -161,14 +160,27 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
 
   private initBlockLine = (line) => ({
     ...line,
+    key: `${uuid(8, 16)}${line.key}`,
     data: []
   })
 
   public render () {
-    const { rowKeys, colKeys, rowTree, rowWidths, colTree, tree, chart, metrics, metricAxisConfig, drawingData } = this.props
-    const { extraMetricCount, elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
-    const { dimetionAxis } = chart
-
+    const {
+      rowKeys,
+      colKeys,
+      rowTree,
+      rowWidths,
+      colTree,
+      tree,
+      metrics,
+      metricAxisConfig,
+      drawingData,
+      dimetionAxis,
+      color,
+      label,
+      renderType
+    } = this.props
+    const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed, multiCoordinate } = drawingData
     let tableBody = null
     const chartGrid: IChartLine[] = []
     const cells = []
@@ -186,7 +198,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
 
           colKeys.forEach((ck, j) => {
             const flatColKey = ck.join(String.fromCharCode(0))
-            const record = tree[flatRowKey][flatColKey]
+            const records = tree[flatRowKey][flatColKey]
 
             if (dimetionAxis === 'col') {
               const nextCk = colKeys[j + 1] || []
@@ -202,11 +214,11 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               }
               lastUnit.records.push({
                 key: ck[ck.length - 1],
-                value: record
+                value: records
               })
               if (ck.length === 1 && j === colKeys.length - 1 ||
                   ck[ck.length - 2] !== nextCk[nextCk.length - 2]) {
-                const unitWidth = lastUnit.records.length * elementSize
+                const unitWidth = lastUnit.records.length * (multiCoordinate ? unitMetricHeight : elementSize)
                 // tableWidth += unitWidth
                 lastUnit.width = unitWidth
                 lastUnit.ended = true
@@ -240,7 +252,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               }
               lastUnit.records.push({
                 key: rk[rk.length - 1],
-                value: record
+                value: records
               })
               if (rk.length === 1 && i === rowKeys.length - 1 ||
                   rk[rk.length - 2] !== nextRk[nextRk.length - 2]) {
@@ -248,7 +260,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
                 lastUnit.width = unitMetricWidth
                 lastUnit.ended = true
                 if (j === colKeys.length - 1) {
-                  const height = lastUnit.records.length * elementSize
+                  const height = lastUnit.records.length * (multiCoordinate ? unitMetricWidth : elementSize)
                   chartGrid.push({
                     key: flatRowKey,
                     height,
@@ -277,6 +289,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
             let lastUnit = chartLine[chartLine.length - 1]
             if (!lastUnit || lastUnit.ended) {
               lastUnit = {
+                key: flatColKey,
                 width: 0,
                 records: [],
                 ended: false
@@ -285,11 +298,11 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
             }
             lastUnit.records.push({
               key: ck[ck.length - 1],
-              value: records[0]
+              value: records
             })
             if (ck.length === 1 && j === colKeys.length - 1 ||
                 ck[ck.length - 2] !== nextCk[nextCk.length - 2]) {
-              const unitWidth = lastUnit.records.length * elementSize
+              const unitWidth = lastUnit.records.length * (multiCoordinate ? unitMetricHeight : elementSize)
               // tableWidth += unitWidth
               lastUnit.width = unitWidth
               lastUnit.ended = true
@@ -307,10 +320,11 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
           } else {
             // tableWidth += unitMetricWidth * (extraMetricCount + 1)
             chartLine.push({
+              key: flatColKey,
               width: unitMetricWidth,
               records: [{
                 key: ck[ck.length - 1],
-                value: records[0]
+                value: records
               }],
               ended: true
             })
@@ -318,7 +332,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
             if (j === colKeys.length - 1) {
               chartGrid.push({
                 key: flatColKey,
-                height: elementSize,
+                height: (multiCoordinate ? unitMetricWidth : elementSize),
                 data: chartLine.slice()
               })
               // tableHeight = elementSize
@@ -346,7 +360,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
             }
             lastUnit.records.push({
               key: rk[rk.length - 1],
-              value: records[0]
+              value: records
             })
             if (rk.length === 1 && i === rowKeys.length - 1 ||
                 rk[rk.length - 2] !== nextRk[nextRk.length - 2]) {
@@ -354,7 +368,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               lastUnit.width = unitMetricWidth
               lastUnit.ended = true
 
-              const height = lastUnit.records.length * elementSize
+              const height = lastUnit.records.length * (multiCoordinate ? unitMetricWidth : elementSize)
               chartGrid.push({
                 key: flatRowKey,
                 height,
@@ -373,10 +387,10 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               height: unitMetricHeight,
               data: [{
                 key: flatRowKey,
-                width: elementSize,
+                width: (multiCoordinate ? unitMetricHeight : elementSize),
                 records: [{
                   key: rk[rk.length - 1],
-                  value: records[0]
+                  value: records
                 }],
                 ended: false
               }]
@@ -387,16 +401,20 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
         })
       } else {
         const records = tree[0]
-        const width = dimetionAxis === 'col' ? elementSize : unitMetricWidth
-        const height = dimetionAxis === 'row' ? elementSize : unitMetricHeight
+        const width = dimetionAxis === 'col' ? (multiCoordinate ? unitMetricHeight : elementSize) : unitMetricWidth
+        const height = dimetionAxis === 'row' ? (multiCoordinate ? unitMetricWidth : elementSize) : unitMetricHeight
         // tableWidth = width * (dimetionAxis === 'row' ? extraMetricCount + 1 : 1)
         // tableHeight = height * (dimetionAxis === 'col' ? extraMetricCount + 1 : 1)
         const chartUnit = {
           width,
-          records: records.map((r) => ({
-            key: '',
-            value: r
-          })),
+          // records: records.map((r) => ({
+          //   key: '',
+          //   value: [r]
+          // })),
+          records: [{
+            key: 'data',
+            value: records
+          }],
           ended: true
         }
         chartGrid.push({ height, data: [chartUnit] })
@@ -408,27 +426,33 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
       let tableHeight = 0
 
       if (dimetionAxis === 'col') {
-        tableWidth = colKeyLength * elementSize
-        tableHeight = metricAxisCount * unitMetricHeight * (extraMetricCount + 1)
+        tableWidth = colKeyLength * (multiCoordinate ? unitMetricHeight : elementSize)
+        tableHeight = metricAxisCount * unitMetricHeight * metrics.length
       } else {
-        tableWidth = metricAxisCount * unitMetricWidth * (extraMetricCount + 1)
-        tableHeight = rowKeyLength * elementSize
+        tableWidth = metricAxisCount * unitMetricWidth * metrics.length
+        tableHeight = rowKeyLength * (multiCoordinate ? unitMetricWidth : elementSize)
       }
-
       tableBody = (
         <Chart
           width={tableWidth}
           height={tableHeight}
           dimetionAxisCount={dimetionAxis === 'col' ? colKeyLength : rowKeyLength}
           metricAxisCount={metricAxisCount}
-          chart={chart}
           metrics={metrics}
           data={this.gridCutting(tableWidth, tableHeight, chartGrid)}
           drawingData={drawingData}
+          dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}
+          color={color}
+          label={label}
+          renderType={renderType}
         />
       )
     } else {
+      const decodedMetrics = metrics.map((m) => ({
+        ...m,
+        name: decodeMetricName(m.name)
+      }))
       if (colKeys.length && rowKeys.length) {
         rowKeys.forEach((rk) => {
           const flatRowKey = rk.join(String.fromCharCode(0))
@@ -437,7 +461,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
 
           colKeys.forEach((ck) => {
             const flatColKey = ck.join(String.fromCharCode(0))
-            const record = tree[flatRowKey][flatColKey]
+            const records = tree[flatRowKey][flatColKey]
 
             const { width, height } = colTree[flatColKey]
             const cellWidth = getPivotCellWidth(width)
@@ -447,8 +471,8 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
                 key={`${flatRowKey}${flatColKey}`}
                 width={cellWidth}
                 height={getPivotCellHeight(height)}
-                metrics={metrics}
-                data={[record]}
+                metrics={decodedMetrics}
+                data={records}
               />
             )
           })
@@ -473,7 +497,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               key={flatColKey}
               width={cellWidth}
               height={getPivotCellHeight(height)}
-              metrics={metrics}
+              metrics={decodedMetrics}
               data={records}
             />
           )
@@ -498,7 +522,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
               key={flatRowKey}
               width={cellWidth}
               height={getPivotCellHeight(height)}
-              metrics={metrics}
+              metrics={decodedMetrics}
               data={records}
             />
           )
@@ -516,7 +540,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
           const records = tree[0]
           let width = 0
           metrics.forEach((m) => {
-            const text = records[m.name]
+            const text = records[`${m.agg}(${m.name})`]
             width = Math.max(width, getPivotContentTextWidth(text))
           })
           const height = getPivotCellHeight()
@@ -526,7 +550,7 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
                 key={uuid(8, 16)}
                 width={width}
                 height={height}
-                metrics={metrics}
+                metrics={decodedMetrics}
                 data={records}
               />
             </tr>

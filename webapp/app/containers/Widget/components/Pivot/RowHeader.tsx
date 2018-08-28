@@ -1,14 +1,12 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import Yaxis from './Yaxis'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
-import { IChartInfo } from './Chart'
-import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData } from '../util'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType } from './Pivot'
+import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData, decodeMetricName } from '../util'
 
 const styles = require('./Pivot.less')
 
 interface IRowHeaderProps {
-  cols: string[]
   rows: string[]
   rowKeys: string[][]
   colKeys: string[][]
@@ -16,17 +14,16 @@ interface IRowHeaderProps {
   rowTree: object
   colTree: object
   tree: object
-  chart: IChartInfo
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
 }
 
 export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
   public render () {
-    const { cols, rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, chart, drawingData, metrics, metricAxisConfig } = this.props
-    const { extraMetricCount, elementSize, unitMetricHeight } = drawingData
-    const { dimetionAxis } = chart
+    const { rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, drawingData, dimetionAxis, metrics, metricAxisConfig } = this.props
+    const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
 
     const headers = []
 
@@ -51,7 +48,7 @@ export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
               if (rk[j] === lastRk[j]) {
                 return
               } else {
-                cellHeight = elementCount * elementSize
+                cellHeight = elementCount * (multiCoordinate ? unitMetricWidth : elementSize)
                 x = 1
                 elementCount = 0
                 auxiliaryLines = true
@@ -61,7 +58,7 @@ export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
             }
           } else {
             if (j === rk.length - 1) {
-              cellHeight = dimetionAxis === 'col' ? unitMetricHeight * (extraMetricCount + 1) : getPivotCellHeight(height)
+              cellHeight = dimetionAxis === 'col' ? unitMetricHeight * metrics.length : getPivotCellHeight(height)
               auxiliaryLines = dimetionAxis === 'col'
             }
             x = spanSize(rowKeys, i, j)
@@ -109,15 +106,18 @@ export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
 
     let yAxis
     if (dimetionAxis && !(dimetionAxis === 'row' && !colKeys.length && !rowKeys.length)) {
-      const { data, length } = getAxisData('y', rowKeys, colKeys, rowTree, colTree, tree, chart, drawingData)
+      const { data, length } = getAxisData('y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis)
+      const decodedMetrics = metrics.map((m) => ({
+        ...m,
+        name: decodeMetricName(m.name)
+      }))
       yAxis = (
         <Yaxis
           height={length}
           rowKeys={rowKeys}
-          chart={chart}
-          metrics={metrics}
+          metrics={decodedMetrics}
           data={data}
-          extraMetricCount={extraMetricCount}
+          dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}
         />
       )

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IChartInfo } from './Chart'
+import { DimetionType } from './Pivot'
 import { getPivotCellWidth, getPivotCellHeight } from '../util'
 
 const styles = require('./Pivot.less')
@@ -9,12 +9,11 @@ interface ICornerProps {
   cols: string[]
   rows: string[]
   rowWidths: number[]
-  chart: IChartInfo
+  dimetionAxis: DimetionType
 }
 
 export function Corner (props: ICornerProps) {
-  const { cols, rows, rowWidths, chart } = props
-  const { dimetionAxis } = chart
+  const { cols, rows, rowWidths, dimetionAxis } = props
 
   let width
   let height

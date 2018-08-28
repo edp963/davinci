@@ -5,51 +5,50 @@ import { checkChartEnable } from '../util'
 const Tooltip = require('antd/lib/tooltip')
 const styles = require('./Workbench.less')
 
-interface IChartIndicatorProps extends IChartInfo {
+interface IChartIndicatorProps {
+  chartInfo: IChartInfo
   dimetionsCount: number
   metricsCount: number
-  selected: number
-  onSelect: (chartId: number) => void
+  selectedCharts: IChartInfo[]
+  onSelect: (chart: IChartInfo) => void
 }
 
-export class ChartIndicator extends React.PureComponent<IChartIndicatorProps, {}> {
-  private onSelect = () => {
-    const { id, onSelect, dimetionsCount, metricsCount, requireDimetions, requireMetrics } = this.props
-    if (checkChartEnable(dimetionsCount, metricsCount, requireDimetions, requireMetrics)) {
-      onSelect(id)
+export function ChartIndicator (props: IChartIndicatorProps) {
+  const { chartInfo, dimetionsCount, metricsCount, selectedCharts } = props
+  const { title, icon, requireDimetions, requireMetrics} = chartInfo
+
+  const overlay = (
+    <p>
+      {title}<br />
+      {`需要 ${requireDimetions}个 到多个维度`}<br/>
+      {`需要 ${requireMetrics}个 到多个度量`}
+    </p>
+  )
+
+  const iconClass = classnames({
+    iconfont: true,
+    [icon]: true,
+    [styles.enabled]: checkChartEnable(dimetionsCount, metricsCount, chartInfo),
+    [styles.selected]: selectedCharts.filter((s) => s.id !== chartInfo.id).length === 0,
+    [styles.multipleSelect]: selectedCharts.some((s) => s.id === chartInfo.id)
+  })
+  return (
+    <Tooltip
+      title={overlay}
+      placement="bottom"
+      mouseLeaveDelay={0}
+    >
+      <i className={iconClass} onClick={onSelect(props)} />
+    </Tooltip>
+  )
+}
+
+function onSelect (props) {
+  return function () {
+    const { chartInfo, onSelect, dimetionsCount, metricsCount } = props
+    if (checkChartEnable(dimetionsCount, metricsCount, chartInfo)) {
+      onSelect(chartInfo)
     }
-  }
-
-  public render () {
-    const { id, name, icon, dimetionsCount, metricsCount, requireDimetions, requireMetrics, selected } = this.props
-
-    const title = (
-      <p>
-        {name}<br />
-        {Array.isArray(requireDimetions)
-          ? `需要 ${requireDimetions[0]}个 到 ${requireDimetions[2] === 9999 ? '多' : requireDimetions[2]}个 维度`
-          : `需要 ${requireDimetions}个 维度`}<br/>
-        {Array.isArray(requireMetrics)
-          ? `需要 ${requireMetrics.map((m) => `${m === 9999 ? '多' : m}个`).join(` 到 `)} 度量`
-          : `需要 ${requireMetrics}个 度量`}
-      </p>
-    )
-
-    const iconClass = classnames({
-      iconfont: true,
-      [icon]: true,
-      [styles.enabled]: checkChartEnable(dimetionsCount, metricsCount, requireDimetions, requireMetrics),
-      [styles.selected]: selected === id
-    })
-    return (
-      <Tooltip
-        title={title}
-        placement="bottom"
-        mouseLeaveDelay={0}
-      >
-        <i className={iconClass} onClick={this.onSelect} />
-      </Tooltip>
-    )
   }
 }
 

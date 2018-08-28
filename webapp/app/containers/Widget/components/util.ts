@@ -18,7 +18,9 @@ import {
   PIVOT_TITLE_SIZE,
   PIVOT_CANVAS_AXIS_SIZE_LIMIT
 } from '../../../globalConstants'
-import { IChartLine, IChartUnit } from './Pivot/Chart'
+import { DimetionType } from './Pivot/Pivot'
+import { IChartLine, IChartUnit, IChartInfo } from './Pivot/Chart'
+import widgetlibs from '../../../assets/json/widgetlib'
 import { uuid } from '../../../utils/util'
 
 export function getAggregatorLocale (agg) {
@@ -171,7 +173,7 @@ export function getPivotCellHeight (height?: number): number {
   return (height || PIVOT_LINE_HEIGHT) + PIVOT_CELL_PADDING * 2 + PIVOT_CELL_BORDER
 }
 
-export const getTableBodyWidth = (direction: 'row' | 'col', containerWidth, rowHeaderWidths) => {
+export const getTableBodyWidth = (direction: DimetionType, containerWidth, rowHeaderWidths) => {
   const title = rowHeaderWidths.length && PIVOT_TITLE_SIZE
   const rowHeaderWidthSum = direction === 'row'
     ? rowHeaderWidths.slice(0, rowHeaderWidths.length - 1).reduce((sum, r) => sum + getPivotCellWidth(r), 0)
@@ -179,17 +181,17 @@ export const getTableBodyWidth = (direction: 'row' | 'col', containerWidth, rowH
   return containerWidth - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
 }
 
-export const getTableBodyHeight = (direction: 'row' | 'col', containerHeight, columnHeaderCount) => {
+export const getTableBodyHeight = (direction: DimetionType, containerHeight, columnHeaderCount) => {
   const title = columnHeaderCount && PIVOT_TITLE_SIZE
   const realColumnHeaderCount = direction === 'col' ? Math.max(columnHeaderCount - 1, 0) : columnHeaderCount
   return containerHeight - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
 }
 
-export function getChartElementSizeAndShouldCollapsed (
-  direction: 'row' | 'col',
+export function getChartElementSize (
+  direction: DimetionType,
   tableBodySideLength: number[],
   chartElementCountArr: number[]
-): {elementSize: number, shouldCollapsed: boolean} {
+): number {
   let chartElementCount
   let side
 
@@ -204,33 +206,70 @@ export function getChartElementSizeAndShouldCollapsed (
   const sizePerElement = side / chartElementCount
 
   return sizePerElement > PIVOT_CHART_ELEMENT_MAX_WIDTH
-    ? { elementSize: PIVOT_CHART_ELEMENT_MAX_WIDTH, shouldCollapsed: direction === 'row' && true }
+    ? PIVOT_CHART_ELEMENT_MAX_WIDTH
     : sizePerElement < PIVOT_CHART_ELEMENT_MIN_WIDTH
-      ? { elementSize: PIVOT_CHART_ELEMENT_MIN_WIDTH, shouldCollapsed: false }
-      : {
-          elementSize: Math.round(sizePerElement),
-          shouldCollapsed: direction === 'row' && side > chartElementCount * sizePerElement
-        }
+      ? PIVOT_CHART_ELEMENT_MIN_WIDTH
+      : Math.floor(sizePerElement)
 }
 
-export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, extraMetricCount: number): number {
-  const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
-  return realContainerWidth / colKeyCount / (extraMetricCount + 1)
+export function shouldTableBodyCollapsed (
+  direction: DimetionType,
+  multiCoordinate: boolean,
+  tableBodyHeight: number,
+  rowKeyLength: number,
+  elementSizeArr: number[]
+): boolean {
+  const elementSize = multiCoordinate ? elementSizeArr[1] : elementSizeArr[0]
+  return direction === 'row' && tableBodyHeight > rowKeyLength * elementSize
 }
 
-export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, extraMetricCount: number): number {
-  const realContainerHeight = Math.max(tableBodyHeight, rowKeyCount * (extraMetricCount + 1) * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
-  return realContainerHeight / rowKeyCount / (extraMetricCount + 1)
+// export function getChartElementSizeAndShouldCollapsed (
+//   direction: DimetionType,
+//   tableBodySideLength: number[],
+//   chartElementCountArr: number[]
+// ): {elementSize: number, shouldCollapsed: boolean} {
+//   let chartElementCount
+//   let side
+
+//   if (direction === 'col') {
+//     chartElementCount = Math.max(1, chartElementCountArr[0])
+//     side = tableBodySideLength[0]
+//   } else {
+//     chartElementCount = Math.max(1, chartElementCountArr[1])
+//     side = tableBodySideLength[1]
+//   }
+
+//   const sizePerElement = side / chartElementCount
+
+//   return sizePerElement > PIVOT_CHART_ELEMENT_MAX_WIDTH
+//     ? { elementSize: PIVOT_CHART_ELEMENT_MAX_WIDTH, shouldCollapsed: direction === 'row' && true }
+//     : sizePerElement < PIVOT_CHART_ELEMENT_MIN_WIDTH
+//       ? { elementSize: PIVOT_CHART_ELEMENT_MIN_WIDTH, shouldCollapsed: false }
+//       : {
+//           elementSize: Math.floor(sizePerElement),
+//           shouldCollapsed: direction === 'row' && side > chartElementCount * sizePerElement
+//         }
+// }
+
+export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, metricCount: number): number {
+  const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+  return realContainerWidth / colKeyCount / metricCount
 }
 
-export function checkChartEnable (dimetionsCount: number, metricsCount: number, requireDimetions: number | number[], requireMetrics: number | number[]): boolean {
-  const dimetionEnable = Array.isArray(requireDimetions)
-    ? dimetionsCount >= requireDimetions[0] && dimetionsCount <= requireDimetions[2]
-    : dimetionsCount >= requireDimetions
-  const metricEnable = Array.isArray(requireMetrics)
-  ? metricsCount >= requireMetrics[0] && dimetionsCount <= requireMetrics[1]
-  : metricsCount >= requireMetrics
-  return dimetionEnable && metricEnable
+export function getChartUnitMetricHeight (tableBodyHeight, rowKeyCount: number, metricCount: number): number {
+  const realContainerHeight = Math.max(tableBodyHeight, rowKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
+  return realContainerHeight / rowKeyCount / metricCount
+}
+
+export function checkChartEnable (dimetionsCount: number, metricsCount: number, charts: IChartInfo | IChartInfo[]): boolean {
+  const chartArr = Array.isArray(charts) ? charts : [charts]
+  for (const chart of chartArr) {
+    const { requireDimetions, requireMetrics } = chart
+    if (dimetionsCount < requireDimetions || metricsCount < requireMetrics) {
+      return false
+    }
+  }
+  return true
 }
 
 export function getAxisInterval (max, splitNumber) {
@@ -255,19 +294,32 @@ export function getChartPieces (total, lines) {
 
 export function metricAxisLabelFormatter (value) {
   if (value >= Math.pow(10, 9) && value < Math.pow(10, 12)) {
-    return `${Math.floor(value / Math.pow(10, 9))}B`
+    return `${precision(value / Math.pow(10, 9))}B`
   } else if (value >= Math.pow(10, 6) && value < Math.pow(10, 9)) {
-    return `${Math.floor(value / Math.pow(10, 6))}M`
+    return `${precision(value / Math.pow(10, 6))}M`
   } else if (value >= Math.pow(10, 3) && value < Math.pow(10, 6)) {
-    return `${Math.floor(value / Math.pow(10, 3))}K`
+    return `${precision(value / Math.pow(10, 3))}K`
   } else {
     return value
   }
+
+  function precision (num) {
+    return num >= 10 ? Math.floor(num) : num.toFixed(1)
+  }
 }
 
-export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, chart, drawingData) {
-  const { extraMetricCount, elementSize, unitMetricWidth, unitMetricHeight } = drawingData
-  const { dimetionAxis } = chart
+export function getPivot () {
+  return widgetlibs[0]
+}
+
+export function getChartViewMetrics (metrics, requireMetrics) {
+  const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
+  metrics.slice().splice(1, auxiliaryMetrics)
+  return metrics
+}
+
+export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis) {
+  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
   const data: IChartLine[] = []
   const chartLine: IChartUnit[] = []
   let axisLength = 0
@@ -278,6 +330,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
   let sndTree
   let renderDimetionAxis
   let unitMetricSide
+  let polarMetricSide
 
   if (type === 'x') {
     renderKeys = colKeys
@@ -286,6 +339,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
     sndTree = rowTree
     renderDimetionAxis = 'col'
     unitMetricSide = unitMetricWidth
+    polarMetricSide = unitMetricHeight
   } else {
     renderKeys = rowKeys
     renderTree = rowTree
@@ -293,6 +347,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
     sndTree = colTree
     renderDimetionAxis = 'row'
     unitMetricSide = unitMetricHeight
+    polarMetricSide = unitMetricWidth
   }
 
   if (renderKeys.length) {
@@ -317,7 +372,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
         })
         if (keys.length === 1 && i === renderKeys.length - 1 ||
             keys[keys.length - 2] !== nextKeys[nextKeys.length - 2]) {
-          const unitLength = lastUnit.records.length * elementSize
+          const unitLength = lastUnit.records.length * (multiCoordinate ? polarMetricSide : elementSize)
           axisLength += unitLength
           lastUnit.width = unitLength
           lastUnit.ended = true
@@ -364,17 +419,17 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
   }
 
   return {
-    data: axisDataCutting(type, dimetionAxis, extraMetricCount, axisLength, data),
+    data: axisDataCutting(type, dimetionAxis, metrics, axisLength, data),
     length: axisLength
   }
 }
 
-export function axisDataCutting (type: 'x' | 'y', dimetionAxis, extraMetricCount, axisLength, data) {
+export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLength, data) {
   if (axisLength > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
     const result = []
     data.forEach((line) => {
       let blockLine = {
-        key: line.key,
+        key: `${uuid(8, 16)}${line.key}`,
         data: []
       }
       let block = {
@@ -384,13 +439,13 @@ export function axisDataCutting (type: 'x' | 'y', dimetionAxis, extraMetricCount
       }
       line.data.forEach((unit, index) => {
         const unitWidth = type === 'x' && dimetionAxis === 'row' || type === 'y' && dimetionAxis === 'col'
-          ? unit.width * (extraMetricCount + 1)
+          ? unit.width * metrics.length
           : unit.width
         if (block.length + unitWidth > PIVOT_CANVAS_AXIS_SIZE_LIMIT) {
           block.key = `${index}${block.data.map((d) => d.key).join(',')}`
           result.push(block)
           blockLine = {
-            key: line.key,
+            key: `${uuid(8, 16)}${line.key}`,
             data: []
           }
           block = {

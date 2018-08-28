@@ -1,7 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { DragType, DropboxItemType, ViewModelType, SortType, AggregatorType } from './Dropbox'
+import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox } from './Dropbox'
+import ChartSelector from './ChartSelector'
 import { getAggregatorLocale, decodeMetricName } from '../util'
+import { IChartInfo } from '../Pivot/Chart'
 
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
@@ -10,15 +12,16 @@ const Dropdown = require('antd/lib/dropdown')
 const styles = require('./Workbench.less')
 
 interface IDropboxItemProps {
-  text: string
-  type: DropboxItemType
-  sort: SortType
-  icon: ViewModelType
-  agg: AggregatorType
-  onDragStart: (name: string, type: DragType, icon: ViewModelType, agg: AggregatorType, sort: SortType, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
+  container: string
+  item: IDataParamSourceInBox
+  dimetionsCount: number
+  metricsCount: number
+  onDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onDragEnd: () => void
-  onSort: (sort: SortType) => void
-  onChangAgg: (agg: AggregatorType) => void
+  onSort: (item: IDataParamSource, sort: SortType) => void
+  onChangAgg: (item: IDataParamSource, agg: AggregatorType) => void
+  onChangeColorConfig: (item: IDataParamSource) => void
+  onChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
   onRemove: (e) => void
 }
 
@@ -38,11 +41,24 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     }
   }
 
-  private categoryDropdownList = [{
-    default: '默认顺序',
-    asc: '升序',
-    desc: '降序'
-  }]
+  private categoryDropdownList = this.props.container === 'color'
+    ? [{
+      color: '配置颜色'
+    }, {
+      sort: {
+        name: '排序',
+        subs: [{
+          default: '默认顺序',
+          asc: '升序',
+          desc: '降序'
+        }]
+      }
+    }]
+    : [{
+      default: '默认顺序',
+      asc: '升序',
+      desc: '降序'
+    }]
 
   private valueDropdownList = [{
     sum: getAggregatorLocale('sum'),
@@ -63,14 +79,14 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
   }]
 
   private dragStart = (e) => {
-    const { text, type, icon, sort, agg, onDragStart } = this.props
+    const { item, onDragStart } = this.props
     // hack firefox trigger dragEnd
     e.persist()
-    if (type !== 'add') {
+    if (item.type !== 'add') {
       this.setState({
         dragging: true
       }, () => {
-        onDragStart(text, type, icon, agg, sort, e)
+        onDragStart(item as IDataParamSource, e)
       })
       setTimeout(() => {
         e.target.classList.add(styles.dragged)
@@ -103,19 +119,34 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
   }
 
   private dropdownMenuClick = ({key}) => {
-    const { onSort, onChangAgg } = this.props
+    const { item, onSort, onChangAgg, onChangeColorConfig } = this.props
     if (['default', 'asc', 'desc'].indexOf(key) >= 0) {
-      onSort(key)
+      onSort(item as IDataParamSource, key)
+    } else if (key === 'color') {
+      onChangeColorConfig(item as IDataParamSource)
     } else {
-      onChangAgg(key)
+      onChangAgg(item as IDataParamSource, key)
     }
   }
 
   public render () {
-    const { text: originalText, type, sort, agg, onRemove } = this.props
+    const { container, item, dimetionsCount, metricsCount, onChangeChart, onRemove } = this.props
+    const { name: originalName, type, sort, agg } = item
     const { dragging } = this.state
 
-    const text = type === 'value' ? decodeMetricName(originalText) : originalText
+    const name = type === 'value' ? decodeMetricName(originalName) : originalName
+
+    let chartSelector
+    if (container === 'metrics' && item.type !== 'add') {
+      chartSelector = (
+        <ChartSelector
+          chart={item.chart}
+          dimetionsCount={dimetionsCount}
+          metricsCount={metricsCount}
+          onChangeChart={onChangeChart(item as IDataParamSource)}
+        />
+      )
+    }
 
     const itemClass = classnames({
       [styles.dropItemContent]: true,
@@ -132,20 +163,10 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     })
 
     const content = (
-      <p
-        className={itemClass}
-        onDragStart={this.dragStart}
-        onDragEnd={this.dragEnd}
-        draggable
-      >
+      <p>
         <Icon type="down" />
-        {agg ? ` [${getAggregatorLocale(agg)}] ${text} ` : ` ${text} `}
+        {agg ? ` [${getAggregatorLocale(agg)}] ${name} ` : ` ${name} `}
         {sort && <i className={sortClass} />}
-        <Icon
-          type="close-square-o"
-          className={styles.remove}
-          onClick={onRemove}
-        />
       </p>
     )
 
@@ -180,7 +201,20 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
 
     return (
       <div className={styles.dropItem}>
-        {contentWithDropdownList}
+        <div
+          className={itemClass}
+          onDragStart={this.dragStart}
+          onDragEnd={this.dragEnd}
+          draggable
+        >
+          {chartSelector}
+          {contentWithDropdownList}
+          <Icon
+            type="close-square-o"
+            className={styles.remove}
+            onClick={onRemove}
+          />
+        </div>
       </div>
     )
   }

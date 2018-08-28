@@ -10,7 +10,9 @@ interface ICellProps {
 
 export function Cell (props: ICellProps) {
   const { width, height, metrics, data } = props
-  const content = metrics.map((m) => data[0] && data[0][`${m.agg}(${m.name})`]).join('\r\n')
+  const content = metrics.map((m) => {
+    return data && data.map((d) => d[`${m.agg}(${m.name})`]).join('\r\n')
+  }).join('\r\n')
 
   const cellStyles = {
     width,
