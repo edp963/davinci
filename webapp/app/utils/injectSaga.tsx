@@ -44,7 +44,6 @@ export default (descriptor: { key: string, saga: any, mode?: any }) => (WrappedC
     private injectors = getInjectors(this.context.store)
 
     public render () {
-      console.log(this.context.store)
       return <WrappedComponent {...this.props} />
     }
   }

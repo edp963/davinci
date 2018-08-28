@@ -114,10 +114,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                     label="描述"
                   >
                     {getFieldDecorator('description', {
-                      rules: [{
-                        required: true,
-                        message: 'description 不能为空'
-                      }, {}]
                     })(
                       <Input placeholder="description" />
                     )}
