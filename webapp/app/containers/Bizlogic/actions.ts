@@ -338,7 +338,7 @@ export function loadDataFail (error) {
   }
 }
 
-export function loadDistinctValue (viewId, fieldName, filters, resolve) {
+export function loadDistinctValue (viewId, fieldName, filters?, resolve?) {
   return {
     type: LOAD_DISTINCT_VALUE,
     payload: {
@@ -349,9 +349,13 @@ export function loadDistinctValue (viewId, fieldName, filters, resolve) {
     }
   }
 }
-export function distinctValueLoaded () {
+export function distinctValueLoaded (data, fieldName) {
   return {
-    type: LOAD_DISTINCT_VALUE_SUCCESS
+    type: LOAD_DISTINCT_VALUE_SUCCESS,
+    payload: {
+      data,
+      fieldName
+    }
   }
 }
 export function loadDistinctValueFail (error) {
