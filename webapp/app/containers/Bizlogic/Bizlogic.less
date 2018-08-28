@@ -78,6 +78,7 @@
       flex-direction: column;
 
       .declareSelect {
+        max-width: 236px;
         margin-top: 16px;
         margin-bottom: 6px;
       }
@@ -118,9 +119,6 @@
             width: 100%;
             padding-bottom: 30px;
           }
-          // .ant-tree > li:first-child {
-          //   padding-top: 0 !important;
-          // }
         }
       }
       .sqlAlertText {
@@ -132,7 +130,15 @@
       }
       .fromBtn {
         margin: 10px 16px;
+        display: flex;
+        flex-direction: row;
+        .sqlAlert {
+          flex: 1 1 auto;
+          width: 100%;
+        }
         .executeBtn {
+          width: 112px;
+          flex-shrink: 0;
           float: right;
         }
       }
