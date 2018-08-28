@@ -26,7 +26,7 @@ const styles = require('../Sidebar/Sidebar.less')
 
 
 interface ISidebarOptionProps {
-  route: any
+  route: any[]
   active: boolean
   children: React.ReactNode
   params: any

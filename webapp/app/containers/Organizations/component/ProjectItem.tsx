@@ -1,5 +1,5 @@
 import * as React from 'react'
-import {IOrganization} from '../Organization'
+import * as Organization from '../Organization'
 const Button = require('antd/lib/button')
 const styles = require('../Organization.less')
 const Tag = require('antd/lib/tag')
@@ -12,13 +12,12 @@ import {IProject, IStarUser} from '../../Projects'
 
 interface IProjectItemProps {
   key: number
- // options: IProjectOptions
-  options: IProject,
+  options: Organization.IOrganizationProjects,
   toProject: (id: number) => any
   loginUser: any
   deleteProject: (id: number) => any
   starUser: IStarUser[]
-  currentOrganization: IOrganization
+  currentOrganization: Organization.IOrganization
   unStar?: (id: number) => any
   userList?: (id: number) => any
 }

@@ -47,8 +47,9 @@ interface IUserFormProps {
     id: number,
     name: string,
     type: string,
-    resolve: (res: any) => void,
-    reject: (err: any) => void
+    param?: any,
+    resolve?: (res: any) => void,
+    reject?: (err: any) => void
   ) => any
 }
 
@@ -242,7 +243,7 @@ export class UserForm extends React.PureComponent<IUserFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
   }
 }
 

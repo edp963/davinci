@@ -70,7 +70,7 @@ interface IWidgetFormProps {
   onShowMarkConfigTable: (id?: any) => any,
   onDeleteControl: (id: any) => any,
   onDeleteMarkControl: (id: any) => any,
-  onCheckName: (id: any, name: any, type: any, resolve: any, reject: any) => void
+  onCheckName: (id: any, name: any, type: any, param?: any, resolve?: any, reject?: any) => void
 }
 
 export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
@@ -554,7 +554,7 @@ export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
   }
 }
 

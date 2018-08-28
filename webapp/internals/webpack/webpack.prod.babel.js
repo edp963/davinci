@@ -9,9 +9,9 @@ module.exports = require('./webpack.base.babel')({
     app: [
       path.join(process.cwd(), 'app/app.tsx')
     ],
-    share: [
-      path.join(process.cwd(), 'share/app.js')
-    ]
+    // share: [
+    //   path.join(process.cwd(), 'share/app.js')
+    // ]
   },
 
   // Utilize long-term caching by adding content hashes (not compilation hashes) to compiled assets
@@ -48,24 +48,24 @@ module.exports = require('./webpack.base.babel')({
       },
       inject: true
     }),
-    new HtmlWebpackPlugin({
-      filename: 'share.html',
-      chunks: ['share'],
-      template: 'app/index.html',
-      minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeRedundantAttributes: true,
-        useShortDoctype: true,
-        removeEmptyAttributes: true,
-        removeStyleLinkTypeAttributes: true,
-        keepClosingSlash: true,
-        minifyJS: true,
-        minifyCSS: true,
-        minifyURLs: true
-      },
-      inject: true
-    })
+    // new HtmlWebpackPlugin({
+    //   filename: 'share.html',
+    //   chunks: ['share'],
+    //   template: 'app/index.html',
+    //   minify: {
+    //     removeComments: true,
+    //     collapseWhitespace: true,
+    //     removeRedundantAttributes: true,
+    //     useShortDoctype: true,
+    //     removeEmptyAttributes: true,
+    //     removeStyleLinkTypeAttributes: true,
+    //     keepClosingSlash: true,
+    //     minifyJS: true,
+    //     minifyCSS: true,
+    //     minifyURLs: true
+    //   },
+    //   inject: true
+    // })
   ],
 
   performance: {
@@ -74,14 +74,15 @@ module.exports = require('./webpack.base.babel')({
 
   htmlWebpackPlugin: {
     files: {
-      js: ['app.js', 'share.js'],
+      // js: ['app.js', 'share.js'],
+      js: ['app.js'],
       chunks: {
         app: {
           entry: 'app.js'
-        },
-        share: {
-          entry: 'share.js'
         }
+        // share: {
+        //   entry: 'share.js'
+        // }
       }
     }
   }

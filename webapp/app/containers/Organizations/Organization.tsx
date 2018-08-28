@@ -98,11 +98,21 @@ export interface IOrganization {
 }
 
 export interface IOrganizationProjects {
-  id: number
-  description: string
-  name: string
-  createBy: number
-  total: number
+  id?: number
+  description?: string
+  name?: string
+  total?: number
+  isStar?: boolean
+  orgId?: number
+  pic?: string
+  starNum?: number
+  userId?: number
+  visibility?: boolean
+  createBy?: {
+    avatar?: string
+    id?: number
+    username?: string
+  }
 }
 export interface IOrganizationTeams {
   id: number

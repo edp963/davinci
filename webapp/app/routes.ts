@@ -22,8 +22,8 @@
 import { RouteProps } from 'react-router'
 
 import Report from './containers/Report'
-import Group from './containers/Group'
-import User from './containers/User'
+// import Group from './containers/Group'
+// import User from './containers/User'
 import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'

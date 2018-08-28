@@ -92,7 +92,7 @@ export interface IProject {
   name?: string
   id?: number
   description?: string
-  pic?: number
+  pic?: string
   orgId?: number
   visibility?: boolean
   starNum?: number
@@ -193,9 +193,18 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   }
 
   private foldPanel = (flag) => () => {
-    this.setState({
-      [flag]: !this.state[flag]
-    })
+    // this.setState({
+    //   [flag]: !this.state[flag]
+    // })
+    if (flag === 'mimePanel') {
+      this.setState({
+        mimePanel: !this.state.mimePanel
+      })
+    } else if (flag === 'joinPanel') {
+      this.setState({
+        joinPanel: !this.state.joinPanel
+      })
+    }
   }
 
   private onTransfer = () => {
@@ -219,7 +228,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     }
     this.setState({
       searchMaskVisible: false
-    },() => onSearchProject(param))
+    }, () => onSearchProject(param))
   }
   private widgetTypeChange = (val) =>
     new Promise((resolve) => {
@@ -649,7 +658,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       <div className={wrapper}>
         <div className={styles.search}>
           <div  className={styles.searchWrapper}>
-            <label htmlFor="newtab-search-text" className={styles.searchLabel}></label>
+            <label htmlFor="newtab-search-text" className={styles.searchLabel}/>
             <input
               id="newtab-search-text"
               placeholder="Search the Davinci"

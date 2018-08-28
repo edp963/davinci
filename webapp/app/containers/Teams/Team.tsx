@@ -40,6 +40,13 @@ import {loadOrganizationMembers, loadOrganizationProjects, loadOrganizationTeams
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
 
+export interface ITeam {
+  id?: number
+  avatar?: string
+  name?: string
+  role?: number
+}
+
 interface ITeamsProps {
   router: InjectedRouter
   loginUser: any
@@ -71,10 +78,6 @@ interface ITeamsProps {
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve: () => any) => any
 }
 
-export interface ITeam {
-  id: number
-}
-
 export interface ITeamProjects {
   id: number
   downloadPermission: boolean
@@ -89,6 +92,8 @@ export interface ITeamProjects {
 
 export interface ITeamTeams {
   id: number
+  name?: string
+  description?: string
 }
 
 export interface ITeamMembers {
@@ -172,8 +177,8 @@ export class Teams extends React.Component<ITeamsProps> {
   }
 
   private pullProjectInTeam = (target) => {
-    const { params: {teamId} } = this.props.router
-    const { onPullProjectInTeam, onLoadTeamDetail } = this.props
+   // const { params: {teamId} } = this.props.router
+    const { onPullProjectInTeam, onLoadTeamDetail, params: {teamId} } = this.props
     if (target) {
       onPullProjectInTeam(Number(teamId), target, () => {
           onLoadTeamDetail(Number(teamId))

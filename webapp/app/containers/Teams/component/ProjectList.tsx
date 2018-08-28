@@ -37,7 +37,7 @@ interface IprojectOptions {
 }
 
 interface IProjectListProps {
-  projects: IprojectOptions
+  // projects: IprojectOptions
   currentTeam: any
   deleteProject: (event:any, id: number) => any
   currentTeamProjects: ITeamProjects[]

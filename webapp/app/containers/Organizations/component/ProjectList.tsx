@@ -13,9 +13,8 @@ import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
-import {IOrganization} from '../Organization'
 import {IStarUser} from '../../Projects'
-import {IOrganizationProjects} from '../Organization'
+
 interface IProjectsState {
   formType?: string
   formVisible: boolean
@@ -27,13 +26,13 @@ interface IProjectsState {
 interface IProjectsProps {
   loginUser: any
   organizationId: number
-  currentOrganization: IOrganization
+  currentOrganization: Organization.IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
-  starUserList: IStarUser[]
+  starUser: IStarUser[]
   onAddProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
-  organizationProjectsDetail: {total?: number, list: IOrganizationProjects[]}
+  organizationProjectsDetail: {total?: number, list: Organization.IOrganizationProjects[]}
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -76,7 +75,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   private checkUniqueName = (rule, value = '', callback) => {
     const { onCheckUniqueName, organizationId } = this.props
     const { getFieldsValue } = this.ProjectForm
-    const { id } = getFieldsValue()
+    const id = getFieldsValue()['id']
     const data = {
       name: value,
       orgId: organizationId,
@@ -149,7 +148,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     let projectSearchPagination = void 0
     if (organizationProjectsDetail) {
       projectSearchPagination =
-        <Pagination
+        (<Pagination
           //  simple={screenWidth < 768 || screenWidth === 768}
           showSizeChanger
           defaultCurrent={2}
@@ -159,7 +158,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           defaultPageSize={10}
           pageSizeOptions={['10', '15', '20']}
           current={this.state.pageNum}
-        />
+        />)
     }
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem

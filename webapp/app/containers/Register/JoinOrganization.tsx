@@ -22,7 +22,7 @@ const utilStyles = require('../../assets/less/util.less')
 const registerStyles = require('./register.less')
 
 interface IJoinOrganizationProps {
-  onJoinOrganization: (token?: string, resolve?: (res?: string) => any, reject?: (err?: string) => any) => any
+  onJoinOrganization: (token?: string, resolve?: (res?: {id?: number}) => any, reject?: (err?: string) => any) => any
   router: InjectedRouter
   loginLoading: boolean
   onLogin: (username: string, password: string, resolve?: () => any) => any

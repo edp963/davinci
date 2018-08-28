@@ -33,7 +33,7 @@ const utilStyles = require('../../assets/less/util.less')
 interface IGroupFormProps {
   type: string
   form: any
-  onCheckName: (id: number, name: string, type: string, resolve: (res: any) => void, reject: (err: any) => void) => any
+  onCheckName: (id: number, name: string, type: string, param?: any, resolve?: (res: any) => void, reject?: (err: any) => void) => any
 }
 
 export class GroupForm extends React.PureComponent<IGroupFormProps, {}> {
@@ -102,7 +102,7 @@ export class GroupForm extends React.PureComponent<IGroupFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
   }
 }
 

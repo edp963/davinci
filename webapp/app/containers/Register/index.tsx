@@ -44,7 +44,7 @@ interface IRegisterProps {
   router: InjectedRouter
   onSendEmailOnceMore: (email: string, resolve?: (res: any) => any) => any
   onSignup: (username: string, email: string, password: string, resolve?: (res: any) => any) => any
-  onCheckName: (id: number, name: string, type: string, resolve?: (res: any) => any, reject?: (error: any) => any) => any
+  onCheckName: (id: number, name: string, type: string, param?: any, resolve?: (res: any) => any, reject?: (error: any) => any) => any
 }
 
 interface IRegisterStates {
@@ -200,7 +200,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onSignup: (username, email, password, resolve) => dispatch(signup(username, email, password, resolve)),
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject)),
+    onCheckName: (id, name, type, params, resolve, reject) => dispatch(checkNameAction(id, name, type, params, resolve, reject)),
     onSendEmailOnceMore: (email, resolve) => dispatch(sendMailAgain(email, resolve))
   }
 }

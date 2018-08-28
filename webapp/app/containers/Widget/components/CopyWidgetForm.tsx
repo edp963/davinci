@@ -35,7 +35,7 @@ const styles = require('../Widget.less')
 interface ICopyWidgetFormProps {
   form: any,
   type: string,
-  onCheckName: (idName: any, value: any, typeName: any, success: (res: any) => void, error: (err: any) => void) => void
+  onCheckName: (idName: any, value: any, typeName: any, param?: any, success?: (res: any) => void, error?: (err: any) => void) => void
 }
 
 export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
@@ -97,7 +97,7 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
 
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
   }
 }
 
