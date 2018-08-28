@@ -1,18 +1,18 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IMetricAxisConfig } from './Pivot'
-import { IChartInfo, IChartLine, IChartUnit } from './Chart'
+import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
+import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter } from '../util'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
 interface IYaxisProps {
   height: number
   rowKeys: string[][]
-  chart: IChartInfo
   metrics: IPivotMetric[]
   data: any[]
-  extraMetricCount: number
+  dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
 }
 
@@ -28,13 +28,9 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { rowKeys, chart, metrics, data, extraMetricCount, metricAxisConfig } = this.props
-    const { dimetionAxis } = chart
+    const { rowKeys, metrics, data, dimetionAxis, metricAxisConfig } = this.props
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
-    const metric = metrics[0]
-    const extraMetrics = extraMetricCount > 0 ? metrics.slice(-extraMetricCount) : []
-    const combinedMetrics = [metric].concat(extraMetrics)
 
     const grid = []
     const xAxis = []
@@ -57,7 +53,42 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
         lineData.forEach((unit: IChartUnit) => {
           const { width, records } = unit
 
-          combinedMetrics.forEach((m, l) => {
+          metrics.forEach((m, l) => {
+            const metricAxisStyle = m.chart.coordinate === 'polar'
+              ? {
+                axisLabel: {
+                  show: false
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                  }
+                },
+                axisTick: {
+                  show: false
+                }
+              }
+              : {
+                axisLabel: {
+                  color: '#333',
+                  padding: 2,
+                  formatter: metricAxisLabelFormatter,
+                  showMaxLabel: false,
+                  showMinLabel: false,
+                  verticalAlign: 'top'
+                },
+                axisLine: {
+                  lineStyle: {
+                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                  }
+                },
+                axisTick: {
+                  lineStyle: {
+                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                  }
+                }
+              }
+
             grid.push({
               top: dimetionAxis === 'col' ? (xSum + l * width) : ySum,
               left: dimetionAxis === 'col' ? ySum + 63 : xSum + 63,   // splitLine 对齐
@@ -80,24 +111,7 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                 nameTextStyle: {
                   color: '#333'
                 },
-                axisLabel: {
-                  color: '#333',
-                  padding: 2,
-                  formatter: metricAxisLabelFormatter,
-                  showMaxLabel: false,
-                  showMinLabel: false,
-                  verticalAlign: 'top'
-                },
-                axisLine: {
-                  lineStyle: {
-                    color: '#d9d9d9'
-                  }
-                },
-                axisTick: {
-                  lineStyle: {
-                    color: '#d9d9d9'
-                  }
-                },
+                ...metricAxisStyle,
                 ...metricAxisConfig[m.name]
               })
             } else {
@@ -116,12 +130,12 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                 },
                 axisLine: {
                   lineStyle: {
-                    color: '#d9d9d9'
+                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
                   }
                 },
                 axisTick: {
                   lineStyle: {
-                    color: '#d9d9d9'
+                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
                   }
                 }
               })
@@ -129,7 +143,7 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
             index += 1
           })
           if (dimetionAxis === 'col') {
-            xSum += width * (extraMetricCount + 1)
+            xSum += width * metrics.length
           } else {
             ySum += width
           }
@@ -152,9 +166,9 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   public render () {
-    const { data } = this.props
+    const { data, metrics } = this.props
     const blocks = data.map((block) => (
-      <div key={block.key} style={{height: block.length}} />
+      <div key={block.key} style={{height: block.length * metrics.length}} />
     ))
     return (
       <div

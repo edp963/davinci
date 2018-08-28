@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { IDrawingData } from './Pivot'
+import { IDrawingData, DimetionType } from './Pivot'
 import { IChartInfo } from './Chart'
 import { getPivotCellWidth } from '../util'
 
@@ -9,19 +9,18 @@ interface IColumnTitleProps {
   cols: string[]
   colKeys: string[][]
   colTree: object
-  chart: IChartInfo
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
 }
 
 export function ColumnTitle (props: IColumnTitleProps) {
-  const { cols, colKeys, colTree, chart, drawingData } = props
-  const { dimetionAxis } = chart
-  const { elementSize, unitMetricWidth } = drawingData
+  const { cols, colKeys, colTree, drawingData, dimetionAxis } = props
+  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
   let tableWidth = 0
 
   if (dimetionAxis) {
     tableWidth = dimetionAxis === 'col'
-      ? elementSize * colKeys.length
+      ? (multiCoordinate ? unitMetricHeight : elementSize) * colKeys.length
       : elementSize * unitMetricWidth
   } else {
     tableWidth = Object.values(colTree).reduce((sum, d) => sum + getPivotCellWidth(d.width), 0)

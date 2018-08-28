@@ -39,7 +39,10 @@ import {
   LOAD_DATA,
   LOAD_DATA_SUCCESS,
   LOAD_DATA_FAILURE,
-  CLEAR_BIZDATAS
+  CLEAR_BIZDATAS,
+  LOAD_DISTINCT_VALUE,
+  LOAD_DISTINCT_VALUE_SUCCESS,
+  LOAD_DISTINCT_VALUE_FAILURE
 } from '../Bizlogic/constants'
 import { fromJS } from 'immutable'
 // import { STATUS_CODES } from 'http'
@@ -47,7 +50,9 @@ import { fromJS } from 'immutable'
 const initialState = fromJS({
   widgets: false,
   loading: false,
-  dataLoading: false
+  dataLoading: false,
+  columnValueLoading: false,
+  distinctColumnValues: null
 })
 
 function widgetReducer (state = initialState, action) {
@@ -97,6 +102,16 @@ function widgetReducer (state = initialState, action) {
       return state.set('bizdatas', false)
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       return state.set('widgets', payload.widgets)
+    case LOAD_DISTINCT_VALUE:
+      return state
+        .set('columnValueLoading', true)
+        .set('distinctColumnValues', null)
+    case LOAD_DISTINCT_VALUE_SUCCESS:
+      return state
+        .set('columnValueLoading', false)
+        .set('distinctColumnValues', payload.data[payload.fieldName].slice(0, 100))
+    case LOAD_DISTINCT_VALUE_FAILURE:
+      return state.set('columnValueLoading', false)
     default:
       return state
   }

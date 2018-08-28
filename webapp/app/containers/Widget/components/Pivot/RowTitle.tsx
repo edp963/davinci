@@ -1,6 +1,5 @@
 import * as React from 'react'
-import { IDrawingData } from './Pivot'
-import { IChartInfo } from './Chart'
+import { IDrawingData, DimetionType } from './Pivot'
 import { getPivotContentTextWidth, getPivotCellHeight } from '../util'
 
 const styles = require('./Pivot.less')
@@ -8,19 +7,18 @@ const styles = require('./Pivot.less')
 interface IRowTitleProps {
   rows: string[]
   rowKeys: string[][]
-  chart: IChartInfo
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
 }
 
 export function RowTitle (props: IRowTitleProps) {
-  const { rows, rowKeys, chart, drawingData } = props
-  const { dimetionAxis } = chart
-  const { elementSize, unitMetricHeight } = drawingData
+  const { rows, rowKeys, dimetionAxis, drawingData } = props
+  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
   let tableHeight = 0
 
   if (dimetionAxis) {
     tableHeight = dimetionAxis === 'row'
-      ? elementSize * rowKeys.length
+      ? (multiCoordinate ? unitMetricWidth : elementSize) * rowKeys.length
       : elementSize * unitMetricHeight
   } else {
     tableHeight = rowKeys.length * getPivotCellHeight()

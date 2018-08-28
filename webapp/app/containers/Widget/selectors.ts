@@ -37,9 +37,21 @@ const makeSelectDataLoading = () => createSelector(
   (widgetState) => widgetState.get('dataLoading')
 )
 
+const makeSelectDistinctColumnValues = () => createSelector(
+  selectWidget,
+  (widgetState) => widgetState.get('distinctColumnValues')
+)
+
+const makeSelectColumnValueLoading = () => createSelector(
+  selectWidget,
+  (widgetState) => widgetState.get('columnValueLoading')
+)
+
 export {
   selectWidget,
   makeSelectWidgets,
   makeSelectLoading,
-  makeSelectDataLoading
+  makeSelectDataLoading,
+  makeSelectDistinctColumnValues,
+  makeSelectColumnValueLoading
 }

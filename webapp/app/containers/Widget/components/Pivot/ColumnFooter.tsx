@@ -1,9 +1,8 @@
 import * as React from 'react'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig } from './Pivot'
-import { IChartInfo, IChartUnit, IChartLine } from './Chart'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType } from './Pivot'
+import { IChartLine } from './Chart'
 import Xaxis from './Xaxis'
-import { getAxisData } from '../util'
-import { uuid } from '../../../../utils/util'
+import { getAxisData, decodeMetricName } from '../util'
 
 const styles = require('./Pivot.less')
 
@@ -13,37 +12,39 @@ interface IColumnFooterProps {
   rowTree: object
   colTree: object
   tree: object
-  chart: IChartInfo
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
 }
 
 export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
   public render () {
-    const { rowKeys, colKeys, rowTree, colTree, tree, chart, metrics, metricAxisConfig, drawingData } = this.props
-    const { dimetionAxis } = chart
-    const { extraMetricCount } = drawingData
+    const { rowKeys, colKeys, rowTree, colTree, tree, metrics, metricAxisConfig, drawingData, dimetionAxis } = this.props
 
     let footers: IChartLine[] = []
     let tableWidth = 0
 
     if (dimetionAxis) {
-      const { data, length } = getAxisData('x', rowKeys, colKeys, rowTree, colTree, tree, chart, drawingData)
+      const { data, length } = getAxisData('x', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis)
       footers = data
       tableWidth = length
     }
+
+    const decodedMetrics = metrics.map((m) => ({
+      ...m,
+      name: decodeMetricName(m.name)
+    }))
 
     return (
       <div className={styles.columnFooter}>
         {dimetionAxis &&
           <Xaxis
             width={tableWidth}
-            chart={chart}
-            metrics={metrics}
+            metrics={decodedMetrics}
             data={footers}
-            extraMetricCount={extraMetricCount}
             metricAxisConfig={metricAxisConfig}
+            dimetionAxis={dimetionAxis}
           />
         }
       </div>

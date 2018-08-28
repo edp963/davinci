@@ -114,6 +114,7 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import {InjectedRouter} from 'react-router/lib/Router'
+import { IPivotProps } from '../Widget/components/Pivot/Pivot'
 
 const utilStyles = require('../../assets/less/util.less')
 const widgetStyles = require('../Widget/Widget.less')
@@ -512,8 +513,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const chartInfo = widgetlibs.find((wl) => wl.id === widget.type)
     const chartInstanceId = `widget_${itemId}`
 
-    const widgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics } = widgetConfig
+    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, color, label, size } = widgetConfig
 
     // let widgetConfig = JSON.parse(widget.config)
     // let currentChart = this.charts[chartInstanceId]
@@ -573,11 +574,32 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       pagination = cachedQueryParams.pagination
     }
 
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+
     onLoadDataFromItem(
       itemId,
       widget.viewId,
-      cols.concat(rows),
-      metrics.map((m) => ({ column: m.name, func: m.agg })),
+      groups,
+      aggregators,
       {
         filters,
         linkageFilters,

@@ -18,10 +18,16 @@
  * >>
  */
 
-export default function () {
-  return {
-    chartOption: {
-      type: 'line'
-    }
+import line from './line'
+import bar from './bar'
+import scatter from './scatter'
+import pie from './pie'
+
+export default function (type, elementSize) {
+  switch (type) {
+    case 'line': return line()
+    case 'bar': return bar(elementSize)
+    case 'scatter': return scatter()
+    case 'pie': return pie()
   }
 }

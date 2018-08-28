@@ -100,25 +100,31 @@
     display: flex;
     flex-direction: row;
 
-    .model {
-      width: 200px;
-      background-color: @light-bg;
+    .operatingPanel {
       flex-shrink: 0;
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
+
+      .model {
+        width: 200px;
+        background-color: @light-bg;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
+  
+      .config {
+        width: 241px;
+        background-color: @white;
+        border-left: 1px solid @border-color-base;
+        box-shadow: @left-side-box-shadow;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
     }
 
-    .config {
-      width: 241px;
-      background-color: @white;
-      border-left: 1px solid @border-color-base;
-      box-shadow: @left-side-box-shadow;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .table {
+    .viewPanel {
       min-width: 0;
       padding: 16px;
       flex: 1;
@@ -234,8 +240,14 @@
       color: @primary-color;
     }
 
+    &.multipleSelect {
+      border-bottom-color: @primary-color;
+      border-bottom-style: dashed;
+    }
+
     &.selected {
       border-bottom-color: @primary-color;
+      border-bottom-style: solid;
 
       &:hover {
         background-color: transparent;
@@ -315,23 +327,18 @@
   }
 
   .dropContainer {
-    height: 32px;
+    min-height: 54px;
     padding: 4px;
     border: 1px dashed @border-color-base;
     border-radius: 2px;
     line-height: 22px;
     position: relative;
+    transition: all 100ms ease;
     display: flex;
     flex-flow: row wrap;
     align-items: center;
 
-    &.large {
-      height: auto;
-      min-height: 54px;
-      transition: all 100ms ease;
-    }
-
-    .placeholder {
+    .dropboxContent {
       position: absolute;
       top: 0;
       left: 0;
@@ -341,6 +348,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      cursor: pointer;
 
       i {
         margin-right: 4px;
@@ -392,7 +400,7 @@
   flex-shrink: 0;
 
   .dropItemContent {
-    padding: 0 24px 0 12px;
+    padding: 0 24px;
     border-radius: 3px;
     color: @white;
     text-align: center;
@@ -435,6 +443,17 @@
       display: none;
     }
 
+    .chart {
+      width: 23px;
+      height: 23px;
+      line-height: 23px;
+      position: absolute;
+      top: 0;
+      left: 2px;
+      color: @white;
+      font-size: 1.5em;
+    }
+
     &:hover {
       .remove {
         display: block;
@@ -443,9 +462,152 @@
   }
 }
 
+.chartSelectorList {
+  background-color: @white;
+  border: 1px solid @border-color-base;
+  border-radius: 2px;
+
+  .item {
+    width: 28px;
+    height: 28px;
+    border-bottom: 1px solid @border-color-base;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @light-bg;
+    }
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .icon {
+    color: @primary-color;
+    font-size: 1.5em;
+  }
+}
+
 .valueDropDown {
   li:hover,
   li > div:hover {
     background-color: color(~`colorPalette("@{light-green}", 1)`);
+  }
+}
+
+.colorPanel {
+  height: 310px;
+  margin: -8px -16px;
+  display: flex;
+  flex-direction: row;
+
+  .tabs {
+    max-width: 96px;
+    padding: 2px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+
+    li {
+      padding: 2px 8px;
+      color: @light-text-color;
+      font-weight: bold;
+      line-height: 2em;
+      text-align: right;
+      cursor: pointer;
+      .ellipsis;
+
+      &:hover {
+        background-color: color(~`colorPalette("@{primary-color}", 1)`);
+      }
+
+      &.selected {
+        background-color: @light-bg;
+        border-right: 2px solid @primary-color;
+        color: @primary-color;
+      }
+    }
+  }
+
+  .picker {
+    flex: 1;
+    border-left: 1px solid @border-color-base;
+  }
+}
+
+.colorSettingForm {
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    flex-shrink: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid @border-color-base;
+
+    h4 {
+      margin-bottom: 8px;
+    }
+  }
+
+  .body {
+    flex: 1;
+    max-height: 290px;
+    display: flex;
+    flex-direction: row;
+
+    .list {
+      width: 128px;
+      padding: 4px 0;
+      border-right: 1px solid @border-color-base;
+      flex-shrink: 0;
+      overflow-y: auto;
+
+      li {
+        padding: 4px 8px 4px 32px;
+        color: @light-text-color;
+        font-weight: bold;
+        line-height: 2em;
+        position: relative;
+        cursor: pointer;
+        .ellipsis;
+
+        .icon {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          position: absolute;
+          top: 6px;
+          left: 4px;
+        }
+
+        &:hover {
+          background-color: color(~`colorPalette("@{primary-color}", 1)`);
+        }
+  
+        &.selected {
+          background-color: @light-bg;
+          border-right: 2px solid @primary-color;
+          color: @primary-color;
+        }
+      }
+    }
+
+    .picker {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .footer {
+    margin-top: 16px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
   }
 }

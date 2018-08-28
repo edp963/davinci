@@ -279,11 +279,15 @@ export function* getDistinctValue (action) {
       url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
       data: {
         column: fieldName,
-        parents: Object.entries(filters).map(([column, value]) => ({ column, value }))
+        parents: filters
+          ? Object.entries(filters).map(([column, value]) => ({ column, value }))
+          : []
       }
     })
-    resolve(readListAdapter(asyncData))
-    yield put(distinctValueLoaded())
+    yield put(distinctValueLoaded(asyncData.payload, fieldName))
+    if (resolve) {
+      resolve(readListAdapter(asyncData))
+    }
   } catch (err) {
     yield put(loadDistinctValueFail(err))
   }

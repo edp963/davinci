@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData } from './Pivot'
+import { IPivotMetric, IDrawingData, DimetionType } from './Pivot'
 import { IChartInfo } from './Chart'
 import { spanSize, getPivotCellWidth } from '../util'
 
@@ -8,28 +8,25 @@ const styles = require('./Pivot.less')
 
 interface IColumnHeaderProps {
   cols: string[]
-  rows: string[]
-  rowWidths: number[]
   colKeys: string[][]
   colTree: object
-  chart: IChartInfo
   metrics: IPivotMetric[]
   drawingData: IDrawingData
+  dimetionAxis: DimetionType
 }
 
 export class ColumnHeader extends React.PureComponent<IColumnHeaderProps, {}> {
   public tableContainer: HTMLDivElement = null
   public render () {
-    const { cols, rows, rowWidths, colKeys, colTree, chart, metrics, drawingData } = this.props
-    const { extraMetricCount, elementSize, unitMetricWidth } = drawingData
-    const { dimetionAxis } = chart
+    const { cols, colKeys, colTree, metrics, drawingData, dimetionAxis } = this.props
+    const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
 
     let tableWidth = 0
     let headers
 
     if (cols.length) {
       if (dimetionAxis === 'col' && cols.length === 1) {
-        tableWidth = colKeys.length * elementSize
+        tableWidth = colKeys.length * (multiCoordinate ? unitMetricHeight : elementSize)
       }
 
       headers = cols.map((c, i) => {
@@ -52,7 +49,7 @@ export class ColumnHeader extends React.PureComponent<IColumnHeaderProps, {}> {
               if (ck[i] === nextCk[i]) {
                 return
               } else {
-                cellWidth = elementCount * elementSize
+                cellWidth = elementCount * (multiCoordinate ? unitMetricHeight : elementSize)
                 x = elementCount
                 tableWidth += cellWidth
                 elementCount = 0
@@ -62,7 +59,7 @@ export class ColumnHeader extends React.PureComponent<IColumnHeaderProps, {}> {
             }
           } else {
             if (i === cols.length - 1) {
-              cellWidth = dimetionAxis === 'row' ? unitMetricWidth * (extraMetricCount + 1) : getPivotCellWidth(width)
+              cellWidth = dimetionAxis === 'row' ? unitMetricWidth * metrics.length : getPivotCellWidth(width)
               tableWidth += cellWidth
             }
             x = spanSize(colKeys, j, i)

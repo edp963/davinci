@@ -44,6 +44,7 @@ import './assets/fonts/iconfont.css'
 import './assets/override/antd.css'
 import './assets/override/react-grid.css'
 import './assets/override/datepicker.css'
+import './assets/override/react-color.css'
 import './assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'

@@ -1,7 +1,6 @@
 import * as React from 'react'
 import ScrollablePivot from './index'
 import { IPivotProps } from './Pivot'
-import widgetlibs from '../../../../assets/json/widgetlib'
 
 interface IPivotInVizStates {
   pivotProps: IPivotProps
@@ -15,8 +14,7 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
         data: [],
         cols: [],
         rows: [],
-        metrics: [],
-        chart: widgetlibs[0]
+        metrics: []
       }
     }
   }
