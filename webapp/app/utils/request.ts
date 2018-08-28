@@ -38,11 +38,11 @@ function refreshToken (response) {
   }
   return response
 }
-console.log(message)
+
 function checkStatus (response) {
   switch (response.status) {
     case 403:
-      message.error('未登录或会话过期，请重新登录', 5)
+    //  message.error('未登录或会话过期，请重新登录', 5)
       removeToken()
       localStorage.removeItem('token')
       break

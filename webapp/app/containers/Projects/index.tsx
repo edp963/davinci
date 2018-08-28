@@ -92,7 +92,7 @@ export interface IProject {
   name?: string
   id?: number
   description?: string
-  pic?: number
+  pic?: string
   orgId?: number
   visibility?: boolean
   starNum?: number

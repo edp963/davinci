@@ -6,13 +6,27 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const styles = require('./Star.less')
 import Avatar from '../../components/Avatar'
+import * as Organization from '../../containers/Organizations/Organization'
 
 interface IStar {
-  d?: IProject
   unStar?: (id: number) => any
   userList?: (id: number) => any
   starUser?: IStarUser[]
+  d?: {
+    createBy?: { avatar?: string, id?: number, username?: string}
+    isStar?: boolean
+    type?: string
+    name?: string
+    id?: number
+    description?: string
+    pic?: string
+    orgId?: number
+    visibility?: boolean
+    starNum?: number
+  }
 }
+
+
 interface IStarState {
   visible: boolean
 }

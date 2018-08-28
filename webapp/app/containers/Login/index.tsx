@@ -59,8 +59,8 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   constructor (props) {
     super(props)
     this.state = {
-      username: 'hanruan',
-      password: '123456'
+      username: '',
+      password: ''
     }
   }
 

@@ -6,7 +6,8 @@ interface IResultset {
   result: any[]
   offset: number,
   limit: number,
-  totalCount: number
+  totalCount: number,
+  length?: number
 }
 
 export default function resultsetConverter (resultset: IResultset) {

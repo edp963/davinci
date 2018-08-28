@@ -14,7 +14,6 @@ import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
 import {IStarUser} from '../../Projects'
-import {IOrganization, IOrganizationProjects} from '../Organization'
 
 interface IProjectsState {
   formType?: string
@@ -27,13 +26,13 @@ interface IProjectsState {
 interface IProjectsProps {
   loginUser: any
   organizationId: number
-  currentOrganization: IOrganization
+  currentOrganization: Organization.IOrganization
   toProject: (id: number) => any
   deleteProject: (id: number) => any
-  starUserList: IStarUser[]
+  starUser: IStarUser[]
   onAddProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
-  organizationProjectsDetail: {total?: number, list: IOrganizationProjects[]}
+  organizationProjectsDetail: {total?: number, list: Organization.IOrganizationProjects[]}
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any

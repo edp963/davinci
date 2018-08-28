@@ -21,7 +21,7 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-
+import {InjectedRouter} from 'react-router/lib/Router'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
@@ -38,10 +38,11 @@ import {makeSelectCurrentProject} from '../Projects/selectors'
 import {IProject} from '../Projects'
 const styles = require('./Report.less')
 import MenuPermission from '../Account/components/checkMenuPermission'
+import { PermissionLevel } from '../Teams/component/PermissionLevel';
 
 interface IReportProps {
-  router: any
-  sidebar: boolean | any[]
+  router: InjectedRouter
+  sidebar: boolean | IsidebarDetail[]
   loginUser: { admin: boolean }
   routes: any[]
   params: any
@@ -51,6 +52,12 @@ interface IReportProps {
   onShowNavigator: () => any
   onLoadProjectDetail: (id) => any
   onKillProjectDetail: () => any
+}
+
+interface IsidebarDetail {
+  icon?: string
+  route?: string[]
+  permission?: string
 }
 
 export class Report extends React.Component<IReportProps, {}> {
@@ -92,14 +99,14 @@ export class Report extends React.Component<IReportProps, {}> {
       routes,
       currentProject
     } = this.props
-    const sidebarOptions = sidebar && (sidebar as any[]).map((item) => {
+    const sidebarOptions = sidebar && (sidebar as IsidebarDetail[]).map((item) => {
       const isOptionActive = item.route.indexOf(routes[3].name) >= 0
       const iconClassName = `iconfont ${item.icon}`
       const ProviderSidebar = MenuPermission(currentProject, item.permission)(SidebarOption)
 
       return (
         <ProviderSidebar
-          key={item.route}
+          key={item.permission}
           route={item.route}
           active={isOptionActive}
           params={this.props.params}

@@ -16,6 +16,7 @@ import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
 import {IOrganizationMembers} from '../../Organizations/Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 
+
 interface IMemberListState {
   modalLoading: boolean
   formType: string
@@ -29,7 +30,7 @@ interface IMemberListState {
 }
 
 interface IMemberListProps {
-  currentTeam: any
+  currentTeam: Team.ITeam
   deleteTeamMember: (id: number) => any
   pullMemberInTeam: (teamId: number, memberId: number, resolve: () => any) => any
   changeTeamMemberRole: (id: number, role: string) => any
@@ -107,7 +108,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     })
   }
 
-  private showChangeRoleForm = (type: string, obj: { id?: number}) => (e) => {
+  private showChangeRoleForm = (type: string, obj: { id?: number, user?: {role?: number}}) => (e) => {
     e.stopPropagation()
     this.setState({
       currentMember: obj,
@@ -168,7 +169,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
           <Popconfirm
             title="确定删除此成员吗？"
             placement="bottom"
-            onConfirm={ this.removeMemberForm(text, record)}
+            onConfirm={this.removeMemberForm(text, record)}
           >
             <Tooltip title="删除">
               <a href="javascript:;">从团队里移除</a>

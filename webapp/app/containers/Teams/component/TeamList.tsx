@@ -20,7 +20,7 @@ interface ITeamListState {
 interface ITeamListProps {
   currentTeam: any
   toThatTeam: (url: string) => any
-  currentTeamTeams: Team.ITeamMembers[]
+  currentTeamTeams: Team.ITeamTeams[]
 }
 
 export class TeamList extends React.PureComponent <ITeamListProps, ITeamListState> {
