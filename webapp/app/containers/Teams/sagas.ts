@@ -90,8 +90,11 @@ export function* editTeam (action) {
       data: team
     })
     yield put(teamEdited(team))
-    resolve()
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
+    console.log(err)
     yield put(editTeamFail())
     message.error('修改 Team 失败，请稍后再试')
   }

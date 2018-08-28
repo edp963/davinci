@@ -35,13 +35,13 @@ function signupReducer (state = initialState, action) {
   switch (type) {
     case  SIGNUP:
       return state
-        .set('signupLoading', false)
+        .set('signupLoading', true)
     case SIGNUP_SUCCESS:
       return state
-        .set('signupLoading', true)
+        .set('signupLoading', false)
     case SIGNUP_ERROR:
       return state
-        .set('signupLoading', false)
+        .set('signupLoading', true)
     default:
       return state
   }
