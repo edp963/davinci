@@ -18,6 +18,7 @@
 
 package edp.davinci.dto.projectDto;
 
+import edp.davinci.core.enums.UserPermissionEnum;
 import lombok.Data;
 
 @Data
@@ -47,5 +48,12 @@ public class ProjectPermission {
         this.widgetPermission = permission;
         this.vizPermission = permission;
         this.schedulePermission = permission;
+    }
+
+    public static ProjectPermission adminPermission() {
+        ProjectPermission permission = new ProjectPermission(UserPermissionEnum.DELETE.getPermission());
+        permission.setDownloadPermission(true);
+        permission.setSharePermission(true);
+        return permission;
     }
 }

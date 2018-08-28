@@ -89,7 +89,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     public RelUserTeamMapper relUserTeamMapper;
 
     @Override
-    public boolean isExist(String name, Long id, Long orgId) {
+    public synchronized boolean isExist(String name, Long id, Long orgId) {
         Long projectId = projectMapper.getByNameWithOrgId(name, orgId);
         if (null != id && null != projectId) {
             return !id.equals(projectId);
@@ -125,8 +125,6 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
 
         Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-        // TODO org owner | project creater
-//        if (teamNumOfOrgByUser > 0 || isMaintainer(project, user)) {
         if (teamNumOfOrgByUser > 0) {
             List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
             for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
@@ -134,6 +132,8 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
                     BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
                 }
             }
+        } else if (isMaintainer(project, user)) {
+            projectInfo.setPermission(ProjectPermission.adminPermission());
         } else {
             Organization organization = organizationMapper.getById(project.getOrgId());
             projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
@@ -156,21 +156,21 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         List<ProjectWithCreateBy> projects = projectMapper.getProejctsByUser(user.getId());
         List<ProjectInfo> projectInfoList = new ArrayList<>();
         if (null != projects && projects.size() > 0) {
-            List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
             for (ProjectWithCreateBy project : projects) {
                 ProjectInfo projectInfo = new ProjectInfo();
                 BeanUtils.copyProperties(project, projectInfo);
 
                 Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
 
-                //TODO： org owner | project creater
-//                if (teamNumOfOrgByUser > 0 || isMaintainer(project, user)) {
                 if (teamNumOfOrgByUser > 0) {
+                    List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
                     for (UserMaxProjectPermission maxProjectPermission : permissions) {
                         if (maxProjectPermission.getProjectId().equals(project.getId())) {
                             BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
                         }
                     }
+                } else if (isMaintainer(project, user)) {
+                    projectInfo.setPermission(ProjectPermission.adminPermission());
                 } else {
                     Organization organization = organizationMapper.getById(project.getOrgId());
                     projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
@@ -293,20 +293,20 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         Organization organization = organizationMapper.getById(orgId);
         if (null == organization) {
             log.info("not found organization, name: {}", orgId);
-            return resultMap.failAndRefreshToken(request).message("not found organization " + orgId);
+            return resultMap.failAndRefreshToken(request).message("not found organization");
         }
 
         //不能移交给当前所在组织
         if (organization.getId().equals(project.getOrgId())) {
             log.info("this project cannot be transferred to the current organization, name: {}", orgId);
-            return resultMap.failAndRefreshToken(request).message("this project cannot be transferred to the organization " + orgId);
+            return resultMap.failAndRefreshToken(request).message("the project can only be transferred to the non-current organizations");
         }
 
         //当前用户在即将移交的组织下才能移交
         RelUserOrganization ucRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
         if (null == ucRel) {
             log.info("user[{}] must be a member of the organization {} that is about to be transfer", user.getId(), orgId);
-            return resultMap.failAndRefreshToken(request).message("you must be a member of the organization " + orgId + " that is about to be transfer");
+            return resultMap.failAndRefreshToken(request).message("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
         }
 
         Long beforeOrgId = project.getOrgId();

@@ -36,4 +36,6 @@ public interface WidgetService extends CheckEntityService {
     ResultMap deleteWidget(Long id, User user, HttpServletRequest request);
 
     ResultMap shareWidget(Long id, User user, String username, HttpServletRequest request);
+
+    ResultMap getWidget(Long id, User user, HttpServletRequest request);
 }

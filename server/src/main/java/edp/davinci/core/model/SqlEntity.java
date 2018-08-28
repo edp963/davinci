@@ -27,10 +27,7 @@ import java.util.Map;
 public class SqlEntity {
 
     //查询sql
-    private List<String> querySql;
-
-    //执行sql
-    private List<String> executeSql;
+    private String sql;
 
     private Map<String, String> quaryParams;
 
@@ -39,9 +36,8 @@ public class SqlEntity {
     public SqlEntity() {
     }
 
-    public SqlEntity(List<String> querySql, List<String> executeSql, Map<String, String> quaryParams, Map<String, List<String>> teamParams) {
-        this.querySql = querySql;
-        this.executeSql = executeSql;
+    public SqlEntity(String sql, Map<String, String> quaryParams, Map<String, List<String>> teamParams) {
+        this.sql = sql;
         this.quaryParams = quaryParams;
         this.teamParams = teamParams;
     }

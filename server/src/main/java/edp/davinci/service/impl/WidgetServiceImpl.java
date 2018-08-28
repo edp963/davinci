@@ -69,7 +69,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     private ShareService shareService;
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long widgetId = widgetMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != widgetId) {
             return !id.equals(widgetId);
@@ -136,6 +136,35 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         }
 
         return resultMap.successAndRefreshToken(request).payloads(widgets);
+    }
+
+
+    /**
+     * 获取单个widget信息
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getWidget(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+
+        if (null == widgetWithProjectAndView) {
+            log.info("widget {} not found", id);
+            return resultMap.failAndRefreshToken(request).message("widget is not found");
+        }
+
+        if (!allowRead(widgetWithProjectAndView.getProject(), user)) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+        }
+
+        Widget widget = new Widget();
+        BeanUtils.copyProperties(widgetWithProjectAndView, widget);
+
+        return resultMap.successAndRefreshToken(request).payload(widget);
     }
 
     /**

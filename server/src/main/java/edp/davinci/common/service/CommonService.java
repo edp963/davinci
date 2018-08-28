@@ -123,11 +123,8 @@ public class CommonService<T> {
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel) {
-            //当前project所属organization的owner
-            if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-                return true;
-            }
+        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+            return true;
         }
 
         return false;
@@ -468,8 +465,6 @@ public class CommonService<T> {
             maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, userId);
         } else if (clazz instanceof CronJob) {
             maxVizPermission = relTeamProjectMapper.getMaxSchedulePermission(projectId, userId);
-        } else {
-            maxVizPermission = (short) 0;
         }
 
         if (null != clazz) {

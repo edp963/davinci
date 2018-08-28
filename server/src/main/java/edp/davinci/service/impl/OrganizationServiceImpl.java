@@ -83,7 +83,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
     private RelUserTeamMapper relUserTeamMapper;
 
     @Override
-    public boolean isExist(String name, Long id, Long scopeId) {
+    public synchronized boolean isExist(String name, Long id, Long scopeId) {
         Long orgId = organizationMapper.getIdByName(name);
         if (null != id && null != orgId) {
             return !id.equals(orgId);
@@ -486,7 +486,6 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
     public ResultMap confirmInvite(String token, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-
         //aes解密
         token = AESUtils.decrypt(token, null);
 
@@ -536,16 +535,16 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             return resultMap.failAndRefreshToken(request).message("Invalid Token");
         }
 
-        RelUserOrganization rel = relUserOrganizationMapper.getRel(inviter.getId(), orgId);
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(memeberId, orgId);
+
         OrganizationInfo organizationInfo = new OrganizationInfo();
         BeanUtils.copyProperties(organization, organizationInfo);
-
         if (rel != null) {
             organizationInfo.setRole(rel.getRole());
             return resultMap.successAndRefreshToken(request).payload(organizationInfo).message("You have joined the organization and don't need to repeat.");
         }
         //验证通过，建立关联
-        rel = new RelUserOrganization(orgId, inviter.getId(), UserOrgRoleEnum.MEMBER.getRole());
+        rel = new RelUserOrganization(orgId, memeberId, UserOrgRoleEnum.MEMBER.getRole());
         int insert = relUserOrganizationMapper.insert(rel);
         //修改成员人数
         organization.setMemberNum(organization.getMemberNum() + 1);

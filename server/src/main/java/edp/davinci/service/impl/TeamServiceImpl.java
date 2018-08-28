@@ -78,7 +78,7 @@ public class TeamServiceImpl implements TeamService {
 
 
     @Override
-    public boolean isExist(String name, Long id, Long orgId) {
+    public synchronized boolean isExist(String name, Long id, Long orgId) {
         Long teamId = teamMapper.getByNameWithOrgId(name, orgId);
         if (null != id && null != teamId) {
             return !id.equals(teamId);

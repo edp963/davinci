@@ -31,7 +31,6 @@ public class ProjectCreat {
     @NotBlank(message = "project name cannot be empty")
     private String name;
 
-    @NotBlank(message = "project description cannot be empty")
     private String description;
 
     @Min(value = 1L, message = "orgId cannot be empty")

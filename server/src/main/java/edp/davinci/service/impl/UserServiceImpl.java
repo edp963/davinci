@@ -81,7 +81,7 @@ public class UserServiceImpl extends CommonService implements UserService {
      * @return
      */
     @Override
-    public boolean isExist(String name, Long id, Long scopeId) {
+    public synchronized boolean isExist(String name, Long id, Long scopeId) {
         Long userId = userMapper.getIdByName(name);
         if (null != id && null != userId) {
             return !id.equals(userId);
@@ -97,7 +97,7 @@ public class UserServiceImpl extends CommonService implements UserService {
      */
     @Override
     @Transactional
-    public ResultMap regist(UserRegist userRegist) {
+    public synchronized ResultMap regist(UserRegist userRegist) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         //用户名是否已经注册
@@ -222,7 +222,7 @@ public class UserServiceImpl extends CommonService implements UserService {
 
     @Override
     @Transactional
-    public ResultMap activateUserNoLogin(String token, HttpServletRequest request) {
+    public synchronized ResultMap activateUserNoLogin(String token, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         token = AESUtils.decrypt(token, null);
@@ -237,7 +237,7 @@ public class UserServiceImpl extends CommonService implements UserService {
 
         //已经激活，不需要再次激活
         if (user.getActive()) {
-            return resultMap.fail().message("The current user is activated and doesn't need to be reactivated");
+            return resultMap.fail(302).message("The current user is activated and doesn't need to be reactivated");
         }
         //验证激活token
         if (tokenUtils.validateToken(token, user)) {
@@ -412,6 +412,7 @@ public class UserServiceImpl extends CommonService implements UserService {
 
     /**
      * 查询用户信息
+     *
      * @param id
      * @param user
      * @param request

@@ -64,7 +64,7 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
     private DashboardMapper dashboardMapper;
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long portalId = dashboardPortalMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != portalId) {
             return id.longValue() != portalId.longValue();

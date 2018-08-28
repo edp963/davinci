@@ -83,7 +83,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
     FileUtils fileUtils;
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long sourceId = sourceMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != sourceId) {
             return !id.equals(sourceId);

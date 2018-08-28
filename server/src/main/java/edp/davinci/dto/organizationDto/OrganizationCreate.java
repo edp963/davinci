@@ -29,7 +29,6 @@ public class OrganizationCreate {
     @NotBlank(message = "organzation name cannot be empty")
     private String name;
 
-    @NotBlank(message = "organzation description cannot be empty")
     private String description;
 
     @Override
