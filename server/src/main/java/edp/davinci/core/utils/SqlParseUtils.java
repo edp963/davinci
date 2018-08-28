@@ -26,17 +26,13 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlOperatorEnum;
 import edp.davinci.core.model.SqlEntity;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.parser.CCJSqlParserManager;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
-import net.sf.jsqlparser.statement.select.SubSelect;
+import org.apache.ibatis.jdbc.Null;
+import org.stringtemplate.v4.ST;
 
-import java.io.StringReader;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -89,7 +85,7 @@ public class SqlParseUtils {
 
     private static final String REG_PLACEHOLDER = "\\$.+\\$";
 
-    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?\\$\\w+\\$\\)?\\s?\\)";
+    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?%s\\w+%s\\)?\\s?\\)";
 
     /**
      * 解析sql
@@ -97,7 +93,7 @@ public class SqlParseUtils {
      * @param sqlStr
      * @return
      */
-    public static SqlEntity parseSql(String sqlStr) throws ServerException {
+    public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
         if (!StringUtils.isEmpty(sqlStr.trim())) {
             log.info("original sql >>>>>>: {}", sqlStr);
             //过滤注释
@@ -116,8 +112,6 @@ public class SqlParseUtils {
                 throw new ServerException("You have an error in your SQL syntax;");
             }
 
-            List<String> querySqlList = null, executeSqlList = null;
-
             //sql体
             if (!StringUtils.isEmpty(sqlStruct.trim())) {
                 sqlStruct = sqlStruct.trim();
@@ -132,25 +126,6 @@ public class SqlParseUtils {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
                 log.info("after structed sql >>>>>>: {}", sqlStruct);
-
-                String[] split = sqlStruct.split(sqlSeparator);
-                if (null != split && split.length > 0) {
-                    querySqlList = new ArrayList<>();
-                    executeSqlList = new ArrayList<>();
-                    for (String sql : split) {
-                        sql = sql.trim();
-                        if (StringUtils.isEmpty(sql)) {
-                            continue;
-                        }
-                        if (sql.toLowerCase().startsWith(select)) {
-                            querySqlList.add(sql);
-                            log.info("query sql >>>>>>: {}", sql);
-                        } else {
-                            executeSqlList.add(sql);
-                            log.info("execute sql >>>>>>: {}", sql);
-                        }
-                    }
-                }
             }
 
             Map<String, String> queryParamMap = new HashMap<>();
@@ -169,9 +144,9 @@ public class SqlParseUtils {
                             param = param.replaceAll(queryVarKey, "");
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0].trim();
-                                String v = paramArray.length > 1 ? paramArray[1].trim() : "";
-                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(dollarDelimiter), ""), v);
+                                String k = paramArray[0].trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), "");
+                                String v = paramArray.length > 1 ? paramArray[1].trim() : null;
+                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 queryParamMap.put(k, v);
                             }
                         } else if (param.startsWith(teamVarKey)) {
@@ -180,7 +155,7 @@ public class SqlParseUtils {
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0].trim();
                                 String v = paramArray.length > 1 ? paramArray[1].trim() : "";
-                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(dollarDelimiter), ""), v);
+                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 teamParamMap.put(k, Arrays.asList(v));
                             }
                         }
@@ -188,82 +163,115 @@ public class SqlParseUtils {
                 }
             }
 
-            if (null == querySqlList || querySqlList.size() <= 0) {
+            if (StringUtils.isEmpty(sqlStruct)) {
                 throw new ServerException("Invalid Query Sql");
             }
 
-            SqlEntity sqlEntity = new SqlEntity(
-                    querySqlList,
-                    executeSqlList,
-                    queryParamMap,
-                    teamParamMap
-            );
+            sqlStruct = sqlStruct.replaceAll(newLineChar, "");
+
+            SqlEntity sqlEntity = new SqlEntity(sqlStruct, queryParamMap, teamParamMap);
             return sqlEntity;
         }
         return null;
     }
 
-
     /**
      * 替换参数
      *
-     * @param sqlList
+     * @param sql
      * @param queryParamMap
+     * @param teamParamMap
+     * @param sqlTempDelimiter
      * @return
      */
-    public static List<String> replaceParams(List<String> sqlList, Map<String, String> queryParamMap, Map<String, List<String>> teamParamMap) {
-        if (null != sqlList && sqlList.size() > 0) {
-            //替换team@var
-            if (null != teamParamMap && teamParamMap.size() > 0) {
-                Pattern p = Pattern.compile(REG_TEAMVAR);
-                Set<String> expSet = new HashSet<>();
-                for (String sql : sqlList) {
-                    Matcher matcher = p.matcher(sql);
-                    while (matcher.find()) {
-                        expSet.add(matcher.group());
-                    }
-                }
-                if (expSet.size() > 0) {
-                    Map<String, String> parsedMap = getParsedExpression(expSet, teamParamMap);
-                    for (String sql : sqlList) {
-                        for (String key : parsedMap.keySet()) {
-                            if (sql.indexOf(key) > -1) {
-                                int position = sqlList.indexOf(sql);
-                                sql = sql.replace(key, parsedMap.get(key));
-                                sqlList.set(position, sql);
-                            }
-                        }
-                    }
-                }
+    public static String replaceParams(String sql, Map<String, String> queryParamMap, Map<String, List<String>> teamParamMap, String sqlTempDelimiter) {
+        if (StringUtils.isEmpty(sql)) {
+            return null;
+        }
+
+        char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
+
+        //替换team@var
+        if (null != teamParamMap && teamParamMap.size() > 0) {
+            Pattern p = Pattern.compile(getTeamVarReg(delimiter));
+            Set<String> expSet = new HashSet<>();
+            Matcher matcher = p.matcher(sql);
+            while (matcher.find()) {
+                expSet.add(matcher.group());
             }
-
-
-            //替换query@var
-            if (null != queryParamMap && queryParamMap.size() > 0) {
-                Pattern p = Pattern.compile(REG_PLACEHOLDER);
-                for (String sql : sqlList) {
-                    Matcher matcher = p.matcher(sql);
-                    if (matcher.find()) {
-                        for (String key : queryParamMap.keySet()) {
-                            int position = sqlList.indexOf(sql);
-                            sql = sql.replace(key, queryParamMap.get(key));
-                            sqlList.set(position, sql);
-                        }
+            if (expSet.size() > 0) {
+                Map<String, String> parsedMap = getParsedExpression(expSet, teamParamMap, delimiter);
+                for (String key : parsedMap.keySet()) {
+                    if (sql.indexOf(key) > -1) {
+                        sql = sql.replace(key, parsedMap.get(key));
                     }
                 }
             }
         }
-        return sqlList;
+
+        ST st = new ST(sql, delimiter, delimiter);
+        //替换query@var
+        if (null != queryParamMap && queryParamMap.size() > 0) {
+            for (String key : queryParamMap.keySet()) {
+                st.add(key, queryParamMap.get(key));
+            }
+        }
+        sql = st.render();
+        return sql;
     }
 
 
-    private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> teamParamMap) {
+    public static List<String> getExecuteSqlList(String sql) {
+        if (StringUtils.isEmpty(sql)) {
+            return null;
+        }
+
+        List<String> list = null;
+
+        String[] split = sql.split(sqlSeparator);
+        if (null != split && split.length > 0) {
+            list = new ArrayList<>();
+            for (String sqlStr : split) {
+                sqlStr = sqlStr.trim();
+                if (sqlStr.toLowerCase().startsWith(select)) {
+                    continue;
+                } else {
+                    list.add(sqlStr);
+                }
+            }
+        }
+        return list;
+    }
+
+
+    public static List<String> getQuerySqlList(String sql) {
+        if (StringUtils.isEmpty(sql)) {
+            return null;
+        }
+        List<String> list = null;
+        String[] split = sql.split(sqlSeparator);
+        if (null != split && split.length > 0) {
+            list = new ArrayList<>();
+            for (String sqlStr : split) {
+                sqlStr = sqlStr.trim();
+                if (sqlStr.toLowerCase().startsWith(select)) {
+                    list.add(sqlStr);
+                } else {
+                    continue;
+                }
+            }
+        }
+        return list;
+    }
+
+
+    private static Map<String, String> getParsedExpression(Set<String> expSet, Map<String, List<String>> teamParamMap, char sqlTempDelimiter) {
         Iterator<String> iterator = expSet.iterator();
         Map<String, String> map = new HashMap<>();
         while (iterator.hasNext()) {
             String exp = iterator.next().trim();
             try {
-                map.put(exp, getTeamVarExpression(exp, teamParamMap));
+                map.put(exp, getTeamVarExpression(exp, teamParamMap, sqlTempDelimiter));
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new ServerException(e.getMessage());
@@ -278,7 +286,7 @@ public class SqlParseUtils {
         }
     }
 
-    private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> teamParamMap) throws Exception {
+    private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> teamParamMap, char sqlTempDelimiter) throws Exception {
         String originExpression = srcExpression;
         if (!StringUtils.isEmpty(srcExpression)) {
             srcExpression = srcExpression.trim();
@@ -349,76 +357,17 @@ public class SqlParseUtils {
         return originExpression;
     }
 
-    /**
-     * 获取查询操作的最外层wehre 条件
-     *
-     * @param sql
-     * @return
-     * @throws JSQLParserException
-     */
-    public static String getSelectWhere(String sql) throws JSQLParserException {
-        CCJSqlParserManager parserManager = new CCJSqlParserManager();
-        Select select = (Select) parserManager.parse(new StringReader(sql));
-        PlainSelect plain = (PlainSelect) select.getSelectBody();
-        Expression where_expression = plain.getWhere();
-        if (null != where_expression) {
-            return where_expression.toString();
+
+    public static char getSqlTempDelimiter(String sqlTempDelimiter) {
+        return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
+    }
+
+
+    private static String getTeamVarReg(char delimiter) {
+        String arg = String.valueOf(delimiter);
+        if (delimiter == dollarDelimiter) {
+            arg = "\\" + arg;
         }
-        return null;
+        return String.format(REG_TEAMVAR, arg, arg);
     }
-
-
-    /**
-     * 构造子查询
-     *
-     * @param sql
-     * @return
-     * @throws JSQLParserException
-     */
-    public static PlainSelect buildSubSelect(String sql) throws JSQLParserException {
-        CCJSqlParserManager parserManager = new CCJSqlParserManager();
-        Select select = (Select) parserManager.parse(new StringReader(sql));
-        PlainSelect plainSelect = new PlainSelect();
-        SubSelect subSelect = new SubSelect();
-        subSelect.setAlias(new Alias("T"));
-        subSelect.setSelectBody(select.getSelectBody());
-        plainSelect.setFromItem(subSelect);
-        return plainSelect;
-    }
-
-    /**
-     * 构建查询列
-     *
-     * @param plainSelect
-     * @param fields
-     * @return
-     * @throws JSQLParserException
-     */
-    public static PlainSelect buildSelectFields(PlainSelect plainSelect, List<String> fields)
-            throws JSQLParserException {
-        plainSelect.setSelectItems(null);
-        for (String field : fields) {
-            plainSelect.addSelectItems(new SelectExpressionItem(CCJSqlParserUtil.parseExpression(field)));
-        }
-        return plainSelect;
-    }
-
-
-    /**
-     * 构建group
-     *
-     * @param plainSelect
-     * @param groups
-     * @return
-     * @throws JSQLParserException
-     */
-    public static PlainSelect buildSelectGroupby(PlainSelect plainSelect, List<String> groups) throws JSQLParserException {
-        List<Expression> GroupByColumnReferences = new ArrayList<>();
-        for (String group : groups) {
-            GroupByColumnReferences.add(CCJSqlParserUtil.parseExpression(group));
-        }
-        plainSelect.setGroupByColumnReferences(GroupByColumnReferences);
-        return plainSelect;
-    }
-
 }

@@ -36,6 +36,7 @@ public class UserRegist {
     private String email;
 
     @NotBlank(message = "password cannot be empty")
+    @Pattern(regexp = Constants.REG_USER_PASSWORD, message = "密码长度为6-20位")
     private String password;
 
     @Override

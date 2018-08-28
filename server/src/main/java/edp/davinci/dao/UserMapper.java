@@ -51,7 +51,7 @@ public interface UserMapper {
     @Update({"update user set avatar = #{avatar}, update_time = #{updateTime}  where id = #{id}"})
     int updateAvatar(User user);
 
-    @Select({"select id from user where (LOWER(username) = LOWER(#{name}) or LOWER(email) = LOWER(#{name}))"})
+    @Select({"select id from user where (LOWER(username) = LOWER(#{name}) or LOWER(email) = LOWER(#{name}) or LOWER(`name`) = LOWER(#{name}))"})
     Long getIdByName(@Param("name") String name);
 
     @Update({"update `user` set active = #{active}, update_time = #{updateTime}  where id = #{id}"})

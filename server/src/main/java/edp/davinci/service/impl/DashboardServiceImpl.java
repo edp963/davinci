@@ -69,7 +69,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
 
 
     @Override
-    public boolean isExist(String name, Long id, Long portalId) {
+    public synchronized boolean isExist(String name, Long id, Long portalId) {
         Long dashboardId = dashboardMapper.getByNameWithPortalId(name, portalId);
         if (null != id && null != dashboardId) {
             return !id.equals(dashboardId);
@@ -109,7 +109,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel|| orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
             short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
             if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
                 short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(project.getId(), user.getId());

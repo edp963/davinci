@@ -23,7 +23,7 @@
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
-        insert rel_user_organization
+        insert ignore rel_user_organization
         <trim prefix="(" suffix=")" suffixOverrides="," >
             org_id,
             user_id,

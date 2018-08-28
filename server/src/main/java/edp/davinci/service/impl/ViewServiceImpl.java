@@ -28,6 +28,7 @@ import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.stringtemplate.v4.ST;
@@ -72,6 +73,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Autowired
     private RedisUtils redisUtils;
 
+    @Value("${sql_template_delimiter:$}")
+    private String sqlTempDelimiter;
+
     private static final String viewDataCacheKey = "view_data_";
 
     private static final String viewMetaCacheKey = "view_meta_";
@@ -80,7 +84,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long viewId = viewMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != viewId) {
             return !id.equals(viewId);
@@ -414,22 +418,24 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         List<Map<String, Object>> resultList = null;
         List<QueryColumn> columns = null;
         try {
-            SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql());
-            SqlUtils sqlUtils = this.sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword());
+            SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql(), sqlTempDelimiter);
             if (null != sqlUtils && null != sqlEntity) {
-                //执行sql时 team@var 只运行默认值
-                if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams());
-                    for (String sql : sqlList) {
-                        sqlUtils.execute(sql);
+                if (!StringUtils.isEmpty(sqlEntity.getSql())) {
+                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams(), sqlTempDelimiter);
+                    SqlUtils sqlUtils = this.sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword());
+                    List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
+                    List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
+                    if (null != executeSqlList && executeSqlList.size() > 0) {
+                        for (String sql : executeSqlList) {
+                            sqlUtils.execute(sql);
+                        }
                     }
-                }
-                if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                    List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams());
-                    for (String sql : sqlEntity.getQuerySql()) {
-                        resultList = sqlUtils.syncQuery4List(sql);
+                    if (null != querySqlList && querySqlList.size() > 0) {
+                        for (String sql : querySqlList) {
+                            resultList = sqlUtils.syncQuery4List(sql);
+                        }
+                        columns = sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1));
                     }
-                    columns = sqlUtils.getColumns(sqlList.get(sqlList.size() - 1));
                 }
             }
         } catch (Exception e) {
@@ -504,16 +510,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @param executeParam
      * @return
      */
-    public void buildQuerySql(SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
-        if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
+    public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
+        if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
             if (null != executeParam) {
                 //构造参数， 原有的被传入的替换
-                if (null != executeParam.getParams() && executeParam.getParams().size() > 0) {
-                    for (Param param : executeParam.getParams()) {
-                        sqlEntity.getQuaryParams().put(SqlParseUtils.dollarDelimiter + param.getName().trim() + SqlParseUtils.dollarDelimiter, param.getValue());
-                    }
-                }
-
                 if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
                     executeParam.setGroups(null);
                 }
@@ -530,9 +530,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 st.add("filters", executeParam.getFilters());
                 st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
                 st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
-                st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
+                st.add("sql", querySqlList.get(querySqlList.size() - 1));
 
-                sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
+                querySqlList.set(querySqlList.size() - 1, st.render());
             }
         }
     }
@@ -561,29 +561,27 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             }
 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql());
+                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
 
                 Source source = viewWithProjectAndSource.getSource();
                 if (null == viewWithProjectAndSource) {
                     throw new ServerException("source not found");
                 }
-                SqlUtils sqlUtils = this.sqlUtils.init(source);
-                if (null != sqlUtils && null != sqlEntity) {
-
-                    //解析team@var查询参数
-                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
-
-                    if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
-                        for (String sql : sqlList) {
+                if (!StringUtils.isEmpty(sqlEntity.getSql())) {
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
+                    Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
+                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
+                    SqlUtils sqlUtils = this.sqlUtils.init(source);
+                    List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
+                    List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
+                    if (null != executeSqlList && executeSqlList.size() > 0) {
+                        for (String sql : executeSqlList) {
                             sqlUtils.execute(sql);
                         }
                     }
-                    if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                        list = new ArrayList<>();
-                        buildQuerySql(sqlEntity, executeParam, source);
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
-                        for (String sql : sqlList) {
+                    if (null != querySqlList && querySqlList.size() > 0) {
+                        buildQuerySql(querySqlList, sqlEntity, executeParam, source);
+                        for (String sql : querySqlList) {
                             list = sqlUtils.syncQuery4List(sql);
                         }
                     }
@@ -629,33 +627,33 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql());
+                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
 
                 Source source = viewWithProjectAndSource.getSource();
                 if (null == viewWithProjectAndSource) {
                     throw new ServerException("source not found");
                 }
-                SqlUtils sqlUtils = this.sqlUtils.init(source);
-                if (null != sqlUtils && null != sqlEntity) {
-
+                if (!StringUtils.isEmpty(sqlEntity.getSql())) {
+                    SqlUtils sqlUtils = this.sqlUtils.init(source);
                     //解析team@var查询参数
-                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
-
-                    if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
-                        for (String sql : sqlList) {
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
+                    Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
+                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
+                    List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
+                    List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
+                    if (null != executeSqlList && executeSqlList.size() > 0) {
+                        for (String sql : executeSqlList) {
                             sqlUtils.execute(sql);
                         }
                     }
-                    if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                        buildQuerySql(sqlEntity, executeParam, source);
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
+                    if (null != querySqlList && querySqlList.size() > 0) {
+                        buildQuerySql(querySqlList, sqlEntity, executeParam, source);
                         //逐条查询的目的是为了执行用户sql中的变量定义
-                        for (String sql : sqlList) {
+                        for (String sql : querySqlList) {
                             sqlUtils.syncQuery4List(sql);
                         }
                         //只返回最后一条sql的结果
-                        columns = sqlUtils.getColumns(sqlList.get(sqlList.size() - 1));
+                        columns = sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1));
                     }
                 }
             }
@@ -676,39 +674,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return columns;
     }
 
-
-    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user) {
-        if (null != view && !StringUtils.isEmpty(view.getConfig())) {
-            JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
-            if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
-                String teamVarString = jsonObject.getString(viewTeamVarKey);
-                if (!StringUtils.isEmpty(teamVarString)) {
-                    List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
-                    if (null != varList && varList.size() > 0) {
-                        Set<Long> tIds = relUserTeamMapper.getUserTeamId(user.getId());
-                        for (String key : paramMap.keySet()) {
-                            List<String> params = new ArrayList<>();
-                            for (TeamVar teamVar : varList) {
-                                if (tIds.contains(teamVar.getId())) {
-                                    for (TeamParam teamParam : teamVar.getParams()) {
-                                        String k = key.replace(String.valueOf(SqlParseUtils.dollarDelimiter), "");
-                                        if (teamParam.getK().equals(k)) {
-                                            params.add(teamParam.getV());
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (params.size() > 0) {
-                                paramMap.put(key, params);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return paramMap;
-    }
 
     @Override
     public ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request) {
@@ -756,41 +721,38 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         Map<String, Object> map = null;
         try {
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql());
+                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
                 Source source = viewWithProjectAndSource.getSource();
                 if (null == viewWithProjectAndSource) {
                     throw new ServerException("source not found");
                 }
-                SqlUtils sqlUtils = this.sqlUtils.init(source);
-                if (null != sqlUtils && null != sqlEntity) {
-                    //解析team@var查询参数
-                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user);
+                if (!StringUtils.isEmpty(sqlEntity.getSql())) {
+                    SqlUtils sqlUtils = this.sqlUtils.init(source);
 
-                    if (null != sqlEntity.getExecuteSql() && sqlEntity.getExecuteSql().size() > 0) {
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getExecuteSql(), sqlEntity.getQuaryParams(), teamParams);
-                        for (String sql : sqlList) {
+                    //解析team@var查询参数
+                    Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
+                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), teamParams, sqlTempDelimiter);
+                    List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
+                    List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
+                    if (null != executeSqlList && executeSqlList.size() > 0) {
+                        for (String sql : executeSqlList) {
                             sqlUtils.execute(sql);
                         }
                     }
-                    if (null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                        if (null != sqlEntity && null != sqlEntity.getQuerySql() && sqlEntity.getQuerySql().size() > 0) {
-                            if (null != param) {
+                    if (null != querySqlList && querySqlList.size() > 0) {
+                        if (null != param) {
+                            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                            ST st = stg.getInstanceOf("queryDistinctSql");
+                            st.add("column", param.getColumn());
+                            st.add("params", param.getParents());
+                            st.add("sql", querySqlList.get(querySqlList.size() - 1));
+                            st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
+                            st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
 
-
-                                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                                ST st = stg.getInstanceOf("queryDistinctSql");
-                                st.add("column", param.getColumn());
-                                st.add("params", param.getParents());
-                                st.add("sql", sqlEntity.getQuerySql().get(sqlEntity.getQuerySql().size() - 1));
-                                st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
-                                st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
-
-                                sqlEntity.getQuerySql().set(sqlEntity.getQuerySql().size() - 1, st.render());
-                            }
+                            querySqlList.set(querySqlList.size() - 1, st.render());
                         }
-                        List<String> sqlList = SqlParseUtils.replaceParams(sqlEntity.getQuerySql(), sqlEntity.getQuaryParams(), teamParams);
                         List<Map<String, Object>> list = null;
-                        for (String sql : sqlList) {
+                        for (String sql : querySqlList) {
                             list = sqlUtils.query4List(sql);
                         }
                         if (null != list && list.size() > 0) {
@@ -813,6 +775,57 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             throw new ServerException(e.getMessage());
         }
 
+        return map;
+    }
+
+
+    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user, String sqlTempDelimiter) {
+        if (null != view && !StringUtils.isEmpty(view.getConfig())) {
+            JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
+            if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
+                String teamVarString = jsonObject.getString(viewTeamVarKey);
+                if (!StringUtils.isEmpty(teamVarString)) {
+                    List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
+                    if (null != varList && varList.size() > 0) {
+                        Set<Long> tIds = relUserTeamMapper.getUserTeamId(user.getId());
+                        for (String key : paramMap.keySet()) {
+                            List<String> params = new ArrayList<>();
+                            for (TeamVar teamVar : varList) {
+                                if (tIds.contains(teamVar.getId())) {
+                                    for (TeamParam teamParam : teamVar.getParams()) {
+
+                                        String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
+                                        if (teamParam.getK().equals(k)) {
+                                            params.add(teamParam.getV());
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (params.size() > 0) {
+                                paramMap.put(key, params);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return paramMap;
+    }
+
+    private Map<String, String> getQueryParam(SqlEntity sqlEntity, ViewExecuteParam viewExecuteParam) {
+        Map<String, String> map = null;
+        if (null != sqlEntity && null != viewExecuteParam) {
+            map = new HashMap<>();
+            if (null != sqlEntity.getQuaryParams() && sqlEntity.getQuaryParams().size() > 0) {
+                map.putAll(sqlEntity.getQuaryParams());
+            }
+            if (null != viewExecuteParam.getParams() && viewExecuteParam.getParams().size() > 0) {
+                for (Param param : viewExecuteParam.getParams()) {
+                    map.put(param.getName().trim(), param.getValue());
+                }
+            }
+        }
         return map;
     }
 }

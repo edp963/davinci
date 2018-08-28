@@ -83,7 +83,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
     private TokenUtils tokenUtils;
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != displayId) {
             return !id.equals(displayId);
@@ -867,6 +867,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
     /**
      * 上传辅助widget背景图
+     *
      * @param relationId
      * @param file
      * @param user

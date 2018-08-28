@@ -105,7 +105,7 @@ public class ShareController {
                                             @ApiIgnore @CurrentUser User user,
                                             HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().success().message("Invalid share token");
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -133,7 +133,7 @@ public class ShareController {
                                           @ApiIgnore @CurrentUser User user,
                                           HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().success().message("Invalid share token");
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -161,7 +161,7 @@ public class ShareController {
                                          @ApiIgnore @CurrentUser User user,
                                          HttpServletRequest request) {
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().success().message("Invalid share token");
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -192,7 +192,7 @@ public class ShareController {
                                        HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().success().message("Invalid share token");
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -224,7 +224,7 @@ public class ShareController {
                                                  HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
-            ResultMap resultMap = new ResultMap().success().message("Invalid share token");
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 

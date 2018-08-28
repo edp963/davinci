@@ -81,6 +81,33 @@ public class WidgetController extends BaseController {
 
 
     /**
+     * 获取widget列表
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get widget info")
+    @GetMapping("/{id}")
+    public ResponseEntity getWidgetInfo(@PathVariable Long id,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = widgetService.getWidget(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
      * 新建widget
      *
      * @param widgetCreate

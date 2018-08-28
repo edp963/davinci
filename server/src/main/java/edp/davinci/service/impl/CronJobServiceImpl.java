@@ -67,7 +67,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
     private QuartzUtils quartzUtils;
 
     @Override
-    public boolean isExist(String name, Long id, Long projectId) {
+    public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long cronJobId = cronJobMapper.getByNameWithProjectId(name, projectId);
         if (null != id && null != cronJobId) {
             return !id.equals(cronJobId);
@@ -77,6 +77,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
     /**
      * 获取所在project对用户可见的jobs
+     *
      * @param projectId
      * @param user
      * @param request
@@ -118,6 +119,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
     /**
      * 创建job
+     *
      * @param cronJobBaseInfo
      * @param user
      * @param request
@@ -170,6 +172,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
     /**
      * 修改job
+     *
      * @param cronJobUpdate
      * @param user
      * @param request
@@ -218,6 +221,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
     /**
      * 删除job
+     *
      * @param id
      * @param user
      * @param request

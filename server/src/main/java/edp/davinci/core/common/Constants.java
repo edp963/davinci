@@ -110,4 +110,7 @@ public class Constants extends Consts {
      * 点赞project
      */
     public static final String STAR_TARGET_PROJECT = "project";
+
+
+    public static final String REG_USER_PASSWORD = ".{6,20}";
 }

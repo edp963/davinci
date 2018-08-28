@@ -70,7 +70,7 @@ public class UserController extends BaseController {
     public ResponseEntity regist(@Valid @RequestBody UserRegist userRegist, @ApiIgnore BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap().success().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         try {
@@ -154,7 +154,7 @@ public class UserController extends BaseController {
                                    HttpServletRequest request) {
 
         if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap().success().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -228,7 +228,7 @@ public class UserController extends BaseController {
         }
 
         if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap().success().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
