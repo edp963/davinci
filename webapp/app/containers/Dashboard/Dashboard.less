@@ -577,7 +577,6 @@
 
 .more {
   cursor: pointer;
-  vertical-align: middle;
   font-weight: 900;
   &:before {
     padding: 0 8px;
@@ -650,11 +649,16 @@
       display: flex;
       flex-direction: column;
 
+      .loadingTreeMsg {
+        padding-left: 16px;
+      }
+
       .portalRow {
         flex-shrink: 0;
         display: flex;
         flex-direction: row;
         align-items: center;
+        padding: 16px;
       
         .search, .plus {
           cursor: pointer;
@@ -670,7 +674,7 @@
         line-height: 32px;
         font-weight: bold;
         display: inline-block;
-        font-size: 14px;
+        font-size: 16px;
         .ellipsis;
       }
 
@@ -681,6 +685,7 @@
       .portalTreeNode {
         flex: 1;
         overflow-y: auto;
+        border-top: 1px solid #d9d9d9;
       }
     }
 
@@ -705,6 +710,9 @@
   .dashboardTitle {
     display: inline-block;
     margin-bottom: -4px;
+    font-weight: 400;
+    font-size: 14px;
+    font-family: 'PingFang SC','Helvetica Neue',Helvetica,STHeitiSC-Light,WOL_SB,'Segoe UI Semibold','Segoe UI',Tahoma,Helvetica,sans-serif;
     .ellipsis;
   }
 
@@ -726,8 +734,10 @@
   }
 
   .itemName {
-    margin-left:8px;
-    font-weight: 500;
+    margin-left: 8px;
+    font-weight: 400;
+    font-size: 14px;
+    font-family: 'PingFang SC','Helvetica Neue',Helvetica,STHeitiSC-Light,WOL_SB,'Segoe UI Semibold','Segoe UI',Tahoma,Helvetica,sans-serif;
   }
 }
 

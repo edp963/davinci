@@ -79,7 +79,7 @@ export interface IPortal {
   projectId?: number
   id?: number
   name?: string
-  avatar?: number
+  avatar?: string
   publish?: boolean
   description?: string
 }
@@ -148,7 +148,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
           name,
           publish,
           projectId:  this.props.params.pid,
-          avatar: formType === 'add' ? Math.ceil(Math.random() * 19) : Number(avatar)
+          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
         if (formType === 'add') {
           this.props.onAddPortal(val, () => {

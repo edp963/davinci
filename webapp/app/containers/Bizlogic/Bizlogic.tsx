@@ -1097,7 +1097,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           <Col span={24} className={styles.treeSearch}>
             <Search
               className={styles.searchSource}
-              placeholder="Search the Source"
+              placeholder="Search the Schema"
               onChange={this.searchSchema}
             />
           </Col>
