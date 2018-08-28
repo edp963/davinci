@@ -143,7 +143,9 @@ export function* deleteDashboard ({ payload }) {
       url: `${api.portal}/dashboards/${payload.id}`
     })
     yield put(dashboardDeleted(payload.id))
-    payload.resolve()
+    if (payload.resolve) {
+      payload.resolve()
+    }
   } catch (err) {
     yield put(deleteDashboardFail())
     message.error('删除当前 Dashboard 失败，请稍后再试')

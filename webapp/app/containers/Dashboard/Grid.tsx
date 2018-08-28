@@ -334,7 +334,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
     const { pid, portalId, dashboardId } = params
     onLoadBizlogics(pid)
-    onLoadDashboardDetail(pid, portalId, Number(dashboardId))
+    if (dashboardId && Number(dashboardId) !== -1) {
+      onLoadDashboardDetail(pid, portalId, Number(dashboardId))
+    }
   }
 
   public componentWillReceiveProps (nextProps) {
@@ -358,7 +360,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         modifiedPositions: null,
         linkageCascaderSource: null
       })
-      onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+
+      if (params.dashboardId && Number(params.dashboardId) !== -1) {
+        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+      }
     }
 
     if (!currentDashboardLoading) {

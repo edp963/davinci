@@ -161,9 +161,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       this.expandAll(result)
     })
 
-    new Promise((resolve) => {
-      
-    })
     // .then(({result, defaultDashboardId}) => {
     //   if (result.length !== 0 && defaultDashboardId !== -1) {
     //     const { dashboardId } = params
@@ -256,7 +253,17 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             onAddDashboard(addObj, (dashboardId) => {
               this.hideDashboardForm()
               const { pid, portalId, portalName } = params
-              router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+              if (addObj.type === 0) {
+                this.setState({
+                  isGrid: false
+                })
+                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
+              } else {
+                this.setState({
+                  isGrid: true
+                })
+                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+              }
             })
             break
           case 'edit':
@@ -487,20 +494,25 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   private confirmDeleteDashboard = (id) => {
     const { params, router, onDeleteDashboard, dashboards } = this.props
     const { dashboardData } = this.state
-    const paramsDashboard = dashboards.find((d) => d.id === Number(params.dashboardId))
+
     onDeleteDashboard(id, () => {
       const { pid, portalId, portalName } = params
-      const remainDashboards = dashboardData
-        .filter((d) => d.id !== id)
-        .filter((r) => r.parentId !== id)
-      const treeData = {
-        id: -1,
-        type: 2,
-        children: remainDashboards
-      }
-      if (Number(params.dashboardId) === id || paramsDashboard.parentId === id) {
-        const defaultDashboardId = findFirstLeaf(treeData)
-        router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+
+      const paramsDashboard = dashboards.find((d) => d.id === Number(params.dashboardId))
+      const noCurrentDashboards = dashboardData.filter((d) => d.id !== id)
+      if (noCurrentDashboards.length !== 0 && paramsDashboard) {
+        const remainDashboards = noCurrentDashboards.filter((r) => r.parentId !== id)
+        const treeData = {
+          id: -1,
+          type: 2,
+          children: remainDashboards
+        }
+        if (Number(params.dashboardId) === id || paramsDashboard.parentId === id) {
+          const defaultDashboardId = findFirstLeaf(treeData)
+          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+        }
+      } else {
+        router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
       }
       this.hideDashboardForm()
     })
@@ -669,7 +681,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
               </span>
             </div>
             { dashboardData.length
-              ? <div  className={styles.portalTreeNode}>
+              ? <div className={styles.portalTreeNode}>
                 <Tree
                   onExpand={this.onExpand}
                   expandedKeys={this.state.expandedKeys}
@@ -681,7 +693,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                 {loop(dashboardData)}
                 </Tree>
               </div>
-              : isGrid ? <h3>Loading tree......</h3> : ''
+              : isGrid ? <h3 className={styles.loadingTreeMsg}>Loading tree......</h3> : ''
             }
           </div>
           <div className={styles.gridClass}>

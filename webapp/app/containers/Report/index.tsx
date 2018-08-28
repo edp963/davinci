@@ -144,7 +144,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onPageLoad: () => {
       const sidebarSource = [
-        { icon: 'icon-dashboard', route: ['vizs'], permission: 'viz' },
+        { icon: 'icon-dashboard', route: ['vizs', 'dashboard'], permission: 'viz' },
         { icon: 'icon-widget-gallery', route: ['widgets'], permission: 'widget' },
         { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'], permission: 'view' },
         { icon: 'icon-datasource24', route: ['sources'], permission: 'source' },

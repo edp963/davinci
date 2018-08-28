@@ -16,10 +16,11 @@ import PortalForm from './PortalForm'
 import {makeSelectCurrentProject} from '../../Projects/selectors'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
+import {IPortal} from '../../Portal'
 
 interface IPortalListProps {
   projectId: number
-  portals: any[]
+  portals: IPortal[]
   currentProject: IProject
   onPortalClick: (portal: any) => void
   onAdd: (portal, resolve) => void
@@ -77,11 +78,14 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           description,
           name,
           publish,
-          projectId,
-          avatar: formType === 'add' ? Math.ceil(Math.random() * 19) : Number(avatar)
+          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
+
         if (formType === 'add') {
-          onAdd(val, () => {
+          onAdd({
+            ...val,
+            projectId: Number(projectId)
+          }, () => {
             this.hidePortalForm()
           })
         } else {
