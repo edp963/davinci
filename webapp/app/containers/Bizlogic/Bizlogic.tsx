@@ -870,8 +870,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     } = this.state
 
     const itemStyle = {
-      labelCol: { span: 2 },
-      wrapperCol: { span: 22 }
+      labelCol: { span: 8 },
+      wrapperCol: { span: 16 }
     }
 
     const tableData = executeResultset
@@ -1152,21 +1152,19 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Row>
 
           <Row className={styles.fromBtn}>
-            <Col span={22}>
+            <span className={styles.sqlAlert}>
               {sqlValidatePanel}
-            </Col>
-            <Col span={2}>
-              <Button
-                className={styles.executeBtn}
-                key="forward"
-                size="default"
-                type="primary"
-                loading={executeLoading}
-                onClick={this.executeSql}
-              >
-                <Icon type="caret-right" />Execute
-              </Button>
-            </Col>
+            </span>
+            <Button
+              className={styles.executeBtn}
+              key="forward"
+              size="large"
+              type="primary"
+              loading={executeLoading}
+              onClick={this.executeSql}
+            >
+              <Icon type="caret-right" />Execute
+            </Button>
           </Row>
           {
             isFold
