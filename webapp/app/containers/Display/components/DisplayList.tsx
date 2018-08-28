@@ -37,7 +37,7 @@ export interface IDisplayEvent {
 interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
-  currentProject: IProject
+  currentProject?: IProject
 }
 
 interface IDisplayListStates {
