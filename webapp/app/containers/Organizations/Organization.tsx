@@ -341,8 +341,8 @@ const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
 const withProjectReducer = injectReducer({ key: 'project', reducer: reducerProject })
 const withProjectSaga = injectSaga({ key: 'project', saga: sagaProject })
 
-const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,

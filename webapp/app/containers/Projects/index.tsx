@@ -833,8 +833,8 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,

@@ -47,7 +47,7 @@ export function Navigator (props) {
       <Menu.Divider />
       <Menu.Item key="3">
         <a href="javascript:;" onClick={props.onLogout}>
-          退出登陆
+          退出登录
         </a>
       </Menu.Item>
     </Menu>
