@@ -71,8 +71,25 @@ object AuthorizationProvider {
   }
 
   private def getUserFuture(login: LoginClass): Future[User] = {
-    if (ldapIsEnable && validate(login.username, login.password)) findUserByLdap(login)
-    else findUser(login)
+    module.userDal.findByFilter(user => user.email === login.username && user.active === true).map[User] {
+      userSeq =>
+        println(userSeq.headOption)
+        userSeq.headOption match {
+          case Some(user) =>
+            if (verifyPwd(user.password, login.password)) user
+            else throw new passwordError()
+          case None =>
+            if (ldapIsEnable && validate(login.username, login.password)) {
+              val ldapUser: User = User(0, login.username, PasswordHash.createHash(login.password), "", login.username, admin = false, active = true, currentTime, 1, currentTime, 0)
+              module.userDal.insert(ldapUser)
+              ldapUser
+            }
+            else {
+              logger.info("user not found")
+              throw new UserNotFoundError()
+            }
+        }
+    }
   }
 
   private def ldapIsEnable(): Boolean = {
@@ -80,25 +97,14 @@ object AuthorizationProvider {
   }
 
 
-  private def findUserByLdap(login: LoginClass): Future[User] = {
-    val ldapUser = User(0, login.username, login.password, "", login.username, admin = false, active = true, currentTime, 0, currentTime, 0)
-    module.userDal.findByFilter(user => user.email === login.username && user.active === true).map[User] {
-      userSeq =>
-        userSeq.headOption match {
-          case Some(_) =>
-            db.run(module.userQuery.filter(_.email === login.username).map(_.password).update(login.password))
-            ldapUser
-          case None =>
-            logger.info("user not found")
-            module.userDal.insert(ldapUser)
-            ldapUser
-        }
-    }
-  }
-
-
   private def getUserGroups(userId: Long) = {
     DbModule.db.run(module.relUserGroupQuery.filter(_.user_id === userId).map(_.group_id).distinct.result)
+  }
+
+  private def verifyPwd(storePass: String, pass: String): Boolean = {
+    //    pass.isBcrypted(storePass)
+    if (PasswordHash.validatePassword(pass, storePass)) true
+    else false
   }
 
 
@@ -109,22 +115,6 @@ object AuthorizationProvider {
       case _ => Future.successful(None)
     }
 
-
-  private def findUser(login: LoginClass): Future[User] = {
-    module.userDal.findByFilter(user => user.email === login.username && user.active === true).map[User] {
-      userSeq =>
-        println(userSeq.headOption)
-        userSeq.headOption match {
-          case Some(user) =>
-            if (verifyPwd(user.password, login.password)) user
-            else throw new passwordError()
-          case None =>
-            logger.info("user not found")
-            throw new UserNotFoundError()
-        }
-    }
-  }
-
   def validateToken(token: String): Future[Option[SessionClass]] = {
     try {
       val session = JwtSupport.decodeToken(token)
@@ -134,13 +124,6 @@ object AuthorizationProvider {
         logger.error("validateToken error", e)
         Future.successful(None)
     }
-  }
-
-
-  private def verifyPwd(storePass: String, pass: String): Boolean = {
-    //    pass.isBcrypted(storePass)
-    if (PasswordHash.validatePassword(pass, storePass)) true
-    else false
   }
 
 
