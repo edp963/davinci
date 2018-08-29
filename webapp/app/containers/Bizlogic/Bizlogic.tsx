@@ -633,6 +633,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
           i.visualType = iVisualType || 'string'
           i.modelType = SQL_NUMBER_TYPES.indexOf(i.type) < 0 ? 'category' : 'value'
+          i.sqlType = i.type
           return i
         })
         this.setState({
@@ -653,8 +654,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { executeColumns } = this.state
     const obj = {
       name: record.name,
-      sqlType: record.type,
-      key: record.key,
+      sqlType: record.sqlType,
       visualType: item === 'visualType' ? val : record.visualType,
       modelType: item === 'modelType'
         ? val.target.value === '维度' ? 'category' : 'value'
@@ -952,6 +952,16 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           >
             {optionSource}
           </Select>
+        )
+      }
+    }, {
+      title: '类型',
+      dataIndex: 'sqlType',
+      className: `${utilStyles.hide}`,
+      key: 'sqlType',
+      render: (text, record) => {
+        return (
+          <Input />
         )
       }
     }]
