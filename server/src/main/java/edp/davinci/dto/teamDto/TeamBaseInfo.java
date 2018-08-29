@@ -28,5 +28,5 @@ public class TeamBaseInfo {
 
     String description;
 
-//    Boolean visibility;
+    Boolean visibility;
 }

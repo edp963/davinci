@@ -132,7 +132,7 @@ public class SqlParseUtils {
             Map<String, List<String>> teamParamMap = new HashMap<>();
             //参数
             if (!StringUtils.isEmpty(queryParam)) {
-                queryParam = queryParam.replaceAll(newLineChar, "").trim();
+                queryParam = queryParam.replaceAll(newLineChar, space).trim();
                 if (queryParam.endsWith(sqlSeparator)) {
                     queryParam = queryParam.substring(0, queryParam.length() - 1);
                 }
@@ -154,7 +154,7 @@ public class SqlParseUtils {
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0].trim();
-                                String v = paramArray.length > 1 ? paramArray[1].trim() : "";
+                                String v = paramArray.length > 1 ? paramArray[1].trim() : null;
                                 log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 teamParamMap.put(k, Arrays.asList(v));
                             }
@@ -167,7 +167,7 @@ public class SqlParseUtils {
                 throw new ServerException("Invalid Query Sql");
             }
 
-            sqlStruct = sqlStruct.replaceAll(newLineChar, "");
+            sqlStruct = sqlStruct.replaceAll(newLineChar, space);
 
             SqlEntity sqlEntity = new SqlEntity(sqlStruct, queryParamMap, teamParamMap);
             return sqlEntity;

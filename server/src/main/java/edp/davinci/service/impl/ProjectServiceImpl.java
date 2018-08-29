@@ -122,22 +122,8 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         ProjectInfo projectInfo = new ProjectInfo();
         BeanUtils.copyProperties(project, projectInfo);
-
-
-        Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-        if (teamNumOfOrgByUser > 0) {
-            List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
-            for (UserMaxProjectPermission userMaxProjectPermission : permissions) {
-                if (userMaxProjectPermission.getProjectId().equals(project.getId())) {
-                    BeanUtils.copyProperties(userMaxProjectPermission, projectInfo.getPermission());
-                }
-            }
-        } else if (isMaintainer(project, user)) {
-            projectInfo.setPermission(ProjectPermission.adminPermission());
-        } else {
-            Organization organization = organizationMapper.getById(project.getOrgId());
-            projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
-        }
+        ProjectPermission projectPermission = getUserProjectPermission(project, user);
+        projectInfo.setPermission(projectPermission);
 
         return resultMap.successAndRefreshToken(request).payload(projectInfo);
     }
@@ -159,26 +145,38 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             for (ProjectWithCreateBy project : projects) {
                 ProjectInfo projectInfo = new ProjectInfo();
                 BeanUtils.copyProperties(project, projectInfo);
-
-                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-
-                if (teamNumOfOrgByUser > 0) {
-                    List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
-                    for (UserMaxProjectPermission maxProjectPermission : permissions) {
-                        if (maxProjectPermission.getProjectId().equals(project.getId())) {
-                            BeanUtils.copyProperties(maxProjectPermission, projectInfo.getPermission());
-                        }
-                    }
-                } else if (isMaintainer(project, user)) {
-                    projectInfo.setPermission(ProjectPermission.adminPermission());
-                } else {
-                    Organization organization = organizationMapper.getById(project.getOrgId());
-                    projectInfo.setPermission(new ProjectPermission(organization.getMemberPermission()));
-                }
+                ProjectPermission projectPermission = getUserProjectPermission(project, user);
+                projectInfo.setPermission(projectPermission);
                 projectInfoList.add(projectInfo);
             }
         }
         return resultMap.successAndRefreshToken(request).payloads(projectInfoList);
+    }
+
+    /**
+     * 获取用户对project的权限
+     * @param project
+     * @param user
+     * @return
+     */
+    private ProjectPermission getUserProjectPermission(Project project, User user) {
+        if (isMaintainer(project, user)) {
+            return ProjectPermission.adminPermission();
+        } else {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
+                for (UserMaxProjectPermission maxProjectPermission : permissions) {
+                    if (maxProjectPermission.getProjectId().equals(project.getId())) {
+                        return maxProjectPermission;
+                    }
+                }
+            }  else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                return new ProjectPermission(organization.getMemberPermission());
+            }
+        }
+        return new ProjectPermission();
     }
 
     /**
