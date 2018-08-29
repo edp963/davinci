@@ -93,8 +93,8 @@ export function* editTeam (action) {
     if (resolve) {
       resolve()
     }
+    message.success('success')
   } catch (err) {
-    console.log(err)
     yield put(editTeamFail())
     message.error('修改 Team 失败，请稍后再试')
   }
