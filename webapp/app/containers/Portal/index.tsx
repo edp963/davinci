@@ -305,7 +305,6 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
       </Button>
     )]
 
-    // const searchCol = loginUser.admin ? styles.searchAdmin : styles.searchUser
     const searchCol = styles.searchAdmin
 
     return (

@@ -21,6 +21,7 @@
 import * as React from 'react'
 const Input = require('antd/lib/input')
 const styles = require('./Bizlogic.less')
+import { ITeamParams } from '../Bizlogic'
 
 interface ITeamTreeActionProps {
   depth: number
@@ -28,20 +29,13 @@ interface ITeamTreeActionProps {
     id: number,
     name: string,
     checked: boolean,
-    params: ITeamParams[]
+    params: [ITeamParams]
   },
-  teamParams: ITeamParams[]
+  teamParams: [ITeamParams]
   onTeamParamChange: (id: number, index: number) => any
 }
 
-interface ITeamParams {
-  k: string,
-  v: string
-}
-
 export class TeamTreeAction extends React.PureComponent<ITeamTreeActionProps, {}> {
-
-
   public render () {
     const {
       depth,
