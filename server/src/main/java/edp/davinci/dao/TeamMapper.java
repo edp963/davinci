@@ -43,7 +43,7 @@ public interface TeamMapper {
 
 
     @Select({
-            "select distinct t.id, t.`name`, t.description, t.parent_team_id from team t, rel_user_team rut",
+            "select distinct t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t, rel_user_team rut",
             "where rut.team_id = t.id and t.org_id = #{orgId}"
     })
     List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId);
@@ -140,7 +140,7 @@ public interface TeamMapper {
             "	o.`allow_create_project`  'organization.allowCreateProject',",
 //            "	o.`allow_delete_or_transfer_project`  'organization.allowDeleteOrTransferProject',",
 //            "	o.`allow_change_visibility`  'organization.allowChangeVisibility',",
-//            "	o.`member_permission`  'organization.memberPermission',",
+            "	o.`member_permission`  'organization.memberPermission',",
             "	o.`create_time`  'organization.createTime',",
             "	o.`create_by`  'organization.createBy',",
             "	o.`update_time`  'organization.updateTime',",
