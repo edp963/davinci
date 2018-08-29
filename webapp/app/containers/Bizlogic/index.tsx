@@ -71,6 +71,11 @@ interface IBizlogicsStates {
   screenWidth: number
 }
 
+export interface ITeamParams {
+  k: string,
+  v: string
+}
+
 export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsStates> {
   constructor (props) {
     super(props)
@@ -89,8 +94,6 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
   }
 
   public componentWillReceiveProps (props) {
-    // const { loginUser } = this.props
-
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     if (props.bizlogics) {

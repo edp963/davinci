@@ -86,6 +86,7 @@ import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
 import TeamTreeAction from './TeamTreeAction'
 import { toListBF, SQL_FIELD_TYPES } from './viewUtil'
+import { ITeamParams } from '../Bizlogic'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -139,11 +140,6 @@ interface IBizlogicFormState {
   alertVisible: boolean
   screenWidth: number
   isFold: boolean
-}
-
-interface ITeamParams {
-  k: string,
-  v: string
 }
 
 interface IViewTeams {
@@ -1027,7 +1023,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const pagination = {
       simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 100,
-      showSizeChanger: true
+      showSizeChanger: true,
+      pageSizeOptions: ['100', '200', '300', '400']
     }
 
     const operations = (
