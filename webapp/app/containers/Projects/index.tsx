@@ -126,6 +126,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         const {orgId, id, name, pic, description, visibility} = project
         this.widgetTypeChange(`${orgId}`).then(
           () => {
+            if (this.state.formType === 'transfer') {
+              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility ? '1' : '0'}`})
+              return
+            }
             this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility ? '1' : '0'}`})
           }
         )
@@ -833,8 +837,8 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,

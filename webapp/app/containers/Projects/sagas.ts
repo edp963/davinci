@@ -56,8 +56,6 @@ const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import {checkName} from '../App/sagas'
-import {CHECK_NAME} from '../App/constants'
 
 export function* getProjects (action) {
   const { payload } = action
@@ -146,12 +144,11 @@ export function* transferProject ({payload}) {
 }
 
 export function* searchProject ({payload}) {
-  const {param} = payload
+  const {param: {keywords, pageNum, pageSize}} = payload
   try {
     const asyncData = yield call(request, {
       method: 'get',
-      url: `${api.projects}/search`,
-      data: param
+      url: `${api.projects}/search/?pageNum=${pageNum || 1}&pageSize=${pageSize || 10}&keywords=${keywords || ''}`
     })
     const result = readListAdapter(asyncData)
     yield put(projectSearched(result))

@@ -91,6 +91,10 @@ export function* activeUser (action): IterableIterator<any> {
         localStorage.setItem('loginUser', JSON.stringify(loginUser))
         resolve()
         return loginUser
+      case 302:
+        message.error(asyncData.header.msg)
+        setTimeout(() => location.replace('/'), 500)
+        return
       default:
         yield put(activeError())
         message.error(asyncData.header.msg)

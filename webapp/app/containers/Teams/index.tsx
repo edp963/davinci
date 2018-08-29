@@ -110,8 +110,8 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'team', reducer })
 const withSaga = injectSaga({ key: 'team', saga })
 
-const withAppReducer = injectReducer({key: 'app', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'app', saga: sagaApp})
+const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,

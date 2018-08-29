@@ -107,6 +107,7 @@ export function* editOrganization (action) {
       data: organization
     })
     yield put(organizationEdited(organization))
+    message.success('success')
   } catch (err) {
     yield put(editOrganizationFail())
     message.error('修改 Organization 失败，请稍后再试')
