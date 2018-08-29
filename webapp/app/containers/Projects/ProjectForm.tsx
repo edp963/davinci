@@ -83,19 +83,26 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
         移交
       </Button>
     )]
-    const organizationOptions = organizations ? organizations.map((o) => (
-      <Option key={o.id} value={`${o.id}`} disabled={o.allowCreateProject === false} className={styles.selectOption}>
-        <div className={styles.title}>
-          <span className={styles.owner} style={{color: o.allowCreateProject === false ? '#ccc' : '#444444'}}>{o.name}</span>
+    const organizationOptions = organizations ? organizations.map((o) => {
+      const orgId = this.props.form.getFieldValue('orgId_hc')
+      if (this.props.type === 'transfer' && o.id === Number(orgId)) {
+        return []
+      }
+      const disabled = o.allowCreateProject === false
+      return (
+        <Option key={o.id} value={`${o.id}`} disabled={disabled} className={styles.selectOption}>
+          <div className={styles.title}>
+            <span className={styles.owner} style={{color: disabled ? '#ccc' : '#444444'}}>{o.name}</span>
+            {`${o.id}` !== this.props.form.getFieldValue('orgId')
+              ? <Tag color={`${ disabled ? '#ccc' : '#108ee9'}`}>Owner</Tag>
+              : ''}
+          </div>
           {`${o.id}` !== this.props.form.getFieldValue('orgId')
-            ? <Tag color={`${ o.allowCreateProject === false ? '#ccc' : '#108ee9'}`}>Owner</Tag>
+            ? (<Avatar size="small" path={o.avatar}/>)
             : ''}
-        </div>
-        {`${o.id}` !== this.props.form.getFieldValue('orgId')
-          ? (<Avatar size="small" path={o.avatar}/>)
-          : ''}
-      </Option>
-    )) : ''
+        </Option>
+      )
+    }) : ''
     const isShowOrganization = classnames({
       [utilStyles.hide]: (this.props.type === 'organizationProject') || (this.props.type === 'edit')
     })
@@ -128,6 +135,13 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 <FormItem className={utilStyles.hide}>
                   {getFieldDecorator('id', {
                     hidden: this.props.type === 'add'
+                  })(
+                    <Input />
+                  )}
+                </FormItem>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('orgId_hc', {
+                    hidden: this.props.type !== 'transfer'
                   })(
                     <Input />
                   )}
