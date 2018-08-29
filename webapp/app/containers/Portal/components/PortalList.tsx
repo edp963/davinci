@@ -26,6 +26,7 @@ interface IPortalListProps {
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 interface IPortalListStates {
@@ -183,7 +184,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   public render () {
-    const { projectId, portals, currentProject } = this.props
+    const { projectId, portals, currentProject, onCheckUniqueName } = this.props
     if (!Array.isArray(portals)) { return null }
 
     const { formType, formVisible, modalLoading } = this.state
@@ -230,6 +231,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           onCancel={this.hidePortalForm}
         >
           <PortalForm
+            onCheckUniqueName={onCheckUniqueName}
             projectId={projectId}
             type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
