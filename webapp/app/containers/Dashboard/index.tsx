@@ -60,7 +60,7 @@ import {
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
-import { hideNavigator } from '../App/actions'
+import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 
 const utilStyles = require('../../assets/less/util.less')
@@ -82,6 +82,7 @@ interface IDashboardProps {
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
   onDeleteDashboard: (id: number, resolve: any) => void
   onHideNavigator: () => void
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
@@ -531,7 +532,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       loginUser,
       modalLoading,
       children,
-      currentProject
+      currentProject,
+      onCheckUniqueName
     } = this.props
 
     const {
@@ -721,6 +723,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             itemId={this.state.itemId}
             dashboards={dashboards}
             portalId={params.portalId}
+            onCheckUniqueName={onCheckUniqueName}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -743,7 +746,8 @@ export function mapDispatchToProps (dispatch) {
     onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
     onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
     onDeleteDashboard: (id, resolve) => dispatch(deleteDashboard(id, resolve)),
-    onHideNavigator: () => dispatch(hideNavigator())
+    onHideNavigator: () => dispatch(hideNavigator()),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 

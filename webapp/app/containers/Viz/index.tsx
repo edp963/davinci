@@ -17,6 +17,7 @@ import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display
 import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
+import { checkNameUniqueAction } from '../App/actions'
 
 const Icon = require('antd/lib/icon')
 const Collapse = require('antd/lib/collapse')
@@ -52,6 +53,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onAddPortal: (portal, resolve) => void
   onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 interface IVizStates {
@@ -105,7 +107,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   public render () {
     const {
       displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject
+      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName
     } = this.props
     const projectId = params.pid
     const isHideDashboardStyle = classnames({
@@ -150,6 +152,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onAdd={onAddPortal}
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
+                onCheckUniqueName={onCheckUniqueName}
               />
             </div>
           </Box>
@@ -198,7 +201,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
-    onDeletePortal: (id) => dispatch(deletePortal(id))
+    onDeletePortal: (id) => dispatch(deletePortal(id)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 

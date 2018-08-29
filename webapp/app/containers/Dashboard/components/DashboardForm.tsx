@@ -21,12 +21,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-import { compose } from 'redux'
-import injectReducer from '../../../utils/injectReducer'
-import injectSaga from '../../../utils/injectSaga'
-import reducer from '../../App/reducer'
-import saga from '../../App/sagas'
-
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -36,7 +30,6 @@ const Select = require('antd/lib/select')
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { checkNameUniqueAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
 import { listToTree } from './localPositionUtil'
@@ -180,18 +173,5 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
-  }
-}
+export default Form.create()(DashboardForm)
 
-const withConnect = connect<{}, {}, IDashboardFormProps>(null, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
-
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect
-)(Form.create()(DashboardForm))

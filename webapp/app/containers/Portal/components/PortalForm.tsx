@@ -21,12 +21,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-import { compose } from 'redux'
-import injectReducer from 'utils/injectReducer'
-import injectSaga from 'utils/injectSaga'
-import reducer from '../../App/reducer'
-import saga from '../../App/sagas'
-
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -34,7 +28,6 @@ const Input = require('antd/lib/input')
 const Radio = require('antd/lib/radio/radio')
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
-import { checkNameUniqueAction } from '../../App/actions'
 
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -130,17 +123,4 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))  }
-}
-
-const withConnect = connect(null, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
-
-export default compose(
-  withReducer,
-  withSaga,
-  withConnect
-)(Form.create()(PortalForm))
+export default Form.create()(PortalForm)

@@ -29,8 +29,6 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
-import appReducer from '../App/reducer'
-import appSaga from '../App/sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
@@ -67,7 +65,7 @@ import {
 const utilStyles = require('../../assets/less/util.less')
 import api from '../../utils/api'
 import { uuid } from '../../utils/util'
-import { checkNameAction } from '../App/actions'
+import { checkNameUniqueAction } from '../App/actions'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import {IProject} from '../Projects'
@@ -88,6 +86,7 @@ interface ISourceProps {
     csvMeta: any,
     resolve: any,
     reject: any) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 interface ISourceStates {
@@ -388,7 +387,8 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       formLoading,
       testLoading,
       onDeleteSource,
-      currentProject
+      currentProject,
+      onCheckUniqueName
     } = this.props
 
     const AdminButton = ModulePermission(currentProject, 'source', true)(Button)
@@ -579,6 +579,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
                   projectId={params.pid}
                   testLoading={testLoading}
                   onTestSourceConnection={this.testSourceConnection}
+                  onCheckUniqueName={onCheckUniqueName}
                   wrappedComponentRef={this.refHandlers.sourceForm}
                 />
               </Modal>
@@ -611,7 +612,8 @@ export function mapDispatchToProps (dispatch) {
     onDeleteSource: (id) => () => dispatch(deleteSource(id)),
     onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
     onTestSourceConnection: (url) => dispatch(testSourceConnection(url)),
-    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject))
+    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 
@@ -627,13 +629,8 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'source', reducer })
 const withSaga = injectSaga({ key: 'source', saga })
 
-const withAppReducer = injectReducer({ key: 'global', reducer: appReducer })
-const withAppSaga = injectSaga({ key: 'global', saga: appSaga })
-
 export default compose(
   withReducer,
-  withAppReducer,
   withSaga,
-  withAppSaga,
   withConnect
 )(Source)

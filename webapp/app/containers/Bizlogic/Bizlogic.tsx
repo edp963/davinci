@@ -26,8 +26,6 @@ import { InjectedRouter } from 'react-router/lib/Router'
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducer from '../App/reducer'
-import saga from '../App/sagas'
 import bizlogicReducer from './reducer'
 import bizlogicSaga from './sagas'
 import sourceReducer from '../Source/reducer'
@@ -92,28 +90,24 @@ interface IBizlogicFormProps {
   router: InjectedRouter
   type: string
   sources: boolean | any[]
-  onHideNavigator: () => void
-  onInitExecuteSql: (sourceId: number) => any
-  onModelChange: (record: string, item: string, value: string) => any
-  onTmplCodeMirrorChange: (queryTextarea: any) => any
-  onCodeMirrorPrompt: (generateData: any) => any
   sqlValidateCode: boolean | number
   sqlValidateMessage: boolean | string
   form: any
   route: any
   params: any
-  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onLoadSchema: (sourceId: number, resolve: any) => any
   bizlogics: boolean | any[]
   executeLoading: boolean
   modalLoading: boolean
+  viewTeam: IViewTeams[]
+  onHideNavigator: () => void
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onLoadSchema: (sourceId: number, resolve: any) => any
   onExecuteSql: (sourceId: number, sql: any, resolve: any) => any
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
   onLoadSources: (projectId: number, resolve?: any) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
   onLoadViewTeam: (projectId: number) => any
-  viewTeam: IViewTeams[]
 }
 
 interface IBizlogicFormState {
@@ -479,6 +473,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       }
 
       this.codeMirrorInstanceOfQuerySQL.on('change', (editor, change) => {
+        console.log({editor}, {change})
         if (change.origin === '+input') {
           this.codeMirrorInstanceOfQuerySQL.showHint({
             completeSingle: false,
@@ -1263,8 +1258,6 @@ function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
 
 const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
 const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
@@ -1273,10 +1266,8 @@ const withReducerSource = injectReducer({ key: 'source', reducer: sourceReducer 
 const withSagaSource = injectSaga({ key: 'source', saga: sourceSaga })
 
 export default compose(
-  withReducer,
   withReducerBizlogic,
   withReducerSource,
-  withSaga,
   withSagaBizlogic,
   withSagaSource,
   withConnect
