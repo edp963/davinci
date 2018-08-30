@@ -60,38 +60,11 @@ export default function () {
           `${horizontalPer * (metricIndex + metricCount * unitIndex + 1) - horizontalPer / 2}%`,
           `${verticalPer * (verticalRecordCountOfRow - recordIndex - lineIndex * recordCount) - verticalPer / 2}%`
         ]
-        console.log(containerWidth, containerHeight)
-        console.log(verticalRecordCountOfRow)
-        console.log(metricCount, unitCount)
         radius = containerWidth > containerHeight
           ? ['0%', `${100 / verticalRecordCountOfRow * .6}%`]
           : ['0%', `${100 / metricCount / unitCount * .6}%`]
       }
       return { center, radius }
     }
-    // calcPieRadius (
-    //   dimetionAxis,
-    //   containerWidth,
-    //   containerHeight,
-    //   horizontalRecordCountOfCol,
-    //   verticalRecordCountOfRow,
-    //   lineCount,
-    //   unitCount,
-    //   metricCount
-    // ): string[] {
-    //   if (dimetionAxis === 'col') {
-    //     if (containerWidth > containerHeight) {
-    //       return ['0%', `${100 / metricCount / lineCount * .6}%`]
-    //     } else {
-    //       return ['0%', `${100 / horizontalRecordCountOfCol * .6}%`]
-    //     }
-    //   } else {
-    //     if (containerWidth > containerHeight) {
-    //       return ['0%', `${100 / verticalRecordCountOfRow * .6}%`]
-    //     } else {
-    //       return ['0%', `${100 / metricCount / unitCount * .6}%`]
-    //     }
-    //   }
-    // }
   }
 }

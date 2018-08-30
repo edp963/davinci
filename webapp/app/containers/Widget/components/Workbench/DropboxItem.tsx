@@ -21,6 +21,7 @@ interface IDropboxItemProps {
   onSort: (item: IDataParamSource, sort: SortType) => void
   onChangAgg: (item: IDataParamSource, agg: AggregatorType) => void
   onChangeColorConfig: (item: IDataParamSource) => void
+  onChangeFilterConfig: (item: IDataParamSource) => void
   onChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
   onRemove: (e) => void
 }
@@ -41,9 +42,19 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     }
   }
 
-  private categoryDropdownList = this.props.container === 'color'
-    ? [{
-      color: '配置颜色'
+  private dropdownList = {
+    category: [{
+      default: '默认顺序',
+      asc: '升序',
+      desc: '降序'
+    }],
+    value: [{
+      sum: getAggregatorLocale('sum'),
+      avg: getAggregatorLocale('avg'),
+      count: getAggregatorLocale('count'),
+      distinct: getAggregatorLocale('distinct'),
+      max: getAggregatorLocale('max'),
+      min: getAggregatorLocale('min')
     }, {
       sort: {
         name: '排序',
@@ -54,29 +65,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
         }]
       }
     }]
-    : [{
-      default: '默认顺序',
-      asc: '升序',
-      desc: '降序'
-    }]
-
-  private valueDropdownList = [{
-    sum: getAggregatorLocale('sum'),
-    avg: getAggregatorLocale('avg'),
-    count: getAggregatorLocale('count'),
-    distinct: getAggregatorLocale('distinct'),
-    max: getAggregatorLocale('max'),
-    min: getAggregatorLocale('min')
-  }, {
-    sort: {
-      name: '排序',
-      subs: [{
-        default: '默认顺序',
-        asc: '升序',
-        desc: '降序'
-      }]
-    }
-  }]
+  }
 
   private dragStart = (e) => {
     const { item, onDragStart } = this.props
@@ -119,14 +108,27 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
   }
 
   private dropdownMenuClick = ({key}) => {
-    const { item, onSort, onChangAgg, onChangeColorConfig } = this.props
+    const { item, onSort, onChangAgg, onChangeColorConfig, onChangeFilterConfig } = this.props
     if (['default', 'asc', 'desc'].indexOf(key) >= 0) {
       onSort(item as IDataParamSource, key)
     } else if (key === 'color') {
       onChangeColorConfig(item as IDataParamSource)
+    } else if (key === 'filters') {
+      onChangeFilterConfig(item as IDataParamSource)
     } else {
       onChangAgg(item as IDataParamSource, key)
     }
+  }
+
+  private getSpecificDropdownList = (type) => {
+    const { container } = this.props
+    let dropdownList = this.dropdownList[type]
+    if (container === 'color') {
+      dropdownList = [{ color: '配置颜色' }].concat(dropdownList)
+    } else if (container === 'filters') {
+      dropdownList = [{ filters: '配置筛选' }].concat(dropdownList)
+    }
+    return dropdownList
   }
 
   public render () {
@@ -174,16 +176,10 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     if (type === 'add') {
       contentWithDropdownList = content
     } else {
-      let dropdownListSource
+      const dropdownListSource = this.getSpecificDropdownList(type)
       let menuClass = ''
-      switch (type) {
-        case 'category':
-          dropdownListSource = this.categoryDropdownList
-          break
-        case 'value':
-          dropdownListSource = this.valueDropdownList
-          menuClass = styles.valueDropDown
-          break
+      if (type === 'value') {
+        menuClass = styles.valueDropDown
       }
       contentWithDropdownList = (
         <Dropdown

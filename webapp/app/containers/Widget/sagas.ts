@@ -24,7 +24,7 @@ import {
   LOAD_WIDGETS,
   ADD_WIDGET,
   DELETE_WIDGET,
-  // LOAD_WIDGET_DETAIL,
+  LOAD_WIDGET_DETAIL,
   EDIT_WIDGET
 } from './constants'
 
@@ -35,7 +35,8 @@ import {
   addWidgetFail,
   widgetDeleted,
   deleteWidgetFail,
-  // widgetDetailLoaded,
+  widgetDetailLoaded,
+  loadWidgetDetailFail,
   widgetEdited,
   editWidgetFail
 } from './actions'
@@ -43,14 +44,12 @@ import {
 const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getWidgets (action) {
   const { projectId } = action.payload
   try {
-    const asyncData = yield call(request, `${api.widget}?projectId=${projectId}`)
-    const widgets = readListAdapter(asyncData)
-    yield put(widgetsLoaded(widgets))
+    const result = yield call(request, `${api.widget}?projectId=${projectId}`)
+    yield put(widgetsLoaded(result.payload))
   } catch (err) {
     yield put(widgetsLoadedFail())
     message.error('加载 Widget 列表失败')
@@ -59,14 +58,13 @@ export function* getWidgets (action) {
 
 export function* addWidget ({ payload }) {
   try {
-    const asyncData = yield call(request, {
+    const result = yield call(request, {
       method: 'post',
       url: api.widget,
       data: payload.widget
     })
 
-    const result = readObjectAdapter(asyncData)
-    yield put(widgetAdded(result))
+    yield put(widgetAdded(result.payload))
     payload.resolve()
   } catch (err) {
     yield put(addWidgetFail())
@@ -87,25 +85,25 @@ export function* deleteWidget ({ payload }) {
   }
 }
 
-// export const getWidgetDetail = promiseSagaCreator(
-//   function* (payload) {
-//     const widget = yield call(request, `${api.widget}/${payload.id}`)
-//     yield put(widgetDetailLoaded(widget))
-//     return widget
-//   },
-//   function (err) {
-//     console.log('getWidgetDetail', err)
-//   }
-// )
+export function* getWidgetDetail (action) {
+  const { payload } = action
+  try {
+    const result = yield call(request, `${api.widget}/${payload.id}`)
+    yield put(widgetDetailLoaded(result.payload))
+  } catch (err) {
+    yield put(loadWidgetDetailFail(err))
+    message.error('获取详情失败')
+  }
+}
 
 export function* editWidget ({ payload }) {
   try {
     yield call(request, {
       method: 'put',
-      url: api.widget,
-      data: writeAdapter(payload.widget)
+      url: `${api.widget}/${payload.widget.id}`,
+      data: payload.widget
     })
-    yield put(widgetEdited(payload.widget))
+    yield put(widgetEdited())
     payload.resolve()
   } catch (err) {
     yield put(editWidgetFail())
@@ -118,7 +116,7 @@ export default function* rootWidgetSaga (): IterableIterator<any> {
     takeLatest(LOAD_WIDGETS, getWidgets as any),
     takeEvery(ADD_WIDGET, addWidget as any),
     takeEvery(DELETE_WIDGET, deleteWidget as any),
-    // takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
+    takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
     takeEvery(EDIT_WIDGET, editWidget as any)
   ]
 }

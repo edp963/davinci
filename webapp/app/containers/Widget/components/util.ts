@@ -312,6 +312,10 @@ export function getPivot () {
   return widgetlibs[0]
 }
 
+export function getScatter () {
+  return widgetlibs[3]
+}
+
 export function getChartViewMetrics (metrics, requireMetrics) {
   const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
   metrics.slice().splice(1, auxiliaryMetrics)
@@ -409,7 +413,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
           width: unitMetricSide,
           records: [{
             key: '',
-            value: sndKeys.length ? Object.values(sndTree)[0] : tree[0][0]
+            value: sndKeys.length ? Object.values(sndTree)[0] : tree[0] ? tree[0][0] : []
           }],
           ended: true
         }]

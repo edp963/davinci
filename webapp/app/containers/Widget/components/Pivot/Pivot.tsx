@@ -21,6 +21,7 @@ import ColumnTitle from './ColumnTitle'
 import ColumnHeader from './ColumnHeader'
 import TableBody from './TableBody'
 import ColumnFooter from './ColumnFooter'
+import Legend from './Legend'
 import { IChartInfo } from './Chart'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
@@ -56,6 +57,10 @@ export interface IMetricAxisConfig {
   interval: number
 }
 
+export interface ILegend {
+  [key: string]: string[]
+}
+
 export interface IPivotProps {
   data: object[]
   cols: string[]
@@ -71,7 +76,18 @@ export interface IPivotProps {
   renderType?: RenderType
 }
 
-export class Pivot extends React.PureComponent<IPivotProps, {}> {
+export interface IPivotStates {
+  legendSelected: ILegend
+}
+
+export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      legendSelected: {}
+    }
+  }
+
   private width = 0
   private height = 0
   private tableBodyWidth = 0
@@ -286,14 +302,30 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
   private getMetricsMinAndMaxValue (metrics, records) {
     metrics.forEach((m, i) => {
       const metricName = decodeMetricName(m.name)
-      const metricColumnValue = records.reduce((sum, r) => sum + r[`${m.agg}(${metricName})`], 0)
+      const metricColumnValue = records.reduce((sum, r) => sum + (Number(r[`${m.agg}(${metricName})`]) || 0), 0)
+      // const temp = records.reduce((sum, r) => sum + r[`${m.agg}(${metricName})`], 0)
+      // console.log(temp, typeof temp)
       this.min[i] = this.min[i] ? Math.min(this.min[i], metricColumnValue) : metricColumnValue
       this.max[i] = this.max[i] ? Math.max(this.max[i], metricColumnValue) : metricColumnValue
     })
   }
 
+  private legendSelect = (name, key) => {
+    const { legendSelected } = this.state
+    if (!legendSelected[name]) {
+      legendSelected[name] = []
+    }
+    legendSelected[name] = legendSelected[name].includes(key)
+      ? legendSelected[name].filter((ls) => ls !== key)
+      : legendSelected[name].concat(key)
+    this.setState({
+      legendSelected: {...legendSelected}
+    })
+  }
+
   public render () {
-    const { cols, rows, metrics, color, label, dimetionAxis, renderType } = this.props
+    const { cols, rows, metrics, color, label, xAxis, dimetionAxis, renderType } = this.props
+    const { legendSelected } = this.state
     return (
       <div className={styles.block} ref={(f) => this.container = f}>
         <div className={styles.leftSide}>
@@ -357,7 +389,9 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
             dimetionAxis={dimetionAxis}
             color={color}
             label={label}
+            xAxis={xAxis}
             renderType={renderType}
+            legend={legendSelected}
             ref={(f) => this.tableBody = findDOMNode(f)}
           />
           <ColumnFooter
@@ -373,6 +407,10 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
             ref={(f) => this.columnFooter = findDOMNode(f)}
           />
         </div>
+        <Legend
+          color={color}
+          onLegendSelect={this.legendSelect}
+        />
       </div>
     )
   }

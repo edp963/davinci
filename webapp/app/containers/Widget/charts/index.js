@@ -22,6 +22,7 @@ import line from './line'
 import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
+import radar from './radar'
 
 export default function (type, elementSize) {
   switch (type) {
@@ -29,5 +30,6 @@ export default function (type, elementSize) {
     case 'bar': return bar(elementSize)
     case 'scatter': return scatter()
     case 'pie': return pie()
+    case 'radar': return radar()
   }
 }
