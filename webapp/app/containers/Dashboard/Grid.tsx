@@ -519,7 +519,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const chartInstanceId = `widget_${itemId}`
 
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, color, label, size } = widgetConfig
+    const { cols, rows, metrics, color, label, size, xAxis } = widgetConfig
 
     // let widgetConfig = JSON.parse(widget.config)
     // let currentChart = this.charts[chartInstanceId]
@@ -594,6 +594,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         .map((l) => l.name))
       aggregators = aggregators.concat(label.items
         .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg

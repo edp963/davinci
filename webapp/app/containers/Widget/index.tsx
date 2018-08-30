@@ -261,14 +261,12 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
   public render () {
     const {
       widgets,
-      loginUser,
       onDeleteWidget
     } = this.props
 
     const {
       workbenchType,
       currentWidget,
-      workbenchVisible,
       copyWidgetVisible,
       filteredWidgets,
       currentPage,
@@ -278,7 +276,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
       screenWidth
     } = this.state
 
-    const widgetsArr = filteredWidgets || widgets
+    const widgetsArr = filteredWidgets || widgets || []
 
     const cols = widgetsArr
       ? widgetsArr.map((w, index) => {

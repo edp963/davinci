@@ -54,18 +54,18 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { config } = this.props
-    if (nextProps.list) {
+    const { config, list } = nextProps
+    if (list && config) {
       const themeColorLength = defaultThemeColors.length
       const configValues = config.values || {}
-      const nextStateList = nextProps.list.map((l, index) => ({
+      const stateList = list.map((l, index) => ({
         key: l,
         color: configValues[l] || defaultThemeColors[index % themeColorLength]
       }))
       this.setState({
-        list: nextStateList,
+        list: stateList,
         actOn: config.actOn || this.state.actOn,
-        ...nextProps.list.length && {selected: nextStateList[0]}
+        ...list.length && {selected: stateList[0]}
       })
     }
   }
@@ -101,10 +101,6 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
         return config
       }, {})
     })
-  }
-
-  private cancel = () => {
-    this.props.onCancel()
   }
 
   public reset = () => {
@@ -166,7 +162,7 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
         </div>
         <div className={styles.footer}>
           <Button type="primary" onClick={this.saveConfig}>保存</Button>
-          <Button onClick={this.cancel}>取消</Button>
+          <Button onClick={onCancel}>取消</Button>
         </div>
       </div>
     )

@@ -78,3 +78,6 @@ export const ECHARTS_RENDERER = 'echarts'
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_SIZE = '12px'
 export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+
+export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
+export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'

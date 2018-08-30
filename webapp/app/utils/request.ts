@@ -19,7 +19,8 @@
  */
 
 import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
-import message = require('antd/lib/message')
+const message = require('antd/lib/message')
+
 axios.defaults.validateStatus = function (status) {
    return status < 500
    // return status >= 200 && status < 300
@@ -41,8 +42,11 @@ function refreshToken (response) {
 
 function checkStatus (response) {
   switch (response.status) {
+    case 400:
+      message.error(response.data.header.msg)
+      break
     case 403:
-    //  message.error('未登录或会话过期，请重新登录', 5)
+      message.error('未登录或会话过期，请重新登录', 5)
       removeToken()
       localStorage.removeItem('token')
       break

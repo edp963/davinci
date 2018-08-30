@@ -23,21 +23,23 @@ interface IDataColumn {
 
 export interface IDataParamSource extends IDataColumn {
   type: DragType
-  // icon: ViewModelType
+  visualType: ViewModelType
   chart?: IChartInfo
   config?: IDataParamConfig
 }
 
 export interface IDataParamConfig {
-  actOn: string
-  values: {
+  actOn?: string
+  values?: {
     [key: string]: string
-  }
+  },
+  sql?: string
+  filterSource?: any
 }
 
 export interface IDataParamSourceInBox extends IDataColumn {
   type: DropboxItemType
-  // icon?: ViewModelType
+  visualType?: ViewModelType
   chart?: IChartInfo
   config?: IDataParamConfig
 }
@@ -56,6 +58,7 @@ interface IDropboxProps {
   onItemSort: (item: IDataParamSource, sort: SortType) => void
   onItemChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
   onItemChangeColorConfig: (item: IDataParamSource) => void
+  onItemChangeFilterConfig: (item: IDataParamSource) => void
   onItemChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
   beforeDrop: (name: string, cachedItem: IDataParamSource, resolve: (next: boolean) => void) => void
   onDrop: (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[], config?: IDataParamConfig) => void
@@ -251,6 +254,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       onItemSort,
       onItemChangeAgg,
       onItemChangeColorConfig,
+      onItemChangeFilterConfig,
       onItemChangeChart,
       onItemRemove,
       children
@@ -296,6 +300,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
           onSort={onItemSort}
           onChangAgg={onItemChangeAgg}
           onChangeColorConfig={onItemChangeColorConfig}
+          onChangeFilterConfig={onItemChangeFilterConfig}
           onChangeChart={onItemChangeChart}
           onRemove={onItemRemove(item.name)}
         />

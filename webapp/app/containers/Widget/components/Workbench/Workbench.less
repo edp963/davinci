@@ -611,3 +611,181 @@
     }
   }
 }
+
+.actOnSettingForm {
+  .footer {
+    margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.filterSettingForm {
+  .header {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .valueBlock {
+    padding: 16px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .footer {
+    margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+  .conditionalBlock {
+    padding: 16px 0;
+  }
+  .dateBlock {
+    padding-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.conditionalFilterPanel {
+  height: 240px;
+}
+
+.conditionalFilterForm {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+
+  .empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .filterBlock {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .filterRel {
+    width: 88px;
+    margin: 0 5px;
+    flex-shrink: 0;
+    position: relative;
+
+    &:after{
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      content: '';
+    }
+  }
+
+  .filterList {
+    padding-left: 5px;
+    margin-left: 5px;
+    border-left: 1px solid @primary-color;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filterItem {
+    padding: 4px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+
+    & > *:not(.filterBlock) {
+      margin: 0 4px;
+    }
+
+    &:before {
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      left: -5px;
+      content: '';
+    }
+
+    &.root:before {
+      width: 0;
+      display: none;
+    }
+
+    &.noPadding {
+      padding: 0;
+    }
+
+    &:first-child,
+    &:last-child {
+      &:after {
+        width: 3px;
+        background-color: @white;
+        position: absolute;
+        left: -7px;
+        content: '';
+      }
+    }
+
+    &:first-child {
+      &:after {
+        height: 50%;
+        top: 0;
+      }
+    }
+
+    &:last-child {
+      &:after {
+        height: 50%;
+        bottom: -1px;
+      }
+    }
+  }
+
+  .filterFormItem {
+    margin-bottom: 0;
+
+    .inputNumber {
+      width: 100%;
+    }
+  }
+
+  .filterFormKey {
+    padding-left: 8px;
+    font-weight: bold;
+  }
+
+  .filterFormOperator {
+    min-width: 60px;
+  }
+
+  .filterFormInput {
+    width: 100px;
+  }
+}
+
+.dateFilterRadios {
+  .radio {
+    line-height: 2.5em;
+  }
+}

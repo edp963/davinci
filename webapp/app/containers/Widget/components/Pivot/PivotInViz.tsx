@@ -15,8 +15,7 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
         cols: [],
         rows: [],
         metrics: [],
-        filters: [],
-        chart: []
+        filters: []
       }
     }
   }
