@@ -9,12 +9,15 @@ const Input = require('antd/lib/input')
 const Checkbox = require('antd/lib/checkbox')
 const Select = require('antd/lib/select')
 const Option = Select.Option
+const Switch = require('antd/lib/switch')
 
 const utilStyles = require('../../../../assets/less/util.less')
 const styles = require('./filter.less')
 
-import { spliter, prefixItem, prefixView } from './constants'
+import { prefixItem, prefixView, prefixOther } from './constants'
 import { FilterTypeList, FilterTypesLocale, FilterTypesViewSetting } from './filterTypes'
+
+import { IModel } from './'
 
 interface IFilterFormProps {
   views: any[]
@@ -28,10 +31,24 @@ interface IFilterFormProps {
 }
 
 interface IFilterFormStates {
-  usedViews: object
+  usedViews: {
+    [viewId: number]: {
+      id: number
+      name: string
+      description: string
+      model: [{
+        key: string
+        visualType: string
+        sqlType: string
+      }]
+      param: string[]
+    }
+
+  }
   mappingViewItems: object
   needSetView: boolean
-  fieldList: any[]
+  modelItems: any[]
+  modelOrParam: object
 }
 
 export class FilterForm extends React.Component<IFilterFormProps  & FormComponentProps, IFilterFormStates> {
@@ -42,12 +59,28 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       usedViews: {},
       mappingViewItems: {},
       needSetView: false,
-      fieldList: []
+      modelItems: [],
+      modelOrParam: {}
+    }
+  }
+
+  public componentWillMount () {
+    const { views, widgets, items } = this.props
+    if (views && widgets && items) {
+      this.initFormSetting(views, widgets, items)
     }
   }
 
   public componentWillReceiveProps (nextProps: IFilterFormProps) {
-    const { filterItem } = nextProps
+    const { views, widgets, items, filterItem } = nextProps
+
+    if (views && widgets && items
+      && views !== this.props.views
+      && widgets !== this.props.widgets
+      && items !== this.props.items) {
+        this.initFormSetting(views, widgets, items)
+      }
+
     const previousFilterItem = this.props.filterItem
     if (filterItem && filterItem !== previousFilterItem) {
       if (previousFilterItem.key) {
@@ -57,45 +90,89 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   }
 
   private saveFilterItem = () => {
-    const { form, onFilterItemSave } = this.props
+    const { form, onFilterItemSave, views } = this.props
+    const { usedViews, mappingViewItems } = this.state
     const fieldsValue = form.getFieldsValue()
     const filterItem = {
-      relatedItems: [],
       relatedViews: {}
     }
-    Object.keys(fieldsValue).forEach((name) => {
-      const val = fieldsValue[name]
-      if (!val) { return }
-      if (name.indexOf(prefixItem) >= 0) {
-        filterItem.relatedItems.push(+name.substr(prefixItem.length))
-      } else if (name.indexOf(prefixView) >= 0) {
-        filterItem.relatedViews[+name.substr(prefixView.length)] = val
-      } else {
-        filterItem[name] = val
-      }
-    })
+
+    Object.keys(fieldsValue)
+      .filter((name) => fieldsValue[name] && name.indexOf(prefixView) >= 0)
+      .forEach((name) => {
+        const val = fieldsValue[name]
+        const viewId = +name.substr(prefixView.length)
+        const isParam = !!fieldsValue[prefixOther + viewId]
+        const sqlType = usedViews[viewId].model.find((m) => m.key === val).sqlType
+        filterItem.relatedViews[viewId] = {
+          key: val,
+          name: val,
+          isParam,
+          sqlType,
+          items: mappingViewItems[viewId].filter((item) => fieldsValue[prefixItem + item.id]).map((item) => item.id)
+        }
+      })
+
+    Object.keys(fieldsValue)
+      .filter((name) => [prefixItem, prefixView, prefixOther].every((prefix) => name.indexOf(prefix) < 0))
+      .forEach((name) => {
+        filterItem[name] = fieldsValue[name]
+      })
+
+    console.log('saved... ', JSON.parse(JSON.stringify(filterItem)))
 
     onFilterItemSave(filterItem)
   }
 
   public setFieldsValue = (filterItem) => {
-    const { views, items } = this.props
-    const { key, name, type } = filterItem
+    const { views, widgets, items, onGetPreviewData } = this.props
+    const { key, name, type, fromView, fromModel } = filterItem
     const fieldsValue = {
       key,
       name,
-      type
+      type,
+      fromView,
+      fromModel
     }
-    const { relatedViews, relatedItems } = filterItem
+    if (fromView) {
+      this.onFromViewChange(fromView)
+
+      if (fromModel) {
+        onGetPreviewData(fromView, fromModel, key)
+      }
+    }
+    const { relatedViews } = filterItem
+    const modelOrParam = {}
     views.forEach((view) => {
       const viewId = view.id
-      fieldsValue[`${prefixView}${viewId}`] = relatedViews[viewId]
+      if (relatedViews[viewId]) {
+        fieldsValue[`${prefixView}${viewId}`] = relatedViews[viewId].key
+        fieldsValue[`${prefixOther}${viewId}`] = relatedViews[viewId].isParam
+      } else {
+        const model = JSON.parse(view.model)
+        const defaultKey = Object.keys(model)[0]
+        fieldsValue[`${prefixView}${viewId}`] = defaultKey
+        fieldsValue[`${prefixOther}${viewId}`] = false
+      }
     })
     items.forEach((item) => {
       const itemId = item.id
-      fieldsValue[`${prefixItem}${itemId}`] = relatedItems.indexOf(itemId) >= 0
+      const widget = widgets.find((w) => w.id === item.widgetId)
+      const { viewId } = widget
+      if (relatedViews[viewId]) {
+        fieldsValue[`${prefixItem}${itemId}`] = relatedViews[viewId].items.indexOf(itemId) > 0
+        modelOrParam[viewId] = relatedViews[viewId].isParam
+      } else {
+        fieldsValue[`${prefixItem}${itemId}`] = false
+        modelOrParam[viewId] = false
+      }
     })
-    this.props.form.setFieldsValue(fieldsValue)
+    this.setState({
+      needSetView: !!FilterTypesViewSetting[type],
+      modelOrParam
+    }, () => {
+      this.props.form.setFieldsValue(fieldsValue)
+    })
   }
 
   private initFormSetting (views, widgets, items) {
@@ -109,16 +186,17 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       if (!usedViews[viewId]) {
         const view = views.find((v) => v.id === viewId)
         const { id, name, description, model, sql } = view
-        const modelObj = JSON.parse(model)
+        const modelObj = JSON.parse(model) as IModel
         usedViews[viewId] = {
           id,
           name,
           description,
-          fields: Object.keys(modelObj).map((key) => ({
+          model: Object.entries(modelObj).map(([key, { sqlType, visualType }]) => ({
             key,
-            visualType: modelObj[key].visualType
-          })) ,
-          vars: (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
+            visualType,
+            sqlType
+          })),
+          param: (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
         }
       }
       if (!mappingViewItems[viewId]) {
@@ -129,23 +207,55 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
         name: widget.name
       })
     })
-    return {
+    this.setState({
       usedViews,
       mappingViewItems
-    }
+    })
   }
 
   private filterItemNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { onFilterItemNameChange, form, filterItem } = this.props
+    const { onFilterItemNameChange, filterItem } = this.props
     const name = e.target.value
     onFilterItemNameChange(filterItem.key, name)
   }
 
+  private modelOrParamChange = (viewId) => (isParam) => {
+    const { modelOrParam, usedViews } = this.state
+    const { param, model } = usedViews[viewId]
+    const options = isParam ? param : model
+    const newVal = options.length <= 0 ? null : (isParam ? param[0] : model[0].key)
+    this.setState({
+      modelOrParam: {
+        ...modelOrParam,
+        [viewId]: isParam
+      }
+    }, () => {
+      this.props.form.setFieldsValue({ [`${prefixView}${viewId}`]: newVal })
+    })
+  }
+
   private renderConfigItem (viewId, usedViews, mappingViewItems) {
     const { form } = this.props
+    const { modelOrParam } = this.state
     const { getFieldDecorator } = form
     const view = usedViews[viewId]
     const items = mappingViewItems[viewId]
+
+    const modelOrParamSelect = (
+      <Select>
+        {
+          modelOrParam[viewId] ? (
+            view.param.map((p) => (
+              <Option key={p} value={p}>{p}</Option>
+            ))
+          ) : (
+            view.model.map((m) => (
+              <Option key={m.key} value={m.key}>{m.key}</Option>
+            ))
+          )
+        }
+      </Select>
+    )
 
     return (
       <Row key={viewId} className={styles.configItem}>
@@ -170,23 +280,32 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
             ))
           }
         </Col>
-        <Col span={12}>
-          <FormItem
-            label={view.name}
-            labelCol={{span: 8}}
-            wrapperCol={{span: 16}}
-          >
-            {getFieldDecorator(`${prefixView}${view.id}`)(
-              <Select>
-                {
-                  view.fields.map((f) => (
-                    <Option key={f.key} value={f.key}>{f.key}</Option>
-                  ))
-                }
-              </Select>
-            )}
-          </FormItem>
-        </Col>
+        <Col span={12} className={styles.viewSet}>
+          <Row>
+            <Col span={24}>
+              <FormItem
+                label="参数"
+                labelCol={{span: 8}}
+                wrapperCol={{span: 16}}
+              >
+                {getFieldDecorator(`${prefixOther}${view.id}`, {
+                  valuePropName: 'checked'
+                })(
+                  <Switch onChange={this.modelOrParamChange(viewId)}/>
+                )}
+              </FormItem>
+            </Col>
+            <Col span={24}>
+              <FormItem
+                label={view.name}
+                labelCol={{span: 8}}
+                wrapperCol={{span: 16}}
+              >
+                {getFieldDecorator(`${prefixView}${view.id}`)(modelOrParamSelect)}
+              </FormItem>
+            </Col>
+          </Row>
+          </Col>
       </Row>
     )
   }
@@ -194,18 +313,18 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   private onFromViewChange = (viewId) => {
     const { views } = this.props
     const view = views.find((v) => v.id === +viewId)
-    const fieldList = Object.entries(JSON.parse(view.model))
+    const modelItems = Object.entries(JSON.parse(view.model))
       .filter(([_, desc]) => (desc as any).modelType === 'category')
       .map(([key]) => key)
     this.setState({
-      fieldList
+      modelItems
     })
   }
 
-  private onFromFieldChange = (fieldName) => {
+  private onFromModelChange = (modelItemName) => {
     const { onGetPreviewData, form, filterItem } = this.props
     const viewId = form.getFieldValue('fromView')
-    onGetPreviewData(viewId, fieldName, filterItem.key)
+    onGetPreviewData(viewId, modelItemName, filterItem.key)
   }
 
   private filterTypeChange = (val) => {
@@ -217,9 +336,9 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   }
 
   private renderConfigForm (usedViews, mappingViewItems) {
-    const { form, onFilterTypeChange, views, filterItem } = this.props
+    const { form, views } = this.props
     const { getFieldDecorator } = form
-    const { needSetView, fieldList } = this.state
+    const { needSetView, modelItems } = this.state
 
     return (
       <Form className={styles.filterForm}>
@@ -308,16 +427,16 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
                     wrapperCol={{span: 16}}
                 >
                   {
-                    getFieldDecorator('fromField', {
+                    getFieldDecorator('fromModel', {
                       rules: [{
                         required: true,
                         message: '不能为空'
                       }]
                     })(
-                      <Select onChange={this.onFromFieldChange}>
+                      <Select onChange={this.onFromModelChange}>
                         {
-                          fieldList.map((fieldName) => (
-                            <Option key={fieldName} value={fieldName}>{fieldName}</Option>
+                          modelItems.map((itemName) => (
+                            <Option key={itemName} value={itemName}>{itemName}</Option>
                           ))
                         }
                       </Select>
@@ -342,7 +461,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   public render () {
     const { views, widgets, items } = this.props
     if (views && widgets && items) {
-      const { usedViews, mappingViewItems } = this.initFormSetting(views, widgets, items)
+      const { usedViews, mappingViewItems } = this.state
       return this.renderConfigForm(usedViews, mappingViewItems)
     }
     return null

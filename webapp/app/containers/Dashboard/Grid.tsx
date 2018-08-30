@@ -1311,202 +1311,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private globalFilterChange = (filter) => (formValue) => {
+  private globalFilterChange = (queryParams) => {
     const { currentItems } = this.props
-    const { key, type, relatedItems } = filter
-
-    Object.keys(relatedItems).forEach((itemId) => {
-      const columnAndType = relatedItems[itemId].split(DEFAULT_SPLITER)
-      const isParam = !columnAndType[1]  // 变量type为空
-      const item = currentItems.find((ci) => ci.id === Number(itemId))
-
-      if (!this.interactGlobalFilters[itemId]) {
-        this.interactGlobalFilters[itemId] = {}
-      }
-
-      if (isParam) {
-        const paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
-
-        let currentParam
-
-        switch (type) {
-          case 'numberRange':
-            if (formValue[0] || formValue[1]) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: fv
-              }))
-            }
-            break
-          case 'select':
-          case 'cascadeSelect':
-            if (formValue) {
-              currentParam = [{
-                k: columnAndType[0],
-                v: `${formValue}`
-              }]
-            }
-            break
-          case 'multiSelect':
-            if (formValue.length) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: `${fv}`
-              }))
-            }
-            break
-          case 'date':
-            if (formValue) {
-              currentParam = {
-                k: columnAndType[0],
-                v: `'${moment(formValue).format('YYYY-MM-DD')}'`
-              }
-            }
-            break
-          case 'datetime':
-            if (formValue) {
-              currentParam = {
-                k: columnAndType[0],
-                v: `'${moment(formValue).format('YYYY-MM-DD HH:mm:ss')}'`
-              }
-            }
-            break
-          case 'multiDate':
-            if (formValue) {
-              currentParam = formValue.split(',').map((fv) => ({
-                k: columnAndType[0],
-                v: `'${fv}'`
-              }))
-            }
-            break
-          case 'dateRange':
-            if (formValue.length) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: `'${moment(fv).format('YYYY-MM-DD')}'`
-              }))
-            }
-            break
-          case 'datetimeRange':
-            if (formValue.length) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: `'${moment(fv).format('YYYY-MM-DD HH:mm:ss')}'`
-              }))
-            }
-            break
-          default:
-            const val = formValue.target.value.trim()
-            if (val) {
-              currentParam = {
-                k: columnAndType[0],
-                v: `${val}`
-              }
-            }
-            break
-        }
-
-        if (currentParam) {
-          paramsOnThisItem[key] = currentParam
-          this.interactGlobalFilters[itemId].params = paramsOnThisItem
-        } else {
-          delete paramsOnThisItem[key]
-        }
-      } else {
-        const filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
-
-        let currentFilter
-
-        switch (type) {
-          case 'numberRange':
-            const numberFilters = []
-            if (formValue[0]) {
-              numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
-            }
-            if (formValue[1]) {
-              numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
-            }
-            if (numberFilters.length) {
-              currentFilter = numberFilters.join(` and `)
-            }
-            break
-          case 'select':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${formValue}`
-            }
-            break
-          case 'cascadeSelect':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(formValue, columnAndType[1])}`
-            }
-            break
-          case 'multiSelect':
-            if (formValue.length) {
-              currentFilter = formValue.map((val) => `${columnAndType[0]} = ${val}`).join(` and `)
-            }
-            break
-          case 'date':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}`
-            }
-            break
-          case 'datetime':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
-            }
-            break
-          case 'multiDate':
-            if (formValue) {
-              currentFilter = formValue.split(',').map((val) => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
-            }
-            break
-          case 'dateRange':
-            if (formValue.length) {
-              const clauses = [
-                `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'), columnAndType[1])}`,
-                `${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
-              ]
-              currentFilter = clauses.join(' and ')
-            }
-            break
-          case 'datetimeRange':
-            if (formValue.length) {
-              const clauses = [
-                `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`,
-                `${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
-              ]
-              currentFilter = clauses.join(' and ')
-            }
-            break
-          default:
-            const inputValue = formValue.target.value.trim()
-            if (inputValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}`
-            }
-            break
-        }
-
-        if (currentFilter) {
-          filtersOnThisItem[key] = currentFilter
-          this.interactGlobalFilters[itemId].filters = filtersOnThisItem
-        } else {
-          delete filtersOnThisItem[key]
-        }
-      }
-
-      this.getChartData('rerender', Number(itemId), item.widgetId, {
-        globalFilters: this.interactGlobalFilters[itemId].filters
-          ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
-          : '',
-        globalParams: this.interactGlobalFilters[itemId].params
-          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr: any[], val) => arr.concat(val), [])
-          : []
-      })
+    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
+      const item = currentItems.find((ci) => ci.id === +itemId)
+      this.getChartData('rerender', +itemId, item.widgetId, queryParam)
     })
-
-    function getValidValue (val, type) {
-      return SQL_NUMBER_TYPES.indexOf(type) >= 0 ? val : `'${val}'`
-    }
   }
 
   private visibleFullScreen = (currentChartData) => {
@@ -1590,10 +1400,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const globalFilterTableSource = config.filters || []
 
     return globalFilterTableSource.map((gfts) => {
-      const deprecatedItems = Object.keys(gfts.relatedItems).filter((key) => !currentItems.find((ci) => ci.id === Number(key)))
-      deprecatedItems.forEach((di) => {
-        delete gfts.relatedItems[di]
-      })
+      const { relatedViews } = gfts
+      let { items } = relatedViews
+      if (items) {
+        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+      }
       return gfts
     })
   }
@@ -1601,6 +1412,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private getFilterOptions = (viewId, fieldName, filterKey) => {
     const { onLoadDistinctValue } = this.props
     const { filterOptions } = this.state
+    if (filterOptions[filterKey]) { return }
     onLoadDistinctValue(viewId, fieldName, (data) => {
       this.setState({
         filterOptions: {
@@ -1990,6 +1802,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
                 filters={globalFilterTableSource}
                 onGetOptions={this.getFilterOptions}
                 filterOptions={filterOptions}
+                onChange={this.globalFilterChange}
               />
             </Col>
           </Row>
@@ -2074,16 +1887,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           visible={globalFilterConfigPanelVisible}
           footer={false}
         >
-          <GlobalFilterConfig
-            views={bizlogics}
-            widgets={widgets}
-            items={currentItems}
-            filters={globalFilterTableSource}
-            onCancel={this.hideGlobalFilterConfigPanel}
-            onOk={this.saveFilters}
-            onGetPreviewData={this.getFilterOptions}
-            previewData={filterOptions}
-          />
+          <div className={styles.modalFilterConfig}>
+            <GlobalFilterConfig
+              views={bizlogics}
+              widgets={widgets}
+              items={currentItems}
+              filters={globalFilterTableSource}
+              onCancel={this.hideGlobalFilterConfigPanel}
+              onOk={this.saveFilters}
+              onGetPreviewData={this.getFilterOptions}
+              previewData={filterOptions}
+            />
+          </div>
         </Modal>
         {/* <FullScreenPanel
           widgets={widgets}

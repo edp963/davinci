@@ -46,15 +46,24 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     }
   }
 
+  public componentWillMount () {
+    this.initState()
+  }
+
   public componentWillReceiveProps (nextProps: IFilterConfigProps) {
     const { filters } = nextProps
     if (filters !== this.props.filters) {
-      const localFilters = fromJS(filters).toJS()
-      this.setState({
-        localFilters,
-        selectedFilter: localFilters.length > 0 ? localFilters[0] : {}
-      })
+      this.initState()
     }
+  }
+
+  private initState = () => {
+    const { filters } = this.props
+    const localFilters = fromJS(filters).toJS()
+    this.setState({
+      localFilters,
+      selectedFilter: localFilters.length > 0 ? localFilters[0] : {}
+    })
   }
 
   private selectFilter = (key) => {
@@ -73,8 +82,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       key: uuid(8, 16),
       name: '新建全局筛选',
       type: FilterTypes.InputText,
-      relatedViews: {},
-      relatedItems: []
+      relatedViews: {}
     }
     this.setState({
       hasEdited: true,
@@ -134,9 +142,11 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   private ok = () => {
-    this.filterForm.saveFilterItem()
-    const { onOk } = this.props
     const { localFilters } = this.state
+    if (localFilters.length > 0) {
+      this.filterForm.saveFilterItem()
+    }
+    const { onOk } = this.props
     onOk([...localFilters])
   }
 
@@ -156,20 +166,28 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
             />
           </div>
           <div className={styles.center}>
-            <FilterForm
-              views={views}
-              widgets={widgets}
-              items={items}
-              filterItem={selectedFilter}
-              onFilterTypeChange={this.filterTypeChange}
-              onFilterItemNameChange={this.filterItemNameChange}
-              onFilterItemSave={this.filterItemSave}
-              onGetPreviewData={onGetPreviewData}
-              wrappedComponentRef={this.refHandlers.filterForm}
-            />
+            {
+              !selectedFilter.key ? null : (
+                <FilterForm
+                  views={views}
+                  widgets={widgets}
+                  items={items}
+                  filterItem={selectedFilter}
+                  onFilterTypeChange={this.filterTypeChange}
+                  onFilterItemNameChange={this.filterItemNameChange}
+                  onFilterItemSave={this.filterItemSave}
+                  onGetPreviewData={onGetPreviewData}
+                  wrappedComponentRef={this.refHandlers.filterForm}
+                />
+              )
+            }
           </div>
           <div className={styles.right}>
-            <FilterValuePreview currentPreviewData={previewData[selectedFilter.key] || []} />
+            {
+              !selectedFilter.key ? null : (
+                <FilterValuePreview currentPreviewData={previewData[selectedFilter.key] || []} />
+              )
+            }
           </div>
         </div>
         <div className={`${styles.bottom} ant-modal-footer`}>
