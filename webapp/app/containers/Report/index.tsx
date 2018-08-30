@@ -116,7 +116,7 @@ export class Report extends React.Component<IReportProps, {}> {
       )
     })
 
-    const sidebarComponent = loginUser.admin
+    const sidebarComponent = currentProject && currentProject.inTeam
       ? (
         <Sidebar>
           {sidebarOptions}

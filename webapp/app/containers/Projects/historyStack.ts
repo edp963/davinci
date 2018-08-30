@@ -11,9 +11,10 @@ class HistoryStack  {
     this.wrap = {}
     this.init()
   }
-  private init () {
+  public init () {
     const store = localStorage.getItem('historyBrowser')
     const user = this.getUser()
+    console.log(user)
     if (store && store.length) {
       const result = this.parse(store)
       this.wrap = result
