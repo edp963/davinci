@@ -24,7 +24,7 @@ const utilStyles = require('../../../../assets/less/util.less')
 export interface IDataParamProperty {
   title: string
   type: DropboxType
-  value?: object
+  value?: {all?: any}
   items: IDataParamSource[]
 }
 
