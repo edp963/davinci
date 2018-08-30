@@ -20,6 +20,7 @@ import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.model.SqlEntity;
 import edp.davinci.core.utils.SqlParseUtils;
 import edp.davinci.dao.*;
+import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.dto.sourceDto.SourceBaseInfo;
 import edp.davinci.dto.sourceDto.SourceWithProject;
 import edp.davinci.dto.viewDto.*;
@@ -129,11 +130,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
                 //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
                 if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
                     //查询当前用户在的 project所属team对project view的最高权限
-                    short maxSourcePermission = relTeamProjectMapper.getMaxViewPermission(projectId, user.getId());
-
-                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                    short maxViewPermission = relTeamProjectMapper.getMaxViewPermission(projectId, user.getId());
+                    if (maxViewPermission == UserPermissionEnum.HIDDEN.getPermission()) {
                         //隐藏
                         views = null;
                     }
@@ -404,11 +403,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
             if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                //查询当前用户在的 project所属team对project source的最高权限
-                short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
-
-                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                short maxViewPermission = relTeamProjectMapper.getMaxViewPermission(project.getId(), user.getId());
+                if (maxViewPermission == UserPermissionEnum.HIDDEN.getPermission()) {
                     return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to execute sql in this view");
                 }
             }
@@ -477,20 +473,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
         //当前用户是project的创建者和organization的owner，直接返回
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            //查询project所属team中当前用户最高角色
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-            //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                //查询当前用户在的 project所属team对project source的最高权限
-                short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
-
-                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                    return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
-                }
-            }
+        if (!allowGetData(project, user)) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
         }
 
         try {
@@ -693,18 +677,14 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
+        Organization organization = organizationMapper.getById(project.getOrgId());
+
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
         //当前用户是project的创建者和organization的owner，直接返回
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
-                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                    return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
-                }
-            }
+        if (!allowGetData(project, user)) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
         }
 
         try {
@@ -827,6 +807,51 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             }
         }
         return map;
+    }
+
+
+    /**
+     * 允许获取数据
+     *
+     * @param project
+     * @param user
+     * @return
+     */
+    private boolean allowGetData(Project project, User user) {
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+        if (project.getUserId().equals(user.getId())) {
+            return true;
+        }
+        if (null != orgRel && UserOrgRoleEnum.OWNER.getRole() == orgRel.getRole()) {
+            return true;
+        }
+
+        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+        if (UserTeamRoleEnum.MAINTAINER.getRole() == maxTeamRole) {
+            return true;
+        } else {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                UserMaxProjectPermission userMaxPermission = relTeamProjectMapper.getUserMaxPermission(project.getId(), user.getId());
+                if (null != userMaxPermission && 0L != userMaxPermission.getProjectId().longValue()) {
+                    if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSchedulePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSharePermission()
+                            || userMaxPermission.getDownloadPermission()) {
+                        return true;
+                    }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (project.getVisibility() && organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
 

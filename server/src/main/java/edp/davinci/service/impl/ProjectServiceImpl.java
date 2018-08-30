@@ -122,8 +122,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         ProjectInfo projectInfo = new ProjectInfo();
         BeanUtils.copyProperties(project, projectInfo);
-        ProjectPermission projectPermission = getUserProjectPermission(project, user);
-        projectInfo.setPermission(projectPermission);
+        setProjectPermission(projectInfo, user);
 
         return resultMap.successAndRefreshToken(request).payload(projectInfo);
     }
@@ -145,8 +144,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             for (ProjectWithCreateBy project : projects) {
                 ProjectInfo projectInfo = new ProjectInfo();
                 BeanUtils.copyProperties(project, projectInfo);
-                ProjectPermission projectPermission = getUserProjectPermission(project, user);
-                projectInfo.setPermission(projectPermission);
+                setProjectPermission(projectInfo, user);
                 projectInfoList.add(projectInfo);
             }
         }
@@ -155,28 +153,28 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
     /**
      * 获取用户对project的权限
-     * @param project
+     * @param projectInfo
      * @param user
      * @return
      */
-    private ProjectPermission getUserProjectPermission(Project project, User user) {
-        if (isMaintainer(project, user)) {
-            return ProjectPermission.adminPermission();
+    private void setProjectPermission(ProjectInfo projectInfo, User user) {
+        ProjectPermission projectPermission = ProjectPermission.previewPermission();
+        if (isMaintainer(projectInfo, user)) {
+            projectPermission = ProjectPermission.adminPermission();
+            projectInfo.setInTeam(true);
         } else {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectInfo.getOrgId(), user.getId());
             if (teamNumOfOrgByUser > 0) {
-                List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermission(user.getId());
+                projectInfo.setInTeam(true);
+                List<UserMaxProjectPermission> permissions = relTeamProjectMapper.getUserMaxPermissions(user.getId());
                 for (UserMaxProjectPermission maxProjectPermission : permissions) {
-                    if (maxProjectPermission.getProjectId().equals(project.getId())) {
-                        return maxProjectPermission;
+                    if (maxProjectPermission.getProjectId().equals(projectInfo.getId())) {
+                        projectPermission = maxProjectPermission;
                     }
                 }
-            }  else {
-                Organization organization = organizationMapper.getById(project.getOrgId());
-                return new ProjectPermission(organization.getMemberPermission());
             }
         }
-        return new ProjectPermission();
+        projectInfo.setPermission(projectPermission);
     }
 
     /**

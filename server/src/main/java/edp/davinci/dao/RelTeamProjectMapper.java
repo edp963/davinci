@@ -193,6 +193,27 @@ public interface RelTeamProjectMapper {
             "			WHERE rut.user_id = #{userId})",
             "GROUP BY project_id"
     })
-    List<UserMaxProjectPermission> getUserMaxPermission(@Param("userId") Long userId);
+    List<UserMaxProjectPermission> getUserMaxPermissions(@Param("userId") Long userId);
+
+
+    @Select({
+            "SELECT ",
+            "	IFNULL(rtp.project_id,0) as projectId,",
+            "	IFNULL(max( rtp.viz_permission ),0) as vizPermission,",
+            "	IFNULL(max( rtp.widget_permission ),0) as widgetPermission,",
+            "	IFNULL(max( rtp.view_permission ),0) as viewPermission,",
+            "	IFNULL(max( rtp.source_permission ),0) as sourcePermission,",
+            "	IFNULL(max( rtp.schedule_permission ),0) as schedulePermission,",
+            "	IFNULL(max( rtp.share_permission ),0) as sharePermission,",
+            "	IFNULL(max( rtp.download_permission ),0) as downloadPermission",
+            "	FROM rel_team_project rtp",
+            "	INNER JOIN rel_user_team rut ON rtp.team_id = rut.team_id ",
+            "WHERE rut.user_id = #{userId} AND rtp.project_id = #{projectId} ",
+            "       AND rtp.team_id IN (",
+            "		    SELECT rut.team_id  FROM rel_team_project rtp",
+            "			INNER JOIN rel_user_team rut ON rut.team_id = rtp.team_id ",
+            "			WHERE rut.user_id = #{userId})",
+    })
+    UserMaxProjectPermission getUserMaxPermission(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
 }

@@ -21,6 +21,7 @@ package edp.davinci.dto.organizationDto;
 
 import lombok.Data;
 
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -41,5 +42,7 @@ public class OrganizationPut {
 
     private Boolean allowCreateProject;
 
+    @Min(value = 0L, message = "Invalid permission")
+    @Max(value = 1L, message = "Invalid permission")
     private Short memberPermission;
 }

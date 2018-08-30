@@ -32,6 +32,7 @@ import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.*;
+import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.model.*;
 import edp.davinci.service.DisplayService;
 import lombok.extern.slf4j.Slf4j;
@@ -528,13 +529,13 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
     public ResultMap getDisplayListByProject(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        Project project = projectMapper.getById(projectId);
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
 
-        if (null == project) {
+        if (null == projectWithOrganization) {
             return resultMap.successAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowRead(project, user)) {
+        if (!allowRead(projectWithOrganization, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
@@ -543,29 +544,43 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         if (null != displays && displays.size() > 0) {
 
             //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!projectWithOrganization.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 //查询project所属team中当前用户最高角色
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
 
                 //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
                 if (maxTeamRole < UserTeamRoleEnum.MAINTAINER.getRole()) {
-
-                    //查询当前用户在的 project所属team对project display的最高权限
-                    short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
-
-                    if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
-                        //隐藏
-                        displays = null;
-                    } else if (maxVizPermisson == UserPermissionEnum.READ.getPermission()) {
-                        //只读, remove未发布的
-                        Iterator<Display> iterator = displays.iterator();
-                        while (iterator.hasNext()) {
-                            Display display = iterator.next();
-                            if (!display.getPublish()) {
-                                iterator.remove();
+                    Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+                    if (teamNumOfOrgByUser > 0) {
+                        //查询当前用户在的 project所属team对project display的最高权限
+                        short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
+                        if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
+                            //隐藏
+                            displays = null;
+                        } else if (maxVizPermisson == UserPermissionEnum.READ.getPermission()) {
+                            //只读, remove未发布的
+                            Iterator<Display> iterator = displays.iterator();
+                            while (iterator.hasNext()) {
+                                Display display = iterator.next();
+                                if (!display.getPublish()) {
+                                    iterator.remove();
+                                }
+                            }
+                        }
+                    } else {
+                        Organization organization = projectWithOrganization.getOrganization();
+                        if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
+                            displays = null;
+                        } else {
+                            Iterator<Display> iterator = displays.iterator();
+                            while (iterator.hasNext()) {
+                                Display display = iterator.next();
+                                if (!display.getPublish()) {
+                                    iterator.remove();
+                                }
                             }
                         }
                     }
@@ -595,15 +610,15 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             return resultMap.failAndRefreshToken(request).message("display is not found");
         }
 
-        Project project = projectMapper.getByProject(new Project(display.getProjectId(), user.getId()));
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(display.getProjectId());
 
         //当前用户不是project创建者且display未发布
-        if (null == project && !display.getPublish()) {
+        if (null == projectWithOrganization && !display.getPublish()) {
             log.info("user (:{}) you have not permisson to view display slides", user.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
         }
 
-        if (!allowRead(project, user)) {
+        if (!allowRead(projectWithOrganization, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
@@ -616,16 +631,22 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             RelUserOrganization orgRel = relUserOrganizationMapper.getRelByProject(user.getId(), display.getProjectId());
 
             //project的创建者 和 当前project的owner直接返回
-            if (null == project && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //验证team member权限
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
-
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-
-                    short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(display.getProjectId(), user.getId());
-
-                    //用户所在team对display的最高权限是隐藏
-                    if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
+            if (null == projectWithOrganization && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+                if (teamNumOfOrgByUser > 0) {
+                    //验证team member权限
+                    short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
+                    if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                        short maxVizPermisson = relTeamProjectMapper.getMaxVizPermission(display.getProjectId(), user.getId());
+                        //用户所在team对display的最高权限是隐藏
+                        if (maxVizPermisson == UserPermissionEnum.HIDDEN.getPermission()) {
+                            log.info("user (:{}) have not permission to view display slides", user.getId());
+                            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
+                        }
+                    }
+                }else {
+                    Organization organization = projectWithOrganization.getOrganization();
+                    if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
                         log.info("user (:{}) have not permission to view display slides", user.getId());
                         return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
                     }
@@ -665,15 +686,15 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             return resultMap.failAndRefreshToken(request).message("display is not found");
         }
 
-        Project project = projectMapper.getByProject(new Project(display.getProjectId(), user.getId()));
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(display.getProjectId());
 
         //当前用户不是project创建者且display未发布
-        if (null == project && !display.getPublish()) {
+        if (null == projectWithOrganization && !display.getPublish()) {
             log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
         }
 
-        if (!allowRead(project, user)) {
+        if (!allowRead(projectWithOrganization, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
@@ -688,17 +709,27 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRelByProject(user.getId(), display.getProjectId());
         //project创建者和当前project的owner直接返回
-        if (null == project && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            //验证team member权限
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
-            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                short maxWidgetPermission = relTeamProjectMapper.getMaxWidgetPermission(display.getProjectId(), user.getId());
-                //所在team 对 widget 拥有的最高全显示隐藏， 直接删除对应
-                if (maxWidgetPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+        if (null == projectWithOrganization && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                //验证team member权限
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(display.getProjectId(), user.getId());
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(display.getProjectId(), user.getId());
+                    //所在team 对 widget 拥有的最高全显示隐藏， 直接删除对应
+                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
+                        return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
+                    }
+                }
+            } else {
+                Organization organization = projectWithOrganization.getOrganization();
+                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
                     log.info("user (:{}) have not permission to view widgets in this display slide", user.getId());
                     return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to view widgets in this display slide");
                 }
             }
+
         }
 
         return resultMap.successAndRefreshToken(request).payloads(widgetList);

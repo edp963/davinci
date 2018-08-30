@@ -18,10 +18,11 @@
 
 package edp.davinci.dto.projectDto;
 
+import edp.davinci.model.Organization;
+import edp.davinci.model.Project;
 import lombok.Data;
 
 @Data
-public class ProjectInfo extends ProjectWithCreateBy {
-    private boolean inTeam = false;
-    private ProjectPermission permission = new ProjectPermission();
+public class ProjectWithOrganization extends Project {
+    private Organization organization;
 }

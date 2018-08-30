@@ -21,6 +21,7 @@ package edp.davinci.dao;
 import edp.davinci.core.common.Constants;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.ProjectWithCreateBy;
+import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.model.Project;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -132,6 +133,27 @@ public interface ProjectMapper {
 
     @Select({"select * from project where id = #{id}"})
     Project getById(@Param("id") Long id);
+
+
+    @Select({
+            "SELECT p.*, ",
+            "    o.`id` AS 'organization.id',",
+            "    o.`name` AS 'organization.name',",
+            "    o.`description` AS 'organization.description',",
+            "    o.`avatar` AS 'organization.avatar',",
+            "    o.`user_id` AS 'organization.userId',",
+            "    o.`project_num` AS 'organization.projectNum',",
+            "    o.`member_num` AS 'organization.memberNum',",
+            "    o.`team_num` AS 'organization.teamNum',",
+            "    o.`allow_create_project` AS 'organization.allowCreateProject',",
+            "    o.`member_permission` AS 'organization.memberPermission',",
+            "    o.`create_time` AS 'organization.createTime',",
+            "    o.`create_by` AS 'organization.createBy',",
+            "    o.`update_time` AS 'organization.updateTime',",
+            "    o.`update_by` AS 'organization.updateBy'",
+            "FROM project p LEFT JOIN organization o on o.id = p.org_id WHERE p.id = #{id}"
+    })
+    ProjectWithOrganization getProjectWithOrganization(@Param("id") Long id);
 
 
     @Select({"select * from project where id = #{id} and user_id = #{userId}"})

@@ -27,6 +27,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
+import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
@@ -89,14 +90,14 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     public ResultMap getWidgets(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        Project project = projectMapper.getById(projectId);
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
 
-        if (null == project) {
-            log.info("project {} not found", project);
+        if (null == projectWithOrganization) {
+            log.info("project {} not found", projectId);
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowRead(project, user)) {
+        if (!allowRead(projectWithOrganization, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
@@ -105,31 +106,42 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         if (null != widgets && widgets.size() > 0) {
 
             //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //查询project所属team中当前用户最高角色
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
+            if (!projectWithOrganization.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+                if (teamNumOfOrgByUser > 0) {
+                    //查询project所属team中当前用户最高角色
+                    short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
 
-                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
+                    if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
 
-                    //查询当前用户在的 project所属team对project view的最高权限
-                    short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(projectId, user.getId());
+                        short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
+                        //查询当前用户在的 project所属team对project view的最高权限
+                        short maxWidgetPermission = relTeamProjectMapper.getMaxWidgetPermission(projectId, user.getId());
 
-                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        //隐藏
-                        widgets = null;
-                    } else if (maxSourcePermission == UserPermissionEnum.READ.getPermission()) {
-                        //只读, remove未发布的
-                        Iterator<Widget> iterator = widgets.iterator();
-                        while (iterator.hasNext()) {
-                            Widget widget = iterator.next();
-                            if (!widget.getPublish()) {
-                                iterator.remove();
+                        short permission = (short) Math.max(maxVizPermission, maxWidgetPermission);
+
+                        if (permission == UserPermissionEnum.HIDDEN.getPermission()) {
+                            //隐藏
+                            widgets = null;
+                        } else if (permission == UserPermissionEnum.READ.getPermission()) {
+                            //只读, remove未发布的
+                            Iterator<Widget> iterator = widgets.iterator();
+                            while (iterator.hasNext()) {
+                                Widget widget = iterator.next();
+                                if (!widget.getPublish()) {
+                                    iterator.remove();
+                                }
                             }
                         }
+                    }
+                } else {
+                    Organization organization = projectWithOrganization.getOrganization();
+                    if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
+                        widgets = null;
                     }
                 }
             }
