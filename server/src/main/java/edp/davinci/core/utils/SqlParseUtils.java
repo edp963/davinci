@@ -274,8 +274,6 @@ public class SqlParseUtils {
                 map.put(exp, getTeamVarExpression(exp, teamParamMap, sqlTempDelimiter));
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ServerException(e.getMessage());
-            } finally {
                 continue;
             }
         }
