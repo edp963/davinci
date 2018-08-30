@@ -632,7 +632,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         <div className={styles.portalBody}>
           <div className={styles.portalTree}>
             <div className={styles.portalRow}>
-              <span className={styles.portalTitle}>{params.portalName}</span>
+              <span className={styles.portalTitle} title={params.portalName}>{params.portalName}</span>
               <span className={styles.portalAction}>
                 <Popover
                   placement="bottom"
