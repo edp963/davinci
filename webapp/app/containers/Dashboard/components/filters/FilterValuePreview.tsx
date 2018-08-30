@@ -11,7 +11,7 @@ export class FilterValuePreview extends React.Component<IFilterValuePreviewProps
 
     return (
       <ul>
-        {currentPreviewData.map((val) => (<li key={val}>{val}</li>))}
+        {currentPreviewData.map((val) => (<li title={val} key={val}>{val}</li>))}
       </ul>
     )
   }

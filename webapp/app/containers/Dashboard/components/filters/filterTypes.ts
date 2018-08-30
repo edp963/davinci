@@ -1,4 +1,6 @@
 
+import OperatorTypes from './operatorTypes'
+
 export enum FilterTypes {
   InputText = 'inputText',
   InputNumber = 'inputNumber',
@@ -53,6 +55,12 @@ export const FilterTypesViewSetting = {
   [FilterTypes.DateRange]: false,
   [FilterTypes.Datetime]: false,
   [FilterTypes.DatetimeRange]: false
+}
+
+// @TODO 过滤操作符的配置
+export const FilterTypesOperatorSetting = {
+  [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual]
 }
 
 export default FilterTypes

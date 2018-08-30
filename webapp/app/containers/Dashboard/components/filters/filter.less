@@ -1,6 +1,7 @@
 @import "../../../../assets/less/variable";
 
 .filterConfig {
+  flex: 1;
   display: flex;
   flex-direction: column;
 
@@ -78,6 +79,13 @@
     border: 1px solid @border-color-base;
     border-left: none;
     width: 200px;
+    overflow-y: auto;
+
+    ul li {
+      padding-bottom: 8px;
+
+      .ellipsis
+    }
   }
 
   .bottom {
@@ -92,12 +100,19 @@
   .configItem {
     border: 1px solid @border-color-base;
 
-    .itemList {
-      border-right: 1px solid @border-color-base;
-
+    .itemList, .itemConfig{
       >div:nth-child(1+n) {
         border-top: 1px solid @border-color-base;
       }
+    }
+
+    .itemList {
+      border-right: 1px solid @border-color-base;
+    }
+
+    .viewSet {
+      border-left: 1px solid @border-color-base;
+      margin-left: -1px;
     }
   }
 

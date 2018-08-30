@@ -21,6 +21,20 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
     super(props)
   }
 
+  public componentWillMount () {
+    const { selectedFilterKey, onSelectFilter } = this.props
+    if (selectedFilterKey) {
+      onSelectFilter(selectedFilterKey)
+    }
+  }
+
+  public componentWillReceiveProps (nextProps: IFilterListProps) {
+    const { selectedFilterKey, onSelectFilter } = nextProps
+    if (selectedFilterKey !== this.props.selectedFilterKey) {
+      onSelectFilter(selectedFilterKey)
+    }
+  }
+
   private onAddFilterClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation()
     const { onAddFilter } = this.props
