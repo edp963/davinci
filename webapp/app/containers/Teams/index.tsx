@@ -55,7 +55,7 @@ export class Teams extends React.PureComponent <ITeamProps> {
   public render () {
     const { teams } = this.props
     const teamArr = teams ? teams.map((team) => (
-        <div className={styles.groupList} key={`team${team.id}`}>
+        <div className={styles.groupList} key={`team${team.id}`} onClick={this.toTeam(team)}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
               <Avatar path={team.avatar} enlarge={false} size="small"/>
@@ -64,7 +64,7 @@ export class Teams extends React.PureComponent <ITeamProps> {
             </div>
           </div>
           <div className={styles.setting}>
-            <Icon type="setting" onClick={this.toTeam(team)}/>
+            <Icon type="setting"/>
           </div>
         </div>
       )

@@ -148,9 +148,9 @@ export class Setting extends React.PureComponent <ISettingProps> {
                     })(
                       <Radio.Group size="small">
                         <RadioButton value={0}>隐藏</RadioButton>
-                        <RadioButton value={1}>只读</RadioButton>
-                        <RadioButton value={2}>修改</RadioButton>
-                        <RadioButton value={3}>删除</RadioButton>
+                        <RadioButton value={1}>预览</RadioButton>
+                        {/* <RadioButton value={2}>修改</RadioButton>
+                        <RadioButton value={3}>删除</RadioButton> */}
                       </Radio.Group>
                     )}
                   </FormItem>

@@ -79,18 +79,18 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
   let result
 
   switch (flatInfo.name) {
-    case 'line':
-      result = line(dataSource, flatInfo, chartParams, interactIndex)
-      break
-    case 'bar':
-      result = bar(dataSource, flatInfo, chartParams, interactIndex)
-      break
-    case 'scatter':
-      result = scatter(dataSource, flatInfo, chartParams)
-      break
-    case 'pie':
-      result = pie(dataSource, flatInfo, chartParams, interactIndex)
-      break
+    // case 'line':
+    //   result = line(dataSource, flatInfo, chartParams, interactIndex)
+    //   break
+    // case 'bar':
+    //   result = bar(dataSource, flatInfo, chartParams, interactIndex)
+    //   break
+    // case 'scatter':
+    //   result = scatter(dataSource, flatInfo, chartParams)
+    //   break
+    // case 'pie':
+    //   result = pie(dataSource, flatInfo, chartParams, interactIndex)
+    //   break
     case 'area':
       result = area(dataSource, flatInfo, chartParams)
       break
