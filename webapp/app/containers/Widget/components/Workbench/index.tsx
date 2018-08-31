@@ -18,7 +18,7 @@ import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 import OperatingPanel from './OperatingPanel'
 import { IPivotProps } from '../Pivot/Pivot'
 import ScrollablePivot from '../Pivot'
-const Button = require('antd/lib/button')
+import EditorHeader from '../../../../components/EditorHeader'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -100,15 +100,18 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     }
   }
 
-  private namePlaceholder = '请输入Widget名称'
-  private descPlaceholder = '请输入描述…'
+  private placeholder = {
+    name: '请输入Widget名称',
+    description: '请输入描述…'
+  }
 
   public componentWillMount () {
     const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
-    onLoadBizlogics(Number(params.pid))
-    if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
-      onLoadWidgetDetail(Number(params.wid))
-    }
+    onLoadBizlogics(Number(params.pid), () => {
+      if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
+        onLoadWidgetDetail(Number(params.wid))
+      }
+    })
   }
 
   public componentDidMount () {
@@ -117,7 +120,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
-    if (views && currentWidget) {
+    if (currentWidget && currentWidget !== this.props.currentWidget) {
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -203,29 +206,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
     return (
       <div className={styles.workbench}>
-        <div className={styles.header}>
-          <div className={styles.title}>
-            <div className={styles.name}>
-              <input type="text" placeholder={this.namePlaceholder} value={name} onChange={this.changeName} />
-              <span>{name || this.namePlaceholder}</span>
-            </div>
-            <div className={styles.desc}>
-              <input type="text" placeholder={this.descPlaceholder} value={description} onChange={this.changeDesc} />
-              <span>{description || this.descPlaceholder}</span>
-            </div>
-          </div>
-          <div className={styles.actions}>
-            <Button
-              type="primary"
-              loading={loading}
-              disabled={loading}
-              onClick={this.saveWidget}
-            >
-              保存
-            </Button>
-            <Button onClick={this.cancel}>取消</Button>
-          </div>
-        </div>
+        <EditorHeader
+          className={styles.header}
+          name={name}
+          description={description}
+          placeholder={this.placeholder}
+          onNameChange={this.changeName}
+          onDescriptionChange={this.changeDesc}
+          onSave={this.saveWidget}
+          onCancel={this.cancel}
+          loading={loading}
+        />
         <div className={styles.body}>
           <OperatingPanel
             views={views}

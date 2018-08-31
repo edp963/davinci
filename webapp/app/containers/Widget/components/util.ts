@@ -16,6 +16,8 @@ import {
   PIVOT_XAXIS_SIZE,
   PIVOT_YAXIS_SIZE,
   PIVOT_TITLE_SIZE,
+  PIVOT_XAXIS_ROTATE_LIMIT,
+  PIVOT_XAXIS_TICK_SIZE,
   PIVOT_CANVAS_AXIS_SIZE_LIMIT
 } from '../../../globalConstants'
 import { DimetionType } from './Pivot/Pivot'
@@ -473,5 +475,19 @@ export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLen
       data,
       length: axisLength
     }]
+  }
+}
+
+export function getXaxisLabel (elementSize) {
+  return function (label) {
+    const originLabel = label
+    const ellipsis = '…'
+    const limit = elementSize > PIVOT_XAXIS_ROTATE_LIMIT ? elementSize : PIVOT_XAXIS_SIZE - PIVOT_XAXIS_TICK_SIZE
+    while (getTextWidth(label) > limit) {
+      label = label.substring(0, label.length - 1)
+    }
+    return label === originLabel
+      ? label
+      : `${label.substring(0, label.length - 1)}${ellipsis}`
   }
 }
