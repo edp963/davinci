@@ -85,6 +85,7 @@ import { loadSources } from '../Source/actions'
 import TeamTreeAction from './TeamTreeAction'
 import { toListBF, SQL_FIELD_TYPES } from './viewUtil'
 import { ITeamParams } from '../Bizlogic'
+import EditorHeader from '../../components/EditorHeader'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -134,6 +135,10 @@ interface IBizlogicFormState {
   alertVisible: boolean
   screenWidth: number
   isFold: boolean
+
+  name: string
+  description: string
+  isNameExited: boolean
 }
 
 interface IViewTeams {
@@ -181,10 +186,18 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       configTeam: [],
       alertVisible: true,
       screenWidth: 0,
-      isFold: true
+      isFold: true,
+      name: '',
+      description: '',
+      isNameExited: false
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
+  }
+
+  private placeholder = {
+    name: '请输入View名称',
+    description: '请输入描述…'
   }
 
   public componentWillMount () {
@@ -359,6 +372,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     this.setState({
+      name,
+      description,
       listData: listDataFinal,
       teamParams: configTeam ? (configTeam[0].params).map((o) => {
         return {
@@ -370,8 +385,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     this.props.form.setFieldsValue({
       id: Number(params.bid),
-      name,
-      desc: description,
       source_id: `${sourceId}`,
       source_name: source.name,
       isDeclarate: dec ? 'yes' : 'no'
@@ -392,22 +405,22 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
   }
 
-  private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckUniqueName, route, params, form } = this.props
-    const { id } = form.getFieldsValue()
+  // private checkNameUnique = (rule, value = '', callback) => {
+  //   const { onCheckUniqueName, route, params, form } = this.props
+  //   const { id } = form.getFieldsValue()
 
-    const data = {
-      projectId: params.pid,
-      id: route.path === '/project/:pid/bizlogic' ? '' : id,
-      name: value
-    }
-    onCheckUniqueName('view', data,
-      () => {
-        callback()
-      }, (err) => {
-        callback(err)
-      })
-  }
+  //   const data = {
+  //     projectId: params.pid,
+  //     id: route.path === '/project/:pid/bizlogic' ? '' : id,
+  //     name: value
+  //   }
+  //   onCheckUniqueName('view', data,
+  //     () => {
+  //       callback()
+  //     }, (err) => {
+  //       callback(err)
+  //     })
+  // }
 
   private changeIsDeclarate  = (e) => {
     this.setState({
@@ -671,12 +684,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, configTeam, listData, isDeclarate } = this.state
+        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited } = this.state
         const { sqlValidateCode, route, params } = this.props
+        if (!name.trim()) {
+          message.error('View名称不能为空')
+          return
+        }
+        if (isNameExited) {
+          message.error('View名称已存在')
+          return
+        }
 
         switch (sqlValidateCode) {
           case 200:
-            const { id, name, desc, source_id, source_name } = values
+            const { id, source_id, source_name } = values
             const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
             let querySql = ''
             if (isDeclarate === 'yes' && this.codeMirrorInstanceOfDeclaration) {
@@ -705,7 +726,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
             const requestValue = {
               name,
-              description: desc,
+              description,
               sql: querySql,
               model: JSON.stringify(modelObj),
               config: configTeamStr.length !== 0 ? JSON.stringify({team: configTeamStr}) : '',
@@ -713,7 +734,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             }
 
             if (route.path === '/project/:pid/bizlogic') {
-              this.props.onAddBizlogic({ ...requestValue, sourceId: Number(source_id) }, () => {
+              this.props.onAddBizlogic({
+                ...requestValue,
+                sourceId: Number(source_id)
+              }, () => {
                 this.hideForm()
               })
             } else {
@@ -756,6 +780,35 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   public componentWillUnmount () {
     clearTimeout(this.asyncValidateResult)
+  }
+
+  private changeName = (e) => {
+    const { onCheckUniqueName, route, params, form } = this.props
+    const { id } = form.getFieldsValue()
+
+    const data = {
+      projectId: params.pid,
+      id: route.path === '/project/:pid/bizlogic' ? '' : id,
+      name: e.currentTarget.value
+    }
+    this.setState({
+      name: e.currentTarget.value
+    })
+    onCheckUniqueName('view', data, () => {
+      this.setState({
+        isNameExited: false
+      })
+      }, (err) => {
+        this.setState({
+          isNameExited: true
+        })
+      })
+  }
+
+  private changeDesc = (e) => {
+    this.setState({
+      description: e.currentTarget.value
+    })
   }
 
   private onTeamExpand = (expandedKeys) => {
@@ -830,6 +883,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
+  private cancel = () => {
+    this.props.router.goBack()
+  }
+
   public render () {
     const {
       form,
@@ -854,7 +911,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       treeData,
       alertVisible,
       screenWidth,
-      isFold
+      isFold,
+      name,
+      description
     } = this.state
 
     const itemStyle = {
@@ -1039,16 +1098,17 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     return (
       <div className={styles.bizlogic}>
-        <div className={styles.header}>
-          <span className={styles.historyBack}>
-            <Tooltip placement="bottom" title="返回">
-              <Icon type="left-circle-o" className={styles.backIcon} onClick={this.hideForm} />
-            </Tooltip>
-          </span>
-          <span className={styles.title}>
-              {`${route.path === '/project/:pid/bizlogic' ? '新增' : '修改'} View`}
-          </span>
-        </div>
+        <EditorHeader
+          className={styles.header}
+          name={name}
+          description={description}
+          placeholder={this.placeholder}
+          onNameChange={this.changeName}
+          onDescriptionChange={this.changeDesc}
+          onSave={this.onModalOk}
+          onCancel={this.cancel}
+          loading={modalLoading}
+        />
         <Form className={styles.formView}>
         <Row className={`${styles.formLeft} no-item-margin`}>
           <Col span={24} className={styles.leftInput}>
@@ -1057,25 +1117,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 hidden: this.props.type === 'add'
               })(
                 <Input />
-              )}
-            </FormItem>
-            <FormItem label="名称" hasFeedback >
-              {getFieldDecorator('name', {
-                rules: [{
-                  required: true,
-                  message: 'Name 不能为空'
-                }, {
-                  validator: this.checkNameUnique
-                }]
-              })(
-                <Input placeholder="Name" />
-              )}
-            </FormItem>
-            <FormItem label="描述" >
-              {getFieldDecorator('desc', {
-                initialValue: ''
-              })(
-                <Input placeholder="Description" />
               )}
             </FormItem>
             <FormItem label="Source" >
@@ -1214,17 +1255,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           }
         </Row>
       </Form>
-        <div className={styles.footBtn}>
-          <Button
-            className={styles.btn}
-            size="large"
-            type="primary"
-            loading={modalLoading}
-            onClick={this.onModalOk}
-          >
-            保存
-          </Button>
-        </div>
       </div>
     )
   }
