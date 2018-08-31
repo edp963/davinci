@@ -97,7 +97,7 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
 
         if (null != dashboardPortals && dashboardPortals.size() > 0) {
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
-            if (!projectWithOrganization.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
                 if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
                     Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());

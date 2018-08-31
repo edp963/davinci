@@ -29,7 +29,6 @@ public class TeamPut {
     @NotBlank(message = "team name cannot be empty")
     private String name;
 
-    @NotBlank(message = "team description cannot be empty")
     private String description;
 
 //    private Long parentTeamId;

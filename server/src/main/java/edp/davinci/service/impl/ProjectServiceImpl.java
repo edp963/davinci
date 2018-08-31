@@ -27,6 +27,7 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
@@ -110,7 +111,8 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (!user.getId().equals(project.getUserId()) && null == rel) {
+
+        if ((!isMaintainer(project, user) && null == rel) || (rel.getRole() == UserOrgRoleEnum.MEMBER.getRole() && !project.getVisibility())) {
             log.info("user[{}] don't have permission to get project info", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission");
         }
@@ -281,7 +283,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
         //项目的创建人 和 当前项目对应组织的owner可以移交
-        if (!user.getId().equals(project.getUserId()) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
+        if (!isMaintainer(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
             log.info("user[{}] don't have permission to delete transfer[{}]", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to transfer this project");
         }
@@ -305,16 +307,30 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             return resultMap.failAndRefreshToken(request).message("you must be a member of the organization " + organization.getName() + " that is about to be transfer");
         }
 
+        if (isExist(project.getName(), null, orgId)) {
+            return resultMap.failAndRefreshToken(request).message("the project name \""+project.getName()+"\" is already in the organization you will transfer");
+        }
+
         Long beforeOrgId = project.getOrgId();
         project.setOrgId(organization.getId());
         int i = projectMapper.changeOrganization(project);
         if (i > 0) {
+
+            boolean isTransfer = true;
+            //移交回原组织
+            if (project.getInitialOrgId().equals(orgId)) {
+                RelUserOrganization projectCreaterRuo = relUserOrganizationMapper.getRel(project.getUserId(), orgId);
+                if (null != projectCreaterRuo) {
+                    isTransfer = false;
+                }
+            }
+            projectMapper.changeTransferStatus(isTransfer, project.getId());
+
             Organization beforeOrg = organizationMapper.getById(beforeOrgId);
             beforeOrg.setProjectNum(beforeOrg.getProjectNum() - 1);
             organizationMapper.updateProjectNum(beforeOrg);
             organization.setProjectNum(organization.getProjectNum() + 1);
             organizationMapper.updateProjectNum(organization);
-
             return resultMap.successAndRefreshToken(request);
         } else {
             log.info("transfer project fail, {} -> {}", project.getOrgId(), organization.getId());
@@ -342,7 +358,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         }
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
         //项目的创建人 和 当前项目对应组织的owner可以删除
-        if (!user.getId().equals(project.getUserId()) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
+        if (!isProjectAdmin(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
             log.info("user({}) don't have permission to delete project({})", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to delete this project");
         }
@@ -403,7 +419,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
         //项目的创建人 和 当前项目对应组织的owner可以修改
-        if (!user.getId().equals(project.getUserId()) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
+        if (!isProjectAdmin(project, user) && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
             log.info("user({}) don't have permission to update project({})", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you don't have permission to update this project");
         }

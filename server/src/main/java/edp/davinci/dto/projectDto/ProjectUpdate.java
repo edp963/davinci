@@ -30,7 +30,6 @@ public class ProjectUpdate {
     @NotBlank(message = "project name cannot be empty")
     private String name;
 
-    @NotBlank(message = "project description cannot be empty")
     private String description;
 
     private Boolean visibility = true;

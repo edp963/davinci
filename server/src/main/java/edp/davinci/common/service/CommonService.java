@@ -100,6 +100,13 @@ public class CommonService<T> {
     }
 
 
+    public boolean isProjectAdmin(Project project, User user) {
+        if (project.getUserId().equals(user.getId()) && !project.getIsTransfer()) {
+            return true;
+        }
+        return false;
+    }
+
     /**
      * user是否project 的维护者
      *
@@ -113,7 +120,7 @@ public class CommonService<T> {
         }
 
         //当前project的creater
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -149,7 +156,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -209,7 +216,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -272,7 +279,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -332,7 +339,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -381,7 +388,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
 
@@ -424,7 +431,7 @@ public class CommonService<T> {
         if (null == project || null == user) {
             return 0;
         }
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return UserPermissionEnum.DELETE.getPermission();
         }
 

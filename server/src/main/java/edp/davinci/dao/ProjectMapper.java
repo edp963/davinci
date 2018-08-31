@@ -48,10 +48,10 @@ public interface ProjectMapper {
             "    u.username as 'createBy.username',",
             "    u.avatar as 'createBy.avatar'",
             "FROM project p ",
-            "left join user u on u.id = p.user_id",
+            "left join `user` u on u.id = p.user_id",
             "left join star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
             "left join (",
-            "   SELECT org.id, org.member_permission ",
+            "   SELECT org.id, ruo.role, org.member_permission ",
             "   FROM rel_user_organization ruo ",
             "   LEFT JOIN organization org on ruo.org_id = org.id ",
             "   WHERE ruo.user_id = #{userId} ",
@@ -70,6 +70,8 @@ public interface ProjectMapper {
             ") ",
             //organization对成员可见
             "or o.member_permission > 0",
+            //organization的owner
+            "or o.role > 0",
             "order by p.id asc",
     })
     List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
@@ -86,7 +88,7 @@ public interface ProjectMapper {
             "   LEFT JOIN `user` u on u.id = p.user_id",
             "   LEFT JOIN star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
             "   LEFT JOIN (",
-            "      SELECT org.id, org.member_permission ",
+            "      SELECT org.id, ruo.role, org.member_permission ",
             "      FROM rel_user_organization ruo ",
             "      LEFT JOIN organization org on ruo.org_id = org.id ",
             "      where ruo.user_id = #{userId} and org.id = #{orgId}",
@@ -107,6 +109,8 @@ public interface ProjectMapper {
             "    )",
             //organization对成员可见
             "   or o.member_permission > 0",
+            //organization的owner
+            " or o.role > 0",
             "order by p.id",
     })
     List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
@@ -164,6 +168,10 @@ public interface ProjectMapper {
 
     @Update({"update project set `org_id` = #{orgId} where id = #{id}"})
     int changeOrganization(Project project);
+
+
+    @Update({"update project set `is_transfer` = #{isTransfer, jdbcType=TINYINT} where id = #{id}"})
+    int changeTransferStatus(@Param("isTransfer") Boolean isTransfer, @Param("id") Long id);
 
     @Delete({"delete from project where id = #{id}"})
     int deleteById(@Param("id") Long id);
