@@ -6,6 +6,7 @@ import { FilterTypesLocale } from './filterTypes'
 const styles = require('./filter.less')
 
 const Icon = require('antd/lib/icon')
+const Tooltip = require('antd/lib/tooltip')
 
 interface IFilterListProps {
   list: any[]
@@ -65,8 +66,12 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
     })
     return (
       <li className={itemClass} key={item.key}>
-        <label>{FilterTypesLocale[item.type]}</label>
-        <span>{item.name}</span>
+        <Tooltip title={FilterTypesLocale[item.type]} placement="right">
+          <Icon type="filter" />
+        </Tooltip>
+        <Tooltip title={item.name} mouseEnterDelay={0.8}>
+          <label>{item.name}</label>
+        </Tooltip>
       </li>
     )
   }
