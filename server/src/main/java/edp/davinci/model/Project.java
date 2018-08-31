@@ -38,6 +38,10 @@ public class Project {
 
     private Boolean visibility = true;
 
+    private Boolean isTransfer = false;
+
+    private Long initialOrgId;
+
     public Project() {
     }
 

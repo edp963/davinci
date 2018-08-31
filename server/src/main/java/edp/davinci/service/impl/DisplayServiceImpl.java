@@ -547,7 +547,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!projectWithOrganization.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 //查询project所属team中当前用户最高角色
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
 

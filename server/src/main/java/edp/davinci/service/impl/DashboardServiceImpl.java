@@ -109,7 +109,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
             Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
             if (teamNumOfOrgByUser > 0) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
@@ -171,7 +171,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+        if (!isProjectAdmin(project,user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
             Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
             if (teamNumOfOrgByUser > 0) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());

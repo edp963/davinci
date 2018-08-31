@@ -109,7 +109,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!projectWithOrganization.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
                 if (teamNumOfOrgByUser > 0) {
                     //查询project所属team中当前用户最高角色

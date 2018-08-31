@@ -124,7 +124,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 //查询project所属team中当前用户最高角色
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
 
@@ -349,7 +349,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
         if (null != tableList) {
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 //查询project所属team中当前用户最高角色
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
 
@@ -397,7 +397,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
         //当前用户是project的创建者和organization的owner，直接返回
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
             //查询project所属team中当前用户最高角色
             short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
 
@@ -819,7 +819,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      */
     private boolean allowGetData(Project project, User user) {
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (project.getUserId().equals(user.getId())) {
+        if (isProjectAdmin(project, user)) {
             return true;
         }
         if (null != orgRel && UserOrgRoleEnum.OWNER.getRole() == orgRel.getRole()) {
