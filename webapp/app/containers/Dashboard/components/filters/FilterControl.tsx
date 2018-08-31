@@ -2,8 +2,6 @@ import * as React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
 const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
 const Select = require('antd/lib/select')
@@ -21,8 +19,9 @@ import MultiDatePicker from '../../../../components/MultiDatePicker'
 interface IFilterControlProps {
   formToAppend: WrappedFormUtils
   filter: any
-  onGetOptions: (fromViewId, fromFieldName, filterKey) => void
+  onGetOptions: (fromViewId, fromModelName, filterKey) => void
   currentOptions: any[]
+  onChange: (filter, val) => void
 }
 
 export class FilterControl extends React.Component<IFilterControlProps, {}> {
@@ -43,19 +42,19 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     if (!filter) { return }
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
-    const { key, fromView, fromField } = filter
-    onGetOptions(fromView, fromField, key)
+    const { key, fromView, fromModel } = filter
+    onGetOptions(fromView, fromModel, key)
   }
 
-  private renderInputText = (filter) => {
+  private renderInputText = (filter, onChange) => {
     return (
-      <Input placeholder={filter.name} />
+      <Input placeholder={filter.name} onChange={onChange} />
     )
   }
 
   private renderInputNumber = (filter, onChange) => {
     return (
-      <InputNumber placeholder={filter.name} />
+      <InputNumber placeholder={filter.name} onChange={onChange} />
     )
   }
 
@@ -142,16 +141,9 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private wrapFormItem = (filter, form: WrappedFormUtils, control) => {
     const { getFieldDecorator } = form
     return (
-      <Col
-        xl={3}
-        lg={4}
-        md={6}
-        sm={12}
-      >
-        <FormItem className={styles.item}>
-          {getFieldDecorator(filter.key, {})(control)}
-        </FormItem>
-      </Col>
+      <FormItem className={styles.item}>
+        {getFieldDecorator(filter.key, {})(control)}
+      </FormItem>
     )
   }
 
@@ -160,7 +152,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     let control
     switch (filter.type) {
       case FilterTypes.InputText:
-        control = this.renderInputText(filter)
+        control = this.renderInputText(filter, onChange)
         break
       case FilterTypes.InputNumber:
         control = this.renderInputNumber(filter, onChange)
@@ -196,9 +188,14 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     return this.wrapFormItem(filter, formToAppend, control)
   }
 
+  private change = (val) => {
+    const { filter, onChange } = this.props
+    onChange(filter, val)
+  }
+
   public render () {
     const { filter } = this.props
-    return this.renderControl(filter, () => {})
+    return this.renderControl(filter, this.change)
   }
 }
 
