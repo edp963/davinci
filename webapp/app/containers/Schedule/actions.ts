@@ -20,7 +20,10 @@ import {
   CHANGE_SCHEDULE_STATUS,
   CHANGE_SCHEDULE_STATUS_SUCCESS,
   DELETE_SCHEDULES_FAILURE,
-  CHANGE_SCHEDULE_STATUS_FAILURE
+  CHANGE_SCHEDULE_STATUS_FAILURE,
+  LOAD_VIZS,
+  LOAD_VIZS_SUCCESS,
+  LOAD_VIZS_FAILUER
 } from './constants'
 
 // import { promiseActionCreator } from '../../utils/reduxPromisation'
@@ -151,3 +154,26 @@ export function changeSchedulesStatusFail () {
   }
 }
 
+export function loadVizs (pid) {
+  return {
+    type: LOAD_VIZS,
+    payload: {
+      pid
+    }
+  }
+}
+
+export function vizsLoaded (schedules) {
+  return {
+    type: LOAD_VIZS_SUCCESS,
+    payload: {
+      schedules
+    }
+  }
+}
+
+export function loadVizsFail () {
+  return {
+    type: LOAD_VIZS_FAILUER
+  }
+}

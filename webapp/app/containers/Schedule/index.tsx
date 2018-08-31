@@ -29,7 +29,7 @@ import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
 
 import {loadDashboardDetail, loadDashboards} from '../Dashboard/actions'
-import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule } from './actions'
+import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule, loadVizs } from './actions'
 import {loadWidgets} from '../Widget/actions'
 import Box from '../../components/Box'
 
@@ -69,6 +69,7 @@ interface IScheduleProps {
   currentProject: IProject
   onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: (pid: number) => any
+  onLoadVizs: (pid: number) => any
   onLoadSchedules: (pid: number) => any
   onLoadDashboards: () => any
   onDeleteSchedule: (id: number) => any
@@ -114,6 +115,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   public componentWillMount () {
     const {pid} = this.props.params
     this.props.onLoadWidgets(pid)
+    this.props.onLoadVizs(pid)
     this.props.onLoadDashboards().then(() => {
       const {dashboards} = this.props
       const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
@@ -427,7 +429,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       onDeleteSchedule,
       currentProject,
       tableLoading,
-      formLoading
+      formLoading,
+      onLoadVizs
     } = this.props
 
     const pagination: PaginationProps = {
@@ -634,6 +637,7 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
+    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
     onLoadWidgets: (pid) => dispatch(loadWidgets(pid)),
     onLoadSchedules: (pid) => dispatch(loadSchedules(pid)),
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),

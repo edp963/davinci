@@ -1,7 +1,7 @@
 import { takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all } from 'redux-saga/effects'
 
-import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES} from './constants'
+import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES, LOAD_VIZS} from './constants'
 import {
   schedulesLoaded,
   loadSchedulesFail,
@@ -18,6 +18,8 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
+import { PortalList } from '../Portal/components/PortalList'
+const message = require('antd/lib/message')
 
 export function* getSchedules ({payload}) {
   try {
@@ -106,12 +108,27 @@ export function* updateSchedule ({ payload }) {
   }
 }
 
+export function* getVizsData ({ payload }) {
+  const { pid } = payload
+  try {
+    const displayData = yield call(request, `${api.display}?projectId=${pid}`)
+    const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
+    const portalsList = readListAdapter(portalsData)
+    const list = yield all(portalsList.map((portals, index) => {
+      return call(request, `${api.portal}/${portals.id}/dashboards`)
+    }))
+  } catch (err) {
+    message.error('获取失败')
+  }
+}
+
 export default function* rootScheduleSaga (): IterableIterator<any> {
   yield [
     takeEvery(LOAD_SCHEDULES, getSchedules as any),
     takeEvery(ADD_SCHEDULES, addSchedules as any),
     takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
     takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
-    takeEvery(UPDATE_SCHEDULES, updateSchedule as any)
+    takeEvery(UPDATE_SCHEDULES, updateSchedule as any),
+    takeEvery(LOAD_VIZS, getVizsData as any)
   ]
 }
