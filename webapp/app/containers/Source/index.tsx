@@ -488,14 +488,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
     const modalButtons = ([(
       <Button
-        key="back"
-        size="large"
-        onClick={this.hideForm}
-      >
-        取 消
-      </Button>),
-      (
-      <Button
         key="submit"
         size="large"
         type="primary"
@@ -504,6 +496,14 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
         onClick={this.onModalOk}
       >
         保 存
+      </Button>),
+      (
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideForm}
+      >
+        取 消
       </Button>)
     ])
     const uploadFormButtons = formStep
