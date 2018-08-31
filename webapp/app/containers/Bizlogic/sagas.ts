@@ -297,6 +297,7 @@ export function* getDataFromItem (action) {
   const { payload } = action
   try {
     const { itemId, viewId, groups, aggregators, sql, cache, expired } = payload
+    const { filters, params } = sql
 
     const data = yield call(request, {
       method: 'post',
@@ -304,8 +305,8 @@ export function* getDataFromItem (action) {
       data: {
         groups,
         aggregators,
-        filters: [],
-        params: [],
+        filters,
+        params,
         orders: [],
         cache,
         expired

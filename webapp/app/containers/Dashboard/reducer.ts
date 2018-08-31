@@ -166,7 +166,7 @@ function dashboardReducer (state = initialState, action) {
         }, {}))
         .set('currentItemsQueryParams', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = {
-            filters: '',
+            filters: [],
             linkageFilters: '',
             globalFilters: '',
             params: [],
@@ -218,7 +218,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItemsQueryParams', {
           ...queryParams,
           [payload.result.id]: {
-            filters: '',
+            filters: [],
             linkageFilters: '',
             globalFilters: '',
             params: [],

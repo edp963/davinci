@@ -47,7 +47,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
               params: []
             }
           }
-          queryParam[itemId].params.push(paramValue)
+          queryParam[itemId].params.push(...paramValue)
         })
       } else {
         const filterValue = this.getModelValue(type, config, val)
@@ -58,7 +58,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
               params: []
             }
           }
-          queryParam[itemId].filters.push(filterValue)
+          queryParam[itemId].filters.push(...filterValue)
         })
       }
     })
@@ -75,7 +75,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       case FilterTypes.InputText:
       case FilterTypes.InputNumber:
       case FilterTypes.Select:
-        param.push({ name: key, value })
+        param.push({ name: key, value: this.getValidValue(value, sqlType) })
         break
       case FilterTypes.NumberRange:
         if (value[0] || value[1]) {
