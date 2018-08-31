@@ -2,8 +2,8 @@ import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
 import { IChartLine, IChartUnit } from './Chart'
-import { metricAxisLabelFormatter } from '../util'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
+import { metricAxisLabelFormatter, getXaxisLabel } from '../util'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
@@ -13,6 +13,7 @@ interface IXaxisProps {
   data: any[]
   metricAxisConfig?: IMetricAxisConfig
   dimetionAxis: DimetionType
+  elementSize: number
 }
 
 export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
@@ -27,7 +28,7 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { metrics, data, metricAxisConfig, dimetionAxis } = this.props
+    const { metrics, data, metricAxisConfig, dimetionAxis, elementSize } = this.props
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
@@ -91,15 +92,18 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
               left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),   // 隐藏yaxisline
               width
             })
+
             if (dimetionAxis === 'col') {
               xAxis.push({
                 gridIndex: index,
                 type: 'category',
                 data: records.map((r) => r.key),
+                interval: 0,
                 axisLabel: {
                   interval: 0,
-                  rotate: -45,
-                  color: '#333'
+                  rotate: elementSize <= PIVOT_XAXIS_ROTATE_LIMIT ? -90 : 0,
+                  color: '#333',
+                  formatter: getXaxisLabel(elementSize * .8)
                 },
                 axisLine: {
                   lineStyle: {

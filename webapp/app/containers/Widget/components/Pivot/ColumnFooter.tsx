@@ -21,6 +21,7 @@ interface IColumnFooterProps {
 export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
   public render () {
     const { rowKeys, colKeys, rowTree, colTree, tree, metrics, metricAxisConfig, drawingData, dimetionAxis } = this.props
+    const { elementSize } = drawingData
 
     let footers: IChartLine[] = []
     let tableWidth = 0
@@ -45,6 +46,7 @@ export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
             data={footers}
             metricAxisConfig={metricAxisConfig}
             dimetionAxis={dimetionAxis}
+            elementSize={elementSize}
           />
         }
       </div>
