@@ -8,10 +8,7 @@ import FilterControl from './FilterControl'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
 const Form = require('antd/lib/form')
-const FormItem = Form.Item
 
 const styles = require('./filter.less')
 
@@ -71,10 +68,9 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
   }
 
   private getParamValue = (type: FilterTypes, config: IFilterViewConfig, value) => {
-    const { key } = config
+    const { key, sqlType } = config
     let param = []
 
-    // FIXME 是否 wrap '' 的判断
     switch (type) {
       case FilterTypes.InputText:
       case FilterTypes.InputNumber:
@@ -83,12 +79,12 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         break
       case FilterTypes.NumberRange:
         if (value[0] || value[1]) {
-          param = value.map((val) => ({ name: key, value: val }))
+          param = value.map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
         }
         break
       case FilterTypes.MultiSelect:
         if (value.length) {
-          param.push({ name: key, value: value.join(',') })
+          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
         }
         break
       case FilterTypes.CascadeSelect: // TODO
@@ -117,7 +113,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       default:
         const val = value.target.value.trim()
         if (val) {
-          param.push({ name: key, value: `${val}` })
+          param.push({ name: key, value: this.getValidValue(val, sqlType) })
         }
         break
     }
