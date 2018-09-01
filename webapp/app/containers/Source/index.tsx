@@ -77,7 +77,7 @@ interface ISourceProps {
   formLoading: boolean
   testLoading: boolean
   currentProject: IProject
-  onLoadSources: (projectId: number, resolve?: any) => any
+  onLoadSources: (projectId: number) => any
   onAddSource: (sourceData: any, resolve: any) => any
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
@@ -607,7 +607,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
+    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onAddSource: (source, resolve) => dispatch(addSource(source, resolve)),
     onDeleteSource: (id) => () => dispatch(deleteSource(id)),
     onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
