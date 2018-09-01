@@ -94,8 +94,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         cols: [],
         rows: [],
         metrics: [],
-        filters: [],
-        chart: []
+        filters: []
       }
     }
   }

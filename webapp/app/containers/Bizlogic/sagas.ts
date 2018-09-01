@@ -296,7 +296,7 @@ export function* getDistinctValue (action) {
 export function* getDataFromItem (action) {
   const { payload } = action
   try {
-    const { itemId, viewId, groups, aggregators, sql, cache, expired } = payload
+    const {renderType, itemId, viewId, groups, aggregators, sql, cache, expired } = payload
 
     const data = yield call(request, {
       method: 'post',
@@ -311,7 +311,7 @@ export function* getDataFromItem (action) {
         expired
       }
     })
-    yield put(dataFromItemLoaded(itemId, data.payload))
+    yield put(dataFromItemLoaded(renderType, itemId, data.payload))
   } catch (err) {
     yield put(loadDataFromItemFail(err))
   }

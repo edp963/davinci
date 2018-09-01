@@ -59,7 +59,6 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { makeSelectLoginUser } from '../App/selectors'
 import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 
@@ -73,7 +72,6 @@ import {IProject} from '../Projects'
 interface IDashboardProps {
   modalLoading: boolean
   dashboards: IDashboard[]
-  loginUser: { id: number, admin: boolean }
   router: InjectedRouter
   params: any
   currentProject: IProject
@@ -529,7 +527,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     const {
       params,
       dashboards,
-      loginUser,
       modalLoading,
       children,
       currentProject,
@@ -734,7 +731,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
-  loginUser: makeSelectLoginUser(),
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject()
 })

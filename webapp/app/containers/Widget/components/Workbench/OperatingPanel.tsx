@@ -485,7 +485,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...label && {label},
         ...xAxis && {xAxis},
         dimetionAxis: this.getDimetionAxis(selectedCharts),
-        renderType: 'refresh'
+        renderType: 'clear'
       })
       this.setState({
         commonParams,

@@ -367,10 +367,11 @@ export function loadDistinctValueFail (error) {
   }
 }
 
-export function loadDataFromItem (itemId, viewId, groups, aggregators, sql, cache, expired) {
+export function loadDataFromItem (renderType, itemId, viewId, groups, aggregators, sql, cache, expired) {
   return {
     type: LOAD_DATA_FROM_ITEM,
     payload: {
+      renderType,
       itemId,
       viewId,
       groups,
@@ -382,10 +383,11 @@ export function loadDataFromItem (itemId, viewId, groups, aggregators, sql, cach
   }
 }
 
-export function dataFromItemLoaded (itemId, data) {
+export function dataFromItemLoaded (renderType, itemId, data) {
   return {
     type: LOAD_DATA_FROM_ITEM_SUCCESS,
     payload: {
+      renderType,
       itemId,
       data
     }

@@ -29,7 +29,7 @@ import DownLoadCsv from '../../../components/DownLoadCsv'
 
 import Chart from './Chart'
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps } from '../../Widget/components/Pivot/Pivot'
+import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
@@ -39,43 +39,35 @@ const Menu = require('antd/lib/menu')
 import { decodeMetricName } from '../../Widget/components/util'
 
 import { ECHARTS_RENDERER } from '../../../globalConstants'
+import { InjectedRouter } from 'react-router'
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemProps {
-  w: number
-  h: number
+  projectId: number
   itemId: number
   widget: any
-  chartInfo: any
   data: any
   loading: boolean
-  triggerType: string
-  triggerParams: string
+  polling: string
+  frequency: string
   shouldShare?: boolean
   shouldDownload?: boolean
   shareInfo: string
   secretInfo?: string
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
-  isInteractive: boolean
   interactId: string
-  cascadeSources: any
-  rendered?: boolean
-  isAdmin?: boolean
-  isShared?: boolean
-  isDownload?: boolean
-  onShowFiltersForm?: (itemId: number, keys: string, types: string) => any
-  onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
-  onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
+  rendered: boolean
+  renderType: RenderType
+  router: InjectedRouter
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
-  onShowWorkbench?: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onDownloadCsv: (itemId: number) => (shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => object
   onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
-  onGetCascadeSource: (itemId: number, controlId: number, flatTableId: number, column: string, parents?: any[]) => void
 }
 
 interface IDashboardItemStates {
@@ -96,13 +88,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public static defaultProps = {
     onShowEdit: () => void 0,
-    onShowWorkbench: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
   private frequent: NodeJS.Timer = void 0
+  private container: HTMLDivElement = null
 
   public componentWillMount () {
-    // this.initControlCascadeSource(this.props)
     this.setState({
       pivotProps: JSON.parse(this.props.widget.config)
     })
@@ -116,44 +107,33 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  public componentWillUpdate (nextProps) {
+  public componentWillUpdate (nextProps: IDashboardItemProps) {
     const {
       itemId,
       widget,
-      data,
-      chartInfo,
-      triggerType,
+      polling,
       onGetChartData,
-      onRenderChart,
       rendered
     } = nextProps
 
     if (!this.props.rendered && rendered) {
-      onGetChartData('rerender', itemId, widget.id)
+      onGetChartData('clear', itemId, widget.id)
       this.setFrequent(this.props)
     }
 
-    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER && rendered) {
-      onRenderChart(itemId, widget, data.dataSource, chartInfo)
-    }
-
-    if (triggerType !== this.props.triggerType) {
+    if (polling !== this.props.polling) {
       this.setFrequent(nextProps)
     }
-
-    // if (nextProps.widget !== this.props.widget) {
-    //   this.initControlCascadeSource(nextProps)
-    // }
   }
 
   public componentWillUnmount () {
     clearInterval(this.frequent)
   }
 
-  private setFrequent = (props) => {
+  private setFrequent = (props: IDashboardItemProps) => {
     const {
-      triggerType,
-      triggerParams,
+      polling,
+      frequency,
       itemId,
       widget,
       onGetChartData
@@ -161,10 +141,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     clearInterval(this.frequent)
 
-    if (triggerType === 'frequent') {
+    if (polling) {
       this.frequent = setInterval(() => {
-        onGetChartData('dynamic', itemId, widget.id)
-      }, Number(triggerParams) * 1000)
+        onGetChartData('refresh', itemId, widget.id)
+      }, Number(frequency) * 1000)
     }
   }
 
@@ -179,17 +159,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private onControlSearch = (queryParams) => {
-    this.onSearch('rerender', queryParams)
-  }
-
-  private onSearch = (renderType, queryParams) => {
     const {
       itemId,
       widget,
       onGetChartData
     } = this.props
 
-    onGetChartData(renderType, itemId, widget.id, queryParams)
+    onGetChartData('clear', itemId, widget.id, queryParams)
   }
 
   private toggleControlPanel = () => {
@@ -202,15 +178,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       onShowFullScreen,
       itemId,
-      w,
-      h,
       data,
       widget,
       loading,
-      chartInfo,
       onGetChartData
     } = this.props
-    const chartsData = {itemId, w, h, widget, data, loading, chartInfo, onGetChartData}
+    const chartsData = {itemId, widget, data, loading, onGetChartData}
     if (onShowFullScreen) {
       onShowFullScreen(chartsData)
     }
@@ -231,29 +204,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  // private initControlCascadeSource = (props) => {
-  //   const { itemId, widget, onGetCascadeSource } = props
-  //   const { query_params } = widget
-
-  //   JSON.parse(query_params).forEach((c) => {
-  //     if (c.type === 'cascadeSelect' && !c.parentColumn) {
-  //       onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
-  //     }
-  //   })
-  // }
-
-  private onCascadeSelectChange = (controlId, column, parents) => {
-    const { itemId, widget, onGetCascadeSource } = this.props
-    onGetCascadeSource(itemId, controlId, widget.flatTable_id, column, parents)
+  private toWorkbench = (projectId, itemId, widget) => () => {
+    this.props.router.push(`/project/${projectId}/widget/${widget.id}`)
   }
 
   public render () {
     const {
-      w,
-      h,
+      projectId,
       itemId,
       widget,
-      chartInfo,
       data,
       loading,
       shouldShare,
@@ -262,11 +221,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       secretInfo,
       shareInfoLoading,
       downloadCsvLoading,
-      isInteractive,
       interactId,
-      cascadeSources,
+      renderType,
       onShowEdit,
-      onShowWorkbench,
       onDeleteDashboardItem,
       onDownloadCsv,
       onTurnOffInteract,
@@ -348,7 +305,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const widgetButton = (
       <Tooltip title="编辑widget">
-        <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
+        <i className="iconfont icon-edit-2" onClick={this.toWorkbench(projectId, itemId, widget)} />
       </Tooltip>
     )
 
@@ -394,25 +351,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const gridItemClass = classnames({
       [styles.gridItem]: true,
-      [styles.interact]: isInteractive
+      [styles.interact]: !!interactId
     })
 
     return (
-      <div className={gridItemClass}>
+      <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
-          {
-            chartInfo.name !== 'text'
-              ? (
-                <div className={styles.title}>
-                  {controlPanelHandle}
-                  <h4>{widget.name}</h4>
-                  {descPanelHandle}
-                </div>
-            )
-              : (
-                <div className={styles.title} />
-            )
-          }
+          <div className={styles.title}>
+            {controlPanelHandle}
+            <h4>{widget.name}</h4>
+            {descPanelHandle}
+          </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
               <Icon type="reload" onClick={this.onSyncBizdatas} />
@@ -441,10 +390,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <DashboardItemControlPanel show={controlPanelVisible}>
             <DashboardItemControlForm
               controls={controls}
-              cascadeSources={cascadeSources}
               onSearch={this.onControlSearch}
               onHide={this.toggleControlPanel}
-              onCascadeSelectChange={this.onCascadeSelectChange}
             />
           </DashboardItemControlPanel>
         </Animate>
@@ -466,6 +413,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         /> */}
         <Pivot
           {...pivotProps}
+          renderType={renderType}
           data={data || []}
         />
       </div>

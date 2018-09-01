@@ -77,7 +77,6 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
   }
 
   public render () {
-    const { onLegendSelect } = this.props
     const { list } = this.state
     const legendClass = classnames({
       [styles.legend]: true,
