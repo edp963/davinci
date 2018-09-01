@@ -30,30 +30,23 @@
     border-bottom: 1px solid @border-color-base;
   
     .formLeft {
-      width: 320px;
+      width: 200px;
       flex-shrink: 0;
       overflow: auto;
-      padding: 0 16px;
       border-right: 1px solid @border-color-base;
       display: flex;
       flex-direction: column;
+      padding: 0 16px 16px 16px;
   
       .leftInput {
         flex-shrink: 0;
-        margin-top: 8px;
-        margin-bottom: 16px;
+        height: 40px;
+        line-height: 40px;
       }
       .sourceTree {
         flex-shrink: 1;
         overflow: auto;
-        margin: 16px auto;
         background-color: @light-bg;
-      }
-      .treeSearch {
-        margin-bottom: -16px;
-        .searchSource {
-          height: 32px;
-        }
       }
     }
     
@@ -61,6 +54,7 @@
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
+      margin-bottom: 16px;
 
       .declareSelect {
         max-width: 236px;

@@ -56,6 +56,10 @@ const Alert = require('antd/lib/alert')
 const Tree = require('antd/lib/tree').default
 const message = require('antd/lib/message')
 const Tooltip = require('antd/lib/tooltip')
+const Dropdown = require('antd/lib/dropdown')
+
+const Menu = require('antd/lib/menu')
+const MenuItem = Menu.Item
 
 const TreeNode = Tree.TreeNode
 const Search = Input.Search
@@ -106,7 +110,7 @@ interface IBizlogicFormProps {
   onExecuteSql: (sourceId: number, sql: any, resolve: any) => any
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
-  onLoadSources: (projectId: number, resolve?: any) => any
+  onLoadSources: (projectId: number) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
   onLoadViewTeam: (projectId: number) => any
 }
@@ -139,6 +143,7 @@ interface IBizlogicFormState {
   name: string
   description: string
   isNameExited: boolean
+  selectedSourceName: string
 }
 
 interface IViewTeams {
@@ -189,7 +194,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       isFold: true,
       name: '',
       description: '',
-      isNameExited: false
+      isNameExited: false,
+      selectedSourceName: ''
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
@@ -210,6 +216,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       onLoadBizlogics,
       onLoadViewTeam
     } = this.props
+    const { selectedSourceName, schemaData } = this.state
 
     this.setState({
       screenWidth: document.documentElement.clientWidth,
@@ -220,25 +227,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       onLoadBizlogics(params.pid)
     }
 
-    new Promise((resolve) => {
-      onLoadSources(params.pid, (result) => {
-        resolve(result)
-      })
-    }).then((result) => {
-      if ((result as any[]).length) {
-        onLoadSchema(result[0].id, (res) => {
-          this.setState({
-            schemaData: res,
-            sourceIdGeted: result[0].id
-          }, () => {
-            this.promptCodeMirror(generateData(this.state.schemaData))
-          })
-        })
-      } else {
-        return
-      }
-    })
-
+    onLoadSources(params.pid)
     onLoadViewTeam(params.pid)
   }
 
@@ -329,8 +318,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private showViewInfo (bizlogics) {
-    const { params } = this.props
-    const { schemaData, listData, teamParams } = this.state
+    const { params, onLoadSchema } = this.props
+    const { listData, teamParams } = this.state
 
     const {
       name,
@@ -342,6 +331,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       config
     } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
     const dec = (sql.includes('{') && sql.substring(0, sql.lastIndexOf('{')) !== '')
+
+    onLoadSchema(sourceId, (res) => {
+      this.setState({
+        schemaData: res,
+        sourceIdGeted: sourceId
+      }, () => {
+        this.promptCodeMirror(generateData(this.state.schemaData))
+      })
+    })
 
     if (model) {
       const modelObj = JSON.parse(model)
@@ -372,6 +370,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     this.setState({
+      selectedSourceName: source.name,
       name,
       description,
       listData: listDataFinal,
@@ -404,23 +403,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
   }
-
-  // private checkNameUnique = (rule, value = '', callback) => {
-  //   const { onCheckUniqueName, route, params, form } = this.props
-  //   const { id } = form.getFieldsValue()
-
-  //   const data = {
-  //     projectId: params.pid,
-  //     id: route.path === '/project/:pid/bizlogic' ? '' : id,
-  //     name: value
-  //   }
-  //   onCheckUniqueName('view', data,
-  //     () => {
-  //       callback()
-  //     }, (err) => {
-  //       callback(err)
-  //     })
-  // }
 
   private changeIsDeclarate  = (e) => {
     this.setState({
@@ -518,11 +500,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     return parentKey
   }
 
-  private selectSource = (sourceId) => {
-    this.props.onLoadSchema(Number(sourceId), (result) => {
+  private selectSource = (source) => {
+    const { sources, onLoadSchema } = this.props
+    const currentSource = (sources as any[]).find((s) => s.id === Number(source.key))
+    this.setState({
+      selectedSourceName: currentSource.name
+    })
+    this.props.form.setFieldsValue({
+      source_id: Number(currentSource.id),
+      source_name: currentSource.name
+    })
+    onLoadSchema(Number(source.key), (result) => {
       this.setState({
         schemaData: result,
-        sourceIdGeted: Number(sourceId)
+        sourceIdGeted: Number(source.key)
       }, () => {
         this.promptCodeMirror(generateData(this.state.schemaData))
       })
@@ -686,6 +677,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (!err) {
         const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited } = this.state
         const { sqlValidateCode, route, params } = this.props
+        const { id, source_id, source_name } = values
         if (!name.trim()) {
           message.error('View名称不能为空')
           return
@@ -694,10 +686,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           message.error('View名称已存在')
           return
         }
+        if (!source_id || !source_name) {
+          message.error('请选择一个Source')
+          return
+        }
 
         switch (sqlValidateCode) {
           case 200:
-            const { id, source_id, source_name } = values
             const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
             let querySql = ''
             if (isDeclarate === 'yes' && this.codeMirrorInstanceOfDeclaration) {
@@ -913,7 +908,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       screenWidth,
       isFold,
       name,
-      description
+      description,
+      selectedSourceName
     } = this.state
 
     const itemStyle = {
@@ -934,11 +930,23 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
       : []
 
-    let sourceOptions = []
+    let sourceOptions
+    let sourceSelectMenu
     if (sources) {
       sourceOptions = (sources as any[]).map((s) => (
         <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>
       ))
+      sourceSelectMenu = (
+        <Menu onClick={this.selectSource}>
+          {((sources as any[]) || []).map((v) => (
+            <MenuItem key={v.id}>{v.name}</MenuItem>
+          ))}
+        </Menu>
+      )
+    } else {
+      sourceSelectMenu = (
+        <Menu />
+      )
     }
 
     const tableDataKey = []
@@ -1119,13 +1127,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 <Input />
               )}
             </FormItem>
-            <FormItem label="Source" >
-              {getFieldDecorator('source_id', {
-                initialValue: (sources as any[]).length ? `${sources[0].id}` : ''
-              })(
-                <Select onChange={this.selectSource}>
-                  {sourceOptions}
-                </Select>
+            <FormItem label="" className={utilStyles.hide}>
+              {getFieldDecorator('source_id', {})(
+                <Input />
               )}
             </FormItem>
             <FormItem label="" className={utilStyles.hide}>
@@ -1133,15 +1137,18 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 <Input />
               )}
             </FormItem>
+
+            <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
+              <a>{selectedSourceName || '选择一个Source'}</a>
+            </Dropdown>
           </Col>
-          <Col span={24} className={styles.treeSearch}>
+          <Col span={24} className={`${schemaData.length !== 0 ? styles.treeSearch : utilStyles.hide}`}>
             <Search
-              className={styles.searchSource}
               placeholder="Search the Schema"
               onChange={this.searchSchema}
             />
           </Col>
-          <Col span={24} className={styles.sourceTree}>
+          <Col span={24} className={`${schemaData.length !== 0 ? styles.sourceTree : utilStyles.hide}`}>
             <Tree
               onExpand={this.onExpand}
               expandedKeys={expandedKeys}
@@ -1151,6 +1158,33 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Tree>
           </Col>
         </Row>
+        {/* <div className={styles.model}>
+          <div className={styles.source}>
+            <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
+              <a>{selectedView ? selectedView.name : '选择一个Source'}</a>
+              <a>'选择一个Source'</a>
+            </Dropdown>
+          </div>
+          <div className={styles.columnContainer}>
+            <h4>分类型</h4>
+            <Col span={24} className={styles.treeSearch}>
+              <Search
+                className={styles.searchSource}
+                placeholder="Search the Schema"
+                onChange={this.searchSchema}
+              />
+            </Col>
+            <Col span={24} className={styles.sourceTree}>
+              <Tree
+                onExpand={this.onExpand}
+                expandedKeys={expandedKeys}
+                autoExpandParent={autoExpandParent}
+              >
+              {loop(data || [])}
+              </Tree>
+            </Col>
+          </div>
+        </div> */}
         <Row className={styles.formRight}>
           <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
             <FormItem label="声明变量" {...itemStyle}>
@@ -1278,7 +1312,7 @@ function mapDispatchToProps (dispatch) {
     onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
-    onLoadSources: (projectId, resolve) => dispatch(loadSources(projectId, resolve)),
+    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadViewTeam: (projectId) => dispatch(loadViewTeam(projectId))
   }
