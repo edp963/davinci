@@ -46,7 +46,6 @@ interface IDashboardItemFormProps {
   type: string
   widgets: any[]
   selectedWidget: number
-  loginUser: { id: number, admin: boolean }
   polling: boolean,
   step: number
   onWidgetSelect: (id: number) => void

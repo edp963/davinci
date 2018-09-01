@@ -18,7 +18,7 @@ interface IColumnFooterProps {
   dimetionAxis: DimetionType
 }
 
-export class ColumnFooter extends React.PureComponent<IColumnFooterProps, {}> {
+export class ColumnFooter extends React.Component<IColumnFooterProps, {}> {
   public render () {
     const { rowKeys, colKeys, rowTree, colTree, tree, metrics, metricAxisConfig, drawingData, dimetionAxis } = this.props
     const { elementSize } = drawingData

@@ -3,7 +3,7 @@ import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
 import chartOptionGenerator from '../../charts'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
-import { decodeMetricName, getScatter } from '../util'
+import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
@@ -52,6 +52,8 @@ export interface IChartChunk {
 interface IChartProps {
   width: number
   height: number
+  cols: string[]
+  rows: string[]
   dimetionAxisCount: number
   metricAxisCount: number
   metrics: IPivotMetric[]
@@ -70,7 +72,7 @@ interface IChartStates {
   renderSign: string
 }
 
-export class Chart extends React.PureComponent<IChartProps, IChartStates> {
+export class Chart extends React.Component<IChartProps, IChartStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -154,7 +156,7 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
   }
 
   private renderChart = () => {
-    const { metrics, data, drawingData, metricAxisConfig, dimetionAxis, color, label, xAxis: scatterXaxis, legend } = this.props
+    const { cols, rows, metrics, data, drawingData, metricAxisConfig, dimetionAxis, color, label, xAxis: scatterXaxis, legend, renderType } = this.props
     const { elementSize } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -173,14 +175,16 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
           if (!instance) {
             instance = echarts.init(chartPiece, 'default')
           } else {
-            instance.clear()
+            if (renderType === 'clear') {
+              instance.clear()
+            }
           }
 
           const grid = []
           const xAxis = []
           const yAxis = []
           const series = []
-          const s2 = []
+          const seriesData = []
           let xSum = 0
           let ySum = 0
           let index = 0
@@ -262,7 +266,6 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                           left: dimetionAxis === 'col' ? tempYsum - 1 : (tempXsum - 1 + l * multiCoordinateElementSize),    // 隐藏yaxisline
                           width: multiCoordinateElementSize,
                           height: multiCoordinateElementSize
-                          // containLabel: true
                         })
                         xAxis.push(this.getXaxisOption(index, 'value'))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
@@ -290,6 +293,11 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                             xAxisIndex: index,
                             yAxisIndex: index,
                             ...chartOption
+                          })
+                          seriesData.push({
+                            type: 'scatter',
+                            grouped: true,
+                            records: groupedRecords[colKey]
                           })
                         })
                         if (dimetionAxis === 'col') {
@@ -325,7 +333,11 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                           yAxisIndex: index,
                           ...chartOption
                         })
-                        s2.push(groupedRecords)
+                        seriesData.push({
+                          type: 'cartesian',
+                          grouped: true,
+                          records: groupedRecords
+                        })
                       })
                     }
                   } else {
@@ -338,7 +350,6 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                           left: dimetionAxis === 'col' ? tempYsum - 1 : (tempXsum - 1 + l * multiCoordinateElementSize),    // 隐藏yaxisline
                           width: multiCoordinateElementSize,
                           height: multiCoordinateElementSize
-                          // containLabel: true
                         })
                         xAxis.push(this.getXaxisOption(index, 'value'))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
@@ -353,6 +364,11 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                           xAxisIndex: index,
                           yAxisIndex: index,
                           ...chartOption
+                        })
+                        seriesData.push({
+                          type: 'scatter',
+                          grouped: false,
+                          records: recordCollection.value
                         })
                         if (dimetionAxis === 'col') {
                           tempYsum += multiCoordinateElementSize
@@ -375,8 +391,12 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                         yAxisIndex: index,
                         ...chartOption
                       })
+                      seriesData.push({
+                        type: 'cartesian',
+                        grouped: false,
+                        records
+                      })
                     }
-                    s2.push(records)
                   }
                 } else {
                   records.forEach((recordCollection, r) => {
@@ -396,34 +416,62 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
                       l,
                       r
                     )
-                    series.push({
-                      data: groupingItems.length
-                        ? recordCollection.value
-                          ? recordCollection.value.map((record) => ({
-                              name: recordCollection.key,
-                              value: record[`${m.agg}(${decodedMetricName})`],
-                              itemStyle: {
-                                color: currentColorItem
-                                  ? currentColorItem.config.values[record[currentColorItem.name]]
-                                  : (color.value[m.name] || defaultThemeColors[0])
-                              }
-                            }))
-                          : []
-                        : [{
-                          name: recordCollection.key,
-                          value: recordCollection.value
-                            ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
-                            : 0,
-                          itemStyle: {
-                            color: color.value[m.name] || defaultThemeColors[0]
+
+                    let data = []
+                    if (groupingItems.length) {
+                      if (recordCollection.value) {
+                        const legendSelectedItem = legend[currentColorItem.name]
+                        recordCollection.value.forEach((record) => {
+                          if (legendSelectedItem && legendSelectedItem.includes(record[currentColorItem.name])) {
+                            return false
                           }
-                        }],
+                          data.push({
+                            name: recordCollection.key,
+                            value: record[`${m.agg}(${decodedMetricName})`],
+                            itemStyle: {
+                              color: currentColorItem
+                                ? currentColorItem.config.values[record[currentColorItem.name]]
+                                : (color.value[m.name] || defaultThemeColors[0])
+                            }
+                          })
+                        })
+                      }
+                    } else {
+                      data = [{
+                        name: recordCollection.key,
+                        value: recordCollection.value
+                          ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
+                          : 0,
+                        itemStyle: {
+                          color: color.value[m.name] || defaultThemeColors[0]
+                        }
+                      }]
+                    }
+                    series.push({
+                      data,
+                      ...currentLabelItem.length
+                        ? {
+                          label: {
+                            show: true,
+                            formatter: (params) => {
+                              return params.value
+                            }
+                          }
+                        }
+                        : {
+                          label: {
+                            show: false
+                          }
+                        },
                       ...centerAndRadius,
                       ...chartOption
                     })
-                    s2.push(recordCollection)
+                    seriesData.push({
+                      type: 'polar',
+                      grouped: !!groupingItems.length,
+                      records: recordCollection.value
+                    })
                   })
-                  s2.push(records)
                 }
                 index += 1
               })
@@ -445,21 +493,15 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
               xSum = 0
             }
           })
-          console.log(grid)
-          console.log(xAxis)
-          console.log(yAxis)
-          console.log(series)
+          // console.log(grid)
+          // console.log(xAxis)
+          // console.log(yAxis)
+          // console.log(series)
 
           instance.setOption({
             tooltip: {
-              position (point, params, dom, rect, size) {
-                return [point[0], point[1]]
-              }
-              // formatter (params) {
-              //   const { seriesIndex, dataIndex } = params
-              //   console.log(s2[seriesIndex][dataIndex])
-              //   return `就是： ${params.value}`
-              // }
+              position: getTooltipPosition,
+              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, scatterXaxis)
             },
             grid,
             xAxis,

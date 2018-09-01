@@ -491,3 +491,69 @@ export function getXaxisLabel (elementSize) {
       : `${label.substring(0, label.length - 1)}${ellipsis}`
   }
 }
+
+export function getTooltipPosition (point, params, dom, rect, size) {
+  const [x, y] = point
+  const { contentSize, viewSize } = size
+  const [cx, cy] = contentSize
+  const [vx, vy] = viewSize
+  return [
+    Math.min(x, vx - cx),
+    Math.min(y, vy - cy)
+  ]
+}
+
+export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, scatterXaxis) {
+  let dimetionColumns = cols.concat(rows)
+  let metricColumns = [...metrics]
+  if (color && color.items) {
+    dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
+  }
+  if (label && label.items) {
+    dimetionColumns = dimetionColumns.concat(
+      label.items.filter((i) => i.type === 'category').map((i) => i.name)
+    )
+    metricColumns = metricColumns.concat(
+      label.items.filter((i) => i.type === 'value')
+    )
+  }
+  if (scatterXaxis && scatterXaxis.items) {
+    metricColumns = metricColumns.concat(scatterXaxis.items)
+  }
+
+  dimetionColumns = dimetionColumns.reduce((arr, dc) => {
+    if (!arr.includes(dc)) {
+      arr.push(dc)
+    }
+    return arr
+  }, [])
+  metricColumns = metricColumns.reduce((arr, mc) => {
+    const decodedName = decodeMetricName(mc.name)
+    if (!arr.includes(decodedName)) {
+      arr.push(mc)
+    }
+    return arr
+  }, [])
+
+  return function (params) {
+    const { seriesIndex, dataIndex } = params
+    const { type, grouped, records } = seriesData[seriesIndex]
+    let record
+    if (type === 'cartesian') {
+      record = grouped
+        ? Object.values(records)[dataIndex][0]
+        : records[dataIndex].value[0]
+    } else if (type === 'polar') {
+      record = records[dataIndex]
+    } else {
+      record = records[0]
+    }
+    return metricColumns
+      .map((mc) => {
+        const decodedName = decodeMetricName(mc.name)
+        return `${decodedName}: ${record[`${mc.agg}(${decodedName})`]}`
+      })
+      .concat(dimetionColumns.map((dc) => `${dc}: ${record[dc]}`))
+      .join('<br/>')
+  }
+}

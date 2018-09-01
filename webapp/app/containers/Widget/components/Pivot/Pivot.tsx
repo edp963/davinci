@@ -29,7 +29,7 @@ import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox
 const styles = require('./Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'refresh'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
 
 export interface IPivotMetric {
   name: string
@@ -65,7 +65,6 @@ export interface IPivotProps {
   data: object[]
   cols: string[]
   rows: string[]
-  chart: any
   metrics: IPivotMetric[]
   filters: IPivotFilter[]
   color?: IDataParamProperty
@@ -117,32 +116,35 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   private container: HTMLElement = null
 
   public componentDidMount () {
-    const { offsetWidth, offsetHeight } = this.container
-    this.width = offsetWidth
-    this.height = offsetHeight
+    this.getContainerSize()
   }
 
   public componentWillUpdate (nextProps: IPivotProps) {
-    this.rowKeys = []
-    this.colKeys = []
-    this.rowTree = {}
-    this.colTree = {}
-    this.tree = {}
-    this.drawingData = {
-      elementSize: 0,
-      unitMetricWidth: 0,
-      unitMetricHeight: 0,
-      tableBodyCollapsed: false,
-      multiCoordinate: false
+    const { renderType } = nextProps
+    if (renderType !== 'refresh') {
+      if (renderType === 'resize') {
+        this.getContainerSize()
+      }
+      this.rowKeys = []
+      this.colKeys = []
+      this.rowTree = {}
+      this.colTree = {}
+      this.tree = {}
+      this.drawingData = {
+        elementSize: 0,
+        unitMetricWidth: 0,
+        unitMetricHeight: 0,
+        tableBodyCollapsed: false,
+        multiCoordinate: false
+      }
+      this.min = []
+      this.max = []
+      this.metricAxisConfig = void 0
+      this.getRenderData(nextProps)
+      this.rowHeader.scrollTop = 0
+      this.columnHeader.scrollLeft = 0
+      this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
     }
-
-    this.min = []
-    this.max = []
-    this.metricAxisConfig = void 0
-    this.getRenderData(nextProps)
-    this.rowHeader.scrollTop = 0
-    this.columnHeader.scrollLeft = 0
-    this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
   }
 
   public componentWillUnmount () {
@@ -162,6 +164,12 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     this.min = []
     this.max = []
     this.metricAxisConfig = void 0
+  }
+
+  private getContainerSize = () => {
+    const { offsetWidth, offsetHeight } = this.container
+    this.width = offsetWidth
+    this.height = offsetHeight
   }
 
   private getRenderData = (props) => {
@@ -377,6 +385,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             ref={(f) => this.columnHeader = findDOMNode(f)}
           />
           <TableBody
+            cols={cols}
+            rows={rows}
             rowKeys={this.rowKeys}
             colKeys={this.colKeys}
             rowWidths={this.rowHeaderWidths}

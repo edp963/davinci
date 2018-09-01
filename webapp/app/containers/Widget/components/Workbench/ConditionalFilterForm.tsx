@@ -59,10 +59,6 @@ export class ConditionalFilterPanel extends React.PureComponent<IConditionalFilt
     }
   }
 
-  public componentWillMount () {
-
-  }
-
   public componentWillReceiveProps (nextProps) {
     const { filterTree } = nextProps
     const { flattenTree } = this.state

@@ -34,8 +34,7 @@ import {
   DELETE_DASHBOARD_ITEM,
   LOAD_DASHBOARD_SHARE_LINK,
   LOAD_WIDGET_SHARE_LINK,
-  LOAD_WIDGET_CSV,
-  UPDAATE_MARK
+  LOAD_WIDGET_CSV
 } from './constants'
 
 import {
@@ -69,19 +68,17 @@ import {
   loadWidgetCsvFail
 } from './actions'
 
-import message from 'antd/lib/message'
+const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
 
 export function* getDashboards ({ payload }) {
   try {
-    const asyncData = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
-    const dashboards = readListAdapter(asyncData)
-    yield put(dashboardsLoaded(dashboards))
-    payload.resolve(dashboards)
+    const dashboards = yield call(request, `${api.portal}/${payload.portalId}/dashboards`)
+    yield put(dashboardsLoaded(dashboards.payload))
+    payload.resolve(dashboards.payload)
   } catch (err) {
     yield put(loadDashboardsFail())
     message.error('获取 Dashboards 失败，请稍后再试')
@@ -175,7 +172,7 @@ export function* addDashboardItem (action) {
       url: `${api.portal}/${portalId}/dashboards/${item.dashboardId}/widgets`,
       data: item
     })
-    yield put(dashboardItemAdded(result))
+    yield put(dashboardItemAdded(result.payload))
     resolve(result)
   } catch (err) {
     yield put(addDashboardItemFail())
@@ -189,7 +186,7 @@ export function* editDashboardItem (action) {
     yield call(request, {
       method: 'put',
       url: `${api.dashboard}/widgets`,
-      data: writeAdapter(item)
+      data: item
     })
     yield put(dashboardItemEdited(item))
     resolve()
@@ -200,7 +197,7 @@ export function* editDashboardItem (action) {
 }
 
 export function* editDashboardItems (action) {
-  const { items, resolve } = action.payload
+  const { items } = action.payload
   try {
     yield call(request, {
       method: 'put',
@@ -208,7 +205,6 @@ export function* editDashboardItems (action) {
       data: items
     })
     yield put(dashboardItemsEdited(items))
-    resolve()
   } catch (err) {
     yield put(editDashboardItemsFail())
     message.error('修改失败，请稍后再试')
@@ -233,16 +229,15 @@ export function* deleteDashboardItem (action) {
 export function* getDashboardShareLink (action) {
   const { id, authName } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const shareInfo = yield call(request, {
       method: 'get',
       url: `${api.share}/dashboard/${id}`,
       params: {auth_name: authName}
     })
-    const shareInfo = readListAdapter(asyncData)
     if (authName) {
-      yield put(dashboardSecretLinkLoaded(shareInfo))
+      yield put(dashboardSecretLinkLoaded(shareInfo.payload))
     } else {
-      yield put(dashboardShareLinkLoaded(shareInfo))
+      yield put(dashboardShareLinkLoaded(shareInfo.payload))
     }
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
@@ -253,16 +248,15 @@ export function* getDashboardShareLink (action) {
 export function* getWidgetShareLink (action) {
   const { id, authName, itemId } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const shareInfo = yield call(request, {
       method: 'get',
       url: `${api.share}/widget/${id}`,
       params: {auth_name: authName}
     })
-    const shareInfo = readListAdapter(asyncData)
     if (authName) {
-      yield put(widgetSecretLinkLoaded(shareInfo, itemId))
+      yield put(widgetSecretLinkLoaded(shareInfo.payload, itemId))
     } else {
-      yield put(widgetShareLinkLoaded(shareInfo, itemId))
+      yield put(widgetShareLinkLoaded(shareInfo.payload, itemId))
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))
@@ -279,33 +273,17 @@ export function* getWidgetCsv (action) {
   }
 
   try {
-    const asyncData = yield call(request, {
+    const path = yield call(request, {
       method: 'post',
       url: `${api.share}/csv/${token}${queries}`,
       data: sql || {}
     })
     yield put(widgetCsvLoaded(itemId))
-    const path = readListAdapter(asyncData)
-    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path}`
+    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path.payload}`
     // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
   } catch (err) {
     yield put(loadWidgetCsvFail(itemId))
     message.error('获取csv文件失败，请稍后再试')
-  }
-}
-
-export function* updateMarkRepos (action) {
-  const {id, params, resolve, reject} = action.payload
-  try {
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/mark`,
-      data: {params}
-    })
-    const result = readListAdapter(asyncData)
-    resolve(result)
-  } catch (err) {
-    reject(err)
   }
 }
 
@@ -323,7 +301,6 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeEvery(DELETE_DASHBOARD_ITEM, deleteDashboardItem as any),
     takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
-    takeLatest(LOAD_WIDGET_CSV, getWidgetCsv),
-    takeLatest(UPDAATE_MARK, updateMarkRepos)
+    takeLatest(LOAD_WIDGET_CSV, getWidgetCsv)
   ]
 }

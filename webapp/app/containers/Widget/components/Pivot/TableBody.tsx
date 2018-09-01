@@ -17,6 +17,8 @@ import { IDataParamProperty } from '../Workbench/OperatingPanel'
 const styles = require('./Pivot.less')
 
 export interface ITableBodyProps {
+  cols: string[]
+  rows: string[]
   rowKeys: string[][]
   colKeys: string[][]
   rowWidths: number[]
@@ -34,9 +36,11 @@ export interface ITableBodyProps {
   legend: ILegend
 }
 
-export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
+export class TableBody extends React.Component<ITableBodyProps, {}> {
   private gridCutting = (width, height, chartGrid) => {
+    console.log(chartGrid)
     const chunks = this.horizontalCutting(height, chartGrid)
+    console.log(chunks)
     chunks.forEach((chunk) => {
       chunk.data = this.verticalCutting(width, chunk.data)
     })
@@ -168,6 +172,8 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
 
   public render () {
     const {
+      rows,
+      cols,
       rowKeys,
       colKeys,
       rowTree,
@@ -440,6 +446,8 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
         <Chart
           width={tableWidth}
           height={tableHeight}
+          cols={cols}
+          rows={rows}
           dimetionAxisCount={dimetionAxis === 'col' ? colKeyLength : rowKeyLength}
           metricAxisCount={metricAxisCount}
           metrics={metrics}
