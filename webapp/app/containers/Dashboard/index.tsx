@@ -151,7 +151,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
       if (defaultDashboardId >= 0) {
         if (!dashboardId) {
-          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
         }
       }
 
@@ -473,7 +473,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private backPortal = () => {
     const { router, params } = this.props
-    router.push(`/project/${params.pid}/vizs`)
+    router.replace(`/project/${params.pid}/vizs`)
   }
 
   private pickSearchDashboard = (dashboardId) => (e) => {
@@ -510,10 +510,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         }
         if (Number(params.dashboardId) === id || paramsDashboard.parentId === id) {
           const defaultDashboardId = findFirstLeaf(treeData)
-          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
         }
       } else {
-        router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
+        router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
       }
       this.hideDashboardForm()
     })
