@@ -295,25 +295,22 @@ export function* getDistinctValue (action) {
 
 export function* getDataFromItem (action) {
   const { payload } = action
-  try {
-    const {renderType, itemId, viewId, groups, aggregators, sql, cache, expired } = payload
+  const {renderType, itemId, viewId, params: parameters } = payload
+  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
 
+  try {
     const data = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdata`,
       data: {
-        groups,
-        aggregators,
-        filters: [],
-        params: [],
-        orders: [],
-        cache,
-        expired
+        ...rest,
+        filters: filters.concat(linkageFilters).concat(globalFilters),
+        params: params.concat(linkageParams).concat(globalParams)
       }
     })
     yield put(dataFromItemLoaded(renderType, itemId, data.payload))
   } catch (err) {
-    yield put(loadDataFromItemFail(err))
+    yield put(loadDataFromItemFail(itemId))
   }
 }
 

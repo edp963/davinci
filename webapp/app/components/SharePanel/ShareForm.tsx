@@ -1,22 +1,30 @@
-import React, { PureComponent, PropTypes } from 'react'
+import * as React from 'react'
 
-import Input from 'antd/lib/input'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+const Input = require('antd/lib/input')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 import config, { env } from '../../globalConfig'
 // FIXME
 const apiHost = `${location.origin}${config[env].host}`
 const shareHost = `${location.origin}${config[env].shareHost}`
 
-import styles from './SharePanel.less'
+const styles = require('./SharePanel.less')
 
-export class ShareForm extends PureComponent {
-  handleInputSelect = (inputRefName) => () => {
-    this.refs[inputRefName].refs.input.select()
+interface IShareFormProps {
+  type: string
+  shareInfo: string
+}
+
+export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
+  private shareLinkInput = null
+  private shareHtmlInput = null
+
+  private handleInputSelect = (inputRefName) => () => {
+    this[inputRefName].refs.input.select()
     document.execCommand('copy')
   }
 
-  render () {
+  public render () {
     const {
       type,
       shareInfo
@@ -47,7 +55,6 @@ export class ShareForm extends PureComponent {
           <Col span={19}>
             <Input
               className={styles.shareInput}
-              ref="shareLinkInput"
               value={linkValue}
               addonAfter={
                 <span
@@ -57,6 +64,7 @@ export class ShareForm extends PureComponent {
                   复制
                 </span>
               }
+              ref={(f) => this.shareLinkInput = f}
               readOnly
             />
           </Col>
@@ -71,7 +79,6 @@ export class ShareForm extends PureComponent {
                 <Col span={19}>
                   <Input
                     className={styles.shareInput}
-                    ref="shareHtmlInput"
                     value={`${apiHost}/shares/html/${encodeURI(shareInfo)}`}
                     addonAfter={
                       <span
@@ -81,6 +88,7 @@ export class ShareForm extends PureComponent {
                         复制
                       </span>
                     }
+                    ref={(f) => this.shareHtmlInput = f}
                     readOnly
                   />
                 </Col>
@@ -91,11 +99,6 @@ export class ShareForm extends PureComponent {
       </div>
     )
   }
-}
-
-ShareForm.propTypes = {
-  type: PropTypes.string,
-  shareInfo: PropTypes.string
 }
 
 export default ShareForm

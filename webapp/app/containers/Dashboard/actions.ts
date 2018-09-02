@@ -361,13 +361,14 @@ export function loadDashboardShareLinkFail () {
   }
 }
 
-export function loadWidgetShareLink (id, itemId, authName) {
+export function loadWidgetShareLink (id, itemId, authName, resolve) {
   return {
     type: LOAD_WIDGET_SHARE_LINK,
     payload: {
       id,
       itemId,
-      authName
+      authName,
+      resolve
     }
   }
 }
@@ -401,16 +402,13 @@ export function loadWidgetShareLinkFail (itemId) {
   }
 }
 
-export function loadWidgetCsv (itemId, token, sql, sorts, offset, limit) {
+export function loadWidgetCsv (itemId, params, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
-      token,
-      sql,
-      sorts,
-      offset,
-      limit
+      params,
+      token
     }
   }
 }

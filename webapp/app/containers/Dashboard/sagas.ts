@@ -231,8 +231,8 @@ export function* getDashboardShareLink (action) {
   try {
     const shareInfo = yield call(request, {
       method: 'get',
-      url: `${api.share}/dashboard/${id}`,
-      params: {auth_name: authName}
+      url: `${api.portal}/dashboards/${id}/share`,
+      params: {username: authName}
     })
     if (authName) {
       yield put(dashboardSecretLinkLoaded(shareInfo.payload))
@@ -246,17 +246,20 @@ export function* getDashboardShareLink (action) {
 }
 
 export function* getWidgetShareLink (action) {
-  const { id, authName, itemId } = action.payload
+  const { id, authName, itemId, resolve } = action.payload
   try {
     const shareInfo = yield call(request, {
       method: 'get',
-      url: `${api.share}/widget/${id}`,
-      params: {auth_name: authName}
+      url: `${api.widget}/${id}/share`,
+      params: {username: authName}
     })
     if (authName) {
       yield put(widgetSecretLinkLoaded(shareInfo.payload, itemId))
     } else {
       yield put(widgetShareLinkLoaded(shareInfo.payload, itemId))
+    }
+    if (resolve) {
+      resolve()
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))
@@ -265,18 +268,13 @@ export function* getWidgetShareLink (action) {
 }
 
 export function* getWidgetCsv (action) {
-  const { token, sql, sorts, offset, limit, itemId } = action.payload
-  let queries = ''
-
-  if (offset !== undefined && limit !== undefined) {
-    queries = `?sortby=${sorts}&offset=${offset}&limit=${limit}`
-  }
+  const { itemId, params, token } = action.payload
 
   try {
     const path = yield call(request, {
       method: 'post',
-      url: `${api.share}/csv/${token}${queries}`,
-      data: sql || {}
+      url: `${api.share}/csv/${token}`,
+      data: params
     })
     yield put(widgetCsvLoaded(itemId))
     location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path.payload}`
