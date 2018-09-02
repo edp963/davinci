@@ -152,9 +152,8 @@ function dashboardReducer (state = initialState, action) {
             datasource: [],
             loading: false,
             queryParams: {
-              filters: '',
-              linkageFilters: '',
-              globalFilters: '',
+              linkageFilters: [],
+              globalFilters: [],
               params: [],
               linkageParams: [],
               globalParams: [],
@@ -185,9 +184,8 @@ function dashboardReducer (state = initialState, action) {
             datasource: [],
             loading: false,
             queryParams: {
-              filters: '',
-              linkageFilters: '',
-              globalFilters: '',
+              linkageFilters: [],
+              globalFilters: [],
               params: [],
               linkageParams: [],
               globalParams: [],
@@ -236,33 +234,27 @@ function dashboardReducer (state = initialState, action) {
             ...itemsInfo[payload.itemId],
             loading: true,
             queryParams: {
-              filters: payload.sql.filters,
-              linkageFilters: payload.sql.linkageFilters,
-              globalFilters: payload.sql.globalFilters,
-              params: payload.sql.params,
-              linkageParams: payload.sql.linkageParams,
-              globalParams: payload.sql.globalParams,
-              pagination: {
-                sorts: payload.sorts,
-                offset: payload.offset,
-                limit: payload.limit
-              }
+              linkageFilters: payload.params.linkageFilters,
+              globalFilters: payload.params.globalFilters,
+              params: payload.params.params,
+              linkageParams: payload.params.linkageParams,
+              globalParams: payload.params.globalParams
             }
           }
         })
 
     case LOAD_DATA_FROM_ITEM_SUCCESS:
-      return state
-        .set('currentItemsInfo', {
-          ...itemsInfo,
-          [payload.itemId]: {
-            ...itemsInfo[payload.itemId],
-            loading: false,
-            datasource: payload.data,
-            renderType: payload.renderType
-          }
-        })
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          loading: false,
+          datasource: payload.data,
+          renderType: payload.renderType
+        }
+      })
     case LOAD_DATA_FROM_ITEM_FAILURE:
+      console.log(payload)
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {

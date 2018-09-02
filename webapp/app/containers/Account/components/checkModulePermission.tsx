@@ -11,6 +11,7 @@ interface IModulePermissionProps {
   icon?: string
   onClick?: any
   className?: string
+  style?: object
   permission?: IOrganization
   shape?: string
 }

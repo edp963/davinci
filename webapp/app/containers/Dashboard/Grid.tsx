@@ -48,6 +48,7 @@ import GlobalFilterConfig from './components/filters/FilterConfig'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
+import { ButtonProps } from 'antd/lib/button/button'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
@@ -74,7 +75,9 @@ import {
   loadWidgetCsv,
   renderDashboardItem,
   resizeDashboardItem,
-  resizeAllDashboardItem
+  resizeAllDashboardItem,
+  loadDashboardShareLink,
+  loadWidgetShareLink
 } from './actions'
 import {
   makeSelectDashboards,
@@ -88,10 +91,18 @@ import {
   makeSelectCurrentItemsCascadeSources,
   makeSelectCurrentDashboardCascadeSources
 } from './selectors'
-import { loadBizlogics, loadDataFromItem, loadCascadeSourceFromItem, loadCascadeSourceFromDashboard, loadBizdataSchema, loadDistinctValue } from '../Bizlogic/actions'
+import {
+  loadBizlogics,
+  loadDataFromItem,
+  loadCascadeSourceFromItem,
+  loadCascadeSourceFromDashboard,
+  loadBizdataSchema,
+  loadDistinctValue
+} from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import {
   ECHARTS_RENDERER,
@@ -103,8 +114,11 @@ import {
   GRID_ROW_HEIGHT,
   KEY_COLUMN
 } from '../../globalConstants'
-import {InjectedRouter} from 'react-router/lib/Router'
+import ModulePermission from '../Account/components/checkModulePermission'
+import ShareDownloadPermission from '../Account/components/checkShareDownloadPermission'
+import { InjectedRouter } from 'react-router/lib/Router'
 import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IProject } from '../Projects'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -116,6 +130,7 @@ interface IGridProps {
   widgets: any[]
   bizlogics: any[]
   loginUser: { id: number, admin: boolean }
+  currentProject: IProject
   router: InjectedRouter
   params: any
   currentDashboard: ICurrentDashboard,
@@ -132,9 +147,9 @@ interface IGridProps {
         filters: string
         linkageFilters: string
         globalFilters: string
-        params: IBizdataIncomeParamObject[]
-        linkageParams: IBizdataIncomeParamObject[]
-        globalParams: IBizdataIncomeParamObject[]
+        params: Array<{name: string, value: string}>
+        linkageParams: Array<{name: string, value: string}>
+        globalParams: Array<{name: string, value: string}>
       }
       shareInfo: string
       secretInfo: string
@@ -157,28 +172,21 @@ interface IGridProps {
     renderType: RenderType,
     dashboardItemId: number,
     viewId: number,
-    groups: string[],
-    aggregators: Array<{column: string, func: string}>,
-    sql: {
-      filters: string
-      linkageFilters: string
-      globalFilters: string
-      params: IBizdataIncomeParamObject[]
-      linkageParams: IBizdataIncomeParamObject[]
-      globalParams: IBizdataIncomeParamObject[]
-    },
-    cache: boolean,
-    expired: number
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      cache: boolean
+      expired: number
+    }
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadWidgetCsv: (
-    itemId: number,
-    token: string,
-    sql: object,
-    sorts?: string,
-    offset?: number,
-    limit?: number
-  ) => void
+  onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, token: string) => void
   onLoadCascadeSourceFromItem: (
     itemId: number,
     controlId: string,
@@ -193,6 +201,8 @@ interface IGridProps {
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
   onResizeAllDashboardItem: () => void
+  onLoadDashboardShareLink: (id: number, authName: string) => void
+  onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
 }
 
 interface IGridStates {
@@ -214,11 +224,6 @@ interface IGridStates {
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
   filterOptions: any[]
-}
-
-interface IBizdataIncomeParamObject {
-  k: string
-  v: string
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -456,13 +461,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, color, label, size, xAxis } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
-
-    let filters
+// filters.items.map((i) => i.config.sql)
     let linkageFilters
     let globalFilters
     let params
@@ -470,14 +473,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let globalParams
 
     if (queryParams) {
-      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
     } else {
-      filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
@@ -517,18 +518,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       renderType,
       itemId,
       widget.viewId,
-      groups,
-      aggregators,
       {
-        filters,
+        groups,
+        aggregators,
+        filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
         linkageParams,
-        globalParams
-      },
-      false,
-      0
+        globalParams,
+        cache: false,
+        expired: 0
+      }
     )
   }
 
@@ -722,28 +723,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private downloadCsv = (itemId) => (token) => {
+  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
     const {
-      currentItems,
       currentItemsInfo,
-      widgets,
       onLoadWidgetCsv
     } = this.props
 
-    const dashboardItem = currentItems.find((c) => c.id === itemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-
     const { filters, params } = currentItemsInfo[itemId].queryParams
 
-    onLoadWidgetCsv(
-      itemId,
-      token,
-      {
-        adHoc: widget.adhoc_sql,
-        manualFilters: filters,
-        params
-      }
-    )
+    onLoadWidgetCsv(itemId, pivotProps, shareInfo)
   }
 
   private navDropdownClick = (e) => {
@@ -1264,8 +1252,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       bizlogics,
       onLoadBizdataSchema,
       onLoadCascadeSourceFromDashboard,
+      onLoadDashboardShareLink,
+      onLoadWidgetShareLink,
       router,
-      params
+      currentProject
     } = this.props
 
     const {
@@ -1338,7 +1328,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         itemblocks.push((
           <div key={dashboardItem.id}>
             <DashboardItem
-              projectId={Number(params.pid)}
               itemId={id}
               widget={widget}
               data={datasource}
@@ -1350,9 +1339,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               interactId={interactId}
+              currentProject={currentProject}
               onGetChartData={this.getChartData}
               onShowEdit={this.showEditDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
+              onLoadWidgetShareLink={onLoadWidgetShareLink}
               onDownloadCsv={this.downloadCsv}
               onTurnOffInteract={this.turnOffInteract}
               onCheckTableInteract={this.checkInteract}
@@ -1469,42 +1460,47 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       </Button>
     )]
 
-    let addButton = void 0
-    let shareButton = void 0
-    let linkageButton = void 0
-    let globalFilterButton = void 0
+    let addButton
+    let shareButton
+    let linkageButton
+    let globalFilterButton
 
-    addButton = (
-      <Tooltip placement="bottom" title="新增">
-        <Button
-          size="large"
-          type="primary"
-          icon="plus"
-          style={{marginLeft: '8px'}}
-          onClick={this.showAddDashboardItemForm}
-        />
-      </Tooltip>
-    )
+    if (currentDashboard) {
+      const AddButton = ModulePermission(currentProject, 'viz', true)(Button)
+      const ShareButton = ShareDownloadPermission<ButtonProps>(currentProject, 'share')(Button)
+      const LinkageButton = ModulePermission(currentProject, 'viz', false)(Button)
+      const GlobalFilterButton = ModulePermission(currentProject, 'viz', false)(Button)
 
-    shareButton = currentDashboard
-      ? (
+      addButton = (
+        <Tooltip placement="bottom" title="新增">
+          <AddButton
+            size="large"
+            type="primary"
+            icon="plus"
+            style={{marginLeft: '8px'}}
+            onClick={this.showAddDashboardItemForm}
+          />
+        </Tooltip>
+      )
+      shareButton = (
         <Popover
           placement="bottomRight"
           content={
             <SharePanel
               id={currentDashboard.id}
+              type="dashboard"
               shareInfo={currentDashboardShareInfo}
               secretInfo={currentDashboardSecretInfo}
               shareInfoLoading={currentDashboardShareInfoLoading}
               authorized={dashboardSharePanelAuthorized}
               afterAuthorization={this.changeDashboardSharePanelAuthorizeState(true)}
-              type="dashboard"
+              onLoadDashboardShareLink={onLoadDashboardShareLink}
             />
           }
           trigger="click"
         >
           <Tooltip placement="bottom" title="分享">
-            <Button
+            <ShareButton
               size="large"
               type="primary"
               icon="share-alt"
@@ -1514,12 +1510,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           </Tooltip>
         </Popover>
       )
-      : ''
-
-    linkageButton = currentDashboard
-      ? (
+      linkageButton = (
         <Tooltip placement="bottom" title="联动关系配置">
-          <Button
+          <LinkageButton
             size="large"
             type="primary"
             icon="link"
@@ -1528,12 +1521,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           />
         </Tooltip>
       )
-      : ''
-
-    globalFilterButton = currentDashboard
-      ? (
+      globalFilterButton = (
         <Tooltip placement="bottomRight" title="全局筛选器配置">
-          <Button
+          <GlobalFilterButton
             size="large"
             type="primary"
             icon="filter"
@@ -1542,7 +1532,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           />
         </Tooltip>
       )
-      : ''
+    }
 
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !globalFilterTableSource.length
@@ -1707,7 +1697,8 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
-  loginUser: makeSelectLoginUser()
+  loginUser: makeSelectLoginUser(),
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -1719,17 +1710,19 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, groups, aggregators, sql, cache, expired) =>
-                        dispatch(loadDataFromItem(renderType, itemId, viewId, groups, aggregators, sql, cache, expired)),
+    onLoadDataFromItem: (renderType, itemId, viewId, params) =>
+                        dispatch(loadDataFromItem(renderType, itemId, viewId, params)),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
+    onLoadWidgetCsv: (itemId, pivotProps, token) => dispatch(loadWidgetCsv(itemId, pivotProps, token)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
     onLoadCascadeSourceFromDashboard: (controlId, id, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, column, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
-    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
+    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
+    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve))
   }
 }
 

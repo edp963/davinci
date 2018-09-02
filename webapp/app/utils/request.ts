@@ -22,8 +22,7 @@ import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
 const message = require('antd/lib/message')
 
 axios.defaults.validateStatus = function (status) {
-   return status < 500
-   // return status >= 200 && status < 300
+   return status < 400
 }
 
 function parseJSON (response) {

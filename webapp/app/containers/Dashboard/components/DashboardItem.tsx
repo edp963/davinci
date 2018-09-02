@@ -25,33 +25,31 @@ import * as classnames from 'classnames'
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
-import DownLoadCsv from '../../../components/DownLoadCsv'
+import DownLoadCsv, { IDownloadCsvProps } from '../../../components/DownLoadCsv'
 
-import Chart from './Chart'
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
 import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import { IconProps } from 'antd/lib/icon'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Popover = require('antd/lib/popover')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
-import { decodeMetricName } from '../../Widget/components/util'
 
-import { ECHARTS_RENDERER } from '../../../globalConstants'
+import ModulePermission from '../../Account/components/checkModulePermission'
+import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 import { InjectedRouter } from 'react-router'
+import { IProject } from '../../Projects'
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemProps {
-  projectId: number
   itemId: number
   widget: any
   data: any
   loading: boolean
   polling: string
   frequency: string
-  shouldShare?: boolean
-  shouldDownload?: boolean
   shareInfo: string
   secretInfo?: string
   shareInfoLoading?: boolean
@@ -60,10 +58,12 @@ interface IDashboardItemProps {
   rendered: boolean
   renderType: RenderType
   router: InjectedRouter
+  currentProject: IProject
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
-  onDownloadCsv: (itemId: number) => (shareInfo: string) => void
+  onLoadWidgetShareLink: (id: number, itemId: number, authName: string) => void
+  onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => object
@@ -189,14 +189,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  private sharePanelDownloadCsv = () => {
-    const {
-      itemId,
-      shareInfo,
-      onDownloadCsv
-    } = this.props
+  private downloadCsv = () => {
+    const { itemId, shareInfo, onDownloadCsv } = this.props
+    const { pivotProps } = this.state
 
-    onDownloadCsv(itemId)(shareInfo)
+    onDownloadCsv(itemId, pivotProps, shareInfo)
   }
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
@@ -210,22 +207,20 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public render () {
     const {
-      projectId,
       itemId,
       widget,
       data,
       loading,
-      shouldShare,
-      shouldDownload,
       shareInfo,
       secretInfo,
       shareInfoLoading,
       downloadCsvLoading,
       interactId,
       renderType,
+      currentProject,
       onShowEdit,
       onDeleteDashboardItem,
-      onDownloadCsv,
+      onLoadWidgetShareLink,
       onTurnOffInteract,
       onCheckTableInteract,
       onDoTableInteract
@@ -254,58 +249,50 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       </Menu>
     )
 
-    const userDownloadButton = shouldDownload
-      ? (
-        <Tooltip title="下载数据">
-          <Popover
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <DownLoadCsv
-                id={widget.id}
-                type="widget"
-                itemId={itemId}
-                shareInfo={shareInfo}
-                shareInfoLoading={shareInfoLoading}
-                downloadCsvLoading={downloadCsvLoading}
-                onDownloadCsv={this.sharePanelDownloadCsv}
-              />
-            }
-          >
-            <Icon type="download" />
-          </Popover>
-        </Tooltip>
-      ) : void 0
+    const DownloadButton = ShareDownloadPermission<IDownloadCsvProps>(currentProject, 'download')(DownLoadCsv)
+    const downloadButton = (
+      <Tooltip title="下载数据">
+        <DownloadButton
+          id={widget.id}
+          type="widget"
+          itemId={itemId}
+          shareInfo={shareInfo}
+          shareInfoLoading={shareInfoLoading}
+          downloadCsvLoading={downloadCsvLoading}
+          onLoadWidgetShareLink={onLoadWidgetShareLink}
+          onDownloadCsv={this.downloadCsv}
+        />
+      </Tooltip>
+    )
 
-    const shareButton = shouldShare
-      ? (
-        <Tooltip title="分享">
-          <Popover
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <SharePanel
-                id={widget.id}
-                type="widget"
-                itemId={itemId}
-                shareInfo={shareInfo}
-                secretInfo={secretInfo}
-                shareInfoLoading={shareInfoLoading}
-                downloadCsvLoading={downloadCsvLoading}
-                onDownloadCsv={onDownloadCsv(itemId)}
-                authorized={sharePanelAuthorized}
-                afterAuthorization={this.changeSharePanelAuthorizeState(true)}
-              />
-            }
-          >
-            <Icon type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
-          </Popover>
-        </Tooltip>
-      ) : void 0
+    const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
+    const shareButton = (
+      <Tooltip title="分享">
+        <Popover
+          placement="bottomRight"
+          trigger="click"
+          content={
+            <SharePanel
+              id={widget.id}
+              type="widget"
+              itemId={itemId}
+              shareInfo={shareInfo}
+              secretInfo={secretInfo}
+              shareInfoLoading={shareInfoLoading}
+              authorized={sharePanelAuthorized}
+              onLoadWidgetShareLink={onLoadWidgetShareLink}
+              afterAuthorization={this.changeSharePanelAuthorizeState(true)}
+            />
+          }
+        >
+          <ShareButton type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
+        </Popover>
+      </Tooltip>
+    )
 
     const widgetButton = (
       <Tooltip title="编辑widget">
-        <i className="iconfont icon-edit-2" onClick={this.toWorkbench(projectId, itemId, widget)} />
+        <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
       </Tooltip>
     )
 
@@ -364,14 +351,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              <Icon type="reload" onClick={this.onSyncBizdatas} />
+              <Icon type={loading ? 'loading' : 'reload'} onClick={this.onSyncBizdatas} />
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
               <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
             </Tooltip>
             {shareButton}
-            {userDownloadButton}
+            {downloadButton}
             {dropdownMenu}
           </div>
         </div>
