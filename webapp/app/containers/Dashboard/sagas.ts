@@ -70,6 +70,7 @@ import {
 
 const message = require('antd/lib/message')
 import request from '../../utils/request'
+import { errorHandler } from '../../utils/util'
 import api from '../../utils/api'
 import config, { env } from '../../globalConfig'
 const shareHost = config[env].shareHost
@@ -241,7 +242,7 @@ export function* getDashboardShareLink (action) {
     }
   } catch (err) {
     yield put(loadDashboardShareLinkFail())
-    message.error('获取 Dashboard 分享链接失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
