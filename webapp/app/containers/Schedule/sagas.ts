@@ -17,7 +17,7 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
-const message = require('antd/lib/message')
+import { errorHandler } from '../../utils/util'
 
 export function* getSchedules ({payload}) {
   try {
@@ -26,7 +26,7 @@ export function* getSchedules ({payload}) {
     yield put(schedulesLoaded(schedules))
   } catch (err) {
     yield put(loadSchedulesFail())
-    message.error('加载 Schedules 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -42,7 +42,7 @@ export function* addSchedules ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(addScheduleFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -55,7 +55,7 @@ export function* deleteSchedule ({ payload }) {
     yield put(scheduleDeleted(payload.id))
   } catch (err) {
     yield put(deleteScheduleFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -86,7 +86,7 @@ export function* changeScheduleStatus ({ payload }) {
     yield put(currentScheduleStatusChanged(payload.id, result))
   } catch (err) {
     yield put(changeSchedulesStatusFail())
-    message.error('更改状态失败')
+    errorHandler(err)
   }
 }
 
@@ -102,7 +102,7 @@ export function* updateSchedule ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(updateScheduleFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 

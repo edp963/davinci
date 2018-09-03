@@ -52,9 +52,9 @@ import {
   getProjectStarUserFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
+import { errorHandler } from '../../utils/util'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getProjects (action) {
@@ -65,7 +65,7 @@ export function* getProjects (action) {
     yield put(projectsLoaded(projects))
   } catch (err) {
     yield put(loadProjectsFail())
-    message.error('获取 Projects 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -80,9 +80,9 @@ export function* addProject (action) {
     const result = readListAdapter(asyncData)
     yield put(projectAdded(result))
     resolve()
-  } catch (error) {
+  } catch (err) {
     yield put(addProjectFail())
-    message.error('添加 Project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -100,7 +100,7 @@ export function* editProject (action) {
     resolve()
   } catch (err) {
     yield put(editProjectFail())
-    message.error('修改 Project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -114,7 +114,7 @@ export function* deleteProject (action) {
     yield put(projectDeleted(id))
   } catch (err) {
     yield put(deleteProjectFail())
-    message.error('删除当前 Project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 export function* getProjectDetail ({ payload }) {
@@ -123,7 +123,7 @@ export function* getProjectDetail ({ payload }) {
     const project = readListAdapter(asyncData)
     yield put(projectDetailLoaded(project))
   } catch (err) {
-    console.log('getProjectDetail', err)
+    errorHandler(err)
   }
 }
 
@@ -139,7 +139,7 @@ export function* transferProject ({payload}) {
     yield put(projectTransfered(result))
   } catch (err) {
     yield put(transferProjectFail())
-    message.error('移交当前 Project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -154,7 +154,7 @@ export function* searchProject ({payload}) {
     yield put(projectSearched(result))
   } catch (err) {
     yield put(searchProjectFail())
-    message.error('查找 Project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -171,7 +171,7 @@ export function* unStarProject ({payload}) {
     yield resolve()
   } catch (err) {
     yield put(unStarProjectFail())
-    message.error(' 操作失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -186,7 +186,7 @@ export function* getProjectStarUser ({payload}) {
     yield put(getProjectStarUserSuccess(result))
   } catch (err) {
     yield put(getProjectStarUserFail())
-    message.error('获取列表失败，请稍后再试')
+    errorHandler(err)
   }
 }
 

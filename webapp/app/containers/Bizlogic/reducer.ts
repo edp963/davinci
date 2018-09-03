@@ -103,10 +103,12 @@ function bizlogicReducer (state = initialState, action) {
     case EXECUTE_SQL_SUCCESS:
       const { code, msg } = payload.result
       return state.set('executeLoading', false)
-            .set('sqlValidateMessage', code === 400 ? msg : undefined)
-            .set('sqlValidateCode', code === 200 ? code : 1)
+            .set('sqlValidateMessage', undefined)
+            .set('sqlValidateCode', 200)
     case EXECUTE_SQL_FAILURE:
       return state.set('executeLoading', false)
+            .set('sqlValidateMessage', payload.error.response.data.header.msg)
+            .set('sqlValidateCode', 1)
     case LOAD_VIEW_TEAM:
       return state
     case LOAD_VIEW_TEAM_SUCCESS:

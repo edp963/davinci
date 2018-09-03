@@ -25,8 +25,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import { getDefaultSlideParams } from '../../assets/json/slideSettings'
-
-const message = require('antd/lib/message')
+import { errorHandler } from '../../utils/util'
 
 import {
   ActionTypes
@@ -105,7 +104,7 @@ export function* addDisplay (action) {
     resolve()
   } catch (err) {
     yield put(addDisplayFail())
-    message.error('添加 Display 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -136,7 +135,7 @@ export function* editDisplay (action): IterableIterator<any> {
     if (resolve) { resolve() }
   } catch (err) {
     yield put(editDisplayFail(err))
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -151,7 +150,7 @@ export function* editCurrentDisplay (action): IterableIterator<any> {
     if (resolve) { resolve() }
   } catch (err) {
     yield put(editCurrentDisplayFail(err))
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -168,7 +167,7 @@ export function* editCurrentSlide (action): IterableIterator<any> {
     yield put(currentSlideEdited(slide))
   } catch (err) {
     yield put(editCurrentSlideFail(err))
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -186,7 +185,7 @@ export function* uploadCurrentSlideCover (action): IterableIterator<any> {
     resolve(coverPath)
   } catch (err) {
     yield put(uploadCurrentSlideCoverFail(err))
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -199,7 +198,7 @@ export function* deleteDisplay (action) {
     yield put(displayDeleted(id))
   } catch (err) {
     yield put(deleteDisplayFail())
-    message.error('删除当前 Display 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -215,7 +214,7 @@ export function* addDisplayLayers (action) {
     return result
   } catch (err) {
     yield put(addDisplayLayersFail())
-    message.error('当前 Display 添加图层失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -229,7 +228,7 @@ export function* editDisplayLayers (action) {
     yield put(displayLayersEdited(layers))
   } catch (err) {
     yield put(editDisplayLayersFail())
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -243,7 +242,7 @@ export function* deleteDisplayLayers (action) {
     yield put(displayLayersDeleted(ids))
   } catch (err) {
     yield put(deleteDisplayLayersFail())
-    message.error('当前 Display 删除图层失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -259,7 +258,7 @@ export function* pasteSlideLayers (action) {
     return result
   } catch (err) {
     yield put(pasteSlideLayersFail())
-    message.error('当前 Display 粘贴图层失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -279,7 +278,7 @@ export function* getDisplayShareLink (action) {
     }
   } catch (err) {
     yield put(loadDisplayShareLinkFail())
-    message.error('获取 Display 分享链接失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -322,7 +321,7 @@ export function* undoOperation (action) {
     yield put(undoOperationDone())
   } catch (err) {
     yield put(undoOperationFail())
-    message.error(err)
+    errorHandler(err)
   }
 }
 
@@ -365,7 +364,7 @@ export function* redoOperation (action) {
     yield put(redoOperationDone())
   } catch (err) {
     yield put(redoOperationFail())
-    message.error(err)
+    errorHandler(err)
   }
 }
 

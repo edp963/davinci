@@ -1,9 +1,9 @@
 import {SIGNUP, SEND_MAIL_AGAIN} from './constants'
 import { signupSuccess, signupError, sendMailAgainSuccess, sendMailAgainFail } from './actions'
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
 
 import {call, put} from 'redux-saga/effects'
 import {takeLatest} from 'redux-saga'
@@ -21,20 +21,11 @@ export function* signup (action): IterableIterator<any> {
       }
     })
     const resPayload = readListAdapter(asyncData)
-    switch (asyncData.header.code) {
-      case 200:
-        yield put(signupSuccess())
-        resolve(resPayload)
-        return null
-      case 400:
-        message.error(asyncData.header.msg)
-        break
-      default:
-        yield put(signupError())
-    }
+    yield put(signupSuccess())
+    resolve(resPayload)
   } catch (err) {
     yield put(signupError())
-    message.error('注册失败')
+    errorHandler(err)
   }
 }
 export function* sendMailAgain (action): IterableIterator<any> {
@@ -48,18 +39,11 @@ export function* sendMailAgain (action): IterableIterator<any> {
       }
     })
     const msg = asyncData.header.msg
-    switch (asyncData.header.code) {
-      case 200:
-        yield put(sendMailAgainSuccess())
-        resolve(msg)
-        return null
-      default:
-        yield put(sendMailAgainFail())
-        message.error(msg)
-    }
+    yield put(sendMailAgainSuccess())
+    resolve(msg)
   } catch (err) {
     yield put(sendMailAgainFail())
-    message.error('重发邮件失败')
+    errorHandler(err)
   }
 }
 

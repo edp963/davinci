@@ -37,20 +37,20 @@ import {
   editPortalFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
 
 export function* getPortals (action) {
   const { payload } = action
   try {
-      const asyncData = yield call(request, `${api.portal}?projectId=${payload.projectId}`)
-      const portals = readListAdapter(asyncData)
-      yield put(portalsLoaded(portals))
+    const asyncData = yield call(request, `${api.portal}?projectId=${payload.projectId}`)
+    const portals = readListAdapter(asyncData)
+    yield put(portalsLoaded(portals))
   } catch (err) {
-      yield put(loadPortalsFail())
-      message.error('加载 Portal 列表失败')
+    yield put(loadPortalsFail())
+    errorHandler(err)
   }
 }
 
@@ -66,7 +66,7 @@ export function* addPortal (action) {
     payload.resolve()
   } catch (err) {
     yield put(addPortalFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -80,7 +80,7 @@ export function* deletePortal (action) {
     yield put(portalDeleted(payload.id))
   } catch (err) {
     yield put(deletePortalFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -96,7 +96,7 @@ export function* editPortal (action) {
     payload.resolve()
   } catch (err) {
     yield put(editPortalFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 

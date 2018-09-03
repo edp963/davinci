@@ -64,11 +64,11 @@ import {
   loadViewTeamFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter } from '../../utils/asyncAdapter'
 import resultsetConverter from '../../utils/resultsetConverter'
+import { errorHandler } from '../../utils/util'
 
 declare interface IObjectConstructor {
   assign (...objects: object[]): object
@@ -85,7 +85,7 @@ export function* getBizlogics (action) {
     }
   } catch (err) {
     yield put(loadBizlogicsFail())
-    message.error('加载 View 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -101,7 +101,7 @@ export function* addBizlogic (action) {
     payload.resolve()
   } catch (err) {
     yield put(addBizlogicFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -112,16 +112,10 @@ export function* deleteBizlogic (action) {
       method: 'delete',
       url: `${api.bizlogic}/${payload.id}`
     })
-    const { code } = result.header
-    if (code === 200) {
-      yield put(bizlogicDeleted(payload.id))
-    } else if (code === 400) {
-      message.error(result.header.msg, 3)
-      yield put(deleteBizlogicFail())
-    }
+    yield put(bizlogicDeleted(payload.id))
   } catch (err) {
     yield put(deleteBizlogicFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -146,7 +140,7 @@ export function* editBizlogic (action) {
     payload.resolve()
   } catch (err) {
     yield put(editBizlogicFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 
@@ -227,7 +221,7 @@ export function* getSchema (action) {
     payload.resolve(schema)
   } catch (err) {
     yield put(loadSchemaFail())
-    message.error('加载 Schema 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -248,8 +242,7 @@ export function* executeSql (action) {
       payload.resolve(asyncData.payload)
     }
   } catch (err) {
-    yield put(executeSqlFail())
-    message.error('执行 SQL 失败')
+    yield put(executeSqlFail(err))
   }
 }
 
