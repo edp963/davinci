@@ -114,9 +114,16 @@ export function* getVizsData ({ payload }) {
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = readListAdapter(portalsData)
+    const displayList = readListAdapter(displayData)
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
+    const portals = {}
+    portalsList.forEach((portal, index) => {
+      portals[`${portal['id']}&&${portal['name']}`] = readListAdapter(list[index])
+    })
+    const result = {display: displayList, portal: portals}
+    console.log(result)
   } catch (err) {
     message.error('获取失败')
   }
