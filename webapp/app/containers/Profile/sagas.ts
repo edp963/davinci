@@ -21,7 +21,6 @@
 import { takeLatest } from 'redux-saga'
 import { call, put } from 'redux-saga/effects'
 
-const message = require('antd/lib/message')
 import { GET_USER_PROFILE } from './constants'
 import {
   userProfileGot,
@@ -31,6 +30,7 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
 
 export function* getUserProfile (action): IterableIterator<any> {
   const { id } = action.payload
@@ -44,7 +44,7 @@ export function* getUserProfile (action): IterableIterator<any> {
     yield put(userProfileGot(result))
   } catch (err) {
     yield put(getUserProfileFail())
-    message.error(' 获取 profile 失败')
+    errorHandler(err)
   }
 }
 

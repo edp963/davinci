@@ -67,6 +67,7 @@ import {
 const message =  require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
+import { errorHandler } from '../../utils/util'
 import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 
@@ -77,7 +78,7 @@ export function* getTeams () {
     yield put(teamsLoaded(projects))
   } catch (err) {
     yield put(loadTeamsFail())
-    message.error('获取 Teams 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -96,7 +97,7 @@ export function* editTeam (action) {
     message.success('success')
   } catch (err) {
     yield put(editTeamFail())
-    message.error('修改 Team 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -111,7 +112,7 @@ export function* deleteTeam (action) {
     resolve()
   } catch (err) {
     yield put(deleteTeamFail())
-    message.error('删除当前 Team 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -122,7 +123,7 @@ export function* getTeamDetail ({ payload }) {
     yield put(teamDetailLoaded(detail))
     yield payload.resolve && payload.resolve(detail)
   } catch (err) {
-    console.log('getTeamDetail', err)
+    errorHandler(err)
   }
 }
 
@@ -134,7 +135,7 @@ export function* getTeamProjects ({payload}) {
     yield put(teamProjectsLoaded(projects))
   } catch (err) {
     yield put(loadTeamProjectsFail())
-    message.error('获取 teamProjects 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -146,7 +147,7 @@ export function* getTeamMembers ({payload}) {
     yield put(teamMembersLoaded(members))
   } catch (err) {
     yield put(loadTeamMembersFail())
-    message.error('获取 teamMembers 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -158,7 +159,7 @@ export function* getTeamTeams ({payload}) {
     yield put(teamTeamsLoaded(teams))
   } catch (err) {
     yield put(loadTeamTeamsFail())
-    message.error('获取 teamTeams 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -175,7 +176,7 @@ export function* pullProjectInTeam ({payload}) {
     resolve()
   } catch (err) {
     yield put(pullProjectInTeamFail())
-    message.error('添加 teamProjects 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -194,7 +195,7 @@ export function* updateTeamProjectPermission ({payload}) {
     }
   } catch (err) {
     yield put(updateTeamProjectPermissionFail())
-    message.error('更新 project permission 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -208,7 +209,7 @@ export function* deleteTeamProject ({payload}) {
     yield put(teamProjectDeleted(relationId))
   } catch (err) {
     yield put(deleteTeamProjectFail())
-    message.error('删除 team project 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -224,7 +225,7 @@ export function* pullMemberInTeam ({payload}) {
     resolve()
   } catch (err) {
     yield put(pullMemberInTeamFail())
-    message.error('添加 teamMembers 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -238,7 +239,7 @@ export function* deleteTeamMember ({payload}) {
     yield put(teamMemberDeleted(relationId))
   } catch (err) {
     yield put(deleteTeamMemberFail())
-    message.error('删除 team member 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -252,15 +253,10 @@ export function* changeTeamMemberRole ({payload}) {
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
-    if (code && code === 400) {
-      message.error(msg)
-    }
-    if (code && code === 200) {
-      yield put(teamMemberRoleChanged(relationId, newRole))
-    }
+    yield put(teamMemberRoleChanged(relationId, newRole))
   } catch (err) {
     yield put(changeTeamMemberRoleFail())
-    message.error('删除 team member 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 

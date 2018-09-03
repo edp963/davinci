@@ -44,10 +44,11 @@ import {
   testSourceConnectionFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
+const message = require('antd/lib/message')
 
 export function* getSources (action) {
   const { payload } = action
@@ -57,7 +58,7 @@ export function* getSources (action) {
     yield put(sourcesLoaded(sources))
   } catch (err) {
     yield put(loadSourceFail())
-    message.error('加载 Source 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -73,7 +74,7 @@ export function* addSource (action) {
     yield put(sourceAdded(asyncData.payload))
   } catch (err) {
     yield put(addSourceFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -85,15 +86,10 @@ export function* deleteSource (action) {
       url: `${api.source}/${payload.id}`
     })
     const { code } = result.header
-    if (code === 200) {
-      yield put(sourceDeleted(payload.id))
-    } else if (code === 400) {
-      message.error(result.header.msg, 3)
-      yield put(deleteSourceFail())
-    }
+    yield put(sourceDeleted(payload.id))
   } catch (err) {
     yield put(deleteSourceFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -104,7 +100,7 @@ export function* getSourceDetail (action) {
     yield put(sourceDetailLoaded(source))
   } catch (err) {
     yield put(loadSourceDetailFail())
-    message.error('加载详情失败')
+    errorHandler(err)
   }
 }
 
@@ -120,7 +116,7 @@ export function* editSource (action) {
     payload.resolve()
   } catch (err) {
     yield put(editSourceFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 
@@ -132,17 +128,11 @@ export function* testSourceConnection (action) {
       url: `${api.source}/test`,
       data: payload.url
     })
-
-    if (res.header.code !== 400) {
-      yield put(sourceConnected())
-      message.success('测试成功')
-    } else {
-      yield put(testSourceConnectionFail())
-      message.error(res.header.msg)
-    }
+    yield put(sourceConnected())
+    message.success('测试成功')
   } catch (err) {
     yield put(testSourceConnectionFail())
-    message.error('测试 Source 连接失败')
+    errorHandler(err)
   }
 }
 

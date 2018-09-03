@@ -546,7 +546,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private executeSql = () => {
     const { sourceIdGeted, listData, isDeclarate } = this.state
 
-    this.setState({ isFold: true })
+    this.setState({
+      isFold: true,
+      alertVisible: true
+    })
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
@@ -610,9 +613,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
 
     this.props.onExecuteSql(sourceIdGeted, sql, (result) => {
-      this.setState({
-        alertVisible: true
-      })
       if (result) {
         const { resultset, columns } = result
 
@@ -634,8 +634,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         })
         this.setState({
           executeResultset: resultset,
-          executeColumns: columns,
-          alertVisible: true
+          executeColumns: columns
         })
       }
     })

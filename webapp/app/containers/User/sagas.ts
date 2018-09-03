@@ -45,9 +45,9 @@ import {
   changeUserPasswordFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
+import { errorHandler } from '../../utils/util'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getUsers () {
@@ -57,7 +57,7 @@ export function* getUsers () {
     yield put(usersLoaded(users))
   } catch (err) {
     yield put(loadUsersFail())
-    message.error('加载 User 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -73,7 +73,7 @@ export function* addUser ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(addUserFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -86,7 +86,7 @@ export function* deleteUser ({ payload }) {
     yield put(userDeleted(payload.id))
   } catch (err) {
     yield put(deleteUserFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -109,7 +109,7 @@ export function* getUserGroups ({ payload }) {
     payload.resolve(groups)
   } catch (err) {
     yield put(loadUserGroupsFail())
-    message.error('加载 User 所属 Groups 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -124,7 +124,7 @@ export function* editUserInfo ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(editUserInfoFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 
@@ -136,17 +136,11 @@ export function* changeUserPassword ({ payload }) {
       url: `${api.signup}/${id}/changepassword`,
       data: payload.info
     })
-
-    if (result.header.code === 400) {
-      payload.reject(result.header.msg)
-    }
-    if (result.header.code === 200) {
-      yield put(userPasswordChanged(payload.info))
-      payload.resolve()
-    }
+    yield put(userPasswordChanged(payload.info))
+    payload.resolve()
   } catch (err) {
     yield put(changeUserPasswordFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 
