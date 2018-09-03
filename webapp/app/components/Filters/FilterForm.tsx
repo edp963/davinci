@@ -11,7 +11,7 @@ const Select = require('antd/lib/select')
 const Option = Select.Option
 const Switch = require('antd/lib/switch')
 
-const utilStyles = require('../../../../assets/less/util.less')
+const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')
 
 import { prefixItem, prefixView, prefixOther } from './constants'
@@ -160,7 +160,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       const widget = widgets.find((w) => w.id === item.widgetId)
       const { viewId } = widget
       if (relatedViews[viewId]) {
-        fieldsValue[`${prefixItem}${itemId}`] = relatedViews[viewId].items.indexOf(itemId) > 0
+        fieldsValue[`${prefixItem}${itemId}`] = relatedViews[viewId].items.indexOf(itemId) >= 0
         modelOrParam[viewId] = relatedViews[viewId].isParam
       } else {
         fieldsValue[`${prefixItem}${itemId}`] = false

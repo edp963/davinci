@@ -1,9 +1,9 @@
 import * as React from 'react'
 import moment from 'moment'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { IFilterViewConfig, IFilterItem } from './'
+import { IFilterViewConfig, IFilterItem, IFilterValue, IFilterChangeParam } from './'
 import { FilterTypes } from './filterTypes'
-import { SQL_NUMBER_TYPES } from '../../../../globalConstants'
+import { SQL_NUMBER_TYPES } from '../../globalConstants'
 import FilterControl from './FilterControl'
 
 const Row = require('antd/lib/row')
@@ -19,52 +19,62 @@ interface IFilterPanelProps {
     [filterKey: string]: string[]
   },
   onChange: (
-    queryParams: {
-      [itemId: number]: {
-        params: Array<{ name: string, value: object }>
-        filtes: string[]
-      }
-    }
+    queryParams: IFilterChangeParam,
+    filterKey: string
   ) => void
 }
 
 export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, {}> {
 
-  private change = (filter: IFilterItem, val) => {
-    const queryParam = {}
+  private itemsFilterValues: {
+    [itemId: number]: {
+      [filterKey: string]: IFilterValue
+    }
+  } = {}
 
-    const { type, relatedViews } = filter
+  private change = (filter: IFilterItem, val) => {
+    const { key, type, relatedViews } = filter
+    const relatedItemIds = []
     Object.entries(relatedViews).forEach(([_, config]) => {
       const { items, isParam } = config
       if (items.length <= 0) { return }
 
-      if (isParam) {
-        const paramValue = this.getParamValue(type, config, val)
-        items.forEach((itemId) => {
-          if (!queryParam[itemId]) {
-            queryParam[itemId] = {
-              filters: [],
-              params: []
-            }
+      const filterValue = isParam ?
+        this.getParamValue(type, config, val) : this.getModelValue(type, config, val)
+
+      items.forEach((itemId) => {
+        relatedItemIds.push(itemId)
+        if (!this.itemsFilterValues[itemId]) {
+          this.itemsFilterValues[itemId] = {}
+        }
+        if (!this.itemsFilterValues[itemId][key]) {
+          this.itemsFilterValues[itemId][key] = {
+            params: [],
+            filters: []
           }
-          queryParam[itemId].params.push(...paramValue)
-        })
-      } else {
-        const filterValue = this.getModelValue(type, config, val)
-        items.forEach((itemId) => {
-          if (!queryParam[itemId]) {
-            queryParam[itemId] = {
-              filters: [],
-              params: []
-            }
-          }
-          queryParam[itemId].filters.push(...filterValue)
-        })
-      }
+        }
+        if (isParam) {
+          this.itemsFilterValues[itemId][key].params = filterValue
+        } else {
+          this.itemsFilterValues[itemId][key].filters = filterValue
+        }
+      })
     })
 
+    const filterChangeParam: IFilterChangeParam = relatedItemIds.reduce((acc, itemId) => {
+      acc[itemId] = Object.values(this.itemsFilterValues[itemId]).reduce((filterValue, val) => {
+        filterValue.params.push(...val.params)
+        filterValue.filters.push(...val.filters)
+        return filterValue
+      }, {
+        params: [],
+        filters: []
+      })
+      return acc
+    }, {})
+
     const { onChange } = this.props
-    onChange(queryParam)
+    onChange(filterChangeParam, key)
   }
 
   private getParamValue = (type: FilterTypes, config: IFilterViewConfig, value) => {

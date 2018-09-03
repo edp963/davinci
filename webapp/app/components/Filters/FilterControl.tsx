@@ -13,8 +13,8 @@ const FormItem = Form.Item
 
 const styles = require('./filter.less')
 
-import NumberRange from '../../../../components/NumberRange'
-import MultiDatePicker from '../../../../components/MultiDatePicker'
+import NumberRange from '../NumberRange'
+import MultiDatePicker from '../MultiDatePicker'
 
 interface IFilterControlProps {
   formToAppend: WrappedFormUtils

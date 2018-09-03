@@ -28,3 +28,12 @@ export interface IFilterItem {
     [viewId: string]: IFilterViewConfig
   }
 }
+
+export interface IFilterValue {
+  params: Array<{ name: string, value: string | number }>
+  filters: string[]
+}
+
+export interface IFilterChangeParam {
+  [itemId: number]: IFilterValue
+}
