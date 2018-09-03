@@ -59,7 +59,6 @@ import {
   loadDashboardDetail
 } from './actions'
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
-import { makeSelectLoginUser } from '../App/selectors'
 import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 
@@ -73,7 +72,6 @@ import {IProject} from '../Projects'
 interface IDashboardProps {
   modalLoading: boolean
   dashboards: IDashboard[]
-  loginUser: { id: number, admin: boolean }
   router: InjectedRouter
   params: any
   currentProject: IProject
@@ -151,7 +149,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
       if (defaultDashboardId >= 0) {
         if (!dashboardId) {
-          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
         }
       }
 
@@ -473,7 +471,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private backPortal = () => {
     const { router, params } = this.props
-    router.push(`/project/${params.pid}/vizs`)
+    router.replace(`/project/${params.pid}/vizs`)
   }
 
   private pickSearchDashboard = (dashboardId) => (e) => {
@@ -510,10 +508,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         }
         if (Number(params.dashboardId) === id || paramsDashboard.parentId === id) {
           const defaultDashboardId = findFirstLeaf(treeData)
-          router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
+          router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${defaultDashboardId}`)
         }
       } else {
-        router.push(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
+        router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
       }
       this.hideDashboardForm()
     })
@@ -529,7 +527,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     const {
       params,
       dashboards,
-      loginUser,
       modalLoading,
       children,
       currentProject,
@@ -632,7 +629,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         <div className={styles.portalBody}>
           <div className={styles.portalTree}>
             <div className={styles.portalRow}>
-              <span className={styles.portalTitle}>{params.portalName}</span>
+              <span className={styles.portalTitle} title={params.portalName}>{params.portalName}</span>
               <span className={styles.portalAction}>
                 <Popover
                   placement="bottom"
@@ -734,7 +731,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
-  loginUser: makeSelectLoginUser(),
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject()
 })

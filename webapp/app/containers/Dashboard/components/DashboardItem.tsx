@@ -25,57 +25,49 @@ import * as classnames from 'classnames'
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
-import DownLoadCsv from '../../../components/DownLoadCsv'
+import DownLoadCsv, { IDownloadCsvProps } from '../../../components/DownLoadCsv'
 
-import Chart from './Chart'
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps } from '../../Widget/components/Pivot/Pivot'
+import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import { IconProps } from 'antd/lib/icon'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Popover = require('antd/lib/popover')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
-import { decodeMetricName } from '../../Widget/components/util'
 
-import { ECHARTS_RENDERER } from '../../../globalConstants'
+import ModulePermission from '../../Account/components/checkModulePermission'
+import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
+import { InjectedRouter } from 'react-router'
+import { IProject } from '../../Projects'
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemProps {
-  w: number
-  h: number
   itemId: number
   widget: any
-  chartInfo: any
   data: any
   loading: boolean
-  triggerType: string
-  triggerParams: string
-  shouldShare?: boolean
-  shouldDownload?: boolean
+  polling: string
+  frequency: string
   shareInfo: string
   secretInfo?: string
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
-  isInteractive: boolean
   interactId: string
-  cascadeSources: any
-  rendered?: boolean
-  isAdmin?: boolean
-  isShared?: boolean
-  isDownload?: boolean
-  onShowFiltersForm?: (itemId: number, keys: string, types: string) => any
-  onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
-  onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
+  rendered: boolean
+  renderType: RenderType
+  router: InjectedRouter
+  currentProject: IProject
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
-  onShowWorkbench?: (itemId: number, widget: any) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
-  onDownloadCsv: (itemId: number) => (shareInfo: string) => void
+  onLoadWidgetShareLink: (id: number, itemId: number, authName: string) => void
+  onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => object
   onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
-  onGetCascadeSource: (itemId: number, controlId: number, flatTableId: number, column: string, parents?: any[]) => void
 }
 
 interface IDashboardItemStates {
@@ -96,13 +88,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public static defaultProps = {
     onShowEdit: () => void 0,
-    onShowWorkbench: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
   private frequent: NodeJS.Timer = void 0
+  private container: HTMLDivElement = null
 
   public componentWillMount () {
-    // this.initControlCascadeSource(this.props)
     this.setState({
       pivotProps: JSON.parse(this.props.widget.config)
     })
@@ -116,44 +107,33 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
   }
 
-  public componentWillUpdate (nextProps) {
+  public componentWillUpdate (nextProps: IDashboardItemProps) {
     const {
       itemId,
       widget,
-      data,
-      chartInfo,
-      triggerType,
+      polling,
       onGetChartData,
-      onRenderChart,
       rendered
     } = nextProps
 
     if (!this.props.rendered && rendered) {
-      onGetChartData('rerender', itemId, widget.id)
+      onGetChartData('clear', itemId, widget.id)
       this.setFrequent(this.props)
     }
 
-    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER && rendered) {
-      onRenderChart(itemId, widget, data.dataSource, chartInfo)
-    }
-
-    if (triggerType !== this.props.triggerType) {
+    if (polling !== this.props.polling) {
       this.setFrequent(nextProps)
     }
-
-    // if (nextProps.widget !== this.props.widget) {
-    //   this.initControlCascadeSource(nextProps)
-    // }
   }
 
   public componentWillUnmount () {
     clearInterval(this.frequent)
   }
 
-  private setFrequent = (props) => {
+  private setFrequent = (props: IDashboardItemProps) => {
     const {
-      triggerType,
-      triggerParams,
+      polling,
+      frequency,
       itemId,
       widget,
       onGetChartData
@@ -161,10 +141,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     clearInterval(this.frequent)
 
-    if (triggerType === 'frequent') {
+    if (polling) {
       this.frequent = setInterval(() => {
-        onGetChartData('dynamic', itemId, widget.id)
-      }, Number(triggerParams) * 1000)
+        onGetChartData('refresh', itemId, widget.id)
+      }, Number(frequency) * 1000)
     }
   }
 
@@ -179,17 +159,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private onControlSearch = (queryParams) => {
-    this.onSearch('rerender', queryParams)
-  }
-
-  private onSearch = (renderType, queryParams) => {
     const {
       itemId,
       widget,
       onGetChartData
     } = this.props
 
-    onGetChartData(renderType, itemId, widget.id, queryParams)
+    onGetChartData('clear', itemId, widget.id, queryParams)
   }
 
   private toggleControlPanel = () => {
@@ -202,28 +178,22 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       onShowFullScreen,
       itemId,
-      w,
-      h,
       data,
       widget,
       loading,
-      chartInfo,
       onGetChartData
     } = this.props
-    const chartsData = {itemId, w, h, widget, data, loading, chartInfo, onGetChartData}
+    const chartsData = {itemId, widget, data, loading, onGetChartData}
     if (onShowFullScreen) {
       onShowFullScreen(chartsData)
     }
   }
 
-  private sharePanelDownloadCsv = () => {
-    const {
-      itemId,
-      shareInfo,
-      onDownloadCsv
-    } = this.props
+  private downloadCsv = () => {
+    const { itemId, shareInfo, onDownloadCsv } = this.props
+    const { pivotProps } = this.state
 
-    onDownloadCsv(itemId)(shareInfo)
+    onDownloadCsv(itemId, pivotProps, shareInfo)
   }
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
@@ -231,44 +201,26 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  // private initControlCascadeSource = (props) => {
-  //   const { itemId, widget, onGetCascadeSource } = props
-  //   const { query_params } = widget
-
-  //   JSON.parse(query_params).forEach((c) => {
-  //     if (c.type === 'cascadeSelect' && !c.parentColumn) {
-  //       onGetCascadeSource(itemId, c.id, widget.flatTable_id, c.cascadeColumn)
-  //     }
-  //   })
-  // }
-
-  private onCascadeSelectChange = (controlId, column, parents) => {
-    const { itemId, widget, onGetCascadeSource } = this.props
-    onGetCascadeSource(itemId, controlId, widget.flatTable_id, column, parents)
+  private toWorkbench = (projectId, itemId, widget) => () => {
+    this.props.router.push(`/project/${projectId}/widget/${widget.id}`)
   }
 
   public render () {
     const {
-      w,
-      h,
       itemId,
       widget,
-      chartInfo,
       data,
       loading,
-      shouldShare,
-      shouldDownload,
       shareInfo,
       secretInfo,
       shareInfoLoading,
       downloadCsvLoading,
-      isInteractive,
       interactId,
-      cascadeSources,
+      renderType,
+      currentProject,
       onShowEdit,
-      onShowWorkbench,
       onDeleteDashboardItem,
-      onDownloadCsv,
+      onLoadWidgetShareLink,
       onTurnOffInteract,
       onCheckTableInteract,
       onDoTableInteract
@@ -297,60 +249,55 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       </Menu>
     )
 
-    const userDownloadButton = shouldDownload
-      ? (
-        <Tooltip title="下载数据">
-          <Popover
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <DownLoadCsv
-                id={widget.id}
-                type="widget"
-                itemId={itemId}
-                shareInfo={shareInfo}
-                shareInfoLoading={shareInfoLoading}
-                downloadCsvLoading={downloadCsvLoading}
-                onDownloadCsv={this.sharePanelDownloadCsv}
-              />
-            }
-          >
-            <Icon type="download" />
-          </Popover>
-        </Tooltip>
-      ) : void 0
-
-    const shareButton = shouldShare
-      ? (
-        <Tooltip title="分享">
-          <Popover
-            placement="bottomRight"
-            trigger="click"
-            content={
-              <SharePanel
-                id={widget.id}
-                type="widget"
-                itemId={itemId}
-                shareInfo={shareInfo}
-                secretInfo={secretInfo}
-                shareInfoLoading={shareInfoLoading}
-                downloadCsvLoading={downloadCsvLoading}
-                onDownloadCsv={onDownloadCsv(itemId)}
-                authorized={sharePanelAuthorized}
-                afterAuthorization={this.changeSharePanelAuthorizeState(true)}
-              />
-            }
-          >
-            <Icon type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
-          </Popover>
-        </Tooltip>
-      ) : void 0
-
-    const widgetButton = (
-      <Tooltip title="编辑widget">
-        <i className="iconfont icon-edit-2" onClick={onShowWorkbench(itemId, widget)} />
+    const DownloadButton = ShareDownloadPermission<IDownloadCsvProps>(currentProject, 'download')(DownLoadCsv)
+    const downloadButton = (
+      <Tooltip title="下载数据">
+        <DownloadButton
+          id={widget.id}
+          type="widget"
+          itemId={itemId}
+          shareInfo={shareInfo}
+          shareInfoLoading={shareInfoLoading}
+          downloadCsvLoading={downloadCsvLoading}
+          onLoadWidgetShareLink={onLoadWidgetShareLink}
+          onDownloadCsv={this.downloadCsv}
+        />
       </Tooltip>
     )
+
+    const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
+    const shareButton = (
+      <Tooltip title="分享">
+        <Popover
+          placement="bottomRight"
+          trigger="click"
+          content={
+            <SharePanel
+              id={widget.id}
+              type="widget"
+              itemId={itemId}
+              shareInfo={shareInfo}
+              secretInfo={secretInfo}
+              shareInfoLoading={shareInfoLoading}
+              authorized={sharePanelAuthorized}
+              onLoadWidgetShareLink={onLoadWidgetShareLink}
+              afterAuthorization={this.changeSharePanelAuthorizeState(true)}
+            />
+          }
+        >
+          <ShareButton type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
+        </Popover>
+      </Tooltip>
+    )
+
+    let widgetButton
+    if (currentProject) {
+      widgetButton = (
+        <Tooltip title="编辑widget">
+          <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
+        </Tooltip>
+      )
+    }
 
     const dropdownMenu = (
       <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
@@ -394,35 +341,27 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const gridItemClass = classnames({
       [styles.gridItem]: true,
-      [styles.interact]: isInteractive
+      [styles.interact]: !!interactId
     })
 
     return (
-      <div className={gridItemClass}>
+      <div className={gridItemClass} ref={(f) => this.container = f}>
         <div className={styles.header}>
-          {
-            chartInfo.name !== 'text'
-              ? (
-                <div className={styles.title}>
-                  {controlPanelHandle}
-                  <h4>{widget.name}</h4>
-                  {descPanelHandle}
-                </div>
-            )
-              : (
-                <div className={styles.title} />
-            )
-          }
+          <div className={styles.title}>
+            {controlPanelHandle}
+            <h4>{widget.name}</h4>
+            {descPanelHandle}
+          </div>
           <div className={styles.tools}>
             <Tooltip title="同步数据">
-              <Icon type="reload" onClick={this.onSyncBizdatas} />
+              <Icon type={loading ? 'loading' : 'reload'} onClick={this.onSyncBizdatas} />
             </Tooltip>
             {widgetButton}
             <Tooltip title="全屏">
               <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
             </Tooltip>
             {shareButton}
-            {userDownloadButton}
+            {downloadButton}
             {dropdownMenu}
           </div>
         </div>
@@ -441,10 +380,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           <DashboardItemControlPanel show={controlPanelVisible}>
             <DashboardItemControlForm
               controls={controls}
-              cascadeSources={cascadeSources}
               onSearch={this.onControlSearch}
               onHide={this.toggleControlPanel}
-              onCascadeSelectChange={this.onCascadeSelectChange}
             />
           </DashboardItemControlPanel>
         </Animate>
@@ -466,6 +403,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         /> */}
         <Pivot
           {...pivotProps}
+          renderType={renderType}
           data={data || []}
         />
       </div>

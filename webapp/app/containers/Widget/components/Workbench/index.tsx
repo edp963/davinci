@@ -11,14 +11,14 @@ import saga from '../../sagas'
 import bizlogicSaga from '../../../Bizlogic/sagas'
 import { hideNavigator } from '../../../App/actions'
 import { loadBizlogics, loadData, loadDistinctValue } from '../../../Bizlogic/actions'
-import { addWidget } from '../../actions'
-import { makeSelectWidgets, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
+import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget } from '../../actions'
+import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
 import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
 import OperatingPanel from './OperatingPanel'
 import { IPivotProps } from '../Pivot/Pivot'
 import ScrollablePivot from '../Pivot'
-const Button = require('antd/lib/button')
+import EditorHeader from '../../../../components/EditorHeader'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -53,8 +53,8 @@ interface IWidget {
 }
 
 interface IWorkbenchProps {
-  widgets: IWidget[],
   views: IView[]
+  currentWidget: IWidget
   loading: boolean
   dataLoading: boolean
   distinctColumnValues: any[]
@@ -63,12 +63,16 @@ interface IWorkbenchProps {
   params: { pid: string, wid: string }
   onHideNavigator: () => void
   onLoadBizlogics: (projectId: number, resolve?: any) => void
+  onLoadWidgetDetail: (id: number) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
+  onEditWidget: (widget: IWidget, resolve: () => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onClearCurrentWidget: () => void
 }
 
 interface IWorkbenchStates {
+  id: number
   name: string
   description: string
   selectedView: IView
@@ -80,6 +84,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   constructor (props) {
     super(props)
     this.state = {
+      id: 0,
       name: '',
       description: '',
       selectedView: null,
@@ -94,23 +99,39 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     }
   }
 
-  private namePlaceholder = '请输入Widget名称'
-  private descPlaceholder = '请输入描述…'
+  private placeholder = {
+    name: '请输入Widget名称',
+    description: '请输入描述…'
+  }
 
   public componentWillMount () {
-    const { params, views, widgets, onLoadBizlogics } = this.props
-    onLoadBizlogics(Number(params.pid))
-    if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
-      const currentWidget = widgets.find((w) => w.id === Number(params.wid))
+    const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
+    onLoadBizlogics(Number(params.pid), () => {
+      if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
+        onLoadWidgetDetail(Number(params.wid))
+      }
+    })
+  }
+
+  public componentDidMount () {
+    this.props.onHideNavigator()
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const { views, currentWidget } = nextProps
+    if (currentWidget && currentWidget !== this.props.currentWidget) {
       this.setState({
+        id: currentWidget.id,
+        name: currentWidget.name,
+        description: currentWidget.description,
         selectedView: views.find((v) => v.id === currentWidget.viewId),
         currentWidgetConfig: JSON.parse(currentWidget.config)
       })
     }
   }
 
-  public componentDidMount () {
-    this.props.onHideNavigator()
+  public componentWillUnmount () {
+    this.props.onClearCurrentWidget()
   }
 
   private changeName = (e) => {
@@ -140,8 +161,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private saveWidget = () => {
-    const { params, onAddWidget } = this.props
-    const { name, description, selectedView, pivotProps } = this.state
+    const { params, onAddWidget, onEditWidget } = this.props
+    const { id, name, description, selectedView, pivotProps } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -155,10 +176,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       config: JSON.stringify({...pivotProps, data: []}),
       publish: true
     }
-    onAddWidget(widget, () => {
-      message.success('添加成功')
-      this.props.router.replace(`/project/${params.pid}/widgets`)
-    })
+    if (id) {
+      onEditWidget({...widget, id}, () => {
+        message.success('修改成功')
+        this.props.router.replace(`/project/${params.pid}/widgets`)
+      })
+    } else {
+      onAddWidget(widget, () => {
+        message.success('添加成功')
+        this.props.router.replace(`/project/${params.pid}/widgets`)
+      })
+    }
   }
 
   private cancel = () => {
@@ -177,29 +205,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
     return (
       <div className={styles.workbench}>
-        <div className={styles.header}>
-          <div className={styles.title}>
-            <div className={styles.name}>
-              <input type="text" placeholder={this.namePlaceholder} onChange={this.changeName} />
-              <span>{name || this.namePlaceholder}</span>
-            </div>
-            <div className={styles.desc}>
-              <input type="text" placeholder={this.descPlaceholder} onChange={this.changeDesc} />
-              <span>{description || this.descPlaceholder}</span>
-            </div>
-          </div>
-          <div className={styles.actions}>
-            <Button
-              type="primary"
-              loading={loading}
-              disabled={loading}
-              onClick={this.saveWidget}
-            >
-              保存
-            </Button>
-            <Button onClick={this.cancel}>取消</Button>
-          </div>
-        </div>
+        <EditorHeader
+          className={styles.header}
+          name={name}
+          description={description}
+          placeholder={this.placeholder}
+          onNameChange={this.changeName}
+          onDescriptionChange={this.changeDesc}
+          onSave={this.saveWidget}
+          onCancel={this.cancel}
+          loading={loading}
+        />
         <div className={styles.body}>
           <OperatingPanel
             views={views}
@@ -223,7 +239,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
 const mapStateToProps = createStructuredSelector({
   views: makeSelectBizlogics(),
-  widgets: makeSelectWidgets(),
+  currentWidget: makeSelectCurrentWidget(),
   loading: makeSelectLoading(),
   dataLoading: makeSelectDataLoading(),
   distinctColumnValues: makeSelectDistinctColumnValues(),
@@ -234,9 +250,12 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
     onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
-    onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents))
+    onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
+    onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),
+    onClearCurrentWidget: () => dispatch(clearCurrentWidget())
   }
 }
 

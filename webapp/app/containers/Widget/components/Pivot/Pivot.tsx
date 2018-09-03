@@ -21,6 +21,7 @@ import ColumnTitle from './ColumnTitle'
 import ColumnHeader from './ColumnHeader'
 import TableBody from './TableBody'
 import ColumnFooter from './ColumnFooter'
+import Legend from './Legend'
 import { IChartInfo } from './Chart'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
@@ -28,7 +29,7 @@ import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox
 const styles = require('./Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'refresh'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
 
 export interface IPivotMetric {
   name: string
@@ -56,6 +57,10 @@ export interface IMetricAxisConfig {
   interval: number
 }
 
+export interface ILegend {
+  [key: string]: string[]
+}
+
 export interface IPivotProps {
   data: object[]
   cols: string[]
@@ -70,7 +75,18 @@ export interface IPivotProps {
   renderType?: RenderType
 }
 
-export class Pivot extends React.PureComponent<IPivotProps, {}> {
+export interface IPivotStates {
+  legendSelected: ILegend
+}
+
+export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      legendSelected: {}
+    }
+  }
+
   private width = 0
   private height = 0
   private tableBodyWidth = 0
@@ -100,32 +116,35 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
   private container: HTMLElement = null
 
   public componentDidMount () {
-    const { offsetWidth, offsetHeight } = this.container
-    this.width = offsetWidth
-    this.height = offsetHeight
+    this.getContainerSize()
   }
 
   public componentWillUpdate (nextProps: IPivotProps) {
-    this.rowKeys = []
-    this.colKeys = []
-    this.rowTree = {}
-    this.colTree = {}
-    this.tree = {}
-    this.drawingData = {
-      elementSize: 0,
-      unitMetricWidth: 0,
-      unitMetricHeight: 0,
-      tableBodyCollapsed: false,
-      multiCoordinate: false
+    const { renderType } = nextProps
+    if (renderType !== 'refresh') {
+      if (renderType === 'resize') {
+        this.getContainerSize()
+      }
+      this.rowKeys = []
+      this.colKeys = []
+      this.rowTree = {}
+      this.colTree = {}
+      this.tree = {}
+      this.drawingData = {
+        elementSize: 0,
+        unitMetricWidth: 0,
+        unitMetricHeight: 0,
+        tableBodyCollapsed: false,
+        multiCoordinate: false
+      }
+      this.min = []
+      this.max = []
+      this.metricAxisConfig = void 0
+      this.getRenderData(nextProps)
+      this.rowHeader.scrollTop = 0
+      this.columnHeader.scrollLeft = 0
+      this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
     }
-
-    this.min = []
-    this.max = []
-    this.metricAxisConfig = void 0
-    this.getRenderData(nextProps)
-    this.rowHeader.scrollTop = 0
-    this.columnHeader.scrollLeft = 0
-    this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
   }
 
   public componentWillUnmount () {
@@ -145,6 +164,12 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
     this.min = []
     this.max = []
     this.metricAxisConfig = void 0
+  }
+
+  private getContainerSize = () => {
+    const { offsetWidth, offsetHeight } = this.container
+    this.width = offsetWidth
+    this.height = offsetHeight
   }
 
   private getRenderData = (props) => {
@@ -285,14 +310,30 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
   private getMetricsMinAndMaxValue (metrics, records) {
     metrics.forEach((m, i) => {
       const metricName = decodeMetricName(m.name)
-      const metricColumnValue = records.reduce((sum, r) => sum + r[`${m.agg}(${metricName})`], 0)
+      const metricColumnValue = records.reduce((sum, r) => sum + (Number(r[`${m.agg}(${metricName})`]) || 0), 0)
+      // const temp = records.reduce((sum, r) => sum + r[`${m.agg}(${metricName})`], 0)
+      // console.log(temp, typeof temp)
       this.min[i] = this.min[i] ? Math.min(this.min[i], metricColumnValue) : metricColumnValue
       this.max[i] = this.max[i] ? Math.max(this.max[i], metricColumnValue) : metricColumnValue
     })
   }
 
+  private legendSelect = (name, key) => {
+    const { legendSelected } = this.state
+    if (!legendSelected[name]) {
+      legendSelected[name] = []
+    }
+    legendSelected[name] = legendSelected[name].includes(key)
+      ? legendSelected[name].filter((ls) => ls !== key)
+      : legendSelected[name].concat(key)
+    this.setState({
+      legendSelected: {...legendSelected}
+    })
+  }
+
   public render () {
-    const { cols, rows, metrics, color, label, dimetionAxis, renderType } = this.props
+    const { cols, rows, metrics, color, label, xAxis, dimetionAxis, renderType } = this.props
+    const { legendSelected } = this.state
     return (
       <div className={styles.block} ref={(f) => this.container = f}>
         <div className={styles.leftSide}>
@@ -344,6 +385,8 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
             ref={(f) => this.columnHeader = findDOMNode(f)}
           />
           <TableBody
+            cols={cols}
+            rows={rows}
             rowKeys={this.rowKeys}
             colKeys={this.colKeys}
             rowWidths={this.rowHeaderWidths}
@@ -356,7 +399,9 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
             dimetionAxis={dimetionAxis}
             color={color}
             label={label}
+            xAxis={xAxis}
             renderType={renderType}
+            legend={legendSelected}
             ref={(f) => this.tableBody = findDOMNode(f)}
           />
           <ColumnFooter
@@ -372,6 +417,10 @@ export class Pivot extends React.PureComponent<IPivotProps, {}> {
             ref={(f) => this.columnFooter = findDOMNode(f)}
           />
         </div>
+        <Legend
+          color={color}
+          onLegendSelect={this.legendSelect}
+        />
       </div>
     )
   }

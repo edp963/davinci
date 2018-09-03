@@ -1,0 +1,118 @@
+import * as React from 'react'
+import * as classnames from 'classnames'
+import { IDataParamProperty } from '../Workbench/OperatingPanel'
+import { IDataParamSource } from '../Workbench/Dropbox'
+
+const styles = require('./Pivot.less')
+
+interface ILegendProps {
+  color: IDataParamProperty
+  onLegendSelect: (name: string, key: string) => void
+}
+
+interface ILengdItem extends IDataParamSource {
+  localConfig?: {
+    values?: {
+      [key: string]: {
+        value: string
+        visible: boolean
+      }
+    }
+  }
+}
+
+interface ILegendStates {
+  list: ILengdItem[]
+}
+
+export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      list: []
+    }
+  }
+
+  public componentWillMount () {
+    this.initList(this.props)
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    this.initList(nextProps)
+  }
+
+  private initList = (props) => {
+    const { color } = props
+    const { list } = this.state
+    if (color && color.items) {
+      this.setState({
+        list: color.items.map((item) => {
+          const originItem = list.find((i) => i.name === item.name)
+          const originConfig = originItem && originItem.localConfig
+          const configValues = Object.entries(item.config.values).reduce((obj, [key, value]) => {
+            obj[key] = {
+              value,
+              visible: originConfig ? originConfig.values[key].visible : true
+            }
+            return obj
+          }, {})
+          return {
+            ...item,
+            localConfig: {
+              values: configValues
+            }
+          }
+        })
+      })
+    }
+  }
+
+  private legendSelect = (name: string, key: string) => () => {
+    const { list } = this.state
+    const selectedItem = list.find((i) => i.name === name)
+    const visible = selectedItem.localConfig.values[key].visible
+    selectedItem.localConfig.values[key].visible = !visible
+    this.setState({list})
+    this.props.onLegendSelect(name, key)
+  }
+
+  public render () {
+    const { list } = this.state
+    const legendClass = classnames({
+      [styles.legend]: true,
+      [styles.shown]: list.length
+    })
+
+    const legendBoxes = list.map((i) => {
+      const { values } = i.localConfig
+      const listItems = Object.entries(values).map(([key, value]: [string, { value: string, visible: boolean }]) => {
+        return  (
+          <li
+            key={key}
+            onClick={this.legendSelect(i.name, key)}
+            className={classnames({[styles.disabled]: !value.visible})}
+          >
+            <span style={{background: value.value}} />
+            {key}
+          </li>
+        )
+      })
+      return (
+        <div key={i.name} className={styles.legendBox}>
+          <h4>{i.name}</h4>
+          <ul className={styles.list}>
+            {listItems}
+          </ul>
+        </div>
+      )
+    })
+
+    return (
+      <div className={legendClass}>
+        {legendBoxes}
+      </div>
+    )
+  }
+}
+
+export default Legend

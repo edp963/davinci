@@ -27,6 +27,11 @@ const makeSelectWidgets = () => createSelector(
   (widgetState) => widgetState.get('widgets')
 )
 
+const makeSelectCurrentWidget = () => createSelector(
+  selectWidget,
+  (widgetState) => widgetState.get('currentWidget')
+)
+
 const makeSelectLoading = () => createSelector(
   selectWidget,
   (widgetState) => widgetState.get('loading')
@@ -50,6 +55,7 @@ const makeSelectColumnValueLoading = () => createSelector(
 export {
   selectWidget,
   makeSelectWidgets,
+  makeSelectCurrentWidget,
   makeSelectLoading,
   makeSelectDataLoading,
   makeSelectDistinctColumnValues,

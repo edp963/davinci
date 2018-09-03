@@ -16,22 +16,13 @@
  * >>
  */
 
-package edp.davinci.dto.teamDto;
+package edp.davinci.dto.projectDto;
 
+import edp.davinci.model.Organization;
+import edp.davinci.model.Project;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-
 @Data
-@NotNull(message = "team info cannot be null")
-public class TeamPut {
-    @NotBlank(message = "team name cannot be empty")
-    private String name;
-
-    private String description;
-
-//    private Long parentTeamId;
-
-//    private Boolean visibility = true;
+public class ProjectWithOrganization extends Project {
+    private Organization organization;
 }

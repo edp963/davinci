@@ -6,6 +6,8 @@ import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import DropboxContent from './DropboxContent'
 import ColorSettingForm from './ColorSettingForm'
+import ActOnSettingForm from './ActOnSettingForm'
+import FilterSettingForm from './FilterSettingForm'
 import { IPivotProps, DimetionType } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
@@ -24,7 +26,7 @@ const utilStyles = require('../../../../assets/less/util.less')
 export interface IDataParamProperty {
   title: string
   type: DropboxType
-  value?: object
+  value?: {all?: any}
   items: IDataParamSource[]
 }
 
@@ -51,7 +53,11 @@ interface IOperatingPanelStates {
   specificParams: IDataParams
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
+  modalDataFrom: string
   colorModalVisible: boolean
+  actOnModalVisible: boolean
+  actOnModalList: IDataParamSource[]
+  filterModalVisible: boolean
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -69,58 +75,66 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       specificParams: {},
       modalCachedData: null,
       modalCallback: null,
-      colorModalVisible: false
+      modalDataFrom: void 0,
+      colorModalVisible: false,
+      actOnModalVisible: false,
+      actOnModalList: null,
+      filterModalVisible: false
     }
   }
 
   private lastRequestParamString = null
   private colorSettingForm = null
+  private actOnSettingForm = null
+  private filterSettingForm = null
 
   public componentWillMount () {
     this.setState({
       specificParams: this.getChartDataConfig(this.getSelectedCharts([]))
     })
-    if (this.props.currentWidgetConfig) {
-      this.abc(this.props.currentWidgetConfig)
-    }
   }
 
-  public componentWillReceiveProps (nextProps) {
-    if (nextProps.currentWidgetConfig && nextProps.currentWidgetConfig !== this.props.currentWidgetConfig) {
-      this.abc(nextProps.currentWidgetConfig)
-    }
-  }
+  public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
+    const { selectedView, currentWidgetConfig } = nextProps
+    if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
+      const { cols, rows, metrics, filters, color, label, size } = currentWidgetConfig
+      const { commonParams } = this.state
+      const model = JSON.parse(selectedView.model)
 
-  private abc = (currentWidgetConfig: IPivotProps) => {
-    const { cols, rows, metrics, filters, color, label, size } = currentWidgetConfig
-    const { commonParams } = this.state
-    commonParams.cols.items = cols.map((c) => ({
-      name: c,
-      from: 'cols',
-      type: 'category' as DragType
-    }))
-    commonParams.rows.items = rows.map((r) => ({
-      name: r,
-      from: 'rows',
-      type: 'category' as DragType
-    }))
-    commonParams.metrics.items = metrics.map((m) => ({
-      ...m,
-      type: 'value' as DragType
-    }))
-    commonParams.filters.items = filters
-    const currentSpecificParams = {
-      ...color && {color},
-      ...label && {label},
-      ...size && {size}
+      commonParams.cols.items = cols.map((c) => ({
+        name: c,
+        from: 'cols',
+        type: 'category' as DragType,
+        visualType: model[c].visualType
+      }))
+      commonParams.rows.items = rows.map((r) => ({
+        name: r,
+        from: 'rows',
+        type: 'category' as DragType,
+        visualType: model[r].visualType
+      }))
+      commonParams.metrics.items = metrics.map((m) => ({
+        ...m,
+        type: 'value' as DragType,
+        visualType: model[decodeMetricName(m.name)].visualType
+      }))
+      commonParams.filters.items = filters.map((f) => ({
+        ...f,
+        visualType: model[f.name]
+      }))
+      const currentSpecificParams = {
+        ...color && {color},
+        ...label && {label},
+        ...size && {size}
+      }
+      this.setState({
+        commonParams,
+        specificParams: currentSpecificParams,
+        showColsAndRows: !!rows.length
+      }, () => {
+        this.getVisualData(commonParams, currentSpecificParams)
+      })
     }
-    this.setState({
-      commonParams,
-      specificParams: currentSpecificParams,
-      showColsAndRows: !!rows.length
-    }, () => {
-      this.getVisualData(commonParams, currentSpecificParams)
-    })
   }
 
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
@@ -200,13 +214,36 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private beforeDrop = (name, cachedItem, resolve) => {
     const { selectedView, onLoadDistinctValue } = this.props
+    const { commonParams } = this.state
+    const { metrics } = commonParams
     switch (name) {
+      case 'filters':
+        if (cachedItem.visualType !== 'number' && cachedItem.visualType !== 'date') {
+          onLoadDistinctValue(selectedView.id, cachedItem.name)
+        }
+        this.setState({
+          modalCachedData: cachedItem,
+          modalCallback: resolve,
+          modalDataFrom: 'filters',
+          filterModalVisible: true
+        })
+        break
       case 'color':
         onLoadDistinctValue(selectedView.id, cachedItem.name)
         this.setState({
           modalCachedData: cachedItem,
           modalCallback: resolve,
+          modalDataFrom: 'color',
           colorModalVisible: true
+        })
+        break
+      case 'label':
+        this.setState({
+          modalCachedData: cachedItem,
+          modalCallback: resolve,
+          modalDataFrom: 'label',
+          actOnModalVisible: true,
+          actOnModalList: metrics.items.slice()
         })
         break
       default:
@@ -309,6 +346,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     onLoadDistinctValue(selectedView.id, item.name)
     this.setState({
       modalCachedData: item,
+      modalDataFrom: 'color',
       modalCallback: (config) => {
         if (config) {
           item.config = config as IDataParamConfig
@@ -319,6 +357,28 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         }
       },
       colorModalVisible: true
+    })
+  }
+
+  private dropboxItemChangeFilterConfig = (item: IDataParamSource) => {
+    const { selectedView, onLoadDistinctValue } = this.props
+    const { commonParams, specificParams } = this.state
+    if (item.type === 'category') {
+      onLoadDistinctValue(selectedView.id, item.name)
+    }
+    this.setState({
+      modalCachedData: item,
+      modalDataFrom: 'filters',
+      modalCallback: (config) => {
+        if (config) {
+          item.config = config as IDataParamConfig
+          this.getVisualData(commonParams, specificParams)
+          this.setState({
+            modalCachedData: null
+          })
+        }
+      },
+      filterModalVisible: true
     })
   }
 
@@ -339,7 +399,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getVisualData = (commonParams, specificParams) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label } = specificParams
+    const { color, label, xAxis } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
     let selectedCharts = this.getSelectedCharts(metrics.items)
     let groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name))
@@ -361,13 +421,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           func: l.agg
         })))
     }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
     groups.sort()
     aggregators.sort()
 
     const requestParams = {
       groups,
       aggregators,
-      filters: [],
+      filters: filters.items.map((i) => i.config.sql),
       cache: false,
       expired: 0
     }
@@ -379,17 +446,30 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (data) => {
-        onSetPivotProps({
-          cols: cols.items.map((i) => i.name),
-          rows: rows.items.map((i) => i.name),
-          metrics: metrics.items,
-          filters: filters.items,
-          ...color && {color},
-          ...label && {label},
-          data,
-          dimetionAxis: this.getDimetionAxis(selectedCharts),
-          renderType: 'rerender'
-        })
+        if (data.length) {
+          onSetPivotProps({
+            cols: cols.items.map((i) => i.name),
+            rows: rows.items.map((i) => i.name),
+            metrics: metrics.items,
+            filters: filters.items,
+            ...color && {color},
+            ...label && {label},
+            ...xAxis && {xAxis},
+            data,
+            dimetionAxis: this.getDimetionAxis(selectedCharts),
+            renderType: 'rerender'
+          })
+        } else {
+          onSetPivotProps({
+            cols: [],
+            rows: [],
+            metrics: [],
+            filters: [],
+            data: [],
+            dimetionAxis: this.getDimetionAxis([getPivot()]),
+            renderType: 'rerender'
+          })
+        }
         this.setState({
           commonParams,
           specificParams: this.getChartDataConfig(selectedCharts)
@@ -403,8 +483,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         filters: filters.items,
         ...color && {color},
         ...label && {label},
+        ...xAxis && {xAxis},
         dimetionAxis: this.getDimetionAxis(selectedCharts),
-        renderType: 'refresh'
+        renderType: 'clear'
       })
       this.setState({
         commonParams,
@@ -473,8 +554,49 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
+  private confirmActOnModal = (config) => {
+    this.state.modalCallback(config)
+    this.closeActOnModal()
+  }
+
+  private cancelActOnModal = () => {
+    this.state.modalCallback(false)
+    this.closeActOnModal()
+  }
+
+  private closeActOnModal = () => {
+    this.setState({
+      actOnModalVisible: false,
+      actOnModalList: null
+    })
+  }
+
+  private confirmFilterModal = (config) => {
+    this.state.modalCallback(config)
+    this.closeFilterModal()
+  }
+
+  private cancelFilterModal = () => {
+    this.state.modalCallback(false)
+    this.closeFilterModal()
+  }
+
+  private closeFilterModal = () => {
+    this.setState({
+      filterModalVisible: false
+    })
+  }
+
   private afterColorModalClose = () => {
     this.colorSettingForm.reset()
+  }
+
+  private afterActOnModalClose = () => {
+    this.actOnSettingForm.reset()
+  }
+
+  private afterFilterModalClose = () => {
+    this.filterSettingForm.reset()
   }
 
   public render () {
@@ -490,7 +612,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       commonParams,
       specificParams,
       modalCachedData,
-      colorModalVisible
+      modalDataFrom,
+      colorModalVisible,
+      actOnModalVisible,
+      actOnModalList,
+      filterModalVisible
     } = this.state
     const { metrics } = commonParams
 
@@ -513,13 +639,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           categories.push({
             name: key,
             type: 'category',
-            icon: m.visualType
+            visualType: m.visualType
           })
         } else {
           values.push({
             name: key,
             type: 'value',
-            icon: m.visualType
+            visualType: m.visualType
           })
         }
       })
@@ -550,6 +676,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onItemSort={this.getDropboxItemSortDirection(k)}
             onItemChangeAgg={this.getDropboxItemAggregator(k)}
             onItemChangeColorConfig={this.dropboxItemChangeColorConfig}
+            onItemChangeFilterConfig={this.dropboxItemChangeFilterConfig}
             onItemChangeChart={this.getDropboxItemChart}
             beforeDrop={this.beforeDrop}
             onDrop={this.drop}
@@ -573,9 +700,23 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
 
     let colorSettingConfig
+    let actOnSettingConfig
+    let filterSettingConfig
     if (modalCachedData) {
-      const selectedItem = specificParams.color.items.find((i) => i.name === modalCachedData.name)
-      colorSettingConfig = selectedItem ? selectedItem.config : {}
+      const selectedItem = modalDataFrom === 'filters'
+        ? commonParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
+        : specificParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
+      switch (modalDataFrom) {
+        case 'color':
+          colorSettingConfig = selectedItem ? selectedItem.config : {}
+          break
+        case 'filters':
+          filterSettingConfig = selectedItem ? selectedItem.config : {}
+          break
+        default:
+          actOnSettingConfig = selectedItem ? selectedItem.config : {}
+          break
+      }
     }
 
     return (
@@ -596,7 +737,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                   onDragEnd={this.dragEnd}
                   draggable
                 >
-                  <i className={`iconfont ${this.getDragItemIconClass(cat.icon)}`} />
+                  <i className={`iconfont ${this.getDragItemIconClass(cat.visualType)}`} />
                   <p>{cat.name}</p>
                 </li>
               ))}
@@ -612,7 +753,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                   onDragEnd={this.dragEnd}
                   draggable
                 >
-                  <i className={`iconfont ${this.getDragItemIconClass(v.icon)}`} />
+                  <i className={`iconfont ${this.getDragItemIconClass(v.visualType)}`} />
                   <p>{v.name}</p>
                 </li>
               ))}
@@ -644,7 +785,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <i className="iconfont icon-510tongji_guanxitu" />
             <i className="iconfont icon-waterfall" />
             <i className="iconfont icon-gauge" />
-            <i className="iconfont icon-radarchart" />
             <i className="iconfont icon-parallel" />
             <i className="iconfont icon-confidence-band" /> */}
           </div>
@@ -680,6 +820,38 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onSave={this.confirmColorModal}
             onCancel={this.cancelColorModal}
             ref={(f) => this.colorSettingForm = f}
+          />
+        </Modal>
+        <Modal
+          title="作用于"
+          wrapClassName="ant-modal-small"
+          visible={actOnModalVisible}
+          onCancel={this.cancelActOnModal}
+          afterClose={this.afterActOnModalClose}
+          footer={null}
+        >
+          <ActOnSettingForm
+            list={actOnModalList}
+            config={actOnSettingConfig}
+            onSave={this.confirmActOnModal}
+            onCancel={this.cancelActOnModal}
+            ref={(f) => this.actOnSettingForm = f}
+          />
+        </Modal>
+        <Modal
+          title="筛选配置"
+          visible={filterModalVisible}
+          onCancel={this.cancelFilterModal}
+          afterClose={this.afterFilterModalClose}
+          footer={null}
+        >
+          <FilterSettingForm
+            item={modalCachedData}
+            list={distinctColumnValues}
+            config={filterSettingConfig}
+            onSave={this.confirmFilterModal}
+            onCancel={this.cancelFilterModal}
+            ref={(f) => this.filterSettingForm = f}
           />
         </Modal>
       </div>

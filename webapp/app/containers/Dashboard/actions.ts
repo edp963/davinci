@@ -61,9 +61,9 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  UPDAATE_MARK,
-  UPDATE_MARK_SUCCESS,
-  UPDATE_MARK_ERROR
+  RENDER_DASHBOARDITEM,
+  RESIZE_DASHBOARDITEM,
+  RESIZE_ALL_DASHBOARDITEM
 } from './constants'
 
 export function addDashboardItem (portalId, item, resolve) {
@@ -288,21 +288,20 @@ export function editDashboardItemFail () {
   }
 }
 
-export function editDashboardItems (items, resolve) {
+export function editDashboardItems (items) {
   return {
     type: EDIT_DASHBOARD_ITEMS,
     payload: {
-      items,
-      resolve
+      items
     }
   }
 }
 
-export function dashboardItemsEdited (result) {
+export function dashboardItemsEdited (items) {
   return {
     type: EDIT_DASHBOARD_ITEMS_SUCCESS,
     payload: {
-      result
+      items
     }
   }
 }
@@ -362,13 +361,14 @@ export function loadDashboardShareLinkFail () {
   }
 }
 
-export function loadWidgetShareLink (id, itemId, authName) {
+export function loadWidgetShareLink (id, itemId, authName, resolve) {
   return {
     type: LOAD_WIDGET_SHARE_LINK,
     payload: {
       id,
       itemId,
-      authName
+      authName,
+      resolve
     }
   }
 }
@@ -402,16 +402,13 @@ export function loadWidgetShareLinkFail (itemId) {
   }
 }
 
-export function loadWidgetCsv (itemId, token, sql, sorts, offset, limit) {
+export function loadWidgetCsv (itemId, params, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
-      token,
-      sql,
-      sorts,
-      offset,
-      limit
+      params,
+      token
     }
   }
 }
@@ -434,32 +431,26 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function updateMark (id, params, resolve, reject) {
+export function renderDashboardItem (itemId) {
   return {
-    type: UPDAATE_MARK,
+    type: RENDER_DASHBOARDITEM,
     payload: {
-      id,
-      params,
-      resolve,
-      reject
+      itemId
     }
   }
 }
 
-export function updateMarkSuccess (id) {
+export function resizeDashboardItem (itemId) {
   return {
-    type: UPDATE_MARK_SUCCESS,
+    type: RESIZE_DASHBOARDITEM,
     payload: {
-      id
+      itemId
     }
   }
 }
 
-export function updateMarkError (id) {
+export function resizeAllDashboardItem () {
   return {
-    type: UPDATE_MARK_ERROR,
-    payload: {
-      id
-    }
+    type: RESIZE_ALL_DASHBOARDITEM
   }
 }

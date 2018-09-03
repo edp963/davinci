@@ -113,6 +113,18 @@
       }
     }
   }
+
+  .legend {
+    flex-shrink: 0;
+    max-width: 180px; 
+    padding-bottom: 50px;
+    overflow-y: auto;
+    display: none;
+
+    &.shown {
+      display: block;
+    }
+  }
 }
 
 .pivot {
@@ -221,5 +233,47 @@
   &.raw {
     position: relative;
     left: 1px;
+  }
+}
+
+.legendBox {
+  padding: 8px 0 8px 16px;
+
+  h3 {
+    padding-left: 6px;
+    line-height: 2.5em;
+    .ellipsis;
+  }
+
+  .list {
+    li {
+      height: 2.25em;
+      padding: 0 4px 0 28px;
+      line-height: 2.25em;
+      position: relative;
+      cursor: pointer;
+      .ellipsis;
+
+      &:hover {
+        background-color: @body-bg;
+      }
+
+      &.disabled {
+        color: @disabled-text-color;
+
+        span {
+          background-color: @disabled-text-color !important;
+        }
+      }
+
+      span {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        position: absolute;
+        top: 6px;
+        left: 6px;
+      }
+    }
   }
 }

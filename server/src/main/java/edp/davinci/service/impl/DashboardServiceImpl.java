@@ -109,16 +109,24 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(project.getId(), user.getId());
-                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                    dashboardList = null;
-                } else if (maxSourcePermission == UserPermissionEnum.READ.getPermission()) {
-                    if (!portal.getPublish()) {
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
+                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
                         dashboardList = null;
+                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
+                        if (!portal.getPublish()) {
+                            dashboardList = null;
+                        }
                     }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
+                    dashboardList = null;
                 }
             }
         }
@@ -163,16 +171,24 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-            if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(project.getId(), user.getId());
-                if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                    memDashboardWidgets = null;
-                } else if (maxSourcePermission == UserPermissionEnum.READ.getPermission()) {
-                    if (!portal.getPublish()) {
+        if (!isProjectAdmin(project,user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
+                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
                         memDashboardWidgets = null;
+                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
+                        if (!portal.getPublish()) {
+                            memDashboardWidgets = null;
+                        }
                     }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
+                    memDashboardWidgets = null;
                 }
             }
         }
@@ -180,7 +196,6 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         DashboardWithMem dashboardWithMem = new DashboardWithMem();
         BeanUtils.copyProperties(dashboardWithPortalAndProject, dashboardWithMem);
         dashboardWithMem.setWidgets(memDashboardWidgets);
-
 
         return resultMap.successAndRefreshToken(request).payload(dashboardWithMem);
     }

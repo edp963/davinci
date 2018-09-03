@@ -16,6 +16,8 @@ import {
   PIVOT_XAXIS_SIZE,
   PIVOT_YAXIS_SIZE,
   PIVOT_TITLE_SIZE,
+  PIVOT_XAXIS_ROTATE_LIMIT,
+  PIVOT_XAXIS_TICK_SIZE,
   PIVOT_CANVAS_AXIS_SIZE_LIMIT
 } from '../../../globalConstants'
 import { DimetionType } from './Pivot/Pivot'
@@ -312,6 +314,10 @@ export function getPivot () {
   return widgetlibs[0]
 }
 
+export function getScatter () {
+  return widgetlibs[3]
+}
+
 export function getChartViewMetrics (metrics, requireMetrics) {
   const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
   metrics.slice().splice(1, auxiliaryMetrics)
@@ -409,7 +415,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
           width: unitMetricSide,
           records: [{
             key: '',
-            value: sndKeys.length ? Object.values(sndTree)[0] : tree[0][0]
+            value: sndKeys.length ? Object.values(sndTree)[0] : tree[0] ? tree[0][0] : []
           }],
           ended: true
         }]
@@ -469,5 +475,85 @@ export function axisDataCutting (type: 'x' | 'y', dimetionAxis, metrics, axisLen
       data,
       length: axisLength
     }]
+  }
+}
+
+export function getXaxisLabel (elementSize) {
+  return function (label) {
+    const originLabel = label
+    const ellipsis = '…'
+    const limit = elementSize > PIVOT_XAXIS_ROTATE_LIMIT ? elementSize : PIVOT_XAXIS_SIZE - PIVOT_XAXIS_TICK_SIZE
+    while (getTextWidth(label) > limit) {
+      label = label.substring(0, label.length - 1)
+    }
+    return label === originLabel
+      ? label
+      : `${label.substring(0, label.length - 1)}${ellipsis}`
+  }
+}
+
+export function getTooltipPosition (point, params, dom, rect, size) {
+  const [x, y] = point
+  const { contentSize, viewSize } = size
+  const [cx, cy] = contentSize
+  const [vx, vy] = viewSize
+  return [
+    Math.min(x, vx - cx),
+    Math.min(y, vy - cy)
+  ]
+}
+
+export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, scatterXaxis) {
+  let dimetionColumns = cols.concat(rows)
+  let metricColumns = [...metrics]
+  if (color && color.items) {
+    dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
+  }
+  if (label && label.items) {
+    dimetionColumns = dimetionColumns.concat(
+      label.items.filter((i) => i.type === 'category').map((i) => i.name)
+    )
+    metricColumns = metricColumns.concat(
+      label.items.filter((i) => i.type === 'value')
+    )
+  }
+  if (scatterXaxis && scatterXaxis.items) {
+    metricColumns = metricColumns.concat(scatterXaxis.items)
+  }
+
+  dimetionColumns = dimetionColumns.reduce((arr, dc) => {
+    if (!arr.includes(dc)) {
+      arr.push(dc)
+    }
+    return arr
+  }, [])
+  metricColumns = metricColumns.reduce((arr, mc) => {
+    const decodedName = decodeMetricName(mc.name)
+    if (!arr.includes(decodedName)) {
+      arr.push(mc)
+    }
+    return arr
+  }, [])
+
+  return function (params) {
+    const { seriesIndex, dataIndex } = params
+    const { type, grouped, records } = seriesData[seriesIndex]
+    let record
+    if (type === 'cartesian') {
+      record = grouped
+        ? Object.values(records)[dataIndex][0]
+        : records[dataIndex].value[0]
+    } else if (type === 'polar') {
+      record = records[dataIndex]
+    } else {
+      record = records[0]
+    }
+    return metricColumns
+      .map((mc) => {
+        const decodedName = decodeMetricName(mc.name)
+        return `${decodedName}: ${record[`${mc.agg}(${decodedName})`]}`
+      })
+      .concat(dimetionColumns.map((dc) => `${dc}: ${record[dc]}`))
+      .join('<br/>')
   }
 }

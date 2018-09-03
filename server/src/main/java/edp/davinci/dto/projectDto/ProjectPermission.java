@@ -50,6 +50,18 @@ public class ProjectPermission {
         this.schedulePermission = permission;
     }
 
+    public static ProjectPermission previewPermission() {
+        ProjectPermission permission = new ProjectPermission();
+        permission.setVizPermission((short) 1);
+        permission.setWidgetPermission((short) 0);
+        permission.setViewPermission((short) 0);
+        permission.setSourcePermission((short) 0);
+        permission.setSchedulePermission((short) 0);
+        permission.setDownloadPermission(false);
+        permission.setSharePermission(false);
+        return permission;
+    }
+
     public static ProjectPermission adminPermission() {
         ProjectPermission permission = new ProjectPermission(UserPermissionEnum.DELETE.getPermission());
         permission.setDownloadPermission(true);

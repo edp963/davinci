@@ -25,19 +25,17 @@ import {
   ADD_WIDGET,
   ADD_WIDGET_SUCCESS,
   ADD_WIDGET_FAILURE,
-  // LOAD_WIDGET_DETAIL,
-  // LOAD_WIDGET_DETAIL_SUCCESS,
+  LOAD_WIDGET_DETAIL,
+  LOAD_WIDGET_DETAIL_SUCCESS,
+  LOAD_WIDGET_DETAIL_FAILURE,
   EDIT_WIDGET,
   EDIT_WIDGET_SUCCESS,
   EDIT_WIDGET_FAILURE,
   DELETE_WIDGET,
   DELETE_WIDGET_SUCCESS,
-  DELETE_WIDGET_FAILURE
+  DELETE_WIDGET_FAILURE,
+  CLEAR_CURRENT_WIDGET
 } from './constants'
-
-// import { promiseActionCreator } from '../../utils/reduxPromisation'
-
-// export const loadWidgetDetail = promiseActionCreator(LOAD_WIDGET_DETAIL, ['id'])
 
 export function loadWidgets (projectId) {
   return {
@@ -88,14 +86,32 @@ export function addWidgetFail () {
   }
 }
 
-// export function widgetDetailLoaded (widget) {
-//   return {
-//     type: LOAD_WIDGET_DETAIL_SUCCESS,
-//     payload: {
-//       widget
-//     }
-//   }
-// }
+export function loadWidgetDetail (id) {
+  return {
+    type: LOAD_WIDGET_DETAIL,
+    payload: {
+      id
+    }
+  }
+}
+
+export function widgetDetailLoaded (detail) {
+  return {
+    type: LOAD_WIDGET_DETAIL_SUCCESS,
+    payload: {
+      detail
+    }
+  }
+}
+
+export function loadWidgetDetailFail (error) {
+  return {
+    type: LOAD_WIDGET_DETAIL_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
 
 export function editWidget (widget, resolve) {
   return {
@@ -107,12 +123,9 @@ export function editWidget (widget, resolve) {
   }
 }
 
-export function widgetEdited (result) {
+export function widgetEdited () {
   return {
-    type: EDIT_WIDGET_SUCCESS,
-    payload: {
-      result
-    }
+    type: EDIT_WIDGET_SUCCESS
   }
 }
 
@@ -143,5 +156,11 @@ export function widgetDeleted (id) {
 export function deleteWidgetFail () {
   return {
     type: DELETE_WIDGET_FAILURE
+  }
+}
+
+export function clearCurrentWidget () {
+  return {
+    type: CLEAR_CURRENT_WIDGET
   }
 }

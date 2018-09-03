@@ -23,8 +23,7 @@ export const DEFAULT_ECHARTS_THEME = defaultEchartsTheme.theme
 export const DEFAULT_PRIMARY_COLOR = '#1B98E0'
 export const DEFAULT_SECONDARY_COLOR = '#223151'
 
-export const ADMIN_GRID_BREAKPOINTS = { lg: 1136, md: 932, sm: 704, xs: 416, xxs: 0 }
-export const USER_GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }
+export const GRID_BREAKPOINTS = { lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }
 export const GRID_COLS = { lg: 12, md: 12, sm: 12, xs: 2, xxs: 2 }
 export const GRID_ITEM_MARGIN = 16
 export const GRID_ROW_HEIGHT = 30
@@ -51,6 +50,8 @@ export const PIVOT_CHART_POINT_LIMIT = 100
 export const PIVOT_XAXIS_SIZE = 50
 export const PIVOT_YAXIS_SIZE = 64
 export const PIVOT_TITLE_SIZE = 27
+export const PIVOT_XAXIS_ROTATE_LIMIT = 30
+export const PIVOT_XAXIS_TICK_SIZE = 12
 export const PIVOT_CANVAS_SIZE_LIMIT = 3000
 export const PIVOT_CANVAS_AXIS_SIZE_LIMIT = 8000
 export const PIVOT_CANVAS_POLAR_SIZE_LIMIT = 8000
@@ -78,3 +79,6 @@ export const ECHARTS_RENDERER = 'echarts'
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_SIZE = '12px'
 export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+
+export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
+export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'

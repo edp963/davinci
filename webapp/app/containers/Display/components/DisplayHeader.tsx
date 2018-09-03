@@ -160,12 +160,12 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
         content={
           <SharePanel
             id={display.id}
+            type="display"
             shareInfo={currentDisplayShareInfo}
             secretInfo={currentDisplaySecretInfo}
             shareInfoLoading={currentDisplayShareInfoLoading}
             authorized={displaySharePanelAuthorized}
             afterAuthorization={this.changeDisplaySharePanelAuthorizeState(true)}
-            type="display"
           />
         }
         trigger="click"

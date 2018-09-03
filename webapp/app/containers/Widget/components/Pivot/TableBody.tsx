@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType } from './Pivot'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
 import Cell from './Cell'
 import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
 import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
@@ -17,6 +17,8 @@ import { IDataParamProperty } from '../Workbench/OperatingPanel'
 const styles = require('./Pivot.less')
 
 export interface ITableBodyProps {
+  cols: string[]
+  rows: string[]
   rowKeys: string[][]
   colKeys: string[][]
   rowWidths: number[]
@@ -29,12 +31,16 @@ export interface ITableBodyProps {
   dimetionAxis: DimetionType
   color?: IDataParamProperty
   label?: IDataParamProperty
+  xAxis?: IDataParamProperty
   renderType: RenderType
+  legend: ILegend
 }
 
-export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
+export class TableBody extends React.Component<ITableBodyProps, {}> {
   private gridCutting = (width, height, chartGrid) => {
+    console.log(chartGrid)
     const chunks = this.horizontalCutting(height, chartGrid)
+    console.log(chunks)
     chunks.forEach((chunk) => {
       chunk.data = this.verticalCutting(width, chunk.data)
     })
@@ -166,6 +172,8 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
 
   public render () {
     const {
+      rows,
+      cols,
       rowKeys,
       colKeys,
       rowTree,
@@ -178,7 +186,9 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
       dimetionAxis,
       color,
       label,
-      renderType
+      xAxis,
+      renderType,
+      legend
     } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed, multiCoordinate } = drawingData
     let tableBody = null
@@ -436,6 +446,8 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
         <Chart
           width={tableWidth}
           height={tableHeight}
+          cols={cols}
+          rows={rows}
           dimetionAxisCount={dimetionAxis === 'col' ? colKeyLength : rowKeyLength}
           metricAxisCount={metricAxisCount}
           metrics={metrics}
@@ -445,7 +457,9 @@ export class TableBody extends React.PureComponent<ITableBodyProps, {}> {
           metricAxisConfig={metricAxisConfig}
           color={color}
           label={label}
+          xAxis={xAxis}
           renderType={renderType}
+          legend={legend}
         />
       )
     } else {

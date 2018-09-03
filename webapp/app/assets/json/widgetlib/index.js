@@ -159,4 +159,32 @@ export default [{
       type: 'value'
     }
   }
-}]
+}
+// {
+//   id: 10,
+//   name: 'radar',
+//   title: '雷达图',
+//   icon: 'icon-radarchart',
+//   coordinate: 'polar',
+//   requireDimetions: 0,
+//   requireMetrics: 1,
+//   data: {
+//     color: {
+//       title: '颜色',
+//       type: 'all'
+//     },
+//     size: {
+//       title: '尺寸',
+//       type: 'value'
+//     },
+//     label: {
+//       title: '标签',
+//       type: 'all'
+//     },
+//     tip: {
+//       title: '提示信息',
+//       type: 'value'
+//     }
+//   }
+// }
+]

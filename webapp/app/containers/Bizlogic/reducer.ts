@@ -43,7 +43,7 @@ import {
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
-  bizlogics: false,
+  bizlogics: null,
   sqlValidateCode: false,
   sqlValidateMessage: false,
   tableLoading: false,

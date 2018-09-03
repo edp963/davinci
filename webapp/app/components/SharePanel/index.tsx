@@ -18,25 +18,41 @@
  * >>
  */
 
-import React, { PureComponent, PropTypes } from 'react'
-import { connect } from 'react-redux'
+import * as React from 'react'
 
 import ShareForm from './ShareForm'
-import Icon from 'antd/lib/icon'
-import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Radio from 'antd/lib/radio'
+const Icon = require('antd/lib/icon')
+const Input = require('antd/lib/input')
+const Button = require('antd/lib/button')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Radio = require('antd/lib/radio')
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 
-import { loadDashboardShareLink, loadWidgetShareLink } from '../../containers/Dashboard/actions'
-import { loadDisplayShareLink } from '../../containers/Display/actions'
+const styles = require('./SharePanel.less')
 
-import styles from './SharePanel.less'
+interface ISharePanelProps {
+  id?: number
+  type: string
+  itemId?: number
+  active?: string
+  shareInfo: string
+  secretInfo: string
+  shareInfoLoading: boolean
+  authorized: boolean
+  afterAuthorization: () => void
+  onLoadDashboardShareLink?: (id: number, authName: string) => void
+  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
+  onLoadDisplayShareLink?: (id: number, authName: string) => void
+}
 
-export class SharePanel extends PureComponent {
+interface ISharePanelStates {
+  active: string
+  authName: string
+}
+
+export class SharePanel extends React.PureComponent<ISharePanelProps, ISharePanelStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -45,24 +61,30 @@ export class SharePanel extends PureComponent {
     }
   }
 
-  componentWillMount () {
+  public static defaultProps = {
+    active: 'normal'
+  }
+
+  public componentWillMount () {
     if (!this.props.shareInfo) {
       this.getShareInfo('')
     }
   }
 
-  componentWillReceiveProps () {
-    this.state.authName = ''
+  public componentWillReceiveProps () {
+    this.setState({
+      authName: ''
+    })
   }
 
-  componentDidUpdate () {
+  public componentDidUpdate () {
     const { shareInfo, shareInfoLoading } = this.props
     if (!shareInfo && !shareInfoLoading) {
       this.getShareInfo('')
     }
   }
 
-  getShareInfo = (authName) => {
+  private getShareInfo = (authName) => {
     const {
       id,
       type,
@@ -72,7 +94,7 @@ export class SharePanel extends PureComponent {
       onLoadDisplayShareLink
     } = this.props
 
-    let name = authName.target
+    const name = authName.target
       ? authName.target.value
       : authName
 
@@ -90,29 +112,27 @@ export class SharePanel extends PureComponent {
     }
   }
 
-  radioChange = (e) => {
+  private radioChange = (e) => {
     this.setState({
       active: e.target.value
     })
   }
 
-  downloadCsv = () => {
-    this.props.onDownloadCsv(this.props.shareInfo)
-  }
-  creditShare = () => {
+  private creditShare = () => {
     this.getShareInfo(this.state.authName)
     this.props.afterAuthorization()
   }
-  authNameChange = (event) => {
+
+  private authNameChange = (event) => {
     this.setState({authName: event.target.value})
   }
-  render () {
+
+  public render () {
     const {
       type,
       shareInfo,
       secretInfo,
       shareInfoLoading,
-      downloadCsvLoading,
       authorized
     } = this.props
 
@@ -130,17 +150,14 @@ export class SharePanel extends PureComponent {
       </div>
       )
 
-    let content = ''
-    let secretContent = ''
+    let content
+    let secretContent
 
     if (shareInfo) {
       content = (
         <ShareForm
           type={type}
           shareInfo={shareInfo}
-          downloadCsvLoading={downloadCsvLoading}
-          onHandleInputSelect={this.handleInputSelect}
-          onDownloadCsv={this.downloadCsv}
         />
       )
     } else {
@@ -156,9 +173,6 @@ export class SharePanel extends PureComponent {
         <ShareForm
           type={type}
           shareInfo={secretInfo}
-          downloadCsvLoading={downloadCsvLoading}
-          onHandleInputSelect={this.handleInputSelect}
-          onDownloadCsv={this.downloadCsv}
         />
       )
     } else {
@@ -201,33 +215,4 @@ export class SharePanel extends PureComponent {
   }
 }
 
-SharePanel.propTypes = {
-  id: PropTypes.number,
-  type: PropTypes.string,
-  itemId: PropTypes.number,
-  active: PropTypes.string,
-  shareInfo: PropTypes.string,
-  secretInfo: PropTypes.string,
-  shareInfoLoading: PropTypes.bool,
-  downloadCsvLoading: PropTypes.bool,
-  authorized: PropTypes.bool,
-  onLoadDashboardShareLink: PropTypes.func,
-  onLoadWidgetShareLink: PropTypes.func,
-  onLoadDisplayShareLink: PropTypes.func,
-  onDownloadCsv: PropTypes.func,
-  afterAuthorization: PropTypes.func
-}
-
-SharePanel.defaultProps = {
-  active: 'normal'
-}
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
-    onLoadWidgetShareLink: (id, itemId, authName) => dispatch(loadWidgetShareLink(id, itemId, authName)),
-    onLoadDisplayShareLink: (id, authName) => dispatch(loadDisplayShareLink(id, authName))
-  }
-}
-
-export default connect(null, mapDispatchToProps)(SharePanel)
+export default SharePanel

@@ -26,13 +26,15 @@ import {
   DELETE_WIDGET,
   DELETE_WIDGET_SUCCESS,
   DELETE_WIDGET_FAILURE,
-  // LOAD_WIDGET_DETAIL,
-  // LOAD_WIDGET_DETAIL_SUCCESS,
+  LOAD_WIDGET_DETAIL,
+  LOAD_WIDGET_DETAIL_SUCCESS,
+  LOAD_WIDGET_DETAIL_FAILURE,
   EDIT_WIDGET,
   EDIT_WIDGET_SUCCESS,
   EDIT_WIDGET_FAILURE,
   LOAD_WIDGETS_FAILURE,
-  ADD_WIDGET_FAILURE
+  ADD_WIDGET_FAILURE,
+  CLEAR_CURRENT_WIDGET
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import {
@@ -45,10 +47,10 @@ import {
   LOAD_DISTINCT_VALUE_FAILURE
 } from '../Bizlogic/constants'
 import { fromJS } from 'immutable'
-// import { STATUS_CODES } from 'http'
 
 const initialState = fromJS({
-  widgets: false,
+  widgets: null,
+  currentWidget: null,
   loading: false,
   dataLoading: false,
   columnValueLoading: false,
@@ -61,7 +63,9 @@ function widgetReducer (state = initialState, action) {
 
   switch (type) {
     case LOAD_WIDGETS:
-      return state.set('loading', true)
+      return state
+        .set('loading', true)
+        .set('widgets', null)
     case LOAD_WIDGETS_SUCCESS:
       return state
         .set('loading', false)
@@ -82,10 +86,16 @@ function widgetReducer (state = initialState, action) {
         .set('loading', false)
     case DELETE_WIDGET_FAILURE:
       return state.set('loading', false)
-    // case LOAD_WIDGET_DETAIL:
-    //   return state
-    // case LOAD_WIDGET_DETAIL_SUCCESS:
-    //   return state
+    case LOAD_WIDGET_DETAIL:
+      return state
+        .set('loading', true)
+        .set('currentWidget', null)
+    case LOAD_WIDGET_DETAIL_SUCCESS:
+      return state
+        .set('loading', false)
+        .set('currentWidget', payload.detail)
+    case LOAD_WIDGET_DETAIL_FAILURE:
+      return state.set('loading', false)
     case EDIT_WIDGET:
       return state.set('loading', true)
     case EDIT_WIDGET_SUCCESS:
@@ -112,6 +122,8 @@ function widgetReducer (state = initialState, action) {
         .set('distinctColumnValues', payload.data[payload.fieldName].slice(0, 100))
     case LOAD_DISTINCT_VALUE_FAILURE:
       return state.set('columnValueLoading', false)
+    case CLEAR_CURRENT_WIDGET:
+      return state.set('currentWidget', null)
     default:
       return state
   }

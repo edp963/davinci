@@ -31,10 +31,8 @@ import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.dashboardDto.PortalWithProject;
-import edp.davinci.model.DashboardPortal;
-import edp.davinci.model.Project;
-import edp.davinci.model.RelUserOrganization;
-import edp.davinci.model.User;
+import edp.davinci.dto.projectDto.ProjectWithOrganization;
+import edp.davinci.model.*;
 import edp.davinci.service.DashboardPortalService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -84,34 +82,42 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
     public ResultMap getDashboardPortals(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        Project project = projectMapper.getById(projectId);
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
 
-        if (null == project) {
-            log.info("project {} not found", project);
+        if (null == projectWithOrganization) {
+            log.info("project {} not found", projectWithOrganization);
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowRead(project, user)) {
+        if (!allowRead(projectWithOrganization, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
         List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId);
 
         if (null != dashboardPortals && dashboardPortals.size() > 0) {
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
+            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
                 if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    short maxSourcePermission = relTeamProjectMapper.getMaxWidgetPermission(projectId, user.getId());
-                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        dashboardPortals = null;
-                    } else if (maxSourcePermission == UserPermissionEnum.READ.getPermission()) {
-                        Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
-                        while (iterator.hasNext()) {
-                            DashboardPortal dashboardPortal = iterator.next();
-                            if (!dashboardPortal.getPublish()) {
-                                iterator.remove();
+                    Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+                    if (teamNumOfOrgByUser > 0) {
+                        short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
+                        if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                            dashboardPortals = null;
+                        } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
+                            Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
+                            while (iterator.hasNext()) {
+                                DashboardPortal dashboardPortal = iterator.next();
+                                if (!dashboardPortal.getPublish()) {
+                                    iterator.remove();
+                                }
                             }
+                        }
+                    } else {
+                        Organization organization = projectWithOrganization.getOrganization();
+                        if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
+                            dashboardPortals = null;
                         }
                     }
                 }

@@ -15,8 +15,7 @@ interface IColumnHeaderProps {
   dimetionAxis: DimetionType
 }
 
-export class ColumnHeader extends React.PureComponent<IColumnHeaderProps, {}> {
-  public tableContainer: HTMLDivElement = null
+export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
   public render () {
     const { cols, colKeys, colTree, metrics, drawingData, dimetionAxis } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData

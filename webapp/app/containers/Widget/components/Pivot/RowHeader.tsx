@@ -20,7 +20,7 @@ interface IRowHeaderProps {
   metricAxisConfig: IMetricAxisConfig
 }
 
-export class RowHeader extends React.PureComponent<IRowHeaderProps, {}> {
+export class RowHeader extends React.Component<IRowHeaderProps, {}> {
   public render () {
     const { rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, drawingData, dimetionAxis, metrics, metricAxisConfig } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData

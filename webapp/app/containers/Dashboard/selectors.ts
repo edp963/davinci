@@ -55,33 +55,9 @@ const makeSelectCurrentItems = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentItems')
 )
-const makeSelectCurrentDatasources = () => createSelector(
+const makeSelectCurrentItemsInfo = () => createSelector(
   selectDashboard,
-  (dashboardState) => dashboardState.get('currentDatasources')
-)
-const makeSelectCurrentItemsLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsLoading')
-)
-const makeSelectCurrentItemsQueryParams = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsQueryParams')
-)
-const makeSelectCurrentItemsDownloadCsvLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsDownloadCsvLoading')
-)
-const makeSelectCurrentItemsShareInfo = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsShareInfo')
-)
-const makeSelectCurrentItemsSecretInfo = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsSecretInfo')
-)
-const makeSelectCurrentItemsShareInfoLoading = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsShareInfoLoading')
+  (dashboardState) => dashboardState.get('currentItemsInfo')
 )
 const makeSelectCurrentItemsCascadeSources = () => createSelector(
   selectDashboard,
@@ -98,17 +74,11 @@ export {
   makeSelectCurrentDashboard,
   makeSelectCurrentDashboardLoading,
   makeSelectCurrentItems,
-  makeSelectCurrentDatasources,
-  makeSelectCurrentItemsLoading,
-  makeSelectCurrentItemsQueryParams,
-  makeSelectCurrentItemsDownloadCsvLoading,
+  makeSelectCurrentItemsInfo,
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentDashboardCascadeSources,
-  makeSelectCurrentItemsShareInfo,
-  makeSelectCurrentItemsSecretInfo,
-  makeSelectCurrentItemsShareInfoLoading,
   makeSelectCurrentItemsCascadeSources,
   makeSelectModalLoading
 }

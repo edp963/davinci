@@ -104,7 +104,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
     const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
     const organizationArr = organizations ? organizations.map((org) => (
-        <div className={styles.groupList} key={org.id}>
+        <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
               <Avatar path={org.avatar} enlarge={false} size="small"/>
@@ -115,7 +115,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
             </div>
           </div>
           <div className={styles.setting}>
-            <Icon type="setting" onClick={this.toOrganization(org)}/>
+            <Icon type="setting"/>
           </div>
         </div>
       )

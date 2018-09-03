@@ -102,7 +102,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
 
         if (null != cronJobs && cronJobs.size() > 0) {
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-            if (!project.getUserId().equals(user.getId()) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
                 if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
                     short maxSourcePermission = relTeamProjectMapper.getMaxSchedulePermission(projectId, user.getId());
