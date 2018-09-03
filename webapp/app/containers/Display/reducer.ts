@@ -119,9 +119,8 @@ function displayReducer (state = initialState, action) {
         .set('currentLayersQueryParams', payload.layers.reduce((obj, layer) => {
           if (layer.type !== GraphTypes.Chart) { return obj }
           obj[layer.id] = {
-            filters: '',
-            linkageFilters: '',
-            globalFilters: '',
+            linkageFilters: [],
+            globalFilters: [],
             params: [],
             linkageParams: [],
             globalParams: [],
@@ -158,9 +157,8 @@ function displayReducer (state = initialState, action) {
           ...queryParams,
           ...payload.result.reduce((obj, layer) => {
             obj[layer.id] = {
-              filters: '',
-              linkageFilters: '',
-              globalFilters: '',
+              linkageFilters: [],
+              globalFilters: [],
               params: [],
               linkageParams: [],
               globalParams: [],
@@ -213,17 +211,11 @@ function displayReducer (state = initialState, action) {
         .set('currentLayersQueryParams', {
           ...queryParams,
           [payload.layerId]: {
-            filters: payload.sql.filters,
-            linkageFilters: payload.sql.linkageFilters,
-            globalFilters: payload.sql.globalFilters,
-            params: payload.sql.params,
-            linkageParams: payload.sql.linkageParams,
-            globalParams: payload.sql.globalParams,
-            pagination: {
-              sorts: payload.sorts,
-              offset: payload.offset,
-              limit: payload.limit
-            }
+            linkageFilters: payload.params.linkageFilters,
+            globalFilters: payload.params.globalFilters,
+            params: payload.params.params,
+            linkageParams: payload.params.linkageParams,
+            globalParams: payload.params.globalParams
           }
         })
     case LOAD_DATA_FROM_ITEM_SUCCESS:
@@ -297,9 +289,8 @@ function displayReducer (state = initialState, action) {
           ...queryParams,
           ...payload.result.reduce((obj, layer) => {
             obj[layer.id] = {
-              filters: '',
-              linkageFilters: '',
-              globalFilters: '',
+              linkageFilters: [],
+              globalFilters: [],
               params: [],
               linkageParams: [],
               globalParams: [],
