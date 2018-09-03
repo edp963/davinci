@@ -42,9 +42,10 @@ import SharePanel from '../../components/SharePanel'
 import DashboardLinkagePanel from './components/linkage/LinkagePanel'
 import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfigPanel'
 // import GlobalFilters from './components/globalFilter/GlobalFilters'
-import GlobalFilterPanel from './components/filters/FilterPanel'
 
-import GlobalFilterConfig from './components/filters/FilterConfig'
+import { IFilterChangeParam } from '../../components/Filters'
+import GlobalFilterPanel from '../../components/Filters/FilterPanel'
+import GlobalFilterConfig from '../../components/Filters/FilterConfig'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
@@ -1129,7 +1130,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private globalFilterChange = (queryParams) => {
+  private globalFilterChange = (queryParams: IFilterChangeParam) => {
     const { currentItems } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
@@ -1650,25 +1651,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             onLoadBizdataSchema={onLoadBizdataSchema}
           />
         </Modal> */}
-        <Modal
-          wrapClassName="ant-modal-large"
-          title="全局筛选配置"
-          visible={globalFilterConfigPanelVisible}
-          footer={false}
-        >
-          <div className={styles.modalFilterConfig}>
-            <GlobalFilterConfig
-              views={bizlogics}
-              widgets={widgets}
-              items={currentItems}
-              filters={globalFilterTableSource}
+        {
+          !globalFilterConfigPanelVisible ? null : (
+            <Modal
+              wrapClassName="ant-modal-large"
+              title="全局筛选配置"
+              visible={globalFilterConfigPanelVisible}
+              footer={false}
               onCancel={this.hideGlobalFilterConfigPanel}
-              onOk={this.saveFilters}
-              onGetPreviewData={this.getFilterOptions}
-              previewData={filterOptions}
-            />
-          </div>
-        </Modal>
+            >
+              <div className={styles.modalFilterConfig}>
+                <GlobalFilterConfig
+                  views={bizlogics}
+                  widgets={widgets}
+                  items={currentItems}
+                  filters={globalFilterTableSource}
+                  onCancel={this.hideGlobalFilterConfigPanel}
+                  onOk={this.saveFilters}
+                  onGetPreviewData={this.getFilterOptions}
+                  previewData={filterOptions}
+                />
+              </div>
+            </Modal>
+          )
+        }
         {/* <FullScreenPanel
           widgets={widgets}
           widgetlibs={widgetlibs}

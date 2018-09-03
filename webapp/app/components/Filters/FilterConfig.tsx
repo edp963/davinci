@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { fromJS } from 'immutable'
 import { uuid } from 'utils/util'
 import { FilterTypes } from './filterTypes'
