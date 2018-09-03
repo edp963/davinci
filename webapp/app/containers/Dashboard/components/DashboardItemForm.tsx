@@ -130,6 +130,16 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       screenWidth
     } = this.state
 
+    const stepIndicator = type === 'add'
+      ? (
+        <Steps current={step}>
+          <Step title="Widget" />
+          <Step title="Frequent" />
+          <Step title="完成" />
+        </Steps>
+      )
+      : ''
+
     const widgetsArr = filteredWidgets.length ? filteredWidgets : widgets
 
     const { getFieldDecorator } = form
@@ -193,11 +203,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       <Form>
         <Row className={utilStyles.formStepArea}>
           <Col span={24}>
-            <Steps current={step}>
-              <Step title="Widget" />
-              <Step title="Frequent" />
-              <Step title="完成" />
-            </Steps>
+            {stepIndicator}
           </Col>
         </Row>
         <Row className={`${selectWidgetStep} ${styles.searchRow}`}>
