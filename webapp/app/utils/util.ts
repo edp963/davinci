@@ -18,7 +18,8 @@
  * >>
  */
 
-import notification from 'antd/lib/notification'
+import { removeToken } from './request'
+const message = require('antd/lib/message')
 
 /**
  * UUID生成器
@@ -70,25 +71,27 @@ export function safeAddition (num1, num2) {
 }
 
 /**
- * 异常通知弹窗
- * @param err 异常内容: Error
- * @param title 弹窗标题: string
+ * 通用saga异常处理
+ * @param error 异常内容: Error
  */
-export function notifyError (err, title) {
-  notification.error({
-    message: title,
-    description: err.toString(),
-    duration: null
-  })
-}
-
-/**
- * sagas 异常通知
- * @param err 异常内容: Error
- * @param prefix sagas名称: string
- */
-export function notifySagasError (err, prefix) {
-  notifyError(err, `${prefix} sagas or reducer 异常`)
+export function errorHandler (error) {
+  if (error.response) {
+    switch (error.response.status) {
+      case 403:
+        message.error('未登录或会话过期，请重新登录', 5)
+        removeToken()
+        localStorage.removeItem('token')
+        break
+      case 401:
+        message.error('您没有权限访问此数据', 5)
+        break
+      default:
+        message.error(error.response.data.header.msg, 5)
+        break
+    }
+  } else {
+    message.error(error, 5)
+  }
 }
 
 export function getBase64 (img, callback) {

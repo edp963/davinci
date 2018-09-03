@@ -19,10 +19,9 @@
  */
 
 import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
-const message = require('antd/lib/message')
 
 axios.defaults.validateStatus = function (status) {
-   return status < 400
+  return status < 400
 }
 
 function parseJSON (response) {
@@ -39,23 +38,10 @@ function refreshToken (response) {
   return response
 }
 
-function checkStatus (response) {
-  switch (response.status) {
-    case 403:
-      message.error('未登录或会话过期，请重新登录', 5)
-      removeToken()
-      localStorage.removeItem('token')
-      break
-    default:
-      break
-  }
-  return response
-}
 export function request (config: AxiosRequestConfig): AxiosPromise
 export function request (url: string, options?: AxiosRequestConfig): AxiosPromise
 export default function request (url: any, options?: AxiosRequestConfig): AxiosPromise {
   return axios(url, options)
-    .then(checkStatus)
     .then(refreshToken)
     .then(parseJSON)
 }
