@@ -295,7 +295,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private charts: object = {}
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
@@ -314,8 +313,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const {
       onLoadBizlogics,
       onLoadDashboardDetail,
-      params,
-      dashboards
+      params
     } = this.props
     const { pid, portalId, dashboardId } = params
     onLoadBizlogics(pid)
@@ -421,9 +419,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   public componentWillUnmount () {
     window.removeEventListener('resize', this.onWindowResize, false)
     this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
-    Object.keys(this.charts).forEach((k) => {
-      this.charts[k].dispose()
-    })
     this.props.onClearCurrentDashboard()
   }
 
@@ -466,7 +461,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
-// filters.items.map((i) => i.config.sql)
+
     let linkageFilters
     let globalFilters
     let params
@@ -534,29 +529,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  // private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
-  //   const chartInstance = this.charts[`widget_${itemId}`]
-
-  //   echartsOptionsGenerator({
-  //     dataSource,
-  //     chartInfo,
-  //     chartParams: {
-  //       id: widget.id,
-  //       name: widget.name,
-  //       desc: widget.desc,
-  //       flatTable_id: widget.flatTable_id,
-  //       widgetlib_id: widget.widgetlib_id,
-  //       ...JSON.parse(widget.chart_params)
-  //     },
-  //     interactIndex
-  //   })
-  //     .then((chartOptions) => {
-  //       chartInstance.setOption(chartOptions)
-  //       this.registerChartInteractListener(chartInstance, itemId)
-  //       chartInstance.hideLoading()
-  //     })
-  // }
-
   private registerChartInteractListener = (instance, itemId) => {
     instance.off('click')
     instance.on('click', (params) => {
@@ -616,6 +588,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.setState({
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
+      dashboardItemFormStep: 1,
       selectedWidget: dashboardItem.widgetId,
       polling: dashboardItem.polling
     }, () => {
@@ -667,12 +640,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { selectedWidget, dashboardItemFormType, linkageCascaderSource } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
-    const maxY = Math.max(...currentItems.map((item) => item.y + item.height))
-    const maxYItems = currentItems.filter((item) => item.y + item.height === maxY)
-    let maxX = Math.max(...maxYItems.map((item) => item.x + item.width))
+    const maxY = Math.max(...currentItems.map((item) => item.y + item.height), 0)
+    let maxX = 0
+    if (maxY) {
+      const maxYItems = currentItems.filter((item) => item.y + item.height === maxY)
+      maxX = Math.max(...maxYItems.map((item) => item.x + item.width))
 
-    if (maxX + 3 > cols) {
-      maxX = 0
+      if (maxX + 3 > cols) {
+        maxX = 0
+      }
     }
 
     const newItem = {
@@ -1311,7 +1287,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const itemblocks = []
       const layouts = { lg: [] }
       currentItems.forEach((dashboardItem) => {
-        const { id, x, y, width, height, widgetId } = dashboardItem
+        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
         const {
           datasource,
           loading,
@@ -1327,14 +1303,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const widget = widgets.find((w) => w.id === widgetId)
 
         itemblocks.push((
-          <div key={dashboardItem.id}>
+          <div key={id}>
             <DashboardItem
               itemId={id}
               widget={widget}
               data={datasource}
               loading={loading}
-              polling={dashboardItem.polling}
-              frequency={dashboardItem.frequency}
+              polling={polling}
+              frequency={frequency}
               shareInfo={shareInfo}
               secretInfo={secretInfo}
               shareInfoLoading={shareInfoLoading}
@@ -1386,38 +1362,41 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       )
     }
 
-    const modalButtons = dashboardItemFormStep
-      ? [(
-        <Button
-          key="back"
-          size="large"
-          onClick={this.changeDashboardItemFormStep(0)}
-        >
-          上一步
-        </Button>
-      ), (
-        <Button
-          key="submit"
-          size="large"
-          type="primary"
-          loading={modalLoading}
-          disabled={modalLoading}
-          onClick={this.saveDashboardItem}
-        >
-          保 存
-        </Button>
-      )]
-      : [(
-        <Button
-          key="forward"
-          size="large"
-          type="primary"
-          disabled={!selectedWidget}
-          onClick={this.changeDashboardItemFormStep(1)}
-        >
-          下一步
-        </Button>
-      )]
+    const saveDashboardItemButton = (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        disabled={modalLoading}
+        onClick={this.saveDashboardItem}
+      >
+        保 存
+      </Button>
+    )
+    const modalButtons = dashboardItemFormType === 'add'
+      ? dashboardItemFormStep
+        ? [(
+          <Button
+            key="back"
+            size="large"
+            onClick={this.changeDashboardItemFormStep(0)}
+          >
+            上一步
+          </Button>
+        ), saveDashboardItemButton]
+        : [(
+          <Button
+            key="forward"
+            size="large"
+            type="primary"
+            disabled={!selectedWidget}
+            onClick={this.changeDashboardItemFormStep(1)}
+          >
+            下一步
+          </Button>
+        )]
+      : saveDashboardItemButton
 
     const linkageModalButtons = [(
       <Button

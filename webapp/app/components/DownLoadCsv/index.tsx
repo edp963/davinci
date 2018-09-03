@@ -26,14 +26,14 @@ export interface IDownloadCsvProps {
   type?: string
   itemId?: number
   shareInfo: string
-  shareInfoLoading: boolean
+  shareInfoLoading?: boolean
   downloadCsvLoading: boolean
   onLoadDashboardShareLink?: (id: number, authName: string) => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
   onDownloadCsv: () => void
 }
 
-export function DownLoadCsv (props: IDownloadCsvProps) {
+export function DownloadCsv (props: IDownloadCsvProps) {
   const { shareInfoLoading, downloadCsvLoading } = props
   const iconType = shareInfoLoading || downloadCsvLoading ? 'loading' : 'download'
   return (
@@ -72,4 +72,4 @@ function getShareInfo (props) {
   }
 }
 
-export default DownLoadCsv
+export default DownloadCsv

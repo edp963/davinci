@@ -254,7 +254,6 @@ function dashboardReducer (state = initialState, action) {
         }
       })
     case LOAD_DATA_FROM_ITEM_FAILURE:
-      console.log(payload)
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {

@@ -288,7 +288,7 @@ export function* getDistinctValue (action) {
 
 export function* getDataFromItem (action) {
   const { payload } = action
-  const {renderType, itemId, viewId, params: parameters } = payload
+  const { renderType, itemId, viewId, params: parameters } = payload
   const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
 
   try {
