@@ -290,11 +290,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       </Tooltip>
     )
 
-    const widgetButton = (
-      <Tooltip title="编辑widget">
-        <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
-      </Tooltip>
-    )
+    let widgetButton
+    if (currentProject) {
+      widgetButton = (
+        <Tooltip title="编辑widget">
+          <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
+        </Tooltip>
+      )
+    }
 
     const dropdownMenu = (
       <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
