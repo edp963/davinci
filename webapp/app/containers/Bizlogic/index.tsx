@@ -51,6 +51,7 @@ import { makeSelectLoginUser } from '../App/selectors'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import {IProject} from '../Projects'
+import { ButtonProps } from 'antd/lib/button/button'
 
 interface IBizlogicsProps  {
   params: any
@@ -165,8 +166,8 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       currentProject
     } = this.props
 
-    const AdminButton = ModulePermission(currentProject, 'view', true)(Button)
-    const EditButton = ModulePermission(currentProject, 'view', false)(Button)
+    const AdminButton = ModulePermission<ButtonProps>(currentProject, 'view', true)(Button)
+    const EditButton = ModulePermission<ButtonProps>(currentProject, 'view', false)(Button)
 
     const columns = [{
       title: '名称',
