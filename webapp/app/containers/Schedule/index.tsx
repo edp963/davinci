@@ -23,7 +23,7 @@ import widgetSaga from '../Widget/sagas'
 // import dashboardReducer from '../Dashboard/reducer'
 // import dashboardSaga from '../Dashboard/sagas'
 import {makeSelectCurrentProject} from '../Projects/selectors'
-import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading} from './selectors'
+import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
@@ -67,6 +67,7 @@ interface IScheduleProps {
   tableLoading: boolean
   formLoading: boolean
   currentProject: IProject
+  vizs: any
   onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: (pid: number) => any
   onLoadVizs: (pid: number) => any
@@ -331,6 +332,13 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     })
   }
 
+  private formatterVizs = () => {
+    const { vizs } = this.props
+    if (vizs && vizs.length) {
+      
+    }
+  }
+
   private onLoadTreeData = (treeNode) => {
     const eventKey = treeNode.props.eventKey
     return new Promise((resolve) => {
@@ -430,7 +438,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       currentProject,
       tableLoading,
       formLoading,
-      onLoadVizs
+      vizs
     } = this.props
 
     const pagination: PaginationProps = {
@@ -609,6 +617,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
               >
                 <ConfigForm
                   type={configType}
+                  vizs={vizs}
                   dashboardTree={dashboardTree}
                   treeSelect={this.onTreeSelect}
                   treeChange={this.onTreeChange}
@@ -632,7 +641,8 @@ const mapStateToProps = createStructuredSelector({
   currentDashboard: makeSelectCurrentDashboard(),
   currentProject: makeSelectCurrentProject(),
   tableLoading: makeSelectTableLoading(),
-  formLoading: makeSelectFormLoading()
+  formLoading: makeSelectFormLoading(),
+  vizs: makeSelectVizs()
 })
 
 function mapDispatchToProps (dispatch) {

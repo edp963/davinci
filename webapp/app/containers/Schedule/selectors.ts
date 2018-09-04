@@ -37,6 +37,10 @@ const makeSelectFormLoading = () => createSelector(
   selectSchedule,
   (substate) => substate.get('formLoading')
 )
+const makeSelectVizs = () => createSelector(
+  selectSchedule,
+  (substate) => substate.get('vizs')
+)
 
 export {
   selectSchedule,
@@ -45,5 +49,6 @@ export {
   makeSelectDashboards,
   makeSelectCurrentDashboard,
   makeSelectTableLoading,
-  makeSelectFormLoading
+  makeSelectFormLoading,
+  makeSelectVizs
 }

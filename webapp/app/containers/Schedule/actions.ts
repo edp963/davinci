@@ -163,11 +163,11 @@ export function loadVizs (pid) {
   }
 }
 
-export function vizsLoaded (schedules) {
+export function vizsLoaded (result) {
   return {
     type: LOAD_VIZS_SUCCESS,
     payload: {
-      schedules
+      result
     }
   }
 }

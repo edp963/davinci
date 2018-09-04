@@ -12,7 +12,9 @@ import {
   currentScheduleStatusChanged,
   changeSchedulesStatusFail,
   scheduleUpdated,
-  updateScheduleFail
+  updateScheduleFail,
+  vizsLoaded,
+  loadVizsFail
 } from './actions'
 import request from '../../utils/request'
 import api from '../../utils/api'
@@ -118,14 +120,46 @@ export function* getVizsData ({ payload }) {
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
-    const portals = {}
-    portalsList.forEach((portal, index) => {
-      portals[`${portal['id']}&&${portal['name']}`] = readListAdapter(list[index])
+    const portals = portalsList.map((portal, index) => {
+      portal.children =  buildTree(readListAdapter(list[index]))
+      return portal
     })
-    const result = {display: displayList, portal: portals}
-    console.log(result)
+    const result = [{name: 'display', children: displayList}, {name: 'portal', children: portals}]
+    yield put(vizsLoaded(result))
   } catch (err) {
+    yield put(loadVizsFail())
     message.error('获取失败')
+  }
+
+  function buildTree (list) {
+    const temp = {}
+    const tree = {}
+    const result = []
+    list.forEach((l, index) => temp[list[index].id] = list[index])
+    for (const i in temp) {
+      if (temp[i].parentId) {
+        if (!temp[temp[i].parentId].children) {
+          temp[temp[i].parentId].children = {}
+        }
+        temp[temp[i].parentId].children[temp[i].id] = temp[i]
+      } else {
+        tree[temp[i].id] =  temp[i]
+      }
+    }
+    function arr (tree, wrapper) {
+      for (const attr in tree) {
+        if (tree[attr]['children']) {
+          wrapper.push(tree[attr])
+          const children = tree[attr]['children']
+          tree[attr]['children'] = []
+          arr(children, tree[attr]['children'])
+        } else {
+          wrapper.push(tree[attr])
+        }
+      }
+    }
+    arr(tree, result)
+    return result
   }
 }
 

@@ -19,7 +19,9 @@ import {
   UPDATE_SCHEDULES,
   UPDATE_SCHEDULES_SUCCESS,
   UPDATE_SCHEDULES_FAILURE,
-  CHANGE_SCHEDULE_STATUS_FAILURE
+  CHANGE_SCHEDULE_STATUS_FAILURE,
+  LOAD_VIZS_SUCCESS,
+  LOAD_VIZS_FAILUER
 } from './constants'
 import {
   LOAD_DASHBOARDS_SUCCESS,
@@ -35,7 +37,8 @@ const initialState = fromJS({
   dashboards: false,
   currentDashboard: false,
   tableLoading: false,
-  formLoading: false
+  formLoading: false,
+  vizs: false
 })
 
 function scheduleReducer (state = initialState, action) {
@@ -91,6 +94,11 @@ function scheduleReducer (state = initialState, action) {
         .set('formLoading', false)
     case UPDATE_SCHEDULES_FAILURE:
       return state.set('formLoading', false)
+    case LOAD_VIZS_SUCCESS:
+      return state
+        .set('vizs', payload.result)
+    case LOAD_VIZS_FAILUER:
+      return state
     default:
       return state
   }
