@@ -32,7 +32,7 @@ interface ILayerItemProps {
   polling: boolean
   frequency: string
   interactId: string
-  rendered: boolean
+  rendered?: boolean
   renderType: RenderType
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onCheckTableInteract?: (itemId: number) => object

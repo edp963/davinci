@@ -77,7 +77,8 @@ import {
   copySlideLayers,
   pasteSlideLayers,
   undoOperation,
-  redoOperation  } from './actions'
+  redoOperation,
+  loadDisplayShareLink  } from './actions'
 import widgetlibs from '../../assets/json/widgetlib'
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
@@ -144,6 +145,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onCopySlideLayers: (slideId, layers) => void
   onPasteSlideLayers: (displayId, slideId, layers) => void
+  onLoadDisplayShareLink: (id: number, authName: string) => void
   onUndo: (currentState) => void
   onRedo: (nextState) => void
   onHideNavigator: () => void
@@ -671,6 +673,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       widgets,
       currentDisplay,
       onSelectLayer,
+      onLoadDisplayShareLink,
       canUndo,
       canRedo
     } = this.props
@@ -768,6 +771,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onDeleteLayers={this.deleteLayers}
           onCopyLayers={this.copyLayers}
           onPasteLayers={this.pasteLayers}
+          onLoadDisplayShareLink={onLoadDisplayShareLink}
           onUndo={this.undo}
           onRedo={this.redo}
           canUndo={canUndo}
@@ -844,6 +848,7 @@ function mapDispatchToProps (dispatch) {
     onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
     onCopySlideLayers: (slideId, layers) => dispatch(copySlideLayers(slideId, layers)),
     onPasteSlideLayers: (displayId, slideId, layers) => dispatch(pasteSlideLayers(displayId, slideId, layers)),
+    onLoadDisplayShareLink: (id, authName) => dispatch(loadDisplayShareLink(id, authName)),
     onUndo: (currentState) => dispatch(undoOperation(currentState)),
     onRedo: (nextState) => dispatch(redoOperation(nextState)),
     onHideNavigator: () => dispatch(hideNavigator())
