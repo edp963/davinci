@@ -154,7 +154,7 @@ export class LayerList extends React.Component <ILayerListProps, ILayerListState
     const { ctrlKey, metaKey } = e
     const { layersStatus, onSelectLayer } = this.props
     const exclusive = !ctrlKey && !metaKey
-    onSelectLayer({ id: layerId, selected: !layersStatus[layerId], exclusive})
+    onSelectLayer({ id: layerId, selected: !layersStatus[layerId].selected, exclusive})
     e.stopPropagation()
   }
 
@@ -206,7 +206,7 @@ export class LayerList extends React.Component <ILayerListProps, ILayerListState
         <li key={layer.id}>
           <i
             onClick={this.changeLayerStatus(layer.id)}
-            className={`iconfont ${layersStatus[layer.id] ? 'icon-selected' : 'icon-unselected'}`}
+            className={`iconfont ${layersStatus[layer.id].selected ? 'icon-selected' : 'icon-unselected'}`}
           />
           <span title={layer.name}>{layer.name}</span>
         </li>

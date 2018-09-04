@@ -225,13 +225,11 @@ export function dragSelectedLayer ({ id, deltaX, deltaY }) {
   }
 }
 
-export function resizeSelectedLayer ({ id, deltaWidth, deltaHeight }) {
+export function resizeLayers (layerIds) {
   return {
-    type: ActionTypes.RESIZE_SELECT_LAYER,
+    type: ActionTypes.RESIZE_LAYERS,
     payload: {
-      id,
-      deltaWidth,
-      deltaHeight
+      layerIds
     }
   }
 }

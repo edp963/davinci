@@ -8,14 +8,12 @@ import Draggable from '../../../components/Draggable/react-draggable'
 // const Menu = require('antd/lib/menu')
 // import LayerContextMenu from './LayerContextMenu'
 
-import { ECHARTS_RENDERER } from '../../../globalConstants'
 import {
   GraphTypes,
   SecondaryGraphTypes
 } from 'utils/util'
-import Chart from '../../Dashboard/components/Chart'
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps } from '../../Widget/components/Pivot/Pivot'
+import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
 
 const Resizable = require('react-resizable').Resizable
 
@@ -29,13 +27,14 @@ interface ILayerItemProps {
   selected?: boolean
   itemId: number
   widget: any
-  chartInfo: any
   data: any
   loading: boolean
-  isInteractive?: boolean
-  interactId?: string
-  onGetChartData: (renderType: string, itemId: number, widgetId: number, queryParams?: any) => void
-  onRenderChart: (itemId: number, widget: any, dataSource: any[], chartInfo: any, interactIndex?: number) => void
+  polling: boolean
+  frequency: string
+  interactId: string
+  rendered: boolean
+  renderType: RenderType
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
@@ -76,21 +75,9 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentDidMount () {
-    const {
-      layer
-    } = this.props
-    if (layer.type !== GraphTypes.Chart) {
-      return
-    }
-
-    const {
-      itemId,
-      widget,
-      onGetChartData
-    } = this.props
-
-    onGetChartData('rerender', itemId, widget.id)
-    this.setFrequent(this.props)
+      const { itemId, widget, onGetChartData } = this.props
+      onGetChartData('clear', itemId, widget.id)
+      this.setFrequent(this.props)
   }
 
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
@@ -114,43 +101,23 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     if (layer.type !== GraphTypes.Chart) {
       return
     }
+  }
 
+  public componentWillUpdate (nextProps: ILayerItemProps) {
     const {
       itemId,
       widget,
-      data,
-      chartInfo,
-      onRenderChart
+      polling,
+      onGetChartData,
+      rendered,
+      layer
     } = nextProps
 
-    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER) {
-      onRenderChart(itemId, widget, data.dataSource, chartInfo)
-    }
-    if (layer.triggerType !== nextProps.layer.triggerType) {
-      this.setFrequent(nextProps)
-    }
-  }
-
-  public componentWillUpdate (nextProps) {
-    const {
-      layer
-    } = this.props
     if (layer.type !== GraphTypes.Chart) {
       return
     }
 
-    const {
-      itemId,
-      widget,
-      data,
-      chartInfo,
-      onRenderChart
-    } = nextProps
-
-    if (data && data !== this.props.data && chartInfo.renderer === ECHARTS_RENDERER) {
-      onRenderChart(itemId, widget, data.dataSource, chartInfo)
-    }
-    if (layer.triggerType !== nextProps.layer.triggerType) {
+    if (polling !== this.props.polling) {
       this.setFrequent(nextProps)
     }
   }
@@ -163,17 +130,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   private setFrequent = (props: ILayerItemProps) => {
     const {
+      polling,
+      frequency,
       layer,
       itemId,
       widget,
       onGetChartData
     } = props
-    if (layer.triggerType === 'frequent') {
+
+    clearInterval(this.frequent)
+
+    if (polling) {
       this.frequent = window.setInterval(() => {
-        onGetChartData('dynamic', itemId, widget.id)
-      }, Number(layer.triggerParams) * 1000)
-    } else {
-      clearInterval(this.frequent)
+        onGetChartData('refresh', itemId, widget.id)
+      }, Number(frequency) * 1000)
     }
   }
 
@@ -275,10 +245,9 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
-      chartInfo,
       data,
       loading,
-      isInteractive,
+      renderType,
       interactId,
       onCheckTableInteract,
       onDoTableInteract
@@ -303,22 +272,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       container: styles.block
     }
 
-    let updateParams
-    let updateConfig
-    let currentBizlogicId
-
-    if (widget.config) {
-      const config = JSON.parse(widget.config)
-      currentBizlogicId = widget.flatTable_id
-      // FIXME 前期误将 update_params 和 update_fields 字段 stringify 后存入数据库，此处暂时做判断避免问题，保存时不再 stringify，下个大版本后删除判断语句
-      updateParams = typeof config['update_params'] === 'string'
-        ? JSON.parse(config['update_params'])
-        : config['update_params']
-      updateConfig = typeof config['update_fields'] === 'string'
-        ? JSON.parse(config['update_fields'])
-        : config['update_fields']
-    }
-
     const exactScaleWidth = pure ? scale[0] : 1
     const exactScaleHeight = pure ? scale[1] : 1
     const { chartParams } = JSON.parse(widget.config)
@@ -333,26 +286,10 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           <h4>{layer.name}</h4>
         </div>
         <div className={styles.body}>
-          {/* <Chart
-            id={`${itemId}`}
-            w={width * exactScaleWidth}
-            h={height * exactScaleHeight}
-            data={data || {}}
-            loading={loading}
-            chartInfo={chartInfo}
-            updateConfig={updateConfig}
-            chartParams={chartParams}
-            updateParams={updateParams}
-            currentBizlogicId={widget.viewId}
-            classNames={chartClass}
-            interactId={interactId}
-            onCheckTableInteract={onCheckTableInteract}
-            onDoTableInteract={onDoTableInteract}
-          /> */}
           <Pivot
-            data={data || {}}
-            chart={chartInfo}
             {...pivotProps}
+            data={data || []}
+            renderType={renderType}
           />
         </div>
       </div>

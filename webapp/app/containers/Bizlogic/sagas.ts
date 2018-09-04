@@ -288,7 +288,7 @@ export function* getDistinctValue (action) {
 
 export function* getDataFromItem (action) {
   const { payload } = action
-  const { renderType, itemId, viewId, params: parameters } = payload
+  const { renderType, itemId, viewId, params: parameters, vizType } = payload
   const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
 
   try {
@@ -301,9 +301,9 @@ export function* getDataFromItem (action) {
         params: params.concat(linkageParams).concat(globalParams)
       }
     })
-    yield put(dataFromItemLoaded(renderType, itemId, data.payload))
+    yield put(dataFromItemLoaded(renderType, itemId, data.payload, vizType))
   } catch (err) {
-    yield put(loadDataFromItemFail(itemId))
+    yield put(loadDataFromItemFail(itemId, vizType))
   }
 }
 

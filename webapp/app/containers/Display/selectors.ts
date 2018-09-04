@@ -42,32 +42,17 @@ const makeSelectCurrentLayers = () => createSelector(
   ({ present }) =>  present.get('currentLayers')
 )
 
-const makeSelectCurrentDatasources = () => createSelector(
+const makeSelectCurrentLayersInfo = () => createSelector(
   selectDisplay,
-  ({ present }) =>  present.get('currentDatasources')
-)
-
-const makeSelectCurrentLayersLoading = () => createSelector(
-  selectDisplay,
-  ({ present }) =>  present.get('currentLayersLoading')
-)
-
-const makeSelectCurrentLayersQueryParams = () => createSelector(
-  selectDisplay,
-  ({ present }) =>  present.get('currentLayersQueryParams')
-)
-
-const makeSelectCurrentLayersStatus = () => createSelector(
-  selectDisplay,
-  ({ present }) => present.get('currentLayersStatus')
+  ({ present }) => present.get('currentLayersInfo')
 )
 
 const makeSelectCurrentSelectedLayers = () => createSelector(
   selectDisplay,
   ({ present }) => {
-    const layerStatus = present.get('currentLayersStatus')
+    const layersInfo = present.get('currentLayersInfo')
     const layers = present.get('currentLayers')
-    return layers.filter((layer) => layerStatus[layer.id])
+    return layers.filter((layer) => layersInfo[layer.id].selected)
   }
 )
 
@@ -136,12 +121,8 @@ export {
   makeSelectCurrentDisplay,
   makeSelectCurrentSlide,
   makeSelectCurrentLayers,
+  makeSelectCurrentLayersInfo,
 
-  makeSelectCurrentDatasources,
-  makeSelectCurrentLayersLoading,
-  makeSelectCurrentLayersQueryParams,
-
-  makeSelectCurrentLayersStatus,
   makeSelectCurrentSelectedLayers,
 
   makeSelectClipboardLayers,

@@ -227,7 +227,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItemsInfo', null)
 
     case LOAD_DATA_FROM_ITEM:
-      return state
+      return payload.vizType !== 'dashboard' ? state : state
         .set('currentItemsInfo', {
           ...itemsInfo,
           [payload.itemId]: {
@@ -244,7 +244,7 @@ function dashboardReducer (state = initialState, action) {
         })
 
     case LOAD_DATA_FROM_ITEM_SUCCESS:
-      return state.set('currentItemsInfo', {
+      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
@@ -254,7 +254,7 @@ function dashboardReducer (state = initialState, action) {
         }
       })
     case LOAD_DATA_FROM_ITEM_FAILURE:
-      return state.set('currentItemsInfo', {
+      return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
