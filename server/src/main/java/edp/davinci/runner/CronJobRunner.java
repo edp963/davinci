@@ -31,7 +31,8 @@ public class CronJobRunner implements ApplicationRunner {
     private CronJobService cronJobService;
 
     /**
-     * 引用启动后立即开启已启动的cronjob
+     * 应用启动后开启已启动的cronjob
+     *
      * @param args
      * @throws Exception
      */
