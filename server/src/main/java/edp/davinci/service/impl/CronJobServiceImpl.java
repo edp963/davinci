@@ -214,7 +214,10 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             e.printStackTrace();
         }
         cronJob.setUpdateTime(new Date());
-        cronJobMapper.update(cronJob);
+        int update = cronJobMapper.update(cronJob);
+        if (update > 0) {
+            quartzUtils.modifyJob(cronJob);
+        }
 
         return resultMap.successAndRefreshToken(request);
     }
@@ -249,7 +252,10 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to delete this job");
         }
 
-        cronJobMapper.deleteById(id);
+        int i = cronJobMapper.deleteById(id);
+        if (i > 0) {
+            quartzUtils.removeJob(cronJobWithProject);
+        }
 
         return resultMap.successAndRefreshToken(request);
     }
@@ -323,6 +329,19 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
         } catch (ServerException e) {
             e.printStackTrace();
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+    }
+
+
+    @Override
+    public void startAllJobs() {
+        List<CronJob> jobList = cronJobMapper.getStartedJobs();
+        if (null != jobList && jobList.size() > 0) {
+            for (CronJob cronJob : jobList) {
+                if (CronJobStatusEnum.START.getStatus().equals(cronJob.getJobStatus())) {
+                    quartzUtils.addJob(cronJob);
+                }
+            }
         }
     }
 }

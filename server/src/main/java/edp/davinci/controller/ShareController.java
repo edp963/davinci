@@ -23,9 +23,11 @@ import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
 import edp.core.enums.HttpCodeEnum;
+import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.User;
 import edp.davinci.service.ShareService;
@@ -50,7 +52,7 @@ import javax.validation.Valid;
 @Slf4j
 @RestController
 @RequestMapping(value = Constants.BASE_API_PATH + "/share", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-public class ShareController {
+public class ShareController extends BaseController {
 
 
     @Autowired
@@ -198,6 +200,51 @@ public class ShareController {
 
         try {
             ResultMap resultMap = shareService.getShareData(token, executeParam, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * share 获取唯一值
+     * @param token
+     * @param viewId
+     * @param param
+     * @param bindingResult
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get share data")
+    @AuthShare
+    @PostMapping(value = "/data/{token}/distinctvalue/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getDistinctValue(@PathVariable("token") String token,
+                                                @PathVariable("viewId") Long viewId,
+                                                @Valid @RequestBody DistinctParam param,
+                                                @ApiIgnore BindingResult bindingResult,
+                                                @ApiIgnore @CurrentUser User user,
+                                                HttpServletRequest request) {
+
+        if (StringUtils.isEmpty(token)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(viewId)) {
+            ResultMap resultMap = new ResultMap().fail().message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = shareService.getDistinctValue(token, viewId, param, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

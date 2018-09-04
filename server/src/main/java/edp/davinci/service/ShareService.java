@@ -21,6 +21,7 @@ package edp.davinci.service;
 import edp.core.exception.ServerException;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.User;
 
@@ -41,4 +42,5 @@ public interface ShareService {
 
     ResultMap generationShareDataCsv(String token, ViewExecuteParam executeParam, User user, HttpServletRequest request);
 
+    ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request);
 }

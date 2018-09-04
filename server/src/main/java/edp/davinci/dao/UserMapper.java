@@ -41,6 +41,10 @@ public interface UserMapper {
     User selectByUsername(@Param("username") String username);
 
 
+    @Select({"select * from `user` where email = #{email}"})
+    User selectByEmail(@Param("email") String email);
+
+
     List<UserBaseInfo> getUsersByKeyword(@Param("keyword") String keyword, @Param("orgId") Long orgId);
 
 
