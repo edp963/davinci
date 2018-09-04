@@ -52,22 +52,20 @@ export function* getDisplay (action) {
 
 export function* getData (action) {
   const { payload } = action
-  const { layerId, token, groups, aggregators, sql, cache, expired } = payload
+  const { renderType, layerId, dataToken, params: parameters } = payload
+  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.share}/data/${token}`,
+      url: `${api.share}/data/${dataToken}`,
       data: {
-        groups,
-        aggregators,
-        filters: [],
-        params: [],
-        orders: [],
-        cache,
-        expired
+        ...rest,
+        filters: filters.concat(linkageFilters).concat(globalFilters),
+        params: params.concat(linkageParams).concat(globalParams)
       }
     })
-    yield put(layerDataLoaded(layerId, readListAdapter(asyncData)))
+    yield put(layerDataLoaded(renderType, layerId, readListAdapter(asyncData)))
   } catch (err) {
     yield put(loadLayerDataFail(err))
   }

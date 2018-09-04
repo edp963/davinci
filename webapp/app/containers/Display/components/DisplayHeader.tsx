@@ -64,6 +64,7 @@ interface IDisplayHeaderProps {
   onPasteLayers: () => void
   onUndo: () => void
   onRedo: () => void
+  onLoadDisplayShareLink: (id: number, authName: string) => void
 }
 
 interface IDisplayHeaderStates {
@@ -118,7 +119,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
       widgetId: w.id,
       name: w.name,
       type: GraphTypes.Chart,
-      params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart)),
+      params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart))
       // triggerType,
       // triggerParams
     }))
@@ -150,7 +151,12 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   public renderShare () {
-    const { display, currentDisplayShareInfo, currentDisplaySecretInfo, currentDisplayShareInfoLoading } = this.props
+    const {
+      display,
+      currentDisplayShareInfo,
+      currentDisplaySecretInfo,
+      currentDisplayShareInfoLoading,
+      onLoadDisplayShareLink } = this.props
     if (!display) { return null }
 
     const { displaySharePanelAuthorized } = this.state
@@ -166,6 +172,7 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
             shareInfoLoading={currentDisplayShareInfoLoading}
             authorized={displaySharePanelAuthorized}
             afterAuthorization={this.changeDisplaySharePanelAuthorizeState(true)}
+            onLoadDisplayShareLink={onLoadDisplayShareLink}
           />
         }
         trigger="click"

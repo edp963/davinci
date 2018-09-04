@@ -324,7 +324,6 @@ function displayReducer (state = initialState, action) {
 }
 
 export default undoable(displayReducer, {
-  debug: true,
   filter: includeAction([
     ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
     ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,

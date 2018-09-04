@@ -1,3 +1,23 @@
+/*
+ * <<
+ * Davinci
+ * ==
+ * Copyright (C) 2016 - 2017 EDP
+ * ==
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * >>
+ */
+
 import * as React from 'react'
 import { RouteComponentProps } from 'react-router'
 import Helmet from 'react-helmet'
@@ -19,6 +39,8 @@ import {
 import widgetlibs from '../../../app/assets/json/widgetlib'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
+import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
+import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 
 const styles = require('../../../app/containers/Display/Display.less')
 
@@ -34,9 +56,7 @@ import {
   makeSelectSlide,
   makeSelectLayers,
   makeSelectWidgets,
-  makeSelectDatasources,
-  makeSelectLoadings,
-  makeSelectLayersQueryParams
+  makeSelectLayersInfo
 } from './selectors'
 
 interface IDisplayProps extends RouteComponentProps<{}, {}> {
@@ -45,11 +65,41 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
   slide: any
   layers: any
   widgets: any
-  datasources: any
-  loadings: any
-  layersQueryParams: any
+  layersInfo: {
+    [key: string]: {
+      datasource: any[]
+      loading: boolean
+      queryParams: {
+        filters: string
+        linkageFilters: string
+        globalFilters: string
+        params: Array<{name: string, value: string}>
+        linkageParams: Array<{name: string, value: string}>
+        globalParams: Array<{name: string, value: string}>
+      }
+      downloadCsvLoading: boolean
+      interactId: string
+      renderType: RenderType
+    }
+  }
   onLoadDisplay: (token, resolve, reject) => void
-  onLoadLayerData: (layerId: number, token: string, groups, aggregators, sql, cache, expired) => void
+  onLoadLayerData: (
+    renderType: RenderType,
+    layerId: number,
+    dataToken: string,
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      cache: boolean
+      expired: number
+    }
+  ) => void
 }
 
 interface IDisplayStates {
@@ -107,61 +157,83 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     }
   }
 
-  private getChartData = (renderType: string, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
       widgets,
-      layers,
-      layersQueryParams,
+      layersInfo,
       onLoadLayerData
     } = this.props
+
     const widget = widgets.find((w) => w.id === widgetId)
+    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
-    const widgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics } = widgetConfig
+    const cachedQueryParams = layersInfo[itemId].queryParams
 
-    const cachedQueryParams = layersQueryParams[itemId]
-
-    let filters
     let linkageFilters
     let globalFilters
     let params
     let linkageParams
     let globalParams
-    let pagination
 
     if (queryParams) {
-      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
-      filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
+    }
+
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
     }
 
     onLoadLayerData(
+      renderType,
       itemId,
       widget.dataToken,
-      cols.concat(rows),
-      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
-        filters,
+        groups,
+        aggregators,
+        filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
         linkageParams,
-        globalParams
-      },
-      false,
-      0
+        globalParams,
+        cache: false,
+        expired: 0
+      }
     )
   }
 
@@ -243,9 +315,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       display,
       slide,
       layers,
-      datasources,
-      loadings,
-      layersQueryParams
+      layersInfo
     } = this.props
 
     const { scale, showLogin, shareInfo } = this.state
@@ -256,26 +326,24 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       const slideStyle = this.getSlideStyle(JSON.parse(slide.config).slideParams)
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
-        const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
         const layerId = layer.id
-        const data = datasources[layerId]
-        const loading = loadings[layerId]
-        const sql = layersQueryParams[layerId]
+        const { datasource, loading, interactId, renderType } = layersInfo[layerId]
 
         return (
           <LayerItem
+            key={layer.id}
             pure={true}
             scale={scale}
-            ref={(f) => this[`layerId_${layer.id}`]}
             itemId={layerId}
             widget={widget}
-            chartInfo={chartInfo}
-            data={data}
-            key={layer.id}
+            data={datasource}
             layer={layer}
             loading={loading}
+            polling={false}
+            frequency={'10000'}
+            interactId={interactId}
+            renderType={renderType}
             onGetChartData={this.getChartData}
-            onRenderChart={this.renderChart}
           />
         )
       }) : null
@@ -302,15 +370,13 @@ const mapStateToProps = createStructuredSelector({
   slide: makeSelectSlide(),
   layers: makeSelectLayers(),
   widgets: makeSelectWidgets(),
-  datasources: makeSelectDatasources(),
-  loadings: makeSelectLoadings(),
-  layersQueryParams: makeSelectLayersQueryParams()
+  layersInfo: makeSelectLayersInfo()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDisplay: (token, resolve, reject) => dispatch(loadDisplay(token, resolve, reject)),
-    onLoadLayerData: (layerId: string, token: string, groups, aggregators, sql, cache, expired) => dispatch(loadLayerData(layerId, token, groups, aggregators, sql, cache, expired))
+    onLoadLayerData: (renderType, layerId, dataToken, params) => dispatch(loadLayerData(renderType, layerId, dataToken, params))
   }
 }
 

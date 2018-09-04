@@ -27,15 +27,12 @@ const initialState = fromJS({
   display: null,
   slide: null,
   layers: [],
-  widgets: [],
-  datasources: {},
-  loadings: {},
-  layersQueryParams: {}
+  layersInfo: {},
+  widgets: []
 })
 
 function displayReducer (state = initialState, { type, payload }) {
-  const datasources = state.get('datasources')
-  const loadings = state.get('loadings')
+  const layersInfo = state.get('layersInfo')
 
   switch (type) {
     case ActionTypes.LOAD_SHARE_DISPLAY_SUCCESS:
@@ -45,19 +42,21 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('slide', payload.slide)
         .set('layers', payload.slide.relations)
         .set('widgets', payload.widgets)
-        .set('datasources', {})
-        .set('loadings', {})
-        .set('layersQueryParams', payload.slide.relations.reduce((obj, layer) => {
-          if (layer.type === GraphTypes.Chart) {
-            obj[layer.id] = {
-              filters: '',
-              linkageFilters: '',
-              globalFilters: '',
+        .set('layersInfo', payload.slide.relations.reduce((obj, layer) => {
+          obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
+            datasource: [],
+            loading: false,
+            queryParams: {
+              linkageFilters: [],
+              globalFilters: [],
               params: [],
               linkageParams: [],
-              globalParams: [],
-              pagination: {}
-            }
+              globalParams: []
+            },
+            interactId: '',
+            renderType: 'rerender'
+          } : {
+            loading: false
           }
           return obj
         }, {}))
@@ -67,28 +66,35 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('slide', null)
         .set('layers', [])
         .set('widgets', [])
-        .set('datasources', {})
+        .set('layersInfo', {})
     case ActionTypes.LOAD_LAYER_DATA:
       return state
-        .set('loadings', {
-          ...loadings,
-          [payload.layerId]: true
+        .set('layersInfo', {
+          ...layersInfo,
+          [payload.layerId]: {
+            ...layersInfo[payload.layerId],
+            loading: true
+          }
         })
     case ActionTypes.LOAD_LAYER_DATA_SUCCESS:
       return state
-        .set('datasources', {
-          ...datasources,
-          [payload.layerId]: payload.data
-        })
-        .set('loadings', {
-          ...loadings,
-          [payload.layerId]: false
+        .set('layersInfo', {
+          ...layersInfo,
+          [payload.layerId]: {
+            ...layersInfo[payload.layerId],
+            loading: false,
+            datasource: payload.data,
+            renderType: payload.renderType
+          }
         })
     case ActionTypes.LOAD_LAYER_DATA_FAILURE:
       return state
         .set('loadings', {
-          ...loadings,
-          [payload.layerId]: false
+          ...layersInfo,
+          [payload.layerId]: {
+            ...layersInfo[payload.layerId],
+            loading: false
+          }
         })
     default:
         return state

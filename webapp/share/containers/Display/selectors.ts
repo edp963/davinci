@@ -47,19 +47,9 @@ const makeSelectWidgets = () => createSelector(
   (shareState) => shareState.get('widgets')
 )
 
-const makeSelectDatasources = () => createSelector(
+const makeSelectLayersInfo = () => createSelector(
   selectShare,
-  (shareState) => shareState.get('datasources')
-)
-
-const makeSelectLoadings = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('loadings')
-)
-
-const makeSelectLayersQueryParams = () => createSelector(
-  selectShare,
-  (shareState) => shareState.get('layersQueryParams')
+  (shareState) => shareState.get('layersInfo')
 )
 
 export {
@@ -69,7 +59,5 @@ export {
   makeSelectSlide,
   makeSelectLayers,
   makeSelectWidgets,
-  makeSelectDatasources,
-  makeSelectLoadings,
-  makeSelectLayersQueryParams
+  makeSelectLayersInfo
 }
