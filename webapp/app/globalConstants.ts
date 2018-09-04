@@ -69,7 +69,6 @@ export const SQL_NUMBER_TYPES = [
   'BIT', 'SERIAL', 'BOOL', 'BOOLEAN', 'DEC', 'FIXED', 'NUMERIC'
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
-export const SQL_FIELD_TYPES = ['type1', 'type2', 'type3', 'type4', 'type5', 'type6','type7', 'type8']
 
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
