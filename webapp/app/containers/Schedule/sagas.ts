@@ -39,7 +39,8 @@ export function* addSchedules ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.schedule,
-      data: writeAdapter(payload.schedule)
+    //  data: writeAdapter(payload.schedule)
+      data: payload.schedule
     })
     const result = readObjectAdapter(asyncData)
     yield put(scheduleAdded(result))
@@ -117,10 +118,10 @@ export function* getVizsData ({ payload }) {
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = readListAdapter(portalsData)
     const displayList = readListAdapter(displayData).map((display) => ({...display, ...{
-      contenType: 'display',
+      contentType: 'display',
       label: `${display.name}`,
       key: display.name,
-      value: `${display.id}`,
+      value: `${display.id}(d)`,
       isLeaf: true
     }}))
     const list = yield all(portalsList.map((portals, index) => {
@@ -131,16 +132,16 @@ export function* getVizsData ({ payload }) {
       return {
         ...portal,
         ...{
-          contenType: 'portal',
+          contentType: 'portal',
           label: `${portal.name}`,
           key: portal.name,
-          value: `${portal.id}`,
+          value: `${portal.id}(p)`,
           isLeaf: true
         }
       }
     })
     const result = [{
-      contenType: 'display',
+      contentType: 'display',
       label: `Display`,
       key: 'display',
       value: 'display',
@@ -148,7 +149,7 @@ export function* getVizsData ({ payload }) {
       children: displayList
     },
     {
-      contenType: 'portal',
+      contentType: 'portal',
       label: `Portal`,
       key: 'portal',
       value: 'portal',
@@ -182,10 +183,10 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
-                contenType: 'portal',
+                contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,
-                value: `${tree[attr].id}`,
+                value: `${tree[attr].id}(p)`,
                 isLeaf: true
             }
           }
@@ -197,10 +198,10 @@ export function* getVizsData ({ payload }) {
           tree[attr] = {
             ...tree[attr],
             ...{
-                contenType: 'portal',
+                contentType: 'portal',
                 label: `${tree[attr].name}`,
                 key: tree[attr].name,
-                value: `${tree[attr].id}`,
+                value: `${tree[attr].id}(p)`,
                 isLeaf: true
             }
           }
