@@ -64,7 +64,7 @@ export enum ActionTypes {
   DELETE_DISPLAY_LAYERS_FAILURE = 'davinci/Display/DELETE_DISPLAY_LAYERS_FAILURE',
 
   DRAG_SELECT_LAYER = 'davinci/Display/DRAG_SELECT_LAYER',
-  RESIZE_SELECT_LAYER = 'davinci/Display/RESIZE_SELECT_LAYER',
+  RESIZE_LAYERS = 'davinci/Display/RESIZE_LAYERS',
   SELECT_LAYER = 'davinci/Display/SELECT_LAYER',
   COPY_SLIDE_LAYERS = 'davinci/Display/COPY_SLIDE_LAYERS',
 

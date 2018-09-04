@@ -367,34 +367,37 @@ export function loadDistinctValueFail (error) {
   }
 }
 
-export function loadDataFromItem (renderType, itemId, viewId, params) {
+export function loadDataFromItem (renderType, itemId, viewId, params, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM,
     payload: {
       renderType,
       itemId,
       viewId,
-      params
+      params,
+      vizType
     }
   }
 }
 
-export function dataFromItemLoaded (renderType, itemId, data) {
+export function dataFromItemLoaded (renderType, itemId, data, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM_SUCCESS,
     payload: {
       renderType,
       itemId,
-      data
+      data,
+      vizType
     }
   }
 }
 
-export function loadDataFromItemFail (itemId) {
+export function loadDataFromItemFail (itemId, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM_FAILURE,
     payload: {
-      itemId
+      itemId,
+      vizType
     }
   }
 }

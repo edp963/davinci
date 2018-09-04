@@ -1134,7 +1134,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
-      this.getChartData('rerender', +itemId, item.widgetId, queryParam)
+      const { params: globalParams, filters: globalFilters } = queryParam
+      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
     })
   }
 
@@ -1717,7 +1718,7 @@ export function mapDispatchToProps (dispatch) {
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, params) =>
-                        dispatch(loadDataFromItem(renderType, itemId, viewId, params)),
+                        dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, pivotProps, token) => dispatch(loadWidgetCsv(itemId, pivotProps, token)),
     onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),

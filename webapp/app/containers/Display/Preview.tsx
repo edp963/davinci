@@ -30,11 +30,8 @@ import {
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersStatus,
-  makeSelectCurrentSelectedLayers,
-  makeSelectCurrentLayersLoading,
-  makeSelectCurrentDatasources,
-  makeSelectCurrentLayersQueryParams } from './selectors'
+  makeSelectCurrentLayersInfo,
+  makeSelectCurrentSelectedLayers } from './selectors'
 
 import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
@@ -60,6 +57,8 @@ import LayerItem from './components/LayerItem'
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
+import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { decodeMetricName } from '../Widget/components/util'
 
 interface IBizdataIncomeParamObject {
   k: string
@@ -73,28 +72,44 @@ interface IPreviewProps {
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
-  currentDatasources: object
-  currentLayersLoading: object
-  currentLayersQueryParams: object
+  currentLayersInfo: {
+    [key: string]: {
+      datasource: any[]
+      loading: boolean
+      selected: boolean
+      queryParams: {
+        filters: string
+        linkageFilters: string
+        globalFilters: string
+        params: Array<{name: string, value: string}>
+        linkageParams: Array<{name: string, value: string}>
+        globalParams: Array<{name: string, value: string}>
+      }
+      interactId: string
+      rendered: boolean
+      renderType: RenderType
+    }
+  }
   onHideNavigator: () => void
   onLoadWidgets: (projectId: number) => void
   onLoadBizlogics: () => any
   onLoadDisplayDetail: (id: any) => void
   onLoadDataFromItem: (
+    renderType: RenderType,
     layerItemId: number,
     viewId: number,
-    groups: string[],
-    aggregators: Array<{column: string, func: string}>,
-    sql: {
-      filters: string
-      linkageFilters: string
-      globalFilters: string
-      params: IBizdataIncomeParamObject[]
-      linkageParams: IBizdataIncomeParamObject[]
-      globalParams: IBizdataIncomeParamObject[]
-    },
-    cache: boolean,
-    expired: number
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      cache: boolean
+      expired: number
+    }
   ) => void
 }
 
@@ -157,85 +172,83 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     }
   }
 
-  private getChartData = (renderType: string, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
+      currentLayersInfo,
       widgets,
-      currentLayers,
-      currentLayersQueryParams,
       onLoadDataFromItem
     } = this.props
+
     const widget = widgets.find((w) => w.id === widgetId)
+    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
-    const widgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics } = widgetConfig
-
-    const cachedQueryParams = currentLayersQueryParams[itemId]
-
-    let filters
+    const cachedQueryParams = currentLayersInfo[itemId].queryParams
     let linkageFilters
     let globalFilters
     let params
     let linkageParams
     let globalParams
-    let pagination
 
     if (queryParams) {
-      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
-      filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
+    }
+
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
     }
 
     onLoadDataFromItem(
+      renderType,
       itemId,
       widget.viewId,
-      cols.concat(rows),
-      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
-        filters,
+        groups,
+        aggregators,
+        filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
         linkageParams,
-        globalParams
-      },
-      false,
-      0
+        globalParams,
+        cache: false,
+        expired: 0
+      }
     )
-  }
-
-  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
-    const chartInstance = this.charts[`widget_${itemId}`]
-
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.viewId,
-        widgetlib_id: widget.type,
-        ...JSON.parse(widget.config).chartParams
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        // this.registerChartInteractListener(chartInstance, itemId)
-        chartInstance.hideLoading()
-      })
   }
 
   private getSlideStyle = (slideParams) => {
@@ -272,9 +285,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       currentDisplay,
       currentSlide,
       currentLayers,
-      currentDatasources,
-      currentLayersLoading,
-      currentLayersQueryParams } = this.props
+      currentLayersInfo } = this.props
     if (!currentDisplay) { return null }
 
     const { scale } = this.state
@@ -283,24 +294,27 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       const widget = widgets.find((w) => w.id === layer.widgetId)
       const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
-      const data = currentDatasources[layerId]
-      const loading = currentLayersLoading[layerId]
-      const sql = currentLayersQueryParams[layerId]
+
+      const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
         <LayerItem
+          key={layer.id}
+          ref={(f) => this[`layerId_${layer.id}`]}
           pure={true}
           scale={scale}
-          ref={(f) => this[`layerId_${layer.id}`]}
+          layer={layer}
+          selected={selected}
           itemId={layerId}
           widget={widget}
-          chartInfo={chartInfo}
-          data={data}
-          key={layer.id}
-          layer={layer}
+          data={datasource}
           loading={loading}
+          polling={false}
+          frequency={'10000'}
+          interactId={interactId}
+          rendered={rendered}
+          renderType={renderType}
           onGetChartData={this.getChartData}
-          onRenderChart={this.renderChart}
         />
       )
     }) : null
@@ -321,11 +335,8 @@ const mapStateToProps = createStructuredSelector({
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
   currentLayers: makeSelectCurrentLayers(),
-  currentLayersStatus: makeSelectCurrentLayersStatus(),
-  currentSelectedLayers: makeSelectCurrentSelectedLayers(),
-  currentDatasources: makeSelectCurrentDatasources(),
-  currentLayersLoading: makeSelectCurrentLayersLoading(),
-  currentLayersQueryParams: makeSelectCurrentLayersQueryParams()
+  currentLayersInfo: makeSelectCurrentLayersInfo(),
+  currentSelectedLayers: makeSelectCurrentSelectedLayers()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -334,7 +345,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
     onLoadWidgets: (projectId: number) => dispatch(loadWidgets(projectId)),
     onLoadBizlogics: (projectId: number, resolve?: any) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired))
+    onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display'))
   }
 }
 

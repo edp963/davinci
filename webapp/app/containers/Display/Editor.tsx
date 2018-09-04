@@ -22,7 +22,6 @@ import * as React from 'react'
 import { fromJS } from 'immutable'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
-import * as echarts from 'echarts/lib/echarts'
 import { createStructuredSelector } from 'reselect'
 import { RouteComponentProps } from 'react-router'
 
@@ -41,17 +40,13 @@ import {
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersStatus,
+  makeSelectCurrentLayersInfo,
   makeSelectCurrentSelectedLayers,
   makeSelectClipboardLayers,
-  makeSelectCurrentLayersLoading,
-  makeSelectCurrentDatasources,
-  makeSelectCurrentLayersQueryParams,
   makeSelectCanUndo,
   makeSelectCanRedo,
   makeSelectCurrentState,
   makeSelectNextState } from './selectors'
-import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 import slideSettings from '../../assets/json/slideSettings'
 
 import DisplayHeader from './components/DisplayHeader'
@@ -75,7 +70,7 @@ import {
   loadDisplayDetail,
   selectLayer,
   dragSelectedLayer,
-  resizeSelectedLayer,
+  resizeLayers,
   addDisplayLayers,
   deleteDisplayLayers,
   editDisplayLayers,
@@ -83,13 +78,12 @@ import {
   pasteSlideLayers,
   undoOperation,
   redoOperation  } from './actions'
-import {
-  ECHARTS_RENDERER,
-  DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import widgetlibs from '../../assets/json/widgetlib'
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
 
+import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { decodeMetricName } from '../Widget/components/util'
 import {
   loadBizlogics,
   loadDataFromItem,
@@ -106,23 +100,32 @@ interface IParams {
   displayId: number
 }
 
-interface IBizdataIncomeParamObject {
-  k: string
-  v: string
-}
-
 interface IEditorProps extends RouteComponentProps<{}, IParams> {
   widgets: any[]
   bizlogics: any[]
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
+  currentLayersInfo: {
+    [key: string]: {
+      datasource: any[]
+      loading: boolean
+      selected: boolean
+      queryParams: {
+        filters: string
+        linkageFilters: string
+        globalFilters: string
+        params: Array<{name: string, value: string}>
+        linkageParams: Array<{name: string, value: string}>
+        globalParams: Array<{name: string, value: string}>
+      }
+      interactId: string
+      rendered: boolean
+      renderType: RenderType
+    }
+  },
   clipboardLayers: any[]
-  currentLayersStatus: object
   currentSelectedLayers: any[]
-  currentDatasources: object
-  currentLayersLoading: object
-  currentLayersQueryParams: object
   canUndo: boolean
   canRedo: boolean
   currentState
@@ -135,7 +138,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onLoadDisplayDetail: (id: number) => void
   onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
   onDragSelectedLayer: (id: number, deltaX: number, deltaY: number) => void
-  onResizeSelectedLayer: (id: number, deltaWidth: number, deltaHeight: number) => void
+  onResizeLayers: (layerIds: number[]) => void
   onAddDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
   onDeleteDisplayLayers: (displayId: any, slideId: any, ids: any[]) => void,
   onEditDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
@@ -145,20 +148,21 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onRedo: (nextState) => void
   onHideNavigator: () => void
   onLoadDataFromItem: (
+    renderType: RenderType,
     layerItemId: number,
     viewId: number,
-    groups: string[],
-    aggregators: Array<{column: string, func: string}>,
-    sql: {
-      filters: string
-      linkageFilters: string
-      globalFilters: string
-      params: IBizdataIncomeParamObject[]
-      linkageParams: IBizdataIncomeParamObject[]
-      globalParams: IBizdataIncomeParamObject[]
-    },
-    cache: boolean,
-    expired: number
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      cache: boolean
+      expired: number
+    }
   ) => void
 }
 
@@ -317,79 +321,100 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
-  private getChartData = (renderType: string, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
+      currentLayersInfo,
       widgets,
-      currentLayersQueryParams,
       onLoadDataFromItem
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
+    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
-    const widgetConfig = JSON.parse(widget.config)
-    const { cols, rows, metrics } = widgetConfig
-
-    const cachedQueryParams = currentLayersQueryParams[itemId]
-
-    let filters
+    const cachedQueryParams = currentLayersInfo[itemId].queryParams
     let linkageFilters
     let globalFilters
     let params
     let linkageParams
     let globalParams
-    let pagination
 
     if (queryParams) {
-      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
-      filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
+    }
+
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
     }
 
     onLoadDataFromItem(
+      renderType,
       itemId,
       widget.viewId,
-      cols.concat(rows),
-      metrics.map((m) => ({ column: m.name, func: m.agg })),
       {
-        filters,
+        groups,
+        aggregators,
+        filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
         linkageParams,
-        globalParams
-      },
-      false,
-      0
+        globalParams,
+        cache: false,
+        expired: 0
+      }
     )
   }
 
   private dragLayer = (itemId, delta) => {
     const { deltaX, deltaY } = delta
-    const { currentLayersStatus, onDragSelectedLayer } = this.props
-    if (currentLayersStatus[itemId]) {
+    const { currentLayersInfo, onDragSelectedLayer } = this.props
+    if (currentLayersInfo[itemId].selected) {
       onDragSelectedLayer(itemId, deltaX, deltaY)
     }
   }
 
   private resizeLayer = (itemId, delta) => {
     const { deltaWidth, deltaHeight } = delta
-    const { currentLayersStatus } = this.props
+    const { currentLayersInfo } = this.props
     const { currentLocalLayers } = this.state
     const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
     copyCurrentLocalLayers.forEach((layer) => {
-      if (!currentLayersStatus[layer.id] || itemId === layer.id) { return }
+      if (!currentLayersInfo[layer.id].selected || itemId === layer.id) { return }
 
       const layerParams = JSON.parse(layer.params)
       const { width, height } = layerParams
@@ -400,50 +425,25 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       })
     })
     this.setState({ currentLocalLayers: copyCurrentLocalLayers })
-    // const { onResizeSelectedLayer } = this.props
-    // onResizeSelectedLayer(itemId, deltaWidth, deltaHeight)
   }
 
   private resizeLayerStop = (layer: any, size: any, itemId: any) => {
-    const { currentLayersStatus } = this.props
+    const { currentLayersInfo, onResizeLayers } = this.props
     const { currentLocalLayers } = this.state
     const layerParams = {
       ...JSON.parse(layer.params),
       ...size
     }
     let attached = []
-    if (currentLayersStatus[layer.id]) {
-      attached = currentLocalLayers.filter((l) => currentLayersStatus[l.id] && l.id !== layer.id)
+    if (currentLayersInfo[layer.id].selected) {
+      attached = currentLocalLayers.filter((l) => currentLayersInfo[l.id].selected && l.id !== layer.id)
     }
-    this.onEditLayers([{
+    const layers = [{
       ...layer,
       params: JSON.stringify(layerParams)
-    }, ...attached])
-    const chartInstance = this.charts[`widget_${itemId}`]
-    if (chartInstance) { chartInstance.resize() }
-  }
-
-  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
-    const chartInstance = this.charts[`widget_${itemId}`]
-
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.viewId,
-        widgetlib_id: widget.type,
-        ...JSON.parse(widget.config).chartParams
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        // this.registerChartInteractListener(chartInstance, itemId)
-        chartInstance.hideLoading()
-      })
+    }, ...attached]
+    this.onEditLayers(layers)
+    onResizeLayers(layers.map((layer) => layer.id))
   }
 
   private formItemChange = (field, val) => {
@@ -504,8 +504,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private deleteLayers = () => {
-    const { currentDisplay, currentSlide, currentLayersStatus } = this.props
-    const ids = Object.keys(currentLayersStatus).filter((id) => currentLayersStatus[id])
+    const { currentDisplay, currentSlide, currentLayersInfo } = this.props
+    const ids = Object.keys(currentLayersInfo).filter((id) => currentLayersInfo[id].selected)
     if (ids.length <= 0) {
       message.warning('请选择图层')
       return
@@ -666,11 +666,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   public render () {
     const {
       params,
-      currentLayersStatus,
-      currentLayersLoading,
+      currentLayersInfo,
       currentSelectedLayers,
-      currentLayersQueryParams,
-      currentDatasources,
       widgets,
       currentDisplay,
       onSelectLayer,
@@ -692,31 +689,30 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     const layerItems =  !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
-      const data = currentDatasources[layerId]
-      const loading = currentLayersLoading[layerId]
-      const sql = currentLayersQueryParams[layerId]
+
+      const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
         // <LayerContextMenu key={layer.id}>
         <LayerItem
           key={layer.id}
           pure={false}
-          ref={(f) => this[`layerId_${layer.id}`]}
-          itemId={layerId}
-          widget={widget}
-          chartInfo={chartInfo}
-          data={data}
-
           scale={[scale, scale]}
           slideParams={slideParams}
           layer={layer}
+          selected={selected}
+          itemId={layerId}
+          widget={widget}
+          data={datasource}
           loading={loading}
-          selected={currentLayersStatus[layerId]}
+          polling={false}
+          frequency={'10000'}
+          interactId={interactId}
+          rendered={rendered}
+          renderType={renderType}
           onSelectLayer={onSelectLayer}
           onGetChartData={this.getChartData}
-          onRenderChart={this.renderChart}
           onDragLayer={this.dragLayer}
           onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
@@ -801,7 +797,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           <DisplaySidebar>
             <LayerList
               layers={currentLocalLayers}
-              layersStatus={currentLayersStatus}
+              layersStatus={currentLayersInfo}
               selectedLayers={currentSelectedLayers}
               onSelectLayer={onSelectLayer}
               onEditDisplayLayers={this.onEditLayers}
@@ -822,12 +818,9 @@ const mapStateToProps = createStructuredSelector({
   currentDisplay: makeSelectCurrentDisplay(),
   currentSlide: makeSelectCurrentSlide(),
   currentLayers: makeSelectCurrentLayers(),
+  currentLayersInfo: makeSelectCurrentLayersInfo(),
   clipboardLayers: makeSelectClipboardLayers(),
-  currentLayersStatus: makeSelectCurrentLayersStatus(),
   currentSelectedLayers: makeSelectCurrentSelectedLayers(),
-  currentDatasources: makeSelectCurrentDatasources(),
-  currentLayersLoading: makeSelectCurrentLayersLoading(),
-  currentLayersQueryParams: makeSelectCurrentLayersQueryParams(),
   canUndo: makeSelectCanUndo(),
   canRedo: makeSelectCanRedo(),
   currentState: makeSelectCurrentState(),
@@ -842,10 +835,10 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
-    onLoadDataFromItem: (itemId, viewId, groups, aggregators, sql, cache, expired) => dispatch(loadDataFromItem(itemId, viewId, groups, aggregators, sql, cache, expired)),
+    onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display')),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
-    onResizeSelectedLayer: (id, deltaWidth, deltaHeight) => dispatch(resizeSelectedLayer({ id, deltaWidth, deltaHeight })),
+    onResizeLayers: (layerIds) => dispatch(resizeLayers(layerIds)),
     onAddDisplayLayers: (displayId, slideId, layers) => dispatch(addDisplayLayers(displayId, slideId, layers)),
     onDeleteDisplayLayers: (displayId, slideId, ids) => dispatch(deleteDisplayLayers(displayId, slideId, ids)),
     onEditDisplayLayers: (displayId, slideId, layers) => dispatch(editDisplayLayers(displayId, slideId, layers)),
