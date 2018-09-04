@@ -52,22 +52,22 @@ export function* getDashboard (action) {
     payload.resolve(dashboard.payload)
   } catch (err) {
     yield put(loadDashboardFail())
-    errorHandler(err)
+    payload.reject(err)
   }
 }
 
 export function* getWidget (action) {
   const { payload } = action
   try {
-    const asyncData = yield call(request, `${api.share}/widget/${payload.token}`)
-    const widget = asyncData.payload
-    yield put(widgetGetted(widget))
+    const widget = yield call(request, `${api.share}/widget/${payload.token}`)
+    yield put(widgetGetted(widget.payload))
 
     if (payload.resolve) {
-      payload.resolve(widget[0])
+      payload.resolve(widget.payload)
     }
   } catch (err) {
     errorHandler(err)
+    payload.reject(err)
   }
 }
 

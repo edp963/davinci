@@ -46,7 +46,6 @@ import {
   getResultset,
   setIndividualDashboard,
   loadWidgetCsv,
-  loadCascadeSourceFromItem,
   loadCascadeSourceFromDashboard,
   resizeAllDashboardItem
 } from './actions'
@@ -58,10 +57,8 @@ import {
   makeSelectItems,
   makeSelectItemsInfo
 } from './selectors'
-import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 import {
-  DEFAULT_PRIMARY_COLOR,
   DEFAULT_SPLITER,
   ECHARTS_RENDERER,
   GRID_COLS,
@@ -195,23 +192,25 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         //   })
         // })
       }, (err) => {
-        console.log(err)
-        this.setState({
-          showLogin: true
-        })
+        if (err.response.status === 403) {
+          this.setState({
+            showLogin: true
+          })
+        }
       })
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
-        this.setState({
-          linkageTableSource: [],
-          globalFilterTableSource: []
-        })
+        // this.setState({
+        //   linkageTableSource: [],
+        //   globalFilterTableSource: []
+        // })
       }, (err) => {
-        console.log(err)
-        this.setState({
-          showLogin: true
-        })
+        if (err.response.status === 403) {
+          this.setState({
+            showLogin: true
+          })
+        }
       })
     }
   }
@@ -887,6 +886,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           h: height,
           i: `${id}`
         })
+        console.log(layouts)
       })
 
       grids = (

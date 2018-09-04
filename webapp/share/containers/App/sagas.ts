@@ -23,16 +23,15 @@ import { call, fork, put } from 'redux-saga/effects'
 
 import { LOGIN, GET_LOGIN_USER } from './constants'
 import { logged } from './actions'
-const message = require('antd/lib/message')
 
 import request from '../../../app/utils/request'
+import { errorHandler } from '../../../app/utils/util'
 import api from '../../../app/utils/api'
-import { readObjectAdapter } from '../../../app/utils/asyncAdapter'
 
 export function* login (action) {
   const { username, password, shareInfo, resolve } = action.payload
   try {
-    const asyncData = yield call(request, {
+    const userInfo = yield call(request, {
       method: 'post',
       url: `${api.share}/login/${shareInfo}`,
       data: {
@@ -40,37 +39,15 @@ export function* login (action) {
         password
       }
     })
-    switch (asyncData.header.code) {
-      case 400:
-        message.error('密码错误')
-        return null
-      case 404:
-        message.error('用户不存在')
-        return null
-      default:
-        resolve(asyncData)
-        return asyncData
-    }
+    yield put(logged(userInfo.payload))
+    resolve()
   } catch (err) {
-    message.error(err)
-  }
-}
-
-export function* getLoginUser (action) {
-  try {
-    const asyncData = yield call(request, `${api.user}/token`)
-    const loginUser = readObjectAdapter(asyncData)
-    yield put(logged(loginUser))
-    localStorage.setItem('loginUser', JSON.stringify(loginUser))
-    return loginUser
-  } catch (err) {
-    message.error(err)
+    errorHandler(err)
   }
 }
 
 export default function* rootAppSaga (): IterableIterator<any> {
   yield [
-    takeLatest(LOGIN, login),
-    takeLatest(GET_LOGIN_USER, getLoginUser)
+    takeLatest(LOGIN, login)
   ]
 }

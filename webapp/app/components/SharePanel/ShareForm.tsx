@@ -17,7 +17,6 @@ interface IShareFormProps {
 
 export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
   private shareLinkInput = null
-  private shareHtmlInput = null
 
   private handleInputSelect = (inputRefName) => () => {
     this[inputRefName].refs.input.select()
@@ -69,33 +68,6 @@ export class ShareForm extends React.PureComponent<IShareFormProps, {}> {
             />
           </Col>
         </Row>
-        {
-          type === 'widget'
-            ? <div>
-              <Row className={styles.shareRow}>
-                <Col span={5}>
-                  <span className={styles.shareText}>HTML：</span>
-                </Col>
-                <Col span={19}>
-                  <Input
-                    className={styles.shareInput}
-                    value={`${apiHost}/shares/html/${encodeURI(shareInfo)}`}
-                    addonAfter={
-                      <span
-                        style={{cursor: 'pointer'}}
-                        onClick={this.handleInputSelect('shareHtmlInput')}
-                      >
-                        复制
-                      </span>
-                    }
-                    ref={(f) => this.shareHtmlInput = f}
-                    readOnly
-                  />
-                </Col>
-              </Row>
-            </div>
-            : ''
-        }
       </div>
     )
   }
