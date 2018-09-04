@@ -76,14 +76,14 @@ function shareReducer (state = initialState, { type, payload }) {
       return state
         .set('items', [{
           id: 1,
-          position_x: 0,
-          position_y: 0,
+          x: 0,
+          y: 0,
           width: 12,
-          length: 10,
-          trigger_type: 'manual',
-          trigger_params: '',
-          widget_id: payload.widgetId,
-          aesStr: payload.token
+          height: 12,
+          polling: false,
+          frequency: 0,
+          widgetId: payload.widgetId,
+          dataToken: payload.token
         }])
         .set('itemsInfo', {
           1: {
@@ -105,6 +105,7 @@ function shareReducer (state = initialState, { type, payload }) {
       if (!widgets) {
         widgets = []
       }
+      console.log(widgets.concat(payload.widget))
       return state.set('widgets', widgets.concat(payload.widget))
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
