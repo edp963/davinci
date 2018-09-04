@@ -99,8 +99,9 @@ export function* updateSchedule ({ payload }) {
   try {
     const asyncData = yield call(request, {
       method: 'put',
-      url: api.schedule,
-      data: writeAdapter(payload.schedule)
+      url: `${api.schedule}/${payload.schedule.id}`,
+   //   data: writeAdapter(payload.schedule)
+      data: payload.schedule
     })
     const result = readObjectAdapter(asyncData)
     yield put(scheduleUpdated(result))

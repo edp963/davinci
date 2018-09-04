@@ -46,7 +46,6 @@ const utilStyles = require('../../assets/less/util.less')
 import { PaginationProps } from 'antd/lib/pagination'
 import ModulePermission from '../Account/components/checkModulePermission'
 import {IProject} from '../Projects'
-import { ServerRequest } from 'http';
 
 interface ICurrentDashboard {
   config: string
@@ -162,7 +161,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       formVisible: true,
       formType: 'edit'
     }, () => {
-      const { id, name, desc, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
+      const { id, name, description, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
       const config2json = JSON.parse(config)
       const { time_range, range, contentList, month, hour, week, time } = config2json
       const formatterContentList = this.json2arr(contentList)
@@ -176,7 +175,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       }
       this.setState({
         rangeTime: time_range
-      }, () => this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week, time: moment(time) })
+      }, () => this.scheduleForm.setFieldsValue({ id, name, description, range: momentRange, time_range, month, hour, week, time: moment(time) })
       )
     })
   }
@@ -509,7 +508,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       },
       {
         title: '描述',
-        dataIndex: 'desc',
+        dataIndex: 'description',
         key: 'desc'
       },
       {
