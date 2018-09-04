@@ -166,6 +166,13 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       currentProject
     } = this.props
 
+    let isShow
+    if (currentProject && currentProject.permission) {
+      const currentPermission = currentProject.permission.viewPermission
+      isShow = (currentPermission === 0 || currentPermission === 1) ? false : true
+    } else {
+      isShow = false
+    }
     const AdminButton = ModulePermission<ButtonProps>(currentProject, 'view', true)(Button)
     const EditButton = ModulePermission<ButtonProps>(currentProject, 'view', false)(Button)
 
@@ -198,7 +205,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       title: '操作',
       key: 'action',
       width: 120,
-      className: `${utilStyles.textAlignCenter}`,
+      className: `${isShow ? utilStyles.textAlignCenter : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">

@@ -36,6 +36,7 @@ import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
 import AntdFormType from 'antd/lib/form/Form'
+import { ButtonProps } from 'antd/lib/button/button'
 
 const message = require('antd/lib/message')
 const Modal = require('antd/lib/modal')
@@ -241,13 +242,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       this.uploadForm.props.form.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { table_name, source_id, primary_keys, index_keys, replace_mode } = values
-          // const csvMeta = {
-          //   table_name,
-          //   source_id,
-          //   primary_keys,
-          //   index_keys,
-          //   replace_mode
-          // }
           const csvMeta = {
             table_name,
             source_id,
@@ -391,8 +385,15 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       onCheckUniqueName
     } = this.props
 
-    const AdminButton = ModulePermission(currentProject, 'source', true)(Button)
-    const EditButton = ModulePermission(currentProject, 'source', false)(Button)
+    let isShow
+    if (currentProject && currentProject.permission) {
+      const currentPermission = currentProject.permission.sourcePermission
+      isShow = (currentPermission === 0 || currentPermission === 1) ? false : true
+    } else {
+      isShow = false
+    }
+    const AdminButton = ModulePermission<ButtonProps>(currentProject, 'source', true)(Button)
+    const EditButton = ModulePermission<ButtonProps>(currentProject, 'source', false)(Button)
 
     const { table_name, source_id, replace_mode } = metaObj
     const uploadProps = {
@@ -456,7 +457,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       title: '操作',
       key: 'action',
       width: 135,
-      className: `${utilStyles.textAlignLeft}`,
+      className: `${isShow ? utilStyles.textAlignLeft : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">
