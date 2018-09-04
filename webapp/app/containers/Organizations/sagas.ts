@@ -69,6 +69,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import {userPasswordChanged} from '../App/actions'
+import { errorHandler } from '../../utils/util'
 
 export function* getOrganizations () {
   try {
@@ -77,7 +78,7 @@ export function* getOrganizations () {
     yield put(organizationsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsFail())
-    message.error('获取 Organizations 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -94,7 +95,7 @@ export function* addOrganization (action) {
     resolve()
   } catch (err) {
     yield put(addOrganizationFail())
-    message.error('添加 Organization 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -110,7 +111,7 @@ export function* editOrganization (action) {
     message.success('success')
   } catch (err) {
     yield put(editOrganizationFail())
-    message.error('修改 Organization 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -125,7 +126,7 @@ export function* deleteOrganization (action) {
     resolve()
   } catch (err) {
     yield put(deleteOrganizationFail())
-    message.error('删除当前 Organization 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -135,7 +136,7 @@ export function* getOrganizationDetail ({ payload }) {
     const organization = readListAdapter(asyncData)
     yield put(organizationDetailLoaded(organization))
   } catch (err) {
-    console.log('getOrganizationDetail', err)
+    errorHandler(err)
   }
 }
 
@@ -150,7 +151,7 @@ export function* getOrganizationsProjects ({payload}) {
     yield put(organizationsProjectsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsProjectsFail())
-    message.error('获取 Organizations 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -162,7 +163,7 @@ export function* getOrganizationsMembers ({payload}) {
     yield put(organizationsMembersLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsMembersFail())
-    message.error('获取 Organizations 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -174,7 +175,7 @@ export function* getOrganizationsTeams ({payload}) {
     yield put(organizationsTeamsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsTeamsFail())
-    message.error('获取 Organizations 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -192,7 +193,7 @@ export function* addTeam (action) {
     resolve()
   } catch (err) {
     yield put(addTeamFail())
-    message.error('添加 Team 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -205,16 +206,12 @@ export function* searchMember ({payload}) {
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
-    if (code && code === 400) {
-      message.error(msg)
-    }
-    if (code && code === 200) {
-      const result = readListAdapter(asyncData)
-      yield put(memberSearched(result))
-    }
+
+    const result = readListAdapter(asyncData)
+    yield put(memberSearched(result))
   } catch (err) {
     yield put(searchMemberFail())
-    message.error('查找用户失败， 请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -233,7 +230,7 @@ export function* inviteMember ({payload}) {
     yield put(inviteMemberSuccess(result))
   } catch (err) {
     yield put(inviteMemberFail())
-    message.error('邀请用户失败， 请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -248,7 +245,7 @@ export function* deleteOrganizationMember ({payload}) {
     resolve()
   } catch (err) {
     yield put(deleteOrganizationMemberFail())
-    message.error('删除 team member 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -264,9 +261,8 @@ export function* changeOrganizationMemberRole ({payload}) {
     yield put(organizationMemberRoleChanged(relationId, member))
     yield resolve()
   } catch (err) {
-    console.log(err)
     yield put(changeOrganizationMemberRoleFail())
-    message.error('删除 team member 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 

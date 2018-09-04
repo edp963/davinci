@@ -24,7 +24,6 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import * as classnames from 'classnames'
 import moment from 'moment'
-import * as echarts from 'echarts/lib/echarts'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -36,11 +35,10 @@ import Container from '../../../app/components/Container'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
 import GlobalFilters from '../../../app/containers/Dashboard/components/globalFilter/GlobalFilters'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import DashboardItemFilters from '../../../app/containers/Dashboard/components/DashboardItemFilters'
 import { Responsive, WidthProvider } from 'react-grid-layout'
+import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Modal = require('antd/lib/modal')
 
 import {
   getDashboard,
@@ -48,8 +46,8 @@ import {
   getResultset,
   setIndividualDashboard,
   loadWidgetCsv,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard
+  loadCascadeSourceFromDashboard,
+  resizeAllDashboardItem
 } from './actions'
 import {
   makeSelectTitle,
@@ -57,17 +55,17 @@ import {
   makeSelectDashboardCascadeSources,
   makeSelectWidgets,
   makeSelectItems,
-  makeSelectDataSources,
-  makeSelectLoadings,
-  makeSelectItemQueryParams,
-  makeSelectItemDownloadCsvLoadings,
-  makeSelectItemsCascadeSources
+  makeSelectItemsInfo
 } from './selectors'
-import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
-import { changePosition } from '../../../app/containers/Dashboard/components/localPositionUtil'
+import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 import {
-  DEFAULT_PRIMARY_COLOR, DEFAULT_SPLITER, ECHARTS_RENDERER, GRID_COLS, SQL_NUMBER_TYPES,
-  USER_GRID_BREAKPOINTS
+  DEFAULT_SPLITER,
+  ECHARTS_RENDERER,
+  GRID_COLS,
+  GRID_ROW_HEIGHT,
+  GRID_ITEM_MARGIN,
+  SQL_NUMBER_TYPES,
+  GRID_BREAKPOINTS
 } from '../../../app/globalConstants'
 
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
@@ -82,81 +80,88 @@ interface IDashboardProps {
   title: string
   config: string
   currentItems: any[],
+  currentItemsInfo: {
+    [key: string]: {
+      datasource: any[]
+      loading: boolean
+      queryParams: {
+        filters: string
+        linkageFilters: string
+        globalFilters: string
+        params: Array<{name: string, value: string}>
+        linkageParams: Array<{name: string, value: string}>
+        globalParams: Array<{name: string, value: string}>
+      }
+      downloadCsvLoading: boolean
+      interactId: string
+      renderType: RenderType
+    }
+  },
   widgets: any[],
-  dataSources: any,
-  loadings: any,
-  itemQueryParams: any,
-  downloadCsvLoadings: any,
-  itemsCascadeSources: any,
   dashboardCascadeSources: any,
   onLoadDashboard: (shareInfo: any, success: (dashboard) => void, error: (err) => void) => void,
   onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
-  onLoadResultset: (itemId, aesStr, sql, sorts, offset, limit, useCache, expired) => void,
+  onLoadResultset: (
+    renderType: RenderType,
+    dashboardItemId: number,
+    dataToken: string,
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      cache: boolean
+      expired: number
+    }
+  ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
-  onLoadWidgetCsv: (itemId, token, sql) => void,
+  onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, dataToken: string) => void,
   onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => void,
   onLoadCascadeSourceFromDashboard: (key, flatTableId, shareInfo, cascadeColumn, parents?) => void
+  onResizeAllDashboardItem: () => void
 }
 
 interface IDashboardStates {
   mounted: boolean,
-  modifiedPositions: any[],
   type: string,
   shareInfo: string,
   modalLoading: boolean,
-  filtersVisible: boolean,
-  filtersDashboardItem: number,
-  filtersKeys: any,
-  filtersTypes: any,
   allowFullScreen: boolean,
   currentDataInFullScreen: any,
   showLogin: boolean,
   linkageTableSource: any[],
   globalFilterTableSource: any[],
-  interactiveItems: any,
   phantomRenderSign: boolean
 }
 
 export class Share extends React.Component<IDashboardProps, IDashboardStates> {
-  private charts
-  private interactCallbacks
-  private interactingLinkagers
-  private interactGlobalFilters
-  private resizeSign
-  private dashboardItemFilters
-  private refHandlers = {
-    dashboardItemFilters: (ref) => this.dashboardItemFilters = ref
-  }
-
   constructor (props) {
     super(props)
     this.state = {
       mounted: false,
-      modifiedPositions: [],
       type: '',
       shareInfo: '',
 
       modalLoading: false,
 
-      filtersVisible: false,
-      filtersDashboardItem: 0,
-      filtersKeys: null,
-      filtersTypes: null,
       allowFullScreen: false,
       currentDataInFullScreen: {},
       showLogin: false,
       linkageTableSource: [],
       globalFilterTableSource: [],
-      interactiveItems: {},
 
       phantomRenderSign: false
     }
-    this.charts = {}
-    this.interactCallbacks = {}
-    this.interactingLinkagers = {}
-    this.interactGlobalFilters = {}
-    this.resizeSign = void 0
   }
+
+  private interactCallbacks: object = {}
+  private interactingLinkagers: object = {}
+  private interactGlobalFilters: object = {}
+  private resizeSign: NodeJS.Timer
 
   /**
    * object
@@ -173,39 +178,39 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onSetIndividualDashboard,
       onLoadCascadeSourceFromDashboard
     } = this.props
+
     if (qs.type === 'dashboard') {
       onLoadDashboard(qs.shareInfo, (dashboard) => {
-        dashboard.widgets.forEach((w) => {
-          onLoadWidget(w.aesStr)
-        })
-        this.setState({
-          linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
-          globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
-        }, () => {
-          this.state.globalFilterTableSource.forEach((gft) => {
-            if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
-              onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
-            }
-          })
-        })
+        // this.setState({
+        //   linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
+        //   globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
+        // }, () => {
+        //   this.state.globalFilterTableSource.forEach((gft) => {
+        //     if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
+        //       onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
+        //     }
+        //   })
+        // })
       }, (err) => {
-        console.log(err)
-        this.setState({
-          showLogin: true
-        })
+        if (err.response.status === 403) {
+          this.setState({
+            showLogin: true
+          })
+        }
       })
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
-        this.setState({
-          linkageTableSource: [],
-          globalFilterTableSource: []
-        })
+        // this.setState({
+        //   linkageTableSource: [],
+        //   globalFilterTableSource: []
+        // })
       }, (err) => {
-        console.log(err)
-        this.setState({
-          showLogin: true
-        })
+        if (err.response.status === 403) {
+          this.setState({
+            showLogin: true
+          })
+        }
       })
     }
   }
@@ -219,38 +224,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   public componentDidMount () {
-    window.addEventListener('resize', this.onResize, false)
+    window.addEventListener('resize', this.onWindowResize, false)
     this.setState({ mounted: true })
   }
 
-  public componentWillUpdate (nextProps) {
-    const { currentItems, dataSources } = nextProps
-    if (currentItems) {
-      if (this.state.modifiedPositions.length === 0) {
-        this.setState({
-          modifiedPositions: currentItems.map((ci) => ({
-            x: ci.position_x,
-            y: ci.position_y,
-            w: ci.width,
-            h: ci.length,
-            i: `${ci.id}`
-          }))
-        })
-      }
-
-      if (!Object.keys(this.state.interactiveItems).length) {
-        this.setState({
-          interactiveItems: currentItems.reduce((acc, i) => {
-            acc[i.id] = {
-              isInteractive: false,
-              interactId: null
-            }
-            return acc
-          }, {})
-        })
-      }
-
-      if (currentItems.map((ci) => ci.id).join(',') === Object.keys(dataSources).join(',')) {
+  public componentWillReceiveProps (nextProps: IDashboardProps) {
+    const { currentItems, currentItemsInfo } = nextProps
+    if (currentItemsInfo) {
+      if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.length).length === currentItems.length) {
         this.setState({
           phantomRenderSign: true
         })
@@ -259,10 +240,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   public componentWillUnmount () {
-    window.removeEventListener('resize', this.onResize, false)
-    Object.keys(this.charts).forEach((k) => {
-      this.charts[k].dispose()
-    })
+    window.removeEventListener('resize', this.onWindowResize, false)
   }
 
   private getQs = (qs) => {
@@ -274,118 +252,84 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }, {})
   }
 
-  private getChartData = (renderType, itemId, widgetId, queryParams) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
-      currentItems,
+      currentItemsInfo,
       widgets,
-      itemQueryParams,
       onLoadResultset
     } = this.props
 
-    const dashboardItem = currentItems.find((c) => c.id === Number(itemId))
     const widget = widgets.find((w) => w.id === widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
-    const chartInstanceId = `widget_${itemId}`
+    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
 
-    let widgetConfig = JSON.parse(widget.config)
-    let currentChart = this.charts[chartInstanceId]
+    const cachedQueryParams = currentItemsInfo[itemId].queryParams
 
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      switch (renderType) {
-        case 'rerender':
-          if (currentChart) {
-            currentChart.dispose()
-          }
-
-          currentChart = echarts.init(document.getElementById(chartInstanceId) as HTMLDivElement, 'default')
-          this.charts[chartInstanceId] = currentChart
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'clear':
-          currentChart.clear()
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          break
-        case 'refresh':
-          currentChart.showLoading('default', { color: DEFAULT_PRIMARY_COLOR })
-          widgetConfig = { // 点击"同步数据"按钮时强制不使用缓存
-            useCache: 'false',
-            expired: 0
-          }
-          break
-        default:
-          break
-      }
-    }
-
-    const cachedQueryParams = itemQueryParams[itemId]
-
-    let filters
     let linkageFilters
     let globalFilters
     let params
     let linkageParams
     let globalParams
-    let pagination
 
     if (queryParams) {
-      filters = queryParams.filters !== undefined ? queryParams.filters : cachedQueryParams.filters
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
       globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params ? queryParams.params : cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      pagination = queryParams.pagination ? queryParams.pagination : cachedQueryParams.pagination
     } else {
-      filters = cachedQueryParams.filters
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
+    }
+
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
     }
 
     onLoadResultset(
+      renderType,
       itemId,
-      dashboardItem.aesStr,
+      widget.dataToken,
       {
-        adHoc: widget.adhoc_sql,
-        filters,
+        groups,
+        aggregators,
+        filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
         linkageParams,
-        globalParams
-      },
-      pagination.sorts,
-      pagination.offset,
-      pagination.limit,
-      widgetConfig.useCache,
-      widgetConfig.expired
+        globalParams,
+        cache: false,
+        expired: 0
+      }
     )
-  }
-
-  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?) => {
-    const chartInstance = this.charts[`widget_${itemId}`]
-    const { id, name, desc, flatTable_id, widgetlib_id } = widget
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        id,
-        name,
-        desc,
-        flatTable_id,
-        widgetlib_id,
-        ...JSON.parse(widget)
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        this.registerChartInteractListener(chartInstance, itemId)
-        chartInstance.hideLoading()
-      })
   }
 
   private registerChartInteractListener = (instance, itemId) => {
@@ -399,95 +343,28 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private onLayoutChange = (layout) => {
-    setTimeout(() => {
-      const { currentItems } = this.props
-      const { modifiedPositions } = this.state
-
-      const newModifiedItems = changePosition(modifiedPositions, layout
-      //   (pos) => {
-      //   const dashboardItem = currentItems.find((item) => item.id === Number(pos.i))
-      //   const chartInstanceId = `widget_${dashboardItem.id}`
-      //   const chartInstance = this.charts[chartInstanceId]
-      //   if (chartInstance) { chartInstance.resize() }
-      // }
-    )
-
-      this.setState({
-        modifiedPositions: newModifiedItems
-      })
-    })
-  }
-
-  private onResize = () => {
-    if (this.resizeSign === void 0) { clearTimeout(this.resizeSign) }
+  private onWindowResize = () => {
+    if (this.resizeSign) {
+      clearTimeout(this.resizeSign)
+    }
     this.resizeSign = setTimeout(() => {
-      this.props.currentItems.forEach((ci) => {
-        const chartInstance = this.charts[`widget_${ci.id}`]
-        if (chartInstance) { chartInstance.resize() }
-      })
+      this.props.onResizeAllDashboardItem()
       clearTimeout(this.resizeSign)
       this.resizeSign = void 0
     }, 500)
   }
 
-  private showFiltersForm = (itemId, keys, types) => () => {
-    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
-
-    this.setState({
-      filtersVisible: true,
-      filtersDashboardItem: dashboardItem.id,
-      filtersKeys: keys,
-      filtersTypes: types
-    })
-  }
-
-  private hideFiltersForm = () => {
-    this.setState({
-      filtersVisible: false,
-      filtersDashboardItem: 0,
-      filtersKeys: [],
-      filtersTypes: []
-    })
-    this.dashboardItemFilters.resetTree()
-  }
-
-  private doFilterQuery = (sql) => {
-    const itemId = this.state.filtersDashboardItem
-    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
-
-    this.getChartData('clear', itemId, dashboardItem.widget_id, {
-      filters: sql
-    })
-    this.hideFiltersForm()
-  }
-
-  private downloadCsv = (itemId) => (token) => {
+  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
     const {
-      currentItems,
-      widgets,
-      itemQueryParams,
+      currentItemsInfo,
       onLoadWidgetCsv
     } = this.props
 
-    const dashboardItem = currentItems.find((c) => c.id === itemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widget_id)
+    const { filters, params } = currentItemsInfo[itemId].queryParams
 
-    const cachedQueryParams = itemQueryParams[itemId]
-
-    const filters = cachedQueryParams.filters
-    const params = cachedQueryParams.params
-
-    onLoadWidgetCsv(
-      itemId,
-      token,
-      {
-        adHoc: widget.adhoc_sql,
-        manualFilters: filters,
-        params
-      }
-    )
+    onLoadWidgetCsv(itemId, pivotProps, shareInfo)
   }
+
   private visibleFullScreen = (currentChartData) => {
     const {allowFullScreen} = this.state
     if (currentChartData) {
@@ -944,131 +821,105 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const {
       title,
       currentItems,
-      dataSources,
-      loadings,
+      currentItemsInfo,
       widgets,
-      itemQueryParams,
-      downloadCsvLoadings,
-      dashboardCascadeSources,
-      itemsCascadeSources
+      dashboardCascadeSources
     } = this.props
 
     const {
       mounted,
       shareInfo,
-      modifiedPositions,
-      filtersVisible,
-      filtersDashboardItem,
-      filtersKeys,
       showLogin,
-      filtersTypes,
       allowFullScreen,
-      interactiveItems,
       globalFilterTableSource,
       phantomRenderSign
     } = this.state
 
     let grids = null
-    let fullScreenComponent = null
+    // let fullScreenComponent = null
     let loginPanel = null
 
-    const layouts = {
-      lg: []
-    }
-    const itemblocks = []
+    if (currentItems) {
+      const itemblocks = []
+      const layouts = {lg: []}
 
-    if (currentItems && widgets) {
-      if (widgets.length === currentItems.length) {
-        currentItems.forEach((item, index) => {
-          layouts.lg.push({
-            x: item.position_x,
-            y: item.position_y,
-            w: item.width,
-            h: item.length,
-            i: `${item.id}`
-          })
+      currentItems.forEach((dashboardItem) => {
+        const { id, x, y, width, height, widgetId, polling, frequency } = dashboardItem
+        const {
+          datasource,
+          loading,
+          downloadCsvLoading,
+          interactId,
+          renderType
+        } = currentItemsInfo[id]
 
-          const widget = widgets.find((w) => w.id === item.widget_id)
-          const data = dataSources[item.id]
-          const loading = loadings[item.id]
-          const modifiedPosition = modifiedPositions[index]
-          const downloadCsvLoading = downloadCsvLoadings[item.id]
-          const sql = itemQueryParams[item.id]
-          const cascadeSources = itemsCascadeSources[item.id]
-          const { isInteractive, interactId } = interactiveItems[item.id]
+        const widget = widgets.find((w) => w.id === widgetId)
 
-          if (widget) {
-            const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
-            const permission = widget['permission']
-            const isDownload = permission ? permission.indexOf('download') > -1 : false
+        itemblocks.push((
+          <div key={id}>
+            <DashboardItem
+              itemId={id}
+              widget={widget}
+              data={datasource}
+              loading={loading}
+              polling={polling}
+              frequency={frequency}
+              shareInfo={widget.dataToken}
+              downloadCsvLoading={downloadCsvLoading}
+              interactId={interactId}
+              onGetChartData={this.getChartData}
+              onDownloadCsv={this.downloadCsv}
+              onTurnOffInteract={this.turnOffInteract}
+              onCheckTableInteract={this.checkInteract}
+              onDoTableInteract={this.doInteract}
+              onShowFullScreen={this.visibleFullScreen}
+              renderType={renderType}
+              container="share"
+            />
+          </div>
+        ))
 
-            itemblocks.push((
-              <div key={item.id}>
-                <DashboardItem
-                  w={modifiedPosition ? modifiedPosition.w : 0}
-                  h={modifiedPosition ? modifiedPosition.h : 0}
-                  itemId={item.id}
-                  widget={widget}
-                  chartInfo={chartInfo}
-                  data={data}
-                  loading={loading}
-                  triggerType={item.trigger_type}
-                  triggerParams={item.trigger_params}
-                  isAdmin={false}
-                  isShared
-                  isDownload={isDownload}
-                  shareInfo={item.aesStr}
-                  downloadCsvLoading={downloadCsvLoading}
-                  isInteractive={isInteractive}
-                  interactId={interactId}
-                  cascadeSources={cascadeSources}
-                  onGetChartData={this.getChartData}
-                  onRenderChart={this.renderChart}
-                  onShowFiltersForm={this.showFiltersForm}
-                  onDownloadCsv={this.downloadCsv}
-                  onTurnOffInteract={this.turnOffInteract}
-                  onCheckTableInteract={this.checkInteract}
-                  onDoTableInteract={this.doInteract}
-                  onShowFullScreen={this.visibleFullScreen}
-                  onGetCascadeSource={this.getCascadeSource(item.aesStr, {...sql, adHoc: widget.adhoc_sql})}
-                />
-              </div>
-            ))
-          }
+        layouts.lg.push({
+          x,
+          y,
+          w: width,
+          h: height,
+          i: `${id}`
         })
+        console.log(layouts)
+      })
 
-        grids = (
-          <ResponsiveReactGridLayout
-            className="layout"
-            style={{marginTop: '-16px'}}
-            rowHeight={30}
-            margin={[20, 20]}
-            breakpoints={USER_GRID_BREAKPOINTS}
-            cols={GRID_COLS}
-            layouts={layouts}
-            onLayoutChange={this.onLayoutChange}
-            measureBeforeMount={false}
-            draggableHandle={`.${styles.title}`}
-            useCSSTransforms={mounted}
-          >
-            {itemblocks}
-          </ResponsiveReactGridLayout>
-        )
+      grids = (
+        <ResponsiveReactGridLayout
+          className="layout"
+          style={{marginTop: '-16px'}}
+          rowHeight={GRID_ROW_HEIGHT}
+          margin={[GRID_ITEM_MARGIN, GRID_ITEM_MARGIN]}
+          breakpoints={GRID_BREAKPOINTS}
+          cols={GRID_COLS}
+          layouts={layouts}
+          measureBeforeMount={false}
+          useCSSTransforms={mounted}
+          isDraggable={false}
+          isResizable={false}
+        >
+          {itemblocks}
+        </ResponsiveReactGridLayout>
+      )
 
-        fullScreenComponent = (
-          <FullScreenPanel
-            widgets={widgets}
-            widgetlibs={widgetlibs}
-            currentDashboard={{ widgets: currentItems }}
-            currentDatasources={dataSources}
-            visible={allowFullScreen}
-            isVisible={this.visibleFullScreen}
-            onRenderChart={this.renderChart}
-            currentDataInFullScreen={this.state.currentDataInFullScreen}
-            onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-          />
-        )
-      }
+      // fullScreenComponent = (
+      //   <FullScreenPanel
+      //     widgets={widgets}
+      //     widgetlibs={widgetlibs}
+      //     currentDashboard={{ widgets: currentItems }}
+      //     currentDatasources={dataSources}
+      //     visible={allowFullScreen}
+      //     isVisible={this.visibleFullScreen}
+      //     onRenderChart={this.renderChart}
+      //     currentDataInFullScreen={this.state.currentDataInFullScreen}
+      //     onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+      //   />
+      // )
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -1076,7 +927,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         </div>
       )
 
-      fullScreenComponent = ''
+      // fullScreenComponent = ''
     }
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
@@ -1109,23 +960,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         </Container.Title>
         {grids}
         <div className={styles.gridBottom} />
-        <Modal
-          title="条件查询"
-          wrapClassName="ant-modal-xlarge"
-          visible={filtersVisible}
-          onCancel={this.hideFiltersForm}
-          footer={false}
-        >
-          <DashboardItemFilters
-            loginUser={null}
-            itemId={filtersDashboardItem}
-            keys={filtersKeys}
-            types={filtersTypes}
-            onQuery={this.doFilterQuery}
-            wrappedComponentRef={this.refHandlers.dashboardItemFilters}
-          />
-        </Modal>
-        {fullScreenComponent}
+        {/* {fullScreenComponent} */}
         {loginPanel}
         {phantomDOM}
       </Container>
@@ -1138,11 +973,7 @@ const mapStateToProps = createStructuredSelector({
   config: makeSelectConfig(),
   widgets: makeSelectWidgets(),
   currentItems: makeSelectItems(),
-  dataSources: makeSelectDataSources(),
-  loadings: makeSelectLoadings(),
-  itemQueryParams: makeSelectItemQueryParams(),
-  downloadCsvLoadings: makeSelectItemDownloadCsvLoadings(),
-  itemsCascadeSources: makeSelectItemsCascadeSources(),
+  currentItemsInfo: makeSelectItemsInfo(),
   dashboardCascadeSources: makeSelectDashboardCascadeSources()
 })
 
@@ -1150,11 +981,12 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboard: (token, resolve, reject) => dispatch(getDashboard(token, resolve, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
-    onLoadResultset: (itemId, token, sql, sorts, offset, limit, useCache, expired) => dispatch(getResultset(itemId, token, sql, sorts, offset, limit, useCache, expired)),
+    onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, token, sql, sorts, offset, limit) => dispatch(loadWidgetCsv(itemId, token, sql, sorts, offset, limit)),
+    onLoadWidgetCsv: (itemId, pivotProps, dataToken) => dispatch(loadWidgetCsv(itemId, pivotProps, dataToken)),
     onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, token, sql, column, parents)),
-    onLoadCascadeSourceFromDashboard: (controlId, flatTableId, token, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, flatTableId, token, column, parents))
+    onLoadCascadeSourceFromDashboard: (controlId, flatTableId, token, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, flatTableId, token, column, parents)),
+    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
   }
 }
 

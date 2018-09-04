@@ -68,7 +68,6 @@ import {
   loadWidgetCsvFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import { errorHandler } from '../../utils/util'
 import api from '../../utils/api'
@@ -82,7 +81,7 @@ export function* getDashboards ({ payload }) {
     payload.resolve(dashboards.payload)
   } catch (err) {
     yield put(loadDashboardsFail())
-    message.error('获取 Dashboards 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -98,7 +97,7 @@ export function* addDashboard ({ payload }) {
     resolve(asyncData.payload.id)
   } catch (err) {
     yield put(addDashboardFail())
-    message.error('添加 Dashboard 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -114,7 +113,7 @@ export function* editDashboard ({ payload }) {
     resolve(dashboard)
   } catch (err) {
     yield put(editDashboardFail())
-    message.error('修改 Dashboard 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -130,7 +129,7 @@ export function* editCurrentDashboard (action) {
     resolve()
   } catch (err) {
     yield put(editCurrentDashboardFail())
-    message.error('修改当前 Dashboard 内容失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -146,7 +145,7 @@ export function* deleteDashboard ({ payload }) {
     }
   } catch (err) {
     yield put(deleteDashboardFail())
-    message.error('删除当前 Dashboard 失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -161,7 +160,7 @@ export function* getDashboardDetail ({ payload }) {
     yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload))
   } catch (err) {
     yield put(loadDashboardDetailFail())
-    message.error('获取 Dashboard 详细信息失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -177,7 +176,7 @@ export function* addDashboardItem (action) {
     resolve(result)
   } catch (err) {
     yield put(addDashboardItemFail())
-    message.error('新增失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -193,7 +192,7 @@ export function* editDashboardItem (action) {
     resolve()
   } catch (err) {
     yield put(editDashboardItemFail())
-    message.error('修改失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -208,7 +207,7 @@ export function* editDashboardItems (action) {
     yield put(dashboardItemsEdited(items))
   } catch (err) {
     yield put(editDashboardItemsFail())
-    message.error('修改失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -223,7 +222,7 @@ export function* deleteDashboardItem (action) {
     resolve()
   } catch (err) {
     yield put(deleteDashboardItemFail())
-    message.error('删除失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -264,7 +263,7 @@ export function* getWidgetShareLink (action) {
     }
   } catch (err) {
     yield put(loadWidgetShareLinkFail(itemId))
-    message.error('获取 Widget 分享链接失败，请稍后再试')
+    errorHandler(err)
   }
 }
 
@@ -282,7 +281,7 @@ export function* getWidgetCsv (action) {
     // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
   } catch (err) {
     yield put(loadWidgetCsvFail(itemId))
-    message.error('获取csv文件失败，请稍后再试')
+    errorHandler(err)
   }
 }
 

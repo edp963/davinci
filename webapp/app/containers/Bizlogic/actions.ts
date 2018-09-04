@@ -306,9 +306,12 @@ export function sqlExecuted (result) {
   }
 }
 
-export function executeSqlFail () {
+export function executeSqlFail (error) {
   return {
-    type: EXECUTE_SQL_FAILURE
+    type: EXECUTE_SQL_FAILURE,
+    payload: {
+      error
+    }
   }
 }
 

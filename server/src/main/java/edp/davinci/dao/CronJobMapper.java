@@ -45,13 +45,11 @@ public interface CronJobMapper {
             "set `name` = #{name,jdbcType=VARCHAR},",
             "project_id = #{projectId,jdbcType=BIGINT},",
             "job_type = #{jobType,jdbcType=VARCHAR},",
-            "job_status = #{jobStatus,jdbcType=BIT},",
+            "job_status = #{jobStatus,jdbcType=VARCHAR},",
             "cron_expression = #{cronExpression,jdbcType=VARCHAR},",
             "start_date = #{startDate,jdbcType=TIMESTAMP},",
             "end_date = #{endDate,jdbcType=TIMESTAMP},",
             "description = #{description,jdbcType=VARCHAR},",
-            "create_by = #{createBy,jdbcType=BIGINT},",
-            "create_time = #{createTime,jdbcType=TIMESTAMP},",
             "update_time = #{updateTime,jdbcType=TIMESTAMP},",
             "config = #{config,jdbcType=LONGVARCHAR},",
             "exec_log = #{execLog,jdbcType=LONGVARCHAR}",
@@ -82,5 +80,8 @@ public interface CronJobMapper {
             "WHERE c.id = #{id}",
     })
     CronJobWithProject getCronJobWithProjectById(@Param("id") Long id);
+
+    @Select({"select * from cron_job where job_status = 'started'"})
+    List<CronJob> getStartedJobs();
 
 }

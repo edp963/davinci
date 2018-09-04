@@ -40,6 +40,7 @@ import request, { removeToken } from '../../utils/request'
 // import request from '../../utils/request'
 import api from '../../utils/api'
 import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
 
 export function* login (action): IterableIterator<any> {
   const { username, password, resolve } = action.payload
@@ -54,25 +55,29 @@ export function* login (action): IterableIterator<any> {
       }
     })
 
-    switch (asyncData.header.code) {
-      case 400:
-        message.error('密码错误')
-        yield put(loginError())
-        return null
-      case 404:
-        message.error('用户不存在')
-        yield put(loginError())
-        return null
-      default:
-        const loginUser = readListAdapter(asyncData)
-        yield put(logged(loginUser))
-        localStorage.setItem('loginUser', JSON.stringify(loginUser))
-        resolve()
-        return loginUser
-    }
+    // switch (asyncData.header.code) {
+    //   case 400:
+    //     message.error('密码错误')
+    //     yield put(loginError())
+    //     return null
+    //   case 404:
+    //     message.error('用户不存在')
+    //     yield put(loginError())
+    //     return null
+    //   default:
+    //     const loginUser = readListAdapter(asyncData)
+    //     yield put(logged(loginUser))
+    //     localStorage.setItem('loginUser', JSON.stringify(loginUser))
+    //     resolve()
+    //     return loginUser
+    // }
+    const loginUser = readListAdapter(asyncData)
+    yield put(logged(loginUser))
+    localStorage.setItem('loginUser', JSON.stringify(loginUser))
+    resolve()
   } catch (err) {
     yield put(loginError())
-    message.error('登录失败')
+    errorHandler(err)
   }
 }
 
@@ -102,7 +107,7 @@ export function* activeUser (action): IterableIterator<any> {
     }
   } catch (err) {
     yield put(activeError())
-    message.error('认证失败')
+    errorHandler(err)
   }
 }
 
@@ -115,7 +120,7 @@ export function* getLoginUser (action): IterableIterator<any> {
     action.payload.resolve()
   } catch (err) {
     yield put(getLoginUserError())
-    message.error('获取登录用户失败')
+    errorHandler(err)
   }
 }
 
@@ -132,14 +137,9 @@ export function* checkName (action): IterableIterator<any> {
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
-    if (code && code === 400) {
-      reject(msg)
-    }
-    if (code && code === 200) {
-      resolve(msg)
-    }
+    resolve(msg)
   } catch (err) {
-    console.log(err)
+    errorHandler(err)
   }
 }
 
@@ -153,14 +153,9 @@ export function* checkNameUnique (action): IterableIterator<any> {
     })
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
-    if (code && code === 400) {
-      reject(msg)
-    }
-    if (code && code === 200) {
-      resolve(msg)
-    }
+    resolve(msg)
   } catch (err) {
-    console.log(err)
+    errorHandler(err)
   }
 }
 
@@ -180,7 +175,7 @@ export function* updateProfile (action): IterableIterator<any> {
     resolve(asyncData)
   } catch (err) {
     yield put(updateProfileError())
-    message.error(' 更新 profile 失败')
+    errorHandler(err)
   }
 }
 
@@ -192,17 +187,11 @@ export function* changeUserPassword ({ payload }) {
       url: `${api.user}/${user.id}/changepassword`,
       data: user
     })
-
-    if (result.header.code === 400) {
-      payload.reject(result.header.msg)
-    }
-    if (result.header.code === 200) {
-      yield put(userPasswordChanged(payload.info))
-      payload.resolve()
-    }
+    yield put(userPasswordChanged(payload.info))
+    payload.resolve()
   } catch (err) {
     yield put(changeUserPasswordFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 

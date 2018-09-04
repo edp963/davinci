@@ -29,4 +29,12 @@ public class Aggregator {
     private String column;
 
     private String func;
+
+    public Aggregator() {
+    }
+
+    public Aggregator(String column, String func) {
+        this.column = column;
+        this.func = func;
+    }
 }

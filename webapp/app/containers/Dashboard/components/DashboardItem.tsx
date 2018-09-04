@@ -25,7 +25,7 @@ import * as classnames from 'classnames'
 import DashboardItemControlPanel from './DashboardItemControlPanel'
 import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
-import DownLoadCsv, { IDownloadCsvProps } from '../../../components/DownLoadCsv'
+import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
 import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
@@ -55,14 +55,15 @@ interface IDashboardItemProps {
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
   interactId: string
-  rendered: boolean
+  rendered?: boolean
   renderType: RenderType
-  router: InjectedRouter
-  currentProject: IProject
+  router?: InjectedRouter
+  currentProject?: IProject
+  container?: string
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
-  onLoadWidgetShareLink: (id: number, itemId: number, authName: string) => void
+  onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
   onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void
@@ -94,8 +95,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private container: HTMLDivElement = null
 
   public componentWillMount () {
+    const { itemId, widget, onGetChartData, container } = this.props
+    if (container === 'share') {
+      onGetChartData('clear', itemId, widget.id)
+      this.setFrequent(this.props)
+    }
     this.setState({
-      pivotProps: JSON.parse(this.props.widget.config)
+      pivotProps: JSON.parse(widget.config)
     })
   }
 
@@ -113,12 +119,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       polling,
       onGetChartData,
-      rendered
+      rendered,
+      container
     } = nextProps
 
-    if (!this.props.rendered && rendered) {
-      onGetChartData('clear', itemId, widget.id)
-      this.setFrequent(this.props)
+    if (!container) {
+      if (!this.props.rendered && rendered) {
+        onGetChartData('clear', itemId, widget.id)
+        this.setFrequent(this.props)
+      }
     }
 
     if (polling !== this.props.polling) {
@@ -223,7 +232,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       onTurnOffInteract,
       onCheckTableInteract,
-      onDoTableInteract
+      onDoTableInteract,
+      container
     } = this.props
 
     const {
@@ -232,66 +242,53 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       pivotProps
     } = this.state
 
-    const menu = (
-      <Menu>
-        <Menu.Item className={styles.menuItem}>
-          <span className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</span>
-        </Menu.Item>
-        <Menu.Item className={styles.menuItem}>
-          <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={onDeleteDashboardItem(itemId)}
-          >
-            <span className={styles.menuText}>删除</span>
-          </Popconfirm>
-        </Menu.Item>
-      </Menu>
-    )
-
-    const DownloadButton = ShareDownloadPermission<IDownloadCsvProps>(currentProject, 'download')(DownLoadCsv)
-    const downloadButton = (
-      <Tooltip title="下载数据">
-        <DownloadButton
-          id={widget.id}
-          type="widget"
-          itemId={itemId}
-          shareInfo={shareInfo}
-          shareInfoLoading={shareInfoLoading}
-          downloadCsvLoading={downloadCsvLoading}
-          onLoadWidgetShareLink={onLoadWidgetShareLink}
-          onDownloadCsv={this.downloadCsv}
-        />
-      </Tooltip>
-    )
-
-    const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
-    const shareButton = (
-      <Tooltip title="分享">
-        <Popover
-          placement="bottomRight"
-          trigger="click"
-          content={
-            <SharePanel
-              id={widget.id}
-              type="widget"
-              itemId={itemId}
-              shareInfo={shareInfo}
-              secretInfo={secretInfo}
-              shareInfoLoading={shareInfoLoading}
-              authorized={sharePanelAuthorized}
-              onLoadWidgetShareLink={onLoadWidgetShareLink}
-              afterAuthorization={this.changeSharePanelAuthorizeState(true)}
-            />
-          }
-        >
-          <ShareButton type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
-        </Popover>
-      </Tooltip>
-    )
-
+    let downloadButton
+    let shareButton
     let widgetButton
+    let dropdownMenu
+
     if (currentProject) {
+      const DownloadButton = ShareDownloadPermission<IDownloadCsvProps>(currentProject, 'download')(DownloadCsv)
+      downloadButton = (
+        <Tooltip title="下载数据">
+          <DownloadButton
+            id={widget.id}
+            type="widget"
+            itemId={itemId}
+            shareInfo={shareInfo}
+            shareInfoLoading={shareInfoLoading}
+            downloadCsvLoading={downloadCsvLoading}
+            onLoadWidgetShareLink={onLoadWidgetShareLink}
+            onDownloadCsv={this.downloadCsv}
+          />
+        </Tooltip>
+      )
+
+      const ShareButton = ShareDownloadPermission<IconProps>(currentProject, 'download')(Icon)
+      shareButton = (
+        <Tooltip title="分享">
+          <Popover
+            placement="bottomRight"
+            trigger="click"
+            content={
+              <SharePanel
+                id={widget.id}
+                type="widget"
+                itemId={itemId}
+                shareInfo={shareInfo}
+                secretInfo={secretInfo}
+                shareInfoLoading={shareInfoLoading}
+                authorized={sharePanelAuthorized}
+                onLoadWidgetShareLink={onLoadWidgetShareLink}
+                afterAuthorization={this.changeSharePanelAuthorizeState(true)}
+              />
+            }
+          >
+            <ShareButton type="share-alt" onClick={this.changeSharePanelAuthorizeState(false)} />
+          </Popover>
+        </Tooltip>
+      )
+
       widgetButton = (
         <Tooltip title="编辑widget">
           <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
@@ -299,11 +296,45 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const dropdownMenu = (
-      <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
-        <Icon type="ellipsis" />
-      </Dropdown>
-    )
+    if (container === 'share') {
+      downloadButton = (
+        <Tooltip title="下载数据">
+          <DownloadCsv
+            id={widget.id}
+            type="widget"
+            itemId={itemId}
+            shareInfo={shareInfo}
+            downloadCsvLoading={downloadCsvLoading}
+            onLoadWidgetShareLink={onLoadWidgetShareLink}
+            onDownloadCsv={this.downloadCsv}
+          />
+        </Tooltip>
+      )
+    } else {
+      const InfoButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', false)(Span)
+      const DeleteButton = ModulePermission<React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>>(currentProject, 'viz', true)(Span)
+      const menu = (
+        <Menu>
+          <Menu.Item className={styles.menuItem}>
+            <InfoButton className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</InfoButton>
+          </Menu.Item>
+          <Menu.Item className={styles.menuItem}>
+            <Popconfirm
+              title="确定删除？"
+              placement="bottom"
+              onConfirm={onDeleteDashboardItem(itemId)}
+            >
+              <DeleteButton className={styles.menuText}>删除</DeleteButton>
+            </Popconfirm>
+          </Menu.Item>
+        </Menu>
+      )
+      dropdownMenu = (
+        <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
+          <Icon type="ellipsis" />
+        </Dropdown>
+      )
+    }
 
     const controls = widget.query_params
       ? JSON.parse(widget.query_params).filter((c) => c.type)
@@ -409,6 +440,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       </div>
     )
   }
+}
+
+function Span (props: React.DetailedHTMLProps<React.HTMLAttributes<HTMLSpanElement>, HTMLSpanElement>) {
+  return (
+    <span {...props} >{props.children}</span>
+  )
 }
 
 export default DashboardItem

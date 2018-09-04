@@ -32,7 +32,7 @@ public class QuartzUtils {
     @Autowired
     private SchedulerFactoryBean schedulerFactoryBean;
 
-    public void addJob(ScheduleJob scheduleJob) {
+    public void addJob(ScheduleJob scheduleJob) throws ServerException {
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getId().toString());

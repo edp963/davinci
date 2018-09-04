@@ -20,8 +20,7 @@
 
 import {
   LOGGED,
-  LOGOUT,
-  SET_LOGIN_USER
+  LOGOUT
 } from './constants'
 import { fromJS } from 'immutable'
 
@@ -40,9 +39,6 @@ function appReducer (state = initialState, { type, payload }) {
       return state
         .set('logged', false)
         .set('loginUser', null)
-    case SET_LOGIN_USER:
-      return state
-        .set('loginUser', payload.user)
     default:
       return state
   }

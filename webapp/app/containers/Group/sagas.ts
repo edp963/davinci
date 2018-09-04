@@ -39,11 +39,11 @@ import {
   editGroupFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { promiseSagaCreator } from '../../utils/reduxPromisation'
 import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
+import { errorHandler } from '../../utils/util'
 
 export function* getGroups () {
   try {
@@ -52,7 +52,7 @@ export function* getGroups () {
     yield put(groupsLoaded(groups))
   } catch (err) {
     yield put(loadGroupFail())
-    message.error('加载 Group 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -68,7 +68,7 @@ export function* addGroup ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(addGroupFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -81,7 +81,7 @@ export function* deleteGroup ({ payload }) {
     yield put(groupDeleted(payload.id))
   } catch (err) {
     yield put(deleteGroupFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -108,7 +108,7 @@ export function* editGroup ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(editGroupFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 

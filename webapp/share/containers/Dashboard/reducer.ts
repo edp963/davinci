@@ -29,31 +29,23 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+  RESIZE_ALL_DASHBOARDITEM
 } from './constants'
 
 const initialState = fromJS({
   title: '',
   config: '{}',
-  dashboardCascadeSources: false,
-  widgets: false,
-  items: false,
-  dataSources: false,
-  loadings: false,
-  itemQueryParams: false,
-  downloadCsvLoadings: false,
-  itemsCascadeSources: false
+  dashboardCascadeSources: null,
+  widgets: null,
+  items: null,
+  itemsInfo: null
 })
 
 function shareReducer (state = initialState, { type, payload }) {
   const dashboardCascadeSources = state.get('dashboardCascadeSources')
+  const itemsInfo = state.get('itemsInfo')
   let widgets = state.get('widgets')
-  const dataSources = state.get('dataSources')
-  const loadings = state.get('loadings')
-  const itemQueryParams = state.get('itemQueryParams')
-  const downloadCsvLoadings = state.get('downloadCsvLoadings')
-  const itemsCascadeSources = state.get('itemsCascadeSources')
 
   switch (type) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
@@ -61,105 +53,100 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('title', payload.dashboard.name)
         .set('config', payload.dashboard.config)
         .set('dashboardCascadeSources', {})
-        .set('items', payload.dashboard.widgets)
-        .set('dataSources', {})
-        .set('loadings', payload.dashboard.widgets.reduce((obj, w) => {
-          obj[w.id] = false
-          return obj
-        }, {}))
-        .set('itemQueryParams', payload.dashboard.widgets.reduce((obj, w) => {
-          obj[w.id] = {
-            filters: '',
-            linkageFilters: '',
-            globalFilters: '',
-            params: [],
-            linkageParams: [],
-            globalParams: [],
-            pagination: {}
+        .set('widgets', payload.dashboard.widgets)
+        .set('items', payload.dashboard.relations)
+        .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
+          obj[item.id] = {
+            datasource: [],
+            loading: false,
+            queryParams: {
+              linkageFilters: [],
+              globalFilters: [],
+              params: [],
+              linkageParams: [],
+              globalParams: []
+            },
+            downloadCsvLoading: false,
+            interactId: '',
+            renderType: 'rerender'
           }
-          return obj
-        }, {}))
-        .set('downloadCsvLoadings', payload.dashboard.widgets.reduce((obj, w) => {
-          obj[w.id] = false
-          return obj
-        }, {}))
-        .set('itemsCascadeSources', payload.dashboard.widgets.reduce((obj, w) => {
-          obj[w.id] = {}
           return obj
         }, {}))
     case SET_INDIVIDUAL_DASHBOARD:
       return state
         .set('items', [{
           id: 1,
-          position_x: 0,
-          position_y: 0,
+          x: 0,
+          y: 0,
           width: 12,
-          length: 10,
-          trigger_type: 'manual',
-          trigger_params: '',
-          widget_id: payload.widgetId,
-          aesStr: payload.token
+          height: 12,
+          polling: false,
+          frequency: 0,
+          widgetId: payload.widgetId,
+          dataToken: payload.token
         }])
-        .set('dataSources', {})
-        .set('loadings', {1: false})
-        .set('itemQueryParams', {
+        .set('itemsInfo', {
           1: {
-            filters: '',
-            linkageFilters: '',
-            globalFilters: '',
-            params: [],
-            linkageParams: [],
-            globalParams: [],
-            pagination: {}
+            datasource: [],
+            loading: false,
+            queryParams: {
+              linkageFilters: [],
+              globalFilters: [],
+              params: [],
+              linkageParams: [],
+              globalParams: []
+            },
+            downloadCsvLoading: false,
+            interactId: '',
+            renderType: 'rerender'
           }
         })
-        .set('downloadCsvLoadings', {1: false})
     case LOAD_SHARE_WIDGET_SUCCESS:
       if (!widgets) {
         widgets = []
       }
+      console.log(widgets.concat(payload.widget))
       return state.set('widgets', widgets.concat(payload.widget))
     case LOAD_SHARE_RESULTSET:
-      loadings[payload.itemId] = true
-      itemQueryParams[payload.itemId] = {
-        filters: payload.sql.filters,
-        linkageFilters: payload.sql.linkageFilters,
-        globalFilters: payload.sql.globalFilters,
-        params: payload.sql.params,
-        linkageParams: payload.sql.linkageParams,
-        globalParams: payload.sql.globalParams,
-        pagination: {
-          sorts: payload.sorts,
-          offset: payload.offset,
-          limit: payload.limit
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          loading: true,
+          queryParams: {
+            linkageFilters: payload.params.linkageFilters,
+            globalFilters: payload.params.globalFilters,
+            params: payload.params.params,
+            linkageParams: payload.params.linkageParams,
+            globalParams: payload.params.globalParams
+          }
         }
-      }
-      return state
-        .set('loadings', { ...loadings })
-        .set('itemQueryParams', { ...itemQueryParams })
+      })
     case LOAD_SHARE_RESULTSET_SUCCESS:
-      loadings[payload.itemId] = false
-      dataSources[payload.itemId] = payload.resultset
-      return state
-        .set('loadings', { ...loadings })
-        .set('dataSources', { ...dataSources })
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          loading: false,
+          datasource: payload.resultset,
+          renderType: payload.renderType
+        }
+      })
     case LOAD_WIDGET_CSV:
-      return state.set('downloadCsvLoadings', {
-        ...downloadCsvLoadings,
-        [payload.itemId]: true
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          downloadCsvLoading: true
+        }
       })
     case LOAD_WIDGET_CSV_SUCCESS:
     case LOAD_WIDGET_CSV_FAILURE:
-      return state.set('downloadCsvLoadings', {
-        ...downloadCsvLoadings,
-        [payload.itemId]: false
-      })
-    case LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS:
-      return state.set('itemsCascadeSources', {
-        ...itemsCascadeSources,
+      return state.set('itemsInfo', {
+        ...itemsInfo,
         [payload.itemId]: {
-          ...itemsCascadeSources[payload.itemId],
-          [payload.controlId]: payload.values
+          ...itemsInfo[payload.itemId],
+          downloadCsvLoading: false
         }
       })
     case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
@@ -167,6 +154,18 @@ function shareReducer (state = initialState, { type, payload }) {
         ...dashboardCascadeSources,
         [payload.controlId]: payload.values
       })
+    case RESIZE_ALL_DASHBOARDITEM:
+      return state.set(
+        'itemsInfo',
+        Object.entries(itemsInfo).reduce((info, [key, prop]: [string, any]) => {
+          info[key] = {
+            ...prop,
+            renderType: 'resize',
+            datasource: [...prop.datasource]
+          }
+          return info
+        }, {})
+      )
     default:
       return state
   }

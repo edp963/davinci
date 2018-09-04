@@ -37,6 +37,7 @@ import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.model.*;
 import edp.davinci.service.ViewService;
+import edp.davinci.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +91,9 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
     @Autowired
     private ViewService viewService;
 
+    @Autowired
+    private WidgetService widgetService;
+
 
     private volatile boolean imageExit = false;
 
@@ -107,8 +111,12 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
                 Map<String, Object> content = new HashMap<>();
-                User user = userMapper.getById(cronJob.getCreateBy());
-                content.put("username", StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName());
+                User user = userMapper.selectByEmail(cronJobConfig.getTo());
+                String username = cronJobConfig.getTo().split("@")[0];
+                if (null != user) {
+                    username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
+                }
+                content.put("username", username);
 
                 List<File> attachments = null;
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
@@ -145,6 +153,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
 
     /**
      * 根据job配置截取图片
+     *
      * @param cronJobConfig
      * @param userId
      * @return
@@ -236,10 +245,9 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
     }
 
 
-
-
     /**
      * 根据job配置生成excel ，多个excel压缩至zip包
+     *
      * @param cronJobConfig
      * @return
      * @throws Exception
@@ -317,8 +325,8 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                 XSSFSheet sheet = null;
                 try {
                     ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widget.getViewId());
-                    //TODO 组装查询条件
-                    ViewExecuteParam executeParam = null;
+
+                    ViewExecuteParam executeParam = widgetService.buildViewExecuteParam(widget);
 
                     List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
                     List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);

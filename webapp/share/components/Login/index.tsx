@@ -47,13 +47,8 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, shareInfo, (res) => {
-        if (res && res.header && res.header.code && res.header.code === 200) {
-          legitimateUser()
-        } else {
-          Message.destroy() // 掩盖 request 批量处理400 的提示语
-          Message.error('无权限')
-        }
+      onLogin(username, password, shareInfo, () => {
+        legitimateUser()
       })
     }
   }
@@ -92,7 +87,7 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLogin: (username: string, password: string, shareInfo: any, resolve: (res) => void) => dispatch(login(username, password, shareInfo, resolve))
+    onLogin: (username: string, password: string, shareInfo: any, resolve: () => void) => dispatch(login(username, password, shareInfo, resolve))
   }
 }
 

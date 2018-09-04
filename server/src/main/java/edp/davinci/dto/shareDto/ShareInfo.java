@@ -16,16 +16,35 @@
  * >>
  */
 
-package edp;
+package edp.davinci.dto.shareDto;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import edp.davinci.model.User;
+import lombok.Data;
 
-@SpringBootApplication
-public class DavinciServerApplication {
+@Data
+public class ShareInfo {
+    /**
+     * 分享实体Id
+     */
+    private Long shareId;
 
-    public static void main(String[] args) {
-        SpringApplication.run(DavinciServerApplication.class, args);
+    /**
+     * 分享人
+     */
+    private User shareUser;
+
+    /**
+     * 被分享人用户名
+     */
+    private String sharedUserName;
+
+
+    public ShareInfo() {
     }
 
+    public ShareInfo(Long shareId, User shareUser, String sharedUserName) {
+        this.shareId = shareId;
+        this.shareUser = shareUser;
+        this.sharedUserName = sharedUserName;
+    }
 }

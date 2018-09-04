@@ -41,9 +41,9 @@ import {
   editWidgetFail
 } from './actions'
 
-const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
+import { errorHandler } from '../../utils/util'
 
 export function* getWidgets (action) {
   const { projectId } = action.payload
@@ -52,7 +52,7 @@ export function* getWidgets (action) {
     yield put(widgetsLoaded(result.payload))
   } catch (err) {
     yield put(widgetsLoadedFail())
-    message.error('加载 Widget 列表失败')
+    errorHandler(err)
   }
 }
 
@@ -68,7 +68,7 @@ export function* addWidget ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(addWidgetFail())
-    message.error('新增失败')
+    errorHandler(err)
   }
 }
 
@@ -81,7 +81,7 @@ export function* deleteWidget ({ payload }) {
     yield put(widgetDeleted(payload.id))
   } catch (err) {
     yield put(deleteWidgetFail())
-    message.error('删除失败')
+    errorHandler(err)
   }
 }
 
@@ -92,7 +92,7 @@ export function* getWidgetDetail (action) {
     yield put(widgetDetailLoaded(result.payload))
   } catch (err) {
     yield put(loadWidgetDetailFail(err))
-    message.error('获取详情失败')
+    errorHandler(err)
   }
 }
 
@@ -107,7 +107,7 @@ export function* editWidget ({ payload }) {
     payload.resolve()
   } catch (err) {
     yield put(editWidgetFail())
-    message.error('修改失败')
+    errorHandler(err)
   }
 }
 

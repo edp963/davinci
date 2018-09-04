@@ -30,12 +30,10 @@ import {
   LOAD_WIDGET_CSV,
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
-  LOAD_CASCADESOURCE_FROM_ITEM,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
   LOAD_CASCADESOURCE_FROM_DASHBOARD,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE
+  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+  RESIZE_ALL_DASHBOARDITEM
 } from './constants'
 
 export function getDashboard (token, resolve, reject) {
@@ -84,26 +82,23 @@ export function widgetGetted (widget) {
   }
 }
 
-export function getResultset (itemId, token, sql, sorts, offset, limit, useCache, expired) {
+export function getResultset (renderType, itemId, dataToken, params) {
   return {
     type: LOAD_SHARE_RESULTSET,
     payload: {
+      renderType,
       itemId,
-      token,
-      sql,
-      sorts,
-      offset,
-      limit,
-      useCache,
-      expired
+      dataToken,
+      params
     }
   }
 }
 
-export function resultsetGetted (itemId, resultset) {
+export function resultsetGetted (renderType, itemId, resultset) {
   return {
     type: LOAD_SHARE_RESULTSET_SUCCESS,
     payload: {
+      renderType,
       itemId,
       resultset
     }
@@ -120,16 +115,13 @@ export function setIndividualDashboard (widgetId, token) {
   }
 }
 
-export function loadWidgetCsv (itemId, token, sql, sorts, offset, limit) {
+export function loadWidgetCsv (itemId, params, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
-      token,
-      sql,
-      sorts,
-      offset,
-      limit
+      params,
+      token
     }
   }
 }
@@ -148,41 +140,6 @@ export function loadWidgetCsvFail (itemId) {
     type: LOAD_WIDGET_CSV_FAILURE,
     payload: {
       itemId
-    }
-  }
-}
-
-export function loadCascadeSourceFromItem (itemId, controlId, token, sql, column, parents) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM,
-    payload: {
-      itemId,
-      controlId,
-      token,
-      sql,
-      column,
-      parents
-    }
-  }
-}
-
-export function cascadeSourceFromItemLoaded (itemId, controlId, column, values) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-    payload: {
-      itemId,
-      controlId,
-      column,
-      values
-    }
-  }
-}
-
-export function loadCascadeSourceFromItemFail (error) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
-    payload: {
-      error
     }
   }
 }
@@ -217,5 +174,11 @@ export function loadCascadeSourceFromDashboardFail (error) {
     payload: {
       error
     }
+  }
+}
+
+export function resizeAllDashboardItem () {
+  return {
+    type: RESIZE_ALL_DASHBOARDITEM
   }
 }

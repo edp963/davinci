@@ -62,32 +62,13 @@ export function listToTree (list, parentId) {
   const ret = []
   for (const i in list) {
     if (list[i].parentId === parentId) {
-      list[i].children = this.listToTree(list, list[i].id)
+      const leftList = list.filter((l) => l.id !== list[i].id)
+      list[i].children = listToTree(leftList, list[i].id)
       ret.push(list[i])
     }
   }
   return ret
 }
-
-// list 转成树选择json
-// declare interface IObjectConstructor {
-//   assign (...objects: object[]): object
-// }
-// export function listToTreeSelect (list, parentId) {
-//   const ret = []
-//   for (const i in list) {
-//     if (list[i].parentId === parentId) {
-//       list[i].children = this.listToTreeSelect(list, list[i].id)
-//       const listObj = (Object as IObjectConstructor).assign({}, list[i], {
-//         title: list[i].name,
-//         value: `${list[i].id}`,
-//         key: list[i].id
-//       })
-//       ret.push(listObj)
-//     }
-//   }
-//   return ret
-// }
 
 // 获取第一个dashboard的id
 export function findFirstLeaf (tree) {

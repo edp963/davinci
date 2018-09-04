@@ -35,7 +35,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 @Slf4j
 @Configuration
-@MapperScan("edp.davinci.dao.*Mapper")
+@MapperScan("edp.davinci.dao")
 @EnableTransactionManagement
 public class DataSourceConfig {
 

@@ -144,6 +144,7 @@ interface IBizlogicFormState {
   description: string
   isNameExited: boolean
   selectedSourceName: string
+  sqlExecuteCode: boolean | number
 }
 
 interface IViewTeams {
@@ -195,7 +196,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       name: '',
       description: '',
       isNameExited: false,
-      selectedSourceName: ''
+      selectedSourceName: '',
+      sqlExecuteCode: false
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
@@ -232,7 +234,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { viewTeam } =  nextProps
+    const { viewTeam, sqlValidateCode } =  nextProps
     const { listData, teamParams, teamCheckedKeys, schemaData } = this.state
     const { route, params, bizlogics } = this.props
 
@@ -292,7 +294,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.setState({
       treeData: viewTeam,
       listData: listDataFinal,
-      teamCheckedKeys: teamKeyArr
+      teamCheckedKeys: teamKeyArr,
+      sqlExecuteCode: sqlValidateCode
     })
    }
 
@@ -546,7 +549,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private executeSql = () => {
     const { sourceIdGeted, listData, isDeclarate } = this.state
 
-    this.setState({ isFold: true })
+    this.setState({
+      isFold: true,
+      alertVisible: true
+    })
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
@@ -610,9 +616,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
 
     this.props.onExecuteSql(sourceIdGeted, sql, (result) => {
-      this.setState({
-        alertVisible: true
-      })
       if (result) {
         const { resultset, columns } = result
 
@@ -634,8 +637,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         })
         this.setState({
           executeResultset: resultset,
-          executeColumns: columns,
-          alertVisible: true
+          executeColumns: columns
         })
       }
     })
@@ -675,8 +677,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited } = this.state
-        const { sqlValidateCode, route, params } = this.props
+        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode } = this.state
+        const { route, params } = this.props
         const { id, source_id, source_name } = values
         if (!name.trim()) {
           message.error('View名称不能为空')
@@ -691,7 +693,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           return
         }
 
-        switch (sqlValidateCode) {
+        switch (sqlExecuteCode) {
           case 200:
             const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.doc.getValue()
             let querySql = ''
@@ -886,7 +888,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const {
       form,
       sources,
-      sqlValidateCode,
       sqlValidateMessage,
       executeLoading,
       modalLoading,
@@ -909,7 +910,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       isFold,
       name,
       description,
-      selectedSourceName
+      selectedSourceName,
+      sqlExecuteCode
     } = this.state
 
     const itemStyle = {
@@ -1027,14 +1029,14 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     let sqlValidatePanel
     if (isShowSqlValidateAlert) {
-      if (sqlValidateCode) {
+      if (sqlExecuteCode) {
         sqlValidatePanel = alertVisible
           ? (
             <Alert
               className={styles.sqlAlertText}
-              message={`syntax check ${sqlValidateCode === 200 ? 'success' : 'error'}`}
+              message={`syntax check ${sqlExecuteCode === 200 ? 'success' : 'error'}`}
               description={`${sqlValidateMessage || ''}`}
-              type={`${sqlValidateCode === 200 ? 'success' : 'error'}`}
+              type={`${sqlExecuteCode === 200 ? 'success' : 'error'}`}
               showIcon
               closable
               onClose={this.handleClose}
@@ -1158,33 +1160,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Tree>
           </Col>
         </Row>
-        {/* <div className={styles.model}>
-          <div className={styles.source}>
-            <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
-              <a>{selectedView ? selectedView.name : '选择一个Source'}</a>
-              <a>'选择一个Source'</a>
-            </Dropdown>
-          </div>
-          <div className={styles.columnContainer}>
-            <h4>分类型</h4>
-            <Col span={24} className={styles.treeSearch}>
-              <Search
-                className={styles.searchSource}
-                placeholder="Search the Schema"
-                onChange={this.searchSchema}
-              />
-            </Col>
-            <Col span={24} className={styles.sourceTree}>
-              <Tree
-                onExpand={this.onExpand}
-                expandedKeys={expandedKeys}
-                autoExpandParent={autoExpandParent}
-              >
-              {loop(data || [])}
-              </Tree>
-            </Col>
-          </div>
-        </div> */}
         <Row className={styles.formRight}>
           <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
             <FormItem label="声明变量" {...itemStyle}>
