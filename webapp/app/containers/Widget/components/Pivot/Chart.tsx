@@ -493,10 +493,10 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
               xSum = 0
             }
           })
-          // console.log(grid)
-          // console.log(xAxis)
-          // console.log(yAxis)
-          // console.log(series)
+          console.log(grid)
+          console.log(xAxis)
+          console.log(yAxis)
+          console.log(series)
 
           instance.setOption({
             tooltip: {

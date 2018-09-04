@@ -77,13 +77,15 @@ export interface IPivotProps {
 
 export interface IPivotStates {
   legendSelected: ILegend
+  renderType: RenderType
 }
 
 export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   constructor (props) {
     super(props)
     this.state = {
-      legendSelected: {}
+      legendSelected: {},
+      renderType: 'rerender'
     }
   }
 
@@ -117,6 +119,12 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
   public componentDidMount () {
     this.getContainerSize()
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    this.setState({
+      renderType: nextProps.renderType
+    })
   }
 
   public componentWillUpdate (nextProps: IPivotProps) {
@@ -327,13 +335,15 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       ? legendSelected[name].filter((ls) => ls !== key)
       : legendSelected[name].concat(key)
     this.setState({
-      legendSelected: {...legendSelected}
+      legendSelected: {...legendSelected},
+      renderType: 'clear'
     })
   }
 
   public render () {
-    const { cols, rows, metrics, color, label, xAxis, dimetionAxis, renderType } = this.props
-    const { legendSelected } = this.state
+    const { cols, rows, metrics, color, label, xAxis, dimetionAxis } = this.props
+    const { legendSelected, renderType } = this.state
+
     return (
       <div className={styles.block} ref={(f) => this.container = f}>
         <div className={styles.leftSide}>
