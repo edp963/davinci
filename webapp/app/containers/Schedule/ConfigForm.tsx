@@ -61,7 +61,6 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
       treeCheckable: true,
       onChange: treeChange,
       onSelect: treeSelect,
-    //  treeData: dashboardTree,
       treeData: vizs,
       value: dashboardTreeValue,
       loadData: loadTreeData,

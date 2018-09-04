@@ -332,13 +332,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     })
   }
 
-  private formatterVizs = () => {
-    const { vizs } = this.props
-    if (vizs && vizs.length) {
-      
-    }
-  }
-
   private onLoadTreeData = (treeNode) => {
     const eventKey = treeNode.props.eventKey
     return new Promise((resolve) => {

@@ -116,15 +116,45 @@ export function* getVizsData ({ payload }) {
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = readListAdapter(portalsData)
-    const displayList = readListAdapter(displayData)
+    const displayList = readListAdapter(displayData).map((display) => ({...display, ...{
+      contenType: 'display',
+      label: `${display.name}`,
+      key: display.name,
+      value: `${display.id}`,
+      isLeaf: true
+    }}))
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
     const portals = portalsList.map((portal, index) => {
       portal.children =  buildTree(readListAdapter(list[index]))
-      return portal
+      return {
+        ...portal,
+        ...{
+          contenType: 'portal',
+          label: `${portal.name}`,
+          key: portal.name,
+          value: `${portal.id}`,
+          isLeaf: true
+        }
+      }
     })
-    const result = [{name: 'display', children: displayList}, {name: 'portal', children: portals}]
+    const result = [{
+      contenType: 'display',
+      label: `Display`,
+      key: 'display',
+      value: 'display',
+      isLeaf: true,
+      children: displayList
+    },
+    {
+      contenType: 'portal',
+      label: `Portal`,
+      key: 'portal',
+      value: 'portal',
+      isLeaf: true,
+      children: portals
+    }]
     yield put(vizsLoaded(result))
   } catch (err) {
     yield put(loadVizsFail())
@@ -149,11 +179,31 @@ export function* getVizsData ({ payload }) {
     function arr (tree, wrapper) {
       for (const attr in tree) {
         if (tree[attr]['children']) {
+          tree[attr] = {
+            ...tree[attr],
+            ...{
+                contenType: 'portal',
+                label: `${tree[attr].name}`,
+                key: tree[attr].name,
+                value: `${tree[attr].id}`,
+                isLeaf: true
+            }
+          }
           wrapper.push(tree[attr])
           const children = tree[attr]['children']
           tree[attr]['children'] = []
           arr(children, tree[attr]['children'])
         } else {
+          tree[attr] = {
+            ...tree[attr],
+            ...{
+                contenType: 'portal',
+                label: `${tree[attr].name}`,
+                key: tree[attr].name,
+                value: `${tree[attr].id}`,
+                isLeaf: true
+            }
+          }
           wrapper.push(tree[attr])
         }
       }
