@@ -42,7 +42,7 @@
       #{name,jdbcType=VARCHAR},
       #{projectId,jdbcType=BIGINT},
       #{jobType,jdbcType=VARCHAR},
-      #{jobStatus,jdbcType=BIT},
+      #{jobStatus,jdbcType=VARCHAR},
       #{cronExpression,jdbcType=VARCHAR},
       #{startDate,jdbcType=TIMESTAMP},
       #{endDate,jdbcType=TIMESTAMP},

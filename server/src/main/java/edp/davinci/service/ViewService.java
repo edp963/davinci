@@ -23,6 +23,7 @@ import edp.core.model.QueryColumn;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.*;
+import edp.davinci.model.Project;
 import edp.davinci.model.User;
 
 import javax.servlet.http.HttpServletRequest;
@@ -50,4 +51,8 @@ public interface ViewService extends CheckEntityService {
     List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
     ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request);
+
+    boolean allowGetData(Project project, User user);
+
+    Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
 }

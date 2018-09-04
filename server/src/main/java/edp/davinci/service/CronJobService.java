@@ -38,4 +38,6 @@ public interface CronJobService extends CheckEntityService {
     ResultMap startCronJob(Long id, User user, HttpServletRequest request);
 
     ResultMap stopCronJob(Long id, User user, HttpServletRequest request);
+
+    void startAllJobs();
 }

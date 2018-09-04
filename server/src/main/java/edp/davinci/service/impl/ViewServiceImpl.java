@@ -677,11 +677,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        Organization organization = organizationMapper.getById(project.getOrgId());
-
-        //获取当前用户在organization的role
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
         //当前用户是project的创建者和organization的owner，直接返回
         if (!allowGetData(project, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
@@ -697,7 +692,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
 
-    private Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
+    public Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
         Map<String, Object> map = null;
         try {
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
@@ -817,7 +812,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @param user
      * @return
      */
-    private boolean allowGetData(Project project, User user) {
+    public boolean allowGetData(Project project, User user) {
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
         if (isProjectAdmin(project, user)) {
             return true;

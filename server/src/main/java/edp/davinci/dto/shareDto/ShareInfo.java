@@ -16,25 +16,35 @@
  * >>
  */
 
-package edp.davinci.dto.viewDto;
+package edp.davinci.dto.shareDto;
 
+import edp.davinci.model.User;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
-
 @Data
-public class Aggregator {
+public class ShareInfo {
+    /**
+     * 分享实体Id
+     */
+    private Long shareId;
 
-    @NotBlank(message = "Invalid aggregator column")
-    private String column;
+    /**
+     * 分享人
+     */
+    private User shareUser;
 
-    private String func;
+    /**
+     * 被分享人用户名
+     */
+    private String sharedUserName;
 
-    public Aggregator() {
+
+    public ShareInfo() {
     }
 
-    public Aggregator(String column, String func) {
-        this.column = column;
-        this.func = func;
+    public ShareInfo(Long shareId, User shareUser, String sharedUserName) {
+        this.shareId = shareId;
+        this.shareUser = shareUser;
+        this.sharedUserName = sharedUserName;
     }
 }
