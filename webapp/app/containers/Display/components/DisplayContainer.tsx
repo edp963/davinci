@@ -30,7 +30,9 @@ export enum Keys {
   Right,
   Delete,
   Copy,
-  Paste
+  Paste,
+  UnDo,
+  Redo
 }
 
 interface IDisplayContainerProps {
@@ -104,7 +106,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     if (['button', 'input', 'select'].indexOf((e.target as HTMLElement).tagName.toLowerCase()) > 0) {
       return
     }
-    const { key, ctrlKey, metaKey } = e
+    const { key, ctrlKey, metaKey, shiftKey } = e
     const { onKeyDown } = this.props
     switch (key) {
       case 'ArrowUp':
@@ -135,6 +137,19 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
           onKeyDown(Keys.Paste)
         }
         break
+      case 'y':
+      case 'Y':
+        if (ctrlKey && !metaKey) {
+          onKeyDown(Keys.Redo)
+        }
+        break
+      case 'z':
+      case 'Z':
+        if (metaKey) {
+          onKeyDown(shiftKey ? Keys.Redo : Keys.UnDo)
+        } else if (ctrlKey) {
+          onKeyDown(Keys.UnDo)
+        }
     }
   }
 

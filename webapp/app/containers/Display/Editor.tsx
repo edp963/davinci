@@ -630,6 +630,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       case Keys.Paste:
         this.pasteLayers()
         break
+      case Keys.UnDo:
+        this.undo()
+        break
+      case Keys.Redo:
+        this.redo()
+        break
     }
   }
 
