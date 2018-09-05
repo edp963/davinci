@@ -17,6 +17,7 @@ import {makeSelectCurrentProject} from '../../Projects/selectors'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 import {IPortal} from '../../Portal'
+import { IconProps } from 'antd/lib/icon'
 
 interface IPortalListProps {
   projectId: number
@@ -142,8 +143,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       [styles.editing]: !portal.publish
     })
 
-    const EditIcon = ModulePermission(currentProject, 'viz', false)(Icon)
-    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
+    const EditIcon = ModulePermission<IconProps>(currentProject, 'viz', false)(Icon)
+    const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
     return (
       <Col
         key={portal.id}
