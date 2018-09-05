@@ -1452,10 +1452,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let globalFilterButton
 
     if (currentDashboard) {
-      const AddButton = ModulePermission(currentProject, 'viz', true)(Button)
+      const AddButton = ModulePermission<ButtonProps>(currentProject, 'viz', true)(Button)
       const ShareButton = ShareDownloadPermission<ButtonProps>(currentProject, 'share')(Button)
-      const LinkageButton = ModulePermission(currentProject, 'viz', false)(Button)
-      const GlobalFilterButton = ModulePermission(currentProject, 'viz', false)(Button)
+      const LinkageButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
+      const GlobalFilterButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
 
       addButton = (
         <Tooltip placement="bottom" title="新增">

@@ -469,9 +469,9 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private changeStatus = (record) => () => {
-    const { id, job_status } = record
+    const { id, jobStatus } = record
     const { onChangeCurrentJobStatus } = this.props
-    onChangeCurrentJobStatus(id, job_status)
+    onChangeCurrentJobStatus(id, jobStatus)
   }
 
   public render () {
@@ -528,7 +528,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       },
       {
         title: '状态',
-        dataIndex: 'job_status',
+        dataIndex: 'jobStatus',
         key: 'job_status'
       },
       {
