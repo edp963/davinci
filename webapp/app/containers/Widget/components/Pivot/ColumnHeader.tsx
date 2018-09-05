@@ -18,14 +18,14 @@ interface IColumnHeaderProps {
 export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
   public render () {
     const { cols, colKeys, colTree, metrics, drawingData, dimetionAxis } = this.props
-    const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
+    const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     let tableWidth = 0
     let headers
 
     if (cols.length) {
       if (dimetionAxis === 'col' && cols.length === 1) {
-        tableWidth = colKeys.length * (multiCoordinate ? unitMetricHeight : elementSize)
+        tableWidth = colKeys.length * elementSize
       }
 
       headers = cols.map((c, i) => {
@@ -48,7 +48,7 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
               if (ck[i] === nextCk[i]) {
                 return
               } else {
-                cellWidth = elementCount * (multiCoordinate ? unitMetricHeight : elementSize)
+                cellWidth = elementCount * elementSize
                 x = elementCount
                 tableWidth += cellWidth
                 elementCount = 0
