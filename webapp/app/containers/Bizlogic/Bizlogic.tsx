@@ -403,7 +403,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     } else {
       this.codeMirrorInstanceOfDeclaration = false
     }
-
     this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
   }
 
@@ -560,42 +559,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     if (isDeclarate === 'yes' && this.codeMirrorInstanceOfDeclaration) {
       const declaration = this.codeMirrorInstanceOfDeclaration.getValue()
       sql = `${declaration}{${sqlTmpl}}`
-
-      const sqlTeamVariables = declaration.match(/team@var\s+\$\w+\$/g)
-      const teamParams = sqlTeamVariables
-      ? sqlTeamVariables.map((gv) => gv.substring(gv.indexOf('$') + 1, gv.lastIndexOf('$')))
-      : []
-      const params = teamParams.map((gp) => {
-        return {
-          k: gp,
-          v: ''
-        }
-      })
-
-      this.setState({
-        teamParams: params
-      }, () => {
-        const listDataFinal = listData.map((ld) => {
-          const originParams = ld.params
-
-          ld.params = teamParams.map((tp) => {
-            const alreadyInUseParam = originParams.find((o) => o.k === tp)
-
-            if (alreadyInUseParam) {
-              return (Object as IObjectConstructor).assign({}, alreadyInUseParam)
-            } else {
-              return {
-                k: tp,
-                v: ''
-              }
-            }
-          })
-          return ld
-        })
-        this.setState({
-          listData: listDataFinal.slice()
-        })
-      })
+      this.getTeamTreeData(sql)
     } else {
       sql = `{${sqlTmpl}}`
       const listDataFinal = listData.map((ld) => {
@@ -882,6 +846,53 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private cancel = () => {
     this.props.router.goBack()
+  }
+
+  private changeTabs = (value) => {
+    const { teamParams } = this.state
+    const { params, bizlogics } = this.props
+    if (!teamParams.length) {
+      const { sql } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
+      this.getTeamTreeData(sql)
+    }
+  }
+
+  private getTeamTreeData (sql) {
+    const { listData } = this.state
+
+    const sqlTeamVariables = sql.match(/team@var\s+\$\w+\$/g)
+    const teamParamsTemp = sqlTeamVariables
+      ? sqlTeamVariables.map((gv) => gv.substring(gv.indexOf('$') + 1, gv.lastIndexOf('$')))
+      : []
+    const paramsTemp = teamParamsTemp.map((gp) => {
+      return {
+        k: gp,
+        v: ''
+      }
+    })
+
+    const listDataFinal = listData.map((ld) => {
+      const originParams = ld.params
+
+      ld.params = teamParamsTemp.map((tp) => {
+        const alreadyInUseParam = originParams.find((o) => o.k === tp)
+
+        if (alreadyInUseParam) {
+          return (Object as IObjectConstructor).assign({}, alreadyInUseParam)
+        } else {
+          return {
+            k: tp,
+            v: ''
+          }
+        }
+      })
+      return ld
+    })
+
+    this.setState({
+      teamParams: paramsTemp,
+      listData: listDataFinal.slice()
+    })
   }
 
   public render () {
@@ -1220,7 +1231,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               ? (
               <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
                 <Col span={24} className={styles.tabCol}>
-                  <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab}>
+                  <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
                     <TabPane tab="Data" key="data">
                       <Table
                         className={styles.viewTabPane}
