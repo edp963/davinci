@@ -38,6 +38,7 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Table = require('antd/lib/table')
 const Button = require('antd/lib/button')
+import {ButtonProps} from 'antd/lib/button/button'
 const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
@@ -499,7 +500,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-    const ProviderButton = ModulePermission(currentProject, 'schedule', true)(Button)
+    const ProviderButton = ModulePermission<ButtonProps>(currentProject, 'schedule', true)(Button)
     const columns = [
       {
         title: '名称',

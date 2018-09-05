@@ -38,6 +38,7 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
 const Icon = require('antd/lib/icon')
+import {IconProps} from 'antd/lib/icon/index'
 const Tooltip = require('antd/lib/tooltip')
 const Popover = require('antd/lib/popover')
 const Modal = require('antd/lib/modal')
@@ -606,7 +607,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
 
-    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
+    const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
     let isTreeDraggable
     if (currentProject && currentProject.permission) {
