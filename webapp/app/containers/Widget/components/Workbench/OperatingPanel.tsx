@@ -4,7 +4,6 @@ import * as classnames from 'classnames'
 import widgetlibs from '../../../../assets/json/widgetlib'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
-import DropboxContent from './DropboxContent'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -97,7 +96,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, currentWidgetConfig } = nextProps
     if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
-      const { cols, rows, metrics, filters, color, label, size } = currentWidgetConfig
+      const { cols, rows, metrics, filters, color, label, size, xAxis } = currentWidgetConfig
       const { commonParams } = this.state
       const model = JSON.parse(selectedView.model)
 
@@ -125,7 +124,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const currentSpecificParams = {
         ...color && {color},
         ...label && {label},
-        ...size && {size}
+        ...size && {size},
+        ...xAxis && {xAxis}
       }
       this.setState({
         commonParams,
@@ -144,17 +144,26 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     selectedCharts.forEach((chartInfo) => {
       Object.entries(chartInfo.data).forEach(([key, prop]: [string, IDataParamProperty]) => {
         if (!config[key]) {
+          let value = null
+          switch (key) {
+            case 'color':
+              value = specificParams[key]
+                ? {
+                  all: specificParams[key].value.all,
+                  ...metrics.items.reduce((props, i) => {
+                    props[i.name] = specificParams[key].value[i.name] || specificParams[key].value['all']
+                    return props
+                  }, {})
+                }
+                : { all: defaultThemeColors[0] }
+              break
+            case 'size':
+              value = specificParams[key] ? specificParams[key].value : { all: 3 }
+              break
+          }
           config[key] = {
             ...prop,
-            value: specificParams[key]
-              ? {
-                all: specificParams[key].value.all,
-                ...metrics.items.reduce((props, i) => {
-                  props[i.name] = specificParams[key].value[i.name] || defaultThemeColors[0]
-                  return props
-                }, {})
-              }
-              : { all: defaultThemeColors[0] },
+            value,
             items: specificParams[key] ? specificParams[key].items : []
           }
         }
@@ -386,7 +395,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { commonParams, specificParams } = this.state
     item.chart = chart
     commonParams.metrics.items = [...commonParams.metrics.items]
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts(commonParams.metrics.items)))
   }
 
   private getDiemtionsAndMetricsCount = () => {
@@ -397,9 +406,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  private getVisualData = (commonParams, specificParams) => {
+  private getVisualData = (commonParams, specificParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label, xAxis } = specificParams
+    const { color, label, size, xAxis } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
     let selectedCharts = this.getSelectedCharts(metrics.items)
     let groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name))
@@ -416,6 +425,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         .map((l) => l.name))
       aggregators = aggregators.concat(label.items
         .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (size) {
+      aggregators = aggregators.concat(size.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg
@@ -454,10 +470,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             filters: filters.items,
             ...color && {color},
             ...label && {label},
+            ...size && {size},
             ...xAxis && {xAxis},
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
-            renderType: 'rerender'
+            renderType: renderType || 'rerender'
           })
         } else {
           onSetPivotProps({
@@ -483,9 +500,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         filters: filters.items,
         ...color && {color},
         ...label && {label},
+        ...size && {size},
         ...xAxis && {xAxis},
         dimetionAxis: this.getDimetionAxis(selectedCharts),
-        renderType: 'clear'
+        renderType: renderType || 'clear'
       })
       this.setState({
         commonParams,
@@ -509,7 +527,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       metrics.items.forEach((i) => {
         i.chart = chart
       })
-      this.getVisualData(commonParams, specificParams)
+      this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts(metrics.items)))
     }
   }
 
@@ -517,24 +535,29 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.props.onViewSelect(this.props.views.find((v) => `${v.id}` === key))
   }
 
-  private dropboxContentClick = (boxRole: string) => () => {
-    switch (boxRole) {
-      default:
-        break
-    }
-  }
-
-  private dropboxContentColorValueChange = (key: string, hex: string) => {
+  private dropboxValueChange = (name) => (key: string, value: string | number) => {
     const { commonParams, specificParams } = this.state
-    const { color } = specificParams
-    if (key === 'all') {
-      Object.keys(color.value).forEach((k) => {
-        color.value[k] = hex
-      })
-    } else {
-      color.value[key] = hex
+    const { color, size } = specificParams
+    switch (name) {
+      case 'color':
+        if (key === 'all') {
+          Object.keys(color.value).forEach((k) => {
+            color.value[k] = value
+          })
+        } else {
+          color.value[key] = value
+        }
+        break
+      case 'size':
+        if (key === 'all') {
+          Object.keys(size.value).forEach((k) => {
+            size.value[k] = value
+          })
+        } else {
+          size.value[key] = value
+        }
     }
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, 'refresh')
   }
 
   private confirmColorModal = (config) => {
@@ -619,7 +642,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       filterModalVisible
     } = this.state
     const { metrics } = commonParams
-
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -628,7 +650,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ))}
       </Menu>
     )
-
     const categories = []
     const values = []
 
@@ -660,16 +681,26 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         if (k === 'cols') {
           v.title = showColsAndRows ? '列' : '维度'
         }
+        let panelList = []
+        if (k === 'color') {
+          panelList = metrics.items
+        }
+        if (k === 'size') {
+          panelList = v.items
+        }
         return (
           <Dropbox
             key={k}
             name={k}
             title={v.title}
             type={v.type}
+            value={v.value}
             items={v.items}
             dragged={dragged}
+            panelList={panelList}
             dimetionsCount={dimetionsCount}
             metricsCount={metricsCount}
+            onValueChange={this.dropboxValueChange(k)}
             onItemDragStart={this.insideDragStart(k)}
             onItemDragEnd={this.insideDragEnd}
             onItemRemove={this.removeDropboxItem(k)}
@@ -680,17 +711,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onItemChangeChart={this.getDropboxItemChart}
             beforeDrop={this.beforeDrop}
             onDrop={this.drop}
-          >
-            <DropboxContent
-              title={v.title}
-              role={k}
-              type={v.type}
-              value={v.value}
-              panelList={metrics.items}
-              onClick={this.dropboxContentClick(k)}
-              {...k === 'color' ? {onColorValueChange: this.dropboxContentColorValueChange} : void 0}
-            />
-          </Dropbox>
+          />
         )
       })
 

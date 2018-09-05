@@ -1,9 +1,15 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
+
 import DropboxItem from './DropboxItem'
+import DropboxContent from './DropboxContent'
+import ColorPanel from './ColorPanel'
+import SizePanel from './SizePanel'
 import { IChartInfo } from '../Pivot/Chart'
 import { decodeMetricName } from '../util'
+const Popover = require('antd/lib/popover')
+const Icon = require('antd/lib/icon')
 const styles = require('./Workbench.less')
 
 export type DragType = 'category' | 'value'
@@ -48,10 +54,13 @@ interface IDropboxProps {
   name: string
   title: string
   type: DropboxType
+  value: object
   items: IDataParamSource[]
   dragged: IDataParamSource
+  panelList: IDataParamSource[]
   dimetionsCount: number
   metricsCount: number
+  onValueChange: (key: string, value: string) => void
   onItemDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onItemDragEnd: (dropType: DropType) => void
   onItemRemove: (name: string) => (e) => void
@@ -247,17 +256,19 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       name,
       title,
       type,
+      value,
+      panelList,
       dragged,
       dimetionsCount,
       metricsCount,
+      onValueChange,
       onItemDragStart,
       onItemSort,
       onItemChangeAgg,
       onItemChangeColorConfig,
       onItemChangeFilterConfig,
       onItemChangeChart,
-      onItemRemove,
-      children
+      onItemRemove
     } = this.props
 
     const { entering, items } = this.state
@@ -287,6 +298,42 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       [styles.value]: dragType === 'value'
     })
 
+    let setting
+    if (['color', 'size'].includes(name)) {
+      let panel
+      switch (name) {
+        case 'color':
+          panel = (
+            <ColorPanel
+              list={panelList}
+              value={value}
+              onValueChange={onValueChange}
+            />
+          )
+          break
+        case 'size':
+          panel = (
+            <SizePanel
+              list={panelList}
+              value={value}
+              onValueChange={onValueChange}
+            />
+          )
+          break
+      }
+      setting = (
+        <Popover
+          content={panel}
+          trigger="click"
+          placement="right"
+        >
+          <span className={styles.setting}>
+            <Icon type="setting" /> 设置
+          </span>
+        </Popover>
+      )
+    }
+
     const itemContent = items.length
       ? items.map((item) => (
         <DropboxItem
@@ -305,12 +352,18 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
           onRemove={onItemRemove(item.name)}
         />
       ))
-      : children
+      : (
+        <DropboxContent
+          title={title}
+          type={type}
+        />
+      )
 
     return (
       <div className={styles.dropbox}>
         <p className={styles.title}>
           {title}
+          {setting}
         </p>
         <div
           className={containerClass}

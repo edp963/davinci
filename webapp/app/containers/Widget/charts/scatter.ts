@@ -18,10 +18,13 @@
  * >>
  */
 
-export default function () {
+export default function (sizeRate: {[key: string]: number}) {
   return {
     chartOption: {
       type: 'scatter'
+    },
+    getSymbolSize (itemName, size) {
+      return sizeRate ? Math.ceil(size * sizeRate[itemName]) : size
     }
   }
 }
