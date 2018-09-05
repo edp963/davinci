@@ -16,6 +16,7 @@ import DisplayForm from './DisplayForm'
 import {makeSelectCurrentProject} from '../../Projects/selectors'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
+import { IconProps } from 'antd/lib/icon'
 
 export interface IDisplay {
   id: number
@@ -101,7 +102,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private delegate = (func: (...args) => void, ...args) => (e: MouseEvent) => {
+  private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent<any>) => {
     func.apply(this, args)
     e.stopPropagation()
   }
@@ -140,8 +141,8 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       [styles.editing]: !display.publish
     })
 
-    const EditIcon = ModulePermission(currentProject, 'viz', false)(Icon)
-    const AdminIcon = ModulePermission(currentProject, 'viz', true)(Icon)
+    const EditIcon = ModulePermission<IconProps>(currentProject, 'viz', false)(Icon)
+    const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
     return (
       <Col
