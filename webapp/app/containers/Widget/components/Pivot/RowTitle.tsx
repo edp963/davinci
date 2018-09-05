@@ -13,12 +13,12 @@ interface IRowTitleProps {
 
 export function RowTitle (props: IRowTitleProps) {
   const { rows, rowKeys, dimetionAxis, drawingData } = props
-  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
+  const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
   let tableHeight = 0
 
   if (dimetionAxis) {
     tableHeight = dimetionAxis === 'row'
-      ? (multiCoordinate ? unitMetricWidth : elementSize) * rowKeys.length
+      ? elementSize * rowKeys.length
       : elementSize * unitMetricHeight
   } else {
     tableHeight = rowKeys.length * getPivotCellHeight()

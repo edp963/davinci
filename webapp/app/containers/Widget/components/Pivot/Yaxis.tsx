@@ -32,13 +32,6 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
-    const grid = []
-    const xAxis = []
-    const yAxis = []
-    let xSum = 0
-    let ySum = 0
-    let index = 0
-
     data.forEach((block, i) => {
       let instance = echarts.getInstanceByDom(doms[i])
       if (!instance) {
@@ -46,6 +39,13 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
       } else {
         instance.clear()
       }
+
+      const grid = []
+      const xAxis = []
+      const yAxis = []
+      let xSum = 0
+      let ySum = 0
+      let index = 0
 
       block.data.forEach((line: IChartLine) => {
         const { data: lineData } = line
@@ -166,9 +166,9 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   public render () {
-    const { data, metrics } = this.props
+    const { data } = this.props
     const blocks = data.map((block) => (
-      <div key={block.key} style={{height: block.length * metrics.length}} />
+      <div key={block.key} style={{height: block.length}} />
     ))
     return (
       <div

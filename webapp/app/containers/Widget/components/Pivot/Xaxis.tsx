@@ -32,13 +32,6 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
-    const grid = []
-    const xAxis = []
-    const yAxis = []
-    let xSum = 0
-    let ySum = 0
-    let index = 0
-
     data.forEach((block, i) => {
       let instance = echarts.getInstanceByDom(doms[i])
       if (!instance) {
@@ -46,6 +39,13 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
       } else {
         instance.clear()
       }
+
+      const grid = []
+      const xAxis = []
+      const yAxis = []
+      let xSum = 0
+      let ySum = 0
+      let index = 0
 
       block.data.forEach((line: IChartLine) => {
         const { data: lineData } = line
@@ -165,15 +165,16 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
   }
 
   public render () {
-    const { width, metrics, data } = this.props
+    const { width, data } = this.props
+
     const blocks = data.map((block) => (
-      <div key={block.key} style={{width: block.length * metrics.length}} />
+      <div key={block.key} style={{width: block.length}} />
     ))
 
     return (
       <div
         className={styles.xAxis}
-        style={{width: width * metrics.length}}
+        style={{width}}
         ref={(f) => this.container = f}
       >
         {blocks}

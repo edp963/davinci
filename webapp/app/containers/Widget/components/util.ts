@@ -192,7 +192,8 @@ export const getTableBodyHeight = (direction: DimetionType, containerHeight, col
 export function getChartElementSize (
   direction: DimetionType,
   tableBodySideLength: number[],
-  chartElementCountArr: number[]
+  chartElementCountArr: number[],
+  multiCoordinate: boolean
 ): number {
   let chartElementCount
   let side
@@ -206,52 +207,19 @@ export function getChartElementSize (
   }
 
   const sizePerElement = side / chartElementCount
+  const limit = multiCoordinate ? PIVOT_CHART_METRIC_AXIS_MIN_SIZE : PIVOT_CHART_ELEMENT_MIN_WIDTH
 
-  return sizePerElement > PIVOT_CHART_ELEMENT_MAX_WIDTH
-    ? PIVOT_CHART_ELEMENT_MAX_WIDTH
-    : sizePerElement < PIVOT_CHART_ELEMENT_MIN_WIDTH
-      ? PIVOT_CHART_ELEMENT_MIN_WIDTH
-      : Math.floor(sizePerElement)
+  return Math.max(Math.floor(sizePerElement), limit)
 }
 
 export function shouldTableBodyCollapsed (
   direction: DimetionType,
-  multiCoordinate: boolean,
+  elementSize: number,
   tableBodyHeight: number,
-  rowKeyLength: number,
-  elementSizeArr: number[]
+  rowKeyLength: number
 ): boolean {
-  const elementSize = multiCoordinate ? elementSizeArr[1] : elementSizeArr[0]
   return direction === 'row' && tableBodyHeight > rowKeyLength * elementSize
 }
-
-// export function getChartElementSizeAndShouldCollapsed (
-//   direction: DimetionType,
-//   tableBodySideLength: number[],
-//   chartElementCountArr: number[]
-// ): {elementSize: number, shouldCollapsed: boolean} {
-//   let chartElementCount
-//   let side
-
-//   if (direction === 'col') {
-//     chartElementCount = Math.max(1, chartElementCountArr[0])
-//     side = tableBodySideLength[0]
-//   } else {
-//     chartElementCount = Math.max(1, chartElementCountArr[1])
-//     side = tableBodySideLength[1]
-//   }
-
-//   const sizePerElement = side / chartElementCount
-
-//   return sizePerElement > PIVOT_CHART_ELEMENT_MAX_WIDTH
-//     ? { elementSize: PIVOT_CHART_ELEMENT_MAX_WIDTH, shouldCollapsed: direction === 'row' && true }
-//     : sizePerElement < PIVOT_CHART_ELEMENT_MIN_WIDTH
-//       ? { elementSize: PIVOT_CHART_ELEMENT_MIN_WIDTH, shouldCollapsed: false }
-//       : {
-//           elementSize: Math.floor(sizePerElement),
-//           shouldCollapsed: direction === 'row' && side > chartElementCount * sizePerElement
-//         }
-// }
 
 export function getChartUnitMetricWidth (tableBodyWidth, colKeyCount: number, metricCount: number): number {
   const realContainerWidth = Math.max(tableBodyWidth, colKeyCount * metricCount * PIVOT_CHART_METRIC_AXIS_MIN_SIZE)
@@ -325,7 +293,7 @@ export function getChartViewMetrics (metrics, requireMetrics) {
 }
 
 export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis) {
-  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
+  const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
   const data: IChartLine[] = []
   const chartLine: IChartUnit[] = []
   let axisLength = 0
@@ -336,7 +304,6 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
   let sndTree
   let renderDimetionAxis
   let unitMetricSide
-  let polarMetricSide
 
   if (type === 'x') {
     renderKeys = colKeys
@@ -345,7 +312,6 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
     sndTree = rowTree
     renderDimetionAxis = 'col'
     unitMetricSide = unitMetricWidth
-    polarMetricSide = unitMetricHeight
   } else {
     renderKeys = rowKeys
     renderTree = rowTree
@@ -353,7 +319,6 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
     sndTree = colTree
     renderDimetionAxis = 'row'
     unitMetricSide = unitMetricHeight
-    polarMetricSide = unitMetricWidth
   }
 
   if (renderKeys.length) {
@@ -378,7 +343,7 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
         })
         if (keys.length === 1 && i === renderKeys.length - 1 ||
             keys[keys.length - 2] !== nextKeys[nextKeys.length - 2]) {
-          const unitLength = lastUnit.records.length * (multiCoordinate ? polarMetricSide : elementSize)
+          const unitLength = lastUnit.records.length * elementSize
           axisLength += unitLength
           lastUnit.width = unitLength
           lastUnit.ended = true
@@ -423,6 +388,8 @@ export function getAxisData (type: 'x' | 'y', rowKeys, colKeys, rowTree, colTree
       axisLength = unitMetricSide
     }
   }
+
+  axisLength = dimetionAxis === renderDimetionAxis ? axisLength : axisLength * metrics.length
 
   return {
     data: axisDataCutting(type, dimetionAxis, metrics, axisLength, data),
