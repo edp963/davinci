@@ -20,7 +20,9 @@ interface IFilterControlProps {
   formToAppend: WrappedFormUtils
   filter: any
   onGetOptions: (fromViewId, fromModelName, filterKey) => void
-  currentOptions: any[]
+  currentOptions: {
+    [key: string]: Array<number|string>
+  }
   onChange: (filter, val) => void
 }
 
@@ -149,6 +151,8 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   private renderControl = (filter, onChange) => {
     const { currentOptions, formToAppend } = this.props
+    const { fromModel } = filter
+    const options = currentOptions[fromModel] || []
     let control
     switch (filter.type) {
       case FilterTypes.InputText:
@@ -161,10 +165,10 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
         control = this.renderNumberRange(filter, onChange)
         break
       case FilterTypes.Select:
-        control = this.renderSelect(filter, onChange, currentOptions)
+        control = this.renderSelect(filter, onChange, options)
         break
       case FilterTypes.MultiSelect:
-        control = this.renderMultiSelect(filter, onChange, currentOptions)
+        control = this.renderMultiSelect(filter, onChange, options)
         break
       case FilterTypes.CascadeSelect:
         control = this.renderCascadeSelect()

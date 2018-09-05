@@ -224,7 +224,9 @@ interface IGridStates {
   globalFilterTableSource: any[]
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
-  filterOptions: any[]
+  filterOptions: {
+    [key: string]: Array<number | string>
+  }
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -291,7 +293,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       nextMenuTitle: '',
 
-      filterOptions: []
+      filterOptions: {}
     }
   }
 
@@ -1209,7 +1211,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       this.setState({
         filterOptions: {
           ...filterOptions,
-          [filterKey]: data[fieldName] || []
+          [filterKey]: {
+            ...filterOptions[filterKey],
+            [fieldName]: data[fieldName] || []
+          }
         }
       })
     })

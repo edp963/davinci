@@ -152,7 +152,10 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
       return state.set('dashboardCascadeSources', {
         ...dashboardCascadeSources,
-        [payload.controlId]: payload.values
+        [payload.controlId]: {
+          ...dashboardCascadeSources[payload.controlId],
+          [payload.column]: payload.values
+        }
       })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(

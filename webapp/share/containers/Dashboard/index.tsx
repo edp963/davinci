@@ -23,7 +23,6 @@ import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import * as classnames from 'classnames'
-import moment from 'moment'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -33,9 +32,10 @@ import saga from './sagas'
 
 import Container from '../../../app/components/Container'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
-import GlobalFilters from '../../../app/containers/Dashboard/components/globalFilter/GlobalFilters'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from 'react-grid-layout'
+import { IFilterChangeParam } from '../../../app/components/Filters'
+import GlobalFilterPanel from '../../../app/components/Filters/FilterPanel'
 import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -121,7 +121,7 @@ interface IDashboardProps {
   onSetIndividualDashboard: (id, shareInfo) => void,
   onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, dataToken: string) => void,
   onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => void,
-  onLoadCascadeSourceFromDashboard: (key, flatTableId, shareInfo, cascadeColumn, parents?) => void
+  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, params) => void
   onResizeAllDashboardItem: () => void
 }
 
@@ -181,16 +181,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     if (qs.type === 'dashboard') {
       onLoadDashboard(qs.shareInfo, (dashboard) => {
-        // this.setState({
-        //   linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
-        //   globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
-        // }, () => {
-        //   this.state.globalFilterTableSource.forEach((gft) => {
-        //     if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
-        //       onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
-        //     }
-        //   })
-        // })
+        this.setState({
+          // linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
+          globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
+        }, () => {
+          this.state.globalFilterTableSource.forEach((gft) => {
+            if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
+              onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
+            }
+          })
+        })
       }, (err) => {
         if (err.response.status === 403) {
           this.setState({
@@ -201,10 +201,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
-        // this.setState({
-        //   linkageTableSource: [],
-        //   globalFilterTableSource: []
-        // })
+        this.setState({
+          linkageTableSource: [],
+          globalFilterTableSource: []
+        })
       }, (err) => {
         if (err.response.status === 403) {
           this.setState({
@@ -599,180 +599,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private globalFilterChange = (filter) => (formValue) => {
+  private globalFilterChange = (queryParams: IFilterChangeParam) => {
     const { currentItems } = this.props
-    const { key, type, relatedItems } = filter
-
-    Object.keys(relatedItems).forEach((itemId) => {
-      const columnAndType = relatedItems[itemId].split(DEFAULT_SPLITER)
-      const isParam = !columnAndType[1]  // 变量type为空
-      const item = currentItems.find((ci) => ci.id === Number(itemId))
-
-      if (!this.interactGlobalFilters[itemId]) {
-        this.interactGlobalFilters[itemId] = {}
-      }
-
-      if (isParam) {
-        const paramsOnThisItem = this.interactGlobalFilters[itemId].params || {}
-        let currentParam
-
-        switch (type) {
-          case 'numberRange':
-            if (formValue[0] || formValue[1]) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: fv
-              }))
-            }
-            break
-          case 'select':
-          case 'cascadeSelect':
-            if (formValue) {
-              currentParam = [{
-                k: columnAndType[0],
-                v: `${formValue}`
-              }]
-            }
-            break
-          case 'multiSelect':
-            if (formValue.length) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: `${fv}`
-              }))
-            }
-            break
-          case 'date':
-          case 'datetime':
-            if (formValue) {
-              currentParam = {
-                k: columnAndType[0],
-                v: `'${formValue}'`
-              }
-            }
-            break
-          case 'multiDate':
-            if (formValue) {
-              currentParam = formValue.split(',').map((fv) => ({
-                k: columnAndType[0],
-                v: `'${fv}'`
-              }))
-            }
-            break
-          case 'dateRange':
-          case 'datetimeRange':
-            if (formValue.length) {
-              currentParam = formValue.map((fv) => ({
-                k: columnAndType[0],
-                v: `'${fv}'`
-              }))
-            }
-            break
-          default:
-            const val = formValue.target.value.trim()
-            if (val) {
-              currentParam = {
-                k: columnAndType[0],
-                v: `${val}`
-              }
-            }
-            break
-        }
-
-        if (currentParam) {
-          paramsOnThisItem[key] = currentParam
-          this.interactGlobalFilters[itemId].params = paramsOnThisItem
-        } else {
-          delete paramsOnThisItem[key]
-        }
-      } else {
-        const filtersOnThisItem = this.interactGlobalFilters[itemId].filters || {}
-        let currentFilter
-
-        switch (type) {
-          case 'numberRange':
-            const numberFilters = []
-            if (formValue[0]) {
-              numberFilters.push(`${columnAndType[0]} >= ${getValidValue(formValue[0], columnAndType[1])}`)
-            }
-            if (formValue[1]) {
-              numberFilters.push(`${columnAndType[0]} <= ${getValidValue(formValue[1], columnAndType[1])}`)
-            }
-            if (numberFilters.length) {
-              currentFilter = numberFilters.join(` and `)
-            }
-            break
-          case 'select':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${formValue}`
-            }
-            break
-          case 'cascadeSelect':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(formValue, columnAndType[1])}`
-            }
-            break
-          case 'multiSelect':
-            if (formValue.length) {
-              currentFilter = formValue.map((val) => `${columnAndType[0]} = ${val}`).join(` and `)
-            }
-            break
-          case 'date':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD'), columnAndType[1])}`
-            }
-            break
-          case 'datetime':
-            if (formValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(moment(formValue).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
-            }
-            break
-          case 'multiDate':
-            if (formValue) {
-              currentFilter = formValue.split(',').map((val) => `${columnAndType[0]} = ${getValidValue(val, columnAndType[1])}`).join(` and `)
-            }
-            break
-          case 'dateRange':
-            if (formValue.length) {
-              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD'),
-              columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD'), columnAndType[1])}`
-            }
-            break
-          case 'datetimeRange':
-            if (formValue.length) {
-              currentFilter = `${columnAndType[0]} >= ${getValidValue(moment(formValue[0]).format('YYYY-MM-DD HH:mm:ss'),
-              columnAndType[1])} and ${columnAndType[0]} <= ${getValidValue(moment(formValue[1]).format('YYYY-MM-DD HH:mm:ss'), columnAndType[1])}`
-            }
-            break
-          default:
-            const inputValue = formValue.target.value.trim()
-            if (inputValue) {
-              currentFilter = `${columnAndType[0]} = ${getValidValue(inputValue, columnAndType[1])}`
-            }
-            break
-        }
-
-        if (currentFilter) {
-          filtersOnThisItem[key] = currentFilter
-          this.interactGlobalFilters[itemId].filters = filtersOnThisItem
-        } else {
-          delete filtersOnThisItem[key]
-        }
-      }
-
-      this.getChartData('rerender', itemId, item.widget_id, {
-        globalFilters: this.interactGlobalFilters[itemId].filters
-          ? Object.values(this.interactGlobalFilters[itemId].filters).join(` and `)
-          : '',
-        globalParams: this.interactGlobalFilters[itemId].params
-          ? Object.values(this.interactGlobalFilters[itemId].params).reduce((arr, val) => (arr as any).concat(val), [])
-          : []
-      })
+    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
+      const item = currentItems.find((ci) => ci.id === +itemId)
+      const { params: globalParams, filters: globalFilters } = queryParam
+      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
     })
-
-    function getValidValue (val, type) {
-      return SQL_NUMBER_TYPES.indexOf(type) >= 0 ? val : `'${val}'`
-    }
   }
 
   private getCascadeSource = (token, sql) => (itemId, controlId, flatTableId, column, parents) => {
@@ -801,20 +634,23 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
-    const { config } = currentDashboard
-    const globalFilterTableSource = JSON.parse(config).globalFilters || []
+    const config = JSON.parse(currentDashboard.config || '{}')
+    const globalFilterTableSource = config.filters || []
 
     return globalFilterTableSource.map((gfts) => {
-      const deprecatedItems = Object.keys(gfts.relatedItems).filter((key) => !currentItems.find((ci) => ci.id === Number(key)))
-      deprecatedItems.forEach((di) => {
-        delete gfts.relatedItems[di]
-      })
+      const { relatedViews } = gfts
+      let { items } = relatedViews
+      if (items) {
+        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+      }
       return gfts
     })
   }
 
-  private loadCascadeSourceInsideGlobalFilters = (token) => (key, flatTableId, column, parents) => {
-    this.props.onLoadCascadeSourceFromDashboard(key, flatTableId, token, column, parents)
+  private loadGlobalFilterControlOptions = (viewId, column, controlId) => {
+    const { onLoadCascadeSourceFromDashboard } = this.props
+    const { shareInfo } = this.state
+    onLoadCascadeSourceFromDashboard(controlId, viewId, shareInfo, { column })
   }
 
   public render () {
@@ -949,11 +785,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           </Row>
           <Row className={globalFilterContainerClass}>
             <Col span={24}>
-              <GlobalFilters
-                filters={globalFilterTableSource || []}
-                cascadeSources={dashboardCascadeSources || {}}
+              <GlobalFilterPanel
+                filters={globalFilterTableSource}
+                onGetOptions={this.loadGlobalFilterControlOptions}
+                filterOptions={dashboardCascadeSources}
                 onChange={this.globalFilterChange}
-                onCascadeSelectChange={this.loadCascadeSourceInsideGlobalFilters(shareInfo)}
               />
             </Col>
           </Row>
@@ -984,8 +820,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, pivotProps, dataToken) => dispatch(loadWidgetCsv(itemId, pivotProps, dataToken)),
-    onLoadCascadeSourceFromItem: (itemId, controlId, token, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, token, sql, column, parents)),
-    onLoadCascadeSourceFromDashboard: (controlId, flatTableId, token, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, flatTableId, token, column, parents)),
+    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, params) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, params)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
   }
 }

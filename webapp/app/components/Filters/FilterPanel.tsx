@@ -1,6 +1,6 @@
 import * as React from 'react'
 import moment from 'moment'
-import { FormComponentProps } from 'antd/lib/form/Form'
+import { FormComponentProps, WrappedFormUtils } from 'antd/lib/form/Form'
 import { IFilterViewConfig, IFilterItem, IFilterValue, IFilterChangeParam } from './'
 import { FilterTypes } from './filterTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
@@ -8,7 +8,7 @@ import FilterControl from './FilterControl'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Form = require('antd/lib/form')
+const Form: FormProps = require('antd/lib/form')
 
 const styles = require('./filter.less')
 
@@ -16,7 +16,9 @@ interface IFilterPanelProps {
   filters: IFilterItem[]
   onGetOptions: (fromViewId, fromModelName, filterKey) => void
   filterOptions: {
-    [filterKey: string]: string[]
+    [filterKey: string]: {
+      [key: string]: Array<number | string>
+    }
   },
   onChange: (
     queryParams: IFilterChangeParam,
@@ -24,7 +26,7 @@ interface IFilterPanelProps {
   ) => void
 }
 
-export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, {}> {
+export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps> {
 
   private itemsFilterValues: {
     [itemId: number]: {
@@ -214,7 +216,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
               <FilterControl
                 filter={f}
                 onGetOptions={onGetOptions}
-                currentOptions={filterOptions[f.key] || []}
+                currentOptions={filterOptions[f.key] || {}}
                 formToAppend={form}
                 onChange={this.change}
               />
@@ -227,4 +229,4 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
 
 }
 
-export default Form.create()(FilterPanel)
+export default Form.create<IFilterPanelProps>()(FilterPanel)

@@ -144,15 +144,14 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadCascadeSourceFromDashboard (controlId, flatTableId, token, column, parents) {
+export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, params) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
     payload: {
       controlId,
-      flatTableId,
-      token,
-      column,
-      parents
+      viewId,
+      dataToken,
+      params
     }
   }
 }

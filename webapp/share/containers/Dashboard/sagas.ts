@@ -110,26 +110,20 @@ export function* getWidgetCsv (action) {
   }
 }
 
+
+
 export function* getCascadeSourceFromDashboard (action) {
   try {
     const { payload } = action
-    const { flatTableId, controlId, token, column, parents } = payload
-
-    const data = {
-      adHoc: '',
-      manualFilters: '',
-      params: [],
-      childFieldName: column,
-      parents
-    }
+    const { controlId, viewId, dataToken, params } = payload
+    const { column } = params
 
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.share}/resultset/${token}/distinct_value/${flatTableId}`,
-      data
+      url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
+      data: params
     })
-    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
-    yield put(cascadeSourceFromDashboardLoaded(controlId, column, values))
+    yield put(cascadeSourceFromDashboardLoaded(controlId, column, asyncData.payload[column]))
   } catch (err) {
     yield put(loadCascadeSourceFromDashboardFail(err))
     errorHandler(err)
