@@ -15,12 +15,12 @@ interface IColumnTitleProps {
 
 export function ColumnTitle (props: IColumnTitleProps) {
   const { cols, colKeys, colTree, drawingData, dimetionAxis } = props
-  const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
+  const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
   let tableWidth = 0
 
   if (dimetionAxis) {
     tableWidth = dimetionAxis === 'col'
-      ? (multiCoordinate ? unitMetricHeight : elementSize) * colKeys.length
+      ? elementSize * colKeys.length
       : elementSize * unitMetricWidth
   } else {
     tableWidth = Object.values(colTree).reduce((sum, d) => sum + getPivotCellWidth(d.width), 0)

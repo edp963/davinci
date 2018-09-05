@@ -61,6 +61,7 @@ interface IChartProps {
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
+  scatterXaxisConfig?: IMetricAxisConfig
   color?: IDataParamProperty
   label?: IDataParamProperty
   xAxis?: IDataParamProperty
@@ -156,8 +157,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
   }
 
   private renderChart = () => {
-    const { cols, rows, metrics, data, drawingData, metricAxisConfig, dimetionAxis, color, label, xAxis: scatterXaxis, legend, renderType } = this.props
-    const { elementSize } = drawingData
+    const { cols, rows, metrics, data, drawingData, metricAxisConfig, scatterXaxisConfig, dimetionAxis, color, label, xAxis: scatterXaxis, legend, renderType } = this.props
+    const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
       chunk.data.forEach((block: IChartBlock) => {
@@ -167,10 +168,11 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
 
         dataPieces.forEach((dp, i) => {
           const chartPiece = chartPieces[i]
-          chartPiece.style.height = `${dp.reduce((sum, line) => {
+          const containerHeight = dp.reduce((sum, line) => {
             const lineHeight = line.height * (dimetionAxis === 'col' ? metrics.length : 1)
             return sum + lineHeight
-          }, 0)}px`
+          }, 0)
+          chartPiece.style.height = `${containerHeight}px`
           let instance = echarts.getInstanceByDom(chartPiece)
           if (!instance) {
             instance = echarts.init(chartPiece, 'default')
@@ -194,12 +196,10 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           dp.forEach((line: IChartLine, j) => {
             const { height, data: lineData } = line
             const horizontalRecordCountOfCol = lineData.reduce((sum, unit) => sum + unit.records.length, 0)
-            const containerHeight = height
             let lineRecordSum = 0
 
             lineData.forEach((unit: IChartUnit, k) => {
               const { width, records } = unit
-              const multiCoordinateElementSize = width / records.length
 
               metrics.forEach((m, l) => {
                 const decodedMetricName = decodeMetricName(m.name)
@@ -261,24 +261,33 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       xAxisData.forEach((colKey, xdIndex) => {
-                        grid.push({
-                          top: dimetionAxis === 'col' ? (tempXsum + l * multiCoordinateElementSize) : tempYsum,
-                          left: dimetionAxis === 'col' ? tempYsum - 1 : (tempXsum - 1 + l * multiCoordinateElementSize),    // 隐藏yaxisline
-                          width: multiCoordinateElementSize,
-                          height: multiCoordinateElementSize
-                        })
-                        xAxis.push(this.getXaxisOption(index, 'value'))
+                        if (dimetionAxis === 'col') {
+                          grid.push({
+                            top: tempXsum + l * unitMetricHeight,
+                            left: tempYsum - 1,    // 隐藏yaxisline
+                            width: elementSize,
+                            height: unitMetricHeight
+                          })
+                        } else {
+                          grid.push({
+                            top: tempYsum,
+                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
+                            width: unitMetricWidth,
+                            height: elementSize
+                          })
+                        }
+                        xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
                         Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
                           series.push({
                             data: groupedRecords[colKey]
-                              ? groupedRecords[colKey].reduce((sum, record) => {
+                              ? [groupedRecords[colKey].reduce((sum, record) => {
                                 return [
                                   sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
                                   sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0)
                                 ]
-                              }, [0, 0])
-                              : [0, 0],
+                              }, [0, 0])]
+                              : [[0, 0]],
                             color: currentColorItem
                               ? currentColorItem.config.values[groupingKey.split(',')[0]]
                               : (color.value[m.name] || defaultThemeColors[0]),
@@ -301,9 +310,9 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           })
                         })
                         if (dimetionAxis === 'col') {
-                          tempYsum += multiCoordinateElementSize
+                          tempYsum += elementSize
                         } else {
-                          tempXsum += multiCoordinateElementSize * metrics.length
+                          tempXsum += elementSize * metrics.length
                         }
                         if (xdIndex !== xAxisData.length - 1) {
                           index += 1
@@ -345,35 +354,44 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       records.forEach((recordCollection, rcIndex) => {
-                        grid.push({
-                          top: dimetionAxis === 'col' ? (tempXsum + l * multiCoordinateElementSize) : tempYsum,
-                          left: dimetionAxis === 'col' ? tempYsum - 1 : (tempXsum - 1 + l * multiCoordinateElementSize),    // 隐藏yaxisline
-                          width: multiCoordinateElementSize,
-                          height: multiCoordinateElementSize
-                        })
-                        xAxis.push(this.getXaxisOption(index, 'value'))
+                        if (dimetionAxis === 'col') {
+                          grid.push({
+                            top: tempXsum + l * unitMetricHeight,
+                            left: tempYsum - 1,    // 隐藏yaxisline
+                            width: elementSize,
+                            height: unitMetricHeight
+                          })
+                        } else {
+                          grid.push({
+                            top: tempYsum,
+                            left: tempXsum - 1 + l * unitMetricWidth,    // 隐藏yaxisline
+                            width: unitMetricWidth,
+                            height: elementSize
+                          })
+                        }
+                        xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
                         series.push({
                           data: recordCollection.value
-                            ? recordCollection.value.reduce((sum, record) => [
+                            ? [recordCollection.value.reduce((sum, record) => [
                                 sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
                                 sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0)
-                              ], [0, 0])
-                            : [0, 0],
+                              ], [0, 0])]
+                            : [[0, 0]],
                           color: color.value[m.name] || defaultThemeColors[0],
                           xAxisIndex: index,
                           yAxisIndex: index,
                           ...chartOption
                         })
                         seriesData.push({
-                          type: 'scatter',
+                          type: 'scatt er',
                           grouped: false,
                           records: recordCollection.value
                         })
                         if (dimetionAxis === 'col') {
-                          tempYsum += multiCoordinateElementSize
+                          tempYsum += elementSize
                         } else {
-                          tempXsum += multiCoordinateElementSize * metrics.length
+                          tempXsum += elementSize * metrics.length
                         }
                         if (rcIndex !== records.length - 1) {
                           index += 1
@@ -404,6 +422,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       dimetionAxis,
                       containerWidth,
                       containerHeight,
+                      elementSize,
+                      [unitMetricHeight, unitMetricWidth],
                       horizontalRecordCountOfCol,
                       verticalRecordCountOfRow,
                       lineRecordSum,
@@ -493,10 +513,10 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
               xSum = 0
             }
           })
-          console.log(grid)
-          console.log(xAxis)
-          console.log(yAxis)
-          console.log(series)
+          // console.log(grid)
+          // console.log(xAxis)
+          // console.log(yAxis)
+          // console.log(series)
 
           instance.setOption({
             tooltip: {

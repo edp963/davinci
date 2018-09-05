@@ -10,9 +10,15 @@ import {
   shouldTableBodyCollapsed,
   getChartUnitMetricWidth,
   getChartUnitMetricHeight,
-  getAxisInterval
+  getAxisInterval,
+  getTextWidth
 } from '../util'
-import { PIVOT_LINE_HEIGHT, PIVOT_CHART_SPLIT_SIZE } from '../../../../globalConstants'
+import {
+  PIVOT_LINE_HEIGHT,
+  PIVOT_CHART_SPLIT_SIZE,
+  PIVOT_LEGEND_ITEM_PADDING,
+  PIVOT_LEGEND_PADDING
+} from '../../../../globalConstants'
 import Corner from './Corner'
 import RowTitle from './RowTitle'
 import RowHeader from './RowHeader'
@@ -109,13 +115,17 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
   private min = []
   private max = []
+  private scatterMin = []
+  private scatterMax = []
   private metricAxisConfig: IMetricAxisConfig = void 0
+  private scatterXaxisConfig: IMetricAxisConfig = void 0
 
   public rowHeader: HTMLElement = null
   public columnHeader: HTMLElement = null
   public tableBody: HTMLElement = null
   public columnFooter: HTMLElement = null
   private container: HTMLElement = null
+  private legend: HTMLElement = null
 
   public componentDidMount () {
     this.getContainerSize()
@@ -147,7 +157,10 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       }
       this.min = []
       this.max = []
+      this.scatterMin = []
+      this.scatterMax = []
       this.metricAxisConfig = void 0
+      this.scatterXaxisConfig = void 0
       this.getRenderData(nextProps)
       this.rowHeader.scrollTop = 0
       this.columnHeader.scrollLeft = 0
@@ -171,7 +184,10 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
     this.min = []
     this.max = []
+    this.scatterMin = []
+    this.scatterMax = []
     this.metricAxisConfig = void 0
+    this.scatterXaxisConfig = void 0
   }
 
   private getContainerSize = () => {
@@ -187,32 +203,34 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     if (!cols.length && !rows.length) {
       this.tree[0] = data.slice()
       this.getMetricsMinAndMaxValue(metrics, data)
+      if (xAxis && xAxis.items) {
+        this.getScatterXaxisMinAndMaxValue(xAxis, data)
+      }
     } else {
       data.forEach((record) => {
         this.getRowKeyAndColKey(props, record, !!dimetionAxis)
       })
       this.rowKeys.sort(this.sortingKeys(rows))
       this.colKeys.sort(this.sortingKeys(cols))
-      // console.log(this.colKeys.length, this.rowKeys.length)
     }
 
     if (dimetionAxis) {
-      this.tableBodyWidth = getTableBodyWidth(dimetionAxis, this.width, this.rowHeaderWidths)
+      this.tableBodyWidth = getTableBodyWidth(dimetionAxis, this.width - this.getLegendWidth(props), this.rowHeaderWidths)
       this.tableBodyHeight = getTableBodyHeight(dimetionAxis, this.height, cols.length)
-      this.drawingData.elementSize = getChartElementSize(
-        dimetionAxis,
-        [this.tableBodyWidth, this.tableBodyHeight],
-        [this.colKeys.length, this.rowKeys.length]
-      )
       this.drawingData.unitMetricWidth = getChartUnitMetricWidth(this.tableBodyWidth, this.colKeys.length || 1, metrics.length)
       this.drawingData.unitMetricHeight = getChartUnitMetricHeight(this.tableBodyHeight, this.rowKeys.length || 1, metrics.length)
       this.drawingData.multiCoordinate = metrics.some((m) => m.chart.coordinate === 'polar') || xAxis && xAxis.items.length
+      this.drawingData.elementSize = getChartElementSize(
+        dimetionAxis,
+        [this.tableBodyWidth, this.tableBodyHeight],
+        [this.colKeys.length, this.rowKeys.length],
+        this.drawingData.multiCoordinate
+      )
       this.drawingData.tableBodyCollapsed = shouldTableBodyCollapsed(
         dimetionAxis,
-        this.drawingData.multiCoordinate,
+        this.drawingData.elementSize,
         this.tableBodyHeight,
-        this.rowKeys.length,
-        [this.drawingData.elementSize, this.drawingData.unitMetricWidth]
+        this.rowKeys.length
       )
       this.metricAxisConfig = metrics.reduce((obj: IMetricAxisConfig, m, i) => {
         const metricName = decodeMetricName(m.name)
@@ -228,12 +246,28 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           interval
         }
         return obj
-      }, { min: 0, max: 0, interval: 0 })
+      }, {})
+      this.scatterXaxisConfig = xAxis && xAxis.items &&
+        xAxis.items.reduce((obj: IMetricAxisConfig, x, i) => {
+          const itemName = decodeMetricName(x.name)
+          const min = this.scatterMin[i] >= 0 ? 0 : this.scatterMin[i]
+          const max = this.scatterMax[i]
+          const splitNumber = dimetionAxis === 'col'
+            ? Math.ceil(this.drawingData.unitMetricHeight / PIVOT_CHART_SPLIT_SIZE)
+            : Math.ceil(this.drawingData.unitMetricWidth / PIVOT_CHART_SPLIT_SIZE)
+          const interval = getAxisInterval(max, splitNumber)
+          obj[itemName] = {
+            min,
+            max: interval * splitNumber,
+            interval
+          }
+          return obj
+        }, {})
     }
   }
 
   private getRowKeyAndColKey = (props: IPivotProps, record: object, hasDimetionAxis: boolean) => {
-    const { cols, rows, metrics } = props
+    const { cols, rows, metrics, xAxis } = props
 
     const rowKey = []
 
@@ -260,6 +294,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       if (metrics.length) {
         if (!colKey.length) {
           this.getMetricsMinAndMaxValue(metrics, this.rowTree[flatRowKey].records)
+          if (xAxis && xAxis.items) {
+            this.getScatterXaxisMinAndMaxValue(xAxis, this.rowTree[flatRowKey].records)
+          }
         }
 
         if (!hasDimetionAxis) {
@@ -280,6 +317,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       if (metrics.length) {
         if (!rowKey.length) {
           this.getMetricsMinAndMaxValue(metrics, this.colTree[flatColKey].records)
+          if (xAxis && xAxis.items) {
+            this.getScatterXaxisMinAndMaxValue(xAxis, this.colTree[flatColKey].records)
+          }
         }
 
         if (!hasDimetionAxis) {
@@ -301,6 +341,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
       if (metrics.length) {
         this.getMetricsMinAndMaxValue(metrics, this.tree[flatRowKey][flatColKey])
+        if (xAxis && xAxis.items) {
+          this.getScatterXaxisMinAndMaxValue(xAxis, this.tree[flatRowKey][flatColKey])
+        }
       }
     }
   }
@@ -319,10 +362,17 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     metrics.forEach((m, i) => {
       const metricName = decodeMetricName(m.name)
       const metricColumnValue = records.reduce((sum, r) => sum + (Number(r[`${m.agg}(${metricName})`]) || 0), 0)
-      // const temp = records.reduce((sum, r) => sum + r[`${m.agg}(${metricName})`], 0)
-      // console.log(temp, typeof temp)
       this.min[i] = this.min[i] ? Math.min(this.min[i], metricColumnValue) : metricColumnValue
       this.max[i] = this.max[i] ? Math.max(this.max[i], metricColumnValue) : metricColumnValue
+    })
+  }
+
+  private getScatterXaxisMinAndMaxValue (xAxis, records) {
+    xAxis.items.forEach((x, i) => {
+      const itemName = decodeMetricName(x.name)
+      const columnValue = records.reduce((sum, r) => sum + (Number(r[`${x.agg}(${itemName})`]) || 0), 0)
+      this.scatterMin[i] = this.scatterMin[i] ? Math.min(this.scatterMin[i], columnValue) : columnValue
+      this.scatterMax[i] = this.scatterMax[i] ? Math.max(this.scatterMax[i], columnValue) : columnValue
     })
   }
 
@@ -338,6 +388,22 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       legendSelected: {...legendSelected},
       renderType: 'clear'
     })
+  }
+
+  private getLegendWidth = (props) => {
+    const { color } = props
+    if (color && color.items) {
+      return color.items.reduce((max, item) =>
+        Math.max(
+          max,
+          getTextWidth(item.name),
+          Object.keys(item.config.values).reduce((keyMax, key) =>
+            Math.max(keyMax, getTextWidth(key))
+          , 0) + PIVOT_LEGEND_ITEM_PADDING
+        )
+      , 0) + PIVOT_LEGEND_PADDING
+    }
+    return 0
   }
 
   public render () {
@@ -405,6 +471,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tree={this.tree}
             metrics={metrics}
             metricAxisConfig={this.metricAxisConfig}
+            scatterXaxisConfig={this.scatterXaxisConfig}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
             color={color}

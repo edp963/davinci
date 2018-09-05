@@ -18,7 +18,7 @@
  * >>
  */
 
-export default function (elementSize) {
+export default function () {
   return {
     chartOption: {
       type: 'scatter'

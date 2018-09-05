@@ -27,6 +27,7 @@ export interface ITableBodyProps {
   tree: object
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
+  scatterXaxisConfig: IMetricAxisConfig
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   color?: IDataParamProperty
@@ -182,6 +183,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       tree,
       metrics,
       metricAxisConfig,
+      scatterXaxisConfig,
       drawingData,
       dimetionAxis,
       color,
@@ -190,7 +192,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       renderType,
       legend
     } = this.props
-    const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed, multiCoordinate } = drawingData
+    const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
     let tableBody = null
     const chartGrid: IChartLine[] = []
     const cells = []
@@ -228,7 +230,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               })
               if (ck.length === 1 && j === colKeys.length - 1 ||
                   ck[ck.length - 2] !== nextCk[nextCk.length - 2]) {
-                const unitWidth = lastUnit.records.length * (multiCoordinate ? unitMetricHeight : elementSize)
+                const unitWidth = lastUnit.records.length * elementSize
                 // tableWidth += unitWidth
                 lastUnit.width = unitWidth
                 lastUnit.ended = true
@@ -270,7 +272,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 lastUnit.width = unitMetricWidth
                 lastUnit.ended = true
                 if (j === colKeys.length - 1) {
-                  const height = lastUnit.records.length * (multiCoordinate ? unitMetricWidth : elementSize)
+                  const height = lastUnit.records.length * elementSize
                   chartGrid.push({
                     key: flatRowKey,
                     height,
@@ -312,7 +314,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
             })
             if (ck.length === 1 && j === colKeys.length - 1 ||
                 ck[ck.length - 2] !== nextCk[nextCk.length - 2]) {
-              const unitWidth = lastUnit.records.length * (multiCoordinate ? unitMetricHeight : elementSize)
+              const unitWidth = lastUnit.records.length * elementSize
               // tableWidth += unitWidth
               lastUnit.width = unitWidth
               lastUnit.ended = true
@@ -342,7 +344,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
             if (j === colKeys.length - 1) {
               chartGrid.push({
                 key: flatColKey,
-                height: (multiCoordinate ? unitMetricWidth : elementSize),
+                height: elementSize,
                 data: chartLine.slice()
               })
               // tableHeight = elementSize
@@ -378,7 +380,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               lastUnit.width = unitMetricWidth
               lastUnit.ended = true
 
-              const height = lastUnit.records.length * (multiCoordinate ? unitMetricWidth : elementSize)
+              const height = lastUnit.records.length * elementSize
               chartGrid.push({
                 key: flatRowKey,
                 height,
@@ -397,7 +399,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               height: unitMetricHeight,
               data: [{
                 key: flatRowKey,
-                width: (multiCoordinate ? unitMetricHeight : elementSize),
+                width: elementSize,
                 records: [{
                   key: rk[rk.length - 1],
                   value: records
@@ -411,8 +413,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
         })
       } else {
         const records = tree[0]
-        const width = dimetionAxis === 'col' ? (multiCoordinate ? unitMetricHeight : elementSize) : unitMetricWidth
-        const height = dimetionAxis === 'row' ? (multiCoordinate ? unitMetricWidth : elementSize) : unitMetricHeight
+        const width = dimetionAxis === 'col' ? elementSize : unitMetricWidth
+        const height = dimetionAxis === 'row' ? elementSize : unitMetricHeight
         // tableWidth = width * (dimetionAxis === 'row' ? extraMetricCount + 1 : 1)
         // tableHeight = height * (dimetionAxis === 'col' ? extraMetricCount + 1 : 1)
         const chartUnit = {
@@ -436,11 +438,11 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       let tableHeight = 0
 
       if (dimetionAxis === 'col') {
-        tableWidth = colKeyLength * (multiCoordinate ? unitMetricHeight : elementSize)
+        tableWidth = colKeyLength * elementSize
         tableHeight = metricAxisCount * unitMetricHeight * metrics.length
       } else {
         tableWidth = metricAxisCount * unitMetricWidth * metrics.length
-        tableHeight = rowKeyLength * (multiCoordinate ? unitMetricWidth : elementSize)
+        tableHeight = rowKeyLength * elementSize
       }
       tableBody = (
         <Chart
@@ -455,6 +457,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           drawingData={drawingData}
           dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}
+          scatterXaxisConfig={scatterXaxisConfig}
           color={color}
           label={label}
           xAxis={xAxis}

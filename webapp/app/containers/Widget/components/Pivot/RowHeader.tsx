@@ -23,7 +23,7 @@ interface IRowHeaderProps {
 export class RowHeader extends React.Component<IRowHeaderProps, {}> {
   public render () {
     const { rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, drawingData, dimetionAxis, metrics, metricAxisConfig } = this.props
-    const { elementSize, unitMetricWidth, unitMetricHeight, multiCoordinate } = drawingData
+    const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     const headers = []
 
@@ -48,7 +48,7 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
               if (rk[j] === lastRk[j]) {
                 return
               } else {
-                cellHeight = elementCount * (multiCoordinate ? unitMetricWidth : elementSize)
+                cellHeight = elementCount * elementSize
                 x = 1
                 elementCount = 0
                 auxiliaryLines = true
