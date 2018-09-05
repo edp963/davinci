@@ -23,7 +23,7 @@ import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
 import radar from './radar'
-import { DimetionType } from '../components/Pivot/Pivot'
+import { DimetionType, IDrawingData } from '../components/Pivot/Pivot'
 
 interface IChartOptions {
   chartOption: object
@@ -46,13 +46,14 @@ interface IChartOptions {
     metricIndex: number,
     recordIndex: number
   ): { center: string[], radius: string[]}
+  getSymbolSize? (name: string, size: number): number
 }
 
-export default function (type, elementSize?): IChartOptions {
+export default function (type, drawingData?: IDrawingData): IChartOptions {
   switch (type) {
     case 'line': return line()
-    case 'bar': return bar(elementSize)
-    case 'scatter': return scatter()
+    case 'bar': return bar(drawingData.elementSize)
+    case 'scatter': return scatter(drawingData.sizeRate)
     case 'pie': return pie()
     case 'radar': return radar()
   }

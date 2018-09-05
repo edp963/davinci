@@ -32,6 +32,7 @@ export interface ITableBodyProps {
   dimetionAxis: DimetionType
   color?: IDataParamProperty
   label?: IDataParamProperty
+  size?: IDataParamProperty
   xAxis?: IDataParamProperty
   renderType: RenderType
   legend: ILegend
@@ -188,6 +189,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       dimetionAxis,
       color,
       label,
+      size,
       xAxis,
       renderType,
       legend
@@ -460,6 +462,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           scatterXaxisConfig={scatterXaxisConfig}
           color={color}
           label={label}
+          size={size}
           xAxis={xAxis}
           renderType={renderType}
           legend={legend}

@@ -27,6 +27,27 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
     }
   }
 
+  public componentWillMount () {
+    this.initColor(this.props.value)
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps.list !== this.props.list) {
+      this.setState({
+        selectedTab: 'all',
+        color: nextProps.value['all']
+      })
+    } else {
+      this.initColor(nextProps.value)
+    }
+  }
+
+  private initColor = (value) => {
+    this.setState({
+      color: value[this.state.selectedTab]
+    })
+  }
+
   private tabSelect = (key) => () => {
     const { value } = this.props
     this.setState({
@@ -40,8 +61,9 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
   }
 
   public render () {
-    const { list, value } = this.props
+    const { list } = this.props
     const { color, selectedTab } = this.state
+
     const tabs = [(
       <li
         className={classnames({ [styles.selected]: selectedTab === 'all' })}

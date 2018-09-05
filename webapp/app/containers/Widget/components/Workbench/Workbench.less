@@ -225,6 +225,7 @@
       top: 8px;
       font-weight: bold;
       color: @disabled-text-color;
+      z-index: 1;
       cursor: pointer;
 
       &:hover {
@@ -244,6 +245,19 @@
     color: @light-text-color;
     line-height: 18px;
     font-weight: bold;
+    position: relative;
+
+    .setting {
+      position: absolute;
+      right: 2px;
+      top: 0;
+      color: @disabled-text-color;
+      cursor: pointer;
+
+      &:hover {
+        color: @light-text-color;
+      }
+    }
   }
 
   .dropContainer {
@@ -708,4 +722,8 @@
   .radio {
     line-height: 2.5em;
   }
+}
+
+.sizePanel {
+  max-width: 256px;
 }

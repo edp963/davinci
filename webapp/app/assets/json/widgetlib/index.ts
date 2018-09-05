@@ -40,7 +40,9 @@
 // import parallel from './parallel.json'
 // import confidenceBand from './confidenceBand.json'
 
-export default [{
+import { IChartInfo } from '../../../containers/Widget/components/Pivot/Chart'
+
+const widgetlibs: IChartInfo[] = [{
   id: 1,
   name: 'pivot',
   title: '透视表',
@@ -55,7 +57,7 @@ export default [{
     }
   },
   style: {
-    
+
   }
 }, {
   id: 2,
@@ -79,6 +81,9 @@ export default [{
       title: '提示信息',
       type: 'value'
     }
+  },
+  style: {
+
   }
 }, {
   id: 3,
@@ -102,6 +107,9 @@ export default [{
       title: '提示信息',
       type: 'value'
     }
+  },
+  style: {
+
   }
 }, {
   id: 4,
@@ -118,7 +126,7 @@ export default [{
     },
     color: {
       title: '颜色',
-      type: 'all'
+      type: 'category'
     },
     size: {
       title: '尺寸',
@@ -132,6 +140,9 @@ export default [{
       title: '提示信息',
       type: 'value'
     }
+  },
+  style: {
+
   }
 }, {
   id: 5,
@@ -144,11 +155,7 @@ export default [{
   data: {
     color: {
       title: '颜色',
-      type: 'all'
-    },
-    size: {
-      title: '尺寸',
-      type: 'value'
+      type: 'category'
     },
     label: {
       title: '标签',
@@ -158,6 +165,9 @@ export default [{
       title: '提示信息',
       type: 'value'
     }
+  },
+  style: {
+
   }
 }
 // {
@@ -171,7 +181,7 @@ export default [{
 //   data: {
 //     color: {
 //       title: '颜色',
-//       type: 'all'
+//       type: 'category'
 //     },
 //     size: {
 //       title: '尺寸',
@@ -188,3 +198,5 @@ export default [{
 //   }
 // }
 ]
+
+export default widgetlibs

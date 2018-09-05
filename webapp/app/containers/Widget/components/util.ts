@@ -278,11 +278,15 @@ export function metricAxisLabelFormatter (value) {
   }
 }
 
-export function getPivot () {
+export function getPivot (): IChartInfo {
   return widgetlibs[0]
 }
 
-export function getScatter () {
+export function getBar (): IChartInfo {
+  return widgetlibs[2]
+}
+
+export function getScatter (): IChartInfo {
   return widgetlibs[3]
 }
 
@@ -470,13 +474,13 @@ export function getTooltipPosition (point, params, dom, rect, size) {
   ]
 }
 
-export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, scatterXaxis) {
+export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXaxis) {
   let dimetionColumns = cols.concat(rows)
   let metricColumns = [...metrics]
-  if (color && color.items) {
+  if (color) {
     dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
   }
-  if (label && label.items) {
+  if (label) {
     dimetionColumns = dimetionColumns.concat(
       label.items.filter((i) => i.type === 'category').map((i) => i.name)
     )
@@ -484,7 +488,10 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
       label.items.filter((i) => i.type === 'value')
     )
   }
-  if (scatterXaxis && scatterXaxis.items) {
+  if (size) {
+    metricColumns = metricColumns.concat(size.items)
+  }
+  if (scatterXaxis) {
     metricColumns = metricColumns.concat(scatterXaxis.items)
   }
 
@@ -508,7 +515,7 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
     let record
     if (type === 'cartesian') {
       record = grouped
-        ? Object.values(records)[dataIndex][0]
+        ? records[dataIndex][0]
         : records[dataIndex].value[0]
     } else if (type === 'polar') {
       record = records[dataIndex]
@@ -523,4 +530,8 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
       .concat(dimetionColumns.map((dc) => `${dc}: ${record[dc]}`))
       .join('<br/>')
   }
+}
+
+export function getSizeValue (value) {
+  return value >= 3 ? value - 2 : value / 4
 }

@@ -3,11 +3,9 @@ import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
 import chartOptionGenerator from '../../charts'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
-import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel } from '../util'
+import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel, getSizeValue } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
-const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Pivot.less')
 
 export interface IChartInfo {
@@ -64,6 +62,7 @@ interface IChartProps {
   scatterXaxisConfig?: IMetricAxisConfig
   color?: IDataParamProperty
   label?: IDataParamProperty
+  size?: IDataParamProperty
   xAxis?: IDataParamProperty
   renderType: RenderType
   legend: ILegend
@@ -157,7 +156,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
   }
 
   private renderChart = () => {
-    const { cols, rows, metrics, data, drawingData, metricAxisConfig, scatterXaxisConfig, dimetionAxis, color, label, xAxis: scatterXaxis, legend, renderType } = this.props
+    const { cols, rows, metrics, data, drawingData, metricAxisConfig, scatterXaxisConfig, dimetionAxis, color, label, size, xAxis: scatterXaxis, legend, renderType } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -206,9 +205,10 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 const xAxisData = records.map((r) => r.key)
                 const {
                   chartOption,
-                  stackOption
-                } = chartOptionGenerator(m.chart.name, elementSize)
-                const { calcPieCenterAndRadius } = chartOptionGenerator('pie')
+                  stackOption,
+                  calcPieCenterAndRadius,
+                  getSymbolSize
+                } = chartOptionGenerator(m.chart.name, drawingData)
 
                 // 单次循环records做手动分类，判断条件color和label，tip只能是指标
                 const currentColorItem = color.items.find((i) => i.config.actOn === m.name) || color.items.find((i) => i.config.actOn === 'all')
@@ -217,6 +217,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 // const currentScatterXaxisItem = scatterXaxis &&
                 //   (scatterXaxis.items.find((i) => i.config.actOn === m.name) || scatterXaxis.items.find((i) => i.config.actOn === 'all'))
                 const currentScatterXaxisItem = scatterXaxis && scatterXaxis.items[0]
+                const currentSizeItem = size && size.items[0]
+                const currentSizeValue = size && (currentSizeItem ? getSizeValue(size.value[currentSizeItem.name] || size.value['all']) : getSizeValue(size.value['all']))
                 const groupingItems = [].concat(currentColorItem).concat(currentLabelItem).filter((i) => !!i)
 
                 if (!(currentScatterXaxisItem && m.chart.id === getScatter().id)) {
@@ -279,18 +281,29 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
                         Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
+                          let data
+                          if (groupedRecords[colKey]) {
+                            data = groupedRecords[colKey].reduce((sum, record) => {
+                              return [
+                                sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
+                                sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
+                                currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 10
+                              ]
+                            }, [0, 0, 0])
+                            data = [{
+                              value: [data[0], data[1]],
+                              symbolSize: currentSizeItem
+                                ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
+                                : 10 * currentSizeValue
+                            }]
+                          } else {
+                            data = [[0, 0, 0]]
+                          }
                           series.push({
-                            data: groupedRecords[colKey]
-                              ? [groupedRecords[colKey].reduce((sum, record) => {
-                                return [
-                                  sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
-                                  sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0)
-                                ]
-                              }, [0, 0])]
-                              : [[0, 0]],
+                            data,
                             color: currentColorItem
                               ? currentColorItem.config.values[groupingKey.split(',')[0]]
-                              : (color.value[m.name] || defaultThemeColors[0]),
+                              : (color.value[m.name] || color.value['all']),
                             ...currentLabelItem.length && {
                               label: {
                                 show: true,
@@ -320,16 +333,38 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       })
                     } else {
                       Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
+                        const data = []
+                        const backupData = []
+                        xAxisData.forEach((colKey) => {
+                          if (m.chart.id === getScatter().id) {
+                            const result = groupedRecords[colKey]
+                              ? groupedRecords[colKey].reduce(([value, size], record) => [
+                                  value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
+                                  currentSizeItem ? size + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 0
+                                ], [0, 0])
+                              : [0, 0]
+                            console.log(currentSizeValue)
+                            data.push({
+                              value: result[0],
+                              symbolSize: currentSizeItem
+                                ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
+                                : 10 * currentSizeValue
+                            })
+                          } else {
+                            if (groupedRecords[colKey]) {
+                              data.push(groupedRecords[colKey].reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0))
+                            } else {
+                              data.push(0)
+                            }
+                          }
+                          backupData.push(groupedRecords[colKey])
+                        })
                         series.push({
                           ...stackOption && {stack: `${unit.key}${m.name}`},
-                          data: xAxisData.map((colKey) => {
-                            return groupedRecords[colKey]
-                              ? groupedRecords[colKey].reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
-                              : 0
-                          }),
+                          data,
                           color: currentColorItem
                             ? currentColorItem.config.values[groupingKey.split(',')[0]]
-                            : (color.value[m.name] || defaultThemeColors[0]),
+                            : (color.value[m.name] || color.value['all']),
                           ...currentLabelItem.length && {
                             label: {
                               show: true,
@@ -345,7 +380,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         seriesData.push({
                           type: 'cartesian',
                           grouped: true,
-                          records: groupedRecords
+                          records: backupData
                         })
                       })
                     }
@@ -371,20 +406,31 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         }
                         xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
                         yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
+                        let data
+                        if (recordCollection.value) {
+                          data = recordCollection.value.reduce((sum, record) => [
+                            sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
+                            sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
+                            currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 10
+                          ], [0, 0, 0])
+                          data = [{
+                            value: [data[0], data[1]],
+                            symbolSize: currentSizeItem
+                              ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
+                              : 10 * currentSizeValue
+                          }]
+                        } else {
+                          data = [[0, 0, 0]]
+                        }
                         series.push({
-                          data: recordCollection.value
-                            ? [recordCollection.value.reduce((sum, record) => [
-                                sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
-                                sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0)
-                              ], [0, 0])]
-                            : [[0, 0]],
-                          color: color.value[m.name] || defaultThemeColors[0],
+                          data,
+                          color: color.value[m.name] || color.value['all'],
                           xAxisIndex: index,
                           yAxisIndex: index,
                           ...chartOption
                         })
                         seriesData.push({
-                          type: 'scatt er',
+                          type: 'scatter',
                           grouped: false,
                           records: recordCollection.value
                         })
@@ -400,11 +446,26 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     } else {
                       series.push({
                         data: records.map((recordCollection) => {
-                          return recordCollection.value
-                            ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
-                            : 0
+                          if (m.chart.id === getScatter().id) {
+                            const result = recordCollection.value
+                              ? recordCollection.value.reduce(([value, size], record) => [
+                                  value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
+                                  currentSizeItem ? size + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 0
+                                ], [0, 0])
+                              : [0, 0]
+                            return {
+                              value: result[0],
+                              symbolSize: currentSizeItem
+                                ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
+                                : 10 * currentSizeValue
+                            }
+                          } else {
+                            return recordCollection.value
+                              ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
+                              : 0
+                          }
                         }),
-                        color: color.value[m.name] || defaultThemeColors[0],
+                        color: color.value[m.name] || color.value['all'],
                         xAxisIndex: index,
                         yAxisIndex: index,
                         ...chartOption
@@ -451,7 +512,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             itemStyle: {
                               color: currentColorItem
                                 ? currentColorItem.config.values[record[currentColorItem.name]]
-                                : (color.value[m.name] || defaultThemeColors[0])
+                                : (color.value[m.name] || color.value['all'])
                             }
                           })
                         })
@@ -463,7 +524,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           ? recordCollection.value.reduce((sum, record) => sum + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0), 0)
                           : 0,
                         itemStyle: {
-                          color: color.value[m.name] || defaultThemeColors[0]
+                          color: color.value[m.name] || color.value['all']
                         }
                       }]
                     }
@@ -516,12 +577,13 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(grid)
           // console.log(xAxis)
           // console.log(yAxis)
-          // console.log(series)
+          console.log(series)
+          console.log(seriesData)
 
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
-              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, scatterXaxis)
+              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXaxis)
             },
             grid,
             xAxis,
