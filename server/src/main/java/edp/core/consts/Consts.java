@@ -19,6 +19,41 @@
 package edp.core.consts;
 
 public class Consts {
+
+    /**
+     * 特殊符号定义
+     */
+    public static final String conditionSeparator = ",";
+
+    public static final String space = " ";
+
+    public static final String sqlSeparator = ";";
+
+    public static final String sqlUrlSeparator = "&";
+
+    public static final String newLineChar = "\n";
+
+    public static final char CSVHeaderSeparator = ':';
+
+    public static final char delimiterStartChar = '<';
+
+    public static final String parenthesesStart = "(";
+
+    public static final String parenthesesEnd = ")";
+
+    public static final char delimiterEndChar = '>';
+
+    public static final char assignmentChar = '=';
+
+    public static final char dollarDelimiter = '$';
+
+    public static final String mysqlKeyDelimiter = "`";
+
+    public static final String apostrophe = "\'";
+
+    public static final String doubleQuotes = "\"";
+
+
     /**
      * 当前用户
      */
@@ -48,6 +83,9 @@ public class Consts {
      * Token 创建时间
      */
     public static final String TOKEN_CREATE_TIME = "token_create_time";
+
+
+    public static final String SCHEDULE_JOB_DATA_KEY = "scheduleJobs";
 
     /**
      * 常用图片格式

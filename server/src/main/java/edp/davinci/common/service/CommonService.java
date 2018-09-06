@@ -130,7 +130,12 @@ public class CommonService<T> {
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+
+        if (null == orgRel) {
+            return false;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -162,13 +167,21 @@ public class CommonService<T> {
 
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (null == orgRel) {
+            return false;
+        }
+
         //当前project所属organization的owner
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -220,15 +233,22 @@ public class CommonService<T> {
             return true;
         }
 
-
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -284,13 +304,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -344,13 +372,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -393,13 +429,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -436,7 +480,12 @@ public class CommonService<T> {
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (null == orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+
+        if (null == orgRel) {
+            return 0;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return UserPermissionEnum.DELETE.getPermission();
         }
 

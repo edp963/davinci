@@ -8,9 +8,7 @@ import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
-import edp.core.utils.RedisUtils;
-import edp.core.utils.SqlUtils;
-import edp.core.utils.TokenUtils;
+import edp.core.utils.*;
 import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -39,6 +37,8 @@ import org.stringtemplate.v4.STGroupFile;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
+import static edp.core.consts.Consts.*;
 
 @Slf4j
 @Service("viewService")
@@ -454,8 +454,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Override
     public ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
-
         List<Map<String, Object>> list = null;
+
+        if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+            return resultMap.successAndRefreshToken(request).payloads(null);
+        }
 
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(id);
         if (null == viewWithProjectAndSource) {
@@ -535,14 +538,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
         List<Map<String, Object>> list = null;
 
+        if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
+            return null;
+        }
+
+        String cacheKey = null;
         try {
-
-            Object object = redisUtils.get(String.valueOf(viewDataCacheKey + viewWithProjectAndSource.getId()));
-
-            if (null != object) {
-                list = (List<Map<String, Object>>) object;
-                return list;
-            }
 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
@@ -554,7 +555,20 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
+
+                    cacheKey = getCacheKey(viewDataCacheKey, viewWithProjectAndSource, executeParam, teamParams, queryParam);
+                    try {
+                        Object object = redisUtils.get(cacheKey);
+                        if (null != object && executeParam.getCache()) {
+                            list = (List<Map<String, Object>>) object;
+                            return list;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
+
                     SqlUtils sqlUtils = this.sqlUtils.init(source);
                     List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
                     List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
@@ -581,7 +595,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 && executeParam.getCache()
                 && executeParam.getExpired() > 0L
                 && null != list && list.size() > 0) {
-            redisUtils.set(viewDataCacheKey + viewWithProjectAndSource.getId(), list, executeParam.getExpired(), TimeUnit.SECONDS);
+            redisUtils.set(cacheKey, list, executeParam.getExpired(), TimeUnit.SECONDS);
         }
 
         return list;
@@ -600,15 +614,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
         List<QueryColumn> columns = null;
 
+        String cacheKey = null;
         try {
-
-            Object object = redisUtils.get(String.valueOf(viewMetaCacheKey + viewWithProjectAndSource.getId()));
-
-            if (null != object) {
-                columns = (List<QueryColumn>) object;
-                return columns;
-            }
-
 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
@@ -622,6 +629,14 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     //解析team@var查询参数
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
+
+                    cacheKey = getCacheKey(viewMetaCacheKey, viewWithProjectAndSource, executeParam, teamParams, queryParam);
+                    Object object = redisUtils.get(cacheKey);
+                    if (null != object && executeParam.getCache()) {
+                        columns = (List<QueryColumn>) object;
+                        return columns;
+                    }
+
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
                     List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
                     List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
@@ -652,7 +667,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 && executeParam.getCache()
                 && executeParam.getExpired() > 0L
                 && null != columns && columns.size() > 0) {
-            redisUtils.set(viewMetaCacheKey + viewWithProjectAndSource.getId(), columns, executeParam.getExpired(), TimeUnit.SECONDS);
+            redisUtils.set(cacheKey, columns, executeParam.getExpired(), TimeUnit.SECONDS);
         }
 
         return columns;
@@ -848,5 +863,54 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
         return false;
     }
+
+
+    private String getCacheKey(String prefix,ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam ,Map<String, List<String>> teamParams, Map<String, String> queryParams) {
+
+        StringBuilder sqlKey = new StringBuilder(prefix)
+                .append(String.valueOf(viewWithProjectAndSource.getSource().getId()))
+                .append("-")
+                .append(String.valueOf(viewWithProjectAndSource.getId()));
+
+        STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+        ST st = stg.getInstanceOf("querySql");
+        st.add("groups", executeParam.getGroups());
+        st.add("aggregators", executeParam.getAggregators(viewWithProjectAndSource.getSource().getJdbcUrl()));
+        st.add("orders", executeParam.getOrders());
+        st.add("filters", executeParam.getFilters());
+        st.add("keywordStart", DataTypeEnum.getKeywordStart(viewWithProjectAndSource.getSource().getJdbcUrl()));
+        st.add("keywordEnd", DataTypeEnum.getKeywordEnd(viewWithProjectAndSource.getSource().getJdbcUrl()));
+        st.add("sql", sqlKey.toString());
+
+        StringBuilder keyBuilder = new StringBuilder(st.render()).append("-");
+
+        if (null != queryParams && queryParams.size() > 0) {
+            for (String key : teamParams.keySet()) {
+                keyBuilder.append(key).append(":").append(teamParams.get(key)).append(",");
+            }
+        }
+        if (null != teamParams && teamParams.size() > 0) {
+            for (String key : teamParams.keySet()) {
+                List<String> list = teamParams.get(key);
+                if (null != list && list.size() > 0) {
+                    keyBuilder.append(key).append(":").append("[");
+                    for (String str : list) {
+                        keyBuilder.append(str).append(",");
+                    }
+                    keyBuilder.append(key).append(":").append("]");
+                }
+            }
+        }
+
+        String src = keyBuilder.toString()
+                .replaceAll(newLineChar, "")
+                .replaceAll(space, "")
+                .replace(mysqlKeyDelimiter, "")
+                .replace(apostrophe, "")
+                .replace(doubleQuotes, "");
+
+        return MD5Util.getMD5(src, true, 32);
+    }
+
 }
 
