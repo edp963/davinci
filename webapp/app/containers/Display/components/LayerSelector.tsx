@@ -26,18 +26,15 @@ const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
 const Select = require('antd/lib/select')
-const Icon = require('antd/lib/icon')
 const Steps = require('antd/lib/steps')
-const Pagination = require('antd/lib/pagination')
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
-const Search = Input.Search
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { FormComponentProps } from 'antd/lib/form/Form'
 
+// TODO widgets icon display
 import { iconMapping } from '../../Widget/components/chartUtil'
 import WidgetSelector from '../../Widget/components/WidgetSelector'
 
@@ -45,12 +42,10 @@ const utilStyles = require('../../../assets/less/util.less')
 
 interface ILayerSelectorProps {
   visible: boolean
-  form: WrappedFormUtils
   multiple: boolean
   modalLoading: boolean
   widgets: any[]
   selectedWidgets: any[]
-  triggerType: string
   onSelectDone: (widgets: any[], values: any) => void
   onCancel: () => void
 }
@@ -58,16 +53,16 @@ interface ILayerSelectorProps {
 interface ILayerSelectorStates {
   step: number
   tempSelectedWidgets: any[]
-  tempTriggerType: string
+  showFrequency: boolean
 }
 
-export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSelectorStates> {
+export class LayerSelector extends React.Component<ILayerSelectorProps & FormComponentProps, ILayerSelectorStates> {
   constructor (props) {
     super(props)
     this.state = {
       step: 0,
       tempSelectedWidgets: [],
-      tempTriggerType: this.props.triggerType || 'manual'
+      showFrequency: false
     }
   }
 
@@ -77,14 +72,12 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
     })
   }
 
-  private onTriggerTypeSelect = (val) => {
-    this.setState({
-      tempTriggerType: val
-    })
-  }
-
   private onStepChange = (step) => () => {
     this.setState({ step })
+  }
+
+  private onPollingSelect = (polling) => {
+    this.setState({ showFrequency: polling === 'true' })
   }
 
   private save = () => {
@@ -105,11 +98,10 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
       multiple,
       modalLoading,
       form,
-      widgets,
-      triggerType
+      widgets
     } = this.props
 
-    const { step, tempSelectedWidgets, tempTriggerType } = this.state
+    const { step, tempSelectedWidgets, showFrequency } = this.state
 
     const { getFieldDecorator } = form
 
@@ -121,8 +113,8 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
       [utilStyles.hide]: !step
     })
 
-    const triggerParamsClass = classnames({
-      [utilStyles.hide]: tempTriggerType === 'manual'
+    const frequencyClass = classnames({
+      [utilStyles.hide]: !showFrequency
     })
 
     const modalButtons = step
@@ -183,23 +175,23 @@ export class LayerSelector extends React.Component<ILayerSelectorProps, ILayerSe
                   labelCol={{span: 10}}
                   wrapperCol={{span: 14}}
                 >
-                  {getFieldDecorator('triggerType', {
-                    initialValue: tempTriggerType
+                  {getFieldDecorator('polling', {
+                    initialValue: 'false'
                   })(
-                    <Select onSelect={this.onTriggerTypeSelect}>
-                      <Option value="manual">手动刷新</Option>
-                      <Option value="frequent">定时刷新</Option>
+                    <Select onSelect={this.onPollingSelect}>
+                      <Option value="false">手动刷新</Option>
+                      <Option value="true">定时刷新</Option>
                     </Select>
                   )}
                 </FormItem>
               </Col>
-              <Col sm={4} className={triggerParamsClass}>
+              <Col sm={4} className={frequencyClass}>
                 <FormItem
                   label="时长"
                   labelCol={{span: 12}}
                   wrapperCol={{span: 12}}
                 >
-                  {getFieldDecorator('triggerParams', {
+                  {getFieldDecorator('frequency', {
                     rules: [{
                       required: true,
                       message: '不能为空'

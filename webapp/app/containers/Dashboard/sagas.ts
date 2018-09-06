@@ -185,8 +185,8 @@ export function* editDashboardItem (action) {
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.dashboard}/widgets`,
-      data: item
+      url: `${api.portal}/dashboards/widgets`,
+      data: [item]
     })
     yield put(dashboardItemEdited(item))
     resolve()

@@ -29,7 +29,7 @@ interface ILayerItemProps {
   widget: any
   data: any
   loading: boolean
-  polling: boolean
+  polling: string
   frequency: string
   interactId: string
   rendered?: boolean
@@ -140,7 +140,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     clearInterval(this.frequent)
 
-    if (polling) {
+    if (polling === 'true' && frequency) {
       this.frequent = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id)
       }, Number(frequency) * 1000)
