@@ -30,7 +30,6 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import org.apache.ibatis.jdbc.Null;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
@@ -38,38 +37,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static edp.core.consts.Consts.*;
+
 @Slf4j
 public class SqlParseUtils {
 
-
-    /**
-     * 特殊符号定义
-     */
-
-
-    private static final String conditionSeparator = ",";
-
-    private static final String space = " ";
-
-    private static final String sqlSeparator = ";";
-
-    private static final String sqlUrlSeparator = "&";
-
-    private static final String newLineChar = "\n";
-
-    private static final char CSVHeaderSeparator = ':';
-
-    private static final char delimiterStartChar = '<';
-
-    private static final String parenthesesStart = "(";
-
-    private static final String parenthesesEnd = ")";
-
-    private static final char delimiterEndChar = '>';
-
-    private static final char assignmentChar = '=';
-
-    public static final char dollarDelimiter = '$';
 
     private static final char STStartChar = '{';
 
@@ -132,7 +104,8 @@ public class SqlParseUtils {
             Map<String, List<String>> teamParamMap = new HashMap<>();
             //参数
             if (!StringUtils.isEmpty(queryParam)) {
-                queryParam = queryParam.replaceAll(newLineChar, space).trim();
+                queryParam = queryParam.trim().replaceAll(newLineChar, sqlSeparator).trim();
+                queryParam = queryParam.replaceAll(sqlSeparator + "{2,}", sqlSeparator);
                 if (queryParam.endsWith(sqlSeparator)) {
                     queryParam = queryParam.substring(0, queryParam.length() - 1);
                 }
@@ -167,7 +140,7 @@ public class SqlParseUtils {
                 throw new ServerException("Invalid Query Sql");
             }
 
-            sqlStruct = sqlStruct.replaceAll(newLineChar, space);
+            sqlStruct = sqlStruct.replaceAll(newLineChar, space).trim();
 
             SqlEntity sqlEntity = new SqlEntity(sqlStruct, queryParamMap, teamParamMap);
             return sqlEntity;
@@ -222,8 +195,18 @@ public class SqlParseUtils {
 
 
     public static List<String> getExecuteSqlList(String sql) {
+        sql = sql.trim();
+
         if (StringUtils.isEmpty(sql)) {
             return null;
+        }
+
+        if (sql.startsWith(sqlSeparator)) {
+            sql = sql.substring(1);
+        }
+
+        if (sql.endsWith(sqlSeparator)) {
+            sql = sql.substring(0, sql.length() - 1);
         }
 
         List<String> list = null;
@@ -245,9 +228,19 @@ public class SqlParseUtils {
 
 
     public static List<String> getQuerySqlList(String sql) {
+        sql = sql.trim();
         if (StringUtils.isEmpty(sql)) {
             return null;
         }
+
+        if (sql.startsWith(sqlSeparator)) {
+            sql = sql.substring(1);
+        }
+
+        if (sql.endsWith(sqlSeparator)) {
+            sql = sql.substring(0, sql.length() - 1);
+        }
+
         List<String> list = null;
         String[] split = sql.split(sqlSeparator);
         if (null != split && split.length > 0) {

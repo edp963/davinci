@@ -19,6 +19,7 @@
 package edp.core.common.job;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.consts.Consts;
 import edp.core.model.ScheduleJob;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -32,7 +33,7 @@ public class QuartzJobFactory implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) {
-        ScheduleJob scheduleJob = (ScheduleJob) jobExecutionContext.getMergedJobDataMap().get("jobs");
+        ScheduleJob scheduleJob = (ScheduleJob) jobExecutionContext.getMergedJobDataMap().get(Consts.SCHEDULE_JOB_DATA_KEY);
 
         if (scheduleJob.getStartDate().getTime() <= System.currentTimeMillis()
                 && scheduleJob.getEndDate().getTime() >= System.currentTimeMillis()) {

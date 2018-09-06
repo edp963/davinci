@@ -16,12 +16,27 @@
  * >>
  */
 
-package edp.davinci.dto.cronJobDto;
+package edp.core.utils;
 
-import lombok.Data;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-@Data
-public class CronJobContent {
-    private String contentType;
-    private Long id;
+public class CollectionUtils {
+
+    public static boolean isEmpty(Collection<?> collection) {
+        return collection == null || collection.isEmpty();
+    }
+
+    public static boolean isEmpty(Map<?, ?> map) {
+        return map == null || map.isEmpty();
+    }
+
+    public static boolean isEmpty(Object[] array) {
+        return array == null || array.length == 0;
+    }
+
+    public static boolean isEmpty(List<Object> list) {
+        return list == null || list.size() == 0;
+    }
 }
