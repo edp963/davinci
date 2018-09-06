@@ -80,5 +80,28 @@
       "component": "inputnumber",
       "default": 0
     }]
+  }, {
+    "name": "dataRefresh",
+    "title": "数据刷新",
+    "items": [{
+      "name": "polling",
+      "title": "模式",
+      "component": "select",
+      "values": [{
+        "name": "手动刷新",
+        "value": "false"
+      }, {
+        "name": "定时刷新",
+        "value": "true"
+      }],
+      "default": "false"
+    }, {
+      "name": "frequency",
+      "title": "时长",
+      "component": "inputnumber",
+      "default": "60",
+      "min": 1,
+      "placeholder": "秒"
+    }]
   }]
 }

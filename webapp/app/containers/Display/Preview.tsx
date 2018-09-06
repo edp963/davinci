@@ -295,6 +295,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
 
+      const { polling, frequency } = layer.params
       const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
@@ -309,8 +310,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           widget={widget}
           data={datasource}
           loading={loading}
-          polling={false}
-          frequency={'10000'}
+          polling={polling}
+          frequency={frequency}
           interactId={interactId}
           rendered={rendered}
           renderType={renderType}

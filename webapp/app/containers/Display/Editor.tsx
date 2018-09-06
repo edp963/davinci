@@ -176,7 +176,6 @@ interface IEditorStates {
   editorPadding: string
   scale: number
   sliderValue: number
-  triggerType: string
 }
 
 export class Editor extends React.Component<IEditorProps, IEditorStates> {
@@ -190,8 +189,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       editorHeight: 0,
       editorPadding: '',
       scale: 1,
-      sliderValue: 20,
-      triggerType: 'manual'
+      sliderValue: 20
     }
 
     this.refHandlers = {
@@ -630,6 +628,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       case Keys.Paste:
         this.pasteLayers()
         break
+      case Keys.UnDo:
+        this.undo()
+        break
+      case Keys.Redo:
+        this.redo()
+        break
     }
   }
 
@@ -694,6 +698,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       const widget = widgets.find((w) => w.id === layer.widgetId)
       const layerId = layer.id
 
+      const { polling, frequency } = JSON.parse(layer.params)
       const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
@@ -709,8 +714,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           widget={widget}
           data={datasource}
           loading={loading}
-          polling={false}
-          frequency={'10000'}
+          polling={polling}
+          frequency={frequency}
           interactId={interactId}
           rendered={rendered}
           renderType={renderType}

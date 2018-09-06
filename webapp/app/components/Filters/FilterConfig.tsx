@@ -184,7 +184,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
           <div className={styles.right}>
             {
               !selectedFilter.key ? null : (
-                <FilterValuePreview currentPreviewData={previewData[selectedFilter.key] || []} />
+                <FilterValuePreview currentPreviewData={previewData[selectedFilter.key][selectedFilter.fromModel] || []} />
               )
             }
           </div>

@@ -327,6 +327,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       const layerItems =  Array.isArray(widgets) ? layers.map((layer) => {
         const widget = widgets.find((w) => w.id === layer.widgetId)
         const layerId = layer.id
+        const { polling, frequency } = layer.params
         const { datasource, loading, interactId, renderType } = layersInfo[layerId]
 
         return (
@@ -339,8 +340,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
             data={datasource}
             layer={layer}
             loading={loading}
-            polling={false}
-            frequency={'10000'}
+            polling={polling}
+            frequency={frequency}
             interactId={interactId}
             renderType={renderType}
             onGetChartData={this.getChartData}

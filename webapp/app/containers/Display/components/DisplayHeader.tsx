@@ -114,14 +114,16 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
   }
 
   private onWidgetsSelectDone = (selectedWidgets, fieldValues) => {
-    const { triggerType, triggerParams  } = fieldValues
+    const { polling, frequency  } = fieldValues
     const layers = selectedWidgets.map((w) => ({
       widgetId: w.id,
       name: w.name,
       type: GraphTypes.Chart,
-      params: JSON.stringify(this.getDefaultSetting(GraphTypes.Chart))
-      // triggerType,
-      // triggerParams
+      params: JSON.stringify({
+        ...this.getDefaultSetting(GraphTypes.Chart),
+        polling,
+        frequency
+      })
     }))
 
     this.props.onAddLayers(layers)
