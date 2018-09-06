@@ -6,6 +6,7 @@ import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
 import Chart from '../Chart'
+import Pivot from '../../../Widget/components/Pivot/PivotInViz'
 import {ECHARTS_RENDERER} from '../../../../globalConstants'
 const styles = require('./fullScreenPanel.less')
 
@@ -13,24 +14,18 @@ interface IFullScreenPanelProps {
   visible: boolean
   isVisible: (currentChartData?: any) => any
   currentDataInFullScreen: {
-    w?: any
-    h?: any
     loading?: any
-    chartInfo?: {
-      renderer?: string
-    }
+    renderType?: string
     widget?: any
     itemId?: number
     onGetChartData?: any
   }
   widgets: any
-  widgetlibs: any[]
   currentDatasources: boolean | object
   currentDashboard: {
     widgets?: any[]
   }
   onCurrentWidgetInFullScreen: (id: number) => any
-
   onRenderChart?: any
 }
 
@@ -66,44 +61,29 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
   private triggerWidget = (e) => {
     const {onCurrentWidgetInFullScreen} = this.props
     const itemId = e.item.props.itemId
+    console.log(itemId)
     onCurrentWidgetInFullScreen(itemId)
   }
-  public componentDidUpdate (prevProps, prevState) {
-    const {chartInfo, widget, itemId} = this.props.currentDataInFullScreen
-    const {currentDatasources, visible} = this.props
-    const data = currentDatasources[itemId]
-    const chartInstanceId = 'fsChartsWrapper'
-    if (chartInfo && chartInfo.renderer !== ECHARTS_RENDERER) {
-      return false
-    }
-    if (itemId && visible) {
-      if (this.chartInstance) {
-        this.chartInstance.dispose()
-      }
-      this.chartInstance = echarts.init(document.getElementById(chartInstanceId) as any, 'default')
-      this.renderChart(this.chartInstance, itemId, widget, data.dataSource, chartInfo)
-    }
-  }
 
-  private renderChart = (chartInstance, itemId, widget, dataSource, chartInfo, interactIndex?: any) => {
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        ...JSON.parse(widget.chart_params),
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.flatTable_id,
-        widgetlib_id: widget.widgetlib_id
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        chartInstance.hideLoading()
-      })
-  }
+  // public componentDidUpdate (prevProps, prevState) {
+  //   console.log(this.props.currentDataInFullScreen)
+  //   const {chartInfo, widget, itemId} = this.props.currentDataInFullScreen
+  //   const {currentDatasources, visible} = this.props
+  //  // const data = currentDatasources[itemId]['datasource']
+  //   // console.log(currentDatasources)
+  //   // console.log(itemId)
+  //   const chartInstanceId = 'fsChartsWrapper'
+  //   if (chartInfo && chartInfo.renderer !== ECHARTS_RENDERER) {
+  //     return false
+  //   }
+  //   if (itemId && visible) {
+  //     if (this.chartInstance) {
+  //       this.chartInstance.dispose()
+  //     }
+  //     this.chartInstance = echarts.init(document.getElementById(chartInstanceId) as any, 'default')
+  //     this.renderChart(this.chartInstance, itemId, widget, data.dataSource, chartInfo)
+  //   }
+  // }
   private isShowSideMenu = () => {
     this.setState({
       isShowMenu: !this.state.isShowMenu
@@ -120,7 +100,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
   }
   public render () {
     const {isShowMenu, controlPanelVisible} = this.state
-    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets, widgetlibs} = this.props
+    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets} = this.props
     const fsClassName = classnames({
       [styles.fullScreen]: true,
       [styles.displayNone]: !visible,
@@ -130,7 +110,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     let menus: any
     let title: string = ''
     let renderType: string = ''
-    let data: string = ''
+    let data: any = null
     const chartClass = {
       chart: styles.chartBlock,
       table: styles.tableBlock,
@@ -154,10 +134,10 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
             {
               currentDashboard && currentDashboard.widgets.map(
                 (widget, i) => {
-                  const w = widgets.find((w) => w.id === widget.widget_id)
-                  const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
+                  const w = widgets.find((w) => w.id === widget.widgetId)
+               // const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
                   return <Menu.Item key={widget.id} itemId={widget.id} >
-                    <i className={`iconfont ${iconMapping[iconName]}`} style={{marginRight: '12px'}}/>
+                    {/* <i className={`iconfont ${iconMapping[iconName]}`} style={{marginRight: '12px'}}/> */}
                     {w['name']}
                   </Menu.Item>
                 }
@@ -167,24 +147,19 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
         )
       }
     }
-
     if (Object.keys(currentDataInFullScreen).length > 0) {
       const c = currentDataInFullScreen
       title = c.widget.name
-      renderType = c.chartInfo.renderer
+      renderType = c.renderType
       data = currentDatasources[c.itemId]
+      const pivotProps = JSON.parse(currentDataInFullScreen.widget.config)
       charts = renderType !== 'echarts'
         ?
         (
-          <Chart
-            id={`${c.itemId}`}
-            w={c.w}
-            h={c.h}
-            data={data || {}}
-            loading={c.loading}
-            chartInfo={c.chartInfo}
-            chartParams={JSON.parse(c.widget.chart_params)}
-            classNames={chartClass}
+          <Pivot
+            {...pivotProps}
+            renderType="rerender"
+            data={data && data.datasource ? data.datasource : []}
           />
         )
         :

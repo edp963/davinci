@@ -376,29 +376,25 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       allowFullScreen: !allowFullScreen
     })
   }
+
   private currentWidgetInFullScreen = (id) => {
-    const {currentItems, dataSources, loadings, widgets} = this.props
-    const { modifiedPositions } = this.state
+    const {currentItems, currentItemsInfo, widgets} = this.props
     const item = currentItems.find((ci) => ci.id === id)
-    const modifiedPosition = modifiedPositions[currentItems.indexOf(item)]
-    const widget = widgets.find((w) => w.id === item.widget_id)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
-    const data = dataSources[id]
-    const loading = loadings[id]
+    const widget = widgets.find((w) => w.id === item.widgetId)
+    const data = currentItemsInfo[id]
+    const loading = currentItemsInfo['loading']
     this.setState({
       currentDataInFullScreen: {
-        w: modifiedPosition ? modifiedPosition.w : 0,
-        h: modifiedPosition ? modifiedPosition.h : 0,
-        itemId: id,
-        widgetId: widget.id,
-        widget,
-        chartInfo,
-        data,
-        loading,
-        onGetChartData: this.getChartData
-      }
+            itemId: id,
+            widgetId: widget.id,
+            widget,
+            data,
+            loading,
+            onGetChartData: this.getChartData
+        }
     })
   }
+
   private handleLegitimateUser = () => {
     const {type, shareInfo} = this.state
     this.setState({
@@ -672,7 +668,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.state
 
     let grids = null
-    // let fullScreenComponent = null
+    let fullScreenComponent = null
     let loginPanel = null
 
     if (currentItems) {
@@ -743,19 +739,17 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         </ResponsiveReactGridLayout>
       )
 
-      // fullScreenComponent = (
-      //   <FullScreenPanel
-      //     widgets={widgets}
-      //     widgetlibs={widgetlibs}
-      //     currentDashboard={{ widgets: currentItems }}
-      //     currentDatasources={dataSources}
-      //     visible={allowFullScreen}
-      //     isVisible={this.visibleFullScreen}
-      //     onRenderChart={this.renderChart}
-      //     currentDataInFullScreen={this.state.currentDataInFullScreen}
-      //     onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-      //   />
-      // )
+      fullScreenComponent = (
+        <FullScreenPanel
+          widgets={widgets}
+          currentDashboard={{ widgets: currentItems }}
+          currentDatasources={currentItemsInfo}
+          visible={allowFullScreen}
+          isVisible={this.visibleFullScreen}
+          currentDataInFullScreen={this.state.currentDataInFullScreen}
+          onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
+        />
+      )
     } else {
       grids = (
         <div className={styles.shareContentEmpty}>
@@ -763,7 +757,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         </div>
       )
 
-      // fullScreenComponent = ''
+      fullScreenComponent = ''
     }
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
@@ -796,7 +790,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         </Container.Title>
         {grids}
         <div className={styles.gridBottom} />
-        {/* {fullScreenComponent} */}
+        {fullScreenComponent}
         {loginPanel}
         {phantomDOM}
       </Container>

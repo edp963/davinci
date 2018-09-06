@@ -1132,19 +1132,17 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const {currentItems, currentItemsInfo, widgets} = this.props
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
-    const data = currentDatasources[id]
-    const loading = currentItemsLoading[id]
+    const data = currentItemsInfo[id]
+    const loading = currentItemsInfo['loading']
     this.setState({
       currentDataInFullScreen: {
-        itemId: id,
-        widgetId: widget.id,
-        widget,
-        chartInfo,
-        data,
-        loading,
-        onGetChartData: this.getChartData
-      }
+            itemId: id,
+            widgetId: widget.id,
+            widget,
+            data,
+            loading,
+            onGetChartData: this.getChartData
+        }
     })
   }
   private changeDashboardSharePanelAuthorizeState = (state) => () => {
@@ -1660,16 +1658,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             </Modal>
           )
         }
-        {/* <FullScreenPanel
+        <FullScreenPanel
           widgets={widgets}
-          widgetlibs={widgetlibs}
           currentDashboard={currentDashboard}
-          currentDatasources={currentDatasources}
+          currentDatasources={currentItemsInfo}
           visible={allowFullScreen}
           isVisible={this.visibleFullScreen}
           currentDataInFullScreen={this.state.currentDataInFullScreen}
           onCurrentWidgetInFullScreen={this.currentWidgetInFullScreen}
-        /> */}
+        />
       </Container>
     )
   }
