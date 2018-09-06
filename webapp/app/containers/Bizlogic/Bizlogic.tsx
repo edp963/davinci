@@ -242,7 +242,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     let listDataFinal
     if (listData.length === 0) {
-
       listDataFinal = toListBF(viewTeam).map((td) => {
         const arr = [{
           k: '',
@@ -943,12 +942,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
       : []
 
-    let sourceOptions
     let sourceSelectMenu
     if (sources) {
-      sourceOptions = (sources as any[]).map((s) => (
-        <Option key={`${s.id}`} value={`${s.id}`}>{s.name}</Option>
-      ))
       sourceSelectMenu = (
         <Menu onClick={this.selectSource}>
           {((sources as any[]) || []).map((v) => (

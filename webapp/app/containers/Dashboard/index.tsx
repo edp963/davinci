@@ -69,6 +69,7 @@ const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import {IProject} from '../Projects'
+import { IconProps } from 'antd/lib/icon'
 
 interface IDashboardProps {
   modalLoading: boolean
