@@ -188,12 +188,12 @@ export class Teams extends React.Component<ITeamsProps> {
   private createTeamRouter = (source) => {
     const arr = []
     function find (wrapper, data) {
-      if (data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
+      if (data && data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
         wrapper.push({
           id: data['id'],
           name: data['name']
         })
-        if (data.hasOwnProperty('child') && data['child'] !== ''){
+        if (data.hasOwnProperty('child') && data['child'] !== '') {
           find(wrapper, data['child'])
         }
       }

@@ -21,9 +21,11 @@ export default (project?: IProject, item?: any) => (WrapperComponent) => {
       if (project) {
         const projectPermission = project.permission
         for (const attr in projectPermission) {
-          const pStr = attr.slice(0, -10)
-          if (pStr === item) {
-            permission = projectPermission [attr]
+          if (attr) {
+            const pStr = attr.slice(0, -10)
+            if (pStr === item) {
+              permission = projectPermission [attr]
+            }
           }
         }
       }

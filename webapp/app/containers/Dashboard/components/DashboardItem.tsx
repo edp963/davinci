@@ -190,9 +190,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       data,
       widget,
       loading,
+      renderType,
       onGetChartData
     } = this.props
-    const chartsData = {itemId, widget, data, loading, onGetChartData}
+    const chartsData = {itemId, widget, data, loading, renderType, onGetChartData}
     if (onShowFullScreen) {
       onShowFullScreen(chartsData)
     }

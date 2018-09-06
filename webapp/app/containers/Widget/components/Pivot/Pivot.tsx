@@ -73,6 +73,7 @@ export interface IPivotProps {
   data: object[]
   cols: string[]
   rows: string[]
+  chart?: any
   metrics: IPivotMetric[]
   filters: IPivotFilter[]
   color?: IDataParamProperty
