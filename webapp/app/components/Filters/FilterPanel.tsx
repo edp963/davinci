@@ -8,7 +8,7 @@ import FilterControl from './FilterControl'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
-const Form: FormProps = require('antd/lib/form')
+const Form = require('antd/lib/form')
 
 const styles = require('./filter.less')
 
@@ -229,4 +229,4 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
 
 }
 
-export default Form.create<IFilterPanelProps>()(FilterPanel)
+export default Form.create()(FilterPanel)

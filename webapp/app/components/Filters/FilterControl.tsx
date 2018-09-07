@@ -21,7 +21,7 @@ interface IFilterControlProps {
   filter: any
   onGetOptions: (fromViewId, fromModelName, filterKey) => void
   currentOptions: {
-    [key: string]: Array<number|string>
+    [key: string]: Array<number | string>
   }
   onChange: (filter, val) => void
 }
