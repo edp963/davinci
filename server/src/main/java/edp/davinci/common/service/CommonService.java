@@ -53,24 +53,39 @@ public class CommonService<T> {
     @Autowired
     private ShareService shareService;
 
-    @Value("${server.address}")
+    @Value("${server.protocol:http}")
+    private String protocol;
+
+    @Value("${server.address:localhost}")
     private String address;
 
     @Value("${server.port}")
     public String port;
 
+
+    private static final String HTTP_PROTOCOL = "http";
+
+    private static final String HTTPS_PROTOCOL = "https";
+
+    private static final String PROTOCOL_SEPARATOR = "://";
+
     public String getHost() {
-        if (StringUtils.isEmpty(address)) {
-            address = "localhost";
+        protocol = protocol.trim().toLowerCase();
+
+        if (protocol.equals(HTTP_PROTOCOL)) {
+            if ("80".equals(port)) {
+                port = null;
+            }
         }
 
-        if ("80".equals(port)) {
-            port = null;
+        if (protocol.equals(HTTPS_PROTOCOL)) {
+            if ("443".equals(port)) {
+                port = null;
+            }
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("http://");
-        sb.append(address);
+        sb.append(protocol).append(PROTOCOL_SEPARATOR).append(address);
         if (!StringUtils.isEmpty(port)) {
             sb.append(":" + port);
         }

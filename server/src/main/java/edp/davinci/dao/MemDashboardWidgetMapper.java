@@ -64,6 +64,7 @@ public interface MemDashboardWidgetMapper {
     })
     int deleteByProject(@Param("projectId") Long projectId);
 
+    int insertBatch(@Param("list") List<MemDashboardWidget> list);
 
     int updateBatch(List<MemDashboardWidget> list);
 

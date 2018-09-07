@@ -564,7 +564,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                             return list;
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.warn("get data by cache: {}", e.getMessage());
                     }
 
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
@@ -631,10 +631,14 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
 
                     cacheKey = getCacheKey(viewMetaCacheKey, viewWithProjectAndSource, executeParam, teamParams, queryParam);
-                    Object object = redisUtils.get(cacheKey);
-                    if (null != object && executeParam.getCache()) {
-                        columns = (List<QueryColumn>) object;
-                        return columns;
+                    try {
+                        Object object = redisUtils.get(cacheKey);
+                        if (null != object && executeParam.getCache()) {
+                            columns = (List<QueryColumn>) object;
+                            return columns;
+                        }
+                    } catch (Exception e) {
+                        log.warn("get data meta by cache: {}", e.getMessage());
                     }
 
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
@@ -865,7 +869,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
 
-    private String getCacheKey(String prefix,ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam ,Map<String, List<String>> teamParams, Map<String, String> queryParams) {
+    private String getCacheKey(String prefix, ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, Map<String, List<String>> teamParams, Map<String, String> queryParams) {
 
         StringBuilder sqlKey = new StringBuilder(prefix)
                 .append(String.valueOf(viewWithProjectAndSource.getSource().getId()))

@@ -26,6 +26,7 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.AESUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.TokenUtils;
+import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.model.TokenEntity;
@@ -54,7 +55,7 @@ import java.util.*;
 
 @Service
 @Slf4j
-public class ShareServiceImpl implements ShareService {
+public class ShareServiceImpl extends CommonService implements ShareService {
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -407,13 +408,17 @@ public class ShareServiceImpl implements ShareService {
             Long viewId = shareInfo.getShareId();
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
 
+            if (!allowDownload(viewWithProjectAndSource.getProject(), shareInfo.getShareUser())) {
+                resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
+            }
+
             List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             if (null != columns && columns.size() > 0) {
                 String csvPath = fileUtils.fileBasePath + File.separator + "csv";
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
                 String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
                 String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
                 filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
@@ -423,7 +428,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
-        return resultSuccess(user, request).payload(filePath);
+        return resultSuccess(user, request).payload(getHost() + filePath);
     }
 
     /**

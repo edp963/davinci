@@ -16,7 +16,7 @@
 
 ## This file is used to add databases with jdbc drivers that are not supported by the Davinci,
 ## ignore this file if your datasource is already supported,
-## the jdbc datasources Davinci support by default are:
+## the datasource list that have been supported by Davinci:
 ##     mysql:           com.mysql.jdbc.Driver
 ##     oracle:          oracle.jdbc.driver.OracleDriver
 ##     sqlserver:       com.microsoft.sqlserver.jdbc.SQLServerDriver
