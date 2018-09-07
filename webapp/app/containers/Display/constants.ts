@@ -66,6 +66,7 @@ export enum ActionTypes {
   DRAG_SELECT_LAYER = 'davinci/Display/DRAG_SELECT_LAYER',
   RESIZE_LAYERS = 'davinci/Display/RESIZE_LAYERS',
   SELECT_LAYER = 'davinci/Display/SELECT_LAYER',
+  CLEAR_LAYERS_SELECTION = 'davinci/Display/CLEAR_LAYERS_SELECTION',
   COPY_SLIDE_LAYERS = 'davinci/Display/COPY_SLIDE_LAYERS',
 
   PASTE_SLIDE_LAYERS = 'davinci/Display/PASTE_SLIDE_LAYERS',

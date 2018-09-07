@@ -131,7 +131,8 @@ function displayReducer (state = initialState, action) {
             renderType: 'rerender'
           } : {
             loading: false,
-            selected: false
+            selected: false,
+            datasource: []
           }
           return obj
         }, {}))
@@ -271,6 +272,9 @@ function displayReducer (state = initialState, action) {
           selected: payload.selected
         }
       })
+    case ActionTypes.CLEAR_LAYERS_SELECTION:
+      Object.keys(layersInfo).forEach((key) => { layersInfo[key].selected = false })
+      return state.set('currentLayersInfo', layersInfo)
 
     case ActionTypes.COPY_SLIDE_LAYERS:
       return state.set('clipboardLayers', payload.layers)

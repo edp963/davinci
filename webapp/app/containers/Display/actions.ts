@@ -245,6 +245,12 @@ export function selectLayer ({ id, selected, exclusive }) {
   }
 }
 
+export function clearLayersSelection () {
+  return {
+    type: ActionTypes.CLEAR_LAYERS_SELECTION
+  }
+}
+
 export function copySlideLayers (slideId, layers: any[]) {
   return {
     type: ActionTypes.COPY_SLIDE_LAYERS,
