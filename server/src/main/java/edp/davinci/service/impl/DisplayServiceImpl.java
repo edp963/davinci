@@ -360,7 +360,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         }
 
         List<Widget> widgets = widgetMapper.getByIds(ids);
-        if (null == widgets) {
+        if (null == widgets || widgets.size() != ids.size()) {
             return resultMap.failAndRefreshToken(request).message("Invalid widget id");
         }
 

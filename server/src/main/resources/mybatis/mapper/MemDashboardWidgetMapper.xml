@@ -51,6 +51,25 @@
         </trim>
     </insert>
 
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert into mem_dashboard_widget
+        (dashboard_id,widget_Id,`x`,`y`,width,height,frequency,polling)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+                #{record.dashboardId,jdbcType=BIGINT},
+                #{record.widgetId,jdbcType=BIGINT},
+                #{record.x,jdbcType=INTEGER},
+                #{record.y,jdbcType=INTEGER},
+                #{record.width,jdbcType=INTEGER},
+                #{record.height,jdbcType=INTEGER},
+                #{record.frequency,jdbcType=INTEGER},
+                #{record.polling,jdbcType=BIT}
+            )
+        </foreach>
+    </insert>
+
     <update id="updateBatch" parameterType="java.util.List">
         <foreach collection="list" item="item" index="index" open="" close="" separator=";">
             update mem_dashboard_widget

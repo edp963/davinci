@@ -41,9 +41,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 @Service("dashboardService")
@@ -326,14 +324,14 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
      *
      * @param portalId
      * @param dashboardId
-     * @param memDashboardWidgetCreate
+     * @param memDashboardWidgetCreates
      * @param user
      * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate memDashboardWidgetCreate, User user, HttpServletRequest request) {
+    public ResultMap createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         DashboardWithPortal dashboardWithPortalAndProject = dashboardMapper.getDashboardWithPortalAndProject(dashboardId);
@@ -353,24 +351,34 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to do this operation");
         }
 
-        Widget widget = widgetMapper.getById(memDashboardWidgetCreate.getWidgetId());
-        if (null == widget) {
-            return resultMap.failAndRefreshToken(request).message("widget not found");
+        Set<Long> ids = new HashSet<>();
+        List<MemDashboardWidget> list = new ArrayList<>();
+        for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+
+            if (memDashboardWidgetCreate.getPolling() && memDashboardWidgetCreate.getFrequency() < 1) {
+                return resultMap.failAndRefreshToken(request).message("Invalid frequency");
+            }
+
+            ids.add(memDashboardWidgetCreate.getWidgetId());
+            MemDashboardWidget memDashboardWidget = new MemDashboardWidget();
+            BeanUtils.copyProperties(memDashboardWidgetCreate, memDashboardWidget);
+            list.add(memDashboardWidget);
         }
 
-        if (!widget.getProjectId().equals(dashboardWithPortalAndProject.getProject().getId())) {
-            return resultMap.failAndRefreshToken(request).message("Invalid project id");
+        List<Widget> widgets = widgetMapper.getByIds(ids);
+        if (null == widgets || widgets.size() != ids.size()) {
+            return resultMap.failAndRefreshToken(request).message("Invalid widget id");
         }
 
-        if (memDashboardWidgetCreate.getPolling() && memDashboardWidgetCreate.getFrequency() < 1) {
-            return resultMap.failAndRefreshToken(request).message("Invalid frequency");
+        for (Widget widget : widgets) {
+            if (!widget.getProjectId().equals(dashboardWithPortalAndProject.getProject().getId())) {
+                return resultMap.failAndRefreshToken(request).message("Invalid project id");
+            }
         }
 
-        MemDashboardWidget memDashboardWidget = new MemDashboardWidget();
-        BeanUtils.copyProperties(memDashboardWidgetCreate, memDashboardWidget);
-        int insert = memDashboardWidgetMapper.insert(memDashboardWidget);
+        int insert = memDashboardWidgetMapper.insertBatch(list);
         if (insert > 0) {
-            return resultMap.successAndRefreshToken(request).payload(memDashboardWidget);
+            return resultMap.successAndRefreshToken(request).payload(list);
         } else {
             return resultMap.failAndRefreshToken(request).message("unkown fail");
         }

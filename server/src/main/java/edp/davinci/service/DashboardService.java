@@ -40,7 +40,7 @@ public interface DashboardService extends CheckEntityService {
 
     ResultMap deleteDashboard(Long id, User user, HttpServletRequest request);
 
-    ResultMap createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate memDashboardWidgetCreate, User user, HttpServletRequest request);
+    ResultMap createMemDashboardWidget(Long portalId, Long dashboardId, MemDashboardWidgetCreate[] memDashboardWidgetCreates, User user, HttpServletRequest request);
 
     ResultMap updateMemDashboardWidgets(MemDashboardWidget[] memDashboardWidgets, User user, HttpServletRequest request);
 

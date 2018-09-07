@@ -358,7 +358,7 @@ public class DashboardController extends BaseController {
      *
      * @param portalId
      * @param dashboardId
-     * @param memDashboardWidgetCreate
+     * @param memDashboardWidgetCreates
      * @param bindingResult
      * @param user
      * @param request
@@ -368,27 +368,34 @@ public class DashboardController extends BaseController {
     @PostMapping(value = "/{portalId}/dashboards/{dashboardId}/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createMemDashboardWidget(@PathVariable("portalId") Long portalId,
                                                    @PathVariable("dashboardId") Long dashboardId,
-                                                   @Valid @RequestBody MemDashboardWidgetCreate memDashboardWidgetCreate,
+                                                   @Valid @RequestBody MemDashboardWidgetCreate[] memDashboardWidgetCreates,
                                                    @ApiIgnore BindingResult bindingResult,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
-        if (bindingResult.hasErrors()) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
         if (invalidId(portalId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard portal id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
+        if (null == memDashboardWidgetCreates || memDashboardWidgetCreates.length < 1) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("dashboard widgets info cannot be empty");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        for (MemDashboardWidgetCreate memDashboardWidgetCreate : memDashboardWidgetCreates) {
+            if (invalidId(dashboardId) || !dashboardId.equals(memDashboardWidgetCreate.getDashboardId())) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
+        }
+
+        if (bindingResult.hasErrors()) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         try {
-            ResultMap resultMap = dashboardService.createMemDashboardWidget(portalId, dashboardId, memDashboardWidgetCreate, user, request);
+            ResultMap resultMap = dashboardService.createMemDashboardWidget(portalId, dashboardId, memDashboardWidgetCreates, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
