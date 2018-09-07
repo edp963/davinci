@@ -1,13 +1,11 @@
 import * as React from 'react'
-import * as classnames from 'classnames'
 
 import { IDataParamSource } from './Dropbox'
 import { getAggregatorLocale, decodeMetricName } from '../util'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 const Tabs = require('antd/lib/tabs')
 const TabPane = Tabs.TabPane
 const Slider = require('antd/lib/slider')
-const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
-const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
 
 interface ISizePanelProps {
@@ -25,7 +23,7 @@ export class SizePanel extends React.PureComponent<ISizePanelProps, ISizePanelSt
   constructor (props) {
     super(props)
     this.state = {
-      size: 3,
+      size: PIVOT_DEFAULT_SCATTER_SIZE_TIMES,
       selectedTab: 'all'
     }
   }
@@ -55,7 +53,7 @@ export class SizePanel extends React.PureComponent<ISizePanelProps, ISizePanelSt
     const { value } = this.props
     this.setState({
       selectedTab: key,
-      size: value[key] || 3
+      size: value[key] || PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     })
   }
 

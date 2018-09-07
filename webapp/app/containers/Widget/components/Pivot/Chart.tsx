@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
 import chartOptionGenerator from '../../charts'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
 import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel, getSizeValue } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
@@ -64,6 +64,7 @@ interface IChartProps {
   label?: IDataParamProperty
   size?: IDataParamProperty
   xAxis?: IDataParamProperty
+  tip?: IDataParamProperty
   renderType: RenderType
   legend: ILegend
 }
@@ -156,7 +157,23 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
   }
 
   private renderChart = () => {
-    const { cols, rows, metrics, data, drawingData, metricAxisConfig, scatterXaxisConfig, dimetionAxis, color, label, size, xAxis: scatterXaxis, legend, renderType } = this.props
+    const {
+      cols,
+      rows,
+      metrics,
+      data,
+      drawingData,
+      metricAxisConfig,
+      scatterXaxisConfig,
+      dimetionAxis,
+      color,
+      label,
+      size,
+      xAxis: scatterXaxis,
+      tip,
+      legend,
+      renderType
+    } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -214,10 +231,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 const currentColorItem = color.items.find((i) => i.config.actOn === m.name) || color.items.find((i) => i.config.actOn === 'all')
                 const categroyLabelItems = label ? label.items.filter((i) => i.type === 'category') : []
                 const currentLabelItem = categroyLabelItems.filter((i) => i.config.actOn === m.name || i.config.actOn === 'all')
-                // const currentScatterXaxisItem = scatterXaxis &&
-                //   (scatterXaxis.items.find((i) => i.config.actOn === m.name) || scatterXaxis.items.find((i) => i.config.actOn === 'all'))
                 const currentScatterXaxisItem = scatterXaxis && scatterXaxis.items[0]
-                const currentSizeItem = size && size.items[0]
+                const currentSizeItem = size && (size.items.find((i) => i.config.actOn === m.name) || size.items.find((i) => i.config.actOn === 'all'))
                 const currentSizeValue = size && (currentSizeItem ? getSizeValue(size.value[currentSizeItem.name] || size.value['all']) : getSizeValue(size.value['all']))
                 const groupingItems = [].concat(currentColorItem).concat(currentLabelItem).filter((i) => !!i)
 
@@ -287,14 +302,14 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                               return [
                                 sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
                                 sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
-                                currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 10
+                                currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : PIVOT_DEFAULT_SCATTER_SIZE
                               ]
                             }, [0, 0, 0])
                             data = [{
                               value: [data[0], data[1]],
                               symbolSize: currentSizeItem
                                 ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
-                                : 10 * currentSizeValue
+                                : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             }]
                           } else {
                             data = [[0, 0, 0]]
@@ -307,6 +322,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             ...currentLabelItem.length && {
                               label: {
                                 show: true,
+                                position: 'top',
                                 formatter: (params) => {
                                   return params.value
                                 }
@@ -343,12 +359,11 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                                   currentSizeItem ? size + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 0
                                 ], [0, 0])
                               : [0, 0]
-                            console.log(currentSizeValue)
                             data.push({
                               value: result[0],
                               symbolSize: currentSizeItem
                                 ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
-                                : 10 * currentSizeValue
+                                : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             })
                           } else {
                             if (groupedRecords[colKey]) {
@@ -411,13 +426,13 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           data = recordCollection.value.reduce((sum, record) => [
                             sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
                             sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
-                            currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : 10
+                            currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : PIVOT_DEFAULT_SCATTER_SIZE
                           ], [0, 0, 0])
                           data = [{
                             value: [data[0], data[1]],
                             symbolSize: currentSizeItem
                               ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
-                              : 10 * currentSizeValue
+                              : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                           }]
                         } else {
                           data = [[0, 0, 0]]
@@ -457,7 +472,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                               value: result[0],
                               symbolSize: currentSizeItem
                                 ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
-                                : 10 * currentSizeValue
+                                : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             }
                           } else {
                             return recordCollection.value
@@ -501,7 +516,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     let data = []
                     if (groupingItems.length) {
                       if (recordCollection.value) {
-                        const legendSelectedItem = legend[currentColorItem.name]
+                        const legendSelectedItem = currentColorItem && legend[currentColorItem.name]
                         recordCollection.value.forEach((record) => {
                           if (legendSelectedItem && legendSelectedItem.includes(record[currentColorItem.name])) {
                             return false
@@ -577,13 +592,12 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(grid)
           // console.log(xAxis)
           // console.log(yAxis)
-          console.log(series)
-          console.log(seriesData)
+          // console.log(series)
 
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
-              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXaxis)
+              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXaxis, tip)
             },
             grid,
             xAxis,

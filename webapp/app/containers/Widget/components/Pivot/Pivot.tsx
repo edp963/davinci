@@ -80,6 +80,7 @@ export interface IPivotProps {
   label?: IDataParamProperty
   size?: IDataParamProperty
   xAxis?: IDataParamProperty
+  tip?: IDataParamProperty
   dimetionAxis?: DimetionType
   renderType?: RenderType
 }
@@ -214,7 +215,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     this.rowHeaderWidths = rows.map((r) => getPivotContentTextWidth(r, 'bold'))
     if (!cols.length && !rows.length) {
       this.tree[0] = data.slice()
-      this.getMetricsMinAndMaxValue(metrics, data)
+      this.getMetricsMinAndMaxValue(props, data)
       if (xAxis) {
         this.getScatterXaxisMinAndMaxValue(xAxis, data)
       }
@@ -307,7 +308,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
       if (metrics.length) {
         if (!colKey.length) {
-          this.getMetricsMinAndMaxValue(metrics, this.rowTree[flatRowKey].records)
+          this.getMetricsMinAndMaxValue(props, this.rowTree[flatRowKey].records)
           if (xAxis) {
             this.getScatterXaxisMinAndMaxValue(xAxis, this.rowTree[flatRowKey].records)
           }
@@ -333,7 +334,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
       if (metrics.length) {
         if (!rowKey.length) {
-          this.getMetricsMinAndMaxValue(metrics, this.colTree[flatColKey].records)
+          this.getMetricsMinAndMaxValue(props, this.colTree[flatColKey].records)
           if (xAxis) {
             this.getScatterXaxisMinAndMaxValue(xAxis, this.colTree[flatColKey].records)
           }
@@ -360,7 +361,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       this.tree[flatRowKey][flatColKey].push(record)
 
       if (metrics.length) {
-        this.getMetricsMinAndMaxValue(metrics, this.tree[flatRowKey][flatColKey])
+        this.getMetricsMinAndMaxValue(props, this.tree[flatRowKey][flatColKey])
         if (xAxis) {
           this.getScatterXaxisMinAndMaxValue(xAxis, this.tree[flatRowKey][flatColKey])
         }
@@ -381,7 +382,26 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     return 0
   }
 
-  private getMetricsMinAndMaxValue (metrics, records) {
+  private recordGrouping = (conditions, records) => {
+    const grouped = {}
+    records.forEach((r) => {
+      const groupKey = conditions.map((c) => r[c.name]).join(',')
+      if (!grouped[groupKey]) {
+        grouped[groupKey] = {}
+        // 不管用，在单次循环中拿不到所有的groupkey，必须另起一次循环
+      }
+    })
+  }
+
+  private getMetricsMinAndMaxValue (props, records) {
+    const { metrics, color, label } = props
+    let groupItems = []
+    if (color) {
+      groupItems = groupItems.concat(color.items)
+    }
+    if (label) {
+      groupItems = groupItems.concat(label.items.filter((l) => l.type === 'category'))
+    }
     metrics.forEach((m, i) => {
       const metricName = decodeMetricName(m.name)
       if (m.chart.id === getBar().id) {
@@ -389,6 +409,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         this.min[i] = this.min[i] ? Math.min(this.min[i], metricColumnValue) : metricColumnValue
         this.max[i] = this.max[i] ? Math.max(this.max[i], metricColumnValue) : metricColumnValue
       } else {
+        // const acting = groupItems.filter((item) => item.config.actOn === 'all' || item.config.actOn === m.name)
+        // const groupedRecords =
         const metricColumnValue = records.reduce(([min, max], r) => [
           Math.min(min, (Number(r[`${m.agg}(${metricName})`]) || 0)),
           Math.max(max, (Number(r[`${m.agg}(${metricName})`]) || 0))
@@ -408,6 +430,9 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       ], [0, 0])
       this.scatterMin[i] = this.scatterMin[i] ? Math.min(this.scatterMin[i], columnValue[0]) : columnValue[0]
       this.scatterMax[i] = this.scatterMax[i] ? Math.max(this.scatterMax[i], columnValue[1]) : columnValue[1]
+      // const columnValue = records.reduce((sum, r) => sum + (Number(r[`${x.agg}(${itemName})`]) || 0), 0)
+      // this.sizeMin[i] = this.sizeMin[i] ? Math.min(this.sizeMin[i], columnValue) : columnValue
+      // this.sizeMax[i] = this.sizeMax[i] ? Math.max(this.sizeMax[i], columnValue) : columnValue
     })
   }
 
@@ -467,7 +492,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, color, label, size, xAxis, dimetionAxis } = this.props
+    const { cols, rows, metrics, color, label, size, xAxis, tip, dimetionAxis } = this.props
     const { legendSelected, renderType } = this.state
 
     return (
@@ -538,6 +563,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             label={label}
             size={size}
             xAxis={xAxis}
+            tip={tip}
             renderType={renderType}
             legend={legendSelected}
             ref={(f) => this.tableBody = findDOMNode(f)}

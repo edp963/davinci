@@ -34,6 +34,7 @@ export interface ITableBodyProps {
   label?: IDataParamProperty
   size?: IDataParamProperty
   xAxis?: IDataParamProperty
+  tip?: IDataParamProperty
   renderType: RenderType
   legend: ILegend
 }
@@ -191,6 +192,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       label,
       size,
       xAxis,
+      tip,
       renderType,
       legend
     } = this.props
@@ -464,6 +466,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           label={label}
           size={size}
           xAxis={xAxis}
+          tip={tip}
           renderType={renderType}
           legend={legend}
         />

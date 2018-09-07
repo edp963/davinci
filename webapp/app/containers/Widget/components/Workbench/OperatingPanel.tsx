@@ -10,13 +10,15 @@ import FilterSettingForm from './FilterSettingForm'
 import { IPivotProps, DimetionType } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot } from '../util'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter } from '../util'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
 const Dropdown = require('antd/lib/dropdown')
 const Modal = require('antd/lib/modal')
+const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -96,10 +98,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, currentWidgetConfig } = nextProps
     if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
-      const { cols, rows, metrics, filters, color, label, size, xAxis } = currentWidgetConfig
+      const { cols, rows, metrics, filters, color, label, size, xAxis, tip } = currentWidgetConfig
       const { commonParams } = this.state
       const model = JSON.parse(selectedView.model)
-
       commonParams.cols.items = cols.map((c) => ({
         name: c,
         from: 'cols',
@@ -125,7 +126,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...color && {color},
         ...label && {label},
         ...size && {size},
-        ...xAxis && {xAxis}
+        ...xAxis && {xAxis},
+        ...tip && {tip}
       }
       this.setState({
         commonParams,
@@ -158,7 +160,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 : { all: defaultThemeColors[0] }
               break
             case 'size':
-              value = specificParams[key] ? specificParams[key].value : { all: 3 }
+              value = specificParams[key] ? specificParams[key].value : { all: PIVOT_DEFAULT_SCATTER_SIZE_TIMES }
               break
           }
           config[key] = {
@@ -255,6 +257,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           actOnModalList: metrics.items.slice()
         })
         break
+      case 'size':
+        this.setState({
+          modalCachedData: cachedItem,
+          modalCallback: resolve,
+          modalDataFrom: 'size',
+          actOnModalVisible: true,
+          actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
+        })
+        break
       default:
         resolve(true)
         break
@@ -270,12 +281,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
     if (config) {
       dragged.config = config
-      if (name === 'color') {
+      if (['color', 'label', 'size'].includes(name)) {
         const actingOnItemIndex = items.findIndex((i) => i.config.actOn === config.actOn)
         if (actingOnItemIndex >= 0) {
           items.splice(actingOnItemIndex, 1)
           dropIndex = dropIndex <= actingOnItemIndex ? dropIndex : dropIndex - 1
         }
+      }
+      if (name === 'xAxis') {
+        items.splice(0, 1)
+        dropIndex = 0
       }
     }
 
@@ -408,7 +423,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getVisualData = (commonParams, specificParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label, size, xAxis } = specificParams
+    const { color, label, size, xAxis, tip } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
     let selectedCharts = this.getSelectedCharts(metrics.items)
     let groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name))
@@ -444,6 +459,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           func: l.agg
         })))
     }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
     groups.sort()
     aggregators.sort()
 
@@ -472,6 +494,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...label && {label},
             ...size && {size},
             ...xAxis && {xAxis},
+            ...tip && {tip},
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender'
@@ -502,6 +525,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...label && {label},
         ...size && {size},
         ...xAxis && {xAxis},
+        ...tip && {tip},
         dimetionAxis: this.getDimetionAxis(selectedCharts),
         renderType: renderType || 'clear'
       })
@@ -521,7 +545,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private chartSelect = (chart: IChartInfo) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams } = this.state
     const { metrics } = commonParams
     if (!(metrics.items.length === 1 && metrics.items[0].chart === chart)) {
       metrics.items.forEach((i) => {
@@ -532,7 +556,38 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private viewSelect = ({key}) => {
-    this.props.onViewSelect(this.props.views.find((v) => `${v.id}` === key))
+    const { commonParams, specificParams } = this.state
+    const hasItems = Object.values(commonParams)
+      .concat(Object.values(specificParams))
+      .filter((param) => !!param.items.length)
+    if (hasItems.length) {
+      confirm({
+        title: '切换 View 会清空所有配置项，是否继续？',
+        onOk: () => {
+          this.resetWorkbench()
+          this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+        }
+      })
+    } else {
+      this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+    }
+  }
+
+  private resetWorkbench = () => {
+    const { commonParams, specificParams } = this.state
+    Object.values(commonParams).forEach((param) => {
+      param.items = []
+      if (param.value) {
+        param.value = {}
+      }
+    })
+    Object.values(specificParams).forEach((param) => {
+      param.items = []
+      if (param.value) {
+        param.value = {}
+      }
+    })
+    this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts([])))
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {

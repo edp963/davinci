@@ -18,7 +18,8 @@ import {
   PIVOT_TITLE_SIZE,
   PIVOT_XAXIS_ROTATE_LIMIT,
   PIVOT_XAXIS_TICK_SIZE,
-  PIVOT_CANVAS_AXIS_SIZE_LIMIT
+  PIVOT_CANVAS_AXIS_SIZE_LIMIT,
+  PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
 import { DimetionType } from './Pivot/Pivot'
 import { IChartLine, IChartUnit, IChartInfo } from './Pivot/Chart'
@@ -474,7 +475,7 @@ export function getTooltipPosition (point, params, dom, rect, size) {
   ]
 }
 
-export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXaxis) {
+export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXaxis, tip) {
   let dimetionColumns = cols.concat(rows)
   let metricColumns = [...metrics]
   if (color) {
@@ -494,6 +495,9 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
   if (scatterXaxis) {
     metricColumns = metricColumns.concat(scatterXaxis.items)
   }
+  if (tip) {
+    metricColumns = metricColumns.concat(tip.items)
+  }
 
   dimetionColumns = dimetionColumns.reduce((arr, dc) => {
     if (!arr.includes(dc)) {
@@ -503,35 +507,54 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.includes(decodedName)) {
+    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
   }, [])
 
   return function (params) {
-    const { seriesIndex, dataIndex } = params
-    const { type, grouped, records } = seriesData[seriesIndex]
-    let record
-    if (type === 'cartesian') {
-      record = grouped
-        ? records[dataIndex][0]
-        : records[dataIndex].value[0]
-    } else if (type === 'polar') {
-      record = records[dataIndex]
-    } else {
-      record = records[0]
-    }
+    const record = getTriggeringRecord(params, seriesData)
     return metricColumns
       .map((mc) => {
         const decodedName = decodeMetricName(mc.name)
-        return `${decodedName}: ${record[`${mc.agg}(${decodedName})`]}`
+        const value = record
+          ? Array.isArray(record)
+            ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
+            : record[`${mc.agg}(${decodedName})`]
+          : 0
+        return `${decodedName}: ${value}`
       })
-      .concat(dimetionColumns.map((dc) => `${dc}: ${record[dc]}`))
+      .concat(dimetionColumns.map((dc) => {
+        const value = record
+          ? Array.isArray(record)
+            ? record[0][dc]
+            : record[dc]
+          : ''
+        return `${dc}: ${value}`
+      }))
       .join('<br/>')
   }
 }
 
+export function getTriggeringRecord (params, seriesData) {
+  const { seriesIndex, dataIndex } = params
+  const { type, grouped, records } = seriesData[seriesIndex]
+  let record
+  if (type === 'cartesian') {
+    record = grouped
+      ? records[dataIndex]
+      : records[dataIndex].value
+  } else if (type === 'polar') {
+    record = records[dataIndex]
+  } else {
+    record = records[0]
+  }
+  return record
+}
+
 export function getSizeValue (value) {
-  return value >= 3 ? value - 2 : value / 4
+  return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
+    ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
+    : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
 }
