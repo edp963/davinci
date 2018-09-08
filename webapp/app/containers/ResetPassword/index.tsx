@@ -12,8 +12,8 @@ import {changeUserPassword} from '../App/actions'
 import injectReducer from '../../utils/injectReducer'
 import {connect} from 'react-redux'
 import injectSaga from '../../utils/injectSaga'
-import saga from '../App/sagas'
-import reducer from '../App/reducer'
+// import saga from '../App/sagas'
+// import reducer from '../App/reducer'
 import {compose} from 'redux'
 import {makeSelectLoginUser} from '../App/selectors'
 import {createStructuredSelector} from 'reselect'
@@ -91,12 +91,12 @@ function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IResetPasswordProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
+// const withReducer = injectReducer({ key: 'global', reducer })
+// const withSaga = injectSaga({ key: 'global', saga })
 
 export default compose(
-  withReducer,
-  withSaga,
+  // withReducer,
+  // withSaga,
   withConnect
 )(ResetPassword)
 

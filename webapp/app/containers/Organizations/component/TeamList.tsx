@@ -25,8 +25,8 @@ import {checkNameUniqueAction} from '../../App/actions'
 import {addTeam} from '../actions'
 import {loadTeams, editTeam, deleteTeam} from '../../Teams/actions'
 import Avatar from '../../../components/Avatar'
-import sagaApp from '../../App/sagas'
-import reducerApp from '../../App/reducer'
+// import sagaApp from '../../App/sagas'
+// import reducerApp from '../../App/reducer'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 interface ITeamsState {
@@ -275,13 +275,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 // const withReducer = injectReducer({key: 'team', reducer: teamReducer})
 // const withSaga = injectSaga({key: 'team', saga: teamSaga})
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
 //  withReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
  // withSaga,
   withConnect
 )(TeamList)

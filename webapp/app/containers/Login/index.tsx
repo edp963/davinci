@@ -30,8 +30,8 @@ const Icon = require('antd/lib/icon')
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducer from '../App/reducer'
-import saga from '../App/sagas'
+// import reducer from '../App/reducer'
+// import saga from '../App/sagas'
 
 import { login, logged, setLoginUser } from '../App/actions'
 import { makeSelectLoginLoading } from '../App/selectors'
@@ -102,7 +102,7 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { username, password } = this.state
 
     if (username && password) {
-      onLogin(username, password, () => { router.replace('/') })
+      onLogin(username, password, () => { router.replace('/')})
     }
   }
 
@@ -156,12 +156,12 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, ILoginProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
+// const withReducer = injectReducer({ key: 'global', reducer })
+// const withSaga = injectSaga({ key: 'global', saga })
 
 export default compose(
- withReducer,
- withSaga,
+//  withReducer,
+//  withSaga,
  withConnect
 )(Login)
 
