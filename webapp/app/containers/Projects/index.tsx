@@ -26,8 +26,8 @@ import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-import reducerApp from '../App/reducer'
-import sagaApp from '../App/sagas'
+// import reducerApp from '../App/reducer'
+// import sagaApp from '../App/sagas'
 import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
@@ -844,14 +844,14 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
   withOrganizationReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
   withSaga,
   withOrganizationSaga,
   withConnect

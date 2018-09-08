@@ -2,8 +2,8 @@ import * as React from 'react'
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducer from '../App/reducer'
-import saga from '../App/sagas'
+// import reducer from '../App/reducer'
+// import saga from '../App/sagas'
 
 import {connect} from 'react-redux'
 import {active} from '../App/actions'
@@ -64,12 +64,12 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IActivateProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
+// const withReducer = injectReducer({ key: 'global', reducer })
+// const withSaga = injectSaga({ key: 'global', saga })
 
 export default compose(
-  withReducer,
-  withSaga,
+  // withReducer,
+  // withSaga,
   withConnect
 )(Activate)
 

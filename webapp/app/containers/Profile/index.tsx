@@ -18,8 +18,8 @@ import {compose} from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import {updateProfile, checkNameUniqueAction, uploadAvatarSuccess} from '../App/actions'
 import injectSaga from '../../utils/injectSaga'
-import reducer from '../App/reducer'
-import saga from '../App/sagas'
+// import reducer from '../App/reducer'
+// import saga from '../App/sagas'
 const utilStyles = require('../../assets/less/util.less')
 const Breadcrumb = require('antd/lib/breadcrumb')
 
@@ -164,11 +164,11 @@ const mapStateToProps = createStructuredSelector({
 })
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-const withReducerApp = injectReducer({key: 'global', reducer})
-const withSagaAccount = injectSaga({key: 'account', saga})
+// const withReducerApp = injectReducer({key: 'global', reducer})
+// const withSagaAccount = injectSaga({key: 'account', saga})
 
 export default compose(
-  withReducerApp,
-  withSagaAccount,
+  // withReducerApp,
+  // withSagaAccount,
   withConnect
 )(Form.create()(Profile))
