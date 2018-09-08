@@ -163,7 +163,7 @@ interface IGridProps {
   }
   currentDashboardCascadeSources: object
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
-  onAddDashboardItem: (portalId: number, item: IDashboardItem, resolve: (item: IDashboardItem) => void) => any
+  onAddDashboardItem: (portalId: number, item: [IDashboardItem], resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[]) => void
@@ -215,7 +215,7 @@ interface IGridStates {
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
   modalLoading: boolean
-  selectedWidget: number
+  selectedWidget: any[]
   polling: boolean
   linkagePanelVisible: boolean
   linkageTableSource: any[]
@@ -279,7 +279,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormVisible: false,
       dashboardItemFormStep: 0,
       modalLoading: false,
-      selectedWidget: 0,
+      selectedWidget: [],
       polling: false,
 
       linkagePanelVisible: false,
@@ -591,7 +591,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
       dashboardItemFormStep: 1,
-      selectedWidget: dashboardItem.widgetId,
+      selectedWidget: [dashboardItem.widgetId],
       polling: dashboardItem.polling
     }, () => {
       this.dashboardItemForm.props.form.setFieldsValue({
@@ -605,13 +605,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private hideDashboardItemForm = () => {
     this.setState({
       modalLoading: false,
-      dashboardItemFormVisible: false
+      dashboardItemFormVisible: false,
+      selectedWidget: []
     })
   }
 
   private afterDashboardItemFormClose = () => {
     this.setState({
-      selectedWidget: 0,
+      selectedWidget: [],
       polling: false,
       dashboardItemFormStep: 0
     })
@@ -619,9 +620,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.dashboardItemForm.props.form.resetFields()
   }
 
-  private widgetSelect = (id) => () => {
+  private widgetSelect = (selectedRowKeys) => {
     this.setState({
-      selectedWidget: id
+      selectedWidget: selectedRowKeys
     })
   }
 
@@ -642,34 +643,63 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { selectedWidget, dashboardItemFormType, linkageCascaderSource } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
-    const maxY = Math.max(...currentItems.map((item) => item.y + item.height), 0)
+
+    const yArr = [...currentItems.map((item) => item.y + item.height), 0]
+    const maxY = Math.max(...yArr)
+    const secondMaxY = maxY === 0 ? 0 : Math.max(...yArr.filter((y) => y !== maxY))
+
     let maxX = 0
     if (maxY) {
       const maxYItems = currentItems.filter((item) => item.y + item.height === maxY)
       maxX = Math.max(...maxYItems.map((item) => item.x + item.width))
 
-      if (maxX + 3 > cols) {
-        maxX = 0
-      }
+      // if (maxX + 6 > cols) {
+        // maxX = 0
+      // }
     }
 
+    this.setState({ modalLoading: true })
+
     const newItem = {
-      widgetId: selectedWidget,
       dashboardId: currentDashboard.id,
       polling: formdata.polling !== 'false',
       frequency: formdata.frequency
     }
 
-    this.setState({ modalLoading: true })
-
     if (dashboardItemFormType === 'add') {
       const positionInfo = {
-        x: maxX,
-        y: maxY,
-        width: 3,
-        height: 3
+        width: 6,
+        height: 6
       }
-      this.props.onAddDashboardItem(Number(params.portalId), {...newItem, ...positionInfo}, (dashboardItem: IDashboardItem) => {
+
+      const newItemsArr = selectedWidget.map((key, index) => {
+        const xAxisTemp = index % 2 !== 0 ? 6 : 0
+        const yAxisTemp = index % 2 === 0
+          ? secondMaxY + 6 * Math.floor(index / 2)
+          : maxY + 6 * Math.floor(index / 2)
+        let xAxis
+        let yAxis
+        if (maxX > 0 && maxX <= 6) {
+          xAxis = index % 2 === 0 ? 6 : 0
+          yAxis = yAxisTemp
+        } else if (maxX === 0) {
+          xAxis = xAxisTemp
+          yAxis = yAxisTemp
+        } else if (maxX > 6) {
+          xAxis = xAxisTemp
+          yAxis = maxY + 6 * Math.floor(index / 2)
+        }
+        const item = {
+          widgetId: key,
+          x: xAxis,
+          y: yAxis,
+          ...newItem,
+          ...positionInfo
+        }
+        return item
+      })
+
+      this.props.onAddDashboardItem(Number(params.portalId), (newItemsArr as any), (dashboardItem: IDashboardItem) => {
         // linkageCascaderSource.push({
         //   label: widgets.find((w) => w.id === dashboardItem.widgetId).name,
         //   value: dashboardItem.id,
@@ -679,7 +709,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       })
     } else {
       const dashboardItem = currentItems.find((item) => item.id === Number(formdata.id))
-      const modifiedDashboardItem = {...dashboardItem, ...newItem}
+      const modifiedDashboardItem = {
+        ...dashboardItem,
+        ...newItem,
+        widgetId: selectedWidget[0]
+      }
 
       this.props.onEditDashboardItem(modifiedDashboardItem, () => {
         this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
@@ -1378,6 +1412,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         保 存
       </Button>
     )
+
     const modalButtons = dashboardItemFormType === 'add'
       ? dashboardItemFormStep
         ? [(
@@ -1394,7 +1429,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             key="forward"
             size="large"
             type="primary"
-            disabled={!selectedWidget}
+            disabled={selectedWidget.length === 0}
             onClick={this.changeDashboardItemFormStep(1)}
           >
             下一步

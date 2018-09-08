@@ -24,6 +24,7 @@ import * as classnames from 'classnames'
 const Form = require('antd/lib/form')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
+const Table = require('antd/lib/table')
 const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
 const Select = require('antd/lib/select')
@@ -36,6 +37,7 @@ const Step = Steps.Step
 const Search = Input.Search
 
 import { iconMapping } from '../../Widget/components/chartUtil'
+import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 
 const utilStyles = require('../../../assets/less/util.less')
 const widgetStyles = require('../../Widget/Widget.less')
@@ -48,15 +50,20 @@ interface IDashboardItemFormProps {
   selectedWidget: number
   polling: boolean,
   step: number
-  onWidgetSelect: (id: number) => void
+  onWidgetSelect: (selectedRowKeys: any[]) => void
   onPollingSelect: () => any
 }
 
 interface IDashboardItemFormStates {
+  tableWidget: any[]
   filteredWidgets: any[]
   pageSize: number
   currentPage: number
   screenWidth: number
+  nameFilterValue: string
+  nameFilterDropdownVisible: boolean
+  tableSortedInfo: {columnKey?: string, order?: string}
+  selectedRowKeys: any[]
 }
 
 export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps, IDashboardItemFormStates> {
@@ -67,11 +74,28 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       filteredWidgets: [],
       pageSize: 24,
       currentPage: 1,
-      screenWidth: 0
+      screenWidth: 0,
+      tableWidget: [],
+      nameFilterValue: '',
+      nameFilterDropdownVisible: false,
+      tableSortedInfo: {},
+      selectedRowKeys: []
     }
   }
 
-  public componentWillReceiveProps () {
+  public componentWillMount () {
+    const { widgets } = this.props
+    if (widgets) {
+      this.setState({
+        tableWidget: widgets.map((g) => {
+          g.key = g.id
+          return g
+        })
+      })
+    }
+  }
+
+  public componentWillReceiveProps (nextProps) {
     window.addEventListener('resize', this.getScreenWidth, false)
   }
 
@@ -91,12 +115,6 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     })
   }
 
-  private onChange = (page) => {
-    this.setState({
-      currentPage: page
-    })
-  }
-
   private onShowSizeChange = (currentPage, pageSize) => {
     this.setState({
       currentPage,
@@ -108,6 +126,51 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     this.setState({
       filteredWidgets: [],
       currentPage: 1
+    })
+  }
+
+  private onSearchInputChange = (e) => {
+    this.setState({
+      nameFilterValue: e.target.value
+    })
+  }
+
+  private onSearch = () => {
+    const val = this.state.nameFilterValue
+    const reg = new RegExp(val, 'gi')
+
+    this.setState({
+      nameFilterDropdownVisible: false,
+      tableWidget: (this.props.widgets as any[]).map((record) => {
+        const match = record.name.match(reg)
+        if (!match) {
+          return null
+        }
+        return {
+          ...record,
+          name: (
+            <span>
+              {record.name.split(reg).map((text, i) => (
+                i > 0 ? [<span key={i} className={utilStyles.highlight}>{match[0]}</span>, text] : text
+              ))}
+            </span>
+          )
+        }
+      }).filter((record) => !!record)
+    })
+  }
+
+  private handleTableChange = (pagination, filters, sorter) => {
+    this.setState({
+      tableSortedInfo: sorter
+    })
+  }
+
+  private onSelectChange = (selectedRowKeys) => {
+    this.setState({
+      selectedRowKeys
+    }, () => {
+      this.props.onWidgetSelect(this.state.selectedRowKeys)
     })
   }
 
@@ -127,8 +190,49 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       filteredWidgets,
       pageSize,
       currentPage,
-      screenWidth
+      screenWidth,
+      tableWidget,
+      nameFilterValue,
+      nameFilterDropdownVisible,
+      tableSortedInfo,
+      selectedRowKeys
     } = this.state
+
+    const columns = [{
+      title: '名称',
+      dataIndex: 'name',
+      key: 'name',
+      filterDropdown: (
+        <SearchFilterDropdown
+          placeholder="name"
+          value={nameFilterValue}
+          onChange={this.onSearchInputChange}
+          onSearch={this.onSearch}
+        />
+      ),
+      filterDropdownVisible: nameFilterDropdownVisible,
+      onFilterDropdownVisibleChange: (visible) => this.setState({
+        nameFilterDropdownVisible: visible
+      }),
+      sorter: (a, b) => a.name > b.name ? -1 : 1,
+      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+    }, {
+      title: '描述',
+      dataIndex: 'description',
+      key: 'description'
+    }]
+
+    const pagination = {
+      simple: screenWidth < 768 || screenWidth === 768,
+      defaultPageSize: 20,
+      showSizeChanger: true
+    }
+
+    const rowSelection = {
+      selectedRowKeys: selectedWidget,
+      onChange: this.onSelectChange,
+      onShowSizeChange: this.onShowSizeChange
+    }
 
     const stepIndicator = type === 'add'
       ? (
@@ -143,49 +247,6 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     const widgetsArr = filteredWidgets.length ? filteredWidgets : widgets
 
     const { getFieldDecorator } = form
-
-    const widgetSelector = widgetsArr.map((w, index) => {
-
-      const widgetClassName = classnames({
-        [widgetStyles.widget]: true,
-        [widgetStyles.selector]: true,
-        [widgetStyles.selected]: w.id === selectedWidget
-      })
-
-      const checkmark = w.id === selectedWidget
-        ? (
-          <div className={widgetStyles.checkmark}>
-            <Icon type="check" />
-          </div>
-        )
-        : ''
-
-      const startCol = (currentPage - 1) * pageSize + 1
-      const endCol = Math.min(currentPage * pageSize, widgetsArr.length)
-
-      let colItems = void 0
-      if ((index + 1 >= startCol && index + 1 <= endCol) ||
-        (startCol > widgetsArr.length)) {
-        colItems = (
-          <Col
-            md={8}
-            sm={12}
-            xs={24}
-            key={w.id}
-            onClick={onWidgetSelect(w.id)}
-          >
-            <div className={widgetClassName}>
-              <h3 className={widgetStyles.title}>{w.name}</h3>
-              <p className={widgetStyles.content}>{w.description}</p>
-              {/* <i className={`${widgetStyles.pic} iconfont ${iconMapping[widgetType]}`} /> */}
-              {checkmark}
-            </div>
-          </Col>
-        )
-      }
-
-      return colItems
-    })
 
     const selectWidgetStep = classnames({
       [utilStyles.hide]: !!step
@@ -206,33 +267,13 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
             {stepIndicator}
           </Col>
         </Row>
-        <Row className={`${selectWidgetStep} ${styles.searchRow}`}>
-          <Col span={17} />
-          <Col>
-            <FormItem wrapperCol={{span: 7}}>
-              {getFieldDecorator('searchItem', {})(
-                <Search
-                  placeholder="Widget 名称"
-                  onSearch={this.onSearchWidgetItem}
-                />
-              )}
-            </FormItem>
-          </Col>
-        </Row>
         <Row gutter={20} className={selectWidgetStep}>
-          {widgetSelector}
-        </Row>
-        <Row className={selectWidgetStep}>
-          <Pagination
-            simple={screenWidth < 768 || screenWidth === 768}
-            className={widgetStyles.paginationPosition}
-            showSizeChanger
-            onShowSizeChange={this.onShowSizeChange}
-            onChange={this.onChange}
-            total={widgetsArr.length}
-            defaultPageSize={24}
-            pageSizeOptions={['24', '48', '72', '96']}
-            current={currentPage}
+          <Table
+            dataSource={tableWidget}
+            columns={columns}
+            pagination={pagination}
+            onChange={this.handleTableChange}
+            rowSelection={rowSelection}
           />
         </Row>
         <div className={inputFormStep}>

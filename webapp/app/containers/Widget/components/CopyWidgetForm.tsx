@@ -33,19 +33,23 @@ const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Widget.less')
 
 interface ICopyWidgetFormProps {
-  form: any,
-  type: string,
-  onCheckName: (idName: any, value: any, typeName: any, param?: any, success?: (res: any) => void, error?: (err: any) => void) => void
+  form: any
+  projectId: number
+  type: string
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
   private checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckName, type } = this.props
-    const { getFieldsValue } = this.props.form
-    const { id } = getFieldsValue()
-    const idName = type === 'add' ? '' : id
-    const typeName = 'widget'
-    onCheckName(idName, value, typeName,
+    const { form, onCheckUniqueName, projectId } = this.props
+    const { id } = form.getFieldsValue()
+
+    const data = {
+      projectId,
+      id: '',
+      name: value
+    }
+    onCheckUniqueName('widget', data,
       () => {
         callback()
       }, (err) => {
@@ -54,6 +58,7 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
   }
 
   public render () {
+    const { type } = this.props
     const { getFieldDecorator } = this.props.form
 
     const itemStyle = {
@@ -66,13 +71,31 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
         <Row gutter={8}>
           <Col span={24}>
             <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('create_by', {
-                hidden: this.props.type === 'copy'
-              })(
+              {getFieldDecorator('type', {})(
                 <Input />
               )}
             </FormItem>
-            <FormItem label="Widget 名称" {...itemStyle}>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('viewId', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('config', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('projectId', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('publish', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem label="Widget 名称" {...itemStyle} hasFeedback>
               {getFieldDecorator('name', {
                 rules: [{ required: true }, {validator: this.checkNameUnique}]
               })(
@@ -82,7 +105,7 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
           </Col>
           <Col span={24}>
             <FormItem label="Widget 描述" {...itemStyle}>
-              {getFieldDecorator('desc', {
+              {getFieldDecorator('description', {
                 initialValue: ''
               })(
                 <Input placeholder="Widget Description" />
@@ -95,10 +118,4 @@ export class CopyWidgetForm extends React.Component<ICopyWidgetFormProps, {}> {
   }
 }
 
-function mapDispatchToProps (dispatch) {
-  return {
-    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
-  }
-}
-
-export default Form.create()(connect(null, mapDispatchToProps)(CopyWidgetForm))
+export default Form.create()(CopyWidgetForm)
