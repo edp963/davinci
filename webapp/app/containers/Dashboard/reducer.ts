@@ -176,29 +176,34 @@ function dashboardReducer (state = initialState, action) {
       if (!items) {
         items = []
       }
+
+      const infoTemp = new Object()
+      payload.result.forEach((pr) => {
+        infoTemp[pr.id] = {
+          datasource: [],
+          loading: false,
+          queryParams: {
+            linkageFilters: [],
+            globalFilters: [],
+            params: [],
+            linkageParams: [],
+            globalParams: [],
+            pagination: {}
+          },
+          shareInfo: '',
+          shareInfoLoading: false,
+          secretInfo: '',
+          downloadCsvLoading: false,
+          interactId: '',
+          rendered: false,
+          renderType: 'rerender'
+        }
+      })
       return state
         .set('currentItems', items.concat(payload.result))
         .set('currentItemsInfo', {
           ...itemsInfo,
-          [payload.result.id]: {
-            datasource: [],
-            loading: false,
-            queryParams: {
-              linkageFilters: [],
-              globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: [],
-              pagination: {}
-            },
-            shareInfo: '',
-            shareInfoLoading: false,
-            secretInfo: '',
-            downloadCsvLoading: false,
-            interactId: '',
-            rendered: false,
-            renderType: 'rerender'
-          }
+          ...infoTemp
         })
     case ADD_DASHBOARD_ITEM_FAILURE:
       return state
