@@ -186,7 +186,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
           <Col span={16}>
             <Input.Search
               size="large"
-              placeholder="Dashboard 名称"
+              placeholder="Project 名称"
               onSearch={this.onSearchProject}
             />
           </Col>
