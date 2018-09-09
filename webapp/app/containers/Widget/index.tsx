@@ -154,12 +154,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
 
   private toWorkbench = (widgetId) => () => {
     const { router, params } = this.props
-    this.props.router.push(`/project/${params.pid}/widget/${widgetId}`)
-    // this.setState({
-    //   workbenchType: type,
-    //   currentWidget: widget,
-    //   workbenchVisible: true
-    // })
+    router.push(`/project/${params.pid}/widget/${widgetId}`)
   }
 
   private hideWorkbench = () => {
@@ -319,6 +314,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
     } else {
       isShow = false
     }
+    const EditButton = ModulePermission<ButtonProps>(currentProject, 'widget', false)(Button)
     const AdminButton = ModulePermission<ButtonProps>(currentProject, 'widget', true)(Button)
 
     const columns = [{
@@ -347,9 +343,12 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
       title: '操作',
       key: 'action',
       width: 135,
-      className: `${isShow ? utilStyles.textAlignLeft : utilStyles.hide}`,
+      className: `${isShow ? utilStyles.textAlignCenter : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
+          <Tooltip title="修改">
+            <EditButton icon="edit" shape="circle" type="ghost" onClick={this.toWorkbench(record.id)} />
+          </Tooltip>
           <Tooltip title="复制">
             <AdminButton icon="copy" shape="circle" onClick={this.onCopy('copy', record)} />
           </Tooltip>
