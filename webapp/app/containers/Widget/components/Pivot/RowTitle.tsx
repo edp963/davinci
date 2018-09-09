@@ -13,7 +13,7 @@ interface IRowTitleProps {
 
 export function RowTitle (props: IRowTitleProps) {
   const { rows, rowKeys, dimetionAxis, drawingData } = props
-  const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
+  const { elementSize, unitMetricHeight } = drawingData
   let tableHeight = 0
 
   if (dimetionAxis) {

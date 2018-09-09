@@ -460,7 +460,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
 
@@ -504,11 +504,25 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: l.agg
         })))
     }
+    if (size) {
+      aggregators = aggregators.concat(size.items
+        .map((s) => ({
+          column: decodeMetricName(s.name),
+          func: s.agg
+        })))
+    }
     if (xAxis) {
       aggregators = aggregators.concat(xAxis.items
-        .map((l) => ({
-          column: decodeMetricName(l.name),
-          func: l.agg
+        .map((x) => ({
+          column: decodeMetricName(x.name),
+          func: x.agg
+        })))
+    }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((t) => ({
+          column: decodeMetricName(t.name),
+          func: t.agg
         })))
     }
 

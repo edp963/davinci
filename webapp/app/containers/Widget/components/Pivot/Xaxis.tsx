@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
 import { IChartLine, IChartUnit } from './Chart'
-import { metricAxisLabelFormatter, getXaxisLabel } from '../util'
+import { metricAxisLabelFormatter, getXaxisLabel, decodeMetricName } from '../util'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
@@ -125,14 +125,14 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
               xAxis.push({
                 gridIndex: index,
                 type: 'value',
-                name: m.name,
+                name: decodeMetricName(m.name),
                 nameLocation: 'center',
                 nameGap: 28,
                 nameTextStyle: {
                   color: '#333'
                 },
                 ...metricAxisStyle,
-                ...metricAxisConfig[m.name]
+                ...metricAxisConfig[m.name].yAxis
               })
               yAxis.push({
                 gridIndex: index,

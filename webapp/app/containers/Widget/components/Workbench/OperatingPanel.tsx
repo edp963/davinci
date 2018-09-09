@@ -10,13 +10,28 @@ import FilterSettingForm from './FilterSettingForm'
 import { IPivotProps, DimetionType } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot } from '../util'
+import { ChromePicker } from 'react-color'
+import ColorPicker from '../../../../components/ColorPicker'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter } from '../util'
+import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
+const Radio = require('antd/lib/radio/radio')
+const RadioButton = Radio.Button
+const RadioGroup = Radio.Group
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Checkbox = require('antd/lib/checkbox')
+const Select = require('antd/lib/select')
+const Option = Select.Option
 const Dropdown = require('antd/lib/dropdown')
 const Modal = require('antd/lib/modal')
+const Popover = require('antd/lib/popover')
+const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -48,6 +63,7 @@ interface IOperatingPanelProps {
 interface IOperatingPanelStates {
   dragged: IDataParamSource
   showColsAndRows: boolean
+  selectedTab: 'data' | 'style' | 'variable' | 'cache'
   commonParams: IDataParams
   specificParams: IDataParams
   modalCachedData: IDataParamSource
@@ -65,6 +81,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.state = {
       dragged: null,
       showColsAndRows: false,
+      selectedTab: 'data',
       commonParams: {
         cols: { title: '列', type: 'category', items: [] },
         rows: { title: '行', type: 'category', items: [] },
@@ -82,6 +99,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
+  private tabKeys = [
+    { key: 'data', title: '数据' },
+    { key: 'style', title: '样式' },
+    { key: 'variable', title: '变量' },
+    { key: 'cache', title: '缓存' }
+  ]
   private lastRequestParamString = null
   private colorSettingForm = null
   private actOnSettingForm = null
@@ -96,10 +119,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, currentWidgetConfig } = nextProps
     if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
-      const { cols, rows, metrics, filters, color, label, size, xAxis } = currentWidgetConfig
+      const { cols, rows, metrics, filters, color, label, size, xAxis, tip } = currentWidgetConfig
       const { commonParams } = this.state
       const model = JSON.parse(selectedView.model)
-
       commonParams.cols.items = cols.map((c) => ({
         name: c,
         from: 'cols',
@@ -125,7 +147,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...color && {color},
         ...label && {label},
         ...size && {size},
-        ...xAxis && {xAxis}
+        ...xAxis && {xAxis},
+        ...tip && {tip}
       }
       this.setState({
         commonParams,
@@ -158,7 +181,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 : { all: defaultThemeColors[0] }
               break
             case 'size':
-              value = specificParams[key] ? specificParams[key].value : { all: 3 }
+              value = specificParams[key] ? specificParams[key].value : { all: PIVOT_DEFAULT_SCATTER_SIZE_TIMES }
               break
           }
           config[key] = {
@@ -255,6 +278,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           actOnModalList: metrics.items.slice()
         })
         break
+      case 'size':
+        this.setState({
+          modalCachedData: cachedItem,
+          modalCallback: resolve,
+          modalDataFrom: 'size',
+          actOnModalVisible: true,
+          actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
+        })
+        break
       default:
         resolve(true)
         break
@@ -270,12 +302,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
     if (config) {
       dragged.config = config
-      if (name === 'color') {
+      if (['color', 'label', 'size'].includes(name)) {
         const actingOnItemIndex = items.findIndex((i) => i.config.actOn === config.actOn)
         if (actingOnItemIndex >= 0) {
           items.splice(actingOnItemIndex, 1)
           dropIndex = dropIndex <= actingOnItemIndex ? dropIndex : dropIndex - 1
         }
+      }
+      if (name === 'xAxis') {
+        items.splice(0, 1)
+        dropIndex = 0
       }
     }
 
@@ -408,7 +444,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getVisualData = (commonParams, specificParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label, size, xAxis } = specificParams
+    const { color, label, size, xAxis, tip } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
     let selectedCharts = this.getSelectedCharts(metrics.items)
     let groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name))
@@ -444,6 +480,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           func: l.agg
         })))
     }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
     groups.sort()
     aggregators.sort()
 
@@ -472,6 +515,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...label && {label},
             ...size && {size},
             ...xAxis && {xAxis},
+            ...tip && {tip},
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender'
@@ -502,6 +546,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...label && {label},
         ...size && {size},
         ...xAxis && {xAxis},
+        ...tip && {tip},
         dimetionAxis: this.getDimetionAxis(selectedCharts),
         renderType: renderType || 'clear'
       })
@@ -521,7 +566,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private chartSelect = (chart: IChartInfo) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams } = this.state
     const { metrics } = commonParams
     if (!(metrics.items.length === 1 && metrics.items[0].chart === chart)) {
       metrics.items.forEach((i) => {
@@ -532,7 +577,38 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private viewSelect = ({key}) => {
-    this.props.onViewSelect(this.props.views.find((v) => `${v.id}` === key))
+    const { commonParams, specificParams } = this.state
+    const hasItems = Object.values(commonParams)
+      .concat(Object.values(specificParams))
+      .filter((param) => !!param.items.length)
+    if (hasItems.length) {
+      confirm({
+        title: '切换 View 会清空所有配置项，是否继续？',
+        onOk: () => {
+          this.resetWorkbench()
+          this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+        }
+      })
+    } else {
+      this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+    }
+  }
+
+  private resetWorkbench = () => {
+    const { commonParams, specificParams } = this.state
+    Object.values(commonParams).forEach((param) => {
+      param.items = []
+      if (param.value) {
+        param.value = {}
+      }
+    })
+    Object.values(specificParams).forEach((param) => {
+      param.items = []
+      if (param.value) {
+        param.value = {}
+      }
+    })
+    this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts([])))
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {
@@ -622,6 +698,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.filterSettingForm.reset()
   }
 
+  private tabSelect = (key) => () => {
+    this.setState({
+      selectedTab: key
+    })
+  }
+
   public render () {
     const {
       views,
@@ -632,6 +714,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const {
       dragged,
       showColsAndRows,
+      selectedTab,
       commonParams,
       specificParams,
       modalCachedData,
@@ -719,6 +802,216 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       [styles.switchRowsAndCols]: true,
       [utilStyles.hide]: !showColsAndRows
     })
+
+    const tabs = this.tabKeys.map(({key, title}) => {
+      const tabClass = classnames({
+        [styles.selected]: key === selectedTab
+      })
+      return (
+        <li
+          key={key}
+          className={tabClass}
+          onClick={this.tabSelect(key)}
+        >
+          {title}
+        </li>
+      )
+    })
+
+    let tabPane
+    switch (selectedTab) {
+      case 'data':
+        tabPane = (
+          <div className={`${styles.paramsPane} ${styles.dropPane}`}>
+            <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
+              <Icon type="swap" />
+              {showColsAndRows ? ' 使用维度' : ' 使用行列'}
+            </div>
+            <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
+              <Icon type="retweet" /> 行列切换
+            </div>
+            {dropboxes}
+          </div>
+        )
+        break
+      case 'style':
+        tabPane = (
+          <div className={styles.paramsPane}>
+            <div className={styles.paneBlock}>
+              <h4>X轴</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示坐标轴</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="样式" className={styles.blockElm}>
+                      <Option key="solid" value="solid">实线</Option>
+                      <Option key="dashed" value="dashed">虚线</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="粗细" className={styles.blockElm}>
+                      {Array.from(Array(10), (o, i) => (
+                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标签文字</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <div className={styles.paneBlock}>
+              <h4>Y轴</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={4} push={1}>标题:</Col>
+                  <Col span={19} push={1}>
+                    <Input />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={4} push={1}>单位:</Col>
+                  <Col span={19} push={1}>
+                    <Input />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示坐标轴</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="样式" className={styles.blockElm}>
+                      <Option key="solid" value="solid">实线</Option>
+                      <Option key="dashed" value="dashed">虚线</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="粗细" className={styles.blockElm}>
+                      {Array.from(Array(10), (o, i) => (
+                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标签文字</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标题和单位</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </div>
+        )
+        break
+      case 'cache':
+        tabPane = (
+          <div className={styles.paramsPane}>
+            <div className={styles.paneBlock}>
+              <h4>开启缓存</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <RadioGroup size="small" defaultValue={false}>
+                      <RadioButton value={false}>关闭</RadioButton>
+                      <RadioButton value={true}>开启</RadioButton>
+                    </RadioGroup>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <div className={styles.paneBlock}>
+              <h4>缓存有效期（秒）</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <InputNumber defaultValue={60} />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </div>
+        )
+        break
+    }
 
     let colorSettingConfig
     let actOnSettingConfig
@@ -809,21 +1102,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <i className="iconfont icon-parallel" />
             <i className="iconfont icon-confidence-band" /> */}
           </div>
-          <div className={styles.props}>
-            <ul className={styles.propsTitle}>
-              <li>数据</li>
-              <li>样式</li>
-            </ul>
-            <div className={styles.propsBody}>
-              <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
-                <Icon type="swap" />
-                {showColsAndRows ? ' 使用维度' : ' 使用行列'}
-              </div>
-              <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
-                <Icon type="retweet" /> 行列切换
-              </div>
-              {dropboxes}
-            </div>
+          <div className={styles.params}>
+            <ul className={styles.paramsTab}>{tabs}</ul>
+            {tabPane}
           </div>
         </div>
         <Modal
