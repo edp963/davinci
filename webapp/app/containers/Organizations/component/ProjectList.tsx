@@ -21,6 +21,7 @@ interface IProjectsState {
   modalLoading: boolean
   pageNum: number
   pageSize: number
+  organizationProjects: boolean | Organization.IOrganizationProjects[]
 }
 
 interface IProjectsProps {
@@ -47,7 +48,8 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       formVisible: false,
       modalLoading: false,
       pageNum: 1,
-      pageSize: 10
+      pageSize: 10,
+      organizationProjects: false
     }
   }
   private ProjectForm: WrappedFormUtils
@@ -58,11 +60,15 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       formType: type
     })
   }
-  private onSearchProject = () => {
-    console.log(1)
-  }
-  private onSearchProjectType = () => {
-    console.log(1)
+  private onSearchProject = (event) => {
+    const value = event.target.value
+    const {organizationProjects} = this.props
+    const result = (organizationProjects as Organization.IOrganizationProjects[]).filter((project, index) => {
+      return project && project.name.indexOf(value.trim()) > -1
+    })
+    this.setState({
+      organizationProjects: value && value.length ? result : this.props.organizationProjects
+    })
   }
   private hideProjectForm = () => {
     this.setState({
@@ -128,9 +134,18 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       this.props.getOrganizationProjectsByPagination(param)
     })
   }
+  public componentWillReceiveProps (nextProps) {
+    const {organizationProjects} = this.props
+    const nextOrgProjects = nextProps.organizationProjects
+    if (nextOrgProjects && nextOrgProjects !== organizationProjects) {
+      this.setState({
+        organizationProjects: nextOrgProjects
+      })
+    }
+  }
   public render () {
-    const { formVisible, formType, modalLoading } = this.state
-    const { organizationProjects, currentOrganization, organizationProjectsDetail } = this.props
+    const { formVisible, formType, modalLoading, organizationProjects } = this.state
+    const { currentOrganization, organizationProjectsDetail } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -180,7 +195,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             <Input.Search
               size="large"
               placeholder="Project 名称"
-              onSearch={this.onSearchProject}
+              onChange={this.onSearchProject}
             />
           </Col>
           <Col span={1} offset={7}>

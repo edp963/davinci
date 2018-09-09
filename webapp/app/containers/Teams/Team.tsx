@@ -260,6 +260,16 @@ export class Teams extends React.Component<ITeamsProps> {
             <div className={styles.title}>{name}</div>
           </div>
           <Tabs onChange={this.tabChange} >
+          <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
+              <ProjectList
+                deleteProject={this.deleteProject}
+                currentTeam={currentTeam}
+                currentTeamProjects={currentTeamProjects}
+                currentOrganizationProjects={currentOrganizationProjects}
+                pullProjectInTeam={this.pullProjectInTeam}
+                onUpdateTeamProjectPermission={this.props.onUpdateTeamProjectPermission}
+              />
+            </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
               <MemberList
                 currentTeam={currentTeam}
@@ -268,16 +278,6 @@ export class Teams extends React.Component<ITeamsProps> {
                 changeTeamMemberRole={this.props.onChangeTeamMemberRole}
                 currentTeamMembers={currentTeamMembers}
                 currentOrganizationMembers={currentOrganizationMembers}
-              />
-            </TabPane>
-            <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
-              <ProjectList
-                deleteProject={this.deleteProject}
-                currentTeam={currentTeam}
-                currentTeamProjects={currentTeamProjects}
-                currentOrganizationProjects={currentOrganizationProjects}
-                pullProjectInTeam={this.pullProjectInTeam}
-                onUpdateTeamProjectPermission={this.props.onUpdateTeamProjectPermission}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
