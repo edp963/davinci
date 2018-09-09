@@ -68,6 +68,7 @@ const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
+import { initializePermission } from '../Account/components/checkUtilPermission'
 import {IProject} from '../Projects'
 
 interface IDashboardProps {
@@ -609,14 +610,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
-    let isTreeDraggable
-    if (currentProject && currentProject.permission) {
-      const currentPermission = currentProject.permission.vizPermission
-      isTreeDraggable = (currentPermission === 0 || currentPermission === 1) ? false : true
-    } else {
-      isTreeDraggable = false
-    }
-
     return (
       <div className={styles.portal}>
         <Helmet title={params.portalName} />
@@ -687,7 +680,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   expandedKeys={this.state.expandedKeys}
                   autoExpandParent={this.state.autoExpandParent}
                   selectedKeys={[this.props.params.dashboardId]}
-                  draggable={isTreeDraggable}
+                  draggable={initializePermission(currentProject, 'vizPermission')}
                   onDrop={this.onDrop}
                 >
                 {loop(dashboardData)}

@@ -69,6 +69,7 @@ import { uuid } from '../../utils/util'
 import { checkNameUniqueAction } from '../App/actions'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
+import { initializePermission } from '../Account/components/checkUtilPermission'
 import {IProject} from '../Projects'
 
 interface ISourceProps {
@@ -385,13 +386,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       onCheckUniqueName
     } = this.props
 
-    let isShow
-    if (currentProject && currentProject.permission) {
-      const currentPermission = currentProject.permission.sourcePermission
-      isShow = (currentPermission === 0 || currentPermission === 1) ? false : true
-    } else {
-      isShow = false
-    }
     const AdminButton = ModulePermission<ButtonProps>(currentProject, 'source', true)(Button)
     const EditButton = ModulePermission<ButtonProps>(currentProject, 'source', false)(Button)
 
@@ -457,7 +451,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       title: '操作',
       key: 'action',
       width: 135,
-      className: `${isShow ? utilStyles.textAlignLeft : utilStyles.hide}`,
+      className: `${initializePermission(currentProject, 'sourcePermission') ? utilStyles.textAlignLeft : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">

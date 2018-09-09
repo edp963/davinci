@@ -62,6 +62,7 @@ import { checkNameUniqueAction } from '../App/actions'
 import { iconMapping } from './components/chartUtil'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
+import { initializePermission } from '../Account/components/checkUtilPermission'
 import {IProject} from '../Projects'
 
 const styles = require('./Widget.less')
@@ -307,13 +308,6 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
       tableSortedInfo
     } = this.state
 
-    let isShow
-    if (currentProject && currentProject.permission) {
-      const currentPermission = currentProject.permission.widgetPermission
-      isShow = (currentPermission === 0 || currentPermission === 1) ? false : true
-    } else {
-      isShow = false
-    }
     const EditButton = ModulePermission<ButtonProps>(currentProject, 'widget', false)(Button)
     const AdminButton = ModulePermission<ButtonProps>(currentProject, 'widget', true)(Button)
 
@@ -343,7 +337,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
       title: '操作',
       key: 'action',
       width: 135,
-      className: `${isShow ? utilStyles.textAlignCenter : utilStyles.hide}`,
+      className: `${initializePermission(currentProject, 'widgetPermission') ? utilStyles.textAlignCenter : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
           <Tooltip title="修改">
