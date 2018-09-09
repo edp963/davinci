@@ -164,7 +164,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             String imageName = UUID.randomUUID() + ".png";
             String imageUrl = baseUrl + File.separator + imageName;
-            String url = getContentUrl(userId, cronJobContent.getType(), cronJobContent.getId());
+            String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
             boolean bol = phantomRender(url, fileBasePath + imageUrl);
             if (bol) {
                 File image = new File(fileBasePath + imageUrl);
@@ -255,7 +255,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
     private List<File> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
         List<File> files = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getType().trim())) {
+            if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Dashboard dashboard = dashboardMapper.getById(cronJobContent.getId());
                 if (dashboard != null) {
                     Set<Widget> widgets = widgetMapper.getByDashboard(dashboard.getId());
@@ -266,7 +266,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                         files.add(file);
                     }
                 }
-            } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getType().trim())) {
+            } else if (CheckEntityEnum.DISPLAY.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Display display = displayMapper.getById(cronJobContent.getId());
                 if (display != null) {
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());

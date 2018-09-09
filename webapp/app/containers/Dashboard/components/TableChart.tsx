@@ -19,7 +19,6 @@
  */
 
 import * as React from 'react'
-import { connect } from 'react-redux'
 import * as classnames from 'classnames'
 import * as moment from 'moment'
 
@@ -32,7 +31,6 @@ import NumberFilterDropdown from '../../../components/NumberFilterDropdown/index
 import DateFilterDropdown from '../../../components/DateFilterDropdown/index'
 
 import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../globalConstants'
-import { updateMark } from '../actions'
 const styles = require('../Dashboard.less')
 
 interface ITableChartProps {
@@ -505,10 +503,4 @@ export class TableChart extends React.PureComponent<ITableChartProps, ITableChar
   }
 }
 
-export function mapDispatchToProps (dispatch) {
-  return {
-    onUpdateMark: (id, params, resolve, reject) => dispatch(updateMark(id, params, resolve, reject))
-  }
-}
-
-export default connect<{}, {}, ITableChartProps>(null, mapDispatchToProps)(TableChart)
+export default TableChart

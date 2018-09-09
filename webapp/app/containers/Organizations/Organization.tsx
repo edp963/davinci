@@ -15,13 +15,13 @@ const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
 import {connect} from 'react-redux'
 import saga from './sagas'
-import sagaApp from '../App/sagas'
+// import sagaApp from '../App/sagas'
 import reducerTeam from '../Teams/reducer'
 import sagaTeam from '../Teams/sagas'
 import injectReducer from '../../utils/injectReducer'
 import reducer from './reducer'
 import injectSaga from '../../utils/injectSaga'
-import reducerApp from '../App/reducer'
+// import reducerApp from '../App/reducer'
 import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
 import {compose} from 'redux'
@@ -341,17 +341,17 @@ const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
 const withProjectReducer = injectReducer({ key: 'project', reducer: reducerProject })
 const withProjectSaga = injectSaga({ key: 'project', saga: sagaProject })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
-  withAppReducer,
+  // withAppReducer,
   withProjectReducer,
   withTeamReducer,
   withTeamSaga,
   withProjectSaga,
-  withAppSaga,
+  // withAppSaga,
   withSaga,
   withConnect
 )(Organization)

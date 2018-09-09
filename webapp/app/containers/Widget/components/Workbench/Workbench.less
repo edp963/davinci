@@ -176,13 +176,13 @@
   }
 }
 
-.props {
+.params {
   min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
 
-  .propsTitle {
+  .paramsTab {
     border-bottom: 1px solid @border-color-base;
     flex-shrink: 0;
     display: flex;
@@ -191,25 +191,56 @@
     li {
       padding: 0 16px;
       margin-top: 2px;
-      border-bottom: 2px solid @primary-color;
       font-size: 1.08em;
       line-height: 24px;
-      color: @primary-color;
+      color: @light-text-color;
       position: relative;
       bottom: -1px;
+      cursor: pointer;
 
-      &:last-child {
-        color: @light-text-color;
-        border-bottom: 0;
+      &.selected {
+        color: @primary-color;
+        border-bottom: 2px solid @primary-color;
       }
     }
   }
 
-  .propsBody {
-    padding: 4px 8px;
+  .paramsPane {
     flex: 1;
     position: relative;
     overflow-y: auto;
+
+    &.dropPane {
+      padding: 4px 8px;
+    }
+
+    .paneBlock {
+      padding: 8px;
+      border-bottom: 1px solid @border-color-base;
+
+      &:first-child {
+        padding-top: 4px;
+      }
+
+      h4 {
+        margin-top: 4px;
+        color: @light-text-color;
+        line-height: 18px;
+        font-weight: bold;
+      }
+      
+      .blockBody {
+
+      }
+
+      .blockRow {
+        height: 32px;
+      }
+
+      .blockElm {
+        width: 100%;
+      }
+    }
 
     .toggleRowsAndCols {
       right: 10px; 

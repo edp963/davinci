@@ -23,13 +23,13 @@ import widgetSaga from '../Widget/sagas'
 // import dashboardReducer from '../Dashboard/reducer'
 // import dashboardSaga from '../Dashboard/sagas'
 import {makeSelectCurrentProject} from '../Projects/selectors'
-import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading} from './selectors'
+import {makeSelectSchedule, makeSelectDashboards, makeSelectCurrentDashboard, makeSelectWidgets, makeSelectTableLoading, makeSelectFormLoading, makeSelectVizs} from './selectors'
 import { promiseDispatcher } from '../../utils/reduxPromisation'
 import ScheduleForm from './ScheduleForm'
 import ConfigForm from './ConfigForm'
 
 import {loadDashboardDetail, loadDashboards} from '../Dashboard/actions'
-import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule } from './actions'
+import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, updateSchedule, loadVizs } from './actions'
 import {loadWidgets} from '../Widget/actions'
 import Box from '../../components/Box'
 
@@ -38,6 +38,7 @@ const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Table = require('antd/lib/table')
 const Button = require('antd/lib/button')
+import {ButtonProps} from 'antd/lib/button/button'
 const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
@@ -67,8 +68,10 @@ interface IScheduleProps {
   tableLoading: boolean
   formLoading: boolean
   currentProject: IProject
+  vizs: any
   onAddSchedule: (param: object, resolve: any) => any
   onLoadWidgets: (pid: number) => any
+  onLoadVizs: (pid: number) => any
   onLoadSchedules: (pid: number) => any
   onLoadDashboards: () => any
   onDeleteSchedule: (id: number) => any
@@ -114,6 +117,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   public componentWillMount () {
     const {pid} = this.props.params
     this.props.onLoadWidgets(pid)
+    this.props.onLoadVizs(pid)
     this.props.onLoadDashboards().then(() => {
       const {dashboards} = this.props
       const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
@@ -158,7 +162,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       formVisible: true,
       formType: 'edit'
     }, () => {
-      const { id, name, desc, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
+      const { id, name, description, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
       const config2json = JSON.parse(config)
       const { time_range, range, contentList, month, hour, week, time } = config2json
       const formatterContentList = this.json2arr(contentList)
@@ -172,13 +176,13 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       }
       this.setState({
         rangeTime: time_range
-      }, () => this.scheduleForm.setFieldsValue({ id, name, desc, range: momentRange, time_range, month, hour, week, time: moment(time) })
+      }, () => this.scheduleForm.setFieldsValue({ id, name, description, range: momentRange, time_range, month, hour, week, time: moment(time) })
       )
     })
   }
 
   private onScheduleOk = () => {
-    const { projectId } = this.props.params
+    const { pid } = this.props.params
     const { onAddSchedule, onUpdateSchedule } = this.props
     this.scheduleForm.validateFieldsAndScroll((err, values) => {
       const { emailConfig } = this.state
@@ -238,7 +242,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           const params = {
             ...values,
             ...{
-              projectId,
+              projectId: pid,
               startDate: moment(startDate).format('YYYY-MM-DD HH:mm:ss'),
               endDate: moment(endDate).format('YYYY-MM-DD HH:mm:ss'),
               cronExpression: cronPatten
@@ -259,23 +263,68 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private arr2json = (arr) => {
+    const { vizs } = this.props
     const result = arr.map((a) => {
-      if (a.indexOf('(w)') > -1) {
-        return {
-          id: parseInt(a.replace('(w)', ''), 10),
-          type: 'widget'
-        }
+      if (a === 'display') {
+        const children =  vizs.find((viz) => viz.contentType === 'display')['children']
+        return children.map((child) => ({
+          contentType: child.contentType,
+          id: child.id
+        }))
+      }
+      if (a === 'portal') {
+        const children =  vizs.find((viz, index) => viz.contentType === 'portal')['children']
+        return this.getIdByArray(children)
+      }
+      if (a.indexOf('(p)') > -1) {
+        const id = parseInt(a.replace('(p)', ''), 10)
+        const children = vizs.find((viz, index) => viz.contentType === 'portal')['children']
+        const arr = this.getCurrentListById(children, id)
+        return this.getIdByArray(arr)
       } else {
         return {
           id: parseInt(a.replace('(d)', ''), 10),
-          type: 'dashboard'
+          contentType: 'display'
         }
       }
     })
     return result
   }
-
-  private json2arr = (json) => json.map((js) => `${js.id}(${js.type.substr(0, 1)})`)
+  private getCurrentListById = (array, id) => {
+    const ret = []
+    function loop (array) {
+      for (let i = 0; i < array.length; i++) {
+        const arr = array[i]
+        if (arr && arr.children) {
+          loop(arr.children)
+        }
+        if (arr && arr.id === id) {
+          ret.push(arr)
+        }
+      }
+    }
+    loop(array)
+    return ret
+  }
+  private getIdByArray = (array) => {
+    const ret = []
+    function loop (a) {
+      a.forEach((arr) => {
+        if (arr && arr.children) {
+          loop(arr.children)
+        }
+        if (arr && arr.type === 1) {
+          ret.push({
+            contentType: arr.contentType,
+            id: arr.id
+          })
+        }
+      })
+    }
+    loop(array)
+    return ret
+  }
+  private json2arr = (json) => json.map((js) => `${js.id}(${js.contentType.substr(0, 1)})`)
 
   private onConfigModalOk = () => {
     this.configForm.validateFieldsAndScroll((err, values) => {
@@ -283,15 +332,28 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       if (!err) {
         const emailConfigData = {
           ...values,
-          ...{contentList: this.arr2json(dashboardTreeValue)}
+          ...{contentList: bootstrap(this.arr2json(dashboardTreeValue))}
         }
+        console.log(emailConfigData)
         this.setState({
           emailConfig: emailConfigData
         }, () => this.hideConfigForm())
       }
     })
+    function bootstrap (arr) {
+      const result = []
+      if (arr && arr.length) {
+        arr.map((a, index) => {
+          if (Array.isArray(a)) {
+            a.forEach((o) => result.push(o))
+          } else {
+            result.push(a)
+          }
+        })
+      }
+      return result
+    }
   }
-
   private hideForm = () => {
     this.setState({
       formVisible: false,
@@ -324,6 +386,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
 
   private onTreeChange = (value) => {
    // let triggerData = extra.triggerNode.props
+    console.log(value)
     this.setState({
       dashboardTreeValue: value
     })
@@ -407,9 +470,9 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private changeStatus = (record) => () => {
-    const { id, job_status } = record
+    const { id, jobStatus } = record
     const { onChangeCurrentJobStatus } = this.props
-    onChangeCurrentJobStatus(id, job_status)
+    onChangeCurrentJobStatus(id, jobStatus)
   }
 
   public render () {
@@ -427,7 +490,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       onDeleteSchedule,
       currentProject,
       tableLoading,
-      formLoading
+      formLoading,
+      vizs
     } = this.props
 
     const pagination: PaginationProps = {
@@ -436,7 +500,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       showSizeChanger: true,
       total: tableSource.length
     }
-    const ProviderButton = ModulePermission(currentProject, 'schedule', true)(Button)
+    const ProviderButton = ModulePermission<ButtonProps>(currentProject, 'schedule', true)(Button)
     const columns = [
       {
         title: '名称',
@@ -445,27 +509,27 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       },
       {
         title: '描述',
-        dataIndex: 'desc',
+        dataIndex: 'description',
         key: 'desc'
       },
       {
         title: '类型',
-        dataIndex: 'job_type',
+        dataIndex: 'jobType',
         key: 'job_type'
       },
       {
         title: '开始时间',
-        dataIndex: 'start_date',
+        dataIndex: 'startDate',
         key: 'start_date'
       },
       {
         title: '结束时间',
-        dataIndex: 'end_date',
+        dataIndex: 'endDate',
         key: 'end_date'
       },
       {
         title: '状态',
-        dataIndex: 'job_status',
+        dataIndex: 'jobStatus',
         key: 'job_status'
       },
       {
@@ -606,6 +670,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
               >
                 <ConfigForm
                   type={configType}
+                  vizs={vizs}
                   dashboardTree={dashboardTree}
                   treeSelect={this.onTreeSelect}
                   treeChange={this.onTreeChange}
@@ -629,11 +694,13 @@ const mapStateToProps = createStructuredSelector({
   currentDashboard: makeSelectCurrentDashboard(),
   currentProject: makeSelectCurrentProject(),
   tableLoading: makeSelectTableLoading(),
-  formLoading: makeSelectFormLoading()
+  formLoading: makeSelectFormLoading(),
+  vizs: makeSelectVizs()
 })
 
 function mapDispatchToProps (dispatch) {
   return {
+    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
     onLoadWidgets: (pid) => dispatch(loadWidgets(pid)),
     onLoadSchedules: (pid) => dispatch(loadSchedules(pid)),
     onLoadDashboards: () => promiseDispatcher(dispatch, loadDashboards),

@@ -37,6 +37,7 @@ const utilStyles =  require('../../assets/less/util.less')
 interface IConfigFormProps {
   form: any
   type: string
+  vizs: any
   dashboardTree: any[]
   treeSelect: () => any
   treeChange: () => any
@@ -47,7 +48,7 @@ interface IConfigFormProps {
 export class ConfigForm extends React.PureComponent<IConfigFormProps> {
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData } = this.props
+    const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData, vizs } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 }
@@ -60,7 +61,7 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
       treeCheckable: true,
       onChange: treeChange,
       onSelect: treeSelect,
-      treeData: dashboardTree,
+      treeData: vizs,
       value: dashboardTreeValue,
       loadData: loadTreeData,
       showCheckedStrategy: SHOW_PARENT,

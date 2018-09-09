@@ -22,6 +22,6 @@ import lombok.Data;
 
 @Data
 public class CronJobContent {
-    private String type;
+    private String contentType;
     private Long id;
 }

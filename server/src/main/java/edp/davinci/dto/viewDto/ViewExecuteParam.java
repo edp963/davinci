@@ -18,7 +18,6 @@
 
 package edp.davinci.dto.viewDto;
 
-import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.DataTypeEnum;
 import lombok.Data;
 
@@ -56,7 +55,7 @@ public class ViewExecuteParam {
                     sb.append(next.getFunc()).append("(");
                     sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
                     sb.append(")");
-                    sb.append(" AS '"+next.getFunc()+"(");
+                    sb.append(" AS '" + next.getFunc() + "(");
                     sb.append(next.getColumn());
                     sb.append(")'");
                 }

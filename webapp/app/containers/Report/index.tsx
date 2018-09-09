@@ -38,7 +38,7 @@ import {makeSelectCurrentProject} from '../Projects/selectors'
 import {IProject} from '../Projects'
 const styles = require('./Report.less')
 import MenuPermission from '../Account/components/checkMenuPermission'
-import { PermissionLevel } from '../Teams/component/PermissionLevel';
+import { PermissionLevel } from '../Teams/component/PermissionLevel'
 
 interface IReportProps {
   router: InjectedRouter
@@ -76,12 +76,14 @@ export class Report extends React.Component<IReportProps, {}> {
     if (location && currentProject && currentProject.permission) {
       const projectPermission = currentProject.permission
       for (const attr in projectPermission) {
-        const pathname = location.pathname
-        const pStr = attr.slice(0, -10)
-        if (pathname.indexOf(pStr) > 0) {
-          permission = projectPermission[attr]
-        } else if (pathname.indexOf('bizlogics') > 0 && pathname.replace('bizlogics', 'view').indexOf(pStr) > 0) {
-          permission = projectPermission[attr]
+        if (attr) {
+          const pathname = location.pathname
+          const pStr = attr.slice(0, -10)
+          if (pathname.indexOf(pStr) > 0) {
+            permission = projectPermission[attr]
+          } else if (pathname.indexOf('bizlogics') > 0 && pathname.replace('bizlogics', 'view').indexOf(pStr) > 0) {
+            permission = projectPermission[attr]
+          }
         }
       }
     }
@@ -116,7 +118,7 @@ export class Report extends React.Component<IReportProps, {}> {
       )
     })
 
-    const sidebarComponent = loginUser.admin
+    const sidebarComponent = currentProject && currentProject.inTeam
       ? (
         <Sidebar>
           {sidebarOptions}

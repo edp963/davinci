@@ -23,8 +23,8 @@ export default function (sizeRate: {[key: string]: number}) {
     chartOption: {
       type: 'scatter'
     },
-    getSymbolSize (itemName, size) {
-      return sizeRate ? Math.ceil(size * sizeRate[itemName]) : size
+    getSymbolSize (metricName, size) {
+      return sizeRate ? Math.ceil(size / sizeRate[metricName]) : size
     }
   }
 }

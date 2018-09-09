@@ -53,24 +53,39 @@ public class CommonService<T> {
     @Autowired
     private ShareService shareService;
 
-    @Value("${server.address}")
+    @Value("${server.protocol:http}")
+    private String protocol;
+
+    @Value("${server.address:localhost}")
     private String address;
 
     @Value("${server.port}")
     public String port;
 
+
+    private static final String HTTP_PROTOCOL = "http";
+
+    private static final String HTTPS_PROTOCOL = "https";
+
+    private static final String PROTOCOL_SEPARATOR = "://";
+
     public String getHost() {
-        if (StringUtils.isEmpty(address)) {
-            address = "localhost";
+        protocol = protocol.trim().toLowerCase();
+
+        if (protocol.equals(HTTP_PROTOCOL)) {
+            if ("80".equals(port)) {
+                port = null;
+            }
         }
 
-        if ("80".equals(port)) {
-            port = null;
+        if (protocol.equals(HTTPS_PROTOCOL)) {
+            if ("443".equals(port)) {
+                port = null;
+            }
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("http://");
-        sb.append(address);
+        sb.append(protocol).append(PROTOCOL_SEPARATOR).append(address);
         if (!StringUtils.isEmpty(port)) {
             sb.append(":" + port);
         }
@@ -130,7 +145,12 @@ public class CommonService<T> {
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+
+        if (null == orgRel) {
+            return false;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -162,13 +182,21 @@ public class CommonService<T> {
 
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (null == orgRel) {
+            return false;
+        }
+
         //当前project所属organization的owner
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -220,15 +248,22 @@ public class CommonService<T> {
             return true;
         }
 
-
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -284,13 +319,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -344,13 +387,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -393,13 +444,21 @@ public class CommonService<T> {
         }
 
         Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
+        if (null == organization) {
+            return false;
+        }
+
+        if (organization.getUserId().equals(user.getId())) {
             return true;
         }
 
-        //当前project所属organization的owner
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null != orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+        if (null == orgRel) {
+            return false;
+        }
+
+        //当前project所属organization的owner
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return true;
         }
 
@@ -436,7 +495,12 @@ public class CommonService<T> {
         }
 
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (null == orgRel && orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+
+        if (null == orgRel) {
+            return 0;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
             return UserPermissionEnum.DELETE.getPermission();
         }
 

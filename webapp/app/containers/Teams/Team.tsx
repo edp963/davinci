@@ -19,8 +19,8 @@ import injectReducer from '../../utils/injectReducer'
 import reducer from './reducer'
 import injectSaga from '../../utils/injectSaga'
 import saga from './sagas'
-import reducerApp from '../App/reducer'
-import sagaApp from '../App/sagas'
+// import reducerApp from '../App/reducer'
+// import sagaApp from '../App/sagas'
 import {
   loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject, deleteTeamMember, changeTeamMemberRole,
   editTeam, deleteTeam, loadTeams, pullMemberInTeam
@@ -188,12 +188,12 @@ export class Teams extends React.Component<ITeamsProps> {
   private createTeamRouter = (source) => {
     const arr = []
     function find (wrapper, data) {
-      if (data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
+      if (data && data.hasOwnProperty('id') && data.hasOwnProperty('name')) {
         wrapper.push({
           id: data['id'],
           name: data['name']
         })
-        if (data.hasOwnProperty('child') && data['child'] !== ''){
+        if (data.hasOwnProperty('child') && data['child'] !== '') {
           find(wrapper, data['child'])
         }
       }
@@ -346,15 +346,15 @@ const withSaga = injectSaga({ key: 'team', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
-  withAppReducer,
+  // withAppReducer,
   withOrganizationReducer,
   withOrganizationSaga,
-  withAppSaga,
+  // withAppSaga,
   withSaga,
   withConnect
 )(Teams)

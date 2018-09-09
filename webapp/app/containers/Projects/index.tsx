@@ -26,8 +26,8 @@ import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-import reducerApp from '../App/reducer'
-import sagaApp from '../App/sagas'
+// import reducerApp from '../App/reducer'
+// import sagaApp from '../App/sagas'
 import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
@@ -37,7 +37,7 @@ import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
-const  historyBrowser = new HistoryStack()
+const  historyStack = new HistoryStack()
 
 interface IProjectsProps {
   router: InjectedRouter
@@ -87,6 +87,7 @@ export interface IProject {
     vizPermission: number
     widgetPermission: number
   }
+  inTeam?: boolean
   isStar?: boolean
   type?: string
   name?: string
@@ -114,7 +115,6 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       pageSize: 10
     }
   }
-
   private ProjectForm: WrappedFormUtils
   private showProjectForm = (formType, project?: IProject) => (e) => {
     this.stopPPG(e)
@@ -139,7 +139,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   public componentWillMount () {
     this.props.onLoadProjects()
     this.props.onLoadOrganizations()
+    historyStack.init()
   }
+
+  // public componentWillReceiveProps (nextProps) {
+  //   if (nextProps.loginUser !== this.props.loginUser) {
+  //     historyBrowser.init()
+  //   }
+  // }
 
   private enterSearch: (e: KeyboardEvent) => any = null
 
@@ -266,7 +273,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
   }
 
   private saveHistory = (d: any) => {
-    historyBrowser.pushNode(d)
+    historyStack.pushNode(d)
   }
 
   private hideSearchMask = () => {
@@ -555,7 +562,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
         return colItems
       }) : ''
-    const historyBrowserAll = historyBrowser.getAll()
+    const historyBrowserAll = historyStack.getAll()
     const history =  historyBrowserAll
       ? historyBrowserAll.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic || 9}.png`)
@@ -837,14 +844,14 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
   withOrganizationReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
   withSaga,
   withOrganizationSaga,
   withConnect

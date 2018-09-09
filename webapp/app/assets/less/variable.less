@@ -34,3 +34,11 @@
   text-overflow: ellipsis;
   overflow: hidden;
 }
+
+.hideScrollbar {
+  overflow: -moz-scrollbars-none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { 
+    display: none; 
+  }
+}

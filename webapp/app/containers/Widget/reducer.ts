@@ -75,7 +75,16 @@ function widgetReducer (state = initialState, action) {
     case ADD_WIDGET:
       return state.set('loading', true)
     case ADD_WIDGET_SUCCESS:
-      return state.set('loading', false)
+      if (widgets) {
+        widgets.push(payload.result)
+        return state
+          .set('loading', false)
+          .set('widgets', widgets.slice())
+      } else {
+        return state
+          .set('loading', false)
+          .set('widgets', [payload.result])
+      }
     case ADD_WIDGET_FAILURE:
       return state.set('loading', false)
     case DELETE_WIDGET:

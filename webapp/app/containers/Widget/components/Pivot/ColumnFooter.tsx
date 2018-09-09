@@ -32,17 +32,12 @@ export class ColumnFooter extends React.Component<IColumnFooterProps, {}> {
       tableWidth = length
     }
 
-    const decodedMetrics = metrics.map((m) => ({
-      ...m,
-      name: decodeMetricName(m.name)
-    }))
-
     return (
       <div className={styles.columnFooter}>
         {dimetionAxis &&
           <Xaxis
             width={tableWidth}
-            metrics={decodedMetrics}
+            metrics={metrics}
             data={footers}
             metricAxisConfig={metricAxisConfig}
             dimetionAxis={dimetionAxis}

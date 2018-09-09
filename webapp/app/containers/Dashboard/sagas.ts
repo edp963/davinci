@@ -166,10 +166,11 @@ export function* getDashboardDetail ({ payload }) {
 
 export function* addDashboardItem (action) {
   const { portalId, item, resolve } = action.payload
+
   try {
     const result = yield call(request, {
       method: 'post',
-      url: `${api.portal}/${portalId}/dashboards/${item.dashboardId}/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/${item[0].dashboardId}/widgets`,
       data: item
     })
     yield put(dashboardItemAdded(result.payload))

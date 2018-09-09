@@ -11,13 +11,13 @@ import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
 import { loadTeams } from './actions'
 import saga from './sagas'
-import sagaApp from '../App/sagas'
+// import sagaApp from '../App/sagas'
 import injectReducer from '../../utils/injectReducer'
 import reducer from './reducer'
 import {makeSelectLoginUser} from '../App/selectors'
 import injectSaga from '../../utils/injectSaga'
 import {makeSelectTeams} from './selectors'
-import reducerApp from '../App/reducer'
+// import reducerApp from '../App/reducer'
 import {createStructuredSelector} from 'reselect'
 import {connect} from 'react-redux'
 import {compose} from 'redux'
@@ -110,13 +110,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'team', reducer })
 const withSaga = injectSaga({ key: 'team', saga })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
   withSaga,
   withConnect
 )(Teams)

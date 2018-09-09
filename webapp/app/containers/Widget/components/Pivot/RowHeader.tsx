@@ -107,15 +107,10 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
     let yAxis
     if (dimetionAxis && !(dimetionAxis === 'row' && !colKeys.length && !rowKeys.length)) {
       const { data, length } = getAxisData('y', rowKeys, colKeys, rowTree, colTree, tree, metrics, drawingData, dimetionAxis)
-      const decodedMetrics = metrics.map((m) => ({
-        ...m,
-        name: decodeMetricName(m.name)
-      }))
       yAxis = (
         <Yaxis
           height={length}
-          rowKeys={rowKeys}
-          metrics={decodedMetrics}
+          metrics={metrics}
           data={data}
           dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}

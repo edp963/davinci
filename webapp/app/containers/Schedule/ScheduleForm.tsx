@@ -77,11 +77,11 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
     const minuteOptions = []
     const monthOptions = []
     while (minuteIndex < 60) {
-      minuteOptions.push(<Option key={minuteIndex} value={minuteIndex}>{minuteIndex}</Option>)
+      minuteOptions.push(<Option key={minuteIndex} value={`${minuteIndex}`}>{minuteIndex}</Option>)
       minuteIndex++
     }
     while (monthIndex < 32) {
-      monthOptions.push(<Option key={monthIndex} value={monthIndex}>{monthIndex}</Option>)
+      monthOptions.push(<Option key={monthIndex} value={`${monthIndex}`}>{monthIndex}</Option>)
       monthIndex++
     }
     return (

@@ -26,6 +26,7 @@ import edp.core.model.QueryColumn;
 import edp.core.utils.AESUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.TokenUtils;
+import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.model.TokenEntity;
@@ -54,7 +55,7 @@ import java.util.*;
 
 @Service
 @Slf4j
-public class ShareServiceImpl implements ShareService {
+public class ShareServiceImpl extends CommonService implements ShareService {
 
     @Autowired
     private TokenUtils tokenUtils;
@@ -101,14 +102,24 @@ public class ShareServiceImpl implements ShareService {
             throw new ServerException("Invalid share token");
         }
 
-        User user = userMapper.selectByUsername(userLogin.getUsername());
-        if (null == user) {
-            return new ResultMap().fail().message("user not found").payload("username or password invalid");
+        User loginUser = userMapper.selectByUsername(userLogin.getUsername());
+        if (null == loginUser) {
+            return new ResultMap().fail().payload("username or password invalid").message("user not found");
+        }
+
+        Long shareUserId = Long.parseLong(tokenInfos[1]);
+        if (shareUserId.longValue() < 1L) {
+            throw new ServerException("Invalid share token");
+        }
+
+        User shareUser = userMapper.getById(shareUserId);
+        if (null == shareUser) {
+            throw new ServerException("Invalid share token");
         }
 
         //校验密码
-        if (!BCrypt.checkpw(userLogin.getPassword(), user.getPassword())) {
-            return new ResultMap().fail().message("password is wrong").payload("username or password invalid");
+        if (!BCrypt.checkpw(userLogin.getPassword(), loginUser.getPassword())) {
+            return new ResultMap().fail().payload("username or password invalid").message("password is wrong");
         }
 
         if (tokenInfos.length == 3) {
@@ -116,24 +127,24 @@ public class ShareServiceImpl implements ShareService {
                 throw new ServerException("Invalid share token");
             }
             try {
-                String shareUserName = tokenInfos[2];
-                Long shareUserId = Long.parseLong(tokenCrypts[1]);
-                if (!user.getUsername().equals(shareUserName) || !user.getId().equals(shareUserId)) {
-                    return new ResultMap().fail().message("Invalid token username");
+                String sharedUserName = tokenInfos[2];
+                Long sharedUserId = Long.parseLong(tokenCrypts[1]);
+                if (!(loginUser.getUsername().equals(sharedUserName) && loginUser.getId().equals(sharedUserId)) && !loginUser.getId().equals(shareUserId)) {
+                    return new ResultMap().fail().message("The resource requires authentication, which was not supplied with the request");
                 }
             } catch (NumberFormatException e) {
-                return new ResultMap().fail().message("Invalid token username");
+                return new ResultMap().fail().message("The resource requires authentication, which was not supplied with the request");
             }
         }
 
         //是否激活
-        if (!user.getActive()) {
-            return new ResultMap().failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
+        if (!loginUser.getActive()) {
+            return new ResultMap().failWithToken(tokenUtils.generateToken(loginUser)).message("this user is not active");
         }
 
         UserLoginResult userLoginResult = new UserLoginResult();
-        BeanUtils.copyProperties(user, userLoginResult);
-        return new ResultMap().success(tokenUtils.generateToken(user)).payload(userLoginResult);
+        BeanUtils.copyProperties(loginUser, userLoginResult);
+        return new ResultMap().success(tokenUtils.generateToken(loginUser)).payload(userLoginResult);
     }
 
     /**
@@ -397,13 +408,17 @@ public class ShareServiceImpl implements ShareService {
             Long viewId = shareInfo.getShareId();
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
 
+            if (!allowDownload(viewWithProjectAndSource.getProject(), shareInfo.getShareUser())) {
+                resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
+            }
+
             List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             if (null != columns && columns.size() > 0) {
                 String csvPath = fileUtils.fileBasePath + File.separator + "csv";
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
                 String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
                 String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
                 filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
@@ -413,7 +428,7 @@ public class ShareServiceImpl implements ShareService {
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
-        return resultSuccess(user, request).payload(filePath);
+        return resultSuccess(user, request).payload(getHost() + filePath);
     }
 
     /**
@@ -528,34 +543,7 @@ public class ShareServiceImpl implements ShareService {
         String[] tokenInfos = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
         String[] tokenCrypts = tokenPassword.split(Constants.SPLIT_CHAR_STRING);
 
-
         if (tokenInfos.length < 2) {
-            throw new ServerException("Invalid share token");
-        }
-
-        String sharedUserName = null;
-        if (tokenInfos.length == 3) {
-            if (tokenCrypts.length < 2) {
-                throw new ServerException("Invalid share token");
-            }
-            String username = tokenInfos[2];
-            Long userId = Long.parseLong(tokenCrypts[1]);
-            User tokenUser = userMapper.selectByUsername(username);
-            if (null == tokenUser || !tokenUser.getId().equals(userId)) {
-                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
-            }
-
-            if (null == user || !user.getId().equals(tokenUser.getId())) {
-                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
-            }
-
-            sharedUserName = username;
-        }
-
-        Long shareId1 = Long.parseLong(tokenInfos[0]);
-        Long shareId2 = Long.parseLong(tokenCrypts[0]);
-
-        if (shareId1.longValue() < 1L || shareId2.longValue() < 1L || !shareId1.equals(shareId2)) {
             throw new ServerException("Invalid share token");
         }
 
@@ -566,6 +554,32 @@ public class ShareServiceImpl implements ShareService {
 
         User shareUser = userMapper.getById(shareUserId);
         if (null == shareUser) {
+            throw new ServerException("Invalid share token");
+        }
+
+        String sharedUserName = null;
+        if (tokenInfos.length == 3) {
+            if (tokenCrypts.length < 2) {
+                throw new ServerException("Invalid share token");
+            }
+            String username = tokenInfos[2];
+            Long sharedUserId = Long.parseLong(tokenCrypts[1]);
+            User sharedUser = userMapper.selectByUsername(username);
+            if (null == sharedUser || !sharedUser.getId().equals(sharedUserId)) {
+                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+            }
+
+            if (null == user || (!user.getId().equals(sharedUserId) && !user.getId().equals(shareUserId))) {
+                throw new UnAuthorizedExecption("The resource requires authentication, which was not supplied with the request");
+            }
+
+            sharedUserName = username;
+        }
+
+        Long shareId1 = Long.parseLong(tokenInfos[0]);
+        Long shareId2 = Long.parseLong(tokenCrypts[0]);
+
+        if (shareId1.longValue() < 1L || shareId2.longValue() < 1L || !shareId1.equals(shareId2)) {
             throw new ServerException("Invalid share token");
         }
 

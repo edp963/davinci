@@ -22,8 +22,8 @@ import OrganizationForm from './component/OrganizationForm'
 const utilStyles = require('../../assets/less/util.less')
 const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
-import sagaApp from '../App/sagas'
-import reducerApp from '../App/reducer'
+// import sagaApp from '../App/sagas'
+// import reducerApp from '../App/reducer'
 import {checkNameUniqueAction} from '../App/actions'
 
 interface IOrganizationsState {
@@ -178,13 +178,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'organization', reducer })
 const withSaga = injectSaga({ key: 'organization', saga })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
   withSaga,
   withConnect
 )(Organizations)

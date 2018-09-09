@@ -7,8 +7,8 @@ import Background from '../../containers/Login/Background'
 const Icon = require('antd/lib/icon')
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducer from '../App/reducer'
-import saga from '../App/sagas'
+// import reducer from '../App/reducer'
+// import saga from '../App/sagas'
 
 import {connect} from 'react-redux'
 import {joinOrganization, login} from '../App/actions'
@@ -201,12 +201,12 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IJoinOrganizationProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({key: 'global', reducer})
-const withSaga = injectSaga({key: 'global', saga})
+// const withReducer = injectReducer({key: 'global', reducer})
+// const withSaga = injectSaga({key: 'global', saga})
 
 export default compose(
-  withReducer,
-  withSaga,
+  // withReducer,
+  // withSaga,
   withConnect
 )(JoinOrganization)
 

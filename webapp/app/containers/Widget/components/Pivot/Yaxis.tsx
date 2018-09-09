@@ -2,14 +2,13 @@ import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
 import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
 import { IChartLine, IChartUnit } from './Chart'
-import { metricAxisLabelFormatter } from '../util'
+import { metricAxisLabelFormatter, decodeMetricName } from '../util'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
 interface IYaxisProps {
   height: number
-  rowKeys: string[][]
   metrics: IPivotMetric[]
   data: any[]
   dimetionAxis: DimetionType
@@ -28,7 +27,7 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { rowKeys, metrics, data, dimetionAxis, metricAxisConfig } = this.props
+    const { metrics, data, dimetionAxis, metricAxisConfig } = this.props
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
@@ -105,14 +104,14 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
               yAxis.push({
                 gridIndex: index,
                 type: 'value',
-                name: m.name,
+                name: decodeMetricName(m.name),
                 nameLocation: 'middle',
                 nameGap: 45,
                 nameTextStyle: {
                   color: '#333'
                 },
                 ...metricAxisStyle,
-                ...metricAxisConfig[m.name]
+                ...metricAxisConfig[m.name].yAxis
               })
             } else {
               xAxis.push({

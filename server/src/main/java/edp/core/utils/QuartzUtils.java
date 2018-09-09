@@ -19,6 +19,7 @@
 package edp.core.utils;
 
 import edp.core.common.job.QuartzJobFactory;
+import edp.core.consts.Consts;
 import edp.core.exception.ServerException;
 import edp.core.model.ScheduleJob;
 import org.quartz.*;
@@ -42,7 +43,7 @@ public class QuartzUtils {
             }
 
             JobDetail jobDetail = JobBuilder.newJob(QuartzJobFactory.class).withIdentity(scheduleJob.getId().toString()).build();
-            jobDetail.getJobDataMap().put("jobs", scheduleJob);
+            jobDetail.getJobDataMap().put(Consts.SCHEDULE_JOB_DATA_KEY, scheduleJob);
 
             TriggerBuilder<CronTrigger> triggerBuilder = TriggerBuilder
                     .newTrigger()

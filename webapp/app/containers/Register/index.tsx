@@ -210,12 +210,12 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IRegisterProps>(mapStateToProps, mapDispatchToProps)
-const withReducer = injectReducer({ key: 'global', reducer })
-const withSaga = injectSaga({ key: 'global', saga })
+const withReducer = injectReducer({ key: 'register', reducer })
+const withSaga = injectSaga({ key: 'register', saga })
 
 export default compose(
-  withReducer,
-  withSaga,
+  // withReducer,
+  // withSaga,
   withConnect
 )(Register)
 
