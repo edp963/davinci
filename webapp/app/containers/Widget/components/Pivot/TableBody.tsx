@@ -27,7 +27,6 @@ export interface ITableBodyProps {
   tree: object
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
-  scatterXaxisConfig: IMetricAxisConfig
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   color?: IDataParamProperty
@@ -185,7 +184,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       tree,
       metrics,
       metricAxisConfig,
-      scatterXaxisConfig,
       drawingData,
       dimetionAxis,
       color,
@@ -461,7 +459,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           drawingData={drawingData}
           dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}
-          scatterXaxisConfig={scatterXaxisConfig}
           color={color}
           label={label}
           size={size}

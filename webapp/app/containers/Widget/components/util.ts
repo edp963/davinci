@@ -553,6 +553,10 @@ export function getTriggeringRecord (params, seriesData) {
   return record
 }
 
+export function getSizeRate (min, max) {
+  return Math.max(min / 10, max / 100)
+}
+
 export function getSizeValue (value) {
   return value >= PIVOT_DEFAULT_SCATTER_SIZE_TIMES
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1

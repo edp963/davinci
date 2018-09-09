@@ -6,7 +6,6 @@ const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
 const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
-import {IconProps} from 'antd/lib/icon/index'
 const Popconfirm = require('antd/lib/popconfirm')
 const Modal = require('antd/lib/modal')
 

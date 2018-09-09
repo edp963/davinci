@@ -10,14 +10,27 @@ import FilterSettingForm from './FilterSettingForm'
 import { IPivotProps, DimetionType } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
+import { ChromePicker } from 'react-color'
+import ColorPicker from '../../../../components/ColorPicker'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
+const Radio = require('antd/lib/radio/radio')
+const RadioButton = Radio.Button
+const RadioGroup = Radio.Group
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Checkbox = require('antd/lib/checkbox')
+const Select = require('antd/lib/select')
+const Option = Select.Option
 const Dropdown = require('antd/lib/dropdown')
 const Modal = require('antd/lib/modal')
+const Popover = require('antd/lib/popover')
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
@@ -50,6 +63,7 @@ interface IOperatingPanelProps {
 interface IOperatingPanelStates {
   dragged: IDataParamSource
   showColsAndRows: boolean
+  selectedTab: 'data' | 'style' | 'variable' | 'cache'
   commonParams: IDataParams
   specificParams: IDataParams
   modalCachedData: IDataParamSource
@@ -67,6 +81,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.state = {
       dragged: null,
       showColsAndRows: false,
+      selectedTab: 'data',
       commonParams: {
         cols: { title: '列', type: 'category', items: [] },
         rows: { title: '行', type: 'category', items: [] },
@@ -84,6 +99,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
+  private tabKeys = [
+    { key: 'data', title: '数据' },
+    { key: 'style', title: '样式' },
+    { key: 'variable', title: '变量' },
+    { key: 'cache', title: '缓存' }
+  ]
   private lastRequestParamString = null
   private colorSettingForm = null
   private actOnSettingForm = null
@@ -677,6 +698,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.filterSettingForm.reset()
   }
 
+  private tabSelect = (key) => () => {
+    this.setState({
+      selectedTab: key
+    })
+  }
+
   public render () {
     const {
       views,
@@ -687,6 +714,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const {
       dragged,
       showColsAndRows,
+      selectedTab,
       commonParams,
       specificParams,
       modalCachedData,
@@ -774,6 +802,216 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       [styles.switchRowsAndCols]: true,
       [utilStyles.hide]: !showColsAndRows
     })
+
+    const tabs = this.tabKeys.map(({key, title}) => {
+      const tabClass = classnames({
+        [styles.selected]: key === selectedTab
+      })
+      return (
+        <li
+          key={key}
+          className={tabClass}
+          onClick={this.tabSelect(key)}
+        >
+          {title}
+        </li>
+      )
+    })
+
+    let tabPane
+    switch (selectedTab) {
+      case 'data':
+        tabPane = (
+          <div className={`${styles.paramsPane} ${styles.dropPane}`}>
+            <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
+              <Icon type="swap" />
+              {showColsAndRows ? ' 使用维度' : ' 使用行列'}
+            </div>
+            <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
+              <Icon type="retweet" /> 行列切换
+            </div>
+            {dropboxes}
+          </div>
+        )
+        break
+      case 'style':
+        tabPane = (
+          <div className={styles.paramsPane}>
+            <div className={styles.paneBlock}>
+              <h4>X轴</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示坐标轴</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="样式" className={styles.blockElm}>
+                      <Option key="solid" value="solid">实线</Option>
+                      <Option key="dashed" value="dashed">虚线</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="粗细" className={styles.blockElm}>
+                      {Array.from(Array(10), (o, i) => (
+                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标签文字</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <div className={styles.paneBlock}>
+              <h4>Y轴</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={4} push={1}>标题:</Col>
+                  <Col span={19} push={1}>
+                    <Input />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={4} push={1}>单位:</Col>
+                  <Col span={19} push={1}>
+                    <Input />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示坐标轴</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="样式" className={styles.blockElm}>
+                      <Option key="solid" value="solid">实线</Option>
+                      <Option key="dashed" value="dashed">虚线</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="粗细" className={styles.blockElm}>
+                      {Array.from(Array(10), (o, i) => (
+                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标签文字</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <Checkbox>显示标题和单位</Checkbox>
+                  </Col>
+                </Row>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={10}>
+                    <Select placeholder="字体" className={styles.blockElm}>
+                      <Option key="solid" value="solid">微软雅黑</Option>
+                      <Option key="dashed" value="dashed">宋体</Option>
+                      <Option key="dotted" value="dotted">点</Option>
+                    </Select>
+                  </Col>
+                  <Col span={10}>
+                    <Select placeholder="文字大小" className={styles.blockElm}>
+                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
+                          <Option key={o} value={`${o}`}>{o}</Option>
+                        ))}
+                    </Select>
+                  </Col>
+                  <Col span={4}>
+                    <ColorPicker />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </div>
+        )
+        break
+      case 'cache':
+        tabPane = (
+          <div className={styles.paramsPane}>
+            <div className={styles.paneBlock}>
+              <h4>开启缓存</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <RadioGroup size="small" defaultValue={false}>
+                      <RadioButton value={false}>关闭</RadioButton>
+                      <RadioButton value={true}>开启</RadioButton>
+                    </RadioGroup>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+            <div className={styles.paneBlock}>
+              <h4>缓存有效期（秒）</h4>
+              <div className={styles.blockBody}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <InputNumber defaultValue={60} />
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          </div>
+        )
+        break
+    }
 
     let colorSettingConfig
     let actOnSettingConfig
@@ -864,21 +1102,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <i className="iconfont icon-parallel" />
             <i className="iconfont icon-confidence-band" /> */}
           </div>
-          <div className={styles.props}>
-            <ul className={styles.propsTitle}>
-              <li>数据</li>
-              <li>样式</li>
-            </ul>
-            <div className={styles.propsBody}>
-              <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
-                <Icon type="swap" />
-                {showColsAndRows ? ' 使用维度' : ' 使用行列'}
-              </div>
-              <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
-                <Icon type="retweet" /> 行列切换
-              </div>
-              {dropboxes}
-            </div>
+          <div className={styles.params}>
+            <ul className={styles.paramsTab}>{tabs}</ul>
+            {tabPane}
           </div>
         </div>
         <Modal

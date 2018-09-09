@@ -59,7 +59,6 @@ interface IChartProps {
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
-  scatterXaxisConfig?: IMetricAxisConfig
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -136,7 +135,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
     }
   }
 
-  private getYaxisOption = (index, metricAxisConfig, metricName) => {
+  private getYaxisOption = (index, metricAxisConfig) => {
     return {
       gridIndex: index,
       type: 'value',
@@ -152,7 +151,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           type: 'dotted'
         }
       },
-      ...metricAxisConfig[metricName]
+      ...metricAxisConfig
     }
   }
 
@@ -164,7 +163,6 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       data,
       drawingData,
       metricAxisConfig,
-      scatterXaxisConfig,
       dimetionAxis,
       color,
       label,
@@ -244,7 +242,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     height
                   })
                   xAxis.push(this.getXaxisOption(index, 'category', xAxisData))
-                  yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
+                  yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
                 }
 
                 if (m.chart.coordinate === 'cartesian') {
@@ -293,8 +291,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             height: elementSize
                           })
                         }
-                        xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
-                        yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
+                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXaxis))
+                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
                         Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
                           let data
                           if (groupedRecords[colKey]) {
@@ -308,7 +306,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             data = [{
                               value: [data[0], data[1]],
                               symbolSize: currentSizeItem
-                                ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
+                                ? getSymbolSize(m.name, data[2]) * currentSizeValue
                                 : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             }]
                           } else {
@@ -362,7 +360,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             data.push({
                               value: result[0],
                               symbolSize: currentSizeItem
-                                ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
+                                ? getSymbolSize(m.name, result[1]) * currentSizeValue
                                 : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             })
                           } else {
@@ -419,8 +417,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             height: elementSize
                           })
                         }
-                        xAxis.push(this.getYaxisOption(index, scatterXaxisConfig, decodeMetricName(currentScatterXaxisItem.name)))
-                        yAxis.push(this.getYaxisOption(index, metricAxisConfig, decodedMetricName))
+                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXaxis))
+                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
                         let data
                         if (recordCollection.value) {
                           data = recordCollection.value.reduce((sum, record) => [
@@ -431,7 +429,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           data = [{
                             value: [data[0], data[1]],
                             symbolSize: currentSizeItem
-                              ? getSymbolSize(currentSizeItem.name, data[2]) * currentSizeValue
+                              ? getSymbolSize(m.name, data[2]) * currentSizeValue
                               : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                           }]
                         } else {
@@ -471,7 +469,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             return {
                               value: result[0],
                               symbolSize: currentSizeItem
-                                ? getSymbolSize(currentSizeItem.name, result[1]) * currentSizeValue
+                                ? getSymbolSize(m.name, result[1]) * currentSizeValue
                                 : PIVOT_DEFAULT_SCATTER_SIZE * currentSizeValue
                             }
                           } else {
