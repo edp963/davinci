@@ -39,7 +39,7 @@ import Container from '../../components/Container'
 import DashboardItemForm from './components/DashboardItemForm'
 import DashboardItem from './components/DashboardItem'
 import SharePanel from '../../components/SharePanel'
-import DashboardLinkagePanel from './components/linkage/LinkagePanel'
+import DashboardLinkageConfig from 'components/Linkages/LinkageConfig'
 import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfigPanel'
 // import GlobalFilters from './components/globalFilter/GlobalFilters'
 
@@ -49,7 +49,7 @@ import GlobalFilterConfig from '../../components/Filters/FilterConfig'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import { ButtonProps } from 'antd/lib/button/button'
+import Button, { ButtonProps } from 'antd/lib/button/button'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
@@ -63,7 +63,7 @@ const Menu = require('antd/lib/menu')
 
 import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName } from '../Widget/components/util'
+import { decodeMetricName, getAggregatorLocale } from '../Widget/components/util'
 import { uuid } from '../../utils/util'
 import {
   loadDashboardDetail,
@@ -102,7 +102,6 @@ import {
 } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { makeSelectLoginUser } from '../App/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import {
@@ -130,7 +129,6 @@ interface IGridProps {
   dashboards: any[]
   widgets: any[]
   bizlogics: any[]
-  loginUser: { id: number, admin: boolean }
   currentProject: IProject
   router: InjectedRouter
   params: any
@@ -217,9 +215,10 @@ interface IGridStates {
   modalLoading: boolean
   selectedWidget: number
   polling: boolean
-  linkagePanelVisible: boolean
+  linkageConfigVisible: boolean
   linkageTableSource: any[]
   linkageCascaderSource: any[]
+  savingLinkageConfig: boolean
   globalFilterConfigPanelVisible: boolean
   globalFilterTableSource: any[]
   dashboardSharePanelAuthorized: boolean
@@ -282,9 +281,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       selectedWidget: 0,
       polling: false,
 
-      linkagePanelVisible: false,
+      linkageConfigVisible: false,
       linkageTableSource: null,
       linkageCascaderSource: null,
+      savingLinkageConfig: false,
 
       globalFilterConfigPanelVisible: false,
       globalFilterTableSource: [],
@@ -324,25 +324,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  public componentWillReceiveProps (nextProps) {
+  public componentWillReceiveProps (nextProps: IGridProps) {
     const {
-      loginUser,
       currentDashboard,
       currentDashboardLoading,
       currentItems,
-      currentDatasources,
-      params,
-      widgets,
-      bizlogics,
-      dashboards
+      params
     } = nextProps
     const { onLoadDashboardDetail, onLoadCascadeSourceFromDashboard } = this.props
-    const { layoutInitialized, linkageCascaderSource, globalFilterTableSource } = this.state
+    const { layoutInitialized, globalFilterTableSource } = this.state
 
     if (params.dashboardId !== this.props.params.dashboardId) {
       this.setState({
-        nextMenuTitle: '',
-        linkageCascaderSource: null
+        nextMenuTitle: ''
       })
 
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
@@ -351,19 +345,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     if (!currentDashboardLoading) {
-      // dashboard 加载完成或修改完成
-      if (this.props.currentDashboardLoading) {
-        this.setState({
-          linkageTableSource: this.adjustLinkageTableSource(currentDashboard, currentItems),
-          globalFilterTableSource: this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
-        })
-        globalFilterTableSource.forEach((gft) => {
-          if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
-            onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, gft.cascadeColumn)
-          }
-        })
-      }
-
       if (currentItems && !layoutInitialized) {
         this.setState({
           mounted: true
@@ -372,44 +353,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
           this.containerBody.addEventListener('scroll', this.lazyLoad, false)
         })
-      }
-
-      if (loginUser.admin) {
-        if (currentItems && widgets && !linkageCascaderSource) {
-          this.setState({
-            linkageCascaderSource: currentItems.map((ci) => ({
-              label: widgets.find((w) => w.id === ci.widgetId).name,
-              value: ci.id,
-              children: []
-            }))
-          })
-        }
-
-        // if (currentItems &&
-        //     bizlogics &&
-        //     currentDatasources &&
-        //     linkageCascaderSource) {
-        //   const itemKeys = Object.keys(currentDatasources)
-
-        //   if (itemKeys.join('') !== Object.keys(this.props.currentDatasources).join('')) {
-        //     // 当 datasources key 不同时刷新 linkageCascaderSource
-        //     this.refreshLinkageCascaderSource(nextProps)
-        //   } else {
-        //     // key 相同，引用有不同时也刷新 linkageCascaderSource
-        //     let changeSign = false
-
-        //     for (let i = 0, il = itemKeys.length; i < il; i += 1) {
-        //       if (currentDatasources[itemKeys[i]] !== this.props.currentDatasources[itemKeys[i]]) {
-        //         changeSign = true
-        //         break
-        //       }
-        //     }
-
-        //     if (changeSign) {
-        //       this.refreshLinkageCascaderSource(nextProps)
-        //     }
-        //   }
-        // }
       }
     }
   }
@@ -670,11 +613,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: 3
       }
       this.props.onAddDashboardItem(Number(params.portalId), {...newItem, ...positionInfo}, (dashboardItem: IDashboardItem) => {
-        // linkageCascaderSource.push({
-        //   label: widgets.find((w) => w.id === dashboardItem.widgetId).name,
-        //   value: dashboardItem.id,
-        //   children: []
-        // })
         this.hideDashboardItemForm()
       })
     } else {
@@ -735,15 +673,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private showLinkagePanel = () => {
+  private showLinkageConfig = () => {
+    // get newest linkage config cascader source
+    const linkageCascaderSource = this.getLinkageConfigSource()
+
     this.setState({
-      linkagePanelVisible: true
+      linkageCascaderSource,
+      linkageConfigVisible: true
     })
   }
 
-  private hideLinkagePanel = () => {
+  private hideLinkageConfig = () => {
     this.setState({
-      linkagePanelVisible: false
+      linkageConfigVisible: false
     })
   }
 
@@ -754,16 +696,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private addToLinkageTable = (formValues) => {
+  private savingLinkageConfig = () => {
     this.setState({
-      linkageTableSource: this.state.linkageTableSource.concat({
-        ...formValues,
-        key: uuid(8, 16)
-      })
+      savingLinkageConfig: !this.state.savingLinkageConfig
     })
   }
 
-  private saveLinkageConditions = () => {
+  private saveLinkageConfig = (linkages: any[]) => {
     // todo
     const {
       currentDashboard,
@@ -772,8 +711,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       widgets,
       onEditCurrentDashboard
     } = this.props
-
-    const { linkageTableSource } = this.state
 
     Object.keys(interactiveItems).forEach((itemId) => {
       if (interactiveItems[itemId].interactId) {
@@ -810,49 +747,62 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     onEditCurrentDashboard(
       {
         ...currentDashboard,
-        linkage_detail: JSON.stringify(linkageTableSource),
+        linkage_detail: JSON.stringify(linkages),
         // FIXME
         active: true
       },
       () => {
-        this.hideLinkagePanel()
+        this.hideLinkageConfig()
       }
     )
   }
 
-  private deleteLinkageCondition = (key) => () => {
-    this.setState({
-      linkageTableSource: this.state.linkageTableSource.filter((lt) => lt.key !== key)
-    })
-  }
+  private getLinkageConfigSource = () => {
+    const { currentItems, widgets, bizlogics, currentItemsInfo } = this.props
+    const varReg = /query@var\s+\$(\w+)\$/g
 
-  private refreshLinkageCascaderSource = (props) => {
-    const { currentItems, widgets, bizlogics, currentDatasources } = props
-
-    Object.keys(currentDatasources).forEach((k) => {
+    const linkageConfigSource = []
+    Object.keys(currentItemsInfo).forEach((k) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const flattable = bizlogics.find((bl) => bl.id === widget.flatTable_id)
-      const variableArr = flattable.sql_tmpl.match(/query@var\s+\$\w+\$/g) || []
+      const widgetConfig: IPivotProps = JSON.parse(widget.config)
+      const { cols, rows, metrics } = widgetConfig
+
+      const view = bizlogics.find((bl) => bl.id === widget.viewId)
+      const { sql, model } = view
+      const modelObj = JSON.parse(model)
+      const variableArr = (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
-      const params = currentDatasources[k].keys.map((pk, index) => ({
-        label: `${pk}`,
-        value: `${pk}${DEFAULT_SPLITER}${currentDatasources[k].types[index]}${DEFAULT_SPLITER}parameter`
-      }))
+      const params = [
+        [...cols, ...rows].filter((key) => model[key]).map((key) => ({
+          label: key,
+          value: [key, modelObj[key].sqlType, 'parameter'].join(DEFAULT_SPLITER)
+        })),
+        ...metrics.map(({ name, agg }) => ({
+          label: `${getAggregatorLocale(agg)} ${decodeMetricName(name)}`,
+          value: [name, SQL_NUMBER_TYPES[SQL_NUMBER_TYPES.length - 1], 'parameter'].join(DEFAULT_SPLITER)
+        }))
+      ]
 
-      const variables = variableArr.map((va) => {
-        const val = va.substring(va.indexOf('$') + 1, va.lastIndexOf('$'))
+      const variables = variableArr.map((val) => {
         return {
           label: `${val}[变量]`,
-          value: `${val}${DEFAULT_SPLITER}variable`
+          value: [val, 'variable'].join(DEFAULT_SPLITER)
         }
       })
 
-      const sourceItem = this.state.linkageCascaderSource.find((ld) => `${ld.value}` === k)
-      sourceItem.label = widget.name
-      sourceItem.children = params.concat(variables)
+      linkageConfigSource.push({
+        label: widget.name,
+        value: k,
+        children: {
+          params,
+          variables
+        }
+      })
     })
+
+    return linkageConfigSource
   }
 
   private checkInteract = (itemId) => {
@@ -1056,36 +1006,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private afterGlobalFilterConfigPanelClose = () => {
-    const { currentDashboard, currentItems } = this.props
-    this.setState({
-      globalFilterTableSource: this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
-    })
-  }
-
-  private saveToGlobalFilterTable = (formValues) => {
-    const { globalFilterTableSource } = this.state
-
-    if (formValues.key) {
-      globalFilterTableSource.splice(globalFilterTableSource.findIndex((gfts) => gfts.key === formValues.key), 1, formValues)
-    } else {
-      globalFilterTableSource.push({
-        ...formValues,
-        key: uuid(8, 16)
-      })
-    }
-
-    this.setState({
-      globalFilterTableSource: globalFilterTableSource.slice()
-    })
-  }
-
-  private deleteFromGlobalFilterTable = (key) => () => {
-    this.setState({
-      globalFilterTableSource: this.state.globalFilterTableSource.filter((gfts) => gfts.key !== key)
-    })
-  }
-
   private saveFilters = (filterItems) => {
     const {
       currentDashboard,
@@ -1157,15 +1077,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems, widgets } = this.props
     const dashboardItem = currentItems.find((ci) => ci.id === dashboardItemId)
     const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-    const widgetlib = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
+    const widgetlib = widgetlibs.find((wl) => wl.id === widget.type)
     return {
       name: widget.name,
       type: widgetlib.name
     }
-  }
-
-  private getCascadeSource = (sql) => (itemId, controlId, flatTableId, column, parents) => {
-    this.props.onLoadCascadeSourceFromItem(itemId, controlId, flatTableId, sql, column, parents)
   }
 
   private adjustLinkageTableSource = (currentDashboard, currentItems) => {
@@ -1189,24 +1105,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
-    const config = JSON.parse(currentDashboard.config || '{}')
-    const globalFilterTableSource = config.filters || []
-
-    return globalFilterTableSource.map((gfts) => {
-      const { relatedViews } = gfts
-      let { items } = relatedViews
-      if (items) {
-        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
-      }
-      return gfts
-    })
-  }
-
   private getFilterOptions = (viewId, fieldName, filterKey) => {
     const { onLoadDistinctValue } = this.props
     const { filterOptions } = this.state
-    if (filterOptions[filterKey]) { return }
     onLoadDistinctValue(viewId, fieldName, (data) => {
       this.setState({
         filterOptions: {
@@ -1249,9 +1150,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       selectedWidget,
       polling,
       dashboardItemFormStep,
-      linkagePanelVisible,
+      linkageConfigVisible,
       linkageCascaderSource,
       linkageTableSource,
+      savingLinkageConfig,
       globalFilterConfigPanelVisible,
       globalFilterTableSource,
       allowFullScreen,
@@ -1408,7 +1310,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       <Button
         key="cancel"
         size="large"
-        onClick={this.hideLinkagePanel}
+        onClick={this.hideLinkageConfig}
       >
         取 消
       </Button>
@@ -1419,7 +1321,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         type="primary"
         loading={currentDashboardLoading}
         disabled={currentDashboardLoading}
-        onClick={this.saveLinkageConditions}
+        onClick={this.savingLinkageConfig}
       >
         保 存
       </Button>
@@ -1454,8 +1356,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (currentDashboard) {
       const AddButton = ModulePermission(currentProject, 'viz', true)(Button)
       const ShareButton = ShareDownloadPermission<ButtonProps>(currentProject, 'share')(Button)
-      const LinkageButton = ModulePermission(currentProject, 'viz', false)(Button)
-      const GlobalFilterButton = ModulePermission(currentProject, 'viz', false)(Button)
+      const LinkageButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
+      const GlobalFilterButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
 
       addButton = (
         <Tooltip placement="bottom" title="新增">
@@ -1503,7 +1405,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             type="primary"
             icon="link"
             style={{marginLeft: '8px'}}
-            onClick={this.showLinkagePanel}
+            onClick={this.showLinkageConfig}
           />
         </Tooltip>
       )
@@ -1602,40 +1504,26 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
-        <Modal
-          title="联动关系配置"
-          wrapClassName="ant-modal-large"
-          visible={linkagePanelVisible}
-          onCancel={this.hideLinkagePanel}
-          footer={linkageModalButtons}
-          afterClose={this.afterLinkagePanelClose}
-        >
-          <DashboardLinkagePanel
-            cascaderSource={linkageCascaderSource || []}
-            tableSource={linkageTableSource || []}
-            onAddToTable={this.addToLinkageTable}
-            onDeleteFromTable={this.deleteLinkageCondition}
-            onGetWidgetInfo={this.getWidgetInfo}
-          />
-        </Modal>
-        {/* <Modal
-          title="全局筛选配置"
-          visible={globalFilterConfigPanelVisible}
-          onCancel={this.hideGlobalFilterConfigPanel}
-          footer={globalFilterConfigModalButtons}
-          afterClose={this.afterGlobalFilterConfigPanelClose}
-        >
-          <GlobalFilterConfigPanel
-            items={currentItems || []}
-            widgets={widgets || []}
-            bizlogics={bizlogics || []}
-            dataSources={currentDatasources || {}}
-            tableSource={globalFilterTableSource}
-            onSaveToTable={this.saveToGlobalFilterTable}
-            onDeleteFromTable={this.deleteFromGlobalFilterTable}
-            onLoadBizdataSchema={onLoadBizdataSchema}
-          />
-        </Modal> */}
+        {
+          !this.hideLinkageConfig ? null : (
+            <Modal
+              title="联动关系配置"
+              wrapClassName="ant-modal-large"
+              visible={linkageConfigVisible}
+              onCancel={this.hideLinkageConfig}
+              footer={linkageModalButtons}
+              afterClose={this.afterLinkagePanelClose}
+            >
+              <DashboardLinkageConfig
+                cascaderSource={linkageCascaderSource || []}
+                tableSource={linkageTableSource || []}
+                onGetWidgetInfo={this.getWidgetInfo}
+                saving={savingLinkageConfig}
+                onSave={this.saveLinkageConfig}
+              />
+            </Modal>
+          )
+        }
         {
           !globalFilterConfigPanelVisible ? null : (
             <Modal
@@ -1688,7 +1576,6 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
-  loginUser: makeSelectLoginUser(),
   currentProject: makeSelectCurrentProject()
 })
 
