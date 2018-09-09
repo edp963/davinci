@@ -17,7 +17,9 @@
       "*": [
         "*"
       ],
-      "utils/*": [ "app/utils/*" ]
+      "utils/*": [ "app/utils/*" ],
+      "assets/*": [ "app/assets/*" ],
+      "components/*": [ "app/components/*" ]
     }
 //    "paths": {
 //      "utils/*": [ "app/utils/*" ]
