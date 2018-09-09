@@ -27,6 +27,7 @@ interface IMemberListState {
   changeRoleFormCategory: string
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
+  currentTeamMembers: any[]
 }
 
 interface IMemberListProps {
@@ -50,12 +51,27 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormCategory: '',
       currentMember: {},
       changeRoleFormVisible: false,
-      changeRoleModalLoading: false
+      changeRoleModalLoading: false,
+      currentTeamMembers: []
     }
   }
-
-  private onSearchMember = () => {
-
+  public componentDidMount () {
+    const {currentTeamMembers} = this.props
+    if (currentTeamMembers) {
+      this.setState({
+        currentTeamMembers
+      })
+    }
+  }
+  private onSearchMember = (event) => {
+    const value = event.target.value
+    const {currentTeamMembers} = this.props
+    const result = (currentTeamMembers as Team.ITeamMembers[]).filter((member, index) => {
+      return member && member.user && member.user.username.indexOf(value.trim()) > -1
+    })
+    this.setState({
+      currentTeamMembers: value && value.length ? result : this.props.currentTeamMembers
+    })
   }
   private AddForm: WrappedFormUtils
   private ChangeRoleForm: WrappedFormUtils
@@ -125,10 +141,10 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       formType,
       changeRoleFormVisible,
       changeRoleModalLoading,
-      changeRoleFormCategory
+      changeRoleFormCategory,
+      currentTeamMembers
     } = this.state
-    const { currentTeamMembers, currentTeam} = this.props
-    const currentTeamMember = Array.isArray(currentTeamMembers) ? currentTeamMembers : []
+    const { currentTeam} = this.props
     let CreateButton = void 0
     if (currentTeam) {
       CreateButton = ComponentPermission(currentTeam, '')(Button)
@@ -204,7 +220,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <Input.Search
               size="large"
               placeholder="placeholder"
-              onSearch={this.onSearchMember}
+              onChange={this.onSearchMember}
             />
           </Col>
           <Col span={1} offset={7}>
@@ -216,7 +232,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <Table
               bordered
               columns={columns}
-              dataSource={currentTeamMember}
+              dataSource={currentTeamMembers as Team.ITeamMembers[]}
             />
           </div>
         </Row>
