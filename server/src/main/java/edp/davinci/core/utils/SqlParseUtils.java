@@ -117,19 +117,19 @@ public class SqlParseUtils {
                             param = param.replaceAll(queryVarKey, "");
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0].trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), "");
-                                String v = paramArray.length > 1 ? paramArray[1].trim() : null;
+                                String k = paramArray[0];
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
                                 log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
-                                queryParamMap.put(k, v);
+                                queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                             }
                         } else if (param.startsWith(teamVarKey)) {
-                            param = param.replaceAll(teamVarKey, "");
+                            param = param.replaceAll(teamVarKey, "").trim();
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0].trim();
-                                String v = paramArray.length > 1 ? paramArray[1].trim() : null;
+                                String k = paramArray[0];
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
                                 log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
-                                teamParamMap.put(k, Arrays.asList(v));
+                                teamParamMap.put(k.trim(), Arrays.asList(v));
                             }
                         }
                     }
@@ -278,7 +278,7 @@ public class SqlParseUtils {
     }
 
     private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> teamParamMap, char sqlTempDelimiter) throws Exception {
-        String originExpression = srcExpression;
+        String originExpression = "";
         if (!StringUtils.isEmpty(srcExpression)) {
             srcExpression = srcExpression.trim();
             if (srcExpression.startsWith(parenthesesStart) && srcExpression.endsWith(parenthesesEnd)) {
@@ -299,14 +299,31 @@ public class SqlParseUtils {
                 if (null != expList && expList.size() > 0) {
                     String left = operatorMap.get(sqlOperator).get(0);
                     String right = operatorMap.get(sqlOperator).get(expList.size() - 1);
+                    if (right.startsWith(parenthesesStart) && right.endsWith(parenthesesEnd)) {
+                        right = right.substring(1, right.length() - 1);
+                    }
                     if (teamParamMap.containsKey(right)) {
                         StringBuilder expBuilder = new StringBuilder();
                         List<String> list = teamParamMap.get(right);
                         if (null != list && list.size() > 0) {
                             if (list.size() == 1) {
-                                expBuilder
-                                        .append(left).append(space)
-                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                if (!StringUtils.isEmpty(list.get(0))) {
+                                    switch (sqlOperator) {
+                                        case IN:
+                                            expBuilder
+                                                    .append(left).append(space)
+                                                    .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                                    .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                            break;
+                                        default:
+                                            expBuilder
+                                                    .append(left).append(space)
+                                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            break;
+                                    }
+                                } else {
+                                    return "1=1";
+                                }
                             } else {
                                 switch (sqlOperator) {
                                     case IN:

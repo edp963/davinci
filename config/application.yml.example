@@ -20,42 +20,49 @@ server:
   address: 127.0.0.1
   port: 8080
 
+
+## jwt is one of the important configuration of the application
+## jwt config cannot be null or empty
 jwtToken:
-  secret:                   # your secret
+  secret: secret
   timeout: 1800000
   algorithm: HS512
 
-#your datasouce config
+
+##your datasouce config
 source:
   initial-size: 2
   min-idle: 1
   max-wait: 6000
   max-active: 10
 
+
 spring:
   mvc:
     async:
       request-timeout: 30s
 
-  # davinci datasouce config
+  ## davinci datasouce config
   datasource:
     url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
-    username: # your datasource user
-    password: # your datasource password
+    username:
+    password:
     driver-class-name: com.mysql.jdbc.Driver
     initial-size: 2
     min-idle: 1
     max-wait: 60000
     max-active: 10
 
+  ## redis config
+  ## please choose one of the two ways
   redis:
     isEnable: false
 
   ## standalone config
-    host:
-    port:
+    host: 127.0.0.1
+    port: 6379
 
-  ##  cluster config
+  ## cluster config
   #  cluster:
   #       nodes:
 
@@ -69,17 +76,20 @@ spring:
         max-idle: 8
         min-idle: 0
 
+  ## mail is one of the important configuration of the application
+  ## mail config cannot be null or empty
+  ## some mailboxes need to be set separately password for the SMTP service)
   mail:
-    host:                         # 邮件服务器的SMTP地址
-    port:                         # 邮件服务器的SMTP端口
-    username:                     # 发件人邮箱地址（必须正确，否则发送失败）
-    password:                     # 密码（注意，某些邮箱需要为SMTP服务单独设置密码，详情查看相关帮助）
-    nickname:                     # 发件人昵称
+    host:
+    port:
+    username:
+    password:
+    nickname:
 
     properties:
       smtp:
         starttls:
-          enable: true
+          enable: false
           required: true
         auth: true
       mail:
@@ -87,4 +97,4 @@ spring:
           ssl:
             enable: false
 
-phantomjs_home: "/$your_path$/bin/phantomjs"
+phantomjs_home: "$your_phantomjs_path$/phantomjs"
