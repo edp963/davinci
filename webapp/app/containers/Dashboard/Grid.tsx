@@ -1249,6 +1249,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         />
         <FullScreenPanel
           widgets={widgets}
+          currentItems={currentItems}
           currentDashboard={currentDashboard}
           currentDatasources={currentItemsInfo}
           visible={allowFullScreen}
