@@ -41,7 +41,7 @@ function signupReducer (state = initialState, action) {
         .set('signupLoading', false)
     case SIGNUP_ERROR:
       return state
-        .set('signupLoading', true)
+        .set('signupLoading', false)
     default:
       return state
   }
