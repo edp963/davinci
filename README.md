@@ -192,7 +192,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
   注： 默认的日志文件是以日期命名的，如不符合日期要求，可自行修改`config/logback.xml`中的日志模板
   
   ```
-  	tail -200f logs/davinci.XXXX.log
+    tail -200f logs/davinci.XXXX.log
   ```
 
 * **输入http://localhost:8080，进入davinci登录界面(super@davinci.com/123456)**
