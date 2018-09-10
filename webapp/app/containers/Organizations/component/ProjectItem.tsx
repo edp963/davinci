@@ -30,6 +30,9 @@ interface IProjectOptions {
   isLike: boolean
 }
 export class ProjectItem extends React.PureComponent<IProjectItemProps> {
+  private stopPPG = (e) => {
+    e.stopPropagation()
+  }
   public render () {
     const {options, loginUser, currentOrganization, starUser} = this.props
     const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
@@ -43,14 +46,14 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
       StarPanel = <Star d={options} starUser={starUser} unStar={this.props.unStar} userList={this.props.userList}/>
     }
     return (
-      <div className={styles.projectItemWrap}>
+      <div className={styles.projectItemWrap} onClick={this.props.toProject(options.id)}>
         <div
           className={styles.avatarWrapper}
           style={{backgroundImage: `url(${require(`../../../assets/images/bg${options.pic || 9}.png`)})`}}
         />
         <div className={styles.detailWrapper}>
           <div className={styles.titleWrapper}>
-            <div className={styles.title} onClick={this.props.toProject(options.id)}>{options.name}</div>
+            <div className={styles.title}>{options.name}</div>
           </div>
           <div className={styles.desc}>{options.description}</div>
           {tags}
@@ -65,6 +68,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
                 <Tooltip title="删除">
                   <CreateButton
                     type="delete"
+                    onClick={this.stopPPG}
                   />
                 </Tooltip>
               </Popconfirm>
