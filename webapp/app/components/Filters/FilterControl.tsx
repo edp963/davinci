@@ -61,7 +61,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   private renderInputNumber = (filter, onChange) => {
     return (
-      <InputNumber placeholder={filter.name} onChange={onChange} />
+      <InputNumber style={{ width: '100%' }} placeholder={filter.name} onChange={onChange} />
     )
   }
 
@@ -148,7 +148,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private wrapFormItem = (filter, form: WrappedFormUtils, control) => {
     const { getFieldDecorator } = form
     return (
-      <FormItem className={styles.item}>
+      <FormItem wrapCol={{span: 24}} className={styles.item}>
         {getFieldDecorator(filter.key, {})(control)}
       </FormItem>
     )
