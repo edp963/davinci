@@ -83,7 +83,7 @@ export function errorHandler (error) {
         localStorage.removeItem('token')
         const path = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#login`
         location.replace(path)
-        location.reload()
+      //  location.reload()
         break
       case 401:
         message.error('您没有权限访问此数据', 5)
