@@ -92,25 +92,27 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       case FilterTypes.InputText:
       case FilterTypes.InputNumber:
       case FilterTypes.Select:
-        param.push({ name: key, value: this.getValidValue(value, sqlType) })
+        if (value !== undefined) { param.push({ name: key, value: this.getValidValue(value, sqlType) }) }
         break
       case FilterTypes.NumberRange:
-        if (value[0] || value[1]) {
-          param = value.map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
-        }
+        param = value.filter((val) => val !== '').map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
         break
       case FilterTypes.MultiSelect:
-        if (value.length) {
+        if (value.length && value.length > 0) {
           param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
         }
         break
       case FilterTypes.CascadeSelect: // TODO
         break
       case FilterTypes.InputDate:
-        param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD')}'` })
+        if (value) {
+          param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD')}'` })
+        }
         break
       case FilterTypes.MultiDate:
-        param.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
+        if (value) {
+          param.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
+        }
         break
       case FilterTypes.DateRange:
         if (value.length) {
@@ -146,19 +148,19 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       case FilterTypes.InputText:
       case FilterTypes.InputNumber:
       case FilterTypes.Select:
-        filters.push(`${key} = ${this.getValidValue(value, sqlType)}`)
+        if (value !== undefined) { filters.push(`${key} = ${this.getValidValue(value, sqlType)}`) }
         break
       case FilterTypes.NumberRange:
-        if (!isNaN(value[0])) {
+        if (value[0] !== '' && !isNaN(value[0])) {
           filters.push(`${key} >= ${this.getValidValue(value[0], sqlType)}`)
         }
-        if (!isNaN(value[1])) {
+        if (value[1] !== '' && !isNaN(value[1])) {
           filters.push(`${key} <= ${this.getValidValue(value[1], sqlType)}`)
         }
         break
       case FilterTypes.MultiSelect:
-        if (value.length) {
-          filters.push(`${key} in (${value.join(',')})`)
+        if (value.length && value.length > 0) {
+          filters.push(`${key} in (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
         }
         break
       case FilterTypes.CascadeSelect: // @TODO
