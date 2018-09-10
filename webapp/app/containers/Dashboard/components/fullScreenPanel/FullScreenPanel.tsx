@@ -20,6 +20,7 @@ interface IFullScreenPanelProps {
     itemId?: number
     onGetChartData?: any
   }
+  currentItems?: any[]
   widgets: any
   currentDatasources: boolean | object
   currentDashboard: {
@@ -61,7 +62,6 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
   private triggerWidget = (e) => {
     const {onCurrentWidgetInFullScreen} = this.props
     const itemId = e.item.props.itemId
-    console.log(itemId)
     onCurrentWidgetInFullScreen(itemId)
   }
 
@@ -100,7 +100,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
   }
   public render () {
     const {isShowMenu, controlPanelVisible} = this.state
-    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets} = this.props
+    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets, currentItems} = this.props
     const fsClassName = classnames({
       [styles.fullScreen]: true,
       [styles.displayNone]: !visible,
@@ -132,7 +132,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
         menus = (
           <Menu theme="light" onClick={this.triggerWidget} selectedKeys={[itemId]}>
             {
-              currentDashboard && currentDashboard.widgets.map(
+              currentItems && currentItems.map(
                 (widget, i) => {
                   const w = widgets.find((w) => w.id === widget.widgetId)
                // const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
