@@ -88,6 +88,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -116,6 +117,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -144,6 +146,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -172,6 +175,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -203,6 +207,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -210,6 +215,7 @@ public class ShareController extends BaseController {
 
     /**
      * share 获取唯一值
+     *
      * @param token
      * @param viewId
      * @param param
@@ -222,11 +228,11 @@ public class ShareController extends BaseController {
     @AuthShare
     @PostMapping(value = "/data/{token}/distinctvalue/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity getDistinctValue(@PathVariable("token") String token,
-                                                @PathVariable("viewId") Long viewId,
-                                                @Valid @RequestBody DistinctParam param,
-                                                @ApiIgnore BindingResult bindingResult,
-                                                @ApiIgnore @CurrentUser User user,
-                                                HttpServletRequest request) {
+                                           @PathVariable("viewId") Long viewId,
+                                           @Valid @RequestBody DistinctParam param,
+                                           @ApiIgnore BindingResult bindingResult,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
 
         if (StringUtils.isEmpty(token)) {
             ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
@@ -248,6 +254,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
@@ -280,6 +287,7 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
+            log.error(e.getMessage());
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }

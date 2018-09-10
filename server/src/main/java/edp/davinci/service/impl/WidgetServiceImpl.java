@@ -23,22 +23,24 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
+import edp.core.model.QueryColumn;
+import edp.core.utils.FileUtils;
 import edp.core.utils.TokenUtils;
 import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
+import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectWithOrganization;
-import edp.davinci.dto.viewDto.Aggregator;
-import edp.davinci.dto.viewDto.Order;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
+import edp.davinci.dto.viewDto.*;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
 import edp.davinci.model.*;
 import edp.davinci.service.ShareService;
+import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -47,6 +49,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service("widgetService")
@@ -73,6 +77,12 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
     @Autowired
     private ShareService shareService;
+
+    @Autowired
+    private ViewService viewService;
+
+    @Autowired
+    private FileUtils fileUtils;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -517,5 +527,47 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             e.printStackTrace();
         }
         return executeParam;
+    }
+
+
+    @Override
+    public ResultMap generationCsv(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        String filePath = null;
+        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+
+        if (null == widgetWithProjectAndView) {
+            log.info("widget (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("widget not found");
+        }
+
+        if (null == widgetWithProjectAndView.getProject()) {
+            log.info("project not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        if (!allowDownload(widgetWithProjectAndView.getProject(), user)) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to download the widget");
+        }
+
+        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widgetWithProjectAndView.getViewId());
+
+        if (null == viewWithProjectAndSource) {
+            return resultMap.failAndRefreshToken(request).message("view not found");
+        }
+
+        List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+
+        List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+
+        if (null != columns && columns.size() > 0) {
+            String csvPath = fileUtils.fileBasePath + File.separator + "csv";
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+            String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
+            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
+            filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
+        }
+        return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);
     }
 }

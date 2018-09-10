@@ -18,6 +18,8 @@
 
 package edp.core.utils;
 
+import com.alibaba.druid.util.StringUtils;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 
@@ -28,10 +30,10 @@ public class AESUtils {
     /**
      * AES加密默认盐值
      */
-    public static final String AES_KEY = "s˚∆ƒ˚∂√";
+    public static final String AES_KEY = "sM7!tsv?5ygRo;h.";
 
     public static String encrypt(String src, String key) {
-        if (null == key || key.getBytes().length != 16) {
+        if (StringUtils.isEmpty(key)) {
             key = AES_KEY;
         }
         try {
@@ -48,7 +50,7 @@ public class AESUtils {
     }
 
     public static String decrypt(String src, String key) {
-        if (null == key || key.length() != 16) {
+        if (StringUtils.isEmpty(key)) {
             key = AES_KEY;
         }
         try {
