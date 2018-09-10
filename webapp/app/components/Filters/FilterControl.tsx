@@ -19,7 +19,12 @@ import MultiDatePicker from '../MultiDatePicker'
 interface IFilterControlProps {
   formToAppend: WrappedFormUtils
   filter: any
-  onGetOptions: (fromViewId, fromModelName, filterKey) => void
+  onGetOptions: (
+    filterKey: string,
+    fromViewId: string,
+    fromModel: string,
+    parents: Array<{ column: string, value: string }>
+  ) => void
   currentOptions: {
     [key: string]: Array<number | string>
   }
@@ -45,7 +50,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
     const { key, fromView, fromModel } = filter
-    onGetOptions(fromView, fromModel, key)
+    onGetOptions(key, fromView, fromModel, [])
   }
 
   private renderInputText = (filter, onChange) => {

@@ -19,14 +19,19 @@ interface IFilterConfigProps {
   widgets: any[]
   items: any[]
   filters: any[]
+  saving: boolean
   onCancel: () => void
   onOk: (filters: any[]) => void
-  onGetPreviewData: (viewId, fieldName, filterKey) => void
+  onGetPreviewData: (
+    filterKey: string,
+    fromViewId: string,
+    fromModel: string,
+    parents: Array<{ column: string, value: string }>
+  ) => void
   previewData: object
 }
 
 interface IFilterConfigStates {
-  hasEdited: boolean
   localFilters: any[]
   selectedFilter: any,
   showPreview: boolean,
@@ -45,7 +50,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   constructor (props) {
     super(props)
     this.state = {
-      hasEdited: false,
       localFilters: [],
       selectedFilter: {},
       showPreview: false,
@@ -65,9 +69,12 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   public componentWillReceiveProps (nextProps: IFilterConfigProps) {
-    const { filters } = nextProps
+    const { filters, saving, onOk } = nextProps
     if (filters !== this.props.filters) {
       this.initState()
+    }
+    if (saving !== this.props.saving) {
+      this.ok()
     }
   }
 
@@ -106,7 +113,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       relatedViews: {}
     }
     this.setState({
-      hasEdited: true,
       localFilters: [...localFilters, newFilter],
       selectedFilter: newFilter,
       showPreview: false
@@ -121,7 +127,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     const newSelectedFilter = (selectedFilter.key !== key) ?
       selectedFilter : (localFilters.length > 0 ? localFilters[0] : {})
     this.setState({
-      hasEdited: true,
       localFilters,
       selectedFilter: newSelectedFilter,
       showPreview: FilterTypesViewSetting[newSelectedFilter.type]
@@ -139,7 +144,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     const filterItem = localFilters.find((f) => f.key === key)
     filterItem.name = name
     this.setState({
-      hasEdited: true,
       localFilters
     })
   }
@@ -152,20 +156,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     })
   }
 
-  private cancel = () => {
-    const { onCancel } = this.props
-    const { hasEdited } = this.state
-    if (!hasEdited) {
-      onCancel()
-      return
-    }
-    Modal.confirm({
-      content: '确认不保存当前全局筛选配置吗？',
-      onOk: onCancel,
-      onCancel: void 0
-    })
-  }
-
   private ok = () => {
     const { localFilters } = this.state
     if (localFilters.length > 0) {
@@ -175,7 +165,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     onOk([...localFilters])
   }
 
-  private getPreviewData = (viewId, fieldName, filterKey) => {
+  private getPreviewData = (filterKey, viewId, fieldName, parents) => {
     const { onGetPreviewData } = this.props
     this.setState({
       previewFilter: {
@@ -184,7 +174,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
         fromModel: fieldName
       }
     }, () => {
-      onGetPreviewData(viewId, fieldName, filterKey)
+      onGetPreviewData(filterKey, viewId, fieldName, parents)
     })
   }
 
@@ -235,21 +225,6 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
               )
             }
           </div>
-        </div>
-        <div className={`${styles.bottom} ant-modal-footer`}>
-          <Button
-            size="large"
-            onClick={this.cancel}
-          >
-            取消
-          </Button>
-          <Button
-            size="large"
-            type="primary"
-            onClick={this.ok}
-          >
-            确认
-          </Button>
         </div>
       </div>
     )

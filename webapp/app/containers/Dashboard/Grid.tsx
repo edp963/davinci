@@ -23,8 +23,6 @@ import { findDOMNode } from 'react-dom'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import * as classnames from 'classnames'
-import * as moment from 'moment'
 import { Link } from 'react-router'
 
 import { compose } from 'redux'
@@ -36,27 +34,22 @@ import reducerBizlogic from '../Bizlogic/reducer'
 import sagaBizlogic from '../Bizlogic/sagas'
 
 import Container from '../../components/Container'
+import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
 import DashboardItem from './components/DashboardItem'
-import SharePanel from '../../components/SharePanel'
-import DashboardLinkageConfig from 'components/Linkages/LinkageConfig'
-import GlobalFilterConfigPanel from './components/globalFilter/GlobalFilterConfigPanel'
-// import GlobalFilters from './components/globalFilter/GlobalFilters'
+import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IFilterChangeParam } from '../../components/Filters'
-import GlobalFilterPanel from '../../components/Filters/FilterPanel'
-import GlobalFilterConfig from '../../components/Filters/FilterConfig'
+import { IFilterChangeParam } from 'components/Filters'
+import DashboardFilterPanel from './components/DashboardFilterPanel'
+import DashboardFilterConfig from './components/DashboardFilterConfig'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import Button, { ButtonProps } from 'antd/lib/button/button'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
 const Modal = require('antd/lib/modal')
 const Breadcrumb = require('antd/lib/breadcrumb')
-const Popover = require('antd/lib/popover')
-const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
@@ -89,14 +82,12 @@ import {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentItemsCascadeSources,
   makeSelectCurrentDashboardCascadeSources
 } from './selectors'
 import {
   loadBizlogics,
   loadDataFromItem,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard,
+  loadCascadeSource,
   loadBizdataSchema,
   loadDistinctValue
 } from '../Bizlogic/actions'
@@ -114,11 +105,10 @@ import {
   GRID_ROW_HEIGHT,
   KEY_COLUMN
 } from '../../globalConstants'
-import ModulePermission from '../Account/components/checkModulePermission'
-import ShareDownloadPermission from '../Account/components/checkShareDownloadPermission'
 import { InjectedRouter } from 'react-router/lib/Router'
 import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
 import { IProject } from '../Projects'
+import { ICurrentDashboard } from './'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -159,7 +149,11 @@ interface IGridProps {
       renderType: RenderType
     }
   }
-  currentDashboardCascadeSources: object
+  currentDashboardCascadeSources: {
+    [filterKey: string]: {
+      [key: string]: Array<number | string>
+    }
+  }
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItem: (portalId: number, item: [IDashboardItem], resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
@@ -186,15 +180,7 @@ interface IGridProps {
   ) => void
   onClearCurrentDashboard: () => any
   onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, token: string) => void
-  onLoadCascadeSourceFromItem: (
-    itemId: number,
-    controlId: string,
-    flatTableId: number,
-    sql: object,
-    column: string,
-    parents: object[]
-  ) => any
-  onLoadCascadeSourceFromDashboard: (controlId: number, id: number, column: string, parents?: object[]) => void
+  onLoadCascadeSource: (controlId: number, viewId: number, column: string, parents: Array<{ column: string, value: string }>) => void
   onLoadBizdataSchema: () => any
   onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
   onRenderDashboardItem: (itemId: number) => void
@@ -217,15 +203,9 @@ interface IGridStates {
   polling: boolean
   linkageConfigVisible: boolean
   linkageTableSource: any[]
-  linkageCascaderSource: any[]
-  savingLinkageConfig: boolean
-  globalFilterConfigPanelVisible: boolean
-  globalFilterTableSource: any[]
+  globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
-  filterOptions: {
-    [key: string]: Array<number | string>
-  }
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -242,21 +222,6 @@ interface IDashboardItem {
   dashboardId?: number
   polling?: boolean
   frequency?: number
-}
-
-interface IDashboard {
-  id?: number
-  desc: string
-  name: string
-  pic: string
-  config: string
-  linkage_detail: string
-  publish: boolean
-  create_by: number,
-}
-
-interface ICurrentDashboard extends IDashboard {
-  widgets: any[]
 }
 
 interface IDashboardItemFilters extends AntdFormType {
@@ -282,25 +247,20 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling: false,
 
       linkageConfigVisible: false,
-      linkageTableSource: null,
-      linkageCascaderSource: null,
-      savingLinkageConfig: false,
+      linkageTableSource: [],
 
-      globalFilterConfigPanelVisible: false,
-      globalFilterTableSource: [],
+      globalFilterConfigVisible: false,
 
       dashboardSharePanelAuthorized: false,
 
-      nextMenuTitle: '',
-
-      filterOptions: {}
+      nextMenuTitle: ''
     }
   }
 
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
-  private resizeSign: NodeJS.Timer
+  private resizeSign: number
   private dashboardItemForm: IDashboardItemForm = null
   private dashboardItemFilters: IDashboardItemFilters = null
   private refHandles = {
@@ -329,10 +289,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentDashboard,
       currentDashboardLoading,
       currentItems,
+      currentItemsInfo,
       params
     } = nextProps
-    const { onLoadDashboardDetail, onLoadCascadeSourceFromDashboard } = this.props
-    const { layoutInitialized, globalFilterTableSource } = this.state
+    const { onLoadDashboardDetail, onLoadCascadeSource } = this.props
+    const { layoutInitialized } = this.state
 
     if (params.dashboardId !== this.props.params.dashboardId) {
       this.setState({
@@ -353,6 +314,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
           this.containerBody.addEventListener('scroll', this.lazyLoad, false)
         })
+      }
+
+      if (currentDashboard !== this.props.currentDashboard || currentItemsInfo !== this.props.currentItemsInfo) {
+        const linkageTableSource = this.getLinkageTableSource(currentDashboard, currentItemsInfo)
+        this.setState({ linkageTableSource })
       }
     }
   }
@@ -393,6 +359,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
+
+  private getLinkageTableSource = (currentDashboard: ICurrentDashboard, currentItemsInfo: any) => {
+    const config = JSON.parse(currentDashboard.config || '{}')
+    const linkageTableSource = config.linkages || []
+    const validLinkageTableSource = linkageTableSource.filter((lts) => {
+      const { linkager, trigger } = lts
+      return currentItemsInfo[linkager[0]] && currentItemsInfo[trigger[0]]
+    })
+    return validLinkageTableSource
+  }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
@@ -488,17 +464,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private registerChartInteractListener = (instance, itemId) => {
-    instance.off('click')
-    instance.on('click', (params) => {
-      const linkagers = this.checkInteract(itemId)
-
-      if (Object.keys(linkagers).length) {
-        this.doInteract(itemId, linkagers, params.dataIndex)
-      }
-    })
-  }
-
   private onDragStop = (layout) => {
     this.onEditDashboardItemsPosition(layout)
   }
@@ -527,7 +492,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (this.resizeSign) {
       clearTimeout(this.resizeSign)
     }
-    this.resizeSign = setTimeout(() => {
+    this.resizeSign = window.setTimeout(() => {
       this.props.onResizeAllDashboardItem()
       clearTimeout(this.resizeSign)
       this.resizeSign = void 0
@@ -597,7 +562,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private saveDashboardItem = () => {
     const { params, currentDashboard, currentItems, widgets } = this.props
-    const { selectedWidget, dashboardItemFormType, linkageCascaderSource } = this.state
+    const { selectedWidget, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
 
@@ -657,11 +622,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       })
 
       this.props.onAddDashboardItem(Number(params.portalId), (newItemsArr as any), (dashboardItem: IDashboardItem) => {
-        // linkageCascaderSource.push({
-        //   label: widgets.find((w) => w.id === dashboardItem.widgetId).name,
-        //   value: dashboardItem.id,
-        //   children: []
-        // })
         this.hideDashboardItemForm()
       })
     } else {
@@ -680,17 +640,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private deleteItem = (id) => () => {
-    this.props.onDeleteDashboardItem(id, () => {
-      const { linkageCascaderSource, linkageTableSource, globalFilterTableSource } = this.state
-      this.setState({
-        linkageCascaderSource: linkageCascaderSource.filter((lcs) => lcs.value !== id),
-        linkageTableSource: linkageTableSource.filter((lts) => lts.linkager[0] !== id && lts.trigger[0] !== id),
-        globalFilterTableSource: globalFilterTableSource.map((gfts) => {
-          delete gfts.relatedItems[id]
-          return gfts
-        })
-      })
-    })
+    this.props.onDeleteDashboardItem(id, void 0)
   }
 
   private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
@@ -726,32 +676,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private showLinkageConfig = () => {
-    // get newest linkage config cascader source
-    const linkageCascaderSource = this.getLinkageConfigSource()
-
+  private toggleLinkageConfig = (visible) => () => {
     this.setState({
-      linkageCascaderSource,
-      linkageConfigVisible: true
-    })
-  }
-
-  private hideLinkageConfig = () => {
-    this.setState({
-      linkageConfigVisible: false
-    })
-  }
-
-  private afterLinkagePanelClose = () => {
-    const { currentDashboard, currentItems } = this.props
-    this.setState({
-      linkageTableSource: this.adjustLinkageTableSource(currentDashboard, currentItems)
-    })
-  }
-
-  private savingLinkageConfig = () => {
-    this.setState({
-      savingLinkageConfig: !this.state.savingLinkageConfig
+      linkageConfigVisible: visible
     })
   }
 
@@ -765,255 +692,156 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onEditCurrentDashboard
     } = this.props
 
-    Object.keys(interactiveItems).forEach((itemId) => {
-      if (interactiveItems[itemId].interactId) {
-        const triggerItem = currentItems.find((ci) => `${ci.id}` === itemId)
-        const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
-        const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
-        const dataSource = currentItemsInfo[itemId].datasource
+    // Object.keys(interactiveItems).forEach((itemId) => {
+    //   if (interactiveItems[itemId].interactId) {
+    //     const triggerItem = currentItems.find((ci) => `${ci.id}` === itemId)
+    //     const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
 
-        if (chartInfo.renderer === ECHARTS_RENDERER) {
-          // this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
-        }
+    //     interactiveItems[itemId] = {
+    //       interactId: ''
+    //     }
+    //   }
+    // })
 
-        interactiveItems[itemId] = {
-          interactId: ''
-        }
-      }
-    })
+    // Object.keys(this.interactCallbacks).map((triggerId) => {
+    //   const triggerCallbacks = this.interactCallbacks[triggerId]
 
-    Object.keys(this.interactCallbacks).map((triggerId) => {
-      const triggerCallbacks = this.interactCallbacks[triggerId]
+    //   Object.keys(triggerCallbacks).map((linkagerId) => {
+    //     triggerCallbacks[linkagerId]()
+    //   })
+    // })
+    // // 由于新的配置和之前可能有很大不同，因此需要遍历 GridItem 来重新注册事件
+    // currentItems.forEach((ci) => {
+    //   const triggerIntance = this.charts[`widget_${ci.id}`]
 
-      Object.keys(triggerCallbacks).map((linkagerId) => {
-        triggerCallbacks[linkagerId]()
-      })
-    })
-    // 由于新的配置和之前可能有很大不同，因此需要遍历 GridItem 来重新注册事件
-    currentItems.forEach((ci) => {
-      const triggerIntance = this.charts[`widget_${ci.id}`]
-
-      if (triggerIntance) {
-        this.registerChartInteractListener(triggerIntance, ci.id)
-      }
-    })
+    //   if (triggerIntance) {
+    //     this.registerChartInteractListener(triggerIntance, ci.id)
+    //   }
+    // })
     onEditCurrentDashboard(
       {
         ...currentDashboard,
-        linkage_detail: JSON.stringify(linkages),
-        // FIXME
-        active: true
+        config: JSON.stringify({
+          ...JSON.parse(currentDashboard.config || '{}'),
+          linkages
+        })
       },
       () => {
-        this.hideLinkageConfig()
+        this.setState({
+          linkageTableSource: linkages
+        })
+        this.toggleLinkageConfig(false)()
       }
     )
   }
 
-  private getLinkageConfigSource = () => {
-    const { currentItems, widgets, bizlogics, currentItemsInfo } = this.props
-    const varReg = /query@var\s+\$(\w+)\$/g
-
-    const linkageConfigSource = []
-    Object.keys(currentItemsInfo).forEach((k) => {
-      const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
-      const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const widgetConfig: IPivotProps = JSON.parse(widget.config)
-      const { cols, rows, metrics } = widgetConfig
-
-      const view = bizlogics.find((bl) => bl.id === widget.viewId)
-      const { sql, model } = view
-      const modelObj = JSON.parse(model)
-      const variableArr = (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
-
-      // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
-      const params = [
-        [...cols, ...rows].filter((key) => model[key]).map((key) => ({
-          label: key,
-          value: [key, modelObj[key].sqlType, 'parameter'].join(DEFAULT_SPLITER)
-        })),
-        ...metrics.map(({ name, agg }) => ({
-          label: `${getAggregatorLocale(agg)} ${decodeMetricName(name)}`,
-          value: [name, SQL_NUMBER_TYPES[SQL_NUMBER_TYPES.length - 1], 'parameter'].join(DEFAULT_SPLITER)
-        }))
-      ]
-
-      const variables = variableArr.map((val) => {
-        return {
-          label: `${val}[变量]`,
-          value: [val, 'variable'].join(DEFAULT_SPLITER)
-        }
-      })
-
-      linkageConfigSource.push({
-        label: widget.name,
-        value: k,
-        children: {
-          params,
-          variables
-        }
-      })
-    })
-
-    return linkageConfigSource
-  }
-
-  private checkInteract = (itemId) => {
-    const { currentItems, widgets } = this.props
+  private checkInteract = (itemId: number) => {
     const { linkageTableSource } = this.state
-    const dashboardItem = currentItems.find((ci) => ci.id === itemId)
-    const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-    const widgetlib = widgetlibs.find((wl) => wl.id === widget.widgetlib_id)
-
-    const linkagers = {}
-
-    linkageTableSource.forEach((lts) => {
+    const isInteractiveItem = linkageTableSource.some((lts) => {
       const { trigger, linkager, relation } = lts
-
-      const triggerId = trigger[0]
-      const linkagerId = linkager[0]
-
-      if (itemId === triggerId) {
-        if (widgetlib.renderer === ECHARTS_RENDERER && !this.charts[`widget_${triggerId}`]) {
-          return false
-        }
-
-        const triggerValueInfo = trigger[1].split(DEFAULT_SPLITER)
-        const linkagerValueInfo = linkager[1].split(DEFAULT_SPLITER)
-
-        if (!linkagers[linkagerId]) {
-          linkagers[linkagerId] = []
-        }
-
-        linkagers[linkagerId].push({
-          triggerValue: triggerValueInfo[0],
-          triggerValueType: triggerValueInfo[1],
-          linkagerValue: linkagerValueInfo[0],
-          linkagerType: linkagerValueInfo[2],
-          linkagerId,
-          relation
-        })
-      }
+      const triggerId = +trigger[0]
+      return triggerId === itemId
     })
 
-    return linkagers
+    return isInteractiveItem
   }
 
-  private doInteract = (itemId, linkagers, interactIndexOrId) => {
+  private doInteract = (itemId, triggerData) => {
     const {
       currentItems,
       currentItemsInfo,
-      widgets,
+      widgets
     } = this.props
+    const { linkageTableSource } = this.state
 
-    const triggerItem = currentItems.find((ci) => ci.id === itemId)
-    const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
-    const dataSource = currentItemsInfo[itemId].datasource
-    let triggeringData
+    console.log(itemId, triggerData)
 
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      triggeringData = dataSource[interactIndexOrId]
-      // this.renderChart(itemId, triggerWidget, dataSource, chartInfo, interactIndexOrId)
-    } else {
-      triggeringData = dataSource.find((ds) => ds[KEY_COLUMN] === interactIndexOrId)
-    }
+    // Object.keys(linkagers).forEach((key) => {
+    //   const linkager = linkagers[key]
 
-    this.setState({
-      interactiveItems: {
-        ...this.state.interactiveItems,
-        [itemId]: {
-          interactId: `${interactIndexOrId}`
-        }
-      }
-    })
+    //   const linkageFilters = []
+    //   const linkageParams = []
+    //   let linkagerId
+    //   // 合并单个 linkager 所接收的数据
+    //   linkager.forEach((lr) => {
+    //     linkagerId = lr.linkagerId
 
-    Object.keys(linkagers).forEach((key) => {
-      const linkager = linkagers[key]
+    //     const {
+    //       triggerValue,
+    //       triggerValueType,
+    //       linkagerValue,
+    //       linkagerType,
+    //       relation
+    //     } = lr
 
-      const linkageFilters = []
-      const linkageParams = []
-      let linkagerId
-      // 合并单个 linkager 所接收的数据
-      linkager.forEach((lr) => {
-        linkagerId = lr.linkagerId
+    //     const interactValue = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
+    //       ? triggeringData[triggerValue]
+    //       : `'${triggeringData[triggerValue]}'`
 
-        const {
-          triggerValue,
-          triggerValueType,
-          linkagerValue,
-          linkagerType,
-          relation
-        } = lr
+    //     if (linkagerType === 'parameter') {
+    //       linkageFilters.push(`${linkagerValue} ${relation} ${interactValue}`)
+    //     } else {
+    //       linkageParams.push({
+    //         k: linkagerValue,
+    //         v: interactValue
+    //       })
+    //     }
+    //   })
 
-        const interactValue = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
-          ? triggeringData[triggerValue]
-          : `'${triggeringData[triggerValue]}'`
+    //   const linkagerItem = currentItems.find((ci) => ci.id === linkagerId)
+    //   const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
+    //   /*
+    //    * 多个 trigger 联动同一个 linkager
+    //    * interactingLinkagers 是个临时数据存储，且不触发render
+    //    */
+    //   if (alreadyInUseFiltersAndParams) {
+    //     const { filters, params } = alreadyInUseFiltersAndParams
+    //     const mergedFilters = linkageFilters.length ? { ...filters, [itemId]: linkageFilters } : filters
+    //     const mergedParams = linkageParams.length ? { ...params, [itemId]: linkageParams } : params
 
-        if (linkagerType === 'parameter') {
-          linkageFilters.push(`${linkagerValue} ${relation} ${interactValue}`)
-        } else {
-          linkageParams.push({
-            k: linkagerValue,
-            v: interactValue
-          })
-        }
-      })
+    //     this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
+    //       linkageFilters: Object.values(mergedFilters)
+    //         .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
+    //         .join(' and '),
+    //       linkageParams: Object.values(mergedParams).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
+    //     })
 
-      const linkagerItem = currentItems.find((ci) => ci.id === linkagerId)
-      const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
-      /*
-       * 多个 trigger 联动同一个 linkager
-       * interactingLinkagers 是个临时数据存储，且不触发render
-       */
-      if (alreadyInUseFiltersAndParams) {
-        const { filters, params } = alreadyInUseFiltersAndParams
-        const mergedFilters = linkageFilters.length ? { ...filters, [itemId]: linkageFilters } : filters
-        const mergedParams = linkageParams.length ? { ...params, [itemId]: linkageParams } : params
+    //     this.interactingLinkagers[linkagerId] = {
+    //       filters: mergedFilters,
+    //       params: mergedParams
+    //     }
+    //   } else {
+    //     this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
+    //       linkageFilters: linkageFilters.join(' and '),
+    //       linkageParams
+    //     })
 
-        this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-          linkageFilters: Object.values(mergedFilters)
-            .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
-            .join(' and '),
-          linkageParams: Object.values(mergedParams).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
-        })
+    //     this.interactingLinkagers[linkagerId] = {
+    //       filters: linkageFilters.length ? {[itemId]: linkageFilters} : {},
+    //       params: linkageParams.length ? {[itemId]: linkageParams} : {}
+    //     }
+    //   }
 
-        this.interactingLinkagers[linkagerId] = {
-          filters: mergedFilters,
-          params: mergedParams
-        }
-      } else {
-        this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-          linkageFilters: linkageFilters.join(' and '),
-          linkageParams
-        })
+    //   if (!this.interactCallbacks[itemId]) {
+    //     this.interactCallbacks[itemId] = {}
+    //   }
 
-        this.interactingLinkagers[linkagerId] = {
-          filters: linkageFilters.length ? {[itemId]: linkageFilters} : {},
-          params: linkageParams.length ? {[itemId]: linkageParams} : {}
-        }
-      }
+    //   if (!this.interactCallbacks[itemId][linkagerId]) {
+    //     this.interactCallbacks[itemId][linkagerId] = () => {
+    //       const { filters, params } = this.interactingLinkagers[linkagerId]
 
-      if (!this.interactCallbacks[itemId]) {
-        this.interactCallbacks[itemId] = {}
-      }
+    //       delete filters[itemId]
+    //       delete params[itemId]
 
-      if (!this.interactCallbacks[itemId][linkagerId]) {
-        this.interactCallbacks[itemId][linkagerId] = () => {
-          const { filters, params } = this.interactingLinkagers[linkagerId]
-
-          delete filters[itemId]
-          delete params[itemId]
-
-          this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-            linkageFilters: Object.values(filters)
-              .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
-              .join(' and '),
-            linkageParams: Object.values(params).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
-          })
-        }
-      }
-    })
+    //       this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
+    //         linkageFilters: Object.values(filters)
+    //           .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
+    //           .join(' and '),
+    //         linkageParams: Object.values(params).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
+    //       })
+    //     }
+    //   }
+    // })
   }
 
   private turnOffInteract = (itemId) => () => {
@@ -1028,18 +856,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
     const dataSource = currentItemsInfo[itemId].datasource
 
-    if (chartInfo.renderer === ECHARTS_RENDERER) {
-      // this.renderChart(itemId, triggerWidget, dataSource, chartInfo)
-    }
-
-    this.setState({
-      interactiveItems: {
-        ...this.state.interactiveItems,
-        [itemId]: {
-          interactId: ''
-        }
-      }
-    })
+    // this.setState({
+    //   interactiveItems: {
+    //     ...this.state.interactiveItems,
+    //     [itemId]: {
+    //       interactId: ''
+    //     }
+    //   }
+    // })
 
     Object.keys(this.interactCallbacks[itemId]).map((linkagerId) => {
       this.interactCallbacks[itemId][linkagerId]()
@@ -1047,15 +871,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
-  private showGlobalFilterConfigPanel = () => {
+  private toggleGlobalFilterConfig = (visible) => () => {
     this.setState({
-      globalFilterConfigPanelVisible: true
-    })
-  }
-
-  private hideGlobalFilterConfigPanel = () => {
-    this.setState({
-      globalFilterConfigPanelVisible: false
+      globalFilterConfigVisible: visible
     })
   }
 
@@ -1076,9 +894,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         active: true
       },
       () => {
-        this.hideGlobalFilterConfigPanel()
+        this.toggleGlobalFilterConfig(false)()
       }
     )
+  }
+
+  private getOptions = (controlId, viewId, column, parents) => {
+    this.props.onLoadCascadeSource(controlId, viewId, column, parents)
   }
 
   private globalFilterChange = (queryParams: IFilterChangeParam) => {
@@ -1135,43 +957,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private adjustLinkageTableSource = (currentDashboard, currentItems) => {
-    const config = JSON.parse(currentDashboard.config || '{}')
-    const linkageTableSource = config.linkage || []
-
-    return linkageTableSource.filter((lts) => {
-      let linkagerSign = false
-      let triggerSign = false
-
-      for (let i = 0, cl = currentItems.length; i < cl; i += 1) {
-        if (currentItems[i].id === lts.linkager[0]) {
-          linkagerSign = true
-        }
-        if (currentItems[i].id === lts.trigger[0]) {
-          triggerSign = true
-        }
-      }
-
-      return linkagerSign && triggerSign
-    })
-  }
-
-  private getFilterOptions = (viewId, fieldName, filterKey) => {
-    const { onLoadDistinctValue } = this.props
-    const { filterOptions } = this.state
-    onLoadDistinctValue(viewId, fieldName, (data) => {
-      this.setState({
-        filterOptions: {
-          ...filterOptions,
-          [filterKey]: {
-            ...filterOptions[filterKey],
-            [fieldName]: data[fieldName] || []
-          }
-        }
-      })
-    })
-  }
-
   public render () {
     const {
       dashboards,
@@ -1186,7 +971,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentDashboardCascadeSources,
       bizlogics,
       onLoadBizdataSchema,
-      onLoadCascadeSourceFromDashboard,
+      onLoadCascadeSource,
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
       router,
@@ -1202,14 +987,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling,
       dashboardItemFormStep,
       linkageConfigVisible,
-      linkageCascaderSource,
       linkageTableSource,
-      savingLinkageConfig,
-      globalFilterConfigPanelVisible,
-      globalFilterTableSource,
+      globalFilterConfigVisible,
       allowFullScreen,
-      dashboardSharePanelAuthorized,
-      filterOptions
+      dashboardSharePanelAuthorized
     } = this.state
 
     let navDropdown = (<span />)
@@ -1358,126 +1139,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         )]
       : saveDashboardItemButton
 
-    const linkageModalButtons = [(
-      <Button
-        key="cancel"
-        size="large"
-        onClick={this.hideLinkageConfig}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={currentDashboardLoading}
-        disabled={currentDashboardLoading}
-        onClick={this.savingLinkageConfig}
-      >
-        保 存
-      </Button>
-    )]
-
-    const globalFilterConfigModalButtons = [(
-      <Button
-        key="cancel"
-        size="large"
-        onClick={this.hideGlobalFilterConfigPanel}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={currentDashboardLoading}
-        disabled={currentDashboardLoading}
-        onClick={this.saveFilters}
-      >
-        保 存
-      </Button>
-    )]
-
-    let addButton
-    let shareButton
-    let linkageButton
-    let globalFilterButton
-
-    if (currentDashboard) {
-      const AddButton = ModulePermission<ButtonProps>(currentProject, 'viz', true)(Button)
-      const ShareButton = ShareDownloadPermission<ButtonProps>(currentProject, 'share')(Button)
-      const LinkageButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
-      const GlobalFilterButton = ModulePermission<ButtonProps>(currentProject, 'viz', false)(Button)
-
-      addButton = (
-        <Tooltip placement="bottom" title="新增">
-          <AddButton
-            size="large"
-            type="primary"
-            icon="plus"
-            style={{marginLeft: '8px'}}
-            onClick={this.showAddDashboardItemForm}
-          />
-        </Tooltip>
-      )
-      shareButton = (
-        <Popover
-          placement="bottomRight"
-          content={
-            <SharePanel
-              id={currentDashboard.id}
-              type="dashboard"
-              shareInfo={currentDashboardShareInfo}
-              secretInfo={currentDashboardSecretInfo}
-              shareInfoLoading={currentDashboardShareInfoLoading}
-              authorized={dashboardSharePanelAuthorized}
-              afterAuthorization={this.changeDashboardSharePanelAuthorizeState(true)}
-              onLoadDashboardShareLink={onLoadDashboardShareLink}
-            />
-          }
-          trigger="click"
-        >
-          <Tooltip placement="bottom" title="分享">
-            <ShareButton
-              size="large"
-              type="primary"
-              icon="share-alt"
-              style={{marginLeft: '8px'}}
-              onClick={this.changeDashboardSharePanelAuthorizeState(false)}
-            />
-          </Tooltip>
-        </Popover>
-      )
-      linkageButton = (
-        <Tooltip placement="bottom" title="联动关系配置">
-          <LinkageButton
-            size="large"
-            type="primary"
-            icon="link"
-            style={{marginLeft: '8px'}}
-            onClick={this.showLinkageConfig}
-          />
-        </Tooltip>
-      )
-      globalFilterButton = (
-        <Tooltip placement="bottomRight" title="全局筛选器配置">
-          <GlobalFilterButton
-            size="large"
-            type="primary"
-            icon="filter"
-            style={{marginLeft: '8px'}}
-            onClick={this.showGlobalFilterConfigPanel}
-          />
-        </Tooltip>
-      )
-    }
-
-    const globalFilterContainerClass = classnames({
-      [utilStyles.hide]: !globalFilterTableSource.length
-    })
-
     return (
       <Container>
         <Helmet title={currentDashboard && currentDashboard.name} />
@@ -1515,23 +1176,27 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
                 }
               </Breadcrumb>
             </Col>
-            <Col sm={12} className={utilStyles.textAlignRight}>
-              {addButton}
-              {shareButton}
-              {linkageButton}
-              {globalFilterButton}
-            </Col>
+            <DashboardToolbar
+              currentProject={currentProject}
+              currentDashboard={currentDashboard}
+              currentDashboardShareInfo={currentDashboardShareInfo}
+              currentDashboardSecretInfo={currentDashboardSecretInfo}
+              currentDashboardShareInfoLoading={currentDashboardShareInfoLoading}
+              dashboardSharePanelAuthorized={dashboardSharePanelAuthorized}
+              showAddDashboardItem={this.showAddDashboardItemForm}
+              onChangeDashboardAuthorize={this.changeDashboardSharePanelAuthorizeState}
+              onLoadDashboardShareLink={onLoadDashboardShareLink}
+              onToggleGlobalFilterVisibility={this.toggleGlobalFilterConfig}
+              onToggleLinkageVisibility={this.toggleLinkageConfig}
+            />
           </Row>
-          <Row className={globalFilterContainerClass}>
-            <Col span={24}>
-              <GlobalFilterPanel
-                filters={globalFilterTableSource}
-                onGetOptions={this.getFilterOptions}
-                filterOptions={filterOptions}
-                onChange={this.globalFilterChange}
-              />
-            </Col>
-          </Row>
+          <DashboardFilterPanel
+            currentDashboard={currentDashboard}
+            currentItems={currentItems}
+            onGetOptions={this.getOptions}
+            filterOptions={currentDashboardCascadeSources}
+            onChange={this.globalFilterChange}
+          />
         </Container.Title>
         <Container.Body grid ref={(f) => this.containerBody = findDOMNode(f)}>
           {grids}
@@ -1556,50 +1221,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
-        {
-          !this.hideLinkageConfig ? null : (
-            <Modal
-              title="联动关系配置"
-              wrapClassName="ant-modal-large"
-              visible={linkageConfigVisible}
-              onCancel={this.hideLinkageConfig}
-              footer={linkageModalButtons}
-              afterClose={this.afterLinkagePanelClose}
-            >
-              <DashboardLinkageConfig
-                cascaderSource={linkageCascaderSource || []}
-                tableSource={linkageTableSource || []}
-                onGetWidgetInfo={this.getWidgetInfo}
-                saving={savingLinkageConfig}
-                onSave={this.saveLinkageConfig}
-              />
-            </Modal>
-          )
-        }
-        {
-          !globalFilterConfigPanelVisible ? null : (
-            <Modal
-              wrapClassName="ant-modal-large"
-              title="全局筛选配置"
-              visible={globalFilterConfigPanelVisible}
-              footer={false}
-              onCancel={this.hideGlobalFilterConfigPanel}
-            >
-              <div className={styles.modalFilterConfig}>
-                <GlobalFilterConfig
-                  views={bizlogics}
-                  widgets={widgets}
-                  items={currentItems}
-                  filters={globalFilterTableSource}
-                  onCancel={this.hideGlobalFilterConfigPanel}
-                  onOk={this.saveFilters}
-                  onGetPreviewData={this.getFilterOptions}
-                  previewData={filterOptions}
-                />
-              </div>
-            </Modal>
-          )
-        }
+        <DashboardLinkageConfig
+          currentDashboard={currentDashboard}
+          currentItems={currentItems}
+          currentItemsInfo={currentItemsInfo}
+          views={bizlogics}
+          widgets={widgets}
+          visible={linkageConfigVisible}
+          loading={currentDashboardLoading}
+          onGetWidgetInfo={this.getWidgetInfo}
+          onSave={this.saveLinkageConfig}
+          onCancel={this.toggleLinkageConfig(false)}
+        />
+        <DashboardFilterConfig
+          currentDashboard={currentDashboard}
+          currentItems={currentItems}
+          views={bizlogics}
+          widgets={widgets}
+          visible={globalFilterConfigVisible}
+          loading={currentDashboardLoading}
+          filterOptions={currentDashboardCascadeSources}
+          onCancel={this.toggleGlobalFilterConfig(false)}
+          onSave={this.saveFilters}
+          onGetOptions={this.getOptions}
+        />
         <FullScreenPanel
           widgets={widgets}
           currentDashboard={currentDashboard}
@@ -1623,7 +1268,6 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardShareInfoLoading: makeSelectCurrentDashboardShareInfoLoading(),
   currentItems: makeSelectCurrentItems(),
   currentItemsInfo: makeSelectCurrentItemsInfo(),
-  currentItemsCascadeSources: makeSelectCurrentItemsCascadeSources(),
   currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
@@ -1643,8 +1287,7 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, pivotProps, token) => dispatch(loadWidgetCsv(itemId, pivotProps, token)),
-    onLoadCascadeSourceFromItem: (itemId, controlId, id, sql, column, parents) => dispatch(loadCascadeSourceFromItem(itemId, controlId, id, sql, column, parents)),
-    onLoadCascadeSourceFromDashboard: (controlId, id, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, id, column, parents)),
+    onLoadCascadeSource: (controlId, viewId, column, parents) => dispatch(loadCascadeSource(controlId, viewId, column, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),

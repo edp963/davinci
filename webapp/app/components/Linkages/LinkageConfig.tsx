@@ -175,6 +175,9 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
   private deleteFromTable = (key) => () => {
     this.setState({
       localTableSource: this.state.localTableSource.filter((lt) => lt.key !== key)
+    }, () => {
+      const { onGetWidgetInfo } = this.props
+      this.renderChart(this.state.localTableSource, onGetWidgetInfo)
     })
   }
 

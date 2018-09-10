@@ -89,8 +89,7 @@ import { decodeMetricName } from '../Widget/components/util'
 import {
   loadBizlogics,
   loadDataFromItem,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard,
+  loadCascadeSource, // TODO global filter in Display
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'

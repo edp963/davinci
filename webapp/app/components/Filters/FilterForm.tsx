@@ -27,7 +27,12 @@ interface IFilterFormProps {
   onFilterTypeChange: (filterType: FilterTypes) => void
   onFilterItemSave: (filterItem) => void
   onFilterItemNameChange: (key: string, name: string) => void
-  onGetPreviewData: (viewId: number, fieldName: string, filterKey: string) => void
+  onGetPreviewData: (
+    filterKey: string,
+    fromViewId: string,
+    fromModel: string,
+    parents: Array<{ column: string, value: string }>
+  ) => void
 }
 
 interface IFilterFormStates {
@@ -311,9 +316,9 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       const { form, filterItem, onGetPreviewData } = this.props
       if (!fromModel || modelItems.indexOf(fromModel) < 0) {
         form.setFieldsValue({ fromModel: modelItems[0] })
-        onGetPreviewData(viewId, modelItems[0], filterItem.key)
+        onGetPreviewData(filterItem.key, viewId, modelItems[0], [])
       } else {
-        onGetPreviewData(viewId, fromModel, filterItem.key)
+        onGetPreviewData(filterItem.key, viewId, fromModel, [])
       }
     })
   }
@@ -321,7 +326,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   private onFromModelChange = (modelItemName) => {
     const { onGetPreviewData, form, filterItem } = this.props
     const viewId = form.getFieldValue('fromView')
-    onGetPreviewData(viewId, modelItemName, filterItem.key)
+    onGetPreviewData(filterItem.key, viewId, modelItemName, [])
   }
 
   private filterTypeChange = (val) => {

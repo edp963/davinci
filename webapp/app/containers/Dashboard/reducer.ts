@@ -63,8 +63,7 @@ import {
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
   LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
+  LOAD_CASCADESOURCE_SUCCESS
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({
@@ -334,10 +333,13 @@ function dashboardReducer (state = initialState, action) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
+    case LOAD_CASCADESOURCE_SUCCESS:
       return state.set('currentDashboardCascadeSources', {
         ...dashboardCascadeSources,
-        [payload.controlId]: payload.values
+        [payload.controlId]: {
+          ...dashboardCascadeSources[payload.controlId],
+          [payload.column]: payload.values
+        }
       })
     case RENDER_DASHBOARDITEM:
       return state.set('currentItemsInfo', {

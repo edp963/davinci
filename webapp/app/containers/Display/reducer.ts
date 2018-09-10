@@ -26,9 +26,7 @@ import { GraphTypes } from 'utils/util'
 import {
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
+  LOAD_DATA_FROM_ITEM_FAILURE
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({

@@ -32,12 +32,9 @@ import {
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
   CLEAR_BIZDATAS,
-  LOAD_CASCADESOURCE_FROM_ITEM,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+  LOAD_CASCADESOURCE,
+  LOAD_CASCADESOURCE_SUCCESS,
+  LOAD_CASCADESOURCE_FAILURE,
   LOAD_BIZDATA_SCHEMA,
   LOAD_BIZDATA_SCHEMA_SUCCESS,
   LOAD_BIZDATA_SCHEMA_FAILURE,
@@ -166,56 +163,21 @@ export function clearBizdatas () {
   }
 }
 
-export function loadCascadeSourceFromItem (itemId, controlId, id, sql, column, parents) {
+export function loadCascadeSource (controlId, viewId, column, parents) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM,
+    type: LOAD_CASCADESOURCE,
     payload: {
-      itemId,
       controlId,
-      id,
-      sql,
+      viewId,
       column,
       parents
     }
   }
 }
 
-export function cascadeSourceFromItemLoaded (itemId, controlId, column, values) {
+export function cascadeSourceLoaded (controlId, column, values) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-    payload: {
-      itemId,
-      controlId,
-      column,
-      values
-    }
-  }
-}
-
-export function loadCascadeSourceFromItemFail (error) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_ITEM_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
-export function loadCascadeSourceFromDashboard (controlId, id, column, parents) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
-    payload: {
-      controlId,
-      id,
-      column,
-      parents
-    }
-  }
-}
-
-export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
-  return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
+    type: LOAD_CASCADESOURCE_SUCCESS,
     payload: {
       controlId,
       column,
@@ -224,9 +186,9 @@ export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
   }
 }
 
-export function loadCascadeSourceFromDashboardFail (error) {
+export function loadCascadeSourceFail (error) {
   return {
-    type: LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
+    type: LOAD_CASCADESOURCE_FAILURE,
     payload: {
       error
     }

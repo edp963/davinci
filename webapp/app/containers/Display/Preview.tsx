@@ -38,8 +38,7 @@ import { loadWidgets } from '../Widget/actions'
 import {
   loadBizlogics,
   loadDataFromItem,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard,
+  loadCascadeSource, // TODO global filter in Display Preview
   loadBizdataSchema  } from '../Bizlogic/actions'
 import {
   editCurrentDisplay,

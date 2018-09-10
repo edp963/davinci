@@ -68,7 +68,7 @@ const styles = require('./Dashboard.less')
 const widgetStyles = require('../Widget/Widget.less')
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+import { IProject } from '../Projects'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -85,6 +85,21 @@ interface IDashboardProps {
   // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
+export interface IDashboard {
+  id?: number
+  name?: string
+  config?: string
+  parentId?: number
+  dashboardPortalId?: number
+  index?: number
+  type?: number
+  children?: any[]
+}
+
+export interface ICurrentDashboard extends IDashboard {
+  widgets: any[]
+}
+
 interface IDashboardStates {
   formType: 'add' | 'edit' | 'copy' | 'move' | 'delete' | ''
   formVisible: boolean
@@ -97,17 +112,6 @@ interface IDashboardStates {
   isExpand: boolean
   searchVisible: boolean
   isGrid: boolean
-}
-
-export interface IDashboard {
-  id?: number
-  name?: string
-  config?: string
-  parentId?: number
-  dashboardPortalId?: number
-  index?: number
-  type?: number
-  children?: any[]
 }
 
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {

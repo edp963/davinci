@@ -38,7 +38,7 @@ interface IChartProps {
   updateParams?: any[]
   classNames: any
   interactId?: string
-  onCheckTableInteract?: (itemId: number) => object
+  onCheckTableInteract?: (itemId: number) => boolean
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   currentBizlogicId?: number
   onTextEditorChange?: (content: any) => void

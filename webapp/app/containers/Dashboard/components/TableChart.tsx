@@ -46,7 +46,7 @@ interface ITableChartProps {
   width: number
   height: number
   interactId?: string,
-  onCheckInteract?: (itemId: number) => object
+  onCheckInteract?: (itemId: number) => boolean
   onDoInteract?: (itemId: number, linkagers: any, value: any) => void
   onUpdateMark?: (bizlogicId: number, paramsArr: any[], resolve: (res: any) => void, reject: (err: any) => void) => void
   currentBizlogicId?: number

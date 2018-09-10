@@ -14,7 +14,12 @@ const styles = require('./filter.less')
 
 interface IFilterPanelProps {
   filters: IFilterItem[]
-  onGetOptions: (fromViewId, fromModelName, filterKey) => void
+  onGetOptions: (
+    filterKey: string,
+    fromViewId: string,
+    fromModel: string,
+    parents: Array<{ column: string, value: string }>
+  ) => void
   filterOptions: {
     [filterKey: string]: {
       [key: string]: Array<number | string>

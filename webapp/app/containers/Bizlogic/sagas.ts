@@ -25,8 +25,7 @@ import {
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
-  LOAD_CASCADESOURCE_FROM_ITEM,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD,
+  LOAD_CASCADESOURCE,
   LOAD_BIZDATA_SCHEMA,
   LOAD_SCHEMA,
   EXECUTE_SQL,
@@ -44,10 +43,8 @@ import {
   deleteBizlogicFail,
   bizlogicEdited,
   editBizlogicFail,
-  cascadeSourceFromItemLoaded,
-  loadCascadeSourceFromItemFail,
-  cascadeSourceFromDashboardLoaded,
-  loadCascadeSourceFromDashboardFail,
+  cascadeSourceLoaded,
+  loadCascadeSourceFail,
   bizdataSchemaLoaded,
   loadBizdataSchemaFail,
   schemaLoaded,
@@ -144,53 +141,23 @@ export function* editBizlogic (action) {
   }
 }
 
-export function* getCascadeSourceFromItem (action) {
-  const  { payload } = action
-  try {
-    const { itemId, controlId, id, sql, column, parents } = payload
-    const { adHoc, filters, linkageFilters, globalFilters, params, linkageParams, globalParams } = sql
-    const data = (Object as IObjectConstructor).assign({
-      adHoc,
-      manualFilters: [filters, linkageFilters, globalFilters]
-        .filter((f) => !!f)
-        .join(' and '),
-      params: [].concat(params).concat(linkageParams).concat(globalParams),
-      childFieldName: column
-    }, parents && { parents })
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/distinct_value`,
-      data
-    })
-    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
-    yield put(cascadeSourceFromItemLoaded(itemId, controlId, column, values))
-  } catch (err) {
-    yield put(loadCascadeSourceFromItemFail(err))
-  }
-}
-
-export function* getCascadeSourceFromDashboard (action) {
+export function* getCascadeSource (action) {
   const { payload } = action
   try {
-    const { controlId, id, column, parents } = payload
-
-    const data = (Object as IObjectConstructor).assign({
-      adHoc: '',
-      manualFilters: '',
-      params: [],
-      childFieldName: column
-    }, parents && { parents })
+    const { controlId, viewId, column, parents } = payload
 
     const asyncData = yield call(request, {
       method: 'post',
-      url: `${api.bizlogic}/${id}/distinct_value`,
-      data
+      url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
+      data: {
+        column,
+        parents: parents || []
+      }
     })
-    const values = resultsetConverter(readListAdapter(asyncData)).dataSource
-    yield put(cascadeSourceFromDashboardLoaded(controlId, column, values))
+    const values = asyncData.payload[column]
+    yield put(cascadeSourceLoaded(controlId, column, values))
   } catch (err) {
-    yield put(loadCascadeSourceFromDashboardFail(err))
+    yield put(loadCascadeSourceFail(err))
   }
 }
 
@@ -326,8 +293,7 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
-    takeEvery(LOAD_CASCADESOURCE_FROM_ITEM, getCascadeSourceFromItem),
-    takeEvery(LOAD_CASCADESOURCE_FROM_DASHBOARD, getCascadeSourceFromDashboard),
+    takeEvery(LOAD_CASCADESOURCE, getCascadeSource),
     takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
     takeLatest(LOAD_SCHEMA, getSchema),
     takeLatest(EXECUTE_SQL, executeSql),
