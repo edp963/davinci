@@ -110,7 +110,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
     }]
     return (
       <div className={styles.listWrapper}>
-        <Row>
+        {/* <Row>
           <Col span={16}>
             <Input.Search
               size="large"
@@ -118,7 +118,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
               onSearch={this.onSearchTeam}
             />
           </Col>
-        </Row>
+        </Row> */}
         <Row>
           <div className={styles.tableWrap}>
             <Table
