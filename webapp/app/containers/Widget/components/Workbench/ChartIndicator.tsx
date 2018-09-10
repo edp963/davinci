@@ -21,7 +21,7 @@ export function ChartIndicator (props: IChartIndicatorProps) {
     <p>
       {title}<br />
       {`需要 ${requireDimetions}个 到多个维度`}<br/>
-      {`需要 ${requireMetrics}个 到多个度量`}
+      {`需要 ${requireMetrics}个 到多个指标`}
     </p>
   )
 
