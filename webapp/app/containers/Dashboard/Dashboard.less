@@ -76,6 +76,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-shadow: @block-box-shadow;
   transition: all 350ms ease;
 
   .header {
@@ -193,6 +194,7 @@
     &.show {
       display: block;
       background-color: fade(@black, 50);
+      cursor: pointer;
     }
 
     .form {
@@ -200,6 +202,7 @@
       background-color: @white;
       border-top: 1px solid @border-color-base;
       overflow-y: auto;
+      cursor: default;
 
       &.show {
         transform: translate(0, 0);
@@ -245,28 +248,8 @@
 
   .block {
     flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-
-    .chartBlock {
-      flex: 1;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tableBlock {
-      padding: 0 16px;
-      flex: 1;
-
-      .selectedRow {
-        td {
-          background-color: @primary-color;
-          color: @white;
-        }
-      }
-    }
+    min-height: 0;
+    padding: 16px;
   }
 }
 
@@ -276,142 +259,6 @@
 
 .gridBottom {
   height: 100px;
-}
-
-.filters {
-  width: 100%;
-  height: 100%;
-  padding-bottom: 40px;
-  position: relative;
-
-  .buttons {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-
-    button {
-      margin-left: 8px;
-    }
-  }
-}
-
-.filterForm {
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-
-  .empty {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-  }
-
-  .filterBlock {
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .filterRel {
-    width: 110px;
-    margin: 0 5px;
-    flex-shrink: 0;
-    position: relative;
-
-    &:after{
-      width: 10px;
-      height: 0;
-      border-top: 1px solid @primary-color;
-      position: absolute;
-      top: 50%;
-      right: -10px;
-      content: '';
-    }
-  }
-
-  .filterList {
-    padding-left: 5px;
-    margin-left: 5px;
-    border-left: 1px solid @primary-color;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .filterItem {
-    padding: 4px 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    position: relative;
-
-    & > *:not(.filterBlock) {
-      margin: 0 4px;
-    }
-
-    &:before {
-      width: 10px;
-      height: 0;
-      border-top: 1px solid @primary-color;
-      position: absolute;
-      top: 50%;
-      left: -5px;
-      content: '';
-    }
-
-    &.root:before {
-      width: 0;
-      display: none;
-    }
-
-    &.noPadding {
-      padding: 0;
-    }
-
-    &:first-child,
-    &:last-child {
-      &:after {
-        width: 3px;
-        background-color: @white;
-        position: absolute;
-        left: -7px;
-        content: '';
-      }
-    }
-
-    &:first-child {
-      &:after {
-        height: 50%;
-        top: 0;
-      }
-    }
-
-    &:last-child {
-      &:after {
-        height: 50%;
-        bottom: -1px;
-      }
-    }
-  }
-
-  .filterFormItem {
-    margin-bottom: 0;
-
-    .inputNumber {
-      width: 100%;
-    }
-  }
-
-  .filterFormKey {
-    min-width: 100px;
-  }
-
-  .filterFormOperator {
-    min-width: 60px;
-  }
 }
 
 .dimension {
@@ -571,25 +418,183 @@
   font-size: 17px;
 }
 
-.searchAdmin, .addCol {
-  padding: 0 4px;
-  text-align: right;
+.size {
+  width: 78px !important;
 }
 
-@media (max-width: 768px) {
-  .searchAdmin {
-    margin-bottom: 8px;
+.more {
+  cursor: pointer;
+  font-weight: 900;
+  &:before {
+    padding: 0 8px;
   }
 }
 
-.searchUser {
-  float: right;
+.more:before, .swap:before, .itemAction:before {
+  -moz-transform:rotate(-90deg);
+  -webkit-transform:rotate(-90deg);
+  filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
 }
 
-.searchInputAdmin {
-  margin-right: 10px;
+.portalTreeSearch {
+  overflow-x: auto;
+  text-align: center;
+  ul {
+    max-height: 410px;
+    overflow-y: auto;
+    li {
+      cursor: pointer;
+      line-height: 26px;
+    }
+  }
 }
 
-.size {
-  width: 78px !important;
+.menu > li {
+  cursor: pointer;
+  line-height: 26px;
+}
+
+.portal {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .portalHeader {
+    flex-shrink: 0;
+    height: 40px;
+    background: @white;
+    border-bottom: 1px solid @border-color-base;
+
+    .title {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 40px;
+    }
+
+    .historyBack {
+      padding-left: 13px;
+      line-height: 40px;
+      cursor: pointer;
+
+      .backIcon:before {
+        font-size: 18px !important;
+      }
+    }
+  }
+
+  .portalBody {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+
+    .portalTree {
+      flex-shrink: 0;
+      width: 190px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+
+      .loadingTreeMsg {
+        padding-left: 16px;
+      }
+
+      .portalRow {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 16px;
+
+        .search, .plus {
+          cursor: pointer;
+        }
+        .search:before, .plus:before {
+          padding: 0 8px;
+        }
+      }
+
+      .portalTitle {
+        flex: 1;
+        padding: 0 4px;
+        line-height: 32px;
+        font-weight: bold;
+        display: inline-block;
+        font-size: 16px;
+        .ellipsis;
+      }
+
+      .portalAction {
+        flex-shrink: 0;
+      }
+
+      .portalTreeNode {
+        flex: 1;
+        overflow-y: auto;
+        border-top: 1px solid #d9d9d9;
+        padding-left: 8px;
+      }
+    }
+
+    .gridClass {
+      flex: 1;
+      border-left: 1px solid #d9d9d9;
+    }
+  }
+}
+
+.noDashboard {
+  top: 32%;
+  left: 50%;
+  position: fixed;
+  img {
+    cursor: pointer;
+  }
+  p {
+    text-align: center;
+    color: rgba(10,18,32,.46);
+  }
+}
+
+.portalTreeItem {
+  .dashboardTitle {
+    display: inline-block;
+    margin-bottom: -4px;
+    font-weight: 400;
+    font-size: 14px;
+    font-family: 'PingFang SC','Helvetica Neue',Helvetica,STHeitiSC-Light,WOL_SB,'Segoe UI Semibold','Segoe UI',Tahoma,Helvetica,sans-serif;
+    .ellipsis;
+  }
+
+  .itemAction {
+    display: none !important;
+  }
+
+  &:hover {
+    .itemAction {
+      display: inline-block !important;
+      cursor: pointer;
+      font-weight: 900;
+      margin-bottom: 1px;
+      padding-left: 5px;
+
+      &:before {
+        // padding: 0 8px;
+      }
+    }
+  }
+
+  .itemName {
+    margin-left: 8px;
+    font-weight: 400;
+    font-size: 14px;
+    font-family: 'PingFang SC','Helvetica Neue',Helvetica,STHeitiSC-Light,WOL_SB,'Segoe UI Semibold','Segoe UI',Tahoma,Helvetica,sans-serif;
+  }
+}
+
+.modalFilterConfig {
+  height: 400px;
+  display: flex;
+  flex-direction: column;
 }

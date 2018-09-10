@@ -18,22 +18,37 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import TreeSelect from 'antd/lib/tree-select'
+import * as React from 'react'
+// import {connect} from 'react-redux'
+// import {checkNameAction} from '../App/actions'
+const Form  = require('antd/lib/form')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Input = require('antd/lib/input')
+const Select = require('antd/lib/select')
+const Option = Select.Option
+const TreeSelect = require('antd/lib/tree-select')
 const SHOW_PARENT = TreeSelect.SHOW_PARENT
 const FormItem = Form.Item
+const utilStyles =  require('../../assets/less/util.less')
 
-import utilStyles from '../../assets/less/util.less'
 
-export class ConfigForm extends React.PureComponent {
-  render () {
+
+interface IConfigFormProps {
+  form: any
+  type: string
+  vizs: any
+  dashboardTree: any[]
+  treeSelect: () => any
+  treeChange: () => any
+  loadTreeData: () => any
+  dashboardTreeValue: any
+}
+
+export class ConfigForm extends React.PureComponent<IConfigFormProps> {
+  public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData } = this.props
+    const { dashboardTree, dashboardTreeValue, treeSelect, treeChange, loadTreeData, vizs } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 4 },
       wrapperCol: { span: 18 }
@@ -46,7 +61,7 @@ export class ConfigForm extends React.PureComponent {
       treeCheckable: true,
       onChange: treeChange,
       onSelect: treeSelect,
-      treeData: dashboardTree,
+      treeData: vizs,
       value: dashboardTreeValue,
       loadData: loadTreeData,
       showCheckedStrategy: SHOW_PARENT,
@@ -138,9 +153,7 @@ export class ConfigForm extends React.PureComponent {
           </Col>
         </Row>
         <Row>
-          <div className="ant-col-2 ant-form-item-label">
-            <label className="" title="发送项">发送项</label>
-          </div>
+          <div className="ant-col-2 ant-form-item-label"><label className="" title="发送项">发送项</label></div>
           <Col span={21}>
             <TreeSelect {...treeSelectProps} />
           </Col>
@@ -150,14 +163,5 @@ export class ConfigForm extends React.PureComponent {
   }
 }
 
-ConfigForm.propTypes = {
-  form: PropTypes.any,
-  type: PropTypes.string,
-  dashboardTree: PropTypes.array,
-  treeSelect: PropTypes.func,
-  treeChange: PropTypes.func,
-  loadTreeData: PropTypes.func,
-  dashboardTreeValue: PropTypes.any
-}
 
 export default Form.create()(ConfigForm)

@@ -44,40 +44,34 @@ export default function (dataSource, flatInfo, chartParams) {
     metrics,
     prefix,
     suffix,
-    gaugeName,
-    upperLimitGraduation
+    gaugeName
   } = chartParams
-  let metricOptions,
-    tooltipOptions,
-    toolboxOptions,
-    subsectionMax
+  let metricOptions
+  let tooltipOptions
+  let toolboxOptions
+  let subsectionMax
 
   // series 数据项
-  let metricArr = []
-  let color = []
+  const metricArr = []
+  const color = []
   if (subsection) {
-    let tiny = 1 / subsection
+    const tiny = 1 / subsection
     for (let index = 0; index < subsection; index++) {
       color.push(index === subsection - 1 ? [1, danger] : [tiny * (index + 1), colorList[index]])
     }
   }
 
-  let prefixOption = prefix && prefix.length ? prefix : ''
-  let suffixOption = suffix && suffix.length ? suffix : ''
+  const prefixOption = prefix && prefix.length ? prefix : ''
+  const suffixOption = suffix && suffix.length ? suffix : ''
+
   if (dataSource && dataSource[0] && dataSource[0][metrics]) {
-    let metric = dataSource[0][metrics]
-    let first = parseInt(metric[0]) + 1
-    let length = parseInt(metric).toString().length
+    const metric = dataSource[0][metrics]
+    const first = parseInt(metric[0], 10) + 1
+    const length = parseInt(metric, 10).toString().length
     subsectionMax = first * Math.pow(10, length - 1)
   }
 
-  if (typeof upperLimitGraduation !== 'number') {
-    if (upperLimitGraduation >= subsectionMax) {
-      subsectionMax = upperLimitGraduation
-    }
-  }
-
-  let serieObj = {
+  const serieObj = {
     name: '业务指标',
     type: 'gauge',
     radius: `${radius}%`, // 仪表盘半径
@@ -108,7 +102,9 @@ export default function (dataSource, flatInfo, chartParams) {
       value: dataSource && dataSource[0] && dataSource[0][metrics] ? dataSource[0][metrics] : 0
     }]
   }
-  color && color.length > 3 ? serieObj.axisLine.lineStyle['color'] = color : ''
+  if (color && color.length > 3) {
+    serieObj.axisLine.lineStyle['color'] = color
+  }
   metricArr.push(serieObj)
   metricOptions = {
     series: metricArr
@@ -136,9 +132,9 @@ export default function (dataSource, flatInfo, chartParams) {
       }
     } : null
 
-  return Object.assign({},
-    metricOptions,
-    tooltipOptions,
-    toolboxOptions
-  )
+  return {
+    ...metricOptions,
+    ...tooltipOptions,
+    ...toolboxOptions
+  }
 }

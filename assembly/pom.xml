@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>davinci-parent_2.11</artifactId>
+        <artifactId>davinci-parent_3.01</artifactId>
         <groupId>edp.davinci</groupId>
-        <version>0.2.1-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>davinci-assembly_2.11</artifactId>
+    <artifactId>davinci-assembly_3.0.1</artifactId>
     <packaging>pom</packaging>
 
     <licenses>
@@ -23,6 +23,8 @@
     </licenses>
 
     <properties>
+        <skipTests>true</skipTests>
+
         <main.basedir>${project.parent.basedir}</main.basedir>
         <sbt.project.name>assembly</sbt.project.name>
         <build.testJarPhase>none</build.testJarPhase>
@@ -32,7 +34,7 @@
     <dependencies>
         <dependency>
             <groupId>edp.davinci</groupId>
-            <artifactId>davinci-server_${scala.binary.version}</artifactId>
+            <artifactId>davinci-server_3.01</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

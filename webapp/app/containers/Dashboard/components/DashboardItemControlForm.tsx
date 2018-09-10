@@ -18,25 +18,37 @@
  * >>
  */
 
-import React, { PropTypes, PureComponent } from 'react'
+import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import DatePicker from 'antd/lib/date-picker'
 import MultiDatePicker from '../../../components/MultiDatePicker'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Form = require('antd/lib/form')
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Select = require('antd/lib/select')
+const DatePicker = require('antd/lib/date-picker')
+const Button = require('antd/lib/button')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const FormItem = Form.Item
 const Option = Select.Option
 const RangePicker = DatePicker.RangePicker
 
 import { KEY_COLUMN } from '../../../globalConstants'
-import styles from '../Dashboard.less'
+const styles = require('../Dashboard.less')
 
-export class DashboardItemControlForm extends PureComponent {
+interface IDashboardItemControlFormProps {
+  form: WrappedFormUtils
+  controls: any[]
+  onSearch: (queayParams: { params: any[] }) => void
+  onHide: () => void
+}
+
+interface IDashboardItemControlFormStates {
+  parentSelValues: object
+}
+
+export class DashboardItemControlForm extends React.PureComponent<IDashboardItemControlFormProps, IDashboardItemControlFormStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -44,50 +56,32 @@ export class DashboardItemControlForm extends PureComponent {
     }
   }
 
-  componentWillMount () {
+  public componentWillMount () {
     this.getStateValues(this.props.controls)
   }
 
-  componentWillUpdate (nextProps) {
-    if (nextProps.controls.map(c => c.id).join(',') !==
-        this.props.controls.map(c => c.id).join(',')) {
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps.controls.map((c) => c.id).join(',') !==
+        this.props.controls.map((c) => c.id).join(',')) {
       this.getStateValues(nextProps.controls)
     }
   }
 
-  getStateValues = (controls) => {
-    this.state.parentSelValues = controls
-      .filter(c => c.sub.length)
-      .reduce((acc, c) => {
-        acc[c.id] = 0
-        return acc
-      }, {})
+  private getStateValues = (controls) => {
+    this.setState({
+      parentSelValues: controls
+        .filter((c) => c.sub.length)
+        .reduce((acc, c) => {
+          acc[c.id] = 0
+          return acc
+        }, {})
+    })
   }
 
-  getCascadeChildrenControlId = (column, chilrenArr) => {
-    const nearest = this.props.controls.find(c => c.parentColumn === column.cascadeColumn)
-    if (nearest) {
-      return this.getCascadeChildrenControlId(nearest, chilrenArr.concat(nearest.id))
-    } else {
-      return chilrenArr
-    }
-  }
-
-  getCascadeParents = (column, parentsArr) => {
-    if (column.parent) {
-      const parent = this.props.controls.find(c => c.cascadeColumn === column.parent)
-      return this.getCascadeParents(parent, parentsArr.concat(parent.cascadeColumn))
-    } else {
-      return parentsArr
-    }
-  }
-
-  generateFormComponent = (c) => {
+  private generateFormComponent = (c) => {
     const {
       form,
-      controls,
-      cascadeSources,
-      onCascadeSelectChange
+      controls
     } = this.props
 
     const { getFieldDecorator } = form
@@ -97,9 +91,8 @@ export class DashboardItemControlForm extends PureComponent {
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -110,7 +103,7 @@ export class DashboardItemControlForm extends PureComponent {
         )
       case 'select':
       case 'multiSelect':
-        let options = []
+        const options = []
         let followComponents = []
 
         c.sub.forEach((sub, index) => {
@@ -122,10 +115,11 @@ export class DashboardItemControlForm extends PureComponent {
               c.hasRelatedComponent === 'yes' &&
               sub.variableType &&
               this.state.parentSelValues[c.id] === index) {
-            followComponents = followComponents.concat(this.generateFormComponent(Object.assign({}, sub, {
+            followComponents = followComponents.concat(this.generateFormComponent({
+              ...sub,
               id: `sub_${c.id}_${sub.id}`,
               type: sub.variableType
-            })))
+            }))
           }
         })
 
@@ -136,17 +130,17 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             allowClear: true
           }
-        const selProperties = Object.assign({
+        const selProperties = {
           placeholder: c.variables[0] || '请选择',
-          onChange: this.parentSelectChange(c)
-        }, mode)
+          onChange: this.parentSelectChange(c),
+          ...mode
+        }
 
         followComponents.unshift(
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -159,53 +153,6 @@ export class DashboardItemControlForm extends PureComponent {
         )
 
         return followComponents
-      case 'cascadeSelect':
-        const column = c.cascadeColumn
-        const nearestChild = controls.find(cl => cl.parentColumn === column)
-        const dataSource = cascadeSources && cascadeSources[c.id]
-        const cascadeOptions = dataSource
-          ? dataSource.map(s => (
-            <Option key={s[KEY_COLUMN]} value={s[column]}>{s[column]}</Option>
-          ))
-          : ''
-
-        const changeCallback = nearestChild && {
-          onChange: (val) => {
-            if (val) {
-              const childColumn = nearestChild.cascadeColumn
-              const parentColumns = this.getCascadeParents(c, [column])
-              const parents = parentColumns.length &&
-                Object.entries(form.getFieldsValue(parentColumns)).map(arr => ({
-                  fieldName: arr[0],
-                  fieldValue: arr[0] === column ? val : arr[1]  // onChange未完成，不能获取到当前control的值
-                }))
-              onCascadeSelectChange(nearestChild.id, childColumn, parents)
-            }
-            form.resetFields(this.getCascadeChildrenControlId(c, []))
-          }
-        }
-
-        const cascadeProperties = Object.assign({
-          placeholder: column,
-          allowClear: true
-        }, changeCallback)
-
-        return (
-          <Col
-            key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(c.id, {})(
-                <Select {...cascadeProperties}>
-                  {cascadeOptions}
-                </Select>
-              )}
-            </FormItem>
-          </Col>
-        )
       case 'date':
       case 'datetime':
         const dateFormat = c.type === 'datetime'
@@ -216,16 +163,13 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             format: 'YYYY-MM-DD'
           }
-        const dateProperties = Object.assign({
-          placeholder: c.variables[0]
-        }, dateFormat)
+        const dateProperties = {...dateFormat}
 
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -238,11 +182,11 @@ export class DashboardItemControlForm extends PureComponent {
         return (
           <Col
             key={c.id}
-            lg={12}
+            xl={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
-                <MultiDatePicker placeholder={c.variables[0]} />
+                <MultiDatePicker />
               )}
             </FormItem>
           </Col>
@@ -257,16 +201,16 @@ export class DashboardItemControlForm extends PureComponent {
           : {
             format: 'YYYY-MM-DD'
           }
-        const rangeProperties = Object.assign({
-          placeholder: c.variables
-        }, rangeFormat)
+        const rangeProperties = {
+          placeholder: c.variables[0],
+          ...rangeFormat
+        }
 
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -279,9 +223,8 @@ export class DashboardItemControlForm extends PureComponent {
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -293,14 +236,14 @@ export class DashboardItemControlForm extends PureComponent {
     }
   }
 
-  parentSelectChange = (control) => (val) => {
+  private parentSelectChange = (control) => (val) => {
     const { parentSelValues } = this.state
 
     if (Object.prototype.toString.call(val) !== '[object Array]') {
       let selIndex = -1
 
       if (val) {
-        selIndex = control.sub.findIndex(c => c.value === val)
+        selIndex = control.sub.findIndex((c) => c.value === val)
         parentSelValues[control.id] = selIndex
       } else {
         selIndex = parentSelValues[control.id]
@@ -308,7 +251,7 @@ export class DashboardItemControlForm extends PureComponent {
       }
 
       this.setState({
-        parentSelValues: parentSelValues
+        parentSelValues
       }, () => {
         // FIXME 当未关联控件时控制台报错
         this.props.form.setFieldsValue({
@@ -318,7 +261,7 @@ export class DashboardItemControlForm extends PureComponent {
     }
   }
 
-  onControlSearch = () => {
+  private onControlSearch = () => {
     const { controls, onSearch, onHide } = this.props
 
     const formValues = this.props.form.getFieldsValue()
@@ -330,45 +273,45 @@ export class DashboardItemControlForm extends PureComponent {
 
       if (key.indexOf('sub') >= 0) {
         const idArr = key.split('_')
-        valControl = controls.find(c => c.id === idArr[1]).sub.find(s => s.id === idArr[2])
+        valControl = controls.find((c) => c.id === idArr[1]).sub.find((s) => s.id === idArr[2])
       } else {
-        valControl = controls.find(c => c.id === key)
+        valControl = controls.find((c) => c.id === key)
       }
 
       valControl.type = valControl.variableType || valControl.type
 
       if (Object.prototype.toString.call(val) === '[object Array]') {
-        if (val.length) {
-          switch (valControl.type) {
-            case 'dateRange':
-              val = val.map(v => v.format('YYYY-MM-DD'))
+        switch (valControl.type) {
+          case 'dateRange':
+            val = val.map((v) => v.format('YYYY-MM-DD'))
+            arr = arr.concat({
+              name: valControl.variables[0],
+              value: `'${val[0]}'`
+            }).concat({
+              name: valControl.variables[1],
+              value: `'${val[1]}'`
+            })
+            break
+          case 'datetimeRange':
+            val = val.map((v) => v.format('YYYY-MM-DD HH:mm:ss'))
+            arr = arr.concat({
+              name: valControl.variables[0],
+              value: `'${val[0]}'`
+            }).concat({
+              name: valControl.variables[1],
+              value: `'${val[1]}'`
+            })
+            break
+          case 'multiSelect':
+            val.forEach((v) => {
               arr = arr.concat({
-                k: valControl.variables[0],
-                v: `'${val[0]}'`
-              }).concat({
-                k: valControl.variables[1],
-                v: `'${val[1]}'`
+                name: valControl.variables[0],
+                value: `${v}`
               })
-              break
-            case 'datetimeRange':
-              val = val.map(v => v.format('YYYY-MM-DD HH:mm:ss'))
-              arr = arr.concat({
-                k: valControl.variables[0],
-                v: `'${val[0]}'`
-              }).concat({
-                k: valControl.variables[1],
-                v: `'${val[1]}'`
-              })
-              break
-            case 'multiSelect':
-              arr = arr.concat({
-                k: valControl.variables[0],
-                v: val.join(',')
-              })
-              break
-            default:
-              break
-          }
+            })
+            break
+          default:
+            break
         }
       } else {
         if (val) {
@@ -377,45 +320,45 @@ export class DashboardItemControlForm extends PureComponent {
               case 'date':
                 val = val.format('YYYY-MM-DD')
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
               case 'datetime':
                 val = val.format('YYYY-MM-DD HH:mm:ss')
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
               case 'multiDate':
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: val.split(',').map(v => `'${v}'`).join(',')
+                  name: valControl.variables[0],
+                  value: val.split(',').map((v) => `'${v}'`).join(',')
                 })
                 break
               case 'select':
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `${val}`
+                  name: valControl.variables[0],
+                  value: `${val}`
                 })
                 break
               default:
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
             }
           } else {
             if (valControl.type === 'select') {
               if (valControl.hasRelatedComponent === 'no') {
-                const chosenSub = valControl.sub.find(s => s.value === val)
+                const chosenSub = valControl.sub.find((s) => s.value === val)
 
                 if (chosenSub.variables[0]) {
                   arr = arr.concat({
-                    k: chosenSub.variables[0],
-                    v: `'${val}'`
+                    name: chosenSub.variables[0],
+                    value: `'${val}'`
                   })
                 }
               }
@@ -434,13 +377,13 @@ export class DashboardItemControlForm extends PureComponent {
     onHide()
   }
 
-  render () {
+  public render () {
     const {
       controls
     } = this.props
 
     const controlItems = controls
-      .map(c => this.generateFormComponent(c))
+      .map((c) => this.generateFormComponent(c))
 
     return (
       <Form className={styles.controlForm}>
@@ -455,15 +398,6 @@ export class DashboardItemControlForm extends PureComponent {
       </Form>
     )
   }
-}
-
-DashboardItemControlForm.propTypes = {
-  form: PropTypes.any,
-  controls: PropTypes.array,
-  cascadeSources: PropTypes.object,
-  onSearch: PropTypes.func,
-  onHide: PropTypes.func,
-  onCascadeSelectChange: PropTypes.func
 }
 
 export default Form.create()(DashboardItemControlForm)

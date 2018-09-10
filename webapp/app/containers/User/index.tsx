@@ -18,12 +18,19 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
+
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
+import groupReducer from '../Group/reducer'
+import groupSaga from '../Group/sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
@@ -31,30 +38,63 @@ import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import UserForm from './UserForm'
 import UserPasswordForm from './UserPasswordForm'
 import GroupForm from '../Group/GroupForm'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const Modal = require('antd/lib/modal')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Table = require('antd/lib/table')
+const Button = require('antd/lib/button')
+const Tooltip = require('antd/lib/tooltip')
+const Icon = require('antd/lib/icon')
+const Popconfirm = require('antd/lib/popconfirm')
+const Breadcrumb = require('antd/lib/breadcrumb')
+const message = require('antd/lib/message')
 
 import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUserPassword } from './actions'
 import { loadGroups, addGroup } from '../Group/actions'
-import { makeSelectUsers } from './selectors'
+import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-import { promiseDispatcher } from '../../utils/reduxPromisation'
-import utilStyles from '../../assets/less/util.less'
+// import { resolve } from 'dns'
+const utilStyles = require('../../assets/less/util.less')
 
-export class User extends React.PureComponent {
+interface IUserProps {
+  users: boolean | any[]
+  groups: boolean | any[]
+  tableLoading: boolean
+  formLoading: boolean
+  onLoadUsers: () => any
+  onAddUser: (userData: object, resolve: any) => any
+  onDeleteUser: (id: number) => any
+  onLoadUserGroups: (id: number, resolve: any) => any
+  onEditUserInfo: (userData: object, resolve: any) => any
+  onChangeUserPassword: (formdata: any, resolve: any, reject: any) => any
+  onLoadGroups: () => any
+  onAddGroup: (group: any, resolve: any) => any
+}
+
+interface IUserStates {
+  tableSource: any[]
+  tableSortedInfo: {columnKey?: string, order?: string}
+  formType: string
+  groupTransfer: { id: string, targets: any[] }
+  emailFilterValue: string
+  emailFilterDropdownVisible: boolean
+  nameFilterValue: string
+  nameFilterDropdownVisible: boolean
+  modalLoading: boolean
+  userFormVisible: boolean
+  passwordFormVisible: boolean
+  groupFormVisible: boolean
+  userFormStep: number
+  screenWidth: number
+}
+
+export class User extends React.PureComponent<IUserProps, IUserStates> {
   constructor (props) {
     super(props)
     this.state = {
       tableSource: [],
       tableSortedInfo: {},
-      tableLoading: false,
 
       formType: '',
       groupTransfer: {
@@ -78,66 +118,67 @@ export class User extends React.PureComponent {
     }
   }
 
-  componentWillMount () {
-    this.setState({
-      tableLoading: true,
-      screenWidth: document.documentElement.clientWidth
-    })
+  private userForm: WrappedFormUtils = null
+  private userPasswordForm: WrappedFormUtils = null
+  private groupForm: WrappedFormUtils = null
+
+  public componentWillMount () {
+    this.setState({ screenWidth: document.documentElement.clientWidth })
     this.props.onLoadGroups()
     this.props.onLoadUsers()
-      .then(() => { this.setState({ tableLoading: false }) })
   }
 
-  componentWillReceiveProps (props) {
+  public componentWillReceiveProps (props) {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     if (props.users) {
-      this.state.tableSource = props.users.map(g => {
-        g.key = g.id
-        return g
+      this.setState({
+        tableSource: props.users.map((g) => {
+          g.key = g.id
+          return g
+        })
       })
     }
   }
 
-  showAdd = () => {
+  private showAdd = () => {
     this.setState({
       formType: 'add',
       userFormVisible: true
     })
   }
 
-  showInfo = (id) => () => {
+  private showInfo = (id) => () => {
     this.setState({
       formType: 'edit',
       userFormVisible: true
     }, () => {
-      const { email, admin, name, title } = this.props.users.find(u => u.id === id)
-      this.props.onLoadUserGroups(id)
-        .then(groups => {
-          this.userForm.setFieldsValue({
-            id,
-            email,
-            name,
-            title,
-            admin
-          })
-          this.setState({
-            groupTransfer: {
-              id: id,
-              targets: groups ? groups.map(g => g.group_id) : []
-            }
-          })
+      const { email, admin, name, title } = (this.props.users as any[]).find((u) => u.id === id)
+      this.props.onLoadUserGroups(id, (groups) => {
+        this.userForm.setFieldsValue({
+          id,
+          email,
+          name,
+          title,
+          admin
         })
+        this.setState({
+          groupTransfer: {
+            id,
+            targets: groups ? groups.map((g) => g.group_id) : []
+          }
+        })
+      })
     })
   }
 
-  showGroupForm = () => {
+  private showGroupForm = () => {
     this.setState({
       groupFormVisible: true
     })
   }
 
-  showPassword = (id) => () => {
+  private showPassword = (id) => () => {
     this.setState({
       passwordFormVisible: true
     }, () => {
@@ -145,7 +186,7 @@ export class User extends React.PureComponent {
     })
   }
 
-  changeUserFormStep = (sign) => () => {
+  private changeUserFormStep = (sign) => () => {
     if (sign) {
       this.userForm.validateFieldsAndScroll((err) => {
         if (!err) {
@@ -161,24 +202,29 @@ export class User extends React.PureComponent {
     }
   }
 
-  onUserModalOk = () => {
+  private onUserModalOk = () => {
     const { formType, groupTransfer } = this.state
     this.userForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const userData = Object.assign({}, values, {
-          relUG: groupTransfer.targets.map(gid => ({
-            group_id: gid
-          }))
-        })
-        this.setState({ modalLoading: true })
+        const userData = {
+          ...values,
+          ...{
+            relUG: groupTransfer.targets.map((gid) => ({
+              group_id: gid
+            }))
+          }
+        }
+
         switch (formType) {
           case 'add':
-            this.props.onAddUser(userData)
-              .then(() => { this.hideForm() })
+            this.props.onAddUser(userData, () => {
+              this.hideForm()
+            })
             break
           case 'edit':
-            this.props.onEditUserInfo(userData)
-              .then(() => { this.hideForm() })
+            this.props.onEditUserInfo(userData, () => {
+              this.hideForm()
+            })
             break
           default:
             break
@@ -187,37 +233,40 @@ export class User extends React.PureComponent {
     })
   }
 
-  onPasswordModalOk = () => {
+  private onPasswordModalOk = () => {
     this.userPasswordForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.props.onChangeUserPassword(values)
-          .then(() => { this.hideForm() })
+        this.props.onChangeUserPassword(values, () => {
+          this.hideForm()
+        }, (msg) => {
+          message.error(msg, 3)
+        })
       }
     })
   }
 
-  onGroupTransferChange = (targets) => {
+  private onGroupTransferChange = (targets) => {
     this.setState({
       groupTransfer: {
         id: this.state.groupTransfer.id,
-        targets: targets
+        targets
       }
     })
   }
 
-  onGroupAddModalOk = () => {
+  private onGroupAddModalOk = () => {
     this.groupForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
-        this.props.onAddGroup(values)
-          .then(() => { this.hideGroupForm() })
+        this.props.onAddGroup(values, () => {
+          this.hideGroupForm()
+        })
       }
     })
   }
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
-      modalLoading: false,
       userFormVisible: false,
       passwordFormVisible: false,
       groupTransfer: {
@@ -226,11 +275,17 @@ export class User extends React.PureComponent {
       },
       userFormStep: 0
     })
-    this.userForm && this.userForm.resetFields()
-    this.userPasswordForm && this.userPasswordForm.resetFields()
+
+    if (this.userForm) {
+      this.userForm.resetFields()
+    }
+
+    if (this.userPasswordForm) {
+      this.userPasswordForm.resetFields()
+    }
   }
 
-  hideGroupForm = () => {
+  private hideGroupForm = () => {
     this.setState({
       modalLoading: false,
       groupFormVisible: false
@@ -238,46 +293,74 @@ export class User extends React.PureComponent {
     this.groupForm.resetFields()
   }
 
-  handleTableChange = (pagination, filters, sorter) => {
+  private handleTableChange = (pagination, filters, sorter) => {
     this.setState({
       tableSortedInfo: sorter
     })
   }
 
-  onSearchInputChange = (columnName) => (e) => {
-    this.setState({ [`${columnName}FilterValue`]: e.target.value })
+  private onEmailInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    this.setState({ emailFilterValue: e.currentTarget.value })
   }
 
-  onSearch = (columnName) => () => {
-    const val = this.state[`${columnName}FilterValue`]
+  private onNameInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    this.setState({ nameFilterValue: e.currentTarget.value })
+  }
+
+  private onNameSearch = () => {
+    const val = this.state.nameFilterValue
     const reg = new RegExp(val, 'gi')
 
     this.setState({
-      [`${columnName}FilterDropdownVisible`]: false,
-      tableSource: this.props.users.map(record => {
-        const match = record[columnName].match(reg)
+      nameFilterDropdownVisible: false,
+      tableSource: (this.props.users as any[]).map((record) => {
+        const match = record.name.match(reg)
         if (!match) {
           return null
         }
         return {
           ...record,
-          [columnName]: (
+          name: (
             <span>
-              {record[columnName].split(reg).map((text, i) => (
-                i > 0 ? [<span className={utilStyles.highlight}>{match[0]}</span>, text] : text
+              {record.name.split(reg).map((text, i) => (
+                i > 0 ? [<span key={i} className={utilStyles.highlight}>{match[0]}</span>, text] : text
               ))}
             </span>
           )
         }
-      }).filter(record => !!record)
+      }).filter((record) => !!record)
     })
   }
 
-  render () {
+  private onEmailSearch = () => {
+    const val = this.state.emailFilterValue
+    const reg = new RegExp(val, 'gi')
+
+    this.setState({
+      emailFilterDropdownVisible: false,
+      tableSource: (this.props.users as any[]).map((record) => {
+        const match = record.email.match(reg)
+        if (!match) {
+          return null
+        }
+        return {
+          ...record,
+          email: (
+            <span>
+              {record.email.split(reg).map((text, i) => (
+                i > 0 ? [<span key={i} className={utilStyles.highlight}>{match[0]}</span>, text] : text
+              ))}
+            </span>
+          )
+        }
+      }).filter((record) => !!record)
+    })
+  }
+
+  public render () {
     const {
       tableSource,
       tableSortedInfo,
-      tableLoading,
       emailFilterValue,
       emailFilterDropdownVisible,
       nameFilterValue,
@@ -294,7 +377,9 @@ export class User extends React.PureComponent {
 
     const {
       groups,
-      onDeleteUser
+      onDeleteUser,
+      tableLoading,
+      formLoading
     } = this.props
 
     const columns = [{
@@ -305,12 +390,12 @@ export class User extends React.PureComponent {
         <SearchFilterDropdown
           placeholder="email"
           value={emailFilterValue}
-          onChange={this.onSearchInputChange('email')}
-          onSearch={this.onSearch('email')}
+          onChange={this.onEmailInputChange}
+          onSearch={this.onEmailSearch}
         />
       ),
       filterDropdownVisible: emailFilterDropdownVisible,
-      onFilterDropdownVisibleChange: visible => this.setState({ emailFilterDropdownVisible: visible }),
+      onFilterDropdownVisibleChange: (visible) => this.setState({ emailFilterDropdownVisible: visible }),
       sorter: (a, b) => a.email > b.email ? -1 : 1,
       sortOrder: tableSortedInfo.columnKey === 'email' && tableSortedInfo.order
     }, {
@@ -321,12 +406,12 @@ export class User extends React.PureComponent {
         <SearchFilterDropdown
           placeholder="name"
           value={nameFilterValue}
-          onChange={this.onSearchInputChange('name')}
-          onSearch={this.onSearch('name')}
+          onChange={this.onNameInputChange}
+          onSearch={this.onNameSearch}
         />
       ),
       filterDropdownVisible: nameFilterDropdownVisible,
-      onFilterDropdownVisibleChange: visible => this.setState({ nameFilterDropdownVisible: visible }),
+      onFilterDropdownVisibleChange: (visible) => this.setState({ nameFilterDropdownVisible: visible }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
       sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
     }, {
@@ -352,23 +437,25 @@ export class User extends React.PureComponent {
       key: 'action',
       width: 180,
       className: `${utilStyles.textAlignCenter}`,
-      render: (text, record) => <span className="ant-table-action-column">
-        <Tooltip title="基本信息">
-          <Button icon="user" shape="circle" type="ghost" onClick={this.showInfo(record.id)} />
-        </Tooltip>
-        <Tooltip title="修改密码">
-          <Button icon="edit" shape="circle" type="ghost" onClick={this.showPassword(record.id)} />
-        </Tooltip>
-        <Popconfirm
-          title="确定删除？"
-          placement="bottom"
-          onConfirm={onDeleteUser(record.id)}
-            >
-          <Tooltip title="删除">
-            <Button icon="delete" shape="circle" type="ghost" />
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Tooltip title="基本信息">
+            <Button icon="user" shape="circle" type="ghost" onClick={this.showInfo(record.id)} />
           </Tooltip>
-        </Popconfirm>
-      </span>
+          <Tooltip title="修改密码">
+            <Button icon="edit" shape="circle" type="ghost" onClick={this.showPassword(record.id)} />
+          </Tooltip>
+          <Popconfirm
+            title="确定删除？"
+            placement="bottom"
+            onConfirm={onDeleteUser(record.id)}
+          >
+            <Tooltip title="删除">
+              <Button icon="delete" shape="circle" type="ghost" />
+            </Tooltip>
+          </Popconfirm>
+        </span>
+      )
     }]
 
     const pagination = {
@@ -380,7 +467,7 @@ export class User extends React.PureComponent {
     const userModalTitle = formType === 'add' ? '新增用户' : '修改基本信息'
 
     const addModalButtons = userFormStep
-      ? [
+      ? [(
         <Button
           key="add"
           size="large"
@@ -389,49 +476,58 @@ export class User extends React.PureComponent {
           onClick={this.showGroupForm}
         >
           新增用户组
-        </Button>,
+        </Button>
+      ), (
         <Button
           key="back"
           size="large"
-          onClick={this.changeUserFormStep(0)}>
+          onClick={this.changeUserFormStep(0)}
+        >
           上一步
-        </Button>,
+        </Button>
+      ), (
         <Button
           key="submit"
           size="large"
           type="primary"
-          loading={modalLoading}
-          disabled={modalLoading}   // 防多次提交
-          onClick={this.onUserModalOk}>
+          loading={formLoading}
+          disabled={formLoading}   // 防多次提交
+          onClick={this.onUserModalOk}
+        >
           保 存
         </Button>
-      ]
-      : [
+      )]
+      : [(
         <Button
           key="forward"
           size="large"
           type="primary"
-          onClick={this.changeUserFormStep(1)}>
+          onClick={this.changeUserFormStep(1)}
+        >
           下一步
         </Button>
-      ]
+      )]
 
-    const groupAddModalButtons = ([
+    const groupAddModalButtons = ([(
       <Button
         key="back"
         size="large"
-        onClick={this.hideGroupForm}>
+        onClick={this.hideGroupForm}
+      >
         取 消
-      </Button>,
+      </Button>
+    ), (
       <Button
         key="submit"
         size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}
-        onClick={this.onGroupAddModalOk}>
+        onClick={this.onGroupAddModalOk}
+      >
         保 存
       </Button>
+    )
     ])
 
     return (
@@ -442,7 +538,7 @@ export class User extends React.PureComponent {
             <Col span={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link>User</Link>
+                  <Link to="">User</Link>
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
@@ -518,41 +614,38 @@ export class User extends React.PureComponent {
   }
 }
 
-User.propTypes = {
-  users: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  groups: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  onLoadUsers: PropTypes.func,
-  onAddUser: PropTypes.func,
-  onDeleteUser: PropTypes.func,
-  onLoadUserGroups: PropTypes.func,
-  onEditUserInfo: PropTypes.func,
-  onChangeUserPassword: PropTypes.func, // eslint-disable-line
-  onLoadGroups: PropTypes.func,
-  onAddGroup: PropTypes.func
-}
-
 const mapStateToProps = createStructuredSelector({
   users: makeSelectUsers(),
-  groups: makeSelectGroups()
+  groups: makeSelectGroups(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadUsers: () => promiseDispatcher(dispatch, loadUsers),
-    onAddUser: (user) => promiseDispatcher(dispatch, addUser, user),
-    onDeleteUser: (id) => () => promiseDispatcher(dispatch, deleteUser, id),
-    onLoadUserGroups: (id) => promiseDispatcher(dispatch, loadUserGroups, id),
-    onEditUserInfo: (user) => promiseDispatcher(dispatch, editUserInfo, user),
-    onChangeUserPassword: (user) => promiseDispatcher(dispatch, changeUserPassword, user),
-    onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
-    onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group)
+    onLoadUsers: () => dispatch(loadUsers()),
+    onAddUser: (user, resolve) => dispatch(addUser(user, resolve)),
+    onDeleteUser: (id) => () => dispatch(deleteUser(id)),
+    onLoadUserGroups: (id, resolve) => dispatch(loadUserGroups(id, resolve)),
+    onEditUserInfo: (user, resolve) => dispatch(editUserInfo(user, resolve)),
+    onChangeUserPassword: (user, resolve, reject) => dispatch(changeUserPassword(user, resolve, reject)),
+    onLoadGroups: () => dispatch(loadGroups()),
+    onAddGroup: (group, resolve) => dispatch(addGroup(group, resolve))
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(User)
+const withConnect = connect<{}, {}, IUserProps>(mapStateToProps, mapDispatchToProps)
+
+const withReducerUser = injectReducer({ key: 'user', reducer })
+const withSagaUser = injectSaga({ key: 'user', saga })
+
+const withReducerGroup = injectReducer({ key: 'group', reducer: groupReducer })
+const withSagaGroup = injectSaga({ key: 'group', saga: groupSaga })
+
+export default compose(
+  withReducerUser,
+  withReducerGroup,
+  withSagaUser,
+  withSagaGroup,
+  withConnect
+)(User)

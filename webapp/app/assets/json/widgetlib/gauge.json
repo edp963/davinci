@@ -32,19 +32,16 @@
         {
           "name": "radius",
           "title": "仪表盘半径",
-          "default": 89,
           "component": "inputnumber"
         },
         {
           "name": "axisLine",
           "title": "坐标轴宽度",
-          "default": 28,
           "component": "inputnumber"
         },
         {
           "name": "pointer",
           "title": "指针宽度",
-          "default": 9,
           "component": "inputnumber"
         },
         {
@@ -54,11 +51,6 @@
           "default" : 3,
           "min": 3,
           "max": 10
-        },
-        {
-          "name": "upperLimitGraduation",
-          "title": "刻度上限",
-          "component": "input"
         },
         {
           "name": "gaugeName",

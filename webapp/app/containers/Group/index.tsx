@@ -18,44 +18,68 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
+import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import { Link } from 'react-router'
+// import { Link } from 'react-router'
+
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from './reducer'
+import saga from './sagas'
 
 import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import GroupForm from './GroupForm'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
+const Modal = require('antd/lib/modal')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Table = require('antd/lib/table')
+const Button = require('antd/lib/button')
+const Tooltip = require('antd/lib/tooltip')
+const Icon = require('antd/lib/icon')
+const Popconfirm = require('antd/lib/popconfirm')
+const Breadcrumb = require('antd/lib/breadcrumb')
 
-import { promiseDispatcher } from '../../utils/reduxPromisation'
+import { PaginationProps } from 'antd/lib/pagination'
+import Column from 'antd/lib/table/Column'
+
 import { loadGroups, addGroup, deleteGroup, editGroup } from './actions'
-import { makeSelectGroups } from './selectors'
-import utilStyles from '../../assets/less/util.less'
+import { makeSelectGroups, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
+const utilStyles = require('../../assets/less/util.less')
 
-export class Group extends React.PureComponent {
+interface IGroupProps {
+  groups: boolean | any[]
+  tableLoading: boolean
+  formLoading: boolean
+  onLoadGroups: () => any
+  onAddGroup: (values: object, resolve: any) => any
+  onDeleteGroup: (id: number) => any
+  onEditGroup: (values: object, resolve: any) => any
+}
+
+interface IGroupStates {
+  tableSource: any[]
+  tableSortedInfo: { columnKey?: string, order?: string }
+  nameFilterValue: string
+  nameFilterDropdownVisible: boolean
+  formVisible: boolean
+  formType: string
+  screenWidth: number
+}
+
+export class Group extends React.PureComponent<IGroupProps, IGroupStates> {
   constructor (props) {
     super(props)
     this.state = {
       tableSource: [],
       tableSortedInfo: {},
-      tableLoading: false,
 
       nameFilterValue: '',
       nameFilterDropdownVisible: false,
-
-      modalLoading: false,
 
       formVisible: false,
       formType: 'add',
@@ -63,41 +87,43 @@ export class Group extends React.PureComponent {
     }
   }
 
-  componentWillMount () {
-    this.setState({
-      tableLoading: true,
-      screenWidth: document.documentElement.clientWidth
-    })
+  private groupForm: {
+    validateFieldsAndScroll: (cb: (err: any, values: object) => void) => void
+    setFieldsValue: (values: { id: number, name: string, desc: string }) => void
+    resetFields: () => void
+  } = null
+
+  public componentWillMount () {
+    this.setState({ screenWidth: document.documentElement.clientWidth })
     this.props.onLoadGroups()
-      .then(() => {
-        this.setState({ tableLoading: false })
-      })
   }
 
-  componentWillReceiveProps (props) {
+  public componentWillReceiveProps (props) {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     if (props.groups) {
-      this.state.tableSource = props.groups.map(g => {
-        g.key = g.id
-        return g
+      this.setState({
+        tableSource: props.groups.map((g) => {
+          g.key = g.id
+          return g
+        })
       })
     }
   }
 
-  showAdd = () => {
+  private showAdd = () => {
     this.setState({
       formVisible: true,
       formType: 'add'
     })
   }
 
-  showDetail = (groupId) => () => {
+  private showDetail = (groupId) => () => {
     this.setState({
       formVisible: true,
       formType: 'edit'
     }, () => {
-      const { id, name, desc } = this.props.groups.find(g => g.id === groupId)
+      const { id, name, desc } = (this.props.groups as any[]).find((g) => g.id === groupId)
       this.groupForm.setFieldsValue({ id, name, desc })
     })
     // FIXME 确认业务后删除 loadDetail 相关代码
@@ -107,82 +133,82 @@ export class Group extends React.PureComponent {
     //   })
   }
 
-  onModalOk = () => {
+  private onModalOk = () => {
     this.groupForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
-          this.props.onAddGroup(values)
-            .then(() => { this.hideForm() })
+          this.props.onAddGroup(values, () => {
+            this.hideForm()
+          })
         } else {
-          this.props.onEditGroup(values)
-            .then(() => { this.hideForm() })
+          this.props.onEditGroup(values, () => {
+            this.hideForm()
+          })
         }
       }
     })
   }
 
-  hideForm = () => {
+  private hideForm = () => {
     this.setState({
-      modalLoading: false,
       formVisible: false
     })
     this.groupForm.resetFields()
   }
 
-  handleTableChange = (pagination, filters, sorter) => {
+  private handleTableChange = (pagination, filters, sorter) => {
     this.setState({
       tableSortedInfo: sorter
     })
   }
 
-  onSearchInputChange = (columnName) => (e) => {
-    this.setState({ [`${columnName}FilterValue`]: e.target.value })
+  private onSearchInputChange = (e) => {
+    this.setState({ nameFilterValue: e.target.value })
   }
 
-  onSearch = (columnName) => () => {
-    const val = this.state[`${columnName}FilterValue`]
+  private onSearch = () => {
+    const val = this.state.nameFilterValue
     const reg = new RegExp(val, 'gi')
 
     this.setState({
-      [`${columnName}FilterDropdownVisible`]: false,
-      tableSource: this.props.groups.map(record => {
-        const match = record[columnName].match(reg)
+      nameFilterDropdownVisible: false,
+      tableSource: (this.props.groups as any[]).map((record) => {
+        const match = record.name.match(reg)
         if (!match) {
           return null
         }
         return {
           ...record,
-          [columnName]: (
+          name: (
             <span>
-              {record[columnName].split(reg).map((text, i) => (
-                i > 0 ? [<span className={utilStyles.highlight}>{match[0]}</span>, text] : text
+              {record.name.split(reg).map((text, i) => (
+                i > 0 ? [<span key={i} className={utilStyles.highlight}>{match[0]}</span>, text] : text
               ))}
             </span>
           )
         }
-      }).filter(record => !!record)
+      }).filter((record) => !!record)
     })
   }
 
-  render () {
+  public render () {
     const {
       tableSource,
       tableSortedInfo,
-      tableLoading,
       nameFilterValue,
       nameFilterDropdownVisible,
-      modalLoading,
       formVisible,
       formType,
       screenWidth
     } = this.state
 
     const {
-      onDeleteGroup
+      onDeleteGroup,
+      tableLoading,
+      formLoading
     } = this.props
 
-    const columns = [{
+    const columns: any = [{
       title: '名称',
       dataIndex: 'name',
       key: 'name',
@@ -190,12 +216,12 @@ export class Group extends React.PureComponent {
         <SearchFilterDropdown
           placeholder="name"
           value={nameFilterValue}
-          onChange={this.onSearchInputChange('name')}
-          onSearch={this.onSearch('name')}
+          onChange={this.onSearchInputChange}
+          onSearch={this.onSearch}
         />
       ),
       filterDropdownVisible: nameFilterDropdownVisible,
-      onFilterDropdownVisibleChange: visible => this.setState({ nameFilterDropdownVisible: visible }),
+      onFilterDropdownVisibleChange: (visible) => this.setState({ nameFilterDropdownVisible: visible }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
       sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
     }, {
@@ -225,29 +251,33 @@ export class Group extends React.PureComponent {
       )
     }]
 
-    const pagination = {
+    const pagination: PaginationProps = {
       simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,
-      showSizeChanger: true
+      showSizeChanger: true,
+      total: tableSource.length
     }
 
-    const modalButtons = ([
+    const modalButtons = ([(
       <Button
         key="back"
         size="large"
-        onClick={this.hideForm}>
+        onClick={this.hideForm}
+      >
         取 消
-      </Button>,
+      </Button>
+    ), (
       <Button
         key="submit"
         size="large"
         type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}>
+        loading={formLoading}
+        disabled={formLoading}
+        onClick={this.onModalOk}
+      >
         保 存
       </Button>
-    ])
+    )])
 
     return (
       <Container>
@@ -257,7 +287,7 @@ export class Group extends React.PureComponent {
             <Col span={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
-                  <Link>Group</Link>
+                  {/* <Link>Group</Link> */}
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
@@ -297,7 +327,7 @@ export class Group extends React.PureComponent {
               >
                 <GroupForm
                   type={formType}
-                  ref={(f) => { this.groupForm = f }}
+                  ref={(f: any) => { this.groupForm = f }}
                 />
               </Modal>
             </Box.Body>
@@ -308,28 +338,27 @@ export class Group extends React.PureComponent {
   }
 }
 
-Group.propTypes = {
-  groups: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.array
-  ]),
-  onLoadGroups: PropTypes.func,
-  onAddGroup: PropTypes.func,
-  onDeleteGroup: PropTypes.func,
-  onEditGroup: PropTypes.func
-}
-
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadGroups: () => promiseDispatcher(dispatch, loadGroups),
-    onAddGroup: (group) => promiseDispatcher(dispatch, addGroup, group),
-    onDeleteGroup: (id) => () => promiseDispatcher(dispatch, deleteGroup, id),
-    onEditGroup: (group) => promiseDispatcher(dispatch, editGroup, group)
+    onLoadGroups: () => dispatch(loadGroups()),
+    onAddGroup: (group, resolve) => dispatch(addGroup(group, resolve)),
+    onDeleteGroup: (id) => () => dispatch(deleteGroup(id)),
+    onEditGroup: (group, resolve) => dispatch(editGroup(group, resolve))
   }
 }
 
 const mapStateToProps = createStructuredSelector({
-  groups: makeSelectGroups()
+  groups: makeSelectGroups(),
+  tableLoading: makeSelectTableLoading(),
+  formLoading: makeSelectFormLoading()
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(Group)
+const withConnect = connect<{}, {}, IGroupProps>(mapStateToProps, mapDispatchToProps)
+const withReducer = injectReducer({ key: 'group', reducer })
+const withSaga = injectSaga({ key: 'group', saga })
+
+export default compose(
+  withReducer,
+  withSaga,
+  withConnect
+)(Group)

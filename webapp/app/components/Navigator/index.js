@@ -25,39 +25,64 @@ import { Link } from 'react-router'
 import classnames from 'classnames'
 
 import Icon from 'antd/lib/icon'
-
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 import { makeSelectLoginUser } from '../../containers/App/selectors'
 
 import styles from './Navigator.less'
 
+const goGithub = () => window.open('https://github.com/edp963/davinci')
 export function Navigator (props) {
   const headerClass = classnames({
     [styles.header]: true,
     [styles.hide]: !props.show
   })
+  const menu = (
+    <Menu>
+      <Menu.Item key="0">
+        <Link to="/account" >
+          用户设置
+        </Link>
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="3">
+        <a href="javascript:;" onClick={props.onLogout}>
+          退出登录
+        </a>
+      </Menu.Item>
+    </Menu>
+  )
+
   return (
     <nav className={headerClass}>
       <div className={styles.logoPc}>
         <div className={styles.logo}>
-          <Link to="/report/dashboards">
+          {/*<Link to="/report/dashboards">*/}
+          <Link to="/projects">
             <img src={require('../../assets/images/logo.svg')} />
           </Link>
         </div>
       </div>
       <div className={styles.logoMobile}>
         <div className={styles.logo}>
-          <Link to="/report/dashboards">
+          <Link to="/projects">
             <img src={require('../../assets/images/logo_mobile.svg')} />
           </Link>
         </div>
       </div>
-
       <ul className={styles.tools}>
-        <li className={styles.emailHide}>
-          <p>{props.loginUser.email}</p>
+        {/*<li className={styles.emailHide}>*/}
+          {/*<p>{props.loginUser.email}</p>*/}
+        {/*</li>*/}
+        <li>
+          {/*<Icon type="github" onClick={goGithub}/>*/}
+          <i className="iconfont icon-GitHub" onClick={goGithub} style={{lineHeight: '38px'}}/>
         </li>
         <li>
-          <Icon type="logout" onClick={props.onLogout} />
+          <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
+            {/*<Icon type="user" />*/}
+            <i className="iconfont icon-user_circle" style={{fontSize:'26px'}}/>
+          </Dropdown>
         </li>
       </ul>
     </nav>

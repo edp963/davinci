@@ -137,12 +137,6 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
     case 'confidenceBand':
       result = confidenceBand(dataSource, flatInfo, chartParams, interactIndex)
       break
-    case 'parallel':
-      result = parallel(dataSource, flatInfo, chartParams, interactIndex)
-      break
-    case 'confidenceBand':
-      result = confidenceBand(dataSource, flatInfo, chartParams, interactIndex)
-      break
     default:
       result = {}
       break

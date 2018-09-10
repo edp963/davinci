@@ -18,21 +18,21 @@
  * >>
  */
 
-import React from 'react'
-import PropTypes from 'prop-types'
-import {connect} from 'react-redux'
-import classnames from 'classnames'
-import {checkNameAction} from '../../App/actions'
-import Table from 'antd/lib/table'
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import Checkbox from 'antd/lib/checkbox'
-import Radio from 'antd/lib/radio'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import * as React from 'react'
+import { connect } from 'react-redux'
+import * as classnames from 'classnames'
+import { checkNameAction } from '../../App/actions'
+
+const Table = require('antd/lib/table')
+const Form = require('antd/lib/form')
+const Input = require('antd/lib/input')
+const InputNumber = require('antd/lib/input-number')
+const Select = require('antd/lib/select')
+const Checkbox = require('antd/lib/checkbox')
+const Radio = require('antd/lib/radio/radio')
+const Button = require('antd/lib/button')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
 const FormItem = Form.Item
 const Option = Select.Option
 const CheckboxGroup = Checkbox.Group
@@ -42,24 +42,52 @@ const RadioGroup = Radio.Group
 import { iconMapping } from './chartUtil'
 import { KEY_COLUMN, DEFAULT_SPLITER } from '../../../globalConstants'
 
-import utilStyles from '../../../assets/less/util.less'
-import styles from '../Widget.less'
+const utilStyles = require('../../../assets/less/util.less')
+const styles = require('../Widget.less')
 
-export class WidgetForm extends React.Component {
-  checkNameUnique = (rule, value = '', callback) => {
+interface IWidgetFormProps {
+  type: string,
+  form: any,
+  bizlogics: any[],
+  widgetlibs: any[],
+  dataColumns: any[],
+  chartInfo: any,
+  queryParams: any[],
+  updateInfo: any,
+  updateParams: any[],
+  segmentControlActiveIndex: number,
+  queryInfo: any,
+  updateConfig: object,
+  updateFields: object,
+  wrappedComponentRef: any,
+  onBizlogicChange: (id: any) => void,
+  onWidgetTypeChange: (id: any) => Promise<any>,
+  onFormItemChange: (name: any) => any,
+  onFormInputItemChange: (name: string) => any,
+  onSegmentControlChange: (e: any) => void,
+  onShowVariableConfigTable: (id?: any) => any,
+  onMarkFieldsOptionsChange: (e: any, type: any)  => void,
+  onShowMarkConfigTable: (id?: any) => any,
+  onDeleteControl: (id: any) => any,
+  onDeleteMarkControl: (id: any) => any,
+  onCheckName: (id: any, name: any, type: any, param?: any, resolve?: any, reject?: any) => void
+}
+
+export class WidgetForm extends React.Component<IWidgetFormProps, {}> {
+  private checkNameUnique = (rule, value = '', callback) => {
     const { onCheckName, type } = this.props
     const { getFieldsValue } = this.props.form
     const { id } = getFieldsValue()
-    let idName = type === 'add' ? '' : id
-    let typeName = 'widget'
+    const idName = type === 'add' ? '' : id
+    const typeName = 'widget'
     onCheckName(idName, value, typeName,
-      res => {
+      () => {
         callback()
-      }, err => {
+      }, (err) => {
         callback(err)
       })
   }
-  render () {
+  public render () {
     const {
       form,
       bizlogics,
@@ -83,21 +111,18 @@ export class WidgetForm extends React.Component {
     } = this.props
 
     const { getFieldDecorator } = form
-    let markFieldsOptions = ''
+    let markFieldsOptions: any = ''
     getFieldDecorator('colorList', {initialValue: []})
-    const bizlogicOptions = bizlogics.map(b => (
+    const bizlogicOptions = bizlogics.map((b) => (
       <Option key={b.id} value={`${b.id}`}>{b.name}</Option>
     ))
 
-    const widgetlibOptions = widgetlibs.map(w => (
+    const widgetlibOptions = widgetlibs.map((w) => (
       <Option key={w.id} value={`${w.id}`}>
         {w.title}
-        {
-          `${w.id}` !== form.getFieldValue('widgetlib_id')
-            ? (
-              <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-            ) : ''
-        }
+        {`${w.id}` !== form.getFieldValue('widgetlib_id')
+            ? (<i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />)
+            : ''}
       </Option>
     ))
 
@@ -118,7 +143,7 @@ export class WidgetForm extends React.Component {
       title: '控件',
       dataIndex: 'type',
       key: 'type',
-      render: (text, record) => controlTypes.find(c => c.value === text).text
+      render: (text, record) => controlTypes.find((c) => c.value === text).text
     }, {
       title: '关联',
       dataIndex: 'variables',
@@ -179,17 +204,17 @@ export class WidgetForm extends React.Component {
     }]
     let chartConfigElements = ''
     if (chartInfo) {
-      chartConfigElements = chartInfo.params.map(info => {
-        const formItems = info.items.map(item => {
-          const itemName = `${chartInfo.name}${DEFAULT_SPLITER}${item.name}`
-          let formItem = ''
+      chartConfigElements = chartInfo.params.map((info) => {
+        const formItems = info.items.map((item) => {
+          const uniqueName = `${chartInfo.name}${DEFAULT_SPLITER}${item.name}`
+          let formItem: any = ''
 
           switch (item.component) {
             case 'select':
               formItem = (
-                <Col key={itemName} span={item.span || 24}>
+                <Col key={uniqueName} span={item.span || 24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || undefined
                     })(
                       <Select
@@ -199,11 +224,11 @@ export class WidgetForm extends React.Component {
                       >
                         {
                           item && item.values && item.values.length > 0
-                          ? item.values.map(c => (
-                            <Option key={c.value} value={c.value}>{c.name}</Option>
-                            ))
-                          : dataColumns.map(c => (
-                            <Option key={c} value={c}>{c}</Option>
+                            ? item.values.map((c) => (
+                              <Option key={c.value} value={c.value}>{c.name}</Option>
+                          ))
+                            : dataColumns.map((c) => (
+                              <Option key={c} value={c}>{c}</Option>
                           ))
                         }
                       </Select>
@@ -214,17 +239,15 @@ export class WidgetForm extends React.Component {
               break
             case 'multiSelect':
               formItem = (
-                <Col key={itemName} span={24}>
+                <Col key={uniqueName} span={24}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {})(
+                    {getFieldDecorator(uniqueName, {})(
                       <Select
                         placeholder={item.tip || item.placeholder || item.name}
                         mode="multiple"
                         onChange={onFormItemChange(item.name)}
                       >
-                        {
-                          dataColumns.map(c => (<Option key={c} value={c}>{c}</Option>))
-                        }
+                        {dataColumns.map((c) => (<Option key={c} value={c}>{c}</Option>))}
                       </Select>
                     )}
                   </FormItem>
@@ -233,9 +256,9 @@ export class WidgetForm extends React.Component {
               break
             case 'checkbox':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label="">
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || []
                     })(
                       <CheckboxGroup
@@ -249,9 +272,9 @@ export class WidgetForm extends React.Component {
               break
             case 'inputnumber':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || 0
                     })(
                       <InputNumber
@@ -267,9 +290,9 @@ export class WidgetForm extends React.Component {
               break
             case 'input':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: ''
                     })(
                       <Input
@@ -283,16 +306,16 @@ export class WidgetForm extends React.Component {
               break
             case 'radio':
               formItem = (
-                <Col key={itemName} span={item.span || 12}>
+                <Col key={uniqueName} span={item.span || 12}>
                   <FormItem label={item.title}>
-                    {getFieldDecorator(itemName, {
+                    {getFieldDecorator(uniqueName, {
                       initialValue: item.default || ''
                     })(
                       <RadioGroup
                         onChange={onFormInputItemChange(item.name)}
                       >
                         {
-                          item.values.map(c => (
+                          item.values.map((c) => (
                             <Radio key={c.value} value={c.value}>{c.name}</Radio>
                           ))
                         }
@@ -320,13 +343,13 @@ export class WidgetForm extends React.Component {
       })
 
       if (updateInfo && updateInfo.length) {
-        let fieldLists = [...dataColumns]
+        const fieldLists = [...dataColumns]
         fieldLists.unshift('标注器')
         markFieldsOptions = (
           <div key="333" className={styles.formUnit} style={{margin: '20px 0'}}>
             <div className={styles.unitContent}>
               {
-                updateInfo.map((info, index) => (
+                updateInfo.map((info) => (
                   <Row key={info} style={{marginBottom: '8px'}}>
                     <Col span={9}>
                       {info}
@@ -334,13 +357,12 @@ export class WidgetForm extends React.Component {
                     <Col span={15}>
                       <Select
                         placeholder="关联变量"
-                        // defaultValue={`${updateFields.length ? updateFields[index] : ''}`}
-                        onChange={(e) => onMarkFieldsOptionsChange(e, info)}
+                        onChange={onMarkFieldsOptionsChange.bind(this, info)}
                       >
                         {
                           fieldLists
-                            .filter(c => c !== KEY_COLUMN)
-                            .map(c => (<Option key={c} value={c}>{c}</Option>))
+                            .filter((c) => c !== KEY_COLUMN)
+                            .map((c) => (<Option key={c} value={c}>{c}</Option>))
                         }
                       </Select>
                     </Col>
@@ -530,37 +552,9 @@ export class WidgetForm extends React.Component {
   }
 }
 
-WidgetForm.propTypes = {
-  type: PropTypes.string,
-  form: PropTypes.any,
-  bizlogics: PropTypes.array,
-  widgetlibs: PropTypes.array,
-  dataColumns: PropTypes.array,
-  chartInfo: PropTypes.oneOfType([
-    PropTypes.bool,
-    PropTypes.object
-  ]),
-  queryParams: PropTypes.array,
-  updateInfo: PropTypes.any,
-  updateParams: PropTypes.array,
-  updateFields: PropTypes.any,
-  segmentControlActiveIndex: PropTypes.number,
-  onBizlogicChange: PropTypes.func,
-  onWidgetTypeChange: PropTypes.func,
-  onFormItemChange: PropTypes.func,
-  onFormInputItemChange: PropTypes.func,
-  onSegmentControlChange: PropTypes.func,
-  onShowVariableConfigTable: PropTypes.func,
-  onMarkFieldsOptionsChange: PropTypes.func,
-  onShowMarkConfigTable: PropTypes.func,
-  onDeleteControl: PropTypes.func,
-  onDeleteMarkControl: PropTypes.func,
-  onCheckName: PropTypes.func
-}
-
 function mapDispatchToProps (dispatch) {
   return {
-    onCheckName: (id, name, type, resolve, reject) => dispatch(checkNameAction(id, name, type, resolve, reject))
+    onCheckName: (id, name, type, param, resolve, reject) => dispatch(checkNameAction(id, name, type, param, resolve, reject))
   }
 }
 
