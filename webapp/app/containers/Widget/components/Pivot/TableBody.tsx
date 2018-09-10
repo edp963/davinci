@@ -43,9 +43,9 @@ export interface ITableBodyProps {
 
 export class TableBody extends React.Component<ITableBodyProps, {}> {
   private gridCutting = (width, height, chartGrid) => {
-    console.log(chartGrid)
+    // console.log(chartGrid)
     const chunks = this.horizontalCutting(height, chartGrid)
-    console.log(chunks)
+    // console.log(chunks)
     chunks.forEach((chunk) => {
       chunk.data = this.verticalCutting(width, chunk.data)
     })
@@ -502,6 +502,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 height={getPivotCellHeight(height)}
                 metrics={decodedMetrics}
                 data={records}
+                color={color}
+                legend={legend}
               />
             )
           })
@@ -528,6 +530,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               height={getPivotCellHeight(height)}
               metrics={decodedMetrics}
               data={records}
+              color={color}
+              legend={legend}
             />
           )
         })
@@ -553,6 +557,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               height={getPivotCellHeight(height)}
               metrics={decodedMetrics}
               data={records}
+              color={color}
+              legend={legend}
             />
           )
 
@@ -581,6 +587,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 height={height}
                 metrics={decodedMetrics}
                 data={records}
+                color={color}
+                legend={legend}
               />
             </tr>
           )

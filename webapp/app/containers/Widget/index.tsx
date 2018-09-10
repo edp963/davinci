@@ -155,6 +155,7 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
 
   private toWorkbench = (widgetId) => () => {
     const { router, params } = this.props
+    localStorage.removeItem('editWidgetFromDashboard')
     router.push(`/project/${params.pid}/widget/${widgetId}`)
   }
 

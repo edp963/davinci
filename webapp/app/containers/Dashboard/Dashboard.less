@@ -76,6 +76,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-shadow: @block-box-shadow;
   transition: all 350ms ease;
 
   .header {
@@ -247,28 +248,8 @@
 
   .block {
     flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-
-    .chartBlock {
-      flex: 1;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tableBlock {
-      padding: 0 16px;
-      flex: 1;
-
-      .selectedRow {
-        td {
-          background-color: @primary-color;
-          color: @white;
-        }
-      }
-    }
+    min-height: 0;
+    padding: 16px;
   }
 }
 

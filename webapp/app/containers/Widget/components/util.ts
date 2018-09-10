@@ -9,7 +9,6 @@ import {
   PIVOT_MAX_CONTENT_WIDTH,
   PIVOT_CHART_ELEMENT_MIN_WIDTH,
   PIVOT_CHART_ELEMENT_MAX_WIDTH,
-  PIVOT_CONTAINER_PADDING,
   PIVOT_CHART_METRIC_AXIS_MIN_SIZE,
   PIVOT_CHART_POINT_LIMIT,
   PIVOT_BORDER,
@@ -181,13 +180,13 @@ export const getTableBodyWidth = (direction: DimetionType, containerWidth, rowHe
   const rowHeaderWidthSum = direction === 'row'
     ? rowHeaderWidths.slice(0, rowHeaderWidths.length - 1).reduce((sum, r) => sum + getPivotCellWidth(r), 0)
     : rowHeaderWidths.reduce((sum, r) => sum + getPivotCellWidth(r), 0)
-  return containerWidth - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
+  return containerWidth - PIVOT_BORDER * 2 - rowHeaderWidthSum - PIVOT_YAXIS_SIZE - title
 }
 
 export const getTableBodyHeight = (direction: DimetionType, containerHeight, columnHeaderCount) => {
   const title = columnHeaderCount && PIVOT_TITLE_SIZE
   const realColumnHeaderCount = direction === 'col' ? Math.max(columnHeaderCount - 1, 0) : columnHeaderCount
-  return containerHeight - PIVOT_CONTAINER_PADDING * 2 - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
+  return containerHeight - PIVOT_BORDER * 2 - realColumnHeaderCount * getPivotCellHeight() - PIVOT_XAXIS_SIZE - title
 }
 
 export function getChartElementSize (

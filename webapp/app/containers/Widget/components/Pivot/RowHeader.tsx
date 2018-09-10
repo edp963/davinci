@@ -3,6 +3,7 @@ import * as classnames from 'classnames'
 import Yaxis from './Yaxis'
 import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
 import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData, decodeMetricName } from '../util'
+import { PIVOT_LINE_HEIGHT } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
@@ -37,7 +38,10 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
       rowKeys.forEach((rk, i) => {
         const flatRowKey = rk.join(String.fromCharCode(0))
         const header = []
-        const { height } = rowTree[flatRowKey]
+        const { height, records } = rowTree[flatRowKey]
+        const maxElementCount = tree[flatRowKey]
+          ? Math.max(...Object.values(tree[flatRowKey]).map((r: any[]) => r ? r.length : 0))
+          : records.length
 
         rk.forEach((txt, j) => {
           if (dimetionAxis === 'row') {
@@ -59,7 +63,11 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
             }
           } else {
             if (j === rk.length - 1) {
-              cellHeight = dimetionAxis === 'col' ? unitMetricHeight * metrics.length : getPivotCellHeight(height)
+              cellHeight = dimetionAxis === 'col'
+                ? unitMetricHeight * metrics.length
+                : maxElementCount === 1
+                  ? getPivotCellHeight(height)
+                  : getPivotCellHeight(maxElementCount * metrics.length * PIVOT_LINE_HEIGHT)
               auxiliaryLines = dimetionAxis === 'col'
             }
             x = spanSize(rowKeys, i, j)

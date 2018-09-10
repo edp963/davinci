@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as classnames from 'classnames'
 import { findDOMNode } from 'react-dom'
 import {
   naturalSort,
@@ -36,6 +37,7 @@ import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { AggregatorType, DragType, IDataParamConfig, IDataParamSource } from '../Workbench/Dropbox'
 import { IAxisConfig } from '../Workbench/AxisConfigSection'
 import { ISplitLineConfig } from '../Workbench/SplitLineConfigSection'
+const Icon = require('antd/lib/icon')
 
 const styles = require('./Pivot.less')
 
@@ -102,6 +104,7 @@ export interface IPivotProps {
   queryParams: any[]
   cache: boolean
   expired: number
+  loading?: boolean
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
 }
@@ -178,8 +181,10 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public componentWillReceiveProps (nextProps) {
+    const { renderType, color } = nextProps
     this.setState({
-      renderType: nextProps.renderType
+      renderType,
+      legendSelected: color && !color.items.length ? {} : this.state.legendSelected
     })
   }
 
@@ -512,7 +517,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract } = this.props
+    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract, loading } = this.props
     const { legendSelected, renderType } = this.state
 
     return (
@@ -609,6 +614,15 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           color={color}
           onLegendSelect={this.legendSelect}
         />
+        <div
+          className={classnames({
+            [styles.mask]: true,
+            [styles.loading]: loading
+          })}
+        >
+          <Icon type="loading" />
+          <p>加载中…</p>
+        </div>
       </div>
     )
   }

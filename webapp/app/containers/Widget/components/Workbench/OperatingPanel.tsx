@@ -565,17 +565,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
 
     const requestParamString = JSON.stringify(requestParams)
+    if (!checkChartEnable(groups.length, metrics.items.length, selectedCharts)) {
+      selectedCharts = this.getSelectedCharts([])
+    }
     if (requestParamString !== this.lastRequestParamString) {
-      if (!checkChartEnable(groups.length, metrics.items.length, selectedCharts)) {
-        selectedCharts = this.getSelectedCharts([])
-      }
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (data) => {
         if (data.length) {
           onSetPivotProps({
             cols: cols.items.map((i) => i.name),
             rows: rows.items.map((i) => i.name),
-            metrics: metrics.items,
+            metrics: metrics.items.map((item) => ({...item})),
             filters: filters.items,
             ...color && {color},
             ...label && {label},
@@ -610,7 +610,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       onSetPivotProps({
         cols: cols.items.map((i) => i.name),
         rows: rows.items.map((i) => i.name),
-        metrics: metrics.items,
+        metrics: metrics.items.map((item) => ({...item})),
         filters: filters.items,
         ...color && {color},
         ...label && {label},
@@ -640,7 +640,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private chartSelect = (chart: IChartInfo) => {
     const { commonParams } = this.state
     const { metrics } = commonParams
-    if (!(metrics.items.length === 1 && metrics.items[0].chart === chart)) {
+    if (!(metrics.items.length === 1 && metrics.items[0].chart.id === chart.id)) {
       metrics.items.forEach((i) => {
         i.chart = chart
       })

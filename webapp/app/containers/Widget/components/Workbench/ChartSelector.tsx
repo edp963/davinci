@@ -23,7 +23,7 @@ export function ChartSelector (props: IChartSelectorProps) {
         <i className={`iconfont ${c.icon} ${styles.icon}`} />
       </MenuItem>
     ))
-  const selector = props.chart === pivot
+  const selector = props.chart.id === pivot.id
     ? null
     : (
       <Dropdown
