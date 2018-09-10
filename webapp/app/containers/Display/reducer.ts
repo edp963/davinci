@@ -272,7 +272,10 @@ function displayReducer (state = initialState, action) {
         }
       })
     case ActionTypes.CLEAR_LAYERS_SELECTION:
-      Object.keys(layersInfo).forEach((key) => { layersInfo[key].selected = false })
+      Object.keys(layersInfo).forEach((key) => {
+        layersInfo[key].selected = false
+        layersInfo[key].renderType = 'refresh'
+      })
       return state.set('currentLayersInfo', layersInfo)
 
     case ActionTypes.COPY_SLIDE_LAYERS:
