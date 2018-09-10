@@ -1,0 +1,100 @@
+#  <<
+#  Davinci
+#  ==
+#  Copyright (C) 2016 - 2018 EDP
+#  ==
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#  >>
+
+
+server:
+  protocol: http
+  address: 127.0.0.1
+  port: 8080
+
+
+## jwt is one of the important configuration of the application
+## jwt config cannot be null or empty
+jwtToken:
+  secret: secret
+  timeout: 1800000
+  algorithm: HS512
+
+
+##your datasouce config
+source:
+  initial-size: 2
+  min-idle: 1
+  max-wait: 6000
+  max-active: 10
+
+
+spring:
+  mvc:
+    async:
+      request-timeout: 30s
+
+  ## davinci datasouce config
+  datasource:
+    url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+    username:
+    password:
+    driver-class-name: com.mysql.jdbc.Driver
+    initial-size: 2
+    min-idle: 1
+    max-wait: 60000
+    max-active: 10
+
+  ## redis config
+  ## please choose one of the two ways
+  redis:
+    isEnable: false
+
+  ## standalone config
+    host: 127.0.0.1
+    port: 6379
+
+  ## cluster config
+  #  cluster:
+  #       nodes:
+
+    password:
+    database: 0
+    timeout: 1000
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: 1
+        max-idle: 8
+        min-idle: 0
+
+  ## mail is one of the important configuration of the application
+  ## mail config cannot be null or empty
+  ## some mailboxes need to be set separately password for the SMTP service)
+  mail:
+    host:
+    port:
+    username:
+    password:
+    nickname:
+
+    properties:
+      smtp:
+        starttls:
+          enable: false
+          required: true
+        auth: true
+      mail:
+        smtp:
+          ssl:
+            enable: false
+
+phantomjs_home: "$your_phantomjs_path$/phantomjs"

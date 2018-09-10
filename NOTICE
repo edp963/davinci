@@ -16,69 +16,172 @@ specific language governing permissions and limitations
 under the License.
 
 This project includes:
-  akka-actor under Apache License, Version 2.0
-  akka-http under Apache-2.0
-  akka-http-core under Apache-2.0
-  akka-http-spray-json under Apache-2.0
-  akka-parsing under Apache-2.0
-  akka-stream under Apache License, Version 2.0
   ANTLR 3 Runtime under BSD licence
-  Apache Commons Lang under The Apache Software License, Version 2.0
-  Apache Log4j under The Apache Software License, Version 2.0
-  ASM Commons under BSD
+  Apache Commons Codec under Apache License, Version 2.0
+  Apache Commons Collections under Apache License, Version 2.0
+  Apache Commons CSV under Apache License, Version 2.0
+  Apache HttpAsyncClient under Apache License, Version 2.0
+  Apache HttpClient under Apache License, Version 2.0
+  Apache HttpCore under Apache License, Version 2.0
+  Apache HttpCore NIO under Apache License, Version 2.0
+  Apache Log4j Core under Apache License, Version 2.0
+  Apache Log4j to SLF4J Adapter under Apache License, Version 2.0
+  Apache POI under The Apache Software License, Version 2.0
+  ASM based accessors helper used by json-smart under The Apache Software License, Version 2.0
   ASM Core under BSD
-  ASM Tree under BSD
-  ASM Util under BSD
-  Bean Validation API under The Apache Software License, Version 2.0
-  Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs under Bouncy Castle Licence
-  Bouncy Castle Provider under Bouncy Castle Licence
-  classutil under BSD New
-  config under Apache License, Version 2.0
-  davinci-assembly_2.11 under Apache License, Version 2.0
-  davinci-parent_2.11 under Apache License, Version 2.0
-  davinci-server_2.11 under Apache License, Version 2.0
-  grizzled-scala under BSD
+  AssertJ fluent assertions under Apache License, Version 2.0
+  attoparser under The Apache Software License, Version 2.0
+  Bean Validation API under Apache License 2.0
+  Byte Buddy (without dependencies) under The Apache Software License, Version 2.0
+  Byte Buddy Java agent under The Apache Software License, Version 2.0
+  Caffeine cache under Apache License, Version 2.0
+  ClassMate under The Apache Software License, Version 2.0
+  Commons Logging under The Apache Software License, Version 2.0
+  compiler under Apache License 2.0
+  core under The Apache Software License, Version 2.0
+  curvesapi under BSD License
+  davinci-server_3.01 under Apache License, Version 2.0
+  druid under Apache 2
+  Elasticsearch SecureSM under The Apache Software License, Version 2.0
+  elasticsearch-sql under The Apache Software License, Version 2.0
+  fastjson under Apache 2
   Guava: Google Core Libraries for Java under The Apache Software License, Version 2.0
+  Hamcrest Core under New BSD License
+  Hamcrest library under New BSD License
+  HdrHistogram under Public Domain, per Creative Commons CC0
+  Hibernate Validator Engine under Apache License 2.0
   HikariCP under The Apache Software License, Version 2.0
-  Jackson module: Paranamer under The Apache Software License, Version 2.0
+  HPPC Collections under The Apache Software License, Version 2.0
+  Jackson dataformat: CBOR under The Apache Software License, Version 2.0
+  Jackson dataformat: Smile under The Apache Software License, Version 2.0
+  Jackson datatype: jdk8 under The Apache Software License, Version 2.0
+  Jackson datatype: JSR310 under The Apache Software License, Version 2.0
   Jackson-annotations under The Apache Software License, Version 2.0
   Jackson-core under The Apache Software License, Version 2.0
   jackson-databind under The Apache Software License, Version 2.0
   Jackson-dataformat-YAML under The Apache Software License, Version 2.0
-  jackson-module-scala under The Apache Software License, Version 2.0
-  Joda-Convert under Apache 2
+  Jackson-module-parameter-names under The Apache Software License, Version 2.0
+  Java Native Access under LGPL, version 2.1 or Apache License v2.0
+  JavaBeans Activation Framework (JAF) under Common Development and Distribution License (CDDL) v1.0
+  JavaMail API under CDDL/GPLv2+CE
+  javax.annotation API under CDDL + GPLv2 with classpath exception
+  jbcrypt under ISC/BSD License
+  JBoss Logging 3 under Apache License, version 2.0
   Joda-Time under Apache 2
-  json4s-ast under ASL
-  json4s-core under ASL
-  json4s-ext under ASL
-  json4s-jackson under ASL
+  JOpt Simple under The MIT License
+  jquery under MIT License
+  JSON library from Android SDK under Apache License 2.0
+  JSON Small and Fast Parser under The Apache Software License, Version 2.0
+  JSON Web Token support for the JVM under Apache License, Version 2.0
+  JSONassert under The Apache Software License, Version 2.0
   JSQLParser library under GNU Library or Lesser General Public License (LGPL) V2.1 or The Apache Software License, Version 2.0
-  jsr311-api under CDDL License
-  jwt-core under Apache-2.0
-  jwt-core-impl under Apache-2.0
-  ParaNamer Core under BSD
+  JTS Topology Suite under Lesser General Public License (LGPL)
+  JUL to SLF4J bridge under MIT License
+  JUnit under Eclipse Public License 1.0
+  lang-mustache under The Apache Software License, Version 2.0
+  Lettuce under Apache License, Version 2.0
+  Logback Classic Module under Eclipse Public License - v 1.0 or GNU Lesser General Public License
+  Logback Core Module under Eclipse Public License - v 1.0 or GNU Lesser General Public License
+  Lucene Common Analyzers under Apache 2
+  Lucene Core under Apache 2
+  Lucene Grouping under Apache 2
+  Lucene Highlighter under Apache 2
+  Lucene Join under Apache 2
+  Lucene Memory under Apache 2
+  Lucene Miscellaneous under Apache 2
+  Lucene Queries under Apache 2
+  Lucene QueryParsers under Apache 2
+  Lucene Sandbox under Apache 2
+  Lucene Spatial under Apache 2
+  Lucene Spatial 3D under Apache 2
+  Lucene Spatial Extras under Apache 2
+  Lucene Suggest under Apache 2
+  MapStruct Core under The Apache Software License, Version 2.0
+  mchange-commons-java under GNU Lesser General Public License, Version 2.1 or Eclipse Public License, Version 1.0
+  mockito-core under The MIT License
+  mybatis under The Apache Software License, Version 2.0
+  mybatis-spring under The Apache Software License, Version 2.0
+  mybatis-spring-boot-autoconfigure under The Apache Software License, Version 2.0
+  mybatis-spring-boot-starter under The Apache Software License, Version 2.0
+  MySQL Connector/J under The GNU General Public License, Version 2
+  Netty under Apache License, Version 2.0
+  Netty/Buffer under Apache License, Version 2.0
+  Netty/Codec under Apache License, Version 2.0
+  Netty/Codec/HTTP under Apache License, Version 2.0
+  Netty/Common under Apache License, Version 2.0
+  Netty/Handler under Apache License, Version 2.0
+  Netty/Resolver under Apache License, Version 2.0
+  Netty/Transport under Apache License, Version 2.0
+  Non-Blocking Reactive Foundation for the JVM under The Apache Software License, Version 2.0
+  Objenesis under Apache 2
+  org.xmlunit:xmlunit-core under The Apache Software License, Version 2.0
+  pagehelper 5 under The MIT License (MIT)
+  pagehelper-spring-boot-autoconfigure under The MIT License (MIT)
+  pagehelper-spring-boot-starter under The MIT License (MIT)
+  percolator under The Apache Software License, Version 2.0
+  project ':json-path' under The Apache Software License, Version 2.0
+  Project Lombok under The MIT License
+  quartz under The Apache Software License, Version 2.0
   reactive-streams under CC0
-  Reflections under WTFPL or The New BSD License
-  Scala Compiler under BSD 3-Clause
-  Scala Library under BSD 3-Clause
-  scala-java8-compat under BSD 3-clause
-  scala-parser-combinators under BSD 3-clause
-  scala-xml under BSD 3-clause
-  Scalap under BSD 3-Clause
-  scalasti under BSD
-  scalatest under the Apache License, ASL Version 2.0
+  reindex under The Apache Software License, Version 2.0
+  rest under The Apache Software License, Version 2.0
   SLF4J API Module under MIT License
-  SLF4J LOG4J-12 Binding under MIT License
-  Slick under Two-clause BSD-style license
-  Slick-HikariCP under Two-clause BSD-style license
   SnakeYAML under Apache License, Version 2.0
-  spray-json under Apache 2
-  ssl-config-core under Apache License, Version 2.0
+  Spatial4J under The Apache Software License, Version 2.0
+  Spring AOP under Apache License, Version 2.0
+  Spring Beans under Apache License, Version 2.0
+  Spring Boot under Apache License, Version 2.0
+  Spring Boot AutoConfigure under Apache License, Version 2.0
+  Spring Boot Cache Starter under Apache License, Version 2.0
+  Spring Boot Data Redis Starter under Apache License, Version 2.0
+  Spring Boot JDBC Starter under Apache License, Version 2.0
+  Spring Boot Json Starter under Apache License, Version 2.0
+  Spring Boot Logging Starter under Apache License, Version 2.0
+  Spring Boot Mail Starter under Apache License, Version 2.0
+  Spring Boot Starter under Apache License, Version 2.0
+  Spring Boot Test under Apache License, Version 2.0
+  Spring Boot Test Auto-Configure under Apache License, Version 2.0
+  Spring Boot Test Starter under Apache License, Version 2.0
+  Spring Boot Thymeleaf Starter under Apache License, Version 2.0
+  Spring Boot Tomcat Starter under Apache License, Version 2.0
+  Spring Boot Web Starter under Apache License, Version 2.0
+  Spring Commons Logging Bridge under Apache License, Version 2.0
+  Spring Context under Apache License, Version 2.0
+  Spring Context Support under Apache License, Version 2.0
+  Spring Core under Apache License, Version 2.0
+  Spring Data Core under Apache License, Version 2.0
+  Spring Data KeyValue under Apache License, Version 2.0
+  Spring Data Redis under Apache License, Version 2.0
+  Spring Expression Language (SpEL) under Apache License, Version 2.0
+  Spring JDBC under Apache License, Version 2.0
+  Spring Object/XML Marshalling under Apache License, Version 2.0
+  Spring Plugin - Core under Apache License, Version 2.0
+  Spring Plugin - Metadata Extension under Apache License, Version 2.0
+  Spring TestContext Framework under Apache License, Version 2.0
+  Spring Transaction under Apache License, Version 2.0
+  Spring Web under Apache License, Version 2.0
+  Spring Web MVC under Apache License, Version 2.0
+  springfox-core under The Apache Software License, Version 2.0
+  springfox-schema under The Apache Software License, Version 2.0
+  springfox-spi under The Apache Software License, Version 2.0
+  springfox-spring-web under The Apache Software License, Version 2.0
+  springfox-swagger-common under The Apache Software License, Version 2.0
+  springfox-swagger-ui under The Apache Software License, Version 2.0
+  springfox-swagger2 under The Apache Software License, Version 2.0
+  StAX API under The Apache Software License, Version 2.0
   StringTemplate 4 under BSD licence
-  swagger-akka-http under The Apache Software License, Version 2.0
   swagger-annotations under Apache License 2.0
-  swagger-core under Apache License 2.0
-  swagger-jaxrs under Apache License 2.0
   swagger-models under Apache License 2.0
-  swagger-scala-module under Apache License 2.0
+  T-Digest under The Apache Software License, Version 2.0
+  thymeleaf under The Apache Software License, Version 2.0
+  thymeleaf-extras-java8time under The Apache Software License, Version 2.0
+  thymeleaf-spring5 under The Apache Software License, Version 2.0
+  tomcat-embed-core under Apache License, Version 2.0
+  tomcat-embed-el under Apache License, Version 2.0
+  tomcat-embed-websocket under Apache License, Version 2.0
+  transport under The Apache Software License, Version 2.0
+  transport-netty3 under The Apache Software License, Version 2.0
+  transport-netty4 under The Apache Software License, Version 2.0
+  unbescape under The Apache Software License, Version 2.0
+  XmlBeans under The Apache Software License, Version 2.0
 

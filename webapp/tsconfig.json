@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "target": "es6",
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "sourceMap": true,
+    "preserveConstEnums": true,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "jsx": "preserve",
+    "lib": ["dom","es5","es6","es7","es2017"],
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": ["node_modules/@types"],
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "*"
+      ],
+      "utils/*": [ "app/utils/*" ],
+      "assets/*": [ "app/assets/*" ],
+      "components/*": [ "app/components/*" ]
+    }
+//    "paths": {
+//      "utils/*": [ "app/utils/*" ]
+//    },
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
+  "awesomeTypescriptLoaderOptions": {
+    "useBabel": true,
+    "forkChecker": true,
+    "useCache": false
+  }
+}

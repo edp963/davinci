@@ -67,6 +67,15 @@
   margin-bottom: 0;
 }
 
+.small-item-margin .ant-form-item {
+  margin-bottom: 10px;
+}
+
+.small-item-margin .ant-radio-button-wrapper-checked {
+  color: #fff !important;
+  background-color: #1B98E0 !important;
+}
+
 .ant-modal-small > .ant-modal {
   width: 400px !important;
 }
@@ -167,4 +176,8 @@
 /* 调整因字体大小造成的 RangePicker input 位置不对 */
 .ant-calendar-picker-input {
   line-height: 1;
+}
+
+.ant-tree.ant-tree-show-line li span.ant-tree-switcher {
+  background: inherit;
 }

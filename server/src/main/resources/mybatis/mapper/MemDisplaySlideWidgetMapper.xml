@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  <<
+  Davinci
+  ==
+  Copyright (C) 2016 - 2018 EDP
+  ==
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+        http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+  >>
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="edp.davinci.dao.MemDisplaySlideWidgetMapper">
+
+    <insert id="insert" parameterType="edp.davinci.model.MemDisplaySlideWidget">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT LAST_INSERT_ID() AS id
+        </selectKey>
+        insert into mem_display_slide_widget
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            display_slide_id,
+            widget_id,
+            `name`,
+            `type`,
+            params,
+            <if test="subType != null">
+                sub_type,
+            </if>
+            `index`
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            #{displaySlideId,jdbcType=BIGINT},
+            #{widgetId,jdbcType=BIGINT},
+            #{name,jdbcType=VARCHAR},
+            #{type,jdbcType=SMALLINT},
+            #{params,jdbcType=LONGVARCHAR},
+            <if test="subType != null">
+                #{subType,jdbcType=SMALLINT},
+            </if>
+            #{index,jdbcType=INTEGER}
+        </trim>
+    </insert>
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert into mem_display_slide_widget
+        (id,display_slide_id, widget_id, `name`, `type`, params,sub_type, `index`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+                <choose>
+                    <when test="record.id != null and record.id > 0">
+                        #{record.id,jdbcType=BIGINT},
+                    </when>
+                    <otherwise>
+                        null,
+                    </otherwise>
+                </choose>
+                #{record.displaySlideId,jdbcType=BIGINT},
+                #{record.widgetId,jdbcType=BIGINT},
+                #{record.name,jdbcType=VARCHAR},
+                #{record.type,jdbcType=SMALLINT},
+                #{record.params,jdbcType=LONGVARCHAR},
+                #{record.subType,jdbcType=SMALLINT},
+                #{record.index,jdbcType=INTEGER}
+            )
+        </foreach>
+    </insert>
+
+
+    <update id="updateBatch" parameterType="java.util.List">
+        <foreach collection="list" item="record" index="index" open="" close="" separator=";">
+            update mem_display_slide_widget
+            <set>
+                `display_slide_id` = #{record.displaySlideId,jdbcType=BIGINT},
+                `widget_id` = #{record.widgetId,jdbcType=BIGINT},
+                `name` = #{record.name,jdbcType=VARCHAR},
+                `type` = #{record.type,jdbcType=SMALLINT},
+                `sub_type` = #{record.subType,jdbcType=SMALLINT},
+                `index` = #{record.index,jdbcType=INTEGER},
+                `params` = #{record.params,jdbcType=LONGVARCHAR}
+            </set>
+            where id = #{record.id,jdbcType=BIGINT}
+        </foreach>
+    </update>
+
+    <delete id="deleteBatchById" parameterType="java.util.List">
+        delete from mem_display_slide_widget where id in
+        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+</mapper>
