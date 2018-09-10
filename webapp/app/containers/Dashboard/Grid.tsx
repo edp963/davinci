@@ -1023,7 +1023,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
-  private toWorkbench = (itemId, widgetId) => () => {
+  private toWorkbench = (itemId, widgetId) => {
     const { params } = this.props
     const { pid, portalId, portalName, dashboardId } = params
     const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
@@ -1142,7 +1142,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
-              onEditWidget={this.toWorkbench(id, widget.id)}
+              onEditWidget={this.toWorkbench}
               rendered={rendered}
               renderType={renderType}
               router={router}

@@ -70,7 +70,7 @@ interface IDashboardItemProps {
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
   onDoTableInteract: (itemId: number, triggerData: object) => void
-  onEditWidget?: () => void
+  onEditWidget?: (itemId: number, widgetId: number) => void
 }
 
 interface IDashboardItemStates {
@@ -223,6 +223,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onDoTableInteract(itemId, triggerData)
   }
 
+  private toWorkbench = () => {
+    const { itemId, widget } = this.props
+    this.props.onEditWidget(itemId, widget.id)
+  }
+
   public render () {
     const {
       itemId,
@@ -240,9 +245,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onDeleteDashboardItem,
       onLoadWidgetShareLink,
       onTurnOffInteract,
-      onCheckTableInteract,
-      onDoTableInteract,
-      onEditWidget,
       container
     } = this.props
 
@@ -301,7 +303,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
       widgetButton = (
         <Tooltip title="编辑widget">
-          <i className="iconfont icon-edit-2" onClick={onEditWidget} />
+          <i className="iconfont icon-edit-2" onClick={this.toWorkbench} />
         </Tooltip>
       )
     }
