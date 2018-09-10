@@ -92,7 +92,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       commonParams: {
         cols: { title: '列', type: 'category', items: [] },
         rows: { title: '行', type: 'category', items: [] },
-        metrics: { title: '度量', type: 'value', items: [] },
+        metrics: { title: '指标', type: 'value', items: [] },
         filters: { title: '筛选', type: 'all', items: [] }
       },
       specificParams: {},
