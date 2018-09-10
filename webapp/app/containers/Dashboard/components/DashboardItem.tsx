@@ -202,10 +202,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private downloadCsv = () => {
-    const { itemId, shareInfo, onDownloadCsv } = this.props
+    const { widget, itemId, shareInfo, onDownloadCsv } = this.props
     const { pivotProps } = this.state
 
-    onDownloadCsv(itemId, pivotProps, shareInfo)
+    onDownloadCsv(widget.id, pivotProps, shareInfo)
   }
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({

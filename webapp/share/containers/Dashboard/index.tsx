@@ -348,7 +348,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       onLoadWidgetCsv
     } = this.props
 
-    const { filters, params } = currentItemsInfo[itemId].queryParams
+  //  const { filters, params } = currentItemsInfo[itemId].queryParams
 
     onLoadWidgetCsv(itemId, pivotProps, shareInfo)
   }
