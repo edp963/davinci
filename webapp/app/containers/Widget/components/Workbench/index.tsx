@@ -76,8 +76,11 @@ interface IWorkbenchStates {
   name: string
   description: string
   selectedView: IView
+  queryParams: any[]
+  cache: boolean
+  expired: number
   currentWidgetConfig: IPivotProps
-  pivotProps: IPivotProps
+  pivotProps: Partial<IPivotProps>
 }
 
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
@@ -88,13 +91,18 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       name: '',
       description: '',
       selectedView: null,
+      queryParams: [],
+      cache: false,
+      expired: 300,
       currentWidgetConfig: null,
       pivotProps: {
         data: [],
         cols: [],
         rows: [],
         metrics: [],
-        filters: []
+        filters: [],
+        chartStyles: {},
+        orders: []
       }
     }
   }
@@ -120,12 +128,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
     if (currentWidget && currentWidget !== this.props.currentWidget) {
+      const { queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
         selectedView: views.find((v) => v.id === currentWidget.viewId),
-        currentWidgetConfig: JSON.parse(currentWidget.config)
+        queryParams,
+        cache,
+        expired,
+        currentWidgetConfig: {...rest}
       })
     }
   }
@@ -147,7 +159,30 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private viewSelect = (selectedView: IView) => {
-    this.setState({ selectedView })
+    this.setState({
+      selectedView,
+      queryParams: [],
+      cache: false,
+      expired: 300
+    })
+  }
+
+  private setQueryParams = (queryParams: any[]) => {
+    this.setState({
+      queryParams
+    })
+  }
+
+  private cacheChange = (e) => {
+    this.setState({
+      cache: e.target.value
+    })
+  }
+
+  private expiredChange = (value) => {
+    this.setState({
+      expired: value
+    })
   }
 
   private setPivotProps = (pivotProps: IPivotProps) => {
@@ -162,7 +197,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, pivotProps } = this.state
+    const { id, name, description, selectedView, queryParams, cache, expired, pivotProps } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -173,7 +208,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       type: 1,
       viewId: selectedView.id,
       projectId: Number(params.pid),
-      config: JSON.stringify({...pivotProps, data: []}),
+      config: JSON.stringify({
+        ...pivotProps,
+        queryParams,
+        cache,
+        expired,
+        data: []
+      }),
       publish: true
     }
     if (id) {
@@ -194,11 +235,21 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public render () {
-    const { views, loading, distinctColumnValues, columnValueLoading, onLoadDistinctValue, onLoadData } = this.props
+    const {
+      views,
+      loading,
+      distinctColumnValues,
+      columnValueLoading,
+      onLoadDistinctValue,
+      onLoadData
+    } = this.props
     const {
       name,
       description,
       selectedView,
+      queryParams,
+      cache,
+      expired,
       currentWidgetConfig,
       pivotProps
     } = this.state
@@ -223,7 +274,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             selectedView={selectedView}
             distinctColumnValues={distinctColumnValues}
             columnValueLoading={columnValueLoading}
+            queryParams={queryParams}
+            cache={cache}
+            expired={expired}
             onViewSelect={this.viewSelect}
+            onSetQueryParams={this.setQueryParams}
+            onCacheChange={this.cacheChange}
+            onExpiredChange={this.expiredChange}
             onLoadData={onLoadData}
             onSetPivotProps={this.setPivotProps}
             onLoadDistinctValue={onLoadDistinctValue}

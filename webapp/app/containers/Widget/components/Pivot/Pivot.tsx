@@ -34,6 +34,8 @@ import Legend from './Legend'
 import { IChartInfo } from './Chart'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { AggregatorType, DragType, IDataParamConfig, IDataParamSource } from '../Workbench/Dropbox'
+import { IAxisConfig } from '../Workbench/AxisConfigSection'
+import { ISplitLineConfig } from '../Workbench/SplitLineConfigSection'
 
 const styles = require('./Pivot.less')
 
@@ -75,13 +77,20 @@ export interface ILegend {
   [key: string]: string[]
 }
 
+export interface IChartStyles {
+  spec?: object
+  xAxis?: IAxisConfig
+  yAxis?: IAxisConfig
+  splitLine?: ISplitLineConfig
+}
+
 export interface IPivotProps {
   data: object[]
   cols: string[]
   rows: string[]
-  chart?: any
   metrics: IPivotMetric[]
   filters: IPivotFilter[]
+  chartStyles: IChartStyles
   color?: IDataParamProperty
   label?: IDataParamProperty
   size?: IDataParamProperty
@@ -89,6 +98,10 @@ export interface IPivotProps {
   tip?: IDataParamProperty
   dimetionAxis?: DimetionType
   renderType?: RenderType
+  orders: Array<{column: string, direction: string}>
+  queryParams: any[]
+  cache: boolean
+  expired: number
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
 }
@@ -159,7 +172,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public tableBody: HTMLElement = null
   public columnFooter: HTMLElement = null
   private container: HTMLElement = null
-  private legend: HTMLElement = null
 
   public componentDidMount () {
     this.getContainerSize()
@@ -225,7 +237,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   private getRenderData = (props) => {
-    const { cols, rows, metrics, data, xAxis, size, dimetionAxis } = props
+    const { cols, rows, metrics, data, xAxis, dimetionAxis } = props
 
     this.rowHeaderWidths = rows.map((r) => getPivotContentTextWidth(r, 'bold'))
     if (!cols.length && !rows.length) {
@@ -500,7 +512,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract } = this.props
+    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract } = this.props
     const { legendSelected, renderType } = this.state
 
     return (
@@ -528,6 +540,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
               colTree={this.colTree}
               tree={this.tree}
               metrics={metrics}
+              chartStyles={chartStyles}
               drawingData={this.drawingData}
               dimetionAxis={dimetionAxis}
               metricAxisConfig={this.metricAxisConfig}
@@ -564,6 +577,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tree={this.tree}
             metrics={metrics}
             metricAxisConfig={this.metricAxisConfig}
+            chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
             color={color}
@@ -585,6 +599,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tree={this.tree}
             metrics={metrics}
             metricAxisConfig={this.metricAxisConfig}
+            chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
             ref={(f) => this.columnFooter = findDOMNode(f)}

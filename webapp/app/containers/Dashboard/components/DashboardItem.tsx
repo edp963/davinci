@@ -347,9 +347,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const controls = widget.query_params
-      ? JSON.parse(widget.query_params).filter((c) => c.type)
-      : []
+    const controls = pivotProps.queryParams.filter((c) => c.type)
     const controlPanelHandle = controls.length
       ? (
         <Tooltip title="选择参数">
@@ -419,7 +417,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           showProp="show"
           transitionName={controlPanelTransitionName}
         >
-          <DashboardItemControlPanel show={controlPanelVisible}>
+          <DashboardItemControlPanel
+            show={controlPanelVisible}
+            onClose={this.toggleControlPanel}
+          >
             <DashboardItemControlForm
               controls={controls}
               onSearch={this.onControlSearch}
@@ -427,22 +428,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             />
           </DashboardItemControlPanel>
         </Animate>
-        {/* <Chart
-          id={`${itemId}`}
-          w={w}
-          h={h}
-          data={data || {}}
-          loading={loading}
-          chartInfo={chartInfo}
-          updateConfig={updateConfig}
-          chartParams={JSON.parse(widget.chart_params)}
-          updateParams={updateParams}
-          currentBizlogicId={currentBizlogicId}
-          classNames={chartClass}
-          interactId={interactId}
-          onCheckTableInteract={onCheckTableInteract}
-          onDoTableInteract={onDoTableInteract}
-        /> */}
         <Pivot
           {...pivotProps}
           renderType={renderType}

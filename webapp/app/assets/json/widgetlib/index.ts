@@ -41,6 +41,7 @@
 // import confidenceBand from './confidenceBand.json'
 
 import { IChartInfo } from '../../../containers/Widget/components/Pivot/Chart'
+import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_CHART_FONT_FAMILIES, PIVOT_DEFAULT_LABEL_COLOR } from '../../../globalConstants'
 
 const widgetlibs: IChartInfo[] = [{
   id: 1,
@@ -83,7 +84,44 @@ const widgetlibs: IChartInfo[] = [{
     }
   },
   style: {
-
+    spec: {
+      smooth: false,
+      step: false
+    },
+    xAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    yAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      showTitleAndUnit: true,
+      titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      titleFontSize: '12',
+      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    splitLine: {
+      showHorizontalLine: true,
+      horizontalLineStyle: 'dashed',
+      horizontalLineSize: '1',
+      horizontalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showVerticalLine: false,
+      verticalLineStyle: 'dashed',
+      verticalLineSize: '1',
+      verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    }
   }
 }, {
   id: 3,
@@ -109,7 +147,40 @@ const widgetlibs: IChartInfo[] = [{
     }
   },
   style: {
-
+    xAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    yAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      showTitleAndUnit: true,
+      titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      titleFontSize: '12',
+      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    splitLine: {
+      showHorizontalLine: true,
+      horizontalLineStyle: 'dashed',
+      horizontalLineSize: '1',
+      horizontalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showVerticalLine: false,
+      verticalLineStyle: 'dashed',
+      verticalLineSize: '1',
+      verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    }
   }
 }, {
   id: 4,
@@ -142,7 +213,40 @@ const widgetlibs: IChartInfo[] = [{
     }
   },
   style: {
-
+    xAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    yAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      showTitleAndUnit: true,
+      titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      titleFontSize: '12',
+      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    splitLine: {
+      showHorizontalLine: true,
+      horizontalLineStyle: 'dashed',
+      horizontalLineSize: '1',
+      horizontalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showVerticalLine: false,
+      verticalLineStyle: 'dashed',
+      verticalLineSize: '1',
+      verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    }
   }
 }, {
   id: 5,
@@ -167,36 +271,30 @@ const widgetlibs: IChartInfo[] = [{
     }
   },
   style: {
-
+    spec: {
+      circle: false
+    },
+    xAxis: {
+      showLine: true,
+      lineStyle: 'solid',
+      lineSize: '1',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showLabel: true,
+      labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      labelFontSize: '12',
+      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+    },
+    splitLine: {
+      showHorizontalLine: true,
+      horizontalLineStyle: 'dashed',
+      horizontalLineSize: '1',
+      horizontalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      showVerticalLine: false,
+      verticalLineStyle: 'dashed',
+      verticalLineSize: '1',
+      verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    }
   }
-}
-// {
-//   id: 10,
-//   name: 'radar',
-//   title: '雷达图',
-//   icon: 'icon-radarchart',
-//   coordinate: 'polar',
-//   requireDimetions: 0,
-//   requireMetrics: 1,
-//   data: {
-//     color: {
-//       title: '颜色',
-//       type: 'category'
-//     },
-//     size: {
-//       title: '尺寸',
-//       type: 'value'
-//     },
-//     label: {
-//       title: '标签',
-//       type: 'all'
-//     },
-//     tip: {
-//       title: '提示信息',
-//       type: 'value'
-//     }
-//   }
-// }
-]
+}]
 
 export default widgetlibs

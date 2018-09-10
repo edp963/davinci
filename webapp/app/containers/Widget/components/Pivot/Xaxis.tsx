@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
+import { IPivotMetric, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
 import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter, getXaxisLabel, decodeMetricName } from '../util'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from '../../../../globalConstants'
@@ -13,6 +13,7 @@ interface IXaxisProps {
   data: any[]
   metricAxisConfig?: IMetricAxisConfig
   dimetionAxis: DimetionType
+  chartStyles: IChartStyles
   elementSize: number
 }
 
@@ -28,7 +29,21 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { metrics, data, metricAxisConfig, dimetionAxis, elementSize } = this.props
+    const { metrics, data, metricAxisConfig, dimetionAxis, chartStyles, elementSize } = this.props
+    const {
+      showLine,
+      lineStyle,
+      lineSize,
+      lineColor,
+      showLabel,
+      labelFontFamily,
+      labelFontSize,
+      labelColor,
+      showTitleAndUnit,
+      titleFontFamily,
+      titleFontSize,
+      titleColor
+    } = dimetionAxis === 'col' ? chartStyles.xAxis : chartStyles.yAxis
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
@@ -70,22 +85,40 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
               }
               : {
                 axisLabel: {
-                  color: '#333',
+                  show: showLabel,
+                  color: labelColor,
+                  fontFamily: labelFontFamily,
+                  fontSize: labelFontSize,
                   showMinLabel: false,
                   showMaxLabel: false,
                   formatter: metricAxisLabelFormatter
                 },
                 axisLine: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor,
+                    width: lineSize,
+                    type: lineStyle
                   }
                 },
                 axisTick: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor
                   }
                 }
               }
+
+            const axisTitle = showTitleAndUnit && {
+              name: decodeMetricName(m.name),
+              nameLocation: 'center',
+              nameGap: 28,
+              nameTextStyle: {
+                color: titleColor,
+                fontFamily: titleFontFamily,
+                fontSize: titleFontSize
+              }
+            }
 
             grid.push({
               top: dimetionAxis === 'col' ? xSum : ySum,
@@ -100,19 +133,26 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
                 data: records.map((r) => r.key),
                 interval: 0,
                 axisLabel: {
+                  show: showLabel,
+                  color: labelColor,
+                  fontFamily: labelFontFamily,
+                  fontSize: labelFontSize,
                   interval: 0,
                   rotate: elementSize <= PIVOT_XAXIS_ROTATE_LIMIT ? -90 : 0,
-                  color: '#333',
                   formatter: getXaxisLabel(elementSize * .8)
                 },
                 axisLine: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor,
+                    width: lineSize,
+                    type: lineStyle
                   }
                 },
                 axisTick: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor
                   }
                 }
               })
@@ -125,12 +165,7 @@ export class Xaxis extends React.PureComponent<IXaxisProps, {}> {
               xAxis.push({
                 gridIndex: index,
                 type: 'value',
-                name: decodeMetricName(m.name),
-                nameLocation: 'center',
-                nameGap: 28,
-                nameTextStyle: {
-                  color: '#333'
-                },
+                ...axisTitle,
                 ...metricAxisStyle,
                 ...metricAxisConfig[m.name].yAxis
               })

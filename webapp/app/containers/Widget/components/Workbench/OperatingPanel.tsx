@@ -7,11 +7,12 @@ import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
-import { IPivotProps, DimetionType } from '../Pivot/Pivot'
+import VariableConfigForm from '../VariableConfigForm'
+import { IPivotProps, DimetionType, IChartStyles } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
-import { ChromePicker } from 'react-color'
-import ColorPicker from '../../../../components/ColorPicker'
+import AxisConfigSection, { IAxisConfig } from './AxisConfigSection'
+import SplitLineConfigSection, { ISplitLineConfig } from './SplitLineConfigSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
@@ -20,17 +21,14 @@ const Col = require('antd/lib/col')
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
+const Table = require('antd/lib/table')
+const Button = require('antd/lib/button')
 const Radio = require('antd/lib/radio/radio')
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
-const Option = Select.Option
 const Dropdown = require('antd/lib/dropdown')
 const Modal = require('antd/lib/modal')
-const Popover = require('antd/lib/popover')
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
@@ -54,7 +52,13 @@ interface IOperatingPanelProps {
   selectedView: IView
   distinctColumnValues: any[]
   columnValueLoading: boolean
+  queryParams: any[]
+  cache: boolean
+  expired: number
   onViewSelect: (selectedView: IView) => void
+  onSetQueryParams: (queryParams: any[]) => void
+  onCacheChange: (cache: boolean) => void
+  onExpiredChange: (expired: number) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
   onSetPivotProps: (pivotProps: Partial<IPivotProps>) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
@@ -66,6 +70,7 @@ interface IOperatingPanelStates {
   selectedTab: 'data' | 'style' | 'variable' | 'cache'
   commonParams: IDataParams
   specificParams: IDataParams
+  styleParams: IChartStyles
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
   modalDataFrom: string
@@ -73,6 +78,8 @@ interface IOperatingPanelStates {
   actOnModalVisible: boolean
   actOnModalList: IDataParamSource[]
   filterModalVisible: boolean
+  variableConfigModalVisible: boolean
+  variableConfigControl: object
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -89,13 +96,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         filters: { title: '筛选', type: 'all', items: [] }
       },
       specificParams: {},
+      styleParams: {},
       modalCachedData: null,
       modalCallback: null,
       modalDataFrom: void 0,
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
-      filterModalVisible: false
+      filterModalVisible: false,
+      variableConfigModalVisible: false,
+      variableConfigControl: {}
     }
   }
 
@@ -110,16 +120,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private actOnSettingForm = null
   private filterSettingForm = null
 
+  private variableConfigForm = null
+  private refHandlers = {
+    variableConfigForm: (ref) => this.variableConfigForm = ref
+  }
+
   public componentWillMount () {
     this.setState({
-      specificParams: this.getChartDataConfig(this.getSelectedCharts([]))
+      ...this.getChartDataConfig(this.getSelectedCharts([]))
     })
   }
 
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, currentWidgetConfig } = nextProps
     if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
-      const { cols, rows, metrics, filters, color, label, size, xAxis, tip } = currentWidgetConfig
+      const { cols, rows, metrics, filters, color, label, size, xAxis, tip, chartStyles, queryParams, cache, expired } = currentWidgetConfig
       const { commonParams } = this.state
       const model = JSON.parse(selectedView.model)
       commonParams.cols.items = cols.map((c) => ({
@@ -153,20 +168,23 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       this.setState({
         commonParams,
         specificParams: currentSpecificParams,
+        styleParams: chartStyles,
         showColsAndRows: !!rows.length
       }, () => {
-        this.getVisualData(commonParams, currentSpecificParams)
+        this.getVisualData(commonParams, currentSpecificParams, chartStyles)
       })
     }
   }
 
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const { metrics } = commonParams
-    const config = {}
+    const dataConfig = {}
+    const styleConfig = {}
+    let specSign = false
     selectedCharts.forEach((chartInfo) => {
       Object.entries(chartInfo.data).forEach(([key, prop]: [string, IDataParamProperty]) => {
-        if (!config[key]) {
+        if (!dataConfig[key]) {
           let value = null
           switch (key) {
             case 'color':
@@ -184,15 +202,41 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               value = specificParams[key] ? specificParams[key].value : { all: PIVOT_DEFAULT_SCATTER_SIZE_TIMES }
               break
           }
-          config[key] = {
+          dataConfig[key] = {
             ...prop,
             value,
             items: specificParams[key] ? specificParams[key].items : []
           }
         }
       })
+      Object.entries(chartInfo.style).forEach(([key, prop]: [string, object]) => {
+        if (key !== 'spec') {
+          styleConfig[key] = {
+            ...prop,
+            ...styleParams[key]
+          }
+        } else {
+          specSign = true
+        }
+      })
     })
-    return config
+    if (specSign) {
+      styleConfig['spec'] = selectedCharts.reduce((spec, chartInfo) => {
+        const specConfig = chartInfo.style['spec'] || {}
+        return {
+          ...spec,
+          ...Object.entries(specConfig).reduce((obj, [key, value]) => {
+            const settledValue = styleParams.spec && styleParams.spec[key]
+            obj[key] = settledValue !== void 0 ? settledValue : value
+            return obj
+          }, {})
+        }
+      }, {})
+    }
+    return {
+      specificParams: dataConfig,
+      styleParams: styleConfig
+    }
   }
 
   private getSelectedCharts = (items: IDataParamSource[]): IChartInfo[] =>
@@ -233,10 +277,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private insideDragEnd = (dropType: DropType) => {
     if (!dropType) {
-      const { dragged: { name, from }, commonParams, specificParams } = this.state
+      const { dragged: { name, from }, commonParams, specificParams, styleParams } = this.state
       const prop = commonParams[from] || specificParams[from]
       prop.items = prop.items.filter((i) => i.name !== name)
-      this.getVisualData(commonParams, specificParams)
+      this.getVisualData(commonParams, specificParams, styleParams)
     }
 
     this.setState({
@@ -294,7 +338,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private drop = (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[], config?: IDataParamConfig) => {
-    const { dragged: stateDragged, commonParams, specificParams, modalCachedData } = this.state
+    const { dragged: stateDragged, commonParams, specificParams, styleParams, modalCachedData } = this.state
     const dragged = stateDragged || modalCachedData
     const from = dragged.from && dragged.from !== name && (commonParams[dragged.from] || specificParams[dragged.from])
     const destination = commonParams[name] || specificParams[name]
@@ -332,17 +376,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged: null,
       modalCachedData: null
     })
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private toggleRowsAndCols = () => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const { cols, rows } = commonParams
 
     if (this.state.showColsAndRows && rows.items.length) {
       cols.items = cols.items.concat(rows.items)
       rows.items = []
-      this.getVisualData(commonParams, specificParams)
+      this.getVisualData(commonParams, specificParams, styleParams)
     }
 
     this.setState({
@@ -351,7 +395,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private switchRowsAndCols = () => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const { cols, rows } = commonParams
 
     let temp = cols.items.slice()
@@ -359,43 +403,51 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     rows.items = temp
     temp = null
 
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private removeDropboxItem = (from: string) => (name: string) => () => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const prop = commonParams[from] || specificParams[from]
     prop.items = prop.items.filter((i) => i.name !== name)
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private getDropboxItemSortDirection = (from: string) => (item: IDataParamSource, sort: SortType) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const prop = commonParams[from] || specificParams[from]
     item.sort = ['asc', 'desc'].indexOf(sort) >= 0 ? sort : void 0
     prop.items = [...prop.items]
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private getDropboxItemAggregator = (from: string) => (item: IDataParamSource, agg: AggregatorType) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const prop = commonParams[from] || specificParams[from]
     item.agg = agg
     prop.items = [...prop.items]
-    this.getVisualData(commonParams, specificParams)
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     onLoadDistinctValue(selectedView.id, item.name)
     this.setState({
       modalCachedData: item,
       modalDataFrom: 'color',
       modalCallback: (config) => {
         if (config) {
+          const colorItems = specificParams.color.items
+          const actingOnItemIndex = colorItems.findIndex((i) => i.config.actOn === config['actOn'])
+          if (actingOnItemIndex >= 0) {
+            specificParams.color.items = [
+              ...colorItems.slice(0, actingOnItemIndex),
+              ...colorItems.slice(actingOnItemIndex + 1)
+            ]
+          }
           item.config = config as IDataParamConfig
-          this.getVisualData(commonParams, specificParams)
+          this.getVisualData(commonParams, specificParams, styleParams)
           this.setState({
             modalCachedData: null
           })
@@ -407,7 +459,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private dropboxItemChangeFilterConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     if (item.type === 'category') {
       onLoadDistinctValue(selectedView.id, item.name)
     }
@@ -417,7 +469,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCallback: (config) => {
         if (config) {
           item.config = config as IDataParamConfig
-          this.getVisualData(commonParams, specificParams)
+          this.getVisualData(commonParams, specificParams, styleParams)
           this.setState({
             modalCachedData: null
           })
@@ -428,10 +480,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private getDropboxItemChart = (item: IDataParamSource) => (chart: IChartInfo) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams } = this.state
     item.chart = chart
     commonParams.metrics.items = [...commonParams.metrics.items]
-    this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts(commonParams.metrics.items)))
+    const { specificParams, styleParams } = this.getChartDataConfig(this.getSelectedCharts(commonParams.metrics.items))
+    this.getVisualData(commonParams, specificParams, styleParams)
   }
 
   private getDiemtionsAndMetricsCount = () => {
@@ -442,7 +495,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  private getVisualData = (commonParams, specificParams, renderType?) => {
+  private getVisualData = (commonParams, specificParams, styleParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
     const { color, label, size, xAxis, tip } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
@@ -490,10 +543,23 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     groups.sort()
     aggregators.sort()
 
+    const orders = []
+    Object.values(commonParams).concat(Object.values(specificParams))
+      .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
+      .forEach((item) => {
+        if (item.sort) {
+          orders.push({
+            column: item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`,
+            direction: item.sort
+          })
+        }
+      })
+
     const requestParams = {
       groups,
       aggregators,
       filters: filters.items.map((i) => i.config.sql),
+      orders,
       cache: false,
       expired: 0
     }
@@ -516,9 +582,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...size && {size},
             ...xAxis && {xAxis},
             ...tip && {tip},
+            chartStyles: styleParams,
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
-            renderType: renderType || 'rerender'
+            renderType: renderType || 'rerender',
+            orders
           })
         } else {
           onSetPivotProps({
@@ -527,13 +595,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             metrics: [],
             filters: [],
             data: [],
+            chartStyles: {},
             dimetionAxis: this.getDimetionAxis([getPivot()]),
-            renderType: 'rerender'
+            renderType: 'rerender',
+            orders
           })
         }
         this.setState({
           commonParams,
-          specificParams: this.getChartDataConfig(selectedCharts)
+          ...this.getChartDataConfig(selectedCharts)
         })
       })
     } else {
@@ -547,12 +617,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...size && {size},
         ...xAxis && {xAxis},
         ...tip && {tip},
+        chartStyles: styleParams,
         dimetionAxis: this.getDimetionAxis(selectedCharts),
-        renderType: renderType || 'clear'
+        renderType: renderType || 'clear',
+        orders
       })
       this.setState({
         commonParams,
-        specificParams: this.getChartDataConfig(selectedCharts)
+        ...this.getChartDataConfig(selectedCharts)
       })
     }
   }
@@ -572,7 +644,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       metrics.items.forEach((i) => {
         i.chart = chart
       })
-      this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts(metrics.items)))
+      const { specificParams, styleParams } = this.getChartDataConfig(this.getSelectedCharts(metrics.items))
+      this.getVisualData(commonParams, specificParams, styleParams)
     }
   }
 
@@ -608,11 +681,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         param.value = {}
       }
     })
-    this.getVisualData(commonParams, this.getChartDataConfig(this.getSelectedCharts([])))
+    const resetedParams = this.getChartDataConfig(this.getSelectedCharts([]))
+    this.getVisualData(commonParams, resetedParams.specificParams, resetedParams.styleParams)
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {
-    const { commonParams, specificParams } = this.state
+    const { commonParams, specificParams, styleParams } = this.state
     const { color, size } = specificParams
     switch (name) {
       case 'color':
@@ -633,7 +707,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
-    this.getVisualData(commonParams, specificParams, 'refresh')
+    this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
+  }
+
+  private styleChange = (name) => (prop, value) => {
+    const { commonParams, specificParams, styleParams } = this.state
+    styleParams[name][prop] = value
+    this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
   }
 
   private confirmColorModal = (config) => {
@@ -704,12 +784,55 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
+  private showVariableConfigTable = (id?: string) => () => {
+    this.setState({
+      variableConfigModalVisible: true,
+      variableConfigControl: id
+        ? this.props.queryParams.find((q) => q.id === id)
+        : {}
+    })
+  }
+
+  private hideVariableConfigTable = () => {
+    this.setState({
+      variableConfigModalVisible: false,
+      variableConfigControl: {}
+    })
+  }
+
+  private resetVariableConfigForm = () => {
+    this.variableConfigForm.resetForm()
+  }
+
+  private saveControl = (control) => {
+    const { queryParams, onSetQueryParams } = this.props
+    const { commonParams, specificParams, styleParams } = this.state
+    const itemIndex = queryParams.findIndex((q) => q.id === control.id)
+
+    if (itemIndex >= 0) {
+      queryParams.splice(itemIndex, 1, control)
+      onSetQueryParams([...queryParams.slice(0, itemIndex), control, ...queryParams.slice(itemIndex + 1)])
+    } else {
+      onSetQueryParams(queryParams.concat(control))
+    }
+  }
+
+  private deleteControl = (id) => () => {
+    const { queryParams, onSetQueryParams } = this.props
+    onSetQueryParams(queryParams.filter((q) => q.id !== id))
+  }
+
   public render () {
     const {
       views,
       selectedView,
       distinctColumnValues,
-      columnValueLoading
+      columnValueLoading,
+      queryParams,
+      cache,
+      expired,
+      onCacheChange,
+      onExpiredChange
     } = this.props
     const {
       dragged,
@@ -717,15 +840,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       selectedTab,
       commonParams,
       specificParams,
+      styleParams,
       modalCachedData,
       modalDataFrom,
       colorModalVisible,
       actOnModalVisible,
       actOnModalList,
-      filterModalVisible
+      filterModalVisible,
+      variableConfigModalVisible,
+      variableConfigControl
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
+    const { spec, xAxis, yAxis, splitLine  } = styleParams
+
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
         {(views || []).map((v) => (
@@ -818,6 +946,52 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       )
     })
 
+    const controlTypes = [
+      { text: '文本输入框', value: 'input' },
+      { text: '数字输入框', value: 'inputNumber' },
+      { text: '单选下拉菜单', value: 'select' },
+      { text: '多选下拉菜单', value: 'multiSelect' },
+      { text: '日期选择', value: 'date' },
+      { text: '日期多选', value: 'multiDate' },
+      { text: '日期范围选择', value: 'dateRange' },
+      { text: '日期时间选择', value: 'datetime' },
+      { text: '日期时间范围选择', value: 'datetimeRange' }
+    ]
+
+    const queryConfigColumns = [{
+      title: '变量',
+      dataIndex: 'variables',
+      key: 'variables',
+      render: (text, record) => record.variables.join(',')
+    }, {
+      title: '操作',
+      key: 'action',
+      width: 100,
+      className: `${utilStyles.textAlignCenter}`,
+      render: (text, record) => (
+        <span className="ant-table-action-column">
+          <Button
+            size="small"
+            shape="circle"
+            icon="edit"
+            onClick={this.showVariableConfigTable(record.id)}
+          />
+          <Button
+            size="small"
+            shape="circle"
+            icon="delete"
+            onClick={this.deleteControl(record.id)}
+          />
+        </span>
+      )
+    }]
+
+    let queryInfo = []
+    if (selectedView) {
+      queryInfo = (selectedView.sql.match(/query@var\s+\$\w+\$/g) || [])
+        .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
+    }
+
     let tabPane
     switch (selectedTab) {
       case 'data':
@@ -837,150 +1011,60 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'style':
         tabPane = (
           <div className={styles.paramsPane}>
-            <div className={styles.paneBlock}>
-              <h4>X轴</h4>
-              <div className={styles.blockBody}>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <Checkbox>显示坐标轴</Checkbox>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={10}>
-                    <Select placeholder="样式" className={styles.blockElm}>
-                      <Option key="solid" value="solid">实线</Option>
-                      <Option key="dashed" value="dashed">虚线</Option>
-                      <Option key="dotted" value="dotted">点</Option>
-                    </Select>
-                  </Col>
-                  <Col span={10}>
-                    <Select placeholder="粗细" className={styles.blockElm}>
-                      {Array.from(Array(10), (o, i) => (
-                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                        ))}
-                    </Select>
-                  </Col>
-                  <Col span={4}>
-                    <ColorPicker />
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <Checkbox>显示标签文字</Checkbox>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={10}>
-                    <Select placeholder="字体" className={styles.blockElm}>
-                      <Option key="solid" value="solid">微软雅黑</Option>
-                      <Option key="dashed" value="dashed">宋体</Option>
-                      <Option key="dotted" value="dotted">点</Option>
-                    </Select>
-                  </Col>
-                  <Col span={10}>
-                    <Select placeholder="文字大小" className={styles.blockElm}>
-                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
-                          <Option key={o} value={`${o}`}>{o}</Option>
-                        ))}
-                    </Select>
-                  </Col>
-                  <Col span={4}>
-                    <ColorPicker />
-                  </Col>
-                </Row>
-              </div>
-            </div>
-            <div className={styles.paneBlock}>
-              <h4>Y轴</h4>
-              <div className={styles.blockBody}>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={4} push={1}>标题:</Col>
-                  <Col span={19} push={1}>
-                    <Input />
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={4} push={1}>单位:</Col>
-                  <Col span={19} push={1}>
-                    <Input />
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <Checkbox>显示坐标轴</Checkbox>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={10}>
-                    <Select placeholder="样式" className={styles.blockElm}>
-                      <Option key="solid" value="solid">实线</Option>
-                      <Option key="dashed" value="dashed">虚线</Option>
-                      <Option key="dotted" value="dotted">点</Option>
-                    </Select>
-                  </Col>
-                  <Col span={10}>
-                    <Select placeholder="粗细" className={styles.blockElm}>
-                      {Array.from(Array(10), (o, i) => (
-                          <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
-                        ))}
-                    </Select>
-                  </Col>
-                  <Col span={4}>
-                    <ColorPicker />
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <Checkbox>显示标签文字</Checkbox>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={10}>
-                    <Select placeholder="字体" className={styles.blockElm}>
-                      <Option key="solid" value="solid">微软雅黑</Option>
-                      <Option key="dashed" value="dashed">宋体</Option>
-                      <Option key="dotted" value="dotted">点</Option>
-                    </Select>
-                  </Col>
-                  <Col span={10}>
-                    <Select placeholder="文字大小" className={styles.blockElm}>
-                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
-                          <Option key={o} value={`${o}`}>{o}</Option>
-                        ))}
-                    </Select>
-                  </Col>
-                  <Col span={4}>
-                    <ColorPicker />
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <Checkbox>显示标题和单位</Checkbox>
-                  </Col>
-                </Row>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={10}>
-                    <Select placeholder="字体" className={styles.blockElm}>
-                      <Option key="solid" value="solid">微软雅黑</Option>
-                      <Option key="dashed" value="dashed">宋体</Option>
-                      <Option key="dotted" value="dotted">点</Option>
-                    </Select>
-                  </Col>
-                  <Col span={10}>
-                    <Select placeholder="文字大小" className={styles.blockElm}>
-                      {[10, 12, 14, 16, 18, 20, 24, 28, 32, 36].map((o) => (
-                          <Option key={o} value={`${o}`}>{o}</Option>
-                        ))}
-                    </Select>
-                  </Col>
-                  <Col span={4}>
-                    <ColorPicker />
-                  </Col>
-                </Row>
-              </div>
-            </div>
+            {xAxis && <AxisConfigSection
+              title="X轴"
+              type="x"
+              config={xAxis as IAxisConfig}
+              onChange={this.styleChange('xAxis')}
+            />}
+            {yAxis && <AxisConfigSection
+              title="Y轴"
+              type="y"
+              config={yAxis as IAxisConfig}
+              onChange={this.styleChange('yAxis')}
+            />}
+            {splitLine && <SplitLineConfigSection
+              title="分隔线"
+              config={splitLine as ISplitLineConfig}
+              onChange={this.styleChange('splitLine')}
+            />}
           </div>
         )
+        break
+      case 'variable':
+        if (queryInfo.length) {
+          tabPane = (
+            <div className={styles.paramsPane}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col
+                  span={24}
+                  className={styles.addVariable}
+                  onClick={this.showVariableConfigTable()}
+                >
+                  <Icon type="plus" /> 点击添加
+                </Col>
+              </Row>
+              <Table
+                dataSource={queryParams}
+                columns={queryConfigColumns}
+                rowKey="id"
+                pagination={false}
+              />
+            </div>
+          )
+        } else {
+          tabPane = (
+            <div className={styles.paramsPane}>
+              <div className={styles.paneBlock}>
+                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                  <Col span={24}>
+                    <h4>没有变量可以设置</h4>
+                  </Col>
+                </Row>
+              </div>
+            </div>
+          )
+        }
         break
       case 'cache':
         tabPane = (
@@ -990,7 +1074,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               <div className={styles.blockBody}>
                 <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
                   <Col span={24}>
-                    <RadioGroup size="small" defaultValue={false}>
+                    <RadioGroup size="small" value={cache} onChange={onCacheChange}>
                       <RadioButton value={false}>关闭</RadioButton>
                       <RadioButton value={true}>开启</RadioButton>
                     </RadioGroup>
@@ -1003,7 +1087,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               <div className={styles.blockBody}>
                 <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
                   <Col span={24}>
-                    <InputNumber defaultValue={60} />
+                    <InputNumber value={expired} disabled={!cache} onChange={onExpiredChange} />
                   </Col>
                 </Row>
               </div>
@@ -1154,6 +1238,23 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onSave={this.confirmFilterModal}
             onCancel={this.cancelFilterModal}
             ref={(f) => this.filterSettingForm = f}
+          />
+        </Modal>
+        <Modal
+          title="QUERY变量配置"
+          wrapClassName="ant-modal-large"
+          visible={variableConfigModalVisible}
+          onCancel={this.hideVariableConfigTable}
+          afterClose={this.resetVariableConfigForm}
+          footer={false}
+          maskClosable={false}
+        >
+          <VariableConfigForm
+            queryInfo={queryInfo}
+            control={variableConfigControl}
+            onSave={this.saveControl}
+            onClose={this.hideVariableConfigTable}
+            wrappedComponentRef={this.refHandlers.variableConfigForm}
           />
         </Modal>
       </div>

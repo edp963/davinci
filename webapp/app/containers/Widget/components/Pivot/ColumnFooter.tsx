@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType } from './Pivot'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
 import { IChartLine } from './Chart'
 import Xaxis from './Xaxis'
 import { getAxisData, decodeMetricName } from '../util'
@@ -14,14 +14,15 @@ interface IColumnFooterProps {
   tree: object
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
 }
 
 export class ColumnFooter extends React.Component<IColumnFooterProps, {}> {
   public render () {
-    const { rowKeys, colKeys, rowTree, colTree, tree, metrics, metricAxisConfig, drawingData, dimetionAxis } = this.props
-    const { elementSize, unitMetricHeight } = drawingData
+    const { rowKeys, colKeys, rowTree, colTree, tree, metrics, metricAxisConfig, chartStyles, drawingData, dimetionAxis } = this.props
+    const { elementSize } = drawingData
 
     let footers: IChartLine[] = []
     let tableWidth = 0
@@ -40,6 +41,7 @@ export class ColumnFooter extends React.Component<IColumnFooterProps, {}> {
             metrics={metrics}
             data={footers}
             metricAxisConfig={metricAxisConfig}
+            chartStyles={chartStyles}
             dimetionAxis={dimetionAxis}
             elementSize={elementSize}
           />

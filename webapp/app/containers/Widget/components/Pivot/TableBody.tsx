@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend, IChartStyles } from './Pivot'
 import Cell from './Cell'
 import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
 import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
@@ -27,6 +27,7 @@ export interface ITableBodyProps {
   tree: object
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   color?: IDataParamProperty
@@ -186,6 +187,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       tree,
       metrics,
       metricAxisConfig,
+      chartStyles,
       drawingData,
       dimetionAxis,
       color,
@@ -460,6 +462,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           metricAxisCount={metricAxisCount}
           metrics={metrics}
           data={this.gridCutting(tableWidth, tableHeight, chartGrid)}
+          chartStyles={chartStyles}
           drawingData={drawingData}
           dimetionAxis={dimetionAxis}
           metricAxisConfig={metricAxisConfig}

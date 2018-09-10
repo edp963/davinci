@@ -1,9 +1,9 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend } from './Pivot'
+import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend, IChartStyles } from './Pivot'
 import chartOptionGenerator from '../../charts'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
-import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel, getSizeValue, getTriggeringRecord } from '../util'
+import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel, getSizeValue, getChartLabel, getBar, getTriggeringRecord } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 const styles = require('./Pivot.less')
@@ -56,6 +56,7 @@ interface IChartProps {
   metricAxisCount: number
   metrics: IPivotMetric[]
   data: IChartChunk[]
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
@@ -118,6 +119,13 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
   }
 
   private getXaxisOption = (index, type, data?) => {
+    const {
+      showVerticalLine = false,
+      verticalLineStyle = '',
+      verticalLineSize = '',
+      verticalLineColor = ''
+    } = this.props.chartStyles.splitLine || {}
+
     return {
       gridIndex: index,
       type,
@@ -129,28 +137,54 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       ...type === 'category' && {
         axisLine: {
           lineStyle: {
-            color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+            color: verticalLineColor
           }
         },
         data
+      },
+      splitLine: {
+        show: showVerticalLine,
+        interval: 0,
+        lineStyle: {
+          color: verticalLineColor,
+          width: verticalLineSize,
+          type: verticalLineStyle
+        }
       }
     }
   }
 
-  private getYaxisOption = (index, metricAxisConfig) => {
+  private getYaxisOption = (index, metricAxisConfig, coordinate, isScatterXAxis?) => {
+    const {
+      showHorizontalLine = false,
+      horizontalLineStyle = '',
+      horizontalLineSize = '',
+      horizontalLineColor = '',
+      showVerticalLine = false,
+      verticalLineStyle = '',
+      verticalLineSize = '',
+      verticalLineColor = ''
+    } = this.props.chartStyles.splitLine || {}
+
     return {
       gridIndex: index,
       type: 'value',
       axisLine: {
+        show: showHorizontalLine,
         lineStyle: {
-          color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+          color: horizontalLineColor,
+          width: horizontalLineSize,
+          type: horizontalLineStyle
         }
       },
       axisTick: { show: false },
       axisLabel: { show: false },
       splitLine: {
+        show: coordinate === 'cartesian' && (isScatterXAxis ? showVerticalLine : showHorizontalLine),
         lineStyle: {
-          type: 'dotted'
+          color: isScatterXAxis ? verticalLineColor : horizontalLineColor,
+          width: isScatterXAxis ? verticalLineSize : horizontalLineSize,
+          type: isScatterXAxis ? verticalLineStyle : horizontalLineStyle
         }
       },
       ...metricAxisConfig
@@ -169,11 +203,12 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
       color,
       label,
       size,
-      xAxis: scatterXaxis,
+      xAxis: scatterXAxis,
       tip,
       legend,
       renderType
     } = this.props
+
     const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
 
     data.forEach((chunk: IChartChunk) => {
@@ -227,16 +262,16 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                   getSymbolSize
                 } = chartOptionGenerator(m.chart.name, drawingData)
 
-                // 单次循环records做手动分类，判断条件color和label，tip只能是指标
                 const currentColorItem = color.items.find((i) => i.config.actOn === m.name) || color.items.find((i) => i.config.actOn === 'all')
-                const categroyLabelItems = label ? label.items.filter((i) => i.type === 'category') : []
-                const currentLabelItem = categroyLabelItems.filter((i) => i.config.actOn === m.name || i.config.actOn === 'all')
-                const currentScatterXaxisItem = scatterXaxis && scatterXaxis.items[0]
+                const currentLabelItem = label && (label.items.find((i) => i.config.actOn === m.name) || label.items.find((i) => i.config.actOn === 'all'))
+                const currentScatterXAxisItem = scatterXAxis && scatterXAxis.items[0]
                 const currentSizeItem = size && (size.items.find((i) => i.config.actOn === m.name) || size.items.find((i) => i.config.actOn === 'all'))
                 const currentSizeValue = size && (currentSizeItem ? getSizeValue(size.value[currentSizeItem.name] || size.value['all']) : getSizeValue(size.value['all']))
-                const groupingItems = [].concat(currentColorItem).concat(currentLabelItem).filter((i) => !!i)
+                const groupingItems = [].concat(currentColorItem)
+                  .concat(currentLabelItem && currentLabelItem.type === 'category' && currentLabelItem)
+                  .filter((i) => !!i)
 
-                if (!(currentScatterXaxisItem && m.chart.id === getScatter().id)) {
+                if (!(currentScatterXAxisItem && m.chart.id === getScatter().id)) {
                   grid.push({
                     top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
                     left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
@@ -244,7 +279,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     height
                   })
                   xAxis.push(this.getXaxisOption(index, 'category', xAxisData))
-                  yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
+                  yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis, m.chart.coordinate))
                 }
 
                 if (m.chart.coordinate === 'cartesian') {
@@ -274,7 +309,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       }
                     })
 
-                    if (currentScatterXaxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       xAxisData.forEach((colKey, xdIndex) => {
@@ -293,14 +328,14 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             height: elementSize
                           })
                         }
-                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXaxis))
-                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
+                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXAxis, m.chart.coordinate, true))
+                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis, m.chart.coordinate))
                         Object.entries((grouped)).sort().forEach(([groupingKey, groupedRecords]: [string, any[]]) => {
                           let data
                           if (groupedRecords[colKey]) {
                             data = groupedRecords[colKey].reduce((sum, record) => {
                               return [
-                                sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
+                                sum[0] + (Number(record[`${currentScatterXAxisItem.agg}(${decodeMetricName(currentScatterXAxisItem.name)})`]) || 0),
                                 sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
                                 currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : PIVOT_DEFAULT_SCATTER_SIZE
                               ]
@@ -319,13 +354,11 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             color: currentColorItem
                               ? currentColorItem.config.values[groupingKey.split(',')[0]]
                               : (color.value[m.name] || color.value['all']),
-                            ...currentLabelItem.length && {
+                            ...currentLabelItem && {
                               label: {
                                 show: true,
                                 position: 'top',
-                                formatter: (params) => {
-                                  return params.value
-                                }
+                                formatter: getChartLabel(seriesData, currentLabelItem)
                               }
                             },
                             xAxisIndex: index,
@@ -380,12 +413,11 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           color: currentColorItem
                             ? currentColorItem.config.values[groupingKey.split(',')[0]]
                             : (color.value[m.name] || color.value['all']),
-                          ...currentLabelItem.length && {
+                          ...currentLabelItem && {
                             label: {
                               show: true,
-                              formatter: (params) => {
-                                return params.value
-                              }
+                              position: m.chart.id === getBar().id ? 'inside' : 'top',
+                              formatter: getChartLabel(seriesData, currentLabelItem)
                             }
                           },
                           xAxisIndex: index,
@@ -400,7 +432,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       })
                     }
                   } else {
-                    if (currentScatterXaxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       records.forEach((recordCollection, rcIndex) => {
@@ -419,12 +451,12 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                             height: elementSize
                           })
                         }
-                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXaxis))
-                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis))
+                        xAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].scatterXAxis, m.chart.coordinate, true))
+                        yAxis.push(this.getYaxisOption(index, metricAxisConfig[m.name].yAxis, m.chart.coordinate))
                         let data
                         if (recordCollection.value) {
                           data = recordCollection.value.reduce((sum, record) => [
-                            sum[0] + (Number(record[`${currentScatterXaxisItem.agg}(${decodeMetricName(currentScatterXaxisItem.name)})`]) || 0),
+                            sum[0] + (Number(record[`${currentScatterXAxisItem.agg}(${decodeMetricName(currentScatterXAxisItem.name)})`]) || 0),
                             sum[1] + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
                             currentSizeItem ? sum[2] + (Number(record[`${currentSizeItem.agg}(${decodeMetricName(currentSizeItem.name)})`]) || 0) : PIVOT_DEFAULT_SCATTER_SIZE
                           ], [0, 0, 0])
@@ -440,6 +472,13 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         series.push({
                           data,
                           color: color.value[m.name] || color.value['all'],
+                          ...currentLabelItem && {
+                            label: {
+                              show: true,
+                              position: 'top',
+                              formatter: getChartLabel(seriesData, currentLabelItem)
+                            }
+                          },
                           xAxisIndex: index,
                           yAxisIndex: index,
                           ...chartOption
@@ -481,6 +520,13 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           }
                         }),
                         color: color.value[m.name] || color.value['all'],
+                        ...currentLabelItem && {
+                          label: {
+                            show: true,
+                            position: 'top',
+                            formatter: getChartLabel(seriesData, currentLabelItem)
+                          }
+                        },
                         xAxisIndex: index,
                         yAxisIndex: index,
                         ...chartOption
@@ -545,13 +591,11 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     }
                     series.push({
                       data,
-                      ...currentLabelItem.length
+                      ...currentLabelItem
                         ? {
                           label: {
                             show: true,
-                            formatter: (params) => {
-                              return params.value
-                            }
+                            formatter: getChartLabel(seriesData, currentLabelItem)
                           }
                         }
                         : {
@@ -597,7 +641,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
-              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXaxis, tip)
+              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
             },
             grid,
             xAxis,
