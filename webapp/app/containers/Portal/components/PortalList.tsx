@@ -13,7 +13,6 @@ const styles = require('../Portal.less')
 import AntdFormType from 'antd/lib/form/Form'
 import EllipsisList from '../../../components/EllipsisList'
 import PortalForm from './PortalForm'
-import {makeSelectCurrentProject} from '../../Projects/selectors'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 import {IPortal} from '../../Portal'

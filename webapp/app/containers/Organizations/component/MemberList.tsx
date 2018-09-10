@@ -26,14 +26,15 @@ interface IMembersState {
   changeRoleFormCategory: string
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
+  organizationMembers: any[]
 }
 
 interface IMembersProps {
   organizationId: number
   loadOrganizationsMembers: (id: number) => any
   deleteOrganizationMember: (id: number, resolve: () => any) => any
+  organizationMembers: any[]
   changeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
-  organizationMembers: Organization.IOrganizationMembers[]
   currentOrganization: Organization.IOrganization
   inviteMemberList: any
   onInviteMember: (ordId: number, memId: number) => any
@@ -52,7 +53,8 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       formVisible: false,
       modalLoading: false,
       changeRoleFormVisible: false,
-      changeRoleModalLoading: false
+      changeRoleModalLoading: false,
+      organizationMembers: []
     }
   }
 
@@ -125,8 +127,23 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     })
   }
 
-  private search = (val) => {
-    console.log(val)
+  private search = (event) => {
+    const value = event.target.value
+    const {organizationMembers} = this.props
+    const result = (organizationMembers as Organization.IOrganizationMembers[]).filter((member, index) => {
+      return member && member.user && member.user.username.indexOf(value.trim()) > -1
+    })
+    this.setState({
+      organizationMembers: value && value.length ? result : this.props.organizationMembers
+    })
+  }
+  public componentDidMount () {
+    const {organizationMembers} = this.props
+    if (organizationMembers) {
+      this.setState({
+        organizationMembers
+      })
+    }
   }
 
   private searchMember = () => {
@@ -161,9 +178,10 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       modalLoading,
       changeRoleFormVisible,
       changeRoleModalLoading,
-      changeRoleFormCategory
+      changeRoleFormCategory,
+      organizationMembers
     } = this.state
-    const { organizationMembers, inviteMemberList, currentOrganization } = this.props
+    const { inviteMemberList, currentOrganization } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
       CreateButton = ComponentPermission(currentOrganization, '')(Button)
@@ -243,7 +261,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           key: 'teamNum'
         }]
     }
-
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -251,7 +268,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
             <Input.Search
               size="large"
               placeholder="placeholder"
-              onSearch={this.search}
+              onChange={this.search}
             />
           </Col>
           <Col span={1} offset={7}>

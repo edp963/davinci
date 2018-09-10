@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {compose} from 'redux'
-// import teamReducer from '../../Teams/reducer'
+import teamReducer from '../../Teams/reducer'
 import {makeSelectLoginUser} from '../../App/selectors'
 import injectReducer from '../../../utils/injectReducer'
 import {createStructuredSelector} from 'reselect'
@@ -10,7 +10,7 @@ import {makeSelectTeams} from '../../Teams/selectors'
 import {connect} from 'react-redux'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {InjectedRouter} from 'react-router/lib/Router'
-// import teamSaga from '../../Teams/sagas'
+import teamSaga from '../../Teams/sagas'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -133,7 +133,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   private onSearchTeam = () => {
 
   }
-  private toThatTeam = (text, record) => () => {
+  private enterTeam = (text, record) => () => {
     const {id} = record
     if (id) {
       this.props.toThatTeam(`account/team/${id}`)
@@ -186,7 +186,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       dataIndex: 'name',
       key: 'name',
       width: '40%',
-      render: (text, record) => <a href="javascript:;" onClick={this.toThatTeam(text, record)} className={styles.avatarName}>{text}</a>
+      render: (text, record) => <a href="javascript:;" onClick={this.enterTeam(text, record)} className={styles.avatarName}>{text}</a>
     }, {
       title: 'Member',
       dataIndex: 'users',
@@ -272,17 +272,17 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-// const withReducer = injectReducer({key: 'team', reducer: teamReducer})
-// const withSaga = injectSaga({key: 'team', saga: teamSaga})
+const withReducer = injectReducer({key: 'team', reducer: teamReducer})
+const withSaga = injectSaga({key: 'team', saga: teamSaga})
 
 // const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
 // const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
-//  withReducer,
+  withReducer,
   // withAppReducer,
   // withAppSaga,
- // withSaga,
+  withSaga,
   withConnect
 )(TeamList)
 

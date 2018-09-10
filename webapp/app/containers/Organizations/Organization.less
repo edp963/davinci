@@ -108,10 +108,12 @@
   display: flex;
   border: 1px solid @grey-line-color;
   &:hover {
-    border: none;
+    box-shadow: @block-box-shadow;
+    //transform: translate3d(0, -5px, 0);
+    cursor: pointer;
+   .avatarWrapper {
     background-size: 110%;
-    box-shadow: @block-active-box-shadow;
-    transform: translate3d(0, -5px, 0);
+   }
   }
   .avatarWrapper{
     width: 260px;

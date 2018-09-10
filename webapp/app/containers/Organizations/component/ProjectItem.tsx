@@ -46,7 +46,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps> {
       <div className={styles.projectItemWrap}>
         <div
           className={styles.avatarWrapper}
-          style={{backgroundImage: `url(${require(`../../../assets/images/bg8.png`)})`}}
+          style={{backgroundImage: `url(${require(`../../../assets/images/bg${options.pic || 9}.png`)})`}}
         />
         <div className={styles.detailWrapper}>
           <div className={styles.titleWrapper}>

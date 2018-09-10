@@ -39,7 +39,7 @@ interface IprojectOptions {
 interface IProjectListProps {
   // projects: IprojectOptions
   currentTeam: any
-  deleteProject: (event:any, id: number) => any
+  deleteProject: (event: any, id: number) => any
   currentTeamProjects: ITeamProjects[]
   currentOrganizationProjects: any
   pullProjectInTeam: (projectId: number) => any
@@ -50,6 +50,7 @@ interface IProjectListState {
   formKey?: number
   formType: string
   formVisible: boolean
+  currentTeamProjects: any[]
 }
 export class ProjectList extends React.PureComponent<IProjectListProps, IProjectListState> {
 
@@ -59,7 +60,8 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
       formKey: 0,
       modalLoading: false,
       formType: '',
-      formVisible: false
+      formVisible: false,
+      currentTeamProjects: []
     }
   }
   private AddForm: WrappedFormUtils
@@ -69,12 +71,6 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
       formType: type,
       formVisible: true
     })
-  }
-  private onSearchProject = () => {
-    console.log(1)
-  }
-  private onSearchProjectType = () => {
-    console.log(1)
   }
 
   private hideAddForm = () => {
@@ -118,6 +114,25 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
       })
     })
   }
+  private onSearchProject = (event) => {
+    const value = event.target.value
+    const {currentTeamProjects} = this.props
+    const result = (currentTeamProjects as ITeamProjects[]).filter((project, index) => {
+      return project && project.project && project.project.name.indexOf(value.trim()) > -1
+    })
+    this.setState({
+      currentTeamProjects: value && value.length ? result : this.props.currentTeamProjects
+    })
+  }
+  public componentWillReceiveProps (nextProps) {
+    const {currentTeamProjects} = this.props
+    const nextCurrentTeamProjects = nextProps.currentTeamProjects
+    if (nextCurrentTeamProjects && nextCurrentTeamProjects !== currentTeamProjects) {
+      this.setState({
+        currentTeamProjects: nextCurrentTeamProjects
+      })
+    }
+  }
   private stopPPG = (e) => {
     e.stopPropagation()
   }
@@ -151,8 +166,8 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
   }
 
   public render () {
-    const { formVisible, formType, modalLoading} = this.state
-    const {currentTeam, currentOrganizationProjects, currentTeamProjects} = this.props
+    const { formVisible, formType, modalLoading, currentTeamProjects} = this.state
+    const {currentTeam, currentOrganizationProjects} = this.props
     let CreateButton = void 0
     if (currentTeam) {
       CreateButton = ComponentPermission(currentTeam, '')(Button)
@@ -186,8 +201,8 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
           <Col span={16}>
             <Input.Search
               size="large"
-              placeholder="Dashboard 名称"
-              onSearch={this.onSearchProject}
+              placeholder="Project 名称"
+              onChange={this.onSearchProject}
             />
           </Col>
           <Col span={1} offset={7}>

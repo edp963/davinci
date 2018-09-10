@@ -13,7 +13,6 @@ const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
 import DisplayForm from './DisplayForm'
-import {makeSelectCurrentProject} from '../../Projects/selectors'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 import { IconProps } from 'antd/lib/icon'

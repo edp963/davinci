@@ -26,7 +26,7 @@ export class Menus extends React.PureComponent <IMenusProps, {}> {
     return (
       <div>
         <Menu
-          style={{ padding: '16px 10px' }}
+          style={{ padding: '16px 16px' }}
           selectedKeys={[this.props.active, `${this.props.active}s`]}
         >
           {menus}
