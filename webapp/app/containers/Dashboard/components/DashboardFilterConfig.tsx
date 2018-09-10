@@ -107,6 +107,8 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
     const { visible, loading, currentItems, widgets, views, onSave, onGetOptions, filterOptions } = this.props
     const { filters, savingFilterConfig } = this.state
 
+    if (!visible) { return null }
+
     const modalButtons = [(
       <Button
         key="cancel"
@@ -143,7 +145,6 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
             items={currentItems}
             filters={filters}
             saving={savingFilterConfig}
-            onCancel={this.cancel}
             onOk={onSave}
             onGetPreviewData={onGetOptions}
             previewData={filterOptions}

@@ -3,13 +3,9 @@ import * as classnames from 'classnames'
 import { fromJS } from 'immutable'
 import { uuid } from 'utils/util'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
 import FilterList from './FilterList'
 import FilterForm from './FilterForm'
 import FilterValuePreview from './FilterValuePreview'
-
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')
@@ -20,7 +16,6 @@ interface IFilterConfigProps {
   items: any[]
   filters: any[]
   saving: boolean
-  onCancel: () => void
   onOk: (filters: any[]) => void
   onGetPreviewData: (
     filterKey: string,
@@ -69,7 +64,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   public componentWillReceiveProps (nextProps: IFilterConfigProps) {
-    const { filters, saving, onOk } = nextProps
+    const { filters, saving } = nextProps
     if (filters !== this.props.filters) {
       this.initState()
     }
@@ -86,6 +81,9 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       localFilters,
       selectedFilter,
       showPreview: FilterTypesViewSetting[selectedFilter.type]
+    }, () => {
+      if (!selectedFilter.key) { return }
+      this.filterForm.setFieldsValue(selectedFilter)
     })
   }
 
@@ -123,13 +121,16 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
 
   private deleteFilter = (key) => {
     const { localFilters, selectedFilter } = this.state
-    localFilters.splice(localFilters.findIndex((f) => f.key === key), 1)
+    const newLocalFilters = localFilters.filter((f) => f.key !== key)
     const newSelectedFilter = (selectedFilter.key !== key) ?
-      selectedFilter : (localFilters.length > 0 ? localFilters[0] : {})
+      selectedFilter : (newLocalFilters.length > 0 ? newLocalFilters[0] : {})
     this.setState({
-      localFilters,
+      localFilters: newLocalFilters,
       selectedFilter: newSelectedFilter,
       showPreview: FilterTypesViewSetting[newSelectedFilter.type]
+    }, () => {
+      if (!newSelectedFilter.key) { return }
+      this.filterForm.setFieldsValue(newSelectedFilter)
     })
   }
 
@@ -150,7 +151,9 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
 
   private filterItemSave = (filterItem) => {
     const { localFilters } = this.state
-    localFilters.splice(localFilters.findIndex((f) => f.key === filterItem.key), 1, filterItem)
+    const filterIdx = localFilters.findIndex((f) => f.key === filterItem.key)
+    if (filterIdx < 0) { return }
+    localFilters.splice(filterIdx, 1, filterItem)
     this.setState({
       localFilters
     })
@@ -179,7 +182,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   public render () {
-    const { views, widgets, items, onCancel, previewData } = this.props
+    const { views, widgets, items, previewData } = this.props
     const { localFilters, selectedFilter, showPreview } = this.state
     const { previewFilter: { key, fromModel } } = this.state
     const currentPreviewData = previewData[key] ? (previewData[key][fromModel] || []) : []

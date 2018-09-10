@@ -22,20 +22,6 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
     super(props)
   }
 
-  public componentWillMount () {
-    const { selectedFilterKey, onSelectFilter } = this.props
-    if (selectedFilterKey) {
-      onSelectFilter(selectedFilterKey)
-    }
-  }
-
-  public componentWillReceiveProps (nextProps: IFilterListProps) {
-    const { selectedFilterKey, onSelectFilter } = nextProps
-    if (selectedFilterKey !== this.props.selectedFilterKey) {
-      onSelectFilter(selectedFilterKey)
-    }
-  }
-
   private onAddFilterClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation()
     const { onAddFilter } = this.props
@@ -49,7 +35,7 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
     onDeleteFilter(selectedFilterKey)
   }
 
-  private onSelectFilter = (e: React.MouseEvent<HTMLUListElement>) => {
+  private selectFilter = (e: React.MouseEvent<HTMLUListElement>) => {
     const { list, onSelectFilter } = this.props
     Array.prototype.slice.call(e.currentTarget.children).some((elem: HTMLElement, idx) => {
       if (elem.contains(e.target as HTMLElement)) {
@@ -87,7 +73,7 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
             <li onClick={this.onDeleteFilterClick}><Icon type="delete" /></li>
           </ul>
         </div>
-        <ul className={styles.list} onClick={this.onSelectFilter}>
+        <ul className={styles.list} onClick={this.selectFilter}>
           {list.map((item) => this.renderFilter(item))}
         </ul>
       </div>
