@@ -26,8 +26,8 @@ import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-// import reducerApp from '../App/reducer'
-// import sagaApp from '../App/sagas'
+import reducerApp from '../App/reducer'
+import sagaApp from '../App/sagas'
 import {loadOrganizations} from '../Organizations/actions'
 import {makeSelectOrganizations} from '../Organizations/selectors'
 import {checkNameUniqueAction} from '../App/actions'
@@ -195,9 +195,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             pic: `${Math.ceil(Math.random() * 19)}`,
             config: '{}'
           }, () => {
-            this.hideProjectForm() })
+            this.props.onLoadProjects()
+            this.hideProjectForm()
+          })
         } else {
-          this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => { this.hideProjectForm() })
+          this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => {
+            this.props.onLoadProjects()
+            this.hideProjectForm()
+          })
         }
       }
     })
@@ -394,7 +399,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             </Col>
           )
         }
-        if (loginUser && loginUser.id !== d.createBy.id) {
+        if (loginUser && d.createBy && loginUser.id !== d.createBy.id) {
           return []
         }
         if (organizations) {
@@ -485,7 +490,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         if (d.type && d.type === 'add') {
           return []
         }
-        if (loginUser && loginUser.id === d.createBy.id) {
+        if (loginUser && d.createBy && loginUser.id === d.createBy.id) {
           return []
         }
         if (organizations) {
@@ -852,14 +857,14 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
   withOrganizationReducer,
-  // withAppReducer,
-  // withAppSaga,
+  withAppReducer,
+  withAppSaga,
   withSaga,
   withOrganizationSaga,
   withConnect
