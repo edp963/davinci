@@ -63,9 +63,9 @@ function projectReducer (state = initialState, action) {
     case ADD_PROJECT_FAILURE:
       return state
 
-    case EDIT_PROJECT_SUCCESS:
-      projects.splice(projects.findIndex((d) => d.id === payload.result.id), 1, payload.result)
-      return state.set('projects', projects.slice())
+    // case EDIT_PROJECT_SUCCESS:
+    //   projects.splice(projects.findIndex((d) => d.id === payload.result.id), 1, payload.result)
+    //   return state.set('projects', projects.slice())
 
     case DELETE_PROJECT_SUCCESS:
       if (projects) {
