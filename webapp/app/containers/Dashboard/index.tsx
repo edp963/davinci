@@ -699,8 +699,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
               ? children
               : (
                 <div className={styles.noDashboard}>
-                  <img src={require('../../assets/images/noDashboard.png')} />
-                  <p>请从左侧创建文件夹或 Dashboard</p>
+                  <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                  <p>请创建文件夹或 Dashboard</p>
                 </div>
               )
             }

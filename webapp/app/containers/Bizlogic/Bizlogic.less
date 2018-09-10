@@ -30,7 +30,7 @@
     border-bottom: 1px solid @border-color-base;
   
     .formLeft {
-      width: 200px;
+      width: 230px;
       flex-shrink: 0;
       overflow: auto;
       border-right: 1px solid @border-color-base;
@@ -57,22 +57,38 @@
       margin-bottom: 16px;
 
       .declareSelect {
-        max-width: 236px;
+        max-width: 272px;
         margin-top: 16px;
         margin-bottom: 6px;
       }
   
       .formTop {
         flex: 2;
-        overflow-y: auto;
         padding: 0 16px;
+        display: flex;
+        flex-direction: column;
   
         .noDeclaration {
           display: none;
         }
 
         .declareText {
-          margin-bottom: -8px;
+          margin-bottom: 16px;
+          flex: 1;
+          overflow-y: auto;
+          height: 100%;
+          .declareForm {
+            height: 100%;
+            margin-bottom: 0 !important;
+          }
+        }
+
+        .sqlText {
+          height: 100%;
+          flex: 1;
+          .sqlForm {
+            height: 100%;
+          }
         }
       }
       .formBottom {
@@ -122,13 +138,6 @@
         }
       }
     }
-
-    .sqlText {
-      height: 100%;
-      .sqlForm {
-        height: 100%;
-      }
-    }
   }
   .footBtn {
     display: flex;
@@ -170,4 +179,22 @@
   text-align: right;
   margin-right: 50px;
   margin-top: -10px;
+}
+
+.declareMsg {
+  width: 213px;
+  height: 160px;
+  .textMsg {
+    font-weight: bold;
+  }
+  .exampleMsg {
+    background-color: #f7f7f7;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+}
+
+.questionClass {
+  margin-left: 2px;
+  cursor: pointer;
 }
