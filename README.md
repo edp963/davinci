@@ -59,9 +59,9 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
   <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
 
-  * 0.3版本使用ymal作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
+  * 0.3版本使用 yaml 作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
 
-    注： 如需接入reids，可继续加入redis的相关配置。
+    注： 如需接入 redis，可继续加入 redis 的相关配置。
 
 ```
    unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip
@@ -113,7 +113,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
         max-active: 10
 
       ## redis config
-      ## please choose one of the two ways
+      ## please choose either of the two ways
       redis:
         isEnable: false
 
@@ -135,9 +135,9 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
             max-idle: 8
             min-idle: 0
 
-      ## mail is one of the important configuration of the application
+      ## mail is one of the important configurations of the application
       ## mail config cannot be null or empty
-      ## some mailboxes need to be set separately password for the SMTP service)
+      ## some mailboxes need to be set password for the SMTP service separately)
       mail:
         host:
         port:
@@ -172,7 +172,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
     source /etc/profile
 ```
 
-* **初始化数据库, 修改port、ip、user 及 password，与application.yml里datasrouce的配置一致即可（只在首次启动前需要进行初始化）**
+* **初始化数据库, 修改port、ip、user 及 password，与application.yml里datasource的配置一致即可（只在首次启动前需要进行初始化）**
 
 ```
     cd /app/davinci/bin
