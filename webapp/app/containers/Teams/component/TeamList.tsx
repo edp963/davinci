@@ -102,12 +102,14 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
           </div>
         )
       }
-    }, {
-      title: 'Visibility',
-      dataIndex: 'visibility',
-      key: 'visibility',
-      render: (text) => text ? '公开（可见）' : '私密（不可见）'
-    }]
+    }
+    // {
+    //   title: 'Visibility',
+    //   dataIndex: 'visibility',
+    //   key: 'visibility',
+    //   render: (text) => text ? '公开（可见）' : '私密（不可见）'
+    // }
+  ]
     return (
       <div className={styles.listWrapper}>
         {/* <Row>

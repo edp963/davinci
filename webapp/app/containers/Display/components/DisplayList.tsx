@@ -8,7 +8,7 @@ const Tooltip = require('antd/lib/tooltip')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
 const Modal = require('antd/lib/modal')
-
+const Row = require('antd/lib/row')
 const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
@@ -217,9 +217,14 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
     return (
       <div>
-        <EllipsisList rows={2}>
+        {/* <EllipsisList rows={2}>
           {addAction}
-        </EllipsisList>
+        </EllipsisList> */}
+        <Row
+          gutter={20}
+        >
+          {addAction}
+        </Row>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Display`}
           wrapClassName="ant-modal-small"

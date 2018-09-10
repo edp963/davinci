@@ -7,7 +7,7 @@ const Button = require('antd/lib/button')
 const Tooltip = require('antd/lib/tooltip')
 const Popconfirm = require('antd/lib/popconfirm')
 const Modal = require('antd/lib/modal')
-
+const Row = require('antd/lib/row')
 const styles = require('../Portal.less')
 
 import AntdFormType from 'antd/lib/form/Form'
@@ -220,9 +220,14 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
 
     return (
       <div>
-        <EllipsisList rows={2}>
+        {/* <EllipsisList rows={2}>
           {addAction}
-        </EllipsisList>
+        </EllipsisList> */}
+        <Row
+          gutter={20}
+        >
+          {addAction}
+        </Row>
         <Modal
           title={`${formType === 'add' ? '新增' : '修改'} Portal`}
           wrapClassName="ant-modal-small"
