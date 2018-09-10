@@ -145,7 +145,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                   )}
                 </FormItem>
               </Col>
-              <Col span={24}>
+              {/* <Col span={24}>
                 <FormItem label="" {...commonFormItemStyle}>
                   {getFieldDecorator('visibility', {
                     initialValue: ''
@@ -156,7 +156,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     </RadioGroup>
                   )}
                 </FormItem>
-              </Col>
+              </Col> */}
             </Row>
           </Form>
         </div>
