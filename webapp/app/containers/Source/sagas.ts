@@ -105,15 +105,28 @@ export function* getSourceDetail (action) {
 }
 
 export function* editSource (action) {
-  const { payload } = action
+  const { source, resolve } = action.payload
+  const { config, description, id, name, type } = source
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.source}/${payload.source.id}`,
-      data: payload.source
+      url: `${api.source}/${source.id}`,
+      data: {
+        config,
+        description,
+        id,
+        name,
+        type
+      }
     })
-    yield put(sourceEdited(payload.source))
-    payload.resolve()
+
+    const { password, url, username } = config
+    source['config'] = JSON.stringify(config)
+    source['password'] = password
+    source['jdbcUrl'] = url
+    source['username'] = username
+    yield put(sourceEdited(source))
+    resolve()
   } catch (err) {
     yield put(editSourceFail())
     errorHandler(err)
