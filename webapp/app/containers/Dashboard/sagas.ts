@@ -274,11 +274,11 @@ export function* getWidgetCsv (action) {
   try {
     const path = yield call(request, {
       method: 'post',
-      url: `${api.share}/csv/${token}`,
+      url: `${api.widget}/${itemId}/csv`,
       data: params
     })
     yield put(widgetCsvLoaded(itemId))
-    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path.payload}`
+    location.href = path.payload
     // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
   } catch (err) {
     yield put(loadWidgetCsvFail(itemId))

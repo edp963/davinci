@@ -102,7 +102,7 @@ export function* getWidgetCsv (action) {
       data: params
     })
     yield put(widgetCsvLoaded(itemId))
-    location.href = `${shareHost.substring(0, shareHost.lastIndexOf('/'))}/${path.payload}`
+    location.href = path.payload
     // location.href = `data:application/octet-stream,${encodeURIComponent(asyncData)}`
   } catch (err) {
     yield put(loadWidgetCsvFail(itemId))
