@@ -174,6 +174,7 @@ interface IGridProps {
       params: Array<{name: string, value: string}>
       linkageParams: Array<{name: string, value: string}>
       globalParams: Array<{name: string, value: string}>
+      orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
     }
@@ -379,7 +380,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
 
@@ -458,8 +459,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         params,
         linkageParams,
         globalParams,
-        cache: false,
-        expired: 0
+        orders,
+        cache,
+        expired
       }
     )
   }

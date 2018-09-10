@@ -60,6 +60,23 @@ export const PIVOT_CANVAS_SIZE_LIMIT = 3000
 export const PIVOT_CANVAS_AXIS_SIZE_LIMIT = 8000
 export const PIVOT_CANVAS_POLAR_SIZE_LIMIT = 8000
 export const PIVOT_DEFAULT_AXIS_LINE_COLOR = '#D9D9D9'
+export const PIVOT_DEFAULT_LABEL_COLOR = '#666'
+export const PIVOT_CHART_FONT_FAMILIES = [
+  { name: '苹方', value: 'PingFang SC'},
+  { name: '微软雅黑', value: 'Microsoft YaHei'},
+  { name: '宋体', value: 'SimSun'},
+  { name: '黑体', value: 'SimHei'},
+  { name: 'Helvetica Neue', value: '"Helvetica Neue"'},
+  { name: 'Helvetica', value: 'Helvetica'},
+  { name: 'Arial', value: 'Arial'},
+  { name: 'sans-serif', value: 'sans-serif'}
+]
+export const PIVOT_CHART_LINE_STYLES = [
+  { name: '实线', value: 'solid'},
+  { name: '虚线', value: 'dashed'},
+  { name: '点', value: 'dotted'}
+]
+export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
 
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',

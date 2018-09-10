@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 
-const VariableConfigTable = require('./VariableConfigTable')
+import VariableConfigTable from './VariableConfigTable'
 const Form = require('antd/lib/form')
 const Input = require('antd/lib/input')
 const Select = require('antd/lib/select')
@@ -42,7 +42,6 @@ interface IVariableConfigFormProps  {
   form: any,
   queryInfo: any[],
   control: object,
-  columns: any[],
   onSave: (obj: any) => void,
   onClose: () => void
 }
@@ -51,7 +50,6 @@ interface IVariableConfigFormStates {
   variableNumber: number,
   chosenType: string,
   tableVisible: boolean,
-  cascadeColumnVisible: boolean,
   hasRelatedComponent: string,
   tableSource: any[]
 }
@@ -60,7 +58,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
 
   private WITH_TABLE = ['select', 'multiSelect']
   private DOUBLE_VARIABLES = ['dateRange', 'datetimeRange']
-  private CASCADE = ['cascadeSelect']
 
   private variableConfigTable: any
 
@@ -70,7 +67,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
       variableNumber: 1,
       chosenType: '',
       tableVisible: false,
-      cascadeColumnVisible: false,
       hasRelatedComponent: 'yes',
       tableSource: []
     }
@@ -112,8 +108,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
       this.props.form.setFieldsValue({
         id: control.id,
         type: control.type,
-        cascadeColumn: control.cascadeColumn,
-        parentColumn: control.parentColumn,
         ...variables
       })
 
@@ -131,8 +125,7 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
     this.setState({
       variableNumber: props.control.variables
         ? props.control.variables.length
-        : 1,
-      cascadeColumnVisible: !!props.control.cascadeColumn
+        : 1
     })
   }
 
@@ -189,8 +182,7 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
     this.setState({
       chosenType: val,
       variableNumber: this.DOUBLE_VARIABLES.indexOf(val) >= 0 ? 2 : 1,
-      tableVisible: this.WITH_TABLE.indexOf(val) >= 0,
-      cascadeColumnVisible: this.CASCADE.indexOf(val) >= 0
+      tableVisible: this.WITH_TABLE.indexOf(val) >= 0
     })
   }
 
@@ -218,17 +210,13 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
               return s
             })
           : []
-        const cascadeColumn = values.cascadeColumn
-        const parentColumn = values.parentColumn
 
         this.props.onSave({
           id,
           type,
           hasRelatedComponent: values.hasRelatedComponent,
           variables,
-          sub,
-          cascadeColumn,
-          parentColumn
+          sub
         })
         this.props.onClose()
       }
@@ -248,7 +236,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
     const {
       form,
       queryInfo,
-      columns,
       onClose
     } = this.props
 
@@ -256,7 +243,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
       variableNumber,
       chosenType,
       tableVisible,
-      cascadeColumnVisible,
       hasRelatedComponent,
       tableSource
     } = this.state
@@ -268,7 +254,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
       { text: '数字输入框', value: 'inputNumber' },
       { text: '单选下拉菜单', value: 'select' },
       { text: '多选下拉菜单', value: 'multiSelect' },
-      { text: '级联下拉菜单', value: 'cascadeSelect' },
       { text: '日期选择', value: 'date' },
       { text: '日期多选', value: 'multiDate' },
       { text: '日期范围选择', value: 'dateRange' },
@@ -341,38 +326,6 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
       )]
     }
 
-    let cascadeColumnSelect
-    let parentColumnSelect
-
-    if (cascadeColumnVisible) {
-      cascadeColumnSelect = (
-        <Col key="cascadeColumn" span={8}>
-          <FormItem>
-            {getFieldDecorator('cascadeColumn', {})(
-              <Select placeholder="级联字段" allowClear>
-                {columns.map((c) => (
-                  <Option key={c} value={c}>{c}</Option>
-                ))}
-              </Select>
-            )}
-          </FormItem>
-        </Col>
-      )
-      parentColumnSelect = (
-        <Col key="parentColumn" span={8}>
-          <FormItem>
-            {getFieldDecorator('parentColumn', {})(
-              <Select placeholder="级联父字段" allowClear>
-                {columns.map((c) => (
-                  <Option key={c} value={c}>{c}</Option>
-                ))}
-              </Select>
-            )}
-          </FormItem>
-        </Col>
-      )
-    }
-
     return (
       <div className={styles.variableConfigForm}>
         <Form>
@@ -397,15 +350,13 @@ export class VariableConfigForm extends React.Component<IVariableConfigFormProps
               </FormItem>
             </Col>
             {variableSelectComponents}
-            {cascadeColumnSelect}
-            {parentColumnSelect}
           </Row>
         </Form>
         {
           tableVisible
             ? <VariableConfigTable
               dataSource={tableSource}
-              variableSource={queryInfo || []}
+              variableSource={queryInfo}
               onAddConfigValue={this.addVariableConfig}
               hasRelatedComponent={hasRelatedComponent}
               onChangeConfigValueStatus={this.changeConfigValueStatus}

@@ -25,29 +25,32 @@ const styles = require('../Dashboard.less')
 
 interface IDashboardItemControlPanelProps {
   show: boolean
+  onClose: () => void
   children: React.ReactNode
 }
 
-export class DashboardItemControlPanel extends React.PureComponent<IDashboardItemControlPanelProps, {}> {
-  public render () {
-    const panelClass = classnames({
-      [styles.controlPanel]: true,
-      [styles.show]: this.props.show
-    })
+export function DashboardItemControlPanel (props: IDashboardItemControlPanelProps) {
+  const panelClass = classnames({
+    [styles.controlPanel]: true,
+    [styles.show]: props.show
+  })
 
-    const formClass = classnames({
-      [styles.form]: true,
-      [styles.show]: this.props.show
-    })
+  const formClass = classnames({
+    [styles.form]: true,
+    [styles.show]: props.show
+  })
 
-    return (
-      <div className={panelClass}>
-        <div className={formClass}>
-          {this.props.children}
-        </div>
+  return (
+    <div className={panelClass} onClick={props.onClose}>
+      <div className={formClass} onClick={stopPPG}>
+        {props.children}
       </div>
-    )
-  }
+    </div>
+  )
 }
 
 export default DashboardItemControlPanel
+
+function stopPPG (e) {
+  e.stopPropagation()
+}

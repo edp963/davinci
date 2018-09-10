@@ -475,7 +475,7 @@ export function getTooltipPosition (point, params, dom, rect, size) {
   ]
 }
 
-export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXaxis, tip) {
+export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip) {
   let dimetionColumns = cols.concat(rows)
   let metricColumns = [...metrics]
   if (color) {
@@ -492,8 +492,8 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
   if (size) {
     metricColumns = metricColumns.concat(size.items)
   }
-  if (scatterXaxis) {
-    metricColumns = metricColumns.concat(scatterXaxis.items)
+  if (scatterXAxis) {
+    metricColumns = metricColumns.concat(scatterXAxis.items)
   }
   if (tip) {
     metricColumns = metricColumns.concat(tip.items)
@@ -537,6 +537,19 @@ export function getTooltipLabel (seriesData, cols, rows, metrics, color, label, 
   }
 }
 
+export function getChartLabel (seriesData, labelItem) {
+  return function (params) {
+    const record = getTriggeringRecord(params, seriesData) || {}
+    return labelItem.type === 'category'
+      ? Array.isArray(record)
+        ? record[0][labelItem.name]
+        : (record[labelItem.name] || '')
+      : Array.isArray(record)
+        ? record.reduce((sum, r) => sum + r[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`], 0)
+        : (record[`${labelItem.agg}(${decodeMetricName(labelItem.name)})`] || 0)
+  }
+}
+
 export function getTriggeringRecord (params, seriesData) {
   const { seriesIndex, dataIndex } = params
   const { type, grouped, records } = seriesData[seriesIndex]
@@ -548,7 +561,7 @@ export function getTriggeringRecord (params, seriesData) {
   } else if (type === 'polar') {
     record = records[dataIndex]
   } else {
-    record = records[0]
+    record = records ? records[0] : {}
   }
   return record
 }

@@ -40,10 +40,8 @@ const styles = require('../Dashboard.less')
 interface IDashboardItemControlFormProps {
   form: WrappedFormUtils
   controls: any[]
-  cascadeSources: object
   onSearch: (queayParams: { params: any[] }) => void
   onHide: () => void
-  onCascadeSelectChange: (id: string, column: string, parent: any[]) => void
 }
 
 interface IDashboardItemControlFormStates {
@@ -80,30 +78,10 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
     })
   }
 
-  private getCascadeChildrenControlId = (column, chilrenArr) => {
-    const nearest = this.props.controls.find((c) => c.parentColumn === column.cascadeColumn)
-    if (nearest) {
-      return this.getCascadeChildrenControlId(nearest, chilrenArr.concat(nearest.id))
-    } else {
-      return chilrenArr
-    }
-  }
-
-  private getCascadeParents = (column, parentsArr) => {
-    if (column.parent) {
-      const parent = this.props.controls.find((c) => c.cascadeColumn === column.parent)
-      return this.getCascadeParents(parent, parentsArr.concat(parent.cascadeColumn))
-    } else {
-      return parentsArr
-    }
-  }
-
   private generateFormComponent = (c) => {
     const {
       form,
-      controls,
-      cascadeSources,
-      onCascadeSelectChange
+      controls
     } = this.props
 
     const { getFieldDecorator } = form
@@ -113,9 +91,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -162,9 +139,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         followComponents.unshift(
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -177,54 +153,6 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         )
 
         return followComponents
-      case 'cascadeSelect':
-        const column = c.cascadeColumn
-        const nearestChild = controls.find((cl) => cl.parentColumn === column)
-        const dataSource = cascadeSources && cascadeSources[c.id]
-        const cascadeOptions = dataSource
-          ? dataSource.map((s) => (
-            <Option key={s[KEY_COLUMN]} value={s[column]}>{s[column]}</Option>
-          ))
-          : ''
-
-        const changeCallback = nearestChild && {
-          onChange: (val) => {
-            if (val) {
-              const childColumn = nearestChild.cascadeColumn
-              const parentColumns = this.getCascadeParents(c, [column])
-              const parents = parentColumns.length &&
-                Object.entries(form.getFieldsValue(parentColumns)).map((arr) => ({
-                  fieldName: arr[0],
-                  fieldValue: arr[0] === column ? val : arr[1]  // onChange未完成，不能获取到当前control的值
-                }))
-              onCascadeSelectChange(nearestChild.id, childColumn, parents)
-            }
-            form.resetFields(this.getCascadeChildrenControlId(c, []))
-          }
-        }
-
-        const cascadeProperties = {
-          placeholder: column,
-          allowClear: true,
-          ...changeCallback
-        }
-
-        return (
-          <Col
-            key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(c.id, {})(
-                <Select {...cascadeProperties}>
-                  {cascadeOptions}
-                </Select>
-              )}
-            </FormItem>
-          </Col>
-        )
       case 'date':
       case 'datetime':
         const dateFormat = c.type === 'datetime'
@@ -240,9 +168,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -255,7 +182,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         return (
           <Col
             key={c.id}
-            lg={12}
+            xl={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -282,9 +209,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -297,9 +223,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
         return (
           <Col
             key={c.id}
-            lg={6}
-            md={8}
-            sm={12}
+            xl={8}
+            md={12}
           >
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
@@ -360,28 +285,28 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           case 'dateRange':
             val = val.map((v) => v.format('YYYY-MM-DD'))
             arr = arr.concat({
-              k: valControl.variables[0],
-              v: `'${val[0]}'`
+              name: valControl.variables[0],
+              value: `'${val[0]}'`
             }).concat({
-              k: valControl.variables[1],
-              v: `'${val[1]}'`
+              name: valControl.variables[1],
+              value: `'${val[1]}'`
             })
             break
           case 'datetimeRange':
             val = val.map((v) => v.format('YYYY-MM-DD HH:mm:ss'))
             arr = arr.concat({
-              k: valControl.variables[0],
-              v: `'${val[0]}'`
+              name: valControl.variables[0],
+              value: `'${val[0]}'`
             }).concat({
-              k: valControl.variables[1],
-              v: `'${val[1]}'`
+              name: valControl.variables[1],
+              value: `'${val[1]}'`
             })
             break
           case 'multiSelect':
             val.forEach((v) => {
               arr = arr.concat({
-                k: valControl.variables[0],
-                v: `${v}`
+                name: valControl.variables[0],
+                value: `${v}`
               })
             })
             break
@@ -395,33 +320,33 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
               case 'date':
                 val = val.format('YYYY-MM-DD')
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
               case 'datetime':
                 val = val.format('YYYY-MM-DD HH:mm:ss')
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
               case 'multiDate':
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: val.split(',').map((v) => `'${v}'`).join(',')
+                  name: valControl.variables[0],
+                  value: val.split(',').map((v) => `'${v}'`).join(',')
                 })
                 break
               case 'select':
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `${val}`
+                  name: valControl.variables[0],
+                  value: `${val}`
                 })
                 break
               default:
                 arr = arr.concat({
-                  k: valControl.variables[0],
-                  v: `'${val}'`
+                  name: valControl.variables[0],
+                  value: `'${val}'`
                 })
                 break
             }
@@ -432,8 +357,8 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
 
                 if (chosenSub.variables[0]) {
                   arr = arr.concat({
-                    k: chosenSub.variables[0],
-                    v: `'${val}'`
+                    name: chosenSub.variables[0],
+                    value: `'${val}'`
                   })
                 }
               }

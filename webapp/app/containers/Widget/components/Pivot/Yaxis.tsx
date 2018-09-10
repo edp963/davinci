@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IMetricAxisConfig, DimetionType } from './Pivot'
+import { IPivotMetric, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
 import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter, decodeMetricName } from '../util'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR } from '../../../../globalConstants'
@@ -11,6 +11,7 @@ interface IYaxisProps {
   height: number
   metrics: IPivotMetric[]
   data: any[]
+  chartStyles: IChartStyles
   dimetionAxis: DimetionType
   metricAxisConfig?: IMetricAxisConfig
 }
@@ -27,7 +28,21 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
   }
 
   private renderAxis = () => {
-    const { metrics, data, dimetionAxis, metricAxisConfig } = this.props
+    const { metrics, data, chartStyles, dimetionAxis, metricAxisConfig } = this.props
+    const {
+      showLine = false,
+      lineStyle = '',
+      lineSize = '',
+      lineColor = '',
+      showLabel = false,
+      labelFontFamily = '',
+      labelFontSize = '',
+      labelColor = '',
+      showTitleAndUnit = false,
+      titleFontFamily = '',
+      titleFontSize = '',
+      titleColor = ''
+    } = dimetionAxis === 'col' ? (chartStyles.yAxis || {}) : chartStyles.xAxis
 
     const doms = this.container.children as HTMLCollectionOf<HTMLDivElement>
 
@@ -69,7 +84,10 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
               }
               : {
                 axisLabel: {
-                  color: '#333',
+                  show: showLabel,
+                  color: labelColor,
+                  fontFamily: labelFontFamily,
+                  fontSize: labelFontSize,
                   padding: 2,
                   formatter: metricAxisLabelFormatter,
                   showMaxLabel: false,
@@ -77,16 +95,31 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                   verticalAlign: 'top'
                 },
                 axisLine: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor,
+                    width: lineSize,
+                    type: lineStyle
                   }
                 },
                 axisTick: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor
                   }
                 }
               }
+
+            const axisTitle = showTitleAndUnit && {
+              name: decodeMetricName(m.name),
+              nameLocation: 'middle',
+              nameGap: 45,
+              nameTextStyle: {
+                color: titleColor,
+                fontFamily: titleFontFamily,
+                fontSize: titleFontSize
+              }
+            }
 
             grid.push({
               top: dimetionAxis === 'col' ? (xSum + l * width) : ySum,
@@ -104,12 +137,7 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
               yAxis.push({
                 gridIndex: index,
                 type: 'value',
-                name: decodeMetricName(m.name),
-                nameLocation: 'middle',
-                nameGap: 45,
-                nameTextStyle: {
-                  color: '#333'
-                },
+                ...axisTitle,
                 ...metricAxisStyle,
                 ...metricAxisConfig[m.name].yAxis
               })
@@ -125,16 +153,23 @@ export class Yaxis extends React.PureComponent<IYaxisProps, {}> {
                 data: records.map((r) => r.key),
                 axisLabel: {
                   interval: 0,
-                  color: '#333'
+                  show: showLabel,
+                  color: labelColor,
+                  fontFamily: labelFontFamily,
+                  fontSize: labelFontSize
                 },
                 axisLine: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor,
+                    width: lineSize,
+                    type: lineStyle
                   }
                 },
                 axisTick: {
+                  show: showLine,
                   lineStyle: {
-                    color: PIVOT_DEFAULT_AXIS_LINE_COLOR
+                    color: lineColor
                   }
                 }
               })
