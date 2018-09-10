@@ -1,0 +1,26 @@
+.moreList {
+  width: 90px;
+  display: table;
+
+  &:hover {
+    cursor: pointer;
+  }
+
+  .more {
+    width: 32px;
+    height: 32px;
+    display: table-cell;
+    position: relative;
+  }
+
+  .more:after {
+    width: 16px;
+    height: 16px;
+    background-color: #1B98E0;
+    border-radius: 50%;
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    content: '';
+  }
+}

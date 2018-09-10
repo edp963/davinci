@@ -1,0 +1,81 @@
+@import "../../assets/less/variable";
+.container {
+  display: flex;
+  padding: 20px 20px 60px 20px;
+  flex-direction: column;
+  .uploadWrapper {
+    height: 100%;
+    width: 100%;
+    margin-left: 66px;
+  }
+  .form {
+    flex: 1;
+  }
+  hr {
+    margin: 0 0 48px 0;
+    border: 0;
+    border-top: 1px solid @grey-line-color;
+  }
+  .avatar {
+    flex-shrink: 0;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    img{
+      flex-shrink: 0;
+      border: 1px solid @light-bg;
+      width: 160px;
+      height: 160px;
+      margin-right: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .uploadAvatar {
+      display: flex;
+      flex-direction: column;
+      padding: 28px 20px 0 20px;
+      .uploadTitle {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+      button{
+        margin-bottom: 16px;
+      }
+      .uploadDesc {
+        color: @description-text
+      }
+    }
+  }
+}
+.formView {
+
+}
+.hide {
+  display: none;
+}
+.orgIcon {
+  display: inline-block;
+}
+.avatarWrapper {
+  height: 41px;
+  width: 41px;
+  display: inline-block;
+  margin-right: 4px;
+  img {
+    vertical-align: top;
+  }
+}
+
+.containerWarp {
+  display: flex;
+  padding: 20px 20px 60px 20px;
+  .avatar {
+    flex-shrink: 0;
+    width: 200px;
+    height: 200px;
+  }
+  .form {
+    flex: 1;
+  }
+}

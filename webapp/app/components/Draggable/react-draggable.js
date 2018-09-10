@@ -684,6 +684,7 @@ function getControlPosition(e /*: MouseTouchEvent*/, touchIdentifier /*: ?number
 
 // Create an data object exposed by <DraggableCore>'s events
 function createCoreData(draggable /*: DraggableCore*/, x /*: number*/, y /*: number*/) /*: DraggableData*/ {
+  var scale = draggable.props.scale;
   var state = draggable.state;
   var isStart = !(0, _shims.isNum)(state.lastX);
   var node = findDOMNode(draggable);
@@ -698,9 +699,17 @@ function createCoreData(draggable /*: DraggableCore*/, x /*: number*/, y /*: num
     };
   } else {
     // Otherwise calculate proper values.
+    var _positionFns = __webpack_require__(9);
+    var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+    var _deltaX = (x - state.lastX) / scale
+    var _deltaY = (y - state.lastY) / scale
+    var _snapToGrid = (0, _positionFns.snapToGrid)(draggable.props.grid, _deltaX, _deltaY);
+    var _snapToGrid2 = _slicedToArray(_snapToGrid, 2);
+
     return {
       node: node,
-      deltaX: x - state.lastX, deltaY: y - state.lastY,
+      deltaX: _snapToGrid2[0], deltaY: _snapToGrid2[1],
       lastX: state.lastX, lastY: state.lastY,
       x: x, y: y
     };
@@ -713,10 +722,10 @@ function createDraggableData(draggable /*: Draggable*/, coreData /*: DraggableDa
 
   return {
     node: coreData.node,
-    x: draggable.state.x + coreData.deltaX / scale,
-    y: draggable.state.y + coreData.deltaY / scale,
-    deltaX: coreData.deltaX / scale,
-    deltaY: coreData.deltaY / scale,
+    x: draggable.state.x + coreData.deltaX,
+    y: draggable.state.y + coreData.deltaY,
+    deltaX: coreData.deltaX,
+    deltaY: coreData.deltaY,
     lastX: draggable.state.x,
     lastY: draggable.state.y
   };

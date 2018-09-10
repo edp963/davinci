@@ -1,0 +1,121 @@
+@import "../../assets/less/variable";
+
+.unit {
+  height: 120px;
+  background-color: @body-background;
+  background-repeat: no-repeat;
+  background-size: 100%;
+  background-position: center center;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  box-shadow: @block-box-shadow;
+  transform: translate3d(0, 0, 0);
+  transition: transform 200ms linear,
+              box-shadow 200ms linear,
+              background-size 500ms linear;
+  position: relative;
+  cursor: pointer;
+
+  &:hover {
+    background-size: 110%;
+    box-shadow: @block-active-box-shadow;
+    transform: translate3d(0, -5px, 0);
+  }
+
+  &.editing {
+    opacity: .3;
+  }
+
+  header {
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0) 100%);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .title {
+    padding: 12px 40px 0 12px;
+    color: @white;
+
+    .ellipsis;
+  }
+
+  .content {
+    padding: 8px 12px 24px;
+    color: @white;
+
+    .ellipsis;
+  }
+
+  .icon {
+    position: absolute;
+    top: 8px;
+    opacity: .7;
+    font-size: 15px;
+    color: @white;
+    transition: transform 200ms ease;
+
+    &:hover {
+      opacity: 1;
+      transform: scale(1.1, 1.1);
+    }
+  }
+
+  .edit {
+    right: 32px;
+
+    .icon;
+  }
+
+  .delete {
+    right: 8px;
+
+    .icon;
+  }
+
+  .central {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      .add,.text {
+        color: @blue;
+        cursor: pointer;
+      }
+    }
+
+    .item {
+      color: @light-text-color;
+
+      &.add {
+        font-size: 28px;
+      }
+
+      &.text {
+        font-size: 16px;
+      }
+    }
+  }
+}
+
+.searchAdmin, .addCol {
+  padding: 0 4px;
+  text-align: right;
+}
+
+@media (max-width: 768px) {
+  .searchAdmin {
+    margin-bottom: 8px;
+  }
+}
+
+.searchUser {
+  float: right;
+}
+
+.searchInputAdmin {
+  margin-right: 10px;
+}
+
+

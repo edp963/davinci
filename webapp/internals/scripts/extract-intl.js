@@ -105,7 +105,7 @@ const extractFromFile = async (fileName) => {
         // Merge old translations into the babel extracted instances where react-intl is used
         const newMsg = (locale === DEFAULT_LOCALE) ? message.defaultMessage : ''
         localeMappings[locale][message.id] = (oldLocaleMapping)
-          ? oldLocaleMapping // eslint-disable-line
+          ? oldLocaleMapping
           : newMsg
       }
     }
@@ -125,7 +125,7 @@ const extractFromFile = async (fileName) => {
   extractTaskDone()
 
   // Make the directory if it doesn't exist, especially for first run
-  mkdir('-p', 'app/translations') // eslint-disable-line
+  mkdir('-p', 'app/translations')
   for (const locale of locales) {
     const translationFileName = `app/translations/${locale}.json`
 
@@ -148,7 +148,7 @@ const extractFromFile = async (fileName) => {
 
       localeTaskDone()
     } catch (error) {
-      localeTaskDone( // eslint-disable-line
+      localeTaskDone(
         `There was an error saving this translation file: ${translationFileName}
         \n${error}`
       )

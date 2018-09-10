@@ -1,0 +1,780 @@
+@import "../../../../assets/less/variable";
+
+.workbench {
+  background-color: @body-bg;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    flex-shrink: 0;
+  }
+
+  .body {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+
+    .operatingPanel {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: row;
+
+      .model {
+        width: 200px;
+        background-color: @light-bg;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
+  
+      .config {
+        width: 241px;
+        background-color: @white;
+        border-left: 1px solid @border-color-base;
+        box-shadow: @left-side-box-shadow;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    .viewPanel {
+      min-width: 0;
+      padding: 16px;
+      flex: 1;
+
+      .pivotBlock {
+        height: 100%;
+        background-color: @white;
+        padding: 16px;
+        box-shadow: @block-box-shadow;
+      }
+    }
+  }
+}
+
+.source {
+  padding: 8px;
+  line-height: 24px;
+  flex-shrink: 0;
+}
+
+.columnContainer {
+  min-height: 0;
+  border-top: 1px solid @border-color-base;
+  list-style-type: none;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  h4 {
+    padding: 0 8px;
+    margin-top: 4px;
+    color: @light-text-color;
+    line-height: 30px;
+    flex-shrink: 0;
+  }
+
+  .columnList {
+    flex: 1;
+    overflow-y: auto;
+
+    li {
+      padding: 0 8px;
+      line-height: 24px;
+      display: flex;
+      flex-direction: row;
+      cursor: pointer;
+
+      &:hover {
+        i {
+          color: @text-color;
+        }
+      }
+
+      i {
+        width: 36px;
+        font-size: 0.8em;
+        text-align: center;
+        flex-shrink: 0;
+      }
+
+      .iconDate {
+        font-size: 1.75em;
+      }
+
+      p {
+        flex: 1;
+        .ellipsis;
+      }
+    }
+  }
+}
+
+.categories {
+  li {
+    &:hover {
+      background-color: lighten(@primary-color, 30%);
+    }
+
+    i {
+      color: @primary-color;
+    }
+  }
+}
+
+.values {
+  li {
+    &:hover {
+      background-color: lighten(@light-green, 30%);
+    }
+
+    i {
+      color: @light-green;
+    }
+  }
+}
+
+.charts {
+  padding: 4px 5px 4px 4px;
+  border-bottom: 1px solid @border-color-base;
+  flex-shrink: 0;
+  display: flex;
+  flex-flow: row wrap;
+
+  i {
+    width: 33px;
+    height: 33px;
+    border: 1px solid transparent;
+    border-radius: 2px;
+    font-size: 1.8em;
+    color: @disabled-icon-color;
+    text-align: center;
+    line-height: 33px;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @body-bg;
+    }
+
+    &.enabled {
+      color: @primary-color;
+    }
+
+    &.multipleSelect {
+      border-bottom-color: @primary-color;
+      border-bottom-style: dashed;
+    }
+
+    &.selected {
+      border-bottom-color: @primary-color;
+      border-bottom-style: solid;
+
+      &:hover {
+        background-color: transparent;
+      }
+    }
+  }
+}
+
+.params {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  .paramsTab {
+    border-bottom: 1px solid @border-color-base;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+
+    li {
+      padding: 0 16px;
+      margin-top: 2px;
+      font-size: 1.08em;
+      line-height: 24px;
+      color: @light-text-color;
+      position: relative;
+      bottom: -1px;
+      cursor: pointer;
+
+      &.selected {
+        color: @primary-color;
+        border-bottom: 2px solid @primary-color;
+      }
+    }
+  }
+
+  .paramsPane {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+
+    &.dropPane {
+      padding: 4px 8px;
+    }
+
+    .paneBlock {
+      padding: 8px;
+      border-bottom: 1px solid @border-color-base;
+
+      &:first-child {
+        padding-top: 4px;
+      }
+
+      h4 {
+        margin-top: 4px;
+        color: @light-text-color;
+        line-height: 18px;
+        font-weight: bold;
+      }
+      
+      .blockBody {
+
+      }
+
+      .blockRow {
+        height: 32px;
+      }
+
+      .blockElm {
+        width: 100%;
+      }
+    }
+
+    .toggleRowsAndCols {
+      right: 10px; 
+    }
+
+    .switchRowsAndCols {
+      right: 90px;
+    }
+
+    .toggleRowsAndCols,
+    .switchRowsAndCols {
+      position: absolute;
+      top: 8px;
+      font-weight: bold;
+      color: @disabled-text-color;
+      z-index: 1;
+      cursor: pointer;
+
+      &:hover {
+        color: @light-text-color;
+      }
+
+      i {
+        font-size: 1.125em;
+      }
+    }
+
+    .addVariable {
+      margin-right: 8px;
+      line-height: 32px;
+      color: @light-text-color;
+      font-weight: bold;
+      text-align: center;
+      cursor: pointer;
+
+      &:hover {
+        color: @primary-color;
+      }
+    }
+  }
+}
+
+.dropbox {
+  .title {
+    margin-top: 4px;
+    color: @light-text-color;
+    line-height: 18px;
+    font-weight: bold;
+    position: relative;
+
+    .setting {
+      position: absolute;
+      right: 2px;
+      top: 0;
+      color: @disabled-text-color;
+      cursor: pointer;
+
+      &:hover {
+        color: @light-text-color;
+      }
+    }
+  }
+
+  .dropContainer {
+    min-height: 54px;
+    padding: 4px;
+    border: 1px dashed @border-color-base;
+    border-radius: 2px;
+    line-height: 22px;
+    position: relative;
+    transition: all 100ms ease;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+
+    .dropboxContent {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      color: @disabled-text-color;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+
+      i {
+        margin-right: 4px;
+      }
+    }
+
+    &.dragOver {
+      border-color: transparent;
+    }
+
+    .mask {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      right: 0;
+      display: none;
+
+      &.onTop {
+        border-radius: 2px;
+        display: block;
+
+        &.category {
+          background-color: fade(@primary-color, 20);
+        }
+        &.value {
+          background-color: fade(@light-green, 20); 
+        }
+      }
+
+      &.enter {
+        border: 1px dashed;
+
+        &.category {
+          border-color: @primary-color;
+        }
+        &.value {
+          border-color: @light-green; 
+        }
+      }
+    }
+  }
+}
+
+.dropItem {
+  width: 100%;
+  background-color: transparent;
+  padding: 2px;
+  flex-shrink: 0;
+
+  .dropItemContent {
+    padding: 0 24px;
+    border-radius: 3px;
+    color: @white;
+    text-align: center;
+    line-height: 22px;
+    position: relative;
+    cursor: pointer;
+    .ellipsis;
+
+    &.category {
+      background-color: lighten(@primary-color, 5%);
+      border: 1px solid lighten(@primary-color, 5%);
+    }
+    &.value {
+      background-color: lighten(@light-green, 5%); 
+      border: 1px solid lighten(@light-green, 5%); 
+    }
+    &.add {
+      background-color: @white;
+      border: 1px dashed @border-color-base;
+      color: @light-text-color;
+    }
+    &.dragging {
+      position: relative;
+      z-index: 1;
+    }
+    &.dragged {
+      transform: translateX(-9999px);
+    }
+
+    .sort {
+      font-size: 1.08em;
+    }
+
+    .remove {
+      position: absolute;
+      top: 5px;
+      right: 4px;
+      color: @white;
+      font-size: 1.125em;
+      display: none;
+    }
+
+    .chart {
+      width: 23px;
+      height: 23px;
+      line-height: 23px;
+      position: absolute;
+      top: 0;
+      left: 2px;
+      color: @white;
+      font-size: 1.5em;
+    }
+
+    &:hover {
+      .remove {
+        display: block;
+      }
+    }
+  }
+}
+
+.chartSelectorList {
+  background-color: @white;
+  border: 1px solid @border-color-base;
+  border-radius: 2px;
+
+  .item {
+    width: 28px;
+    height: 28px;
+    border-bottom: 1px solid @border-color-base;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: @light-bg;
+    }
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .icon {
+    color: @primary-color;
+    font-size: 1.5em;
+  }
+}
+
+.valueDropDown {
+  li:hover,
+  li > div:hover {
+    background-color: color(~`colorPalette("@{light-green}", 1)`);
+  }
+}
+
+.colorPanel {
+  height: 310px;
+  margin: -8px -16px;
+  display: flex;
+  flex-direction: row;
+
+  .tabs {
+    max-width: 96px;
+    padding: 2px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+
+    li {
+      padding: 2px 8px;
+      color: @light-text-color;
+      font-weight: bold;
+      line-height: 2em;
+      text-align: right;
+      cursor: pointer;
+      .ellipsis;
+
+      &:hover {
+        background-color: color(~`colorPalette("@{primary-color}", 1)`);
+      }
+
+      &.selected {
+        background-color: @light-bg;
+        border-right: 2px solid @primary-color;
+        color: @primary-color;
+      }
+    }
+  }
+
+  .picker {
+    flex: 1;
+    border-left: 1px solid @border-color-base;
+  }
+}
+
+.colorSettingForm {
+  display: flex;
+  flex-direction: column;
+
+  .header {
+    flex-shrink: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid @border-color-base;
+
+    h4 {
+      margin-bottom: 8px;
+    }
+  }
+
+  .body {
+    flex: 1;
+    max-height: 290px;
+    display: flex;
+    flex-direction: row;
+
+    .list {
+      width: 128px;
+      padding: 4px 0;
+      border-right: 1px solid @border-color-base;
+      flex-shrink: 0;
+      overflow-y: auto;
+
+      li {
+        padding: 4px 8px 4px 32px;
+        color: @light-text-color;
+        font-weight: bold;
+        line-height: 2em;
+        position: relative;
+        cursor: pointer;
+        .ellipsis;
+
+        .icon {
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          position: absolute;
+          top: 6px;
+          left: 4px;
+        }
+
+        &:hover {
+          background-color: color(~`colorPalette("@{primary-color}", 1)`);
+        }
+  
+        &.selected {
+          background-color: @light-bg;
+          border-right: 2px solid @primary-color;
+          color: @primary-color;
+        }
+      }
+    }
+
+    .picker {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  .footer {
+    margin-top: 16px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.actOnSettingForm {
+  .footer {
+    margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.filterSettingForm {
+  .header {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .valueBlock {
+    padding: 16px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .footer {
+    margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+  .conditionalBlock {
+    padding: 16px 0;
+  }
+  .dateBlock {
+    padding-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+.conditionalFilterPanel {
+  height: 240px;
+}
+
+.conditionalFilterForm {
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+
+  .empty {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .filterBlock {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .filterRel {
+    width: 88px;
+    margin: 0 5px;
+    flex-shrink: 0;
+    position: relative;
+
+    &:after{
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      right: -10px;
+      content: '';
+    }
+  }
+
+  .filterList {
+    padding-left: 5px;
+    margin-left: 5px;
+    border-left: 1px solid @primary-color;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .filterItem {
+    padding: 4px 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+
+    & > *:not(.filterBlock) {
+      margin: 0 4px;
+    }
+
+    &:before {
+      width: 10px;
+      height: 0;
+      border-top: 1px solid @primary-color;
+      position: absolute;
+      top: 50%;
+      left: -5px;
+      content: '';
+    }
+
+    &.root:before {
+      width: 0;
+      display: none;
+    }
+
+    &.noPadding {
+      padding: 0;
+    }
+
+    &:first-child,
+    &:last-child {
+      &:after {
+        width: 3px;
+        background-color: @white;
+        position: absolute;
+        left: -7px;
+        content: '';
+      }
+    }
+
+    &:first-child {
+      &:after {
+        height: 50%;
+        top: 0;
+      }
+    }
+
+    &:last-child {
+      &:after {
+        height: 50%;
+        bottom: -1px;
+      }
+    }
+  }
+
+  .filterFormItem {
+    margin-bottom: 0;
+
+    .inputNumber {
+      width: 100%;
+    }
+  }
+
+  .filterFormKey {
+    padding-left: 8px;
+    font-weight: bold;
+  }
+
+  .filterFormOperator {
+    min-width: 60px;
+  }
+
+  .filterFormInput {
+    width: 100px;
+  }
+}
+
+.dateFilterRadios {
+  .radio {
+    line-height: 2.5em;
+  }
+}
+
+.sizePanel {
+  max-width: 256px;
+}

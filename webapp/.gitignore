@@ -9,3 +9,4 @@ stats.json
 npm-debug.log
 .idea
 pom.xml
+.vscode

@@ -58,91 +58,120 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 * **上传davinci zip包到系统某个目录下，如. /app/davinci，将其解压。解压之后的目录结构如下图所示：**
   <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
 
-  * 主要的配置项包括：mysqldb（请确保连接地址的正确性，初始化数据库时也会用到！！！）、httpServer。
+  * 0.3版本使用ymal作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
 
-    注：如需接入ldap或者cache，可继续加入ldap、cache的相关配置。
+    注： 如需接入reids，可继续加入redis的相关配置。
 
-```unzip davinci-assembly_2.11-0.1.0-SNAPSHOT-dist.zip
+```
+   unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip
 
-   cd conf
+   cd config
 
-   mv application.conf.example application.conf
+   mv application.yml.example application.yml
 
-   vim application.conf
+   vim application.yml
 ```
 
   ```
-    mysqldb {
-      profile = "slick.jdbc.MySQLProfile$"
-      db {
-        url = "jdbc:mysql://localhost:3306/db?useSSL=false"
-        user = ""
-        password = ""
-        profile = com.mysql.jdbc.Driver
-        keepAliveConnection = true
-        numThreads = 5
-      }
-    }
-    httpServer {
-      host = "localhost"
-      port = 8080
-    }
-    ldap {
-      isEnable = false
-      url = ""
-      dc = ""
-      user = ""
-      pwd = ""
-      read.timeout = "5000"
-      connect {
-        timeout = "5000"
-        pool = true
-      }
-    }
-    cache {
-    isEnable = true
-    url: "127.0.0.1:6379"
-    auth:""
-    expire:300
-    mode:"stand-alone"
-    }
-    mail{
-        # 邮件服务器的SMTP地址
-        host = smtp.163.com
-        # 邮件服务器的SMTP端口
-        port = 25
-        # 发件人（必须正确，否则发送失败）
-        from = "email address"
-        # 用户名
-        user = ****
-        # 密码（注意，某些邮箱需要为SMTP服务单独设置密码，详情查看相关帮助）
-        pass = ****
-        #使用 STARTTLS安全连接
-        startttlsEnable = true
-        # 指定实现javax.net.SocketFactory接口的类的名称,这个类将被用于创建SMTP的套接字
-        socketFactoryClass = javax.net.ssl.SSLSocketFactory
-        # 如果设置为true,未能创建一个套接字使用指定的套接字工厂类将导致使用java.net.Socket创建的套接字类, 默认值为true
-        socketFactoryFallback = true
-        # 指定的端口连接到在使用指定的套接字工厂。如果没有设置,将使用默认端口465
-        socketFactoryPort = 465
-    }
-    phantomjs_home = "/$your_path$s/phantomjs-2.1.1-macosx/bin/phantomjs"
+    server:
+      protocol: http
+      address: 127.0.0.1
+      port: 8080
+
+
+    ## jwt is one of the important configuration of the application
+    ## jwt config cannot be null or empty
+    jwtToken:
+      secret: secret
+      timeout: 1800000
+      algorithm: HS512
+
+
+    ##your datasouce config
+    source:
+      initial-size: 2
+      min-idle: 1
+      max-wait: 6000
+      max-active: 10
+
+
+    spring:
+      mvc:
+        async:
+          request-timeout: 30s
+
+      ## davinci datasouce config
+      datasource:
+        url: jdbc:mysql://localhost:3306/davinci0.3?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&allowMultiQueries=true
+        username:
+        password:
+        driver-class-name: com.mysql.jdbc.Driver
+        initial-size: 2
+        min-idle: 1
+        max-wait: 60000
+        max-active: 10
+
+      ## redis config
+      ## please choose one of the two ways
+      redis:
+        isEnable: false
+
+      ## standalone config
+        host: 127.0.0.1
+        port: 6379
+
+      ## cluster config
+      #  cluster:
+      #       nodes:
+
+        password:
+        database: 0
+        timeout: 1000
+        jedis:
+          pool:
+            max-active: 8
+            max-wait: 1
+            max-idle: 8
+            min-idle: 0
+
+      ## mail is one of the important configuration of the application
+      ## mail config cannot be null or empty
+      ## some mailboxes need to be set separately password for the SMTP service)
+      mail:
+        host:
+        port:
+        username:
+        password:
+        nickname:
+
+        properties:
+          smtp:
+            starttls:
+              enable: false
+              required: true
+            auth: true
+          mail:
+            smtp:
+              ssl:
+                enable: false
+
+    phantomjs_home: "$your_phantomjs_path$/phantomjs"
   ```
 
 * **配置log的存放位置（可配置为绝对路径）**
 
-   `vi conf/log4j.properties`
-* **配置DAVINCI_HOME**
+   `vi config/logback.xml`
+* **配置DAVINCI3_HOME**
 
 ```
     vi /etc/profile 
     
-    export DAVINCI_HOME=/app/davinci
+    export DAVINCI3_HOME=/app/davinci
     
     source /etc/profile
 ```
 
-* **初始化数据库, 修改port、ip、user 及 password，与application.conf里mysqldb的配置一致即可（只在首次启动时需要进行初始化）**
+* **初始化数据库, 修改port、ip、user 及 password，与application.yml里datasrouce的配置一致即可（只在首次启动前需要进行初始化）**
 
 ```
     cd /app/davinci/bin
@@ -157,6 +186,13 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
  ```
     sh bin/start-server.sh
  ```
+  * **通过日志监控启动、运行状态**
+  
+  注： 默认的日志文件是以日期命名的，如不符合日期要求，可自行修改`config/logback.xml`中的日志模板
+  
+  ```
+  	tail -200f logs/davinci.XXXX.log
+  ```
 
 * **输入http://localhost:8080，进入davinci登录界面(super@davinci.com/123456)**
 

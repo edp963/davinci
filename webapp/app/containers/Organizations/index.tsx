@@ -1,0 +1,192 @@
+import * as React from 'react'
+import { connect } from 'react-redux'
+const Icon = require('antd/lib/icon')
+const Row = require('antd/lib/row')
+const Col = require('antd/lib/col')
+const Modal = require('antd/lib/modal')
+import { Link } from 'react-router'
+import Box from '../../components/Box'
+import {InjectedRouter} from 'react-router/lib/Router'
+import reducer from './reducer'
+import {compose} from 'redux'
+import {makeSelectLoginUser} from '../App/selectors'
+import saga from './sagas'
+import {addOrganization, loadOrganizations} from './actions'
+import injectReducer from '../../utils/injectReducer'
+import {createStructuredSelector} from 'reselect'
+import injectSaga from '../../utils/injectSaga'
+import {makeSelectOrganizations} from './selectors'
+import {WrappedFormUtils} from 'antd/lib/form/Form'
+const styles = require('./Organization.less')
+import OrganizationForm from './component/OrganizationForm'
+const utilStyles = require('../../assets/less/util.less')
+const Breadcrumb = require('antd/lib/breadcrumb')
+import Avatar from '../../components/Avatar'
+// import sagaApp from '../App/sagas'
+// import reducerApp from '../App/reducer'
+import {checkNameUniqueAction} from '../App/actions'
+
+interface IOrganizationsState {
+  formVisible: boolean
+  modalLoading: boolean
+}
+interface IOrganizationsProps {
+  router: InjectedRouter
+  organizations: IOrganization[]
+  onLoadOrganizations: () => any
+  onAddOrganization: (organization: any, resolve: () => any) => any
+  onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+}
+interface IOrganization {
+  id?: number
+  name?: string
+  description?: string
+  avatar?: any
+}
+export class Organizations extends React.PureComponent<IOrganizationsProps, IOrganizationsState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      formVisible: false,
+      modalLoading: false
+    }
+  }
+  private checkNameUnique = (rule, value = '', callback) => {
+    const { onCheckUniqueName } = this.props
+    const { getFieldsValue } = this.OrganizationForm
+    const id = getFieldsValue()['id']
+    const data = {
+      name: value,
+      id
+    }
+    onCheckUniqueName('organization', data,
+      () => {
+        callback()
+      }, (err) => {
+        callback(err)
+      })
+  }
+  private toOrganization = (organization) => () => {
+    this.props.router.push(`/account/organization/${organization.id}`)
+  }
+  private OrganizationForm: WrappedFormUtils
+  private showOrganizationForm = () => (e) => {
+    e.stopPropagation()
+    this.setState({
+      formVisible: true
+    })
+  }
+  public componentWillMount () {
+    const { onLoadOrganizations } = this.props
+    onLoadOrganizations()
+  }
+  private onModalOk = () => {
+    this.OrganizationForm.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ modalLoading: true })
+        this.props.onAddOrganization({
+          ...values,
+          config: '{}'
+        }, () => { this.hideOrganizationForm() })
+      }
+    })
+  }
+  private hideOrganizationForm = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    }, () => {
+      this.OrganizationForm.resetFields()
+    })
+  }
+
+  public render () {
+    const { formVisible, modalLoading } = this.state
+    const { organizations } = this.props
+    const organizationArr = organizations ? organizations.map((org) => (
+        <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
+          <div className={styles.orgHeader}>
+            <div className={styles.avatar}>
+              <Avatar path={org.avatar} enlarge={false} size="small"/>
+            </div>
+            <div className={styles.name}>
+              <div className={styles.title}>{org.name}</div>
+              <div className={styles.desc}>{org.description}</div>
+            </div>
+          </div>
+          <div className={styles.setting}>
+            <Icon type="setting"/>
+          </div>
+        </div>
+      )
+    ) : ''
+    return (
+      <Box>
+        <Box.Header>
+          <Box.Title>
+            <Row>
+              <Col span={20}>
+                <Breadcrumb className={utilStyles.breadcrumb}>
+                  <Breadcrumb.Item>
+                    <Link to="/account/organizations">
+                      <Icon type="bars" />我的组织
+                    </Link>
+                  </Breadcrumb.Item>
+                </Breadcrumb>
+              </Col>
+              <Col span={1} offset={3}>
+                <Icon type="plus-circle-o"  className={styles.create} onClick={this.showOrganizationForm()}/>
+              </Col>
+            </Row>
+          </Box.Title>
+        </Box.Header>
+        {organizationArr}
+        <Modal
+          title={null}
+          visible={formVisible}
+          footer={null}
+          onCancel={this.hideOrganizationForm}
+        >
+          <OrganizationForm
+            ref={(f) => { this.OrganizationForm = f }}
+            modalLoading={modalLoading}
+            onModalOk={this.onModalOk}
+            onCheckUniqueName={this.checkNameUnique}
+          />
+        </Modal>
+      </Box>
+    )
+  }
+}
+
+
+const mapStateToProps = createStructuredSelector({
+  organizations: makeSelectOrganizations(),
+  loginUser: makeSelectLoginUser()
+})
+
+export function mapDispatchToProps (dispatch) {
+  return {
+    onLoadOrganizations: () => dispatch(loadOrganizations()),
+    onAddOrganization: (organization, resolve) => dispatch(addOrganization(organization, resolve)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+  }
+}
+
+const withConnect = connect(mapStateToProps, mapDispatchToProps)
+
+const withReducer = injectReducer({ key: 'organization', reducer })
+const withSaga = injectSaga({ key: 'organization', saga })
+
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+
+export default compose(
+  withReducer,
+  // withAppReducer,
+  // withAppSaga,
+  withSaga,
+  withConnect
+)(Organizations)
+
+

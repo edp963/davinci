@@ -1,0 +1,84 @@
+@import "../../assets/less/variable";
+
+.editorHeader {
+  height: 48px;
+  background-color: @white;
+  box-shadow: @header-box-shadow;
+  z-index: @header-index;
+  display: flex;
+  flex-direction: row;
+
+  .title {
+    flex: 1;
+    padding: 8px 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+
+
+    input {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      position: absolute;
+      top: 0;
+      cursor: pointer;
+
+      &::-webkit-input-placeholder {
+        color: @disabled-text-color;
+      }
+      &::-moz-placeholder {
+        color: @disabled-text-color;
+      }
+      &:-ms-input-placeholder {
+        color: @disabled-text-color;
+      }
+      &:-moz-placeholder {
+        color: @disabled-text-color;
+      }
+    }
+
+    .name {
+      flex-shrink: 0;
+      min-width: 100px;
+      font-size: 1.5em;
+      position: relative;
+    }
+
+    .desc {
+      flex: 1;
+      height: 1.65em;
+      line-height: 1.65em;
+      color: @light-text-color;
+      padding: 0 16px;
+      position: relative;
+      .ellipsis;
+
+      input {
+        left: 16px;
+      }
+    }
+
+    .name,
+    .desc {
+      span {
+        display: block;
+        visibility: hidden;
+      }
+    }
+  }
+
+  .actions {
+    flex-shrink: 0;
+    padding: 0 16px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
