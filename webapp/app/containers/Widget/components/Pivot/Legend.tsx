@@ -44,7 +44,7 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
   private initList = (props) => {
     const { color } = props
     const { list } = this.state
-    if (color && color.items) {
+    if (color && color.items.length) {
       this.setState({
         list: color.items.map((item) => {
           const originItem = list.find((i) => i.name === item.name)
@@ -63,6 +63,10 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
             }
           }
         })
+      })
+    } else {
+      this.setState({
+        list: []
       })
     }
   }

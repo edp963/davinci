@@ -41,6 +41,7 @@ import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
 import { InjectedRouter } from 'react-router'
 import { IProject } from '../../Projects'
+import { DEFAULT_SPLITER } from '../../../globalConstants'
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemProps {
@@ -69,6 +70,7 @@ interface IDashboardItemProps {
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
   onDoTableInteract: (itemId: number, triggerData: object) => void
+  onEditWidget?: () => void
 }
 
 interface IDashboardItemStates {
@@ -211,10 +213,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
 
-  private toWorkbench = (projectId, itemId, widget) => () => {
-    this.props.router.push(`/project/${projectId}/widget/${widget.id}`)
-  }
-
   private checkTableInteract = () => {
     const { itemId, onCheckTableInteract } = this.props
     return onCheckTableInteract(itemId)
@@ -244,6 +242,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onTurnOffInteract,
       onCheckTableInteract,
       onDoTableInteract,
+      onEditWidget,
       container
     } = this.props
 
@@ -302,7 +301,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
       widgetButton = (
         <Tooltip title="编辑widget">
-          <i className="iconfont icon-edit-2" onClick={this.toWorkbench(currentProject.id, itemId, widget)} />
+          <i className="iconfont icon-edit-2" onClick={onEditWidget} />
         </Tooltip>
       )
     }
@@ -428,13 +427,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             />
           </DashboardItemControlPanel>
         </Animate>
-        <Pivot
-          {...pivotProps}
-          renderType={renderType}
-          data={data || []}
-          onCheckTableInteract={this.checkTableInteract}
-          onDoInteract={this.doInteract}
-        />
+        <div className={styles.block}>
+          <Pivot
+            {...pivotProps}
+            renderType={renderType}
+            data={data || []}
+            loading={loading}
+            onCheckTableInteract={this.checkTableInteract}
+            onDoInteract={this.doInteract}
+          />
+        </div>
       </div>
     )
   }

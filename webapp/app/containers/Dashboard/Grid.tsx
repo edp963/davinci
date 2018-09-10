@@ -179,8 +179,19 @@ interface IGridProps {
       expired: number
     }
   ) => void
+  onLoadWidgetCsv: (
+    itemId: number,
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      orders: Array<{column: string, direction: string}>
+      cache: boolean
+      expired: number
+    },
+    token: string
+  ) => void
   onClearCurrentDashboard: () => any
-  onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, token: string) => void
   onLoadCascadeSource: (controlId: number, viewId: number, column: string, parents: Array<{ column: string, value: string }>) => void
   onLoadBizdataSchema: () => any
   onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
@@ -466,6 +477,70 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
+  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
+    const {
+      currentItemsInfo,
+      onLoadWidgetCsv
+    } = this.props
+
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = pivotProps
+
+    let groups = cols.concat(rows)
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (size) {
+      aggregators = aggregators.concat(size.items
+        .map((s) => ({
+          column: decodeMetricName(s.name),
+          func: s.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((x) => ({
+          column: decodeMetricName(x.name),
+          func: x.agg
+        })))
+    }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((t) => ({
+          column: decodeMetricName(t.name),
+          func: t.agg
+        })))
+    }
+
+    onLoadWidgetCsv(
+      itemId,
+      {
+        groups,
+        aggregators,
+        filters: filters.map((f) => f.config.sql),
+        orders,
+        cache,
+        expired
+      },
+      shareInfo
+    )
+  }
+
   private onDragStop = (layout) => {
     this.onEditDashboardItemsPosition(layout)
   }
@@ -643,17 +718,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private deleteItem = (id) => () => {
     this.props.onDeleteDashboardItem(id, void 0)
-  }
-
-  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
-    const {
-      currentItemsInfo,
-      onLoadWidgetCsv
-    } = this.props
-
-    const { filters, params } = currentItemsInfo[itemId].queryParams
-
-    onLoadWidgetCsv(itemId, pivotProps, shareInfo)
   }
 
   private navDropdownClick = (e) => {
@@ -959,6 +1023,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
   }
 
+  private toWorkbench = (itemId, widgetId) => () => {
+    const { params } = this.props
+    const { pid, portalId, portalName, dashboardId } = params
+    const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
+    localStorage.setItem('editWidgetFromDashboard', editSign)
+    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+  }
+
   public render () {
     const {
       dashboards,
@@ -972,8 +1044,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       currentDashboardCascadeSources,
       bizlogics,
-      onLoadBizdataSchema,
-      onLoadCascadeSource,
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
       router,
@@ -1025,7 +1095,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       )
     }
 
-    if (currentItems) {
+    if (currentProject && currentItems) {
       const itemblocks = []
       const layouts = { lg: [] }
       currentItems.forEach((dashboardItem) => {
@@ -1068,6 +1138,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onCheckTableInteract={this.checkInteract}
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
+              onEditWidget={this.toWorkbench(id, widget.id)}
               rendered={rendered}
               renderType={renderType}
               router={router}
@@ -1289,7 +1360,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadDataFromItem: (renderType, itemId, viewId, params) =>
                         dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, pivotProps, token) => dispatch(loadWidgetCsv(itemId, pivotProps, token)),
+    onLoadWidgetCsv: (itemId, params, token) => dispatch(loadWidgetCsv(itemId, params, token)),
     onLoadCascadeSource: (controlId, viewId, column, parents) => dispatch(loadCascadeSource(controlId, viewId, column, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),

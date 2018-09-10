@@ -19,6 +19,7 @@ import OperatingPanel from './OperatingPanel'
 import { IPivotProps } from '../Pivot/Pivot'
 import ScrollablePivot from '../Pivot'
 import EditorHeader from '../../../../components/EditorHeader'
+import { DEFAULT_SPLITER } from '../../../../globalConstants'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -223,7 +224,14 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
-        this.props.router.replace(`/project/${params.pid}/widgets`)
+        const editSign = localStorage.getItem('editWidgetFromDashboard')
+        if (editSign) {
+          localStorage.removeItem('editWidgetFromDashboard')
+          const [pid, portalId, portalName, dashboardId, itemId] = editSign.split(DEFAULT_SPLITER)
+          this.props.router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+        } else {
+          this.props.router.replace(`/project/${params.pid}/widgets`)
+        }
       })
     } else {
       onAddWidget(widget, () => {
@@ -234,6 +242,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private cancel = () => {
+    localStorage.removeItem('editWidgetFromDashboard')
     this.props.router.goBack()
   }
 
@@ -241,6 +250,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const {
       views,
       loading,
+      dataLoading,
       distinctColumnValues,
       columnValueLoading,
       onLoadDistinctValue,
@@ -289,7 +299,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             onLoadDistinctValue={onLoadDistinctValue}
           />
           <div className={styles.viewPanel}>
-            <ScrollablePivot {...pivotProps} />
+            <div className={styles.pivotBlock}>
+              <ScrollablePivot
+                {...pivotProps}
+                loading={dataLoading}
+              />
+            </div>
           </div>
         </div>
       </div>
