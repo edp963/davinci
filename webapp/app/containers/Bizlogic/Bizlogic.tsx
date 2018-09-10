@@ -56,6 +56,7 @@ const Alert = require('antd/lib/alert')
 const Tree = require('antd/lib/tree').default
 const message = require('antd/lib/message')
 const Tooltip = require('antd/lib/tooltip')
+const Popover = require('antd/lib/popover')
 const Dropdown = require('antd/lib/dropdown')
 
 const Menu = require('antd/lib/menu')
@@ -419,12 +420,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       this.codeMirrorInstanceOfDeclaration = codeMirror.fromTextArea(declareWrapperDom, {
         mode: 'text/x-sql',
         theme: '3024-day',
-        // width: '100%',
-        // height: '100%',
+        width: '100%',
+        height: '100%',
         lineNumbers: true,
         lineWrapping: true
       })
-      this.codeMirrorInstanceOfDeclaration.setSize('100%', 160)
+      // this.codeMirrorInstanceOfDeclaration.setSize('100%', 160)
     }
   }
 
@@ -444,6 +445,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private promptCodeMirror = (data) => {
     this.codeMirrorInstanceOfQuerySQL.on('change', (editor, change) => {
       const tableDatas = {}
+      const filedDatas = {}
       if (data) {
         data.forEach((i) => {
           const { children, title } = i
@@ -451,7 +453,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           children.forEach((j) => {
             childArr.push(j.title)
           })
-          tableDatas[title] = childArr
+
+          childArr.forEach((ca) => {
+            filedDatas[ca] = []
+          })
+
+          tableDatas[title] = []
         })
       }
 
@@ -471,7 +478,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       if (change.origin === '+input') {
         this.codeMirrorInstanceOfQuerySQL.showHint({
           completeSingle: false,
-          tables: {...obj, ...tableDatas}
+          tables: {...obj, ...tableDatas, ...filedDatas}
         })
       }
     })
@@ -1112,6 +1119,28 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       />
     )
 
+    const declareMsg = (
+      <span>
+        声明变量
+        <Tooltip title="帮助">
+          <Popover
+            placement="left"
+            content={
+              <div className={styles.declareMsg}>
+                <p className={styles.textMsg}>查询变量：query@var $变量名称$</p>
+                <p className={styles.exampleMsg}>query@var $age$ = '29'; </p>
+                <p className={styles.textMsg}>团队权限变量：team@var $变量名称$</p>
+                <p className={styles.exampleMsg}>team@var $city$ = '北京'; </p>
+              </div>}
+            title={<h5>示例：</h5>}
+            trigger="click"
+          >
+            <Icon type="question-circle-o" className={styles.questionClass} />
+          </Popover>
+        </Tooltip>
+      </span>
+    )
+
     return (
       <div className={styles.bizlogic}>
         <EditorHeader
@@ -1150,7 +1179,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               <a>{selectedSourceName || '选择一个Source'}</a>
             </Dropdown>
           </Col>
-          <Col span={24} className={`${schemaData.length !== 0 ? styles.treeSearch : utilStyles.hide}`}>
+          <Col span={24} className={`${schemaData.length !== 0 ? '' : utilStyles.hide}`}>
             <Search
               placeholder="Search the Schema"
               onChange={this.searchSchema}
@@ -1168,7 +1197,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         </Row>
         <Row className={styles.formRight}>
           <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
-            <FormItem label="声明变量" {...itemStyle}>
+            <FormItem label={declareMsg} {...itemStyle}>
               {getFieldDecorator('isDeclarate', {
                 initialValue: 'no'
               })(
@@ -1181,7 +1210,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           </Col>
           <Row className={styles.formTop}>
             <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
-              <FormItem label="">
+              <FormItem label="" className={styles.declareForm}>
                 {getFieldDecorator('declaration', {
                   initialValue: ''
                 })(
