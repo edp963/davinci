@@ -1,6 +1,7 @@
 import * as React from 'react'
 import ScrollablePivot from './index'
 import { IPivotProps } from './Pivot'
+import { getPivot } from '../util'
 
 interface IPivotInVizStates {
   pivotProps: IPivotProps
@@ -10,19 +11,21 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
   constructor (props) {
     super(props)
     this.state = {
-      pivotProps: {
-        data: [],
-        cols: [],
-        rows: [],
-        metrics: [],
-        filters: [],
-        chartStyles: {},
-        queryParams: [],
-        cache: false,
-        expired: 300,
-        orders: []
-      }
+      pivotProps: {...this.clearProps}
     }
+  }
+
+  private clearProps = {
+    data: [],
+    cols: [],
+    rows: [],
+    metrics: [],
+    filters: [],
+    chartStyles: {},
+    queryParams: [],
+    cache: false,
+    expired: 300,
+    orders: []
   }
 
   public componentDidMount () {
@@ -37,6 +40,10 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
     if (props.data.length) {
       this.setState({
         pivotProps: {...props}
+      })
+    } else {
+      this.setState({
+        pivotProps: {...this.clearProps}
       })
     }
   }

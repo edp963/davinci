@@ -430,8 +430,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         <div className={styles.block}>
           <Pivot
             {...pivotProps}
-            renderType={renderType}
-            data={data || []}
+            renderType={loading ? 'refresh' : renderType}
+            data={data}
             loading={loading}
             onCheckTableInteract={this.checkTableInteract}
             onDoInteract={this.doInteract}
