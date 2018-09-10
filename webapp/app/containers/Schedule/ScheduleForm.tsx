@@ -104,7 +104,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                   required: true,
                   message: 'Name 不能为空'
                 }, {
-                  validator: this.checkNameUnique
+                  validator: this.checkUniqueName
                 }]
               })(
                 <Input placeholder="Name" />
