@@ -212,6 +212,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
   private onModalOk = () => {
     this.sourceForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
+        const { params } = this.props
         const { id, name, type, url, user, password, desc, config } = values
         const requestValue = {
           config: {
@@ -222,10 +223,12 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
           },
           description: desc,
           name,
-          type
+          type,
+          projectId: Number(params.pid)
         }
+
         if (this.state.formType === 'add') {
-          this.props.onAddSource({...requestValue, projectId: this.props.params.pid}, () => {
+          this.props.onAddSource({...requestValue}, () => {
             this.hideForm()
           })
         } else {
