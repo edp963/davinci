@@ -20,6 +20,7 @@
 
 export default function () {
   const token = localStorage.getItem('TOKEN')
+  console.log(token)
   if (token) {
     const expire = localStorage.getItem('TOKEN_EXPIRE')
     const timestamp = new Date().getTime()

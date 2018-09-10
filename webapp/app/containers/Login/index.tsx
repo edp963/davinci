@@ -69,6 +69,7 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private checkNormalLogin = () => {
+    console.log(checkLogin())
     if (checkLogin()) {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
