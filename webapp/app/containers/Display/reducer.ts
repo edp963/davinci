@@ -168,6 +168,7 @@ function displayReducer (state = initialState, action) {
               rendered: false,
               renderType: 'rerender'
             } : {
+              datasource: [],
               loading: false,
               selected: false
             }
@@ -300,6 +301,7 @@ function displayReducer (state = initialState, action) {
               rendered: false,
               renderType: 'rerender'
             } : {
+              datasource: [],
               loading: false,
               selected: false
             }
