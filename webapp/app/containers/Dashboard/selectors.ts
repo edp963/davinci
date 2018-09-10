@@ -59,10 +59,6 @@ const makeSelectCurrentItemsInfo = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('currentItemsInfo')
 )
-const makeSelectCurrentItemsCascadeSources = () => createSelector(
-  selectDashboard,
-  (dashboardState) => dashboardState.get('currentItemsCascadeSources')
-)
 const makeSelectModalLoading = () => createSelector(
   selectDashboard,
   (dashboardState) => dashboardState.get('modalLoading')
@@ -79,6 +75,5 @@ export {
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentDashboardCascadeSources,
-  makeSelectCurrentItemsCascadeSources,
   makeSelectModalLoading
 }

@@ -15,7 +15,7 @@ const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')
 
 import { prefixItem, prefixView, prefixOther } from './constants'
-import { FilterTypeList, FilterTypesLocale, FilterTypesViewSetting } from './filterTypes'
+import { FilterTypeList, FilterTypesLocale, FilterTypesViewSetting, FilterTypes } from './filterTypes'
 
 import { IModel } from './'
 
@@ -24,10 +24,15 @@ interface IFilterFormProps {
   widgets: any[]
   items: any[]
   filterItem: any
-  onFilterTypeChange: () => void
+  onFilterTypeChange: (filterType: FilterTypes) => void
   onFilterItemSave: (filterItem) => void
   onFilterItemNameChange: (key: string, name: string) => void
-  onGetPreviewData: (viewId: number, fieldName: string, filterKey: string) => void
+  onGetPreviewData: (
+    filterKey: string,
+    fromViewId: string,
+    fromModel: string,
+    parents: Array<{ column: string, value: string }>
+  ) => void
 }
 
 interface IFilterFormStates {
@@ -125,7 +130,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   }
 
   public setFieldsValue = (filterItem) => {
-    const { views, widgets, items, onGetPreviewData } = this.props
+    const { views, widgets, items } = this.props
     const { key, name, type, fromView, fromModel } = filterItem
     const fieldsValue = {
       key,
@@ -135,11 +140,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       fromModel
     }
     if (fromView) {
-      this.onFromViewChange(fromView)
-
-      if (fromModel) {
-        onGetPreviewData(fromView, fromModel, key)
-      }
+      this.onFromViewChange(fromView, fromModel)
     }
     const { relatedViews } = filterItem
     const modelOrParam = {}
@@ -171,7 +172,8 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       needSetView: !!FilterTypesViewSetting[type],
       modelOrParam
     }, () => {
-      this.props.form.setFieldsValue(fieldsValue)
+      const { form, onGetPreviewData } = this.props
+      form.setFieldsValue(fieldsValue)
     })
   }
 
@@ -302,7 +304,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
     )
   }
 
-  private onFromViewChange = (viewId) => {
+  private onFromViewChange = (viewId, fromModel) => {
     const { views } = this.props
     const view = views.find((v) => v.id === +viewId)
     const modelItems = Object.entries(JSON.parse(view.model))
@@ -310,13 +312,21 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       .map(([key]) => key)
     this.setState({
       modelItems
+    }, () => {
+      const { form, filterItem, onGetPreviewData } = this.props
+      if (!fromModel || modelItems.indexOf(fromModel) < 0) {
+        form.setFieldsValue({ fromModel: modelItems[0] })
+        onGetPreviewData(filterItem.key, viewId, modelItems[0], [])
+      } else {
+        onGetPreviewData(filterItem.key, viewId, fromModel, [])
+      }
     })
   }
 
   private onFromModelChange = (modelItemName) => {
     const { onGetPreviewData, form, filterItem } = this.props
     const viewId = form.getFieldValue('fromView')
-    onGetPreviewData(viewId, modelItemName, filterItem.key)
+    onGetPreviewData(filterItem.key, viewId, modelItemName, [])
   }
 
   private filterTypeChange = (val) => {
@@ -324,7 +334,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       needSetView: FilterTypesViewSetting[val]
     })
     const { onFilterTypeChange } = this.props
-    onFilterTypeChange()
+    onFilterTypeChange(val)
   }
 
   private renderConfigForm (usedViews, mappingViewItems) {
@@ -386,62 +396,58 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
                 </FormItem>
               </Col>
             </Row>
-            {
-              needSetView ? (
-                <Row>
-                  <Col span={12}>
-                      <FormItem
-                        label="来源 View"
-                        labelCol={{span: 8}}
-                        wrapperCol={{span: 16}}
-                      >
+            <Row className={!needSetView ? utilStyles.hide : ''}>
+              <Col span={12}>
+                  <FormItem
+                    label="来源 View"
+                    labelCol={{span: 8}}
+                    wrapperCol={{span: 16}}
+                  >
+                    {
+                      getFieldDecorator('fromView', {
+                        rules: [{
+                          required: true,
+                          message: '不能为空'
+                        }]
+                      })(
+                        <Select
+                          onChange={this.onFromViewChange}
+                        >
+                          {
+                            views.map((view) => (
+                              <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
+                            ))
+                          }
+                        </Select>
+                      )
+                    }
+                  </FormItem>
+              </Col>
+              <Col span={12}>
+                <FormItem
+                    label="来源字段"
+                    labelCol={{span: 8}}
+                    wrapperCol={{span: 16}}
+                >
+                  {
+                    getFieldDecorator('fromModel', {
+                      rules: [{
+                        required: true,
+                        message: '不能为空'
+                      }]
+                    })(
+                      <Select onChange={this.onFromModelChange}>
                         {
-                          getFieldDecorator('fromView', {
-                            rules: [{
-                              required: true,
-                              message: '不能为空'
-                            }]
-                          })(
-                            <Select
-                              onChange={this.onFromViewChange}
-                            >
-                              {
-                                views.map((view) => (
-                                  <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
-                                ))
-                              }
-                            </Select>
-                          )
+                          modelItems.map((itemName) => (
+                            <Option key={itemName} value={itemName}>{itemName}</Option>
+                          ))
                         }
-                      </FormItem>
-                  </Col>
-                  <Col span={12}>
-                    <FormItem
-                        label="来源字段"
-                        labelCol={{span: 8}}
-                        wrapperCol={{span: 16}}
-                    >
-                      {
-                        getFieldDecorator('fromModel', {
-                          rules: [{
-                            required: true,
-                            message: '不能为空'
-                          }]
-                        })(
-                          <Select onChange={this.onFromModelChange}>
-                            {
-                              modelItems.map((itemName) => (
-                                <Option key={itemName} value={itemName}>{itemName}</Option>
-                              ))
-                            }
-                          </Select>
-                        )
-                      }
-                    </FormItem>
-                  </Col>
-                </Row>
-              ) : void 0
-            }
+                      </Select>
+                    )
+                  }
+                </FormItem>
+              </Col>
+            </Row>
             <Row>
               <Col span={24}>
                 {Object.keys(usedViews).map((viewId) => this.renderConfigItem(viewId, usedViews, mappingViewItems))}

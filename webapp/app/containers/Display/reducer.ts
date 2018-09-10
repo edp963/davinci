@@ -26,9 +26,7 @@ import { GraphTypes } from 'utils/util'
 import {
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_FROM_ITEM_SUCCESS,
-  LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS
+  LOAD_DATA_FROM_ITEM_FAILURE
 } from '../Bizlogic/constants'
 
 const initialState = fromJS({
@@ -131,7 +129,8 @@ function displayReducer (state = initialState, action) {
             renderType: 'rerender'
           } : {
             loading: false,
-            selected: false
+            selected: false,
+            datasource: []
           }
           return obj
         }, {}))
@@ -271,6 +270,9 @@ function displayReducer (state = initialState, action) {
           selected: payload.selected
         }
       })
+    case ActionTypes.CLEAR_LAYERS_SELECTION:
+      Object.keys(layersInfo).forEach((key) => { layersInfo[key].selected = false })
+      return state.set('currentLayersInfo', layersInfo)
 
     case ActionTypes.COPY_SLIDE_LAYERS:
       return state.set('clipboardLayers', payload.layers)

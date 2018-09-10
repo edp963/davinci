@@ -75,7 +75,9 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentDidMount () {
-      const { itemId, widget, onGetChartData } = this.props
+      const { itemId, layer, widget, onGetChartData } = this.props
+      if (layer.type !== GraphTypes.Chart) { return }
+
       onGetChartData('clear', itemId, widget.id)
       this.setFrequent(this.props)
   }
@@ -96,10 +98,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       this.setState({
         pivotProps: JSON.parse(nextProps.widget.config)
       })
-    }
-
-    if (layer.type !== GraphTypes.Chart) {
-      return
     }
   }
 
@@ -132,7 +130,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       polling,
       frequency,
-      layer,
       itemId,
       widget,
       onGetChartData
@@ -272,9 +269,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       container: styles.block
     }
 
-    const exactScaleWidth = pure ? scale[0] : 1
-    const exactScaleHeight = pure ? scale[1] : 1
-    const { chartParams } = JSON.parse(widget.config)
     return (
       <div
         id={`layer_${itemId}`}
@@ -381,9 +375,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       fontSize,
       textAlign,
       textStyle,
-      bold,
-      italic,
-      underline,
       lineHeight,
       textIndent,
       paddingTop,

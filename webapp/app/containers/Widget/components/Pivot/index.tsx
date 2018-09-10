@@ -6,7 +6,7 @@ type ScrollRole = 'header' | 'body'
 
 export class ScrollablePivot extends React.Component<IPivotProps, {}> {
   private scrollThrottle: boolean = false
-  private scrollEnd: NodeJS.Timer = void 0
+  private scrollEnd: number
   private headerScrolling = false
   private bodyScrolling = false
 
@@ -79,7 +79,7 @@ export class ScrollablePivot extends React.Component<IPivotProps, {}> {
         this.syncScroll(config.type, config.follower, e)
         this.scrollThrottle = false
 
-        this.scrollEnd = setTimeout(() => {
+        this.scrollEnd = window.setTimeout(() => {
           this.headerScrolling = false
           this.bodyScrolling = false
         }, 100)

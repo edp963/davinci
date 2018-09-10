@@ -9,7 +9,7 @@ const Select = require('antd/lib/select')
 const FormItem = Form.Item
 const Option = Select.Option
 
-import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { DEFAULT_SPLITER } from '../../globalConstants'
 const styles = require('./Linkage.less')
 
 interface ILinkageFormProps {
@@ -79,6 +79,9 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
       wrapperCol: { span: 12 }
     }
 
+    const triggerOptions = cascaderSource.map(({ label, value, children: { params } }) => ({ label, value, children: params }))
+    const linkagerOptions = cascaderSource.map(({ label, value, children: { params, variables } }) => ({ label, value, children: [].concat(params, variables) }))
+
     return (
       <Form className={styles.linkageForm}>
         <Row gutter={8}>
@@ -98,7 +101,7 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
               })(
                 <Cascader
                   placeholder="请选择"
-                  options={cascaderSource}
+                  options={triggerOptions}
                   expandTrigger="hover"
                   displayRender={this.displayRenderHandles.trigger}
                 />
@@ -121,7 +124,7 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
               })(
                 <Cascader
                   placeholder="请选择"
-                  options={cascaderSource}
+                  options={linkagerOptions}
                   expandTrigger="hover"
                   displayRender={this.displayRenderHandles.linkager}
                 />

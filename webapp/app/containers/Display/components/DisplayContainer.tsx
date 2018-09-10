@@ -44,6 +44,7 @@ interface IDisplayContainerProps {
   children: JSX.Element[],
   onCoverCutCreated: (blob: Blob) => void
   onKeyDown: (key: Keys) => void
+  onLayersSelectionRemove: () => void
 }
 
 interface IDisplayStyle {
@@ -160,7 +161,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
       height,
       padding,
       scale,
-      children
+      children,
+      onLayersSelectionRemove
     } = this.props
 
     const slideStyle = this.getSlideStyle(slideParams, scale)
@@ -182,6 +184,7 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
                 ref={this.refHandlers.content}
                 className={styles.displayPanel}
                 style={slideStyle}
+                onClick={onLayersSelectionRemove}
               >
                 {children}
               </div>

@@ -89,6 +89,8 @@ export interface IPivotProps {
   tip?: IDataParamProperty
   dimetionAxis?: DimetionType
   renderType?: RenderType
+  onCheckTableInteract?: () => boolean
+  onDoInteract?: (triggerData: object) => void
 }
 
 export interface IPivotStates {
@@ -498,7 +500,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, color, label, size, xAxis, tip, dimetionAxis } = this.props
+    const { cols, rows, metrics, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract } = this.props
     const { legendSelected, renderType } = this.state
 
     return (
@@ -571,6 +573,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             tip={tip}
             renderType={renderType}
             legend={legendSelected}
+            onCheckTableInteract={onCheckTableInteract}
+            onDoInteract={onDoInteract}
             ref={(f) => this.tableBody = findDOMNode(f)}
           />
           <ColumnFooter

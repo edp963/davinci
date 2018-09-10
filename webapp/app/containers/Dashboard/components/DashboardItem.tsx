@@ -67,8 +67,8 @@ interface IDashboardItemProps {
   onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowFullScreen: (chartData: any) => void
-  onCheckTableInteract: (itemId: number) => object
-  onDoTableInteract: (itemId: number, linkagers: any[], value: any) => void
+  onCheckTableInteract: (itemId: number) => boolean
+  onDoTableInteract: (itemId: number, triggerData: object) => void
 }
 
 interface IDashboardItemStates {
@@ -91,7 +91,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onShowEdit: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
-  private frequent: NodeJS.Timer = void 0
+  private frequent: number
   private container: HTMLDivElement = null
 
   public componentWillMount () {
@@ -151,7 +151,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     clearInterval(this.frequent)
 
     if (polling) {
-      this.frequent = setInterval(() => {
+      this.frequent = window.setInterval(() => {
         onGetChartData('refresh', itemId, widget.id)
       }, Number(frequency) * 1000)
     }
@@ -213,6 +213,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private toWorkbench = (projectId, itemId, widget) => () => {
     this.props.router.push(`/project/${projectId}/widget/${widget.id}`)
+  }
+
+  private checkTableInteract = () => {
+    const { itemId, onCheckTableInteract } = this.props
+    return onCheckTableInteract(itemId)
+  }
+
+  private doInteract = (triggerData) => {
+    const { itemId, onDoTableInteract } = this.props
+    onDoTableInteract(itemId, triggerData)
   }
 
   public render () {
@@ -437,6 +447,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           {...pivotProps}
           renderType={renderType}
           data={data || []}
+          onCheckTableInteract={this.checkTableInteract}
+          onDoInteract={this.doInteract}
         />
       </div>
     )

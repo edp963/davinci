@@ -36,7 +36,6 @@ import { echartsOptionsGenerator } from '../../../app/containers/Widget/componen
 import {
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
-import widgetlibs from '../../../app/assets/json/widgetlib'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
 import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
@@ -46,8 +45,6 @@ const styles = require('../../../app/containers/Display/Display.less')
 
 import {
   loadBizlogics,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard,
   loadBizdataSchema  } from '../../../app/containers/Bizlogic/actions'
 import { loadDisplay, loadLayerData } from './actions'
 import {

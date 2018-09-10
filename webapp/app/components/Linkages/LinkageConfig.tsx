@@ -10,27 +10,30 @@ const Col = require('antd/lib/col')
 const Button = require('antd/lib/button')
 const Modal = require('antd/lib/modal')
 
-import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../../../globalConstants'
-const utilStyles = require('../../../../assets/less/util.less')
+import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
+import { uuid } from 'utils/util'
+const utilStyles = require('assets/less/util.less')
 const styles = require('./Linkage.less')
 
-interface ILinkagePanelProps {
+interface ILinkageConfigProps {
   cascaderSource: any[]
   tableSource: any[]
-  onAddToTable: (values: ILinkageForm) => void
-  onDeleteFromTable: (key: string) => (e: React.MouseEvent<HTMLAnchorElement>) => void
   onGetWidgetInfo: (itemId: number) => void
+  saving: boolean
+  onSave: (tableSource: any[]) => void
 }
 
-interface ILinkagePanelStates {
+interface ILinkageConfigStates {
   formVisible: boolean
+  localTableSource: any[]
 }
 
-export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinkagePanelStates> {
+export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILinkageConfigStates> {
   constructor (props) {
     super(props)
     this.state = {
-      formVisible: false
+      formVisible: false,
+      localTableSource: []
     }
   }
 
@@ -39,18 +42,29 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
 
   public componentDidMount () {
     const { tableSource, onGetWidgetInfo } = this.props
+    this.initState(tableSource, onGetWidgetInfo)
+  }
 
-    if (tableSource.length) {
-      this.renderChart(tableSource, onGetWidgetInfo)
+  public componentWillReceiveProps (nextProps: ILinkageConfigProps) {
+    const { tableSource, onGetWidgetInfo, saving, onSave } = nextProps
+    if (tableSource !== this.props.tableSource) {
+      this.initState(tableSource, onGetWidgetInfo)
+    }
+    if (saving !== this.props.saving) {
+      const { localTableSource } = this.state
+      onSave([...localTableSource])
     }
   }
 
-  public componentDidUpdate (prevProps) {
-    const { tableSource, onGetWidgetInfo } = this.props
-
-    if (tableSource.length && tableSource !== prevProps.tableSource) {
-      this.renderChart(tableSource, onGetWidgetInfo)
-    }
+  private initState = (tableSource, onGetWidgetInfo) => {
+    this.setState({
+      localTableSource: tableSource
+    }, () => {
+      const { localTableSource } = this.state
+      if (localTableSource.length) {
+        this.renderChart(localTableSource, onGetWidgetInfo)
+      }
+    })
   }
 
   private renderChart = (tableSource, onGetWidgetInfo) => {
@@ -62,11 +76,11 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
       const linkagerId = ts.linkager[0]
 
       if (!nodes[triggerId]) {
-        nodes[triggerId] = onGetWidgetInfo(triggerId)
+        nodes[triggerId] = onGetWidgetInfo(+triggerId)
       }
 
       if (!nodes[linkagerId]) {
-        nodes[linkagerId] = onGetWidgetInfo(linkagerId)
+        nodes[linkagerId] = onGetWidgetInfo(+linkagerId)
       }
 
       links.push({
@@ -79,7 +93,7 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
       this.chart = echarts.init(document.getElementById('linkageChart') as HTMLDivElement, 'default')
     }
 
-    this.chart.setOption({
+    const chartOptions = {
       animationDurationUpdate: 1000,
       animationEasingUpdate: 'quinticInOut',
       series: [
@@ -123,7 +137,9 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
           }
         }
       ]
-    })
+    }
+
+    this.chart.setOption(chartOptions)
   }
 
   private showForm = () => {
@@ -145,18 +161,32 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
   private addToTable = () => {
     this.linkageForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.props.onAddToTable(values)
-        this.hideForm()
+        const { localTableSource } = this.state
+        this.setState({
+          localTableSource: [ ...localTableSource, { ...values, key: uuid(8, 16) } ]
+        }, () => {
+          const { onGetWidgetInfo } = this.props
+          this.renderChart(this.state.localTableSource, onGetWidgetInfo)
+        })
       }
+    })
+  }
+
+  private deleteFromTable = (key) => () => {
+    this.setState({
+      localTableSource: this.state.localTableSource.filter((lt) => lt.key !== key)
+    }, () => {
+      const { onGetWidgetInfo } = this.props
+      this.renderChart(this.state.localTableSource, onGetWidgetInfo)
     })
   }
 
   public render () {
     const {
-      cascaderSource,
-      tableSource,
-      onDeleteFromTable
+      cascaderSource
     } = this.props
+
+    const { localTableSource } = this.state
 
     const { formVisible } = this.state
 
@@ -164,10 +194,10 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
     const TOOLS_HEIGHT = 28
 
     const chartContainerClass = classnames({
-      [utilStyles.hide]: !tableSource.length
+      [utilStyles.hide]: !localTableSource.length
     })
     const emptyChartClass = classnames({
-      [utilStyles.hide]: tableSource.length
+      [utilStyles.hide]: localTableSource.length
     })
 
     return (
@@ -191,7 +221,7 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
                 render: (val) => {
                   const { cascaderSource } = this.props
                   const triggerData = cascaderSource.find((ts) => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.find((c) => c.value === val[1])
+                  const triggerColumnData = triggerData.children.params.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {
@@ -218,12 +248,12 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
                 className: `${utilStyles.textAlignCenter}`,
                 render: (val, record) => (
                   <span>
-                    <a onClick={onDeleteFromTable(record.key)}>删除</a>
+                    <a onClick={this.deleteFromTable(record.key)}>删除</a>
                   </span>
                 )
               }
             ]}
-            dataSource={tableSource}
+            dataSource={localTableSource}
             pagination={false}
             scroll={{ y: PANEL_BODY_HEIGHT - TOOLS_HEIGHT - TABLE_HEADER_HEIGHT }}
           />
@@ -253,4 +283,4 @@ export class LinkagePanel extends React.PureComponent<ILinkagePanelProps, ILinka
   }
 }
 
-export default LinkagePanel
+export default LinkageConfig

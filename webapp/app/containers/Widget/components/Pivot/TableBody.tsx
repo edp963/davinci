@@ -36,6 +36,8 @@ export interface ITableBodyProps {
   tip?: IDataParamProperty
   renderType: RenderType
   legend: ILegend
+  onCheckTableInteract?: () => boolean
+  onDoInteract?: (triggerData: object) => void
 }
 
 export class TableBody extends React.Component<ITableBodyProps, {}> {
@@ -192,7 +194,9 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       xAxis,
       tip,
       renderType,
-      legend
+      legend,
+      onCheckTableInteract,
+      onDoInteract
     } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
     let tableBody = null
@@ -466,6 +470,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           tip={tip}
           renderType={renderType}
           legend={legend}
+          onCheckTableInteract={onCheckTableInteract}
+          onDoInteract={onDoInteract}
         />
       )
     } else {

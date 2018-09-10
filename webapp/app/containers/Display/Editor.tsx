@@ -69,6 +69,7 @@ import {
   uploadCurrentSlideCover,
   loadDisplayDetail,
   selectLayer,
+  clearLayersSelection,
   dragSelectedLayer,
   resizeLayers,
   addDisplayLayers,
@@ -88,8 +89,7 @@ import { decodeMetricName } from '../Widget/components/util'
 import {
   loadBizlogics,
   loadDataFromItem,
-  loadCascadeSourceFromItem,
-  loadCascadeSourceFromDashboard,
+  loadCascadeSource, // TODO global filter in Display
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
@@ -138,6 +138,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onUploadCurrentSlideCover: (cover: Blob, resolve: any) => void
   onLoadDisplayDetail: (id: number) => void
   onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
+  onClearLayersSelection: () => void
   onDragSelectedLayer: (id: number, deltaX: number, deltaY: number) => void
   onResizeLayers: (layerIds: number[]) => void
   onAddDisplayLayers: (displayId: any, slideId: any, layers: any[]) => void
@@ -669,6 +670,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onRedo(nextState)
   }
 
+  private layersSelectionRemove = () => {
+    const { onClearLayersSelection } = this.props
+    onClearLayersSelection()
+  }
+
   public render () {
     const {
       params,
@@ -792,6 +798,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             scale={scale}
             onCoverCutCreated={this.coverCutCreated}
             onKeyDown={this.keyDown}
+            onLayersSelectionRemove={this.layersSelectionRemove}
             ref={this.refHandlers.editor}
           >
             {layerItems}
@@ -846,6 +853,7 @@ function mapDispatchToProps (dispatch) {
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display')),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
+    onClearLayersSelection: () => dispatch(clearLayersSelection()),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
     onResizeLayers: (layerIds) => dispatch(resizeLayers(layerIds)),
     onAddDisplayLayers: (displayId, slideId, layers) => dispatch(addDisplayLayers(displayId, slideId, layers)),
