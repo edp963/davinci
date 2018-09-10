@@ -31,7 +31,7 @@ import edp.davinci.module.ConfigurationModuleImpl
 import edp.davinci.persistence.entities.PostUploadMeta
 import edp.davinci.rest.{CascadeParent, DistinctFieldValueRequest}
 import edp.davinci.util.common.DateUtils
-import edp.davinci.util.jdbc.{ESConnection, HiveConnection}
+import edp.davinci.util.jdbc.{ESConnection, HiveConnection, KylinConnection}
 import org.apache.log4j.Logger
 import edp.davinci.util.common.DavinciConstants
 
@@ -48,22 +48,24 @@ object SqlUtils extends Serializable {
 
   def getConnection(jdbcUrl: String, username: String, password: String, maxPoolSize: Int = 10): Connection = {
     val tmpJdbcUrl = jdbcUrl.toLowerCase
+
     if (tmpJdbcUrl.indexOf("elasticsearch") > -1)
       ESConnection.getESJDBCConnection(tmpJdbcUrl, username)
+    else if (tmpJdbcUrl.indexOf("hive") > -1 && tmpJdbcUrl.indexOf("presto") == -1)
+      HiveConnection.getConnection(tmpJdbcUrl, username, password)
+    else if (tmpJdbcUrl.indexOf("kylin") > -1)
+      KylinConnection.getConnection(tmpJdbcUrl, username, password)
     else {
-      if (tmpJdbcUrl.indexOf("hive") > -1 && tmpJdbcUrl.indexOf("presto") == -1)
-        HiveConnection.getConnection(tmpJdbcUrl, username, password)
-      else {
-        if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-          synchronized {
-            if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
-              initJdbc(jdbcUrl, username, password, maxPoolSize)
-            }
+      if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+        synchronized {
+          if (!dataSourceMap.contains((tmpJdbcUrl, username)) || dataSourceMap((tmpJdbcUrl, username)) == null) {
+            initJdbc(jdbcUrl, username, password, maxPoolSize)
           }
         }
-        dataSourceMap((tmpJdbcUrl, username)).getConnection
       }
+      dataSourceMap((tmpJdbcUrl, username)).getConnection
     }
+
   }
 
   private def initJdbc(jdbcUrl: String, username: String, password: String, muxPoolSize: Int = 10): Unit = {
