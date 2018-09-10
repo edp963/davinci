@@ -130,7 +130,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     if (nextCurrentTeamProjects && nextCurrentTeamProjects !== currentTeamProjects) {
       this.setState({
         currentTeamProjects: nextCurrentTeamProjects
-      }, () => console.log(this.state.currentTeamProjects)
+      })
     }
   }
   private stopPPG = (e) => {
