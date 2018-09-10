@@ -111,6 +111,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           const { id } = currentOrganization
           if (this.props.loadOrganizationTeams) {
             this.props.loadOrganizationTeams(Number(id))
+            this.props.onLoadTeams()
           }
           this.hideTeamForm()
         })
@@ -211,14 +212,14 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
     return (
       <div className={styles.listWrapper}>
         <Row>
-          <Col span={16}>
+          {/* <Col span={16}>
             <Input.Search
               size="large"
               placeholder="placeholder"
               onSearch={this.onSearchTeam}
             />
-          </Col>
-          <Col span={1} offset={7}>
+          </Col> */}
+          <Col span={1} offset={23}>
             {addButton}
           </Col>
         </Row>
