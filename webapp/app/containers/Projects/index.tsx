@@ -438,7 +438,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             </Tooltip>
           </Popconfirm>
         )
-        const ProjectName = `${d.name} (${organizations.find((org, index) => d.orgId === org.id)['name']})`
+        let ProjectName
+        const org = organizations.find((org, index) => d.orgId === org.id)
+        if (d && organizations) {
+          ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
+        }
         const itemClass = classnames({
           [styles.unit]: true
         })
@@ -496,7 +500,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         let deleteButton = void 0
         let transfer = void 0
         let star = void 0
-        const ProjectName = `${d.name} (${organizations.find((org, index) => d.orgId === org.id)['name']})`
+        let ProjectName
+        const org = organizations.find((org, index) => d.orgId === org.id)
+        if (d && organizations) {
+          ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
+        }
         star = (
           <Tooltip title="点赞项目">
             <div className={styles.starWrapperPosition}>
