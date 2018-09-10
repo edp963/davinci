@@ -20,7 +20,7 @@ interface IFullScreenPanelProps {
     itemId?: number
     onGetChartData?: any
   }
-  currentItems: any[]
+  currentItems?: any[]
   widgets: any
   currentDatasources: boolean | object
   currentDashboard: {

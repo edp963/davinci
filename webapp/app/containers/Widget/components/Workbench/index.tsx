@@ -80,7 +80,7 @@ interface IWorkbenchStates {
   cache: boolean
   expired: number
   currentWidgetConfig: IPivotProps
-  pivotProps: Partial<IPivotProps>
+  pivotProps: IPivotProps
 }
 
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
@@ -102,7 +102,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         metrics: [],
         filters: [],
         chartStyles: {},
-        orders: []
+        orders: [],
+        queryParams: [],
+        cache: false,
+        expired: 300
       }
     }
   }
