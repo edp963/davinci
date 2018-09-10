@@ -1083,11 +1083,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     let nextNavDropdown = (<span />)
     if (currentDashboard && widgets) {
-      const navDropdownItems = currentItems.map((d) => (
+      const navDropdownItems = currentItems.map((d) => {
+        const wid = (widgets.find((widget) => widget.id === d.widgetId))
+        return (
         <Menu.Item key={d.id} widgetId={d.widgetId}>
-          {d.widgetId ? (widgets.find((widget) => widget.id === d.widgetId))['name'] : ''}
+          {d.widgetId ?
+              wid && wid.name ? wid.name : ''
+              : ''}
         </Menu.Item>
-      ))
+      )})
       nextNavDropdown = (
         <Menu onClick={this.nextNavDropdownClick}>
           {navDropdownItems}
