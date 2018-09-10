@@ -56,6 +56,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 #### Setup
 
 * **上传davinci zip包到系统某个目录下，如. /app/davinci，将其解压。解压之后的目录结构如下图所示：**
+
   <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
 
   * 0.3版本使用ymal作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
