@@ -64,7 +64,7 @@
     <update id="updateProjectNum" parameterType="edp.davinci.model.Organization">
         update organization
         <choose>
-            <when test='projectNum > 0'>
+            <when test="projectNum > 0">
                 set project_num=#{projectNum,jdbcType=INTEGER}
             </when>
             <otherwise>
@@ -80,7 +80,7 @@
     <update id="updateMemberNum" parameterType="edp.davinci.model.Organization">
         update organization
         <choose>
-            <when test='projectNum > 0'>
+            <when test="memberNum > 0">
                 set member_num=#{memberNum,jdbcType=INTEGER}
             </when>
             <otherwise>
@@ -96,7 +96,7 @@
     <update id="updateTeamNum" parameterType="edp.davinci.model.Organization">
         update organization
         <choose>
-            <when test='projectNum > 0'>
+            <when test="teamNum > 0">
                 set team_num=#{teamNum,jdbcType=INTEGER}
             </when>
             <otherwise>
