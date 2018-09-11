@@ -176,7 +176,7 @@ public class CommonService<T> {
         }
 
         //当前project的owner
-        if (isProjectAdmin(project, user)) {
+        if (project.getUserId().equals(user.getId())) {
             return true;
         }
 
