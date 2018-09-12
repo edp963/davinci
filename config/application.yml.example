@@ -54,7 +54,7 @@ spring:
     max-active: 10
 
   ## redis config
-  ## please choose one of the two ways
+  ## please choose either of the two ways
   redis:
     isEnable: false
 
@@ -97,4 +97,4 @@ spring:
           ssl:
             enable: false
 
-phantomjs_home: "$your_phantomjs_path$/phantomjs"
+phantomjs_home: $your_phantomjs_path$/phantomjs

@@ -19,7 +19,6 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import edp.core.enums.HttpCodeEnum;
@@ -53,7 +52,7 @@ import java.util.*;
 public class OrganizationServiceImpl extends CommonService implements OrganizationService {
 
     @Autowired
-    private OrganizationMapper organizationMapper;
+    private OrganizationMapper organizationmapper;
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
@@ -297,6 +296,9 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), id);
+        if (null == rel) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("Unauthorized");
+        }
 
         OrganizationInfo organizationInfo = new OrganizationInfo();
         BeanUtils.copyProperties(organization, organizationInfo);
@@ -655,6 +657,14 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you cannot delete any member of this orgainzation, cause you are not the owner of this orginzation");
         }
 
+        if (organization.getUserId().equals(rel.getUserId())) {
+            return resultMap.failAndRefreshToken(request).message("you cannot delete the creator of the organization");
+        }
+
+        if (rel.getUserId().equals(user.getId())) {
+            return resultMap.failAndRefreshToken(request).message("you cannot delete yourself in this orginzation");
+        }
+
         //删除关联
         int i = relUserOrganizationMapper.deleteById(relationId);
 
@@ -663,8 +673,12 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             organization.setMemberNum(organization.getMemberNum() > 0 ? organization.getMemberNum() - 1 : organization.getMemberNum());
             organizationMapper.updateMemberNum(organization);
 
+            List<Integer> relUserTeamIds = relUserTeamMapper.getRelUserTeamIds(rel.getUserId(), rel.getOrgId());
+
             //删除该成员与组织中team的关联关系
-            relUserTeamMapper.deleteByUserAndOrg(rel.getUserId(), rel.getOrgId());
+            if (null != relUserTeamIds && relUserTeamIds.size() > 0) {
+                relUserTeamMapper.deleteBatch(relUserTeamIds);
+            }
 
             return resultMap.successAndRefreshToken(request);
         } else {
