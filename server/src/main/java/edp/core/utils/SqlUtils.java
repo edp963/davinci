@@ -176,7 +176,7 @@ public class SqlUtils {
                 tables.close();
             }
         } catch (Exception e) {
-            throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
+            throw new SourceException(e.getMessage() + " jdbcUrl=" + this.jdbcUrl);
         } finally {
             releaseConnection(connection);
         }
