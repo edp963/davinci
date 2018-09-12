@@ -137,7 +137,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
                   const w = widgets.find((w) => w.id === widget.widgetId)
                // const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
                   return <Menu.Item key={widget.id} itemId={widget.id} >
-                    {/* <i className={`iconfont ${iconMapping[iconName]}`} style={{marginRight: '12px'}}/> */}
+                    <i style={{marginRight: '8px'}}/>
                     {w['name']}
                   </Menu.Item>
                 }
