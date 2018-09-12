@@ -137,11 +137,22 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       organizationMembers: value && value.length ? result : this.props.organizationMembers
     })
   }
+
   public componentDidMount () {
     const {organizationMembers} = this.props
     if (organizationMembers) {
       this.setState({
         organizationMembers
+      })
+    }
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const {organizationMembers} = this.props
+    const nextOrgMembers = nextProps.organizationMembers
+    if (nextOrgMembers && nextOrgMembers !== organizationMembers) {
+      this.setState({
+        organizationMembers: nextOrgMembers
       })
     }
   }
@@ -187,7 +198,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       CreateButton = ComponentPermission(currentOrganization, '')(Button)
     }
     const addButton =  (
-      <Tooltip placement="bottom" title="创建">
+      <Tooltip placement="bottom" title="邀请">
         <CreateButton
           size="large"
           type="primary"

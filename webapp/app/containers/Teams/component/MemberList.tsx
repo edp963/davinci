@@ -63,6 +63,15 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       })
     }
   }
+  public componentWillReceiveProps (nextProps) {
+    const {currentTeamMembers} = this.props
+    const nextCurrentTeamMembers = nextProps.currentTeamMembers
+    if (nextCurrentTeamMembers && nextCurrentTeamMembers !== currentTeamMembers) {
+      this.setState({
+        currentTeamMembers: nextCurrentTeamMembers
+      })
+    }
+  }
   private onSearchMember = (event) => {
     const value = event.target.value
     const {currentTeamMembers} = this.props
