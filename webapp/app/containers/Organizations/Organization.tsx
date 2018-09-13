@@ -115,12 +115,12 @@ export interface IOrganizationProjects {
   }
 }
 export interface IOrganizationTeams {
-  id: number
-  orgId: number
-  name: string,
-  description: string,
-  parentTeamId: number,
-  visibility: boolean
+  id?: number
+  orgId?: number
+  name?: string,
+  description?: string,
+  parentTeamId?: number,
+  visibility?: boolean
 }
 export interface IOrganizationMembers {
   id: number
@@ -277,11 +277,11 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
             </TabPane>
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
               <TeamList
-                toThatTeam={this.toThatTeam}
                 loadOrganizationTeams={this.props.onLoadOrganizationTeams}
                 organizations={organizations}
                 currentOrganization={this.props.currentOrganization}
                 organizationTeams={currentOrganizationTeams}
+                toThatTeam={this.toThatTeam}
               />
             </TabPane>
             {
@@ -333,11 +333,11 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducer = injectReducer({ key: 'organization', reducer })
-const withSaga = injectSaga({ key: 'organization', saga })
+// const withReducer = injectReducer({ key: 'organization', reducer })
+// const withSaga = injectSaga({ key: 'organization', saga })
 
-const withTeamReducer = injectReducer({ key: 'team', reducer: reducerTeam})
-const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
+// const withTeamReducer = injectReducer({ key: 'team', reducer: reducerTeam})
+// const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
 
 const withProjectReducer = injectReducer({ key: 'project', reducer: reducerProject })
 const withProjectSaga = injectSaga({ key: 'project', saga: sagaProject })
@@ -346,14 +346,14 @@ const withProjectSaga = injectSaga({ key: 'project', saga: sagaProject })
 // const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
-  withReducer,
+  // withReducer,
   // withAppReducer,
   withProjectReducer,
-  withTeamReducer,
-  withTeamSaga,
+  // withTeamReducer,
+  // withTeamSaga,
   withProjectSaga,
   // withAppSaga,
-  withSaga,
+  // withSaga,
   withConnect
 )(Organization)
 
