@@ -273,20 +273,5 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-
-
-// const withConnect = connect(mapStateToProps, mapDispatchToProps)
-//  const withReducer = injectReducer({key: 'team', reducer: teamReducer})
-//  const withSaga = injectSaga({key: 'team', saga: teamSaga})
-//  const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-//  const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-// export default compose(
-//   withReducer,
-//    withAppReducer,
-//    withAppSaga,
-//   withSaga,
-//   withConnect
-// )(TeamList)
-
 export default connect<{}, {}, ITeamsProps>(mapStateToProps, mapDispatchToProps)(TeamList)
 

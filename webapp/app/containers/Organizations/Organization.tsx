@@ -224,7 +224,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       currentOrganizationProjectsDetail
     } = this.props
     const {avatar, name, memberNum, teamNum} = currentOrganization as IOrganization
-    const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : ''
+    const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
     return (
       <Box>
         <Box.Header>
@@ -332,28 +332,11 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
-
-// const withReducer = injectReducer({ key: 'organization', reducer })
-// const withSaga = injectSaga({ key: 'organization', saga })
-
-// const withTeamReducer = injectReducer({ key: 'team', reducer: reducerTeam})
-// const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
-
 const withProjectReducer = injectReducer({ key: 'project', reducer: reducerProject })
 const withProjectSaga = injectSaga({ key: 'project', saga: sagaProject })
-
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-
 export default compose(
-  // withReducer,
-  // withAppReducer,
   withProjectReducer,
-  // withTeamReducer,
-  // withTeamSaga,
   withProjectSaga,
-  // withAppSaga,
-  // withSaga,
   withConnect
 )(Organization)
 

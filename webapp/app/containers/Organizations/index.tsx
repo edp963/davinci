@@ -175,17 +175,17 @@ export function mapDispatchToProps (dispatch) {
 
 const withConnect = connect(mapStateToProps, mapDispatchToProps)
 
-const withReducer = injectReducer({ key: 'organization', reducer })
-const withSaga = injectSaga({ key: 'organization', saga })
+// const withReducer = injectReducer({ key: 'organization', reducer })
+// const withSaga = injectSaga({ key: 'organization', saga })
 
 // const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
 // const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
-  withReducer,
+  // withReducer,
   // withAppReducer,
   // withAppSaga,
-  withSaga,
+  // withSaga,
   withConnect
 )(Organizations)
 
