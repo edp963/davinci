@@ -223,7 +223,8 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       params: {organizationId},
       currentOrganizationProjectsDetail
     } = this.props
-    const {avatar, name, projectNum, memberNum, teamNum} = currentOrganization as IOrganization
+    const {avatar, name, memberNum, teamNum} = currentOrganization as IOrganization
+    const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : ''
     return (
       <Box>
         <Box.Header>
