@@ -32,12 +32,14 @@ interface IProjectsProps {
   deleteProject: (id: number) => any
   starUser: IStarUser[]
   onAddProject: (project: any, resolve: () => any) => any
+  onEditProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
   organizationProjectsDetail: {total?: number, list: Organization.IOrganizationProjects[]}
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   getOrganizationProjectsByPagination: (obj: {pageNum: number, pageSize: number}) => any
+  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
 }
 
 export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
@@ -87,6 +89,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       orgId: organizationId,
       id
     }
+
     onCheckUniqueName('project', data,
       () => {
         callback()
@@ -145,7 +148,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
   }
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects } = this.state
-    const { currentOrganization, organizationProjectsDetail } = this.props
+    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -163,7 +166,8 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     let projectSearchPagination = void 0
     if (organizationProjectsDetail) {
       projectSearchPagination =
-        (<Pagination
+        (
+        <Pagination
           //  simple={screenWidth < 768 || screenWidth === 768}
           showSizeChanger
           defaultCurrent={2}
@@ -186,6 +190,9 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         options={lists}
         toProject={this.props.toProject}
         deleteProject={this.props.deleteProject}
+        onEditProject={this.props.onEditProject}
+        onLoadOrganizationProjects={this.props.onLoadOrganizationProjects}
+        // onCheckUniqueName={this.checkUniqueName}
       />
     )) : ''
     return (
