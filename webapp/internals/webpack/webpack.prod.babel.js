@@ -7,10 +7,10 @@ module.exports = require('./webpack.base.babel')({
   // In production, we skip all hot-reloading stuff
   entry: {
     app: [
-      path.join(process.cwd(), 'app/app.js')
+      path.join(process.cwd(), 'app/app.tsx')
     ],
     share: [
-      path.join(process.cwd(), 'share/app.js')
+      path.join(process.cwd(), 'share/app.tsx')
     ]
   },
 
@@ -21,6 +21,7 @@ module.exports = require('./webpack.base.babel')({
   },
 
   plugins: [
+    new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
       children: true,

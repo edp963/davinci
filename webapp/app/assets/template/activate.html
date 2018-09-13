@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no" />
+    <meta content="email=no" name="format-detection" />
+    <title>Title</title>
+    <style>
+      html,body,div,header,h2,article,button,p {
+        margin: 0; padding: 0;
+      }
+      html,body{
+        height: 100%;
+        width: 100%;
+      }
+      .container {
+        width: 100%;
+        height: 100%;
+        background-color: #EAEDF1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .wrapper {
+        width: 420px;
+        display: flex;
+        flex-direction: column;
+        text-align: center;
+      }
+      header{
+        flex:0;
+        background-color: #1B98E0;
+        border-radius: 2px 2px 0 0;
+        line-height: 56px;
+        height: 56px;
+        color: #fff;
+      }
+      article {
+        flex: 1;
+        background-color: #fff;
+        border-radius: 0 0 2px 2px;
+        padding: 32px;
+      }
+      .title {
+        color: #444444;
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+      .sure{
+        font-size: 16px;
+        outline: none;
+        display: inline-block;
+        margin-bottom: 32px;
+        padding: 8px 48px;
+        border-radius: 4px 4px;
+        background-color: #1B98E0;
+        color: #fff;
+        cursor: pointer;
+        text-decoration:none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      .detail {
+        font-size: 14px;
+        color: rgba(0,0,0,.59);
+      }
+    </style>
+</head>
+<body>
+<div class="container">
+  <div class="wrapper">
+    <header>
+      <h2>欢迎使用davinci</h2>
+    </header>
+    <article>
+      <div class="title">您好, <span th:text="${username}">username</span></div>
+      <a class="sure" th:href="@{http://localhost:5002/(token=${token})#/activate}">激活davinci</a>
+      <p class="detail">此邮件为注册davinci确认邮件。如非本人操作，只需删除此邮件即可。</p>
+    </article>
+  </div>
+</div>
+</body>
+</html>

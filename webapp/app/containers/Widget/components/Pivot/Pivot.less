@@ -1,0 +1,288 @@
+@import "../../../../assets/less/variable";
+
+.block {
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  position: relative;
+
+  .leftSide {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+
+    .corner {
+      flex-shrink: 0;
+    }
+
+    .rowHeader {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+
+      .rowTitle {
+        flex-shrink: 0;
+        max-height: 100%;
+        font-size: 14px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+
+        p {
+          transform-origin: 0 center;
+          white-space: nowrap;
+        }
+      }
+
+      .rowBody {
+        flex-shrink: 0;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: row;
+        .hideScrollbar;
+      }
+    }
+
+    .rowFooter {
+      flex-shrink: 0;
+      height: 50px;
+    }
+  }
+
+  .rightSide {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .columnTitle {
+      max-width: 100%;
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 27px;
+    }
+
+    .columnHeader {
+      flex-shrink: 0;
+      overflow-x: auto;
+      .hideScrollbar;
+    }
+
+    .columnBody {
+      flex: 1;
+      overflow: auto;
+
+      &.bodyCollapsed {
+        flex: none;
+      }
+    }
+
+    .columnFooter {
+      flex-shrink: 0;
+      height: 50px;
+      overflow-x: auto;
+      .hideScrollbar;
+    }
+  }
+
+  .xAxis {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+  }
+
+  .yAxis {
+    flex-shrink: 0;
+    width: 64px;
+  }
+
+  .legend {
+    flex-shrink: 0;
+    max-width: 180px; 
+    margin-bottom: 50px;
+    overflow-y: auto;
+    display: none;
+
+    &.shown {
+      display: block;
+    }
+  }
+
+  .mask {
+    background-color: fade(@white, 60);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+
+    &.loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    i {
+      font-size: 1.5em;
+    }
+
+    p {
+      font-size: 1.25em;
+      line-height: 2.5em;
+    }
+  }
+}
+
+.pivot {
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  tr {
+    &:nth-child(even) > td {
+      background-color: @body-bg;
+    }
+  }
+
+  th {
+    line-height: 26px;
+
+    p {
+      max-width: 200px;
+      margin: 0 auto;     // 单th 100%
+      .ellipsis;
+
+      &.colContent {
+        height: 26px;
+      }
+
+      &.auxiliaryLines {
+        position: relative;
+        overflow: visible;
+
+        &:after {
+          width: 64px;
+          border-top: 1px solid @border-color-base;
+          position: absolute;
+          top: -1px;
+          left: 100%;
+          z-index: 1;
+          content: '';
+        }
+      }
+    }
+  }
+
+  td {
+    padding: 4px;
+    line-height: 18px;
+  }
+
+  .topBorder {
+    border-top: 1px solid @border-color-base;
+  }
+
+  .bottomBorder {
+    border-top: 1px solid @border-color-base;
+  }
+
+  .leftBorder {
+    border-left: 1px solid @border-color-base;
+  }
+
+  .rightBorder {
+    border-right: 1px solid @border-color-base;
+  }
+}
+
+.chartContainer {
+  display: flex;
+  flex-direction: column;
+
+  .chartRow {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+
+    .chartColumn {
+      flex-shrink: 0;
+    }
+  }
+}
+
+.columnHeader,
+.rowBody,
+.columnBody {
+  &.raw {
+    th, td {
+      border: 1px solid @border-color-base;
+    }
+    th {
+      background-color: @light-bg;
+    }
+  }
+}
+
+.corner.raw {
+  background-color: @light-bg;
+  border-top: 1px solid @border-color-base;
+  border-left: 1px solid @border-color-base;
+}
+
+.columnHeader {
+  &.raw {
+    position: relative;
+    top: 1px;
+  }
+}
+
+.rowBody {
+  &.raw {
+    position: relative;
+    left: 1px;
+  }
+}
+
+.legendBox {
+  padding: 8px 0 8px 16px;
+
+  h3 {
+    padding-left: 6px;
+    line-height: 2.5em;
+    .ellipsis;
+  }
+
+  .list {
+    li {
+      height: 2.25em;
+      padding: 0 4px 0 28px;
+      line-height: 2.25em;
+      position: relative;
+      cursor: pointer;
+      .ellipsis;
+
+      &:hover {
+        background-color: @body-bg;
+      }
+
+      &.disabled {
+        color: @disabled-text-color;
+
+        span {
+          background-color: @disabled-text-color !important;
+        }
+      }
+
+      span {
+        width: 16px;
+        height: 16px;
+        border-radius: 2px;
+        position: absolute;
+        top: 6px;
+        left: 6px;
+      }
+    }
+  }
+}
