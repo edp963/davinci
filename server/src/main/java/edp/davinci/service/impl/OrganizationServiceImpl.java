@@ -339,6 +339,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         if (PageUtils.checkPageInfo(pageNum, pageSize)) {
             PageHelper.startPage(pageNum, pageSize);
             List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(id, user.getId());
+
             PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
 
             return resultMap.successAndRefreshToken(request).payload(pageInfo);

@@ -66,10 +66,11 @@ public interface ProjectMapper {
             "       LEFT JOIN rel_team_project rtp on rtp.project_id = p.id",
             "       LEFT JOIN team t ON t.id = rtp.team_id",
             "       LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
-            "   WHERE rut.user_id = #{userId} AND (rut.role = 1 or p.visibility = 1)",
+            "   WHERE rut.user_id = #{userId} ",
+//            "    AND (rut.role = 1 or p.visibility = 1)",
             ") ",
             //organization对成员可见
-            "or o.member_permission > 0",
+            "or (p.visibility = 1 and o.member_permission > 0)",
             //organization的owner
             "or o.role > 0",
             "order by p.id asc",
@@ -105,10 +106,12 @@ public interface ProjectMapper {
             "        LEFT JOIN rel_team_project rtp on rtp.project_id = p.id",
             "        LEFT JOIN team t ON t.id = rtp.team_id",
             "        LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
-            "        WHERE p.org_id = #{orgId} and rut.user_id = #{userId} AND rut.role = 1",
+            "        WHERE p.org_id = #{orgId} and rut.user_id = #{userId}",
+//            "  AND rut.role = 1",
             "    )",
             //organization对成员可见
-            "   or o.member_permission > 0",
+            "   or (p.visibility = 1 and o.member_permission > 0)",
+//            " or o.member_permission > 0",
             //organization的owner
             " or o.role > 0",
             "order by p.id",

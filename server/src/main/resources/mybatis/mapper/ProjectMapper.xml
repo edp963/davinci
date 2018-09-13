@@ -89,13 +89,15 @@
                     LEFT JOIN rel_team_project rtp ON rtp.project_id = p.id
                     LEFT JOIN team t ON t.id = rtp.team_id
                     LEFT JOIN rel_user_team rut ON rut.team_id = t.id
-                    WHERE  rut.user_id = #{userId} AND rut.role = 1
+                    WHERE  rut.user_id = #{userId}
                     AND p.org_id IN
                     <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
                         #{item.id}
                     </foreach>
                 )
-            ) OR o.member_permission > 0 OR o.role > 0
+                OR (o.member_permission > 0 and p.visibility = 1)
+                OR o.role > 0
+            )
             <if test="keywords != null">
                 AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keywords})), '%')
             </if>

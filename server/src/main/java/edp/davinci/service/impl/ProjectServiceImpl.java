@@ -112,7 +112,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if ((!isMaintainer(project, user) && null == rel) || (rel.getRole() == UserOrgRoleEnum.MEMBER.getRole() && !project.getVisibility())) {
+        if (!isMaintainer(project, user) && null == rel && !project.getVisibility()) {
             log.info("user[{}] don't have permission to get project info", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission");
         }

@@ -26,6 +26,7 @@ import edp.davinci.dao.OrganizationMapper;
 import edp.davinci.dao.RelTeamProjectMapper;
 import edp.davinci.dao.RelUserOrganizationMapper;
 import edp.davinci.dao.RelUserTeamMapper;
+import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.model.*;
 import edp.davinci.service.ShareService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -205,10 +206,6 @@ public class CommonService<T> {
             //当前project对应team的maintainer
             return true;
         } else {
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
-            }
             Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(organization.getId(), user.getId());
             if (teamNumOfOrgByUser > 0) {
                 //当前project对应team的member且project下内容的权限
@@ -221,6 +218,52 @@ public class CommonService<T> {
                     return true;
                 }
             }
+            //不可见
+            if (!project.getVisibility()) {
+                return false;
+            }
+        }
+
+        Type type = getClass().getGenericSuperclass();
+        Object clazz = null;
+        if (type instanceof ParameterizedType) {
+            Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
+            try {
+                clazz = ((Class) actualTypeArguments[0]).newInstance();
+            } catch (Exception e) {
+                clazz = null;
+            }
+        }
+
+        UserMaxProjectPermission userMaxPermission = relTeamProjectMapper.getUserMaxPermission(project.getId(), user.getId());
+
+        if (clazz instanceof Source) {
+            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                return true;
+            }
+        } else if (clazz instanceof View) {
+            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                return true;
+            }
+        } else if (clazz instanceof Widget) {
+            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                return true;
+            }
+        } else if (clazz instanceof DashboardPortal || clazz instanceof Dashboard || clazz instanceof Display) {
+            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                return true;
+            }
+        }
+
+        if (null != clazz) {
+            clazz = null;
+            System.gc();
         }
 
         return false;
