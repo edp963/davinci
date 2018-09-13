@@ -191,10 +191,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem label="可见" {...commonFormItemStyle} className={isShowVisibility}>
+                <FormItem label="可见" {...commonFormItemStyle}>
                   {getFieldDecorator('visibility', {
-                    hidden: this.props.type !== 'edit',
-                    initialValue: ''
+                    // hidden: this.props.type !== 'edit',
+                    initialValue: '可见'
                   })(
                     <Select>
                       <Option key="visibility" value="1">

@@ -48,7 +48,7 @@ import {
   makeSelectInviteMemberList
 } from './selectors'
 import {createStructuredSelector} from 'reselect'
-import {addProject, deleteProject, getProjectStarUser, loadProjects, unStarProject} from '../Projects/actions'
+import {addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject} from '../Projects/actions'
 import {checkNameUniqueAction} from '../App/actions'
 import {makeSelectStarUserList} from '../Projects/selectors'
 import {IStarUser} from '../Projects'
@@ -58,7 +58,7 @@ interface IOrganizationProps {
   router: InjectedRouter
   organizations: any
   starUserList: IStarUser[]
-  params: {organizationId: number}
+  params: any
   inviteMemberList: any
   currentOrganization: IOrganization
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
@@ -74,6 +74,7 @@ interface IOrganizationProps {
   onInviteMember: (ordId: number, memId: number) => any
   onSearchMember: (keywords: string) => any
   onAddProject: (project: any, resolve: () => any) => any
+  onEditProject: (project: any, resolve: () => any) => any
   onDeleteProject: (id: number) => any
   onStarProject: (id: number, resolve: () => any) => any,
   onGetProjectStarUser: (id: number) => any,
@@ -210,6 +211,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
   private editOrganization = (organization) => () => {
     this.props.onEditOrganization(organization)
   }
+
   public render () {
     const {
       loginUser,
@@ -221,7 +223,8 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       inviteMemberList,
       starUserList,
       params: {organizationId},
-      currentOrganizationProjectsDetail
+      currentOrganizationProjectsDetail,
+      onCheckUniqueName
     } = this.props
     const {avatar, name, memberNum, teamNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
@@ -253,6 +256,8 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
                 deleteProject={this.delete}
                 onCheckUniqueName={this.props.onCheckUniqueName}
                 onAddProject={this.props.onAddProject}
+                onEditProject={this.props.onEditProject}
+                onLoadOrganizationProjects={this.props.onLoadOrganizationProjects}
                 organizationId={this.props.params['organizationId']}
                 organizationProjects={currentOrganizationProjects}
                 organizationProjectsDetail={currentOrganizationProjectsDetail}
@@ -327,6 +332,7 @@ export function mapDispatchToProps (dispatch) {
     onDeleteOrganizationMember: (id, resolve) => dispatch(deleteOrganizationMember(id, resolve)),
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve)),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
+    onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

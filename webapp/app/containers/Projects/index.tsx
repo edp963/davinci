@@ -192,8 +192,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         if (this.state.formType === 'add') {
           this.props.onAddProject({
             ...values,
-            pic: `${Math.ceil(Math.random() * 19)}`,
-            config: '{}'
+            pic: `${Math.ceil(Math.random() * 19)}`
+            // config: '{}'
           }, () => {
             this.props.onLoadProjects()
             this.hideProjectForm()
@@ -631,9 +631,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     }) : ''
     let projectSearchPagination = void 0
     if (searchProject) {
-      projectSearchPagination =
+      projectSearchPagination = (
         <Pagination
-          //  simple={screenWidth < 768 || screenWidth === 768}
+          // simple={screenWidth < 768 || screenWidth === 768}
           showSizeChanger
           defaultCurrent={2}
           total={searchProject.total}
@@ -643,6 +643,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           pageSizeOptions={['10', '15', '18']}
           current={this.state.currentPage}
         />
+      )
     }
     const maskStyle = classnames({
       [utilStyles.hide]: this.state.searchMaskVisible,
