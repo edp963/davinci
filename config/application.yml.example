@@ -20,6 +20,12 @@ server:
   address: 127.0.0.1
   port: 8080
 
+  # Userd for mail and download services, can be empty, careful configuration
+  # By default, 'server.address' and 'server.port' is used as the string value.
+  access:
+    address:
+    port:
+
 
 ## jwt is one of the important configuration of the application
 ## jwt config cannot be null or empty

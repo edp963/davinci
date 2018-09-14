@@ -44,8 +44,8 @@ public class ViewExecuteParam {
             while (iterator.hasNext()) {
                 Aggregator next = iterator.next();
                 StringBuilder sb = new StringBuilder();
-                if ("DISTINCT".equals(next.getFunc().trim().toUpperCase())) {
-                    sb.append("COUNT(").append(next.getFunc().trim()).append(" ");
+                if ("COUNTDISTINCT".equals(next.getFunc().trim().toUpperCase())) {
+                    sb.append("COUNT(").append("DISTINCT").append(" ");
                     sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
                     sb.append(")");
                     sb.append(" AS 'COUNTDISTINCT(");

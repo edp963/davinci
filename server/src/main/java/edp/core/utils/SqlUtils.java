@@ -47,10 +47,7 @@ import org.stringtemplate.v4.STGroupFile;
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -146,28 +143,21 @@ public class SqlUtils {
             connection = getConnection();
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                ResultSet tables = metaData.getTables(null, null, "%", null);
+                String schemaPattern = null;
+                if (DataTypeEnum.ORACLE.getFeature().equals(DataTypeEnum.urlOf(this.jdbcUrl).getFeature())) {
+                    schemaPattern = this.username;
+                    if (null != schemaPattern) {
+                        schemaPattern = schemaPattern.toUpperCase();
+                    }
+                }
+                ResultSet tables = metaData.getTables(null, schemaPattern, "%", null);
                 if (null != tables) {
                     tableInfoList = new ArrayList<>();
                     while (tables.next()) {
                         String tableName = tables.getString("TABLE_NAME");
                         if (!StringUtils.isEmpty(tableName)) {
-                            //查询表主键
-                            ResultSet resultSet = metaData.getPrimaryKeys(null, null, tableName);
-                            List<String> primaryKeys = new ArrayList<>();
-                            while (resultSet.next()) {
-                                if (!StringUtils.isEmpty(resultSet.getString("PK_NAME")) && "PRIMARY".equals(resultSet.getString("PK_NAME"))) {
-                                    primaryKeys.add(resultSet.getString("COLUMN_NAME"));
-                                }
-                            }
-                            resultSet.close();
-                            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                            ST st = stg.getInstanceOf("queryAll");
-                            st.add("tableName", tableName);
-                            st.add("keywordStart", DataTypeEnum.getKeywordStart(this.jdbcUrl));
-                            st.add("keywordEnd", DataTypeEnum.getKeywordEnd(this.jdbcUrl));
-                            String sql = st.render();
-                            List<QueryColumn> columns = getColumns(sql);
+                            List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
+                            List<QueryColumn> columns = getColumns(tableName, metaData);
                             TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
                             tableInfoList.add(tableInfo);
                         }
@@ -180,7 +170,6 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
-
         return tableInfoList;
     }
 
@@ -250,6 +239,61 @@ public class SqlUtils {
         return columnList;
     }
 
+
+    /**
+     * 获取数据表主键
+     *
+     * @param tableName
+     * @param metaData
+     * @return
+     * @throws ServerException
+     */
+    private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
+        Connection connection = null;
+        ResultSet rs = null;
+        List<String> primaryKeys = new ArrayList<>();
+        try {
+            rs = metaData.getPrimaryKeys(null, null, tableName);
+            while (rs.next()) {
+                primaryKeys.add(rs.getString(4));
+            }
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        } finally {
+            closeResult(rs);
+            releaseConnection(connection);
+        }
+        return primaryKeys;
+    }
+
+
+    /**
+     * 获取数据表列
+     *
+     * @param tableName
+     * @param metaData
+     * @return
+     * @throws ServerException
+     */
+    private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
+        Connection connection = null;
+        ResultSet rs = null;
+        List<QueryColumn> columnList = new ArrayList<>();
+        try {
+            rs = metaData.getColumns(null, null, tableName, "%");
+            while (rs.next()) {
+                columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
+            }
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        } finally {
+            closeResult(rs);
+            releaseConnection(connection);
+        }
+        return columnList;
+    }
+
+
     /**
      * 获取数据源
      *
@@ -299,9 +343,22 @@ public class SqlUtils {
         if (null != connection) {
             try {
                 connection.close();
+                connection = null;
             } catch (SQLException e) {
                 e.printStackTrace();
                 log.error("connection close error", e.getMessage());
+            }
+        }
+    }
+
+
+    public static void closeResult(ResultSet rs) {
+        if(rs!=null) {
+            try {
+                rs.close();
+                rs = null;
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
