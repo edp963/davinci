@@ -122,19 +122,23 @@ export enum OrderDirection {
  */
 export function generateData (sourceData) {
   const tableArr = []
-  sourceData.forEach((i) => {
-    const children = []
-    i.columns.forEach((j) => {
-      children.push({
-        title: j.name,
-        key: j.name
+  if (sourceData.length) {
+    sourceData.forEach((i) => {
+      const children = []
+      if (i.columns && i.columns.length) {
+        i.columns.forEach((j) => {
+          children.push({
+            title: j.name,
+            key: j.name
+          })
+        })
+      }
+      tableArr.push({
+        title: i.tableName,
+        key: i.tableName,
+        children
       })
     })
-    tableArr.push({
-      title: i.tableName,
-      key: i.tableName,
-      children
-    })
-  })
+  }
   return tableArr
 }

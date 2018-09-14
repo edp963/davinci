@@ -46,7 +46,6 @@ interface IProjectsFormProps {
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   constructor (props) {
     super(props)

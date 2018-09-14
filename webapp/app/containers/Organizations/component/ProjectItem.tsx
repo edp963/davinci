@@ -63,10 +63,10 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, {}> {
           style={{backgroundImage: `url(${require(`../../../assets/images/bg${options.pic || 9}.png`)})`}}
         />
         <div className={styles.detailWrapper}>
-          <div className={styles.titleWrapper}>
+          <div className={styles.titleWrapper} style={{ flex: 1 }}>
             <div className={styles.title}>{options.name}</div>
+            <div className={styles.desc}>{options.description}</div>
           </div>
-          <div className={styles.desc}>{options.description}</div>
           {tags}
           <div className={styles.others}>
             {StarPanel}
