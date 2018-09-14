@@ -7,11 +7,9 @@ const Tag = require('antd/lib/tag')
 const Icon = require('antd/lib/icon')
 const Popconfirm = require('antd/lib/popconfirm')
 const Tooltip = require('antd/lib/tooltip')
-import AntdFormType from 'antd/lib/form/Form'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import Star from '../../../components/StarPanel/Star'
 import {IProject, IStarUser} from '../../Projects'
-import ProjectsForm from '../../Projects/ProjectForm'
 
 interface IProjectItemProps {
   key: number
@@ -23,15 +21,7 @@ interface IProjectItemProps {
   currentOrganization: Organization.IOrganization
   unStar?: (id: number) => any
   userList?: (id: number) => any
-  onEditProject: (project: any, resolve: () => any) => any
-  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
-  // onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
-}
-
-interface IProjectItemState {
-  formType: string
-  formVisible: boolean
-  modalLoading: boolean
+  showEditProjectForm: (type: string, option: any) => any
 }
 
 interface IProjectOptions {
@@ -43,74 +33,18 @@ interface IProjectOptions {
   isLike: boolean
 }
 
-export class ProjectItem extends React.PureComponent<IProjectItemProps, IProjectItemState> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      formType: '',
-      formVisible: false,
-      modalLoading: false
-    }
-  }
-
-  private ProjectForm: AntdFormType = null
-  private refHandlers = {
-    ProjectForm: (ref) => this.ProjectForm = ref
-  }
-
+export class ProjectItem extends React.PureComponent<IProjectItemProps, {}> {
   private stopPPG = (e) => {
     e.stopPropagation()
   }
 
   private showProjectForm = (formType, option) => (e) => {
     this.stopPPG(e)
-    this.setState({
-      formType,
-      formVisible: true
-    }, () => {
-      const {orgId, id, name, pic, description, visibility} = option
-      this.ProjectForm.props.form.setFieldsValue({
-        orgId: `${orgId}`,
-        id,
-        name,
-        pic,
-        description,
-        visibility: `${visibility}`
-      })
-    })
-  }
-
-  private onModalOk = () => {
-    this.ProjectForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { currentOrganization } = this.props
-        this.setState({
-          modalLoading: true
-        })
-        values.visibility = values.visibility === 'true' ? true : false
-        this.props.onEditProject({
-          ...values,
-          ...{orgId: Number(values.orgId)}
-        }, () => {
-          this.props.onLoadOrganizationProjects({id: currentOrganization.id})
-          this.hideProjectForm()
-        })
-      }
-    })
-  }
-
-  private hideProjectForm = () => {
-    this.setState({
-      formVisible: false,
-      modalLoading: false
-    }, () => {
-      this.ProjectForm.props.form.resetFields()
-    })
+    this.props.showEditProjectForm(formType, option)
   }
 
   public render () {
     const {options, loginUser, currentOrganization, starUser} = this.props
-    const { formVisible, formType, modalLoading } = this.state
 
     const tags = (<div className={styles.tag}>{options.createBy === loginUser.id ? <Tag size="small" key="small">我创建的</Tag> : ''}</div>)
     let CreateButton = void 0
@@ -155,20 +89,6 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IProject
                 </Tooltip>
               </Popconfirm>
             </div>
-            <Modal
-              title={null}
-              footer={null}
-              visible={formVisible}
-              onCancel={this.hideProjectForm}
-            >
-              <ProjectsForm
-                type={formType}
-                wrappedComponentRef={this.refHandlers.ProjectForm}
-                modalLoading={modalLoading}
-                onModalOk={this.onModalOk}
-                // onCheckUniqueName={this.props.onCheckUniqueName}
-              />
-            </Modal>
           </div>
         </div>
       </div>
