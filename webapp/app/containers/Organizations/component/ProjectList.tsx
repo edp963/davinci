@@ -8,7 +8,7 @@ const Input = require('antd/lib/input')
 const styles = require('../Organization.less')
 const Modal = require('antd/lib/modal')
 import ProjectItem from './ProjectItem'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
+import AntdFormType from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
@@ -54,7 +54,12 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       organizationProjects: false
     }
   }
-  private ProjectForm: WrappedFormUtils
+
+  private ProjectForm: AntdFormType = null
+  private refHandlers = {
+    ProjectForm: (ref) => this.ProjectForm = ref
+  }
+
   private showProjectForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
@@ -62,6 +67,24 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       formType: type
     })
   }
+
+  private showEditProjectForm = (formType, option) => (e) => {
+    this.setState({
+      formType,
+      formVisible: true
+    }, () => {
+      const {orgId, id, name, pic, description, visibility} = option
+      this.ProjectForm.props.form.setFieldsValue({
+        orgId: `${orgId}`,
+        id,
+        name,
+        pic,
+        description,
+        visibility: `${visibility}`
+      })
+    })
+  }
+
   private onSearchProject = (event) => {
     const value = event.target.value
     const {organizationProjects} = this.props
@@ -72,17 +95,19 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       organizationProjects: value && value.length ? result : this.props.organizationProjects
     })
   }
+
   private hideProjectForm = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
     }, () => {
-      this.ProjectForm.resetFields()
+      this.ProjectForm.props.form.resetFields()
     })
   }
+
   private checkUniqueName = (rule, value = '', callback) => {
     const { onCheckUniqueName, organizationId } = this.props
-    const { getFieldsValue } = this.ProjectForm
+    const { getFieldsValue } = this.ProjectForm.props.form
     const id = getFieldsValue()['id']
     const data = {
       name: value,
@@ -97,24 +122,38 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         callback(err)
       })
   }
+
   private onModalOk = () => {
-    const { organizationId } = this.props
-    this.ProjectForm.validateFieldsAndScroll((err, values) => {
+    const { organizationId, currentOrganization, onAddProject, onEditProject, onLoadOrganizationProjects } = this.props
+    const { formType } = this.state
+
+    this.ProjectForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         values.visibility = values.visibility === 'true' ? true : false
-        if (this.state.formType === 'organizationProject') {
-          this.props.onAddProject({
+
+        if (formType === 'organizationProject') {
+          onAddProject({
             ...values,
             ...{orgId: organizationId},
             pic: `${Math.ceil(Math.random() * 19)}`
             // config: '{}'
           }, () => {
-            this.hideProjectForm() })
+            this.hideProjectForm()
+          })
+        } else if (formType === 'edit') {
+          onEditProject({
+            ...values,
+            ...{orgId: Number(values.orgId)}
+          }, () => {
+            onLoadOrganizationProjects({id: currentOrganization.id})
+            this.hideProjectForm()
+          })
         }
       }
     })
   }
+
   private onShowSizeChange = (current, pageSize) => {
     this.setState({
       pageNum: current,
@@ -127,6 +166,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       this.props.getOrganizationProjectsByPagination(param)
     })
   }
+
   private onPaginationChange = (page) => {
     this.setState({
       pageNum: page
@@ -138,6 +178,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       this.props.getOrganizationProjectsByPagination(param)
     })
   }
+
   public componentWillReceiveProps (nextProps) {
     const {organizationProjects} = this.props
     const nextOrgProjects = nextProps.organizationProjects
@@ -147,6 +188,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       })
     }
   }
+
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects } = this.state
     const { currentOrganization, organizationProjectsDetail, onCheckUniqueName } = this.props
@@ -180,6 +222,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           current={this.state.pageNum}
         />)
     }
+
     const ProjectItems = Array.isArray(organizationProjects) ? organizationProjects.map((lists, index) => (
       <ProjectItem
         unStar={this.props.unStar}
@@ -191,11 +234,10 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         options={lists}
         toProject={this.props.toProject}
         deleteProject={this.props.deleteProject}
-        onEditProject={this.props.onEditProject}
-        onLoadOrganizationProjects={this.props.onLoadOrganizationProjects}
-        // onCheckUniqueName={this.checkUniqueName}
+        showEditProjectForm={this.showEditProjectForm('edit', lists)}
       />
     )) : ''
+
     return (
       <div className={styles.listWrapper}>
         <Row>
@@ -231,7 +273,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
             onCheckUniqueName={this.checkUniqueName}
-            ref={(f) => { this.ProjectForm = f }}
+            wrappedComponentRef={this.refHandlers.ProjectForm}
           />
         </Modal>
       </div>
