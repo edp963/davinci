@@ -75,7 +75,7 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IProject
         name,
         pic,
         description,
-        visibility: `${visibility ? '1' : '0'}`
+        visibility: `${visibility}`
       })
     })
   }
@@ -87,9 +87,9 @@ export class ProjectItem extends React.PureComponent<IProjectItemProps, IProject
         this.setState({
           modalLoading: true
         })
+        values.visibility = values.visibility === 'true' ? true : false
         this.props.onEditProject({
           ...values,
-          ...{visibility: !!Number(values.visibility)},
           ...{orgId: Number(values.orgId)}
         }, () => {
           this.props.onLoadOrganizationProjects({id: currentOrganization.id})

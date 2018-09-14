@@ -102,12 +102,13 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     this.ProjectForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
+        values.visibility = values.visibility === 'true' ? true : false
         if (this.state.formType === 'organizationProject') {
           this.props.onAddProject({
             ...values,
             ...{orgId: organizationId},
-            pic: `${Math.ceil(Math.random() * 19)}`,
-            config: '{}'
+            pic: `${Math.ceil(Math.random() * 19)}`
+            // config: '{}'
           }, () => {
             this.hideProjectForm() })
         }

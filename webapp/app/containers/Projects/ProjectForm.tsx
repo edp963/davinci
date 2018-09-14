@@ -109,9 +109,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     const isShowDesc = classnames({
       [utilStyles.hide]: this.props.type === 'transfer'
     })
-    const isShowVisibility = classnames({
-      [utilStyles.hide]: this.props.type !== 'edit'
-    })
+    // const isShowVisibility = classnames({
+    //   [utilStyles.hide]: this.props.type !== 'edit'
+    // })
     let modalTitle = '创建'
     if (type === 'edit') {
       modalTitle = '修改'
@@ -194,13 +194,13 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 <FormItem label="可见" {...commonFormItemStyle}>
                   {getFieldDecorator('visibility', {
                     // hidden: this.props.type !== 'edit',
-                    initialValue: '可见'
+                    initialValue: 'true'
                   })(
                     <Select>
-                      <Option key="visibility" value="1">
+                      <Option key="visibility" value="true">
                         可见
                       </Option>
-                      <Option key="hidden" value="0">
+                      <Option key="hidden" value="false">
                         隐藏
                       </Option>
                     </Select>
