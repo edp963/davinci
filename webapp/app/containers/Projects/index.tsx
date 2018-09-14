@@ -127,10 +127,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         this.widgetTypeChange(`${orgId}`).then(
           () => {
             if (this.state.formType === 'transfer') {
-              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility ? '1' : '0'}`})
+              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility}`})
               return
             }
-            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility ? '1' : '0'}`})
+            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility}`})
           }
         )
       }
@@ -189,6 +189,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.ProjectForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
+        values.visibility = values.visibility === 'true' ? true : false
         if (this.state.formType === 'add') {
           this.props.onAddProject({
             ...values,
@@ -199,7 +200,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             this.hideProjectForm()
           })
         } else {
-          this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => {
+          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => {
             this.props.onLoadProjects()
             this.hideProjectForm()
           })
