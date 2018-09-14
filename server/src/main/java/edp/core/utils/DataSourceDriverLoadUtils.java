@@ -19,6 +19,8 @@
 package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.core.model.DataSourceDriver;
 import org.yaml.snakeyaml.Yaml;
 
@@ -26,7 +28,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class DataSourceDriverLoadUtils {
 
@@ -107,10 +112,15 @@ public class DataSourceDriverLoadUtils {
         }
 
         Yaml yaml = new Yaml();
-        Object load = yaml.load(new BufferedReader(fileReader));
+        HashMap<String, Object> map = yaml.loadAs(new BufferedReader(fileReader), HashMap.class);
         Map<String, DataSourceDriver> dataTypeMap = null;
-        if (null != load) {
-            dataTypeMap = (Map<String, DataSourceDriver>) load;
+        if (null != map && map.size() > 0) {
+            dataTypeMap = new HashMap<>();
+            ObjectMapper mapper = new ObjectMapper();
+            for (String key : map.keySet()) {
+                DataSourceDriver dataSourceDriver = mapper.convertValue(map.get(key), DataSourceDriver.class);
+                dataTypeMap.put(key, dataSourceDriver);
+            }
         }
         return dataTypeMap;
     }

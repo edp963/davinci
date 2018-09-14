@@ -57,11 +57,17 @@ public class CommonService<T> {
     @Value("${server.protocol:http}")
     private String protocol;
 
-    @Value("${server.address:localhost}")
+    @Value("${server.address}")
     private String address;
 
     @Value("${server.port}")
     public String port;
+
+    @Value("${server.access.address:}")
+    private String accessAddress;
+
+    @Value("${server.access.port:}")
+    private String accessPort;
 
 
     private static final String HTTP_PROTOCOL = "http";
@@ -72,23 +78,25 @@ public class CommonService<T> {
 
     public String getHost() {
         protocol = protocol.trim().toLowerCase();
+        accessAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
+        accessPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
 
         if (protocol.equals(HTTP_PROTOCOL)) {
-            if ("80".equals(port)) {
-                port = null;
+            if ("80".equals(accessPort)) {
+                accessPort = null;
             }
         }
 
         if (protocol.equals(HTTPS_PROTOCOL)) {
-            if ("443".equals(port)) {
-                port = null;
+            if ("443".equals(accessPort)) {
+                accessPort = null;
             }
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(protocol).append(PROTOCOL_SEPARATOR).append(address);
-        if (!StringUtils.isEmpty(port)) {
-            sb.append(":" + port);
+        sb.append(protocol).append(PROTOCOL_SEPARATOR).append(accessAddress);
+        if (!StringUtils.isEmpty(accessPort)) {
+            sb.append(":" + accessPort);
         }
         return sb.toString();
     }
