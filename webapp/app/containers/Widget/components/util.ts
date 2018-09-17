@@ -468,8 +468,11 @@ export function getTooltipPosition (point, params, dom, rect, size) {
   const { contentSize, viewSize } = size
   const [cx, cy] = contentSize
   const [vx, vy] = viewSize
+
+  const distanceXToMouse = 10
   return [
-    Math.min(x, vx - cx),
+    x + cx + distanceXToMouse > vx ? x - distanceXToMouse - cx : x + distanceXToMouse,
+    // Math.min(x, vx - cx),
     Math.min(y, vy - cy)
   ]
 }
