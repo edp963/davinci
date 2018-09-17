@@ -34,6 +34,7 @@ import {
 } from './constants'
 
 const initialState = fromJS({
+  dashboard: null,
   title: '',
   config: '{}',
   dashboardCascadeSources: null,
@@ -51,6 +52,7 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_SHARE_DASHBOARD_SUCCESS:
       return state
         .set('title', payload.dashboard.name)
+        .set('dashboard', payload.dashboard)
         .set('config', payload.dashboard.config)
         .set('dashboardCascadeSources', {})
         .set('widgets', payload.dashboard.widgets)

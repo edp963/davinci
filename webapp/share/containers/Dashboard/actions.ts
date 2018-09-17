@@ -36,12 +36,11 @@ import {
   RESIZE_ALL_DASHBOARDITEM
 } from './constants'
 
-export function getDashboard (token, resolve, reject) {
+export function getDashboard (token, reject) {
   return {
     type: LOAD_SHARE_DASHBOARD,
     payload: {
       token,
-      resolve,
       reject
     }
   }
@@ -144,14 +143,15 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, params) {
+export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, column, parents) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
     payload: {
       controlId,
       viewId,
       dataToken,
-      params
+      column,
+      parents
     }
   }
 }
