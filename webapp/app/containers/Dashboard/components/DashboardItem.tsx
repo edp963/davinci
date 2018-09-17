@@ -55,7 +55,6 @@ interface IDashboardItemProps {
   secretInfo?: string
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
-  interactId: string
   rendered?: boolean
   renderType: RenderType
   router?: InjectedRouter
@@ -66,7 +65,7 @@ interface IDashboardItemProps {
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
   onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
-  onTurnOffInteract: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
   onDoTableInteract: (itemId: number, triggerData: object) => void
@@ -76,6 +75,7 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
+  isInteracting: boolean
   pivotProps: IPivotProps
 }
 
@@ -85,6 +85,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.state = {
       controlPanelVisible: false,
       sharePanelAuthorized: false,
+      isInteracting: false,
       pivotProps: null
     }
   }
@@ -220,7 +221,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private doInteract = (triggerData) => {
     const { itemId, onDoTableInteract } = this.props
+    this.setState({ isInteracting: true })
     onDoTableInteract(itemId, triggerData)
+  }
+
+  private turnOffInteract = () => {
+    this.setState({ isInteracting: false })
+    const { onTurnOffInteract, itemId } = this.props
+    onTurnOffInteract(itemId)
   }
 
   private toWorkbench = () => {
@@ -238,19 +246,18 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       secretInfo,
       shareInfoLoading,
       downloadCsvLoading,
-      interactId,
       renderType,
       currentProject,
       onShowEdit,
       onDeleteDashboardItem,
       onLoadWidgetShareLink,
-      onTurnOffInteract,
       container
     } = this.props
 
     const {
       controlPanelVisible,
       sharePanelAuthorized,
+      isInteracting,
       pivotProps
     } = this.state
 
@@ -382,7 +389,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const gridItemClass = classnames({
       [styles.gridItem]: true,
-      [styles.interact]: !!interactId
+      [styles.interact]: isInteracting
     })
 
     return (
@@ -409,7 +416,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
         <div
           className={styles.offInteract}
-          onClick={onTurnOffInteract(itemId)}
+          onClick={this.turnOffInteract}
         >
           <i className="iconfont icon-unlink" />
           <h3>点击取消联动</h3>

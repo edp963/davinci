@@ -33,6 +33,7 @@ interface IDashboardLinkageConfigProps {
   currentDashboard: any
   currentItems: any[]
   currentItemsInfo: any
+  linkages: any[]
   views: any[]
   widgets: any[]
   visible: boolean
@@ -43,7 +44,6 @@ interface IDashboardLinkageConfigProps {
 }
 
 interface IDashboardLinkageConfigStates {
-  tableSource: any[]
   linkageCascaderSource: any[]
   savingLinkageConfig: boolean
 }
@@ -53,20 +53,16 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
   public constructor (props: IDashboardLinkageConfigProps) {
     super(props)
     this.state = {
-      tableSource: [],
       linkageCascaderSource: [],
       savingLinkageConfig: false
     }
   }
 
-  public componentWillUpdate (newProps: IDashboardLinkageConfigProps) {
-    const { currentDashboard, currentItems, currentItemsInfo } = newProps
-    if (currentDashboard !== this.props.currentDashboard
-      || currentItems !== this.props.currentItems
-      || currentItemsInfo !== this.props.currentItemsInfo) {
+  public componentWillReceiveProps (nextProps: IDashboardLinkageConfigProps) {
+    const { visible } = nextProps
+    if (visible) {
       const linkageCascaderSource = this.getLinkageConfigSource()
-      const tableSource = this.adjustLinkageTableSource(currentDashboard, currentItems)
-      this.setState({ tableSource, linkageCascaderSource })
+      this.setState({ linkageCascaderSource })
     }
   }
 
@@ -89,7 +85,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
       const params = [
-        [...cols, ...rows].filter((key) => model[key]).map((key) => ({
+        ...[...cols, ...rows].filter((key) => modelObj[key]).map((key) => ({
           label: key,
           value: [key, modelObj[key].sqlType, 'parameter'].join(DEFAULT_SPLITER)
         })),
@@ -119,27 +115,6 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     return linkageConfigSource
   }
 
-  private adjustLinkageTableSource = (currentDashboard, currentItems) => {
-    const config = JSON.parse(currentDashboard.config || '{}')
-    const linkageTableSource = config.linkages || []
-
-    return linkageTableSource.filter((lts) => {
-      let linkagerSign = false
-      let triggerSign = false
-
-      for (let i = 0, cl = currentItems.length; i < cl; i += 1) {
-        if (currentItems[i].id === +lts.linkager[0]) {
-          linkagerSign = true
-        }
-        if (currentItems[i].id === +lts.trigger[0]) {
-          triggerSign = true
-        }
-      }
-
-      return linkagerSign && triggerSign
-    })
-  }
-
   private onSavingLinkageConfig = () => {
     this.setState({
       savingLinkageConfig: !this.state.savingLinkageConfig
@@ -156,8 +131,8 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
   }
 
   public render () {
-    const { visible, loading, onSave, onGetWidgetInfo } = this.props
-    const { tableSource, linkageCascaderSource, savingLinkageConfig } = this.state
+    const { visible, loading, onSave, onGetWidgetInfo, linkages } = this.props
+    const { linkageCascaderSource, savingLinkageConfig } = this.state
 
     const modalButtons = [(
       <Button
@@ -190,7 +165,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
       >
         <div className={styles.modalLinkageConfig}>
           <LinkageConfig
-            tableSource={tableSource}
+            linkages={linkages}
             cascaderSource={linkageCascaderSource}
             onGetWidgetInfo={onGetWidgetInfo}
             saving={savingLinkageConfig}

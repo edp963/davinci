@@ -241,7 +241,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     return (
       <Input
         placeholder={item.tip || item.placeholder || item.name}
-        onChange={onFormInputItemChange}
+        onPressEnter={onFormInputItemChange}
       />
     )
   }
