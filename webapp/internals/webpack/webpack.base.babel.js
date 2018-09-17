@@ -29,7 +29,7 @@ module.exports = (options) => ({
       loaders: ['style-loader', 'css-loader']
     }, {
       test: /\.css$/,
-      include: [/app\/assets/],
+      include: [/app[\\\/]assets/],
       loaders: ['style-loader', 'css-loader', 'postcss-loader']
     }, {
       test: /\.less$/,
