@@ -64,6 +64,24 @@ const makeSelectModalLoading = () => createSelector(
   (dashboardState) => dashboardState.get('modalLoading')
 )
 
+const makeSelectCurrentLinkages = () => createSelector(
+  selectDashboard,
+  (dashboardState) => {
+    const currentDashboard = dashboardState.get('currentDashboard')
+    const currentItemsInfo = dashboardState.get('currentItemsInfo')
+    if (!currentDashboard && !currentItemsInfo) { return [] }
+
+    const emptyConfig = '{}'
+    const { linkages } = JSON.parse(currentDashboard.config || emptyConfig)
+    if (!linkages) { return [] }
+    const validLinkages = linkages.filter((l) => {
+      const { linkager, trigger } = l
+      return currentItemsInfo[linkager[0]] && currentItemsInfo[trigger[0]]
+    })
+    return validLinkages
+  }
+)
+
 export {
   selectDashboard,
   makeSelectDashboards,
@@ -75,5 +93,6 @@ export {
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
   makeSelectCurrentDashboardCascadeSources,
-  makeSelectModalLoading
+  makeSelectModalLoading,
+  makeSelectCurrentLinkages
 }

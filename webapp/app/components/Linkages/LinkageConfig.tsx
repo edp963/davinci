@@ -17,15 +17,15 @@ const styles = require('./Linkage.less')
 
 interface ILinkageConfigProps {
   cascaderSource: any[]
-  tableSource: any[]
+  linkages: any[]
   onGetWidgetInfo: (itemId: number) => void
   saving: boolean
-  onSave: (tableSource: any[]) => void
+  onSave: (linkages: any[]) => void
 }
 
 interface ILinkageConfigStates {
   formVisible: boolean
-  localTableSource: any[]
+  localLinkages: any[]
 }
 
 export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILinkageConfigStates> {
@@ -33,7 +33,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
     super(props)
     this.state = {
       formVisible: false,
-      localTableSource: []
+      localLinkages: []
     }
   }
 
@@ -41,37 +41,37 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
   private linkageForm: WrappedFormUtils = null
 
   public componentDidMount () {
-    const { tableSource, onGetWidgetInfo } = this.props
-    this.initState(tableSource, onGetWidgetInfo)
+    const { linkages, onGetWidgetInfo } = this.props
+    this.initState(linkages, onGetWidgetInfo)
   }
 
   public componentWillReceiveProps (nextProps: ILinkageConfigProps) {
-    const { tableSource, onGetWidgetInfo, saving, onSave } = nextProps
-    if (tableSource !== this.props.tableSource) {
-      this.initState(tableSource, onGetWidgetInfo)
+    const { linkages, onGetWidgetInfo, saving, onSave } = nextProps
+    if (linkages !== this.props.linkages) {
+      this.initState(linkages, onGetWidgetInfo)
     }
     if (saving !== this.props.saving) {
-      const { localTableSource } = this.state
-      onSave([...localTableSource])
+      const { localLinkages } = this.state
+      onSave([...localLinkages])
     }
   }
 
-  private initState = (tableSource, onGetWidgetInfo) => {
+  private initState = (linkages, onGetWidgetInfo) => {
     this.setState({
-      localTableSource: tableSource
+      localLinkages: linkages
     }, () => {
-      const { localTableSource } = this.state
-      if (localTableSource.length) {
-        this.renderChart(localTableSource, onGetWidgetInfo)
+      const { localLinkages } = this.state
+      if (localLinkages.length) {
+        this.renderChart(localLinkages, onGetWidgetInfo)
       }
     })
   }
 
-  private renderChart = (tableSource, onGetWidgetInfo) => {
+  private renderChart = (linkages, onGetWidgetInfo) => {
     const nodes = {}
     const links = []
 
-    tableSource.forEach((ts) => {
+    linkages.forEach((ts) => {
       const triggerId = ts.trigger[0]
       const linkagerId = ts.linkager[0]
 
@@ -161,12 +161,12 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
   private addToTable = () => {
     this.linkageForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { localTableSource } = this.state
+        const { localLinkages } = this.state
         this.setState({
-          localTableSource: [ ...localTableSource, { ...values, key: uuid(8, 16) } ]
+          localLinkages: [ ...localLinkages, { ...values, key: uuid(8, 16) } ]
         }, () => {
           const { onGetWidgetInfo } = this.props
-          this.renderChart(this.state.localTableSource, onGetWidgetInfo)
+          this.renderChart(this.state.localLinkages, onGetWidgetInfo)
         })
       }
     })
@@ -174,10 +174,10 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
 
   private deleteFromTable = (key) => () => {
     this.setState({
-      localTableSource: this.state.localTableSource.filter((lt) => lt.key !== key)
+      localLinkages: this.state.localLinkages.filter((lt) => lt.key !== key)
     }, () => {
       const { onGetWidgetInfo } = this.props
-      this.renderChart(this.state.localTableSource, onGetWidgetInfo)
+      this.renderChart(this.state.localLinkages, onGetWidgetInfo)
     })
   }
 
@@ -186,7 +186,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
       cascaderSource
     } = this.props
 
-    const { localTableSource } = this.state
+    const { localLinkages } = this.state
 
     const { formVisible } = this.state
 
@@ -194,10 +194,10 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
     const TOOLS_HEIGHT = 28
 
     const chartContainerClass = classnames({
-      [utilStyles.hide]: !localTableSource.length
+      [utilStyles.hide]: !localLinkages.length
     })
     const emptyChartClass = classnames({
-      [utilStyles.hide]: localTableSource.length
+      [utilStyles.hide]: localLinkages.length
     })
 
     return (
@@ -253,7 +253,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                 )
               }
             ]}
-            dataSource={localTableSource}
+            dataSource={localLinkages}
             pagination={false}
             scroll={{ y: PANEL_BODY_HEIGHT - TOOLS_HEIGHT - TABLE_HEADER_HEIGHT }}
           />

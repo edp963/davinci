@@ -10,6 +10,7 @@ const FormItem = Form.Item
 const Option = Select.Option
 
 import { DEFAULT_SPLITER } from '../../globalConstants'
+import { LinkageOperatorTypes } from 'utils/operatorTypes'
 const styles = require('./Linkage.less')
 
 interface ILinkageFormProps {
@@ -69,7 +70,7 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
     const { form, cascaderSource } = this.props
     const { getFieldDecorator } = form
 
-    const relations = ['=', 'like', '>', '<', '>=', '<=', '!=']
+    const relations = LinkageOperatorTypes
     const relationOptions = relations.map((r) => (
       <Option key={r} value={r}>{r}</Option>
     ))
