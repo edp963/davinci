@@ -30,7 +30,6 @@ import edp.core.exception.SourceException;
 import edp.core.model.BaseSource;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
-import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -40,14 +39,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -353,7 +352,7 @@ public class SqlUtils {
 
 
     public static void closeResult(ResultSet rs) {
-        if(rs!=null) {
+        if (rs != null) {
             try {
                 rs.close();
                 rs = null;

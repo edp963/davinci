@@ -118,27 +118,27 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
         List<ViewWithSourceBaseInfo> views = viewMapper.getByProject(projectId);
 
-        if (null != views && views.size() > 0) {
-
-            //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-            //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                //查询project所属team中当前用户最高角色
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
-
-                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    //查询当前用户在的 project所属team对project view的最高权限
-                    short maxViewPermission = relTeamProjectMapper.getMaxViewPermission(projectId, user.getId());
-                    if (maxViewPermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        //隐藏
-                        views = null;
-                    }
-                }
-            }
-        }
+//        if (null != views && views.size() > 0) {
+//
+//            //获取当前用户在organization的role
+//            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+//
+//            //当前用户是project的创建者和organization的owner，直接返回
+//            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+//                //查询project所属team中当前用户最高角色
+//                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
+//
+//                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
+//                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+//                    //查询当前用户在的 project所属team对project view的最高权限
+//                    short maxViewPermission = relTeamProjectMapper.getMaxViewPermission(projectId, user.getId());
+//                    if (maxViewPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+//                        //隐藏
+//                        views = null;
+//                    }
+//                }
+//            }
+//        }
 
         return resultMap.successAndRefreshToken(request).payloads(views);
     }

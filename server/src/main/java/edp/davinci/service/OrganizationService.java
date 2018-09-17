@@ -41,7 +41,7 @@ public interface OrganizationService extends CheckEntityService {
 
     ResultMap getOrganization(Long id, User user, HttpServletRequest request);
 
-    ResultMap getOrgProjects(Long id, User user, int pageNum, int pageSize, HttpServletRequest request);
+    ResultMap getOrgProjects(Long id, User user, String keyword, int pageNum, int pageSize, HttpServletRequest request);
 
     ResultMap getOrgMembers(Long id, HttpServletRequest request);
 

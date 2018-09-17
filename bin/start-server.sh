@@ -32,7 +32,7 @@ LOG_PATH=$DAVINCI3_HOME/logs/davinci.$TODAY.log
 nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:$DAVINCI3_HOME/lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication   >$LOG_PATH  2>&1 &
 
 echo "=========================================="
-echo "Starting..., press \`crtl + c\` to exit log"
+echo "Starting..., press \`CRTL + C\` to exit log"
 echo "=========================================="
 
 sleep 3s
