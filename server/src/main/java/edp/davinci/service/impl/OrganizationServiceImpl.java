@@ -327,18 +327,24 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
      *
      * @param id
      * @param user
+     * @param keyword
      * @param pageNum
      * @param pageSize
      * @param request
      * @return
      */
     @Override
-    public ResultMap getOrgProjects(Long id, User user, int pageNum, int pageSize, HttpServletRequest request) {
+    public ResultMap getOrgProjects(Long id, User user, String keyword, int pageNum, int pageSize, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         if (PageUtils.checkPageInfo(pageNum, pageSize)) {
             PageHelper.startPage(pageNum, pageSize);
-            List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(id, user.getId());
+
+            if (StringUtils.isEmpty(keyword)) {
+                keyword = null;
+            }
+
+            List<ProjectWithCreateBy> projects = projectMapper.getProjectsByOrgWithUser(id, user.getId(), keyword);
 
             PageInfo<ProjectWithCreateBy> pageInfo = new PageInfo<>(projects);
 

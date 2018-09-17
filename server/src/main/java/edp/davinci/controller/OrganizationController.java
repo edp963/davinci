@@ -245,6 +245,7 @@ public class OrganizationController extends BaseController {
     @ApiOperation(value = "get organization projects")
     @GetMapping("/{id}/projects")
     public ResponseEntity getOrgProjects(@PathVariable Long id,
+                                         @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword,
                                          @RequestParam(value = "pageNum", required = false, defaultValue = "1") int pageNum,
                                          @RequestParam(value = "pageSize", required = false, defaultValue = "10") int pageSize,
                                          @ApiIgnore @CurrentUser User user,
@@ -254,7 +255,7 @@ public class OrganizationController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         try {
-            ResultMap resultMap = organizationService.getOrgProjects(id, user, pageNum, pageSize, request);
+            ResultMap resultMap = organizationService.getOrgProjects(id, user, keyword, pageNum, pageSize, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

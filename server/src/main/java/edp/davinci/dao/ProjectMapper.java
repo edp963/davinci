@@ -78,45 +78,7 @@ public interface ProjectMapper {
     List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
 
 
-    @Select({
-            "SELECT ",
-            "    p.*, ",
-            "    IF(s.id is NULL, FALSE, TRUE) as 'isStar',",
-            "    u.id as 'createBy.id',",
-            "    u.username as 'createBy.username',",
-            "    u.avatar as 'createBy.avatar'",
-            "from (SELECT * FROM project WHERE org_id = #{orgId}) p",
-            "   LEFT JOIN `user` u on u.id = p.user_id",
-            "   LEFT JOIN star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
-            "   LEFT JOIN (",
-            "      SELECT org.id, ruo.role, org.member_permission ",
-            "      FROM rel_user_organization ruo ",
-            "      LEFT JOIN organization org on ruo.org_id = org.id ",
-            "      where ruo.user_id = #{userId} and org.id = #{orgId}",
-            "   ) o on o.id = p.org_id",
-            "where ",
-            //用户创建
-            "    p.user_id = #{userId} ",
-            //公开的
-            "    or p.visibility = 1",
-            //用户所在组可访问
-            "    or p.id in (",
-            "        SELECT p.id",
-            "        FROM project p",
-            "        LEFT JOIN rel_team_project rtp on rtp.project_id = p.id",
-            "        LEFT JOIN team t ON t.id = rtp.team_id",
-            "        LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
-            "        WHERE p.org_id = #{orgId} and rut.user_id = #{userId}",
-//            "  AND rut.role = 1",
-            "    )",
-            //organization对成员可见
-            "   or (p.visibility = 1 and o.member_permission > 0)",
-//            " or o.member_permission > 0",
-            //organization的owner
-            " or o.role > 0",
-            "order by p.id",
-    })
-    List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
+    List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("keyword") String keyword);
 
 
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})
