@@ -515,8 +515,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
                 st.add("orders", executeParam.getOrders());
                 st.add("filters", executeParam.getFilters());
-                st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
-                st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
+                st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
                 st.add("sql", querySqlList.get(querySqlList.size() - 1));
 
                 querySqlList.set(querySqlList.size() - 1, st.render());
@@ -740,8 +740,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                             st.add("column", param.getColumn());
                             st.add("params", param.getParents());
                             st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                            st.add("keywordStart", DataTypeEnum.getKeywordStart(source.getJdbcUrl()));
-                            st.add("keywordEnd", DataTypeEnum.getKeywordEnd(source.getJdbcUrl()));
+                            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
 
                             querySqlList.set(querySqlList.size() - 1, st.render());
                         }
@@ -882,8 +882,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         st.add("aggregators", executeParam.getAggregators(viewWithProjectAndSource.getSource().getJdbcUrl()));
         st.add("orders", executeParam.getOrders());
         st.add("filters", executeParam.getFilters());
-        st.add("keywordStart", DataTypeEnum.getKeywordStart(viewWithProjectAndSource.getSource().getJdbcUrl()));
-        st.add("keywordEnd", DataTypeEnum.getKeywordEnd(viewWithProjectAndSource.getSource().getJdbcUrl()));
+        st.add("keywordPrefix", sqlUtils.getKeywordPrefix(viewWithProjectAndSource.getSource().getJdbcUrl()));
+        st.add("keywordSuffix", sqlUtils.getKeywordSuffix(viewWithProjectAndSource.getSource().getJdbcUrl()));
         st.add("sql", sqlKey.toString());
 
         StringBuilder keyBuilder = new StringBuilder(st.render()).append("-");

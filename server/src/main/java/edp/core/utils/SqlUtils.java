@@ -28,6 +28,7 @@ import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.BaseSource;
+import edp.core.model.CustomDataSource;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.davinci.core.enums.SqlColumnEnum;
@@ -495,6 +496,62 @@ public class SqlUtils {
             }
             releaseConnection(connection);
         }
+    }
+
+    public static String getKeywordPrefix(String jdbcUrl) {
+        String keywordPrefix = "";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            keywordPrefix = dataTypeEnum.getKeywordPrefix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                keywordPrefix = customDataSource.getKeyword_prefix();
+            }
+        }
+        return StringUtils.isEmpty(keywordPrefix) ? "" : keywordPrefix;
+    }
+
+    public static String getKeywordSuffix(String jdbcUrl) {
+        String keywordSuffix = "";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            keywordSuffix = dataTypeEnum.getKeywordSuffix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                keywordSuffix = customDataSource.getKeyword_suffix();
+            }
+        }
+        return StringUtils.isEmpty(keywordSuffix) ? "" : keywordSuffix;
+    }
+
+    public static String getAliasPrefix(String jdbcUrl) {
+        String aliasPrefix = "'";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            aliasPrefix = dataTypeEnum.getAliasPrefix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                aliasPrefix = customDataSource.getAlias_prefix();
+            }
+        }
+        return StringUtils.isEmpty(aliasPrefix) ? "'" : aliasPrefix;
+    }
+
+    public static String getAliasSuffix(String jdbcUrl) {
+        String aliasSuffix = "'";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            aliasSuffix = dataTypeEnum.getAliasSuffix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                aliasSuffix = customDataSource.getAlias_suffix();
+            }
+        }
+        return StringUtils.isEmpty(aliasSuffix) ? "'" : aliasSuffix;
     }
 
 
