@@ -48,8 +48,16 @@
 #   name: mysql
 #   desc: mysql
 #   driver: com.mysql.jdbc.Driver
+#   keyword_prefix: \`
+#   keyword_suffix: \`
+#   alias_prefix: \'
+#   alias_suffix: \'
 
 # oracle:
 #   name: oracle
 #   desc: oracle
 #   driver: oracle.jdbc.driver.OracleDriver
+#   keyword_prefix: \"
+#   keyword_suffix: \"
+#   alias_prefix: \'
+#   alias_suffix: \'
