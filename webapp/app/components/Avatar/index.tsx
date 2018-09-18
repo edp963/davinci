@@ -33,6 +33,7 @@ export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
     const {path, size, enlarge} = this.props
     const {formVisible} = this.state
     const src = path ? path : logo
+
     const itemClass = classnames({
       [styles.img]: true,
       [styles.profile]: size === 'profile',
@@ -41,11 +42,18 @@ export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
       [styles.small]: size === 'small',
       [styles.isEnlarge]: enlarge
     })
+
     const isEnlarge = enlarge
       ? <img className={itemClass} src={src} alt="" onClick={this.showEnlarge}/>
       : <img className={itemClass} src={src} alt=""/>
+
+    const wrapper = classnames({
+      [styles.enlargeAvatarWrapper]: size === 'large',
+      [styles.avatarWrapper]: size === 'profile'
+    })
+
     return (
-      <div>
+      <div className={wrapper}>
         {isEnlarge}
         <Modal
           title={null}
