@@ -18,29 +18,23 @@
 
 package edp.davinci.runner;
 
-import edp.davinci.service.CronJobService;
+import edp.core.utils.CustomDataSourceUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class CronJobRunner implements ApplicationRunner {
+public class CustomDataSourceRunner implements ApplicationRunner {
 
-    @Autowired
-    private CronJobService cronJobService;
+    @Value("${custom-datasource-driver-path}")
+    private String dataSourceYamlPath;
 
-    /**
-     * 应用启动后开启已启动的cronjob
-     *
-     * @param args
-     * @throws Exception
-     */
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        log.info("======= start cron job =======>>");
-        cronJobService.startAllJobs();
+        log.info("======= load custom datasource config =======>>");
+        CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
     }
 }
