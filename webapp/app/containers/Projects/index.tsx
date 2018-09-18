@@ -577,8 +577,17 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         return colItems
       }) : ''
     const historyBrowserAll = historyStack.getAll()
-    const history =  historyBrowserAll
-      ? historyBrowserAll.map((d: IProject) => {
+    const historyArr = []
+    historyBrowserAll.forEach((historyItem) => {
+      projectArr.forEach((projectItem) => {
+        if (historyItem.id === projectItem.id) {
+          historyArr.push(projectItem)
+        }
+      })
+    })
+
+    const history =  historyArr
+      ? historyArr.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic || 9}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
@@ -595,6 +604,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
         return colItems
       }) : ''
+
     const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
       const path = require(`../../assets/images/bg${d.pic || 9}.png`)
       let StarPanel = void 0
