@@ -38,7 +38,7 @@ interface IProjectsProps {
   unStar?: (id: number) => any
   userList?: (id: number) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
-  getOrganizationProjectsByPagination: (obj: {pageNum: number, pageSize: number}) => any
+  getOrganizationProjectsByPagination: (obj: {keyword?: string, pageNum: number, pageSize: number}) => any
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
 }
 
@@ -91,9 +91,17 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     const result = (organizationProjects as Organization.IOrganizationProjects[]).filter((project, index) => {
       return project && project.name.indexOf(value.trim()) > -1
     })
-    this.setState({
-      organizationProjects: value && value.length ? result : this.props.organizationProjects
-    })
+
+    const param = {
+      keyword: value,
+      pageNum: this.state.pageNum,
+      pageSize: this.state.pageSize
+    }
+
+    this.props.getOrganizationProjectsByPagination(param)
+    // this.setState({
+    //   organizationProjects: value && value.length ? result : this.props.organizationProjects
+    // })
   }
 
   private hideProjectForm = () => {

@@ -179,6 +179,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       pageSize: obj.pageSize
     })
     const param = {
+      keyword: obj.keyword,
       id: organizationId,
       pageNum: obj.pageNum,
       pageSize: obj.pageSize
