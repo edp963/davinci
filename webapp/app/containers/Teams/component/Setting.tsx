@@ -29,16 +29,20 @@ export class Setting extends React.PureComponent <ISettingProps> {
     const { currentTeam } = this.props
     this.setFieldData(currentTeam)
   }
+
   private parentTeamChange = (val) =>
     new Promise((resolve) => {
       this.forceUpdate(() => resolve())
     })
+
   private setFieldData = (currentTeam) => {
     const { id, name, description, parentTeamId, visibility } = currentTeam
+    console.log({currentTeam})
     this.parentTeamChange(`${parentTeamId}`).then(() => {
       this.props.form.setFieldsValue({id, name, description, parentTeamId: `${parentTeamId}`, visibility})
     })
   }
+
   public componentWillReceiveProps (nextProps) {
     const {id} = this.props.currentTeam
     const nextId = nextProps.currentTeam.id
@@ -46,6 +50,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
       this.setFieldData(nextProps.currentTeam)
     }
   }
+
   private filterTeamsByOrg = (teams) => {
     if (teams) {
       const { id } = this.props.currentTeam
@@ -61,10 +66,12 @@ export class Setting extends React.PureComponent <ISettingProps> {
       return result
     }
   }
+
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { name, id, avatar } = this.props.currentTeam
+    const { name, id, avatar, description, parentTeamId } = this.props.currentTeam
     const { teams } = this.props
+
     const commonFormItemStyle = {
       labelCol: { span: 2 },
       wrapperCol: { span: 18 }
@@ -80,6 +87,16 @@ export class Setting extends React.PureComponent <ISettingProps> {
           : ''}
       </Option>
     )) : ''
+
+    const currentValues = this.props.form.getFieldsValue()
+    let isDisabled = true
+    if (currentValues.name !== name
+      || currentValues.description !== description
+      || currentValues.parentTeamId !== parentTeamId
+    ) {
+        isDisabled = false
+    }
+
     return (
       <div className={styles.listWrapper}>
         <div className={styles.container}>
@@ -148,7 +165,13 @@ export class Setting extends React.PureComponent <ISettingProps> {
                   {/*</FormItem>*/}
                 {/*</Col>*/}
                 <Col>
-                  <Button size="large" onClick={this.props.editTeam(this.props.form.getFieldsValue())}>保存修改</Button>
+                  <Button
+                    size="large"
+                    onClick={this.props.editTeam(this.props.form.getFieldsValue())}
+                    disabled={isDisabled}
+                  >
+                    保存修改
+                  </Button>
                 </Col>
               </Row>
               <Row className={styles.dangerZone}>
