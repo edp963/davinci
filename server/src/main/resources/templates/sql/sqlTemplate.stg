@@ -44,11 +44,11 @@ VALUES
 >>
 
 
-queryAll(tableName, keywordStart, keywordEnd)
+queryAll(tableName, keywordPrefix, keywordSuffix)
 ::=<<
 <if(tableName)>
-<if(keywordStart && keywordEnd)>
-SELECT * FROM <keywordStart><tableName><keywordEnd>
+<if(keywordPrefix && keywordSuffix)>
+SELECT * FROM <keywordPrefix><tableName><keywordSuffix>
 <else>
 SELECT * FROM <tableName>
 <endif>
@@ -56,7 +56,7 @@ SELECT * FROM <tableName>
 >>
 
 
-querySql(groups, aggregators, filters, orders, sql, keywordStart, keywordEnd)
+querySql(groups, aggregators, filters, orders, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(!groups && !aggregators && !filters && !orders)>
 <sql>
@@ -66,7 +66,7 @@ SELECT
  *
 <endif>
 <if(groups)>
- <groups:{group|<if(keywordStart && keywordEnd)><keywordStart><group><keywordEnd><else><group><endif>}; separator=",">
+ <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><group><keywordSuffix><else><group><endif>}; separator=",">
 <endif>
 <if(groups && aggregators)>,<endif>
 <if(aggregators)>
@@ -77,24 +77,24 @@ FROM (<sql>) AS T
 WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 <if(groups)>
-GROUP BY <groups:{group|<if(keywordStart && keywordEnd)><keywordStart><group><keywordEnd><else><group><endif>}; separator=",">
+GROUP BY <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><group><keywordSuffix><else><group><endif>}; separator=",">
 <endif>
 <if(orders)>
-ORDER BY <orders:{order|<if(order)><if(keywordStart && keywordEnd)><keywordStart><order.column><keywordEnd><else><order.column><endif> <order.direction><endif>}; separator=",">
+ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)><keywordPrefix><order.column><keywordSuffix><else><order.column><endif> <order.direction><endif>}; separator=",">
 <endif>
 <endif>
 >>
 
 
-queryDistinctSql(column, params, sql, keywordStart, keywordEnd)
+queryDistinctSql(column, params, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(column && sql)>
-<if(keywordStart && keywordEnd)>
-SELECT DISTINCT <keywordStart><column><keywordEnd> FROM (<sql>) AS T
+<if(keywordPrefix && keywordSuffix)>
+SELECT DISTINCT <keywordPrefix><column><keywordSuffix> FROM (<sql>) AS T
 <if(params)>
-WHERE <params:{param|<if(param)><keywordStart><param.column><keywordEnd> = <param.value><endif>}; separator=" AND ">
+WHERE <params:{param|<if(param)><keywordPrefix><param.column><keywordSuffix> = <param.value><endif>}; separator=" AND ">
 <endif>
-ORDER BY <keywordStart><column><keywordEnd>
+ORDER BY <keywordPrefix><column><keywordSuffix>
 <else>
 SELECT DISTINCT <column> FROM (<sql>) AS T
 <if(params)>

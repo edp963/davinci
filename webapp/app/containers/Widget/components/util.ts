@@ -30,7 +30,7 @@ export function getAggregatorLocale (agg) {
     case 'sum': return '总计'
     case 'avg': return '平均数'
     case 'count': return '计数'
-    case 'distinct': return '去重计数'
+    case 'COUNTDISTINCT': return '去重计数'
     case 'max': return '最大值'
     case 'min': return '最小值'
     case 'median': return '中位数'

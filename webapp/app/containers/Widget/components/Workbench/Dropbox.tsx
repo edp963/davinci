@@ -18,7 +18,7 @@ export type DropboxItemType = DragType | 'add'
 export type ViewModelType = 'string' | 'number' | 'date' | 'geoCountry' | 'geoProvince' | 'geoCity'
 export type DropType = 'outside' | 'inside' | 'unmoved'
 export type SortType = 'asc' | 'desc'
-export type AggregatorType = 'sum' | 'avg' | 'count' | 'distinct' | 'max' | 'min' | 'median' | 'var' | 'dev'
+export type AggregatorType = 'sum' | 'avg' | 'count' | 'COUNTDISTINCT' | 'max' | 'min' | 'median' | 'var' | 'dev'
 
 interface IDataColumn {
   name: string

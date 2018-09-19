@@ -52,7 +52,19 @@ export class Setting extends React.PureComponent <ISettingProps> {
       labelCol: { span: 2 },
       wrapperCol: { span: 18 }
     }
-    const {name, avatar, id} = this.props.currentOrganization
+
+    const { name, avatar, id, description, allowCreateProject, memberPermission } = this.props.currentOrganization
+
+    const currentValues = this.props.form.getFieldsValue()
+    let isDisabled = true
+    if (currentValues.name !== name
+      || currentValues.description !== description
+      || currentValues.allowCreateProject !== allowCreateProject
+      || currentValues.memberPermission !== memberPermission
+    ) {
+        isDisabled = false
+    }
+
     return (
       <div className={styles.listWrapper}>
         <div className={styles.container}>
@@ -156,7 +168,13 @@ export class Setting extends React.PureComponent <ISettingProps> {
                   </FormItem>
                 </Col>
                 <Col>
-                  <Button size="large" onClick={this.props.editOrganization(this.props.form.getFieldsValue())}>保存修改</Button>
+                  <Button
+                    size="large"
+                    onClick={this.props.editOrganization(this.props.form.getFieldsValue())}
+                    disabled={isDisabled}
+                  >
+                    保存修改
+                  </Button>
                 </Col>
               </Row>
               <Row className={styles.dangerZone}>

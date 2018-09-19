@@ -21,14 +21,14 @@
 import * as React from 'react'
 
 import { DEFAULT_SECONDARY_COLOR } from '../../globalConstants'
-const styles = require('./Login.less')
+const styles = require('./Background.less')
 
 declare interface IWindow extends Window {
   THREE: any
 }
 declare const window: IWindow
 
-export class Background extends React.Component<{}, {}> {
+export class Canvas extends React.Component<{}, {}> {
   constructor (props) {
     super(props)
   }
@@ -186,4 +186,4 @@ export class Background extends React.Component<{}, {}> {
   }
 }
 
-export default Background
+export default Canvas

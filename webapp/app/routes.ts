@@ -18,12 +18,9 @@
  * >>
  */
 
-// import { getAsyncInjectors } from './utils/asyncInjectors'
 import { RouteProps } from 'react-router'
 
 import Report from './containers/Report'
-// import Group from './containers/Group'
-// import User from './containers/User'
 import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
@@ -31,15 +28,14 @@ import Widget from './containers/Widget'
 import Workbench from './containers/Widget/components/Workbench/index'
 import Viz from './containers/Viz'
 import Dashboard from './containers/Dashboard'
-// import Portal from './containers/Portal'
 import Grid from './containers/Dashboard/Grid'
 import Register from './containers/Register'
 import Activate from './containers/Register/Activate'
 import JoinOrganization from './containers/Register/JoinOrganization'
+import Background from './containers/Background'
 import Login from './containers/Login'
 import Main from './containers/Main'
 import Schedule from './containers/Schedule'
-import Display from './containers/Display'
 import Editor from './containers/Display/Editor'
 import Preview from './containers/Display/Preview'
 import Account from './containers/Account'
@@ -69,26 +65,30 @@ interface IExtendedRouteProps extends RouteProps {
 }
 
 export default function createRoutes (store): IExtendedRouteProps[] {
-  // const { injectReducer, injectSagas } = getAsyncInjectors(store)
   return [
     {
-      path: '/login',
-      component: Login
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: Register
+      component: Background,
+      childRoutes: [
+        {
+          path: '/login',
+          component: Login
+        },
+        {
+          path: '/register',
+          name: 'register',
+          component: Register
+        },
+        {
+          path: '/joinOrganization',
+          name: 'joinOrganization',
+          component: JoinOrganization
+        }
+      ]
     },
     {
       path: '/activate',
       name: 'activate',
       component: Activate
-    },
-    {
-      path: '/joinOrganization',
-      name: 'joinOrganization',
-      component: JoinOrganization
     },
     {
       component: Main,
@@ -105,7 +105,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           indexRoute: {
             onEnter: (_, replace) => {
               const { params } = _
-              // replace(`/project/${params.pid}/portals`)
               replace(`/project/${params.pid}/vizs`)
             }
           },
@@ -115,17 +114,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               name: 'vizs',
               components: Viz
             },
-            // {
-            //   path: '/project/:pid/portals',
-            //   name: 'portals',
-            //   component: Portal
-            // },
-            // {
-            //   path: '/project/:pid/dashboard/:did/portal/:pid',
-            //   name: 'dashboards',
-            //   component: Dashboard
-            // },
-            // todo 待dashboard portal完成后，删除此路由
             {
               path: '/project/:pid/widgets',
               name: 'widgets',
@@ -141,26 +129,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               name: 'sources',
               component: Source
             },
-            // {
-            //   path: '/project/:pid/users',
-            //   name: 'users',
-            //   component: User
-            // },
-            // {
-            //   path: '/project/:pid/groups',
-            //   name: 'groups',
-            //   component: Group
-            // },
             {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
             },
-            // {
-            //   path: '/project/:pid/displays',
-            //   name: 'displays',
-            //   component: Display
-            // }
             {
               path: '/project/:pid/portal/:portalId/portalName/:portalName',
               name: 'dashboard',
