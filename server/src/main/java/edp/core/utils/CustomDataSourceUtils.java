@@ -67,7 +67,7 @@ public class CustomDataSourceUtils {
     }
 
 
-    public static void loadAllFromYaml(String yamlPath) {
+    public static void loadAllFromYaml(String yamlPath) throws Exception {
         if (StringUtils.isEmpty(yamlPath)) {
             return;
         }
@@ -99,13 +99,13 @@ public class CustomDataSourceUtils {
             for (String key : loads.keySet()) {
                 CustomDataSource customDataSource = mapper.convertValue(loads.get(key), CustomDataSource.class);
                 if (StringUtils.isEmpty(customDataSource.getName()) || StringUtils.isEmpty(customDataSource.getDriver())) {
-                    continue;
+                    throw new Exception("Load custom datasource error: name or driver cannot be empty" );
                 }
                 if ("null".equals(customDataSource.getName().trim().toLowerCase())) {
-                    continue;
+                    throw new Exception("Load custom datasource error: invalid name");
                 }
                 if ("null".equals(customDataSource.getDriver().trim().toLowerCase())) {
-                    continue;
+                    throw new Exception("Load custom datasource error: invalid driver");
                 }
 
                 if (StringUtils.isEmpty(customDataSource.getDesc())) {
@@ -114,6 +114,19 @@ public class CustomDataSourceUtils {
                 if ("null".equals(customDataSource.getDesc().trim().toLowerCase())) {
                     customDataSource.setDesc(customDataSource.getName());
                 }
+
+                if (!StringUtils.isEmpty(customDataSource.getKeyword_prefix()) || !StringUtils.isEmpty(customDataSource.getKeyword_suffix())) {
+                    if (StringUtils.isEmpty(customDataSource.getKeyword_prefix()) || StringUtils.isEmpty(customDataSource.getKeyword_suffix())) {
+                        throw new Exception("Load custom datasource error: keyword prefixes and suffixes must be configured in pairs.");
+                    }
+                }
+
+                if (!StringUtils.isEmpty(customDataSource.getAlias_prefix()) || !StringUtils.isEmpty(customDataSource.getAlias_suffix())) {
+                    if (StringUtils.isEmpty(customDataSource.getKeyword_prefix()) || StringUtils.isEmpty(customDataSource.getKeyword_suffix())) {
+                        throw new Exception("Load custom datasource error: alias prefixes and suffixes must be configured in pairs.");
+                    }
+                }
+
                 map.put(key.toLowerCase(), customDataSource);
             }
         }
