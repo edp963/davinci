@@ -29,7 +29,6 @@ import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import Background from '../Login/Background'
 const Icon = require('antd/lib/icon')
 const Message = require('antd/lib/message')
 import RegisterForm from './RegisterForm'
@@ -142,6 +141,7 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
     const { onCheckName, signupLoading} = this.props
     const firstStep = (
         <div className={styles.window}>
+          <Helmet title="Register" />
           <RegisterForm
             username={this.state.username}
             email={this.state.email}
@@ -173,24 +173,16 @@ export class Register extends React.PureComponent<IRegisterProps, IRegisterState
       )
     const secondStep = (
         <div className={styles.window}>
-            <SendEmailTips
-              email={email}
-              goBack={this.goBack}
-              sendEmailOnceMore={this.sendEmailOnceMore}
-            />
+          <Helmet title="Register" />
+          <SendEmailTips
+            email={email}
+            goBack={this.goBack}
+            sendEmailOnceMore={this.sendEmailOnceMore}
+          />
         </div>
       )
 
-    return (
-      <div className={styles.login}>
-        <Helmet title="Register" />
-        <Background />
-        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
-        {
-          step === 'first' ? firstStep : secondStep
-        }
-      </div>
-    )
+    return step === 'first' ? firstStep : secondStep
   }
 }
 

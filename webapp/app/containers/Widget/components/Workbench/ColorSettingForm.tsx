@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { SketchPicker } from 'react-color'
-import { getAggregatorLocale, decodeMetricName } from '../util'
+import { decodeMetricName } from '../util'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 const radios = require('antd/lib/radio')
 const Radio = radios.default
