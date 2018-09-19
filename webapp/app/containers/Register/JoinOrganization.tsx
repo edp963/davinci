@@ -1,14 +1,8 @@
 import * as React from 'react'
-import * as classnames from 'classnames'
 import {compose} from 'redux'
 import Helmet from 'react-helmet'
-import Background from '../../containers/Login/Background'
 
 const Icon = require('antd/lib/icon')
-import injectReducer from '../../utils/injectReducer'
-import injectSaga from '../../utils/injectSaga'
-// import reducer from '../App/reducer'
-// import saga from '../App/sagas'
 
 import {connect} from 'react-redux'
 import {joinOrganization, login} from '../App/actions'
@@ -132,20 +126,11 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
   public render () {
     const {username, password} = this.state
     const {loginLoading} = this.props
-    const loginStyle = classnames({
-      [utilStyles.hide]: !this.state.needLogin,
-      [styles.login]: true
-    })
-    const activeWrapper = classnames({
-      [utilStyles.hide]: this.state.needLogin,
-      [registerStyles.activeWrapper]: true
-    })
-    return (
-      <div className={loginStyle}>
-        <Helmet title="Login"/>
-        <Background/>
-        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')}/>
+
+    return this.state.needLogin
+      ? (
         <div className={styles.window}>
+          <Helmet title="Login - Join Organization" />
           <div className={styles.form}>
             <div className={styles.input}>
               <Icon type="user"/>
@@ -181,11 +166,15 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
             登 录
           </button>
         </div>
-        <div className={activeWrapper}>
-          <Spin size="large"/>
+      )
+     : (
+        <div className={styles.window}>
+          <Helmet title="Join Organization" />
+          <h1 className={styles.joinOrganizationLoadingContent}>
+            加入组织中，请稍候…
+          </h1>
         </div>
-      </div>
-    )
+      )
   }
 }
 
@@ -201,12 +190,8 @@ export function mapDispatchToProps (dispatch) {
 }
 
 const withConnect = connect<{}, {}, IJoinOrganizationProps>(mapStateToProps, mapDispatchToProps)
-// const withReducer = injectReducer({key: 'global', reducer})
-// const withSaga = injectSaga({key: 'global', saga})
 
 export default compose(
-  // withReducer,
-  // withSaga,
   withConnect
 )(JoinOrganization)
 

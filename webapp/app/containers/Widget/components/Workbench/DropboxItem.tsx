@@ -52,7 +52,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       sum: getAggregatorLocale('sum'),
       avg: getAggregatorLocale('avg'),
       count: getAggregatorLocale('count'),
-      distinct: getAggregatorLocale('distinct'),
+      COUNTDISTINCT: getAggregatorLocale('COUNTDISTINCT'),
       max: getAggregatorLocale('max'),
       min: getAggregatorLocale('min')
     }, {
