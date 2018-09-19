@@ -25,7 +25,6 @@ import edp.core.exception.SourceException;
 import edp.core.model.CustomDataSource;
 import edp.core.utils.CustomDataSourceUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -75,13 +74,13 @@ public class JdbcDataSource extends DruidDataSource {
             DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
 
             CustomDataSource customDataSource = null;
-//            if (null == dataTypeEnum) {
-            try {
-                customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
-            } catch (Exception e) {
-                throw new SourceException(e.getMessage());
+            if (null == dataTypeEnum) {
+                try {
+                    customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
+                } catch (Exception e) {
+                    throw new SourceException(e.getMessage());
+                }
             }
-//            }
 
             DruidDataSource instance = new JdbcDataSource();
             if (null == dataTypeEnum && null == customDataSource) {

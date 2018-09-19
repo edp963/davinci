@@ -20,9 +20,12 @@ package edp.davinci.runner;
 
 import edp.core.utils.CustomDataSourceUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -32,9 +35,18 @@ public class CustomDataSourceRunner implements ApplicationRunner {
     @Value("${custom-datasource-driver-path}")
     private String dataSourceYamlPath;
 
+    @Autowired
+    private ApplicationContext applicationContext;
+
     @Override
-    public void run(ApplicationArguments args) throws Exception {
-        log.info("======= load custom datasource config =======>>");
-        CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
+    public void run(ApplicationArguments args) {
+        log.info("======= Load custom datasource config =======>>");
+        try {
+            CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
+        } catch (Exception e) {
+            log.error("{}", e.getMessage());
+            SpringApplication.exit(applicationContext);
+            log.info("Server shutdown");
+        }
     }
 }
