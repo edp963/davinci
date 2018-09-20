@@ -180,21 +180,17 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private onResize = (_, { size }) => {
-    const { itemId, selected, onResizeLayer, scale } = this.props
+    const { itemId, selected, onResizeLayer } = this.props
     const { width: prevWidth, height: prevHeight } = this.state
     const { width, height } = size
     const delta = {
-      deltaWidth: (width - this.state.width) / scale[0],
-      deltaHeight: (height - this.state.height) / scale[1]
+      deltaWidth: width - prevWidth,
+      deltaHeight: height - prevHeight
     }
-    console.log('-----------------------')
-    console.log('delta: ', delta)
-    console.log('prev: ', { prevWidth, prevHeight })
-    console.log(size)
     if (onResizeLayer && selected) { onResizeLayer(itemId, delta) }
     this.setState({
-      width: prevWidth + delta.deltaWidth,
-      height: prevHeight + delta.deltaHeight
+      width,
+      height
     })
   }
 
@@ -470,6 +466,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           minConstraints={[50, 50]}
           maxConstraints={maxConstraints}
           handleSize={[20, 20]}
+          scale={Math.min(scale[0], scale[1])}
         >
             {content}
         </Resizable>

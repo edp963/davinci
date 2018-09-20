@@ -129,14 +129,16 @@ var Resizable = function (_React$Component) {
           deltaX = _ref2.deltaX,
           deltaY = _ref2.deltaY;
 
+      // scale
+      var scale = _this2.props.scale || 1
 
       // Axis restrictions
       var canDragX = _this2.props.axis === 'both' || _this2.props.axis === 'x';
       var canDragY = _this2.props.axis === 'both' || _this2.props.axis === 'y';
 
       // Update w/h
-      var width = _this2.state.width + (canDragX ? deltaX : 0);
-      var height = _this2.state.height + (canDragY ? deltaY : 0);
+      var width = _this2.state.width + (canDragX ? deltaX / scale : 0);
+      var height = _this2.state.height + (canDragY ? deltaY / scale : 0);
 
       // Early return if no change
       var widthChanged = width !== _this2.state.width,
@@ -188,6 +190,7 @@ var Resizable = function (_React$Component) {
         onResize = _props.onResize,
         onResizeStop = _props.onResizeStop,
         onResizeStart = _props.onResizeStart,
+        scale = _props.scale,
         p = _objectWithoutProperties(_props, ['children', 'draggableOpts', 'width', 'height', 'handleSize', 'lockAspectRatio', 'axis', 'minConstraints', 'maxConstraints', 'onResize', 'onResizeStop', 'onResizeStart']);
 
     var className = p.className ? p.className + ' react-resizable' : 'react-resizable';
@@ -253,7 +256,10 @@ Resizable.propTypes = {
   onResize: _propTypes2.default.func,
 
   // These will be passed wholesale to react-draggable's DraggableCore
-  draggableOpts: _propTypes2.default.object
+  draggableOpts: _propTypes2.default.object,
+
+  // feat. add scale ability
+  scale: _propTypes2.default.number
 };
 Resizable.defaultProps = {
   handleSize: [20, 20],

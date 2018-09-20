@@ -127,7 +127,7 @@ function dontSetMe(props /*: Object*/, propName /*: string*/, componentName /*: 
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * 
+ *
  */
 
 function makeEmptyFunction(arg) {
@@ -657,6 +657,7 @@ function getBoundPosition(draggable /*: Draggable*/, x /*: number*/, y /*: numbe
 }
 
 function snapToGrid(grid /*: [number, number]*/, pendingX /*: number*/, pendingY /*: number*/) /*: [number, number]*/ {
+  if (!grid) { return [pendingX, pendingY] }
   var x = Math.round(pendingX / grid[0]) * grid[0];
   var y = Math.round(pendingY / grid[1]) * grid[1];
   return [x, y];
@@ -682,6 +683,7 @@ function getControlPosition(e /*: MouseTouchEvent*/, touchIdentifier /*: ?number
 
 // Create an data object exposed by <DraggableCore>'s events
 function createCoreData(draggable /*: DraggableCore*/, x /*: number*/, y /*: number*/) /*: DraggableData*/ {
+  var scale = draggable.props.scale || 1;
   var state = draggable.state;
   var isStart = !(0, _shims.isNum)(state.lastX);
   var node = findDOMNode(draggable);
@@ -696,9 +698,25 @@ function createCoreData(draggable /*: DraggableCore*/, x /*: number*/, y /*: num
     };
   } else {
     // Otherwise calculate proper values.
+    if (!draggable.props.grid) {
+      return {
+        node: node,
+        deltaX: x - state.lastX, deltaY: y - state.lastY,
+        lastX: state.lastX, lastY: state.lastY,
+        x: x, y: y
+      }
+    }
+
+    var _positionFns = __webpack_require__(9);
+    var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+    var _deltaX = (x - state.lastX) / scale
+    var _deltaY = (y - state.lastY) / scale
+    var _snapToGrid = (0, _positionFns.snapToGrid)(draggable.props.grid, _deltaX, _deltaY);
+    var _snapToGrid2 = _slicedToArray(_snapToGrid, 2);
+
     return {
       node: node,
-      deltaX: x - state.lastX, deltaY: y - state.lastY,
+      deltaX: _snapToGrid2[0], deltaY: _snapToGrid2[1],
       lastX: state.lastX, lastY: state.lastY,
       x: x, y: y
     };
@@ -1324,6 +1342,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
   defaultClassNameDragged: string,
   defaultPosition: ControlPosition,
   position: ControlPosition,
+  scale: number
 };*/
 
 var Draggable = function (_React$Component) {
@@ -1613,6 +1632,8 @@ Draggable.propTypes = _extends({}, _DraggableCore2.default.propTypes, {
     y: _propTypes2.default.number
   }),
 
+  scale: _propTypes2.default.number,
+
   /**
    * `position`, if present, defines the current position of the element.
    *
@@ -1652,7 +1673,8 @@ Draggable.defaultProps = _extends({}, _DraggableCore2.default.defaultProps, {
   defaultClassNameDragging: 'react-draggable-dragging',
   defaultClassNameDragged: 'react-draggable-dragged',
   defaultPosition: { x: 0, y: 0 },
-  position: null
+  position: null,
+  scale: 1
 });
 exports.default = Draggable;
 
