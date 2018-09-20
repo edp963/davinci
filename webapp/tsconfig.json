@@ -20,11 +20,9 @@
       "utils/*": ["app/utils/*"],
       "assets/*": ["app/assets/*"],
       "components/*": [ "app/components/*" ],
-      "containers/*": ["app/containers/*"]
+      "containers/*": ["app/containers/*"],
+      "libs/*": ["libs/*"]
     }
-//    "paths": {
-//      "utils/*": [ "app/utils/*" ]
-//    },
     // "noUnusedLocals": true,
     // "noUnusedParameters": true
   },

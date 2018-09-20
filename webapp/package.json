@@ -225,7 +225,6 @@
     "react-codemirror2": "^3.0.7",
     "react-color": "^2.13.8",
     "react-dom": "~15.6.1",
-    "react-grid-layout": "^0.16.6",
     "react-helmet": "5.1.3",
     "react-intl": "2.3.0",
     "react-loadable": "4.0.3",

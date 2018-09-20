@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-import Draggable from '../../../components/Draggable/react-draggable'
+import Draggable from '../../../../libs/react-draggable/react-draggable'
 
 // @TODO contentMenu
 // const Dropdown = require('antd/lib/dropdown')
@@ -15,7 +15,7 @@ import {
 import Pivot from '../../Widget/components/Pivot/PivotInViz'
 import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
 
-const Resizable = require('react-resizable').Resizable
+const Resizable = require('../../../../libs/react-resizable').Resizable
 
 const styles = require('../Display.less')
 
@@ -180,16 +180,21 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private onResize = (_, { size }) => {
+    const { itemId, selected, onResizeLayer, scale } = this.props
+    const { width: prevWidth, height: prevHeight } = this.state
     const { width, height } = size
     const delta = {
-      deltaWidth: width - this.state.width,
-      deltaHeight: height - this.state.height
+      deltaWidth: (width - this.state.width) / scale[0],
+      deltaHeight: (height - this.state.height) / scale[1]
     }
-    const { itemId, selected, onResizeLayer } = this.props
+    console.log('-----------------------')
+    console.log('delta: ', delta)
+    console.log('prev: ', { prevWidth, prevHeight })
+    console.log(size)
     if (onResizeLayer && selected) { onResizeLayer(itemId, delta) }
     this.setState({
-      width,
-      height
+      width: prevWidth + delta.deltaWidth,
+      height: prevHeight + delta.deltaHeight
     })
   }
 
