@@ -64,7 +64,7 @@ trait STRender {
     val queryVars = queryKVMap.keySet.mkString("(", ",", ")")
     val sqlToRender = sqlWithoutVars.replaceAll("<>", "!=")
     val sqlTemplate =
-      """delimiters "$", "$"""" +
+      s"""delimiters "$dollarDelimiter", "$dollarDelimiter"""" +
         s"""sqlTemplate$queryVars ::= <<
            |$sqlToRender
            |>>""".stripMargin
@@ -78,7 +78,7 @@ trait STRender {
 
   def renderByST(sqlWithoutVars: String, queryKVMap: mutable.HashMap[String, String]): String = {
     val sqlToRender: String = sqlWithoutVars.replaceAll("<>", "!=")
-    val sqlTemplate = new ST(sqlToRender, '$', '$')
+    val sqlTemplate = new ST(sqlToRender, dollarDelimiter.toChar, dollarDelimiter.toChar)
     queryKVMap.foreach(kv => sqlTemplate.add(kv._1, kv._2))
     sqlTemplate.render()
   }
