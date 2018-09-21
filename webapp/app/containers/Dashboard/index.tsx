@@ -518,6 +518,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         }
       } else {
         router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
+        this.setState({
+          isGrid: false
+        })
       }
       this.hideDashboardForm()
     })
