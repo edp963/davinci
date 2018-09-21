@@ -20,7 +20,7 @@ import {
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
-import { DimetionType } from './Pivot/Pivot'
+import { DimetionType, IChartStyles } from './Pivot/Pivot'
 import { IChartLine, IChartUnit, IChartInfo } from './Pivot/Chart'
 import widgetlibs from '../../../assets/json/widgetlib'
 import { uuid } from '../../../utils/util'
@@ -288,6 +288,13 @@ export function getBar (): IChartInfo {
 
 export function getScatter (): IChartInfo {
   return widgetlibs[3]
+}
+
+export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
+  return {
+    ...chartStyles,
+    pivot: chartStyles.pivot || {...getPivot().style['pivot']}  // FIXME 兼容0.3.0-beta 数据库
+  }
 }
 
 export function getChartViewMetrics (metrics, requireMetrics) {

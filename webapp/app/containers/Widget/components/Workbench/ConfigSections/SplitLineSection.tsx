@@ -4,9 +4,9 @@ const Col = require('antd/lib/col')
 const Checkbox = require('antd/lib/checkbox')
 const Select = require('antd/lib/select')
 const Option = Select.Option
-import ColorPicker from '../../../../components/ColorPicker'
-import { PIVOT_CHART_LINE_STYLES } from '../../../../globalConstants'
-const styles = require('./Workbench.less')
+import ColorPicker from '../../../../../components/ColorPicker'
+import { PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'
+const styles = require('../Workbench.less')
 
 export interface ISplitLineConfig {
   showHorizontalLine: boolean
@@ -19,13 +19,13 @@ export interface ISplitLineConfig {
   verticalLineColor: string
 }
 
-interface ISplitLineConfigSectionProps {
+interface ISplitLineSectionProps {
   title: string
   config: ISplitLineConfig
   onChange: (prop: string, value: any) => void
 }
 
-export class SplitLineConfigSection extends React.PureComponent<ISplitLineConfigSectionProps, {}> {
+export class SplitLineSection extends React.PureComponent<ISplitLineSectionProps, {}> {
   private checkboxChange = (prop) => (e) => {
     this.props.onChange(prop, e.target.checked)
   }
@@ -145,4 +145,4 @@ export class SplitLineConfigSection extends React.PureComponent<ISplitLineConfig
   }
 }
 
-export default SplitLineConfigSection
+export default SplitLineSection

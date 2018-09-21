@@ -11,9 +11,10 @@ import VariableConfigForm from '../VariableConfigForm'
 import { IPivotProps, DimetionType, IChartStyles } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
 import { IChartInfo } from '../Pivot/Chart'
-import AxisConfigSection, { IAxisConfig } from './AxisConfigSection'
-import SplitLineConfigSection, { ISplitLineConfig } from './SplitLineConfigSection'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter } from '../util'
+import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
+import SplitLineSection, { ISplitLineConfig } from './ConfigSections/SplitLineSection'
+import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
 const Row = require('antd/lib/row')
@@ -141,13 +142,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         name: c,
         from: 'cols',
         type: 'category' as DragType,
-        visualType: model[c].visualType
+        visualType: c === '指标名称' ? 'string' : model[c].visualType
       }))
       commonParams.rows.items = rows.map((r) => ({
         name: r,
         from: 'rows',
         type: 'category' as DragType,
-        visualType: model[r].visualType
+        visualType: r === '指标名称' ? 'string' :  model[r].visualType
       }))
       commonParams.metrics.items = metrics.map((m) => ({
         ...m,
@@ -500,7 +501,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { color, label, size, xAxis, tip } = specificParams
     const { selectedView, onLoadData, onSetPivotProps } = this.props
     let selectedCharts = this.getSelectedCharts(metrics.items)
-    let groups = cols.items.map((c) => c.name).concat(rows.items.map((r) => r.name))
+    let groups = cols.items.map((c) => c.name)
+      .concat(rows.items.map((r) => r.name))
+      .filter((g) => g !== '指标名称')
     let aggregators = metrics.items.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -568,7 +571,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     if (!checkChartEnable(groups.length, metrics.items.length, selectedCharts)) {
       selectedCharts = this.getSelectedCharts([])
     }
-    if (requestParamString !== this.lastRequestParamString) {
+    if (selectedView && requestParamString !== this.lastRequestParamString) {
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (data) => {
         if (data.length) {
@@ -595,7 +598,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             metrics: [],
             filters: [],
             data: [],
-            chartStyles: {},
+            chartStyles: styleParams,
             dimetionAxis: this.getDimetionAxis([getPivot()]),
             renderType: 'rerender',
             orders
@@ -639,11 +642,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private chartSelect = (chart: IChartInfo) => {
     const { commonParams } = this.state
-    const { metrics } = commonParams
+    const { cols, rows, metrics } = commonParams
     if (!(metrics.items.length === 1 && metrics.items[0].chart.id === chart.id)) {
       metrics.items.forEach((i) => {
         i.chart = chart
       })
+      if (chart.id !== getPivot().id) {
+        cols.items = cols.items.filter((c) => c.name !== '指标名称')
+        rows.items = rows.items.filter((r) => r.name !== '指标名称')
+      }
       const { specificParams, styleParams } = this.getChartDataConfig(this.getSelectedCharts(metrics.items))
       this.getVisualData(commonParams, specificParams, styleParams)
     }
@@ -852,7 +859,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine  } = styleParams
+    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig  } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -866,6 +873,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
     if (selectedView) {
       const model: IModel = JSON.parse(selectedView.model)
+      const pivot = getPivot()
       Object.entries(model).forEach(([key, m]) => {
         if (m.modelType === 'category') {
           categories.push({
@@ -881,6 +889,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           })
         }
       })
+      if (values.length && !metrics.items.filter((item) => item.chart.id !== pivot.id).length) {
+        categories.push({
+          name: '指标名称',
+          type: 'category',
+          visualType: 'string'
+        })
+      }
     }
 
     const dropboxes = Object.entries(commonParams)
@@ -1011,22 +1026,27 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'style':
         tabPane = (
           <div className={styles.paramsPane}>
-            {xAxis && <AxisConfigSection
+            {xAxis && <AxisSection
               title="X轴"
               type="x"
               config={xAxis as IAxisConfig}
               onChange={this.styleChange('xAxis')}
             />}
-            {yAxis && <AxisConfigSection
+            {yAxis && <AxisSection
               title="Y轴"
               type="y"
               config={yAxis as IAxisConfig}
               onChange={this.styleChange('yAxis')}
             />}
-            {splitLine && <SplitLineConfigSection
+            {splitLine && <SplitLineSection
               title="分隔线"
               config={splitLine as ISplitLineConfig}
               onChange={this.styleChange('splitLine')}
+            />}
+            {pivotConfig && <PivotSection
+              title="透视表"
+              config={pivotConfig as IPivotConfig}
+              onChange={this.styleChange('pivot')}
             />}
           </div>
         )
@@ -1120,7 +1140,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return (
       <div className={styles.operatingPanel}>
         <div className={styles.model}>
-          <div className={styles.source}>
+          <div className={styles.viewSelect}>
             <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
               <a>{selectedView ? selectedView.name : '选择一个View'}</a>
             </Dropdown>

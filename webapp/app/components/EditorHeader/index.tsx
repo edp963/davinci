@@ -1,4 +1,5 @@
 import * as React from 'react'
+const Icon = require('antd/lib/icon')
 const Button = require('antd/lib/button')
 const styles = require('./EditorHeader.less')
 
@@ -36,6 +37,7 @@ export function EditorHeader (props: IEditorHeaderProps) {
 
   return (
     <div className={`${styles.editorHeader} ${className}`}>
+      <Icon type="left" className={styles.back} onClick={onCancel} />
       <div className={styles.title}>
         <div className={styles.name}>
           <input type="text" placeholder={placeholder.name} value={name} onChange={onNameChange} />
@@ -55,7 +57,6 @@ export function EditorHeader (props: IEditorHeaderProps) {
         >
           保存
         </Button>
-        <Button onClick={onCancel}>取消</Button>
       </div>
     </div>
   )
