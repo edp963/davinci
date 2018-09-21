@@ -22,9 +22,9 @@ server:
 
   # Userd for mail and download services, can be empty, careful configuration
   # By default, 'server.address' and 'server.port' is used as the string value.
-  access:
-    address:
-    port:
+  # access:
+  #  address:
+  #  port:
 
 
 ## jwt is one of the important configuration of the application
