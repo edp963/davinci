@@ -219,7 +219,7 @@ Please refer to [Davinci用户手册](https://edp-davinci.gitbooks.io/davinci-us
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.1.0/davinci-assembly_2.11-0.1.0-SNAPSHOT-dist.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta/davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip).
 
 Get Help
 ============
