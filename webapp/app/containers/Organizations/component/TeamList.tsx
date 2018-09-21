@@ -35,16 +35,17 @@ interface ITeamsState {
 }
 
 interface ITeamsProps {
-  router: InjectedRouter
-  teams: ITeam[]
-  onLoadTeams: () => any
+  router?: InjectedRouter
+  teams?: ITeam[]
+  onLoadTeams?: () => any
   toThatTeam: (url: string) => any
-  onAddTeam: (team: ITeam, resolve: () => any) => any
+  onAddTeam?: (team: ITeam, resolve: () => any) => any
   currentOrganization: Organization.IOrganization
-  organizationTeams: Organization.IOrganizationTeams
+ // organizationTeams: Organization.IOrganizationTeams
+  organizationTeams: any
   organizations: any
   loadOrganizationTeams: (id: number) => any
-  onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
 
@@ -131,9 +132,6 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       this.forceUpdate(() => resolve())
     })
 
-  private onSearchTeam = () => {
-
-  }
   private enterTeam = (text, record) => () => {
     const {id} = record
     if (id) {
@@ -149,7 +147,9 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   }
 
   private filter = (array) => {
-    if (!Array.isArray(array)) return array
+    if (!Array.isArray(array)) {
+      return array
+    }
     array.forEach((d) => {
       if (!this.isEmptyObj(d)) {
         d.key = `key${d.id}`
@@ -198,7 +198,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           <div className={styles.avatarWrapper}>
             {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span><Avatar key={index} path={user.avatar} size="small"
                                                                                                                                   enlarge={true}/></span></Tooltip>)}
-            <span className={styles.avatarName}>{`${ users ? users.length : 0 }menbers`}</span>
+            <span className={styles.avatarName}>{`${ users ? users.length : 0 }members`}</span>
           </div>
         )
       }
@@ -273,21 +273,5 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-const withConnect = connect(mapStateToProps, mapDispatchToProps)
-
-const withReducer = injectReducer({key: 'team', reducer: teamReducer})
-const withSaga = injectSaga({key: 'team', saga: teamSaga})
-
-// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
-
-export default compose(
-  withReducer,
-  // withAppReducer,
-  // withAppSaga,
-  withSaga,
-  withConnect
-)(TeamList)
-
-
+export default connect<{}, {}, ITeamsProps>(mapStateToProps, mapDispatchToProps)(TeamList)
 

@@ -46,7 +46,6 @@ interface IProjectsFormProps {
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
-
 export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
   constructor (props) {
     super(props)
@@ -109,9 +108,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     const isShowDesc = classnames({
       [utilStyles.hide]: this.props.type === 'transfer'
     })
-    const isShowVisibility = classnames({
-      [utilStyles.hide]: this.props.type !== 'edit'
-    })
+    // const isShowVisibility = classnames({
+    //   [utilStyles.hide]: this.props.type !== 'edit'
+    // })
     let modalTitle = '创建'
     if (type === 'edit') {
       modalTitle = '修改'
@@ -191,16 +190,16 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                 </FormItem>
               </Col>
               <Col span={24}>
-                <FormItem label="可见" {...commonFormItemStyle} className={isShowVisibility}>
+                <FormItem label="可见" {...commonFormItemStyle}>
                   {getFieldDecorator('visibility', {
-                    hidden: this.props.type !== 'edit',
-                    initialValue: ''
+                    // hidden: this.props.type !== 'edit',
+                    initialValue: 'true'
                   })(
                     <Select>
-                      <Option key="visibility" value="1">
+                      <Option key="visibility" value="true">
                         可见
                       </Option>
-                      <Option key="hidden" value="0">
+                      <Option key="hidden" value="false">
                         隐藏
                       </Option>
                     </Select>

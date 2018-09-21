@@ -25,13 +25,17 @@ interface IAddFormProps {
 
 interface IAddFormStates {
   visible: boolean
+  isDisabled: boolean
+  inviteMemberInputValue: string
 }
 
 export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> {
   constructor (props) {
     super(props)
     this.state = {
-      visible: false
+      visible: false,
+      isDisabled: true,
+      inviteMemberInputValue: ''
     }
   }
   public componentDidMount () {
@@ -46,7 +50,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       case 'project':
         return '只能添加您具有管理员权限的项目'
       case 'member':
-        return '邀请一个成员加入当前组织,需要该成员确认邮件。'
+        return '邀请一个成员加入当前组织，需要该成员确认邮件。'
       case 'team':
         return '邀请一个团队到当前团队下级'
       default:
@@ -72,7 +76,8 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   private selectOption = (target) => () => {
     const { name, id, username, user } = target
     this.setState({
-      visible: true
+      visible: true,
+      isDisabled: false
     }, () => {
       if (user && user.username) {
         this.props.form.setFieldsValue({
@@ -88,13 +93,28 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
   }
 
-  private inputChange = () => {
-    const {category} = this.props
+  private inputChange = (e) => {
+    const { category, inviteMemberList, currentOrganizationMembers, handleSearchMember } = this.props
+
     this.setState({
-      visible: false
+      visible: false,
+      inviteMemberInputValue: e.target.value
     })
+
     if (category === 'member') {
-      this.props.handleSearchMember()
+      if (inviteMemberList.length) {
+        const currentList = inviteMemberList.find((list) => list.username === e.target.value)
+        this.setState({
+          isDisabled: currentList ? false : true
+        })
+      }
+      handleSearchMember()
+    }
+    if (category === 'teamMember' && currentOrganizationMembers.length) {
+      const currentList = currentOrganizationMembers.find((list) => list.user.username === e.target.value)
+      this.setState({
+        isDisabled: currentList ? false : true
+      })
     }
   }
 
@@ -152,6 +172,12 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       currentOrganizationMembers,
       currentOrganizationProjects
     } = this.props
+
+    const {
+      isDisabled,
+      inviteMemberInputValue
+    } = this.state
+
     const searchLi = classnames({
       [styles.searchLi]: true,
       [utilStyles.hide]: this.state.visible
@@ -159,11 +185,12 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     let optionList = void 0
     if (category === 'project' && currentOrganizationProjects) {
       optionList = this.bootstrapOptionsLi(searchLi, currentOrganizationProjects)
-    } else if (category === 'member') {
+    } else if (category === 'member' && inviteMemberInputValue !== '') {
       optionList = this.bootstrapOptionsLi(searchLi, inviteMemberList)
-    } else if (category === 'teamMember') {
+    } else if (category === 'teamMember' && inviteMemberInputValue !== '') {
       optionList = this.bootstrapOptionsLi(searchLi, currentOrganizationMembers)
     }
+
     const orgOrTeamName = organizationOrTeam ? organizationOrTeam.name : ''
     const {getFieldDecorator} = this.props.form
     return (
@@ -195,7 +222,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
                 })(
                   <Input style={{width: '65%'}} autoComplete="off"/>
                 )}
-                <Button type="primary" size="large" onClick={this.props.addHandler}>
+                <Button type="primary" size="large" onClick={this.props.addHandler} disabled={isDisabled}>
                   {this.submitText(category)}<Icon type="plus"/>
                 </Button>
                 {optionList}

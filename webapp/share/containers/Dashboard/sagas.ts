@@ -49,7 +49,6 @@ export function* getDashboard (action) {
   try {
     const dashboard = yield call(request, `${api.share}/dashboard/${payload.token}`)
     yield put(dashboardGetted(dashboard.payload))
-    payload.resolve(dashboard.payload)
   } catch (err) {
     yield put(loadDashboardFail())
     payload.reject(err)
@@ -115,8 +114,8 @@ export function* getWidgetCsv (action) {
 export function* getCascadeSourceFromDashboard (action) {
   try {
     const { payload } = action
-    const { controlId, viewId, dataToken, params } = payload
-    const { column } = params
+    const { controlId, viewId, dataToken, column, parents } = payload
+    const params = { column, parents }
 
     const asyncData = yield call(request, {
       method: 'post',

@@ -1,19 +1,21 @@
 import * as React from 'react'
-import { IDrawingData, DimetionType } from './Pivot'
-import { getPivotContentTextWidth, getPivotCellHeight } from '../util'
+import { IDrawingData, DimetionType, IChartStyles } from './Pivot'
+import { getPivotContentTextWidth, getPivotCellHeight, getPivot, getStyleConfig } from '../util'
 
 const styles = require('./Pivot.less')
 
 interface IRowTitleProps {
   rows: string[]
   rowKeys: string[][]
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
 }
 
 export function RowTitle (props: IRowTitleProps) {
-  const { rows, rowKeys, dimetionAxis, drawingData } = props
+  const { rows, rowKeys, chartStyles, dimetionAxis, drawingData } = props
   const { elementSize, unitMetricHeight } = drawingData
+  const { color: fontColor } = getStyleConfig(chartStyles).pivot
   let tableHeight = 0
 
   if (dimetionAxis) {
@@ -32,7 +34,8 @@ export function RowTitle (props: IRowTitleProps) {
       className={styles.rowTitle}
       style={{
         width: rowKeys.length && getPivotCellHeight(),
-        height: tableHeight
+        height: tableHeight,
+        color: fontColor
       }}
     >
       <p style={{transform: `translate(12px, ${contentLength / 2}px) rotate(-90deg)`}}>{content}</p>

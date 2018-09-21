@@ -127,10 +127,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         this.widgetTypeChange(`${orgId}`).then(
           () => {
             if (this.state.formType === 'transfer') {
-              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility ? '1' : '0'}`})
+              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility}`})
               return
             }
-            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility ? '1' : '0'}`})
+            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility}`})
           }
         )
       }
@@ -189,17 +189,18 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     this.ProjectForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
+        values.visibility = values.visibility === 'true' ? true : false
         if (this.state.formType === 'add') {
           this.props.onAddProject({
             ...values,
-            pic: `${Math.ceil(Math.random() * 19)}`,
-            config: '{}'
+            pic: `${Math.ceil(Math.random() * 19)}`
+            // config: '{}'
           }, () => {
             this.props.onLoadProjects()
             this.hideProjectForm()
           })
         } else {
-          this.props.onEditProject({...values, ...{visibility: !!Number(values.visibility)}, ...{orgId: Number(values.orgId)}}, () => {
+          this.props.onEditProject({...values, ...{orgId: Number(values.orgId)}}, () => {
             this.props.onLoadProjects()
             this.hideProjectForm()
           })
@@ -576,8 +577,17 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         return colItems
       }) : ''
     const historyBrowserAll = historyStack.getAll()
-    const history =  historyBrowserAll
-      ? historyBrowserAll.map((d: IProject) => {
+    const historyArr = []
+    historyBrowserAll.forEach((historyItem) => {
+      projectArr.forEach((projectItem) => {
+        if (historyItem.id === projectItem.id) {
+          historyArr.push(projectItem)
+        }
+      })
+    })
+
+    const history =  historyArr
+      ? historyArr.map((d: IProject) => {
         const path = require(`../../assets/images/bg${d.pic || 9}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
@@ -594,6 +604,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         )
         return colItems
       }) : ''
+
     const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
       const path = require(`../../assets/images/bg${d.pic || 9}.png`)
       let StarPanel = void 0
@@ -631,9 +642,9 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     }) : ''
     let projectSearchPagination = void 0
     if (searchProject) {
-      projectSearchPagination =
+      projectSearchPagination = (
         <Pagination
-          //  simple={screenWidth < 768 || screenWidth === 768}
+          // simple={screenWidth < 768 || screenWidth === 768}
           showSizeChanger
           defaultCurrent={2}
           total={searchProject.total}
@@ -643,6 +654,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           pageSizeOptions={['10', '15', '18']}
           current={this.state.currentPage}
         />
+      )
     }
     const maskStyle = classnames({
       [utilStyles.hide]: this.state.searchMaskVisible,
@@ -857,14 +869,14 @@ const withSaga = injectSaga({ key: 'project', saga })
 const withOrganizationReducer = injectReducer({ key: 'organization', reducer: reducerOrganization })
 const withOrganizationSaga = injectSaga({ key: 'organization', saga: sagaOrganization })
 
-const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
-const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
+// const withAppReducer = injectReducer({key: 'global', reducer: reducerApp})
+// const withAppSaga = injectSaga({key: 'global', saga: sagaApp})
 
 export default compose(
   withReducer,
   withOrganizationReducer,
-  withAppReducer,
-  withAppSaga,
+  // withAppReducer,
+  // withAppSaga,
   withSaga,
   withOrganizationSaga,
   withConnect

@@ -132,9 +132,10 @@ public interface RelUserTeamMapper {
     })
     Integer getTeamNumOfOrgByUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
 
-    @Delete({
-            "DELETE FROM rel_user_team WHERE id IN ",
-            "(SELECT id FROM rel_user_team WHERE user_id = #{userId} and team_id IN (SELECT id from team WHERE org_id = #{orgId}))",
-    })
-    int deleteByUserAndOrg(@Param("userId") Long userId, @Param("orgId") Long orgId);
+
+    @Select({"SELECT id FROM rel_user_team WHERE user_id = #{userId} and team_id IN (SELECT id from team WHERE org_id = #{orgId})"})
+    List<Long> getRelUserTeamIds(@Param("userId") Long userId, @Param("orgId") Long orgId);
+
+
+    int deleteBatch(@Param("list") List<Long> list);
 }

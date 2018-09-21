@@ -31,11 +31,14 @@ import reducer from './reducer'
 import saga from './sagas'
 
 import Container from '../../../app/components/Container'
+import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from 'react-grid-layout'
+
 import { IFilterChangeParam } from '../../../app/components/Filters'
-import GlobalFilterPanel from '../../../app/components/Filters/FilterPanel'
+import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
+
 import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -50,12 +53,14 @@ import {
   resizeAllDashboardItem
 } from './actions'
 import {
+  makeSelectDashboard,
   makeSelectTitle,
   makeSelectConfig,
   makeSelectDashboardCascadeSources,
   makeSelectWidgets,
   makeSelectItems,
-  makeSelectItemsInfo
+  makeSelectItemsInfo,
+  makeSelectLinkages
 } from './selectors'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 import {
@@ -77,6 +82,7 @@ import Login from '../../components/Login/index'
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
 interface IDashboardProps {
+  dashboard: any
   title: string
   config: string
   currentItems: any[],
@@ -99,7 +105,8 @@ interface IDashboardProps {
   },
   widgets: any[],
   dashboardCascadeSources: any,
-  onLoadDashboard: (shareInfo: any, success: (dashboard) => void, error: (err) => void) => void,
+  linkages: any[]
+  onLoadDashboard: (shareInfo: any, error: (err) => void) => void,
   onLoadWidget: (aesStr: string, success?: (widget) => void, error?: (err) => void) => void,
   onLoadResultset: (
     renderType: RenderType,
@@ -114,13 +121,14 @@ interface IDashboardProps {
       params: Array<{name: string, value: string}>
       linkageParams: Array<{name: string, value: string}>
       globalParams: Array<{name: string, value: string}>
+      orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
     }
   ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
   onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, dataToken: string) => void,
-  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, params) => void
+  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
   onResizeAllDashboardItem: () => void
 }
 
@@ -132,8 +140,6 @@ interface IDashboardStates {
   allowFullScreen: boolean,
   currentDataInFullScreen: any,
   showLogin: boolean,
-  linkageTableSource: any[],
-  globalFilterTableSource: any[],
   phantomRenderSign: boolean
 }
 
@@ -150,8 +156,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       allowFullScreen: false,
       currentDataInFullScreen: {},
       showLogin: false,
-      linkageTableSource: [],
-      globalFilterTableSource: [],
 
       phantomRenderSign: false
     }
@@ -174,23 +178,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const {
       onLoadDashboard,
       onLoadWidget,
-      onSetIndividualDashboard,
-      onLoadCascadeSourceFromDashboard
+      onSetIndividualDashboard
     } = this.props
 
     if (qs.type === 'dashboard') {
-      onLoadDashboard(qs.shareInfo, (dashboard) => {
-        this.setState({
-          // linkageTableSource: this.adjustLinkageTableSource(dashboard, dashboard.widgets),
-          globalFilterTableSource: this.adjustGlobalFilterTableSource(dashboard, dashboard.widgets)
-        }, () => {
-          this.state.globalFilterTableSource.forEach((gft) => {
-            if (gft.type === 'cascadeSelect' && !gft.parentColumn) {
-              onLoadCascadeSourceFromDashboard(gft.key, gft.flatTableId, qs.shareInfo, gft.cascadeColumn)
-            }
-          })
-        })
-      }, (err) => {
+      onLoadDashboard(qs.shareInfo, (err) => {
         if (err.response.status === 403) {
           this.setState({
             showLogin: true
@@ -200,10 +192,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } else {
       onLoadWidget(qs.shareInfo, (w) => {
         onSetIndividualDashboard(w.id, qs.shareInfo)
-        this.setState({
-          linkageTableSource: [],
-          globalFilterTableSource: []
-        })
       }, (err) => {
         if (err.response.status === 403) {
           this.setState({
@@ -260,7 +248,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
 
@@ -284,7 +272,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows)
+    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -304,11 +292,25 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           func: l.agg
         })))
     }
+    if (size) {
+      aggregators = aggregators.concat(size.items
+        .map((s) => ({
+          column: decodeMetricName(s.name),
+          func: s.agg
+        })))
+    }
     if (xAxis) {
       aggregators = aggregators.concat(xAxis.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg
+        })))
+    }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((t) => ({
+          column: decodeMetricName(t.name),
+          func: t.agg
         })))
     }
 
@@ -325,8 +327,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         params,
         linkageParams,
         globalParams,
-        cache: false,
-        expired: 0
+        orders,
+        cache,
+        expired
       }
     )
   }
@@ -392,16 +395,55 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private checkInteract = (itemId) => {
-    return false
+  private checkInteract = (itemId: number) => {
+    const { linkages } = this.props
+    const isInteractiveItem = linkages.some((lts) => {
+      const { trigger } = lts
+      const triggerId = +trigger[0]
+      return triggerId === itemId
+    })
+
+    return isInteractiveItem
   }
 
-  private doInteract = (itemId, triggerData) => {
-    console.log('@TODO')
+  private doInteract = (itemId: number, triggerData) => {
+    const {
+      currentItems,
+      linkages
+    } = this.props
+
+    const mappingLinkage = getMappingLinkage(itemId, linkages)
+    this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
+
+    Object.keys(mappingLinkage).forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === +linkagerItemId)
+      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
+        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      })
+    })
   }
 
-  private turnOffInteract = (itemId) => () => {
-    console.log('@TODO')
+  private turnOffInteract = (itemId) => {
+    const {
+      linkages,
+      currentItems
+    } = this.props
+
+    const refreshItemIds = removeLinkage(itemId, linkages, this.interactingLinkagers)
+    refreshItemIds.forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === linkagerItemId)
+      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('rerender', linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
+        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      })
+    })
+  }
+
+  private getOptions = (controlId, viewId, column, parents) => {
+    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, column, parents)
   }
 
   private globalFilterChange = (queryParams: IFilterChangeParam) => {
@@ -413,49 +455,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private adjustLinkageTableSource = (currentDashboard, currentItems) => {
-    const { linkage_detail } = currentDashboard
-    const linkageTableSource = JSON.parse(linkage_detail)
-
-    return linkageTableSource.filter((lts) => {
-      let linkagerSign = false
-      let triggerSign = false
-
-      for (let i = 0, cl = currentItems.length; i < cl; i += 1) {
-        if (currentItems[i].id === lts.linkager[0]) {
-          linkagerSign = true
-        }
-        if (currentItems[i].id === lts.trigger[0]) {
-          triggerSign = true
-        }
-      }
-
-      return linkagerSign && triggerSign
-    })
-  }
-
-  private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
-    const config = JSON.parse(currentDashboard.config || '{}')
-    const globalFilterTableSource = config.filters || []
-
-    return globalFilterTableSource.map((gfts) => {
-      const { relatedViews } = gfts
-      let { items } = relatedViews
-      if (items) {
-        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
-      }
-      return gfts
-    })
-  }
-
-  private loadGlobalFilterControlOptions = (viewId, column, controlId) => {
-    const { onLoadCascadeSourceFromDashboard } = this.props
-    const { shareInfo } = this.state
-    onLoadCascadeSourceFromDashboard(controlId, viewId, shareInfo, { column })
-  }
-
   public render () {
     const {
+      dashboard,
       title,
       currentItems,
       currentItemsInfo,
@@ -468,7 +470,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       shareInfo,
       showLogin,
       allowFullScreen,
-      globalFilterTableSource,
       phantomRenderSign
     } = this.state
 
@@ -503,7 +504,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               frequency={frequency}
               shareInfo={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
-              interactId={interactId}
               onGetChartData={this.getChartData}
               onDownloadCsv={this.downloadCsv}
               onTurnOffInteract={this.turnOffInteract}
@@ -567,10 +567,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     loginPanel = showLogin ? <Login shareInfo={this.state.shareInfo} legitimateUser={this.handleLegitimateUser} /> : ''
 
-    const globalFilterContainerClass = classnames({
-      [utilStyles.hide]: !globalFilterTableSource || !globalFilterTableSource.length
-    })
-
     const phantomDOM = phantomRenderSign && (<div id="phantomRenderSign" />)
 
     return (
@@ -582,16 +578,13 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               <h2 className={styles.shareTitle}>{title}</h2>
             </Col>
           </Row>
-          <Row className={globalFilterContainerClass}>
-            <Col span={24}>
-              <GlobalFilterPanel
-                filters={globalFilterTableSource}
-                onGetOptions={this.loadGlobalFilterControlOptions}
-                filterOptions={dashboardCascadeSources}
-                onChange={this.globalFilterChange}
-              />
-            </Col>
-          </Row>
+          <DashboardFilterPanel
+            currentDashboard={dashboard}
+            currentItems={currentItems}
+            onGetOptions={this.getOptions}
+            filterOptions={dashboardCascadeSources}
+            onChange={this.globalFilterChange}
+          />
         </Container.Title>
         {grids}
         <div className={styles.gridBottom} />
@@ -604,22 +597,24 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 }
 
 const mapStateToProps = createStructuredSelector({
+  dashboard: makeSelectDashboard(),
   title: makeSelectTitle(),
   config: makeSelectConfig(),
   widgets: makeSelectWidgets(),
   currentItems: makeSelectItems(),
   currentItemsInfo: makeSelectItemsInfo(),
-  dashboardCascadeSources: makeSelectDashboardCascadeSources()
+  dashboardCascadeSources: makeSelectDashboardCascadeSources(),
+  linkages: makeSelectLinkages()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadDashboard: (token, resolve, reject) => dispatch(getDashboard(token, resolve, reject)),
+    onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, pivotProps, dataToken) => dispatch(loadWidgetCsv(itemId, pivotProps, dataToken)),
-    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, params) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, params)),
+    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
   }
 }

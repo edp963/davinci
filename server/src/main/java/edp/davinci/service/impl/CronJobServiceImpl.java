@@ -202,6 +202,9 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
         } catch (Exception e) {
+            cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+            cronJobMapper.update(cronJobWithProject);
+
             e.printStackTrace();
         }
         cronJob.setUpdateTime(new Date());
@@ -318,6 +321,9 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             cronJobMapper.update(cronJobWithProject);
             return resultMap.successAndRefreshToken(request).payload(cronJobWithProject.toCrobJobInfo());
         } catch (ServerException e) {
+            cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
+            cronJobMapper.update(cronJobWithProject);
+
             e.printStackTrace();
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }

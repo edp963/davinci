@@ -17,9 +17,10 @@
       "*": [
         "*"
       ],
-      "utils/*": [ "app/utils/*" ],
-      "assets/*": [ "app/assets/*" ],
-      "components/*": [ "app/components/*" ]
+      "utils/*": ["app/utils/*"],
+      "assets/*": ["app/assets/*"],
+      "components/*": [ "app/components/*" ],
+      "containers/*": ["app/containers/*"]
     }
 //    "paths": {
 //      "utils/*": [ "app/utils/*" ]

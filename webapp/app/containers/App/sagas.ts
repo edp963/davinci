@@ -146,6 +146,9 @@ export function* checkName (action): IterableIterator<any> {
 export function* checkNameUnique (action): IterableIterator<any> {
   const { pathname, data, resolve, reject } = action.payload
   try {
+    if (!data.name) {
+      return
+    }
     const asyncData = yield call(request, {
       method: 'get',
       url: `${api.checkNameUnique}/${pathname}`,

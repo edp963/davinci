@@ -13,6 +13,12 @@
 
     .corner {
       flex-shrink: 0;
+      border: 0;
+
+      &.raw {
+        border-top: 1px;
+        border-left: 1px;
+      }
     }
 
     .rowHeader {
@@ -23,14 +29,14 @@
       .rowTitle {
         flex-shrink: 0;
         max-height: 100%;
-        font-size: 14px;
+        font-size: 1.16em;
         font-weight: bold;
         display: flex;
         align-items: center;
+        .ellipsis;
 
         p {
           transform-origin: 0 center;
-          white-space: nowrap;
         }
       }
 
@@ -61,6 +67,7 @@
       font-size: 14px;
       font-weight: bold;
       line-height: 27px;
+      .ellipsis;
     }
 
     .columnHeader {
@@ -142,11 +149,12 @@
 
   tr {
     &:nth-child(even) > td {
-      background-color: @body-bg;
+      background-color: fade(@black, 5);
     }
   }
 
   th {
+    border: 0;
     line-height: 26px;
 
     p {
@@ -158,18 +166,18 @@
         height: 26px;
       }
 
-      &.auxiliaryLines {
+      &.hasAuxiliaryLine {
         position: relative;
         overflow: visible;
 
-        &:after {
+        .line {
           width: 64px;
-          border-top: 1px solid @border-color-base;
+          border: 0;
+          border-top: 1px;
           position: absolute;
           top: -1px;
           left: 100%;
           z-index: 1;
-          content: '';
         }
       }
     }
@@ -180,20 +188,24 @@
     line-height: 18px;
   }
 
+  .cellContent {
+    text-align: right;
+  }
+
   .topBorder {
-    border-top: 1px solid @border-color-base;
+    border-top: 1px;
   }
 
   .bottomBorder {
-    border-top: 1px solid @border-color-base;
+    border-top: 1px;
   }
 
   .leftBorder {
-    border-left: 1px solid @border-color-base;
+    border-left: 1px;
   }
 
   .rightBorder {
-    border-right: 1px solid @border-color-base;
+    border-right: 1px;
   }
 }
 
@@ -217,18 +229,9 @@
 .columnBody {
   &.raw {
     th, td {
-      border: 1px solid @border-color-base;
-    }
-    th {
-      background-color: @light-bg;
+      border: 1px;
     }
   }
-}
-
-.corner.raw {
-  background-color: @light-bg;
-  border-top: 1px solid @border-color-base;
-  border-left: 1px solid @border-color-base;
 }
 
 .columnHeader {
@@ -264,11 +267,11 @@
       .ellipsis;
 
       &:hover {
-        background-color: @body-bg;
+        background-color: fade(@black, 5);
       }
 
       &.disabled {
-        color: @disabled-text-color;
+        color: @disabled-text-color !important;
 
         span {
           background-color: @disabled-text-color !important;

@@ -78,21 +78,20 @@ export function errorHandler (error) {
   if (error.response) {
     switch (error.response.status) {
       case 403:
-        message.error('未登录或会话过期，请重新登录', 5)
+        message.error('未登录或会话过期，请重新登录', 1)
         removeToken()
         localStorage.removeItem('TOKEN')
         const path = `${window.location.protocol}//${window.location.host}${window.location.pathname}${window.location.search}#login`
         location.replace(path)
-        break
       case 401:
-        message.error('您没有权限访问此数据', 5)
+        message.error('您没有权限访问此数据', 2)
         break
       default:
-        message.error(error.response.data.header.msg, 5)
+        message.error(error.response.data.header.msg, 3)
         break
     }
   } else {
-    message.error(error, 5)
+    message.error(error, 3)
   }
 }
 
@@ -123,19 +122,23 @@ export enum OrderDirection {
  */
 export function generateData (sourceData) {
   const tableArr = []
-  sourceData.forEach((i) => {
-    const children = []
-    i.columns.forEach((j) => {
-      children.push({
-        title: j.name,
-        key: j.name
+  if (sourceData.length) {
+    sourceData.forEach((i) => {
+      const children = []
+      if (i.columns && i.columns.length) {
+        i.columns.forEach((j) => {
+          children.push({
+            title: j.name,
+            key: j.name
+          })
+        })
+      }
+      tableArr.push({
+        title: i.tableName,
+        key: i.tableName,
+        children
       })
     })
-    tableArr.push({
-      title: i.tableName,
-      key: i.tableName,
-      children
-    })
-  })
+  }
   return tableArr
 }

@@ -518,6 +518,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         }
       } else {
         router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/-1`)
+        this.setState({
+          isGrid: false
+        })
       }
       this.hideDashboardForm()
     })
@@ -552,26 +555,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       return <li key={s.id} onClick={this.pickSearchDashboard(s.id)}>{s.name}</li>
     })
 
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideDashboardForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
-
     let modalTitle = ''
     switch (formType) {
       case 'add':
@@ -590,6 +573,26 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         modalTitle = '提示'
         break
     }
+
+    const modalButtons = [(
+      <Button
+        key="back"
+        size="large"
+        onClick={this.hideDashboardForm}
+      >
+        取 消
+      </Button>
+    ), (
+      <Button
+        key="submit"
+        size="large"
+        type="primary"
+        loading={modalLoading}
+        onClick={this.onModalOk}
+      >
+        {formType === 'delete' ? '确 定' : '保 存'}
+      </Button>
+    )]
 
     const loop = (data, depth = 0) => data.map((item) => {
       const dashboardAction = (

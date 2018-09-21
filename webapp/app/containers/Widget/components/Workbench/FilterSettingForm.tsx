@@ -95,7 +95,7 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
     if (list) {
       this.setState({
         list: list.map((l) => ({
-          key: l,
+          key: l === '' ? uuid(8, 16) : l,
           title: l
         }))
       })

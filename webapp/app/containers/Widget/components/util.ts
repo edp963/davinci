@@ -20,7 +20,7 @@ import {
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
-import { DimetionType } from './Pivot/Pivot'
+import { DimetionType, IChartStyles } from './Pivot/Pivot'
 import { IChartLine, IChartUnit, IChartInfo } from './Pivot/Chart'
 import widgetlibs from '../../../assets/json/widgetlib'
 import { uuid } from '../../../utils/util'
@@ -30,7 +30,7 @@ export function getAggregatorLocale (agg) {
     case 'sum': return '总计'
     case 'avg': return '平均数'
     case 'count': return '计数'
-    case 'distinct': return '去重计数'
+    case 'COUNTDISTINCT': return '去重计数'
     case 'max': return '最大值'
     case 'min': return '最小值'
     case 'median': return '中位数'
@@ -290,6 +290,13 @@ export function getScatter (): IChartInfo {
   return widgetlibs[3]
 }
 
+export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
+  return {
+    ...chartStyles,
+    pivot: chartStyles.pivot || {...getPivot().style['pivot']}  // FIXME 兼容0.3.0-beta 数据库
+  }
+}
+
 export function getChartViewMetrics (metrics, requireMetrics) {
   const auxiliaryMetrics = Math.max((Array.isArray(requireMetrics) ? requireMetrics[0] : requireMetrics) - 1, 0)
   metrics.slice().splice(1, auxiliaryMetrics)
@@ -468,8 +475,11 @@ export function getTooltipPosition (point, params, dom, rect, size) {
   const { contentSize, viewSize } = size
   const [cx, cy] = contentSize
   const [vx, vy] = viewSize
+
+  const distanceXToMouse = 10
   return [
-    Math.min(x, vx - cx),
+    x + cx + distanceXToMouse > vx ? x - distanceXToMouse - cx : x + distanceXToMouse,
+    // Math.min(x, vx - cx),
     Math.min(y, vy - cy)
   ]
 }

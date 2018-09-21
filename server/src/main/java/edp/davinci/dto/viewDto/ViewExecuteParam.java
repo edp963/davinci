@@ -18,7 +18,9 @@
 
 package edp.davinci.dto.viewDto;
 
+import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.DataTypeEnum;
+import edp.core.utils.SqlUtils;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -44,24 +46,35 @@ public class ViewExecuteParam {
             while (iterator.hasNext()) {
                 Aggregator next = iterator.next();
                 StringBuilder sb = new StringBuilder();
-                if ("DISTINCT".equals(next.getFunc().trim().toUpperCase())) {
-                    sb.append("COUNT(").append(next.getFunc().trim()).append(" ");
-                    sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
+                if ("COUNTDISTINCT".equals(next.getFunc().trim().toUpperCase())) {
+                    sb.append("COUNT(").append("DISTINCT").append(" ");
+                    sb.append(getField(next.getColumn(), jdbcUrl));
                     sb.append(")");
-                    sb.append(" AS 'COUNTDISTINCT(");
+                    sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl)).append("COUNTDISTINCT(");
                     sb.append(next.getColumn());
-                    sb.append(")'");
+                    sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
                 } else {
                     sb.append(next.getFunc()).append("(");
-                    sb.append(DataTypeEnum.getField(next.getColumn(), jdbcUrl));
+                    sb.append(getField(next.getColumn(), jdbcUrl));
                     sb.append(")");
-                    sb.append(" AS '" + next.getFunc() + "(");
+                    sb.append(" AS ").append(SqlUtils.getAliasPrefix(jdbcUrl));
+                    sb.append(next.getFunc()).append("(");
                     sb.append(next.getColumn());
-                    sb.append(")'");
+                    sb.append(")").append(SqlUtils.getAliasSuffix(jdbcUrl));
                 }
                 list.add(sb.toString());
             }
         }
         return list;
+    }
+
+
+    public static String getField(String field, String jdbcUrl) {
+        String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl);
+        String keywordSuffix = SqlUtils.getKeywordSuffix(jdbcUrl);
+        if (!StringUtils.isEmpty(keywordPrefix) && !StringUtils.isEmpty(keywordSuffix)) {
+            return keywordPrefix + field + keywordSuffix;
+        }
+        return field;
     }
 }

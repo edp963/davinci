@@ -42,4 +42,9 @@ public interface ProjectService extends CheckEntityService {
 
     ResultMap searchProjects(String keywords, User user, int pageNum, int pageSize, HttpServletRequest request);
 
+    ResultMap favoriteProject(Long id, User user, HttpServletRequest request);
+
+    ResultMap getFavoriteProjects(User user, HttpServletRequest request);
+
+    ResultMap removeFavoriteProjects(User user, Long[] projectIds, HttpServletRequest request);
 }

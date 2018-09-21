@@ -78,27 +78,134 @@
               FROM rel_user_organization ruo
               LEFT JOIN organization org ON ruo.org_id = org.id
               WHERE ruo.user_id = #{userId}
-            ) o on o.id = p.org_id
-        where
+            ) o ON o.id = p.org_id
+        WHERE
             (
                 p.user_id = #{userId}
                 OR p.visibility = 1
-                OR p.id in (
+                OR p.id IN (
                     SELECT p.id
                     FROM project p
                     LEFT JOIN rel_team_project rtp ON rtp.project_id = p.id
                     LEFT JOIN team t ON t.id = rtp.team_id
                     LEFT JOIN rel_user_team rut ON rut.team_id = t.id
-                    WHERE  rut.user_id = #{userId} AND rut.role = 1
+                    WHERE  rut.user_id = #{userId}
                     AND p.org_id IN
                     <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
                         #{item.id}
                     </foreach>
                 )
-            ) OR o.member_permission > 0 OR o.role > 0
+                OR (o.member_permission > 0 AND p.visibility = 1)
+                OR o.role > 0
+            )
             <if test="keywords != null">
                 AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keywords})), '%')
             </if>
-        order by p.id
+        ORDER BY p.id
     </select>
+
+
+
+    <select id="getProjectsByOrgWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        SELECT
+            p.*,
+            IF(s.id is NULL, FALSE, TRUE) AS 'isStar',
+            u.id AS 'createBy.id',
+            u.username AS 'createBy.username',
+            u.avatar AS 'createBy.avatar'
+        FROM (SELECT * FROM project WHERE org_id = #{orgId}) p
+           LEFT JOIN `user` u ON u.id = p.user_id
+           LEFT JOIN star s ON (s.target_id = p.id AND s.target = 'project' AND s.user_id = #{userId})
+           LEFT JOIN (
+              SELECT org.id, ruo.role, org.member_permission
+              FROM rel_user_organization ruo
+              LEFT JOIN organization org ON ruo.org_id = org.id
+              WHERE ruo.user_id = #{userId} AND org.id = #{orgId}
+           ) o ON o.id = p.org_id
+        WHERE
+           (
+                p.user_id = #{userId}
+                OR p.visibility = 1
+                OR p.id IN (
+                    SELECT p.id
+                    FROM project p
+                    LEFT JOIN rel_team_project rtp ON rtp.project_id = p.id
+                    LEFT JOIN team t ON t.id = rtp.team_id
+                    LEFT JOIN rel_user_team rut ON rut.team_id = t.id
+                    WHERE p.org_id = #{orgId} AND rut.user_id = #{userId}
+                )
+                OR (p.visibility = 1 AND o.member_permission > 0)
+                OR o.role > 0
+           )
+            <if test="keyword != null">
+                AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+            </if>
+        ORDER BY p.id
+    </select>
+
+
+
+    <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        SELECT
+            p.*,
+            IF(s.id is NULL, FALSE, TRUE) as 'isStar',
+            u.id as 'createBy.id',
+            u.username as 'createBy.username',
+            u.avatar as 'createBy.avatar'
+        FROM project p
+        left join `user` u on u.id = p.user_id
+        left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        left join (
+           SELECT org.id, ruo.role, org.member_permission
+           FROM rel_user_organization ruo
+           LEFT JOIN organization org on ruo.org_id = org.id
+           WHERE ruo.user_id = #{userId}
+        ) o on o.id = p.org_id
+        WHERE p.id IN (
+           SELECT id  FROM project WHERE user_id = #{userId}
+           UNION
+           SELECT p.id
+           FROM project p
+               LEFT JOIN rel_team_project rtp on rtp.project_id = p.id
+               LEFT JOIN team t ON t.id = rtp.team_id
+               LEFT JOIN rel_user_team rut ON rut.team_id = t.id
+           WHERE rut.user_id = #{userId}
+        )
+        or (p.visibility = 1 and o.member_permission > 0)
+        or o.role > 0
+        order by p.id asc
+    </select>
+
+
+    <select id="getFavoriteProjects" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        SELECT
+            p.*,
+            IF(s.id is NULL, FALSE, TRUE) as 'isStar',
+            u.id as 'createBy.id',
+            u.username as 'createBy.username',
+            u.avatar as 'createBy.avatar'
+        FROM (SELECT p1.* FROM project p1 LEFT JOIN favorite f on p1.id = f.project_id WHERE f.user_id = #{userId}) as p
+        left join `user` u on u.id = p.user_id
+        left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        left join (
+           SELECT org.id, ruo.role, org.member_permission
+           FROM rel_user_organization ruo
+           LEFT JOIN organization org on ruo.org_id = org.id
+           WHERE ruo.user_id = #{userId}
+        ) o on o.id = p.org_id
+        WHERE p.id IN (
+           SELECT id  FROM (SELECT p1.* FROM project p1 LEFT JOIN favorite f on p1.id = f.project_id WHERE f.user_id = #{userId}) as p WHERE user_id = #{userId}
+           UNION
+           SELECT p.id
+           FROM (SELECT p1.* FROM project p1 LEFT JOIN favorite f on p1.id = f.project_id WHERE f.user_id = #{userId}) as p
+               LEFT JOIN rel_team_project rtp on rtp.project_id = p.id
+               LEFT JOIN team t ON t.id = rtp.team_id
+               LEFT JOIN rel_user_team rut ON rut.team_id = t.id
+           WHERE rut.user_id = #{userId}
+        )
+        or (p.visibility = 1 and o.member_permission > 0)
+        or o.role > 0
+        order by p.id asc
+    </select>
+
 </mapper>

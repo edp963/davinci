@@ -1,8 +1,16 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { compose } from 'redux'
+import injectReducer from '../../utils/injectReducer'
+import injectSaga from '../../utils/injectSaga'
+import reducer from '../Organizations/reducer'
+import saga from '../Organizations/sagas'
+import reducerTeam from '../Teams/reducer'
+import sagaTeam from '../Teams/sagas'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 import Menus from './components/Menus'
+const Tooltip = require('antd/lib/tooltip')
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 
@@ -27,7 +35,9 @@ export class Account extends React.PureComponent<IAccountProps, {}> {
                     </div>
                     <div className={styles.userItems}>
                       <div className={styles.userName}>{loginUser.username}</div>
-                      <div className={styles.userDesc}>{loginUser.email}</div>
+                      <Tooltip placement="bottomLeft" title={loginUser.email}>
+                        <div className={styles.userDesc}>{loginUser.email}</div>
+                      </Tooltip>
                     </div>
                   </div>
                   <div className={styles.menu}>
@@ -51,9 +61,23 @@ const mapStateToProps = createStructuredSelector({
   loginUser: makeSelectLoginUser()
 })
 
-export default connect<{}, {}, IAccountProps>(mapStateToProps, null)(Account)
+// export default connect<{}, {}, IAccountProps>(mapStateToProps, null)(Account)
 
 
+const withConnect = connect(mapStateToProps, null)
 
+const withReducer = injectReducer({ key: 'organization', reducer })
+const withSaga = injectSaga({ key: 'organization', saga })
+
+const withTeamReducer = injectReducer({ key: 'team', reducer: reducerTeam})
+const withTeamSaga = injectSaga({ key: 'team', saga: sagaTeam})
+
+export default compose(
+  withReducer,
+  withTeamReducer,
+  withTeamSaga,
+  withSaga,
+  withConnect
+)(Account)
 
 

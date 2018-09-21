@@ -42,6 +42,7 @@ import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 import { IFilterChangeParam } from 'components/Filters'
 import DashboardFilterPanel from './components/DashboardFilterPanel'
 import DashboardFilterConfig from './components/DashboardFilterConfig'
+import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 
 import { Responsive, WidthProvider } from 'react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
@@ -82,7 +83,8 @@ import {
   makeSelectCurrentDashboardShareInfo,
   makeSelectCurrentDashboardSecretInfo,
   makeSelectCurrentDashboardShareInfoLoading,
-  makeSelectCurrentDashboardCascadeSources
+  makeSelectCurrentDashboardCascadeSources,
+  makeSelectCurrentLinkages
 } from './selectors'
 import {
   loadBizlogics,
@@ -154,6 +156,7 @@ interface IGridProps {
       [key: string]: Array<number | string>
     }
   }
+  currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItem: (portalId: number, item: [IDashboardItem], resolve: (item: IDashboardItem) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
@@ -214,7 +217,6 @@ interface IGridStates {
   selectedWidget: any[]
   polling: boolean
   linkageConfigVisible: boolean
-  linkageTableSource: any[]
   globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
@@ -259,7 +261,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling: false,
 
       linkageConfigVisible: false,
-      linkageTableSource: [],
 
       globalFilterConfigVisible: false,
 
@@ -327,11 +328,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           this.containerBody.addEventListener('scroll', this.lazyLoad, false)
         })
       }
-
-      if (currentDashboard !== this.props.currentDashboard || currentItemsInfo !== this.props.currentItemsInfo) {
-        const linkageTableSource = this.getLinkageTableSource(currentDashboard, currentItemsInfo)
-        this.setState({ linkageTableSource })
-      }
     }
   }
 
@@ -372,16 +368,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
-  private getLinkageTableSource = (currentDashboard: ICurrentDashboard, currentItemsInfo: any) => {
-    const config = JSON.parse(currentDashboard.config || '{}')
-    const linkageTableSource = config.linkages || []
-    const validLinkageTableSource = linkageTableSource.filter((lts) => {
-      const { linkager, trigger } = lts
-      return currentItemsInfo[linkager[0]] && currentItemsInfo[trigger[0]]
-    })
-    return validLinkageTableSource
-  }
-
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
     const {
       currentItemsInfo,
@@ -415,7 +401,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows)
+    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -717,7 +703,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private deleteItem = (id) => () => {
-    this.props.onDeleteDashboardItem(id, void 0)
+    this.props.onDeleteDashboardItem(id, () => {})
   }
 
   private navDropdownClick = (e) => {
@@ -750,60 +736,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private saveLinkageConfig = (linkages: any[]) => {
     // todo
-    const {
-      currentDashboard,
-      currentItems,
-      currentItemsInfo,
-      widgets,
-      onEditCurrentDashboard
-    } = this.props
-
-    // Object.keys(interactiveItems).forEach((itemId) => {
-    //   if (interactiveItems[itemId].interactId) {
-    //     const triggerItem = currentItems.find((ci) => `${ci.id}` === itemId)
-    //     const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
-
-    //     interactiveItems[itemId] = {
-    //       interactId: ''
-    //     }
-    //   }
-    // })
-
-    // Object.keys(this.interactCallbacks).map((triggerId) => {
-    //   const triggerCallbacks = this.interactCallbacks[triggerId]
-
-    //   Object.keys(triggerCallbacks).map((linkagerId) => {
-    //     triggerCallbacks[linkagerId]()
-    //   })
-    // })
-    // // 由于新的配置和之前可能有很大不同，因此需要遍历 GridItem 来重新注册事件
-    // currentItems.forEach((ci) => {
-    //   const triggerIntance = this.charts[`widget_${ci.id}`]
-
-    //   if (triggerIntance) {
-    //     this.registerChartInteractListener(triggerIntance, ci.id)
-    //   }
-    // })
-    onEditCurrentDashboard(
-      {
-        ...currentDashboard,
-        config: JSON.stringify({
-          ...JSON.parse(currentDashboard.config || '{}'),
-          linkages
-        })
-      },
-      () => {
-        this.setState({
-          linkageTableSource: linkages
-        })
-        this.toggleLinkageConfig(false)()
-      }
-    )
+    const { currentDashboard, onEditCurrentDashboard } = this.props
+    onEditCurrentDashboard({
+      ...currentDashboard,
+      config: JSON.stringify({
+        ...JSON.parse(currentDashboard.config || '{}'),
+        linkages
+      })
+    }, () => {
+      this.toggleLinkageConfig(false)()
+    })
   }
 
   private checkInteract = (itemId: number) => {
-    const { linkageTableSource } = this.state
-    const isInteractiveItem = linkageTableSource.some((lts) => {
+    const { currentLinkages } = this.props
+    const isInteractiveItem = currentLinkages.some((lts) => {
       const { trigger, linkager, relation } = lts
       const triggerId = +trigger[0]
       return triggerId === itemId
@@ -812,128 +759,41 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     return isInteractiveItem
   }
 
-  private doInteract = (itemId, triggerData) => {
+  private doInteract = (itemId: number, triggerData) => {
     const {
       currentItems,
       currentItemsInfo,
+      currentLinkages,
       widgets
     } = this.props
-    const { linkageTableSource } = this.state
 
-    console.log(itemId, triggerData)
+    const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
+    this.interactingLinkagers = processLinkage(itemId, triggerData, mappingLinkage, this.interactingLinkagers)
 
-    // Object.keys(linkagers).forEach((key) => {
-    //   const linkager = linkagers[key]
-
-    //   const linkageFilters = []
-    //   const linkageParams = []
-    //   let linkagerId
-    //   // 合并单个 linkager 所接收的数据
-    //   linkager.forEach((lr) => {
-    //     linkagerId = lr.linkagerId
-
-    //     const {
-    //       triggerValue,
-    //       triggerValueType,
-    //       linkagerValue,
-    //       linkagerType,
-    //       relation
-    //     } = lr
-
-    //     const interactValue = SQL_NUMBER_TYPES.indexOf(triggerValueType) >= 0
-    //       ? triggeringData[triggerValue]
-    //       : `'${triggeringData[triggerValue]}'`
-
-    //     if (linkagerType === 'parameter') {
-    //       linkageFilters.push(`${linkagerValue} ${relation} ${interactValue}`)
-    //     } else {
-    //       linkageParams.push({
-    //         k: linkagerValue,
-    //         v: interactValue
-    //       })
-    //     }
-    //   })
-
-    //   const linkagerItem = currentItems.find((ci) => ci.id === linkagerId)
-    //   const alreadyInUseFiltersAndParams = this.interactingLinkagers[linkagerId]
-    //   /*
-    //    * 多个 trigger 联动同一个 linkager
-    //    * interactingLinkagers 是个临时数据存储，且不触发render
-    //    */
-    //   if (alreadyInUseFiltersAndParams) {
-    //     const { filters, params } = alreadyInUseFiltersAndParams
-    //     const mergedFilters = linkageFilters.length ? { ...filters, [itemId]: linkageFilters } : filters
-    //     const mergedParams = linkageParams.length ? { ...params, [itemId]: linkageParams } : params
-
-    //     this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-    //       linkageFilters: Object.values(mergedFilters)
-    //         .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
-    //         .join(' and '),
-    //       linkageParams: Object.values(mergedParams).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
-    //     })
-
-    //     this.interactingLinkagers[linkagerId] = {
-    //       filters: mergedFilters,
-    //       params: mergedParams
-    //     }
-    //   } else {
-    //     this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-    //       linkageFilters: linkageFilters.join(' and '),
-    //       linkageParams
-    //     })
-
-    //     this.interactingLinkagers[linkagerId] = {
-    //       filters: linkageFilters.length ? {[itemId]: linkageFilters} : {},
-    //       params: linkageParams.length ? {[itemId]: linkageParams} : {}
-    //     }
-    //   }
-
-    //   if (!this.interactCallbacks[itemId]) {
-    //     this.interactCallbacks[itemId] = {}
-    //   }
-
-    //   if (!this.interactCallbacks[itemId][linkagerId]) {
-    //     this.interactCallbacks[itemId][linkagerId] = () => {
-    //       const { filters, params } = this.interactingLinkagers[linkagerId]
-
-    //       delete filters[itemId]
-    //       delete params[itemId]
-
-    //       this.getChartData('clear', linkagerId, linkagerItem.widgetId, {
-    //         linkageFilters: Object.values(filters)
-    //           .reduce((arr: any[], val: any[]): any => arr.concat(...val), [])
-    //           .join(' and '),
-    //         linkageParams: Object.values(params).reduce((arr: any[], val: any[]) => arr.concat(...val), [])
-    //       })
-    //     }
-    //   }
-    // })
+    Object.keys(mappingLinkage).forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === +linkagerItemId)
+      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
+        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      })
+    })
   }
 
-  private turnOffInteract = (itemId) => () => {
+  private turnOffInteract = (itemId) => {
     const {
-      currentItems,
-      currentItemsInfo,
-      widgets
+      currentLinkages,
+      currentItems
     } = this.props
 
-    const triggerItem = currentItems.find((ci) => ci.id === itemId)
-    const triggerWidget = widgets.find((w) => w.id === triggerItem.widgetId)
-    const chartInfo = widgetlibs.find((wl) => wl.id === triggerWidget.widgetlib_id)
-    const dataSource = currentItemsInfo[itemId].datasource
-
-    // this.setState({
-    //   interactiveItems: {
-    //     ...this.state.interactiveItems,
-    //     [itemId]: {
-    //       interactId: ''
-    //     }
-    //   }
-    // })
-
-    Object.keys(this.interactCallbacks[itemId]).map((linkagerId) => {
-      this.interactCallbacks[itemId][linkagerId]()
-      delete this.interactCallbacks[itemId][linkagerId]
+    const refreshItemIds = removeLinkage(itemId, currentLinkages, this.interactingLinkagers)
+    refreshItemIds.forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === linkagerItemId)
+      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('rerender', linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
+        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      })
     })
   }
 
@@ -1047,7 +907,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
       router,
-      currentProject
+      currentProject,
+      currentLinkages
     } = this.props
 
     const {
@@ -1059,7 +920,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling,
       dashboardItemFormStep,
       linkageConfigVisible,
-      linkageTableSource,
       globalFilterConfigVisible,
       allowFullScreen,
       dashboardSharePanelAuthorized
@@ -1131,7 +991,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               secretInfo={secretInfo}
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
-              interactId={interactId}
               currentProject={currentProject}
               onGetChartData={this.getChartData}
               onShowEdit={this.showEditDashboardItemForm}
@@ -1309,6 +1168,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           onGetWidgetInfo={this.getWidgetInfo}
           onSave={this.saveLinkageConfig}
           onCancel={this.toggleLinkageConfig(false)}
+          linkages={currentLinkages}
         />
         <DashboardFilterConfig
           currentDashboard={currentDashboard}
@@ -1347,6 +1207,7 @@ const mapStateToProps = createStructuredSelector({
   currentItems: makeSelectCurrentItems(),
   currentItemsInfo: makeSelectCurrentItemsInfo(),
   currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
+  currentLinkages: makeSelectCurrentLinkages(),
   widgets: makeSelectWidgets(),
   bizlogics: makeSelectBizlogics(),
   currentProject: makeSelectCurrentProject()

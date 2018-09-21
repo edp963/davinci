@@ -93,6 +93,7 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
       params: Array<{name: string, value: string}>
       linkageParams: Array<{name: string, value: string}>
       globalParams: Array<{name: string, value: string}>
+      orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
     }
@@ -163,7 +164,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IPivotProps = JSON.parse(widget.config)
-    const { cols, rows, metrics, filters, color, label, size, xAxis } = widgetConfig
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = layersInfo[itemId].queryParams
 
@@ -187,7 +188,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows)
+    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -207,11 +208,25 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           func: l.agg
         })))
     }
+    if (size) {
+      aggregators = aggregators.concat(size.items
+        .map((s) => ({
+          column: decodeMetricName(s.name),
+          func: s.agg
+        })))
+    }
     if (xAxis) {
       aggregators = aggregators.concat(xAxis.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg
+        })))
+    }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((t) => ({
+          column: decodeMetricName(t.name),
+          func: t.agg
         })))
     }
 
@@ -228,8 +243,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         params,
         linkageParams,
         globalParams,
-        cache: false,
-        expired: 0
+        orders,
+        cache,
+        expired
       }
     )
   }

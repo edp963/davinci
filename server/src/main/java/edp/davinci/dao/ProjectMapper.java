@@ -18,7 +18,6 @@
 
 package edp.davinci.dao;
 
-import edp.davinci.core.common.Constants;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.projectDto.ProjectWithOrganization;
@@ -34,86 +33,12 @@ import java.util.List;
 @Component
 public interface ProjectMapper {
 
-    /**
-     * 获取项目列表
-     * 用户创建 + 用户所在组里可访问的项目
-     *
-     * @return
-     */
-    @Select({
-            "SELECT ",
-            "    p.*, ",
-            "    IF(s.id is NULL, FALSE, TRUE) as 'isStar',",
-            "    u.id as 'createBy.id',",
-            "    u.username as 'createBy.username',",
-            "    u.avatar as 'createBy.avatar'",
-            "FROM project p ",
-            "left join `user` u on u.id = p.user_id",
-            "left join star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
-            "left join (",
-            "   SELECT org.id, ruo.role, org.member_permission ",
-            "   FROM rel_user_organization ruo ",
-            "   LEFT JOIN organization org on ruo.org_id = org.id ",
-            "   WHERE ruo.user_id = #{userId} ",
-            ") o on o.id = p.org_id",
-            "WHERE p.id IN (",
-            //用户创建
-            "   SELECT id  FROM project WHERE user_id = #{userId}",
-            "   UNION",
-            //用户所在组里可以访问
-            "   SELECT p.id",
-            "   FROM project p",
-            "       LEFT JOIN rel_team_project rtp on rtp.project_id = p.id",
-            "       LEFT JOIN team t ON t.id = rtp.team_id",
-            "       LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
-            "   WHERE rut.user_id = #{userId} AND (rut.role = 1 or p.visibility = 1)",
-            ") ",
-            //organization对成员可见
-            "or o.member_permission > 0",
-            //organization的owner
-            "or o.role > 0",
-            "order by p.id asc",
-    })
+
     List<ProjectWithCreateBy> getProejctsByUser(@Param("userId") Long userId);
 
+    List<ProjectWithCreateBy> getFavoriteProjects(@Param("userId") Long userId);
 
-    @Select({
-            "SELECT ",
-            "    p.*, ",
-            "    IF(s.id is NULL, FALSE, TRUE) as 'isStar',",
-            "    u.id as 'createBy.id',",
-            "    u.username as 'createBy.username',",
-            "    u.avatar as 'createBy.avatar'",
-            "from (SELECT * FROM project WHERE org_id = #{orgId}) p",
-            "   LEFT JOIN `user` u on u.id = p.user_id",
-            "   LEFT JOIN star s on (s.target_id = p.id and s.target = '" + Constants.STAR_TARGET_PROJECT + "' and s.user_id = #{userId})",
-            "   LEFT JOIN (",
-            "      SELECT org.id, ruo.role, org.member_permission ",
-            "      FROM rel_user_organization ruo ",
-            "      LEFT JOIN organization org on ruo.org_id = org.id ",
-            "      where ruo.user_id = #{userId} and org.id = #{orgId}",
-            "   ) o on o.id = p.org_id",
-            "where ",
-            //用户创建
-            "    p.user_id = #{userId} ",
-            //公开的
-            "    or p.visibility = 1",
-            //用户所在组可访问
-            "    or p.id in (",
-            "        SELECT p.id",
-            "        FROM project p",
-            "        LEFT JOIN rel_team_project rtp on rtp.project_id = p.id",
-            "        LEFT JOIN team t ON t.id = rtp.team_id",
-            "        LEFT JOIN rel_user_team rut ON rut.team_id = t.id",
-            "        WHERE p.org_id = #{orgId} and rut.user_id = #{userId} AND rut.role = 1",
-            "    )",
-            //organization对成员可见
-            "   or o.member_permission > 0",
-            //organization的owner
-            " or o.role > 0",
-            "order by p.id",
-    })
-    List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId);
+    List<ProjectWithCreateBy> getProjectsByOrgWithUser(@Param("orgId") Long orgId, @Param("userId") Long userId, @Param("keyword") String keyword);
 
 
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})
@@ -190,4 +115,5 @@ public interface ProjectMapper {
 
     @Update({"update project set star_num = IF(star_num > 0,star_num - 1, 0) where id = #{id}"})
     int starNumReduce(@Param("id") Long id);
+
 }

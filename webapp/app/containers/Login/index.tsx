@@ -23,7 +23,6 @@ import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
-import Background from './Background'
 import LoginForm from './LoginForm'
 const Icon = require('antd/lib/icon')
 
@@ -69,7 +68,6 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
   }
 
   private checkNormalLogin = () => {
-    console.log(checkLogin())
     if (checkLogin()) {
       const token = localStorage.getItem('TOKEN')
       const loginUser = localStorage.getItem('loginUser')
@@ -111,34 +109,30 @@ export class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { loginLoading } = this.props
     const { username, password } = this.state
     return (
-      <div className={styles.login}>
+      <div className={styles.window}>
         <Helmet title="Login" />
-        <Background />
-        <img className={styles.logo} src={require('../../assets/images/logo_light.svg')} />
-        <div className={styles.window}>
-          <LoginForm
-            username={username}
-            password={password}
-            onChangeUsername={this.changeUsername}
-            onChangePassword={this.changePassword}
-            onLogin={this.doLogin}
-          />
-          <button
-            disabled={loginLoading}
-            onClick={this.doLogin}
-          >
-            {
-              loginLoading
-                ? <Icon type="loading" />
-                : ''
-            }
-            登 录
-          </button>
-          <p className={styles.tips}>
-            <span>还没有账号？ </span>
-            <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
-          </p>
-        </div>
+        <LoginForm
+          username={username}
+          password={password}
+          onChangeUsername={this.changeUsername}
+          onChangePassword={this.changePassword}
+          onLogin={this.doLogin}
+        />
+        <button
+          disabled={loginLoading}
+          onClick={this.doLogin}
+        >
+          {
+            loginLoading
+              ? <Icon type="loading" />
+              : ''
+          }
+          登 录
+        </button>
+        <p className={styles.tips}>
+          <span>还没有账号？ </span>
+          <a href="javascript:;" onClick={this.toSignUp}>注册davinci账号</a>
+        </p>
       </div>
     )
   }

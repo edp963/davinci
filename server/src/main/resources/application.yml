@@ -27,7 +27,8 @@ spring:
         enabled: true
 
   config:
-      location: classpath:/, file:${DAVINCI3_HOME}/config/
+      location: classpath:/
+      additional-location: file:${DAVINCI3_HOME}/config/
       name: application
 
   datasource:

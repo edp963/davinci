@@ -1,0 +1,51 @@
+@import "../../assets/less/variable";
+
+.container {
+  background: @secondary-color;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  &.share {
+    background: linear-gradient(135deg, @primary-color, @secondary-color) transparent;
+
+    .window {
+      background-color: transparent;
+    }
+  }
+
+  .background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+  }
+
+  .logo {
+    width: 200px;
+    height: 40px;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+
+    .background {
+      display: none;
+    }
+
+    .window {
+      width: 80%;
+      padding-top: 32px;
+      margin-bottom: 0;
+    }
+  }
+}

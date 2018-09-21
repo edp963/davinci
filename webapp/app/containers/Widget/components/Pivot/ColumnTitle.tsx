@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { IDrawingData, DimetionType } from './Pivot'
-import { IChartInfo } from './Chart'
-import { getPivotCellWidth } from '../util'
+import { IDrawingData, DimetionType, IChartStyles } from './Pivot'
+import { getPivotCellWidth, getPivot, getStyleConfig } from '../util'
 
 const styles = require('./Pivot.less')
 
@@ -9,13 +8,16 @@ interface IColumnTitleProps {
   cols: string[]
   colKeys: string[][]
   colTree: object
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
 }
 
 export function ColumnTitle (props: IColumnTitleProps) {
-  const { cols, colKeys, colTree, drawingData, dimetionAxis } = props
-  const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
+  const { cols, colKeys, colTree, chartStyles, drawingData, dimetionAxis } = props
+  const { elementSize, unitMetricWidth } = drawingData
+  const { color: fontColor } = getStyleConfig(chartStyles).pivot
+
   let tableWidth = 0
 
   if (dimetionAxis) {
@@ -27,7 +29,13 @@ export function ColumnTitle (props: IColumnTitleProps) {
   }
 
   return (
-    <div className={styles.columnTitle} style={{width: tableWidth}}>
+    <div
+      className={styles.columnTitle}
+      style={{
+        width: tableWidth,
+        color: fontColor
+      }}
+    >
       {cols.join(`  /  `)}
     </div>
   )

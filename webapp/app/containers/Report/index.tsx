@@ -150,8 +150,6 @@ export function mapDispatchToProps (dispatch) {
         { icon: 'icon-widget-gallery', route: ['widgets'], permission: 'widget' },
         { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'], permission: 'view' },
         { icon: 'icon-datasource24', route: ['sources'], permission: 'source' },
-        // { icon: 'icon-user1', route: ['users'] },
-        // { icon: 'icon-group', route: ['groups'] },
         { icon: 'anticon anticon-clock-circle-o', route: ['schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))

@@ -36,4 +36,11 @@
             #{role, jdbcType=SMALLINT}
         </trim>
     </insert>
+    
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM rel_user_team WHERE id in
+        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>

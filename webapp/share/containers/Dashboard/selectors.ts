@@ -22,6 +22,11 @@ import { createSelector } from 'reselect'
 
 const selectShare = (state) => state.get('shareDashboard')
 
+const makeSelectDashboard = () => createSelector(
+  selectShare,
+  (shareState) => shareState.get('dashboard')
+)
+
 const makeSelectTitle = () => createSelector(
   selectShare,
   (shareState) => shareState.get('title')
@@ -47,12 +52,33 @@ const makeSelectDashboardCascadeSources = () => createSelector(
   (shareState) => shareState.get('dashboardCascadeSources')
 )
 
+const makeSelectLinkages = () => createSelector(
+  selectShare,
+  (shareState) => {
+    const config = shareState.get('config')
+    if (!config) { return [] }
+
+    const emptyConfig = {}
+    const { linkages } = JSON.parse(config || emptyConfig)
+    if (!linkages) { return [] }
+
+    const itemsInfo = shareState.get('itemsInfo')
+    const validLinkages = linkages.filter((l) => {
+      const { linkager, trigger } = l
+      return itemsInfo[linkager[0]] && itemsInfo[trigger[0]]
+    })
+    return validLinkages
+  }
+)
+
 export {
   selectShare,
+  makeSelectDashboard,
   makeSelectTitle,
   makeSelectConfig,
   makeSelectDashboardCascadeSources,
   makeSelectWidgets,
   makeSelectItems,
-  makeSelectItemsInfo
+  makeSelectItemsInfo,
+  makeSelectLinkages
 }

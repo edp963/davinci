@@ -1,116 +1,83 @@
 @import "../../assets/less/variable";
 
-.login {
-  background: @secondary-color;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.window {
+  width: 320px;
+  background-color: fade(@secondary-color, 50%);
+  padding-top: 64px;
+  margin-bottom: 180px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  position: relative;
+  z-index: 1;
 
-  &.share {
-    background: linear-gradient(135deg, @primary-color, @secondary-color) transparent;
-
-    .window {
-      background-color: transparent;
-    }
+  .form {
+    width: 100%;
+    margin-bottom: 32px;
   }
 
-  .background {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-  }
+  button {
+    width: 75%;
+    height: 36px;
+    background-color: transparent;
+    border: 1px solid @white;
+    border-radius: 3px;
+    color: @white;
+    font-size: 1.15em;
+    outline: none;
 
-  .logo {
-    width: 200px;
-    height: 40px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .window {
-    width: 320px;
-    background-color: fade(@secondary-color, 50%);
-    padding-top: 64px;
-    margin-bottom: 180px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 1;
-
-    .form {
-      width: 100%;
-      margin-bottom: 32px;
-    }
-
-    button {
-      width: 75%;
-      height: 36px;
-      background-color: transparent;
-      border: 1px solid @white;
-      border-radius: 3px;
-      color: @white;
-      outline: none;
-
-      &[disabled] {
-        background-color: fade(@white, 20);
-      }
-
-      i {
-        margin-right: 8px;
-      }
-    }
-  }
-
-  .input {
-    height: 45px;
-    border-bottom: 1px solid @white;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    &:last-child {
-      border-bottom: 0;
+    &[disabled] {
+      background-color: fade(@white, 20);
     }
 
     i {
-      color: @white;
-      font-size: 24px;
-      flex-shrink: 0;
+      margin-right: 8px;
+    }
+  }
+}
+
+.input {
+  height: 45px;
+  border-bottom: 1px solid @white;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
+  i {
+    color: @white;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    background-color: transparent;
+    padding: 0 8px;
+    border: 0;
+    outline: none;
+    color: @white;
+    font-size: 1.15em;
+
+    &::-webkit-input-placeholder {
+      color: fade(@white, 75);
+    }
+    &::-moz-placeholder {
+      color: fade(@white, 75);
+    }
+    &:-ms-input-placeholder {
+      color: fade(@white, 75);
+    }
+    &:-moz-placeholder {
+      color: fade(@white, 75);
     }
 
-    input {
-      flex: 1;
-      background-color: transparent;
-      padding: 0 8px;
-      border: 0;
-      outline: none;
-      color: @white;
-
-      &::-webkit-input-placeholder {
-        color: fade(@white, 75);
-      }
-      &::-moz-placeholder {
-        color: fade(@white, 75);
-      }
-      &:-ms-input-placeholder {
-        color: fade(@white, 75);
-      }
-      &:-moz-placeholder {
-        color: fade(@white, 75);
-      }
-
-      &:-webkit-autofill {
-        -webkit-text-fill-color: @white;
-        transition: background-color 9999s ease-in-out 0s;
-      }
+    &:-webkit-autofill {
+      -webkit-text-fill-color: @white;
+      transition: background-color 9999s ease-in-out 0s;
     }
   }
 }
@@ -125,17 +92,7 @@
   }
 }
 
-@media (max-width: 768px) {
-  .login {
-
-    .background {
-      display: none;
-    }
-
-    .window {
-      width: 80%;
-      padding-top: 32px;
-      margin-bottom: 0;
-    }
-  }
+.joinOrganizationLoadingContent {
+  padding: 20px 0;
+  color: @white;
 }

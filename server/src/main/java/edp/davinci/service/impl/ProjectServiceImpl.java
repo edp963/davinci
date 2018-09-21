@@ -44,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
@@ -87,7 +88,11 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     private StarMapper starMapper;
 
     @Autowired
-    public RelUserTeamMapper relUserTeamMapper;
+    private RelUserTeamMapper relUserTeamMapper;
+
+    @Autowired
+    private FavoriteMapper favoriteMapper;
+
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long orgId) {
@@ -112,7 +117,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if ((!isMaintainer(project, user) && null == rel) || (rel.getRole() == UserOrgRoleEnum.MEMBER.getRole() && !project.getVisibility())) {
+        if (!isMaintainer(project, user) && null == rel && !project.getVisibility()) {
             log.info("user[{}] don't have permission to get project info", user.getId(), project.getId());
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission");
         }
@@ -437,4 +442,60 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         }
     }
 
+    /**
+     * 收藏project
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public ResultMap favoriteProject(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        Project project = projectMapper.getById(id);
+
+        if (null == project) {
+            log.info("project (:{}) not found");
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+        if (null == rel || !allowRead(project, user)) {
+            log.info("user({}) cannot favorite project({})", user.getId(), project.getId());
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("Unauthorized: you can't favorite this project");
+        }
+
+        int insert = favoriteMapper.insert(new Favorite(user.getId(), project.getId()));
+        return resultMap.successAndRefreshToken(request);
+    }
+
+
+    @Override
+    public ResultMap getFavoriteProjects(User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        List<ProjectWithCreateBy> projects = projectMapper.getFavoriteProjects(user.getId());
+        List<ProjectInfo> projectInfoList = new ArrayList<>();
+        if (null != projects && projects.size() > 0) {
+            for (ProjectWithCreateBy project : projects) {
+                ProjectInfo projectInfo = new ProjectInfo();
+                BeanUtils.copyProperties(project, projectInfo);
+                setProjectPermission(projectInfo, user);
+                projectInfoList.add(projectInfo);
+            }
+        }
+        return resultMap.successAndRefreshToken(request).payloads(projectInfoList);
+    }
+
+    @Override
+    @Transactional
+    public ResultMap removeFavoriteProjects(User user, Long[] projectIds, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        favoriteMapper.deleteBatch(Arrays.asList(projectIds), user.getId());
+        return resultMap.successAndRefreshToken(request);
+    }
 }

@@ -14,14 +14,16 @@ import {
   getAxisInterval,
   getTextWidth,
   getBar,
-  getSizeRate
+  getSizeRate,
+  getAggregatorLocale
 } from '../util'
 import {
   PIVOT_LINE_HEIGHT,
   PIVOT_CHART_SPLIT_SIZE,
   PIVOT_LEGEND_ITEM_PADDING,
   PIVOT_LEGEND_PADDING,
-  PIVOT_DEFAULT_SCATTER_SIZE
+  PIVOT_DEFAULT_SCATTER_SIZE,
+  DEFAULT_SPLITER
 } from '../../../../globalConstants'
 import Corner from './Corner'
 import RowTitle from './RowTitle'
@@ -34,9 +36,10 @@ import ColumnFooter from './ColumnFooter'
 import Legend from './Legend'
 import { IChartInfo } from './Chart'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
-import { AggregatorType, DragType, IDataParamConfig, IDataParamSource } from '../Workbench/Dropbox'
-import { IAxisConfig } from '../Workbench/AxisConfigSection'
-import { ISplitLineConfig } from '../Workbench/SplitLineConfigSection'
+import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
+import { IAxisConfig } from 'containers/Widget/components/Workbench/ConfigSections/AxisSection'
+import { ISplitLineConfig } from 'containers/Widget/components/Workbench/ConfigSections/SplitLineSection'
+import { IPivotConfig } from 'containers/Widget/components/Workbench/ConfigSections/PivotSection'
 const Icon = require('antd/lib/icon')
 
 const styles = require('./Pivot.less')
@@ -80,6 +83,7 @@ export interface ILegend {
 }
 
 export interface IChartStyles {
+  pivot?: IPivotConfig
   spec?: object
   xAxis?: IAxisConfig
   yAxis?: IAxisConfig
@@ -182,9 +186,12 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
   public componentWillReceiveProps (nextProps) {
     const { renderType, color } = nextProps
+    const { legendSelected } = this.state
     this.setState({
       renderType,
-      legendSelected: color && !color.items.length ? {} : this.state.legendSelected
+      legendSelected: (color && !color.items.length && Object.keys(legendSelected).length)
+        ? {}
+        : legendSelected
     })
   }
 
@@ -322,61 +329,123 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     const { cols, rows, metrics } = props
 
     const rowKey = []
+    const colKey = []
+    let flatRowKeys
+    let flatColKeys
 
-    rows.forEach((r, i) => {
-      const value = record[r]
-      const textWidth = getPivotContentTextWidth(value, 'bold')
-      this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
-      rowKey.push(value)
+    const metricNames = metrics.map((m) => `${m.name}${DEFAULT_SPLITER}${m.agg}`)
+    if (!metricNames.length) {
+      metricNames.push('无指标值')
+    }
+
+    if (rows.includes('指标名称')) {
+      metricNames.forEach((mn) => {
+        const keyArr = []
+        const [name, id, agg] = mn.split(DEFAULT_SPLITER)
+        const metricTextWidth = getPivotContentTextWidth(
+          `[${getAggregatorLocale(agg)}]${name}`,
+          'bold'
+        )
+        rows.forEach((r, i) => {
+          const value = r === '指标名称' ? mn : record[r]
+          const textWidth = r === '指标名称'
+            ? metricTextWidth
+            : getPivotContentTextWidth(value, 'bold')
+          this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
+          keyArr.push(value)
+        })
+        rowKey.push(keyArr)
+      })
+      flatRowKeys = rowKey.reduce((arr, keys) => arr.concat(keys.join(String.fromCharCode(0))), [])
+    } else {
+      rows.forEach((r, i) => {
+        const value = record[r]
+        const textWidth = getPivotContentTextWidth(value, 'bold')
+        this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
+        rowKey.push(value)
+      })
+      flatRowKeys = [rowKey.join(String.fromCharCode(0))]
+    }
+
+    if (cols.includes('指标名称')) {
+      metricNames.forEach((mn) => {
+        const keyArr = []
+        cols.forEach((c) => {
+          const value = c === '指标名称' ? mn : record[c]
+          keyArr.push(value)
+        })
+        colKey.push(keyArr)
+      })
+      flatColKeys = colKey.reduce((arr, keys) => arr.concat(keys.join(String.fromCharCode(0))), [])
+    } else {
+      cols.forEach((c) => {
+        colKey.push(record[c])
+      })
+      flatColKeys = [colKey.join(String.fromCharCode(0))]
+    }
+
+    flatRowKeys.forEach((flatRowKey) => {
+      flatColKeys.forEach((flatColKey) => {
+        if (rowKey.length) {
+          if (!this.rowTree[flatRowKey]) {
+            const height = !hasDimetionAxis && { height: PIVOT_LINE_HEIGHT }
+            this.rowTree[flatRowKey] = { ...height, records: [] }
+            this.rowKeys.push(flatRowKey.split(String.fromCharCode(0)))
+          }
+          this.rowTree[flatRowKey].records.push(record)
+
+          if (metrics.length) {
+            if (!hasDimetionAxis) {
+              const cellHeight = (rows.includes('指标名称') || cols.includes('指标名称'))
+                ? PIVOT_LINE_HEIGHT
+                : (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
+              this.rowTree[flatRowKey].height = cellHeight
+            }
+          }
+        }
+        if (colKey.length) {
+          if (!this.colTree[flatColKey]) {
+            const width = !hasDimetionAxis && {
+              width: Math.max(
+                ...flatColKey.split(String.fromCharCode(0))
+                  .map((c) => {
+                    if (c.includes(DEFAULT_SPLITER)) {
+                      const [name, id, agg] = c.split(DEFAULT_SPLITER)
+                      return getPivotContentTextWidth(`[${getAggregatorLocale(agg)}]${name}`, 'bold')
+                    } else {
+                      return getPivotContentTextWidth(c, 'bold')
+                    }
+                  })
+              )
+            }
+            const height = !hasDimetionAxis && { height: PIVOT_LINE_HEIGHT }
+            this.colTree[flatColKey] = { ...width, ...height, records: [] }
+            this.colKeys.push(flatColKey.split(String.fromCharCode(0)))
+          }
+          this.colTree[flatColKey].records.push(record)
+
+          if (metrics.length) {
+            if (!hasDimetionAxis) {
+              const maxTextWidth = Math.max(...metrics.map((m) => getPivotContentTextWidth(record[`${m.agg}(${decodeMetricName(m.name)})`])))
+              const cellHeight = (rows.includes('指标名称') || cols.includes('指标名称'))
+                ? PIVOT_LINE_HEIGHT
+                : (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
+              this.colTree[flatColKey].width = Math.max(this.colTree[flatColKey].width, maxTextWidth)
+              this.colTree[flatColKey].height = cellHeight
+            }
+          }
+        }
+        if (rowKey.length && colKey.length) {
+          if (!this.tree[flatRowKey]) {
+            this.tree[flatRowKey] = {}
+          }
+          if (!this.tree[flatRowKey][flatColKey]) {
+            this.tree[flatRowKey][flatColKey] = []
+          }
+          this.tree[flatRowKey][flatColKey].push(record)
+        }
+      })
     })
-
-    const colKey = cols.map((c) => record[c])
-
-    const flatRowKey = rowKey.join(String.fromCharCode(0))
-    const flatColKey = colKey.join(String.fromCharCode(0))
-
-    if (rowKey.length) {
-      if (!this.rowTree[flatRowKey]) {
-        const height = !hasDimetionAxis && { height: PIVOT_LINE_HEIGHT }
-        this.rowTree[flatRowKey] = { ...height, records: [] }
-        this.rowKeys.push(rowKey)
-      }
-      this.rowTree[flatRowKey].records.push(record)
-
-      if (metrics.length) {
-        if (!hasDimetionAxis) {
-          const cellHeight = (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
-          this.rowTree[flatRowKey].height = cellHeight
-        }
-      }
-    }
-    if (colKey.length) {
-      if (!this.colTree[flatColKey]) {
-        const width = !hasDimetionAxis && { width: Math.max(...colKey.map((c) => getPivotContentTextWidth(c, 'bold'))) }
-        const height = !hasDimetionAxis && { height: PIVOT_LINE_HEIGHT }
-        this.colTree[flatColKey] = { ...width, ...height, records: [] }
-        this.colKeys.push(colKey)
-      }
-      this.colTree[flatColKey].records.push(record)
-
-      if (metrics.length) {
-        if (!hasDimetionAxis) {
-          const maxTextWidth = Math.max(...metrics.map((m) => getPivotContentTextWidth(record[`${m.agg}(${decodeMetricName(m.name)})`])))
-          const cellHeight = (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
-          this.colTree[flatColKey].width = Math.max(this.colTree[flatColKey].width, maxTextWidth)
-          this.colTree[flatColKey].height = cellHeight
-        }
-      }
-    }
-    if (rowKey.length && colKey.length) {
-      if (!this.tree[flatRowKey]) {
-        this.tree[flatRowKey] = {}
-      }
-      if (!this.tree[flatRowKey][flatColKey]) {
-        this.tree[flatRowKey][flatColKey] = []
-      }
-      this.tree[flatRowKey][flatColKey].push(record)
-    }
   }
 
   private sortingKeys = (keys) => (a, b) => {
@@ -527,12 +596,14 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             cols={cols}
             rows={rows}
             rowWidths={this.rowHeaderWidths}
+            chartStyles={chartStyles}
             dimetionAxis={dimetionAxis}
           />
           <div className={styles.rowHeader}>
             <RowTitle
               rows={rows}
               rowKeys={this.rowKeys}
+              chartStyles={chartStyles}
               drawingData={this.drawingData}
               dimetionAxis={dimetionAxis}
             />
@@ -549,6 +620,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
               drawingData={this.drawingData}
               dimetionAxis={dimetionAxis}
               metricAxisConfig={this.metricAxisConfig}
+              hasMetricNameDimetion={cols.includes('指标名称') || rows.includes('指标名称')}
               ref={(f) => this.rowHeader = findDOMNode(f)}
             />
           </div>
@@ -559,6 +631,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             cols={cols}
             colKeys={this.colKeys}
             colTree={this.colTree}
+            chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
           />
@@ -567,6 +640,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             colKeys={this.colKeys}
             colTree={this.colTree}
             metrics={metrics}
+            chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
             ref={(f) => this.columnHeader = findDOMNode(f)}
@@ -612,6 +686,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         </div>
         <Legend
           color={color}
+          chartStyles={chartStyles}
           onLegendSelect={this.legendSelect}
         />
         <div

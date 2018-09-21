@@ -28,9 +28,9 @@ import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.BaseSource;
+import edp.core.model.CustomDataSource;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
-import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
@@ -40,9 +40,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.stringtemplate.v4.ST;
-import org.stringtemplate.v4.STGroup;
-import org.stringtemplate.v4.STGroupFile;
 
 import javax.sql.DataSource;
 import java.math.BigDecimal;
@@ -146,28 +143,21 @@ public class SqlUtils {
             connection = getConnection();
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
-                ResultSet tables = metaData.getTables(null, null, "%", null);
+                String schemaPattern = null;
+                if (DataTypeEnum.ORACLE.getFeature().equals(DataTypeEnum.urlOf(this.jdbcUrl).getFeature())) {
+                    schemaPattern = this.username;
+                    if (null != schemaPattern) {
+                        schemaPattern = schemaPattern.toUpperCase();
+                    }
+                }
+                ResultSet tables = metaData.getTables(null, schemaPattern, "%", null);
                 if (null != tables) {
                     tableInfoList = new ArrayList<>();
                     while (tables.next()) {
                         String tableName = tables.getString("TABLE_NAME");
                         if (!StringUtils.isEmpty(tableName)) {
-                            //查询表主键
-                            ResultSet resultSet = metaData.getPrimaryKeys(null, null, tableName);
-                            List<String> primaryKeys = new ArrayList<>();
-                            while (resultSet.next()) {
-                                if (!StringUtils.isEmpty(resultSet.getString("PK_NAME")) && "PRIMARY".equals(resultSet.getString("PK_NAME"))) {
-                                    primaryKeys.add(resultSet.getString("COLUMN_NAME"));
-                                }
-                            }
-                            resultSet.close();
-                            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                            ST st = stg.getInstanceOf("queryAll");
-                            st.add("tableName", tableName);
-                            st.add("keywordStart", DataTypeEnum.getKeywordStart(this.jdbcUrl));
-                            st.add("keywordEnd", DataTypeEnum.getKeywordEnd(this.jdbcUrl));
-                            String sql = st.render();
-                            List<QueryColumn> columns = getColumns(sql);
+                            List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
+                            List<QueryColumn> columns = getColumns(tableName, metaData);
                             TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
                             tableInfoList.add(tableInfo);
                         }
@@ -176,11 +166,10 @@ public class SqlUtils {
                 tables.close();
             }
         } catch (Exception e) {
-            throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
+            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
             releaseConnection(connection);
         }
-
         return tableInfoList;
     }
 
@@ -250,6 +239,61 @@ public class SqlUtils {
         return columnList;
     }
 
+
+    /**
+     * 获取数据表主键
+     *
+     * @param tableName
+     * @param metaData
+     * @return
+     * @throws ServerException
+     */
+    private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
+        Connection connection = null;
+        ResultSet rs = null;
+        List<String> primaryKeys = new ArrayList<>();
+        try {
+            rs = metaData.getPrimaryKeys(null, null, tableName);
+            while (rs.next()) {
+                primaryKeys.add(rs.getString(4));
+            }
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        } finally {
+            closeResult(rs);
+            releaseConnection(connection);
+        }
+        return primaryKeys;
+    }
+
+
+    /**
+     * 获取数据表列
+     *
+     * @param tableName
+     * @param metaData
+     * @return
+     * @throws ServerException
+     */
+    private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
+        Connection connection = null;
+        ResultSet rs = null;
+        List<QueryColumn> columnList = new ArrayList<>();
+        try {
+            rs = metaData.getColumns(null, null, tableName, "%");
+            while (rs.next()) {
+                columnList.add(new QueryColumn(rs.getString(4), rs.getString(6)));
+            }
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        } finally {
+            closeResult(rs);
+            releaseConnection(connection);
+        }
+        return columnList;
+    }
+
+
     /**
      * 获取数据源
      *
@@ -299,9 +343,22 @@ public class SqlUtils {
         if (null != connection) {
             try {
                 connection.close();
+                connection = null;
             } catch (SQLException e) {
                 e.printStackTrace();
                 log.error("connection close error", e.getMessage());
+            }
+        }
+    }
+
+
+    public static void closeResult(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+                rs = null;
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -439,6 +496,62 @@ public class SqlUtils {
             }
             releaseConnection(connection);
         }
+    }
+
+    public static String getKeywordPrefix(String jdbcUrl) {
+        String keywordPrefix = "";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            keywordPrefix = dataTypeEnum.getKeywordPrefix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                keywordPrefix = customDataSource.getKeyword_prefix();
+            }
+        }
+        return StringUtils.isEmpty(keywordPrefix) ? "" : keywordPrefix;
+    }
+
+    public static String getKeywordSuffix(String jdbcUrl) {
+        String keywordSuffix = "";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            keywordSuffix = dataTypeEnum.getKeywordSuffix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                keywordSuffix = customDataSource.getKeyword_suffix();
+            }
+        }
+        return StringUtils.isEmpty(keywordSuffix) ? "" : keywordSuffix;
+    }
+
+    public static String getAliasPrefix(String jdbcUrl) {
+        String aliasPrefix = "'";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            aliasPrefix = dataTypeEnum.getAliasPrefix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                aliasPrefix = customDataSource.getAlias_prefix();
+            }
+        }
+        return StringUtils.isEmpty(aliasPrefix) ? "'" : aliasPrefix;
+    }
+
+    public static String getAliasSuffix(String jdbcUrl) {
+        String aliasSuffix = "'";
+        DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+        if (null != dataTypeEnum) {
+            aliasSuffix = dataTypeEnum.getAliasSuffix();
+        } else {
+            CustomDataSource customDataSource = CustomDataSourceUtils.getInstance(jdbcUrl);
+            if (null != customDataSource) {
+                aliasSuffix = customDataSource.getAlias_suffix();
+            }
+        }
+        return StringUtils.isEmpty(aliasSuffix) ? "'" : aliasSuffix;
     }
 
 

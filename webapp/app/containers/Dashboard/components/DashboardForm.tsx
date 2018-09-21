@@ -166,7 +166,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
           </Col>
         </Row>
         <p className={type === 'delete' ? '' : utilStyles.hide}>
-          确定要删除{deleteType}: {deleteName} ?
+          确定要删除 {deleteType}：{deleteName} ？
         </p>
       </Form>
     )

@@ -18,7 +18,7 @@
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
         </javaModelGenerator>
-        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources/mybatis/mapper">
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources/mybatis">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
         <javaClientGenerator type="MIXEDMAPPER" targetPackage="edp.davinci.dao" targetProject="src/main/java">
@@ -43,6 +43,7 @@
         <!--<table tableName="mem_display_slide_widget" domainObjectName="MemDisplaySlideWidget" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
         <!--<table tableName="cron_Job" domainObjectName="CronJob" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
         <!--<table tableName="star" domainObjectName="Star" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>-->
+        <table tableName="favorite" domainObjectName="Favorite" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false" selectByExampleQueryId="false"></table>
 
 
     </context>

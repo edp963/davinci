@@ -20,6 +20,7 @@ import { IPivotProps } from '../Pivot/Pivot'
 import ScrollablePivot from '../Pivot'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
+import { getStyleConfig } from 'containers/Widget/components/util'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -102,7 +103,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         rows: [],
         metrics: [],
         filters: [],
-        chartStyles: {},
+        chartStyles: getStyleConfig({}),
         orders: [],
         queryParams: [],
         cache: false,

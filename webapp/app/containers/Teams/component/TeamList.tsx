@@ -33,9 +33,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       formVisible: false
     }
   }
-  private onSearchTeam = () => {
 
-  }
   private AddForm: WrappedFormUtils
   private showAddForm = (type: string) => (e) => {
     e.stopPropagation()
@@ -64,7 +62,9 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
   }
 
   private filter = (array) => {
-    if (!Array.isArray(array)) return array
+    if (!Array.isArray(array)) {
+      return array
+    }
     array.forEach((d) => {
       if (!this.isEmptyObj(d)) {
         d.key = `key${d.id}`

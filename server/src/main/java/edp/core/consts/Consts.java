@@ -33,6 +33,8 @@ public class Consts {
 
     public static final String newLineChar = "\n";
 
+    public static final String colon = ":";
+
     public static final char CSVHeaderSeparator = ':';
 
     public static final char delimiterStartChar = '<';
