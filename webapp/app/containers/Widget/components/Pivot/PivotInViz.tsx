@@ -1,7 +1,7 @@
 import * as React from 'react'
 import ScrollablePivot from './index'
 import { IPivotProps } from './Pivot'
-import { getPivot } from '../util'
+import { getStyleConfig } from '../util'
 
 interface IPivotInVizStates {
   pivotProps: IPivotProps
@@ -21,7 +21,7 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
     rows: [],
     metrics: [],
     filters: [],
-    chartStyles: {},
+    chartStyles: getStyleConfig({}),
     queryParams: [],
     cache: false,
     expired: 300,

@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ChromePicker } from 'react-color'
+import { SketchPicker } from 'react-color'
 const Popover = require('antd/lib/popover')
 const styles = require('./ColorPicker.less')
 
@@ -13,9 +13,9 @@ export function ColorPicker (props: IColorPickerProps) {
     <Popover
       content={
         <div style={{margin: '-8px -16px'}}>
-          <ChromePicker
-            disableAlpha={true}
+          <SketchPicker
             color={props.value}
+            presetColors={[]}
             onChangeComplete={colorChange(props)}
           />
         </div>}
@@ -30,8 +30,9 @@ export function ColorPicker (props: IColorPickerProps) {
 }
 
 function colorChange (props: IColorPickerProps) {
-  return function ({hex}) {
-    props.onChange(hex)
+  return function ({rgb}) {
+    const { r, g, b, a } = rgb
+    props.onChange(`rgba(${r}, ${g}, ${b}, ${a})`)
   }
 }
 

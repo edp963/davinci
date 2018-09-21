@@ -1,8 +1,8 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, DimetionType } from './Pivot'
-import { IChartInfo } from './Chart'
-import { spanSize, getPivotCellWidth } from '../util'
+import { IPivotMetric, IDrawingData, DimetionType, IChartStyles } from './Pivot'
+import { spanSize, getPivotCellWidth, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
+import { DEFAULT_SPLITER } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
@@ -11,14 +11,23 @@ interface IColumnHeaderProps {
   colKeys: string[][]
   colTree: object
   metrics: IPivotMetric[]
+  chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
 }
 
 export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
   public render () {
-    const { cols, colKeys, colTree, metrics, drawingData, dimetionAxis } = this.props
-    const { elementSize, unitMetricWidth, unitMetricHeight } = drawingData
+    const { cols, colKeys, colTree, metrics, chartStyles, drawingData, dimetionAxis } = this.props
+    const { elementSize, unitMetricWidth } = drawingData
+    const {
+      color: fontColor,
+      fontSize,
+      fontFamily,
+      lineColor,
+      lineStyle,
+      headerBackgroundColor
+    } = getStyleConfig(chartStyles).pivot
 
     let tableWidth = 0
     let headers
@@ -70,18 +79,33 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
           })
 
           if (x !== -1) {
+            let colContent
+            if (ck[i].includes(DEFAULT_SPLITER)) {
+              const [name, id, agg] = ck[i].split(DEFAULT_SPLITER)
+              colContent = `[${getAggregatorLocale(agg)}]${name}`
+            } else {
+              colContent = ck[i]
+            }
             header.push(
               <th
                 key={flatColKey}
                 colSpan={x}
                 className={columnClass}
-                {...(!!cellWidth && {style: {width: cellWidth}})}
+                style={{
+                  ...(!!cellWidth && {width: cellWidth}),
+                  backgroundColor: headerBackgroundColor,
+                  color: fontColor,
+                  fontSize: Number(fontSize),
+                  fontFamily,
+                  borderColor: lineColor,
+                  borderStyle: lineStyle
+                }}
               >
                 <p
                   className={styles.colContent}
                   {...(!!cellWidth && {style: {width: cellWidth - 2}})}
                 >
-                  {ck[i]}
+                  {colContent}
                 </p>
               </th>
             )

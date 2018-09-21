@@ -2,8 +2,8 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import Yaxis from './Yaxis'
 import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
-import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData, decodeMetricName } from '../util'
-import { PIVOT_LINE_HEIGHT } from '../../../../globalConstants'
+import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData, decodeMetricName, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
+import { PIVOT_LINE_HEIGHT, DEFAULT_SPLITER } from '../../../../globalConstants'
 
 const styles = require('./Pivot.less')
 
@@ -20,20 +20,28 @@ interface IRowHeaderProps {
   dimetionAxis: DimetionType
   metrics: IPivotMetric[]
   metricAxisConfig: IMetricAxisConfig
+  hasMetricNameDimetion: boolean
 }
 
 export class RowHeader extends React.Component<IRowHeaderProps, {}> {
   public render () {
-    const { rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, chartStyles, drawingData, dimetionAxis, metrics, metricAxisConfig } = this.props
+    const { rows, rowKeys, colKeys, rowWidths, rowTree, colTree, tree, chartStyles, drawingData, dimetionAxis, metrics, metricAxisConfig, hasMetricNameDimetion } = this.props
     const { elementSize, unitMetricHeight } = drawingData
+    const {
+      color: fontColor,
+      fontSize,
+      fontFamily,
+      lineColor,
+      lineStyle,
+      headerBackgroundColor
+    } = getStyleConfig(chartStyles).pivot
 
     const headers = []
 
     if (rows.length) {
       let elementCount = 0
-      let cellHeight = 0
       let x = -1
-      let auxiliaryLines = false
+      let hasAuxiliaryLine = false
 
       rowKeys.forEach((rk, i) => {
         const flatRowKey = rk.join(String.fromCharCode(0))
@@ -42,6 +50,7 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
         const maxElementCount = tree[flatRowKey]
           ? Math.max(...Object.values(tree[flatRowKey]).map((r: any[]) => r ? r.length : 0))
           : records.length
+        let cellHeight = 0
 
         rk.forEach((txt, j) => {
           if (dimetionAxis === 'row') {
@@ -56,7 +65,7 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
                 cellHeight = elementCount * elementSize
                 x = 1
                 elementCount = 0
-                auxiliaryLines = true
+                hasAuxiliaryLine = true
               }
             } else {
               x = spanSize(rowKeys, i, j)
@@ -67,8 +76,8 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
                 ? unitMetricHeight * metrics.length
                 : maxElementCount === 1
                   ? getPivotCellHeight(height)
-                  : getPivotCellHeight(maxElementCount * metrics.length * PIVOT_LINE_HEIGHT)
-              auxiliaryLines = dimetionAxis === 'col'
+                  : getPivotCellHeight(maxElementCount * (hasMetricNameDimetion ? 1 : metrics.length) * PIVOT_LINE_HEIGHT)
+              hasAuxiliaryLine = dimetionAxis === 'col'
             }
             x = spanSize(rowKeys, i, j)
           }
@@ -79,10 +88,17 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
           })
 
           const contentClass = classnames({
-            [styles.auxiliaryLines]: auxiliaryLines
+            [styles.hasAuxiliaryLine]: hasAuxiliaryLine
           })
 
           if (x !== -1) {
+            let colContent
+            if (txt.includes(DEFAULT_SPLITER)) {
+              const [name, id, agg] = txt.split(DEFAULT_SPLITER)
+              colContent = `[${getAggregatorLocale(agg)}]${name}`
+            } else {
+              colContent = txt
+            }
             header.push(
               <th
                 key={`${txt}${j}`}
@@ -91,14 +107,29 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
                 className={columnClass}
                 style={{
                   width: getPivotCellWidth(rowWidths[j]),
-                  ...(!!cellHeight && {height: cellHeight})
+                  ...(!!cellHeight && {height: cellHeight}),
+                  backgroundColor: headerBackgroundColor,
+                  color: fontColor,
+                  fontSize: Number(fontSize),
+                  fontFamily,
+                  borderColor: lineColor,
+                  borderStyle: lineStyle
                 }}
               >
                 <p
                   className={contentClass}
                   {...(!!cellHeight && {style: {height: cellHeight - 1, lineHeight: `${cellHeight - 1}px`}})}
                 >
-                  {txt}
+                  {colContent}
+                  {hasAuxiliaryLine && (
+                    <span
+                      className={styles.line}
+                      style={{
+                        borderColor: lineColor,
+                        borderStyle: lineStyle
+                      }}
+                    />
+                  )}
                 </p>
               </th>
             )

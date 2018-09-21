@@ -4,9 +4,9 @@ const Col = require('antd/lib/col')
 const Checkbox = require('antd/lib/checkbox')
 const Select = require('antd/lib/select')
 const Option = Select.Option
-import ColorPicker from '../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../globalConstants'
-const styles = require('./Workbench.less')
+import ColorPicker from '../../../../../components/ColorPicker'
+import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
+const styles = require('../Workbench.less')
 
 export interface IAxisConfig {
   showLine: boolean
@@ -23,14 +23,14 @@ export interface IAxisConfig {
   titleColor?: string
 }
 
-interface IAxisConfigSectionProps {
+interface IAxisSectionProps {
   title: string
   type: 'x' | 'y'
   config: IAxisConfig
   onChange: (prop: string, value: any) => void
 }
 
-export class AxisConfigSection extends React.PureComponent<IAxisConfigSectionProps, {}> {
+export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
   private checkboxChange = (prop) => (e) => {
     this.props.onChange(prop, e.target.checked)
   }
@@ -201,4 +201,4 @@ export class AxisConfigSection extends React.PureComponent<IAxisConfigSectionPro
   }
 }
 
-export default AxisConfigSection
+export default AxisSection

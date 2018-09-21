@@ -478,10 +478,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
         />
       )
     } else {
-      const decodedMetrics = metrics.map((m) => ({
-        ...m,
-        name: decodeMetricName(m.name)
-      }))
       if (colKeys.length && rowKeys.length) {
         rowKeys.forEach((rk) => {
           const flatRowKey = rk.join(String.fromCharCode(0))
@@ -498,10 +494,13 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
             line.push(
               <Cell
                 key={`${flatRowKey}${flatColKey}`}
+                colKey={flatColKey}
+                rowKey={flatRowKey}
                 width={cellWidth}
                 height={getPivotCellHeight(height)}
-                metrics={decodedMetrics}
+                metrics={metrics}
                 data={records}
+                chartStyles={chartStyles}
                 color={color}
                 legend={legend}
               />
@@ -526,10 +525,12 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           line.push(
             <Cell
               key={flatColKey}
+              colKey={flatColKey}
               width={cellWidth}
               height={getPivotCellHeight(height)}
-              metrics={decodedMetrics}
+              metrics={metrics}
               data={records}
+              chartStyles={chartStyles}
               color={color}
               legend={legend}
             />
@@ -553,10 +554,12 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           line.push(
             <Cell
               key={flatRowKey}
+              rowKey={flatRowKey}
               width={cellWidth}
               height={getPivotCellHeight(height)}
-              metrics={decodedMetrics}
+              metrics={metrics}
               data={records}
+              chartStyles={chartStyles}
               color={color}
               legend={legend}
             />
@@ -585,8 +588,9 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 key={uuid(8, 16)}
                 width={width}
                 height={height}
-                metrics={decodedMetrics}
+                metrics={metrics}
                 data={records}
+                chartStyles={chartStyles}
                 color={color}
                 legend={legend}
               />
