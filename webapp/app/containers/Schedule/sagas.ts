@@ -151,7 +151,7 @@ export function* getVizsData ({ payload }) {
     },
     {
       contentType: 'portal',
-      label: `Portal`,
+      label: `Dashboard`,
       key: 'portal',
       value: 'portal',
       isLeaf: true,
