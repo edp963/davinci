@@ -59,6 +59,12 @@
         </fileSet>
         <fileSet>
             <directory>
+                ${project.parent.basedir}/logs
+            </directory>
+            <outputDirectory>logs</outputDirectory>
+        </fileSet>
+        <fileSet>
+            <directory>
                 ${project.parent.basedir}/davinci-ui
             </directory>
             <outputDirectory>davinci-ui</outputDirectory>

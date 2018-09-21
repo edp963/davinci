@@ -29,7 +29,7 @@ script_dir=$(cd `dirname $0`; pwd)
 cd $script_dir/../
 TODAY=`date "+%Y-%m-%d"`
 LOG_PATH=$DAVINCI3_HOME/logs/davinci.$TODAY.log
-nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:$DAVINCI3_HOME/lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication   >$LOG_PATH  2>&1 &
+nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:$DAVINCI3_HOME/lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication > $LOG_PATH  2>&1 &
 
 echo "=========================================="
 echo "Starting..., press \`CRTL + C\` to exit log"
