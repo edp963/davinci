@@ -255,4 +255,84 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
+
+
+    /**
+     * 收藏project
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "favorite project", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/favorite/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity favoriteProject(@PathVariable Long id,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = projectService.favoriteProject(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取已收藏project
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get favorite projects")
+    @GetMapping(value = "/favorites")
+    public ResponseEntity getFavoriteProjects(@ApiIgnore @CurrentUser User user,
+                                              HttpServletRequest request) {
+        try {
+            ResultMap resultMap = projectService.getFavoriteProjects(user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    /**
+     * 获取已收藏project
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get favorite projects")
+    @DeleteMapping(value = "/remove/favorites")
+    public ResponseEntity removeFavoriteProjects(@ApiIgnore @CurrentUser User user,
+                                                 @RequestBody Long[] projectIds,
+                                                 HttpServletRequest request) {
+        for (Long id : projectIds) {
+            if (invalidId(id)) {
+                ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
+        }
+
+        try {
+            ResultMap resultMap = projectService.removeFavoriteProjects(user, projectIds, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
 }

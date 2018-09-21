@@ -34,7 +34,10 @@ import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectWithOrganization;
-import edp.davinci.dto.viewDto.*;
+import edp.davinci.dto.viewDto.Aggregator;
+import edp.davinci.dto.viewDto.Order;
+import edp.davinci.dto.viewDto.ViewExecuteParam;
+import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
@@ -422,8 +425,17 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                     if (jsonObject.containsKey("filters")) {
                         JSONArray filterArray = jsonObject.getJSONArray("filters");
                         if (null != filterArray && filterArray.size() > 0) {
-                            for (Object obj : filterArray) {
-                                filters.add(String.valueOf(obj));
+                            for (int i = 0; i < filterArray.size(); i++) {
+                                JSONObject item = filterArray.getJSONObject(i);
+                                if (null != item && item.containsKey("config")) {
+                                    JSONObject config = item.getJSONObject("config");
+                                    if (null != config && config.containsKey("sql")) {
+                                        String sql = config.getString("sql");
+                                        if (!StringUtils.isEmpty(sql)) {
+                                            filters.add(sql);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
