@@ -112,13 +112,22 @@ public class CommonService<T> {
     public String getContentUrl(Long userId, String contentType, Long contengId) {
         String shareToken = shareService.generateShareToken(contengId, null, userId);
         StringBuilder sb = new StringBuilder();
-        sb.append("http://")
-                .append(getHost())
-                .append("/share.html#/share/")
-                .append(contentType.equals("widget") ? "dashboard" : contentType)
-                .append("?shareInfo=")
-                .append(shareToken)
-                .append(contentType.equals("widget") ? "?type=widget" : "");
+
+        String type = "";
+        if ("widget".equalsIgnoreCase(contentType)) {
+            type = "widget";
+        } else if ("portal".equalsIgnoreCase(contentType) || "dashboard".equalsIgnoreCase(contentType)) {
+            type = "dashboard";
+        } else {
+            type = "";
+        }
+
+        sb.append(getHost())
+            .append("/share.html#/share/")
+            .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+            .append("?shareInfo=")
+            .append(shareToken)
+            .append("&type=" + type);
 
         return sb.toString();
     }
@@ -226,9 +235,9 @@ public class CommonService<T> {
                     return true;
                 }
             }
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
+            //可见
+            if (project.getVisibility() || organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                return true;
             }
         }
 

@@ -680,7 +680,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             organization.setMemberNum(organization.getMemberNum() > 0 ? organization.getMemberNum() - 1 : organization.getMemberNum());
             organizationMapper.updateMemberNum(organization);
 
-            List<Integer> relUserTeamIds = relUserTeamMapper.getRelUserTeamIds(rel.getUserId(), rel.getOrgId());
+            List<Long> relUserTeamIds = relUserTeamMapper.getRelUserTeamIds(rel.getUserId(), rel.getOrgId());
 
             //删除该成员与组织中team的关联关系
             if (null != relUserTeamIds && relUserTeamIds.size() > 0) {

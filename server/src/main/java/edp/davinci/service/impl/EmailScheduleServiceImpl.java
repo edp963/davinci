@@ -97,6 +97,8 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
 
     private volatile boolean imageExit = false;
 
+    private static final String portal = "PORTAL";
+
     /**
      * outlook最大图片显示高度为1728px
      */
@@ -164,10 +166,11 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
             String imageName = UUID.randomUUID() + ".png";
             String imageUrl = baseUrl + File.separator + imageName;
+            String imagePath = fileBasePath + imageUrl;
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
-            boolean bol = phantomRender(url, fileBasePath + imageUrl);
+            boolean bol = phantomRender(url, imagePath);
             if (bol) {
-                File image = new File(fileBasePath + imageUrl);
+                File image = new File(imagePath);
                 files.add(image);
             }
         }
@@ -255,7 +258,8 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
     private List<File> generateExcels(CronJobConfig cronJobConfig, User user) throws Exception {
         List<File> files = new ArrayList<>();
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())) {
+            if (CheckEntityEnum.DASHBOARD.getSource().equalsIgnoreCase(cronJobContent.getContentType().trim())
+                    || portal.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Dashboard dashboard = dashboardMapper.getById(cronJobContent.getId());
                 if (dashboard != null) {
                     Set<Widget> widgets = widgetMapper.getByDashboard(dashboard.getId());

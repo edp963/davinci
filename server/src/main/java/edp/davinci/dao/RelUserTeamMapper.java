@@ -134,8 +134,8 @@ public interface RelUserTeamMapper {
 
 
     @Select({"SELECT id FROM rel_user_team WHERE user_id = #{userId} and team_id IN (SELECT id from team WHERE org_id = #{orgId})"})
-    List<Integer> getRelUserTeamIds(@Param("userId") Long userId, @Param("orgId") Long orgId);
+    List<Long> getRelUserTeamIds(@Param("userId") Long userId, @Param("orgId") Long orgId);
 
 
-    int deleteBatch(@Param("list") List<Integer> list);
+    int deleteBatch(@Param("list") List<Long> list);
 }

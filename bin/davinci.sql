@@ -22,7 +22,7 @@ CREATE TABLE `cron_job` (
   `update_time` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `name_UNIQUE` (`name`) USING BTREE
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- ----------------------------
 -- Table structure for dashboard
@@ -39,7 +39,7 @@ CREATE TABLE `dashboard` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_dashboard_id` (`dashboard_portal_id`) USING BTREE,
   KEY `idx_parent_id` (`parent_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=148 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for dashboard_portal
@@ -54,7 +54,7 @@ CREATE TABLE `dashboard_portal` (
   `publish` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否发布（0：否，1：是）',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_project_id` (`project_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for display
@@ -69,7 +69,7 @@ CREATE TABLE `display` (
   `publish` tinyint(1) NOT NULL COMMENT '是否发布',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_project_id` (`project_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for display_slide
@@ -82,7 +82,20 @@ CREATE TABLE `display_slide` (
   `config` text NOT NULL COMMENT '配置\n',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_display_id` (`display_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for favorite
+-- ----------------------------
+DROP TABLE IF EXISTS `favorite`;
+CREATE TABLE `favorite` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) NOT NULL,
+  `project_id` bigint(20) NOT NULL,
+  `create_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `idx_user_project` (`user_id`,`project_id`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for mem_dashboard_widget
@@ -101,7 +114,7 @@ CREATE TABLE `mem_dashboard_widget` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_protal_id` (`dashboard_id`) USING BTREE,
   KEY `idx_widget_id` (`widget_Id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=62 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for mem_display_slide_widget
@@ -119,7 +132,7 @@ CREATE TABLE `mem_display_slide_widget` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_slide_id` (`display_slide_id`) USING BTREE,
   KEY `idx_widget_id` (`widget_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for organization
@@ -141,7 +154,7 @@ CREATE TABLE `organization` (
   `update_time` timestamp NULL DEFAULT NULL,
   `update_by` bigint(20) DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for project
@@ -159,7 +172,7 @@ CREATE TABLE `project` (
   `is_transfer` tinyint(1) NOT NULL DEFAULT '0',
   `initial_org_id` bigint(20) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for rel_team_project
@@ -178,7 +191,7 @@ CREATE TABLE `rel_team_project` (
   `download_permission` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_team_project` (`team_id`,`project_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for rel_user_organization
@@ -191,7 +204,7 @@ CREATE TABLE `rel_user_organization` (
   `role` smallint(1) NOT NULL DEFAULT '0' COMMENT 'member/owner\n0/1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_org_user` (`org_id`,`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for rel_user_team
@@ -204,7 +217,7 @@ CREATE TABLE `rel_user_team` (
   `role` smallint(1) NOT NULL DEFAULT '0' COMMENT 'member/Maintainer\n0/1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_team_user` (`team_id`,`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for source
@@ -219,7 +232,7 @@ CREATE TABLE `source` (
   `project_id` bigint(20) NOT NULL COMMENT '所属项目Id',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_project_id` (`project_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for star
@@ -234,7 +247,7 @@ CREATE TABLE `star` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_target_id` (`target_id`) USING BTREE,
   KEY `idx_user_id` (`user_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for team
@@ -249,7 +262,7 @@ CREATE TABLE `team` (
   `avatar` varchar(255) DEFAULT NULL,
   `visibility` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for user
@@ -288,7 +301,7 @@ CREATE TABLE `view` (
   `config` text COMMENT '配置',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_project_id` (`project_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for widget
@@ -306,7 +319,7 @@ CREATE TABLE `widget` (
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_project_id` (`project_id`) USING BTREE,
   KEY `idx_view_id` (`view_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=45 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Function structure for childTeamIds
