@@ -61,7 +61,9 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
   * 0.3版本使用 yaml 作为应用配置文件格式，主要配置项包括：server、datasource（请确保连接地址的正确性，初始化数据库时也会用到！！！）、mail（邮箱服务器必须配置）。
 
-    注： 如需接入 redis，可继续加入 redis 的相关配置。
+     注： 1. 如需接入reids，可继续加入redis的相关配置。 
+          2. 由于 yaml 语法的特殊性，请务必确保每个配置项冒号和值之间至少有一个空格。
+
 
 ```
    unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip
@@ -217,7 +219,7 @@ Please refer to [Davinci用户手册](https://edp-davinci.gitbooks.io/davinci-us
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.1.0/davinci-assembly_2.11-0.1.0-SNAPSHOT-dist.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.1/davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip).
 
 Get Help
 ============
