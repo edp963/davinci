@@ -80,7 +80,6 @@ import {
   undoOperation,
   redoOperation,
   loadDisplayShareLink  } from './actions'
-import widgetlibs from '../../assets/json/widgetlib'
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
 
@@ -93,6 +92,7 @@ import {
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { GRID_ITEM_MARGIN } from '../../globalConstants'
 import { GraphTypes } from 'utils/util'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
@@ -310,16 +310,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       }
     }, () => {
       this.sliderChange(this.state.sliderValue)
-    })
-  }
-
-  private gridDistanceChange = (gridDistance) => {
-    const { slideParams } = this.state
-    this.setState({
-      slideParams: {
-        ...slideParams,
-        gridDistance
-      }
     })
   }
 
@@ -545,7 +535,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       onAddDisplayLayers
     } = this.props
     const { slideParams } = this.state
-    const { gridDistance } = slideParams
     let maxLayerIndex = currentLayers.length === 0 ?
       0 :
       currentLayers.reduce((acc, layer) => Math.max(acc, layer.index), -Infinity)
@@ -554,10 +543,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       layer.displaySlideId = currentSlide.id
       layer['params'] = JSON.stringify({
         ...JSON.parse(layer['params']),
-        width: (slideParams.width - slideParams.gridDistance * 5) / 4,
-        height: (slideParams.height - slideParams.gridDistance * 5) / 4,
-        positionX: gridDistance,
-        positionY: gridDistance
+        width: (slideParams.width - GRID_ITEM_MARGIN * 5) / 4,
+        height: (slideParams.height - GRID_ITEM_MARGIN * 5) / 4,
+        positionX: GRID_ITEM_MARGIN,
+        positionY: GRID_ITEM_MARGIN
       })
     })
     onAddDisplayLayers(currentDisplay.id, currentSlide.id, layers)
@@ -570,7 +559,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       return
     }
     const { slideParams } = this.state
-    const { gridDistance } = slideParams
     const copyLayers = currentSelectedLayers.map((layer) => {
       const layerParams = JSON.parse(layer.params)
       const { positionX, positionY } = layerParams
@@ -578,8 +566,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         ...layer,
         params: JSON.stringify({
           ...layerParams,
-          positionX: positionX + gridDistance,
-          positionY: positionY + gridDistance
+          positionX: positionX + GRID_ITEM_MARGIN,
+          positionY: positionY + GRID_ITEM_MARGIN
         }),
         id: null
       }
@@ -622,19 +610,18 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private keyDown = (key: Keys) => {
     const { slideParams } = this.state
-    const { gridDistance } = slideParams
     switch (key) {
       case Keys.Up:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: -gridDistance })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: - GRID_ITEM_MARGIN })
         break
       case Keys.Down:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: gridDistance })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: GRID_ITEM_MARGIN })
         break
       case Keys.Left:
-        this.moveSelectedLayersPosition({ positionXD: -gridDistance, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: - GRID_ITEM_MARGIN, positionYD: 0 })
         break
       case Keys.Right:
-        this.moveSelectedLayersPosition({ positionXD: gridDistance, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: GRID_ITEM_MARGIN, positionYD: 0 })
         break
       case Keys.Delete:
         this.deleteLayers()
@@ -659,8 +646,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     if (currentSelectedLayers.length <= 0) { return }
     const { positionXD, positionYD } = direction
     const { currentDisplay, currentSlide, onEditDisplayLayers } = this.props
-    const { slideParams } = this.state
-    const { gridDistance } = slideParams
     const layers = currentSelectedLayers.map((layer) => {
       const layerParams = JSON.parse(layer.params)
       const { positionX, positionY } = layerParams
@@ -668,8 +653,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         ...layer,
         params: JSON.stringify({
           ...layerParams,
-          positionX: positionX - positionX % gridDistance + positionXD,
-          positionY: positionY - positionY % gridDistance + positionYD
+          positionX: positionX - positionX % GRID_ITEM_MARGIN + positionXD,
+          positionY: positionY - positionY % GRID_ITEM_MARGIN + positionYD
         })
       }
     })
@@ -770,7 +755,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           settingInfo={settingInfo.setting}
           settingParams={settingInfo.param}
           onDisplaySizeChange={this.displaySizeChange}
-          onGridDistanceChange={this.gridDistanceChange}
           onFormItemChange={this.formItemChange}
           wrappedComponentRef={this.refHandlers.settingForm}
           onCollapseChange={this.collapseChange}

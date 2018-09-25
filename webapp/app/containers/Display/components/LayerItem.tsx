@@ -429,15 +429,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const content = this.renderLayer(layer)
     if (pure) { return content }
 
-    const {
-      gridDistance
-    } = slideParams
-
     const maxConstraints = [slideParams.width - position.x, slideParams.height - position.y]
 
     return (
       <Draggable
-        grid={[gridDistance, gridDistance]}
+        grid={[1, 1]}
         bounds="parent"
         scale={Math.min(scale[0], scale[1])}
         onStart={this.dragOnStart}
@@ -451,7 +447,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           height={height}
           onResize={this.onResize}
           onResizeStop={this.onResizeStop}
-          draggableOpts={{grid: [gridDistance, gridDistance]}}
+          draggableOpts={{grid: [1, 1]}}
           minConstraints={[50, 50]}
           maxConstraints={maxConstraints}
           handleSize={[20, 20]}
