@@ -348,51 +348,6 @@
       border: 2px solid @border-color-base;
     }
 
-    .title {
-      width: 100%;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      padding: 0 10px;
-      line-height: 40px;
-
-      h4 {
-        .ellipsis
-      }
-    }
-
-    .body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-
-      .block {
-        flex: 1;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-
-        .chartBlock {
-          flex: 1;
-          overflow-x: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .tableBlock {
-          padding: 0 16px;
-          flex: 1;
-
-          .selectedRow {
-            td {
-              background-color: @primary-color;
-              color: @white;
-            }
-          }
-        }
-      }
-    }
-
     &.rect {
       background-color: @light-bg;
     }

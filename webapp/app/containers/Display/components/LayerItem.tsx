@@ -264,12 +264,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
 
-    const chartClass = {
-      chart: styles.chartBlock,
-      table: styles.tableBlock,
-      container: styles.block
-    }
-
     return (
       <div
         id={`layer_${itemId}`}
@@ -277,16 +271,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         style={layerStyle}
         onClick={this.onClickLayer}
       >
-        <div className={styles.title}>
-          <h4>{layer.name}</h4>
-        </div>
-        <div className={styles.body}>
-          <Pivot
-            {...pivotProps}
-            data={data || []}
-            renderType={renderType}
-          />
-        </div>
+        <Pivot
+          {...pivotProps}
+          data={data || []}
+          renderType={renderType}
+        />
       </div>
     )
   }
