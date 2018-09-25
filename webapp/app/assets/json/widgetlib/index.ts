@@ -41,7 +41,12 @@
 // import confidenceBand from './confidenceBand.json'
 
 import { IChartInfo } from '../../../containers/Widget/components/Pivot/Chart'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_CHART_FONT_FAMILIES, PIVOT_DEFAULT_LABEL_COLOR } from '../../../globalConstants'
+import {
+  PIVOT_DEFAULT_AXIS_LINE_COLOR,
+  PIVOT_CHART_FONT_FAMILIES,
+  PIVOT_DEFAULT_FONT_COLOR,
+  PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
+} from '../../../globalConstants'
 
 const widgetlibs: IChartInfo[] = [{
   id: 1,
@@ -58,7 +63,14 @@ const widgetlibs: IChartInfo[] = [{
     }
   },
   style: {
-
+    pivot: {
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR,
+      lineStyle: 'solid',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
+    }
   }
 }, {
   id: 2,
@@ -96,7 +108,7 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR
     },
     yAxis: {
       showLine: true,
@@ -106,11 +118,11 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR
     },
     splitLine: {
       showHorizontalLine: true,
@@ -121,6 +133,14 @@ const widgetlibs: IChartInfo[] = [{
       verticalLineStyle: 'dashed',
       verticalLineSize: '1',
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    },
+    pivot: {
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR,
+      lineStyle: 'solid',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
     }
   }
 }, {
@@ -155,7 +175,7 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR
     },
     yAxis: {
       showLine: true,
@@ -165,11 +185,11 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR
     },
     splitLine: {
       showHorizontalLine: true,
@@ -180,6 +200,14 @@ const widgetlibs: IChartInfo[] = [{
       verticalLineStyle: 'dashed',
       verticalLineSize: '1',
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    },
+    pivot: {
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR,
+      lineStyle: 'solid',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
     }
   }
 }, {
@@ -221,7 +249,7 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR
     },
     yAxis: {
       showLine: true,
@@ -231,11 +259,11 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR,
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
       showTitleAndUnit: true,
       titleFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       titleFontSize: '12',
-      titleColor: PIVOT_DEFAULT_LABEL_COLOR
+      titleColor: PIVOT_DEFAULT_FONT_COLOR
     },
     splitLine: {
       showHorizontalLine: true,
@@ -246,6 +274,14 @@ const widgetlibs: IChartInfo[] = [{
       verticalLineStyle: 'dashed',
       verticalLineSize: '1',
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    },
+    pivot: {
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR,
+      lineStyle: 'solid',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
     }
   }
 }, {
@@ -282,7 +318,7 @@ const widgetlibs: IChartInfo[] = [{
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_LABEL_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR
     },
     splitLine: {
       showHorizontalLine: true,
@@ -293,6 +329,14 @@ const widgetlibs: IChartInfo[] = [{
       verticalLineStyle: 'dashed',
       verticalLineSize: '1',
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
+    },
+    pivot: {
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR,
+      lineStyle: 'solid',
+      lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
     }
   }
 }]

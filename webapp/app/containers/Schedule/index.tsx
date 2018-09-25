@@ -334,7 +334,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           ...values,
           ...{contentList: bootstrap(this.arr2json(dashboardTreeValue))}
         }
-        console.log(emailConfigData)
         this.setState({
           emailConfig: emailConfigData
         }, () => this.hideConfigForm())
@@ -539,8 +538,8 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
         className: `${utilStyles.textAlignCenter}`,
         render: (text, record) => (
           <span className="ant-table-action-column">
-            <Tooltip title={`${this.formatStatusText(record.job_status)}`}>
-              <Button icon={this.formatStatusIcon(record.job_status)} shape="circle" type="ghost" onClick={this.changeStatus(record)} />
+            <Tooltip title={`${this.formatStatusText(record.jobStatus)}`}>
+              <Button icon={this.formatStatusIcon(record.jobStatus)} shape="circle" type="ghost" onClick={this.changeStatus(record)} />
             </Tooltip>
             <Tooltip title="修改">
               <Button icon="edit" shape="circle" type="ghost" onClick={this.showDetail(record.id)} />

@@ -2,11 +2,14 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IDataParamSource } from '../Workbench/Dropbox'
+import { IChartStyles } from 'containers/Widget/components/Pivot/Pivot'
+import { getStyleConfig } from 'containers/Widget/components/util'
 
 const styles = require('./Pivot.less')
 
 interface ILegendProps {
   color: IDataParamProperty
+  chartStyles: IChartStyles
   onLegendSelect: (name: string, key: string) => void
 }
 
@@ -81,7 +84,9 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
   }
 
   public render () {
+    const { chartStyles } = this.props
     const { list } = this.state
+    const { color: fontColor } = getStyleConfig(chartStyles).pivot
     const legendClass = classnames({
       [styles.legend]: true,
       [styles.shown]: list.length
@@ -95,6 +100,9 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
             key={key}
             onClick={this.legendSelect(i.name, key)}
             className={classnames({[styles.disabled]: !value.visible})}
+            style={{
+              color: fontColor
+            }}
           >
             <span style={{background: value.value}} />
             {key}
@@ -103,7 +111,13 @@ export class Legend extends React.PureComponent<ILegendProps, ILegendStates> {
       })
       return (
         <div key={i.name} className={styles.legendBox}>
-          <h4>{i.name}</h4>
+          <h4
+            style={{
+              color: fontColor
+            }}
+          >
+            {i.name}
+          </h4>
           <ul className={styles.list}>
             {listItems}
           </ul>

@@ -22,7 +22,7 @@ public enum  CronJobStatusEnum {
 
     NEW("new"),
     START("started"),
-    STOP("stoped"),
+    STOP("stopped"),
     FAILED("failed");
 
     private String status;

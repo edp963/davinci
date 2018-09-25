@@ -1155,150 +1155,151 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           loading={modalLoading}
         />
         <Form className={styles.formView}>
-        <Row className={`${styles.formLeft} no-item-margin`}>
-          <Col span={24} className={styles.leftInput}>
-            <FormItem className={utilStyles.hide}>
-              {getFieldDecorator('id', {
-                hidden: this.props.type === 'add'
-              })(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem label="" className={utilStyles.hide}>
-              {getFieldDecorator('source_id', {})(
-                <Input />
-              )}
-            </FormItem>
-            <FormItem label="" className={utilStyles.hide}>
-              {getFieldDecorator('source_name', {})(
-                <Input />
-              )}
-            </FormItem>
-
-            <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
-              <a>{selectedSourceName || '选择一个Source'}</a>
-            </Dropdown>
-          </Col>
-          <Col span={24} className={`${schemaData.length !== 0 ? '' : utilStyles.hide}`}>
-            <Search
-              placeholder="Search the Schema"
-              onChange={this.searchSchema}
-            />
-          </Col>
-          <Col span={24} className={`${schemaData.length !== 0 ? styles.sourceTree : utilStyles.hide}`}>
-            <Tree
-              onExpand={this.onExpand}
-              expandedKeys={expandedKeys}
-              autoExpandParent={autoExpandParent}
-            >
-            {loop(data || [])}
-            </Tree>
-          </Col>
-        </Row>
-        <Row className={styles.formRight}>
-          <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
-            <FormItem label={declareMsg} {...itemStyle}>
-              {getFieldDecorator('isDeclarate', {
-                initialValue: 'no'
-              })(
-                <RadioGroup size="default" onChange={this.changeIsDeclarate}>
-                  <RadioButton value="yes">是</RadioButton>
-                  <RadioButton value="no">否</RadioButton>
-                </RadioGroup>
-              )}
-            </FormItem>
-          </Col>
-          <Row className={styles.formTop}>
-            <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
-              <FormItem label="" className={styles.declareForm}>
-                {getFieldDecorator('declaration', {
-                  initialValue: ''
+          <Row className={`${styles.formLeft} no-item-margin`}>
+            <Col span={24} className={styles.leftInput}>
+              <FormItem className={utilStyles.hide}>
+                {getFieldDecorator('id', {
+                  hidden: this.props.type === 'add'
                 })(
-                  <Input
-                    placeholder="Declare Variables"
-                    type="textarea"
-                  />
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem label="" className={utilStyles.hide}>
+                {getFieldDecorator('source_id', {})(
+                  <Input />
+                )}
+              </FormItem>
+              <FormItem label="" className={utilStyles.hide}>
+                {getFieldDecorator('source_name', {})(
+                  <Input />
+                )}
+              </FormItem>
+              <div className={styles.sourceSelect}>
+                <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
+                  <a>{selectedSourceName || '选择一个Source'}</a>
+                </Dropdown>
+              </div>
+            </Col>
+            <Col span={24} className={`${schemaData.length !== 0 ? styles.treeSearch : utilStyles.hide}`}>
+              <Search
+                placeholder="Search the Schema"
+                onChange={this.searchSchema}
+              />
+            </Col>
+            <Col span={24} className={`${schemaData.length !== 0 ? styles.sourceTree : utilStyles.hide}`}>
+              <Tree
+                onExpand={this.onExpand}
+                expandedKeys={expandedKeys}
+                autoExpandParent={autoExpandParent}
+              >
+              {loop(data || [])}
+              </Tree>
+            </Col>
+          </Row>
+          <Row className={styles.formRight}>
+            <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
+              <FormItem label={declareMsg} {...itemStyle}>
+                {getFieldDecorator('isDeclarate', {
+                  initialValue: 'no'
+                })(
+                  <RadioGroup size="default" onChange={this.changeIsDeclarate}>
+                    <RadioButton value="yes">是</RadioButton>
+                    <RadioButton value="no">否</RadioButton>
+                  </RadioGroup>
                 )}
               </FormItem>
             </Col>
-            <Col span={24} className={`no-item-margin ${styles.sqlText}`}>
-              <FormItem label="" className={styles.sqlForm}>
-                {getFieldDecorator('sql_tmpl', {
-                  initialValue: ''
-                })(
-                  <Input
-                    placeholder="QUERY SQL Template"
-                    type="textarea"
-                  />
-                )}
-              </FormItem>
-            </Col>
-          </Row>
+            <Row className={styles.formTop}>
+              <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
+                <FormItem label="" className={styles.declareForm}>
+                  {getFieldDecorator('declaration', {
+                    initialValue: ''
+                  })(
+                    <Input
+                      placeholder="Declare Variables"
+                      type="textarea"
+                    />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24} className={`no-item-margin ${styles.sqlText}`}>
+                <FormItem label="" className={styles.sqlForm}>
+                  {getFieldDecorator('sql_tmpl', {
+                    initialValue: ''
+                  })(
+                    <Input
+                      placeholder="QUERY SQL Template"
+                      type="textarea"
+                    />
+                  )}
+                </FormItem>
+              </Col>
+            </Row>
 
-          <Row className={styles.fromBtn}>
-            <span className={styles.sqlAlert}>
-              {sqlValidatePanel}
-            </span>
-            <Button
-              className={styles.executeBtn}
-              key="forward"
-              size="large"
-              type="primary"
-              loading={executeLoading}
-              onClick={this.executeSql}
-            >
-              <Icon type="caret-right" />Execute
-            </Button>
+            <Row className={styles.fromBtn}>
+              <span className={styles.sqlAlert}>
+                {sqlValidatePanel}
+              </span>
+              <Button
+                className={styles.executeBtn}
+                key="forward"
+                size="large"
+                type="primary"
+                loading={executeLoading}
+                onClick={this.executeSql}
+              >
+                <Icon type="caret-right" />Execute
+              </Button>
+            </Row>
+            {
+              isFold
+                ? (
+                <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
+                  <Col span={24} className={styles.tabCol}>
+                    <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
+                      <TabPane tab="Data" key="data">
+                        <Table
+                          className={styles.viewTabPane}
+                          dataSource={tableData}
+                          columns={tableColumns}
+                          pagination={pagination}
+                          // scroll={{ y:  }}
+                        />
+                      </TabPane>
+                      <TabPane tab="Model" key="model">
+                        <Table
+                          className={styles.viewTabPane}
+                          dataSource={modelData}
+                          columns={modelColumns}
+                          pagination={pagination}
+                          // scroll={{y: }}
+                        />
+                      </TabPane>
+                      <TabPane tab="Team" key="team">
+                        <Tree
+                          className={styles.viewTabPane}
+                          checkStrictly
+                          checkable
+                          onExpand={this.onTeamExpand}
+                          expandedKeys={this.state.teamExpandedKeys}
+                          autoExpandParent={this.state.teamAutoExpandParent}
+                          defaultExpandAll={true}
+                          onCheck={this.onCheck}
+                          checkedKeys={this.state.teamCheckedKeys}
+                          onSelect={this.onSelect}
+                          selectedKeys={this.state.selectedKeys}
+                        >
+                          {this.renderTreeNodes(viewTeam || [])}
+                        </Tree>
+                      </TabPane>
+                    </Tabs>
+                  </Col>
+                </Row>
+                )
+                : operations
+            }
           </Row>
-          {
-            isFold
-              ? (
-              <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
-                <Col span={24} className={styles.tabCol}>
-                  <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
-                    <TabPane tab="Data" key="data">
-                      <Table
-                        className={styles.viewTabPane}
-                        dataSource={tableData}
-                        columns={tableColumns}
-                        pagination={pagination}
-                        // scroll={{ y:  }}
-                      />
-                    </TabPane>
-                    <TabPane tab="Model" key="model">
-                      <Table
-                        className={styles.viewTabPane}
-                        dataSource={modelData}
-                        columns={modelColumns}
-                        pagination={pagination}
-                        // scroll={{y: }}
-                      />
-                    </TabPane>
-                    <TabPane tab="Team" key="team">
-                      <Tree
-                        className={styles.viewTabPane}
-                        checkStrictly
-                        checkable
-                        onExpand={this.onTeamExpand}
-                        expandedKeys={this.state.teamExpandedKeys}
-                        autoExpandParent={this.state.teamAutoExpandParent}
-                        defaultExpandAll={true}
-                        onCheck={this.onCheck}
-                        checkedKeys={this.state.teamCheckedKeys}
-                        onSelect={this.onSelect}
-                        selectedKeys={this.state.selectedKeys}
-                      >
-                        {this.renderTreeNodes(viewTeam || [])}
-                      </Tree>
-                    </TabPane>
-                  </Tabs>
-                </Col>
-              </Row>
-              )
-              : operations
-          }
-        </Row>
-      </Form>
+        </Form>
       </div>
     )
   }

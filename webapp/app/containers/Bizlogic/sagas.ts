@@ -158,6 +158,7 @@ export function* getCascadeSource (action) {
     yield put(cascadeSourceLoaded(controlId, column, values))
   } catch (err) {
     yield put(loadCascadeSourceFail(err))
+    errorHandler(err)
   }
 }
 
@@ -227,6 +228,7 @@ export function* getData (action) {
     resolve(data.payload)
   } catch (err) {
     yield put(loadDataFail(err))
+    errorHandler(err)
   }
 }
 
@@ -250,6 +252,7 @@ export function* getDistinctValue (action) {
     }
   } catch (err) {
     yield put(loadDistinctValueFail(err))
+    errorHandler(err)
   }
 }
 
@@ -271,6 +274,7 @@ export function* getDataFromItem (action) {
     yield put(dataFromItemLoaded(renderType, itemId, data.payload, vizType))
   } catch (err) {
     yield put(loadDataFromItemFail(itemId, vizType))
+    errorHandler(err)
   }
 }
 
@@ -284,6 +288,7 @@ export function* getViewTeams (action) {
     yield put(viewTeamLoaded(orgTeam))
   } catch (err) {
     yield put(loadViewTeamFail(err))
+    errorHandler(err)
   }
 }
 

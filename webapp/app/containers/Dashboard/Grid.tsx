@@ -401,7 +401,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows)
+    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg

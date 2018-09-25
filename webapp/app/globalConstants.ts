@@ -59,7 +59,8 @@ export const PIVOT_CANVAS_SIZE_LIMIT = 3000
 export const PIVOT_CANVAS_AXIS_SIZE_LIMIT = 8000
 export const PIVOT_CANVAS_POLAR_SIZE_LIMIT = 8000
 export const PIVOT_DEFAULT_AXIS_LINE_COLOR = '#D9D9D9'
-export const PIVOT_DEFAULT_LABEL_COLOR = '#666'
+export const PIVOT_DEFAULT_FONT_COLOR = '#666'
+export const PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR = '#f7f7f7'
 export const PIVOT_CHART_FONT_FAMILIES = [
   { name: '苹方', value: 'PingFang SC'},
   { name: '微软雅黑', value: 'Microsoft YaHei'},
