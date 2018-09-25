@@ -1,4 +1,5 @@
 import { FilterTypes } from './filterTypes'
+import { OperatorTypes } from 'utils/operatorTypes'
 
 export interface IModelItem {
   sqlType: string
@@ -24,6 +25,7 @@ export interface IFilterItem {
   type: FilterTypes
   fromView: string
   fromModel: string
+  operator: OperatorTypes
   relatedViews: {
     [viewId: string]: IFilterViewConfig
   }

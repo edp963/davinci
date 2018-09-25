@@ -3,6 +3,7 @@ import moment from 'moment'
 import { FormComponentProps, WrappedFormUtils } from 'antd/lib/form/Form'
 import { IFilterViewConfig, IFilterItem, IFilterValue, IFilterChangeParam } from './'
 import { FilterTypes } from './filterTypes'
+import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
 import FilterControl from './FilterControl'
 
@@ -40,14 +41,14 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
   } = {}
 
   private change = (filter: IFilterItem, val) => {
-    const { key, type, relatedViews } = filter
+    const { key, type, relatedViews, operator } = filter
     const relatedItemIds = []
     Object.entries(relatedViews).forEach(([_, config]) => {
       const { items, isParam } = config
       if (items.length <= 0) { return }
 
       const filterValue = isParam ?
-        this.getParamValue(type, config, val) : this.getModelValue(type, config, val)
+        this.getParamValue(type, config, val) : this.getModelValue(type, config, operator, val)
 
       items.forEach((itemId) => {
         relatedItemIds.push(itemId)
@@ -139,16 +140,15 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
     return param
   }
 
-  private getModelValue = (type: FilterTypes, config: IFilterViewConfig, value) => {
+  private getModelValue = (type: FilterTypes, config: IFilterViewConfig, operator: OperatorTypes, value) => {
     const { key, sqlType } = config
     const filters = []
 
-    // @TODO Operators Feature
     switch (type) {
       case FilterTypes.InputText:
       case FilterTypes.InputNumber:
       case FilterTypes.Select:
-        if (value !== undefined) { filters.push(`${key} = ${this.getValidValue(value, sqlType)}`) }
+        if (value !== undefined) { filters.push(`${key} ${operator} ${this.getValidValue(value, sqlType)}`) }
         break
       case FilterTypes.NumberRange:
         if (value[0] !== '' && !isNaN(value[0])) {
@@ -160,19 +160,19 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         break
       case FilterTypes.MultiSelect:
         if (value.length && value.length > 0) {
-          filters.push(`${key} in (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
+          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
         }
         break
       case FilterTypes.CascadeSelect: // @TODO
         break
       case FilterTypes.InputDate:
         if (value) {
-          filters.push(`${key} = ${this.getValidValue(moment(value).format('YYYY-MM-DD'), sqlType)}`)
+          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD'), sqlType)}`)
         }
         break
       case FilterTypes.MultiDate:
         if (value) {
-          filters.push(`${key} in (${value.split(',').map((val) => this.getValidValue(val, sqlType)).join(',')})`)
+          filters.push(`${key} ${operator} (${value.split(',').map((val) => this.getValidValue(val, sqlType)).join(',')})`)
         }
         break
       case FilterTypes.DateRange:
@@ -183,7 +183,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         break
       case FilterTypes.Datetime:
         if (value) {
-          filters.push(`${key} = ${this.getValidValue(moment(value).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
+          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
         }
         break
       case FilterTypes.DatetimeRange:
@@ -195,7 +195,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       default:
         const inputValue = value.target.value.trim()
         if (inputValue) {
-          filters.push(`${key} = ${this.getValidValue(inputValue, sqlType)}`)
+          filters.push(`${key} ${operator} ${this.getValidValue(inputValue, sqlType)}`)
         }
         break
     }

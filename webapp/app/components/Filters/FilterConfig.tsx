@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { fromJS } from 'immutable'
 import { uuid } from 'utils/util'
-import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
+import { FilterTypes, FilterTypesViewSetting, FilterTypesOperatorSetting } from './filterTypes'
 import FilterList from './FilterList'
 import FilterForm from './FilterForm'
 import FilterValuePreview from './FilterValuePreview'
@@ -108,6 +108,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       key: uuid(8, 16),
       name: '新建全局筛选',
       type: FilterTypes.InputText,
+      operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
       relatedViews: {}
     }
     this.setState({
@@ -162,10 +163,12 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   private ok = () => {
     const { localFilters } = this.state
     if (localFilters.length > 0) {
-      this.filterForm.saveFilterItem()
+      this.filterForm.saveFilterItem((err) => {
+        if (err) { return }
+        const { onOk } = this.props
+        onOk([...localFilters])
+      })
     }
-    const { onOk } = this.props
-    onOk([...localFilters])
   }
 
   private getPreviewData = (filterKey, viewId, fieldName, parents) => {

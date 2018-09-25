@@ -44,7 +44,7 @@ import DashboardFilterPanel from './components/DashboardFilterPanel'
 import DashboardFilterConfig from './components/DashboardFilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 
-import { Responsive, WidthProvider } from 'react-grid-layout'
+import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
