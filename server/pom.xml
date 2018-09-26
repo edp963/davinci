@@ -212,13 +212,6 @@
             <!--<version>11.2.0.3</version>-->
         <!--</dependency>-->
 
-        <!--prosto-->
-        <!--<dependency>-->
-            <!--<groupId>com.facebook.presto</groupId>-->
-            <!--<artifactId>presto-jdbc</artifactId>-->
-            <!--<version>0.188</version>-->
-        <!--</dependency>-->
-
         <!--clickhouse-->
         <!--<dependency>-->
             <!--<groupId>ru.yandex.clickhouse</groupId>-->
