@@ -100,7 +100,9 @@ public class SqlUtils {
         checkSensitiveSql(sql);
         List<Map<String, Object>> list = null;
         try {
-            list = jdbcTemplate().queryForList(sql);
+            JdbcTemplate jdbcTemplate = jdbcTemplate();
+//            jdbcTemplate.setMaxRows(-1);
+            list = jdbcTemplate.queryForList(sql);
             log.info("query by database");
         } catch (Exception e) {
             e.printStackTrace();
@@ -249,7 +251,6 @@ public class SqlUtils {
      * @throws ServerException
      */
     private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
-        Connection connection = null;
         ResultSet rs = null;
         List<String> primaryKeys = new ArrayList<>();
         try {
@@ -261,7 +262,6 @@ public class SqlUtils {
             throw new ServerException(e.getMessage());
         } finally {
             closeResult(rs);
-            releaseConnection(connection);
         }
         return primaryKeys;
     }
@@ -276,7 +276,6 @@ public class SqlUtils {
      * @throws ServerException
      */
     private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
-        Connection connection = null;
         ResultSet rs = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
@@ -288,7 +287,6 @@ public class SqlUtils {
             throw new ServerException(e.getMessage());
         } finally {
             closeResult(rs);
-            releaseConnection(connection);
         }
         return columnList;
     }
