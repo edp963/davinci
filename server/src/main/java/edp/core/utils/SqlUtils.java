@@ -95,13 +95,13 @@ public class SqlUtils {
     }
 
     @CachePut(value = "query", key = "#sql")
-    public List<Map<String, Object>> query4List(String sql) throws ServerException {
+    public List<Map<String, Object>> query4List(String sql, int limit) throws ServerException {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         List<Map<String, Object>> list = null;
         try {
             JdbcTemplate jdbcTemplate = jdbcTemplate();
-//            jdbcTemplate.setMaxRows(-1);
+            jdbcTemplate.setMaxRows(limit);
             list = jdbcTemplate.queryForList(sql);
             log.info("query by database");
         } catch (Exception e) {
@@ -114,7 +114,13 @@ public class SqlUtils {
 
     @Cacheable(value = "query", key = "#sql", sync = true)
     public List<Map<String, Object>> syncQuery4List(String sql) throws ServerException {
-        List<Map<String, Object>> list = query4List(sql);
+        List<Map<String, Object>> list = query4List(sql, -1);
+        return list;
+    }
+
+    @Cacheable(value = "query", key = "T(String).valueOf(#limit).concat('-').concat(#sql)", sync = true)
+    public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws ServerException {
+        List<Map<String, Object>> list = query4List(sql, limit);
         return list;
     }
 

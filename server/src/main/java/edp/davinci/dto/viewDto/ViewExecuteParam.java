@@ -19,7 +19,6 @@
 package edp.davinci.dto.viewDto;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.enums.DataTypeEnum;
 import edp.core.utils.SqlUtils;
 import lombok.Data;
 
@@ -36,6 +35,7 @@ public class ViewExecuteParam {
     private List<Param> params;
     private Boolean cache;
     private Long expired;
+    private int limit = 0;
 
 
     public List<String> getAggregators(String jdbcUrl) {
