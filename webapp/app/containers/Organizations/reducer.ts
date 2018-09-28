@@ -29,12 +29,15 @@ import {
   DELETE_ORGANIZATION_SUCCESS,
   LOAD_ORGANIZATION_DETAIL,
   LOAD_ORGANIZATION_DETAIL_SUCCESS,
+  LOAD_ORGANIZATION_DETAIL_FAILURE,
   LOAD_ORGANIZATIONS_TEAMS_SUCCESS,
   LOAD_ORGANIZATIONS_PROJECTS_SUCCESS,
   LOAD_ORGANIZATIONS_MEMBERS_SUCCESS,
-  ADD_TEAM_FAILURE,
   SEARCH_MEMBER_SUCCESS,
-  DELETE_ORGANIZATION_MEMBER_SUCCESS
+  DELETE_ORGANIZATION_MEMBER_SUCCESS,
+  ADD_TEAM,
+  ADD_TEAM_SUCCESS,
+  ADD_TEAM_FAILURE
 } from './constants'
 import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
 
@@ -47,7 +50,8 @@ const initialState = fromJS({
   currentOrganizationProjectsDetail: false,
   currentOrganizationTeams: [],
   currentOrganizationMembers: [],
-  inviteMemberLists: []
+  inviteMemberLists: [],
+  teamModalLoading: false
 })
 
 function organizationReducer (state = initialState, action) {
@@ -105,8 +109,7 @@ function organizationReducer (state = initialState, action) {
       return state.set('organizations', organizations.filter((d) => d.id !== payload.id))
 
     case LOAD_ORGANIZATION_DETAIL:
-      return state
-        .set('currentOrganizationLoading', true)
+      return state.set('currentOrganizationLoading', true)
 
     case LOAD_ORGANIZATION_DETAIL_SUCCESS:
       return state
@@ -120,8 +123,14 @@ function organizationReducer (state = initialState, action) {
     //   } else {
     //     return state.set('currentOrganizationTeams', [payload.result])
     //   }
-    case ADD_TEAM_FAILURE:
+    case LOAD_ORGANIZATION_DETAIL_FAILURE:
       return state
+    case ADD_TEAM:
+      return state.set('teamModalLoading', true)
+    case ADD_TEAM_SUCCESS:
+      return state.set('teamModalLoading', false)
+    case ADD_TEAM_FAILURE:
+      return state.set('teamModalLoading', false)
     case SEARCH_MEMBER_SUCCESS:
       return state.set('inviteMemberLists', payload.result)
     default:

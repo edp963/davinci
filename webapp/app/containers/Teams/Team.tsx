@@ -111,9 +111,9 @@ export class Teams extends React.Component<ITeamsProps> {
     super(props)
     this.teamTeams = []
   }
-  private tabChange = () => {
+  // private tabChange = () => {
 
-  }
+  // }
 
   public componentWillMount () {
     const { onLoadTeams } = this.props
@@ -143,11 +143,12 @@ export class Teams extends React.Component<ITeamsProps> {
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { params: {teamId}, currentTeamTeams } = this.props
-    const { params: {teamId: nextTeamId }} = nextProps
+    const { params: {teamId} } = this.props
+    const { params: {teamId: nextTeamId }, currentTeamTeams, currentTeamMembers} = nextProps
     if (teamId !== nextTeamId) {
       this.loadDatas(nextTeamId)
     }
+
     this.teamTeams = []
     this.computeTeamNum(currentTeamTeams, this.teamTeams)
     this.teamTeams.filter((team, index) => this.teamTeams.indexOf(team) === index)
@@ -232,6 +233,7 @@ export class Teams extends React.Component<ITeamsProps> {
     const  memberNum = currentTeamMembers.length
     const teamNum = this.teamTeams.length
     const teamRouterSource = this.createTeamRouter(teamRouter)
+
     return (
       <Box>
         <Box.Header>
@@ -259,7 +261,9 @@ export class Teams extends React.Component<ITeamsProps> {
             <Avatar path={avatar} enlarge={false} size="small"/>
             <div className={styles.title}>{name}</div>
           </div>
-          <Tabs onChange={this.tabChange} >
+          <Tabs
+            // onChange={this.tabChange}
+          >
           <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
                 deleteProject={this.deleteProject}
@@ -275,6 +279,7 @@ export class Teams extends React.Component<ITeamsProps> {
                 currentTeam={currentTeam}
                 deleteTeamMember={this.props.onDeleteTeamMember}
                 pullMemberInTeam={this.props.onPullMemberInTeam}
+                onLoadTeamMembers={this.props.onLoadTeamMembers}
                 changeTeamMemberRole={this.props.onChangeTeamMemberRole}
                 currentTeamMembers={currentTeamMembers}
                 currentOrganizationMembers={currentOrganizationMembers}
@@ -295,8 +300,7 @@ export class Teams extends React.Component<ITeamsProps> {
                   editTeam={this.editTeam}
                   deleteTeam={this.deleteTeam}
                 />
-              </TabPane> : ''
-            }
+              </TabPane> : ''}
           </Tabs>
         </Box.Body>
       </Box>
