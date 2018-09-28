@@ -28,10 +28,10 @@ import Avatar from '../../../components/Avatar'
 // import sagaApp from '../../App/sagas'
 // import reducerApp from '../../App/reducer'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
+import { makeSelectTeamModalLoading } from '../selectors'
 
 interface ITeamsState {
   formVisible: boolean
-  modalLoading: boolean
 }
 
 interface ITeamsProps {
@@ -44,7 +44,9 @@ interface ITeamsProps {
  // organizationTeams: Organization.IOrganizationTeams
   organizationTeams: any
   organizations: any
+  teamModalLoading?: boolean
   loadOrganizationTeams: (id: number) => any
+  onLoadOrganizationDetail?: (id: number) => any
   onCheckUniqueName?: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -64,8 +66,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   constructor (props) {
     super(props)
     this.state = {
-      formVisible: false,
-      modalLoading: false
+      formVisible: false
     }
   }
   public componentWillMount () {
@@ -99,7 +100,6 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
     const {currentOrganization} = this.props
     this.TeamForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        this.setState({modalLoading: true})
         this.props.onAddTeam({
           ...values,
           ...{
@@ -112,6 +112,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           const { id } = currentOrganization
           if (this.props.loadOrganizationTeams) {
             this.props.loadOrganizationTeams(Number(id))
+            this.props.onLoadOrganizationDetail(Number(id))
             this.props.onLoadTeams()
           }
           this.hideTeamForm()
@@ -121,8 +122,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   }
   private hideTeamForm = () => {
     this.setState({
-      formVisible: false,
-      modalLoading: false
+      formVisible: false
     }, () => {
       this.TeamForm.resetFields()
     })
@@ -140,8 +140,10 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   }
 
   private isEmptyObj =  (obj) => {
-    for (let attr in obj) {
-      return false
+    for (const attr in obj) {
+      if (obj.hasOwnProperty(attr)) {
+        return false
+      }
     }
     return true
   }
@@ -165,8 +167,8 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   }
 
   public render () {
-    const {formVisible, modalLoading} = this.state
-    const {organizationTeams, currentOrganization, currentOrganization: {id}} = this.props
+    const { formVisible } = this.state
+    const {organizationTeams, currentOrganization, currentOrganization: {id}, teamModalLoading} = this.props
     this.filter(organizationTeams)
     let CreateButton = void 0
     if (currentOrganization) {
@@ -196,8 +198,8 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
       render: (users) => {
         return (
           <div className={styles.avatarWrapper}>
-            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span><Avatar key={index} path={user.avatar} size="small"
-                                                                                                                                  enlarge={true}/></span></Tooltip>)}
+            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}><span>
+                <Avatar key={index} path={user.avatar} size="small" enlarge={true}/></span></Tooltip>)}
             <span className={styles.avatarName}>{`${ users ? users.length : 0 }members`}</span>
           </div>
         )
@@ -244,7 +246,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
             orgId={id}
             teams={this.props.teams}
             onModalOk={this.onModalOk}
-            modalLoading={modalLoading}
+            modalLoading={teamModalLoading}
             onOrganizationTypeChange={this.organizationTypeChange}
             onCheckUniqueName={this.checkNameUnique}
             ref={(f) => {
@@ -260,7 +262,8 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
 
 const mapStateToProps = createStructuredSelector({
   teams: makeSelectTeams(),
-  loginUser: makeSelectLoginUser()
+  loginUser: makeSelectLoginUser(),
+  teamModalLoading: makeSelectTeamModalLoading()
 })
 
 export function mapDispatchToProps (dispatch) {
