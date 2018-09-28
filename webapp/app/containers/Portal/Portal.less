@@ -45,30 +45,23 @@
     .ellipsis;
   }
 
-  .icon {
+  .portalActions {
     position: absolute;
-    top: 8px;
-    opacity: .7;
-    font-size: 15px;
-    color: @white;
-    transition: transform 200ms ease;
-
-    &:hover {
-      opacity: 1;
-      transform: scale(1.1, 1.1);
-    }
-  }
-
-  .edit {
-    right: 32px;
-
-    .icon;
-  }
-
-  .delete {
     right: 8px;
+    top: 8px;
 
-    .icon;
+    .edit, .delete {
+      opacity: .7;
+      font-size: 15px;
+      margin-left: 8px;
+      color: @white;
+      transition: transform 200ms ease;
+  
+      &:hover {
+        opacity: 1;
+        transform: scale(1.1, 1.1);
+      }
+    }
   }
 
   .central {

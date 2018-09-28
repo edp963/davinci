@@ -42,11 +42,16 @@ const makeSelectStarUserList = () => createSelector(
   (projectState) => projectState.get('starUserList')
 )
 
+const makeSelectCollectProjects = () => createSelector(
+  selectProject,
+  (projectState) => projectState.get('collectProjects')
+)
 
 export {
   selectProject,
   makeSelectProjects,
   makeSelectSearchProject,
   makeSelectCurrentProject,
-  makeSelectStarUserList
+  makeSelectStarUserList,
+  makeSelectCollectProjects
 }
