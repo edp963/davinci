@@ -159,21 +159,23 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
               <h3 className={styles.title}>{display.name} {editHint}</h3>
               <p className={styles.content}>{display.description}</p>
             </header>
-            <Tooltip title="编辑">
-              <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
-            </Tooltip>
-            <Tooltip title="复制">
-              <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
-            </Tooltip>
-            <Popconfirm
-              title="确定删除？"
-              placement="bottom"
-              onConfirm={this.delegate(onDelete, display.id)}
-            >
-              <Tooltip title="删除">
-                <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
+            <div className={styles.displayActions}>
+              <Tooltip title="编辑">
+                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
               </Tooltip>
-            </Popconfirm>
+              <Tooltip title="复制">
+                <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
+              </Tooltip>
+              <Popconfirm
+                title="确定删除？"
+                placement="bottom"
+                onConfirm={this.delegate(onDelete, display.id)}
+              >
+                <Tooltip title="删除">
+                  <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
+                </Tooltip>
+              </Popconfirm>
+            </div>
           </div>
         </div>
       </Col>

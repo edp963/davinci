@@ -166,18 +166,20 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
               {portal.description}
             </p>
           </header>
-          <Tooltip title="编辑">
-            <EditIcon className={styles.edit} type="setting" onClick={this.showPortalForm('edit', portal)} />
-          </Tooltip>
-          <Popconfirm
-            title="确定删除？"
-            placement="bottom"
-            onConfirm={this.delegate(onDelete, portal.id)}
-          >
-            <Tooltip title="删除">
-              <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
+          <div className={styles.portalActions}>
+            <Tooltip title="编辑">
+              <EditIcon className={styles.edit} type="setting" onClick={this.showPortalForm('edit', portal)} />
             </Tooltip>
-          </Popconfirm>
+            <Popconfirm
+              title="确定删除？"
+              placement="bottom"
+              onConfirm={this.delegate(onDelete, portal.id)}
+            >
+              <Tooltip title="删除">
+                <AdminIcon className={styles.delete} type="delete" onClick={this.stopPPG} />
+              </Tooltip>
+            </Popconfirm>
+          </div>
         </div>
       </Col>
     )
