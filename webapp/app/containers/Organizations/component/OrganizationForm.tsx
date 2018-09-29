@@ -64,7 +64,7 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
             创建组织
           </div>
           <div className={styles.desc}>
-            在组织下可以创建若干团队
+            {/* 用户创建组织，邀请成员加入，创建团队 */}
           </div>
         </div>
         <div className={styles.body}>

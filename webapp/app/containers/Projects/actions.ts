@@ -46,7 +46,13 @@ import {
   GET_PROJECT_STAR_USER_FAILURE,
   PROJECT_UNSTAR,
   PROJECT_UNSTAR_SUCCESS,
-  PROJECT_UNSTAR_FAILURE
+  PROJECT_UNSTAR_FAILURE,
+  LOAD_COLLECT_PROJECTS,
+  LOAD_COLLECT_PROJECTS_SUCCESS,
+  LOAD_COLLECT_PROJECTS_FAILURE,
+  CLICK_COLLECT_PROJECT,
+  CLICK_COLLECT_PROJECT_SUCCESS,
+  CLICK_COLLECT_PROJECT_FAILURE
 } from './constants'
 
 export function loadProjectDetail (id) {
@@ -161,11 +167,12 @@ export function transferProjectFail () {
   }
 }
 
-export function deleteProject (id) {
+export function deleteProject (id, resolve) {
   return {
     type: DELETE_PROJECT,
     payload: {
-      id
+      id,
+      resolve
     }
   }
 }
@@ -271,6 +278,53 @@ export function unStarProjectSuccess (result) {
 export function unStarProjectFail () {
   return {
     type: PROJECT_UNSTAR_FAILURE
+  }
+}
+
+export function loadCollectProjects () {
+  return {
+    type: LOAD_COLLECT_PROJECTS
+  }
+}
+
+export function collectProjectLoaded (result) {
+  return {
+    type: LOAD_COLLECT_PROJECTS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function collectProjectFail () {
+  return {
+    type: LOAD_COLLECT_PROJECTS_FAILURE
+  }
+}
+
+export function clickCollectProjects (formType, project, resolve) {
+  return {
+    type: CLICK_COLLECT_PROJECT,
+    payload: {
+      formType,
+      project,
+      resolve
+    }
+  }
+}
+
+export function collectProjectClicked (result) {
+  return {
+    type: CLICK_COLLECT_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function clickCollectProjectFail () {
+  return {
+    type: CLICK_COLLECT_PROJECT_FAILURE
   }
 }
 

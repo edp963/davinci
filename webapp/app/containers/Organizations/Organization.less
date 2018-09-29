@@ -22,10 +22,18 @@
     .name {
       display: flex;
       flex-direction: column;
-      margin-left: 16px;
+      // margin-left: 16px;
       .title {
         font-weight: 400;
         font-size: 16px;
+        .nameTag {
+          color: @white;
+          font-size: 12px;
+          margin-left: 8px;
+          background: lighten(@blue, 20%);;
+          padding: 1px 6px;
+          border-radius: 3px;
+        }
       }
       .desc {
         font-size: 12px;
@@ -275,9 +283,9 @@
   margin-left: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: @blue;
+  // color: @blue;
   line-height: 40px;
-  cursor: pointer;
+  // cursor: pointer;
 }
 
 .radioStyle {

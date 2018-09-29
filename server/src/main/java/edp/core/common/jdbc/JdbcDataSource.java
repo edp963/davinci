@@ -66,6 +66,12 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${spring.datasource.test-on-return}")
     private boolean testOnReturn;
 
+    @Value("${source.break-after-acquire-failure:true}")
+    private boolean breakAfterAcquireFailure;
+
+    @Value("${source.connection-error-retry-attempts:3}")
+    private int connectionErrorRetryAttempts;
+
     private static volatile Map<String, Object> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
@@ -102,6 +108,8 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setTestWhileIdle(testWhileIdle);
             instance.setTestOnBorrow(testOnBorrow);
             instance.setTestOnReturn(testOnReturn);
+            instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+            instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
 
             try {
                 instance.init();

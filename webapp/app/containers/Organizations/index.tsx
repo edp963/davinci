@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 const Icon = require('antd/lib/icon')
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
+const Tag = require('antd/lib/tag')
 const Modal = require('antd/lib/modal')
 import { Link } from 'react-router'
 import Box from '../../components/Box'
@@ -42,6 +43,7 @@ interface IOrganization {
   name?: string
   description?: string
   avatar?: any
+  role?: number
 }
 export class Organizations extends React.PureComponent<IOrganizationsProps, IOrganizationsState> {
   constructor (props) {
@@ -103,15 +105,19 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
   public render () {
     const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
+    console.log({organizations})
     const organizationArr = organizations ? organizations.map((org) => (
         <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
             <div className={styles.avatar}>
               <Avatar path={org.avatar} enlarge={false} size="small"/>
-            </div>
-            <div className={styles.name}>
-              <div className={styles.title}>{org.name}</div>
-              <div className={styles.desc}>{org.description}</div>
+              <div className={styles.name}>
+                <div className={styles.title}>
+                  {org.name}
+                  {org.role === 1 ? <span className={styles.nameTag}>Owner</span> : null}
+                </div>
+                <div className={styles.desc}>{org.description}</div>
+              </div>
             </div>
           </div>
           <div className={styles.setting}>

@@ -38,6 +38,7 @@ import {ITeam} from './TeamList'
 
 
 interface IProjectsFormProps {
+  listType: string
   type: string
   form: any
   orgId: number
@@ -62,8 +63,9 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     }
   }
   public render () {
-    const { onOrganizationTypeChange, modalLoading, teams } = this.props
+    const { onOrganizationTypeChange, modalLoading, teams, listType } = this.props
     const { getFieldDecorator } = this.props.form
+
     const filterTeams = this.filterTeamsByOrg(teams)
     const teamsOptions = filterTeams ? filterTeams.map((o) => (
       <Option key={o.id} value={`${o.id}`} className={styles.selectOption}>
@@ -75,10 +77,12 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
           : ''}
       </Option>
     )) : ''
+
     const commonFormItemStyle = {
       labelCol: { span: 3 },
       wrapperCol: { span: 24 }
     }
+
     const modalButtons = [(
       <Button
         key="submit"
@@ -98,7 +102,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
             创建团队
           </div>
           <div className={styles.desc}>
-            团队隶属于组织，在团队中可以制定项目的权限。
+            团队隶属于组织，可以在团队中指定项目的模块权限
           </div>
         </div>
         <div className={styles.body}>
@@ -139,6 +143,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     <Select
                       placeholder="Please select a team"
                       onChange={onOrganizationTypeChange}
+                      disabled={listType === 'teamTeamList' ? true : false}
                     >
                       {teamsOptions}
                     </Select>
