@@ -217,6 +217,7 @@ interface IGridStates {
   selectedWidget: any[]
   polling: boolean
   linkageConfigVisible: boolean
+  interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
@@ -261,7 +262,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling: false,
 
       linkageConfigVisible: false,
-
+      interactingStatus: {},
       globalFilterConfigVisible: false,
 
       dashboardSharePanelAuthorized: false,
@@ -745,6 +746,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       })
     }, () => {
       this.toggleLinkageConfig(false)()
+      this.clearAllInteracts()
     })
   }
 
@@ -778,6 +780,25 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
     })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: true
+      }
+    })
+  }
+
+  private clearAllInteracts = () => {
+    const { currentItems } = this.props
+    Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === +linkagerItemId)
+      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+        linkageFilters: [],
+        linkageParams: []
+      })
+    })
+    this.interactingLinkagers = {} // FIXME need remove interact effect
+    this.setState({ interactingStatus: {} })
   }
 
   private turnOffInteract = (itemId) => {
@@ -794,6 +815,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
+    })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: false
+      }
     })
   }
 
@@ -920,6 +947,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling,
       dashboardItemFormStep,
       linkageConfigVisible,
+      interactingStatus,
       globalFilterConfigVisible,
       allowFullScreen,
       dashboardSharePanelAuthorized
@@ -977,6 +1005,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const interacting = interactingStatus[id] || false
 
         itemblocks.push((
           <div key={id}>
@@ -986,6 +1015,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               data={datasource}
               loading={loading}
               polling={polling}
+              interacting={interacting}
               frequency={frequency}
               shareInfo={shareInfo}
               secretInfo={secretInfo}

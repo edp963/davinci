@@ -99,7 +99,6 @@ interface IDashboardProps {
         globalParams: Array<{name: string, value: string}>
       }
       downloadCsvLoading: boolean
-      interactId: string
       renderType: RenderType
     }
   },
@@ -137,6 +136,7 @@ interface IDashboardStates {
   type: string,
   shareInfo: string,
   modalLoading: boolean,
+  interactingStatus: { [itemId: number]: boolean }
   allowFullScreen: boolean,
   currentDataInFullScreen: any,
   showLogin: boolean,
@@ -152,7 +152,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       shareInfo: '',
 
       modalLoading: false,
-
+      interactingStatus: {},
       allowFullScreen: false,
       currentDataInFullScreen: {},
       showLogin: false,
@@ -423,6 +423,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
     })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: true
+      }
+    })
   }
 
   private turnOffInteract = (itemId) => {
@@ -439,6 +445,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
+    })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: false
+      }
     })
   }
 
@@ -469,6 +481,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       mounted,
       shareInfo,
       showLogin,
+      interactingStatus,
       allowFullScreen,
       phantomRenderSign
     } = this.state
@@ -487,11 +500,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           datasource,
           loading,
           downloadCsvLoading,
-          interactId,
           renderType
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const interacting = interactingStatus[id] || false
 
         itemblocks.push((
           <div key={id}>
@@ -501,6 +514,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               data={datasource}
               loading={loading}
               polling={polling}
+              interacting={interacting}
               frequency={frequency}
               shareInfo={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
