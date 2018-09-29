@@ -46,6 +46,10 @@ const makeSelectCurrentLayersInfo = () => createSelector(
   selectDisplay,
   ({ present }) => present.get('currentLayersInfo')
 )
+const makeSelectCurrentLayersOperationInfo = () => createSelector(
+  selectDisplay,
+  ({ present }) => present.get('currentLayersOperationInfo')
+)
 
 const makeSelectCurrentSelectedLayers = () => createSelector(
   selectDisplay,
@@ -115,6 +119,11 @@ const makeSelectNextState = () => createSelector(
   }
 )
 
+const makeSelectEditorBaselines = () =>  createSelector(
+  selectDisplay,
+  ({ present }) => present.get('editorBaselines')
+)
+
 export {
   selectDisplay,
   makeSelectDisplays,
@@ -122,6 +131,7 @@ export {
   makeSelectCurrentSlide,
   makeSelectCurrentLayers,
   makeSelectCurrentLayersInfo,
+  makeSelectCurrentLayersOperationInfo,
 
   makeSelectCurrentSelectedLayers,
 
@@ -134,5 +144,7 @@ export {
   makeSelectCanUndo,
   makeSelectCanRedo,
   makeSelectCurrentState,
-  makeSelectNextState
+  makeSelectNextState,
+
+  makeSelectEditorBaselines
 }

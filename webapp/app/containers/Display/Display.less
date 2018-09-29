@@ -381,6 +381,24 @@
     box-shadow: @block-active-box-shadow;
     transform-origin: 0 0;
     transition: transform ease-in 200ms;
+
+    .verticalBaseline {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: #ecc302;
+      z-index: 999999;
+    }
+
+    .horizontalBaseline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #ecc302;
+      z-index: 999999;
+    }
   }
 
 }
