@@ -124,7 +124,7 @@ export class DashboardToolbar extends React.PureComponent<IDashboardToolbarProps
       <Col sm={12} className={utilStyles.textAlignRight}>
         {addButton}
         {shareButton}
-        {/* {linkageButton} */}
+        {linkageButton}
         {globalFilterButton}
       </Col>
     )

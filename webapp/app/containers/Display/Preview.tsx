@@ -30,8 +30,7 @@ import {
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersInfo,
-  makeSelectCurrentSelectedLayers } from './selectors'
+  makeSelectCurrentLayersInfo } from './selectors'
 
 import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
@@ -75,7 +74,6 @@ interface IPreviewProps {
     [key: string]: {
       datasource: any[]
       loading: boolean
-      selected: boolean
       queryParams: {
         filters: string
         linkageFilters: string
@@ -311,7 +309,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       const layerId = layer.id
 
       const { polling, frequency } = layer.params
-      const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
+      const { datasource, loading, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
         <LayerItem
@@ -320,7 +318,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           pure={true}
           scale={scale}
           layer={layer}
-          selected={selected}
           itemId={layerId}
           widget={widget}
           data={datasource}
@@ -351,8 +348,7 @@ const mapStateToProps = createStructuredSelector({
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
   currentLayers: makeSelectCurrentLayers(),
-  currentLayersInfo: makeSelectCurrentLayersInfo(),
-  currentSelectedLayers: makeSelectCurrentSelectedLayers()
+  currentLayersInfo: makeSelectCurrentLayersInfo()
 })
 
 export function mapDispatchToProps (dispatch) {

@@ -121,24 +121,15 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     })
   }
 
-  private cancel = () => {
-    const { onCancel } = this.props
-    Modal.confirm({
-      content: '确认不保存当前联动关系配置吗？',
-      onOk: onCancel,
-      onCancel: void 0
-    })
-  }
-
   public render () {
-    const { visible, loading, onSave, onGetWidgetInfo, linkages } = this.props
+    const { visible, loading, onSave, onGetWidgetInfo, linkages, onCancel } = this.props
     const { linkageCascaderSource, savingLinkageConfig } = this.state
 
     const modalButtons = [(
       <Button
         key="cancel"
         size="large"
-        onClick={this.cancel}
+        onClick={onCancel}
       >
         取 消
       </Button>
@@ -159,8 +150,9 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
       <Modal
         title="联动关系配置"
         wrapClassName="ant-modal-large"
+        maskClosable={false}
         visible={visible}
-        onCancel={this.cancel}
+        onCancel={onCancel}
         footer={modalButtons}
       >
         <div className={styles.modalLinkageConfig}>

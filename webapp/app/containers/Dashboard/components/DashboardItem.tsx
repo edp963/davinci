@@ -50,6 +50,7 @@ interface IDashboardItemProps {
   data: any
   loading: boolean
   polling: string
+  interacting: boolean
   frequency: string
   shareInfo: string
   secretInfo?: string
@@ -75,7 +76,6 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
-  isInteracting: boolean
   pivotProps: IPivotProps
 }
 
@@ -85,7 +85,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.state = {
       controlPanelVisible: false,
       sharePanelAuthorized: false,
-      isInteracting: false,
       pivotProps: null
     }
   }
@@ -221,12 +220,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private doInteract = (triggerData) => {
     const { itemId, onDoTableInteract } = this.props
-    this.setState({ isInteracting: true })
     onDoTableInteract(itemId, triggerData)
   }
 
   private turnOffInteract = () => {
-    this.setState({ isInteracting: false })
     const { onTurnOffInteract, itemId } = this.props
     onTurnOffInteract(itemId)
   }
@@ -242,6 +239,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       data,
       loading,
+      interacting,
       shareInfo,
       secretInfo,
       shareInfoLoading,
@@ -257,7 +255,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       controlPanelVisible,
       sharePanelAuthorized,
-      isInteracting,
       pivotProps
     } = this.state
 
@@ -389,7 +386,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const gridItemClass = classnames({
       [styles.gridItem]: true,
-      [styles.interact]: isInteracting
+      [styles.interact]: interacting
     })
 
     return (
