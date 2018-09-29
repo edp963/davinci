@@ -92,9 +92,9 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionAll = (
       <ul className={styles.menu}>
         {editAction}
-        <li onClick={this.operateMore(item.id, 'copy')} className={item.type === 0 ? styles.popHide : ''}>
+        {/* <li onClick={this.operateMore(item.id, 'copy')} className={item.type === 0 ? styles.popHide : ''}>
           <Icon type="copy" /> 复制
-        </li>
+        </li> */}
         {moveAction}
         <li onClick={this.operateMore(item.id, 'delete')}>
           <Icon type="delete" /> 删除
