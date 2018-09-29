@@ -22,6 +22,7 @@ import * as React from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import { InjectedRouter } from 'react-router/lib/Router'
+import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
 
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
@@ -901,6 +902,28 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
+  private handle = (expandedKeys, obj) => {
+    if (!obj.node.props.children) {
+        const id = obj.selectedNodes[0].props.id
+        return
+    }
+    if (obj.event && obj.selectedNodes.length === 1 && obj.selectedNodes[0].props.children) {
+      this.state.expandedKeys.push(expandedKeys[0])
+      this.setState({
+      // expandedKeys: _.xor(this.state.expandedKeys, expandedKeys),
+        expandedKeys: this.state.expandedKeys,
+        autoExpandParent: false
+      })
+    }
+
+    if (expandedKeys.length === 0 || this.state.expandedKeys.indexOf(expandedKeys) >= 0) {
+      this.setState({
+        expandedKeys: this.state.expandedKeys.filter((e) => e !== obj.node.props.title),
+        autoExpandParent: false
+      })
+    }
+  }
+
   public render () {
     const {
       form,
@@ -1191,6 +1214,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 onExpand={this.onExpand}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
+                onSelect={this.handle}
               >
               {loop(data || [])}
               </Tree>
