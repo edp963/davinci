@@ -422,58 +422,62 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
                 </FormItem>
               </Col>
             </Row>
-            <Row className={!needSetView ? utilStyles.hide : ''}>
-              <Col span={12}>
-                  <FormItem
-                    label="来源 View"
-                    labelCol={{span: 8}}
-                    wrapperCol={{span: 16}}
-                  >
-                    {
-                      getFieldDecorator('fromView', {
-                        rules: [{
-                          required: true,
-                          message: '不能为空'
-                        }]
-                      })(
-                        <Select
-                          onChange={this.onFromViewChange}
-                        >
-                          {
-                            views.map((view) => (
-                              <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
-                            ))
-                          }
-                        </Select>
-                      )
-                    }
-                  </FormItem>
-              </Col>
-              <Col span={12}>
-                <FormItem
-                    label="来源字段"
-                    labelCol={{span: 8}}
-                    wrapperCol={{span: 16}}
-                >
-                  {
-                    getFieldDecorator('fromModel', {
-                      rules: [{
-                        required: true,
-                        message: '不能为空'
-                      }]
-                    })(
-                      <Select onChange={this.onFromModelChange}>
+            {
+              !needSetView ? null : (
+                <Row>
+                  <Col span={12}>
+                      <FormItem
+                        label="来源 View"
+                        labelCol={{span: 8}}
+                        wrapperCol={{span: 16}}
+                      >
                         {
-                          modelItems.map((itemName) => (
-                            <Option key={itemName} value={itemName}>{itemName}</Option>
-                          ))
+                          getFieldDecorator('fromView', {
+                            rules: [{
+                              required: true,
+                              message: '不能为空'
+                            }]
+                          })(
+                            <Select
+                              onChange={this.onFromViewChange}
+                            >
+                              {
+                                views.map((view) => (
+                                  <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
+                                ))
+                              }
+                            </Select>
+                          )
                         }
-                      </Select>
-                    )
-                  }
-                </FormItem>
-              </Col>
-            </Row>
+                      </FormItem>
+                  </Col>
+                  <Col span={12}>
+                    <FormItem
+                        label="来源字段"
+                        labelCol={{span: 8}}
+                        wrapperCol={{span: 16}}
+                    >
+                      {
+                        getFieldDecorator('fromModel', {
+                          rules: [{
+                            required: true,
+                            message: '不能为空'
+                          }]
+                        })(
+                          <Select onChange={this.onFromModelChange}>
+                            {
+                              modelItems.map((itemName) => (
+                                <Option key={itemName} value={itemName}>{itemName}</Option>
+                              ))
+                            }
+                          </Select>
+                        )
+                      }
+                    </FormItem>
+                  </Col>
+                </Row>
+              )
+            }
             <Row>
               <Col span={12}>
                   <FormItem

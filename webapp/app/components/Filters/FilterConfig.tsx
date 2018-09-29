@@ -162,12 +162,14 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
 
   private ok = () => {
     const { localFilters } = this.state
+    const { onOk } = this.props
     if (localFilters.length > 0) {
       this.filterForm.saveFilterItem((err) => {
         if (err) { return }
-        const { onOk } = this.props
         onOk([...localFilters])
       })
+    } else {
+      onOk([])
     }
   }
 
