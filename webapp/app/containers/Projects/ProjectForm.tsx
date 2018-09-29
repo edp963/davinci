@@ -197,10 +197,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                   })(
                     <Select>
                       <Option key="visibility" value="true">
-                        可见
+                        公开
                       </Option>
                       <Option key="hidden" value="false">
-                        隐藏
+                        私密
                       </Option>
                     </Select>
                   )}

@@ -153,14 +153,14 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <Col>
                   <FormItem
                  //   {...commonFormItemStyle}
-                    label="组织成员默认权限"
+                    label="组织成员对项目的权限"
                   >
                     {getFieldDecorator('memberPermission', {
                       initialValue: 1
                     })(
                       <Radio.Group size="small">
-                        <RadioButton value={0}>隐藏</RadioButton>
-                        <RadioButton value={1}>预览</RadioButton>
+                        <RadioButton value={0}>不可见任何</RadioButton>
+                        <RadioButton value={1}>只可见公开</RadioButton>
                         {/* <RadioButton value={2}>修改</RadioButton>
                         <RadioButton value={3}>删除</RadioButton> */}
                       </Radio.Group>
