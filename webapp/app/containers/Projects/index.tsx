@@ -853,6 +853,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       [styles.wrapper]: true,
       [styles.overflowY]: this.state.searchMaskVisible
     })
+    const joinStyle = classnames({
+      [styles.join]: true,
+      [utilStyles.hide]: !(joinProjects && joinProjects.length > 0)
+    })
+    const collectStyle = classnames({
+      [styles.mime]: true,
+      [utilStyles.hide]: !(collectProjectsArr && collectProjectsArr.length > 0)
+    })
     return (
       <div className={wrapper}>
         <div className={styles.search}>
@@ -930,7 +938,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       </div>
                     </Box>
                   </div>
-                  <div className={styles.join} id="join">
+                  <div className={joinStyle} id="join">
                     <Box>
                       <Box.Header>
                         <Box.Title>
@@ -948,7 +956,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       </div>
                     </Box>
                   </div>
-                  <div className={styles.mime} id="collect">
+                  <div className={collectStyle} id="collect">
                     <Box>
                       <Box.Header>
                         <Box.Title>
