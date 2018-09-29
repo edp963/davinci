@@ -902,24 +902,34 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private handle = (expandedKeys, obj) => {
-    if (!obj.node.props.children) {
-        const id = obj.selectedNodes[0].props.id
-        return
-    }
-    if (obj.event && obj.selectedNodes.length === 1 && obj.selectedNodes[0].props.children) {
-      this.state.expandedKeys.push(expandedKeys[0])
-      this.setState({
-      // expandedKeys: _.xor(this.state.expandedKeys, expandedKeys),
-        expandedKeys: this.state.expandedKeys,
-        autoExpandParent: false
-      })
-    }
+  private handleTree = (clickKey, obj) => {
+    const { expandedKeys } = this.state
 
-    if (expandedKeys.length === 0 || this.state.expandedKeys.indexOf(expandedKeys) >= 0) {
+    this.setState({
+      autoExpandParent: false
+    })
+
+    if (obj.selected) {
+      if (expandedKeys.indexOf(clickKey[0]) < 0) {
+        expandedKeys.push(clickKey[0])
+        this.setState({
+          expandedKeys
+        })
+      } else {
+        this.setState({
+          expandedKeys: expandedKeys.filter((e) => e !== clickKey[0])
+        })
+      }
+    } else {
+      let currentKey = []
+      if (expandedKeys.length === 0) {
+        expandedKeys.push(obj.node.props.title)
+        currentKey = expandedKeys
+      } else {
+        currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
+      }
       this.setState({
-        expandedKeys: this.state.expandedKeys.filter((e) => e !== obj.node.props.title),
-        autoExpandParent: false
+        expandedKeys: currentKey
       })
     }
   }
@@ -1214,7 +1224,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 onExpand={this.onExpand}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
-                onSelect={this.handle}
+                onSelect={this.handleTree}
               >
               {loop(data || [])}
               </Tree>

@@ -532,6 +532,38 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
+  private handleTree = (clickKey, obj) => {
+    const { expandedKeys } = this.state
+
+    this.setState({
+      autoExpandParent: false
+    })
+
+    if (obj.selected) {
+      if (expandedKeys.indexOf(clickKey[0]) < 0) {
+        expandedKeys.push(clickKey[0])
+        this.setState({
+          expandedKeys
+        })
+      } else {
+        this.setState({
+          expandedKeys: expandedKeys.filter((e) => e !== clickKey[0])
+        })
+      }
+    } else {
+      let currentKey = []
+      if (expandedKeys.length === 0) {
+        expandedKeys.push(obj.node.props.title)
+        currentKey = expandedKeys
+      } else {
+        currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
+      }
+      this.setState({
+        expandedKeys: currentKey
+      })
+    }
+  }
+
   public render () {
     const {
       params,
@@ -689,6 +721,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
                   selectedKeys={[this.props.params.dashboardId]}
                   draggable={initializePermission(currentProject, 'vizPermission')}
                   onDrop={this.onDrop}
+                  onSelect={this.handleTree}
                 >
                 {loop(dashboardData)}
                 </Tree>
