@@ -167,6 +167,10 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
             String imageName = UUID.randomUUID() + ".png";
             String imageUrl = baseUrl + File.separator + imageName;
             String imagePath = fileBasePath + imageUrl;
+            File file = new File(fileBasePath + baseUrl);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
             boolean bol = phantomRender(url, imagePath);
             if (bol) {

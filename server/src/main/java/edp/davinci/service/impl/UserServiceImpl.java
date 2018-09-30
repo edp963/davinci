@@ -159,12 +159,12 @@ public class UserServiceImpl extends CommonService implements UserService {
         User user = userMapper.selectByUsername(userLogin.getUsername());
         if (null == user) {
             log.info("user not found: {}", userLogin.getUsername());
-            return resultMap.fail().message("user not found").payload("username or password invalid");
+            return resultMap.fail().message("user not found").payload("username or password is wrong");
         }
         //校验密码
         if (!BCrypt.checkpw(userLogin.getPassword(), user.getPassword())) {
             log.info("password is wrong: {}", userLogin.getUsername());
-            return resultMap.fail().message("password is wrong").payload("username or password invalid");
+            return resultMap.fail().message("password is wrong").payload("username or password is wrong");
         }
         //是否激活
         if (!user.getActive()) {
