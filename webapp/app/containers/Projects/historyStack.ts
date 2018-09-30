@@ -35,13 +35,15 @@ class HistoryStack  {
     }
 
     const historyArr = []
-    this.wrap[user].forEach((historyItem) => {
-      projects.forEach((projectItem) => {
-        if (historyItem.id === projectItem.id) {
-          historyArr.push(projectItem)
-        }
+    if (this.wrap && this.wrap[user] && this.wrap[user].length) {
+      this.wrap[user].forEach((historyItem) => {
+        projects.forEach((projectItem) => {
+          if (historyItem.id === projectItem.id) {
+            historyArr.push(projectItem)
+          }
+        })
       })
-    })
+    }
     this.wrap[user] = historyArr
   }
   public pushNode (d?: IHistory) {
