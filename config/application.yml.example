@@ -97,7 +97,7 @@ spring:
     properties:
       smtp:
         starttls:
-          enable: false
+          enable: true
           required: true
         auth: true
       mail:
