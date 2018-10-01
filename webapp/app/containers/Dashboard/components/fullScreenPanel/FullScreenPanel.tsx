@@ -6,7 +6,7 @@ import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
 import Chart from '../Chart'
-import Pivot from '../../../Widget/components/Pivot/PivotInViz'
+import Widget from '../../../Widget/components/Widget/WidgetInViz'
 import {ECHARTS_RENDERER} from '../../../../globalConstants'
 const styles = require('./fullScreenPanel.less')
 
@@ -152,12 +152,12 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       title = c.widget.name
       renderType = c.renderType
       data = currentDatasources[c.itemId]
-      const pivotProps = JSON.parse(currentDataInFullScreen.widget.config)
+      const widgetProps = JSON.parse(currentDataInFullScreen.widget.config)
       charts = renderType !== 'echarts'
         ?
         (
-          <Pivot
-            {...pivotProps}
+          <Widget
+            {...widgetProps}
             renderType="rerender"
             data={data && data.datasource ? data.datasource : []}
           />

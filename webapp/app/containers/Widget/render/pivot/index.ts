@@ -22,8 +22,8 @@ import line from './line'
 import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
-import radar from './radar'
-import { DimetionType, IDrawingData } from '../components/Pivot/Pivot'
+import { IDrawingData } from '../../components/Pivot/Pivot'
+import { DimetionType } from '../../components/Widget'
 
 interface IChartOptions {
   chartOption: object
@@ -55,6 +55,5 @@ export default function (type, drawingData?: IDrawingData): IChartOptions {
     case 'bar': return bar(drawingData.elementSize)
     case 'scatter': return scatter(drawingData.sizeRate)
     case 'pie': return pie()
-    case 'radar': return radar()
   }
 }

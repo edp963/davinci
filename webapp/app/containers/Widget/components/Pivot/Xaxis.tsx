@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
+import { IMetricAxisConfig } from './Pivot'
+import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { IChartLine, IChartUnit } from './Chart'
 import { metricAxisLabelFormatter, getXaxisLabel, decodeMetricName } from '../util'
 import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_XAXIS_ROTATE_LIMIT } from '../../../../globalConstants'
@@ -9,7 +10,7 @@ const styles = require('./Pivot.less')
 
 interface IXaxisProps {
   width: number
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   data: any[]
   metricAxisConfig?: IMetricAxisConfig
   dimetionAxis: DimetionType

@@ -1,31 +1,33 @@
 import * as React from 'react'
-import ScrollablePivot from './index'
-import { IPivotProps } from './Pivot'
-import { getStyleConfig } from '../util'
+import Widget, { IWidgetWrapperProps } from './index'
+import { getStyleConfig, getTable } from '../util'
 
-interface IPivotInVizStates {
-  pivotProps: IPivotProps
+interface IWidgetInVizStates {
+  widgetProps: IWidgetWrapperProps
 }
 
-export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> {
+export class WidgetInViz extends React.Component<IWidgetWrapperProps, IWidgetInVizStates> {
   constructor (props) {
     super(props)
     this.state = {
-      pivotProps: {...this.clearProps}
+      widgetProps: {...this.clearProps}
     }
   }
 
-  private clearProps = {
+  private clearProps: IWidgetWrapperProps = {
     data: [],
     cols: [],
     rows: [],
     metrics: [],
     filters: [],
     chartStyles: getStyleConfig({}),
+    selectedChart: getTable().id,
     queryParams: [],
     cache: false,
     expired: 300,
-    orders: []
+    orders: [],
+    loading: false,
+    mode: 'pivot'
   }
 
   public componentDidMount () {
@@ -39,20 +41,20 @@ export class PivotInViz extends React.Component<IPivotProps, IPivotInVizStates> 
   private renderPivot = (props) => {
     if (props.data.length) {
       this.setState({
-        pivotProps: {...props}
+        widgetProps: {...props}
       })
     } else {
       this.setState({
-        pivotProps: {...this.clearProps}
+        widgetProps: {...this.clearProps}
       })
     }
   }
 
   public render () {
     return (
-      <ScrollablePivot {...this.state.pivotProps} />
+      <Widget {...this.state.widgetProps} />
     )
   }
 }
 
-export default PivotInViz
+export default WidgetInViz

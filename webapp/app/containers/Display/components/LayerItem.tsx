@@ -15,8 +15,8 @@ import {
   SecondaryGraphTypes
 } from 'utils/util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import Widget from '../../Widget/components/Widget/WidgetInViz'
 
 const Resizable = require('../../../../libs/react-resizable').Resizable
 
@@ -53,7 +53,7 @@ interface ILayerItemStates {
   layerParams: any
   layerTooltipPosition: [number, number]
   mousePos: number[]
-  pivotProps: IPivotProps
+  widgetProps: IWidgetProps
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
@@ -67,7 +67,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerParams,
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
-      pivotProps: null
+      widgetProps: null
     }
   }
 
@@ -76,7 +76,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     if (!widget) { return }
 
     this.setState({
-      pivotProps: JSON.parse(widget.config)
+      widgetProps: JSON.parse(widget.config)
     })
   }
 
@@ -99,7 +99,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     if (this.props.widget !== nextProps.widget) {
       this.setState({
-        pivotProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config)
       })
     }
   }
@@ -247,7 +247,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      pivotProps } = this.state
+      widgetProps } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -266,9 +266,10 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         onClick={this.onClickLayer}
       >
         {this.wrapLayerTooltip(
-          (<Pivot
+          (<Widget
             {...pivotProps}
             data={data || []}
+            loading={loading}
             renderType={renderType}
           />)
         )}

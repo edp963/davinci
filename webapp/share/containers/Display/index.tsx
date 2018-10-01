@@ -38,7 +38,7 @@ import {
   DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
+import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 
 const styles = require('../../../app/containers/Display/Display.less')
@@ -163,7 +163,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = layersInfo[itemId].queryParams

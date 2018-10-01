@@ -55,10 +55,8 @@ const Icon = require('antd/lib/icon')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
 
-import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName, getAggregatorLocale } from '../Widget/components/util'
-import { uuid } from '../../utils/util'
+import { decodeMetricName } from '../Widget/components/util'
 import {
   loadDashboardDetail,
   addDashboardItem,
@@ -108,7 +106,7 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 
@@ -377,7 +375,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
@@ -464,13 +462,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
+  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
     const {
       currentItemsInfo,
       onLoadWidgetCsv
     } = this.props
 
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = pivotProps
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
 
     let groups = cols.concat(rows)
     let aggregators =  metrics.map((m) => ({
@@ -903,10 +901,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems, widgets } = this.props
     const dashboardItem = currentItems.find((ci) => ci.id === dashboardItemId)
     const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-    const widgetlib = widgetlibs.find((wl) => wl.id === widget.type)
     return {
-      name: widget.name,
-      type: widgetlib.name
+      name: widget.name
     }
   }
 

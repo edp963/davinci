@@ -1,9 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox } from './Dropbox'
-import ChartSelector from './ChartSelector'
+import PivotChartSelector from './PivotChartSelector'
 import { getAggregatorLocale, decodeMetricName } from '../util'
-import { IChartInfo } from '../Pivot/Chart'
+import { IChartInfo } from '../Widget'
 
 const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
@@ -138,10 +138,10 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
 
     const name = type === 'value' ? decodeMetricName(originalName) : originalName
 
-    let chartSelector
+    let pivotChartSelector
     if (container === 'metrics' && item.type !== 'add') {
-      chartSelector = (
-        <ChartSelector
+      pivotChartSelector = (
+        <PivotChartSelector
           chart={item.chart}
           dimetionsCount={dimetionsCount}
           metricsCount={metricsCount}
@@ -203,7 +203,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
           onDragEnd={this.dragEnd}
           draggable
         >
-          {chartSelector}
+          {pivotChartSelector}
           {contentWithDropdownList}
           <Icon
             type="close-square-o"

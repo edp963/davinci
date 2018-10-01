@@ -6,7 +6,7 @@ import DropboxItem from './DropboxItem'
 import DropboxContent from './DropboxContent'
 import ColorPanel from './ColorPanel'
 import SizePanel from './SizePanel'
-import { IChartInfo } from '../Pivot/Chart'
+import { IChartInfo } from '../Widget'
 import { decodeMetricName } from '../util'
 const Popover = require('antd/lib/popover')
 const Icon = require('antd/lib/icon')

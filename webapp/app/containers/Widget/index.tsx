@@ -48,11 +48,8 @@ const Modal = require('antd/lib/modal')
 const Popconfirm = require('antd/lib/popconfirm')
 const Breadcrumb = require('antd/lib/breadcrumb')
 const Input = require('antd/lib/input')
-const Pagination = require('antd/lib/pagination')
 const Select = require('antd/lib/select')
-const Search = Input.Search
 
-import widgetlibs from '../../assets/json/widgetlib'
 import { loadWidgets, deleteWidget, addWidget } from './actions'
 import { loadBizlogics } from '../Bizlogic/actions'
 import { makeSelectWidgets, makeSelectLoading } from './selectors'
@@ -102,7 +99,7 @@ interface IWidgetStates {
   tableSortedInfo: {columnKey?: string, order?: string}
 }
 
-export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
+export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -366,18 +363,6 @@ export class Widget extends React.Component<IWidgetProps, IWidgetStates> {
       showSizeChanger: true
     }
 
-    const widgetsArr = filteredWidgets || widgets || []
-
-    const widgetlibOptions = widgetlibs.map((w) => (
-      <Select.Option key={w.id} value={`${w.id}`}>
-        {w.title}
-        {`${w.id}` !== filteredWidgetsTypeId
-            ? (
-              <i className={`iconfont ${iconMapping[w.name]} ${styles.chartSelectOption}`} />
-          ) : ''}
-      </Select.Option>
-    ))
-
     return (
       <Container>
         <Helmet title="Widget" />
@@ -496,4 +481,4 @@ export default compose(
   withSagaBizlogic,
   withSagaWidget,
   withConnect
-)(Widget)
+)(WidgetList)

@@ -1,7 +1,8 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import Yaxis from './Yaxis'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
+import { IDrawingData, IMetricAxisConfig } from './Pivot'
+import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { spanSize, getPivotCellWidth, getPivotCellHeight, getAxisData, decodeMetricName, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
 import { PIVOT_LINE_HEIGHT, DEFAULT_SPLITER } from '../../../../globalConstants'
 
@@ -18,7 +19,7 @@ interface IRowHeaderProps {
   chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   hasMetricNameDimetion: boolean
 }
