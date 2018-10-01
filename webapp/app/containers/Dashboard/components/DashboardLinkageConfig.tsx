@@ -24,7 +24,7 @@ const Modal = require('antd/lib/modal')
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
-import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import { IWidgetProps } from '../../Widget/components/Widget'
 import LinkageConfig from 'components/Linkages/LinkageConfig'
 
 const styles = require('../Dashboard.less')
@@ -75,7 +75,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     Object.keys(currentItemsInfo).forEach((k) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const widgetConfig: IPivotProps = JSON.parse(widget.config)
+      const widgetConfig: IWidgetProps = JSON.parse(widget.config)
       const { cols, rows, metrics } = widgetConfig
 
       const view = views.find((bl) => bl.id === widget.viewId)

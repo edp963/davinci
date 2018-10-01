@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { IPivotMetric, ILegend, IChartStyles } from './Pivot'
+import { IWidgetMetric, IChartStyles } from '../Widget'
+import { ILegend } from './Pivot'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { decodeMetricName } from 'containers/Widget/components/util'
@@ -11,7 +12,7 @@ interface ICellProps {
   rowKey?: string
   width: number
   height?: number
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   chartStyles: IChartStyles
   color: IDataParamProperty
   legend: ILegend

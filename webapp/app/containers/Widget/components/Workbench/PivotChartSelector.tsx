@@ -1,22 +1,23 @@
 import * as React from 'react'
-import widgetlibs from '../../../../assets/json/widgetlib'
+import widgetlibs from '../../config'
+const pivotlibs = widgetlibs['pivot']
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
 const MenuItem = Menu.Item
 import { checkChartEnable, getPivot } from '../util'
-import { IChartInfo } from '../Pivot/Chart'
+import { IChartInfo } from '../Widget'
 const styles = require('./Workbench.less')
 
-interface IChartSelectorProps {
+interface IPivotChartSelectorProps {
   chart: IChartInfo
   dimetionsCount: number
   metricsCount: number
   onChangeChart: (chart: IChartInfo) => void
 }
 
-export function ChartSelector (props: IChartSelectorProps) {
+export function PivotChartSelector (props: IPivotChartSelectorProps) {
   const pivot = getPivot()
-  const enabledChartList = widgetlibs
+  const enabledChartList = pivotlibs
     .filter((w) => w !== pivot && checkChartEnable(props.dimetionsCount, props.metricsCount, w))
     .map((c) => (
       <MenuItem key={c.id} className={styles.item}>
@@ -40,11 +41,11 @@ export function ChartSelector (props: IChartSelectorProps) {
   return selector
 }
 
-export default ChartSelector
+export default PivotChartSelector
 
-function chartClick (props: IChartSelectorProps) {
+function chartClick (props: IPivotChartSelectorProps) {
   return function ({key}) {
-    const selectedChart = widgetlibs.find((wl) => `${wl.id}` === key)
+    const selectedChart = pivotlibs.find((wl) => `${wl.id}` === key)
     const originalChart = props.chart
     if (selectedChart.id !== originalChart.id) {
       props.onChangeChart(selectedChart)

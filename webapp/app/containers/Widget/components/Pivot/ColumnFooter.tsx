@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, IChartStyles } from './Pivot'
+import { IDrawingData, IMetricAxisConfig } from './Pivot'
+import { IWidgetMetric , DimetionType, IChartStyles } from '../Widget'
 import { IChartLine } from './Chart'
 import Xaxis from './Xaxis'
 import { getAxisData, decodeMetricName } from '../util'
@@ -12,7 +13,7 @@ interface IColumnFooterProps {
   rowTree: object
   colTree: object
   tree: object
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   chartStyles: IChartStyles
   drawingData: IDrawingData

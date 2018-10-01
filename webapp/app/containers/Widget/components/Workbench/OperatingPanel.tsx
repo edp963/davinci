@@ -1,20 +1,21 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-import widgetlibs from '../../../../assets/json/widgetlib'
+import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
+import { IWidgetProps, IChartStyles, IChartInfo, DimetionType, WidgetMode } from '../Widget'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
 import VariableConfigForm from '../VariableConfigForm'
-import { IPivotProps, DimetionType, IChartStyles } from '../Pivot/Pivot'
 import ChartIndicator from './ChartIndicator'
-import { IChartInfo } from '../Pivot/Chart'
 import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
 import SplitLineSection, { ISplitLineConfig } from './ConfigSections/SplitLineSection'
 import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig } from '../util'
+import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
+import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
 const Row = require('antd/lib/row')
@@ -49,7 +50,7 @@ interface IDataParams {
 
 interface IOperatingPanelProps {
   views: IView[]
-  currentWidgetConfig: IPivotProps
+  currentWidgetConfig: IWidgetProps
   selectedView: IView
   distinctColumnValues: any[]
   columnValueLoading: boolean
@@ -61,7 +62,7 @@ interface IOperatingPanelProps {
   onCacheChange: (cache: boolean) => void
   onExpiredChange: (expired: number) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
-  onSetPivotProps: (pivotProps: Partial<IPivotProps>) => void
+  onSetWidgetProps: (widgetProps: Partial<IWidgetProps>) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
 }
 
@@ -69,6 +70,9 @@ interface IOperatingPanelStates {
   dragged: IDataParamSource
   showColsAndRows: boolean
   selectedTab: 'data' | 'style' | 'variable' | 'cache'
+  mode: WidgetMode
+  currentWidgetlibs: IChartInfo[]
+  chartModeSelectedChart: IChartInfo
   commonParams: IDataParams
   specificParams: IDataParams
   styleParams: IChartStyles
@@ -90,6 +94,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged: null,
       showColsAndRows: false,
       selectedTab: 'data',
+      mode: 'pivot',
+      currentWidgetlibs: widgetlibs['pivot'],
+      chartModeSelectedChart: getTable(),
       commonParams: {
         cols: { title: '列', type: 'category', items: [] },
         rows: { title: '行', type: 'category', items: [] },
@@ -128,15 +135,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   public componentWillMount () {
     this.setState({
-      ...this.getChartDataConfig(this.getSelectedCharts([]))
+      ...this.getChartDataConfig(this.getPivotModeSelectedCharts([]))
     })
   }
 
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, currentWidgetConfig } = nextProps
     if (currentWidgetConfig && currentWidgetConfig !== this.props.currentWidgetConfig) {
-      const { cols, rows, metrics, filters, color, label, size, xAxis, tip, chartStyles, queryParams, cache, expired } = currentWidgetConfig
+      const { cols, rows, metrics, filters, color, label, size, xAxis, tip, chartStyles, mode, selectedChart } = currentWidgetConfig
       const { commonParams } = this.state
+      const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
       const model = JSON.parse(selectedView.model)
       commonParams.cols.items = cols.map((c) => ({
         name: c,
@@ -153,7 +161,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       commonParams.metrics.items = metrics.map((m) => ({
         ...m,
         type: 'value' as DragType,
-        visualType: model[decodeMetricName(m.name)].visualType
+        visualType: model[decodeMetricName(m.name)].visualType,
+        chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
       }))
       commonParams.filters.items = filters.map((f) => ({
         ...f,
@@ -170,7 +179,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         commonParams,
         specificParams: currentSpecificParams,
         styleParams: chartStyles,
-        showColsAndRows: !!rows.length
+        showColsAndRows: !!rows.length,
+        mode: mode || 'pivot', // FIXME 兼容 0.3.0-beta.1 之前版本
+        currentWidgetlibs,
+        ...selectedChart && {chartModeSelectedChart: widgetlibs['chart'].find((wl) => wl.id === selectedChart)}
       }, () => {
         this.getVisualData(commonParams, currentSpecificParams, chartStyles)
       })
@@ -240,7 +252,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private getSelectedCharts = (items: IDataParamSource[]): IChartInfo[] =>
+  private getPivotModeSelectedCharts = (items: IDataParamSource[]): IChartInfo[] =>
     items.length ? items.map((i) => i.chart) : [getPivot()]
 
   private getDragItemIconClass = (type: ViewModelType) => {
@@ -484,7 +496,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { commonParams } = this.state
     item.chart = chart
     commonParams.metrics.items = [...commonParams.metrics.items]
-    const { specificParams, styleParams } = this.getChartDataConfig(this.getSelectedCharts(commonParams.metrics.items))
+    const { specificParams, styleParams } = this.getChartDataConfig(this.getPivotModeSelectedCharts(commonParams.metrics.items))
     this.getVisualData(commonParams, specificParams, styleParams)
   }
 
@@ -499,8 +511,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private getVisualData = (commonParams, specificParams, styleParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
     const { color, label, size, xAxis, tip } = specificParams
-    const { selectedView, onLoadData, onSetPivotProps } = this.props
-    let selectedCharts = this.getSelectedCharts(metrics.items)
+    const { selectedView, onLoadData, onSetWidgetProps } = this.props
+    const { mode, chartModeSelectedChart } = this.state
     let groups = cols.items.map((c) => c.name)
       .concat(rows.items.map((r) => r.name))
       .filter((g) => g !== '指标名称')
@@ -567,15 +579,27 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       expired: 0
     }
 
-    const requestParamString = JSON.stringify(requestParams)
-    if (!checkChartEnable(groups.length, metrics.items.length, selectedCharts)) {
-      selectedCharts = this.getSelectedCharts([])
+    let selectedCharts
+    let dimetionsCount
+    if (mode === 'pivot') {
+      selectedCharts = this.getPivotModeSelectedCharts(metrics.items)
+      dimetionsCount = groups.length
+    } else {
+      selectedCharts = [chartModeSelectedChart]
+      dimetionsCount = cols.items.length
     }
+    if (!checkChartEnable(dimetionsCount, metrics.items.length, selectedCharts)) {
+      selectedCharts = mode === 'pivot'
+        ? this.getPivotModeSelectedCharts([])
+        : [getTable()]
+    }
+
+    const requestParamString = JSON.stringify(requestParams)
     if (selectedView && requestParamString !== this.lastRequestParamString) {
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (data) => {
         if (data.length) {
-          onSetPivotProps({
+          onSetWidgetProps({
             cols: cols.items.map((i) => i.name),
             rows: rows.items.map((i) => i.name),
             metrics: metrics.items.map((item) => ({...item})),
@@ -586,31 +610,36 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...xAxis && {xAxis},
             ...tip && {tip},
             chartStyles: styleParams,
+            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender',
-            orders
+            orders,
+            mode
           })
         } else {
-          onSetPivotProps({
+          onSetWidgetProps({
             cols: [],
             rows: [],
             metrics: [],
             filters: [],
             data: [],
             chartStyles: styleParams,
+            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             dimetionAxis: this.getDimetionAxis([getPivot()]),
             renderType: 'rerender',
-            orders
+            orders,
+            mode
           })
         }
         this.setState({
           commonParams,
-          ...this.getChartDataConfig(selectedCharts)
+          ...this.getChartDataConfig(selectedCharts),
+          chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0]
         })
       })
     } else {
-      onSetPivotProps({
+      onSetWidgetProps({
         cols: cols.items.map((i) => i.name),
         rows: rows.items.map((i) => i.name),
         metrics: metrics.items.map((item) => ({...item})),
@@ -621,13 +650,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...xAxis && {xAxis},
         ...tip && {tip},
         chartStyles: styleParams,
+        selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
         dimetionAxis: this.getDimetionAxis(selectedCharts),
         renderType: renderType || 'clear',
-        orders
+        orders,
+        mode
       })
       this.setState({
         commonParams,
-        ...this.getChartDataConfig(selectedCharts)
+        ...this.getChartDataConfig(selectedCharts),
+        chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0]
       })
     }
   }
@@ -641,18 +673,27 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private chartSelect = (chart: IChartInfo) => {
-    const { commonParams } = this.state
+    const { mode, commonParams } = this.state
     const { cols, rows, metrics } = commonParams
-    if (!(metrics.items.length === 1 && metrics.items[0].chart.id === chart.id)) {
-      metrics.items.forEach((i) => {
-        i.chart = chart
-      })
-      if (chart.id !== getPivot().id) {
-        cols.items = cols.items.filter((c) => c.name !== '指标名称')
-        rows.items = rows.items.filter((r) => r.name !== '指标名称')
+    if (mode === 'pivot') {
+      if (!(metrics.items.length === 1 && metrics.items[0].chart.id === chart.id)) {
+        metrics.items.forEach((i) => {
+          i.chart = chart
+        })
+        if (chart.id !== getPivot().id) {
+          cols.items = cols.items.filter((c) => c.name !== '指标名称')
+          rows.items = rows.items.filter((r) => r.name !== '指标名称')
+        }
+        const { specificParams, styleParams } = this.getChartDataConfig(this.getPivotModeSelectedCharts(metrics.items))
+        this.getVisualData(commonParams, specificParams, styleParams)
       }
-      const { specificParams, styleParams } = this.getChartDataConfig(this.getSelectedCharts(metrics.items))
-      this.getVisualData(commonParams, specificParams, styleParams)
+    } else {
+      this.setState({
+        chartModeSelectedChart: chart
+      }, () => {
+        const { specificParams, styleParams } = this.getChartDataConfig([chart])
+        this.getVisualData(commonParams, specificParams, styleParams)
+      })
     }
   }
 
@@ -674,8 +715,36 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
   }
 
-  private resetWorkbench = () => {
+  private changeMode = (e) => {
+    const mode = e.target.value
     const { commonParams, specificParams } = this.state
+    const hasItems = Object.values(commonParams)
+      .concat(Object.values(specificParams))
+      .filter((param) => !!param.items.length)
+    if (hasItems.length) {
+      confirm({
+        title: '切换图表模式会清空所有配置项，是否继续？',
+        onOk: () => {
+          this.setState({
+            mode,
+            currentWidgetlibs: widgetlibs[mode]
+          }, () => {
+            this.resetWorkbench()
+          })
+        }
+      })
+    } else {
+      this.setState({
+        mode,
+        currentWidgetlibs: widgetlibs[mode]
+      }, () => {
+        this.resetWorkbench()
+      })
+    }
+  }
+
+  private resetWorkbench = () => {
+    const { commonParams, specificParams, mode } = this.state
     Object.values(commonParams).forEach((param) => {
       param.items = []
       if (param.value) {
@@ -688,7 +757,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         param.value = {}
       }
     })
-    const resetedParams = this.getChartDataConfig(this.getSelectedCharts([]))
+    this.setState({
+      showColsAndRows: false,
+      chartModeSelectedChart: getTable()
+    })
+    const resetedParams = this.getChartDataConfig(this.getPivotModeSelectedCharts([]))
     this.getVisualData(commonParams, resetedParams.specificParams, resetedParams.styleParams)
   }
 
@@ -845,6 +918,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dragged,
       showColsAndRows,
       selectedTab,
+      mode,
+      currentWidgetlibs,
+      chartModeSelectedChart,
       commonParams,
       specificParams,
       styleParams,
@@ -859,7 +935,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig  } = styleParams
+    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend  } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -961,18 +1037,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       )
     })
 
-    const controlTypes = [
-      { text: '文本输入框', value: 'input' },
-      { text: '数字输入框', value: 'inputNumber' },
-      { text: '单选下拉菜单', value: 'select' },
-      { text: '多选下拉菜单', value: 'multiSelect' },
-      { text: '日期选择', value: 'date' },
-      { text: '日期多选', value: 'multiDate' },
-      { text: '日期范围选择', value: 'dateRange' },
-      { text: '日期时间选择', value: 'datetime' },
-      { text: '日期时间范围选择', value: 'datetimeRange' }
-    ]
-
     const queryConfigColumns = [{
       title: '变量',
       dataIndex: 'variables',
@@ -1014,7 +1078,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           <div className={`${styles.paramsPane} ${styles.dropPane}`}>
             <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
               <Icon type="swap" />
-              {showColsAndRows ? ' 使用维度' : ' 使用行列'}
+              {mode === 'pivot' && showColsAndRows ? ' 使用维度' : ' 使用行列'}
             </div>
             <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
               <Icon type="retweet" /> 行列切换
@@ -1026,6 +1090,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'style':
         tabPane = (
           <div className={styles.paramsPane}>
+            {label && <LabelSection
+              title="标签"
+              config={label as ILabelConfig}
+              onChange={this.styleChange('label')}
+            />}
+            {legend && <LegendSection
+              title="图例"
+              config={legend as ILegendConfig}
+              onChange={this.styleChange('legend')}
+            />}
             {xAxis && <AxisSection
               title="X轴"
               type="x"
@@ -1137,6 +1211,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     }
 
+    const selectedCharts = mode === 'pivot'
+      ? this.getPivotModeSelectedCharts(metrics.items)
+      : [chartModeSelectedChart]
+
     return (
       <div className={styles.operatingPanel}>
         <div className={styles.model}>
@@ -1146,7 +1224,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             </Dropdown>
           </div>
           <div className={styles.columnContainer}>
-            <h4>分类型</h4>
+            <h4>分类型</h4>
             <ul className={`${styles.columnList} ${styles.categories}`}>
               {categories.map((cat) => (
                 <li
@@ -1162,7 +1240,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             </ul>
           </div>
           <div className={styles.columnContainer}>
-            <h4>数值型</h4>
+            <h4>数值型</h4>
             <ul className={`${styles.columnList} ${styles.values}`}>
               {values.map((v) => (
                 <li
@@ -1179,14 +1257,34 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           </div>
         </div>
         <div className={styles.config}>
+          <div className={styles.mode}>
+            <RadioGroup size="small" value={mode} onChange={this.changeMode}>
+              <RadioButton
+                className={classnames({
+                  [styles.button]: mode !== 'pivot'
+                })}
+                value="pivot"
+              >
+                透视驱动
+              </RadioButton>
+              <RadioButton
+                className={classnames({
+                  [styles.button]: mode !== 'chart'
+                })}
+                value="chart"
+              >
+                视图驱动
+              </RadioButton>
+            </RadioGroup>
+          </div>
           <div className={styles.charts}>
-            {widgetlibs.map((c) => (
+            {currentWidgetlibs.map((c) => (
               <ChartIndicator
                 key={c.id}
                 chartInfo={c}
                 dimetionsCount={dimetionsCount}
                 metricsCount={metricsCount}
-                selectedCharts={this.getSelectedCharts(metrics.items)}
+                selectedCharts={selectedCharts}
                 onSelect={this.chartSelect}
               />
             ))}

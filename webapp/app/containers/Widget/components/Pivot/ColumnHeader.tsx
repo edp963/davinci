@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, DimetionType, IChartStyles } from './Pivot'
+import { IDrawingData } from './Pivot'
+import { IWidgetMetric, DimetionType, IChartStyles } from '../Widget'
 import { spanSize, getPivotCellWidth, getAggregatorLocale, getPivot, getStyleConfig } from '../util'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 
@@ -10,7 +11,7 @@ interface IColumnHeaderProps {
   cols: string[]
   colKeys: string[][]
   colTree: object
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   chartStyles: IChartStyles
   drawingData: IDrawingData
   dimetionAxis: DimetionType

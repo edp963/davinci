@@ -19,21 +19,21 @@
  */
 
 /*
- * Line chart options generator
+ * Area chart options generator
  */
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
+export default function (dataSource, flatInfo, chartParams) {
   const hasGroups = flatInfo.groups
 
   const {
     xAxis,
     metrics,
     groups,
-    label,
     xAxisInterval,
     xAxisRotate,
     dataZoomThreshold,
     smooth,
     step,
+    stack,
     symbol,
     hasLegend,
     legendSelected,
@@ -55,17 +55,18 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   let xAxisOptions
   let smoothOption
   let stepOption
+  let stackOption
   let symbolOption
   let legendOptions
   let toolboxOptions
   let gridOptions
-  let labelOption
   let dataZoomOptions
   let suffixYAxisOptions
 
   suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
     formatter: `{value} ${suffixYAxis}`
   }} : null
+
   // symbol
   symbolOption = symbol && symbol.length
     ? { symbol: 'emptyCircle' }
@@ -74,16 +75,9 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
   smoothOption = smooth && smooth.length ? { smooth: true } : null
   // step
   stepOption = step && step.length ? { step: true } : null
-  // label
-  labelOption = label && label.length
-    ? {
-      label: {
-        normal: {
-          show: true,
-          position: 'top'
-        }
-      }
-    } : null
+  // stack
+  stackOption = stack && stack.length ? { stack: 'stack' } : null
+
   // 数据分组
   let xAxisDistincted = []
 
@@ -104,30 +98,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             const serieObj = {
               name: `${k} ${m}`,
               type: 'line',
+              areaStyle: {normal: {}},
               sampling: 'average',
-              data: grouped[k].map((g, index) => {
-                if (index === interactIndex) {
-                  return {
-                    value: g[m],
-                    itemStyle: {
-                      normal: {
-                        opacity: 1
-                      }
-                    }
-                  }
-                } else {
-                  return g[m]
-                }
-              }),
-              itemStyle: {
-                normal: {
-                  opacity: interactIndex === undefined ? 1 : 0.25
-                }
-              },
+              data: grouped[k].map((g) => g[m]),
               ...symbolOption,
               ...smoothOption,
               ...stepOption,
-              ...labelOption
+              ...stackOption
             }
             metricArr.push(serieObj)
           })
@@ -135,41 +112,13 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
         const serieObj = {
           name: m,
           type: 'line',
+          areaStyle: {normal: {}},
           sampling: 'average',
           symbol: symbolOption,
-          data: dataSource.map((d, index) => {
-            if (index === interactIndex) {
-              return {
-                value: d[m],
-                lineStyle: {
-                  normal: {
-                    opacity: 1
-                  }
-                },
-                itemStyle: {
-                  normal: {
-                    opacity: 1
-                  }
-                }
-              }
-            } else {
-              return d[m]
-            }
-          }),
-          lineStyle: {
-            normal: {
-              opacity: interactIndex === undefined ? 1 : 0.25
-            }
-          },
-          itemStyle: {
-            normal: {
-              opacity: interactIndex === undefined ? 1 : 0.25
-            }
-          },
+          data: dataSource.map((d) => d[m]),
           ...symbolOption,
           ...smoothOption,
-          ...stepOption,
-          ...labelOption
+          ...stepOption
         }
         metricArr.push(serieObj)
       }
@@ -226,7 +175,7 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
 
     const selected = legendSelected === 'unselectAll'
       ? {
-        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
+        selected: metricArr.reduce((obj, m) => ({...obj, [m.name]: false }), {})
       } : null
 
     legendOptions = {

@@ -49,13 +49,12 @@ import {
 import {
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
-import widgetlibs from '../../assets/json/widgetlib'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
-import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 
 interface IBizdataIncomeParamObject {
@@ -178,7 +177,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentLayersInfo[itemId].queryParams
@@ -305,7 +304,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
 
       const { polling, frequency } = layer.params

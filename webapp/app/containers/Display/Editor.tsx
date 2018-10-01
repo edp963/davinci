@@ -87,7 +87,7 @@ import {
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
 
-import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import {
   loadBizlogics,
@@ -343,7 +343,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentLayersInfo[itemId].queryParams

@@ -1,10 +1,40 @@
 @import "../../../../assets/less/variable";
 
+.wrapper {
+  height: 100%;
+  position: relative;
+
+  .mask {
+    background-color: fade(@white, 60);
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+
+    &.loading {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    i {
+      font-size: 1.5em;
+    }
+
+    p {
+      font-size: 1.25em;
+      line-height: 2.5em;
+    }
+  }
+}
+
 .block {
   height: 100%;
   display: flex;
   flex-direction: row;
-  position: relative;
 
   .leftSide {
     flex-shrink: 0;
@@ -113,32 +143,6 @@
 
     &.shown {
       display: block;
-    }
-  }
-
-  .mask {
-    background-color: fade(@white, 60);
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: none;
-
-    &.loading {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-
-    i {
-      font-size: 1.5em;
-    }
-
-    p {
-      font-size: 1.25em;
-      line-height: 2.5em;
     }
   }
 }
