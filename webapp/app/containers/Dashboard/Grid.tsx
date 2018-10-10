@@ -57,6 +57,8 @@ const Menu = require('antd/lib/menu')
 
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
+import { hideNavigator } from '../App/actions'
+import { loadProjectDetail } from '../Projects/actions'
 import {
   loadDashboardDetail,
   addDashboardItem,
@@ -160,7 +162,7 @@ interface IGridProps {
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[]) => void
-  onDeleteDashboardItem: (id: number, resolve: () => void) => void
+  onDeleteDashboardItem: (id: number, resolve?: () => void) => void
   onLoadBizlogics: (projectId: number, resolve?: any) => any
   onLoadDataFromItem: (
     renderType: RenderType,
@@ -201,6 +203,8 @@ interface IGridProps {
   onResizeAllDashboardItem: () => void
   onLoadDashboardShareLink: (id: number, authName: string) => void
   onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
+  onHideNavigator: () => void
+  onLoadProjectDetail: (id) => any
 }
 
 interface IGridStates {
@@ -294,6 +298,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (dashboardId && Number(dashboardId) !== -1) {
       onLoadDashboardDetail(pid, portalId, Number(dashboardId))
     }
+    if (pid) {
+      this.props.onLoadProjectDetail(pid)
+    }
   }
 
   public componentWillReceiveProps (nextProps: IGridProps) {
@@ -331,6 +338,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   public componentDidMount () {
+    this.props.onHideNavigator()
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -357,7 +365,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             }
           })
         } else {
-          this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          if (this.containerBody) {
+            this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          }
         }
         this.containerBodyScrollThrottle = false
       })
@@ -702,7 +712,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private deleteItem = (id) => () => {
-    this.props.onDeleteDashboardItem(id, () => {})
+    this.props.onDeleteDashboardItem(id)
   }
 
   private navDropdownClick = (e) => {
@@ -1259,7 +1269,9 @@ export function mapDispatchToProps (dispatch) {
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
-    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve))
+    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
+    onHideNavigator: () => dispatch(hideNavigator()),
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
   }
 }
 

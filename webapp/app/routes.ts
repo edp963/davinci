@@ -133,18 +133,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/project/:pid/schedule',
               name: 'schedule',
               component: Schedule
-            },
-            {
-              path: '/project/:pid/portal/:portalId/portalName/:portalName',
-              name: 'dashboard',
-              component: Dashboard,
-              childRoutes: [
-                {
-                  path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
-                  name: 'grid',
-                  component: Grid
-                }
-              ]
             }
           ]
         },
@@ -204,6 +192,18 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           path: '/project/:pid/bizlogic/:bid',
           name: 'bizlogic',
           component: Bizlogic
+        },
+        {
+          path: '/project/:pid/portal/:portalId/portalName/:portalName',
+          name: 'dashboard',
+          component: Dashboard,
+          childRoutes: [
+            {
+              path: '/project/:pid/portal/:portalId/portalName/:portalName/dashboard/:dashboardId',
+              name: 'grid',
+              component: Grid
+            }
+          ]
         },
         {
           path: '/project/:pid/display/:displayId',

@@ -29,6 +29,10 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
+import reducerProject from '../Projects/reducer'
+import sagaProject from '../Projects/sagas'
+import portalSaga from '../Portal/sagas'
+import portalReducer from '../Portal/reducer'
 
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
@@ -62,6 +66,8 @@ import {
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
 import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
+import { loadPortals } from '../Portal/actions'
+import { makeSelectPortals } from '../Portal/selectors'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -70,6 +76,7 @@ import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
+import EditorHeader from '../../components/EditorHeader'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -77,12 +84,14 @@ interface IDashboardProps {
   router: InjectedRouter
   params: any
   currentProject: IProject
+  portals: any[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
   onDeleteDashboard: (id: number, resolve: any) => void
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onLoadPortals: (projectId) => void
   // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
@@ -104,7 +113,7 @@ export interface ICurrentDashboard extends IDashboard {
 interface IDashboardStates {
   formType: 'add' | 'edit' | 'copy' | 'move' | 'delete' | ''
   formVisible: boolean
-  expandedKeys: any,
+  expandedKeys: string[],
   autoExpandParent: boolean
   searchValue: IDashboard[]
   dashboardData: any
@@ -179,6 +188,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     //     })
     //   }
     // })
+    this.props.onLoadPortals(pid)
   }
 
   private initalDashboardData (dashboards) {
@@ -564,6 +574,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     }
   }
 
+  private cancel = () => {
+    this.props.router.goBack()
+  }
+
   public render () {
     const {
       params,
@@ -571,7 +585,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       modalLoading,
       children,
       currentProject,
-      onCheckUniqueName
+      onCheckUniqueName,
+      portals
     } = this.props
 
     const {
@@ -649,20 +664,23 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
+    let portalDec = ''
+    if (portals) {
+      portalDec = portals.find((p) => p.name === params.portalName).description
+    }
     return (
       <div className={styles.portal}>
+        <EditorHeader
+          className={styles.portalHeader}
+          currentType="dashboard"
+          name={params.portalName}
+          description={portalDec}
+          onCancel={this.cancel}
+        />
         <Helmet title={params.portalName} />
-        {/* <div className={styles.portalHeader}>
-          <span className={styles.historyBack}>
-            <Tooltip placement="bottom" title="返回">
-              <Icon type="left-circle-o" className={styles.backIcon} onClick={this.backPortal} />
-            </Tooltip>
-          </span>
-        </div> */}
         <div className={styles.portalBody}>
           <div className={styles.portalTree}>
             <div className={styles.portalRow}>
-              <span className={styles.portalTitle} title={params.portalName}>{params.portalName}</span>
               <span className={styles.portalAction}>
                 <Popover
                   placement="bottom"
@@ -766,7 +784,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   modalLoading: makeSelectModalLoading(),
-  currentProject: makeSelectCurrentProject()
+  currentProject: makeSelectCurrentProject(),
+  portals: makeSelectPortals()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -777,7 +796,8 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
     onDeleteDashboard: (id, resolve) => dispatch(deleteDashboard(id, resolve)),
     onHideNavigator: () => dispatch(hideNavigator()),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onLoadPortals: (projectId) => dispatch(loadPortals(projectId))
   }
 }
 
@@ -786,8 +806,18 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducer = injectReducer({ key: 'dashboard', reducer })
 const withSaga = injectSaga({ key: 'dashboard', saga })
 
+const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
+const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
+
+const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
+const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
+
 export default compose(
   withReducer,
+  withReducerProject,
+  withPortalReducer,
   withSaga,
+  withSagaProject,
+  withPortalSaga,
   withConnect
 )(Dashboard)
