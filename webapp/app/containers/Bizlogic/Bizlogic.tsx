@@ -118,7 +118,7 @@ interface IBizlogicFormProps {
 }
 
 interface IBizlogicFormState {
-  expandedKeys: any[]
+  expandedKeys: string[]
   searchValue: string
   autoExpandParent: boolean
   modelType: string
@@ -132,7 +132,7 @@ interface IBizlogicFormState {
 
   treeData: any[]
   listData: any[]
-  teamExpandedKeys: any[]
+  teamExpandedKeys: string[]
   teamAutoExpandParent: boolean
   teamCheckedKeys: any[]
   selectedKeys: any[]
@@ -1177,6 +1177,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     return (
       <div className={styles.bizlogic}>
         <EditorHeader
+          currentType="view"
           className={styles.header}
           name={name}
           description={description}
