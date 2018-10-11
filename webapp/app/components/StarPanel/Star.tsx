@@ -96,7 +96,7 @@ export class Star extends React.PureComponent <IStar, IStarState> {
                         <li className={styles.userList} key={`star${index}list`}>
                           <div className={styles.orgHeader}>
                             <div className={styles.avatar}>
-                              <Avatar path={user.avatar} size="default" enlarge={true}/>
+                              <Avatar path={user.avatar} size="small" enlarge={true}/>
                             </div>
                             <header className={styles.name}>
                               <h3 className={styles.title}>
