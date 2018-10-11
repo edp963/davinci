@@ -9,11 +9,12 @@ import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SI
 const styles = require('../Workbench.less')
 
 export interface ILegendConfig {
+  showLegend: boolean
   legendPosition: string
-  // legendFontFamily: string
-  // legendFontSize: string
-  // legendColor: string
   selectAll: boolean
+  fontFamily: string
+  fontSize: string
+  color: string
 }
 
 interface ILegendSectionProps {
@@ -31,32 +32,46 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
     this.props.onChange(prop, value)
   }
 
-  // private colorChange = (prop) => (color) => {
-  //   this.props.onChange(prop, color)
-  // }
+  private colorChange = (prop) => (color) => {
+    this.props.onChange(prop, color)
+  }
 
   public render () {
     const { title, config } = this.props
 
     const {
+      showLegend,
       legendPosition,
-      selectAll
+      selectAll,
+      fontFamily,
+      fontSize,
+      color
     } = config
 
     const positions = CHART_LEGEND_POSITIONS.map((p) => (
       <Option key={p.value} value={p.value}>{p.name}</Option>
     ))
-    // const fontFamilies = PIVOT_CHART_FONT_FAMILIES.map((f) => (
-    //   <Option key={f.value} value={f.value}>{f.name}</Option>
-    // ))
-    // const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-    //   <Option key={f} value={`${f}`}>{f}</Option>
-    // ))
+    const fontFamilies = PIVOT_CHART_FONT_FAMILIES.map((f) => (
+      <Option key={f.value} value={f.value}>{f.name}</Option>
+    ))
+    const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
+      <Option key={f} value={`${f}`}>{f}</Option>
+    ))
 
     return (
       <div className={styles.paneBlock}>
         <h4>{title}</h4>
         <div className={styles.blockBody}>
+          <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+            <Col span={24}>
+              <Checkbox
+                checked={showLegend}
+                onChange={this.checkboxChange('showLegend')}
+              >
+                显示图例
+              </Checkbox>
+            </Col>
+          </Row>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={10}>
               <Checkbox
@@ -67,7 +82,7 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
               </Checkbox>
             </Col>
             <Col span={4}>位置</Col>
-            <Col span={6}>
+            <Col span={10}>
               <Select
                 placeholder="位置"
                 className={styles.blockElm}
@@ -78,13 +93,13 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
               </Select>
             </Col>
           </Row>
-          {/* <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+          <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={10}>
               <Select
                 placeholder="字体"
                 className={styles.blockElm}
-                value={labelFontFamily}
-                onChange={this.selectChange('labelFontFamily')}
+                value={fontFamily}
+                onChange={this.selectChange('fontFamily')}
               >
                 {fontFamilies}
               </Select>
@@ -93,19 +108,19 @@ export class LegendSection extends React.PureComponent<ILegendSectionProps, {}> 
               <Select
                 placeholder="文字大小"
                 className={styles.blockElm}
-                value={labelFontSize}
-                onChange={this.selectChange('labelFontSize')}
+                value={fontSize}
+                onChange={this.selectChange('fontSize')}
               >
                 {fontSizes}
               </Select>
             </Col>
             <Col span={4}>
               <ColorPicker
-                value={labelColor}
-                onChange={this.colorChange('labelColor')}
+                value={color}
+                onChange={this.colorChange('color')}
               />
             </Col>
-          </Row> */}
+          </Row>
         </div>
       </div>
     )

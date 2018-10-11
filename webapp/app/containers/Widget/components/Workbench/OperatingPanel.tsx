@@ -303,8 +303,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private beforeDrop = (name, cachedItem, resolve) => {
     const { selectedView, onLoadDistinctValue } = this.props
-    const { commonParams } = this.state
+    const { mode, commonParams } = this.state
     const { metrics } = commonParams
+
     switch (name) {
       case 'filters':
         if (cachedItem.visualType !== 'number' && cachedItem.visualType !== 'date') {
@@ -336,13 +337,17 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         })
         break
       case 'size':
-        this.setState({
-          modalCachedData: cachedItem,
-          modalCallback: resolve,
-          modalDataFrom: 'size',
-          actOnModalVisible: true,
-          actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
-        })
+        if (mode === 'pivot') {
+          this.setState({
+            modalCachedData: cachedItem,
+            modalCallback: resolve,
+            modalDataFrom: 'size',
+            actOnModalVisible: true,
+            actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
+          })
+        } else {
+          resolve(true)
+        }
         break
       default:
         resolve(true)
@@ -965,7 +970,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           })
         }
       })
-      if (values.length && !metrics.items.filter((item) => item.chart.id !== pivot.id).length) {
+      if (mode === 'pivot'
+          && values.length
+          && metrics.items.every((item) => item.chart.id === pivot.id)) {
         categories.push({
           name: '指标名称',
           type: 'category',
@@ -1102,13 +1109,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             />}
             {xAxis && <AxisSection
               title="X轴"
-              type="x"
               config={xAxis as IAxisConfig}
               onChange={this.styleChange('xAxis')}
             />}
             {yAxis && <AxisSection
               title="Y轴"
-              type="y"
               config={yAxis as IAxisConfig}
               onChange={this.styleChange('yAxis')}
             />}
@@ -1317,6 +1322,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           footer={null}
         >
           <ColorSettingForm
+            mode={mode}
             list={distinctColumnValues}
             loading={columnValueLoading}
             metrics={metrics.items}

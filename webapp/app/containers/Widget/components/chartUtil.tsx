@@ -128,8 +128,7 @@ export function echartsOptionsGenerator ({ dataSource, chartInfo, chartParams, i
       result = gauge(dataSource, flatInfo, chartParams)
       break
     case 'radar':
-      // result = radar(dataSource, flatInfo, chartParams, interactIndex)
-      result = radar()
+      result = radar(dataSource, flatInfo, chartParams, interactIndex)
       break
     case 'parallel':
       result = parallel(dataSource, flatInfo, chartParams, interactIndex)

@@ -70,7 +70,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
               </Checkbox>
             </Col>
             <Col span={4}>位置</Col>
-            <Col span={6}>
+            <Col span={10}>
               <Select
                 placeholder="位置"
                 className={styles.blockElm}

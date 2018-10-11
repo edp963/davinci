@@ -18,298 +18,208 @@
  * >>
  */
 
-/*
- * Scatter chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getSizeValue,
+  getSizeRate
+} from '../../components/util'
+import {
+  getMetricAxisOption,
+  getLabelOption,
+  getLegendOption,
+  getGridPositions,
+  getSymbolSize
+} from './util'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
 
-export default function (dataSource, flatInfo, chartParams) {
-  const hasGroups = flatInfo.groups
+export default function (chartProps: IChartProps) {
+  const {
+    data,
+    cols,
+    metrics,
+    chartStyles,
+    color,
+    tip,
+    size
+  } = chartProps
 
   const {
-    groups,
+    spec,
     xAxis,
     yAxis,
-    xAxisInterval,
-    xAxisRotate,
-    dataZoomThreshold,
-    size,
-    label,
-    showLabel,
-    value,
-    shadow,
-    hasLegend,
-    legendSelected,
-    legendPosition,
-    toolbox,
-    splitLineX,
-    splitLineY,
-    splitLineStyle,
-    splitLineWidth,
-    top,
-    bottom,
-    left,
-    right,
-    suffixYAxis
-  } = chartParams
+    splitLine,
+    label: labelStyleConfig,
+    legend
+  } = chartStyles
 
-  let grouped
-  let metricOptions
-  let xAxisOptions
-  let yAxisOptions
-  let sizeOptions
-  let labelOptions
-  let shadowOptions
-  let legendOptions
-  let toolboxOptions
-  let gridOptions
-  let dataZoomOptions
-  let suffixYAxisOptions
+  const {
+    showVerticalLine,
+    verticalLineColor,
+    verticalLineSize,
+    verticalLineStyle,
+    showHorizontalLine,
+    horizontalLineColor,
+    horizontalLineSize,
+    horizontalLineStyle
+  } = splitLine
 
-  // series 数据项
-  const metricArr = []
-
-  // 数据分组
-  if (hasGroups && groups) {
-    grouped = makeGrouped(dataSource, [].concat(groups).filter((i) => !!i))
-  }
-
-  sizeOptions = size && {
-    symbolSize: (data) => {
-      return data[3] / size
-    }
-  }
-  shadowOptions = shadow && shadow.length && {
-    itemStyle: {
-      normal: {
-        shadowBlur: 10,
-        shadowColor: 'rgba(0, 0, 0, 0.5)',
-        shadowOffsetY: 5
+  const labelOption = {
+    label: getLabelOption(labelStyleConfig, true, {
+      formatter (param) {
+        return param.data.value[2]
       }
-    }
+    })
   }
 
-  if (label || showLabel && showLabel.length) {
-    let normal
-    let emphasis
+  let sizeRate = 0
+  let sizeItemName = ''
+  if (size.items.length) {
+    const sizeItem = size.items[0]
+    sizeItemName = `${sizeItem.agg}(${decodeMetricName(sizeItem.name)})`
+    const sizeValues = data.map((d) => d[sizeItemName])
+    sizeRate = getSizeRate(Math.min(...sizeValues), Math.max(...sizeValues))
+  }
 
-    if (label) {
-      emphasis = {
-        emphasis: {
-          show: true,
-          opacity: 0.8,
-          position: 'top',
-          formatter: (param) => {
-            return param.data[2]
+  const series = []
+  const seriesData = []
+
+  if (cols.length || color.items.length) {
+    const groupColumns = color.items.map((c) => c.name).concat(cols)
+      .reduce((distinctColumns, col) => {
+        if (!distinctColumns.includes(col)) {
+          distinctColumns.push(col)
+        }
+        return distinctColumns
+      }, [])
+    const grouped = data.reduce((obj, val) => {
+      const groupingKey = groupColumns
+        .reduce((keyArr, col) => keyArr.concat(val[col]), [])
+        .join(String.fromCharCode(0))
+      if (!obj[groupingKey]) {
+        obj[groupingKey] = []
+      }
+      obj[groupingKey].push(val)
+      return obj
+    }, {})
+
+    const labelItemName = color.items.length
+      ? color.items[0].name
+      : cols[0]
+
+    Object.entries(grouped).forEach(([key, value]) => {
+      series.push({
+        name: key.replace(String.fromCharCode(0), ' '),
+        type: 'scatter',
+        data: value.map((v) => {
+          const [x, y] = metrics
+          const currentSize = size.items.length ? v[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
+          const sizeValue = getSizeValue(size.value['all'])
+          return {
+            value: [
+              v[`${x.agg}(${decodeMetricName(x.name)})`],
+              v[`${y.agg}(${decodeMetricName(y.name)})`],
+              v[labelItemName],
+              currentSize
+            ],
+            symbolSize: size.items.length
+              ? getSymbolSize(sizeRate, currentSize) * sizeValue
+              : currentSize * sizeValue
           }
-        }
-      }
-    }
-
-    if (showLabel && showLabel.length) {
-      normal = {
-        normal: {
-          show: true,
-          opacity: 0.8,
-          position: 'top',
-          formatter: (param) => {
-            return param.data[2]
-          }
-        }
-      }
-    }
-
-    labelOptions = {
-      label: {
-        ...normal,
-        ...emphasis
-      }
-    }
-  }
-
-  if (hasGroups && groups) {
-    Object
-      .keys(grouped)
-      .forEach((k) => {
-        const serieObj = {
-          name: k,
-          type: 'scatter',
-          data: grouped[k].map((g) => [g[xAxis], g[yAxis], g[label], g[value]]),
-          ...sizeOptions,
-          ...labelOptions,
-          ...shadowOptions
-        }
-        metricArr.push(serieObj)
-      })
-  } else {
-    const serieObj = {
-      name: '数据',
-      type: 'scatter',
-      data: dataSource.map((g) => [g[xAxis], g[yAxis], g[label], g[value]]),
-      ...sizeOptions,
-      ...labelOptions,
-      ...shadowOptions
-    }
-    metricArr.push(serieObj)
-  }
-
-  metricOptions = {
-    series: metricArr
-  }
-
-  // x轴数据
-  xAxisOptions = {
-    xAxis: {
-      type: 'value',
-      axisLabel: {
-        interval: xAxisInterval,
-        rotate: xAxisRotate
-      },
-      splitLine: {
-        show: splitLineX && splitLineX.length,
-        lineStyle: {
-          width: splitLineWidth,
-          type: splitLineStyle
-        }
-      }
-    }
-  }
-  suffixYAxisOptions = suffixYAxis && suffixYAxis.length ? {axisLabel: {
-    formatter: `{value} ${suffixYAxis}`
-  }} : null
-  yAxisOptions = {
-    yAxis: {
-      type: 'value',
-      scale: true,
-      splitLine: {
-        show: splitLineY && splitLineY.length,
-        lineStyle: {
-          width: splitLineWidth,
-          type: splitLineStyle
-        }
-      },
-      ...suffixYAxisOptions
-    }
-  }
-
-  // legend
-  let adjustedBottom = 0
-  let adjustedRight = 0
-
-  if (hasLegend && hasLegend.length) {
-    let orient
-    let positions
-
-    switch (legendPosition) {
-      case 'right':
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 40, bottom: 16 }
-        adjustedRight = 108
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 16, left: 8, right: 8 }
-        adjustedBottom = 72
-        break
-      default:
-        orient = { orient: 'horizontal' }
-        positions = { top: 3, left: 8, right: 120 }
-        break
-    }
-
-    const selected = legendSelected === 'unselectAll'
-      ? {
-        selected: metricArr.reduce((obj, m) => ({ ...obj, [m.name]: false }), {})
-      } : null
-
-    legendOptions = {
-      legend: {
-        data: metricArr.map((m) => m.name),
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
-      }
-    }
-  }
-
-  // toolbox
-  toolboxOptions = toolbox && toolbox.length
-    ? {
-      toolbox: {
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none'
-          },
-          restore: {},
-          saveAsImage: {
-            pixelRatio: 2
+        }),
+        itemStyle: {
+          normal: {
+            color: color.items.length
+              ? color.items[0].config.values[key.split(String.fromCharCode(0))[0]]
+              : color.value['all']
           }
         },
-        right: 8
-      }
-    } : null
+        ...labelOption
+      })
+      seriesData.push(value)
+    })
+  } else {
+    series.push({
+      name: 'single',
+      type: 'scatter',
+      data: data.map((d) => {
+        const [x, y] = metrics
+        const currentSize = size.items.length ? d[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
+        const sizeValue = getSizeValue(size.value['all'])
+        return {
+          value: [
+            d[`${x.agg}(${decodeMetricName(x.name)})`],
+            d[`${y.agg}(${decodeMetricName(y.name)})`],
+            '',
+            currentSize
+          ],
+          symbolSize: size.items.length
+            ? getSymbolSize(sizeRate, currentSize) * sizeValue
+            : currentSize * sizeValue
+        }
+      }),
+      itemStyle: {
+        normal: {
+          color: color.value['all']
+        }
+      },
+      ...labelOption
+    })
+    seriesData.push(data)
+  }
 
-  // grid
-  gridOptions = {
-    grid: {
-      top,
-      left,
-      right: Math.max(right, adjustedRight),
-      bottom: Math.max(bottom, adjustedBottom)
+  const seriesNames = series.map((s) => s.name)
+
+  let legendOption
+  if (cols.length || color.items.length) {
+    legendOption = {
+      legend: getLegendOption(legend, seriesNames)
     }
   }
 
-  dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
-    dataZoom: [{
-      type: 'inside',
-      start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
-      end: 100
-    }, {
-      start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
-      end: 100,
-      handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-      handleSize: '80%',
-      handleStyle: {
-        color: '#fff',
-        shadowBlur: 3,
-        shadowColor: 'rgba(0, 0, 0, 0.6)',
-        shadowOffsetX: 2,
-        shadowOffsetY: 2
-      }
-    }]
+  // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
+  //   dataZoom: [{
+  //     type: 'inside',
+  //     start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
+  //     end: 100
+  //   }, {
+  //     start: Math.round((1 - dataZoomThreshold / dataSource.length) * 100),
+  //     end: 100,
+  //     handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+  //     handleSize: '80%',
+  //     handleStyle: {
+  //       color: '#fff',
+  //       shadowBlur: 3,
+  //       shadowColor: 'rgba(0, 0, 0, 0.6)',
+  //       shadowOffsetX: 2,
+  //       shadowOffsetY: 2
+  //     }
+  //   }]
+  // }
+
+  const xAxisSplitLineConfig = {
+    showLine: showVerticalLine,
+    lineColor: verticalLineColor,
+    lineSize: verticalLineSize,
+    lineStyle: verticalLineStyle
+  }
+
+  const yAxisSplitLineConfig = {
+    showLine: showHorizontalLine,
+    lineColor: horizontalLineColor,
+    lineSize: horizontalLineSize,
+    lineStyle: horizontalLineStyle
   }
 
   return {
+    xAxis: getMetricAxisOption(xAxis, xAxisSplitLineConfig, decodeMetricName(metrics[0].name), 'x'),
+    yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, decodeMetricName(metrics[1].name)),
+    series,
     tooltip: {
-      formatter: (node) => {
-        const nodeValues = node.data
-        return `<span>
-          ${nodeValues[2] || ''} <br/>
-          ${value}: ${nodeValues[3] || 0} <br/>
-          ${xAxis}: ${nodeValues[0] || 0} <br/>
-          ${yAxis}: ${nodeValues[1] || 0} <br/>
-        </span>`
-      }
+      formatter: getChartTooltipLabel(seriesData, { cols, metrics, color, tip })
     },
-    ...metricOptions,
-    ...xAxisOptions,
-    ...yAxisOptions,
-    ...legendOptions,
-    ...toolboxOptions,
-    ...gridOptions,
-    ...dataZoomOptions
+    ...legendOption,
+    grid: getGridPositions(legend, seriesNames)
   }
-}
-
-export function makeGrouped (dataSource, groupColumns) {
-  return dataSource.reduce((acc, val) => {
-    const accColumn = groupColumns
-      .reduce((arr, col) => arr.concat(val[col]), [])
-      .join(' ')
-    if (!acc[accColumn]) {
-      acc[accColumn] = []
-    }
-    acc[accColumn].push(val)
-    return acc
-  }, {})
 }
