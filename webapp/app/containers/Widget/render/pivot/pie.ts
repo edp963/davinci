@@ -18,7 +18,7 @@
  * >>
  */
 
-import { DimetionType } from '../components/Widget'
+import { DimetionType } from '../../components/Widget'
 
 export default function () {
   return {

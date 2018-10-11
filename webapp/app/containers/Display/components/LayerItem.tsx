@@ -267,7 +267,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       >
         {this.wrapLayerTooltip(
           (<Widget
-            {...pivotProps}
+            {...widgetProps}
             data={data || []}
             loading={loading}
             renderType={renderType}

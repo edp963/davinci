@@ -23,11 +23,13 @@ import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 import table from './table'
 import line from './line'
 import bar from './bar'
+import scatter from './scatter'
 
 const widgetlibs: IChartInfo[] = [
   table,
   line,
-  bar
+  bar,
+  scatter
 ]
 
 export default widgetlibs

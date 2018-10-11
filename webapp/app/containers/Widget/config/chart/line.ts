@@ -73,8 +73,12 @@ const line: IChartInfo = {
       verticalLineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR
     },
     legend: {
+      showLegend: true,
       legendPosition: 'right',
-      selectAll: true
+      selectAll: true,
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR
     }
   }
 }

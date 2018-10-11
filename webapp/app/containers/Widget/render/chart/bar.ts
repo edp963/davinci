@@ -19,8 +19,20 @@
  */
 
 import { IChartProps } from '../../components/Chart'
-import { metricAxisLabelFormatter, decodeMetricName, getChartTooltipLabel, getAggregatorLocale, getTextWidth } from '../../components/util'
-import { makeGrouped, distinctXaxis, getGridPositions, getGridBase } from './line'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getAggregatorLocale
+} from '../../components/util'
+import {
+  getDimetionAxisOption,
+  getMetricAxisOption,
+  getLabelOption,
+  getLegendOption,
+  getGridPositions,
+  makeGrouped,
+  distinctXaxis
+} from './util'
 
 export default function (chartProps: IChartProps) {
   const {
@@ -42,65 +54,18 @@ export default function (chartProps: IChartProps) {
   } = chartStyles
 
   const {
-    showLine: showLineX,
-    lineStyle: lineStyleX,
-    lineSize: lineSizeX,
-    lineColor: lineColorX,
-    showLabel: showLabelX,
-    labelFontFamily: labelFontFamilyX,
-    labelFontSize: labelFontSizeX,
-    labelColor: labelColorX
-  } = xAxis
-
-  const {
-    showLine: showLineY,
-    lineStyle: lineStyleY,
-    lineSize: lineSizeY,
-    lineColor: lineColorY,
-    showLabel: showLabelY,
-    labelFontFamily: labelFontFamilyY,
-    labelFontSize: labelFontSizeY,
-    labelColor: labelColorY,
-    showTitleAndUnit,
-    titleFontFamily,
-    titleFontSize,
-    titleColor
-  } = yAxis
-
-  const {
-    showHorizontalLine,
-    horizontalLineStyle,
-    horizontalLineSize,
-    horizontalLineColor,
     showVerticalLine,
-    verticalLineStyle,
+    verticalLineColor,
     verticalLineSize,
-    verticalLineColor
+    verticalLineStyle,
+    showHorizontalLine,
+    horizontalLineColor,
+    horizontalLineSize,
+    horizontalLineStyle
   } = splitLine
 
-  const {
-    showLabel,
-    labelPosition,
-    labelFontFamily,
-    labelFontSize,
-    labelColor
-  } = label
-
-  const {
-    legendPosition,
-    selectAll
-  } = legend
-
   const labelOption = {
-    label: {
-      normal: {
-        show: showLabel,
-        position: labelPosition,
-        color: labelColor,
-        fontFamily: labelFontFamily,
-        fontSize: labelFontSize
-      }
-    }
+    label: getLabelOption(label)
   }
 
   let xAxisData = data.map((d) => d[cols[0]] || '')
@@ -142,7 +107,7 @@ export default function (chartProps: IChartProps) {
             itemStyle: {
               normal: {
                 // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k.split(',')[0]]
+                color: color.items[0].config.values[k]
               }
             },
             ...labelOption
@@ -192,45 +157,12 @@ export default function (chartProps: IChartProps) {
     }
   })
 
+  const seriesNames = series.map((s) => s.name)
+
   let legendOption
   if (color.items.length || metrics.length > 1) {
-    let orient
-    let positions
-
-    switch (legendPosition) {
-      case 'top':
-        orient = { orient: 'horizontal' }
-        positions = { top: 8, left: 8, right: 8, height: 32 }
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 8, left: 8, right: 8, height: 32 }
-        break
-      case 'left':
-        orient = { orient: 'vertical' }
-        positions = { left: 8, top: 30, bottom: 30, width: 96 }
-        break
-      default:
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 30, bottom: 30, width: 96 }
-        break
-    }
-
-    const selected = {
-      selected: series.reduce((obj, s) => ({
-        ...obj,
-        [s.name]: selectAll
-      }), {})
-    }
-
     legendOption = {
-      legend: {
-        data: series.map((s) => s.name),
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
-      }
+      legend: getLegendOption(legend, seriesNames)
     }
   }
 
@@ -254,85 +186,28 @@ export default function (chartProps: IChartProps) {
   //   }]
   // }
 
+  const xAxisSplitLineConfig = {
+    showLine: showVerticalLine,
+    lineColor: verticalLineColor,
+    lineSize: verticalLineSize,
+    lineStyle: verticalLineStyle
+  }
+
+  const yAxisSplitLineConfig = {
+    showLine: showHorizontalLine,
+    lineColor: horizontalLineColor,
+    lineSize: horizontalLineSize,
+    lineStyle: horizontalLineStyle
+  }
+
   return {
-    xAxis: {
-      data: xAxisData,
-      axisLabel: {
-        show: showLabelX,
-        color: labelColorX,
-        fontFamily: labelFontFamilyX,
-        fontSize: labelFontSizeX
-      },
-      axisLine: {
-        show: showLineX,
-        lineStyle: {
-          color: lineColorX,
-          width: lineSizeX,
-          type: lineStyleX
-        }
-      },
-      axisTick: {
-        show: showLineX,
-        lineStyle: {
-          color: lineColorX
-        }
-      },
-      splitLine: {
-        show: showVerticalLine,
-        lineStyle: {
-          color: verticalLineColor,
-          width: verticalLineSize,
-          type: verticalLineStyle
-        }
-      }
-    },
-    yAxis: {
-      type: 'value',
-      axisLabel: {
-        show: showLabelY,
-        color: labelColorY,
-        fontFamily: labelFontFamilyY,
-        fontSize: labelFontSizeY,
-        formatter: metricAxisLabelFormatter
-      },
-      axisLine: {
-        show: showLineY,
-        lineStyle: {
-          color: lineColorY,
-          width: lineSizeY,
-          type: lineStyleY
-        }
-      },
-      axisTick: {
-        show: showLineY,
-        lineStyle: {
-          color: lineColorY
-        }
-      },
-      ...showTitleAndUnit && {
-        name: metrics.map((m) => decodeMetricName(m.name)).join(` / `),
-        nameLocation: 'middle',
-        nameGap: 45,
-        nameTextStyle: {
-          color: titleColor,
-          fontFamily: titleFontFamily,
-          fontSize: titleFontSize
-        }
-      },
-      splitLine: {
-        show: showHorizontalLine,
-        lineStyle: {
-          color: horizontalLineColor,
-          width: horizontalLineSize,
-          type: horizontalLineStyle
-        }
-      }
-    },
+    xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
+    yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
+    series,
     tooltip: {
       formatter: getChartTooltipLabel(seriesData, { cols, metrics, color, tip })
     },
-    series,
     ...legendOption,
-    grid: getGridPositions(legendPosition, series.map((s) => s.name))
+    grid: getGridPositions(legend, seriesNames)
   }
 }

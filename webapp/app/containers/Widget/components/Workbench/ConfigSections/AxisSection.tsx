@@ -25,7 +25,6 @@ export interface IAxisConfig {
 
 interface IAxisSectionProps {
   title: string
-  type: 'x' | 'y'
   config: IAxisConfig
   onChange: (prop: string, value: any) => void
 }
@@ -44,7 +43,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
   }
 
   public render () {
-    const { title, type, config } = this.props
+    const { title, config } = this.props
 
     const {
       showLine,
@@ -71,7 +70,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       <Option key={f} value={`${f}`}>{f}</Option>
     ))
 
-    const titleAndUnit = type === 'y' && [(
+    const titleAndUnit = showTitleAndUnit !== void 0 && [(
       <Row key="title" gutter={8} type="flex" align="middle" className={styles.blockRow}>
         <Col span={24}>
           <Checkbox
