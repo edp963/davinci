@@ -3,7 +3,7 @@ import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
 
 const Tooltip = require('antd/lib/tooltip')
-import Draggable from '../../../../libs/react-draggable/react-draggable'
+import Draggable from 'libs/react-draggable'
 
 // @TODO contentMenu
 // const Dropdown = require('antd/lib/dropdown')
@@ -50,7 +50,7 @@ interface ILayerItemProps {
 }
 
 interface ILayerItemStates {
-  layerParams: any
+  layerParams: ILayerParams
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetProps
@@ -473,3 +473,35 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 }
 
 export default LayerItem
+
+export interface ILayer {
+
+}
+
+export interface ILayerParams {
+  backgroundColor: [number, number, number]
+  borderColor: [number, number, number]
+  borderRadius: number
+  borderStyle: string
+  borderWidth: number
+  frequency: number
+  height: number
+  opacity: number
+  polling: 'true' | 'false'
+  positionX: number
+  positionY: number
+  width: number
+  fontFamily: string
+  fontColor: [number, number, number]
+  fontSize: number
+  textAlign: string
+  textStyle: string
+  lineHeight: number
+  textIndent: number
+  paddingTop: number
+  paddingBottom: number
+  paddingLeft: number
+  paddingRight: number
+  contentText: string
+}
+

@@ -12,7 +12,7 @@ var _propTypes = require('prop-types');
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _reactDraggable = require('../react-draggable/react-draggable');
+var _reactDraggable = require('../react-draggable');
 
 var _cloneElement = require('./cloneElement');
 
