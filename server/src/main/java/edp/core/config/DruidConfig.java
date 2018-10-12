@@ -89,6 +89,9 @@ public class DruidConfig {
     @Value("${spring.datasource.connection-error-retry-attempts}")
     private int connectionErrorRetryAttempts;
 
+    @Value("${spring.datasource.validation-query}")
+    private String validationQuery;
+
     /**
      * druid监控
      *
@@ -140,6 +143,7 @@ public class DruidConfig {
         druidDataSource.setTestOnReturn(testOnReturn);
         druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
         druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+        druidDataSource.setValidationQuery(validationQuery);
 
         try {
             druidDataSource.setFilters(filters);

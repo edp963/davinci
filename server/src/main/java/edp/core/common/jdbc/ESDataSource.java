@@ -18,6 +18,8 @@
 
 package edp.core.common.jdbc;
 
+import com.alibaba.druid.pool.ElasticSearchConnection;
+import com.alibaba.druid.pool.ElasticSearchDruidDataSource;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
 import edp.core.exception.SourceException;
 import lombok.extern.slf4j.Slf4j;
@@ -37,19 +39,19 @@ public class ESDataSource {
 
     private static volatile Map<String, DataSource> map = new HashMap<>();
 
-    public static synchronized DataSource getDataSource(String jdbcUrl, String username) throws SourceException {
+    public static synchronized DataSource getDataSource(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
+        if (!map.containsKey(url) || null == map.get(url)) {
             Properties properties = new Properties();
             properties.setProperty("url", url);
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
-                map.put(username + "@" + url, dataSource);
+                map.put(url, dataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization, ", e);
                 throw new SourceException("Exception during pool initialization: jdbcUrl=" + jdbcUrl);
             }
         }
-        return map.get(username + "@" + url);
+        return map.get(url);
     }
 }
