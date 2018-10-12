@@ -68,6 +68,7 @@ import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
 import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
+import { loadProjectDetail } from '../Projects/actions'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -92,6 +93,7 @@ interface IDashboardProps {
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
+  onLoadProjectDetail: (id) => any
   // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
@@ -189,6 +191,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     //   }
     // })
     this.props.onLoadPortals(pid)
+    this.props.onLoadProjectDetail(pid)
   }
 
   private initalDashboardData (dashboards) {
@@ -202,6 +205,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     if (nextProps.dashboards !== this.props.dashboards) {
       this.initalDashboardData(nextProps.dashboards)
     }
+  }
+
+  public componentDidMount () {
+    console.log('index')
+    this.props.onHideNavigator()
   }
 
   private changeDashboard = (dashboardId) => (e) => {
@@ -662,6 +670,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
 
+    console.log({currentProject})
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
     let portalDec = ''
@@ -797,7 +806,8 @@ export function mapDispatchToProps (dispatch) {
     onDeleteDashboard: (id, resolve) => dispatch(deleteDashboard(id, resolve)),
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onLoadPortals: (projectId) => dispatch(loadPortals(projectId))
+    onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
   }
 }
 

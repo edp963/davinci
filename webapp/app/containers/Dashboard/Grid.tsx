@@ -203,8 +203,6 @@ interface IGridProps {
   onResizeAllDashboardItem: () => void
   onLoadDashboardShareLink: (id: number, authName: string) => void
   onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
-  onHideNavigator: () => void
-  onLoadProjectDetail: (id) => any
 }
 
 interface IGridStates {
@@ -298,9 +296,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     if (dashboardId && Number(dashboardId) !== -1) {
       onLoadDashboardDetail(pid, portalId, Number(dashboardId))
     }
-    if (pid) {
-      this.props.onLoadProjectDetail(pid)
-    }
   }
 
   public componentWillReceiveProps (nextProps: IGridProps) {
@@ -338,7 +333,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   public componentDidMount () {
-    this.props.onHideNavigator()
     window.addEventListener('resize', this.onWindowResize, false)
   }
 
@@ -1269,9 +1263,7 @@ export function mapDispatchToProps (dispatch) {
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
-    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
-    onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
+    onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve))
   }
 }
 
