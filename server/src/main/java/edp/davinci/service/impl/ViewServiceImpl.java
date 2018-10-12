@@ -512,7 +512,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 ST st = stg.getInstanceOf("querySql");
                 st.add("groups", executeParam.getGroups());
                 st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                st.add("orders", executeParam.getOrders());
+                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
                 st.add("filters", executeParam.getFilters());
                 st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
                 st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));

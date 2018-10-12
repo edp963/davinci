@@ -309,7 +309,7 @@ public class SqlUtils {
      */
     private DataSource getDataSource(String jdbcUrl, String userename, String password) throws SourceException {
         if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            return ESDataSource.getDataSource(jdbcUrl, userename);
+            return ESDataSource.getDataSource(jdbcUrl);
         } else {
             return jdbcDataSource.getDataSource(jdbcUrl, userename, password);
         }
@@ -336,7 +336,7 @@ public class SqlUtils {
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("create connection error, jdbcUrl: {}", jdbcUrl);
             throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
         }
@@ -348,7 +348,7 @@ public class SqlUtils {
             try {
                 connection.close();
                 connection = null;
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 log.error("connection close error", e.getMessage());
             }
@@ -361,7 +361,7 @@ public class SqlUtils {
             try {
                 rs.close();
                 rs = null;
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
