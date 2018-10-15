@@ -18,172 +18,179 @@
  * >>
  */
 
-/*
- * Funnel chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getTextWidth
+} from '../../components/util'
+import {
+  getLegendOption,
+  getLabelOption,
+  getGridPositions
+} from './util'
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
+export default function (chartProps: IChartProps) {
   const {
-    title,
-    value,
-    min,
-    max,
-    gap,
-    hasLegend,
-    legendSelected,
-    legendPosition,
-    toolbox,
-    top,
-    left,
     width,
     height,
-    minSize,
-    maxSize
-  } = chartParams
+    data,
+    cols,
+    metrics,
+    chartStyles,
+    color,
+    tip
+  } = chartProps
 
-  let metricOptions
-  let minOption
-  let maxOption
-  let gapOption
-  let legendOptions
-  let toolboxOptions
+  const {
+    label,
+    legend,
+    spec,
+    toolbox
+  } = chartStyles
 
-  // legend
-  if (hasLegend && hasLegend.length) {
-    let orient
-    let positions
+  const {
+    legendPosition,
+    fontSize
+  } = legend
 
-    switch (legendPosition) {
-      case 'right':
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 40, bottom: 16 }
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 16, left: 8, right: 8 }
-        break
-      default:
-        orient = { orient: 'horizontal' }
-        positions = { top: 3, left: 8, right: 96 }
-        break
-    }
+  const {
+    alignmentMode,
+    gapNumber,
+    sortMode
+  } = spec
 
-    const selected = legendSelected === 'unselectAll'
-      ? {
-        selected: dataSource.reduce((obj, d) => ({ ...obj, [d[title]]: false }), {})
-      } : null
-
-    legendOptions = {
-      legend: {
-        data: dataSource.map((d) => d[title]),
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
-      }
-    }
+  const labelOption = {
+    label: getLabelOption('funnel', label)
   }
 
-  // series 数据项
-  const metricArr = []
-
-  minOption = min && {
-    min
-  }
-
-  maxOption = max && {
-    max
-  }
-
-  gapOption = gap && {
-    gap
-  }
-
-  const serieObj = {
-    name: '数据',
-    type: 'funnel',
-    top: `${top}%`,
-    left: `${left}%`,
-    width: `${width}%`,
-    height: `${height}%`,
-    minSize: `${minSize}%`,
-    maxSize: `${maxSize}%`,
-    sort: 'descending',
-    label: {
-      normal: {
-        show: true,
-        position: 'inside'
-      },
-      emphasis: {
-        textStyle: {
-          fontSize: 20
+  let seriesObj = {}
+  const seriesArr = []
+  let legendData = []
+  metrics.forEach((m) => {
+    const decodedMetricName = decodeMetricName(m.name)
+    if (cols.length || color.items.length) {
+      const groupColumns = color.items.map((c) => c.name).concat(cols)
+      .reduce((distinctColumns, col) => {
+        if (!distinctColumns.includes(col)) {
+          distinctColumns.push(col)
         }
-      }
-    },
-    labelLine: {
-      normal: {
-        length: 10,
-        lineStyle: {
-          width: 1,
-          type: 'solid'
+        return distinctColumns
+      }, [])
+      const grouped = data.reduce((obj, val) => {
+        const groupingKey = groupColumns
+          .reduce((keyArr, col) => keyArr.concat(val[col]), [])
+          .join(String.fromCharCode(0))
+        if (!obj[groupingKey]) {
+          obj[groupingKey] = []
         }
-      }
-    },
-    itemStyle: {
-      normal: {
-        borderColor: '#fff',
-        borderWidth: 1,
-        opacity: interactIndex === undefined ? 1 : 0.25
-      }
-    },
-    data: dataSource.map((d, index) => {
-      if (index === interactIndex) {
-        return {
-          name: d[title],
-          value: Number(d[value]),
-          itemStyle: {
-            normal: {
-              opacity: 1
-            }
+        obj[groupingKey].push(val)
+        return obj
+      }, {})
+
+      const seriesData = []
+      Object.entries(grouped).forEach(([key, value]) => {
+        const legendStr = key.replace(String.fromCharCode(0), ' ')
+        legendData.push(legendStr)
+        value.forEach((v) => {
+          const obj = {
+            name: legendStr,
+            value: v[`${m.agg}(${decodedMetricName})`]
+          }
+          seriesData.push(obj)
+        })
+      })
+
+      const maxValue = Math.max(...data.map((s) => s[`${m.agg}(${decodedMetricName})`]))
+      const minValue = Math.min(...data.map((s) => s[`${m.agg}(${decodedMetricName})`]))
+
+      const funnelLeft = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+      const leftValue = legendPosition === 'left'
+      ? width * 0.15 + funnelLeft
+      : width * 0.15
+      const topValue = legendPosition === 'top'
+        ? height * 0.15 + 32
+        : height * 0.15
+
+      const heightValue = legendPosition === 'left' || legendPosition === 'right'
+        ? height - height * 0.15 * 2
+        : height - 32 - height * 0.15 * 2
+      const widthValue = legendPosition === 'left' || legendPosition === 'right'
+        ? width - funnelLeft - width * 0.15 * 2
+        : width - width * 0.15 * 2
+
+      let colorArr = []
+      if (color.items.length) {
+        const colorvaluesObj = color.items[0].config.values
+        for (const keys in colorvaluesObj) {
+          if (colorvaluesObj.hasOwnProperty(keys)) {
+            colorArr.push(colorvaluesObj[keys])
           }
         }
       } else {
-        return {
-          name: d[title],
-          value: Number(d[value])
-        }
+        colorArr = ['#509af2']
       }
-    }),
-    ...minOption,
-    ...maxOption,
-    ...gapOption
-  }
 
-  metricArr.push(serieObj)
-  metricOptions = {
-    series: metricArr
-  }
-
-  // toolbox
-  toolboxOptions = toolbox && toolbox.length
-    ? {
-      toolbox: {
-        feature: {
-          dataView: {readOnly: false},
-          restore: {},
-          saveAsImage: {}
+      seriesObj = {
+        name: '',
+        type: 'funnel',
+        min: minValue,
+        max: maxValue,
+        sort: sortMode,
+        funnelAlign: alignmentMode,
+        gap: gapNumber || 0,
+        left: leftValue,
+        top: topValue,
+        width: widthValue,
+        height: heightValue,
+        color: colorArr,
+        data: seriesData,
+        itemStyle: {
+          emphasis: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
         },
-        right: 8
+        ...labelOption
       }
-    } : null
+    } else {
+      legendData = []
+      seriesObj = {
+        name: '',
+        type: 'funnel',
+        sort: sortMode,
+        funnelAlign: alignmentMode,
+        gap: gapNumber || 0,
+        left: width * 0.15,
+        top: height * 0.15,
+        width: width - width * 0.15 * 2,
+        height: height - height * 0.15 * 2,
+        data: data.map((d, index) => {
+          return {
+            name: decodedMetricName,
+            value: d[`${m.agg}(${decodedMetricName})`]
+          }
+        }),
+        itemStyle: {
+          emphasis: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        ...labelOption
+      }
+    }
+    seriesArr.push(seriesObj)
+  })
 
   return {
-    calculable: true,
-    tooltip: {
-      trigger: 'item'
+    tooltip : {
+        trigger: 'item',
+        formatter: '{b} <br/>{c} ({d}%)'
     },
-    ...metricOptions,
-    ...legendOptions,
-    ...toolboxOptions
+    legend: getLegendOption(legend, legendData),
+    series: seriesArr
   }
 }

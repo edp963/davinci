@@ -25,13 +25,15 @@ import line from './line'
 import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
+import funnel from './funnel'
 
 const widgetlibs: IChartInfo[] = [
   table,
   line,
   bar,
   scatter,
-  pie
+  pie,
+  funnel
 ]
 
 export default widgetlibs
