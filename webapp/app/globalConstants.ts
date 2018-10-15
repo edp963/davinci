@@ -92,10 +92,27 @@ export const CHART_LABEL_POSITIONS = [
   { name: '内右上', value: 'insideTopRight' },
   { name: '内右下', value: 'insideBottomRight' }
 ]
-export const  CHART_PIE_LABEL_POSITIONS = [
+export const CHART_PIE_LABEL_POSITIONS = [
   { name: '外侧', value: 'outside'},
   { name: '内部', value: 'inside'},
   { name: '中心', value: 'center'}
+]
+export const CHART_FUNNEL_LABEL_POSITIONS = [
+  { name: '左侧', value: 'left'},
+  { name: '右侧', value: 'right'},
+  { name: '内部', value: 'inside'}
+]
+
+export const CHART_SORT_MODES = [
+  { name: '降序', value: 'descending'},
+  { name: '升序', value: 'ascending'},
+  { name: '无', value: 'none'}
+]
+
+export const CHART_ALIGNMENT_MODES = [
+  { name: '居中', value: 'center'},
+  { name: '居左', value: 'left'},
+  { name: '居右', value: 'right'}
 ]
 
 export const CHART_LEGEND_POSITIONS = [

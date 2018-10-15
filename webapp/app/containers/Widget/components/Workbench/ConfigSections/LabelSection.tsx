@@ -5,16 +5,24 @@ const Checkbox = require('antd/lib/checkbox')
 const Select = require('antd/lib/select')
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
-import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_LABEL_POSITIONS, CHART_PIE_LABEL_POSITIONS } from '../../../../../globalConstants'
+import {
+  PIVOT_CHART_FONT_FAMILIES,
+  PIVOT_CHART_LINE_STYLES,
+  PIVOT_CHART_FONT_SIZES,
+  CHART_LABEL_POSITIONS,
+  CHART_PIE_LABEL_POSITIONS,
+  CHART_FUNNEL_LABEL_POSITIONS
+} from '../../../../../globalConstants'
 const styles = require('../Workbench.less')
 
 export interface ILabelConfig {
   showLabel: boolean
-  labelPosition: string
+  labelPosition?: string
   labelFontFamily: string
   labelFontSize: string
   labelColor: string
   pieLabelPosition?: string
+  funnelLabelPosition?: string
 }
 
 interface ILabelSectionProps {
@@ -30,6 +38,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
   }
 
   private selectChange = (prop) => (value) => {
+    console.log('va', prop)
     this.props.onChange(prop, value)
   }
 
@@ -46,16 +55,33 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       labelFontFamily,
       labelFontSize,
       labelColor,
-      pieLabelPosition
+      pieLabelPosition,
+      funnelLabelPosition
     } = config
 
-    const positions = name === 'pie'
-      ? CHART_PIE_LABEL_POSITIONS.map((p) => (
-        <Option key={p.value} value={p.value}>{p.name}</Option>
-      ))
-      : CHART_LABEL_POSITIONS.map((p) => (
-        <Option key={p.value} value={p.value}>{p.name}</Option>
-      ))
+    let positionValues
+    let positionName
+    let positionChangeName
+    switch (name) {
+      case 'pie':
+        positionValues = CHART_PIE_LABEL_POSITIONS
+        positionName = pieLabelPosition
+        positionChangeName = 'pieLabelPosition'
+        break
+      case 'funnel':
+        positionValues = CHART_FUNNEL_LABEL_POSITIONS
+        positionName = funnelLabelPosition
+        positionChangeName = 'funnelLabelPosition'
+        break
+      default:
+        positionValues = CHART_LABEL_POSITIONS
+        positionName = labelPosition
+        positionChangeName = 'labelPosition'
+        break
+    }
+    const positions = positionValues.map((p) => (
+      <Option key={p.value} value={p.value}>{p.name}</Option>
+    ))
     const fontFamilies = PIVOT_CHART_FONT_FAMILIES.map((f) => (
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
@@ -81,8 +107,8 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
               <Select
                 placeholder="位置"
                 className={styles.blockElm}
-                value={name === 'pie' ? pieLabelPosition : labelPosition}
-                onChange={this.selectChange(`${name === 'pie' ? 'pieLabelPosition' : 'labelPosition'}`)}
+                value={positionName}
+                onChange={this.selectChange(positionChangeName)}
               >
                 {positions}
               </Select>

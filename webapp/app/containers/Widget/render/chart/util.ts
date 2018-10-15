@@ -164,13 +164,17 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
     labelFontFamily,
     labelFontSize,
     labelColor,
-    pieLabelPosition
+    pieLabelPosition,
+    funnelLabelPosition
   } = labelConfig
 
   let positionVale
   switch (type) {
     case 'pie':
       positionVale = pieLabelPosition
+      break
+    case 'funnel':
+      positionVale = funnelLabelPosition
       break
     default:
       positionVale = labelPosition

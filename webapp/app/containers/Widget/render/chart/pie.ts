@@ -159,7 +159,7 @@ export default function (chartProps: IChartProps) {
     } else {
       legendData = []
       seriesObj = {
-        name: '',
+        name: decodedMetricName,
         type: 'pie',
         avoidLabelOverlap: false,
         center: [width / 2, height / 2],
