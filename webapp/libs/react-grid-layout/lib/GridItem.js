@@ -12,9 +12,9 @@ var _propTypes = require("prop-types");
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
-var _reactDraggable = require("../react-draggable");
+var _reactDraggable = require("libs/react-draggable");
 
-var _reactResizable = require("../react-resizable");
+var _reactResizable = require("libs/react-resizable");
 
 var _utils = require("./utils");
 
