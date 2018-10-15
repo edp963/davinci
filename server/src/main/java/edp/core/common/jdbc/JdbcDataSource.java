@@ -73,8 +73,8 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.connection-error-retry-attempts:3}")
     private int connectionErrorRetryAttempts;
 
-    @Value("${spring.datasource.validation-query}")
-    private String validationQuery;
+//    @Value("${spring.datasource.validation-query}")
+//    private String validationQuery;
 
     private static volatile Map<String, Object> map = new HashMap<>();
 
@@ -124,7 +124,7 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setTestOnReturn(testOnReturn);
             instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-            instance.setValidationQuery(validationQuery);
+//            instance.setValidationQuery(validationQuery);
 
             try {
                 instance.init();
