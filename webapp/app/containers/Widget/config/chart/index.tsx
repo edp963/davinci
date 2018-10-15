@@ -24,12 +24,14 @@ import table from './table'
 import line from './line'
 import bar from './bar'
 import scatter from './scatter'
+import pie from './pie'
 
 const widgetlibs: IChartInfo[] = [
   table,
   line,
   bar,
-  scatter
+  scatter,
+  pie
 ]
 
 export default widgetlibs

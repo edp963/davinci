@@ -157,19 +157,30 @@ export function getMetricAxisOption (
   }
 }
 
-export function getLabelOption (labelConfig: ILabelConfig, emphasis?: boolean, options?: object) {
+export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasis?: boolean, options?: object) {
   const {
     showLabel,
     labelPosition,
     labelFontFamily,
     labelFontSize,
-    labelColor
+    labelColor,
+    pieLabelPosition
   } = labelConfig
+
+  let positionVale
+  switch (type) {
+    case 'pie':
+      positionVale = pieLabelPosition
+      break
+    default:
+      positionVale = labelPosition
+      break
+  }
 
   return {
     normal: {
-      show: showLabel,
-      position: labelPosition,
+      show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
+      position: positionVale,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
@@ -178,7 +189,7 @@ export function getLabelOption (labelConfig: ILabelConfig, emphasis?: boolean, o
     ...emphasis && {
       emphasis: {
         show: showLabel,
-        position: labelPosition,
+        position: positionVale,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,

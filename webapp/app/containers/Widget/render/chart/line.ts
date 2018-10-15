@@ -70,7 +70,7 @@ export default function (chartProps: IChartProps) {
   } = spec
 
   const labelOption = {
-    label: getLabelOption(label)
+    label: getLabelOption('line', label)
   }
 
   let xAxisData = data.map((d) => d[cols[0]] || '')

@@ -66,7 +66,7 @@ export default function (chartProps: IChartProps) {
   } = splitLine
 
   const labelOption = {
-    label: getLabelOption(labelStyleConfig, true, {
+    label: getLabelOption('scatter', labelStyleConfig, true, {
       formatter (param) {
         return param.data.value[2]
       }

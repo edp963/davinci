@@ -13,8 +13,10 @@ import ChartIndicator from './ChartIndicator'
 import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
 import SplitLineSection, { ISplitLineConfig } from './ConfigSections/SplitLineSection'
 import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
+import SpecSection, { ISpecConfig } from './ConfigSections/SpecSection'
 import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
 import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
+import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
@@ -940,7 +942,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend  } = styleParams
+    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend, toolbox } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1097,15 +1099,26 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'style':
         tabPane = (
           <div className={styles.paramsPane}>
+            {spec && <SpecSection
+              title={chartModeSelectedChart.title}
+              config={spec as ISpecConfig}
+              onChange={this.styleChange('spec')}
+            />}
             {label && <LabelSection
               title="标签"
               config={label as ILabelConfig}
               onChange={this.styleChange('label')}
+              name={chartModeSelectedChart.name}
             />}
             {legend && <LegendSection
               title="图例"
               config={legend as ILegendConfig}
               onChange={this.styleChange('legend')}
+            />}
+            {toolbox && <ToolboxSection
+              title="工具"
+              config={toolbox as IToolboxConfig}
+              onChange={this.styleChange('toolbox')}
             />}
             {xAxis && <AxisSection
               title="X轴"

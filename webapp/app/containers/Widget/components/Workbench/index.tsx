@@ -272,6 +272,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     return (
       <div className={styles.workbench}>
         <EditorHeader
+          currentType="workbench"
           className={styles.header}
           name={name}
           description={description}

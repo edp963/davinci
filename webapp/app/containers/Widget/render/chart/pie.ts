@@ -18,161 +18,178 @@
  * >>
  */
 
-/*
- * Pie chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getTextWidth
+} from '../../components/util'
+import {
+  getLegendOption,
+  getLabelOption,
+  getGridPositions
+} from './util'
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
+export default function (chartProps: IChartProps) {
   const {
-    title,
-    value,
-    circle,
-    insideRadius,
-    outsideRadius,
-    hasLegend,
-    legendSelected,
+    width,
+    height,
+    data,
+    cols,
+    metrics,
+    chartStyles,
+    color,
+    tip
+  } = chartProps
+
+  const {
+    label,
+    legend,
+    spec,
+    toolbox
+  } = chartStyles
+
+  const {
     legendPosition,
-    toolbox,
-    top,
-    roseType,
-    left
-  } = chartParams
+    fontSize
+  } = legend
 
-  let metricOptions
-  let labelOptions
-  let legendOptions
-  let toolboxOptions
-  let roseOptions
+  const {
+    circle,
+    roseType
+  } = spec
 
-  // legend
-  let adjustedLeft = 0
-
-  if (hasLegend && hasLegend.length) {
-    let orient
-    let positions
-
-    switch (legendPosition) {
-      case 'right':
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 40, bottom: 16 }
-        adjustedLeft = 45
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 16, left: 8, right: 8 }
-        break
-      default:
-        orient = { orient: 'horizontal' }
-        positions = { top: 3, left: 8, right: 96 }
-        break
-    }
-
-    const selected = legendSelected === 'unselectAll'
-      ? {
-        selected: dataSource.reduce((obj, d) => ({ ...obj, [d[title]]: false }), {})
-      } : null
-
-    legendOptions = {
-      legend: {
-        data: dataSource.map((d) => d[title]),
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
-      }
-    }
+  // formatter: '{b}({d}%)'
+  const labelOption = {
+    label: getLabelOption('pie', label)
   }
 
-  // series 数据项
-  const metricArr = []
+  const roseTypeValue = roseType ? 'radius' : ''
+  const radiusValue = (!circle && !roseType) || (!circle && roseType) ? `70%` : ['48%', '70%']
 
-  labelOptions = circle && circle.length
-    ? {
-      label: {
-        normal: {
-          show: true,
-          position: 'inside',
-          formatter: '{d}%'
-        },
-        emphasis: {
-          show: true,
-          position: 'center',
-          textStyle: {
-            fontSize: '16',
-            fontWeight: 'bold'
+  let seriesObj = {}
+  const seriesArr = []
+  let legendData = []
+  metrics.forEach((m) => {
+    const decodedMetricName = decodeMetricName(m.name)
+    if (cols.length || color.items.length) {
+      const groupColumns = color.items.map((c) => c.name).concat(cols)
+      .reduce((distinctColumns, col) => {
+        if (!distinctColumns.includes(col)) {
+          distinctColumns.push(col)
+        }
+        return distinctColumns
+      }, [])
+      const grouped = data.reduce((obj, val) => {
+        const groupingKey = groupColumns
+          .reduce((keyArr, col) => keyArr.concat(val[col]), [])
+          .join(String.fromCharCode(0))
+        if (!obj[groupingKey]) {
+          obj[groupingKey] = []
+        }
+        obj[groupingKey].push(val)
+        return obj
+      }, {})
+
+      const seriesData = []
+      Object.entries(grouped).forEach(([key, value]) => {
+        const legendStr = key.replace(String.fromCharCode(0), ' ')
+        legendData.push(legendStr)
+        value.forEach((v) => {
+          const obj = {
+            name: legendStr,
+            value: v[`${m.agg}(${decodedMetricName})`]
           }
-        }
+          seriesData.push(obj)
+        })
+      })
+
+      let leftValue
+      let topValue
+      const pieLeft = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+      switch (legendPosition) {
+        case 'top':
+          leftValue = width / 2
+          topValue = (height + 32) / 2
+          break
+        case 'bottom':
+          leftValue = width / 2
+          topValue = (height - 32) / 2
+          break
+        case 'left':
+          leftValue = (width + pieLeft) / 2
+          topValue = height / 2
+          break
+        case 'right':
+          leftValue = (width - pieLeft) / 2
+          topValue = height / 2
+          break
       }
-    }
-    : {
-      label: {
-        normal: {
-          show: true,
-          formatter: '{b}({d}%)'
-        }
-      }
-    }
-  roseOptions = roseType && roseType.length ? {roseType: 'radius'} : null
-  const serieObj = {
-    name: title,
-    type: 'pie',
-    radius: circle && circle.length ? [`${insideRadius}%`, `${outsideRadius}%`] : `${insideRadius}%`,
-    center: [
-      adjustedLeft && legendPosition === 'right' ? `${Math.min(left, adjustedLeft)}%` : `${left}%`,
-      `${top}%`
-    ],
-    avoidLabelOverlap: !circle || !circle.length,
-    data: dataSource.map((d, index) => {
-      if (index === interactIndex) {
-        return {
-          name: d[title],
-          value: Number(d[value]),
-          itemStyle: {
-            normal: {
-              opacity: 1
-            }
+
+      let colorArr = []
+      if (color.items.length) {
+        const colorvaluesObj = color.items[0].config.values
+        for (const keys in colorvaluesObj) {
+          if (colorvaluesObj.hasOwnProperty(keys)) {
+            colorArr.push(colorvaluesObj[keys])
           }
         }
       } else {
-        return {
-          name: d[title],
-          value: Number(d[value])
-        }
+        colorArr = ['#509af2']
       }
-    }),
-    itemStyle: {
-      normal: {
-        opacity: interactIndex === undefined ? 1 : 0.25
-      }
-    },
-    ...roseOptions,
-    ...labelOptions
-  }
-  metricArr.push(serieObj)
-  metricOptions = {
-    series: metricArr
-  }
 
-  // toolbox
-  toolboxOptions = toolbox && toolbox.length
-    ? {
-      toolbox: {
-        feature: {
-          dataView: {readOnly: false},
-          restore: {},
-          saveAsImage: {}
+      seriesObj = {
+        name: '',
+        type: 'pie',
+        avoidLabelOverlap: false,
+        center: legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2],
+        color: colorArr,
+        data: seriesData,
+        itemStyle: {
+          emphasis: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
         },
-        right: 8
+        ...labelOption,
+        roseType: roseTypeValue,
+        radius: radiusValue
       }
-    } : null
+    } else {
+      legendData = []
+      seriesObj = {
+        name: '',
+        type: 'pie',
+        avoidLabelOverlap: false,
+        center: [width / 2, height / 2],
+        data: data.map((d, index) => {
+          return {
+            name: decodedMetricName,
+            value: d[`${m.agg}(${decodedMetricName})`]
+          }
+        }),
+        itemStyle: {
+          emphasis: {
+              shadowBlur: 10,
+              shadowOffsetX: 0,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        },
+        ...labelOption,
+        roseType: roseTypeValue,
+        radius: radiusValue
+      }
+    }
+    seriesArr.push(seriesObj)
+  })
 
   return {
-    tooltip: {
-      trigger: 'item',
-      formatter: '{b} <br/>{c} ({d}%)'
+    tooltip : {
+        trigger: 'item',
+        formatter: '{b} <br/>{c} ({d}%)'
     },
-    ...metricOptions,
-    ...legendOptions,
-    ...toolboxOptions
+    legend: getLegendOption(legend, legendData),
+    series: seriesArr
   }
 }
