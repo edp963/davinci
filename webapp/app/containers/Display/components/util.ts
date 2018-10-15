@@ -18,18 +18,28 @@
  * >>
  */
 
-import {
-  GraphTypes,
-  SecondaryGraphTypes } from 'utils/util'
+import * as slide from 'assets/json/slideSettings/slide.json'
+import * as chart from 'assets/json/slideSettings/chart.json'
+import * as rectangle from 'assets/json/slideSettings/rectangle.json'
+import * as label from 'assets/json/slideSettings/label.json'
 
-import * as slide from './slide.json'
-import * as chart from './chart.json'
-import * as rectangle from './rectangle.json'
-import * as label from './label.json'
+export enum SecondaryGraphTypes {
+  Rectangle = 20,
+  Label = 21
+}
 
+export enum GraphTypes {
+  Slide,
+  Chart,
+  Secondary
+}
 
+export enum OrderDirection {
+  Asc,
+  Desc
+}
 
-export default {
+export const slideSettings = {
   [GraphTypes.Slide]: slide,
   [GraphTypes.Chart]: chart,
   [SecondaryGraphTypes.Rectangle]: rectangle,

@@ -20,7 +20,7 @@
 
 import { fromJS } from 'immutable'
 import { ActionTypes } from './constants'
-import { GraphTypes } from 'utils/util'
+import { GraphTypes } from '../../../app/containers/Display/components/util'
 
 const initialState = fromJS({
   title: '',

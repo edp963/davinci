@@ -22,7 +22,7 @@ import { fromJS } from 'immutable'
 import undoable, { includeAction } from 'redux-undo'
 
 import { ActionTypes } from './constants'
-import { GraphTypes } from 'utils/util'
+import { GraphTypes } from './components/util'
 import {
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,

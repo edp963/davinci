@@ -13,12 +13,12 @@ import Draggable from 'libs/react-draggable'
 import {
   GraphTypes,
   SecondaryGraphTypes
-} from 'utils/util'
+} from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
 import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 
-const Resizable = require('../../../../libs/react-resizable').Resizable
+const Resizable = require('libs/react-resizable').Resizable
 
 const styles = require('../Display.less')
 
@@ -158,6 +158,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     this.setState({
       mousePos: [e.pageX, e.pageY]
     })
+    console.log('drag starts')
     return e.target !== data.node.lastElementChild
   }
 
@@ -167,11 +168,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const {
       itemId,
       onDragLayerStop } = this.props
+    console.log('drag stops')
     onDragLayerStop(itemId, { deltaX, deltaY })
   }
 
   private onDrag = (e, { deltaX, deltaY }) => {
     e.stopPropagation()
+    console.log('dragging')
     const { itemId, onDragLayer } = this.props
     if (onDragLayer) { onDragLayer(itemId, { deltaX, deltaY }) }
   }
@@ -475,7 +478,14 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 export default LayerItem
 
 export interface ILayer {
-
+  id: number
+  displaySlideId: number
+  index: number
+  name: string
+  params: string
+  subType: SecondaryGraphTypes
+  type: GraphTypes
+  widgetId: number
 }
 
 export interface ILayerParams {

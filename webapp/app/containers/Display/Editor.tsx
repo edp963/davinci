@@ -49,7 +49,7 @@ import {
   makeSelectCurrentState,
   makeSelectNextState,
   makeSelectEditorBaselines } from './selectors'
-import slideSettings from '../../assets/json/slideSettings'
+import { slideSettings, GraphTypes } from './components/util'
 
 import DisplayHeader from './components/DisplayHeader'
 import DisplayBody from './components/DisplayBody'
@@ -58,7 +58,7 @@ import DisplayContainer, { Keys } from './components/DisplayContainer'
 import DisplayBottom from './components/DisplayBottom'
 import DisplaySidebar from './components/DisplaySidebar'
 
-import LayerItem from './components/LayerItem'
+import LayerItem, { ILayerParams } from './components/LayerItem'
 import SettingForm from './components/SettingForm'
 import DisplaySetting from './components/DisplaySetting'
 import LayerAlign from './components/LayerAlign'
@@ -83,7 +83,11 @@ import {
   pasteSlideLayers,
   undoOperation,
   redoOperation,
-  loadDisplayShareLink  } from './actions'
+  loadDisplayShareLink,
+  showHorizontalBaseline,
+  hideHorizontalBaseline,
+  showVerticalBaseline,
+  hideVerticalBaseline    } from './actions'
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
 
@@ -97,8 +101,9 @@ import {
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GRID_ITEM_MARGIN } from '../../globalConstants'
-import { GraphTypes } from 'utils/util'
 // import { LayerContextMenu } from './components/LayerContextMenu'
+
+import { ISlideParams } from './'
 
 interface IParams {
   pid: number
@@ -190,10 +195,15 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
       expired: number
     }
   ) => void
+
+  onShowHorizontalBaseline: (top, right, left) => void
+  onHideHorizontalBaseline: () => void
+  onShowVerticalBaseline: (top, bottom, left) => void
+  onHideVerticalBaseline: () => void
 }
 
 interface IEditorStates {
-  slideParams: any
+  slideParams: Partial<ISlideParams>
   currentLocalLayers: any[]
   editorWidth: number
   editorHeight: number
@@ -435,22 +445,61 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   ) => {
     const editLayers = []
     const { currentLayersOperationInfo } = this.props
-    const { currentLocalLayers } = this.state
+    const { currentLocalLayers, slideParams } = this.state
     const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
-    copyCurrentLocalLayers.forEach((localLayer) => {
-      if (localLayer.id === itemId || (currentLayersOperationInfo[itemId].selected && currentLayersOperationInfo[localLayer.id].selected)) {
-        const layerParams = JSON.parse(localLayer.params)
-        const { positionX, positionY, width, height } = layerParams
-        localLayer.params = JSON.stringify({
-          ...layerParams,
-          positionX: Math.round(positionX + deltaX),
-          positionY: Math.round(positionY + deltaY),
-          width: Math.round(width + deltaWidth),
-          height: Math.round(height + deltaHeight)
-        })
-        editLayers.push(localLayer)
-      }
+
+    editLayers.push(copyCurrentLocalLayers.find((localLayer) => localLayer.id === itemId))
+    if (editLayers[0].selected) {
+      editLayers.splice(0, 1, ...copyCurrentLocalLayers.filter((localLayer) => currentLayersOperationInfo[localLayer.id].selected))
+    }
+
+    const mapLayerParams: { [layerId: number]: ILayerParams } = editLayers.reduce((acc, layer) => {
+      acc[layer.id] = JSON.parse(layer.params)
+      return acc
+    }, {})
+
+    const minX = editLayers.reduce((min, layer) => Math.min(min, mapLayerParams[layer.id].positionX), Infinity)
+    const maxX = editLayers.reduce((max, layer) => {
+      const { positionX, width } = mapLayerParams[layer.id]
+      return Math.max(max, positionX + width)
+    }, -Infinity)
+
+    const minY = editLayers.reduce((min, layer) => Math.min(min, mapLayerParams[layer.id].positionY), Infinity)
+    const maxY = editLayers.reduce((max, layer) => {
+      const { positionY, height } = mapLayerParams[layer.id]
+      return Math.max(max, positionY + height)
+    }, -Infinity)
+
+    const middleX = Math.round((minX + maxX) / 2)
+    const middleY = Math.round((minY + maxY) / 2)
+
+    const { width: slideWidth, height: slideHeight } = slideParams
+    const { onShowHorizontalBaseline, onHideHorizontalBaseline, onShowVerticalBaseline, onHideVerticalBaseline } = this.props
+    if (Math.abs(slideWidth / 2 - middleX) < GRID_ITEM_MARGIN) {
+      onShowVerticalBaseline(0, 0, slideWidth / 2)
+      // deltaX = 0
+    } else {
+      onHideVerticalBaseline()
+    }
+    if (Math.abs(slideHeight / 2 - middleY) < GRID_ITEM_MARGIN) {
+      onShowHorizontalBaseline(slideHeight / 2, 0, 0)
+      // deltaY = 0
+    } else {
+      onHideHorizontalBaseline()
+    }
+
+    editLayers.forEach((localLayer) => {
+      const layerParams = JSON.parse(localLayer.params)
+      const { positionX, positionY, width, height } = layerParams
+      localLayer.params = JSON.stringify({
+        ...layerParams,
+        positionX: Math.round(positionX + deltaX),
+        positionY: Math.round(positionY + deltaY),
+        width: Math.round(width + deltaWidth),
+        height: Math.round(height + deltaHeight)
+      })
     })
+
     this.setState({ currentLocalLayers: copyCurrentLocalLayers })
     return editLayers
   }
@@ -470,8 +519,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       deltaWidth: 0,
       deltaHeight: 0
     })
-    this.props.toggleLayersDraggingStatus(editLayers.map((l) => l.id), false)
     this.onEditLayers(editLayers)
+    const { onHideHorizontalBaseline, onHideVerticalBaseline, toggleLayersDraggingStatus } = this.props
+    toggleLayersDraggingStatus(editLayers.map((l) => l.id), false)
+    onHideHorizontalBaseline()
+    onHideVerticalBaseline()
   }
 
   private resizeLayer = (itemId, delta) => {
@@ -946,7 +998,12 @@ function mapDispatchToProps (dispatch) {
     onLoadDisplayShareLink: (id, authName) => dispatch(loadDisplayShareLink(id, authName)),
     onUndo: (currentState) => dispatch(undoOperation(currentState)),
     onRedo: (nextState) => dispatch(redoOperation(nextState)),
-    onHideNavigator: () => dispatch(hideNavigator())
+    onHideNavigator: () => dispatch(hideNavigator()),
+
+    onShowHorizontalBaseline: (top, right, left) => dispatch(showHorizontalBaseline(top, right, left)),
+    onHideHorizontalBaseline: () => dispatch(hideHorizontalBaseline()),
+    onShowVerticalBaseline: (top, bottom, left) => dispatch(showVerticalBaseline(top, bottom, left)),
+    onHideVerticalBaseline: () => dispatch(hideVerticalBaseline())
   }
 }
 
