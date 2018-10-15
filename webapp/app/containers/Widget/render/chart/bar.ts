@@ -65,7 +65,7 @@ export default function (chartProps: IChartProps) {
   } = splitLine
 
   const labelOption = {
-    label: getLabelOption(label)
+    label: getLabelOption('bar', label)
   }
 
   let xAxisData = data.map((d) => d[cols[0]] || '')

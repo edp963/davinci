@@ -35,7 +35,7 @@ export default function (type, chartProps: IChartProps): EChartOption {
     case 'line': return line(chartProps)
     case 'bar': return bar(chartProps)
     case 'scatter': return scatter(chartProps)
-    // case 'pie': return pie(chartProps)
+    case 'pie': return pie(chartProps)
     // case 'area': return area(chartProps)
     // case 'funnel': return funnel(chartProps)
     // case 'map': return map(chartProps)

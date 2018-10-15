@@ -92,6 +92,11 @@ export const CHART_LABEL_POSITIONS = [
   { name: '内右上', value: 'insideTopRight' },
   { name: '内右下', value: 'insideBottomRight' }
 ]
+export const  CHART_PIE_LABEL_POSITIONS = [
+  { name: '外侧', value: 'outside'},
+  { name: '内部', value: 'inside'},
+  { name: '中心', value: 'center'}
+]
 
 export const CHART_LEGEND_POSITIONS = [
   { name: '右', value: 'right' },

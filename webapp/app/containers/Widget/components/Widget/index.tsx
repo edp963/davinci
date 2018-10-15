@@ -9,7 +9,9 @@ import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
 import { ILabelConfig } from '..//Workbench/ConfigSections/LabelSection'
+import { ISpecConfig } from '../Workbench/ConfigSections/SpecSection'
 import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
+import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -30,12 +32,13 @@ export interface IWidgetFilter {
 
 export interface IChartStyles {
   pivot?: IPivotConfig
-  spec?: object
   xAxis?: IAxisConfig
   yAxis?: IAxisConfig
   splitLine?: ISplitLineConfig
   label?: ILabelConfig
   legend?: ILegendConfig
+  toolbox?: IToolboxConfig
+  spec?: ISpecConfig
 }
 
 export interface IChartInfo {
