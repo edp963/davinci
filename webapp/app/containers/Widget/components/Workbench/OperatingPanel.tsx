@@ -459,7 +459,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCallback: (config) => {
         if (config) {
           const colorItems = specificParams.color.items
-          const actingOnItemIndex = colorItems.findIndex((i) => i.config.actOn === config['actOn'])
+          const actingOnItemIndex = colorItems.findIndex((i) => i.config.actOn === config['actOn'] && i.name !== item.name)
           if (actingOnItemIndex >= 0) {
             specificParams.color.items = [
               ...colorItems.slice(0, actingOnItemIndex),
@@ -1007,6 +1007,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             type={v.type}
             value={v.value}
             items={v.items}
+            mode={mode}
             dragged={dragged}
             panelList={panelList}
             dimetionsCount={dimetionsCount}
@@ -1026,6 +1027,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         )
       })
 
+    const rowsColsToggleClass = classnames({
+      [styles.toggleRowsAndCols]: true,
+      [utilStyles.hide]: mode === 'chart'
+    })
     const rowsColsSwitchClass = classnames({
       [styles.switchRowsAndCols]: true,
       [utilStyles.hide]: !showColsAndRows
@@ -1085,9 +1090,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'data':
         tabPane = (
           <div className={`${styles.paramsPane} ${styles.dropPane}`}>
-            <div className={styles.toggleRowsAndCols} onClick={this.toggleRowsAndCols}>
+            <div className={rowsColsToggleClass} onClick={this.toggleRowsAndCols}>
               <Icon type="swap" />
-              {mode === 'pivot' && showColsAndRows ? ' 使用维度' : ' 使用行列'}
+              {showColsAndRows ? ' 使用维度' : ' 使用行列'}
             </div>
             <div className={rowsColsSwitchClass} onClick={this.switchRowsAndCols}>
               <Icon type="retweet" /> 行列切换

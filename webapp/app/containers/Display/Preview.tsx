@@ -278,7 +278,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     slideStyle  = {
       overflow: 'visible',
       width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      height: `${height * scale[1]}px`,
+      backgroundSize: 'cover'
     }
 
     if (backgroundColor) {
