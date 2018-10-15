@@ -46,7 +46,9 @@ public class LdapServiceImpl implements LdapService {
         //使用用户名、密码验证域用户
         DirContext ctx = ldapTemplate.getContextSource().getContext(username, password);
 
-        LdapUser ldapUser = ldapTemplate.search(query().where("objectclass").is("person").and("sAMAccountName").is(username), new AttributesMapper<LdapUser>() {
+        LdapUser ldapUser = ldapTemplate.search(
+                query().where("objectclass").is("ldapUser").and("sAMAccountName").is(username),
+                new AttributesMapper<LdapUser>() {
             @Override
             public LdapUser mapFromAttributes(Attributes attributes) throws NamingException {
                 LdapUser ldapUser = new LdapUser();
