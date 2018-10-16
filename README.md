@@ -66,7 +66,7 @@ Davinci面向业务人员/数据工程师/数据分析师/数据科学家，致�
 
 
 ```
-   unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist.zip
+   unzip davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist-beta.2.zip
 
    cd config
 
@@ -219,7 +219,7 @@ Please refer to [Davinci用户手册](https://edp-davinci.gitbooks.io/davinci-us
 
 Latest Release
 =============
-Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.1/davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist-beta.1.zip).
+Please download the latest [RELEASE](https://github.com/edp963/davinci/releases/download/v0.3.0-beta.2/davinci-assembly_3.0.1-0.3.0-SNAPSHOT-dist-beta.2.zip).
 
 Get Help
 ============
