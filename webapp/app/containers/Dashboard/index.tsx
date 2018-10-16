@@ -208,7 +208,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   public componentDidMount () {
-    console.log('index')
     this.props.onHideNavigator()
   }
 
@@ -671,7 +670,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
 
-    console.log({currentProject})
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
     let portalDec = ''
