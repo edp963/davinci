@@ -35,7 +35,7 @@ export const FilterTypesLocale = {
   [FilterTypes.NumberRange]: '数字范围输入框',
   [FilterTypes.Select]: '单选下拉菜单',
   [FilterTypes.MultiSelect]: '多选下拉菜单',
-  // [FilterTypes.CascadeSelect]: '级联下拉菜单',
+  [FilterTypes.CascadeSelect]: '级联下拉菜单',
   [FilterTypes.InputDate]: '日期选择',
   [FilterTypes.MultiDate]: '日期多选',
   [FilterTypes.DateRange]: '日期范围选择',
@@ -49,7 +49,7 @@ export const FilterTypesViewSetting = {
   [FilterTypes.NumberRange]: false,
   [FilterTypes.Select]: true,
   [FilterTypes.MultiSelect]: true,
-  // [FilterTypes.CascadeSelect]: true,
+  [FilterTypes.CascadeSelect]: true,
   [FilterTypes.InputDate]: false,
   [FilterTypes.MultiDate]: false,
   [FilterTypes.DateRange]: false,
@@ -57,10 +57,17 @@ export const FilterTypesViewSetting = {
   [FilterTypes.DatetimeRange]: false
 }
 
-// @TODO 过滤操作符的配置
 export const FilterTypesOperatorSetting = {
   [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual]
+  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.NumberRange]: [],
+  [FilterTypes.Select]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+  [FilterTypes.MultiSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.InputDate]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.MultiDate]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.DateRange]: [],
+  [FilterTypes.Datetime]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.DatetimeRange]: []
 }
 
 export default FilterTypes

@@ -82,7 +82,7 @@
                     <maxmem>1024m</maxmem>
                     <fork>true</fork>
                     <compilerArguments>
-                        <bootclasspath>${java.home}/lib/rt.jar:${java.home}/lib/jce.jar:${java.home}/../lib/tools.jar</bootclasspath>
+                        <bootclasspath>${java.home}/lib/rt.jar${path.separator}${java.home}/lib/jce.jar${path.separator}${java.home}/../lib/tools.jar</bootclasspath>
                     </compilerArguments>
                     <compilerArgs>
                         <arg>-Xlint:all,-serial,-path</arg>

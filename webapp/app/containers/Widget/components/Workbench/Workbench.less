@@ -141,8 +141,22 @@
   }
 }
 
+.mode {
+  flex-shrink: 0;
+  height: 36px;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  .button {
+    color: @disabled-text-color;
+  }
+}
+
 .charts {
-  padding: 4px 5px 4px 4px;
+  padding: 0 5px 4px 4px;
   border-bottom: 1px solid @border-color-base;
   flex-shrink: 0;
   display: flex;
@@ -776,5 +790,6 @@
 }
 
 .sizePanel {
+  min-width: 120px;
   max-width: 256px;
 }

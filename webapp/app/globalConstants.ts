@@ -77,6 +77,50 @@ export const PIVOT_CHART_LINE_STYLES = [
   { name: '点', value: 'dotted'}
 ]
 export const PIVOT_CHART_FONT_SIZES = [10, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64]
+export const CHART_LABEL_POSITIONS = [
+  { name: '上', value: 'top' },
+  { name: '左', value: 'left' },
+  { name: '右', value: 'right' },
+  { name: '下', value: 'bottom' },
+  { name: '内', value: 'inside' },
+  { name: '内左', value: 'insideLeft' },
+  { name: '内右', value: 'insideRight' },
+  { name: '内上', value: 'insideTop' },
+  { name: '内下', value: 'insideBottom' },
+  { name: '内左上', value: 'insideTopLeft' },
+  { name: '内左下', value: 'insideBottomLeft' },
+  { name: '内右上', value: 'insideTopRight' },
+  { name: '内右下', value: 'insideBottomRight' }
+]
+export const CHART_PIE_LABEL_POSITIONS = [
+  { name: '外侧', value: 'outside'},
+  { name: '内部', value: 'inside'},
+  { name: '中心', value: 'center'}
+]
+export const CHART_FUNNEL_LABEL_POSITIONS = [
+  { name: '左侧', value: 'left'},
+  { name: '右侧', value: 'right'},
+  { name: '内部', value: 'inside'}
+]
+
+export const CHART_SORT_MODES = [
+  { name: '降序', value: 'descending'},
+  { name: '升序', value: 'ascending'},
+  { name: '无', value: 'none'}
+]
+
+export const CHART_ALIGNMENT_MODES = [
+  { name: '居中', value: 'center'},
+  { name: '居左', value: 'left'},
+  { name: '居右', value: 'right'}
+]
+
+export const CHART_LEGEND_POSITIONS = [
+  { name: '右', value: 'right' },
+  { name: '上', value: 'top' },
+  { name: '下', value: 'bottom' },
+  { name: '左', value: 'left' }
+]
 
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',

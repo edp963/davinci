@@ -22,6 +22,7 @@ import * as React from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import { InjectedRouter } from 'react-router/lib/Router'
+import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
 
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
@@ -117,7 +118,7 @@ interface IBizlogicFormProps {
 }
 
 interface IBizlogicFormState {
-  expandedKeys: any[]
+  expandedKeys: string[]
   searchValue: string
   autoExpandParent: boolean
   modelType: string
@@ -131,7 +132,7 @@ interface IBizlogicFormState {
 
   treeData: any[]
   listData: any[]
-  teamExpandedKeys: any[]
+  teamExpandedKeys: string[]
   teamAutoExpandParent: boolean
   teamCheckedKeys: any[]
   selectedKeys: any[]
@@ -901,6 +902,38 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
+  private handleTree = (clickKey, obj) => {
+    const { expandedKeys } = this.state
+
+    this.setState({
+      autoExpandParent: false
+    })
+
+    if (obj.selected) {
+      if (expandedKeys.indexOf(clickKey[0]) < 0) {
+        expandedKeys.push(clickKey[0])
+        this.setState({
+          expandedKeys
+        })
+      } else {
+        this.setState({
+          expandedKeys: expandedKeys.filter((e) => e !== clickKey[0])
+        })
+      }
+    } else {
+      let currentKey = []
+      if (expandedKeys.length === 0) {
+        expandedKeys.push(obj.node.props.title)
+        currentKey = expandedKeys
+      } else {
+        currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
+      }
+      this.setState({
+        expandedKeys: currentKey
+      })
+    }
+  }
+
   public render () {
     const {
       form,
@@ -1144,6 +1177,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     return (
       <div className={styles.bizlogic}>
         <EditorHeader
+          currentType="view"
           className={styles.header}
           name={name}
           description={description}
@@ -1191,6 +1225,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 onExpand={this.onExpand}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
+                onSelect={this.handleTree}
               >
               {loop(data || [])}
               </Tree>

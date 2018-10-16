@@ -14,10 +14,11 @@ const styles = require('./Project.less')
 import * as classnames from 'classnames'
 import {InjectedRouter} from 'react-router/lib/Router'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail, transferProject, searchProject, unStarProject, getProjectStarUser} from './actions'
+import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
+  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects} from './actions'
 import {compose} from 'redux'
 import {makeSelectLoginUser} from '../App/selectors'
-import {makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList} from './selectors'
+import {makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects} from './selectors'
 import injectReducer from '../../utils/injectReducer'
 import {createStructuredSelector} from 'reselect'
 import injectSaga from '../../utils/injectSaga'
@@ -37,11 +38,13 @@ import Box from '../../components/Box'
 import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
+import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
 const  historyStack = new HistoryStack()
 
 interface IProjectsProps {
   router: InjectedRouter
   projects: IProject[]
+  collectProjects: IProject[]
   loginUser: any
   searchProject?: {list: any[], total: number, pageNum: number, pageSize: number}
   organizations: any
@@ -51,7 +54,9 @@ interface IProjectsProps {
   onLoadProjects: () => any
   onAddProject: (project: any, resolve: () => any) => any
   onLoadOrganizations: () => any
-  onDeleteProject: (id: number) => any
+  onLoadCollectProjects: () => any
+  onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
+  onDeleteProject: (id: number, resolve?: any) => any
   onLoadProjectDetail: (id: number) => any
   onStarProject: (id: number, resolve: () => any) => any,
   onGetProjectStarUser: (id: number) => any,
@@ -70,11 +75,13 @@ interface IProjectsState {
   modalLoading: boolean
   mimePanel: boolean
   joinPanel: boolean
+  collectPanel: boolean
   searchMaskVisible: boolean
   searchKeywordsVisible: boolean
   keywords: string
   currentPage: number
   pageSize: number
+  isDisableCollect: boolean
 }
 export interface IProject {
   createBy?: { avatar?: string, id?: number, username?: string}
@@ -108,11 +115,13 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       modalLoading: false,
       mimePanel: true,
       joinPanel: true,
+      collectPanel: true,
       searchMaskVisible: true,
       searchKeywordsVisible: false,
       keywords: '',
       currentPage: 1,
-      pageSize: 10
+      pageSize: 10,
+      isDisableCollect: false
     }
   }
   private ProjectForm: WrappedFormUtils
@@ -136,17 +145,37 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }
     })
   }
+
+  private collectProject = (formType, project?: IProject) => (e) => {
+    const { projects, collectProjects, onClickCollectProjects } = this.props
+    this.stopPPG(e)
+    this.setState({
+      formType
+    }, () => {
+      onClickCollectProjects(formType, project, () => {
+        this.setState({
+          isDisableCollect: this.state.formType === 'collect' ? true : false
+        })
+      })
+    })
+  }
+
   public componentWillMount () {
     this.props.onLoadProjects()
     this.props.onLoadOrganizations()
-    historyStack.init()
+    this.props.onLoadCollectProjects()
+    // historyStack.init()
   }
 
-  // public componentWillReceiveProps (nextProps) {
-  //   if (nextProps.loginUser !== this.props.loginUser) {
-  //     historyBrowser.init()
-  //   }
-  // }
+  public componentWillReceiveProps (nextProps) {
+    // if (nextProps.loginUser !== this.props.loginUser) {
+    //   historyBrowser.init()
+    // }
+    const { projects, collectProjects } = nextProps
+    if (projects) {
+      historyStack.init(projects)
+    }
+  }
 
   private enterSearch: (e: KeyboardEvent) => any = null
 
@@ -220,6 +249,10 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     } else if (flag === 'joinPanel') {
       this.setState({
         joinPanel: !this.state.joinPanel
+      })
+    } else if (flag === 'collectPanel') {
+      this.setState({
+        collectPanel: !this.state.collectPanel
       })
     }
   }
@@ -355,9 +388,21 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const { onGetProjectStarUser } = this.props
     onGetProjectStarUser(id)
   }
+
+  private confirmDeleteProject = (type, id) => () => {
+    if (type === 'collect') {
+      this.props.onDeleteProject(id)
+    } else {
+      this.props.onDeleteProject(id, () => {
+        this.setState({
+        })
+      })
+    }
+  }
+
   public render () {
     const { formType, formVisible, modalLoading } = this.state
-    const { onDeleteProject, organizations, projects, searchProject, loginUser, starUserList } = this.props
+    const {onDeleteProject, organizations, projects, searchProject, loginUser, starUserList, collectProjects } = this.props
     const projectArr = Array.isArray(projects) ? [...projects, ...[{
       id: 'add',
       type: 'add'
@@ -437,7 +482,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           <Popconfirm
             title="确定删除？"
             placement="bottom"
-            onConfirm={onDeleteProject(d.id)}
+            onConfirm={this.confirmDeleteProject('collect', d.id)}
           >
             <Tooltip title="删除">
               <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
@@ -463,7 +508,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
             >
               <div
                 className={itemClass}
-                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic || 9}.png`)})`}}
+                style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
                 onClick={this.toProject(d)}
               >
                 <header>
@@ -476,9 +521,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                   </p>
                 </header>
                 {star}
-                {transfer}
-                {editButton}
-                {deleteButton}
+                <div className={styles.mimeActions}>
+                  {transfer}
+                  {editButton}
+                  {deleteButton}
+                </div>
               </div>
             </Col>
           )
@@ -494,6 +541,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         if (loginUser && d.createBy && loginUser.id === d.createBy.id) {
           return []
         }
+
         if (organizations) {
           belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
           CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
@@ -504,6 +552,8 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         }
         let editButton = void 0
         let deleteButton = void 0
+        let collectButton = void 0
+        let unCollectButton = void 0
         let transfer = void 0
         let star = void 0
         let ProjectName
@@ -519,24 +569,59 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           </Tooltip>
         )
 
+        let currentCollectIds = []
+        if (collectProjects) {
+          currentCollectIds = collectProjects.map((cp) => cp.id)
+        }
+
+        collectButton = (
+          <Tooltip title="收藏">
+            <i
+              className={`iconfont icon-heart1 ${styles.collect}`}
+              onClick={this.collectProject('collect', d)}
+            />
+          </Tooltip>
+        )
+
+        unCollectButton = (
+          <Tooltip title="取消收藏">
+            <i
+              className={`iconfont icon-heart ${styles.unCollect}`}
+              onClick={this.collectProject('unCollect', d)}
+            />
+          </Tooltip>
+        )
+
         transfer = (
           <Tooltip title="移交项目">
-            <CreateButton className={styles.transfer} type="double-right" onClick={this.showProjectForm('transfer', d)} />
+            <CreateButton
+              className={styles.transfer}
+              type="double-right"
+              onClick={this.showProjectForm('transfer', d)}
+            />
           </Tooltip>
         )
         editButton =  (
           <Tooltip title="编辑">
-            <CreateButton className={styles.edit} type="setting" onClick={this.showProjectForm('edit', d)} />
+            <CreateButton
+              className={styles.edit}
+              type="setting"
+              onClick={this.showProjectForm('edit', d)}
+            />
           </Tooltip>
         )
         deleteButton = (
           <Popconfirm
             title="确定删除？"
             placement="bottom"
-            onConfirm={onDeleteProject(d.id)}
+            onConfirm={this.confirmDeleteProject('onCollect', d.id)}
           >
             <Tooltip title="删除">
-              <CreateButton className={styles.delete} type="delete" onClick={this.stopPPG}/>
+              <CreateButton
+                className={styles.delete}
+                type="delete"
+                onClick={this.stopPPG}
+              />
             </Tooltip>
           </Popconfirm>
         )
@@ -555,7 +640,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           >
             <div
               className={itemClass}
-              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic || 9}.png`)})`}}
+              style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
               onClick={this.toProject(d)}
             >
               <header>
@@ -568,27 +653,100 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                 </p>
               </header>
               {star}
-              {transfer}
-              {editButton}
-              {deleteButton}
+              <div className={styles.joinActions}>
+                {currentCollectIds.indexOf(d.id) < 0 ? collectButton : unCollectButton}
+                {transfer}
+                {editButton}
+                {deleteButton}
+              </div>
             </div>
           </Col>
         )
         return colItems
       }) : ''
-    const historyBrowserAll = historyStack.getAll()
-    const historyArr = []
-    historyBrowserAll.forEach((historyItem) => {
-      projectArr.forEach((projectItem) => {
-        if (historyItem.id === projectItem.id) {
-          historyArr.push(projectItem)
-        }
-      })
-    })
 
-    const history =  historyArr
-      ? historyArr.map((d: IProject) => {
-        const path = require(`../../assets/images/bg${d.pic || 9}.png`)
+    const collectProjectsArr = collectProjects
+    ? collectProjects.map((d: IProject) => {
+      let CreateButton = void 0
+      let belongWhichOrganization = void 0
+      if (d.type && d.type === 'add') {
+        return []
+      }
+      if (loginUser && d.createBy && loginUser.id === d.createBy.id) {
+        return []
+      }
+      if (organizations) {
+        belongWhichOrganization = organizations.find((org) => org.id === d.orgId)
+        CreateButton = ComponentPermission(belongWhichOrganization, '')(Icon)
+      }
+      let StarPanel = void 0
+      if (d && d.id) {
+        StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
+      }
+      let collectButton = void 0
+      let star = void 0
+      let ProjectName
+      const org = organizations.find((org, index) => d.orgId === org.id)
+      if (d && organizations) {
+        ProjectName = `${d.name} (${org && org.name ? org.name : ''})`
+      }
+      star = (
+        <Tooltip title="点赞项目">
+          <div className={styles.starWrapperPosition}>
+            {StarPanel}
+          </div>
+        </Tooltip>
+      )
+
+      collectButton = (
+        <Tooltip title="取消收藏">
+          <i
+            className={`iconfont icon-heart ${styles.unCollect}`}
+            onClick={this.collectProject('unCollect', d)}
+          />
+        </Tooltip>
+      )
+
+      const itemClass = classnames({
+        [styles.unit]: true
+      })
+      const colItems = (
+        <Col
+          key={d.id}
+          xl={6}
+          lg={8}
+          md={8}
+          sm={12}
+          xs={24}
+        >
+          <div
+            className={itemClass}
+            style={{backgroundImage: `url(${require(`../../assets/images/bg${d.pic}.png`)})`}}
+            onClick={this.toProject(d)}
+          >
+            <header>
+              <h3 className={styles.title}>
+                {ProjectName}
+                {/*{editHint}*/}
+              </h3>
+              <p className={styles.content}>
+                {d.description}
+              </p>
+            </header>
+            {star}
+            <div className={styles.collectActions}>
+              {collectButton}
+            </div>
+          </div>
+        </Col>
+      )
+      return colItems
+    }) : ''
+
+    const historyBrowserAll = historyStack.getAll()
+    const history = historyBrowserAll
+      ? historyBrowserAll.map((d: IProject) => {
+        const path = require(`../../assets/images/bg${d.pic}.png`)
         const colItems = (
           <div className={styles.groupList} key={d.id} onClick={this.toProject(d)}>
             <div className={styles.orgHeader}>
@@ -606,7 +764,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }) : ''
 
     const projectSearchItems = searchProject && searchProject.list && searchProject.list.length ? searchProject.list.map((d: IProject) => {
-      const path = require(`../../assets/images/bg${d.pic || 9}.png`)
+      const path = require(`../../assets/images/bg${d.pic}.png`)
       let StarPanel = void 0
       if (d && d.id) {
         StarPanel = <Star d={d} starUser={starUserList} unStar={this.starProject} userList={this.getStarProjectUserList}/>
@@ -682,6 +840,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       [utilStyles.hide]: !this.state.joinPanel
     })
 
+    const isHoldCollectStyle = classnames({
+      [styles.listPadding]: true,
+      [utilStyles.hide]: !this.state.collectPanel
+    })
+
     const searchListWrapperStyle = classnames({
       [utilStyles.hide]: this.computSearchListWrapperStyle(),
       [styles.searchListWrapper]: true
@@ -689,6 +852,14 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
     const wrapper = classnames({
       [styles.wrapper]: true,
       [styles.overflowY]: this.state.searchMaskVisible
+    })
+    const joinStyle = classnames({
+      [styles.join]: true,
+      [utilStyles.hide]: !(joinProjects && joinProjects.length > 0)
+    })
+    const collectStyle = classnames({
+      [styles.mime]: true,
+      [utilStyles.hide]: !(collectProjectsArr && collectProjectsArr.length > 0)
     })
     return (
       <div className={wrapper}>
@@ -767,7 +938,7 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       </div>
                     </Box>
                   </div>
-                  <div className={styles.join} id="join">
+                  <div className={joinStyle} id="join">
                     <Box>
                       <Box.Header>
                         <Box.Title>
@@ -781,6 +952,24 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
                       <div className={isHoldJoinStyle}>
                         <Row gutter={16}>
                           {joinProjects}
+                        </Row>
+                      </div>
+                    </Box>
+                  </div>
+                  <div className={collectStyle} id="collect">
+                    <Box>
+                      <Box.Header>
+                        <Box.Title>
+                          <Row onClick={this.foldPanel('collectPanel')}>
+                            <Col span={20}>
+                              <Icon type={`${this.state.collectPanel ? 'down' : 'right'}`} />我收藏的项目
+                            </Col>
+                          </Row>
+                        </Box.Title>
+                      </Box.Header>
+                      <div className={isHoldCollectStyle}>
+                        <Row gutter={16}>
+                          {collectProjectsArr}
                         </Row>
                       </div>
                     </Box>
@@ -842,7 +1031,8 @@ const mapStateToProps = createStructuredSelector({
   projects: makeSelectProjects(),
   loginUser: makeSelectLoginUser(),
   searchProject: makeSelectSearchProject(),
-  starUserList: makeSelectStarUserList()
+  starUserList: makeSelectStarUserList(),
+  collectProjects: makeSelectCollectProjects()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -852,10 +1042,12 @@ export function mapDispatchToProps (dispatch) {
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onLoadOrganizations: () => dispatch(loadOrganizations()),
+    onLoadCollectProjects: () => dispatch(loadCollectProjects()),
+    onClickCollectProjects: (formType, project, result) => dispatch(clickCollectProjects(formType, project, result)),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
     onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
     onTransferProject: (id, orgId) => dispatch(transferProject(id, orgId)),
-    onDeleteProject: (id) => () => dispatch(deleteProject(id)),
+    onDeleteProject: (id, resolve) => dispatch(deleteProject(id, resolve)),
     onSearchProject: (param) => dispatch(searchProject(param)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }

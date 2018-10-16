@@ -88,30 +88,23 @@
     .ellipsis;
   }
 
-  .delete, .copy, .edit {
-    color: @white;
+  .displayActions {
     position: absolute;
-    top: 8px;
-    font-size: 15px;
-    opacity: .5;
-    transition: transform 200ms ease;
-
-    &:hover {
-      opacity: 1;
-      transform: scale(1.1, 1.1);
-    }
-  }
-
-  .delete {
     right: 8px;
-  }
+    top: 8px;
+    
+    .delete, .copy, .edit {
+      color: @white;
+      margin-left: 8px;
+      font-size: 15px;
+      opacity: .5;
+      transition: transform 200ms ease;
 
-  .copy {
-    right: 32px;
-  }
-
-  .edit {
-    right: 56px;
+      &:hover {
+        opacity: 1;
+        transform: scale(1.1, 1.1);
+      }
+    }
   }
 }
 
@@ -348,51 +341,6 @@
       border: 2px solid @border-color-base;
     }
 
-    .title {
-      width: 100%;
-      height: 40px;
-      display: flex;
-      flex-direction: row;
-      padding: 0 10px;
-      line-height: 40px;
-
-      h4 {
-        .ellipsis
-      }
-    }
-
-    .body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-
-      .block {
-        flex: 1;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-
-        .chartBlock {
-          flex: 1;
-          overflow-x: hidden;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .tableBlock {
-          padding: 0 16px;
-          flex: 1;
-
-          .selectedRow {
-            td {
-              background-color: @primary-color;
-              color: @white;
-            }
-          }
-        }
-      }
-    }
-
     &.rect {
       background-color: @light-bg;
     }
@@ -426,6 +374,24 @@
     box-shadow: @block-active-box-shadow;
     transform-origin: 0 0;
     transition: transform ease-in 200ms;
+
+    .verticalBaseline {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background-color: #ecc302;
+      z-index: 999999;
+    }
+
+    .horizontalBaseline {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background-color: #ecc302;
+      z-index: 999999;
+    }
   }
 
 }

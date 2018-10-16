@@ -27,8 +27,8 @@ import DashboardItemControlForm from './DashboardItemControlForm'
 import SharePanel from '../../../components/SharePanel'
 import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 
-import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import Widget from '../../Widget/components/Widget/WidgetInViz'
+import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
 import { IconProps } from 'antd/lib/icon'
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
@@ -50,6 +50,7 @@ interface IDashboardItemProps {
   data: any
   loading: boolean
   polling: string
+  interacting: boolean
   frequency: string
   shareInfo: string
   secretInfo?: string
@@ -64,7 +65,7 @@ interface IDashboardItemProps {
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onDownloadCsv: (itemId: number, pivotProps: IPivotProps, shareInfo: string) => void
+  onDownloadCsv: (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
@@ -75,8 +76,7 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
-  isInteracting: boolean
-  pivotProps: IPivotProps
+  widgetProps: IWidgetProps
 }
 
 export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
@@ -85,8 +85,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.state = {
       controlPanelVisible: false,
       sharePanelAuthorized: false,
-      isInteracting: false,
-      pivotProps: null
+      widgetProps: null
     }
   }
 
@@ -104,14 +103,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       this.setFrequent(this.props)
     }
     this.setState({
-      pivotProps: JSON.parse(widget.config)
+      widgetProps: JSON.parse(widget.config)
     })
   }
 
   public componentWillReceiveProps (nextProps) {
     if (nextProps.widget !== this.props.widget) {
       this.setState({
-        pivotProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config)
       })
     }
   }
@@ -204,9 +203,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private downloadCsv = () => {
     const { widget, itemId, shareInfo, onDownloadCsv } = this.props
-    const { pivotProps } = this.state
+    const { widgetProps } = this.state
 
-    onDownloadCsv(widget.id, pivotProps, shareInfo)
+    onDownloadCsv(widget.id, widgetProps, shareInfo)
   }
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
@@ -221,12 +220,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private doInteract = (triggerData) => {
     const { itemId, onDoTableInteract } = this.props
-    this.setState({ isInteracting: true })
     onDoTableInteract(itemId, triggerData)
   }
 
   private turnOffInteract = () => {
-    this.setState({ isInteracting: false })
     const { onTurnOffInteract, itemId } = this.props
     onTurnOffInteract(itemId)
   }
@@ -242,6 +239,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       data,
       loading,
+      interacting,
       shareInfo,
       secretInfo,
       shareInfoLoading,
@@ -257,8 +255,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       controlPanelVisible,
       sharePanelAuthorized,
-      isInteracting,
-      pivotProps
+      widgetProps
     } = this.state
 
     let downloadButton
@@ -355,7 +352,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const controls = pivotProps.queryParams.filter((c) => c.type)
+    const controls = widgetProps.queryParams.filter((c) => c.type)
     const controlPanelHandle = controls.length
       ? (
         <Tooltip title="选择参数">
@@ -389,7 +386,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const gridItemClass = classnames({
       [styles.gridItem]: true,
-      [styles.interact]: isInteracting
+      [styles.interact]: interacting
     })
 
     return (
@@ -437,8 +434,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           </DashboardItemControlPanel>
         </Animate>
         <div className={styles.block}>
-          <Pivot
-            {...pivotProps}
+          <Widget
+            {...widgetProps}
             renderType={loading ? 'refresh' : renderType}
             data={data}
             loading={loading}

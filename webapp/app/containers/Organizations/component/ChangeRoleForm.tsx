@@ -37,14 +37,14 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
               <Radio key={`radio${1}`} value={1} className={styles.radio}/>
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Owner</div>
-                <div className={styles.labelDesc}>可以添加和删除团队成员并创建子团队</div>
+                <div className={styles.labelDesc}>组织的管理者，可以添加和删除组织成员并创建团队</div>
               </div>
             </div>
             <div className={styles.radioWrapper}>
               <Radio key={`radio${2}`} value={0} className={styles.radio}/>
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Member</div>
-                <div className={styles.labelDesc}>没有团队的管理权限</div>
+                <div className={styles.labelDesc}>组织内的普通成员，进入团队后，由团队的 Maintainer 分配项目模块权限</div>
               </div>
             </div>
           </RadioGroup>
@@ -56,14 +56,14 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
               <Radio key={`radio${1}`} value={1} className={styles.radio}/>
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Maintainer</div>
-                <div className={styles.labelDesc}>拥有对整个组织的完全管理访问权限</div>
+                <div className={styles.labelDesc}>团队的管理者，可以指定该团队在项目中的模块权限</div>
               </div>
             </div>
             <div className={styles.radioWrapper}>
               <Radio key={`radio${2}`} value={0} className={styles.radio}/>
               <div className={styles.labelWrapper}>
                 <div className={styles.label}>Member</div>
-                <div className={styles.labelDesc}>可以看到组织中的每个成员和非秘密团队，并可以创建新的项目</div>
+                <div className={styles.labelDesc}>组织内的普通成员，进入团队后，由团队的 Maintainer 分配项目模块权限</div>
               </div>
             </div>
           </RadioGroup>

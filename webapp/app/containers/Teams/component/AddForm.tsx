@@ -134,17 +134,15 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
         )
       } else {
         return (
-          (
-            <li key={o.id} className={searchLi} onClick={this.selectOption(o)}>
-              <span className={styles.main}>
-                <img className={styles.avatar} src={o.user && o.user.avatar ? o.user.avatar : ''} alt=""/>
-                <span className={styles.mainText}>
-                  {o.name ? o.name : o.username}
-                </span>
+          <li key={o.id} className={searchLi} onClick={this.selectOption(o)}>
+            <span className={styles.main}>
+              <img className={styles.avatar} src={o.user && o.user.avatar ? o.user.avatar : ''} alt=""/>
+              <span className={styles.mainText}>
+                {o.name ? o.name : o.username}
               </span>
-              <Icon type="plus" className={styles.iconPlus}/>
-            </li>
-          )
+            </span>
+            <Icon type="plus" className={styles.iconPlus}/>
+          </li>
         )
       }
     }) : ''
@@ -222,7 +220,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
                 })(
                   <Input style={{width: '65%'}} autoComplete="off"/>
                 )}
-                <Button type="primary" size="large" onClick={this.props.addHandler} disabled={isDisabled}>
+                <Button className={styles.plusBtn}  type="primary" size="large" onClick={this.props.addHandler} disabled={isDisabled}>
                   {this.submitText(category)}<Icon type="plus"/>
                 </Button>
                 {optionList}

@@ -65,7 +65,7 @@ export function processLinkage (itemId: number, triggerData, mappingLinkage: IMa
       const { triggerKey, triggerSqlType, triggerType, linkagerKey, linkagerSqlType, linkagerType, relation } = l
 
       const interactValue = SQL_NUMBER_TYPES.indexOf(triggerSqlType) >= 0 ?
-        triggerData[0][triggerKey] : `${triggerData[0][triggerKey]}`
+        triggerData[0][triggerKey] : `'${triggerData[0][triggerKey]}'`
 
       if (linkagerType === 'parameter') {
         linkageFilters.push(`${linkagerKey} ${relation} ${interactValue}`)

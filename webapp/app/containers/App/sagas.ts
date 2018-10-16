@@ -218,9 +218,24 @@ export function* joinOrganization (action): IterableIterator<any> {
         message.error(asyncData.header.msg)
         return null
     }
-  } catch (err) {
+  } catch (error) {
     if (reject) {
-      reject(err)
+      reject(error)
+    }
+    if (error.response) {
+      console.log(error.response.status)
+      switch (error.response.status) {
+        case 403:
+          removeToken()
+          localStorage.removeItem('TOKEN')
+          break
+        case 400:
+          console.log({error})
+          message.error(error.response.data.header.msg, 3)
+          break
+        default:
+          break
+      }
     }
   }
 }

@@ -13,7 +13,7 @@ import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
-import {IStarUser} from '../../Projects'
+import {IStarUser, IProject} from '../../Projects'
 
 interface IProjectsState {
   formType?: string
@@ -31,6 +31,7 @@ interface IProjectsProps {
   toProject: (id: number) => any
   deleteProject: (id: number) => any
   starUser: IStarUser[]
+  collectProjects: IProject[]
   onAddProject: (project: any, resolve: () => any) => any
   onEditProject: (project: any, resolve: () => any) => any
   organizationProjects: Organization.IOrganizationProjects[]
@@ -40,6 +41,8 @@ interface IProjectsProps {
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   getOrganizationProjectsByPagination: (obj: {keyword?: string, pageNum: number, pageSize: number}) => any
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
+  onClickCollectProjects: (formType, project: object, resolve: (id: number) => any) => any
+  onLoadCollectProjects: () => any
 }
 
 export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
@@ -199,7 +202,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects } = this.state
-    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName } = this.props
+    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -236,6 +239,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         unStar={this.props.unStar}
         userList={this.props.userList}
         starUser={this.props.starUser}
+        collectProjects={collectProjects}
         currentOrganization={currentOrganization}
         key={index}
         loginUser={this.props.loginUser}
@@ -243,6 +247,8 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         toProject={this.props.toProject}
         deleteProject={this.props.deleteProject}
         showEditProjectForm={this.showEditProjectForm('edit', lists)}
+        onClickCollectProjects={this.props.onClickCollectProjects}
+        onLoadCollectProjects={this.props.onLoadCollectProjects}
       />
     )) : ''
 

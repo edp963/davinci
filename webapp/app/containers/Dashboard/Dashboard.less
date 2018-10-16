@@ -462,25 +462,6 @@
 
   .portalHeader {
     flex-shrink: 0;
-    height: 40px;
-    background: @white;
-    border-bottom: 1px solid @border-color-base;
-
-    .title {
-      font-size: 16px;
-      font-weight: 500;
-      line-height: 40px;
-    }
-
-    .historyBack {
-      padding-left: 13px;
-      line-height: 40px;
-      cursor: pointer;
-
-      .backIcon:before {
-        font-size: 18px !important;
-      }
-    }
   }
 
   .portalBody {
@@ -502,8 +483,8 @@
 
       .portalRow {
         flex-shrink: 0;
-        display: flex;
-        flex-direction: row;
+        // display: flex;
+        // flex-direction: row;
         align-items: center;
         padding: 16px;
 
@@ -515,18 +496,8 @@
         }
       }
 
-      .portalTitle {
-        flex: 1;
-        padding: 0 4px;
-        line-height: 32px;
-        font-weight: bold;
-        display: inline-block;
-        font-size: 16px;
-        .ellipsis;
-      }
-
       .portalAction {
-        flex-shrink: 0;
+        float: right;
       }
 
       .portalTreeNode {

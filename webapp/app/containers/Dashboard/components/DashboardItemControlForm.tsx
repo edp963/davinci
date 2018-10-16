@@ -303,12 +303,12 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
             })
             break
           case 'multiSelect':
-            val.forEach((v) => {
+            if (val.length) {
               arr = arr.concat({
                 name: valControl.variables[0],
-                value: `${v}`
+                value: val.map((v) => `${v}`).join(',')
               })
-            })
+            }
             break
           default:
             break

@@ -1,25 +1,13 @@
 import * as React from 'react'
 import * as echarts from 'echarts/lib/echarts'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend, IChartStyles } from './Pivot'
-import chartOptionGenerator from '../../charts'
-import { PIVOT_DEFAULT_AXIS_LINE_COLOR, PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
-import { decodeMetricName, getScatter, getTooltipPosition, getTooltipLabel, getSizeValue, getChartLabel, getBar, getTriggeringRecord } from '../util'
+import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
+import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
+import chartOptionGenerator from '../../render/pivot'
+import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
+import { decodeMetricName, getScatter, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getBar, getTriggeringRecord } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 const styles = require('./Pivot.less')
-
-export interface IChartInfo {
-  id: number
-  name: string
-  title: string
-  icon: string
-  coordinate: 'cartesian' | 'polar' | 'other'
-  requireDimetions: number | number[],
-  requireMetrics: number | number[],
-  dimetionAxis?: DimetionType
-  data: object,
-  style: object
-}
 
 export interface IChartUnit {
   key?: string
@@ -54,7 +42,7 @@ interface IChartProps {
   rows: string[]
   dimetionAxisCount: number
   metricAxisCount: number
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   data: IChartChunk[]
   chartStyles: IChartStyles
   drawingData: IDrawingData
@@ -641,7 +629,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
-              formatter: getTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
+              formatter: getPivotTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
             },
             grid,
             xAxis,

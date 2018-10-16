@@ -95,12 +95,14 @@ public class SqlUtils {
     }
 
     @CachePut(value = "query", key = "#sql")
-    public List<Map<String, Object>> query4List(String sql) throws ServerException {
+    public List<Map<String, Object>> query4List(String sql, int limit) throws ServerException {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         List<Map<String, Object>> list = null;
         try {
-            list = jdbcTemplate().queryForList(sql);
+            JdbcTemplate jdbcTemplate = jdbcTemplate();
+            jdbcTemplate.setMaxRows(limit);
+            list = jdbcTemplate.queryForList(sql);
             log.info("query by database");
         } catch (Exception e) {
             e.printStackTrace();
@@ -112,7 +114,13 @@ public class SqlUtils {
 
     @Cacheable(value = "query", key = "#sql", sync = true)
     public List<Map<String, Object>> syncQuery4List(String sql) throws ServerException {
-        List<Map<String, Object>> list = query4List(sql);
+        List<Map<String, Object>> list = query4List(sql, -1);
+        return list;
+    }
+
+    @Cacheable(value = "query", key = "T(String).valueOf(#limit).concat('-').concat(#sql)", sync = true)
+    public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws ServerException {
+        List<Map<String, Object>> list = query4List(sql, limit);
         return list;
     }
 
@@ -249,7 +257,6 @@ public class SqlUtils {
      * @throws ServerException
      */
     private List<String> getPrimaryKeys(String tableName, DatabaseMetaData metaData) throws ServerException {
-        Connection connection = null;
         ResultSet rs = null;
         List<String> primaryKeys = new ArrayList<>();
         try {
@@ -261,7 +268,6 @@ public class SqlUtils {
             throw new ServerException(e.getMessage());
         } finally {
             closeResult(rs);
-            releaseConnection(connection);
         }
         return primaryKeys;
     }
@@ -276,7 +282,6 @@ public class SqlUtils {
      * @throws ServerException
      */
     private List<QueryColumn> getColumns(String tableName, DatabaseMetaData metaData) throws ServerException {
-        Connection connection = null;
         ResultSet rs = null;
         List<QueryColumn> columnList = new ArrayList<>();
         try {
@@ -288,7 +293,6 @@ public class SqlUtils {
             throw new ServerException(e.getMessage());
         } finally {
             closeResult(rs);
-            releaseConnection(connection);
         }
         return columnList;
     }
@@ -305,7 +309,7 @@ public class SqlUtils {
      */
     private DataSource getDataSource(String jdbcUrl, String userename, String password) throws SourceException {
         if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
-            return ESDataSource.getDataSource(jdbcUrl, userename);
+            return ESDataSource.getDataSource(jdbcUrl);
         } else {
             return jdbcDataSource.getDataSource(jdbcUrl, userename, password);
         }
@@ -332,7 +336,7 @@ public class SqlUtils {
         Connection connection = null;
         try {
             connection = dataSource.getConnection();
-        } catch (SQLException e) {
+        } catch (Exception e) {
             log.error("create connection error, jdbcUrl: {}", jdbcUrl);
             throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
         }
@@ -344,7 +348,7 @@ public class SqlUtils {
             try {
                 connection.close();
                 connection = null;
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 log.error("connection close error", e.getMessage());
             }
@@ -357,7 +361,7 @@ public class SqlUtils {
             try {
                 rs.close();
                 rs = null;
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

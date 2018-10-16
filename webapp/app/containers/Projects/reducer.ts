@@ -31,7 +31,13 @@ import {
   LOAD_PROJECT_DETAIL_SUCCESS,
   KILL_PROJECT_DETAIL,
   SEARCH_PROJECT_SUCCESS,
-  GET_PROJECT_STAR_USER_SUCCESS
+  GET_PROJECT_STAR_USER_SUCCESS,
+  LOAD_COLLECT_PROJECTS,
+  LOAD_COLLECT_PROJECTS_SUCCESS,
+  LOAD_COLLECT_PROJECTS_FAILURE,
+  CLICK_COLLECT_PROJECT,
+  CLICK_COLLECT_PROJECT_SUCCESS,
+  CLICK_COLLECT_PROJECT_FAILURE
 } from './constants'
 
 
@@ -40,12 +46,14 @@ const initialState = fromJS({
   currentProject: null,
   currentProjectLoading: false,
   searchProject: false,
-  starUserList: false
+  starUserList: false,
+  collectProjects: null
 })
 
 function projectReducer (state = initialState, action) {
   const { type, payload } = action
   const projects = state.get('projects')
+  const collectProjects = state.get('collectProjects')
 
   switch (type) {
     case LOAD_PROJECTS_SUCCESS:
@@ -70,6 +78,7 @@ function projectReducer (state = initialState, action) {
     case DELETE_PROJECT_SUCCESS:
       if (projects) {
         return state.set('projects', projects.filter((d) => d.id !== payload.id))
+        .set('collectProjects', collectProjects.filter((d) => d.id !== payload.id))
       }
       return state
     case LOAD_PROJECT_DETAIL:
@@ -89,6 +98,19 @@ function projectReducer (state = initialState, action) {
     case GET_PROJECT_STAR_USER_SUCCESS:
       return state
         .set('starUserList', payload.result)
+    case LOAD_COLLECT_PROJECTS:
+      return state
+    case LOAD_COLLECT_PROJECTS_SUCCESS:
+      return state.set('collectProjects', payload.result)
+    case LOAD_COLLECT_PROJECTS_FAILURE:
+      return state
+    case CLICK_COLLECT_PROJECT_SUCCESS:
+      if (payload.result.formType === 'unCollect') {
+        return state.set('collectProjects', collectProjects.filter((p) => p.id !== payload.result.project.id))
+      } else {
+        collectProjects.push(payload.result.project)
+        return state.set('collectProjects', collectProjects.slice())
+      }
     default:
       return state
   }

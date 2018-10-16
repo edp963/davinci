@@ -22,7 +22,7 @@ import { fromJS } from 'immutable'
 import undoable, { includeAction } from 'redux-undo'
 
 import { ActionTypes } from './constants'
-import { GraphTypes } from 'utils/util'
+import { GraphTypes } from './components/util'
 import {
   LOAD_DATA_FROM_ITEM,
   LOAD_DATA_FROM_ITEM_SUCCESS,
@@ -41,11 +41,14 @@ const initialState = fromJS({
 
   currentLayers: [],
   currentLayersInfo: {},
+  currentLayersOperationInfo: {},
 
   displayLoading: false,
   clipboardLayers: [],
   lastOperationType: '',
-  lastLayers: []
+  lastLayers: [],
+
+  editorBaselines: {}
 })
 
 function displayReducer (state = initialState, action) {
@@ -55,6 +58,8 @@ function displayReducer (state = initialState, action) {
   const displayCascadeSources = state.get('currentDisplayCascadeSources')
   const layers = state.get('currentLayers')
   const layersInfo = state.get('currentLayersInfo')
+  const layersOperationInfo = state.get('currentLayersOperationInfo')
+  const editorBaselines = state.get('editorBaselines')
 
   switch (type) {
     case ActionTypes.LOAD_DISPLAYS_SUCCESS:
@@ -115,7 +120,6 @@ function displayReducer (state = initialState, action) {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: [],
             loading: false,
-            selected: false,
             queryParams: {
               linkageFilters: [],
               globalFilters: [],
@@ -129,11 +133,28 @@ function displayReducer (state = initialState, action) {
             renderType: 'rerender'
           } : {
             loading: false,
-            selected: false,
             datasource: []
           }
           return obj
         }, {}))
+        .set('currentLayersOperationInfo', payload.layers.reduce((obj, layer) => {
+          obj[layer.id] = {
+            selected: false,
+            dragging: false,
+            resizing: false
+          }
+          return obj
+        }, {}))
+        .set('editorBaselines', {
+          horizontal: {
+            visible: false,
+            position: [0, 0, 0]
+          },
+          vertical: {
+            visible: false,
+            position: [0, 0, 0]
+          }
+        })
     case ActionTypes.LOAD_DISPLAY_DETAIL_FAILURE:
       return state
         .set('currentDisplayLoading', false)
@@ -155,7 +176,6 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: [],
               loading: false,
-              selected: false,
               queryParams: {
                 linkageFilters: [],
                 globalFilters: [],
@@ -169,21 +189,32 @@ function displayReducer (state = initialState, action) {
               renderType: 'rerender'
             } : {
               datasource: [],
-              loading: false,
-              selected: false
+              loading: false
             }
             return obj
+          }, {})
+        })
+        .set('currentLayersOperationInfo', {
+          ...layersOperationInfo,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {
+              selected: false,
+              resizing: false,
+              dragging: false
+            }
           }, {})
         })
     case ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS:
       payload.ids.forEach((id) => {
         delete layersInfo[id]
+        delete layersOperationInfo[id]
       })
       return state
         .set('lastOperationType', ActionTypes.DELETE_DISPLAY_LAYERS_SUCCESS)
         .set('lastLayers', layers.filter((layer) => payload.ids.indexOf(layer.id.toString()) >= 0))
         .set('currentLayers', layers.filter((layer) => payload.ids.indexOf(layer.id.toString()) < 0))
         .set('currentLayersInfo', layersInfo)
+        .set('currentLayersOperationInfo', layersOperationInfo)
     case ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS:
       const copyLayers = fromJS(layers).toJS()
       const lastLayers = []
@@ -234,7 +265,7 @@ function displayReducer (state = initialState, action) {
 
     case ActionTypes.DRAG_SELECT_LAYER:
       return state.set('currentLayers', layers.map((layer) => {
-        if (!layersInfo[layer.id].selected || layer.id === payload.id) { return layer }
+        if (!layersOperationInfo[layer.id].selected || layer.id === payload.id) { return layer }
         const layerParams = JSON.parse(layer.params)
         const { positionX, positionY } = layerParams
         return {
@@ -262,21 +293,69 @@ function displayReducer (state = initialState, action) {
         }, {}))
     case ActionTypes.SELECT_LAYER:
       if (payload.selected && payload.exclusive) {
-        Object.keys(layersInfo).forEach((key) => { layersInfo[key].selected = false })
+        Object.keys(layersOperationInfo).forEach((key) => { layersOperationInfo[key].selected = false })
       }
-      return state.set('currentLayersInfo', {
-        ...layersInfo,
+      return state.set('currentLayersOperationInfo', {
+        ...layersOperationInfo,
         [payload.id]: {
-          ...layersInfo[payload.id],
+          ...layersOperationInfo[payload.id],
           selected: payload.selected
         }
       })
     case ActionTypes.CLEAR_LAYERS_SELECTION:
-      Object.keys(layersInfo).forEach((key) => {
-        layersInfo[key].selected = false
-        layersInfo[key].renderType = 'refresh'
+      Object.keys(layersOperationInfo).forEach((key) => {
+        layersOperationInfo[key].selected = false
       })
-      return state.set('currentLayersInfo', layersInfo)
+      return state.set('currentLayersOperationInfo', layersOperationInfo)
+
+    case ActionTypes.TOGGLE_LAYERS_RESIZING_STATUS:
+      return state.set('currentLayersOperationInfo', payload.layerIds.reduce((acc, layerId) => ({
+        ...acc,
+        [layerId]: {
+          ...acc[layerId],
+          resizing: payload.resizing
+        }
+      }), layersOperationInfo))
+    case ActionTypes.TOGGLE_LAYERS_DRAGGING_STATUS:
+      return state.set('currentLayersOperationInfo', payload.layerIds.reduce((acc, layerId) => ({
+        ...acc,
+        [layerId]: {
+          ...acc[layerId],
+          dragging: payload.dragging
+        }
+      }), layersOperationInfo))
+    case ActionTypes.HIDE_EDITOR_VERTICAL_BASELINE:
+      return state.set('editorBaselines', {
+        ...editorBaselines,
+        vertical: {
+          ...editorBaselines.vertical,
+          visible: false
+        }
+      })
+    case ActionTypes.SHOW_EDITOR_VERTICAL_BASELINE:
+      return state.set('editorBaselines', {
+        ...editorBaselines,
+        vertical: {
+          visible: true,
+          position: [payload.top, payload.bottom, payload.left]
+        }
+      })
+    case ActionTypes.HIDE_EDITOR_HORIZONTAL_BASELINE:
+      return state.set('editorBaselines', {
+        ...editorBaselines,
+        horizontal: {
+          ...editorBaselines.horizontal,
+          visible: false
+        }
+      })
+    case ActionTypes.SHOW_EDITOR_HORIZONTAL_BASELINE:
+      return state.set('editorBaselines', {
+        ...editorBaselines,
+        horizontal: {
+          visible: true,
+          position: [payload.top, payload.right, payload.left]
+        }
+      })
 
     case ActionTypes.COPY_SLIDE_LAYERS:
       return state.set('clipboardLayers', payload.layers)
@@ -291,7 +370,6 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: [],
               loading: false,
-              selected: false,
               queryParams: {
                 linkageFilters: [],
                 globalFilters: [],
@@ -305,10 +383,19 @@ function displayReducer (state = initialState, action) {
               renderType: 'rerender'
             } : {
               datasource: [],
-              loading: false,
-              selected: false
+              loading: false
             }
             return obj
+          }, {})
+        })
+        .set('currentLayersOperationInfo', {
+          ...layersOperationInfo,
+          ...payload.result.reduce((obj, layer) => {
+            obj[layer.id] = {
+              selected: false,
+              resizing: false,
+              dragging: false
+            }
           }, {})
         })
 

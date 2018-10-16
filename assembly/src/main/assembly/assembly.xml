@@ -20,7 +20,7 @@
 
 
 <assembly>
-    <id>dist</id>
+    <id>dist-beta.2</id>
     <formats>
         <format>zip</format>
     </formats>
@@ -56,12 +56,18 @@
                 ${project.parent.basedir}/userfiles
             </directory>
             <outputDirectory>userfiles</outputDirectory>
+            <excludes>
+                <exclude>*</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>
                 ${project.parent.basedir}/logs
             </directory>
             <outputDirectory>logs</outputDirectory>
+            <excludes>
+                <exclude>*</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>

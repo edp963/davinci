@@ -1,7 +1,9 @@
 import * as React from 'react'
+import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
 
-import Draggable from '../../../components/Draggable/react-draggable'
+const Tooltip = require('antd/lib/tooltip')
+import Draggable from 'libs/react-draggable'
 
 // @TODO contentMenu
 // const Dropdown = require('antd/lib/dropdown')
@@ -11,11 +13,12 @@ import Draggable from '../../../components/Draggable/react-draggable'
 import {
   GraphTypes,
   SecondaryGraphTypes
-} from 'utils/util'
-import Pivot from '../../Widget/components/Pivot/PivotInViz'
-import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+} from './util'
+import { GRID_ITEM_MARGIN } from '../../../globalConstants'
+import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import Widget from '../../Widget/components/Widget/WidgetInViz'
 
-const Resizable = require('react-resizable').Resizable
+const Resizable = require('libs/react-resizable').Resizable
 
 const styles = require('../Display.less')
 
@@ -25,6 +28,8 @@ interface ILayerItemProps {
   slideParams?: any
   layer: any
   selected?: boolean
+  resizing?: boolean
+  dragging?: boolean
   itemId: number
   widget: any
   data: any
@@ -39,38 +44,39 @@ interface ILayerItemProps {
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
   onDragLayer?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
+  onDragLayerStop?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
   onResizeLayer?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
-  onResizeLayerStop?: (layer: any, size: { width?: number, height?: number, positionX?: number, positionY?: number }, itemId: any) => void
+  onResizeLayerStop?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
 }
 
 interface ILayerItemStates {
-  layerParams: any
+  layerParams: ILayerParams
+  layerTooltipPosition: [number, number]
   mousePos: number[]
-  width: number
-  height: number,
-  pivotProps: IPivotProps
+  widgetProps: IWidgetProps
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
+  private refLayer
+
   constructor (props) {
     super(props)
     const { layer } = this.props
     const layerParams = JSON.parse(layer.params)
-    const { width, height } = layerParams
     this.state = {
       layerParams,
+      layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
-      width,
-      height,
-      pivotProps: null
+      widgetProps: null
     }
   }
 
   public componentWillMount () {
     const { widget } = this.props
     if (!widget) { return }
+
     this.setState({
-      pivotProps: JSON.parse(widget.config)
+      widgetProps: JSON.parse(widget.config)
     })
   }
 
@@ -86,37 +92,40 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { layer } = this.props
     if (layer.params !== nextProps.layer.params) {
       const layerParams = JSON.parse(nextProps.layer.params)
-      const { width, height } = layerParams
       this.setState({
-        layerParams,
-        width,
-        height
+        layerParams
       })
     }
 
     if (this.props.widget !== nextProps.widget) {
       this.setState({
-        pivotProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config)
       })
     }
   }
 
   public componentWillUpdate (nextProps: ILayerItemProps) {
     const {
-      itemId,
-      widget,
       polling,
-      onGetChartData,
-      rendered,
       layer
     } = nextProps
-
     if (layer.type !== GraphTypes.Chart) {
       return
     }
-
     if (polling !== this.props.polling) {
       this.setFrequent(nextProps)
+    }
+  }
+
+  public componentDidUpdate () {
+    const rect = findDOMNode(this.refLayer).getBoundingClientRect()
+    const { top, height, right } = rect
+    const [ x, y ] = this.state.layerTooltipPosition
+    const [newX, newY] = [top + height / 2, right]
+    if (x !== newX || y !== newY) {
+      this.setState({
+        layerTooltipPosition: [newX, newY]
+      })
     }
   }
 
@@ -145,66 +154,57 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   private dragOnStart = (e, data) => {
+    e.stopPropagation()
     this.setState({
       mousePos: [e.pageX, e.pageY]
     })
+    console.log('drag starts')
     return e.target !== data.node.lastElementChild
   }
 
-  private dragOnStop = (_, data) => {
+  private dragOnStop = (e: Event, data) => {
+    e.stopPropagation()
+    const { deltaX, deltaY } = data
     const {
       itemId,
-      layer,
-      onResizeLayerStop } = this.props
-    const { x, y } = data
-    const { layerParams } = this.state
-    const params = {
-      positionX:  x,
-      positionY: y
-    }
-    this.setState({
-      layerParams: {
-        ...layerParams,
-        ...params
-      }
-    }, () => {
-      onResizeLayerStop(layer, params, itemId)
-    })
+      onDragLayerStop } = this.props
+    console.log('drag stops')
+    onDragLayerStop(itemId, { deltaX, deltaY })
   }
 
-  private drag = (_, data) => {
-    const { lastX, lastY, x, y } = data
-    const delta = { deltaX: x - lastX, deltaY: y - lastY }
+  private onDrag = (e, { deltaX, deltaY }) => {
+    e.stopPropagation()
+    console.log('dragging')
     const { itemId, onDragLayer } = this.props
-    if (onDragLayer) { onDragLayer(itemId, delta) }
+    if (onDragLayer) { onDragLayer(itemId, { deltaX, deltaY }) }
   }
 
-  private onResize = (_, { size }) => {
+  private onResize = (e, { size }) => {
+    e.stopPropagation()
+    const { itemId, onResizeLayer } = this.props
+    const { width: prevWidth, height: prevHeight } = this.state.layerParams
     const { width, height } = size
     const delta = {
-      deltaWidth: width - this.state.width,
-      deltaHeight: height - this.state.height
+      deltaWidth:  width - prevWidth,
+      deltaHeight: height - prevHeight
     }
-    const { itemId, selected, onResizeLayer } = this.props
-    if (onResizeLayer && selected) { onResizeLayer(itemId, delta) }
-    this.setState({
-      width,
-      height
-    })
+    if (onResizeLayer) { onResizeLayer(itemId, delta) }
   }
 
-  private onResizeStop = (_, { size }) => {
-    const { itemId, layer, onResizeLayerStop } = this.props
+  private onResizeStop = (e, { size }) => {
+    e.stopPropagation()
+    const { width: prevWidth, height: prevHeight } = this.state.layerParams
     const { width, height } = size
-    this.setState({
-      width,
-      height
-    }, () => {
-      onResizeLayerStop(layer, { width, height }, itemId)
-    })
+    const delta = {
+      deltaWidth:  width - prevWidth,
+      deltaHeight: height - prevHeight
+    }
+    const { itemId, onResizeLayerStop } = this.props
+    onResizeLayerStop(itemId, delta)
   }
 
   private onClickLayer = (e) => {
+    e.stopPropagation()
     if (this.props.pure) { return }
     const mousePos = [e.pageX, e.pageY]
     const isSamePos = mousePos.every((pos, idx) => pos === this.state.mousePos[idx])
@@ -220,7 +220,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { ctrlKey, metaKey } = e
     const exclusive = !ctrlKey && !metaKey
     onSelectLayer({ id: layer.id, selected: !selected, exclusive})
-    e.stopPropagation()
   }
 
   private renderLayer = (layer) => {
@@ -251,9 +250,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      width,
-      height,
-      pivotProps } = this.state
+      widgetProps } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -263,37 +260,30 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
 
-    const chartClass = {
-      chart: styles.chartBlock,
-      table: styles.tableBlock,
-      container: styles.block
-    }
-
     return (
       <div
-        id={`layer_${itemId}`}
+        ref={(f) => this.refLayer = f}
+        id={`layer_${layer.id}`}
         className={layerClass}
         style={layerStyle}
         onClick={this.onClickLayer}
       >
-        <div className={styles.title}>
-          <h4>{layer.name}</h4>
-        </div>
-        <div className={styles.body}>
-          <Pivot
-            {...pivotProps}
+        {this.wrapLayerTooltip(
+          (<Widget
+            {...widgetProps}
             data={data || []}
+            loading={loading}
             renderType={renderType}
-          />
-        </div>
+          />)
+        )}
       </div>
     )
   }
 
   private getLayerStyle = (layer, layerParams) => {
     const { pure, scale } = this.props
-    const { width, height } = this.state
     const {
+      width, height,
       backgroundImage, backgroundRepeat, backgroundSize, backgroundColor, opacity,
       borderWidth, borderStyle, borderColor, borderRadius } = layerParams
     let layerStyle: React.CSSProperties = {
@@ -352,10 +342,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     return (
       <div
+        ref={(f) => this.refLayer = f}
         className={layerClass}
         style={layerStyle}
         onClick={this.onClickLayer}
-      />
+      >
+        {this.wrapLayerTooltip(null)}
+      </div>
     )
   }
 
@@ -406,14 +399,32 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     }
     return (
       <div
+        ref={(f) => this.refLayer = f}
         className={layerClass}
         style={layerStyle}
         onClick={this.onClickLayer}
       >
-        <p style={labelStyle}>
-          {layerParams.contentText}
-        </p>
+        {this.wrapLayerTooltip(
+          <p style={labelStyle}>
+            {layerParams.contentText}
+          </p>
+        )}
       </div>
+    )
+  }
+
+  private wrapLayerTooltip = (content) => {
+    const { resizing, dragging } = this.props
+    if (!resizing && !dragging) { return content }
+
+    const { layerParams, layerTooltipPosition } = this.state
+    const { positionX, positionY, width, height } = layerParams
+    const tooltip = resizing ? `宽度：${width}px，高度：${height}px` : (dragging ? `x：${positionX}px，y：${positionY}px` : '')
+    const tooltipVisible = resizing || dragging
+    const [top, left] = layerTooltipPosition
+    const style = { top, left }
+    return (
+      <Tooltip title={tooltip} overlayStyle={style} placement="right" visible={tooltipVisible}>{content}</Tooltip>
     )
   }
 
@@ -422,37 +433,27 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       pure,
       scale,
       slideParams,
-      layer,
-      selected
+      layer
     } = this.props
 
-    const {
-      layerParams,
-      width,
-      height } = this.state
+    const { layerParams } = this.state
+    const { positionX: x, positionY: y, width, height } = layerParams
 
-    const position = {
-      x: layerParams['positionX'],
-      y: layerParams['positionY']
-    }
+    const position = { x, y}
 
     const content = this.renderLayer(layer)
     if (pure) { return content }
-
-    const {
-      gridDistance
-    } = slideParams
 
     const maxConstraints = [slideParams.width - position.x, slideParams.height - position.y]
 
     return (
       <Draggable
-        grid={[gridDistance, gridDistance]}
+        grid={[1, 1]}
         bounds="parent"
         scale={Math.min(scale[0], scale[1])}
         onStart={this.dragOnStart}
         onStop={this.dragOnStop}
-        onDrag={this.drag}
+        onDrag={this.onDrag}
         handle={`.${styles.layer}`}
         position={position}
       >
@@ -461,12 +462,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           height={height}
           onResize={this.onResize}
           onResizeStop={this.onResizeStop}
-          draggableOpts={{grid: [gridDistance, gridDistance]}}
+          draggableOpts={{grid: [1, 1]}}
           minConstraints={[50, 50]}
           maxConstraints={maxConstraints}
           handleSize={[20, 20]}
+          scale={Math.min(scale[0], scale[1])}
         >
-            {content}
+          {content}
         </Resizable>
       </Draggable>
     )
@@ -474,3 +476,42 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 }
 
 export default LayerItem
+
+export interface ILayer {
+  id: number
+  displaySlideId: number
+  index: number
+  name: string
+  params: string
+  subType: SecondaryGraphTypes
+  type: GraphTypes
+  widgetId: number
+}
+
+export interface ILayerParams {
+  backgroundColor: [number, number, number]
+  borderColor: [number, number, number]
+  borderRadius: number
+  borderStyle: string
+  borderWidth: number
+  frequency: number
+  height: number
+  opacity: number
+  polling: 'true' | 'false'
+  positionX: number
+  positionY: number
+  width: number
+  fontFamily: string
+  fontColor: [number, number, number]
+  fontSize: number
+  textAlign: string
+  textStyle: string
+  lineHeight: number
+  textIndent: number
+  paddingTop: number
+  paddingBottom: number
+  paddingLeft: number
+  paddingRight: number
+  contentText: string
+}
+

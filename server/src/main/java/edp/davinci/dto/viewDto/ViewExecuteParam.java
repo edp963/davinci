@@ -19,13 +19,14 @@
 package edp.davinci.dto.viewDto;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.enums.DataTypeEnum;
 import edp.core.utils.SqlUtils;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Data
 public class ViewExecuteParam {
@@ -36,7 +37,28 @@ public class ViewExecuteParam {
     private List<Param> params;
     private Boolean cache;
     private Long expired;
+    private int limit = 0;
 
+    public List<Order> getOrders(String jdbcUrl) {
+        List<Order> list = null;
+        if (null != this.orders && this.orders.size() > 0) {
+            list = new ArrayList<>();
+            Iterator<Order> iterator = this.orders.iterator();
+            String regex = "sum\\(.*\\)|avg\\(.*\\)|count\\(.*\\)|COUNTDISTINCT\\(.*\\)|max\\(.*\\)|min\\(.*\\)";
+            Pattern pattern = Pattern.compile(regex);
+            while (iterator.hasNext()) {
+                Order order = iterator.next();
+                String column = order.getColumn().trim();
+                Matcher matcher = pattern.matcher(order.getColumn().trim());
+                if (!matcher.find()) {
+                    column = SqlUtils.getKeywordPrefix(jdbcUrl) + column + SqlUtils.getKeywordSuffix(jdbcUrl);
+                    order.setColumn(column);
+                }
+                list.add(order);
+            }
+        }
+        return list;
+    }
 
     public List<String> getAggregators(String jdbcUrl) {
         List<String> list = null;
@@ -67,7 +89,6 @@ public class ViewExecuteParam {
         }
         return list;
     }
-
 
     public static String getField(String field, String jdbcUrl) {
         String keywordPrefix = SqlUtils.getKeywordPrefix(jdbcUrl);

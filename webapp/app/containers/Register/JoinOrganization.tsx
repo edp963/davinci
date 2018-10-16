@@ -47,6 +47,10 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
     this.unbindDocumentKeypress()
   }
 
+  public componentWillMount () {
+    this.joinOrganization()
+  }
+
   private bindDocumentKeypress = () => {
     this.enterLogin = (e) => {
       if (e.keyCode === 13) {
@@ -77,8 +81,10 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
   private joinOrganization = () => {
     const {onJoinOrganization} = this.props
     const token = this.getParamsByLocation('token')
+    console.log(token)
     if (token) {
       onJoinOrganization(token, (res) => {
+        console.log(res)
         if (res && res.id) {
           const path = `${window.location.protocol}//${window.location.host}/#/account/organization/${res.id}`
           location.replace(path)
@@ -119,9 +125,6 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
     return this.isEmptyOrNull(values) || values === 'null' ? '' : values
   }
 
-  public componentWillMount () {
-    this.joinOrganization()
-  }
 
   public render () {
     const {username, password} = this.state
@@ -171,7 +174,7 @@ export class JoinOrganization extends React.PureComponent <IJoinOrganizationProp
         <div className={styles.window}>
           <Helmet title="Join Organization" />
           <h1 className={styles.joinOrganizationLoadingContent}>
-            加入组织中，请稍候…
+            {this.state.needLogin ? '加入组织中，请稍候…' : ''}
           </h1>
         </div>
       )

@@ -2,8 +2,10 @@ import * as React from 'react'
 const Icon = require('antd/lib/icon')
 const Button = require('antd/lib/button')
 const styles = require('./EditorHeader.less')
+const utilStyles = require('../../assets/less/util.less')
 
 interface IEditorHeaderProps {
+  currentType: string
   name: string
   description: string
   placeholder?: {
@@ -11,15 +13,16 @@ interface IEditorHeaderProps {
     description: string
   }
   className: string
-  onNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onDescriptionChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onSave: () => void
+  onNameChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onDescriptionChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onSave?: () => void
   onCancel: () => void
   loading?: boolean
 }
 
 export function EditorHeader (props: IEditorHeaderProps) {
   const {
+    currentType,
     name,
     description,
     className,
@@ -40,15 +43,27 @@ export function EditorHeader (props: IEditorHeaderProps) {
       <Icon type="left" className={styles.back} onClick={onCancel} />
       <div className={styles.title}>
         <div className={styles.name}>
-          <input type="text" placeholder={placeholder.name} value={name} onChange={onNameChange} />
+          <input
+            type="text"
+            placeholder={placeholder.name}
+            value={name}
+            onChange={onNameChange}
+            readOnly={currentType === 'dashboard'}
+          />
           <span>{name || placeholder.name}</span>
         </div>
         <div className={styles.desc}>
-          <input type="text" placeholder={placeholder.description} value={description} onChange={onDescriptionChange} />
+          <input
+            type="text"
+            placeholder={currentType === 'dashboard' ? '' : placeholder.description}
+            value={description}
+            onChange={onDescriptionChange}
+            readOnly={currentType === 'dashboard'}
+          />
           <span>{description || placeholder.description}</span>
         </div>
       </div>
-      <div className={styles.actions}>
+      <div className={`${currentType === 'dashboard' ? utilStyles.hide : styles.actions}`}>
         <Button
           type="primary"
           loading={loading}

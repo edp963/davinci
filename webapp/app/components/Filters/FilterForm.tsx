@@ -15,7 +15,8 @@ const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')
 
 import { prefixItem, prefixView, prefixOther } from './constants'
-import { FilterTypeList, FilterTypesLocale, FilterTypesViewSetting, FilterTypes } from './filterTypes'
+import { OperatorTypes } from 'utils/operatorTypes'
+import { FilterTypeList, FilterTypesLocale, FilterTypesViewSetting, FilterTypesOperatorSetting, FilterTypes } from './filterTypes'
 
 import { IModel } from './'
 
@@ -53,7 +54,8 @@ interface IFilterFormStates {
   mappingViewItems: object
   needSetView: boolean
   modelItems: any[]
-  modelOrParam: object
+  modelOrParam: object,
+  availableOperatorTypes: OperatorTypes[]
 }
 
 export class FilterForm extends React.Component<IFilterFormProps  & FormComponentProps, IFilterFormStates> {
@@ -65,7 +67,8 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
       mappingViewItems: {},
       needSetView: false,
       modelItems: [],
-      modelOrParam: {}
+      modelOrParam: {},
+      availableOperatorTypes: []
     }
   }
 
@@ -94,50 +97,63 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
     }
   }
 
-  private saveFilterItem = () => {
+  private saveFilterItem = (resolve?: (err?) => void) => {
     const { form, onFilterItemSave, views } = this.props
     const { usedViews, mappingViewItems } = this.state
-    const fieldsValue = form.getFieldsValue()
-    const filterItem = {
-      relatedViews: {}
-    }
 
-    Object.keys(fieldsValue)
-      .filter((name) => fieldsValue[name] && name.indexOf(prefixView) >= 0)
-      .forEach((name) => {
-        const val = fieldsValue[name]
-        const viewId = +name.substr(prefixView.length)
-        const isParam = !!fieldsValue[prefixOther + viewId]
-        const sqlType = usedViews[viewId].model.find((m) => m.key === val).sqlType
-        filterItem.relatedViews[viewId] = {
-          key: val,
-          name: val,
-          isParam,
-          sqlType,
-          items: mappingViewItems[viewId].filter((item) => fieldsValue[prefixItem + item.id]).map((item) => item.id)
+    form.validateFieldsAndScroll((err, fieldsValue) => {
+      if (err) {
+        if (resolve) {
+          resolve(err)
         }
-      })
+        return
+      }
 
-    Object.keys(fieldsValue)
-      .filter((name) => [prefixItem, prefixView, prefixOther].every((prefix) => name.indexOf(prefix) < 0))
-      .forEach((name) => {
-        filterItem[name] = fieldsValue[name]
-      })
+      const filterItem = {
+        relatedViews: {}
+      }
 
-    console.log('saved... ', JSON.parse(JSON.stringify(filterItem)))
+      Object.keys(fieldsValue)
+        .filter((name) => fieldsValue[name] && name.indexOf(prefixView) >= 0)
+        .forEach((name) => {
+          const val = fieldsValue[name]
+          const viewId = +name.substr(prefixView.length)
+          const isParam = !!fieldsValue[prefixOther + viewId]
+          const sqlType = usedViews[viewId].model.find((m) => m.key === val).sqlType
+          filterItem.relatedViews[viewId] = {
+            key: val,
+            name: val,
+            isParam,
+            sqlType,
+            items: mappingViewItems[viewId].filter((item) => fieldsValue[prefixItem + item.id]).map((item) => item.id)
+          }
+        })
 
-    onFilterItemSave(filterItem)
+      Object.keys(fieldsValue)
+        .filter((name) => [prefixItem, prefixView, prefixOther].every((prefix) => name.indexOf(prefix) < 0))
+        .forEach((name) => {
+          filterItem[name] = fieldsValue[name]
+        })
+
+      console.log('saved... ', JSON.parse(JSON.stringify(filterItem)))
+
+      onFilterItemSave(filterItem)
+      if (resolve) {
+        resolve()
+      }
+    })
   }
 
   public setFieldsValue = (filterItem) => {
     const { views, widgets, items } = this.props
-    const { key, name, type, fromView, fromModel } = filterItem
+    const { key, name, type, fromView, fromModel, operator } = filterItem
     const fieldsValue = {
       key,
       name,
       type,
       fromView,
-      fromModel
+      fromModel,
+      operator
     }
     if (fromView) {
       this.onFromViewChange(fromView, fromModel)
@@ -170,6 +186,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
     })
     this.setState({
       needSetView: !!FilterTypesViewSetting[type],
+      availableOperatorTypes: FilterTypesOperatorSetting[type],
       modelOrParam
     }, () => {
       const { form, onGetPreviewData } = this.props
@@ -331,8 +348,17 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
 
   private filterTypeChange = (val) => {
     this.setState({
-      needSetView: FilterTypesViewSetting[val]
+      needSetView: FilterTypesViewSetting[val],
+      availableOperatorTypes: FilterTypesOperatorSetting[val]
+    }, () => {
+      const { form } = this.props
+      const { availableOperatorTypes } = this.state
+      const operator = form.getFieldValue('operator')
+      if (availableOperatorTypes.indexOf(operator) < 0) {
+        form.setFieldsValue({ operator: availableOperatorTypes[0] })
+      }
     })
+
     const { onFilterTypeChange } = this.props
     onFilterTypeChange(val)
   }
@@ -340,7 +366,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
   private renderConfigForm (usedViews, mappingViewItems) {
     const { form, views } = this.props
     const { getFieldDecorator } = form
-    const { needSetView, modelItems } = this.state
+    const { needSetView, modelItems, availableOperatorTypes } = this.state
 
     return (
       <div className={styles.filterForm}>
@@ -396,56 +422,86 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
                 </FormItem>
               </Col>
             </Row>
-            <Row className={!needSetView ? utilStyles.hide : ''}>
+            {
+              !needSetView ? null : (
+                <Row>
+                  <Col span={12}>
+                      <FormItem
+                        label="来源 View"
+                        labelCol={{span: 8}}
+                        wrapperCol={{span: 16}}
+                      >
+                        {
+                          getFieldDecorator('fromView', {
+                            rules: [{
+                              required: true,
+                              message: '不能为空'
+                            }]
+                          })(
+                            <Select
+                              onChange={this.onFromViewChange}
+                            >
+                              {
+                                views.map((view) => (
+                                  <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
+                                ))
+                              }
+                            </Select>
+                          )
+                        }
+                      </FormItem>
+                  </Col>
+                  <Col span={12}>
+                    <FormItem
+                        label="来源字段"
+                        labelCol={{span: 8}}
+                        wrapperCol={{span: 16}}
+                    >
+                      {
+                        getFieldDecorator('fromModel', {
+                          rules: [{
+                            required: true,
+                            message: '不能为空'
+                          }]
+                        })(
+                          <Select onChange={this.onFromModelChange}>
+                            {
+                              modelItems.map((itemName) => (
+                                <Option key={itemName} value={itemName}>{itemName}</Option>
+                              ))
+                            }
+                          </Select>
+                        )
+                      }
+                    </FormItem>
+                  </Col>
+                </Row>
+              )
+            }
+            <Row>
               <Col span={12}>
                   <FormItem
-                    label="来源 View"
+                    label="对应关系"
                     labelCol={{span: 8}}
                     wrapperCol={{span: 16}}
                   >
                     {
-                      getFieldDecorator('fromView', {
+                      getFieldDecorator('operator', {
                         rules: [{
                           required: true,
                           message: '不能为空'
                         }]
                       })(
-                        <Select
-                          onChange={this.onFromViewChange}
-                        >
+                        <Select>
                           {
-                            views.map((view) => (
-                              <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
+                            availableOperatorTypes.map((operatorType) => (
+                              <Option key={operatorType} value={operatorType}>{operatorType}</Option>
                             ))
                           }
                         </Select>
                       )
                     }
                   </FormItem>
-              </Col>
-              <Col span={12}>
-                <FormItem
-                    label="来源字段"
-                    labelCol={{span: 8}}
-                    wrapperCol={{span: 16}}
-                >
-                  {
-                    getFieldDecorator('fromModel', {
-                      rules: [{
-                        required: true,
-                        message: '不能为空'
-                      }]
-                    })(
-                      <Select onChange={this.onFromModelChange}>
-                        {
-                          modelItems.map((itemName) => (
-                            <Option key={itemName} value={itemName}>{itemName}</Option>
-                          ))
-                        }
-                      </Select>
-                    )
-                  }
-                </FormItem>
               </Col>
             </Row>
             <Row>

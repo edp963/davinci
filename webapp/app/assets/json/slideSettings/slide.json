@@ -54,15 +54,6 @@
       "default": "scaleWidth"
     }]
   }, {
-    "name": "grid",
-    "title": "栅格",
-    "items": [{
-      "name": "gridDistance",
-      "title": "栅格间距",
-      "component": "inputnumber",
-      "default": 10
-    }]
-  }, {
     "name": "image",
     "title": "图片",
     "items": [{

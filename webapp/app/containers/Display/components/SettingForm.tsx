@@ -43,7 +43,6 @@ const CheckboxGroup = Checkbox.Group
 const Option = Select.Option
 
 import { SketchPicker } from 'react-color'
-import { ItemSelectorForm } from '../../Dashboard/components/globalFilter/ItemSelectorForm';
 
 const styles = require('../Display.less')
 

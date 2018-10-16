@@ -1,5 +1,5 @@
 import * as React from 'react'
-import Pivot, { IPivotProps, RenderType } from './Pivot'
+import Pivot, { IPivotProps } from './Pivot'
 
 type ScrollConfigType = 'vertical' | 'horizontal' | 'duplex'
 type ScrollRole = 'header' | 'body'
