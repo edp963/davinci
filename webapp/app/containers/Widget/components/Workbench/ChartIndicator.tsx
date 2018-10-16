@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IChartInfo } from '../Pivot/Chart'
+import { IChartInfo } from '../Widget'
 import { checkChartEnable } from '../util'
 const Tooltip = require('antd/lib/tooltip')
 const styles = require('./Workbench.less')
@@ -17,11 +17,26 @@ export function ChartIndicator (props: IChartIndicatorProps) {
   const { chartInfo, dimetionsCount, metricsCount, selectedCharts } = props
   const { title, icon, requireDimetions, requireMetrics} = chartInfo
 
+  let dimetionContent
+  let metricContent
+
+  if (Array.isArray(requireDimetions)) {
+    dimetionContent = `需要 ${requireDimetions[0]}个 到 ${requireDimetions[1] === 9999 ? '多' : requireDimetions[1]}个 维度`
+  } else {
+    dimetionContent =  `需要 ${requireDimetions}个 维度`
+  }
+
+  if (Array.isArray(requireMetrics)) {
+    metricContent = `需要 ${requireMetrics[0]}个 到 ${requireMetrics[1] === 9999 ? '多' : requireMetrics[1]}个 指标`
+  } else {
+    metricContent =  `需要 ${requireMetrics}个 指标`
+  }
+
   const overlay = (
     <p>
       {title}<br />
-      {`需要 ${requireDimetions}个 到多个维度`}<br/>
-      {`需要 ${requireMetrics}个 到多个指标`}
+      {dimetionContent}<br/>
+      {metricContent}
     </p>
   )
 

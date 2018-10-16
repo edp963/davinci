@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,28 +67,44 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${spring.datasource.test-on-return}")
     private boolean testOnReturn;
 
-    private static volatile Map<String, Object> map = new HashMap<>();
+    @Value("${source.break-after-acquire-failure:true}")
+    private boolean breakAfterAcquireFailure;
+
+    @Value("${source.connection-error-retry-attempts:3}")
+    private int connectionErrorRetryAttempts;
+
+    private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
         String url = jdbcUrl.toLowerCase();
         if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
-            DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
-
-            CustomDataSource customDataSource = null;
-            if (null == dataTypeEnum) {
-                try {
-                    customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
-                } catch (Exception e) {
-                    throw new SourceException(e.getMessage());
-                }
-            }
-
             DruidDataSource instance = new JdbcDataSource();
-            if (null == dataTypeEnum && null == customDataSource) {
-                throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+            String className = null;
+            try {
+                className = DriverManager.getDriver(url).getClass().getName();
+            } catch (SQLException e) {
             }
 
-            instance.setDriverClassName(StringUtils.isEmpty(dataTypeEnum.getDriver()) ? customDataSource.getDriver().trim() : dataTypeEnum.getDriver());
+            if (StringUtils.isEmpty(className)) {
+                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
+
+                CustomDataSource customDataSource = null;
+                if (null == dataTypeEnum) {
+                    try {
+                        customDataSource = CustomDataSourceUtils.getCustomDataSource(jdbcUrl);
+                    } catch (Exception e) {
+                        throw new SourceException(e.getMessage());
+                    }
+                }
+
+                if (null == dataTypeEnum && null == customDataSource) {
+                    throw new SourceException("Not supported data type: jdbcUrl=" + jdbcUrl);
+                }
+
+                instance.setDriverClassName(StringUtils.isEmpty(dataTypeEnum.getDriver()) ? customDataSource.getDriver().trim() : dataTypeEnum.getDriver());
+            } else {
+                instance.setDriverClassName(className);
+            }
 
             instance.setUrl(url);
             instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
@@ -102,10 +119,11 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setTestWhileIdle(testWhileIdle);
             instance.setTestOnBorrow(testOnBorrow);
             instance.setTestOnReturn(testOnReturn);
+            instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+            instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
 
             try {
                 instance.init();
-                log.info("user dataseource : {}", dataTypeEnum.getDesc());
             } catch (SQLException e) {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException("Exception during pool initialization");
@@ -113,6 +131,6 @@ public class JdbcDataSource extends DruidDataSource {
             map.put(username + "@" + url, instance);
         }
 
-        return (DruidDataSource) map.get(username + "@" + url);
+        return map.get(username + "@" + url);
     }
 }

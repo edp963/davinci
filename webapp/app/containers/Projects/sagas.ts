@@ -29,7 +29,9 @@ import {
   TRANSFER_PROJECT,
   SEARCH_PROJECT,
   GET_PROJECT_STAR_USER,
-  PROJECT_UNSTAR
+  PROJECT_UNSTAR,
+  LOAD_COLLECT_PROJECTS,
+  CLICK_COLLECT_PROJECT
 } from './constants'
 
 import {
@@ -49,13 +51,19 @@ import {
   unStarProjectSuccess,
   unStarProjectFail,
   getProjectStarUserSuccess,
-  getProjectStarUserFail
+  getProjectStarUserFail,
+  collectProjectLoaded,
+  collectProjectFail,
+  collectProjectClicked,
+  clickCollectProjectFail
 } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
+import configureStore from '../../store'
+import { resolve } from 'url'
 
 export function* getProjects (action) {
   const { payload } = action
@@ -105,13 +113,16 @@ export function* editProject (action) {
 }
 
 export function* deleteProject (action) {
-  const { id } = action.payload
+  const { id, resolve } = action.payload
   try {
     yield call(request, {
       method: 'delete',
       url: `${api.projects}/${id}`
     })
     yield put(projectDeleted(id))
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
     yield put(deleteProjectFail())
     errorHandler(err)
@@ -190,6 +201,44 @@ export function* getProjectStarUser ({payload}) {
   }
 }
 
+export function* getCollectProjects (action) {
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.projects}/favorites`
+    })
+    const result = readListAdapter(asyncData)
+    yield put(collectProjectLoaded(result))
+  } catch (err) {
+    yield put(collectProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* editCollectProject ({payload}) {
+  const {formType, project, resolve} = payload
+  try {
+    if (formType === 'collect') {
+      yield call(request, {
+        method: 'post',
+        url: `${api.projects}/favorite/${project.id}`,
+        data: {id: project.id}
+      })
+    } else {
+      yield call(request, {
+        method: 'delete',
+        url: `${api.projects}/remove/favorites`,
+        data: [project.id]
+      })
+    }
+    yield put(collectProjectClicked(payload))
+    yield resolve()
+  } catch (err) {
+    yield put(clickCollectProjectFail())
+    errorHandler(err)
+  }
+}
+
 export default function* rootProjectSaga (): IterableIterator<any> {
   yield [
     takeLatest(LOAD_PROJECTS, getProjects as any),
@@ -200,6 +249,8 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(TRANSFER_PROJECT, transferProject as any),
     takeEvery(PROJECT_UNSTAR, unStarProject as any),
     takeEvery(GET_PROJECT_STAR_USER, getProjectStarUser as any),
-    throttle(1000, SEARCH_PROJECT, searchProject as any)
+    throttle(1000, SEARCH_PROJECT, searchProject as any),
+    takeLatest(LOAD_COLLECT_PROJECTS, getCollectProjects as any),
+    takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any)
   ]
 }

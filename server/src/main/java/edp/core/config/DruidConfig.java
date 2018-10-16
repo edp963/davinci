@@ -83,6 +83,15 @@ public class DruidConfig {
     @Value("${spring.datasource.filters}")
     private String filters;
 
+    @Value("${spring.datasource.break-after-acquire-failure}")
+    private boolean breakAfterAcquireFailure;
+
+    @Value("${spring.datasource.connection-error-retry-attempts}")
+    private int connectionErrorRetryAttempts;
+
+    @Value("${spring.datasource.validation-query}")
+    private String validationQuery;
+
     /**
      * druid监控
      *
@@ -132,6 +141,9 @@ public class DruidConfig {
         druidDataSource.setTestWhileIdle(testWhileIdle);
         druidDataSource.setTestOnBorrow(testOnBorrow);
         druidDataSource.setTestOnReturn(testOnReturn);
+        druidDataSource.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
+        druidDataSource.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
+        druidDataSource.setValidationQuery(validationQuery);
 
         try {
             druidDataSource.setFilters(filters);

@@ -18,63 +18,161 @@
  * >>
  */
 
-import { DimetionType } from '../components/Pivot/Pivot'
+/*
+ * Pie chart options generator
+ */
 
-export default function () {
-  return {
-    chartOption: {
-      type: 'pie'
-    },
-    calcPieCenterAndRadius (
-      dimetionAxis: DimetionType,
-      containerWidth: number,
-      containerHeight: number,
-      elementSize: number,
-      unitMetricLengthArr: number[],
-      horizontalRecordCountOfCol: number,
-      verticalRecordCountOfRow: number,
-      lineRecordSum: number,
-      lineCount: number,
-      unitCount: number,
-      metricCount: number,
-      recordCount: number,
-      lineIndex: number,
-      unitIndex: number,
-      metricIndex: number,
-      recordIndex: number
-    ): { center: string[], radius: string[]} {
-      let center
-      let radius
-      if (dimetionAxis === 'col') {
-        const verticalPer = 100 / lineCount / metricCount
-        const horizontalPer = 100 / horizontalRecordCountOfCol
-        center = [
-          `${horizontalPer * (recordIndex + lineRecordSum + 1) - horizontalPer / 2}%`,
-          `${verticalPer * (metricIndex + metricCount * lineIndex + 1) - verticalPer / 2}%`
-        ]
-        if (containerWidth > containerHeight) {
-          const rate = Math.min(elementSize / unitMetricLengthArr[0], 1)
-          radius = ['0%', `${100 / metricCount / lineCount * rate * .75}%`]
-        } else {
-          const rate = Math.min(unitMetricLengthArr[0] / elementSize, 1)
-          radius = ['0%', `${100 / horizontalRecordCountOfCol * rate * .75}%`]
-        }
-      } else {
-        const verticalPer = 100 / verticalRecordCountOfRow
-        const horizontalPer = 100 / unitCount / metricCount
-        center = [
-          `${horizontalPer * (metricIndex + metricCount * unitIndex + 1) - horizontalPer / 2}%`,
-          `${verticalPer * (verticalRecordCountOfRow - recordIndex - lineIndex * recordCount) - verticalPer / 2}%`
-        ]
-        if (containerWidth > containerHeight) {
-          const rate = Math.min(unitMetricLengthArr[1] / elementSize, 1)
-          radius = ['0%', `${100 / verticalRecordCountOfRow * rate * .75}%`]
-        } else {
-          const rate = Math.min(elementSize / unitMetricLengthArr[1], 1)
-          radius = ['0%', `${100 / metricCount / unitCount * rate * .75}%`]
+export default function (dataSource, flatInfo, chartParams, interactIndex) {
+  const {
+    title,
+    value,
+    circle,
+    insideRadius,
+    outsideRadius,
+    hasLegend,
+    legendSelected,
+    legendPosition,
+    toolbox,
+    top,
+    roseType,
+    left
+  } = chartParams
+
+  let metricOptions
+  let labelOptions
+  let legendOptions
+  let toolboxOptions
+  let roseOptions
+
+  // legend
+  let adjustedLeft = 0
+
+  if (hasLegend && hasLegend.length) {
+    let orient
+    let positions
+
+    switch (legendPosition) {
+      case 'right':
+        orient = { orient: 'vertical' }
+        positions = { right: 8, top: 40, bottom: 16 }
+        adjustedLeft = 45
+        break
+      case 'bottom':
+        orient = { orient: 'horizontal' }
+        positions = { bottom: 16, left: 8, right: 8 }
+        break
+      default:
+        orient = { orient: 'horizontal' }
+        positions = { top: 3, left: 8, right: 96 }
+        break
+    }
+
+    const selected = legendSelected === 'unselectAll'
+      ? {
+        selected: dataSource.reduce((obj, d) => ({ ...obj, [d[title]]: false }), {})
+      } : null
+
+    legendOptions = {
+      legend: {
+        data: dataSource.map((d) => d[title]),
+        type: 'scroll',
+        ...orient,
+        ...positions,
+        ...selected
+      }
+    }
+  }
+
+  // series 数据项
+  const metricArr = []
+
+  labelOptions = circle && circle.length
+    ? {
+      label: {
+        normal: {
+          show: true,
+          position: 'inside',
+          formatter: '{d}%'
+        },
+        emphasis: {
+          show: true,
+          position: 'center',
+          textStyle: {
+            fontSize: '16',
+            fontWeight: 'bold'
+          }
         }
       }
-      return { center, radius }
     }
+    : {
+      label: {
+        normal: {
+          show: true,
+          formatter: '{b}({d}%)'
+        }
+      }
+    }
+  roseOptions = roseType && roseType.length ? {roseType: 'radius'} : null
+  const serieObj = {
+    name: title,
+    type: 'pie',
+    radius: circle && circle.length ? [`${insideRadius}%`, `${outsideRadius}%`] : `${insideRadius}%`,
+    center: [
+      adjustedLeft && legendPosition === 'right' ? `${Math.min(left, adjustedLeft)}%` : `${left}%`,
+      `${top}%`
+    ],
+    avoidLabelOverlap: !circle || !circle.length,
+    data: dataSource.map((d, index) => {
+      if (index === interactIndex) {
+        return {
+          name: d[title],
+          value: Number(d[value]),
+          itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }
+        }
+      } else {
+        return {
+          name: d[title],
+          value: Number(d[value])
+        }
+      }
+    }),
+    itemStyle: {
+      normal: {
+        opacity: interactIndex === undefined ? 1 : 0.25
+      }
+    },
+    ...roseOptions,
+    ...labelOptions
+  }
+  metricArr.push(serieObj)
+  metricOptions = {
+    series: metricArr
+  }
+
+  // toolbox
+  toolboxOptions = toolbox && toolbox.length
+    ? {
+      toolbox: {
+        feature: {
+          dataView: {readOnly: false},
+          restore: {},
+          saveAsImage: {}
+        },
+        right: 8
+      }
+    } : null
+
+  return {
+    tooltip: {
+      trigger: 'item',
+      formatter: '{b} <br/>{c} ({d}%)'
+    },
+    ...metricOptions,
+    ...legendOptions,
+    ...toolboxOptions
   }
 }

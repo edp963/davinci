@@ -575,6 +575,10 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         if (null != columns && columns.size() > 0) {
             String csvPath = fileUtils.fileBasePath + File.separator + "csv";
+            File file = new File(csvPath);
+            if (!file.exists()) {
+                file.mkdirs();
+            }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
             String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
             String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);

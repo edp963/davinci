@@ -34,7 +34,7 @@ const Modal = require('antd/lib/modal')
 
 const styles = require('../Display.less')
 
-import slideSettings from '../../../assets/json/slideSettings'
+import { slideSettings, GraphTypes, SecondaryGraphTypes } from './util'
 import LayerSelector from './LayerSelector'
 import SharePanel from '../../../components/SharePanel'
 
@@ -44,10 +44,7 @@ import {
   makeSelectCurrentDisplayShareInfoLoading
 } from '../selectors'
 
-import {
-  uuid,
-  GraphTypes,
-  SecondaryGraphTypes } from 'utils/util'
+import { uuid } from 'utils/util'
 
 interface IDisplayHeaderProps {
   params: any

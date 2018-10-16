@@ -53,6 +53,7 @@ interface IDisplayStyle {
   transform: string
   backgroundColor?: string
   backgroundImage?: string
+  backgroundSize: string
 }
 
 export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
@@ -88,7 +89,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     slideStyle  = {
       width: `${slideParams.width}px`,
       height: `${slideParams.height}px`,
-      transform: `scale(${scale})`
+      transform: `scale(${scale})`,
+      backgroundSize: 'cover'
     }
 
     if (slideParams.backgroundColor) {

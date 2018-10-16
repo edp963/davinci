@@ -3,6 +3,7 @@ import * as classnames from 'classnames'
 import { SketchPicker } from 'react-color'
 import { decodeMetricName } from '../util'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
+import { WidgetMode } from '../Widget'
 const radios = require('antd/lib/radio')
 const Radio = radios.default
 const RadioGroup = radios.Group
@@ -10,6 +11,7 @@ const Button = require('antd/lib/button')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
 interface IColorProp {
   key: string
@@ -17,6 +19,7 @@ interface IColorProp {
 }
 
 interface IColorSettingFormProps {
+  mode: WidgetMode
   list: string[]
   loading: boolean
   metrics: IDataParamSource[]
@@ -115,7 +118,7 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
   }
 
   public render () {
-    const { loading, metrics, onCancel } = this.props
+    const { mode, loading, metrics, onCancel } = this.props
     const { actOn, list, selected } = this.state
 
     const metricRadioButtons = [{ name: 'all' }].concat(metrics).map((m) => (
@@ -138,9 +141,14 @@ export class ColorSettingForm extends React.PureComponent<IColorSettingFormProps
       ))
     }
 
+    const headerClass = classnames({
+      [styles.header]: true,
+      [utilStyles.hide]: mode !== 'pivot'
+    })
+
     return (
       <div className={styles.colorSettingForm}>
-        <div className={styles.header}>
+        <div className={headerClass}>
           <h4>应用于：</h4>
           <RadioGroup onChange={this.metricChange} value={actOn}>
             {metricRadioButtons}

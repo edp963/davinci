@@ -44,7 +44,7 @@ import DashboardFilterPanel from './components/DashboardFilterPanel'
 import DashboardFilterConfig from './components/DashboardFilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 
-import { Responsive, WidthProvider } from 'react-grid-layout'
+import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -55,10 +55,10 @@ const Icon = require('antd/lib/icon')
 const Dropdown = require('antd/lib/dropdown')
 const Menu = require('antd/lib/menu')
 
-import widgetlibs from '../../assets/json/widgetlib'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
-import { decodeMetricName, getAggregatorLocale } from '../Widget/components/util'
-import { uuid } from '../../utils/util'
+import { decodeMetricName } from '../Widget/components/util'
+import { hideNavigator } from '../App/actions'
+import { loadProjectDetail } from '../Projects/actions'
 import {
   loadDashboardDetail,
   addDashboardItem,
@@ -108,7 +108,7 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 
@@ -162,7 +162,7 @@ interface IGridProps {
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[]) => void
-  onDeleteDashboardItem: (id: number, resolve: () => void) => void
+  onDeleteDashboardItem: (id: number, resolve?: () => void) => void
   onLoadBizlogics: (projectId: number, resolve?: any) => any
   onLoadDataFromItem: (
     renderType: RenderType,
@@ -217,6 +217,7 @@ interface IGridStates {
   selectedWidget: any[]
   polling: boolean
   linkageConfigVisible: boolean
+  interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
@@ -261,7 +262,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling: false,
 
       linkageConfigVisible: false,
-
+      interactingStatus: {},
       globalFilterConfigVisible: false,
 
       dashboardSharePanelAuthorized: false,
@@ -358,7 +359,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             }
           })
         } else {
-          this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          if (this.containerBody) {
+            this.containerBody.removeEventListener('scroll', this.lazyLoad, false)
+          }
         }
         this.containerBodyScrollThrottle = false
       })
@@ -376,7 +379,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
@@ -463,13 +466,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
+  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
     const {
       currentItemsInfo,
       onLoadWidgetCsv
     } = this.props
 
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = pivotProps
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
 
     let groups = cols.concat(rows)
     let aggregators =  metrics.map((m) => ({
@@ -703,7 +706,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private deleteItem = (id) => () => {
-    this.props.onDeleteDashboardItem(id, () => {})
+    this.props.onDeleteDashboardItem(id)
   }
 
   private navDropdownClick = (e) => {
@@ -745,6 +748,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       })
     }, () => {
       this.toggleLinkageConfig(false)()
+      this.clearAllInteracts()
     })
   }
 
@@ -778,6 +782,25 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
     })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: true
+      }
+    })
+  }
+
+  private clearAllInteracts = () => {
+    const { currentItems } = this.props
+    Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
+      const item = currentItems.find((ci) => ci.id === +linkagerItemId)
+      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+        linkageFilters: [],
+        linkageParams: []
+      })
+    })
+    this.interactingLinkagers = {} // FIXME need remove interact effect
+    this.setState({ interactingStatus: {} })
   }
 
   private turnOffInteract = (itemId) => {
@@ -794,6 +817,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
+    })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: false
+      }
     })
   }
 
@@ -876,10 +905,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems, widgets } = this.props
     const dashboardItem = currentItems.find((ci) => ci.id === dashboardItemId)
     const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-    const widgetlib = widgetlibs.find((wl) => wl.id === widget.type)
     return {
-      name: widget.name,
-      type: widgetlib.name
+      name: widget.name
     }
   }
 
@@ -920,6 +947,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       polling,
       dashboardItemFormStep,
       linkageConfigVisible,
+      interactingStatus,
       globalFilterConfigVisible,
       allowFullScreen,
       dashboardSharePanelAuthorized
@@ -977,6 +1005,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const interacting = interactingStatus[id] || false
 
         itemblocks.push((
           <div key={id}>
@@ -986,6 +1015,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               data={datasource}
               loading={loading}
               polling={polling}
+              interacting={interacting}
               frequency={frequency}
               shareInfo={shareInfo}
               secretInfo={secretInfo}

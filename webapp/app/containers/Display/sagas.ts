@@ -24,7 +24,7 @@ import { call, fork, put, all } from 'redux-saga/effects'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import { getDefaultSlideParams } from '../../assets/json/slideSettings'
+import { getDefaultSlideParams } from './components/util'
 import { errorHandler } from '../../utils/util'
 
 import {

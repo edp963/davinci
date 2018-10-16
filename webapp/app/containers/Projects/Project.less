@@ -169,31 +169,33 @@
           .ellipsis;
         }
 
-        .icon {
+        .mimeActions, .joinActions, .collectActions {
           position: absolute;
+          right: 8px;
+        }
+        .mimeActions {
           top: 8px;
-          font-size: 1.25em;
+        }
+        .joinActions, .collectActions {
+          top: 2px;
+        }
+
+        .icon {
+          margin-left: 8px;
           opacity: .7;
           color: @white;
           transition: transform 200ms ease;
-
           &:hover {
             opacity: 1;
             transform: scale(1.1, 1.1);
           }
         }
-        .transfer {
-          right: 56px;
+        .transfer, .edit, .delete {
+          font-size: 1.25em;
           .icon;
         }
-        .edit {
-          right: 32px;
-
-          .icon;
-        }
-
-        .delete {
-          right: 8px;
+        .collect, .unCollect {
+          font-size: 17px;
           .icon;
         }
         .createNewWrapper {
@@ -289,6 +291,7 @@
   box-shadow: 0 -1px 0 @grey-line-color;
   display: flex;
   justify-content: space-between;
+  cursor: pointer;
   &:hover {
     color: @blue;
   }
@@ -329,6 +332,10 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 16px;
+  cursor: pointer;
+  &:hover {
+    color: @blue;
+  }
   .orgHeader {
     display: flex;
     .avatar {
@@ -350,9 +357,6 @@
         font-size: 12px;
         color: @description-text;
       }
-    }
-    &:hover {
-      color: @blue;
     }
   }
   .others{

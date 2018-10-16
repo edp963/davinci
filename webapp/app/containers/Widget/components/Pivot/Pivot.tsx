@@ -1,5 +1,4 @@
 import * as React from 'react'
-import * as classnames from 'classnames'
 import { findDOMNode } from 'react-dom'
 import {
   naturalSort,
@@ -34,30 +33,9 @@ import ColumnHeader from './ColumnHeader'
 import TableBody from './TableBody'
 import ColumnFooter from './ColumnFooter'
 import Legend from './Legend'
-import { IChartInfo } from './Chart'
-import { IDataParamProperty } from '../Workbench/OperatingPanel'
-import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
-import { IAxisConfig } from 'containers/Widget/components/Workbench/ConfigSections/AxisSection'
-import { ISplitLineConfig } from 'containers/Widget/components/Workbench/ConfigSections/SplitLineSection'
-import { IPivotConfig } from 'containers/Widget/components/Workbench/ConfigSections/PivotSection'
-const Icon = require('antd/lib/icon')
+import { RenderType, IWidgetProps } from '../Widget'
 
 const styles = require('./Pivot.less')
-
-export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
-
-export interface IPivotMetric {
-  name: string
-  agg: AggregatorType
-  chart: IChartInfo
-}
-
-export interface IPivotFilter {
-  name: string
-  type: DragType
-  config: IDataParamConfig
-}
 
 export interface IDrawingData {
   elementSize: number
@@ -82,38 +60,12 @@ export interface ILegend {
   [key: string]: string[]
 }
 
-export interface IChartStyles {
-  pivot?: IPivotConfig
-  spec?: object
-  xAxis?: IAxisConfig
-  yAxis?: IAxisConfig
-  splitLine?: ISplitLineConfig
+export interface IPivotProps extends IWidgetProps {
+  width: number
+  height: number
 }
 
-export interface IPivotProps {
-  data: object[]
-  cols: string[]
-  rows: string[]
-  metrics: IPivotMetric[]
-  filters: IPivotFilter[]
-  chartStyles: IChartStyles
-  color?: IDataParamProperty
-  label?: IDataParamProperty
-  size?: IDataParamProperty
-  xAxis?: IDataParamProperty
-  tip?: IDataParamProperty
-  dimetionAxis?: DimetionType
-  renderType?: RenderType
-  orders: Array<{column: string, direction: string}>
-  queryParams: any[]
-  cache: boolean
-  expired: number
-  loading?: boolean
-  onCheckTableInteract?: () => boolean
-  onDoInteract?: (triggerData: object) => void
-}
-
-export interface IPivotStates {
+interface IPivotStates {
   legendSelected: ILegend
   renderType: RenderType
 }
@@ -127,8 +79,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
   }
 
-  private width = 0
-  private height = 0
   private tableBodyWidth = 0
   private tableBodyHeight = 0
   private rowKeys = []
@@ -178,11 +128,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public columnHeader: HTMLElement = null
   public tableBody: HTMLElement = null
   public columnFooter: HTMLElement = null
-  private container: HTMLElement = null
-
-  public componentDidMount () {
-    this.getContainerSize()
-  }
 
   public componentWillReceiveProps (nextProps) {
     const { renderType, color } = nextProps
@@ -198,9 +143,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public componentWillUpdate (nextProps: IPivotProps) {
     const { renderType } = nextProps
     if (renderType !== 'refresh') {
-      if (renderType === 'resize') {
-        this.getContainerSize()
-      }
       this.rowKeys = []
       this.colKeys = []
       this.rowTree = {}
@@ -242,14 +184,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     this.metricAxisConfig = void 0
   }
 
-  private getContainerSize = () => {
-    const { offsetWidth, offsetHeight } = this.container
-    this.width = offsetWidth
-    this.height = offsetHeight
-  }
-
   private getRenderData = (props) => {
-    const { cols, rows, metrics, data, xAxis, dimetionAxis } = props
+    const { width, height, cols, rows, metrics, data, xAxis, dimetionAxis } = props
 
     this.rowHeaderWidths = rows.map((r) => getPivotContentTextWidth(r, 'bold'))
     if (!cols.length && !rows.length) {
@@ -263,8 +199,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
 
     if (dimetionAxis) {
-      this.tableBodyWidth = getTableBodyWidth(dimetionAxis, this.width - this.getLegendWidth(props), this.rowHeaderWidths)
-      this.tableBodyHeight = getTableBodyHeight(dimetionAxis, this.height, cols.length)
+      this.tableBodyWidth = getTableBodyWidth(dimetionAxis, width - this.getLegendWidth(props), this.rowHeaderWidths)
+      this.tableBodyHeight = getTableBodyHeight(dimetionAxis, height, cols.length)
       this.drawingData.unitMetricWidth = getChartUnitMetricWidth(this.tableBodyWidth, this.colKeys.length || 1, metrics.length)
       this.drawingData.unitMetricHeight = getChartUnitMetricHeight(this.tableBodyHeight, this.rowKeys.length || 1, metrics.length)
       this.drawingData.multiCoordinate = metrics.some((m) => m.chart.coordinate === 'polar') || xAxis && xAxis.items.length
@@ -586,11 +522,11 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract, loading } = this.props
+    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract } = this.props
     const { legendSelected, renderType } = this.state
 
     return (
-      <div className={styles.block} ref={(f) => this.container = f}>
+      <div className={styles.block}>
         <div className={styles.leftSide}>
           <Corner
             cols={cols}
@@ -689,15 +625,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           chartStyles={chartStyles}
           onLegendSelect={this.legendSelect}
         />
-        <div
-          className={classnames({
-            [styles.mask]: true,
-            [styles.loading]: loading
-          })}
-        >
-          <Icon type="loading" />
-          <p>加载中…</p>
-        </div>
       </div>
     )
   }

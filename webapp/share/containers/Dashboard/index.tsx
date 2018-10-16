@@ -34,12 +34,12 @@ import Container from '../../../app/components/Container'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
 import DashboardItem from '../../../app/containers/Dashboard/components/DashboardItem'
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
-import { Responsive, WidthProvider } from 'react-grid-layout'
+import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 
 import { IFilterChangeParam } from '../../../app/components/Filters'
 import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
 
-import { RenderType, IPivotProps } from '../../../app/containers/Widget/components/Pivot/Pivot'
+import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 
@@ -76,7 +76,6 @@ import {
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
 const utilStyles = require('../../../app/assets/less/util.less')
 
-import widgetlibs from '../../../app/assets/json/widgetlib'
 import Login from '../../components/Login/index'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
@@ -99,7 +98,6 @@ interface IDashboardProps {
         globalParams: Array<{name: string, value: string}>
       }
       downloadCsvLoading: boolean
-      interactId: string
       renderType: RenderType
     }
   },
@@ -127,7 +125,7 @@ interface IDashboardProps {
     }
   ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
-  onLoadWidgetCsv: (itemId: number, pivotProps: IPivotProps, dataToken: string) => void,
+  onLoadWidgetCsv: (itemId: number, widgetProps: IWidgetProps, dataToken: string) => void,
   onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
   onResizeAllDashboardItem: () => void
 }
@@ -137,6 +135,7 @@ interface IDashboardStates {
   type: string,
   shareInfo: string,
   modalLoading: boolean,
+  interactingStatus: { [itemId: number]: boolean }
   allowFullScreen: boolean,
   currentDataInFullScreen: any,
   showLogin: boolean,
@@ -152,7 +151,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       shareInfo: '',
 
       modalLoading: false,
-
+      interactingStatus: {},
       allowFullScreen: false,
       currentDataInFullScreen: {},
       showLogin: false,
@@ -247,7 +246,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
@@ -345,7 +344,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }, 500)
   }
 
-  private downloadCsv = (itemId: number, pivotProps: IPivotProps, shareInfo: string) => {
+  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
     const {
       currentItemsInfo,
       onLoadWidgetCsv
@@ -353,7 +352,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
   //  const { filters, params } = currentItemsInfo[itemId].queryParams
 
-    onLoadWidgetCsv(itemId, pivotProps, shareInfo)
+    onLoadWidgetCsv(itemId, widgetProps, shareInfo)
   }
 
   private visibleFullScreen = (currentChartData) => {
@@ -423,6 +422,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
     })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: true
+      }
+    })
   }
 
   private turnOffInteract = (itemId) => {
@@ -439,6 +444,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
         linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
       })
+    })
+    this.setState({
+      interactingStatus: {
+        ...this.state.interactingStatus,
+        [itemId]: false
+      }
     })
   }
 
@@ -469,6 +480,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       mounted,
       shareInfo,
       showLogin,
+      interactingStatus,
       allowFullScreen,
       phantomRenderSign
     } = this.state
@@ -487,11 +499,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           datasource,
           loading,
           downloadCsvLoading,
-          interactId,
           renderType
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const interacting = interactingStatus[id] || false
 
         itemblocks.push((
           <div key={id}>
@@ -501,6 +513,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               data={datasource}
               loading={loading}
               polling={polling}
+              interacting={interacting}
               frequency={frequency}
               shareInfo={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
@@ -613,7 +626,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, pivotProps, dataToken) => dispatch(loadWidgetCsv(itemId, pivotProps, dataToken)),
+    onLoadWidgetCsv: (itemId, widgetProps, dataToken) => dispatch(loadWidgetCsv(itemId, widgetProps, dataToken)),
     onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
   }

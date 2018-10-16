@@ -54,7 +54,9 @@ export class Avatar extends React.PureComponent<IAvatarProps, IAvatarState> {
 
     return (
       <div className={wrapper}>
-        {isEnlarge}
+        <div className={`${size === 'small' ? styles.imgWrapper : ''}`}>
+          {isEnlarge}
+        </div>
         <Modal
           title={null}
           footer={null}

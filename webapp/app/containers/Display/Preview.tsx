@@ -16,7 +16,7 @@ import sagaBizlogic from '../Bizlogic/sagas'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
-import { GraphTypes, SecondaryGraphTypes } from 'utils/util'
+import { GraphTypes, SecondaryGraphTypes } from './components/util'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 
 import Container from '../../components/Container'
@@ -30,8 +30,7 @@ import {
   makeSelectCurrentSlide,
   makeSelectDisplays,
   makeSelectCurrentLayers,
-  makeSelectCurrentLayersInfo,
-  makeSelectCurrentSelectedLayers } from './selectors'
+  makeSelectCurrentLayersInfo } from './selectors'
 
 import { hideNavigator } from '../App/actions'
 import { loadWidgets } from '../Widget/actions'
@@ -50,13 +49,12 @@ import {
 import {
   ECHARTS_RENDERER,
   DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
-import widgetlibs from '../../assets/json/widgetlib'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
-import { IPivotProps, RenderType } from '../Widget/components/Pivot/Pivot'
+import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 
 interface IBizdataIncomeParamObject {
@@ -75,7 +73,6 @@ interface IPreviewProps {
     [key: string]: {
       datasource: any[]
       loading: boolean
-      selected: boolean
       queryParams: {
         filters: string
         linkageFilters: string
@@ -180,7 +177,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentLayersInfo[itemId].queryParams
@@ -281,7 +278,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     slideStyle  = {
       overflow: 'visible',
       width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      height: `${height * scale[1]}px`,
+      backgroundSize: 'cover'
     }
 
     if (backgroundColor) {
@@ -307,11 +305,10 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const chartInfo = widget && widgetlibs.find((wl) => wl.id === widget.type)
       const layerId = layer.id
 
       const { polling, frequency } = layer.params
-      const { datasource, loading, selected, interactId, rendered, renderType } = currentLayersInfo[layerId]
+      const { datasource, loading, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
         <LayerItem
@@ -320,7 +317,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           pure={true}
           scale={scale}
           layer={layer}
-          selected={selected}
           itemId={layerId}
           widget={widget}
           data={datasource}
@@ -351,8 +347,7 @@ const mapStateToProps = createStructuredSelector({
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
   currentLayers: makeSelectCurrentLayers(),
-  currentLayersInfo: makeSelectCurrentLayersInfo(),
-  currentSelectedLayers: makeSelectCurrentSelectedLayers()
+  currentLayersInfo: makeSelectCurrentLayersInfo()
 })
 
 export function mapDispatchToProps (dispatch) {

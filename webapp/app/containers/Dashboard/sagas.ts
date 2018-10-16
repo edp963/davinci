@@ -220,7 +220,9 @@ export function* deleteDashboardItem (action) {
       url: `${api.portal}/dashboards/widgets/${id}`
     })
     yield put(dashboardItemDeleted(id))
-    resolve()
+    if (resolve) {
+      resolve()
+    }
   } catch (err) {
     yield put(deleteDashboardItemFail())
     errorHandler(err)

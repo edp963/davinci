@@ -6,7 +6,7 @@ import DropboxItem from './DropboxItem'
 import DropboxContent from './DropboxContent'
 import ColorPanel from './ColorPanel'
 import SizePanel from './SizePanel'
-import { IChartInfo } from '../Pivot/Chart'
+import { IChartInfo, WidgetMode } from '../Widget'
 import { decodeMetricName } from '../util'
 const Popover = require('antd/lib/popover')
 const Icon = require('antd/lib/icon')
@@ -56,6 +56,7 @@ interface IDropboxProps {
   type: DropboxType
   value: object
   items: IDataParamSource[]
+  mode: WidgetMode
   dragged: IDataParamSource
   panelList: IDataParamSource[]
   dimetionsCount: number
@@ -258,6 +259,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       type,
       value,
       panelList,
+      mode,
       dragged,
       dimetionsCount,
       metricsCount,
@@ -307,6 +309,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
             <ColorPanel
               list={panelList}
               value={value}
+              showAll={mode === 'pivot'}
               onValueChange={onValueChange}
             />
           )
@@ -316,6 +319,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
             <SizePanel
               list={panelList}
               value={value}
+              hasTabs={mode === 'pivot'}
               onValueChange={onValueChange}
             />
           )

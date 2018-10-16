@@ -19,17 +19,29 @@
 
 #start server
 
+if [ -z "$DAVINCI3_HOME" ]; then
+  echo "DAVINCI3_HOME not found"
+  echo "Please export DAVINCI3_HOME to your environment variable"
+  exit
+fi
+
+cd $DAVINCI3_HOME
+Lib_dir=`ls | grep lib`
+if [ -z "$Lib_dir" ]; then
+  echo "Invalid DAVINCI3_HOME"
+  exit
+fi
+
 Server=`ps -ef | grep java | grep davinci-server_3.01-0.3.0-SNAPSHOT | grep -v grep | awk '{print $2}'`
 if [[ $Server -gt 0 ]]; then
   echo "[Davinci Server] is already started"
   exit
 fi
 
-script_dir=$(cd `dirname $0`; pwd)
-cd $script_dir/../
+cd $DAVINCI3_HOME
 TODAY=`date "+%Y-%m-%d"`
 LOG_PATH=$DAVINCI3_HOME/logs/davinci.$TODAY.log
-nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:$DAVINCI3_HOME/lib/*:davinci-server_3.01-0.3.0-SNAPSHOT.jar edp.DavinciServerApplication > $LOG_PATH  2>&1 &
+nohup java -Dfile.encoding=UTF-8 -cp $JAVA_HOME/lib/*:lib/* edp.DavinciServerApplication > $LOG_PATH  2>&1 &
 
 echo "=========================================="
 echo "Starting..., press \`CRTL + C\` to exit log"

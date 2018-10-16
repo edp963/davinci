@@ -33,6 +33,7 @@ interface IMemberListState {
 interface IMemberListProps {
   currentTeam: Team.ITeam
   deleteTeamMember: (id: number) => any
+  onLoadTeamMembers: (id: number) => any
   pullMemberInTeam: (teamId: number, memberId: number, resolve: () => any) => any
   changeTeamMemberRole: (id: number, role: string) => any
   currentTeamMembers: Team.ITeamMembers[]
@@ -104,6 +105,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         const memberId = values.projectId
         const teamId = currentTeam.id
         this.props.pullMemberInTeam(teamId, memberId, () => {
+          this.props.onLoadTeamMembers(teamId)
           this.hideAddForm()
         })
       }
@@ -174,10 +176,12 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         title: 'Name',
         dataIndex: 'user',
         key: 'user',
-        render: (text) => <div className={styles.avatarWrapper}>
-          <Avatar path={text.avatar} size="small" enlarge={true}/>
-          <span className={styles.avatarName}>{text.username}</span>
-        </div>
+        render: (text) => (
+          <div className={styles.avatarWrapper}>
+            <Avatar path={text.avatar} size="small" enlarge={true}/>
+            <span className={styles.avatarName}>{text.username}</span>
+          </div>
+        )
       },
         {
           title: 'role',
@@ -210,10 +214,12 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         title: 'Name',
         dataIndex: 'user',
         key: 'user',
-        render: (text) => <div className={styles.avatarWrapper}>
-          <Avatar path={text.avatar} size="small" enlarge={true}/>
-          <span className={styles.avatarName}>{text.username}</span>
-        </div>
+        render: (text) => (
+          <div className={styles.avatarWrapper}>
+            <Avatar path={text.avatar} size="small" enlarge={true}/>
+            <span className={styles.avatarName}>{text.username}</span>
+          </div>
+        )
       },
         {
           title: 'role',

@@ -72,7 +72,7 @@ SELECT
 <if(aggregators)>
  <aggregators:{agg|<if(agg)><agg><endif>}; separator=",">
 <endif>
-FROM (<sql>) AS T
+FROM (<sql>) T
 <if(filters)>
 WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
@@ -80,7 +80,7 @@ WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 GROUP BY <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><group><keywordSuffix><else><group><endif>}; separator=",">
 <endif>
 <if(orders)>
-ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)><keywordPrefix><order.column><keywordSuffix><else><order.column><endif> <order.direction><endif>}; separator=",">
+ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=",">
 <endif>
 <endif>
 >>
@@ -90,13 +90,13 @@ queryDistinctSql(column, params, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(column && sql)>
 <if(keywordPrefix && keywordSuffix)>
-SELECT DISTINCT <keywordPrefix><column><keywordSuffix> FROM (<sql>) AS T
+SELECT DISTINCT <keywordPrefix><column><keywordSuffix> FROM (<sql>) T
 <if(params)>
 WHERE <params:{param|<if(param)><keywordPrefix><param.column><keywordSuffix> = <param.value><endif>}; separator=" AND ">
 <endif>
 ORDER BY <keywordPrefix><column><keywordSuffix>
 <else>
-SELECT DISTINCT <column> FROM (<sql>) AS T
+SELECT DISTINCT <column> FROM (<sql>) T
 <if(params)>
 WHERE <params:{param|<if(param)><param.column> = <param.value><endif>}; separator=" AND ">
 <endif>

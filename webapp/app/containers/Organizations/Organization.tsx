@@ -48,10 +48,10 @@ import {
   makeSelectInviteMemberList
 } from './selectors'
 import {createStructuredSelector} from 'reselect'
-import {addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject} from '../Projects/actions'
+import {addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects} from '../Projects/actions'
 import {checkNameUniqueAction} from '../App/actions'
-import {makeSelectStarUserList} from '../Projects/selectors'
-import {IStarUser} from '../Projects'
+import {makeSelectStarUserList, makeSelectCollectProjects} from '../Projects/selectors'
+import {IStarUser, IProject} from '../Projects'
 
 interface IOrganizationProps {
   loginUser: any
@@ -61,6 +61,7 @@ interface IOrganizationProps {
   params: any
   inviteMemberList: any
   currentOrganization: IOrganization
+  collectProjects: IProject[]
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
@@ -75,7 +76,9 @@ interface IOrganizationProps {
   onSearchMember: (keywords: string) => any
   onAddProject: (project: any, resolve: () => any) => any
   onEditProject: (project: any, resolve: () => any) => any
-  onDeleteProject: (id: number) => any
+  onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
+  onLoadCollectProjects: () => any
+  onDeleteProject: (id: number, resolve?: any) => any
   onStarProject: (id: number, resolve: () => any) => any,
   onGetProjectStarUser: (id: number) => any,
   onEditOrganization: (organization: IOrganization) => any
@@ -165,13 +168,16 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       onLoadOrganizationMembers,
       onLoadOrganizationTeams,
       onLoadOrganizationDetail,
+      onLoadCollectProjects,
       params: { organizationId }
     } = this.props
     onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadOrganizationMembers(Number(organizationId))
     onLoadOrganizationTeams(Number(organizationId))
     onLoadOrganizationDetail(Number(organizationId))
+    onLoadCollectProjects()
   }
+
   private getOrganizationProjectsByPagination = (obj) => {
     const { onLoadOrganizationProjects, params: { organizationId }} = this.props
     this.setState({
@@ -225,8 +231,10 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       starUserList,
       params: {organizationId},
       currentOrganizationProjectsDetail,
-      onCheckUniqueName
+      onCheckUniqueName,
+      collectProjects
     } = this.props
+
     const {avatar, name, memberNum, teamNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
     return (
@@ -258,6 +266,8 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
                 onCheckUniqueName={this.props.onCheckUniqueName}
                 onAddProject={this.props.onAddProject}
                 onEditProject={this.props.onEditProject}
+                onClickCollectProjects={this.props.onClickCollectProjects}
+                onLoadCollectProjects={this.props.onLoadCollectProjects}
                 onLoadOrganizationProjects={this.props.onLoadOrganizationProjects}
                 organizationId={this.props.params['organizationId']}
                 organizationProjects={currentOrganizationProjects}
@@ -265,6 +275,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
                 toProject={this.toProject}
                 loginUser={loginUser}
                 starUser={starUserList}
+                collectProjects={collectProjects}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
@@ -284,6 +295,7 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
             <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
               <TeamList
                 loadOrganizationTeams={this.props.onLoadOrganizationTeams}
+                onLoadOrganizationDetail={this.props.onLoadOrganizationDetail}
                 organizations={organizations}
                 currentOrganization={this.props.currentOrganization}
                 organizationTeams={currentOrganizationTeams}
@@ -314,7 +326,8 @@ const mapStateToProps = createStructuredSelector({
   currentOrganizationProjectsDetail: makeSelectCurrentOrganizationProjectsDetail(),
   currentOrganizationTeams: makeSelectCurrentOrganizationTeams(),
   currentOrganizationMembers: makeSelectCurrentOrganizationMembers(),
-  inviteMemberList: makeSelectInviteMemberList()
+  inviteMemberList: makeSelectInviteMemberList(),
+  collectProjects: makeSelectCollectProjects()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -329,11 +342,13 @@ export function mapDispatchToProps (dispatch) {
     onDeleteOrganization: (id, resolve) => dispatch(deleteOrganization(id, resolve)),
     onSearchMember: (keyword) => dispatch(searchMember(keyword)),
     onInviteMember: (orgId, memId) => dispatch(inviteMember(orgId, memId)),
-    onDeleteProject: (id) => dispatch(deleteProject(id)),
+    onDeleteProject: (id, resolve) => dispatch(deleteProject(id, resolve)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(deleteOrganizationMember(id, resolve)),
     onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve)),
     onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
     onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
+    onClickCollectProjects: (formType, project, resolve) => dispatch(clickCollectProjects(formType, project, resolve)),
+    onLoadCollectProjects: () => dispatch(loadCollectProjects()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }

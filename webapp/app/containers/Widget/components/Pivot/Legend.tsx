@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IDataParamSource } from '../Workbench/Dropbox'
-import { IChartStyles } from 'containers/Widget/components/Pivot/Pivot'
+import { IChartStyles } from 'containers/Widget/components/Widget'
 import { getStyleConfig } from 'containers/Widget/components/util'
 
 const styles = require('./Pivot.less')

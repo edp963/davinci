@@ -251,6 +251,56 @@ export function clearLayersSelection () {
   }
 }
 
+export function toggleLayersResizingStatus (layerIds: number[], resizing: boolean) {
+  return {
+    type: ActionTypes.TOGGLE_LAYERS_RESIZING_STATUS,
+    payload: {
+      layerIds,
+      resizing
+    }
+  }
+}
+export function toggleLayersDraggingStatus (layerIds: number[], dragging: boolean) {
+  return {
+    type: ActionTypes.TOGGLE_LAYERS_DRAGGING_STATUS,
+    payload: {
+      layerIds,
+      dragging
+    }
+  }
+}
+
+export function hideVerticalBaseline () {
+  return {
+    type: ActionTypes.HIDE_EDITOR_VERTICAL_BASELINE
+  }
+}
+export function showVerticalBaseline (top, bottom, left) {
+  return {
+    type: ActionTypes.SHOW_EDITOR_VERTICAL_BASELINE,
+    payload: {
+      top,
+      bottom,
+      left
+    }
+  }
+}
+export function hideHorizontalBaseline () {
+  return {
+    type: ActionTypes.HIDE_EDITOR_HORIZONTAL_BASELINE
+  }
+}
+export function showHorizontalBaseline (top, right, left) {
+  return {
+    type: ActionTypes.SHOW_EDITOR_HORIZONTAL_BASELINE,
+    payload: {
+      top,
+      right,
+      left
+    }
+  }
+}
+
 export function copySlideLayers (slideId, layers: any[]) {
   return {
     type: ActionTypes.COPY_SLIDE_LAYERS,

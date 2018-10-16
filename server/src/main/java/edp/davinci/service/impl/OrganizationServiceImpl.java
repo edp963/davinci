@@ -504,44 +504,44 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
 
         if (StringUtils.isEmpty(tokenUserName) || StringUtils.isEmpty(tokenPassword)) {
             log.info("confirmInvite error: token detail id empty");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
-        }
-
-        if (!tokenPassword.equals(user.getPassword())) {
-            log.info("confirmInvite error: invalid token password");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            return resultMap.fail().message("username or password cannot be empty");
         }
 
         String[] ids = tokenUserName.split(Constants.SPLIT_CHAR_STRING);
         if (ids.length != 3) {
             log.info("confirmInvite error: invalid token username");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            return resultMap.fail().message("Invalid Token");
         }
         Long inviterId = Long.parseLong(ids[0]);
         Long memeberId = Long.parseLong(ids[1]);
         Long orgId = Long.parseLong(ids[2]);
 
         if (!user.getId().equals(memeberId)) {
-            log.info("confirmInvite error: invalid token member");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            log.info("confirmInvite error: invalid token member, username is wrong");
+            return resultMap.fail().message("username is wrong");
+        }
+
+        if (!tokenPassword.equals(user.getPassword())) {
+            log.info("confirmInvite error: invalid token password");
+            return resultMap.fail().message("password is wrong");
         }
 
         User inviter = userMapper.getById(inviterId);
         if (null == inviter) {
             log.info("confirmInvite error: invalid token inviter");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            return resultMap.fail().message("Invalid Token");
         }
 
         Organization organization = organizationMapper.getById(orgId);
         if (null == organization) {
             log.info("confirmInvite error: invalid token organization");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            return resultMap.fail().message("Invalid Token");
         }
 
         RelUserOrganization tokenRel = relUserOrganizationMapper.getRel(inviterId, orgId);
         if (null != tokenRel && tokenRel.getRole() != UserOrgRoleEnum.OWNER.getRole()) {
             log.info("confirmInvite error: invalid token inviter permission");
-            return resultMap.failAndRefreshToken(request).message("Invalid Token");
+            return resultMap.fail().message("Invalid Token");
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(memeberId, orgId);

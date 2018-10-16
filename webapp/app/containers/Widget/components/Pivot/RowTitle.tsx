@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { IDrawingData, DimetionType, IChartStyles } from './Pivot'
+import { DimetionType, IChartStyles } from '../Widget'
+import { IDrawingData } from './Pivot'
 import { getPivotContentTextWidth, getPivotCellHeight, getPivot, getStyleConfig } from '../util'
 
 const styles = require('./Pivot.less')

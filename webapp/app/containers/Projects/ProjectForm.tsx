@@ -124,7 +124,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
             {modalTitle}项目
           </div>
           <div className={styles.desc}>
-            项目属于组织，在项目中可以通过配置source，生成可视化图表
+            项目属于组织，可以在项目中连接数据源，生成可视化图表
           </div>
         </div>
         <div className={styles.body}>
@@ -197,10 +197,10 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                   })(
                     <Select>
                       <Option key="visibility" value="true">
-                        可见
+                        公开
                       </Option>
                       <Option key="hidden" value="false">
-                        隐藏
+                        私密
                       </Option>
                     </Select>
                   )}

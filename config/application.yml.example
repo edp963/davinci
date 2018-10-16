@@ -41,6 +41,8 @@ source:
   min-idle: 1
   max-wait: 6000
   max-active: 10
+  break-after-acquire-failure: true
+  connection-error-retry-attempts: 3
 
 
 spring:
@@ -95,7 +97,7 @@ spring:
     properties:
       smtp:
         starttls:
-          enable: false
+          enable: true
           required: true
         auth: true
       mail:

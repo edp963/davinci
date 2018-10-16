@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   selectLayer
 } from '../actions'
-import { OrderDirection } from '../../../utils/util'
+import { OrderDirection } from './util'
 
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')

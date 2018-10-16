@@ -43,7 +43,7 @@ module.exports = (options) => ({
         // they will be a part of our compilation either way.
         // So, no need for ExtractTextPlugin here.
         test: /\.css$/,
-        include: /node_modules/,
+        include: /node_modules|libs/,
         use: ['style-loader', 'css-loader']
       },
       {
@@ -137,7 +137,10 @@ module.exports = (options) => ({
       'browser',
       'jsnext:main',
       'main'
-    ]
+    ],
+    alias: {
+      libs: path.resolve(process.cwd(), 'libs')
+    }
   },
   devtool: options.devtool,
   target: 'web', // Make web variables accessible to webpack, e.g. window

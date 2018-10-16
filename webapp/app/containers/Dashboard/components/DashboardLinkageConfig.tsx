@@ -24,7 +24,7 @@ const Modal = require('antd/lib/modal')
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
-import { IPivotProps, RenderType } from '../../Widget/components/Pivot/Pivot'
+import { IWidgetProps } from '../../Widget/components/Widget'
 import LinkageConfig from 'components/Linkages/LinkageConfig'
 
 const styles = require('../Dashboard.less')
@@ -75,7 +75,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     Object.keys(currentItemsInfo).forEach((k) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const widgetConfig: IPivotProps = JSON.parse(widget.config)
+      const widgetConfig: IWidgetProps = JSON.parse(widget.config)
       const { cols, rows, metrics } = widgetConfig
 
       const view = views.find((bl) => bl.id === widget.viewId)
@@ -121,24 +121,15 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     })
   }
 
-  private cancel = () => {
-    const { onCancel } = this.props
-    Modal.confirm({
-      content: '确认不保存当前联动关系配置吗？',
-      onOk: onCancel,
-      onCancel: void 0
-    })
-  }
-
   public render () {
-    const { visible, loading, onSave, onGetWidgetInfo, linkages } = this.props
+    const { visible, loading, onSave, onGetWidgetInfo, linkages, onCancel } = this.props
     const { linkageCascaderSource, savingLinkageConfig } = this.state
 
     const modalButtons = [(
       <Button
         key="cancel"
         size="large"
-        onClick={this.cancel}
+        onClick={onCancel}
       >
         取 消
       </Button>
@@ -159,8 +150,9 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
       <Modal
         title="联动关系配置"
         wrapClassName="ant-modal-large"
+        maskClosable={false}
         visible={visible}
-        onCancel={this.cancel}
+        onCancel={onCancel}
         footer={modalButtons}
       >
         <div className={styles.modalLinkageConfig}>

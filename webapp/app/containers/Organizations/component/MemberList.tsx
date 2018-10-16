@@ -11,6 +11,7 @@ const Modal = require('antd/lib/modal')
 const Table = require('antd/lib/table')
 const Icon = require('antd/lib/icon')
 const styles = require('../Organization.less')
+const utilStyles = require('../../../assets/less/util.less')
 import MemberForm from '../../Teams/component/AddForm'
 import Avatar from '../../../components/Avatar'
 import * as Organization from '../Organization'
@@ -192,6 +193,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormCategory,
       organizationMembers
     } = this.state
+    let isHidden = false
+    if (organizationMembers && organizationMembers.length) {
+      organizationMembers.forEach((m) => {
+        isHidden = m && m.user && m.user.role === 1 ? true : false
+      })
+    }
     const { inviteMemberList, currentOrganization } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
@@ -232,22 +239,28 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         }, {
           title: 'settings',
           dataIndex: 'user',
+          className: isHidden ? utilStyles.hide : '',
           key: 'settings',
-          render: (text, record) => (
-            <span>
-          <Popconfirm
-            title="确定删除此成员吗？"
-            placement="bottom"
-            onConfirm={this.removeMemberForm(text, record)}
-          >
-            <Tooltip title="删除">
-              <a href="javascript:;">从组织里移除</a>
-            </Tooltip>
-          </Popconfirm>
-          <span className="ant-divider" />
-          <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
-        </span>
-          )
+          render: (text, record) => {
+            if (text.role === 1) {
+              return ''
+            }
+            return (
+              <span>
+                <Popconfirm
+                  title="确定删除此成员吗？"
+                  placement="bottom"
+                  onConfirm={this.removeMemberForm(text, record)}
+                >
+                  <Tooltip title="删除">
+                    <a href="javascript:;">从组织里移除</a>
+                  </Tooltip>
+                </Popconfirm>
+                <span className="ant-divider" />
+                <a href="javascript:;" onClick={this.showChangeRoleForm('orgMember', record)}>改变角色</a>
+              </span>
+            )
+          }
         }]
     } else {
       columns = [{

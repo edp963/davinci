@@ -9,9 +9,9 @@ class HistoryStack  {
   constructor () {
     this.item = []
     this.wrap = {}
-    this.init()
+    this.init([])
   }
-  public init () {
+  public init (projects) {
     const store = localStorage.getItem('historyBrowser')
     const user = this.getUser()
     if (store && store.length) {
@@ -33,6 +33,18 @@ class HistoryStack  {
         this.wrap[user] = this.item
       }
     }
+
+    const historyArr = []
+    if (this.wrap && this.wrap[user] && this.wrap[user].length) {
+      this.wrap[user].forEach((historyItem) => {
+        projects.forEach((projectItem) => {
+          if (historyItem.id === projectItem.id) {
+            historyArr.push(projectItem)
+          }
+        })
+      })
+    }
+    this.wrap[user] = historyArr
   }
   public pushNode (d?: IHistory) {
     const user = this.getUser()
@@ -43,11 +55,7 @@ class HistoryStack  {
       if (user && user.length) {
         if (result && result[user]) {
           const userArr = result[user]
-          if (userArr && Array.isArray(userArr)) {
-            this.item = userArr
-          } else {
-            this.item = []
-          }
+          this.item = (userArr && Array.isArray(userArr)) ? userArr : []
           this.wrap[user] = this.item
         } else {
           this.item = []
@@ -105,6 +113,14 @@ class HistoryStack  {
   public getAll () {
     const user = this.getUser()
     if (user) {
+      const items = this.wrap[user]
+      if (items && items.length) {
+        this.item = items
+        this.wrap[user] = this.item
+      } else {
+        this.item = []
+        this.wrap[user] = this.item
+      }
       return this.wrap[user]
     }
   }

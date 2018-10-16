@@ -295,3 +295,22 @@ export default compose(
   withSagaWidget,
   withConnect)(Display)
 
+export interface ISlide {
+  config: string
+  id: number
+  index: number
+}
+
+export interface ISlideConfig {
+  slideParams: ISlideParams
+}
+
+export interface ISlideParams {
+  backgroundColor: [number, number, number]
+  backgroundImage: string
+  height: number
+  width: number
+  opacity: number
+  scaleMode: string
+}
+

@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_CONNECTIONPROPERTIES;
+import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
+
 @Slf4j
 public class ESDataSource {
 
@@ -37,19 +40,20 @@ public class ESDataSource {
 
     private static volatile Map<String, DataSource> map = new HashMap<>();
 
-    public static synchronized DataSource getDataSource(String jdbcUrl, String username) throws SourceException {
+    public static synchronized DataSource getDataSource(String jdbcUrl) throws SourceException {
         String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
+        if (!map.containsKey(url) || null == map.get(url)) {
             Properties properties = new Properties();
-            properties.setProperty("url", url);
+            properties.setProperty(PROP_URL, url);
+            properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
-                map.put(username + "@" + url, dataSource);
+                map.put(url, dataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization, ", e);
                 throw new SourceException("Exception during pool initialization: jdbcUrl=" + jdbcUrl);
             }
         }
-        return map.get(username + "@" + url);
+        return map.get(url);
     }
 }

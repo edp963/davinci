@@ -2,7 +2,6 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import edp.core.enums.DataTypeEnum;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
@@ -513,7 +512,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 ST st = stg.getInstanceOf("querySql");
                 st.add("groups", executeParam.getGroups());
                 st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                st.add("orders", executeParam.getOrders());
+                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
                 st.add("filters", executeParam.getFilters());
                 st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
                 st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
@@ -580,7 +579,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     if (null != querySqlList && querySqlList.size() > 0) {
                         buildQuerySql(querySqlList, sqlEntity, executeParam, source);
                         for (String sql : querySqlList) {
-                            list = sqlUtils.syncQuery4List(sql);
+                            list = sqlUtils.syncQuery4ListByLimit(sql, executeParam.getLimit());
                         }
                     }
                 }
@@ -747,7 +746,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                         List<Map<String, Object>> list = null;
                         for (String sql : querySqlList) {
-                            list = sqlUtils.query4List(sql);
+                            list = sqlUtils.query4List(sql, -1);
                         }
                         if (null != list && list.size() > 0) {
                             List<Object> objects = new ArrayList<>();

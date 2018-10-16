@@ -1,6 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { IPivotMetric, IDrawingData, IMetricAxisConfig, DimetionType, RenderType, ILegend, IChartStyles } from './Pivot'
+import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
+import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import Cell from './Cell'
 import Chart, { IChartUnit, IChartLine, IChartBlock } from './Chart'
 import { PIVOT_CANVAS_SIZE_LIMIT, PIVOT_CANVAS_POLAR_SIZE_LIMIT } from '../../../../globalConstants'
@@ -25,7 +26,7 @@ export interface ITableBodyProps {
   rowTree: object
   colTree: object
   tree: object
-  metrics: IPivotMetric[]
+  metrics: IWidgetMetric[]
   metricAxisConfig: IMetricAxisConfig
   chartStyles: IChartStyles
   drawingData: IDrawingData
