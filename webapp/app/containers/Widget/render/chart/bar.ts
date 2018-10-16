@@ -33,6 +33,8 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
+const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps) {
   const {
@@ -78,7 +80,7 @@ export default function (chartProps: IChartProps) {
   const series = []
   const seriesData = []
 
-  metrics.forEach((m) => {
+  metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     if (color.items.length) {
@@ -147,7 +149,7 @@ export default function (chartProps: IChartProps) {
         itemStyle: {
           normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
-            color: color.value[m.name] || color.value['all']
+            color: color.value[m.name] || defaultThemeColors[i]
           }
         },
         ...labelOption

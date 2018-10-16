@@ -583,7 +583,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private cancel = () => {
-    this.props.router.goBack()
+    const { router, params } = this.props
+    router.replace(`/project/${params.pid}/vizs`)
   }
 
   public render () {

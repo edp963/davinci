@@ -309,7 +309,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
             <ColorPanel
               list={panelList}
               value={value}
-              hasTabs={mode === 'pivot'}
+              showAll={mode === 'pivot'}
               onValueChange={onValueChange}
             />
           )

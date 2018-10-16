@@ -11,7 +11,7 @@ const utilStyles = require('../../../../assets/less/util.less')
 interface IColorPanelProps {
   list: IDataParamSource[]
   value: object
-  hasTabs: boolean
+  showAll: boolean
   onValueChange: (key: string, value: string) => void
 }
 
@@ -63,12 +63,17 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
   }
 
   public render () {
-    const { list, hasTabs } = this.props
+    const { list, showAll } = this.props
     const { color, selectedTab } = this.state
+
+    const allTabClass = classnames({
+      [styles.selected]: selectedTab === 'all',
+      [utilStyles.hide]: !showAll
+    })
 
     const tabs = [(
       <li
-        className={classnames({ [styles.selected]: selectedTab === 'all' })}
+        className={allTabClass}
         key="all"
         onClick={this.tabSelect('all')}
       >
@@ -84,14 +89,9 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
       </li>
     )))
 
-    const tabClass = classnames({
-      [styles.tabs]: true,
-      [utilStyles.hide]: !hasTabs
-    })
-
     return (
       <div className={styles.colorPanel}>
-        <ul className={tabClass}>
+        <ul className={styles.tabs}>
           {tabs}
         </ul>
         <div className={styles.picker}>
