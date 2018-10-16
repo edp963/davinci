@@ -18,8 +18,6 @@
 
 package edp.core.common.jdbc;
 
-import com.alibaba.druid.pool.ElasticSearchConnection;
-import com.alibaba.druid.pool.ElasticSearchDruidDataSource;
 import com.alibaba.druid.pool.ElasticSearchDruidDataSourceFactory;
 import edp.core.exception.SourceException;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +26,9 @@ import javax.sql.DataSource;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
+import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_CONNECTIONPROPERTIES;
+import static com.alibaba.druid.pool.DruidDataSourceFactory.PROP_URL;
 
 @Slf4j
 public class ESDataSource {
@@ -43,7 +44,8 @@ public class ESDataSource {
         String url = jdbcUrl.toLowerCase();
         if (!map.containsKey(url) || null == map.get(url)) {
             Properties properties = new Properties();
-            properties.setProperty("url", url);
+            properties.setProperty(PROP_URL, url);
+            properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
                 map.put(url, dataSource);

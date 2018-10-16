@@ -73,10 +73,7 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.connection-error-retry-attempts:3}")
     private int connectionErrorRetryAttempts;
 
-    @Value("${spring.datasource.validation-query}")
-    private String validationQuery;
-
-    private static volatile Map<String, Object> map = new HashMap<>();
+    private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
         String url = jdbcUrl.toLowerCase();
@@ -124,7 +121,6 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setTestOnReturn(testOnReturn);
             instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-            instance.setValidationQuery(validationQuery);
 
             try {
                 instance.init();
@@ -135,6 +131,6 @@ public class JdbcDataSource extends DruidDataSource {
             map.put(username + "@" + url, instance);
         }
 
-        return (DruidDataSource) map.get(username + "@" + url);
+        return map.get(username + "@" + url);
     }
 }

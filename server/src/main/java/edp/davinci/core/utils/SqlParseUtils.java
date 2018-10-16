@@ -51,6 +51,8 @@ public class SqlParseUtils {
 
     private static final String select = "select";
 
+    private static final String with = "with";
+
     private static final String queryVarKey = "query@var";
 
     private static final String teamVarKey = "team@var";
@@ -216,7 +218,7 @@ public class SqlParseUtils {
             list = new ArrayList<>();
             for (String sqlStr : split) {
                 sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(select)) {
+                if (sqlStr.toLowerCase().startsWith(select) || sqlStr.toLowerCase().startsWith(with)) {
                     continue;
                 } else {
                     list.add(sqlStr);
@@ -247,7 +249,7 @@ public class SqlParseUtils {
             list = new ArrayList<>();
             for (String sqlStr : split) {
                 sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(select)) {
+                if (sqlStr.toLowerCase().startsWith(select) || sqlStr.toLowerCase().startsWith(with)) {
                     list.add(sqlStr);
                 } else {
                     continue;
