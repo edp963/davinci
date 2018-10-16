@@ -1298,7 +1298,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 })}
                 value="chart"
               >
-                视图驱动
+                图表驱动
               </RadioButton>
             </RadioGroup>
           </div>

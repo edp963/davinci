@@ -6,8 +6,6 @@ import DraggableCore from './lib/DraggableCore'
 // See https://github.com/mzabriskie/react-draggable/pull/254
 // and https://github.com/mzabriskie/react-draggable/issues/266
 
-console.log(Draggable, DraggableCore)
-
 export default Draggable
 export {
   Draggable,
