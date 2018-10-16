@@ -109,12 +109,12 @@ export default function (chartProps: IChartProps) {
       ? width * 0.15 + funnelLeft
       : width * 0.15
       const topValue = legendPosition === 'top'
-        ? height * 0.15 + 32
-        : height * 0.15
+        ? height * 0.12 + 32
+        : height * 0.12
 
       const heightValue = legendPosition === 'left' || legendPosition === 'right'
-        ? height - height * 0.15 * 2
-        : height - 32 - height * 0.15 * 2
+        ? height - height * 0.12 * 2
+        : height - 32 - height * 0.12 * 2
       const widthValue = legendPosition === 'left' || legendPosition === 'right'
         ? width - funnelLeft - width * 0.15 * 2
         : width - width * 0.15 * 2
@@ -163,9 +163,9 @@ export default function (chartProps: IChartProps) {
         funnelAlign: alignmentMode,
         gap: gapNumber || 0,
         left: width * 0.15,
-        top: height * 0.15,
+        top: height * 0.12,
         width: width - width * 0.15 * 2,
-        height: height - height * 0.15 * 2,
+        height: height - height * 0.12 * 2,
         data: data.map((d, index) => {
           return {
             name: decodedMetricName,
@@ -186,9 +186,8 @@ export default function (chartProps: IChartProps) {
   })
 
   return {
-    tooltip : {
-        trigger: 'item',
-        formatter: '{b} <br/>{c} ({d}%)'
+    tooltip: {
+      formatter: getChartTooltipLabel('funnel', data, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, legendData),
     series: seriesArr

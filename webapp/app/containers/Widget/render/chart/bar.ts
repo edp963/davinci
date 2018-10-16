@@ -205,7 +205,7 @@ export default function (chartProps: IChartProps) {
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
     series,
     tooltip: {
-      formatter: getChartTooltipLabel(seriesData, { cols, metrics, color, tip })
+      formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
     grid: getGridPositions(legend, seriesNames)
