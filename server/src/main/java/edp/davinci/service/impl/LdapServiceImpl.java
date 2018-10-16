@@ -18,9 +18,10 @@
 
 package edp.davinci.service.impl;
 
-import edp.davinci.model.LdapUser;
+import edp.davinci.model.LdapPerson;
 import edp.davinci.service.LdapService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.LdapTemplate;
 import org.springframework.ldap.support.LdapUtils;
@@ -30,7 +31,6 @@ import org.springframework.util.StringUtils;
 import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
@@ -41,36 +41,36 @@ public class LdapServiceImpl implements LdapService {
     @Autowired
     private LdapTemplate ldapTemplate;
 
-    public LdapUser findByUsername(String username, String password) throws NamingException {
+    @Value("${spring.ldap.domainName}")
+    private String ldapDomainName;
 
-        //使用用户名、密码验证域用户
-        DirContext ctx = ldapTemplate.getContextSource().getContext(username, password);
+    public LdapPerson findByUsername(String username, String password) throws NamingException {
+        LdapPerson ldapPerson = null;
 
-        LdapUser ldapUser = ldapTemplate.search(
-                query().where("objectclass").is("ldapUser").and("sAMAccountName").is(username),
-                new AttributesMapper<LdapUser>() {
-            @Override
-            public LdapUser mapFromAttributes(Attributes attributes) throws NamingException {
-                LdapUser ldapUser = new LdapUser();
-                ldapUser.setName(attributes.get("cn").get().toString());
-                ldapUser.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
+        if (StringUtils.endsWithIgnoreCase(username,ldapDomainName)) {
+            username = username.replaceAll("(?i)" + ldapDomainName, "");
+        }
+        String userDn = username + ldapDomainName;
 
-                String memberOf = attributes.get("memberOf").toString().replaceAll("memberOf: ", "");
+        DirContext ctx = ldapTemplate.getContextSource().getContext(userDn, password);
 
-                List<String> list = new ArrayList<String>();
-                String[] roles = memberOf.split(",");
-                for (String role : roles) {
-                    if (StringUtils.startsWithIgnoreCase(role.trim(), "CN=")) {
-                        list.add(role.trim().replace("CN=", ""));
+        List<LdapPerson> search = ldapTemplate.search(
+                query().where("objectclass").is("person").and("sAMAccountName").is(username),
+                new AttributesMapper<LdapPerson>() {
+                    @Override
+                    public LdapPerson mapFromAttributes(Attributes attributes) throws NamingException {
+                        LdapPerson ldapPerson = new LdapPerson();
+                        ldapPerson.setName(attributes.get("cn").get().toString());
+                        ldapPerson.setSAMAccountName(attributes.get("sAMAccountName").get().toString());
+                        return ldapPerson;
                     }
-                }
-                ldapUser.setRole(list);
+                });
 
-                return ldapUser;
-            }
-        }).get(0);
+        if (null != search && search.size() > 0) {
+            ldapPerson = search.get(0);
+        }
 
         LdapUtils.closeContext(ctx);
-        return ldapUser;
+        return ldapPerson;
     }
 }

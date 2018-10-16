@@ -43,12 +43,6 @@ spring:
       connection-error-retry-attempts: 3
       validation-query: SELECT 1
 
-  ldap:
-      urls: ldap://10.151.6.97:389
-      username: davinci-ldap02
-      password: m6#6EY69
-      base: OU=宜信公司,OU=HABROOT,DC=creditease,DC=corp
-
   resources:
     static-locations: classpath:/META-INF/resources/, classpath:/resources/, classpath:/static/, file:${file.userfiles-path}, file:${file.web_resources}
 

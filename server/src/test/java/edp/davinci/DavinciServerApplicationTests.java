@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.StringUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -29,5 +30,15 @@ public class DavinciServerApplicationTests {
 
     @Test
     public void contextLoads() {
+    }
+
+    public static void main(String[] args) {
+        String username1 = "zhangsan@creditease.cn";
+        String username2 = "lisi@CREDITEASE.cn";
+        String domainName = "@creditease.cn";
+
+        System.out.println(username1.replaceAll("(?i)" + domainName, ""));
+        System.out.println(username2.replaceAll("(?i)" + domainName, ""));
+
     }
 }

@@ -23,20 +23,15 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class LdapUser {
+public class LdapPerson {
     private String name;
     private String sAMAccountName;
-    private List<String> role;
 
     @Override
     public String toString() {
         StringBuffer stringBuffer = new StringBuffer();
         stringBuffer.append("name:"+name+",");
         stringBuffer.append("sAMAccountName:"+ sAMAccountName);
-        if(role!=null && role.size()>0){
-            stringBuffer.append(",role:"+String.join(",",role));
-        }
-
         return stringBuffer.toString();
     }
 }
