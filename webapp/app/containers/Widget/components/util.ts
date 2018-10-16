@@ -567,7 +567,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }
 }
 
-export function getChartTooltipLabel (seriesData, options) {
+export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
   let dimetionColumns = cols
   let metricColumns = [...metrics]
@@ -600,7 +600,9 @@ export function getChartTooltipLabel (seriesData, options) {
 
   return function (params) {
     const { seriesIndex, dataIndex } = params
-    const record = seriesData[seriesIndex][dataIndex]
+    const record = type === 'funnel'
+      ? seriesData[dataIndex]
+      : seriesData[seriesIndex][dataIndex]
     return dimetionColumns
       .map((dc) => {
         const value = record
