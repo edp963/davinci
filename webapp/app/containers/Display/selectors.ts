@@ -54,9 +54,9 @@ const makeSelectCurrentLayersOperationInfo = () => createSelector(
 const makeSelectCurrentSelectedLayers = () => createSelector(
   selectDisplay,
   ({ present }) => {
-    const layersInfo = present.get('currentLayersInfo')
+    const layersOperationInfo = present.get('currentLayersOperationInfo')
     const layers = present.get('currentLayers')
-    return layers.filter((layer) => layersInfo[layer.id].selected)
+    return layers.filter((layer) => layersOperationInfo[layer.id].selected)
   }
 )
 

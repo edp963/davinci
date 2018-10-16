@@ -1,7 +1,7 @@
-'use strict';
-module.exports = function() {
-  throw new Error("Don't instantiate Resizable directly! Use require('react-resizable').Resizable");
-};
+import Resizable from './lib/Resizable'
+import ResizableBox from './lib/ResizableBox'
 
-module.exports.Resizable = require('./Resizable').default;
-module.exports.ResizableBox = require('./ResizableBox').default;
+export {
+  Resizable,
+  ResizableBox
+}
