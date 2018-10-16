@@ -192,7 +192,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
-    const { commonParams, specificParams, styleParams } = this.state
+    const { mode, commonParams, specificParams, styleParams } = this.state
     const { metrics } = commonParams
     const dataConfig = {}
     const styleConfig = {}
@@ -206,8 +206,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               value = specificParams[key]
                 ? {
                   all: specificParams[key].value.all,
-                  ...metrics.items.reduce((props, i) => {
-                    props[i.name] = specificParams[key].value[i.name] || specificParams[key].value['all']
+                  ...metrics.items.reduce((props, item, i) => {
+                    props[item.name] = mode === 'pivot'
+                      ? specificParams[key].value[item.name] || specificParams[key].value['all']
+                      : specificParams[key].value[item.name] || defaultThemeColors[i]
                     return props
                   }, {})
                 }
@@ -773,11 +775,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {
-    const { commonParams, specificParams, styleParams } = this.state
+    const { mode, commonParams, specificParams, styleParams } = this.state
     const { color, size } = specificParams
     switch (name) {
       case 'color':
-        if (key === 'all') {
+        if (key === 'all' && mode === 'pivot') {
           Object.keys(color.value).forEach((k) => {
             color.value[k] = value
           })

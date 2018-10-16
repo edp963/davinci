@@ -38,7 +38,6 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
   }
 
   private selectChange = (prop) => (value) => {
-    console.log('va', prop)
     this.props.onChange(prop, value)
   }
 
