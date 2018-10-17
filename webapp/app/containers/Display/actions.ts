@@ -19,6 +19,7 @@
  */
 
 import { ActionTypes } from './constants'
+import { IBaseline } from './components/LayerItem'
 
 export function loadDisplays (projectId) {
   return {
@@ -270,33 +271,16 @@ export function toggleLayersDraggingStatus (layerIds: number[], dragging: boolea
   }
 }
 
-export function hideVerticalBaseline () {
+export function clearEditorBaselines () {
   return {
-    type: ActionTypes.HIDE_EDITOR_VERTICAL_BASELINE
+    type: ActionTypes.CLEAR_EDITOR_BASELINES
   }
 }
-export function showVerticalBaseline (top, bottom, left) {
+export function showEditorBaselines (baselines: IBaseline[]) {
   return {
-    type: ActionTypes.SHOW_EDITOR_VERTICAL_BASELINE,
+    type: ActionTypes.SHOW_EDITOR_BASELINES,
     payload: {
-      top,
-      bottom,
-      left
-    }
-  }
-}
-export function hideHorizontalBaseline () {
-  return {
-    type: ActionTypes.HIDE_EDITOR_HORIZONTAL_BASELINE
-  }
-}
-export function showHorizontalBaseline (top, right, left) {
-  return {
-    type: ActionTypes.SHOW_EDITOR_HORIZONTAL_BASELINE,
-    payload: {
-      top,
-      right,
-      left
+      baselines
     }
   }
 }

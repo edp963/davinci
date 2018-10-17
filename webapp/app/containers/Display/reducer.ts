@@ -48,7 +48,7 @@ const initialState = fromJS({
   lastOperationType: '',
   lastLayers: [],
 
-  editorBaselines: {}
+  editorBaselines: []
 })
 
 function displayReducer (state = initialState, action) {
@@ -145,16 +145,7 @@ function displayReducer (state = initialState, action) {
           }
           return obj
         }, {}))
-        .set('editorBaselines', {
-          horizontal: {
-            visible: false,
-            position: [0, 0, 0]
-          },
-          vertical: {
-            visible: false,
-            position: [0, 0, 0]
-          }
-        })
+        .set('editorBaselines', [])
     case ActionTypes.LOAD_DISPLAY_DETAIL_FAILURE:
       return state
         .set('currentDisplayLoading', false)
@@ -324,38 +315,10 @@ function displayReducer (state = initialState, action) {
           dragging: payload.dragging
         }
       }), layersOperationInfo))
-    case ActionTypes.HIDE_EDITOR_VERTICAL_BASELINE:
-      return state.set('editorBaselines', {
-        ...editorBaselines,
-        vertical: {
-          ...editorBaselines.vertical,
-          visible: false
-        }
-      })
-    case ActionTypes.SHOW_EDITOR_VERTICAL_BASELINE:
-      return state.set('editorBaselines', {
-        ...editorBaselines,
-        vertical: {
-          visible: true,
-          position: [payload.top, payload.bottom, payload.left]
-        }
-      })
-    case ActionTypes.HIDE_EDITOR_HORIZONTAL_BASELINE:
-      return state.set('editorBaselines', {
-        ...editorBaselines,
-        horizontal: {
-          ...editorBaselines.horizontal,
-          visible: false
-        }
-      })
-    case ActionTypes.SHOW_EDITOR_HORIZONTAL_BASELINE:
-      return state.set('editorBaselines', {
-        ...editorBaselines,
-        horizontal: {
-          visible: true,
-          position: [payload.top, payload.right, payload.left]
-        }
-      })
+    case ActionTypes.CLEAR_EDITOR_BASELINES:
+      return state.set('editorBaselines', [])
+    case ActionTypes.SHOW_EDITOR_BASELINES:
+      return state.set('editorBaselines', payload.baselines)
 
     case ActionTypes.COPY_SLIDE_LAYERS:
       return state.set('clipboardLayers', payload.layers)
