@@ -71,6 +71,7 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
+import 'echarts/lib/component/brush'
 import './containers/Widget/charts/mapFile/china'
 
 import { DEFAULT_ECHARTS_THEME } from './globalConstants'
