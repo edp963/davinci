@@ -52,7 +52,10 @@ export function DataDrill (props: IDataDrillProps) {
 
   return (
     <Menu onClick={drill} style={{ width: 120 }} mode="vertical">
-      <Menu.SubMenu key="sub1" title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan"><span style={{marginLeft: '8px'}}>下钻</span></span>}>
+      {/* <Menu.SubMenu key="sub1" title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1"><span style={{marginLeft: '8px'}}>上钻</span></span>}>
+        {categories ? categories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
+      </Menu.SubMenu> */}
+      <Menu.SubMenu key="sub2" title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan"><span style={{marginLeft: '8px'}}>下钻</span></span>}>
         {categories ? categories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
       </Menu.SubMenu>
     </Menu>
