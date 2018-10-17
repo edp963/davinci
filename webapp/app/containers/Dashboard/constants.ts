@@ -63,3 +63,5 @@ export const LOAD_WIDGET_CSV_FAILURE = 'davinci/Dashboard/LOAD_WIDGET_CSV_FAILUR
 export const RENDER_DASHBOARDITEM = 'davinci/Dashboard/RENDER_DASHBOARDITEM'
 export const RESIZE_DASHBOARDITEM = 'davinci/Dashboard/RESIZE_DASHBOARDITEM'
 export const RESIZE_ALL_DASHBOARDITEM = 'davinci/Dashboard/RESIZE_ALL_DASHBOARDITEM'
+export const DRILL_DASHBOARDITEM = 'davinci/Dashboard/DRILL_DASHBOARDITEM'
+export const DELETE_DRILL_HISTORY = 'davinci/Dashboard/DELETE_DRILL_HISTORY'

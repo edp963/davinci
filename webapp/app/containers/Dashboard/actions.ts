@@ -63,7 +63,9 @@ import {
   LOAD_WIDGET_CSV_FAILURE,
   RENDER_DASHBOARDITEM,
   RESIZE_DASHBOARDITEM,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 export function addDashboardItem (portalId, item, resolve) {
@@ -452,5 +454,25 @@ export function resizeDashboardItem (itemId) {
 export function resizeAllDashboardItem () {
   return {
     type: RESIZE_ALL_DASHBOARDITEM
+  }
+}
+
+export function drillDashboardItem (itemId, drillHistory) {
+  return {
+    type: DRILL_DASHBOARDITEM,
+    payload: {
+      itemId,
+      drillHistory
+    }
+  }
+}
+
+export function deleteDrillHistory (itemId, index) {
+  return {
+    type: DELETE_DRILL_HISTORY,
+    payload: {
+      itemId,
+      index
+    }
   }
 }
