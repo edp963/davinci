@@ -76,6 +76,9 @@ export interface IWidgetProps {
   mode: WidgetMode
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  // onHideDrillPanel?: (swtich: boolean) => void
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {
