@@ -43,10 +43,10 @@ interface ILayerItemProps {
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
-  onDragLayer?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
-  onDragLayerStop?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
-  onResizeLayer?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
-  onResizeLayerStop?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
+  onDragLayer?: (itemId: number, deltaPosition: IDeltaPosition) => void
+  onDragLayerStop?: (itemId: number, deltaPosition: IDeltaPosition) => void
+  onResizeLayer?: (itemId: number, deltaSize: IDeltaSize) => void
+  onResizeLayerStop?: (itemId: number, deltaSize: IDeltaSize) => void
 }
 
 interface ILayerItemStates {
@@ -162,19 +162,17 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     return e.target !== data.node.lastElementChild
   }
 
-  private dragOnStop = (e: Event, data) => {
+  private dragOnStop = (e: Event, data: IDeltaPosition) => {
     e.stopPropagation()
-    const { deltaX, deltaY } = data
     const {
       itemId,
       onDragLayerStop } = this.props
     console.log('drag stops')
-    onDragLayerStop(itemId, { deltaX, deltaY })
+    onDragLayerStop(itemId, data)
   }
 
-  private onDrag = (e, { deltaX, deltaY }) => {
+  private onDrag = (e, { deltaX, deltaY }: IDeltaPosition) => {
     e.stopPropagation()
-    console.log('dragging')
     const { itemId, onDragLayer } = this.props
     if (onDragLayer) { onDragLayer(itemId, { deltaX, deltaY }) }
   }
@@ -439,7 +437,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { layerParams } = this.state
     const { positionX: x, positionY: y, width, height } = layerParams
 
-    const position = { x, y}
+    const position = { x, y }
 
     const content = this.renderLayer(layer)
     if (pure) { return content }
@@ -513,5 +511,23 @@ export interface ILayerParams {
   paddingLeft: number
   paddingRight: number
   contentText: string
+}
+
+export interface IDeltaPosition {
+  deltaX: number
+  deltaY: number
+}
+
+export interface IDeltaSize {
+  deltaWidth: number
+  deltaHeight: number
+}
+export interface IBaseline {
+  top: number
+  right: number
+  bottom: number
+  left: number
+  adjust: [number, number]
+  adjustType: 'position' | 'size'
 }
 

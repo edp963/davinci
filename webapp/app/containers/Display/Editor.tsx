@@ -49,7 +49,7 @@ import {
   makeSelectCurrentState,
   makeSelectNextState,
   makeSelectEditorBaselines } from './selectors'
-import { slideSettings, GraphTypes } from './components/util'
+import { slideSettings, GraphTypes, computeEditorBaselines } from './components/util'
 
 import DisplayHeader from './components/DisplayHeader'
 import DisplayBody from './components/DisplayBody'
@@ -58,7 +58,7 @@ import DisplayContainer, { Keys } from './components/DisplayContainer'
 import DisplayBottom from './components/DisplayBottom'
 import DisplaySidebar from './components/DisplaySidebar'
 
-import LayerItem, { ILayerParams } from './components/LayerItem'
+import LayerItem, { ILayerParams, IBaseline } from './components/LayerItem'
 import SettingForm from './components/SettingForm'
 import DisplaySetting from './components/DisplaySetting'
 import LayerAlign from './components/LayerAlign'
@@ -84,10 +84,8 @@ import {
   undoOperation,
   redoOperation,
   loadDisplayShareLink,
-  showHorizontalBaseline,
-  hideHorizontalBaseline,
-  showVerticalBaseline,
-  hideVerticalBaseline    } from './actions'
+  showEditorBaselines,
+  clearEditorBaselines    } from './actions'
 const message = require('antd/lib/message')
 const styles = require('./Display.less')
 
@@ -100,10 +98,10 @@ import {
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { GRID_ITEM_MARGIN } from '../../globalConstants'
+import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
-import { ISlideParams } from './'
+import { ISlideParams, ISlide } from './'
 
 interface IParams {
   pid: number
@@ -146,16 +144,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   canRedo: boolean
   currentState
   nextState
-  editorBaselines: {
-    horizontal: {
-      visible: boolean,
-      position: [number, number, number]
-    },
-    vertical: {
-      visible: boolean,
-      position: [number, number, number]
-    }
-  }
+  editorBaselines: IBaseline[]
   onLoadWidgets: (projectId) => void
   onLoadBizlogics: (projectId, resolve?: any) => any
   onEditCurrentDisplay: (display: any, resolve?: any) => void
@@ -196,10 +185,8 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
     }
   ) => void
 
-  onShowHorizontalBaseline: (top, right, left) => void
-  onHideHorizontalBaseline: () => void
-  onShowVerticalBaseline: (top, bottom, left) => void
-  onHideVerticalBaseline: () => void
+  onShowEditorBaselines: (baselines: IBaseline[]) => void
+  onClearEditorBaselines: () => void
 }
 
 interface IEditorStates {
@@ -441,62 +428,46 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   private updateCurrentLocalLayers = (
     itemId: number,
-    { deltaX, deltaY, deltaWidth, deltaHeight }: { deltaX: number, deltaY: number, deltaWidth: number, deltaHeight: number }
+    { deltaX, deltaY, deltaWidth, deltaHeight }: { deltaX: number, deltaY: number, deltaWidth: number, deltaHeight: number },
+    adjustType: IBaseline['adjustType']
   ) => {
     const editLayers = []
-    const { currentLayersOperationInfo } = this.props
-    const { currentLocalLayers, slideParams } = this.state
+    const { currentLayersOperationInfo, onShowEditorBaselines } = this.props
+    const { currentLocalLayers, slideParams, scale } = this.state
     const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
 
     editLayers.push(copyCurrentLocalLayers.find((localLayer) => localLayer.id === itemId))
-    if (editLayers[0].selected) {
+    if (currentLayersOperationInfo[editLayers[0].id].selected) {
       editLayers.splice(0, 1, ...copyCurrentLocalLayers.filter((localLayer) => currentLayersOperationInfo[localLayer.id].selected))
     }
+    const otherLayers = copyCurrentLocalLayers.filter((localLayer) => editLayers.map((l) => l.id).indexOf(localLayer.id) < 0)
 
-    const mapLayerParams: { [layerId: number]: ILayerParams } = editLayers.reduce((acc, layer) => {
-      acc[layer.id] = JSON.parse(layer.params)
-      return acc
-    }, {})
-
-    const minX = editLayers.reduce((min, layer) => Math.min(min, mapLayerParams[layer.id].positionX), Infinity)
-    const maxX = editLayers.reduce((max, layer) => {
-      const { positionX, width } = mapLayerParams[layer.id]
-      return Math.max(max, positionX + width)
-    }, -Infinity)
-
-    const minY = editLayers.reduce((min, layer) => Math.min(min, mapLayerParams[layer.id].positionY), Infinity)
-    const maxY = editLayers.reduce((max, layer) => {
-      const { positionY, height } = mapLayerParams[layer.id]
-      return Math.max(max, positionY + height)
-    }, -Infinity)
-
-    const middleX = Math.round((minX + maxX) / 2)
-    const middleY = Math.round((minY + maxY) / 2)
-
-    const { width: slideWidth, height: slideHeight } = slideParams
-    const { onShowHorizontalBaseline, onHideHorizontalBaseline, onShowVerticalBaseline, onHideVerticalBaseline } = this.props
-    if (Math.abs(slideWidth / 2 - middleX) < GRID_ITEM_MARGIN) {
-      onShowVerticalBaseline(0, 0, slideWidth / 2)
-      // deltaX = 0
-    } else {
-      onHideVerticalBaseline()
-    }
-    if (Math.abs(slideHeight / 2 - middleY) < GRID_ITEM_MARGIN) {
-      onShowHorizontalBaseline(slideHeight / 2, 0, 0)
-      // deltaY = 0
-    } else {
-      onHideHorizontalBaseline()
-    }
+    const baselines = computeEditorBaselines(otherLayers, editLayers, slideParams as ISlideParams,
+      GRID_ITEM_MARGIN / 2, scale, { deltaX, deltaY, deltaWidth, deltaHeight }, adjustType)
+    onShowEditorBaselines(baselines)
+    const adjustPosition = [0, 0]
+    const adjustSize = [0, 0]
+    baselines.forEach((bl) => {
+      switch (bl.adjustType) {
+        case 'position':
+          adjustPosition[0] += bl.adjust[0]
+          adjustPosition[1] += bl.adjust[1]
+          break
+        case 'size':
+          adjustSize[0] += bl.adjust[0]
+          adjustSize[1] += bl.adjust[1]
+      }
+    })
 
     editLayers.forEach((localLayer) => {
       const layerParams = JSON.parse(localLayer.params)
       const { positionX, positionY, width, height } = layerParams
       localLayer.params = JSON.stringify({
         ...layerParams,
-        positionX: Math.round(positionX + deltaX),
-        positionY: Math.round(positionY + deltaY),
-        width: Math.round(width + deltaWidth),
-        height: Math.round(height + deltaHeight)
+        positionX: Math.round(positionX + deltaX + adjustPosition[0]),
+        positionY: Math.round(positionY + deltaY + adjustPosition[1]),
+        width: Math.round(width + deltaWidth + adjustSize[0]),
+        height: Math.round(height + deltaHeight + adjustSize[1])
       })
     })
 
@@ -509,7 +480,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       ...delta,
       deltaWidth: 0,
       deltaHeight: 0
-    })
+    }, 'position')
     this.props.toggleLayersDraggingStatus(editLayers.map((l) => l.id), true)
   }
 
@@ -518,12 +489,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       ...delta,
       deltaWidth: 0,
       deltaHeight: 0
-    })
+    }, 'position')
     this.onEditLayers(editLayers)
-    const { onHideHorizontalBaseline, onHideVerticalBaseline, toggleLayersDraggingStatus } = this.props
+    const { onClearEditorBaselines, toggleLayersDraggingStatus } = this.props
     toggleLayersDraggingStatus(editLayers.map((l) => l.id), false)
-    onHideHorizontalBaseline()
-    onHideVerticalBaseline()
+    onClearEditorBaselines()
   }
 
   private resizeLayer = (itemId, delta) => {
@@ -531,7 +501,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       ...delta,
       deltaX: 0,
       deltaY: 0
-    })
+    }, 'size')
     this.props.toggleLayersResizingStatus(editLayers.map((l) => l.id), true)
   }
 
@@ -541,7 +511,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       ...delta,
       deltaX: 0,
       deltaY: 0
-    })
+    }, 'size')
     this.onEditLayers(editLayers)
     onResizeLayers(editLayers.map((layer) => layer.id))
     this.props.toggleLayersResizingStatus(editLayers.map((l) => l.id), false)
@@ -771,32 +741,23 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private getEditorBaselines = () => {
-    const { scale } = this.state
     const { editorBaselines } = this.props
-    const { horizontal, vertical } = editorBaselines
-    const [ hTop, hRight, hLeft ] = horizontal.position
-    const [ vTop, vBottom, vLeft ] = vertical.position
 
-    const styleHorizontal: React.CSSProperties = {
-      display: horizontal.visible ? 'block' : 'none',
-      height: `${1 / scale}px`,
-      top: `${hTop}px`,
-      right: `${hRight}px`,
-      left: `${hLeft}px`
-    }
-    const styleVertical: React.CSSProperties = {
-      display: vertical.visible ? 'block' : 'none',
-      width: `${1 / scale}px`,
-      top: `${vTop}px`,
-      bottom: `${vBottom}px`,
-      left: `${vLeft}px`
-    }
-    const baselines = [
-      (<div key="horizontalBaseline" className={styles.horizontalBaseline} style={styleHorizontal} />),
-      (<div key="verticalBaseline" className={styles.verticalBaseline} style={styleVertical} />)
-    ]
+    const domBaselines = editorBaselines.map((bl, idx) => {
+      const { top, right, bottom, left } = bl
+      const style: React.CSSProperties = {
+        position: 'absolute',
+        zIndex: 999999,
+        top: `${top}px`,
+        right: `${right}px`,
+        bottom: `${bottom}px`,
+        left: `${left}px`,
+        backgroundColor: DEFAULT_BASELINE_COLOR
+      }
+      return (<div key={`baseline_${idx}`} className={styles.baseline} style={style} />)
+    })
 
-    return baselines
+    return domBaselines
   }
 
   public render () {
@@ -865,7 +826,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
 
     const baselines = this.getEditorBaselines()
-
     const settingInfo = this.getSettingInfo()
 
     let settingContent = null
@@ -1000,10 +960,8 @@ function mapDispatchToProps (dispatch) {
     onRedo: (nextState) => dispatch(redoOperation(nextState)),
     onHideNavigator: () => dispatch(hideNavigator()),
 
-    onShowHorizontalBaseline: (top, right, left) => dispatch(showHorizontalBaseline(top, right, left)),
-    onHideHorizontalBaseline: () => dispatch(hideHorizontalBaseline()),
-    onShowVerticalBaseline: (top, bottom, left) => dispatch(showVerticalBaseline(top, bottom, left)),
-    onHideVerticalBaseline: () => dispatch(hideVerticalBaseline())
+    onShowEditorBaselines: (baselines) => dispatch(showEditorBaselines(baselines)),
+    onClearEditorBaselines: () => dispatch(clearEditorBaselines())
   }
 }
 
