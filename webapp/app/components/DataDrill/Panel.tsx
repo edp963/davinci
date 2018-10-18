@@ -35,10 +35,11 @@ export interface ICategories {
 
 export function DataDrill (props: IDataDrillProps) {
   const { categoriesCol, onDataDrill, currentData } = props
-  let categories = []
+  let drilldownCategories = []
+  let drillupCategories = []
 
   if (currentData && currentData.length) {
-      categories = categoriesCol.filter((cate) => {
+    drilldownCategories = categoriesCol.filter((cate) => {
       let vaildate = void 0
       Object.keys(currentData[0]).some((data) => {
         vaildate = cate.name !== data
@@ -47,16 +48,47 @@ export function DataDrill (props: IDataDrillProps) {
         }
       })
       return vaildate
+    }).map((down) => {
+      return {
+        ...down,
+        drillType: 'down'
+      }
+    })
+    drillupCategories = Object.keys(currentData[0]).filter((data) => {
+      let vaildate = void 0
+      categoriesCol.every((cate) => {
+        vaildate = data === cate.name
+        if (data !== cate.name) {
+          return true
+        }
+      })
+      return vaildate
+    }).map((up) => {
+      return {
+        name: up,
+        type: 'category',
+        visualType: 'string',
+        drillType: 'up'
+      }
     })
   }
-
   return (
     <Menu onClick={drill} style={{ width: 120 }} mode="vertical">
-      {/* <Menu.SubMenu key="sub1" title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1"><span style={{marginLeft: '8px'}}>上钻</span></span>}>
-        {categories ? categories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
-      </Menu.SubMenu> */}
-      <Menu.SubMenu key="sub2" title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan"><span style={{marginLeft: '8px'}}>下钻</span></span>}>
-        {categories ? categories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
+      <Menu.SubMenu
+        key="sub2"
+        disabled={drillupCategories.length < 2}
+        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
+        <span style={{marginLeft: '8px'}}>上卷</span></span>}
+      >
+        {drillupCategories ? drillupCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
+      </Menu.SubMenu>
+      <Menu.SubMenu
+        key="sub1"
+        disabled={drilldownCategories.length < 1}
+        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1">
+        <span style={{marginLeft: '8px'}}>下钻</span></span>}
+      >
+        {drilldownCategories ? drilldownCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
       </Menu.SubMenu>
     </Menu>
   )
