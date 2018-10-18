@@ -29,7 +29,7 @@ import { DEFAULT_ECHARTS_THEME } from '../../../globalConstants'
 let geoData
 
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
-  return import('../../../assets/json/city.json').then((d) => {
+  return import('../../../assets/json/geo').then((d) => {
     geoData = d
 
     const {
