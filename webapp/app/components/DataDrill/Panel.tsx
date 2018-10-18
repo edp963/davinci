@@ -37,7 +37,6 @@ export function DataDrill (props: IDataDrillProps) {
   const { categoriesCol, onDataDrill, currentData } = props
   let drilldownCategories = []
   let drillupCategories = []
-
   if (currentData && currentData.length) {
     drilldownCategories = categoriesCol.filter((cate) => {
       let vaildate = void 0
@@ -77,7 +76,7 @@ export function DataDrill (props: IDataDrillProps) {
       <Menu.SubMenu
         key="sub2"
         disabled={drillupCategories.length < 2}
-        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
+        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1">
         <span style={{marginLeft: '8px'}}>上卷</span></span>}
       >
         {drillupCategories ? drillupCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
@@ -85,7 +84,7 @@ export function DataDrill (props: IDataDrillProps) {
       <Menu.SubMenu
         key="sub1"
         disabled={drilldownCategories.length < 1}
-        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan1">
+        title={<span style={{fontSize: '14px'}} className="iconfont icon-iconxiazuan">
         <span style={{marginLeft: '8px'}}>下钻</span></span>}
       >
         {drilldownCategories ? drilldownCategories.map((col) => <Menu.Item key={col.name}>{col.name}</Menu.Item>) : ''}
