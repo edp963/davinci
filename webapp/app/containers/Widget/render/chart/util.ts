@@ -257,7 +257,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: ILegendConfig, seriesNames) {
+export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value

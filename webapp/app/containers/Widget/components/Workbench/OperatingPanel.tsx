@@ -1328,21 +1328,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 onSelect={this.chartSelect}
               />
             ))}
-            {/* <i className="iconfont icon-area-chart" />
-            <i className="iconfont icon-kongjiansangjitu" />
-            <i className="iconfont icon-iconloudoutu" />
-            <i className="iconfont icon-chart-treemap" />
-            <i className="iconfont icon-chartwordcloud" />
-            <i className="iconfont icon-calendar1" />
-            <i className="iconfont icon-text" />
-            <i className="iconfont icon-china" />
-            <i className="iconfont icon-duplex" />
-            <i className="iconfont icon-508tongji_xiangxiantu" />
-            <i className="iconfont icon-510tongji_guanxitu" />
-            <i className="iconfont icon-waterfall" />
-            <i className="iconfont icon-gauge" />
-            <i className="iconfont icon-parallel" />
-            <i className="iconfont icon-confidence-band" /> */}
           </div>
           <div className={styles.params}>
             <ul className={styles.paramsTab}>{tabs}</ul>
