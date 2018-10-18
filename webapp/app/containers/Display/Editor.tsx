@@ -92,7 +92,6 @@ const styles = require('./Display.less')
 import { IWidgetProps, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import {
-  loadBizlogics,
   loadDataFromItem,
   loadCascadeSource, // TODO global filter in Display
   loadBizdataSchema  } from '../Bizlogic/actions'
@@ -145,12 +144,10 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   currentState
   nextState
   editorBaselines: IBaseline[]
-  onLoadWidgets: (projectId) => void
-  onLoadBizlogics: (projectId, resolve?: any) => any
   onEditCurrentDisplay: (display: any, resolve?: any) => void
   onEditCurrentSlide: (displayId: number, slide: any, resolve?: any) => void
   onUploadCurrentSlideCover: (cover: Blob, resolve: any) => void
-  onLoadDisplayDetail: (id: number) => void
+  onLoadDisplayDetail: (projectId: number, displayId: number) => void
   onSelectLayer: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
   onClearLayersSelection: () => void
   onDragSelectedLayer: (id: number, deltaX: number, deltaY: number) => void
@@ -227,15 +224,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   public componentWillMount () {
     const {
       params,
-      onLoadWidgets,
-      onLoadBizlogics,
       onLoadDisplayDetail
     } = this.props
     const projectId = +params.pid
     const displayId = +params.displayId
-    // onLoadBizlogics(projectId)
-    onLoadDisplayDetail(displayId)
-    onLoadWidgets(projectId)
+    onLoadDisplayDetail(projectId, displayId)
   }
 
   public componentDidMount () {
@@ -767,6 +760,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentLayersOperationInfo,
       currentSelectedLayers,
       widgets,
+      bizlogics,
       currentDisplay,
       onSelectLayer,
       onLoadDisplayShareLink,
@@ -786,8 +780,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     if (!currentDisplay) { return null }
 
-    const layerItems =  !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
+    const layerItems = !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
+      const view = widget && bizlogics.find((b) => b.id === widget.viewId)
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -807,6 +802,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           dragging={dragging}
           itemId={layerId}
           widget={widget}
+          view={view}
           data={datasource}
           loading={loading}
           polling={polling}
@@ -937,9 +933,7 @@ const mapStateToProps = createStructuredSelector({
 
 function mapDispatchToProps (dispatch) {
   return {
-    onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
-    onLoadWidgets: (projectId) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),

@@ -51,10 +51,10 @@ const utilStyles = require('../../../assets/less/util.less')
 interface IDashboardItemProps {
   itemId: number
   widget: any
+  view?: Partial<IView>
   data: any
   loading: boolean
   polling: string
-  view?: IView
   interacting: boolean
   frequency: string
   shareInfo: string
@@ -67,7 +67,7 @@ interface IDashboardItemProps {
   router?: InjectedRouter
   currentProject?: IProject
   container?: string
-  onSelectDrillHistory: (history?: any, item?: number, itemId?: number, widgetId?: number) => void
+  onSelectDrillHistory?: (history?: any, item?: number, itemId?: number, widgetId?: number) => void
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
@@ -85,6 +85,7 @@ interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
   widgetProps: IWidgetProps
+  model: IModel
   isDrilling: boolean
   dataDrillPanelPosition: boolean | object
   whichDataDrillBrushed: boolean | object []
@@ -100,6 +101,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible: false,
       sharePanelAuthorized: false,
       widgetProps: null,
+      model: null,
       isDrilling: false,
       dataDrillPanelPosition: false,
       whichDataDrillBrushed: false,
@@ -117,20 +119,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private container: HTMLDivElement = null
 
   public componentWillMount () {
-    const { itemId, widget, onGetChartData, container } = this.props
+    const { itemId, widget, view, onGetChartData, container } = this.props
     if (container === 'share') {
       onGetChartData('clear', itemId, widget.id)
       this.setFrequent(this.props)
     }
+    const widgetProps = JSON.parse(widget.config)
     this.setState({
-      widgetProps: JSON.parse(widget.config)
+      widgetProps,
+      model: JSON.parse(view.model),
+      cacheWidgetProps: {...widgetProps}
     })
   }
 
   public componentWillReceiveProps (nextProps) {
     if (nextProps.widget !== this.props.widget) {
       this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config),
+        model: JSON.parse(nextProps.view.model)
       })
     }
   }
@@ -215,9 +221,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       renderType,
       onGetChartData
     } = this.props
-    const chartsData = {itemId, widget, data, loading, renderType, onGetChartData}
+
     if (onShowFullScreen) {
-      onShowFullScreen(chartsData)
+      onShowFullScreen({
+        itemId,
+        widget,
+        model: this.state.model,
+        data,
+        loading,
+        renderType,
+        onGetChartData
+      })
     }
   }
 
@@ -287,10 +301,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
   }
-  public componentDidMount () {
-    const {widgetProps} = this.state
-    this.setState({cacheWidgetProps: {...widgetProps}})
-  }
+
   private drillDataHistory = (history, item, itemId, widgetId) => {
     const {onSelectDrillHistory, drillHistory} = this.props
     const { widgetProps, cacheWidgetProps } = this.state
@@ -364,7 +375,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       data,
       loading,
-      view,
       interacting,
       shareInfo,
       secretInfo,
@@ -383,7 +393,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       controlPanelVisible,
       sharePanelAuthorized,
-      widgetProps
+      widgetProps,
+      model
     } = this.state
 
     let downloadButton
@@ -511,12 +522,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       <span style={{marginLeft: '8px', cursor: 'pointer'}} onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
     </Tooltip>)
 
-    const chartClass = {
-      chart: styles.chartBlock,
-      table: styles.tableBlock,
-      container: styles.block
-    }
-
     const gridItemClass = classnames({
       [styles.gridItem]: true,
       [styles.interact]: interacting
@@ -530,18 +535,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       })
     }
     const categoriesCol = []
-    if (view) {
-      const model: IModel = JSON.parse(view.model)
-      Object.entries(model).forEach(([key, m]) => {
-        if (m.modelType === 'category') {
-          categoriesCol.push({
-            name: key,
-            type: 'category',
-            visualType: m.visualType
-          })
-        }
-      })
-    }
+    Object.entries(model).forEach(([key, m]) => {
+      if (m.modelType === 'category') {
+        categoriesCol.push({
+          name: key,
+          type: 'category',
+          visualType: m.visualType
+        })
+      }
+    })
 
     const dataDrillPanelClass = classnames({
       [styles.dataDrillPanel]: true,
@@ -627,6 +629,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             renderType={loading ? 'refresh' : renderType}
             data={data}
             loading={loading}
+            model={model}
             onCheckTableInteract={this.checkTableInteract}
             onDoInteract={this.doInteract}
             getDataDrillDetail={this.getDataDrillDetail}

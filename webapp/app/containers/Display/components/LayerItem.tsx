@@ -16,6 +16,7 @@ import {
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
 import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import { IModel } from '../../Widget/components/Workbench/index'
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 
 const Resizable = require('libs/react-resizable').Resizable
@@ -32,6 +33,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
+  view: any
   data: any
   loading: boolean
   polling: string
@@ -54,6 +56,7 @@ interface ILayerItemStates {
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetProps
+  model: IModel
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
@@ -67,16 +70,18 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerParams,
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
-      widgetProps: null
+      widgetProps: null,
+      model: null
     }
   }
 
   public componentWillMount () {
-    const { widget } = this.props
+    const { widget, view } = this.props
     if (!widget) { return }
 
     this.setState({
-      widgetProps: JSON.parse(widget.config)
+      widgetProps: JSON.parse(widget.config),
+      model: JSON.parse(view.model)
     })
   }
 
@@ -99,7 +104,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     if (this.props.widget !== nextProps.widget) {
       this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config),
+        model: nextProps.view && JSON.parse(nextProps.view.model)
       })
     }
   }
@@ -248,7 +254,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      widgetProps } = this.state
+      widgetProps,
+      model } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -272,6 +279,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             data={data || []}
             loading={loading}
             renderType={renderType}
+            model={model}
           />)
         )}
       </div>

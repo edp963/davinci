@@ -109,16 +109,19 @@ export function* addDisplay (action) {
 }
 
 export function* getDisplayDetail (action): IterableIterator<any> {
-  const { id } = action.payload
+  const { projectId, displayId } = action.payload
   try {
-    const asyncDataDetail = yield call(request, `${api.display}/${id}/slides`)
-    const display = readObjectAdapter(asyncDataDetail)
+    const result = yield all({
+      dashboardDetail: call(request, `${api.display}/${displayId}/slides`),
+      widgets: call(request, `${api.widget}?projectId=${projectId}`),
+      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+    })
+    const { dashboardDetail, widgets, bizlogics } = result
+    const display = dashboardDetail.payload
     const slide = display.slides[0]
     delete display.slides
-    const asyncDataWidgets = yield call(request, `${api.display}/${id}/slides/${slide.id}/widgets`)
-    const layers = readListAdapter(asyncDataWidgets)
-    yield put(displayDetailLoaded(display, slide, layers))
-    return display
+    const layers = yield call(request, `${api.display}/${displayId}/slides/${slide.id}/widgets`)
+    yield put(displayDetailLoaded(display, slide, layers.payload, widgets.payload, bizlogics.payload))
   } catch (err) {
     yield put(loadDisplaysFail(err))
   }

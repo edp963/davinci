@@ -503,6 +503,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
+        const view = { model: widget.model }
         const interacting = interactingStatus[id] || false
 
         itemblocks.push((
@@ -510,6 +511,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             <DashboardItem
               itemId={id}
               widget={widget}
+              view={view}
               data={datasource}
               loading={loading}
               polling={polling}
@@ -536,7 +538,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           h: height,
           i: `${id}`
         })
-        console.log(layouts)
       })
 
       grids = (

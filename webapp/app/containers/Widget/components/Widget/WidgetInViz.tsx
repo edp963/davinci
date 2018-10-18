@@ -27,7 +27,8 @@ export class WidgetInViz extends React.Component<IWidgetWrapperProps, IWidgetInV
     expired: 300,
     orders: [],
     loading: false,
-    mode: 'pivot'
+    mode: 'pivot',
+    model: {}
   }
 
   public componentDidMount () {
