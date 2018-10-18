@@ -27,6 +27,8 @@ import scatter from './scatter'
 import pie from './pie'
 import funnel from './funnel'
 import map from './map'
+import wordCloud from './wordCloud'
+import waterfall from './waterfall'
 
 const widgetlibs: IChartInfo[] = [
   table,
@@ -35,7 +37,9 @@ const widgetlibs: IChartInfo[] = [
   scatter,
   pie,
   funnel,
-  map
+  map,
+  wordCloud,
+  waterfall
 ]
 
 export default widgetlibs
