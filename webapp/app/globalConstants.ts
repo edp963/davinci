@@ -133,8 +133,8 @@ export const CHART_VISUALMAP_POSITIONS = [
 ]
 
 export const CHART_LAYER_TYPES = [
-  { name: '气泡图', value: 'scatter' },
   { name: '地图', value: 'map' },
+  { name: '气泡图', value: 'scatter' },
   { name: '热力图', value: 'heatmap' }
 ]
 

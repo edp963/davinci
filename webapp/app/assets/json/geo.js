@@ -1,4 +1,4 @@
-export const geoData = [
+export default [
   {id: 11, name: "北京市", parent: 0, lon: 116.39564503788, lat: 39.92998577808},
   {id: 12, name: "天津市", parent: 0, lon: 117.21081309155, lat: 39.14392990331},
   {id: 13, name: "河北省", parent: 0, lon: 115.66143362422, lat: 38.613839749251},

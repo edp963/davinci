@@ -22,12 +22,14 @@ import { IChartProps } from '../../components/Chart'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getTextWidth
+  getTextWidth,
+  getSizeRate
 } from '../../components/util'
 import {
   getLegendOption,
   getLabelOption,
-  getGridPositions
+  getGridPositions,
+  getSymbolSize
 } from './util'
 import {
   safeAddition
@@ -36,12 +38,11 @@ import {
 import {
   DEFAULT_ECHARTS_THEME
 } from '../../../../globalConstants'
-import {
-  geoData
-} from '../../../../assets/json/geo.js'
+import geoData from '../../../../assets/json/geo'
 
-const cityData = require('../../../../assets/json/city.json')
-const provinceData = require('../../../../assets/json/province.json')
+const specialCities = ['北京', '上海', '天津', '重庆', '香港', '澳门']
+const provinceSuffix = ['省', '自治区']
+const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']
 
 export default function (chartProps: IChartProps) {
   const {
@@ -73,7 +74,7 @@ export default function (chartProps: IChartProps) {
   const labelOption = {
     label: {
       normal: {
-        // formatter: '{b}',
+        formatter: '{b}',
         position: labelPosition,
         show: showLabel,
         color: labelColor,
@@ -84,84 +85,96 @@ export default function (chartProps: IChartProps) {
   }
 
   let metricOptions
-  let scatterOptions
-  const heatmapOptions = []
   let visualMapOptions
 
-  let dataTree
-  let visualMapMax
-  metrics.forEach((m) => {
-    const decodedMetricName = decodeMetricName(m.name)
-    if (cols.length) {
-      dataTree = data.reduce((tree, ds) => {
-        let areaGeo
-        let areaVal
-        const group = []
-        cols.forEach((cs) => {
-          const { visualType } = model[cs]
-          // todo
-          if (visualType === 'geoProvince') {
-            areaVal = ds[cs]
-            for (const cd in provinceData) {
-              if (areaVal && areaVal.includes(cd)) {
-                areaGeo = provinceData[cd]
+  const dataTree = {}
+  let min = 0
+  let max = 0
+
+  const agg = metrics[0].agg
+  const metricName = decodeMetricName(metrics[0].name)
+
+  data.forEach((record) => {
+    let areaVal
+    const group = []
+
+    const value = record[`${agg}(${metricName})`]
+    min = Math.min(min, value)
+    max = Math.max(max, value)
+
+    cols.forEach((col) => {
+      const { visualType } = model[col]
+      // todo
+      if (visualType === 'geoProvince') {
+        areaVal = record[col]
+        const hasSuffix = specialCities.concat(provinceSuffix).some((p) => areaVal.includes(p))
+        const area = hasSuffix
+          ? geoData.find((d) => d.name === areaVal)
+          : geoData.find((d) => d.name.includes(areaVal))
+        if (area) {
+          if (!dataTree[areaVal]) {
+            dataTree[areaVal] = {
+              lon: area.lon,
+              lat: area.lat,
+              value,
+              children: {}
+            }
+          }
+        }
+      } else if (visualType === 'geoCity') {
+        areaVal = record[col]
+        const hasSuffix = specialCities.concat(citySuffix).some((p) => areaVal.includes(p))
+        const area = hasSuffix
+          ? geoData.find((d) => d.name === areaVal)
+          : geoData.find((d) => d.name.includes(areaVal))
+        if (area) {
+          if (layerType === 'map') {
+            const provinceParent = getProvinceParent(area)
+            const parentName = getProvinceName(provinceParent.name)
+            if (!dataTree[parentName]) {
+              dataTree[parentName] = {
+                lon: area.lon,
+                lat: area.lat,
+                value: 0,
+                children: {}
               }
             }
-          } else if (visualType === 'geoCity') {
-            areaVal = ds[cs]
-            for (const cd in cityData) {
-              if (areaVal && areaVal.includes(cd)) {
-                areaGeo = cityData[cd]
-              }
-            }
-          } else if (visualType === 'geoCountry') {
-            return
+            dataTree[parentName].value += value
           } else {
-            areaVal = ''
-          }
-
-          if (areaGeo) {
-            if (areaVal) {
-              if (!tree[areaVal]) {
-                tree[areaVal] = {
-                  lon: areaGeo.lon,
-                  lat: areaGeo.lat,
-                  value: 0,
-                  children: {}
-                }
-              }
-              tree[areaVal].value = ds[`${m.agg}(${decodedMetricName})`]
-
-              // todo: 除去显示城市／省的
-              const group = ['name', 'sex']
-              if (group.length) {
-                group.forEach((g) => {
-                  if (!tree[areaVal].children[ds[g]]) {
-                    tree[areaVal].children[ds[g]] = 0
-                  }
-                  tree[areaVal].children[ds[g]] = safeAddition(tree[areaVal].children[ds[g]], Number(ds[`${m.agg}(${decodedMetricName})`]))
-                })
+            if (!dataTree[areaVal]) {
+              dataTree[areaVal] = {
+                lon: area.lon,
+                lat: area.lat,
+                value,
+                children: {}
               }
             }
           }
-        })
-        return tree
-      }, {})
-      visualMapMax = Math.max(...data.map((d) => d[`${m.agg}(${decodedMetricName})`] || 0))
-    } else {
-      dataTree = {}
-    }
-    console.log('dataTree', dataTree)
+        }
+      }
+
+      // todo: 除去显示城市／省的
+      // const group = ['name', 'sex']
+      // if (group.length) {
+      //   group.forEach((g) => {
+      //     if (!dataTree[areaVal].children[record[g]]) {
+      //       dataTree[areaVal].children[record[g]] = 0
+      //     }
+      //     dataTree[areaVal].children[record[g]] = safeAddition(dataTree[areaVal].children[record[g]], Number(value))
+      //   })
+      // }
+    })
   })
 
   // series 数据项
   const metricArr = []
 
-  scatterOptions = {
-    symbolSize: 12,
-    ...labelOption
+  const sizeRate = getSizeRate(min, max)
+
+  const optionsType = layerType === 'scatter' ? {} : {
+    blurSize: 40
   }
-  const optionsType = layerType === 'scatter' ? scatterOptions : heatmapOptions
+
   const serieObj = layerType === 'map'
     ? {
       name: '地图',
@@ -174,7 +187,8 @@ export default function (chartProps: IChartProps) {
           name: key,
           value: [lon, lat, value]
         }
-      })
+      }),
+      ...labelOption
     }
     : {
       name: layerType === 'scatter' ? '气泡图' : '热力图',
@@ -184,11 +198,12 @@ export default function (chartProps: IChartProps) {
         const { lon, lat, value } = dataTree[key]
         return {
           name: key,
-          value: [lon, lat, value]
+          value: [lon, lat, value],
+          symbolSize: getSymbolSize(sizeRate, value)
         }
       }),
-      ...optionsType,
-      symbolSize: chartStyles.label.labelFontSize
+      ...labelOption,
+      ...optionsType
     }
 
   metricArr.push(serieObj)
@@ -240,8 +255,8 @@ export default function (chartProps: IChartProps) {
     visualMapOptions = {
       visualMap: {
         show: showVisualMap,
-        min: 0,
-        max: visualMapMax,
+        min,
+        max,
         calculable: true,
         inRange: {
           color: [startColor, endColor]
@@ -260,8 +275,8 @@ export default function (chartProps: IChartProps) {
     visualMapOptions = {
       visualMap: {
         show: false,
-        min: 0,
-        max: visualMapMax,
+        min,
+        max,
         calculable: true,
         inRange: {
           color: DEFAULT_ECHARTS_THEME.visualMapColor
@@ -281,16 +296,16 @@ export default function (chartProps: IChartProps) {
 
   const tooltipOptions = {
     tooltip: {
-      trigger: 'item',
-      formatter: (params) => {
-        const treeNode = dataTree[params.name]
-        let content = treeNode ? `${params.name}：${treeNode.value}` : ''
+      trigger: 'item'
+      // formatter: (params) => {
+      //   const treeNode = dataTree[params.name]
+      //   let content = treeNode ? `${params.name}：${treeNode.value}` : ''
 
-        const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
-        content += `<br/>${groupContent}`
+      //   const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
+      //   content += `<br/>${groupContent}`
 
-        return content
-      }
+      //   return content
+      // }
     }
   }
 
@@ -302,7 +317,6 @@ export default function (chartProps: IChartProps) {
     : {
       geo: {
         map: 'china',
-        // ...labelOption,
         itemStyle: {
           normal: {
             areaColor: '#0000003F',
@@ -321,4 +335,21 @@ export default function (chartProps: IChartProps) {
     }
 
   return mapOptions
+}
+
+function getProvinceParent (area) {
+  if (!area.parent) {
+    return area
+  }
+  const parent = geoData.find((g) => g.id === area.parent)
+  return !parent.parent ? parent : getProvinceParent(parent)
+}
+
+function getProvinceName (name) {
+  provinceSuffix.forEach((ps) => {
+    if (name.includes(ps)) {
+      name = name.replace(ps, '')
+    }
+  })
+  return name
 }
