@@ -29,6 +29,9 @@ import funnel from './funnel'
 import radar from './radar'
 import sankey from './sankey'
 import parallel from './parallel'
+import map from './map'
+import wordCloud from './wordCloud'
+import waterfall from './waterfall'
 
 const widgetlibs: IChartInfo[] = [
   table,
@@ -39,7 +42,10 @@ const widgetlibs: IChartInfo[] = [
   funnel,
   radar,
   sankey,
-  parallel
+  parallel,
+  map,
+  wordCloud,
+  waterfall
 ]
 
 export default widgetlibs

@@ -69,21 +69,24 @@ export function addDisplayFail () {
   }
 }
 
-export function loadDisplayDetail (id) {
+export function loadDisplayDetail (projectId, displayId) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL,
     payload: {
-      id
+      projectId,
+      displayId
     }
   }
 }
-export function displayDetailLoaded (display, slide, layers) {
+export function displayDetailLoaded (display, slide, layers, widgets, bizlogics) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     payload: {
       display,
       slide,
-      layers
+      layers,
+      widgets,
+      bizlogics
     }
   }
 }

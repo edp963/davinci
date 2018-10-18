@@ -29,6 +29,7 @@ import radar from './radar'
 import sankey from './sankey'
 import parallel from './parallel'
 import wordCloud from './wordCloud'
+import waterfall from './waterfall'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
 
@@ -40,10 +41,11 @@ export default function (type, chartProps: IChartProps): EChartOption {
     case 'pie': return pie(chartProps)
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
-    // case 'map': return map(chartProps)
     case 'radar': return radar(chartProps)
     case 'sankey': return sankey(chartProps)
     case 'parallel': return parallel(chartProps)
-    // case 'wordCloud': return wordCloud(chartProps)
+    case 'map': return map(chartProps)
+    case 'wordCloud': return wordCloud(chartProps)
+    case 'waterfall': return waterfall(chartProps)
   }
 }

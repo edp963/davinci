@@ -40,6 +40,9 @@ export interface ITableBodyProps {
   legend: ILegend
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  // onHideDrillPanel?: (swtich: boolean) => void
 }
 
 export class TableBody extends React.Component<ITableBodyProps, {}> {
@@ -199,7 +202,10 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       renderType,
       legend,
       onCheckTableInteract,
-      onDoInteract
+      onDoInteract,
+      getDataDrillDetail,
+      isDrilling
+      // onHideDrillPanel
     } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
     let tableBody = null
@@ -476,6 +482,9 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           legend={legend}
           onCheckTableInteract={onCheckTableInteract}
           onDoInteract={onDoInteract}
+          getDataDrillDetail={getDataDrillDetail}
+          isDrilling={isDrilling}
+          // onHideDrillPanel={onHideDrillPanel}
         />
       )
     } else {

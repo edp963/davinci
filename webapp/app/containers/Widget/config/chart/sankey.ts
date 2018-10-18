@@ -6,7 +6,7 @@ import {
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const sankey: IChartInfo = {
-  id: 7,
+  id: 9,
   name: 'sankey',
   title: '桑基图',
   icon: 'icon-kongjiansangjitu',

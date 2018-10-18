@@ -2,13 +2,13 @@ import * as React from 'react'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 const Checkbox = require('antd/lib/checkbox')
-const Radio = require('antd/lib/radio')
+const Radio = require('antd/lib/radio/radio')
 const RadioGroup = Radio.Group
 const Select = require('antd/lib/select')
 const Option = Select.Option
 const InputNumber = require('antd/lib/input-number')
 const styles = require('../Workbench.less')
-import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES } from '../../../../../globalConstants'
+import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES } from '../../../../../globalConstants'
 
 export interface ISpecConfig {
   smooth?: boolean
@@ -19,6 +19,8 @@ export interface ISpecConfig {
   alignmentMode?: string
   gapNumber?: number
   shape?: 'polygon' | 'circle'
+  roam?: boolean
+  layerType?: string
 }
 
 interface ISpecSectionProps {
@@ -49,7 +51,9 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       sortMode,
       alignmentMode,
       gapNumber,
-      shape
+      shape,
+      layerType,
+      roam
     } = config
 
     const sortModes = CHART_SORT_MODES.map((f) => (
@@ -58,6 +62,10 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
 
     const alignmentModes = CHART_ALIGNMENT_MODES.map((f) => (
       <Option key={f.value} value={f.value}>{f.name}</Option>
+    ))
+
+    const layerTypes = CHART_LAYER_TYPES.map((p) => (
+      <Option key={p.value} value={p.value}>{p.name}</Option>
     ))
 
     let renderHtml
@@ -150,6 +158,36 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                   >
                     <Option key="polygon" value="polygon">多边形</Option>
                     <Option key="circle" value="circle">圆形</Option>
+                  </Select>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case '地图':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>
+                  <Checkbox
+                    checked={roam}
+                    onChange={this.checkboxChange('roam')}
+                  >
+                    移动&缩放
+                  </Checkbox>
+                </Col>
+                <Col span={4}>类型</Col>
+                <Col span={10}>
+                  <Select
+                    placeholder="类型"
+                    className={styles.blockElm}
+                    value={layerType}
+                    onChange={this.selectChange('layerType')}
+                  >
+                    {layerTypes}
                   </Select>
                 </Col>
               </Row>

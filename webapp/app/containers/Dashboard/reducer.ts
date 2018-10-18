@@ -56,7 +56,9 @@ import {
   LOAD_WIDGET_CSV_FAILURE,
   RENDER_DASHBOARDITEM,
   RESIZE_DASHBOARDITEM,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 import {
@@ -238,6 +240,7 @@ function dashboardReducer (state = initialState, action) {
             ...itemsInfo[payload.itemId],
             loading: true,
             queryParams: {
+              ...itemsInfo[payload.itemId]['queryParams'],
               linkageFilters: payload.params.linkageFilters,
               globalFilters: payload.params.globalFilters,
               params: payload.params.params,
@@ -255,6 +258,31 @@ function dashboardReducer (state = initialState, action) {
           loading: false,
           datasource: payload.data,
           renderType: payload.renderType
+        }
+      })
+    case DRILL_DASHBOARDITEM:
+      if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
+        itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
+      }
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
+            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          }
+        }
+      })
+    case DELETE_DRILL_HISTORY:
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
+            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].slice(0, payload.index + 1)
+          }
         }
       })
     case LOAD_DATA_FROM_ITEM_FAILURE:

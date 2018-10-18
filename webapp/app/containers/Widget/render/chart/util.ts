@@ -71,7 +71,7 @@ export function getDimetionAxisOption (
       }
     },
     axisTick: {
-      show: showLineX,
+      show: showLabelX,
       lineStyle: {
         color: lineColorX
       }
@@ -133,7 +133,7 @@ export function getMetricAxisOption (
       }
     },
     axisTick: {
-      show: showLineY,
+      show: showLabelY,
       lineStyle: {
         color: lineColorY
       }
@@ -257,7 +257,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: ILegendConfig, seriesNames) {
+export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
