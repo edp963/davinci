@@ -4,6 +4,8 @@ import {
   CHART_LABEL_POSITIONS,
   CHART_VISUALMAP_POSITIONS
 } from '../../../../globalConstants'
+const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const map: IChartInfo = {
@@ -15,16 +17,7 @@ const map: IChartInfo = {
   requireDimetions: [0, 9999],
   requireMetrics: 1,
   dimetionAxis: 'col',
-  data: {
-    // color: {
-    //   title: '颜色',
-    //   type: 'category'
-    // }
-    // tip: {
-    //   title: '提示信息',
-    //   type: 'value'
-    // }
-  },
+  data: {},
   style: {
     label: {
       showLabel: false,
@@ -40,12 +33,12 @@ const map: IChartInfo = {
       fontSize: '12',
       visualMapDirection: 'vertical',
       visualMapWidth: 20,
-      visualMapHeight: 50,
-      startColor: PIVOT_DEFAULT_FONT_COLOR,
-      endColor: PIVOT_DEFAULT_FONT_COLOR
+      visualMapHeight: 150,
+      startColor: defaultThemeColors[0],
+      endColor: defaultThemeColors[2]
     },
     spec: {
-      layerType: 'scatter',
+      layerType: 'map',
       roam: false
     }
   }
