@@ -18,6 +18,7 @@ export interface ISpecConfig {
   sortMode?: string
   alignmentMode?: string
   gapNumber?: number
+  shape?: 'polygon' | 'circle'
 }
 
 interface ISpecSectionProps {
@@ -47,7 +48,8 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       circle,
       sortMode,
       alignmentMode,
-      gapNumber
+      gapNumber,
+      shape
     } = config
 
     const sortModes = CHART_SORT_MODES.map((f) => (
@@ -125,6 +127,29 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     onChange={this.selectChange('alignmentMode')}
                   >
                     {alignmentModes}
+                  </Select>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case '雷达图':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={4}>形状</Col>
+                <Col span={8}>
+                  <Select
+                    placeholder="形状"
+                    className={styles.blockElm}
+                    value={shape}
+                    onChange={this.selectChange('shape')}
+                  >
+                    <Option key="polygon" value="polygon">多边形</Option>
+                    <Option key="circle" value="circle">圆形</Option>
                   </Select>
                 </Col>
               </Row>

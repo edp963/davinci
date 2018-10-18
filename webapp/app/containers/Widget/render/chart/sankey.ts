@@ -18,7 +18,9 @@
  * >>
  */
 
-import { IChartProps } from '../../components/Chart'
+import {
+  IChartProps
+} from '../../components/Chart'
 import {
   decodeMetricName,
   getChartTooltipLabel,
@@ -57,10 +59,12 @@ export default function (chartProps: IChartProps) {
     fontSize
   } = legend
 
-  const { shape } = spec
+  const {
+    shape
+  } = spec
 
   const labelOption = {
-    label: getLabelOption('radar', label)
+    label: getLabelOption('sankey', label)
   }
 
   let dimensions = []
@@ -70,50 +74,52 @@ export default function (chartProps: IChartProps) {
   if (color.items.length) {
     dimensions = dimensions.concat(color.items.map((c) => c.name))
   }
-  const dimension = dimensions[0]
 
-  const metricsNames = metrics.map((m) => decodeMetricName(m.name))
-  const legendData = metricsNames
-  const indicatorData = {}
-  const dimensionData = metricsNames.reduce((acc, name) => ({
-    ...acc,
-    [name]: {}
-  }), {})
+  const metricsName = decodeMetricName(metrics[0].name)
+  const agg = metrics[0].agg
+
+  const nodesValues = []
+  const links = []
   data.forEach((row) => {
-    if (!indicatorData[row[dimension]]) {
-      indicatorData[row[dimension]] = -Infinity
-    }
-
-    metrics.forEach((m) => {
-      const name = decodeMetricName(m.name)
-      const cellVal = row[`${m.agg}(${name})`]
-      indicatorData[row[dimension]] = Math.max(indicatorData[row[dimension]], cellVal)
-      if (!dimensionData[name][row[dimension]]) {
-        dimensionData[name][row[dimension]] = 0
+    dimensions.forEach((dim, idx) => {
+      if (nodesValues.indexOf(row[dim]) < 0) {
+        nodesValues.push(row[dim])
       }
-      dimensionData[name][row[dimension]] += cellVal
+      if (dimensions[idx - 1]) {
+        links.push({
+          source: row[dimensions[idx - 1]],
+          target: row[dimensions[idx]],
+          value: row[`${agg}(${metricsName})`]
+        })
+      }
     })
   })
-  const indicator = Object.entries(indicatorData).map(([name, max]: [string, number]) => ({
-    name,
-    max: max + Math.round(max * 0.1)
-  }))
-  const seriesData = Object.entries(dimensionData).map(([name, value]) => ({
-    name,
-    value: Object.values(value)
-  }))
 
   return {
-    tooltip : {},
-    legend: getLegendOption(legend, legendData),
-    radar: {
-      shape,
-      indicator
+    tooltip: {
+      trigger: 'item',
+      triggerOn: 'mousemove'
     },
     series: [{
       name: '',
-      type: 'radar',
-      data: seriesData
+      type: 'sankey',
+      layout: 'none',
+      data: nodesValues.map((val) => ({
+        name: val
+      })),
+      links,
+      itemStyle: {
+        normal: {
+          borderWidth: 1,
+          borderColor: '#aaa'
+        }
+      },
+      lineStyle: {
+        normal: {
+          color: 'source',
+          curveness: 0.5
+        }
+      }
     }]
   }
 }

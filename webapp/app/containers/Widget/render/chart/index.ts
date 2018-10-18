@@ -26,6 +26,8 @@ import area from './area'
 import funnel from './funnel'
 import map from './map'
 import radar from './radar'
+import sankey from './sankey'
+import parallel from './parallel'
 import wordCloud from './wordCloud'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
@@ -39,7 +41,9 @@ export default function (type, chartProps: IChartProps): EChartOption {
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
     // case 'map': return map(chartProps)
-    // case 'radar': return radar(chartProps)
+    case 'radar': return radar(chartProps)
+    case 'sankey': return sankey(chartProps)
+    case 'parallel': return parallel(chartProps)
     // case 'wordCloud': return wordCloud(chartProps)
   }
 }
