@@ -89,7 +89,6 @@ import {
   makeSelectCurrentLinkages
 } from './selectors'
 import {
-  loadBizlogics,
   loadDataFromItem,
   loadCascadeSource,
   loadBizdataSchema,
@@ -165,7 +164,6 @@ interface IGridProps {
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[]) => void
   onDeleteDashboardItem: (id: number, resolve?: () => void) => void
-  onLoadBizlogics: (projectId: number, resolve?: any) => any
   onLoadDataFromItem: (
     renderType: RenderType,
     dashboardItemId: number,
@@ -291,12 +289,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   public componentWillMount () {
     const {
-      onLoadBizlogics,
       onLoadDashboardDetail,
       params
     } = this.props
     const { pid, portalId, dashboardId } = params
-    onLoadBizlogics(pid)
     if (dashboardId && Number(dashboardId) !== -1) {
       onLoadDashboardDetail(pid, portalId, Number(dashboardId))
     }
@@ -885,9 +881,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
   private currentWidgetInFullScreen = (id) => {
-    const {currentItems, currentItemsInfo, widgets} = this.props
+    const {currentItems, currentItemsInfo, widgets, bizlogics} = this.props
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
+    const model = JSON.parse(bizlogics.find((b) => b.id === widget.viewId).model)
     const data = currentItemsInfo[id]
     const loading = currentItemsInfo['loading']
     this.setState({
@@ -895,6 +892,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             itemId: id,
             widgetId: widget.id,
             widget,
+            model,
             data,
             loading,
             onGetChartData: this.getChartData
@@ -1110,8 +1108,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
-        const interacting = interactingStatus[id] || false
         const view = bizlogics.find((b) => b.id === widget.viewId)
+        const interacting = interactingStatus[id] || false
         const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
 
         itemblocks.push((
@@ -1362,7 +1360,6 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, params) =>
                         dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),

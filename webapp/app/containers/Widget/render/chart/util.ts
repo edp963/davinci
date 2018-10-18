@@ -71,7 +71,7 @@ export function getDimetionAxisOption (
       }
     },
     axisTick: {
-      show: showLineX,
+      show: showLabelX,
       lineStyle: {
         color: lineColorX
       }
@@ -133,7 +133,7 @@ export function getMetricAxisOption (
       }
     },
     axisTick: {
-      show: showLineY,
+      show: showLabelY,
       lineStyle: {
         color: lineColorY
       }

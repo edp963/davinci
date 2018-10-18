@@ -12,6 +12,7 @@ import { ILabelConfig } from '..//Workbench/ConfigSections/LabelSection'
 import { ISpecConfig } from '../Workbench/ConfigSections/SpecSection'
 import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
+import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -74,6 +75,7 @@ export interface IWidgetProps {
   cache: boolean
   expired: number
   mode: WidgetMode
+  model: IModel
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
