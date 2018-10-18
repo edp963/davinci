@@ -26,6 +26,7 @@ import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
 import funnel from './funnel'
+import map from './map'
 
 const widgetlibs: IChartInfo[] = [
   table,
@@ -33,7 +34,8 @@ const widgetlibs: IChartInfo[] = [
   bar,
   scatter,
   pie,
-  funnel
+  funnel,
+  map
 ]
 
 export default widgetlibs
