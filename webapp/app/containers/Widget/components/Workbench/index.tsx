@@ -270,6 +270,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       widgetProps
     } = this.state
 
+    const model = selectedView && JSON.parse(selectedView.model)
+
     return (
       <div className={styles.workbench}>
         <EditorHeader
@@ -307,6 +309,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
               <Widget
                 {...widgetProps}
                 loading={dataLoading}
+                model={model}
               />
             </div>
           </div>

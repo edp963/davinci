@@ -125,6 +125,24 @@ export const CHART_LEGEND_POSITIONS = [
   { name: '左', value: 'left' }
 ]
 
+export const CHART_VISUALMAP_POSITIONS = [
+  { name: '左下', value: 'leftBottom' },
+  { name: '左上', value: 'leftTop' },
+  { name: '右上', value: 'rightTop' },
+  { name: '右下', value: 'rightBottom' }
+]
+
+export const CHART_LAYER_TYPES = [
+  { name: '气泡图', value: 'scatter' },
+  { name: '地图', value: 'map' },
+  { name: '热力图', value: 'heatmap' }
+]
+
+export const CHART_VISUALMAP_DIRECYTIONS = [
+  { name: '竖直', value: 'vertical' },
+  { name: '水平', value: 'horizontal' }
+]
+
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
   'JSON', 'LINESTRING', 'MULTILINESTRING',

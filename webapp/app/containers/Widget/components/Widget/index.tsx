@@ -11,6 +11,7 @@ import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
 import { ILabelConfig } from '..//Workbench/ConfigSections/LabelSection'
 import { ISpecConfig } from '../Workbench/ConfigSections/SpecSection'
 import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
+import { IVisualMapConfig } from '../Workbench/ConfigSections/VisualMapSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
@@ -40,6 +41,7 @@ export interface IChartStyles {
   legend?: ILegendConfig
   toolbox?: IToolboxConfig
   spec?: ISpecConfig
+  visualMap?: IVisualMapConfig
 }
 
 export interface IChartInfo {

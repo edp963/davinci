@@ -38,7 +38,7 @@ export default function (type, chartProps: IChartProps): EChartOption {
     case 'pie': return pie(chartProps)
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
-    // case 'map': return map(chartProps)
+    case 'map': return map(chartProps)
     // case 'radar': return radar(chartProps)
     // case 'wordCloud': return wordCloud(chartProps)
   }

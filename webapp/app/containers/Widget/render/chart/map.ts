@@ -18,184 +18,291 @@
  * >>
  */
 
-/*
- * map chart options generator
- */
+import { IChartProps } from '../../components/Chart'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getTextWidth
+} from '../../components/util'
+import {
+  getLegendOption,
+  getLabelOption,
+  getGridPositions
+} from './util'
+import {
+  safeAddition
+} from '../../../../utils/util'
 
-// import geoData from '../../../assets/json/geo.json'
-import { safeAddition } from '../../../../utils/util'
-import { DEFAULT_ECHARTS_THEME } from '../../../../globalConstants'
+import {
+  DEFAULT_ECHARTS_THEME
+} from '../../../../globalConstants'
+import {
+  geoData
+} from '../../../../assets/json/geo.js'
 
-let geoData
+const cityData = require('../../../../assets/json/city.json')
+const provinceData = require('../../../../assets/json/province.json')
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
-  return import('../../../../assets/json/geo.json').then((d) => {
-    geoData = d
+export default function (chartProps: IChartProps) {
+  const {
+    chartStyles,
+    data,
+    cols,
+    metrics,
+    model
+  } = chartProps
 
-    const {
-      area,
-      group,
-      value,
-      layerType,
-      // visualMapStyle,TODO
-      roam,
-      toolbox
-    } = chartParams
+  const {
+    label,
+    spec
+  } = chartStyles
 
-    let metricOptions
-    let scatterOptions
-    // let heatmapOptions
-    let visualMapOptions
-    let tooltipOptions
-    let toolboxOptions
+  const {
+    labelColor,
+    labelFontFamily,
+    labelFontSize,
+    labelPosition,
+    showLabel
+  } = label
 
-    // 对原数据进行加工
-    let dataTree
+  const {
+    layerType,
+    roam
+  } = spec
 
-    if (area) {
-      dataTree = dataSource.reduce((tree, ds) => {
-        const areaVal = ds[area]
-        const areaGeo = geoData[areaVal]
+  const labelOption = {
+    label: {
+      normal: {
+        // formatter: '{b}',
+        position: labelPosition,
+        show: showLabel,
+        color: labelColor,
+        fontFamily: labelFontFamily,
+        fontSize: labelFontSize
+      }
+    }
+  }
 
-        if (areaGeo) {
-          if (!tree[areaVal]) {
-            tree[areaVal] = {
-              lon: areaGeo.lon,
-              lat: areaGeo.lat,
-              value: 0,
-              children: {}
+  let metricOptions
+  let scatterOptions
+  const heatmapOptions = []
+  let visualMapOptions
+
+  let dataTree
+  let visualMapMax
+  metrics.forEach((m) => {
+    const decodedMetricName = decodeMetricName(m.name)
+    if (cols.length) {
+      dataTree = data.reduce((tree, ds) => {
+        let areaGeo
+        let areaVal
+        const group = []
+        cols.forEach((cs) => {
+          const { visualType } = model[cs]
+          // todo
+          if (visualType === 'geoProvince') {
+            areaVal = ds[cs]
+            for (const cd in provinceData) {
+              if (areaVal && areaVal.includes(cd)) {
+                areaGeo = provinceData[cd]
+              }
             }
+          } else if (visualType === 'geoCity') {
+            areaVal = ds[cs]
+            for (const cd in cityData) {
+              if (areaVal && areaVal.includes(cd)) {
+                areaGeo = cityData[cd]
+              }
+            }
+          } else if (visualType === 'geoCountry') {
+            return
+          } else {
+            areaVal = ''
           }
 
-          tree[areaVal].value = safeAddition(tree[areaVal].value, Number(ds[value]))
+          if (areaGeo) {
+            if (areaVal) {
+              if (!tree[areaVal]) {
+                tree[areaVal] = {
+                  lon: areaGeo.lon,
+                  lat: areaGeo.lat,
+                  value: 0,
+                  children: {}
+                }
+              }
+              tree[areaVal].value = ds[`${m.agg}(${decodedMetricName})`]
 
-          if (group) {
-            if (!tree[areaVal].children[ds[group]]) {
-              tree[areaVal].children[ds[group]] = 0
+              // todo: 除去显示城市／省的
+              const group = ['name', 'sex']
+              if (group.length) {
+                group.forEach((g) => {
+                  if (!tree[areaVal].children[ds[g]]) {
+                    tree[areaVal].children[ds[g]] = 0
+                  }
+                  tree[areaVal].children[ds[g]] = safeAddition(tree[areaVal].children[ds[g]], Number(ds[`${m.agg}(${decodedMetricName})`]))
+                })
+              }
             }
-            tree[areaVal].children[ds[group]] = safeAddition(tree[areaVal].children[ds[group]], Number(ds[value]))
           }
-        }
-
+        })
         return tree
       }, {})
+      visualMapMax = Math.max(...data.map((d) => d[`${m.agg}(${decodedMetricName})`] || 0))
     } else {
       dataTree = {}
     }
+    console.log('dataTree', dataTree)
+  })
 
-    // series 数据项
-    const metricArr = []
+  // series 数据项
+  const metricArr = []
 
-    scatterOptions = {
-      symbolSize: 12,
-      label: {
-        normal: {
-          show: false
-        },
-        emphasis: {
-          show: false
+  scatterOptions = {
+    symbolSize: 12,
+    ...labelOption
+  }
+  const optionsType = layerType === 'scatter' ? scatterOptions : heatmapOptions
+  const serieObj = layerType === 'map'
+    ? {
+      name: '地图',
+      type: 'map',
+      mapType: 'china',
+      roam,
+      data: Object.keys(dataTree).map((key, index) => {
+        const { lon, lat, value } = dataTree[key]
+        return {
+          name: key,
+          value: [lon, lat, value]
         }
-      },
-      itemStyle: {
-        normal: {
-          opacity: interactIndex === undefined ? 1 : 0.25
-        }
-        // emphasis: {
-        //   borderColor: DEFAULT_PRIMARY_COLOR,
-        //   borderWidth: 1
-        // }
-      }
+      })
     }
-
-    let serieObj = {
-      name: area,
+    : {
+      name: layerType === 'scatter' ? '气泡图' : '热力图',
       type: layerType || 'scatter',
       coordinateSystem: 'geo',
       data: Object.keys(dataTree).map((key, index) => {
         const { lon, lat, value } = dataTree[key]
-        if (index === interactIndex) {
-          return {
-            name: key,
-            value: [lon, lat, value],
-            itemStyle: {
-              normal: {
-                opacity: 1
-              }
-            }
-          }
-        } else {
-          return {
-            name: key,
-            value: [lon, lat, value]
-          }
+        return {
+          name: key,
+          value: [lon, lat, value]
         }
-      })
+      }),
+      ...optionsType,
+      symbolSize: chartStyles.label.labelFontSize
     }
-    if (layerType === 'scatter') {
-      serieObj = {
-        ...serieObj,
-        ...scatterOptions
+
+  metricArr.push(serieObj)
+  metricOptions = {
+    series: metricArr
+  }
+
+  if (chartStyles.visualMap) {
+    const {
+      showVisualMap,
+      visualMapPosition,
+      fontFamily,
+      fontSize,
+      visualMapDirection,
+      visualMapWidth,
+      visualMapHeight,
+      startColor,
+      endColor
+    } = chartStyles.visualMap
+
+    let positionValue
+    switch (visualMapPosition) {
+      case 'leftBottom':
+        positionValue = {
+          left: 'left',
+          top: 'bottom'
+        }
+        break
+      case 'leftTop':
+        positionValue = {
+          left: 'left',
+          top: 'top'
+        }
+        break
+      case 'rightTop':
+        positionValue = {
+          left: 'right',
+          top: 'top'
+        }
+        break
+      case 'rightBottom':
+        positionValue = {
+          left: 'right',
+          top: 'bottom'
+        }
+        break
+    }
+
+    visualMapOptions = {
+      visualMap: {
+        show: showVisualMap,
+        min: 0,
+        max: visualMapMax,
+        calculable: true,
+        inRange: {
+          color: [startColor, endColor]
+        },
+        ...positionValue,
+        itemWidth: visualMapWidth,
+        itemHeight: visualMapHeight,
+        textStyle: {
+          fontFamily,
+          fontSize
+        },
+        orient: visualMapDirection
       }
     }
-
-    metricArr.push(serieObj)
-    metricOptions = {
-      series: metricArr
-    }
-
-    // visualMap
-    visualMapOptions = value && {
+  } else {
+    visualMapOptions = {
       visualMap: {
+        show: false,
         min: 0,
-        max: Math.max(...dataSource.map((d) => d[value] || 0)),
+        max: visualMapMax,
         calculable: true,
         inRange: {
           color: DEFAULT_ECHARTS_THEME.visualMapColor
         },
         left: 10,
-        bottom: 20
+        bottom: 20,
+        itemWidth: 20,
+        itemHeight: 50,
+        textStyle: {
+          fontFamily: 'PingFang SC',
+          fontSize: 12
+        },
+        orient: 'vertical'
       }
     }
+  }
 
-    // tooltip
-    tooltipOptions = {
-      tooltip: {
-        trigger: 'item',
-        formatter: (params) => {
-          const treeNode = dataTree[params.name]
+  const tooltipOptions = {
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        const treeNode = dataTree[params.name]
+        let content = treeNode ? `${params.name}：${treeNode.value}` : ''
 
-          let content = `${params.name}：${treeNode.value}`
+        const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
+        content += `<br/>${groupContent}`
 
-          if (group && group.length) {
-            const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
-            content += `<br/>${groupContent}`
-          }
-
-          return content
-        }
+        return content
       }
     }
+  }
 
-    // toolbox
-    toolboxOptions = toolbox && toolbox.length
-      ? {
-        toolbox: {
-          feature: {
-            dataView: {readOnly: false},
-            restore: {},
-            saveAsImage: {}
-          }
-        }
-      } : null
-
-    return {
+  const mapOptions = layerType === 'map'
+    ? {
+      ...metricOptions,
+      ...visualMapOptions
+    }
+    : {
       geo: {
         map: 'china',
-        label: {
-          emphasis: {
-            show: false
-          }
-        },
+        // ...labelOption,
         itemStyle: {
           normal: {
             areaColor: '#0000003F',
@@ -206,12 +313,12 @@ export default function (dataSource, flatInfo, chartParams, interactIndex) {
             areaColor: `#00000059`
           }
         },
-        roam: !!(roam && roam.length)
+        roam
       },
       ...metricOptions,
       ...visualMapOptions,
-      ...tooltipOptions,
-      ...toolboxOptions
+      ...tooltipOptions
     }
-  })
+
+  return mapOptions
 }

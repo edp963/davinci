@@ -16,6 +16,7 @@ import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
 import SpecSection, { ISpecConfig } from './ConfigSections/SpecSection'
 import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
 import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
+import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
@@ -87,6 +88,7 @@ interface IOperatingPanelStates {
   filterModalVisible: boolean
   variableConfigModalVisible: boolean
   variableConfigControl: object
+  isLabelSection: boolean
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -115,7 +117,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       variableConfigModalVisible: false,
-      variableConfigControl: {}
+      variableConfigControl: {},
+      isLabelSection: true
     }
   }
 
@@ -265,7 +268,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'date': return `icon-calendar ${styles.iconDate}`
       case 'geoCountry':
       case 'geoProvince':
-      case 'geoCity': return 'icon-china'
+      case 'geoCity': return 'icon-map'
       default: return 'icon-categories'
     }
   }
@@ -803,6 +806,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { commonParams, specificParams, styleParams } = this.state
     styleParams[name][prop] = value
     this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
+    this.setState({
+      isLabelSection: (name === 'spec' && (value === 'map' || value === 'heatmap')) ? false : true
+    })
   }
 
   private confirmColorModal = (config) => {
@@ -940,11 +946,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       variableConfigModalVisible,
-      variableConfigControl
+      variableConfigControl,
+      isLabelSection
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend, toolbox } = styleParams
+    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1111,16 +1118,24 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
             />}
-            {label && <LabelSection
-              title="标签"
-              config={label as ILabelConfig}
-              onChange={this.styleChange('label')}
-              name={chartModeSelectedChart.name}
-            />}
+            { isLabelSection
+                ? label && <LabelSection
+                  title="标签"
+                  config={label as ILabelConfig}
+                  onChange={this.styleChange('label')}
+                  name={chartModeSelectedChart.name}
+                />
+                : null
+            }
             {legend && <LegendSection
               title="图例"
               config={legend as ILegendConfig}
               onChange={this.styleChange('legend')}
+            />}
+            {visualMap && <VisualMapSection
+              title="视觉映射"
+              config={visualMap as IVisualMapConfig}
+              onChange={this.styleChange('visualMap')}
             />}
             {toolbox && <ToolboxSection
               title="工具"
