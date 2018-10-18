@@ -932,7 +932,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter } = e
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IPivotProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
     const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
     let sql = void 0
@@ -974,6 +974,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       }
       const sqls = widgetConfig.filters.map((i) => i.config.sql)
       sqls.push(sql)
+      const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -982,8 +983,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls,
           visualType: 'string'
         },
-        type: 'down',
-        groups: widgetConfigGroups.concat([groups]),
+        type: isDrillUp ? 'up' : 'down',
+        groups: isDrillUp ? widgetConfigGroups.filter((cg) => cg !== groups) : widgetConfigGroups.concat([groups]),
         name: groups
       }
     } else {
@@ -992,6 +993,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       filterSource = sourceDataFilter.map((source) => source[name])
       sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
       const sqls = lastDrillHistory.filter.sqls.concat(sql)
+      const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -1000,8 +1002,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls,
           visualType: 'string'
         },
-        type: 'down',
-        groups: lastDrillHistory.groups.concat([groups]),
+        type: isDrillUp ? 'up' : 'down',
+        groups: isDrillUp ? lastDrillHistory.groups.filter((cg) => cg !== groups) : lastDrillHistory.groups.concat([groups]),
         name: groups
       }
     }

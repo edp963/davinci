@@ -332,20 +332,26 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       })
     }
     if (widgetProps.dimetionAxis === 'col') {
+      const isDrillUp = widgetProps.cols.some((col) => col === e)
       this.setState({
         widgetProps: {
           ...widgetProps,
           ...{
-            cols: e && e.length ? widgetProps.cols.concat(e) : cacheWidgetProps.cols
+            cols: e && e.length
+            ? isDrillUp ? widgetProps.cols.filter((col) => col !== e) : widgetProps.cols.concat(e)
+            : cacheWidgetProps.cols
           }
         }
       })
     } else {
+      const isDrillUp = widgetProps.rows.some((row) => row === e)
       this.setState({
         widgetProps: {
           ...widgetProps,
           ...{
-            rows: e && e.length ? widgetProps.rows.concat(e) : cacheWidgetProps.rows
+            rows: e && e.length
+            ? isDrillUp ? widgetProps.rows.filter((col) => col !== e) : widgetProps.rows.concat(e)
+            : cacheWidgetProps.rows
           }
         }
       })
@@ -501,7 +507,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     }
 
     const drillButton = (
-    <Tooltip title="下钻">
+    <Tooltip title="钻取">
       <span style={{marginLeft: '8px', cursor: 'pointer'}} onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
     </Tooltip>)
 
