@@ -26,6 +26,9 @@ import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
 import funnel from './funnel'
+import radar from './radar'
+import sankey from './sankey'
+import parallel from './parallel'
 import map from './map'
 import wordCloud from './wordCloud'
 import waterfall from './waterfall'
@@ -37,6 +40,9 @@ const widgetlibs: IChartInfo[] = [
   scatter,
   pie,
   funnel,
+  radar,
+  sankey,
+  parallel,
   map,
   wordCloud,
   waterfall
