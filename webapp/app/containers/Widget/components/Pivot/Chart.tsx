@@ -631,7 +631,8 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           const { isDrilling } = this.props
           const brushedOptions = isDrilling === true ? {
             brush: {
-              toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+              toolbox: ['rect', 'polygon', 'keep', 'clear'],
+            //  toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
               throttleType: 'debounce',
               throttleDelay: 300,
               brushStyle: {
