@@ -447,7 +447,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-
     onLoadDataFromItem(
       renderType,
       itemId,
@@ -967,7 +966,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           const rows = widgetConfig.rows
           name = rows[rows.length - 1]
         }
-        filterSource = sourceDataFilter.map((source) => source[name])
+        filterSource = sourceDataFilter.map((source) => {
+          if (source && source[name]) {
+            return source[name]
+          } else {
+            return source
+          }
+        })
         sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
       }
       const sqls = widgetConfig.filters.map((i) => i.config.sql)
