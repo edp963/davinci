@@ -131,7 +131,6 @@ function shareReducer (state = initialState, { type, payload }) {
       if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
         itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
       }
-      console.log(itemsInfo[payload.itemId]['queryParams']['drillHistory'])
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
