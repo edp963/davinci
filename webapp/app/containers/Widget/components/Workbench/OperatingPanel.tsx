@@ -627,7 +627,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender',
             orders,
-            mode
+            mode,
+            model: JSON.parse(selectedView.model)
           })
         } else {
           onSetWidgetProps({
@@ -641,7 +642,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             dimetionAxis: this.getDimetionAxis([getPivot()]),
             renderType: 'rerender',
             orders,
-            mode
+            mode,
+            model: JSON.parse(selectedView.model)
           })
         }
         this.setState({
@@ -666,7 +668,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         dimetionAxis: this.getDimetionAxis(selectedCharts),
         renderType: renderType || 'clear',
         orders,
-        mode
+        mode,
+        model: selectedView ? JSON.parse(selectedView.model) : {}
       })
       this.setState({
         commonParams,

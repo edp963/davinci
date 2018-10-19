@@ -101,13 +101,13 @@ export default function (chartProps: IChartProps) {
       triggerOn: 'mousemove'
     },
     series: [{
-      name: '',
       type: 'sankey',
       layout: 'none',
       data: nodesValues.map((val) => ({
         name: val
       })),
       links,
+      focusNodeAdjacency: true,
       itemStyle: {
         normal: {
           borderWidth: 1,

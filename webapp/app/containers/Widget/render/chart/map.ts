@@ -40,8 +40,7 @@ import {
 } from '../../../../globalConstants'
 import geoData from '../../../../assets/json/geo'
 
-const specialCities = ['北京', '上海', '天津', '重庆', '香港', '澳门']
-const provinceSuffix = ['省', '自治区']
+const provinceSuffix = ['省', '自治区', '市']
 const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']
 
 export default function (chartProps: IChartProps) {
@@ -107,7 +106,7 @@ export default function (chartProps: IChartProps) {
       // todo
       if (visualType === 'geoProvince') {
         areaVal = record[col]
-        const hasSuffix = specialCities.concat(provinceSuffix).some((p) => areaVal.includes(p))
+        const hasSuffix = provinceSuffix.some((p) => areaVal.includes(p))
         const area = hasSuffix
           ? geoData.find((d) => d.name === areaVal)
           : geoData.find((d) => d.name.includes(areaVal))
@@ -123,7 +122,7 @@ export default function (chartProps: IChartProps) {
         }
       } else if (visualType === 'geoCity') {
         areaVal = record[col]
-        const hasSuffix = specialCities.concat(citySuffix).some((p) => areaVal.includes(p))
+        const hasSuffix = citySuffix.some((p) => areaVal.includes(p))
         const area = hasSuffix
           ? geoData.find((d) => d.name === areaVal)
           : geoData.find((d) => d.name.includes(areaVal))
@@ -199,7 +198,7 @@ export default function (chartProps: IChartProps) {
         return {
           name: key,
           value: [lon, lat, value],
-          symbolSize: getSymbolSize(sizeRate, value)
+          symbolSize: getSymbolSize(sizeRate, value) / 2
         }
       }),
       ...labelOption,

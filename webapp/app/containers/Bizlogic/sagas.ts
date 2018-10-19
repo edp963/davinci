@@ -225,7 +225,7 @@ export function* getData (action) {
       data: params
     })
     yield put(dataLoaded())
-    resolve(data.payload)
+    resolve(data.payload.slice(0, 500))
   } catch (err) {
     yield put(loadDataFail(err))
     errorHandler(err)
@@ -271,7 +271,7 @@ export function* getDataFromItem (action) {
         params: params.concat(linkageParams).concat(globalParams)
       }
     })
-    yield put(dataFromItemLoaded(renderType, itemId, data.payload, vizType))
+    yield put(dataFromItemLoaded(renderType, itemId, data.payload.slice(0, 500), vizType))
   } catch (err) {
     yield put(loadDataFromItemFail(itemId, vizType))
     errorHandler(err)

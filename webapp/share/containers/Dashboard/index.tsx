@@ -218,9 +218,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const { currentItems, currentItemsInfo } = nextProps
     if (currentItemsInfo) {
       if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.length).length === currentItems.length) {
-        this.setState({
-          phantomRenderSign: true
-        })
+        // FIXME
+        setTimeout(() => {
+          this.setState({
+            phantomRenderSign: true
+          })
+        }, 10000)
       }
     }
   }
