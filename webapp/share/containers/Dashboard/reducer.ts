@@ -118,6 +118,7 @@ function shareReducer (state = initialState, { type, payload }) {
           ...itemsInfo[payload.itemId],
           loading: true,
           queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
             linkageFilters: payload.params.linkageFilters,
             globalFilters: payload.params.globalFilters,
             params: payload.params.params,
