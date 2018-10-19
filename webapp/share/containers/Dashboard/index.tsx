@@ -620,6 +620,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         const widget = widgets.find((w) => w.id === widgetId)
         const view = { model: widget.model }
         const interacting = interactingStatus[id] || false
+        const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
 
         itemblocks.push((
           <div key={id}>
@@ -633,6 +634,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               onDrillData={this.dataDrill}
               onSelectDrillHistory={this.selectDrillHistory}
               interacting={interacting}
+              drillHistory={drillHistory}
               frequency={frequency}
               shareInfo={widget.dataToken}
               downloadCsvLoading={downloadCsvLoading}
