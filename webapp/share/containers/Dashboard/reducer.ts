@@ -30,7 +30,9 @@ import {
   LOAD_WIDGET_CSV_SUCCESS,
   LOAD_WIDGET_CSV_FAILURE,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 const initialState = fromJS({
@@ -121,6 +123,31 @@ function shareReducer (state = initialState, { type, payload }) {
             params: payload.params.params,
             linkageParams: payload.params.linkageParams,
             globalParams: payload.params.globalParams
+          }
+        }
+      })
+    case DRILL_DASHBOARDITEM:
+      if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
+        itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
+      }
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
+            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          }
+        }
+      })
+    case DELETE_DRILL_HISTORY:
+      return state.set('itemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
+            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].slice(0, payload.index + 1)
           }
         }
       })

@@ -50,7 +50,9 @@ import {
   setIndividualDashboard,
   loadWidgetCsv,
   loadCascadeSourceFromDashboard,
-  resizeAllDashboardItem
+  resizeAllDashboardItem,
+  drillDashboardItem,
+  deleteDrillHistory
 } from './actions'
 import {
   makeSelectDashboard,
@@ -128,6 +130,8 @@ interface IDashboardProps {
   onLoadWidgetCsv: (itemId: number, widgetProps: IWidgetProps, dataToken: string) => void,
   onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
   onResizeAllDashboardItem: () => void
+  onDrillDashboardItem: (itemId: number, drillHistory: any) => void
+  onDeleteDrillHistory: (itemId: number, index: number) => void
 }
 
 interface IDashboardStates {
@@ -256,6 +260,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let params
     let linkageParams
     let globalParams
+    let drillStatus
 
     if (queryParams) {
       linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
@@ -263,6 +268,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       params = queryParams.params ? queryParams.params : cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
+      drillStatus = queryParams.drillStatus || void 0
     } else {
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
@@ -318,9 +324,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       itemId,
       widget.dataToken,
       {
-        groups,
+        groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
         aggregators,
-        filters: filters.map((i) => i.config.sql),
+        filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
         params,
@@ -466,6 +472,112 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
+  private dataDrill = (e) => {
+    const {
+      widgets,
+      currentItemsInfo,
+      onDrillDashboardItem
+    } = this.props
+    const { itemId, groups, widgetId, sourceDataFilter } = e
+    const widget = widgets.find((w) => w.id === widgetId)
+    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
+    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    let sql = void 0
+    let name = void 0
+    let filterSource = void 0
+    let widgetConfigGroups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let aggregators =  metrics.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+
+    if (color) {
+      widgetConfigGroups = widgetConfigGroups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      widgetConfigGroups = widgetConfigGroups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    let currentDrillStatus = void 0
+    if ((!drillHistory) || drillHistory.length === 0) {
+      if (widgetConfig) {
+        const dimetionAxis = widgetConfig.dimetionAxis
+        if (dimetionAxis === 'col') {
+          const cols = widgetConfig.cols
+          name = cols[cols.length - 1]
+        } else {
+          const rows = widgetConfig.rows
+          name = rows[rows.length - 1]
+        }
+        filterSource = sourceDataFilter.map((source) => {
+          if (source && source[name]) {
+            return source[name]
+          } else {
+            return source
+          }
+        })
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+      }
+      const sqls = widgetConfig.filters.map((i) => i.config.sql)
+      sqls.push(sql)
+      const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
+      currentDrillStatus = {
+        filter: {
+          filterSource,
+          name,
+          sql,
+          sqls,
+          visualType: 'string'
+        },
+        type: isDrillUp ? 'up' : 'down',
+        groups: isDrillUp ? widgetConfigGroups.filter((cg) => cg !== groups) : widgetConfigGroups.concat([groups]),
+        name: groups
+      }
+    } else {
+      const lastDrillHistory = drillHistory[drillHistory.length - 1]
+      name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
+      filterSource = sourceDataFilter.map((source) => source[name])
+      sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+      const sqls = lastDrillHistory.filter.sqls.concat(sql)
+      const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
+      currentDrillStatus = {
+        filter: {
+          filterSource,
+          name,
+          sql,
+          sqls,
+          visualType: 'string'
+        },
+        type: isDrillUp ? 'up' : 'down',
+        groups: isDrillUp ? lastDrillHistory.groups.filter((cg) => cg !== groups) : lastDrillHistory.groups.concat([groups]),
+        name: groups
+      }
+    }
+    onDrillDashboardItem(itemId, currentDrillStatus)
+    this.getChartData('rerender', itemId, widgetId, {
+        drillStatus: currentDrillStatus
+      })
+  }
+  private selectDrillHistory = (history, item, itemId, widgetId) => {
+    const { currentItemsInfo, onDeleteDrillHistory } = this.props
+    if (history) {
+      this.getChartData('rerender', itemId, widgetId, {
+        drillStatus: history
+      })
+    } else {
+      this.getChartData('rerender', itemId, widgetId)
+    }
+    onDeleteDrillHistory(itemId, item)
+  }
+
   public render () {
     const {
       dashboard,
@@ -515,6 +627,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               data={datasource}
               loading={loading}
               polling={polling}
+              onDrillData={this.dataDrill}
+              onSelectDrillHistory={this.selectDrillHistory}
               interacting={interacting}
               frequency={frequency}
               shareInfo={widget.dataToken}
@@ -629,7 +743,9 @@ export function mapDispatchToProps (dispatch) {
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, widgetProps, dataToken) => dispatch(loadWidgetCsv(itemId, widgetProps, dataToken)),
     onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
-    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem())
+    onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
+    onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
+    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
   }
 }
 
