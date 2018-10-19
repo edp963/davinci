@@ -735,13 +735,17 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private undo = () => {
-    const { onUndo, currentState } = this.props
-    onUndo(currentState)
+    const { onUndo, currentState, canUndo } = this.props
+    if (canUndo) {
+      onUndo(currentState)
+    }
   }
 
   private redo = () => {
-    const { onRedo, nextState } = this.props
-    onRedo(nextState)
+    const { onRedo, nextState, canRedo } = this.props
+    if (canRedo) {
+      onRedo(nextState)
+    }
   }
 
   private layersSelectionRemove = () => {
