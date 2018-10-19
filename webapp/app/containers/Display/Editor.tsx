@@ -703,15 +703,31 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     if (currentSelectedLayers.length <= 0) { return }
     const { positionXD, positionYD } = direction
     const { currentDisplay, currentSlide, onEditDisplayLayers } = this.props
+    const { slideParams } = this.state
+    const { width: slideWidth, height: slideHeight } = slideParams
     const layers = currentSelectedLayers.map((layer) => {
-      const layerParams = JSON.parse(layer.params)
-      const { positionX, positionY } = layerParams
+      const layerParams: ILayerParams = JSON.parse(layer.params)
+      const { positionX, positionY, width, height } = layerParams
+      let newPositionX = positionXD === 0 ? positionX : (positionX - positionX % GRID_ITEM_MARGIN + positionXD)
+      let newPositionY = positionYD === 0 ? positionY : (positionY - positionY % GRID_ITEM_MARGIN + positionYD)
+      if (newPositionX < 0) {
+        newPositionX = 0
+      }
+      if (newPositionX + width > slideWidth) {
+        newPositionX = slideWidth - width
+      }
+      if (newPositionY < 0) {
+        newPositionY = 0
+      }
+      if (newPositionY + height > slideHeight) {
+        newPositionY = slideHeight - height
+      }
       return {
         ...layer,
         params: JSON.stringify({
           ...layerParams,
-          positionX: positionX - positionX % GRID_ITEM_MARGIN + positionXD,
-          positionY: positionY - positionY % GRID_ITEM_MARGIN + positionYD
+          positionX: newPositionX,
+          positionY: newPositionY
         })
       }
     })
@@ -719,13 +735,17 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private undo = () => {
-    const { onUndo, currentState } = this.props
-    onUndo(currentState)
+    const { onUndo, currentState, canUndo } = this.props
+    if (canUndo) {
+      onUndo(currentState)
+    }
   }
 
   private redo = () => {
-    const { onRedo, nextState } = this.props
-    onRedo(nextState)
+    const { onRedo, nextState, canRedo } = this.props
+    if (canRedo) {
+      onRedo(nextState)
+    }
   }
 
   private layersSelectionRemove = () => {

@@ -87,7 +87,7 @@ export default function(chartProps: IChartProps) {
       dim: idx,
       name,
       type: 'category',
-      data: dimensionsData.filter((d, idx) => dimensionsData.indexOf(d) === idx)
+      data: dimensionsData.filter((d, idx) => dimensionsData.indexOf(d) === idx).map((d) => d[idx])
     })),
     ...metrics.map((m, idx) => ({
       dim: axisDimensions.length + idx,
