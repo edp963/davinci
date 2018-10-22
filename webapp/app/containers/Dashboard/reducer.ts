@@ -275,13 +275,14 @@ function dashboardReducer (state = initialState, action) {
         }
       })
     case DELETE_DRILL_HISTORY:
+      const drillHistoryArray = itemsInfo[payload.itemId]['queryParams']['drillHistory']
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           queryParams: {
             ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].slice(0, payload.index + 1)
+            drillHistory: Array.isArray(drillHistoryArray) ? drillHistoryArray.slice(0, payload.index + 1) : drillHistoryArray
           }
         }
       })

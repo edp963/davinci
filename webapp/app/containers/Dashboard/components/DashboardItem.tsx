@@ -263,8 +263,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private doDrill = () => {
-    const {isDrilling} = this.state
-    this.setState({isDrilling: true})
+    const {isDrilling, cacheWidgetProps} = this.state
+    this.setState({isDrilling: !isDrilling}, () => {
+      const { onSelectDrillHistory, itemId, widget, onGetChartData } = this.props
+      if (isDrilling) {
+        onSelectDrillHistory(false, -1, itemId, widget.id)
+        this.setState({widgetProps: cacheWidgetProps}, () => onGetChartData('rerender', itemId, widget.id))
+      }
+    })
   }
 
   private toWorkbench = () => {
@@ -394,6 +400,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
+      isDrilling,
       model
     } = this.state
 
@@ -519,7 +526,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const drillButton = (
     <Tooltip title="钻取">
-      <span style={{marginLeft: '8px', cursor: 'pointer'}} onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
+      <span style={{marginLeft: '8px', cursor: 'pointer', color: `${isDrilling ? '#000' : '#ccc'}`}}  onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
     </Tooltip>)
 
     const gridItemClass = classnames({
