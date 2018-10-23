@@ -443,6 +443,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
+      const drillHistory = cachedQueryParams.drillHistory
+      if (drillHistory && drillHistory.length) {
+        drillStatus = drillHistory[drillHistory.length - 1]
+      }
     }
 
     let groups = cols.concat(rows).filter((g) => g !== '指标名称')
