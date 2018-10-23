@@ -109,7 +109,7 @@ public class CommonService<T> {
      * @param contengId
      * @return
      */
-    public String getContentUrl(Long userId, String contentType, Long contengId) {
+    public String getContentUrl(Long userId, String contentType, Long contengId, String persistId) {
         String shareToken = shareService.generateShareToken(contengId, null, userId);
         StringBuilder sb = new StringBuilder();
 
@@ -128,6 +128,10 @@ public class CommonService<T> {
             .append("?shareInfo=")
             .append(shareToken)
             .append("&type=" + type);
+
+        if (!StringUtils.isEmpty(persistId)) {
+            sb.append("&pid=" + persistId);
+        }
 
         return sb.toString();
     }

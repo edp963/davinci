@@ -27,23 +27,27 @@ import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.MailUtils;
 import edp.davinci.common.service.CommonService;
-import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobMediaType;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
+import edp.davinci.dto.cronJobDto.PersistContent;
+import edp.davinci.dto.cronJobDto.PersistImage;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.model.*;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.activation.DataSource;
+import javax.mail.util.ByteArrayDataSource;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
@@ -106,29 +110,42 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
 
     private final String baseUrl = File.separator + "tempFiles" + File.separator + DateUtils.getNowDateYYYYMM();
 
+    private static final ConcurrentMap<String, PersistContent> JOB_MAP = new ConcurrentHashMap<>();
+
+
+    public boolean persistCallback(PersistImage persistImage) {
+        PersistContent persistContent = JOB_MAP.get(persistImage.getPersistId());
+        synchronized (persistContent) {
+            persistContent.setData(persistImage.getData());
+            persistContent.setType(persistImage.getType());
+            persistContent.notify();
+        }
+        return true;
+    }
+
+
     @Override
     public void execute(long jobId) throws Exception {
         CronJob cronJob = cronJobMapper.getById(jobId);
         if (null != cronJob && !StringUtils.isEmpty(cronJob.getConfig())) {
             CronJobConfig cronJobConfig = JSONObject.parseObject(cronJob.getConfig(), CronJobConfig.class);
             if (null != cronJobConfig && !StringUtils.isEmpty(cronJobConfig.getType())) {
-                Map<String, Object> content = new HashMap<>();
                 User user = userMapper.selectByEmail(cronJobConfig.getTo());
                 String username = cronJobConfig.getTo().split("@")[0];
                 if (null != user) {
                     username = StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName();
                 }
-                content.put("username", username);
 
                 List<File> attachments = null;
+                MailContent mailContent = null;
                 if (cronJobConfig.getType().equals(CronJobMediaType.IMAGE.getType())) {
-                    attachments = generateImages(cronJobConfig, cronJob.getCreateBy());
+                    mailContent = generateImages(cronJobConfig, cronJob.getCreateBy());
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.EXCEL.getType())) {
                     attachments = generateExcels(cronJobConfig, user);
                 } else if (cronJobConfig.getType().equals(CronJobMediaType.IMAGEANDEXCEL.getType())) {
                     attachments = new ArrayList<>();
-                    attachments.addAll(generateImages(cronJobConfig, cronJob.getCreateBy()));
                     attachments.addAll(generateExcels(cronJobConfig, user));
+                    mailContent = generateImages(cronJobConfig, cronJob.getCreateBy());
                 }
 
                 String[] cc = null, bcc = null;
@@ -140,13 +157,13 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                     bcc = cronJobConfig.getBcc().split(";");
                 }
 
-                mailUtils.sendTemplateAttachmentsEmail(
+                mailUtils.sendHtmlEmail(
                         cronJobConfig.getSubject(),
                         cronJobConfig.getTo(),
                         cc,
                         bcc,
-                        Constants.SCHEDULE_MAIL_TEMPLATE,
-                        content,
+                        mailContent.getText(),
+                        mailContent.getDataSourceMap(),
                         attachments);
             }
         }
@@ -161,54 +178,53 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
      * @return
      * @throws Exception
      */
-    private List<File> generateImages(CronJobConfig cronJobConfig, Long userId) throws Exception {
-        List<File> files = new ArrayList<>();
+    private MailContent generateImages(CronJobConfig cronJobConfig, Long userId) throws Exception {
+        Map<String, DataSource> dataSourceMap = new HashMap<>();
+        StringBuilder sb = new StringBuilder("<html>");
         for (CronJobContent cronJobContent : cronJobConfig.getContentList()) {
-            String imageName = UUID.randomUUID() + ".png";
-            String imageUrl = baseUrl + File.separator + imageName;
-            String imagePath = fileBasePath + imageUrl;
-            File file = new File(fileBasePath + baseUrl);
-            if (!file.exists()) {
-                file.mkdirs();
-            }
-            String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
-            boolean bol = phantomRender(url, imagePath);
-            if (bol) {
-                File image = new File(imagePath);
-                files.add(image);
-            }
-        }
-        return files;
-    }
+            String persistId = UUID.randomUUID().toString().replaceAll("-", "");
+            PersistContent persistContent = new PersistContent(cronJobContent);
 
-    /**
-     * phantom打开连接并截图
-     *
-     * @param url
-     * @param imgPath
-     * @return
-     * @throws Exception
-     */
-    private boolean phantomRender(String url, String imgPath) throws Exception {
-        boolean result = false;
-        if (!StringUtils.isEmpty(phantomJsHome) && !StringUtils.isEmpty(phantomJsFile)) {
+            JOB_MAP.put(persistId, persistContent);
+
+            String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId(), persistId);
             String rendJsPath = URLDecoder.decode(phantomJsFile, "UTF-8");
-            String cmd = buildCmd(phantomJsHome, rendJsPath, url, imgPath);
+            String cmd = buildCmd(phantomJsHome, rendJsPath, url);
+
             log.info("phantom command : {}", cmd);
             Process process = Runtime.getRuntime().exec(cmd);
-            InputStreamReader isr = new InputStreamReader(process.getInputStream());
-            LineNumberReader input = new LineNumberReader(isr);
-            String line = input.readLine();
-            while (null != line) {
-                log.info(line);
-                line = input.readLine();
+
+            final Process p = process;
+            new Thread(() -> {
+                InputStreamReader isr = new InputStreamReader(p.getInputStream());
+                LineNumberReader input = new LineNumberReader(isr);
+                String line;
+                try {
+                    while ((line = input.readLine()) != null) {
+                        log.info(line);
+                    }
+                    log.info("Finished command " + cmd);
+                } catch (Exception e) {
+                    log.error("Error", e);
+                    p.destroy();
+                }
+            }).start();
+            synchronized (persistContent) {
+                persistContent.wait(5 * 60 * 1000);
             }
-            log.info("Finished command: {}", cmd);
             process.destroy();
-            result = checkFileExists(imgPath);
+            JOB_MAP.remove(persistId);
+
+            sb.append("<img src='cid:").append(persistId).append("'></img></br>");
+
+            byte[] bytes = Base64.getDecoder().decode(persistContent.getData().substring(23));
+            ByteArrayDataSource ds = new ByteArrayDataSource(bytes, "image/jpeg");
+            dataSourceMap.put(persistId, ds);
         }
-        return result;
+
+        return new MailContent(sb.append("</html>").toString(), dataSourceMap);
     }
+
 
     /**
      * 生成运行命令
@@ -407,5 +423,19 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
         for (int i = 0; i < columns.size(); i++) {
             sheet.autoSizeColumn(i);
         }
+    }
+}
+
+@Data
+class MailContent {
+    private String text;
+    private Map<String, DataSource> dataSourceMap;
+
+    public MailContent() {
+    }
+
+    public MailContent(String text, Map<String, DataSource> dataSourceMap) {
+        this.text = text;
+        this.dataSourceMap = dataSourceMap;
     }
 }
