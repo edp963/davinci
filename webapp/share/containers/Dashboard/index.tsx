@@ -127,7 +127,23 @@ interface IDashboardProps {
     }
   ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
-  onLoadWidgetCsv: (itemId: number, widgetProps: IWidgetProps, dataToken: string) => void,
+  onLoadWidgetCsv: (
+    itemId: number,
+    params: {
+      groups: string[]
+      aggregators: Array<{column: string, func: string}>
+      filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
+      orders: Array<{column: string, direction: string}>
+      cache: boolean
+      expired: number
+    },
+    dataToken: string
+  ) => void,
   onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
   onResizeAllDashboardItem: () => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
@@ -246,10 +262,35 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+    this.getData(this.props.onLoadResultset, renderType, itemId, widgetId, queryParams)
+  }
+
+  private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
+    this.getData(
+      (renderType, itemId, dataToken, queryParams) => {
+        this.props.onLoadWidgetCsv(itemId, queryParams, dataToken)
+      },
+      'rerender',
+      itemId,
+      widgetId
+    )
+  }
+
+  private getData = (
+    callback: (
+      renderType: RenderType,
+      itemId: number,
+      dataToken: string,
+      queryParams?: any
+    ) => void,
+    renderType: RenderType,
+    itemId: number,
+    widgetId: number,
+    queryParams?: any
+  ) => {
     const {
       currentItemsInfo,
-      widgets,
-      onLoadResultset
+      widgets
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
@@ -266,8 +307,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let drillStatus
 
     if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
+      linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
+      globalFilters = queryParams.globalFilters !== void 0 ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params ? queryParams.params : cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
@@ -322,7 +363,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         })))
     }
 
-    onLoadResultset(
+    callback(
       renderType,
       itemId,
       widget.dataToken,
@@ -351,17 +392,6 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       clearTimeout(this.resizeSign)
       this.resizeSign = void 0
     }, 500)
-  }
-
-  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
-    const {
-      currentItemsInfo,
-      onLoadWidgetCsv
-    } = this.props
-
-  //  const { filters, params } = currentItemsInfo[itemId].queryParams
-
-    onLoadWidgetCsv(itemId, widgetProps, shareInfo)
   }
 
   private visibleFullScreen = (currentChartData) => {
@@ -746,7 +776,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
     onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, widgetProps, dataToken) => dispatch(loadWidgetCsv(itemId, widgetProps, dataToken)),
+    onLoadWidgetCsv: (itemId, params, dataToken) => dispatch(loadWidgetCsv(itemId, params, dataToken)),
     onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),

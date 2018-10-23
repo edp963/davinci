@@ -184,10 +184,16 @@ interface IGridProps {
   ) => void
   onLoadWidgetCsv: (
     itemId: number,
+    widgetId: number,
     params: {
       groups: string[]
       aggregators: Array<{column: string, func: string}>
       filters: string[]
+      linkageFilters: string[]
+      globalFilters: string[]
+      params: Array<{name: string, value: string}>
+      linkageParams: Array<{name: string, value: string}>
+      globalParams: Array<{name: string, value: string}>
       orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
@@ -372,10 +378,43 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+    this.getData(
+      (renderType, itemId, widget, queryParams) => {
+        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, queryParams)
+      },
+      renderType,
+      itemId,
+      widgetId,
+      queryParams
+    )
+  }
+
+  private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
+    this.getData(
+      (renderType, itemId, widget, queryParams) => {
+        this.props.onLoadWidgetCsv(itemId, widget.id, queryParams, shareInfo)
+      },
+      'rerender',
+      itemId,
+      widgetId
+    )
+  }
+
+  private getData = (
+    callback: (
+      renderType: RenderType,
+      itemId: number,
+      widget: any,
+      queryParams?: any
+    ) => void,
+    renderType: RenderType,
+    itemId: number,
+    widgetId: number,
+    queryParams?: any
+  ) => {
     const {
       currentItemsInfo,
-      widgets,
-      onLoadDataFromItem
+      widgets
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
@@ -392,8 +431,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let drillStatus
 
     if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
+      linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
+      globalFilters = queryParams.globalFilters !== void 0 ? queryParams.globalFilters : cachedQueryParams.globalFilters
       params = queryParams.params || cachedQueryParams.params
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
@@ -447,10 +486,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-    onLoadDataFromItem(
+    callback(
       renderType,
       itemId,
-      widget.viewId,
+      widget,
       {
         groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
         aggregators,
@@ -464,70 +503,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         cache,
         expired
       }
-    )
-  }
-
-  private downloadCsv = (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => {
-    const {
-      currentItemsInfo,
-      onLoadWidgetCsv
-    } = this.props
-
-    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
-
-    let groups = cols.concat(rows)
-    let aggregators =  metrics.map((m) => ({
-      column: decodeMetricName(m.name),
-      func: m.agg
-    }))
-
-    if (color) {
-      groups = groups.concat(color.items.map((c) => c.name))
-    }
-    if (label) {
-      groups = groups.concat(label.items
-        .filter((l) => l.type === 'category')
-        .map((l) => l.name))
-      aggregators = aggregators.concat(label.items
-        .filter((l) => l.type === 'value')
-        .map((l) => ({
-          column: decodeMetricName(l.name),
-          func: l.agg
-        })))
-    }
-    if (size) {
-      aggregators = aggregators.concat(size.items
-        .map((s) => ({
-          column: decodeMetricName(s.name),
-          func: s.agg
-        })))
-    }
-    if (xAxis) {
-      aggregators = aggregators.concat(xAxis.items
-        .map((x) => ({
-          column: decodeMetricName(x.name),
-          func: x.agg
-        })))
-    }
-    if (tip) {
-      aggregators = aggregators.concat(tip.items
-        .map((t) => ({
-          column: decodeMetricName(t.name),
-          func: t.agg
-        })))
-    }
-
-    onLoadWidgetCsv(
-      itemId,
-      {
-        groups,
-        aggregators,
-        filters: filters.map((f) => f.config.sql),
-        orders,
-        cache,
-        expired
-      },
-      shareInfo
     )
   }
 
@@ -1368,7 +1343,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadDataFromItem: (renderType, itemId, viewId, params) =>
                         dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, params, token) => dispatch(loadWidgetCsv(itemId, params, token)),
+    onLoadWidgetCsv: (itemId, widgetId, params, token) => dispatch(loadWidgetCsv(itemId, widgetId, params, token)),
     onLoadCascadeSource: (controlId, viewId, column, parents) => dispatch(loadCascadeSource(controlId, viewId, column, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
