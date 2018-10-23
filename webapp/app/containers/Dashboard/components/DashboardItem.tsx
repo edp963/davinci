@@ -72,7 +72,7 @@ interface IDashboardItemProps {
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onDownloadCsv: (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => void
+  onDownloadCsv: (itemId: number, widgetId: number, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
@@ -237,10 +237,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private downloadCsv = () => {
     const { widget, itemId, shareInfo, onDownloadCsv } = this.props
-    const { widgetProps } = this.state
-
-    onDownloadCsv(widget.id, widgetProps, shareInfo)
+    onDownloadCsv(itemId, widget.id, shareInfo)
   }
+
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
       sharePanelAuthorized: state

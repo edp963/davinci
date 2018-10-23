@@ -405,11 +405,12 @@ export function loadWidgetShareLinkFail (itemId) {
   }
 }
 
-export function loadWidgetCsv (itemId, params, token) {
+export function loadWidgetCsv (itemId, widgetId, params, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
+      widgetId,
       params,
       token
     }
