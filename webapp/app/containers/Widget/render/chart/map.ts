@@ -318,12 +318,12 @@ export default function (chartProps: IChartProps) {
         map: 'china',
         itemStyle: {
           normal: {
-            areaColor: '#0000003F',
-            borderColor: '#FFFFFF',
+            areaColor: '#cccccc',
+            borderColor: '#ffffff',
             borderWidth: 1
           },
           emphasis: {
-            areaColor: `#00000059`
+            areaColor: `#bbbbbb`
           }
         },
         roam
