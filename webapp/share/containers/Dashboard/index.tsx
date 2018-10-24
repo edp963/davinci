@@ -22,7 +22,6 @@ import * as React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
-import * as classnames from 'classnames'
 
 import { compose } from 'redux'
 import injectReducer from 'utils/injectReducer'
@@ -66,17 +65,13 @@ import {
 } from './selectors'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 import {
-  DEFAULT_SPLITER,
-  ECHARTS_RENDERER,
   GRID_COLS,
   GRID_ROW_HEIGHT,
   GRID_ITEM_MARGIN,
-  SQL_NUMBER_TYPES,
   GRID_BREAKPOINTS
 } from '../../../app/globalConstants'
 
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
-const utilStyles = require('../../../app/assets/less/util.less')
 
 import Login from '../../components/Login/index'
 
@@ -243,7 +238,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           this.setState({
             phantomRenderSign: true
           })
-        }, 10000)
+        }, 5000)
       }
     }
   }
