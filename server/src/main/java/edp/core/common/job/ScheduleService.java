@@ -19,16 +19,12 @@
 package edp.core.common.job;
 
 
-import edp.davinci.dto.cronJobDto.PersistImage;
-
 /**
  * 通用schedule调度接口，业务层必须实现
- *    命名格式为{jobType}ScheduleService
- *      如： emailScheduleService
+ * 命名格式为{jobType}ScheduleService
+ * 如： emailScheduleService
  */
 public interface ScheduleService {
 
     void execute(long jobId) throws Exception;
-
-    boolean persistCallback(PersistImage persistImage);
 }

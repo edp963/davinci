@@ -109,7 +109,7 @@ public class CommonService<T> {
      * @param contengId
      * @return
      */
-    public String getContentUrl(Long userId, String contentType, Long contengId, String persistId) {
+    public String getContentUrl(Long userId, String contentType, Long contengId) {
         String shareToken = shareService.generateShareToken(contengId, null, userId);
         StringBuilder sb = new StringBuilder();
 
@@ -123,15 +123,11 @@ public class CommonService<T> {
         }
 
         sb.append(getHost())
-            .append("/share.html#/share/")
-            .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
-            .append("?shareInfo=")
-            .append(shareToken)
-            .append("&type=" + type);
-
-        if (!StringUtils.isEmpty(persistId)) {
-            sb.append("&pid=" + persistId);
-        }
+                .append("/share.html#/share/")
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+                .append("?shareInfo=")
+                .append(shareToken)
+                .append("&type=" + type);
 
         return sb.toString();
     }
