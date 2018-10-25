@@ -32,7 +32,6 @@ import org.springframework.stereotype.Component;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
-import javax.activation.DataSource;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.io.File;
@@ -121,7 +120,7 @@ public class MailUtils {
      * @throws ServerException
      */
     public void sendHtmlEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
-                              String content, Map<String, DataSource> dataSourceMap, List<File> files) throws ServerException {
+                              String content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
             log.info("email address(from) cannot be empty");
@@ -173,11 +172,6 @@ public class MailUtils {
                 content = "<html></html>";
             }
             messageHelper.setText(content, true);
-            if (!dataSourceMap.isEmpty()) {
-                for (String id : dataSourceMap.keySet()) {
-                    messageHelper.addInline(id, dataSourceMap.get(id));
-                }
-            }
 
             if (null != files && files.size() > 0) {
                 if (files.size() == 1) {
@@ -214,8 +208,8 @@ public class MailUtils {
      * @param content
      * @throws ServerException
      */
-    public void sendHtmlEmail(String subject, String to, String content, Map<String, DataSource> dataSourceMap, List<File> files) throws ServerException {
-        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, content, dataSourceMap, files);
+    public void sendHtmlEmail(String subject, String to, String content, List<File> files) throws ServerException {
+        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, content, files);
     }
 
     /**
@@ -227,8 +221,8 @@ public class MailUtils {
      * @param content
      * @throws ServerException
      */
-    public void sendHtmlEmail(String subject, String to, String[] cc, String[] bcc, String content, Map<String, DataSource> dataSourceMap, List<File> files) throws ServerException {
-        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, content, dataSourceMap, files);
+    public void sendHtmlEmail(String subject, String to, String[] cc, String[] bcc, String content, List<File> files) throws ServerException {
+        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, content, files);
     }
 
     /**
