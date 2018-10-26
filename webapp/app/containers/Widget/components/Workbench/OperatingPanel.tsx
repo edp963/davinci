@@ -525,7 +525,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getVisualData = (commonParams, specificParams, styleParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label, size, xAxis, tip } = specificParams
+    const { color, label, size, xAxis, tip, yAxis } = specificParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart } = this.state
     let groups = cols.items.map((c) => c.name)
@@ -565,6 +565,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
     if (tip) {
       aggregators = aggregators.concat(tip.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (yAxis) {
+      aggregators = aggregators.concat(yAxis.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg
@@ -624,6 +631,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...size && {size},
             ...xAxis && {xAxis},
             ...tip && {tip},
+            ...yAxis && {yAxis},
             chartStyles: styleParams,
             selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             data,
@@ -666,6 +674,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...size && {size},
         ...xAxis && {xAxis},
         ...tip && {tip},
+        ...yAxis && {yAxis},
         chartStyles: styleParams,
         selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
         dimetionAxis: this.getDimetionAxis(selectedCharts),
@@ -1132,8 +1141,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         tabPane = (
           <div className={styles.paramsPane}>
             {spec && <SpecSection
-              isShowLines={isShowLines}
+              name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
+              isShowLines={isShowLines}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
             />}

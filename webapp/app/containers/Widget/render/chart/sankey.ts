@@ -43,7 +43,6 @@ export default function (chartProps: IChartProps) {
     cols,
     metrics,
     chartStyles,
-    color,
     tip
   } = chartProps
 
@@ -67,9 +66,6 @@ export default function (chartProps: IChartProps) {
   let dimensions = []
   if (cols.length) {
     dimensions = dimensions.concat(cols)
-  }
-  if (color.items.length) {
-    dimensions = dimensions.concat(color.items.map((c) => c.name))
   }
 
   const metricsName = decodeMetricName(metrics[0].name)
