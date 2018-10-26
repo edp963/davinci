@@ -28,7 +28,7 @@ const bar: IChartInfo = {
   },
   style: {
     spec: {
-
+      stack: false
     },
     label: {
       showLabel: false,

@@ -6,7 +6,7 @@ import {
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const radar: IChartInfo = {
-  id: 19,
+  id: 10,
   name: 'radar',
   title: '雷达图',
   icon: 'icon-radarchart',
