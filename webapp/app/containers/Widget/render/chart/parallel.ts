@@ -50,7 +50,6 @@ export default function (chartProps: IChartProps) {
   } = chartProps
 
   const {
-    label,
     legend,
     axis,
     areaSelect,
@@ -89,10 +88,6 @@ export default function (chartProps: IChartProps) {
     layout,
     smooth
   } = spec
-
-  const labelOption = {
-    label: getLabelOption('parallel', label)
-  }
 
   const parallelPosition: {
     left: number,
@@ -169,7 +164,8 @@ export default function (chartProps: IChartProps) {
       return {
         name: grpText,
         type: 'parallel',
-        lineStyle: 1,
+        smooth,
+        lineStyle,
         data
       }
     })
@@ -198,8 +194,8 @@ export default function (chartProps: IChartProps) {
     series = [{
       name: '',
       type: 'parallel',
+      smooth: smooth ? 1 : 0,
       lineStyle,
-      smooth: !!smooth,
       data: data.map((row) => (
         [
           ...axisDimensions.map((name) => row[name]),
@@ -220,7 +216,7 @@ export default function (chartProps: IChartProps) {
       dim: axisDimensions.length + idx,
       name: showTitleAndUnit ? decodeMetricName(m.name) : '',
       axisLabel: {
-        formatter: metricAxisLabelFormatter
+        formatter: showLabel ? metricAxisLabelFormatter : ''
       }
     }))
   ]

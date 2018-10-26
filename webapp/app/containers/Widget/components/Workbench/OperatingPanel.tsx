@@ -822,7 +822,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private styleChange = (name) => (prop, value) => {
     const { commonParams, specificParams, styleParams } = this.state
     styleParams[name][prop] = value
-    this.getVisualData(commonParams, specificParams, styleParams, prop === 'layerType' ? 'clear' : 'refresh')
+    const clearProps = ['layerType', 'smooth']
+    this.getVisualData(commonParams, specificParams, styleParams, clearProps.includes(prop) ? 'clear' : 'refresh')
     const { layerType } = styleParams.spec
     this.setState({
       isLabelSection: !(layerType && layerType === 'heatmap'),
