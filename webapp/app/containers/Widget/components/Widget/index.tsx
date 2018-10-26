@@ -73,6 +73,7 @@ export interface IWidgetProps {
   size?: IDataParamProperty
   xAxis?: IDataParamProperty
   tip?: IDataParamProperty
+  yAxis?: IDataParamProperty
   dimetionAxis?: DimetionType
   renderType?: RenderType
   orders: Array<{column: string, direction: string}>

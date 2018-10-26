@@ -31,8 +31,9 @@ export interface ISpecConfig {
 }
 
 interface ISpecSectionProps {
-  isShowLines: boolean
+  name: string
   title: string
+  isShowLines: boolean
   config: ISpecConfig
   onChange: (prop: string, value: any) => void
 }
@@ -51,9 +52,11 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
   }
 
   public render () {
-    const { title, config, isShowLines } = this.props
+    const { name, title, isShowLines, config } = this.props
 
     const {
+      smooth,
+      step,
       roseType,
       circle,
       sortMode,
@@ -88,8 +91,35 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       ))
 
     let renderHtml
-    switch (title) {
-      case '饼图':
+    switch (name) {
+      case 'line':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>
+                  <Checkbox
+                    checked={smooth}
+                    onChange={this.checkboxChange('smooth')}
+                  >
+                    平滑
+                  </Checkbox>
+                </Col>
+                <Col span={12}>
+                  <Checkbox
+                    checked={step}
+                    onChange={this.checkboxChange('step')}
+                  >
+                    阶梯
+                  </Checkbox>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case 'pie':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
@@ -116,7 +146,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      case '漏斗图':
+      case 'funnel':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
@@ -161,7 +191,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      case '雷达图':
+      case 'radar':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
@@ -184,7 +214,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      case '地图':
+      case 'map':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>

@@ -14,16 +14,7 @@ const sankey: IChartInfo = {
   requireDimetions: [2, 9999],
   requireMetrics: 1,
   dimetionAxis: 'col',
-  data: {
-    color: {
-      title: '颜色',
-      type: 'category'
-    }
-    // tip: {
-    //   title: '提示信息',
-    //   type: 'value'
-    // }
-  },
+  data: {},
   style: {
     label: {
       showLabel: true,
