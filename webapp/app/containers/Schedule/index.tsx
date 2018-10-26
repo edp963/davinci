@@ -255,6 +255,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           } else {
             onUpdateSchedule(params, () => {
               this.hideForm()
+              this.props.onLoadSchedules(pid)
             })
           }
         })
