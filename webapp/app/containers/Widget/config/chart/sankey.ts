@@ -11,7 +11,7 @@ const sankey: IChartInfo = {
   title: '桑基图',
   icon: 'icon-kongjiansangjitu',
   coordinate: 'cartesian',
-  requireDimetions: [1, 9999],
+  requireDimetions: [2, 9999],
   requireMetrics: 1,
   dimetionAxis: 'col',
   data: {
@@ -26,8 +26,8 @@ const sankey: IChartInfo = {
   },
   style: {
     label: {
-      showLabel: false,
-      labelPosition: CHART_PIE_LABEL_POSITIONS[0].value,
+      showLabel: true,
+      labelPosition: 'right',
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
       labelColor: PIVOT_DEFAULT_FONT_COLOR
@@ -41,10 +41,11 @@ const sankey: IChartInfo = {
       color: PIVOT_DEFAULT_FONT_COLOR
     },
     spec: {
+      nodeWidth: 20,
+      nodeGap: 8,
+      orient: 'horizontal',
+      draggable: true
     }
-    // toolbox: {
-    //   showToolbox: false
-    // }
   }
 }
 

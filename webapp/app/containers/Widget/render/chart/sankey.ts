@@ -60,7 +60,10 @@ export default function (chartProps: IChartProps) {
   } = legend
 
   const {
-    shape
+    nodeWidth,
+    nodeGap,
+    orient,
+    draggable
   } = spec
 
   const labelOption = {
@@ -103,10 +106,15 @@ export default function (chartProps: IChartProps) {
     series: [{
       type: 'sankey',
       layout: 'none',
+      ...labelOption,
       data: nodesValues.map((val) => ({
         name: val
       })),
       links,
+      orient,
+      draggable,
+      nodeWidth,
+      nodeGap,
       focusNodeAdjacency: true,
       itemStyle: {
         normal: {

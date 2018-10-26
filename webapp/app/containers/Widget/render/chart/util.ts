@@ -37,6 +37,7 @@ export function getDimetionAxisOption (
   data: string[]
 ) {
   const {
+    inverse,
     showLine: showLineX,
     lineStyle: lineStyleX,
     lineSize: lineSizeX,
@@ -44,7 +45,10 @@ export function getDimetionAxisOption (
     showLabel: showLabelX,
     labelFontFamily: labelFontFamilyX,
     labelFontSize: labelFontSizeX,
-    labelColor: labelColorX
+    labelColor: labelColorX,
+    nameLocation,
+    nameGap,
+    nameRotate
   } = dimetionAxisConfig
 
   const {
@@ -56,6 +60,7 @@ export function getDimetionAxisOption (
 
   return {
     data,
+    inverse,
     axisLabel: {
       show: showLabelX,
       color: labelColorX,
@@ -83,7 +88,10 @@ export function getDimetionAxisOption (
         width: lineSize,
         type: lineStyle
       }
-    }
+    },
+    nameLocation,
+    nameRotate,
+    nameGap
   }
 }
 
@@ -94,6 +102,7 @@ export function getMetricAxisOption (
   axis: 'x' | 'y' = 'y'
 ) {
   const {
+    inverse,
     showLine: showLineY,
     lineStyle: lineStyleY,
     lineSize: lineSizeY,
@@ -105,7 +114,10 @@ export function getMetricAxisOption (
     showTitleAndUnit,
     titleFontFamily,
     titleFontSize,
-    titleColor
+    titleColor,
+    nameLocation,
+    nameRotate,
+    nameGap
   } = metricAxisConfig
 
   const {
@@ -117,6 +129,7 @@ export function getMetricAxisOption (
 
   return {
     type: 'value',
+    inverse,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
@@ -139,8 +152,9 @@ export function getMetricAxisOption (
       }
     },
     name: showTitleAndUnit ? title : '',
-    nameLocation: axis === 'y' ? 'middle' : 'center',
-    nameGap: axis === 'y' ? 45 : 30,
+    nameLocation,
+    nameGap,
+    nameRotate,
     nameTextStyle: {
       color: titleColor,
       fontFamily: titleFontFamily,

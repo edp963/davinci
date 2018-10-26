@@ -25,7 +25,9 @@ import {
   decodeMetricName,
   getChartTooltipLabel,
   getSizeValue,
-  getSizeRate
+  getSizeRate,
+  getTextWidth,
+  metricAxisLabelFormatter
 } from '../../components/util'
 import {
   getMetricAxisOption,
@@ -35,7 +37,7 @@ import {
   getSymbolSize
 } from './util'
 
-export default function(chartProps: IChartProps) {
+export default function (chartProps: IChartProps) {
   const {
     width,
     height,
@@ -50,6 +52,8 @@ export default function(chartProps: IChartProps) {
   const {
     label,
     legend,
+    axis,
+    areaSelect,
     spec,
     toolbox
   } = chartStyles
@@ -60,49 +64,174 @@ export default function(chartProps: IChartProps) {
   } = legend
 
   const {
-    shape
+    inverse,
+    showLine,
+    lineStyle,
+    lineSize,
+    lineColor,
+    showLabel,
+    labelFontFamily,
+    labelFontSize,
+    labelColor,
+    labelStyle,
+    labelWeight,
+    titleFontFamily,
+    titleFontSize,
+    titleFontStyle,
+    titleColor,
+    nameLocation,
+    nameRotate,
+    nameGap,
+    showTitleAndUnit
+  } = axis
+
+  const {
+    layout,
+    smooth
   } = spec
 
   const labelOption = {
     label: getLabelOption('parallel', label)
   }
 
+  const parallelPosition: {
+    left: number,
+    top: number,
+    right: number,
+    bottom: number
+  } = { // by default
+    left: 80,
+    top: 60,
+    right: 80,
+    bottom: 60
+  }
+
+  let series
+  let parallel = {
+    layout,
+    ...parallelPosition,
+    parallelAxisDefault: {
+      nameLocation,
+      nameGap,
+      nameRotate,
+      inverse,
+      nameTextStyle: {
+        color: titleColor,
+        fontStyle: titleFontStyle,
+        fontFamily: titleFontFamily,
+        fontSize: titleFontSize
+      },
+      axisLabel: {
+        show: showLabel,
+        color: labelColor,
+        fontFamily: labelFontFamily,
+        fontSize: labelFontSize
+      },
+      axisLine: {
+        show: showLine,
+        lineStyle: {
+          color: lineColor,
+          width: lineSize,
+          type: lineStyle
+        }
+      },
+      areaSelectStyle: areaSelect
+    }
+  }
+  const legendData = []
+
   let axisDimensions = []
   if (cols.length) {
     axisDimensions = axisDimensions.concat(cols)
   }
-  if (color.items.length) {
-    axisDimensions = axisDimensions.concat(color.items.map((c) => c.name))
-  }
-
   const dimensionsData = data.map((row) => (
     axisDimensions.map((name) => row[name])
   ))
-  const seriesData = data.map((row, idx) =>
-    (dimensionsData[idx].concat(metrics.map((m) => row[`${m.agg}(${decodeMetricName(m.name)})`])))
-  )
+
+  if (color.items.length) {
+    const groupKeys = color.items.map((c) => c.name)
+    const grouped = data.reduce((obj, row) => {
+      const grpText = groupKeys.map((key) => row[key]).join(String.fromCharCode(0))
+      if (!obj[grpText]) {
+        obj[grpText] = []
+      }
+      obj[grpText].push(row)
+      return obj
+    }, {})
+
+    series = Object.entries(grouped).map(([grpText, rows]) => {
+      legendData.push(grpText)
+      const data = rows.map((r) => {
+        const dimData = axisDimensions.map((name) => r[name])
+        const metricData = metrics.map((m) => r[`${m.agg}(${decodeMetricName(m.name)})`])
+        return dimData.concat(metricData)
+      })
+      return {
+        name: grpText,
+        type: 'parallel',
+        lineStyle: 1,
+        data
+      }
+    })
+
+    if (legend.showLegend) {
+      const legendWidth = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+      switch (legendPosition) {
+        case 'top':
+          parallelPosition.top += 32
+          break
+        case 'bottom':
+          parallelPosition.bottom += 32
+          break
+        case 'left':
+          parallelPosition.left += legendWidth
+          break
+        case 'right':
+          parallelPosition.right += legendWidth
+      }
+      parallel = {
+        ...parallel,
+        ...parallelPosition
+      }
+    }
+  } else {
+    series = [{
+      name: '',
+      type: 'parallel',
+      lineStyle,
+      smooth: !!smooth,
+      data: data.map((row) => (
+        [
+          ...axisDimensions.map((name) => row[name]),
+          ...metrics.map((m) => row[`${m.agg}(${decodeMetricName(m.name)})`])
+        ]
+      ))
+    }]
+  }
 
   const parallelAxis = [
     ...axisDimensions.map((name, idx) => ({
       dim: idx,
-      name,
+      name: showTitleAndUnit ? name : '',
       type: 'category',
       data: dimensionsData.filter((d, idx) => dimensionsData.indexOf(d) === idx).map((d) => d[idx])
     })),
     ...metrics.map((m, idx) => ({
       dim: axisDimensions.length + idx,
-      name: decodeMetricName(m.name)
+      name: showTitleAndUnit ? decodeMetricName(m.name) : '',
+      axisLabel: {
+        formatter: metricAxisLabelFormatter
+      }
     }))
   ]
 
+  const legendOption = getLegendOption(legend, legendData)
+
   return {
+    tooltip: {},
+    legend: legendOption,
+    parallel,
     parallelAxis,
-    series: [{
-      type: 'parallel',
-      data: seriesData,
-      lineStyle: {
-        width: 2
-      }
-    }]
+    series
   }
 }
