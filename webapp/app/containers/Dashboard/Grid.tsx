@@ -142,6 +142,7 @@ interface IGridProps {
         params: Array<{name: string, value: string}>
         linkageParams: Array<{name: string, value: string}>
         globalParams: Array<{name: string, value: string}>
+        drillHistory?: Array<{filter?: any, type?: string, groups?: string[], name: string}>
       }
       shareInfo: string
       secretInfo: string
