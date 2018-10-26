@@ -2,7 +2,8 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS,
-  CHART_VISUALMAP_POSITIONS
+  CHART_VISUALMAP_POSITIONS,
+  CHART_LEGEND_POSITIONS
 } from '../../../../globalConstants'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -36,6 +37,14 @@ const map: IChartInfo = {
       visualMapHeight: 150,
       startColor: defaultThemeColors[0],
       endColor: defaultThemeColors[2]
+    },
+    legend: {
+      showLegend: true,
+      legendPosition: CHART_LEGEND_POSITIONS[0].value,
+      selectAll: true,
+      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+      fontSize: '12',
+      color: PIVOT_DEFAULT_FONT_COLOR
     },
     spec: {
       layerType: 'map',

@@ -8,7 +8,7 @@ const Select = require('antd/lib/select')
 const Option = Select.Option
 const InputNumber = require('antd/lib/input-number')
 const styles = require('../Workbench.less')
-import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES } from '../../../../../globalConstants'
+import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LAYER_TYPES_NO_LINES } from '../../../../../globalConstants'
 
 export interface ISpecConfig {
   smooth?: boolean
@@ -31,6 +31,7 @@ export interface ISpecConfig {
 }
 
 interface ISpecSectionProps {
+  isShowLines: boolean
   title: string
   config: ISpecConfig
   onChange: (prop: string, value: any) => void
@@ -50,7 +51,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
   }
 
   public render () {
-    const { title, config } = this.props
+    const { title, config, isShowLines } = this.props
 
     const {
       roseType,
@@ -78,9 +79,13 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
 
-    const layerTypes = CHART_LAYER_TYPES.map((p) => (
-      <Option key={p.value} value={p.value}>{p.name}</Option>
-    ))
+    const layerTypes = isShowLines
+      ? CHART_LAYER_TYPES.map((p) => (
+        <Option key={p.value} value={p.value}>{p.name}</Option>
+      ))
+      : CHART_LAYER_TYPES_NO_LINES.map((p) => (
+        <Option key={p.value} value={p.value}>{p.name}</Option>
+      ))
 
     let renderHtml
     switch (title) {
