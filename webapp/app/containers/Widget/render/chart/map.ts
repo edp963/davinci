@@ -335,7 +335,7 @@ export default function (chartProps: IChartProps) {
       },
       ...labelOptionLines,
       symbolSize: (val) => {
-          return val[2] / 4
+          return val[2] / 6
       },
       data: scatterData
     }
@@ -355,7 +355,7 @@ export default function (chartProps: IChartProps) {
       },
       lineStyle: {
           normal: {
-              width: 1,
+              width: 2,
               opacity: 0.6,
               curveness: 0.2
           }
@@ -388,14 +388,10 @@ export default function (chartProps: IChartProps) {
     case 'map':
       mapOptions = {
         ...metricOptions,
-        ...visualMapOptions,
-        legend: {
-          show: false
-        }
+        ...visualMapOptions
       }
       break
     case 'lines':
-    // case 'effectScatter':
       mapOptions = {
         ...legendOption,
         geo: {
@@ -424,10 +420,7 @@ export default function (chartProps: IChartProps) {
         },
         ...metricOptions,
         ...visualMapOptions,
-        ...tooltipOptions,
-        legend: {
-          show: false
-        }
+        ...tooltipOptions
       }
       break
   }

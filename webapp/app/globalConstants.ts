@@ -145,12 +145,6 @@ export const CHART_LAYER_TYPES = [
   { name: '飞行图', value: 'lines' }
 ]
 
-export const CHART_LAYER_TYPES_NO_LINES = [
-  { name: '地图', value: 'map' },
-  { name: '气泡图', value: 'scatter' },
-  { name: '热力图', value: 'heatmap' }
-]
-
 export const CHART_VISUALMAP_DIRECYTIONS = [
   { name: '竖直', value: 'vertical' },
   { name: '水平', value: 'horizontal' }
