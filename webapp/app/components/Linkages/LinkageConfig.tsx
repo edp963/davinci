@@ -163,7 +163,8 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
       if (!err) {
         const { localLinkages } = this.state
         this.setState({
-          localLinkages: [ ...localLinkages, { ...values, key: uuid(8, 16) } ]
+          localLinkages: [ ...localLinkages, { ...values, key: uuid(8, 16) } ],
+          formVisible: false
         }, () => {
           const { onGetWidgetInfo } = this.props
           this.renderChart(this.state.localLinkages, onGetWidgetInfo)

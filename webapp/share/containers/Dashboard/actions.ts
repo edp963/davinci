@@ -33,7 +33,9 @@ import {
   LOAD_CASCADESOURCE_FROM_DASHBOARD,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -179,5 +181,25 @@ export function loadCascadeSourceFromDashboardFail (error) {
 export function resizeAllDashboardItem () {
   return {
     type: RESIZE_ALL_DASHBOARDITEM
+  }
+}
+
+export function drillDashboardItem (itemId, drillHistory) {
+  return {
+    type: DRILL_DASHBOARDITEM,
+    payload: {
+      itemId,
+      drillHistory
+    }
+  }
+}
+
+export function deleteDrillHistory (itemId, index) {
+  return {
+    type: DELETE_DRILL_HISTORY,
+    payload: {
+      itemId,
+      index
+    }
   }
 }

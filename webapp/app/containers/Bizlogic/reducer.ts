@@ -40,6 +40,8 @@ import {
   LOAD_VIEW_TEAM_SUCCESS,
   LOAD_VIEW_TEAM_FAILURE
 } from './constants'
+import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
+import { ActionTypes } from '../Display/constants'
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
@@ -115,6 +117,10 @@ function bizlogicReducer (state = initialState, action) {
       return state.set('viewTeam', payload.result)
     case LOAD_VIEW_TEAM_FAILURE:
       return state
+    case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      return state.set('bizlogics', payload.bizlogics)
+    case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+      return state.set('bizlogics', payload.bizlogics)
     default:
       return state
   }

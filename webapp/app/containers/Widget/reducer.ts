@@ -37,6 +37,7 @@ import {
   CLEAR_CURRENT_WIDGET
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
+import { ActionTypes } from '../Display/constants'
 import {
   LOAD_DATA,
   LOAD_DATA_SUCCESS,
@@ -120,6 +121,8 @@ function widgetReducer (state = initialState, action) {
     case CLEAR_BIZDATAS:
       return state.set('bizdatas', false)
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      return state.set('widgets', payload.widgets)
+    case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state.set('widgets', payload.widgets)
     case LOAD_DISTINCT_VALUE:
       return state

@@ -171,15 +171,13 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 }
             }
 
-            Widget widget = widgetMapper.getById(shareInfo.getShareId());
+            shareWidget = widgetMapper.getShareWidgetById(shareInfo.getShareId());
 
-            if (null == widget) {
+            if (null == shareWidget) {
                 return resultFail(user, request, null).message("widget not found");
             }
 
-            String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
-            shareWidget = new ShareWidget();
-            BeanUtils.copyProperties(widget, shareWidget);
+            String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
             shareWidget.setDataToken(dateToken);
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
@@ -260,17 +258,13 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 }
             }
 
-            Set<Widget> widgetSet = widgetMapper.getByDisplayId(displayId);
-            Set<ShareWidget> shareWidgets = new HashSet<>();
-            if (null != widgetSet && widgetSet.size() > 0) {
-                Iterator<Widget> widgetIterator = widgetSet.iterator();
+            Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDisplayId(displayId);
+            if (null != shareWidgets && shareWidgets.size() > 0) {
+                Iterator<ShareWidget> widgetIterator = shareWidgets.iterator();
                 while (widgetIterator.hasNext()) {
-                    ShareWidget shareWidget = new ShareWidget();
-                    Widget widget = widgetIterator.next();
-                    String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
-                    BeanUtils.copyProperties(widget, shareWidget);
+                    ShareWidget shareWidget = widgetIterator.next();
+                    String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                     shareWidget.setDataToken(dateToken);
-                    shareWidgets.add(shareWidget);
                 }
                 shareDisplay.setWidgets(shareWidgets);
             }
@@ -319,17 +313,13 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             List<MemDashboardWidget> memDashboardWidgets = memDashboardWidgetMapper.getByDashboardId(dashboardId);
             shareDashboard.setRelations(memDashboardWidgets);
 
-            Set<ShareWidget> shareWidgets = null;
-
-            Set<Widget> widgets = widgetMapper.getByDashboard(dashboardId);
-            if (null != widgets && widgets.size() > 0) {
-                shareWidgets = new HashSet<>();
-                for (Widget widget : widgets) {
-                    ShareWidget shareWidget = new ShareWidget();
-                    BeanUtils.copyProperties(widget, shareWidget);
-                    String dateToken = generateShareToken(widget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
+            Set<ShareWidget> shareWidgets = widgetMapper.getShareWidgetsByDashboard(dashboardId);
+            if (null != shareWidgets && shareWidgets.size() > 0) {
+                Iterator<ShareWidget> iterator = shareWidgets.iterator();
+                while (iterator.hasNext()) {
+                    ShareWidget shareWidget = iterator.next();
+                    String dateToken = generateShareToken(shareWidget.getViewId(), shareInfo.getSharedUserName(), shareInfo.getShareUser().getId());
                     shareWidget.setDataToken(dateToken);
-                    shareWidgets.add(shareWidget);
                 }
             }
             shareDashboard.setWidgets(shareWidgets);
@@ -437,6 +427,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
 
     /**
      * 获取分享distinct value
+     *
      * @param token
      * @param viewId
      * @param param

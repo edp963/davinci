@@ -63,7 +63,9 @@ import {
   LOAD_WIDGET_CSV_FAILURE,
   RENDER_DASHBOARDITEM,
   RESIZE_DASHBOARDITEM,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 export function addDashboardItem (portalId, item, resolve) {
@@ -231,13 +233,14 @@ export function loadDashboardDetail (projectId, portalId, dashboardId) {
   }
 }
 
-export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets) {
+export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, bizlogics) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
       dashboardId,
       dashboardDetail,
-      widgets
+      widgets,
+      bizlogics
     }
   }
 }
@@ -402,11 +405,12 @@ export function loadWidgetShareLinkFail (itemId) {
   }
 }
 
-export function loadWidgetCsv (itemId, params, token) {
+export function loadWidgetCsv (itemId, widgetId, params, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
+      widgetId,
       params,
       token
     }
@@ -452,5 +456,25 @@ export function resizeDashboardItem (itemId) {
 export function resizeAllDashboardItem () {
   return {
     type: RESIZE_ALL_DASHBOARDITEM
+  }
+}
+
+export function drillDashboardItem (itemId, drillHistory) {
+  return {
+    type: DRILL_DASHBOARDITEM,
+    payload: {
+      itemId,
+      drillHistory
+    }
+  }
+}
+
+export function deleteDrillHistory (itemId, index) {
+  return {
+    type: DELETE_DRILL_HISTORY,
+    payload: {
+      itemId,
+      index
+    }
   }
 }

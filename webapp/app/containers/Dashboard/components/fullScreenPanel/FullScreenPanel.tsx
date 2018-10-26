@@ -6,6 +6,7 @@ import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
 import Chart from '../Chart'
+import { IModel } from '../../../Widget/components/Workbench/index'
 import Widget from '../../../Widget/components/Widget/WidgetInViz'
 import {ECHARTS_RENDERER} from '../../../../globalConstants'
 const styles = require('./fullScreenPanel.less')
@@ -17,11 +18,12 @@ interface IFullScreenPanelProps {
     loading?: any
     renderType?: string
     widget?: any
+    model?: IModel
     itemId?: number
     onGetChartData?: any
   }
   currentItems?: any[]
-  widgets: any
+  widgets: any[]
   currentDatasources: boolean | object
   currentDashboard: {
     widgets?: any[]
@@ -160,6 +162,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
             {...widgetProps}
             renderType="rerender"
             data={data && data.datasource ? data.datasource : []}
+            model={currentDataInFullScreen.model}
           />
         )
         :

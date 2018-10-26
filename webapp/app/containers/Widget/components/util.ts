@@ -600,7 +600,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
 
   return function (params) {
     const { seriesIndex, dataIndex } = params
-    const record = type === 'funnel'
+    const record = (type === 'funnel' || type === 'map')
       ? seriesData[dataIndex]
       : seriesData[seriesIndex][dataIndex]
     return dimetionColumns

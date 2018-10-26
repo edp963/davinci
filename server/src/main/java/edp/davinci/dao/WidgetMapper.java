@@ -18,6 +18,7 @@
 
 package edp.davinci.dao;
 
+import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
 import edp.davinci.model.Widget;
 import org.apache.ibatis.annotations.Delete;
@@ -25,7 +26,6 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 import java.util.Set;
@@ -39,6 +39,9 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where id = #{id}"})
     Widget getById(@Param("id") Long id);
+
+    @Select({"select w.*,v.model from widget w LEFT JOIN `view` v on v.id = w.view_id where w.id = #{id}"})
+    ShareWidget getShareWidgetById(@Param("id") Long id);
 
 
     int insertBatch(@Param("list") List<Widget> list);
@@ -68,6 +71,15 @@ public interface WidgetMapper {
     })
     Set<Widget> getByDisplayId(@Param("displayId") Long displayId);
 
+    @Select({
+            "SELECT  w.*, v.model FROM widget w ",
+            "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",
+            "LEFT JOIN display_slide s on m.display_slide_id = s.id",
+            "LEFT JOIN `view` v on v.id = w.view_id",
+            "WHERE s.display_id = #{displayId}",
+    })
+    Set<ShareWidget> getShareWidgetsByDisplayId(@Param("displayId") Long displayId);
+
     @Select({"select id from widget where project_id = #{projectId} and name = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);
 
@@ -76,33 +88,39 @@ public interface WidgetMapper {
 
 
     @Select({
-        "SELECT ",
-        "	w.*,",
-        "	p.id 'project.id',",
-        "	p.`name` 'project.name',",
-        "	p.description 'project.description',",
-        "	p.pic 'project.pic',",
-        "	p.org_id 'project.orgId',",
-        "	p.user_id 'project.userId',",
-        "	p.visibility 'p.visibility',",
-        "	v.id 'view.id',",
-        "	v.`name` 'view.name',",
-        "	v.description 'view.description',",
-        "	v.project_id 'view.projectId',",
-        "	v.source_id 'view.sourceId',",
-        "	v.`sql` 'view.sql',",
-        "	v.model 'view.model',",
-        "	v.config 'view.config'",
-        "FROM",
-        "	widget w ",
-        "	LEFT JOIN project p on w.project_id = p.id",
-        "	LEFT JOIN `view` v on w.view_id = v.id",
-        "WHERE w.id = #{id}",
+            "SELECT ",
+            "	w.*,",
+            "	p.id 'project.id',",
+            "	p.`name` 'project.name',",
+            "	p.description 'project.description',",
+            "	p.pic 'project.pic',",
+            "	p.org_id 'project.orgId',",
+            "	p.user_id 'project.userId',",
+            "	p.visibility 'p.visibility',",
+            "	v.id 'view.id',",
+            "	v.`name` 'view.name',",
+            "	v.description 'view.description',",
+            "	v.project_id 'view.projectId',",
+            "	v.source_id 'view.sourceId',",
+            "	v.`sql` 'view.sql',",
+            "	v.model 'view.model',",
+            "	v.config 'view.config'",
+            "FROM",
+            "	widget w ",
+            "	LEFT JOIN project p on w.project_id = p.id",
+            "	LEFT JOIN `view` v on w.view_id = v.id",
+            "WHERE w.id = #{id}",
     })
     WidgetWithProjectAndView getWidgetWithProjectAndViewById(@Param("id") Long id);
 
     @Select({"SELECT w.* FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId}"})
     Set<Widget> getByDashboard(@Param("dashboardId") Long dashboardId);
+
+    @Select({"SELECT w.*, v.model FROM mem_dashboard_widget m ",
+            "LEFT JOIN widget w on w.id = m.widget_Id ",
+            "LEFT JOIN `view` v on v.id = w.view_id",
+            "WHERE m.dashboard_id = #{dashboardId}"})
+    Set<ShareWidget> getShareWidgetsByDashboard(@Param("dashboardId") Long dashboardId);
 
     @Delete({"delete from widget where project_id = #{projectId}"})
     int deleteByProject(@Param("projectId") Long projectId);
