@@ -716,7 +716,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     } else {
       this.setState({
-        chartModeSelectedChart: chart
+        chartModeSelectedChart: chart,
+        isLegendSection: chart.name !== 'map',
+        isLabelSection: true
       }, () => {
         const { specificParams, styleParams } = this.getChartDataConfig([chart])
         this.getVisualData(commonParams, specificParams, styleParams)
@@ -820,7 +822,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private styleChange = (name) => (prop, value) => {
     const { commonParams, specificParams, styleParams } = this.state
     styleParams[name][prop] = value
-    this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
+    this.getVisualData(commonParams, specificParams, styleParams, prop === 'layerType' ? 'clear' : 'refresh')
     const { layerType } = styleParams.spec
     this.setState({
       isLabelSection: !(layerType && layerType === 'heatmap'),
@@ -1113,14 +1115,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
     }
 
-    let isShowLines
-    if (commonParams) {
-      const { cols } = commonParams
-      const getGeoCity = cols.items.filter((c) => c.visualType === 'geoCity')
-      const getGeoProvince = cols.items.filter((c) => c.visualType === 'geoProvince')
-      isShowLines = (getGeoCity.length >= 2 || getGeoProvince.length >= 2)
-    }
-
     let tabPane
     switch (selectedTab) {
       case 'data':
@@ -1143,7 +1137,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {spec && <SpecSection
               name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
-              isShowLines={isShowLines}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
             />}
