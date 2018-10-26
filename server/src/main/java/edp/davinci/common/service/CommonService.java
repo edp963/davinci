@@ -123,11 +123,11 @@ public class CommonService<T> {
         }
 
         sb.append(getHost())
-            .append("/share.html#/share/")
-            .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
-            .append("?shareInfo=")
-            .append(shareToken)
-            .append("&type=" + type);
+                .append("/share.html#/share/")
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+                .append("?shareInfo=")
+                .append(shareToken)
+                .append("&type=" + type);
 
         return sb.toString();
     }

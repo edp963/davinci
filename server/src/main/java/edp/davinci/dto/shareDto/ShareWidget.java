@@ -18,6 +18,8 @@
 
 package edp.davinci.dto.shareDto;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -28,4 +30,9 @@ public class ShareWidget {
     private Long type;
     private String config;
     private String dataToken;
+    private String model;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @JSONField(serialize = false)
+    private Long viewId;
 }

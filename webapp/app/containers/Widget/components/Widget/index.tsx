@@ -11,7 +11,10 @@ import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
 import { ILabelConfig } from '..//Workbench/ConfigSections/LabelSection'
 import { ISpecConfig } from '../Workbench/ConfigSections/SpecSection'
 import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
+import { IVisualMapConfig } from '../Workbench/ConfigSections/VisualMapSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
+import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
+import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -34,11 +37,14 @@ export interface IChartStyles {
   pivot?: IPivotConfig
   xAxis?: IAxisConfig
   yAxis?: IAxisConfig
+  axis?: IAxisConfig
   splitLine?: ISplitLineConfig
   label?: ILabelConfig
   legend?: ILegendConfig
   toolbox?: IToolboxConfig
+  areaSelect?: IAreaSelectConfig
   spec?: ISpecConfig
+  visualMap?: IVisualMapConfig
 }
 
 export interface IChartInfo {
@@ -67,6 +73,7 @@ export interface IWidgetProps {
   size?: IDataParamProperty
   xAxis?: IDataParamProperty
   tip?: IDataParamProperty
+  yAxis?: IDataParamProperty
   dimetionAxis?: DimetionType
   renderType?: RenderType
   orders: Array<{column: string, direction: string}>
@@ -74,8 +81,12 @@ export interface IWidgetProps {
   cache: boolean
   expired: number
   mode: WidgetMode
+  model: IModel
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  // onHideDrillPanel?: (swtich: boolean) => void
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {

@@ -57,6 +57,9 @@ interface IChartProps {
   legend: ILegend
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: any) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  // onHideDrillPanel?: (swtich: boolean) => void
 }
 
 interface IChartStates {
@@ -625,12 +628,27 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(xAxis)
           // console.log(yAxis)
           // console.log(series)
+          const { isDrilling } = this.props
+          const brushedOptions = isDrilling === true ? {
+            brush: {
+              toolbox: ['rect', 'polygon', 'keep', 'clear'],
+            //  toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+              throttleType: 'debounce',
+              throttleDelay: 300,
+              brushStyle: {
+                borderWidth: 1,
+                color: 'rgba(255,255,255,0.2)',
+                borderColor: 'rgba(120,140,180,0.6)'
+              }
+            }
+          } : null
 
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
               formatter: getPivotTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
             },
+            ...brushedOptions,
             grid,
             xAxis,
             yAxis,
@@ -646,6 +664,53 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 onDoInteract(triggerData)
               }
             })
+          }
+
+          const { getDataDrillDetail} = this.props
+          if (isDrilling) {
+          //  instance.off('brushselected')
+            instance.on('brushselected', brushselected)
+            setTimeout(function () {
+              instance.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'brush',
+                brushOption: {
+                  brushType: 'rect',
+                  brushMode: 'multiple'
+                }
+              })
+            }, 0)
+          }
+
+          function brushselected (params) {
+            const brushComponent = params.batch[0]
+            const brushed = []
+            let sourceData = []
+            let range: any[] = []
+            if (brushComponent.areas && brushComponent.areas.length) {
+              brushComponent.areas.forEach((area) => {
+                range = range.concat(area.range)
+              })
+            }
+            if (brushComponent.selected && brushComponent.selected.length) {
+              for (let i = 0; i < brushComponent.selected.length; i++) {
+                const rawIndices = brushComponent.selected[i].dataIndex
+                const seriesIndex = brushComponent.selected[i].seriesIndex
+                brushed.push({[i]: rawIndices})
+                if (rawIndices && rawIndices.length) {
+                  rawIndices.forEach((raw) => {
+                    const params = {
+                      dataIndex: raw,
+                      seriesIndex
+                    }
+                    sourceData = sourceData.concat(getTriggeringRecord(params, seriesData))
+                  })
+                }
+              }
+            }
+            if (getDataDrillDetail) {
+              getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+            }
           }
           instance.resize()
         })

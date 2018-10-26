@@ -45,15 +45,19 @@
     }
 
     .viewPanel {
+      flex: 1;
       min-width: 0;
       padding: 16px;
-      flex: 1;
+      display: flex;
+      flex-direction: column;
 
-      .pivotBlock {
-        height: 100%;
+      .widgetBlock {
+        flex: 1;
         background-color: @white;
         padding: 16px;
         box-shadow: @block-box-shadow;
+        display: flex;
+        flex-direction: column;
       }
     }
   }

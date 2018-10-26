@@ -16,7 +16,9 @@ import PivotSection, { IPivotConfig } from './ConfigSections/PivotSection'
 import SpecSection, { ISpecConfig } from './ConfigSections/SpecSection'
 import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
 import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
+import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
+import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
@@ -87,6 +89,8 @@ interface IOperatingPanelStates {
   filterModalVisible: boolean
   variableConfigModalVisible: boolean
   variableConfigControl: object
+  isLabelSection: boolean
+  isLegendSection: boolean
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -115,7 +119,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       variableConfigModalVisible: false,
-      variableConfigControl: {}
+      variableConfigControl: {},
+      isLabelSection: true,
+      isLegendSection: false
     }
   }
 
@@ -265,7 +271,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       case 'date': return `icon-calendar ${styles.iconDate}`
       case 'geoCountry':
       case 'geoProvince':
-      case 'geoCity': return 'icon-china'
+      case 'geoCity': return 'icon-map'
       default: return 'icon-categories'
     }
   }
@@ -519,7 +525,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getVisualData = (commonParams, specificParams, styleParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
-    const { color, label, size, xAxis, tip } = specificParams
+    const { color, label, size, xAxis, tip, yAxis } = specificParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart } = this.state
     let groups = cols.items.map((c) => c.name)
@@ -559,6 +565,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
     if (tip) {
       aggregators = aggregators.concat(tip.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (yAxis) {
+      aggregators = aggregators.concat(yAxis.items
         .map((l) => ({
           column: decodeMetricName(l.name),
           func: l.agg
@@ -618,13 +631,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             ...size && {size},
             ...xAxis && {xAxis},
             ...tip && {tip},
+            ...yAxis && {yAxis},
             chartStyles: styleParams,
             selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             data,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender',
             orders,
-            mode
+            mode,
+            model: JSON.parse(selectedView.model)
           })
         } else {
           onSetWidgetProps({
@@ -638,7 +653,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             dimetionAxis: this.getDimetionAxis([getPivot()]),
             renderType: 'rerender',
             orders,
-            mode
+            mode,
+            model: JSON.parse(selectedView.model)
           })
         }
         this.setState({
@@ -658,12 +674,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...size && {size},
         ...xAxis && {xAxis},
         ...tip && {tip},
+        ...yAxis && {yAxis},
         chartStyles: styleParams,
         selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
         dimetionAxis: this.getDimetionAxis(selectedCharts),
         renderType: renderType || 'clear',
         orders,
-        mode
+        mode,
+        model: selectedView ? JSON.parse(selectedView.model) : {}
       })
       this.setState({
         commonParams,
@@ -698,7 +716,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     } else {
       this.setState({
-        chartModeSelectedChart: chart
+        chartModeSelectedChart: chart,
+        isLegendSection: chart.name !== 'map',
+        isLabelSection: true
       }, () => {
         const { specificParams, styleParams } = this.getChartDataConfig([chart])
         this.getVisualData(commonParams, specificParams, styleParams)
@@ -802,7 +822,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private styleChange = (name) => (prop, value) => {
     const { commonParams, specificParams, styleParams } = this.state
     styleParams[name][prop] = value
-    this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
+    let renderType = 'clear'
+    switch (prop) {
+      case 'layerType':
+        renderType = 'rerender'
+        break
+      case 'smooth':
+        renderType = 'clear'
+        break
+    }
+    this.getVisualData(commonParams, specificParams, styleParams, renderType)
+    const { layerType } = styleParams.spec
+    this.setState({
+      isLabelSection: !(layerType && layerType === 'heatmap'),
+      isLegendSection: !(layerType && (layerType === 'heatmap' || layerType === 'map' || layerType === 'scatter'))
+    })
   }
 
   private confirmColorModal = (config) => {
@@ -921,7 +955,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       cache,
       expired,
       onCacheChange,
-      onExpiredChange
+      onExpiredChange,
+      currentWidgetConfig
     } = this.props
     const {
       dragged,
@@ -940,11 +975,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       variableConfigModalVisible,
-      variableConfigControl
+      variableConfigControl,
+      isLabelSection,
+      isLegendSection
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend, toolbox } = styleParams
+    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1107,21 +1144,36 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         tabPane = (
           <div className={styles.paramsPane}>
             {spec && <SpecSection
+              name={chartModeSelectedChart.name}
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
             />}
-            {label && <LabelSection
-              title="标签"
-              config={label as ILabelConfig}
-              onChange={this.styleChange('label')}
-              name={chartModeSelectedChart.name}
-            />}
-            {legend && <LegendSection
-              title="图例"
-              config={legend as ILegendConfig}
-              onChange={this.styleChange('legend')}
-            />}
+            { isLabelSection
+                ? label && <LabelSection
+                  title="标签"
+                  config={label as ILabelConfig}
+                  onChange={this.styleChange('label')}
+                  name={chartModeSelectedChart.name}
+                />
+                : null
+            }
+            { isLegendSection
+                ? legend && <LegendSection
+                  title="图例"
+                  config={legend as ILegendConfig}
+                  onChange={this.styleChange('legend')}
+                />
+                : null
+            }
+            { isLegendSection
+                ? null
+                : visualMap && <VisualMapSection
+                  title="视觉映射"
+                  config={visualMap as IVisualMapConfig}
+                  onChange={this.styleChange('visualMap')}
+                />
+            }
             {toolbox && <ToolboxSection
               title="工具"
               config={toolbox as IToolboxConfig}
@@ -1137,10 +1189,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={yAxis as IAxisConfig}
               onChange={this.styleChange('yAxis')}
             />}
+            {axis && <AxisSection
+              title="轴"
+              config={axis as IAxisConfig}
+              onChange={this.styleChange('axis')}
+            />}
             {splitLine && <SplitLineSection
               title="分隔线"
               config={splitLine as ISplitLineConfig}
               onChange={this.styleChange('splitLine')}
+            />}
+            {areaSelect && <AreaSelectSection
+              title="坐标轴框选"
+              config={areaSelect as IAreaSelectConfig}
+              onChange={this.styleChange('areaSelect')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"
@@ -1313,21 +1375,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 onSelect={this.chartSelect}
               />
             ))}
-            {/* <i className="iconfont icon-area-chart" />
-            <i className="iconfont icon-kongjiansangjitu" />
-            <i className="iconfont icon-iconloudoutu" />
-            <i className="iconfont icon-chart-treemap" />
-            <i className="iconfont icon-chartwordcloud" />
-            <i className="iconfont icon-calendar1" />
-            <i className="iconfont icon-text" />
-            <i className="iconfont icon-china" />
-            <i className="iconfont icon-duplex" />
-            <i className="iconfont icon-508tongji_xiangxiantu" />
-            <i className="iconfont icon-510tongji_guanxitu" />
-            <i className="iconfont icon-waterfall" />
-            <i className="iconfont icon-gauge" />
-            <i className="iconfont icon-parallel" />
-            <i className="iconfont icon-confidence-band" /> */}
           </div>
           <div className={styles.params}>
             <ul className={styles.paramsTab}>{tabs}</ul>

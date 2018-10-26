@@ -108,7 +108,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         queryParams: [],
         cache: false,
         expired: 300,
-        mode: 'pivot'
+        mode: 'pivot',
+        model: {}
       }
     }
   }
@@ -302,7 +303,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             onLoadDistinctValue={onLoadDistinctValue}
           />
           <div className={styles.viewPanel}>
-            <div className={styles.pivotBlock}>
+            <div className={styles.widgetBlock}>
               <Widget
                 {...widgetProps}
                 loading={dataLoading}
