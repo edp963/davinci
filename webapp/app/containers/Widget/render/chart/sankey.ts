@@ -48,15 +48,9 @@ export default function (chartProps: IChartProps) {
 
   const {
     label,
-    legend,
     spec,
     toolbox
   } = chartStyles
-
-  const {
-    legendPosition,
-    fontSize
-  } = legend
 
   const {
     nodeWidth,

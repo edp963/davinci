@@ -23,14 +23,6 @@ const sankey: IChartInfo = {
       labelFontSize: '12',
       labelColor: PIVOT_DEFAULT_FONT_COLOR
     },
-    legend: {
-      showLegend: true,
-      legendPosition: 'right',
-      selectAll: true,
-      fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
-      fontSize: '12',
-      color: PIVOT_DEFAULT_FONT_COLOR
-    },
     spec: {
       nodeWidth: 20,
       nodeGap: 8,
