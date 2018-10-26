@@ -66,7 +66,6 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       layerType,
       roam,
       layout,
-      smooth,
       // for sankey
       nodeWidth,
       nodeGap,
@@ -244,7 +243,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      case '平行坐标图':
+      case 'parallel':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
@@ -277,7 +276,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
-      case '桑基图':
+      case 'sankey':
         renderHtml = (
           <div className={styles.paneBlock}>
             <h4>{title}</h4>
