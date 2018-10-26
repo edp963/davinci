@@ -88,6 +88,21 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       <Option key={f} value={`${f}`}>{f}</Option>
     ))
 
+    const labelPositionSetting = positionName !== void 0 && [(
+      <Col key="posLabel" span={4}>位置</Col>
+    ), (
+      <Col key="posSetting" span={10}>
+        <Select
+          placeholder="位置"
+          className={styles.blockElm}
+          value={positionName}
+          onChange={this.selectChange(positionChangeName)}
+        >
+          {positions}
+        </Select>
+      </Col>
+    )]
+
     return (
       <div className={styles.paneBlock}>
         <h4>{title}</h4>
@@ -101,17 +116,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
                 显示标签
               </Checkbox>
             </Col>
-            <Col span={4}>位置</Col>
-            <Col span={10}>
-              <Select
-                placeholder="位置"
-                className={styles.blockElm}
-                value={positionName}
-                onChange={this.selectChange(positionChangeName)}
-              >
-                {positions}
-              </Select>
-            </Col>
+            {labelPositionSetting}
           </Row>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={10}>

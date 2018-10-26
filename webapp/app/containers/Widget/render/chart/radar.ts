@@ -103,12 +103,27 @@ export default function (chartProps: IChartProps) {
     value: Object.values(value)
   }))
 
+  const {
+    showLabel,
+    labelColor,
+    labelFontFamily,
+    labelFontSize
+  } = label
+
+  const radarName = {
+    show: showLabel,
+    color: labelColor,
+    fontFamily: labelFontFamily,
+    fontSize: labelFontSize
+  }
+
   return {
     tooltip : {},
     legend: getLegendOption(legend, legendData),
     radar: {
       shape,
-      indicator
+      indicator,
+      name: radarName
     },
     series: [{
       name: '',

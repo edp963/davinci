@@ -4,11 +4,13 @@ const Col = require('antd/lib/col')
 const Checkbox = require('antd/lib/checkbox')
 const Select = require('antd/lib/select')
 const Option = Select.Option
+const InputNumber = require('antd/lib/input-number')
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
 const styles = require('../Workbench.less')
 
 export interface IAxisConfig {
+  inverse: boolean
   showLine: boolean
   lineStyle: string
   lineSize: string
@@ -17,8 +19,14 @@ export interface IAxisConfig {
   labelFontFamily: string
   labelFontSize: string
   labelColor: string
+  labelStyle: 'normal' | 'italic' | 'oblique'
+  labelWeight: 'normal' | 'bold' | 'bolder' | 'lighter'
   showTitleAndUnit?: boolean
+  nameLocation: 'start' | 'middle' | 'center' | 'end'
+  nameRotate?: number
+  nameGap?: number
   titleFontFamily?: string
+  titleFontStyle?: string
   titleFontSize?: string
   titleColor?: string
 }
@@ -38,6 +46,10 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
     this.props.onChange(prop, value)
   }
 
+  private inputNumberChange = (prop) => (value) => {
+    this.props.onChange(prop, value)
+  }
+
   private colorChange = (prop) => (color) => {
     this.props.onChange(prop, color)
   }
@@ -47,6 +59,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
 
     const {
       showLine,
+      inverse,
       lineStyle,
       lineSize,
       lineColor,
@@ -54,8 +67,14 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       labelFontFamily,
       labelFontSize,
       labelColor,
+      labelStyle,
+      labelWeight,
       showTitleAndUnit,
+      nameLocation,
+      nameRotate,
+      nameGap,
       titleFontFamily,
+      titleFontStyle,
       titleFontSize,
       titleColor
     } = config
@@ -110,18 +129,66 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
           />
         </Col>
       </Row>
+    ), (
+      <Row key="location" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={12}>标题位置</Col>
+        <Col span={10}>
+          <Select
+            placeholder="位置"
+            className={styles.blockElm}
+            value={nameLocation}
+            onChange={this.selectChange('nameLocation')}
+          >
+            <Option key="start" value="start">开始</Option>
+            <Option key="center" value="middle">中间</Option>
+            <Option key="end" value="end">结束</Option>
+          </Select>
+        </Col>
+      </Row>
+    ), (
+      <Row key="rotate" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={12}>标题旋转</Col>
+        <Col span={10}>
+            <InputNumber
+              placeholder="width"
+              className={styles.blockElm}
+              value={nameRotate}
+              onChange={this.inputNumberChange('nameRotate')}
+            />
+        </Col>
+      </Row>
+    ), (
+      <Row key="gap" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={12}>标题与轴线距离</Col>
+        <Col span={10}>
+            <InputNumber
+              placeholder="nameGap"
+              className={styles.blockElm}
+              value={nameGap}
+              onChange={this.inputNumberChange('nameGap')}
+            />
+        </Col>
+      </Row>
     )]
     return (
       <div className={styles.paneBlock}>
         <h4>{title}</h4>
         <div className={styles.blockBody}>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-            <Col span={24}>
+            <Col span={12}>
               <Checkbox
                 checked={showLine}
                 onChange={this.checkboxChange('showLine')}
               >
                 显示坐标轴
+              </Checkbox>
+            </Col>
+            <Col span={12}>
+              <Checkbox
+                checked={inverse}
+                onChange={this.checkboxChange('inverse')}
+              >
+                坐标轴反转
               </Checkbox>
             </Col>
           </Row>

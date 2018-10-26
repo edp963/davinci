@@ -21,6 +21,13 @@ export interface ISpecConfig {
   shape?: 'polygon' | 'circle'
   roam?: boolean
   layerType?: string
+  layout?: 'horizontal' | 'vertical'
+
+  // for sankey
+  nodeWidth: number
+  nodeGap: number,
+  orient: 'horizontal' | 'vertical'
+  draggable: boolean
 }
 
 interface ISpecSectionProps {
@@ -53,7 +60,14 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       gapNumber,
       shape,
       layerType,
-      roam
+      roam,
+      layout,
+      smooth,
+      // for sankey
+      nodeWidth,
+      nodeGap,
+      orient,
+      draggable
     } = config
 
     const sortModes = CHART_SORT_MODES.map((f) => (
@@ -189,6 +203,95 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                   >
                     {layerTypes}
                   </Select>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case '平行坐标图':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={18}>
+                  <Checkbox
+                    checked={smooth}
+                    onChange={this.checkboxChange('smooth')}
+                  >
+                    平滑曲线
+                  </Checkbox>
+                </Col>
+              </Row>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={8}>坐标轴排列</Col>
+                <Col span={10}>
+                  <Select
+                    placeholder="排列"
+                    className={styles.blockElm}
+                    value={layout}
+                    onChange={this.selectChange('layout')}
+                  >
+                    <Option key="horizontal" value="horizontal">水平排列</Option>
+                    <Option key="vertical" value="vertical">垂直排列</Option>
+                  </Select>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case '桑基图':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={18}>
+                  <Checkbox
+                    checked={draggable}
+                    onChange={this.checkboxChange('draggable')}
+                  >
+                    允许拖动
+                  </Checkbox>
+                </Col>
+              </Row>
+              {/* TODO feature in echarts@4.2.0 */}
+              {/* <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={10}>节点布局方向</Col>
+                <Col span={10}>
+                  <Select
+                    placeholder="排列"
+                    className={styles.blockElm}
+                    value={orient}
+                    onChange={this.selectChange('orient')}
+                  >
+                    <Option key="horizontal" value="horizontal">水平排列</Option>
+                    <Option key="vertical" value="vertical">垂直排列</Option>
+                  </Select>
+                </Col>
+              </Row> */}
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={6}>节点宽度</Col>
+                <Col span={6}>
+                  <InputNumber
+                    placeholder="nodeWidth"
+                    className={styles.blockElm}
+                    value={nodeWidth}
+                    min={0}
+                    onChange={this.inputNumberChange('nodeWidth')}
+                  />
+                </Col>
+                <Col span={6}>节点间隔</Col>
+                <Col span={6}>
+                  <InputNumber
+                    placeholder="nodeGap"
+                    className={styles.blockElm}
+                    value={nodeGap}
+                    min={0}
+                    onChange={this.inputNumberChange('nodeGap')}
+                  />
                 </Col>
               </Row>
             </div>

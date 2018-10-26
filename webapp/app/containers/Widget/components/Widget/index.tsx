@@ -13,6 +13,7 @@ import { ISpecConfig } from '../Workbench/ConfigSections/SpecSection'
 import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
 import { IVisualMapConfig } from '../Workbench/ConfigSections/VisualMapSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
+import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
 import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
@@ -36,10 +37,12 @@ export interface IChartStyles {
   pivot?: IPivotConfig
   xAxis?: IAxisConfig
   yAxis?: IAxisConfig
+  axis?: IAxisConfig
   splitLine?: ISplitLineConfig
   label?: ILabelConfig
   legend?: ILegendConfig
   toolbox?: IToolboxConfig
+  areaSelect?: IAreaSelectConfig
   spec?: ISpecConfig
   visualMap?: IVisualMapConfig
 }

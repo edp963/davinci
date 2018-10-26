@@ -118,6 +118,12 @@ export const CHART_ALIGNMENT_MODES = [
   { name: '居右', value: 'right'}
 ]
 
+export const AXIS_NAME_LOCATIONS = [
+  { name: '开始', value: 'start' },
+  { name: '结束', value: 'end' },
+  { name: '中间', value: 'center' }
+]
+
 export const CHART_LEGEND_POSITIONS = [
   { name: '右', value: 'right' },
   { name: '上', value: 'top' },
@@ -162,6 +168,7 @@ export const KEY_COLUMN = 'davinciUniqueId'
 export const ECHARTS_RENDERER = 'echarts'
 
 export const DEFAULT_FONT_WEIGHT = 'normal'
+export const DEFAULT_FONT_STYLE = 'normal'
 export const DEFAULT_FONT_SIZE = '12px'
 export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
 

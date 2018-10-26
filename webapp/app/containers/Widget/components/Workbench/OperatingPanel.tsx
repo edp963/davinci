@@ -18,6 +18,7 @@ import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
 import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
 import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
+import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
@@ -954,7 +955,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox } = styleParams
+    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1155,10 +1156,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={yAxis as IAxisConfig}
               onChange={this.styleChange('yAxis')}
             />}
+            {axis && <AxisSection
+              title="轴"
+              config={axis as IAxisConfig}
+              onChange={this.styleChange('axis')}
+            />}
             {splitLine && <SplitLineSection
               title="分隔线"
               config={splitLine as ISplitLineConfig}
               onChange={this.styleChange('splitLine')}
+            />}
+            {areaSelect && <AreaSelectSection
+              title="坐标轴框选"
+              config={areaSelect as IAreaSelectConfig}
+              onChange={this.styleChange('areaSelect')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"
