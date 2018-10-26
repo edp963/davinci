@@ -49,13 +49,10 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
   }
   private submit = () => {
     const { onUpdateProfile, loginUser: {id} } = this.props
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if(!err) {
-        const {name, description, department} = values
-        onUpdateProfile(id, name, description, department, (data) => {
-          Message.success(data.header && data.header.msg)
-        })
-      }
+    const values = this.props.form.getFieldsValue()
+    const {name, description, department} = values
+    onUpdateProfile(id, name, description, department, (data) => {
+      Message.success(data.header && data.header.msg)
     })
   }
   public componentDidMount () {

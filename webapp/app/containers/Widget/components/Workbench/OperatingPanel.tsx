@@ -90,6 +90,7 @@ interface IOperatingPanelStates {
   variableConfigModalVisible: boolean
   variableConfigControl: object
   isLabelSection: boolean
+  isLegendSection: boolean
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -119,7 +120,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       filterModalVisible: false,
       variableConfigModalVisible: false,
       variableConfigControl: {},
-      isLabelSection: true
+      isLabelSection: true,
+      isLegendSection: false
     }
   }
 
@@ -810,8 +812,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const { commonParams, specificParams, styleParams } = this.state
     styleParams[name][prop] = value
     this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
+    const { layerType } = styleParams.spec
     this.setState({
-      isLabelSection: (name === 'spec' && (value === 'map' || value === 'heatmap')) ? false : true
+      isLabelSection: !(layerType && layerType === 'heatmap'),
+      isLegendSection: !(layerType && (layerType === 'heatmap' || layerType === 'map' || layerType === 'scatter'))
     })
   }
 
@@ -931,7 +935,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       cache,
       expired,
       onCacheChange,
-      onExpiredChange
+      onExpiredChange,
+      currentWidgetConfig
     } = this.props
     const {
       dragged,
@@ -951,7 +956,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       filterModalVisible,
       variableConfigModalVisible,
       variableConfigControl,
-      isLabelSection
+      isLabelSection,
+      isLegendSection
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
@@ -1098,6 +1104,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
     }
 
+    let isShowLines
+    if (commonParams) {
+      const { cols } = commonParams
+      const getGeoCity = cols.items.filter((c) => c.visualType === 'geoCity')
+      const getGeoProvince = cols.items.filter((c) => c.visualType === 'geoProvince')
+      isShowLines = (getGeoCity.length >= 2 || getGeoProvince.length >= 2)
+    }
+
     let tabPane
     switch (selectedTab) {
       case 'data':
@@ -1118,6 +1132,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         tabPane = (
           <div className={styles.paramsPane}>
             {spec && <SpecSection
+              isShowLines={isShowLines}
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
@@ -1131,16 +1146,22 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 />
                 : null
             }
-            {legend && <LegendSection
-              title="图例"
-              config={legend as ILegendConfig}
-              onChange={this.styleChange('legend')}
-            />}
-            {visualMap && <VisualMapSection
-              title="视觉映射"
-              config={visualMap as IVisualMapConfig}
-              onChange={this.styleChange('visualMap')}
-            />}
+            { isLegendSection
+                ? legend && <LegendSection
+                  title="图例"
+                  config={legend as ILegendConfig}
+                  onChange={this.styleChange('legend')}
+                />
+                : null
+            }
+            { isLegendSection
+                ? null
+                : visualMap && <VisualMapSection
+                  title="视觉映射"
+                  config={visualMap as IVisualMapConfig}
+                  onChange={this.styleChange('visualMap')}
+                />
+            }
             {toolbox && <ToolboxSection
               title="工具"
               config={toolbox as IToolboxConfig}
