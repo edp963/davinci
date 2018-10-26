@@ -72,7 +72,7 @@ interface IDashboardItemProps {
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onDownloadCsv: (itemId: number, widgetProps: IWidgetProps, shareInfo: string) => void
+  onDownloadCsv: (itemId: number, widgetId: number, shareInfo: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
@@ -237,10 +237,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private downloadCsv = () => {
     const { widget, itemId, shareInfo, onDownloadCsv } = this.props
-    const { widgetProps } = this.state
-
-    onDownloadCsv(widget.id, widgetProps, shareInfo)
+    onDownloadCsv(itemId, widget.id, shareInfo)
   }
+
   private changeSharePanelAuthorizeState = (state) => () => {
     this.setState({
       sharePanelAuthorized: state
@@ -263,8 +262,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private doDrill = () => {
-    const {isDrilling} = this.state
-    this.setState({isDrilling: true})
+    const {isDrilling, cacheWidgetProps} = this.state
+    this.setState({isDrilling: !isDrilling}, () => {
+      const { onSelectDrillHistory, itemId, widget, onGetChartData } = this.props
+      if (isDrilling) {
+        onSelectDrillHistory(false, -1, itemId, widget.id)
+        this.setState({widgetProps: cacheWidgetProps}, () => onGetChartData('rerender', itemId, widget.id))
+      }
+    })
   }
 
   private toWorkbench = () => {
@@ -394,6 +399,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
+      isDrilling,
       model
     } = this.state
 
@@ -519,7 +525,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const drillButton = (
     <Tooltip title="钻取">
-      <span style={{marginLeft: '8px', cursor: 'pointer'}} onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
+      <span style={{marginLeft: '8px', cursor: 'pointer', color: `${isDrilling ? '#000' : '#ccc'}`}}  onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
     </Tooltip>)
 
     const gridItemClass = classnames({

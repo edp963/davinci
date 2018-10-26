@@ -581,6 +581,8 @@ public class SqlUtils {
             Matcher matcher = pattern.matcher(type);
             if (!matcher.find()) {
                 return SqlTypeEnum.getType(type);
+            } else {
+                return type;
             }
         }
         return null;

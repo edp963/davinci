@@ -303,7 +303,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             onLoadDistinctValue={onLoadDistinctValue}
           />
           <div className={styles.viewPanel}>
-            <div className={styles.pivotBlock}>
+            <div className={styles.widgetBlock}>
               <Widget
                 {...widgetProps}
                 loading={dataLoading}
