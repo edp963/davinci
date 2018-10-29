@@ -394,7 +394,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
-    console.log(JSON.parse(widget.config))
     const {
       controlPanelVisible,
       sharePanelAuthorized,
