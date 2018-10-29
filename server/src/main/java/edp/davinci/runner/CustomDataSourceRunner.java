@@ -40,7 +40,6 @@ public class CustomDataSourceRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        log.info("======= Load custom datasource config =======>>");
         try {
             CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
         } catch (Exception e) {
@@ -48,5 +47,6 @@ public class CustomDataSourceRunner implements ApplicationRunner {
             SpringApplication.exit(applicationContext);
             log.info("Server shutdown");
         }
+        log.info("Load custom datasource finish");
     }
 }
