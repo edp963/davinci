@@ -379,6 +379,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+    console.log(queryParams)
     this.getData(
       (renderType, itemId, widget, queryParams) => {
         this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, queryParams)
@@ -417,7 +418,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       widgets
     } = this.props
-
+    console.log(queryParams)
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig

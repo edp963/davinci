@@ -601,6 +601,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         drillStatus: history
       })
     } else {
+      console.log('callback')
       this.getChartData('rerender', itemId, widgetId)
     }
     onDeleteDrillHistory(itemId, item)
