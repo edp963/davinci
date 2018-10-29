@@ -394,7 +394,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
-
+    console.log(JSON.parse(widget.config))
     const {
       controlPanelVisible,
       sharePanelAuthorized,
@@ -525,7 +525,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const drillButton = (
     <Tooltip title="钻取">
-      <span style={{marginLeft: '8px', cursor: 'pointer', color: `${isDrilling ? '#000' : '#ccc'}`}}  onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
+      <span style={{marginLeft: '8px', cursor: 'pointer', fontSize: '18px'}}  onClick={this.doDrill} className={`iconfont ${isDrilling ? 'icon-cube1' : 'icon-cube2'}`}/>
     </Tooltip>)
 
     const gridItemClass = classnames({
