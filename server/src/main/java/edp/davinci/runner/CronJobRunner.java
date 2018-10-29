@@ -41,6 +41,6 @@ public class CronJobRunner implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
         cronJobService.startAllJobs();
-        log.info("load cron job finish");
+        log.info("Load cron job finish");
     }
 }
