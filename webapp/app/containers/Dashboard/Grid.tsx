@@ -379,7 +379,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
-    console.log(queryParams)
     this.getData(
       (renderType, itemId, widget, queryParams) => {
         this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, queryParams)
@@ -418,13 +417,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       widgets
     } = this.props
-    console.log(queryParams)
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
-
     let linkageFilters
     let globalFilters
     let params
@@ -445,10 +442,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      const drillHistory = cachedQueryParams.drillHistory
-      if (drillHistory && drillHistory.length) {
-        drillStatus = drillHistory[drillHistory.length - 1]
-      }
     }
 
     let groups = cols.concat(rows).filter((g) => g !== '指标名称')
@@ -492,6 +485,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
+    // console.log(!!(drillStatus && drillStatus.groups), groups)
+    // console.log(!!(drillStatus && drillStatus.filter), filters.map((i) => i.config.sql))
     callback(
       renderType,
       itemId,
