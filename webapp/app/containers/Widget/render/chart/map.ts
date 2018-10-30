@@ -67,7 +67,9 @@ export default function (chartProps: IChartProps) {
 
   const {
     layerType,
-    roam
+    roam,
+    linesSpeed,
+    symbolType
   } = spec
 
   const labelOption = {
@@ -289,6 +291,8 @@ export default function (chartProps: IChartProps) {
   const getGeoProvince = cols.filter((c) => model[c].visualType === 'geoProvince')
   const linesSeries = []
   const legendData = []
+  let effectScatterType
+  let linesType
   data.forEach((d, index) => {
     let linesSeriesData = []
     let scatterData = []
@@ -321,10 +325,9 @@ export default function (chartProps: IChartProps) {
         value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
       }]
     } else {
-      linesSeriesData = []
+      return
     }
 
-    let effectScatterType
     effectScatterType = {
       name: d[getGeoCity[0]] || d[getGeoProvince[0]],
       type: 'effectScatter',
@@ -335,12 +338,12 @@ export default function (chartProps: IChartProps) {
       },
       ...labelOptionLines,
       symbolSize: (val) => {
-          return val[2] / 6
+          return 12
       },
       data: scatterData
     }
 
-    linesSeries.push({
+    linesType = {
       name: d[getGeoCity[0]] || d[getGeoProvince[0]],
       type: 'lines',
       zlevel: index,
@@ -348,10 +351,11 @@ export default function (chartProps: IChartProps) {
       symbolSize: 10,
       effect: {
           show: true,
-          period: 6,
+          // period: 600,
           trailLength: 0,
-          symbol: 'arrow',
-          symbolSize: 15
+          symbol: symbolType,
+          symbolSize: 15,
+          constantSpeed: linesSpeed
       },
       lineStyle: {
           normal: {
@@ -361,9 +365,8 @@ export default function (chartProps: IChartProps) {
           }
       },
       data: linesSeriesData
-    },
-    effectScatterType
-  )
+    }
+    linesSeries.push(linesType, effectScatterType)
   })
 
   let legendOption
