@@ -22,6 +22,7 @@ import * as slide from 'assets/json/slideSettings/slide.json'
 import * as chart from 'assets/json/slideSettings/chart.json'
 import * as rectangle from 'assets/json/slideSettings/rectangle.json'
 import * as label from 'assets/json/slideSettings/label.json'
+import * as video from 'assets/json/slideSettings/video.json'
 
 import { ILayer, ILayerParams, IBaseline, IDeltaPosition, IDeltaSize } from './LayerItem'
 import { ISlideParams, ISlide } from '../'
@@ -30,7 +31,9 @@ import { DEFAULT_BASELINE_THICKNESS } from '../../../../app/globalConstants'
 
 export enum SecondaryGraphTypes {
   Rectangle = 20,
-  Label = 21
+  Label = 21,
+  Video = 22,
+  IFrame = 23
 }
 
 export enum GraphTypes {
@@ -48,7 +51,8 @@ export const slideSettings = {
   [GraphTypes.Slide]: slide,
   [GraphTypes.Chart]: chart,
   [SecondaryGraphTypes.Rectangle]: rectangle,
-  [SecondaryGraphTypes.Label]: label
+  [SecondaryGraphTypes.Label]: label,
+  [SecondaryGraphTypes.Video]: video
 }
 
 export function getDefaultSlideParams () {
@@ -60,6 +64,30 @@ export function getDefaultSlideParams () {
     })
   })
   return defaultSlideParams
+}
+
+export const captureVideosWithImages = () => {
+  const canvas = this.canvas || document.createElement('canvas')
+  const ctx = canvas.getContext('2d')
+  const videos = document.querySelectorAll('video')
+  Array.prototype.forEach.call(videos, (v) => {
+    if (!v.src) { return }
+
+    try {
+      const { videoWidth, videoHeight } = v
+      canvas.width = videoWidth
+      canvas.height = videoHeight
+      ctx.fillRect(0, 0, videoWidth, videoHeight)
+      ctx.drawImage(v, 0, 0, videoWidth, videoHeight)
+      v.style.backgroundImage = `url(${canvas.toDataURL()})`
+      v.style.backgroundSize = 'cover'
+      console.log('v.style: ', v.style)
+      ctx.clearRect(0, 0, videoWidth, videoHeight)
+    } catch (e) {
+      console.log('e: ', e)
+      return
+    }
+  })
 }
 
 const baselineDivisions: number[] = [ 4, 3, 2 ]

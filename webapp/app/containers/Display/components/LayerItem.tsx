@@ -4,6 +4,7 @@ import * as classnames from 'classnames'
 
 const Tooltip = require('antd/lib/tooltip')
 import Draggable from 'libs/react-draggable'
+import Video from 'components/Video'
 
 // @TODO contentMenu
 // const Dropdown = require('antd/lib/dropdown')
@@ -292,13 +293,20 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       width, height,
       backgroundImage, backgroundRepeat, backgroundSize, backgroundColor, opacity,
       borderWidth, borderStyle, borderColor, borderRadius } = layerParams
+
     let layerStyle: React.CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
-      backgroundColor: `rgb(${backgroundColor.join()},${opacity / 100})`,
-      border: `${borderWidth}px ${borderStyle} rgb(${borderColor.join()}`,
-      borderRadius: `${borderRadius}px`,
       zIndex: layer.index
+    }
+    if (backgroundColor) {
+      layerStyle.backgroundColor = `rgb(${backgroundColor.join()},${opacity / 100})`
+    }
+    if (borderWidth && borderStyle && borderColor) {
+      layerStyle.border = `${borderWidth}px ${borderStyle} rgb(${borderColor.join()}`
+    }
+    if (borderRadius) {
+      layerStyle.borderRadius = `${borderRadius}px`
     }
     if (backgroundImage) {
       layerStyle.background = `${backgroundRepeat} ${backgroundSize} url("${backgroundImage}")`
@@ -322,6 +330,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         return this.renderRectangleLayer(layer)
       case SecondaryGraphTypes.Label:
         return this.renderLabelLayer(layer)
+      case SecondaryGraphTypes.Video:
+        return this.renderVideoLayer(layer)
       default:
         return null
     }
@@ -414,6 +424,44 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           <p style={labelStyle}>
             {layerParams.contentText}
           </p>
+        )}
+      </div>
+    )
+  }
+
+  private renderVideoLayer = (layer) => {
+    const { layerParams } = this.state
+    const { src, controlSetting, start, end } = layerParams
+    const { pure, selected } = this.props
+
+    const layerClass = classnames({
+      [styles.layer]: true,
+      [styles.view]: !pure,
+      [styles.selected]: selected
+    })
+
+    const layerStyle = this.getLayerStyle(layer, layerParams)
+
+    const setting = controlSetting.reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {})
+
+    return (
+      <div
+        ref={(f) => this.refLayer = f}
+        className={layerClass}
+        style={layerStyle}
+        onClick={this.onClickLayer}
+      >
+        {this.wrapLayerTooltip(
+          <Video
+            key={`video_${layer.id}`}
+            src={src}
+            start={start}
+            end={end}
+            {...setting}
+          />
         )}
       </div>
     )
@@ -519,6 +567,11 @@ export interface ILayerParams {
   paddingLeft: number
   paddingRight: number
   contentText: string
+
+  src: string
+  controlSetting: string[]
+  start?: number
+  end?: number
 }
 
 export interface IDeltaPosition {
