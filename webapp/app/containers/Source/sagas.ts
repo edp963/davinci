@@ -41,7 +41,9 @@ import {
   sourceDeleted,
   deleteSourceFail,
   sourceConnected,
-  testSourceConnectionFail
+  testSourceConnectionFail,
+  csvMetaIdGeted,
+  getCsvMetaIdFail
 } from './actions'
 
 import request from '../../utils/request'
@@ -161,13 +163,11 @@ export function* getCsvMetaId (action) {
         tableName: table_name
       }
     })
-    if (res && res.header && res.header.code === 200) {
-      resolve()
-    } else {
-      reject(res.header.msg)
-    }
+    yield put(csvMetaIdGeted())
+    resolve()
   } catch (err) {
-    reject(err)
+    yield put(getCsvMetaIdFail(err))
+    errorHandler(err)
   }
 }
 
