@@ -141,8 +141,18 @@ export const CHART_VISUALMAP_POSITIONS = [
 export const CHART_LAYER_TYPES = [
   { name: '地图', value: 'map' },
   { name: '气泡图', value: 'scatter' },
-  { name: '热力图', value: 'heatmap' }
-  // { name: '飞行图', value: 'lines' }
+  { name: '热力图', value: 'heatmap' },
+  { name: '飞行图', value: 'lines' }
+]
+
+export const CHART_LINES_SYMBOL_TYPE = [
+  {name: '圆形', value: 'circle'},
+  {name: '矩形', value: 'rect'},
+  {name: '圆角矩形', value: 'roundRect'},
+  {name: '三角形', value: 'triangle'},
+  {name: '菱形', value: 'diamond'},
+  {name: '大头针形', value: 'pin'},
+  {name: '箭头形', value: 'arrow'}
 ]
 
 export const CHART_VISUALMAP_DIRECYTIONS = [
