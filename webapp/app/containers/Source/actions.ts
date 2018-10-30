@@ -37,7 +37,9 @@ import {
   TEST_SOURCE_CONNECTION,
   TEST_SOURCE_CONNECTION_SUCCESS,
   TEST_SOURCE_CONNECTION_FAILURE,
-  GET_CSV_META_ID
+  GET_CSV_META_ID,
+  GET_CSV_META_ID_FAILURE,
+  GET_CSV_META_ID_SUCCESS
 } from './constants'
 
 export function loadSources (projectId) {
@@ -183,7 +185,6 @@ export function testSourceConnectionFail () {
   }
 }
 
-// tableName, sourceId, primaryKeys, indexKeys, replaceMode
 export function getCsvMetaId (csvMeta, resolve, reject) {
   return {
     type: GET_CSV_META_ID,
@@ -191,6 +192,21 @@ export function getCsvMetaId (csvMeta, resolve, reject) {
       csvMeta,
       resolve,
       reject
+    }
+  }
+}
+
+export function csvMetaIdGeted () {
+  return {
+    type: GET_CSV_META_ID_SUCCESS
+  }
+}
+
+export function getCsvMetaIdFail (error) {
+  return {
+    type: GET_CSV_META_ID_FAILURE,
+    payload: {
+      error
     }
   }
 }
