@@ -20,6 +20,8 @@ package edp.davinci.core.common;
 
 import edp.core.consts.Consts;
 
+import java.io.File;
+
 /**
  * 常量
  */
@@ -49,29 +51,29 @@ public class Constants extends Consts {
     /**
      * 用户头像上传地址
      */
-    public static final String USER_AVATAR_PATH = "/image/user/";
+    public static final String USER_AVATAR_PATH = File.separator + "image" + File.separator + "user" + File.separator;
 
     /**
      * 组织头像上传地址
      */
-    public static final String ORG_AVATAR_PATH = "/image/organization/";
+    public static final String ORG_AVATAR_PATH = File.separator + "image" + File.separator + "organization" + File.separator;
 
 
     /**
      * display封面图地址
      */
-    public static final String DISPLAY_AVATAR_PATH = "/image/display/";
+    public static final String DISPLAY_AVATAR_PATH = File.separator + "image" + File.separator + "display" + File.separator;
 
 
     /**
-     * 组织头像上传地址
+     * CSV地址
      */
-    public static final String SOURCE_CSV_PATH = "/source/csv/";
+    public static final String SOURCE_CSV_PATH = File.separator + "source" + File.separator + "csv" + File.separator;
 
     /**
      * 团队头像上传地址
      */
-    public static final String TEAM_AVATAR_PATH = "/image/organization/";
+    public static final String TEAM_AVATAR_PATH = File.separator + "image" + File.separator + "organization" + File.separator;
 
     /**
      * 邀请组织成员邮件主题
