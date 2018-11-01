@@ -64,7 +64,7 @@ public class Constants extends Consts {
 
 
     /**
-     * 组织头像上传地址
+     * CSV地址
      */
     public static final String SOURCE_CSV_PATH = "/source/csv/";
 
