@@ -32,7 +32,7 @@
 ##     vertica:         com.vertica.jdbc.Driver
 ##     hana:            com.sap.db.jdbc.Driver
 ##     impala:          com.cloudera.impala.jdbc41.Driver
-## this means that if your datasource is in the above list, you don't need to use this method,
+## this means that if your datasource is in the above list, you don't need to use this way,
 ## unless you know what you are doing.
 
 ## How to use:
