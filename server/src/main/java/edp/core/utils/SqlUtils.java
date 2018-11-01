@@ -532,7 +532,7 @@ public class SqlUtils {
     }
 
     public static String getAliasPrefix(String jdbcUrl) {
-        String aliasPrefix = "'";
+        String aliasPrefix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasPrefix = dataTypeEnum.getAliasPrefix();
@@ -542,11 +542,11 @@ public class SqlUtils {
                 aliasPrefix = customDataSource.getAlias_prefix();
             }
         }
-        return StringUtils.isEmpty(aliasPrefix) ? "'" : aliasPrefix;
+        return StringUtils.isEmpty(aliasPrefix) ? "" : aliasPrefix;
     }
 
     public static String getAliasSuffix(String jdbcUrl) {
-        String aliasSuffix = "'";
+        String aliasSuffix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasSuffix = dataTypeEnum.getAliasSuffix();
@@ -556,7 +556,7 @@ public class SqlUtils {
                 aliasSuffix = customDataSource.getAlias_suffix();
             }
         }
-        return StringUtils.isEmpty(aliasSuffix) ? "'" : aliasSuffix;
+        return StringUtils.isEmpty(aliasSuffix) ? "" : aliasSuffix;
     }
 
 
