@@ -152,7 +152,8 @@ public class SqlUtils {
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 String schemaPattern = null;
-                if (DataTypeEnum.ORACLE.getFeature().equals(DataTypeEnum.urlOf(this.jdbcUrl).getFeature())) {
+                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+                if (null != dataTypeEnum && dataTypeEnum.getFeature().equals(DataTypeEnum.ORACLE.getFeature())) {
                     schemaPattern = this.username;
                     if (null != schemaPattern) {
                         schemaPattern = schemaPattern.toUpperCase();
