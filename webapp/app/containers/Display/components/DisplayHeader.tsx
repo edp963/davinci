@@ -239,6 +239,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
           > 标签
           </i>
         </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-video"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Video)}
+          > 视频
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-iframe"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.IFrame)}
+          > 内嵌页面
+          </i>
+        </Menu.Item>
       </Menu>
     )
 

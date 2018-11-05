@@ -1,13 +1,17 @@
 import * as React from 'react'
 import { IWidgetProps } from '../Widget'
 import Table from './Table'
+import Scorecard from './Scorecard'
 import Chart from './Chart'
-import { getTable } from '../util'
+import { getTable, getScorecard } from '../util'
 
 export interface IChartProps extends IWidgetProps {
   width: number
   height: number
 }
+
+const tableId = getTable().id
+const scorecardId = getScorecard().id
 
 export function CombinedChart (props: IChartProps) {
   const {
@@ -17,18 +21,23 @@ export function CombinedChart (props: IChartProps) {
     selectedChart
   } = props
 
-  if (selectedChart === getTable().id) {
-    return (
-      <Table
-        data={data}
-        width={width}
-        height={height}
-      />
-    )
-  } else {
-    return (
-      <Chart {...props}/>
-    )
+  switch (selectedChart) {
+    case tableId:
+      return (
+        <Table
+          data={data}
+          width={width}
+          height={height}
+        />
+      )
+    case scorecardId:
+      return (
+        <Scorecard {...props} />
+      )
+    default:
+      return (
+        <Chart {...props}/>
+      )
   }
 }
 

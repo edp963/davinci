@@ -320,7 +320,7 @@
         height: 100%;
         display: block;
         background: rgba(0,192,222,.2);
-        z-index: 999998;
+        z-index: 999990;
       }
     }
 
@@ -333,16 +333,17 @@
       height: 100%;
       display: block;
       background: rgba(0,192,222,.3);
-      z-index: 999998;
-      border: 2px solid @border-color-base;
-    }
-
-    &:hover {
+      z-index: 999990;
       border: 2px solid @border-color-base;
     }
 
     &.rect {
       background-color: @light-bg;
+    }
+
+    & video {
+      flex: 1;
+      z-index: 999991;
     }
 
     & > span:last-child {

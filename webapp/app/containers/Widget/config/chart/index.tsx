@@ -32,9 +32,11 @@ import parallel from './parallel'
 import map from './map'
 import wordCloud from './wordCloud'
 import waterfall from './waterfall'
+import scorecard from './scorecard'
 
 const widgetlibs: IChartInfo[] = [
   table,
+  scorecard,
   line,
   bar,
   scatter,
