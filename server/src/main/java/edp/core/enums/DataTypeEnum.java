@@ -36,7 +36,7 @@ public enum DataTypeEnum {
 
     MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", "", "", "'", "'"),
 
-    ELASTICSEARCH("elasticsearch", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
+    ELASTICSEARCH("sql4es", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
 
     PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", "", "", "'", "'"),
 

@@ -41,7 +41,7 @@ public class CustomDataSourceUtils {
 
     public static CustomDataSource getInstance(String url) {
         String dataSourceName = getDataSourceName(url);
-        if (map.containsKey(dataSourceName) && null == map.get(dataSourceName)) {
+        if (map.containsKey(dataSourceName) && null != map.get(dataSourceName)) {
             CustomDataSource customDataSource = map.get(dataSourceName);
             if (null != customDataSource) {
                 return customDataSource;
@@ -122,7 +122,7 @@ public class CustomDataSourceUtils {
                 }
 
                 if (!StringUtils.isEmpty(customDataSource.getAlias_prefix()) || !StringUtils.isEmpty(customDataSource.getAlias_suffix())) {
-                    if (StringUtils.isEmpty(customDataSource.getKeyword_prefix()) || StringUtils.isEmpty(customDataSource.getKeyword_suffix())) {
+                    if (StringUtils.isEmpty(customDataSource.getAlias_prefix()) || StringUtils.isEmpty(customDataSource.getAlias_suffix())) {
                         throw new Exception("Load custom datasource error: alias prefixes and suffixes must be configured in pairs.");
                     }
                 }

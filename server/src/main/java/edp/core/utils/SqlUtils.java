@@ -152,7 +152,8 @@ public class SqlUtils {
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 String schemaPattern = null;
-                if (DataTypeEnum.ORACLE.getFeature().equals(DataTypeEnum.urlOf(this.jdbcUrl).getFeature())) {
+                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+                if (null != dataTypeEnum && dataTypeEnum.getFeature().equals(DataTypeEnum.ORACLE.getFeature())) {
                     schemaPattern = this.username;
                     if (null != schemaPattern) {
                         schemaPattern = schemaPattern.toUpperCase();
@@ -531,7 +532,7 @@ public class SqlUtils {
     }
 
     public static String getAliasPrefix(String jdbcUrl) {
-        String aliasPrefix = "'";
+        String aliasPrefix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasPrefix = dataTypeEnum.getAliasPrefix();
@@ -541,11 +542,11 @@ public class SqlUtils {
                 aliasPrefix = customDataSource.getAlias_prefix();
             }
         }
-        return StringUtils.isEmpty(aliasPrefix) ? "'" : aliasPrefix;
+        return StringUtils.isEmpty(aliasPrefix) ? "" : aliasPrefix;
     }
 
     public static String getAliasSuffix(String jdbcUrl) {
-        String aliasSuffix = "'";
+        String aliasSuffix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasSuffix = dataTypeEnum.getAliasSuffix();
@@ -555,7 +556,7 @@ public class SqlUtils {
                 aliasSuffix = customDataSource.getAlias_suffix();
             }
         }
-        return StringUtils.isEmpty(aliasSuffix) ? "'" : aliasSuffix;
+        return StringUtils.isEmpty(aliasSuffix) ? "" : aliasSuffix;
     }
 
 

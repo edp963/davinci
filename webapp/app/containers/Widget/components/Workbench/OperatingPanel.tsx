@@ -1149,6 +1149,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
+              isLegendSection={isLegendSection}
             />}
             { isLabelSection
                 ? label && <LabelSection

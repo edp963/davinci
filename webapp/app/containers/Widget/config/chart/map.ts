@@ -3,7 +3,8 @@ import {
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS,
   CHART_VISUALMAP_POSITIONS,
-  CHART_LEGEND_POSITIONS
+  CHART_LEGEND_POSITIONS,
+  CHART_LINES_SYMBOL_TYPE
 } from '../../../../globalConstants'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
@@ -48,7 +49,9 @@ const map: IChartInfo = {
     },
     spec: {
       layerType: 'map',
-      roam: false
+      roam: false,
+      symbolType: CHART_LINES_SYMBOL_TYPE[0].value,
+      linesSpeed: '10'
     }
   }
 }
