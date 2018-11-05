@@ -300,7 +300,7 @@ export class Schedule extends React.Component {
   }
 
   onChangeRange = (value) => {
-    let rangeArr = ['month', 'hour', 'week', 'time']
+    let rangeArr = ['minute','month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
     })
