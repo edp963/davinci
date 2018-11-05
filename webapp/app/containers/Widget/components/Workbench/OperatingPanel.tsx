@@ -19,6 +19,7 @@ import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
 import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
+import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 
@@ -981,7 +982,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect } = styleParams
+    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1203,6 +1204,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               title="坐标轴框选"
               config={areaSelect as IAreaSelectConfig}
               onChange={this.styleChange('areaSelect')}
+            />}
+            {scorecard && <ScorecardSection
+              title="翻牌器"
+              config={scorecard as IScorecardConfig}
+              onChange={this.styleChange('scorecard')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"

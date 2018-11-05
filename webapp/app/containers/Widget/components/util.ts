@@ -311,6 +311,10 @@ export function getTable (): IChartInfo {
   return chartlibs[0]
 }
 
+export function getScorecard (): IChartInfo {
+  return chartlibs[1]
+}
+
 export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
   return {
     ...chartStyles,
