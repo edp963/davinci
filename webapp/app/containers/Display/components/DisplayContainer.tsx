@@ -95,8 +95,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     }
 
     if (slideParams.backgroundColor) {
-      const rgb = [...slideParams.backgroundColor, (slideParams.opacity / 100)].join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      const rgb = slideParams.backgroundColor.join()
+      slideStyle.backgroundColor = `rgba(${rgb})`
     }
     if (slideParams.backgroundImage) {
       slideStyle.backgroundImage = `url("${slideParams.backgroundImage}")`

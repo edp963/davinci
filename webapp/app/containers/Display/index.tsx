@@ -310,7 +310,6 @@ export interface ISlideParams {
   backgroundImage: string
   height: number
   width: number
-  opacity: number
   scaleMode: string
 }
 

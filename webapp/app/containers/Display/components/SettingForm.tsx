@@ -279,15 +279,16 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
 
   private renderColorPicker = (item, formItemChange, rgb) => {
     const onChangeComplete = (e) => {
-      const { r, g, b } = e.rgb
-      formItemChange(item.name)([r, g, b])
+      const { r, g, b, a } = e.rgb
+      formItemChange(item.name)([r, g, b, a])
     }
 
-    const color = rgb ? `rgb(${rgb.join()}` : `rgb(0,0,0,1)`
+    console.log('rgb: ', rgb)
+    const color = rgb ? `rgba(${rgb.join()})` : `rgba(0,0,0,1)`
+    console.log(color)
     const colorPicker = (
       <SketchPicker
         color={color}
-        disableAlpha={true}
         onChangeComplete={onChangeComplete}
       />
     )
