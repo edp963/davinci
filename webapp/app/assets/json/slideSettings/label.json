@@ -173,15 +173,6 @@
       "component": "colorPicker",
       "default": [255,255,255],
       "span": 12
-    }, {
-      "name": "opacity",
-      "tip": "0-100",
-      "title": "透明度",
-      "component": "inputnumber",
-      "default": 100,
-      "min": 0,
-      "max": 100,
-      "span": 12
     }]
   }, {
     "name": "border",

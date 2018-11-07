@@ -291,7 +291,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { pure, scale } = this.props
     const {
       width, height,
-      backgroundImage, backgroundRepeat, backgroundSize, backgroundColor, opacity,
+      backgroundImage, backgroundRepeat, backgroundSize, backgroundColor,
       borderWidth, borderStyle, borderColor, borderRadius } = layerParams
 
     let layerStyle: React.CSSProperties = {
@@ -299,18 +299,19 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       height: `${height}px`,
       zIndex: layer.index
     }
-    if (backgroundColor) {
-      layerStyle.backgroundColor = `rgb(${backgroundColor.join()},${opacity / 100})`
-    }
+
     if (borderWidth && borderStyle && borderColor) {
-      layerStyle.border = `${borderWidth}px ${borderStyle} rgb(${borderColor.join()}`
+      layerStyle.border = `${borderWidth}px ${borderStyle} rgba(${borderColor.join()}`
     }
     if (borderRadius) {
       layerStyle.borderRadius = `${borderRadius}px`
     }
     if (backgroundImage) {
-      layerStyle.background = `${backgroundRepeat} ${backgroundSize} url("${backgroundImage}")`
+      layerStyle.background = `url("${backgroundImage}") 0% 0% / ${backgroundSize} ${backgroundRepeat}`
+    } else if (backgroundColor) {
+      layerStyle.backgroundColor = `rgba(${backgroundColor.join()})`
     }
+
     if (pure) {
       layerStyle = {
         ...layerStyle,
@@ -398,7 +399,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       wordBreak: 'break-all',
       overflow: 'hidden',
       fontFamily,
-      color: `rgb(${fontColor.join()})`,
+      color: `rgba(${fontColor.join()})`,
       fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
       textAlign,
       lineHeight: `${lineHeight * exactScaleHeight}px`,
@@ -550,7 +551,6 @@ export interface ILayerParams {
   borderWidth: number
   frequency: number
   height: number
-  opacity: number
   polling: 'true' | 'false'
   positionX: number
   positionY: number

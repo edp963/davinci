@@ -75,6 +75,7 @@ export default function (chartProps: IChartProps) {
   const metricsNames = metrics.map((m) => decodeMetricName(m.name))
   const legendData = metricsNames
   const indicatorData = {}
+  let indicatorMax = -Infinity
   const dimensionData = metricsNames.reduce((acc, name) => ({
     ...acc,
     [name]: {}
@@ -87,16 +88,16 @@ export default function (chartProps: IChartProps) {
     metrics.forEach((m) => {
       const name = decodeMetricName(m.name)
       const cellVal = row[`${m.agg}(${name})`]
-      indicatorData[row[dimension]] = Math.max(indicatorData[row[dimension]], cellVal)
+      indicatorMax = Math.max(indicatorMax, cellVal)
       if (!dimensionData[name][row[dimension]]) {
         dimensionData[name][row[dimension]] = 0
       }
       dimensionData[name][row[dimension]] += cellVal
     })
   })
-  const indicator = Object.entries(indicatorData).map(([name, max]: [string, number]) => ({
+  const indicator = Object.keys(indicatorData).map((name: string) => ({
     name,
-    max: max + Math.round(max * 0.1)
+    max: indicatorMax + Math.round(indicatorMax * 0.1)
   }))
   const seriesData = Object.entries(dimensionData).map(([name, value]) => ({
     name,
@@ -121,6 +122,7 @@ export default function (chartProps: IChartProps) {
     tooltip : {},
     legend: getLegendOption(legend, legendData),
     radar: {
+      // type: 'log',
       shape,
       indicator,
       name: radarName

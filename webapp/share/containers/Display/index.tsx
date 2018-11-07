@@ -292,7 +292,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     }
 
     if (backgroundColor) {
-      const rgb = [...backgroundColor, (opacity / 100)].join()
+      const rgb = backgroundColor.join()
       slideStyle.backgroundColor = `rgb(${rgb})`
     }
     if (backgroundImage) {
