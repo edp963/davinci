@@ -34,7 +34,7 @@
       "name": "backgroundColor",
       "title": "颜色",
       "component": "colorPicker",
-      "default": [255,255,255]
+      "default": [255,255,255,0]
     }]
   }, {
     "name": "backgroundImage",
@@ -94,7 +94,7 @@
       "name": "borderWidth",
       "title": "边框粗细",
       "component": "inputnumber",
-      "default": 1
+      "default": 0
     }, {
       "name": "borderStyle",
       "title": "边框样式",
