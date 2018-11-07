@@ -210,7 +210,8 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private debouncedOnChange = null
   private onInputChange = (e) => {
     const { filter } = this.props
-    const val = e.target.value
+    let val = e.target.value
+    if (val === '') { val = undefined }
     this.debouncedOnChange(filter, val)
   }
 
