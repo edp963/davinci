@@ -76,12 +76,11 @@ public class JdbcDataSource extends DruidDataSource {
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
+        if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {
             DruidDataSource instance = new JdbcDataSource();
             String className = null;
             try {
-                className = DriverManager.getDriver(url).getClass().getName();
+                className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
             } catch (SQLException e) {
             }
 
@@ -107,8 +106,8 @@ public class JdbcDataSource extends DruidDataSource {
             }
 
             instance.setUrl(jdbcUrl.trim());
-            instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
-            instance.setPassword((url.indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
+            instance.setUsername(jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
+            instance.setPassword((jdbcUrl.toLowerCase().indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
                     null : password);
             instance.setInitialSize(initialSize);
             instance.setMinIdle(minIdle);
@@ -128,9 +127,9 @@ public class JdbcDataSource extends DruidDataSource {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException("Exception during pool initialization");
             }
-            map.put(username + "@" + url, instance);
+            map.put(username + "@" + jdbcUrl.trim(), instance);
         }
 
-        return map.get(username + "@" + url);
+        return map.get(username + "@" + jdbcUrl.trim());
     }
 }
