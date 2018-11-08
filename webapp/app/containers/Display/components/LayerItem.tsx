@@ -51,7 +51,7 @@ interface ILayerItemProps {
   onDragLayerStop?: (itemId: number, deltaPosition: IDeltaPosition) => void
   onResizeLayer?: (itemId: number, deltaSize: IDeltaSize) => void
   onResizeLayerStop?: (itemId: number, deltaSize: IDeltaSize) => void
-  onEditWidget?: (itemId: number, widgetId: number)
+  onEditWidget?: (itemId: number, widgetId: number) => void
 }
 
 interface ILayerItemStates {
@@ -422,9 +422,9 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingLeft: `${paddingLeft * exactScaleWidth}px`
     }
     if (textStyle) {
-      layerStyle.fontWeight = textStyle.indexOf('bold') > -1 ? 'bold' : 'normal'
-      layerStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
-      layerStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
+      labelStyle.fontWeight = textStyle.indexOf('bold') > -1 ? 'bold' : 'normal'
+      labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
+      labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
     }
     return (
       <div
