@@ -44,7 +44,7 @@ public class ESDataSource {
         String url = jdbcUrl.toLowerCase();
         if (!map.containsKey(url) || null == map.get(url)) {
             Properties properties = new Properties();
-            properties.setProperty(PROP_URL, url);
+            properties.setProperty(PROP_URL, jdbcUrl.trim());
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
