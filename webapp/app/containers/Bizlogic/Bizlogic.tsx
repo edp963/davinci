@@ -859,8 +859,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { teamParams } = this.state
     const { params, bizlogics } = this.props
     if (!teamParams.length) {
-      const { sql } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
-      this.getTeamTreeData(sql)
+      const sqlVal = params.bid
+        ? (bizlogics as any[]).find((b) => b.id === Number(params.bid)).sql
+        : bizlogics[0].sql
+      this.getTeamTreeData(sqlVal)
     }
   }
 
