@@ -893,7 +893,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { params } = this.props
     const { pid, portalId, portalName, dashboardId } = params
     const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
-    localStorage.setItem('editWidgetFromDashboard', editSign)
+    sessionStorage.setItem('editWidgetFromDashboard', editSign)
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 

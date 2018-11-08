@@ -20,6 +20,7 @@ import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
 import { IModel } from '../../Widget/components/Workbench/index'
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 
+const Icon = require('antd/lib/icon')
 const Resizable = require('libs/react-resizable').Resizable
 
 const styles = require('../Display.less')
@@ -50,6 +51,7 @@ interface ILayerItemProps {
   onDragLayerStop?: (itemId: number, deltaPosition: IDeltaPosition) => void
   onResizeLayer?: (itemId: number, deltaSize: IDeltaSize) => void
   onResizeLayerStop?: (itemId: number, deltaSize: IDeltaSize) => void
+  onEditWidget?: (itemId: number, widgetId: number)
 }
 
 interface ILayerItemStates {
@@ -227,6 +229,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     onSelectLayer({ id: layer.id, selected: !selected, exclusive})
   }
 
+  private toWorkbench = () => {
+    const { itemId, widget, onEditWidget } = this.props
+    onEditWidget(itemId, widget.id)
+  }
+
   private renderLayer = (layer) => {
     switch (layer.type) {
       case GraphTypes.Secondary:
@@ -274,6 +281,11 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         style={layerStyle}
         onClick={this.onClickLayer}
       >
+        <div className={styles.tools}>
+          <Tooltip title="编辑">
+            <Icon type="edit" onClick={this.toWorkbench} />
+          </Tooltip>
+        </div>
         {this.wrapLayerTooltip(
           (<Widget
             {...widgetProps}

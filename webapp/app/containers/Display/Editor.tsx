@@ -97,7 +97,7 @@ import {
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR } from '../../globalConstants'
+import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams, ISlide } from './'
@@ -773,6 +773,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     return domBaselines
   }
 
+  private toWorkbench = (_, widgetId) => {
+    const { params } = this.props
+    const { pid, displayId } = params
+    const editSign = [pid, displayId].join(DEFAULT_SPLITER)
+    sessionStorage.setItem('editWidgetFromDisplay', editSign)
+    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+  }
+
   public render () {
     const {
       params,
@@ -836,6 +844,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
           onDragLayerStop={this.dragLayerStop}
+          onEditWidget={this.toWorkbench}
         />
         // </LayerContextMenu>
       )

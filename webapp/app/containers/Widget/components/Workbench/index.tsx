@@ -227,11 +227,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
-        const editSign = localStorage.getItem('editWidgetFromDashboard')
-        if (editSign) {
-          localStorage.removeItem('editWidgetFromDashboard')
-          const [pid, portalId, portalName, dashboardId, itemId] = editSign.split(DEFAULT_SPLITER)
+        const editSignDashboard = sessionStorage.getItem('editWidgetFromDashboard')
+        const editSignDisplay = sessionStorage.getItem('editWidgetFromDisplay')
+        if (editSignDashboard) {
+          sessionStorage.removeItem('editWidgetFromDashboard')
+          const [pid, portalId, portalName, dashboardId, itemId] = editSignDashboard.split(DEFAULT_SPLITER)
           this.props.router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+        } else if (editSignDisplay) {
+          sessionStorage.removeItem('editWidgetFromDisplay')
+          const [pid, displayId] = editSignDisplay.split(DEFAULT_SPLITER)
+          this.props.router.replace(`/project/${pid}/display/${displayId}`)
         } else {
           this.props.router.replace(`/project/${params.pid}/widgets`)
         }
@@ -245,7 +250,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private cancel = () => {
-    localStorage.removeItem('editWidgetFromDashboard')
+    sessionStorage.removeItem('editWidgetFromDashboard')
+    sessionStorage.removeItem('editWidgetFromDisplay')
     this.props.router.goBack()
   }
 
