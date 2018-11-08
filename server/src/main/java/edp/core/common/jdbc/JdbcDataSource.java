@@ -106,7 +106,7 @@ public class JdbcDataSource extends DruidDataSource {
                 instance.setDriverClassName(className);
             }
 
-            instance.setUrl(url);
+            instance.setUrl(jdbcUrl.trim());
             instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
             instance.setPassword((url.indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
                     null : password);

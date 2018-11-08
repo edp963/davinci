@@ -44,7 +44,7 @@ public enum DataTypeEnum {
 
     CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver", "", "", "'", "'"),
 
-    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", "", "", "'", "'"),
+    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", "", "", "\"", "\""),
 
     KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", "", "", "'", "'"),
 
