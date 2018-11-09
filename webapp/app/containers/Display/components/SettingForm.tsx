@@ -247,7 +247,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     return (
       <Input
         placeholder={item.tip || item.placeholder || item.name}
-        onPressEnter={formItemChange}
+        onPressEnter={formItemChange(item.name)}
       />
     )
   }
@@ -265,7 +265,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
 
   private renderRadio = (item, formItemChange) => {
     return (
-      <RadioGroup onChange={formItemChange}>
+      <RadioGroup onChange={formItemChange(item.name)}>
         {
           item.values.map((val) => (
             <Radio key={val.value} value={val.value}>{val.name}</Radio>
@@ -277,7 +277,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
 
   private renderCheckbox = (item, formItemChange) => {
     return (
-      <Checkbox checked={item.value} onChange={formItemChange}>{item.title}</Checkbox>
+      <Checkbox checked={item.value} onChange={formItemChange(item.name)}>{item.title}</Checkbox>
     )
   }
 
