@@ -109,7 +109,7 @@
     }, {
       "name": "textStyle",
       "title": "样式",
-      "component": "checkbox",
+      "component": "checkboxGroup",
       "values": [{
         "label": "粗体",
         "value": "bold"
@@ -171,7 +171,7 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255],
+      "default": [255,255,255,0],
       "span": 12
     }]
   }, {
@@ -186,7 +186,7 @@
       "name": "borderWidth",
       "title": "边框粗细（像素）",
       "component": "inputnumber",
-      "default": 1
+      "default": 0
     }, {
       "name": "borderStyle",
       "title": "边框样式",

@@ -322,6 +322,30 @@
         background: rgba(0,192,222,.2);
         z-index: 999990;
       }
+
+      .tools {
+        display: none;
+        position: absolute;
+        right: 8px;
+        z-index: 999998;
+
+        i {
+          color: #fff;
+          font-size: 16px;
+          line-height: 40px;
+          display: inline-block;
+          cursor: pointer;
+          transition: transform 200ms ease;
+
+          &:hover {
+            transform: scale(1.1, 1.1);
+          }
+        }
+      }
+
+      &:hover .tools {
+        display: inline-block;
+      }
     }
 
     &.selected:after {

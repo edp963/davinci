@@ -61,19 +61,16 @@ export class Scorecard extends React.PureComponent<IChartProps, {}> {
     const style: React.CSSProperties = {
       fontFamily,
       fontSize,
-      lineHeight: 1,
       color
     }
     const stylePrefix: React.CSSProperties = {
       fontFamily: prefixFontFamily,
       fontSize: prefixFontSize,
-      lineHeight: 1,
       color: prefixColor
     }
     const styleSuffix: React.CSSProperties = {
       fontFamily: suffixFontFamily,
       fontSize: suffixFontSize,
-      lineHeight: 1,
       color: suffixColor
     }
 

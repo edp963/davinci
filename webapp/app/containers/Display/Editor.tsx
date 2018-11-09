@@ -97,7 +97,7 @@ import {
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR } from '../../globalConstants'
+import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams, ISlide } from './'
@@ -669,16 +669,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const { slideParams } = this.state
     switch (key) {
       case Keys.Up:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: - GRID_ITEM_MARGIN })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: -1 })
         break
       case Keys.Down:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: GRID_ITEM_MARGIN })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: 1 })
         break
       case Keys.Left:
-        this.moveSelectedLayersPosition({ positionXD: - GRID_ITEM_MARGIN, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: -1, positionYD: 0 })
         break
       case Keys.Right:
-        this.moveSelectedLayersPosition({ positionXD: GRID_ITEM_MARGIN, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: 1, positionYD: 0 })
         break
       case Keys.Delete:
         this.deleteLayers()
@@ -708,8 +708,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const layers = currentSelectedLayers.map((layer) => {
       const layerParams: ILayerParams = JSON.parse(layer.params)
       const { positionX, positionY, width, height } = layerParams
-      let newPositionX = positionXD === 0 ? positionX : (positionX - positionX % GRID_ITEM_MARGIN + positionXD)
-      let newPositionY = positionYD === 0 ? positionY : (positionY - positionY % GRID_ITEM_MARGIN + positionYD)
+      let newPositionX = positionXD === 0 ? positionX : (positionX + positionXD)
+      let newPositionY = positionYD === 0 ? positionY : (positionY + positionYD)
       if (newPositionX < 0) {
         newPositionX = 0
       }
@@ -771,6 +771,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
 
     return domBaselines
+  }
+
+  private toWorkbench = (_, widgetId) => {
+    const { params } = this.props
+    const { pid, displayId } = params
+    const editSign = [pid, displayId].join(DEFAULT_SPLITER)
+    sessionStorage.setItem('editWidgetFromDisplay', editSign)
+    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 
   public render () {
@@ -836,6 +844,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
           onDragLayerStop={this.dragLayerStop}
+          onEditWidget={this.toWorkbench}
         />
         // </LayerContextMenu>
       )
