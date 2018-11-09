@@ -23,6 +23,7 @@ import * as chart from 'assets/json/slideSettings/chart.json'
 import * as rectangle from 'assets/json/slideSettings/rectangle.json'
 import * as label from 'assets/json/slideSettings/label.json'
 import * as video from 'assets/json/slideSettings/video.json'
+import * as timer from 'assets/json/slideSettings/timer.json'
 
 import { ILayer, ILayerParams, IBaseline, IDeltaPosition, IDeltaSize } from './LayerItem'
 import { ISlideParams, ISlide } from '../'
@@ -33,7 +34,7 @@ export enum SecondaryGraphTypes {
   Rectangle = 20,
   Label = 21,
   Video = 22,
-  IFrame = 23
+  Timer = 23
 }
 
 export enum GraphTypes {
@@ -52,7 +53,8 @@ export const slideSettings = {
   [GraphTypes.Chart]: chart,
   [SecondaryGraphTypes.Rectangle]: rectangle,
   [SecondaryGraphTypes.Label]: label,
-  [SecondaryGraphTypes.Video]: video
+  [SecondaryGraphTypes.Video]: video,
+  [SecondaryGraphTypes.Timer]: timer
 }
 
 export function getDefaultSlideParams () {

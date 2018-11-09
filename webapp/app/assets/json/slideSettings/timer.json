@@ -1,6 +1,6 @@
 {
-  "name": "label",
-  "title": "标签",
+  "name": "timer",
+  "title": "时间器",
   "params": [{
     "name": "size",
     "title": "矩形尺寸",
@@ -17,7 +17,7 @@
     }]
   }, {
     "name": "position",
-    "title": "标签位置",
+    "title": "位置",
     "items": [{
       "name": "positionX",
       "title": "x轴位置（像素）",
@@ -28,16 +28,23 @@
       "component": "inputnumber"
     }]
   }, {
-    "name": "content",
-    "title": "文本",
+    "name": "format",
+    "title": "时间设置",
     "items": [{
-      "name": "contentText",
-      "tip": "输入文本",
-      "title": "文本内容",
+      "name": "timeFormat",
+      "tip": "时间格式",
+      "title": "时间格式",
       "component": "input",
-      "default": "",
+      "default": "YYYY-MM-DD HH:mm:ss",
       "labelCol": 6,
       "wrapperCol": 24
+    }, {
+      "name": "timeDuration",
+      "tip": "间隔时间（ms）",
+      "title": "间隔时间（ms）",
+      "component": "inputnumber",
+      "default": 1000,
+      "min": 1
     }]
   }, {
     "name": "font",

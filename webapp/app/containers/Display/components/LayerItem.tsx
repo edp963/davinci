@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
+import moment from 'moment'
 
 const Tooltip = require('antd/lib/tooltip')
 import Draggable from 'libs/react-draggable'
@@ -60,6 +61,7 @@ interface ILayerItemStates {
   mousePos: number[]
   widgetProps: IWidgetProps
   model: IModel
+  currentTime: string
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
@@ -345,6 +347,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         return this.renderLabelLayer(layer)
       case SecondaryGraphTypes.Video:
         return this.renderVideoLayer(layer)
+      case SecondaryGraphTypes.Timer:
+        return this.renderTimerLayer(layer)
       default:
         return null
     }
@@ -392,6 +396,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     })
     const layerStyle = this.getLayerStyle(layer, layerParams)
     const {
+      fontWeight,
       fontFamily,
       fontColor,
       fontSize,
@@ -410,6 +415,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
+      fontWeight,
       fontFamily,
       color: `rgba(${fontColor.join()})`,
       fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
@@ -422,7 +428,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingLeft: `${paddingLeft * exactScaleWidth}px`
     }
     if (textStyle) {
-      labelStyle.fontWeight = textStyle.indexOf('bold') > -1 ? 'bold' : 'normal'
       labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
       labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
     }
@@ -475,6 +480,82 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             end={end}
             {...setting}
           />
+        )}
+      </div>
+    )
+  }
+
+
+  private timer = null
+  private renderTimerLayer = (layer) => {
+    const { layerParams, currentTime } = this.state
+    const { pure, scale, selected } = this.props
+
+    const layerClass = classnames({
+      [styles.layer]: true,
+      [styles.view]: !pure,
+      [styles.selected]: selected
+    })
+    const layerStyle = this.getLayerStyle(layer, layerParams)
+    const {
+      fontWeight,
+      fontFamily,
+      fontColor,
+      fontSize,
+      textAlign,
+      textStyle,
+      lineHeight,
+      textIndent,
+      paddingTop,
+      paddingBottom,
+      paddingLeft,
+      paddingRight,
+
+      timeFormat,
+      timeDuration
+    } = layerParams
+
+    const exactScaleWidth = pure ? scale[0] : 1
+    const exactScaleHeight = pure ? scale[1] : 1
+    const labelStyle: React.CSSProperties = {
+      wordBreak: 'break-all',
+      overflow: 'hidden',
+      fontWeight,
+      fontFamily,
+      color: `rgba(${fontColor.join()})`,
+      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      textAlign,
+      lineHeight: `${lineHeight * exactScaleHeight}px`,
+      textIndent: `${textIndent * exactScaleWidth}px`,
+      paddingTop: `${paddingTop * exactScaleHeight}px`,
+      paddingRight: `${paddingRight * exactScaleWidth}px`,
+      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
+      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+    }
+    if (textStyle) {
+      labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
+      labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
+    }
+    if (this.timer) { clearInterval(this.timer) }
+    this.setState({
+      currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
+    })
+    this.timer = setInterval(() => {
+      this.setState({
+        currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
+      })
+    }, timeDuration)
+    return (
+      <div
+        ref={(f) => this.refLayer = f}
+        className={layerClass}
+        style={layerStyle}
+        onClick={this.onClickLayer}
+      >
+        {this.wrapLayerTooltip(
+          <p style={labelStyle}>
+            {currentTime}
+          </p>
         )}
       </div>
     )
@@ -567,6 +648,7 @@ export interface ILayerParams {
   positionX: number
   positionY: number
   width: number
+  fontWeight: React.CSSProperties['fontWeight']
   fontFamily: string
   fontColor: [number, number, number]
   fontSize: number
@@ -584,6 +666,9 @@ export interface ILayerParams {
   controlSetting: string[]
   start?: number
   end?: number
+
+  timeFormat: string
+  timeDuration: number
 }
 
 export interface IDeltaPosition {
