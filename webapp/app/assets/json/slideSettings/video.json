@@ -31,7 +31,7 @@
     "items": [{
       "name": "controlSetting",
       "title": "播放设置",
-      "component": "checkbox",
+      "component": "checkboxGroup",
       "values": [{
         "label": "自动播放",
         "value": "autoPlay"

@@ -134,6 +134,13 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     this.props.onFormItemChange(field, val)
   }
 
+  private formInputItemChange = (field) => (e) => {
+    this.props.onFormItemChange(field, e.target.value)
+  }
+  private formCheckboxItemChange = (field) => (e) => {
+    this.props.onFormItemChange(field, e.target.checked)
+  }
+
   private renderItem = (param) => {
     const { form, settingParams } = this.props
     const { getFieldDecorator } = form
@@ -143,7 +150,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       let control
       switch (item.component) {
         case 'input':
-          control = this.renderInput(item, this.formItemChange)
+          control = this.renderInput(item, this.formInputItemChange)
           break
         case 'inputnumber':
           control = this.renderInputNumber(item, this.formItemChange)
@@ -155,10 +162,13 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
           control = this.renderSelect(item, this.formItemChange)
           break
         case 'radio':
-          control = this.renderRadio(item, this.formItemChange)
+          control = this.renderRadio(item, this.formInputItemChange)
           break
         case 'checkbox':
-          control = this.renderCheckbox(item, this.formItemChange)
+          control = this.renderCheckbox(item, this.formCheckboxItemChange)
+          break
+        case 'checkboxGroup':
+          control = this.renderCheckboxGroup(item, this.formItemChange)
           break
         case 'upload':
           control = this.renderUpload(item, this.formItemChange, settingParams[item.name])
@@ -234,13 +244,10 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderInput = (item, formItemChange) => {
-    const onFormInputItemChange = (e) => {
-      formItemChange(item.name)(e.target.value)
-    }
     return (
       <Input
         placeholder={item.tip || item.placeholder || item.name}
-        onPressEnter={onFormInputItemChange}
+        onPressEnter={formItemChange}
       />
     )
   }
@@ -257,11 +264,8 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderRadio = (item, formItemChange) => {
-    const onFormRadioItemChange = (e) => {
-      formItemChange(item.name)(e.target.value)
-    }
     return (
-      <RadioGroup onChange={onFormRadioItemChange}>
+      <RadioGroup onChange={formItemChange}>
         {
           item.values.map((val) => (
             <Radio key={val.value} value={val.value}>{val.name}</Radio>
@@ -272,6 +276,12 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderCheckbox = (item, formItemChange) => {
+    return (
+      <Checkbox checked={item.value} onChange={formItemChange}>{item.title}</Checkbox>
+    )
+  }
+
+  private renderCheckboxGroup = (item, formItemChange) => {
     return (
       <CheckboxGroup onChange={formItemChange(item.name)} options={item.values} />
     )

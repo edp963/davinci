@@ -109,7 +109,7 @@
     }, {
       "name": "textStyle",
       "title": "样式",
-      "component": "checkbox",
+      "component": "checkboxGroup",
       "values": [{
         "label": "粗体",
         "value": "bold"
