@@ -248,9 +248,9 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
         </Menu.Item>
         <Menu.Item>
           <i
-            className="iconfont icon-iframe"
-            onClick={this.addSecondaryGraph(SecondaryGraphTypes.IFrame)}
-          > 内嵌页面
+            className="iconfont icon-clock"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Timer)}
+          > 时间器
           </i>
         </Menu.Item>
       </Menu>
