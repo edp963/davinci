@@ -204,6 +204,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
   }
 
   private getValidValue = (value, sqlType) => {
+    if (!sqlType) { return value }
     return SQL_NUMBER_TYPES.indexOf(sqlType) >= 0 ? value : `'${value}'`
   }
 

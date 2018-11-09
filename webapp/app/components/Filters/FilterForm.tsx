@@ -119,7 +119,7 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
           const val = fieldsValue[name]
           const viewId = +name.substr(prefixView.length)
           const isParam = !!fieldsValue[prefixOther + viewId]
-          const sqlType = usedViews[viewId].model.find((m) => m.key === val).sqlType
+          const sqlType = isParam ? undefined : usedViews[viewId].model.find((m) => m.key === val).sqlType
           filterItem.relatedViews[viewId] = {
             key: val,
             name: val,
@@ -478,32 +478,36 @@ export class FilterForm extends React.Component<IFilterFormProps  & FormComponen
                 </Row>
               )
             }
-            <Row>
-              <Col span={12}>
-                  <FormItem
-                    label="对应关系"
-                    labelCol={{span: 8}}
-                    wrapperCol={{span: 16}}
-                  >
-                    {
-                      getFieldDecorator('operator', {
-                        rules: [{
-                          required: true,
-                          message: '不能为空'
-                        }]
-                      })(
-                        <Select>
-                          {
-                            availableOperatorTypes.map((operatorType) => (
-                              <Option key={operatorType} value={operatorType}>{operatorType}</Option>
-                            ))
-                          }
-                        </Select>
-                      )
-                    }
-                  </FormItem>
-              </Col>
-            </Row>
+            {
+              availableOperatorTypes.length <= 0 ? null : (
+                <Row>
+                <Col span={12}>
+                    <FormItem
+                      label="对应关系"
+                      labelCol={{span: 8}}
+                      wrapperCol={{span: 16}}
+                    >
+                      {
+                        getFieldDecorator('operator', {
+                          rules: [{
+                            required: true,
+                            message: '不能为空'
+                          }]
+                        })(
+                          <Select>
+                            {
+                              availableOperatorTypes.map((operatorType) => (
+                                <Option key={operatorType} value={operatorType}>{operatorType}</Option>
+                              ))
+                            }
+                          </Select>
+                        )
+                      }
+                    </FormItem>
+                </Col>
+              </Row>
+              )
+            }
             <Row>
               <Col span={24}>
                 {Object.keys(usedViews).map((viewId) => this.renderConfigItem(viewId, usedViews, mappingViewItems))}
