@@ -212,7 +212,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     onResizeLayerStop(itemId, delta)
   }
 
-  private onClickLayer = (e) => {
+  private onClickLayer = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     if (this.props.pure) { return }
     const mousePos = [e.pageX, e.pageY]
@@ -226,8 +226,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       onSelectLayer
     } = this.props
 
-    const { ctrlKey, metaKey } = e
-    const exclusive = !ctrlKey && !metaKey
+    const { altKey, metaKey } = e
+    const exclusive = !altKey && !metaKey
     onSelectLayer({ id: layer.id, selected: !selected, exclusive})
   }
 
