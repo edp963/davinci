@@ -76,7 +76,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
       widgetProps: null,
-      model: null
+      model: null,
+      currentTime: ''
     }
   }
 
@@ -101,7 +102,14 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
     const { layer } = this.props
     if (layer.params !== nextProps.layer.params) {
-      const layerParams = JSON.parse(nextProps.layer.params)
+      const layerParams: ILayerParams = JSON.parse(nextProps.layer.params)
+      if (layer.subType === SecondaryGraphTypes.Timer) {
+        const { timeFormat } = layerParams
+        this.setState({
+          layerParams,
+          currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
+        })
+      }
       this.setState({
         layerParams
       })
@@ -537,9 +545,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
     }
     if (this.timer) { clearInterval(this.timer) }
-    this.setState({
-      currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
-    })
     this.timer = setInterval(() => {
       this.setState({
         currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
