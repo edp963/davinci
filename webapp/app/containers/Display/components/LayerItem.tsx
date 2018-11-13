@@ -181,11 +181,15 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     return e.target !== data.node.lastElementChild
   }
 
-  private dragOnStop = (e: Event, data: IDeltaPosition) => {
+  private dragOnStop = (e, data: IDeltaPosition) => {
     e.stopPropagation()
     const {
       itemId,
       onDragLayerStop } = this.props
+    const { mousePos } = this.state
+    if (mousePos[0] === e.pageX && mousePos[1] === e.pageY) {
+      return
+    }
     console.log('drag stops')
     onDragLayerStop(itemId, data)
   }
