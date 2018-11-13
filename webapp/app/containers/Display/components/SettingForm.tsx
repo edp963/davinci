@@ -21,6 +21,7 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { FormComponentProps } from 'antd/lib/form/Form'
+import * as debounce from 'lodash/debounce'
 import api from 'utils/api'
 import { getBase64 } from 'utils/util'
 
@@ -61,15 +62,18 @@ interface ISettingFormStates {
 
 export class SettingForm extends React.PureComponent<ISettingFormProps & FormComponentProps, ISettingFormStates> {
 
+  private debounceFormItemChange = null
+
   constructor (props: ISettingFormProps & FormComponentProps) {
     super(props)
     this.state = {
       loading: {},
       collapse: false
     }
+    this.debounceFormItemChange = debounce(this.props.onFormItemChange, 1000)
   }
 
-  public componentDidMount () {
+  public componentDidUpdate () {
     const {
       form,
       settingParams
@@ -77,13 +81,18 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     form.setFieldsValue({...settingParams})
   }
 
+  public shouldComponentUpdate (nextProps: ISettingFormProps) {
+    const { settingInfo, settingParams } = nextProps
+    const needUpdate = settingInfo !== this.props.settingInfo || settingParams !== this.props.settingParams
+    return needUpdate
+  }
+
   public componentWillReceiveProps (nextProps: ISettingFormProps) {
     const {
-      form,
-      settingParams
+      onFormItemChange
     } = this.props
-    if (settingParams !== nextProps.settingParams) {
-      form.setFieldsValue({...nextProps.settingParams})
+    if (onFormItemChange !== this.props.onFormItemChange) {
+      this.debounceFormItemChange = debounce(onFormItemChange, 1000)
     }
   }
 
@@ -133,8 +142,13 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   private formItemChange = (field) => (val) => {
     this.props.onFormItemChange(field, val)
   }
-
+  private formDebouncedItemChange = (field) => (val) => {
+    this.debounceFormItemChange(field, val)
+  }
   private formInputItemChange = (field) => (e) => {
+    this.debounceFormItemChange(field, e.target.value)
+  }
+  private formRadioItemChange = (field) => (e) => {
     this.props.onFormItemChange(field, e.target.value)
   }
   private formCheckboxItemChange = (field) => (e) => {
@@ -150,19 +164,19 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       let control
       switch (item.component) {
         case 'input':
-          control = this.renderInput(item, this.formInputItemChange)
+          control = this.renderInput(item, this.formDebouncedItemChange)
           break
         case 'inputnumber':
-          control = this.renderInputNumber(item, this.formItemChange)
+          control = this.renderInputNumber(item, this.formDebouncedItemChange)
           break
         case 'colorPicker':
-          control = this.renderColorPicker(item, this.formItemChange, settingParams[item.name])
+          control = this.renderColorPicker(item, this.formDebouncedItemChange, settingParams[item.name])
           break
         case 'select':
           control = this.renderSelect(item, this.formItemChange)
           break
         case 'radio':
-          control = this.renderRadio(item, this.formInputItemChange)
+          control = this.renderRadio(item, this.formRadioItemChange)
           break
         case 'checkbox':
           control = this.renderCheckbox(item, this.formCheckboxItemChange)
@@ -215,11 +229,12 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private wrapFormItem = (control, item, getFieldDecorator) => {
+    const { settingParams, id } = this.props
     return (
       <Col key={item.name} span={item.span || 24}>
         <FormItem label={item.title} {...this.getFormItemLayout(item)}>
           {getFieldDecorator(item.name, {
-            initialValue: item.default || ''
+            initialValue: settingParams[item.name] || item.default || ''
           })(control)}
         </FormItem>
       </Col>
@@ -293,9 +308,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       formItemChange(item.name)([r, g, b, a])
     }
 
-    console.log('rgb: ', rgb)
     const color = rgb ? `rgba(${rgb.join()})` : `rgba(0,0,0,1)`
-    console.log(color)
     const colorPicker = (
       <SketchPicker
         color={color}
