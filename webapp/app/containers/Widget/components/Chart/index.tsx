@@ -2,7 +2,9 @@ import * as React from 'react'
 import { IWidgetProps } from '../Widget'
 import Table from './Table'
 import Scorecard from './Scorecard'
+import Iframe from './Iframe'
 import Chart from './Chart'
+import ChartTypes from '../../config/chart/ChartTypes'
 import { getTable, getScorecard } from '../util'
 
 export interface IChartProps extends IWidgetProps {
@@ -34,6 +36,10 @@ export function CombinedChart (props: IChartProps) {
       return (
         <Scorecard {...props} />
       )
+    case ChartTypes.Iframe:
+        return (
+          <Iframe {...props} />
+        )
     default:
       return (
         <Chart {...props}/>
