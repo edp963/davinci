@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_BORDER,
   PIVOT_CHART_ELEMENT_MIN_WIDTH,
@@ -13,7 +14,7 @@ import {
 } from '../../../../containers/Widget/components/Widget'
 
 const parallel: IChartInfo = {
-  id: 8,
+  id: ChartTypes.Parallel,
   name: 'parallel',
   title: '平行坐标图',
   icon: 'icon-parallel',

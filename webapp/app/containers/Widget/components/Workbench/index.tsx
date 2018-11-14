@@ -19,7 +19,8 @@ import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
-import { getStyleConfig, getTable } from 'containers/Widget/components/util'
+import { getStyleConfig } from 'containers/Widget/components/util'
+import ChartTypes from '../../config/chart/ChartTypes'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -103,7 +104,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         metrics: [],
         filters: [],
         chartStyles: getStyleConfig({}),
-        selectedChart: getTable().id,
+        selectedChart: ChartTypes.Table,
         orders: [],
         queryParams: [],
         cache: false,

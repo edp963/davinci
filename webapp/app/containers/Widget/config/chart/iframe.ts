@@ -18,38 +18,26 @@
  * >>
  */
 
+import ChartTypes from './ChartTypes'
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
-import table from './table'
-import line from './line'
-import bar from './bar'
-import scatter from './scatter'
-import pie from './pie'
-import funnel from './funnel'
-import radar from './radar'
-import sankey from './sankey'
-import parallel from './parallel'
-import map from './map'
-import wordCloud from './wordCloud'
-import waterfall from './waterfall'
-import scorecard from './scorecard'
-import iframe from './iframe'
+const iframe: IChartInfo = {
+  id: ChartTypes.Iframe,
+  name: 'iframe',
+  title: '内嵌网页',
+  icon: 'icon-iframe',
+  coordinate: 'other',
+  requireDimetions: 0,
+  requireMetrics: 0,
+  data: {},
+  style: {
+    iframe: {
+      src: ''
+    },
+    spec: {
 
-const widgetlibs: IChartInfo[] = [
-  table,
-  scorecard,
-  line,
-  bar,
-  scatter,
-  pie,
-  funnel,
-  radar,
-  sankey,
-  parallel,
-  map,
-  wordCloud,
-  waterfall,
-  iframe
-]
+    }
+  }
+}
 
-export default widgetlibs
+export default iframe

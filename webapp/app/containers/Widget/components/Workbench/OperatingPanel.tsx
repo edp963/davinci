@@ -20,8 +20,10 @@ import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSe
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
+import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
+import PivotTypes from '../../config/pivot/PivotTypes'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -354,7 +356,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             modalCallback: resolve,
             modalDataFrom: 'size',
             actOnModalVisible: true,
-            actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
+            actOnModalList: metrics.items.filter((m) => m.chart.id === PivotTypes.Scatter)
           })
         } else {
           resolve(true)
@@ -708,7 +710,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         metrics.items.forEach((i) => {
           i.chart = chart
         })
-        if (chart.id !== getPivot().id) {
+        if (chart.id !== PivotTypes.PivotTable) {
           cols.items = cols.items.filter((c) => c.name !== '指标名称')
           rows.items = rows.items.filter((r) => r.name !== '指标名称')
         }
@@ -982,7 +984,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard } = styleParams
+    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard, iframe } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1210,6 +1212,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               title="翻牌器"
               config={scorecard as IScorecardConfig}
               onChange={this.styleChange('scorecard')}
+            />}
+            {iframe && <IframeSection
+              title="内嵌网页"
+              config={iframe as IframeConfig}
+              onChange={this.styleChange('iframe')}
             />}
             {pivotConfig && <PivotSection
               title="透视表"

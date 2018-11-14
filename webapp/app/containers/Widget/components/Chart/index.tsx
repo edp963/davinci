@@ -2,16 +2,14 @@ import * as React from 'react'
 import { IWidgetProps } from '../Widget'
 import Table from './Table'
 import Scorecard from './Scorecard'
+import Iframe from './Iframe'
 import Chart from './Chart'
-import { getTable, getScorecard } from '../util'
+import ChartTypes from '../../config/chart/ChartTypes'
 
 export interface IChartProps extends IWidgetProps {
   width: number
   height: number
 }
-
-const tableId = getTable().id
-const scorecardId = getScorecard().id
 
 export function CombinedChart (props: IChartProps) {
   const {
@@ -22,7 +20,7 @@ export function CombinedChart (props: IChartProps) {
   } = props
 
   switch (selectedChart) {
-    case tableId:
+    case ChartTypes.Table:
       return (
         <Table
           data={data}
@@ -30,10 +28,14 @@ export function CombinedChart (props: IChartProps) {
           height={height}
         />
       )
-    case scorecardId:
+    case ChartTypes.Scorecard:
       return (
         <Scorecard {...props} />
       )
+    case ChartTypes.Iframe:
+        return (
+          <Iframe {...props} />
+        )
     default:
       return (
         <Chart {...props}/>

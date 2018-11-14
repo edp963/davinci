@@ -194,6 +194,12 @@ interface IEditorStates {
   editorPadding: string
   scale: number
   sliderValue: number
+  settingInfo: {
+    key: string
+    id: number
+    setting: any
+    param: ILayerParams | Partial<ISlideParams>
+  }
 }
 
 export class Editor extends React.Component<IEditorProps, IEditorStates> {
@@ -207,7 +213,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       editorHeight: 0,
       editorPadding: '',
       scale: 1,
-      sliderValue: 20
+      sliderValue: 20,
+      settingInfo: {
+        key: '',
+        id: 0,
+        setting: null,
+        param: null
+      }
     }
 
     this.refHandlers = {
@@ -260,6 +272,37 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       const currentLocalLayers = fromJS(currentLayers).toJS()
       this.setState({
         currentLocalLayers
+      })
+    }
+    this.getSettingInfo(nextProps)
+  }
+
+  private getSettingInfo = (nextProps: IEditorProps) => {
+    const { currentSlide, currentSelectedLayers, currentLayers } = nextProps
+    const { slideParams } = this.state
+
+    let settingInfo = null
+    if (currentSelectedLayers.length === 1) {
+      const selectedLayer = currentLayers.find((layer) => layer.id === currentSelectedLayers[0].id)
+      const type = selectedLayer.subType || selectedLayer.type
+      const param = JSON.parse(selectedLayer['params'])
+      settingInfo = {
+        key: `layer_${selectedLayer.id}`,
+        id: selectedLayer.id,
+        setting: slideSettings[type],
+        param
+      }
+    } else if (currentSlide) {
+      settingInfo = {
+        key: 'slide',
+        id: currentSlide.id,
+        setting: slideSettings[GraphTypes.Slide],
+        param: slideParams
+      }
+    }
+    if (settingInfo) {
+      this.setState({
+        settingInfo
       })
     }
   }
@@ -545,28 +588,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     }
   }
 
-  private getSettingInfo = () => {
-    const { currentSlide, currentSelectedLayers } = this.props
-    const { slideParams } = this.state
-
-    if (currentSelectedLayers.length === 1) {
-      const selectedLayer = currentSelectedLayers[0]
-      const type = selectedLayer.subType || selectedLayer.type
-      return {
-        key: `layer_${selectedLayer.id}`,
-        id: selectedLayer.id,
-        setting: slideSettings[type],
-        param: JSON.parse(selectedLayer['params'])
-      }
-    }
-    return {
-      key: 'slide',
-      id: currentSlide.id,
-      setting: slideSettings[GraphTypes.Slide],
-      param: slideParams
-    }
-  }
-
   private deleteLayers = () => {
     const { currentDisplay, currentSlide, currentLayersOperationInfo } = this.props
     const ids = Object.keys(currentLayersOperationInfo).filter((id) => currentLayersOperationInfo[id].selected)
@@ -803,7 +824,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       editorHeight,
       editorPadding,
       scale,
-      sliderValue
+      sliderValue,
+      settingInfo
     } = this.state
 
     if (!currentDisplay) { return null }
@@ -851,7 +873,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
 
     const baselines = this.getEditorBaselines()
-    const settingInfo = this.getSettingInfo()
 
     let settingContent = null
     if (currentSelectedLayers.length > 1) {
@@ -862,7 +883,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onCollapseChange={this.collapseChange}
         />
       )
-    } else {
+    } else if (settingInfo.id) {
       settingContent = (
         <SettingForm
           key={settingInfo.key}

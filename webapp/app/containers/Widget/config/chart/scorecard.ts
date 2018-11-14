@@ -18,6 +18,7 @@
  * >>
  */
 
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -28,7 +29,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const scorecard: IChartInfo = {
-  id: 13,
+  id: ChartTypes.Scorecard,
   name: 'scorecard',
   title: '翻牌器',
   icon: 'icon-calendar1',

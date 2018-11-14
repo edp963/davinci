@@ -1,7 +1,7 @@
 import * as React from 'react'
 import Widget, { IWidgetWrapperProps } from './index'
-import { getStyleConfig, getTable } from '../util'
-
+import { getStyleConfig } from '../util'
+import ChartTypes from '../../config/chart/ChartTypes'
 interface IWidgetInVizStates {
   widgetProps: IWidgetWrapperProps
 }
@@ -21,7 +21,7 @@ export class WidgetInViz extends React.Component<IWidgetWrapperProps, IWidgetInV
     metrics: [],
     filters: [],
     chartStyles: getStyleConfig({}),
-    selectedChart: getTable().id,
+    selectedChart: ChartTypes.Table,
     queryParams: [],
     cache: false,
     expired: 300,
@@ -40,13 +40,13 @@ export class WidgetInViz extends React.Component<IWidgetWrapperProps, IWidgetInV
   }
 
   private renderPivot = (props) => {
-    if (props.data.length) {
+    if (props.data.length === 0 && props.mode !== 'chart') {
       this.setState({
-        widgetProps: {...props}
+        widgetProps: {...this.clearProps}
       })
     } else {
       this.setState({
-        widgetProps: {...this.clearProps}
+        widgetProps: {...props}
       })
     }
   }
