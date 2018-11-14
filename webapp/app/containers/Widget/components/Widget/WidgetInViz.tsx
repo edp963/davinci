@@ -40,13 +40,13 @@ export class WidgetInViz extends React.Component<IWidgetWrapperProps, IWidgetInV
   }
 
   private renderPivot = (props) => {
-    if (props.data.length) {
+    if (props.data.length === 0 && props.mode !== 'chart') {
       this.setState({
-        widgetProps: {...props}
+        widgetProps: {...this.clearProps}
       })
     } else {
       this.setState({
-        widgetProps: {...this.clearProps}
+        widgetProps: {...props}
       })
     }
   }
