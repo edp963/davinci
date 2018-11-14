@@ -125,7 +125,7 @@ public class JdbcDataSource extends DruidDataSource {
                 instance.init();
             } catch (SQLException e) {
                 log.error("Exception during pool initialization", e);
-                throw new SourceException("Exception during pool initialization");
+                throw new SourceException(e.getMessage());
             }
             map.put(username + "@" + jdbcUrl.trim(), instance);
         }

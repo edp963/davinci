@@ -38,6 +38,8 @@ public class ViewExecuteParam {
     private Boolean cache;
     private Long expired;
     private int limit = 0;
+    private int pageNo = -1;
+    private int pageSize = -1;
 
     public List<Order> getOrders(String jdbcUrl) {
         List<Order> list = null;
