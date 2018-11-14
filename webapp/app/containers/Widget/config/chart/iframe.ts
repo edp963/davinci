@@ -18,10 +18,11 @@
  * >>
  */
 
+import ChartTypes from './ChartTypes'
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const iframe: IChartInfo = {
-  id: 14,
+  id: ChartTypes.Iframe,
   name: 'iframe',
   title: '内嵌网页',
   icon: 'icon-iframe',

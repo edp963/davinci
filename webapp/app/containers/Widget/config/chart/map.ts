@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
@@ -11,7 +12,7 @@ const defaultThemeColors = defaultTheme.theme.color
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const map: IChartInfo = {
-  id: 7,
+  id: ChartTypes.CMap,
   name: 'map',
   title: '地图',
   icon: 'icon-china',

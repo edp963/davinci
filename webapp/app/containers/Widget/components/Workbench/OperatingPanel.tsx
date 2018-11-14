@@ -21,8 +21,9 @@ import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
-import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getScatter, getStyleConfig, getTable } from '../util'
+import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
+import PivotTypes from '../../config/pivot/PivotTypes'
 
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
@@ -355,7 +356,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             modalCallback: resolve,
             modalDataFrom: 'size',
             actOnModalVisible: true,
-            actOnModalList: metrics.items.filter((m) => m.chart.id === getScatter().id)
+            actOnModalList: metrics.items.filter((m) => m.chart.id === PivotTypes.Scatter)
           })
         } else {
           resolve(true)
@@ -709,7 +710,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         metrics.items.forEach((i) => {
           i.chart = chart
         })
-        if (chart.id !== getPivot().id) {
+        if (chart.id !== PivotTypes.PivotTable) {
           cols.items = cols.items.filter((c) => c.name !== '指标名称')
           rows.items = rows.items.filter((r) => r.name !== '指标名称')
         }

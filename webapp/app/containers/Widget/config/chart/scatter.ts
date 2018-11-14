@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -7,8 +8,8 @@ import {
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
-const bar: IChartInfo = {
-  id: 4,
+const scatter: IChartInfo = {
+  id: ChartTypes.Scatter,
   name: 'scatter',
   title: '散点图',
   icon: 'icon-scatter-chart',
@@ -96,4 +97,4 @@ const bar: IChartInfo = {
   }
 }
 
-export default bar
+export default scatter

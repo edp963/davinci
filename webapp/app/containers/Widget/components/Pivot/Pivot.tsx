@@ -12,7 +12,6 @@ import {
   getChartUnitMetricHeight,
   getAxisInterval,
   getTextWidth,
-  getBar,
   getSizeRate,
   getAggregatorLocale
 } from '../util'
@@ -34,6 +33,7 @@ import TableBody from './TableBody'
 import ColumnFooter from './ColumnFooter'
 import Legend from './Legend'
 import { RenderType, IWidgetProps } from '../Widget'
+import PivotTypes from '../../config/pivot/PivotTypes'
 
 const styles = require('./Pivot.less')
 
@@ -423,7 +423,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       const decodedScatterXAxisItemName = scatterXAxisItem && decodeMetricName(scatterXAxisItem.name)
       const decodedSizeItemName = sizeItem && decodeMetricName(sizeItem.name)
 
-      if (actingConditions.length && metric.chart.id !== getBar().id) {
+      if (actingConditions.length && metric.chart.id !== PivotTypes.Bar) {
         this.groupedData[metric.name] = records
           .reduce(({yAxisMin, yAxisMax, scatterXAxisMin, scatterXAxisMax, sizeMin, sizeMax}, recordCollection) => {
             const groupedRecordCollection = {}

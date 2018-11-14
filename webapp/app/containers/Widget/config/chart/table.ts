@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -8,7 +9,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const table: IChartInfo = {
-  id: 1,
+  id: ChartTypes.Table,
   name: 'table',
   title: '表格',
   icon: 'icon-table',

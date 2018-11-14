@@ -5,15 +5,11 @@ import Scorecard from './Scorecard'
 import Iframe from './Iframe'
 import Chart from './Chart'
 import ChartTypes from '../../config/chart/ChartTypes'
-import { getTable, getScorecard } from '../util'
 
 export interface IChartProps extends IWidgetProps {
   width: number
   height: number
 }
-
-const tableId = getTable().id
-const scorecardId = getScorecard().id
 
 export function CombinedChart (props: IChartProps) {
   const {
@@ -24,7 +20,7 @@ export function CombinedChart (props: IChartProps) {
   } = props
 
   switch (selectedChart) {
-    case tableId:
+    case ChartTypes.Table:
       return (
         <Table
           data={data}
@@ -32,7 +28,7 @@ export function CombinedChart (props: IChartProps) {
           height={height}
         />
       )
-    case scorecardId:
+    case ChartTypes.Scorecard:
       return (
         <Scorecard {...props} />
       )
