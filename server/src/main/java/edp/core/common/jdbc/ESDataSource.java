@@ -50,7 +50,7 @@ public class ESDataSource {
                 map.put(jdbcUrl.trim(), dataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization, ", e);
-                throw new SourceException("Exception during pool initialization: jdbcUrl=" + jdbcUrl);
+                throw new SourceException(e.getMessage());
             }
         }
         return map.get(jdbcUrl.trim());
