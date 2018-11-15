@@ -256,6 +256,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.containerResize, false)
+    this.props.onClearLayersSelection()
   }
 
   public componentWillReceiveProps (nextProps: IEditorProps) {

@@ -150,6 +150,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   public componentWillUnmount () {
     clearInterval(this.frequent)
+    clearInterval(this.timer)
   }
 
   private frequent: number
