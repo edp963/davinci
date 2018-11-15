@@ -143,18 +143,24 @@ export class Scorecard extends React.PureComponent<IChartProps, {}> {
 
       footerVisible, footerFontFamily, footerColor,
       prefixFooter, prefixFooterFontFamily, prefixFooterColor,
-      suffixFooter, suffixFooterFontFamily, suffixFooterColor
+      suffixFooter, suffixFooterFontFamily, suffixFooterColor,
+
+      fontSizeFixed, fontSizeMain, fontSizeSub
     } = scorecard
 
     const headerText = this.getMetricText(metricHeader, headerVisible)
     const contentText = this.getMetricText(metricContent, contentVisible)
     const footerText = this.getMetricText(metricFooter, footerVisible)
 
-    const { titleFontSize, contentFontSize } = this.computeFontSize(
-      prefixHeader || '', headerText, suffixHeader || '',
-      prefixContent || '', contentText, suffixContent || '',
-      prefixFooter || '', footerText, suffixFooter || ''
-    )
+    let titleFontSize = +fontSizeSub
+    let contentFontSize = +fontSizeMain
+    if (!fontSizeFixed) {
+      ({ titleFontSize, contentFontSize } = this.computeFontSize(
+        prefixHeader || '', headerText, suffixHeader || '',
+        prefixContent || '', contentText, suffixContent || '',
+        prefixFooter || '', footerText, suffixFooter || ''
+      ))
+    }
 
     return (
       <div className={styles.scorecard}>
