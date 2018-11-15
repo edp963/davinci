@@ -47,6 +47,10 @@ export interface IScorecardConfig {
   prefixFooterFontFamily: string
   suffixFooterColor?: string
   suffixFooterFontFamily: string
+
+  fontSizeFixed: boolean
+  fontSizeMain: string
+  fontSizeSub: string
 }
 
 interface IScorecardSectionProps {
@@ -75,6 +79,10 @@ export class ScorecardSection extends React.PureComponent<IScorecardSectionProps
 
   private static FontFamilies = PIVOT_CHART_FONT_FAMILIES.map((f) => (
     <Option key={f.value} value={f.value}>{f.name}</Option>
+  ))
+
+  private static FontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
+    <Option key={f} value={`${f}`}>{f}</Option>
   ))
 
   public render () {
@@ -109,7 +117,11 @@ export class ScorecardSection extends React.PureComponent<IScorecardSectionProps
       prefixFooterColor,
       prefixFooterFontFamily,
       suffixFooterColor,
-      suffixFooterFontFamily
+      suffixFooterFontFamily,
+
+      fontSizeFixed,
+      fontSizeMain,
+      fontSizeSub
     } = config
 
     return (
@@ -317,6 +329,53 @@ export class ScorecardSection extends React.PureComponent<IScorecardSectionProps
               />
             </Col>
           </Row>
+          <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+            <Col span={24}>字体大小配置</Col>
+          </Row>
+          <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+            <Col span={12}>
+              <Checkbox
+                checked={fontSizeFixed}
+                onChange={this.checkboxChange('fontSizeFixed')}
+              >
+                固定字体大小
+              </Checkbox>
+            </Col>
+          </Row>
+          {
+            !fontSizeFixed ? null : (
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={12}>主体字体大小</Col>
+                <Col span={10}>
+                  <Select
+                    placeholder="文字大小"
+                    className={styles.blockElm}
+                    value={fontSizeMain}
+                    onChange={this.selectChange('fontSizeMain')}
+                  >
+                    {ScorecardSection.FontSizes}
+                  </Select>
+                </Col>
+              </Row>
+            )
+          }
+          {
+            !fontSizeFixed ? null : (
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={12}>辅助字体大小</Col>
+                <Col span={10}>
+                  <Select
+                    placeholder="文字大小"
+                    className={styles.blockElm}
+                    value={fontSizeSub}
+                    onChange={this.selectChange('fontSizeSub')}
+                  >
+                    {ScorecardSection.FontSizes}
+                  </Select>
+                </Col>
+              </Row>
+            )
+          }
         </div>
       </div>
     )

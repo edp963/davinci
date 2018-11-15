@@ -67,7 +67,11 @@ const scorecard: IChartInfo = {
       prefixFooterColor: PIVOT_DEFAULT_FONT_COLOR,
       prefixFooterFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       suffixFooterColor: PIVOT_DEFAULT_FONT_COLOR,
-      suffixFooterFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value
+      suffixFooterFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
+
+      fontSizeFixed: false,
+      fontSizeMain: '48',
+      fontSizeSub: '18'
     },
     spec: {
 
