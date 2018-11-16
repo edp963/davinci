@@ -1,3 +1,7 @@
+---
+layout: global
+title: Deployment
+---
 # 安装
 
 ## 1 环境准备
@@ -119,7 +123,7 @@
 
      下表为常见免费邮箱 SMTP 服务地址及端口：
 
-     ![server](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/server.png)
+     ![server](./img/server.png)
 
    - **phantomjs 配置**
 

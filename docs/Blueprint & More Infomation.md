@@ -1,3 +1,7 @@
+---
+layout: global
+title: Blueprint & More Information
+---
 # 蓝图
 
 Davinci 将有更多的优化，更多的新功能，请保持关注！
@@ -46,4 +50,4 @@ Davinci 将有更多的优化，更多的新功能，请保持关注！
 
    请先添加微信号：edpstack
 
-![More_WeChat](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/More_WeChat.jpg)
+![More_WeChat](./img/More_WeChat.jpg)

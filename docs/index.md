@@ -1,3 +1,9 @@
+---
+layout: global
+displayTitle: Davinci Overview
+title: Overview
+description: Davinci DAVINCI_VERSION_SHORT Documentation Homepage
+---
 # 概述
 
 ## 1 平台介绍
@@ -6,7 +12,7 @@ Davinci 是一个 DVAAS（Data Visualization as a Service）平台解决方案�
 
 ## 2 模块架构
 
-![overview_architecture](/Users/wangfuying/Documents/myworkspace/Davinci_业务方:培训/dv3/img/overview_architecture.jpg)
+![overview_architecture](./img/overview_architecture.jpg)
 
 ## 3 设计理念
 

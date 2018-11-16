@@ -1,4 +1,8 @@
-# 教程
+---
+layout: global
+title: Project Authority
+---
+
 
 ## 用户与权限体系
 
@@ -10,59 +14,59 @@ Davinci 0.3 引入了一种新的用户体系和权限体系。在设计上，�
 
 - 点击右上角图标，选择“用户设置”。
 
-  ![user_org_init](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_init.png)
+  ![user_org_init](./img/user_org_init.png)
 
 - 选择“我的组织”，查看组织列表。
 
-  ![user_org_list](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_list.png)
+  ![user_org_list](./img/user_org_list.png)
 
 - 用户可创建若干个组织，满足其他业务需求。点击右上角“+”，弹框创建。
 
-  ![user_org_add](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_add.png)
+  ![user_org_add](./img/user_org_add.png)
 
 #### 1.1 项目
 
 Davinci 0.3 引入了“项目”的概念，项目从属于组织。每个项目都是独立的 Davinci 应用， Davinci 应用由 Viz， Widget，View， Source， Schedule 几个模块组成。
 
-![user_org_enter_pro](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_enter_pro.png)
+![user_org_enter_pro](./img/user_org_enter_pro.png)
 
 - 编辑和删除项目。
 
-  ![image-20181112173239996](/Users/wangfuying/Library/Application%20Support/typora-user-images/image-20181112173239996.png)
+  ![image-20181112173239996](./img/image-20181112173239996.png)
 
 - 点赞项目，单击数字，查看点赞用户的详细信息。再次点击取消点赞。
 
-  ![user_org_star](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_star.png)
+  ![user_org_star](./img/user_org_star.png)
 
 #### 1.2 成员
 
 组织成员有 Owner 和 Member 两种角色，Owner 可以提升 Member 为 Owner，一个组织允许有多个 Owner，他们的权限相同。
 
-![user_org_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_member.png)
+![user_org_member](./img/user_org_member.png)
 
 - Owner 邀请注册用户加入自己的组织协同工作（被邀请人需要进入邮箱接受邀请），被邀请人为该组织的 Member 角色。
 
-  ![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_add_member.png)
+  ![user_org_add_member](./img/user_org_add_member.png)
 
 #### 1.3 设置
 
 Owner 能给组织上传图像，编辑组织信息或删除组织。Owner 可以决定是否允许组织的 Member 创建项目，也可以决定组织的 Member 是只可见公开项目，还是不可见任何项目。
 
-![user_org_pro](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_org_setting.png)
+![user_org_pro](./img/user_org_setting.png)
 
 ### 2 团队与权限管理
 
 Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 Maintainer（维护者）和 Member（普通成员）两个角色。通过下图来看四种不同角色的权限。
 
-![project_global_relation](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_global_relation.png)
+![project_global_relation](./img/project_global_relation.png)
 
 团队可以是级联结构，能对接企业组织架构。一个组织能有多个 Team 树，组织相当于根节点的概念，但不属于树。一个用户能同时属于多个团队。
 
-![project_org_team_list](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_org_team_list.png)
+![project_org_team_list](./img/project_org_team_list.png)
 
 组织下创建团队。弹框选择上级 Team，保存。
 
-![project_org_team_list](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_org_add_team.png)
+![project_org_team_list](./img/project_org_add_team.png)
 
 #### 2.1 成员
 
@@ -70,11 +74,11 @@ Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 M
 
 - Maintainer 能移除团队里的所有人，也能改变团队所有人的角色。
 
-  ![user_team_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_team_member.png)
+  ![user_team_member](./img/user_team_member.png)
 
 - Maintainer 添加成员到自己所在的团队。
 
-  ![project_team_maintainer_add](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_team_maintainer_add.png)
+  ![project_team_maintainer_add](./img/project_team_maintainer_add.png)
 
 #### 2.2 项目
 
@@ -82,15 +86,15 @@ Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 M
 
 **添加项目到当前团队**
 
-![user_team_add_pro](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/user_team_add_pro.png)
+![user_team_add_pro](./img/user_team_add_pro.png)
 
-![project_team_add_pro](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_team_add_pro1.png)
+![project_team_add_pro](./img/project_team_add_pro1.png)
 
 **模块权限**
 
 模块权限指的是允许或拒绝团队的普通用户使用 Davinci 应用提供的某个/些模块。
 
-![project_team_add_pro](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_team_add_pro2.png)
+![project_team_add_pro](./img/project_team_add_pro2.png)
 
 | 设置项 | 团队 Maintainer 对 Member 授权 |
 | ------ | ------------------------------ |
@@ -113,19 +117,19 @@ Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 M
 
 团队的 Maintainer 能在当前团队里创建子团队。
 
-![project_team_add_team](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_team_add_team.png)
+![project_team_add_team](./img/project_team_add_team.png)
 
 #### 2.4 设置
 
 编辑和删除当前团队。
 
-![project_team_setting](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_team_setting.png)
+![project_team_setting](./img/project_team_setting.png)
 
 ### 3 项目管理
 
 登录系统，首页是该用户在不同组织中项目的快捷入口，主要由“我创建的项目”和“我参与的项目”组成，你能从这里快速定位并进入某个项目，操作 Source、View、Widget、Viz、Schedule 功能。项目的创建者拥有操作该项目的所有权限。
 
-![project_project_add](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_project_add.png)
+![project_project_add](./img/project_project_add.png)
 
 #### 3.1 创建项目
 
@@ -133,17 +137,17 @@ Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 M
 
   你也可以在“我的组织”页创建项目。
 
-  ![project_project_daa_modal](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_project_add_modal.png)
+  ![project_project_daa_modal](./img/project_project_add_modal.png)
 
 #### 3.2 移交、编辑、删除项目
 
 - 分别点击右上角的按钮。
 
-  ![porject_project_action](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/porject_project_action.png)
+  ![porject_project_action](./img/porject_project_action.png)
 
 - 组织的 Owner 能把项目移交给其他组织。
 
-  ![project_project_move](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_project_move.png)
+  ![project_project_move](./img/project_project_move.png)
 
 #### 3.3 收藏、搜索项目
 
@@ -151,18 +155,18 @@ Davinci 0.3 是通过团队来管理项目，团队从属于组织。团队有 M
 
   点击“收藏”，项目被添加到“我收藏的项目”中，再次点击取消收藏，也可以在“我收藏的项目”中点击“取消收藏”。
 
-  ![project_project_collect](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_project_collect.png)
+  ![project_project_collect](./img/project_project_collect.png)
 
 - 输入项目名称，快捷搜索并进入项目中。
 
-  ![project_project_search](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_project_search.png)
+  ![project_project_search](./img/project_project_search.png)
 
 ### 4 用户设置
 
 #### 4.1 修改和查看个人信息
 
-![project_information_edit](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_information_edit.png)
+![project_information_edit](./img/project_information_edit.png)
 
 #### 4.2 修改密码
 
-![project_password_edit](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/project_password_edit.png)
+![project_password_edit](./img/project_password_edit.png)

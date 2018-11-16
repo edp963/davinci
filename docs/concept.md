@@ -1,4 +1,8 @@
-# 教程
+---
+layout: global
+title: Concept
+---
+
 
 ## 基本概念
 

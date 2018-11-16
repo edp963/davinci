@@ -1,4 +1,8 @@
-# 教程
+---
+layout: global
+title: Widget
+---
+
 
 ## 可视组件管理
 
@@ -12,19 +16,19 @@
 
   透视驱动模式中一个图形对应一个指标，支持透视表转换到图表，支持行列转置，支持多图同轴对比，支持不同坐标系图表转换和对比等。
 
-  ![widget_per1](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/widget_per1.png)
+  ![widget_per1](./img/widget_per1.png)
 
 - **图表驱动**。与 Davinci 0.2 版本的可视化逻辑大体一致，用户拖拽配置的维度和指标服务于特定的图表类型，如柱状图、散点图、饼图、地图、桑基图、雷达图等，让你轻松打造出满意的可视化组件。
 
   图表驱动模式下单张图表内可以显示多个指标。用户可根据具体的场景选择不同的图表类型，比如当数据大小对比相近时，你可以选择饼图的南丁格尔玫瑰图，由于使用极坐标系，它会将数据的比例夸大，突出显示。
 
-  ![widget_chart1](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/widget_chart1.png)
+  ![widget_chart1](./img/widget_chart1.png)
 
 Widget 编辑器功能非常丰富，你还可以选择计算函数，指定筛选和颜色区分字段等等。
 
 两种模式的图形都支持用户通过扩展方式将自己的配置项加到图表中，不同的图表对应不同的显示配置（两种模式还都支持外接 Redis 缓存哦，用户可以自主选择外接 Redis 来对查询结果数据进行缓存，在“缓存”栏里开启这项配置并填写缓存有效期）。
 
-![widget_per2](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/widget_per2.png)
+![widget_per2](./img/widget_per2.png)
 
 ### 2 控制器
 
@@ -36,12 +40,12 @@ Widget 编辑器功能非常丰富，你还可以选择计算函数，指定筛�
 
 2. 配置查询变量关联。
 
-   ![dashboard_filter2](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/dashboard_filter3.jpg)
+   ![dashboard_filter2](./img/dashboard_filter3.jpg)
 
-   ![widget_query1](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/widget_query1.png)
+   ![widget_query1](./img/widget_query1.png)
 
 **控制器使用**
 
 将 Widget 添加到 Dashboard 面板，点击下拉框。
 
-![dashboard_filter6](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/dashboard_filter.png)
+![dashboard_filter6](./img/dashboard_filter.png)

@@ -1,4 +1,8 @@
-# 教程
+---
+layout: global
+title: Display
+---
+
 
 ## Display 大屏
 
@@ -8,7 +12,7 @@
 
 点击应用层进入 Display 编辑页。Display 编辑器分为“工具栏”、“编辑区”、“编辑区显示缩放比例设置”、“图层列表”、“Display 及图层设置区”。
 
-![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/display-editor.png)
+![user_org_add_member](./img/display-editor.png)
 
 ### 1 工具栏
 
@@ -29,9 +33,9 @@
 
 点击“分享” ，分享分“普通分享”和“授权分享”两种模式，与分享 Dashboard/Widget 类似。“普通分享”生成当前 Display 的链接，他人可直接打开此链接查看此 Display 大屏应用，无需先登录。“授权分享”需要输入要分享的 Davinci 用户名称，该用户登录 Davinci 之后，通过链接查看 Display 应用。
 
-![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/display-share-1.png)
+![user_org_add_member](./img/display-share-1.png)
 
-![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/display-share-2.png)
+![user_org_add_member](./img/display-share-2.png)
 
 ### 2 编辑区
 
@@ -63,7 +67,7 @@
 
   - **背景颜色**，可通过点选颜色面板或直接输入 Hex 或 RGB 的值设置，其中 A 值为透明度设置，范围 0到 100，0 为全透明，100 为不透明。Display 编辑页所有颜色都是这样设置。 
 
-  ![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/display-background-color.png)
+  ![user_org_add_member](./img/display-background-color.png)
 
   - **缩放方式**，指定了当前 Display 显示的终端屏幕与其配置的屏幕尺寸不一致时的显示策略。
     一共有四种模式，分别为”等比缩放宽度“、”等比缩放高度“、”全屏铺满“、”实际尺寸“。其中只有”全屏铺满“不保证最终显示的长宽比与配置一致，而是根据显示终端的屏幕自动进行缩放，保证全屏显示。其中 1、2 两种模式保证了单一方向的 100% 自适应，而另一方向将会有缩放。”实际尺寸“则是按配置宽高进行显示。
@@ -76,5 +80,5 @@
 - 选中多个图层
   通过 `Cmd + 点击` （Mac）或 `Alt + 点击` （Windows）选择多个图层后，设置区如下图所示：
 
-  ![user_org_add_member](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/layers-alignment.png)
+  ![user_org_add_member](./img/layers-alignment.png)
   此时可设置多个图层的整体对齐方式。  
