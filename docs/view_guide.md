@@ -66,26 +66,26 @@
 
 2. **选择数据源**。列表对应显示数据库表名和字段名。
 
-   ![view_select_source](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/view_select_source.png)
+   ![view_select_source](./img/view_select_source.png)
 
 3. **编辑 SQL。**
 
    SQL 编辑器支持语法、数据库表、字段提示和自动补全功能，支持定义 SQL 模版。编辑器分为变量声明和 SQL 主体两个部分，通过顶部的开关来切换。
 
-   - 配置普通视图![view_nodec_sql](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/view_nodec_sql.png)
+   - 配置普通视图![view_nodec_sql](./img/view_nodec_sql.png)
    - 配置带有 query 查询变量或 team 团队权限变量定义的视图。
 
 ```
- ![view_dec_sql](/Users/wangfuying/Documents/myworkspace/Davinci_业务方:培训/dv3/img/view_dec_sql.png)
+ ![view_dec_sql](./img/view_dec_sql.png)
 ```
 
 1. **执行 SQL。**测试 SQL 正确性，成功后可预览查询结果集。
 
-   ![view_execute](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/view_execute.png)
+   ![view_execute](./img/view_execute.png)
 
 2. **数据建模。**SQL 执行成功后，系统默认分配给每个字段一种数据类型和一种可视化类型，用户也可以配置字段的类型，进行可视化建模。
 
-   ![view_model](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/view_model.png)
+   ![view_model](./img/view_model.png)
 
 3. **团队数据权限控制。**
 
@@ -95,4 +95,4 @@
 
    示例：Team 按下图配置后，通过该 View 创建 Widget，并添加到 Dashboard，“test_auth” 团队的普通成员登录 Davinci，并进入 Dashboard 查看创建的 Widget，能看到北京、天津、武汉和西安的书架；“childTeam”团队的 Member 能看到武汉和西安的数据；“grandson”的 Member 只能看到西安的数据。
 
-   ![view_team](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/view_team.png)
+   ![view_team](./img/view_team.png)

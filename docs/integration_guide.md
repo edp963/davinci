@@ -6,25 +6,25 @@
 
 ### 1 分享 Widget
 
-选中某一 Widget，点击“分享”，选择分享类型，完整的 Widget 将呈现在你面前。![integration_share_widget](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/integration_share_widget.png)
+选中某一 Widget，点击“分享”，选择分享类型，完整的 Widget 将呈现在你面前。![integration_share_widget](./img/integration_share_widget.png)
 
 ### 2 分享 Dashboard
 
 Dashboard 面板右上角点击“分享”，选择分享方式，你将看到当前仪表板所有的 Widget 信息。
 
-![inregration_share_dashboard](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/integration_share_dashboard.png)
+![inregration_share_dashboard](./img/integration_share_dashboard.png)
 
 ### 3 分享 Display
 
 进入 Display，可以在这里根据喜好自由布局，所以当你制作出一个非常漂亮实用的大屏面板之后，可以点击菜单栏的“分享”按钮，让更多的人看到你的成果。
 
-![integration_share_display](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/integration_share_display.png)
+![integration_share_display](./img/integration_share_display.png)
 
 ### 4 Schedule 定时分享
 
 在 Schedule 中进行相关配置，通过邮件的形式发送给想要分享的人。
 
-![integration_schedule](/Users/wangfuying/Documents/myworkspace/Davinci_%E4%B8%9A%E5%8A%A1%E6%96%B9:%E5%9F%B9%E8%AE%AD/dv3/img/integration_schedule.png)
+![integration_schedule](./img/integration_schedule.png)
 
 ### 5 组件 CSV 下载
 
