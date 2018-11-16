@@ -1,8 +1,8 @@
 ---
 layout: global
-title: Integration Guide
+title: Integration
 ---
-# 教程
+
 
 ## 集成整合支持
 

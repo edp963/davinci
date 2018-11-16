@@ -1,9 +1,9 @@
 ---
 layout: global
-title: 教程
+title: View
 ---
 
-# 教程
+
 
 ## 数据视图管理
 
@@ -80,9 +80,7 @@ title: 教程
    - 配置普通视图![view_nodec_sql](./img/view_nodec_sql.png)
    - 配置带有 query 查询变量或 team 团队权限变量定义的视图。
 
-```
- ![view_dec_sql](./img/view_dec_sql.png)
-```
+  ![view_dec_sql](./img/view_dec_sql.png)
 
 1. **执行 SQL。**测试 SQL 正确性，成功后可预览查询结果集。
 

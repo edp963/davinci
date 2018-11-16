@@ -1,9 +1,9 @@
 ---
 layout: global
-title: Dashboard Guide
+title: Dashboard
 ---
 
-# 教程
+
 
 ## 仪表板管理
 

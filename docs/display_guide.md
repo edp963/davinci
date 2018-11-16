@@ -1,8 +1,8 @@
 ---
 layout: global
-title: Display Guide
+title: Display
 ---
-# 教程
+
 
 ## Display 大屏
 

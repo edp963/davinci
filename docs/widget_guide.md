@@ -1,8 +1,8 @@
 ---
 layout: global
-title: Widget Guide
+title: Widget
 ---
-# 教程
+
 
 ## 可视组件管理
 

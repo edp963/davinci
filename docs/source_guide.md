@@ -1,8 +1,8 @@
 ---
 layout: global
-title: Source Guide
+title: Source
 ---
-# 教程
+
 
 ## 数据源管理
 

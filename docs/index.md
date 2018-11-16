@@ -2,7 +2,7 @@
 layout: global
 displayTitle: Davinci Overview
 title: Overview
-description: Davinci DAVINCI_VERSION_SHORT documentation homepage
+description: Davinci DAVINCI_VERSION_SHORT Documentation Homepage
 ---
 # 概述
 
