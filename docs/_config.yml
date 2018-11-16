@@ -1,8 +1,16 @@
-title: Davinci
-description: 可视洞察平台
+highlighter: pygments
+markdown: kramdown
 google_analytics:
 show_downloads: true
-theme: jekyll-theme-architect
+plugins:
+  - jekyll-redirect-from
 
-gems:
-  - jekyll-mentions
+kramdown:
+  entity_output: numeric
+
+include:
+  - _static
+  - _modules
+
+DAVINCI_VERSION: 0.3
+DAVINCI_VERSION_SHORT: 0.3
