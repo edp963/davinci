@@ -580,8 +580,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           func: l.agg
         })))
     }
-    groups.sort()
-    aggregators.sort()
 
     const orders = []
     Object.values(commonParams).concat(Object.values(specificParams))
