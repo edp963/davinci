@@ -1,3 +1,7 @@
+---
+layout: global
+title: Project Authority
+---
 # 教程
 
 ## 用户与权限体系

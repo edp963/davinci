@@ -1,3 +1,7 @@
+---
+layout: global
+title: Source Guide
+---
 # 教程
 
 ## 数据源管理

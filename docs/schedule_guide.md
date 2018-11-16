@@ -1,3 +1,7 @@
+---
+layout: global
+title: Schedule Guide
+---
 # 教程
 
 ## 定时任务发送

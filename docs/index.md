@@ -1,3 +1,9 @@
+---
+layout: global
+displayTitle: Davinci Overview
+title: Overview
+description: Davinci DAVINCI_VERSION_SHORT documentation homepage
+---
 # 概述
 
 ## 1 平台介绍

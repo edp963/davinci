@@ -1,3 +1,7 @@
+---
+layout: global
+title: Quick Start
+---
 # 教程
 
 ## 第一个应用

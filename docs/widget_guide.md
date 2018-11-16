@@ -1,3 +1,7 @@
+---
+layout: global
+title: Widget Guide
+---
 # 教程
 
 ## 可视组件管理

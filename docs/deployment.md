@@ -1,3 +1,7 @@
+---
+layout: global
+title: Deployment
+---
 # 安装
 
 ## 1 环境准备

@@ -1,3 +1,7 @@
+---
+layout: global
+title: Display Guide
+---
 # 教程
 
 ## Display 大屏

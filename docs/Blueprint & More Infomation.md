@@ -1,3 +1,7 @@
+---
+layout: global
+title: Blueprint & More Information
+---
 # 蓝图
 
 Davinci 将有更多的优化，更多的新功能，请保持关注！

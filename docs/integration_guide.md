@@ -1,3 +1,7 @@
+---
+layout: global
+title: Integration Guide
+---
 # 教程
 
 ## 集成整合支持

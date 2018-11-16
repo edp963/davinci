@@ -1,3 +1,8 @@
+---
+layout: global
+title: Dashboard Guide
+---
+
 # 教程
 
 ## 仪表板管理

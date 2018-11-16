@@ -1,3 +1,8 @@
+---
+layout: global
+title: 教程
+---
+
 # 教程
 
 ## 数据视图管理
