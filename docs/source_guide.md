@@ -1,12 +1,10 @@
 ---
 layout: global
-title: Source
+title: 数据源管理
 ---
 
 
-## 数据源管理
-
-数据源管理主要是指数据源的导入和相关编辑工作。Davinci 0.3 目前支持通过 JDBC 连接的数据源，例如 mysql、oracle、es、spark、hive 等，也支持 CSV 数据文件上传。
+数据源管理（Source）主要是指数据源的导入和相关编辑工作。Davinci 0.3 目前支持通过 JDBC 连接的数据源，例如 mysql、oracle、es、spark、hive 等，也支持 CSV 数据文件上传。
 
 ### 1 新增数据源
 

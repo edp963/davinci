@@ -1,10 +1,8 @@
 ---
 layout: global
-title: Display
+title: 大屏管理
 ---
 
-
-## Display 大屏
 
 大屏（Display），即可视化大屏应用，适用于特定像素屏幕下数据可视化的应用场景。Display 所提供的组件功能较为复杂，对页面布局和样式要求较为精细。
 

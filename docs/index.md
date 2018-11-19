@@ -4,7 +4,8 @@ displayTitle: Davinci Overview
 title: Overview
 description: Davinci DAVINCI_VERSION_SHORT Documentation Homepage
 ---
-# 概述
+
+> 来自[宜信技术研发中心](http://www.creditease.com)的大数据可视化平台
 
 ## 1 平台介绍
 

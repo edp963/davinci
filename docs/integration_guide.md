@@ -1,10 +1,8 @@
 ---
 layout: global
-title: Integration
+title: 集成整合支持
 ---
 
-
-## 集成整合支持
 
 集成整合能力是指无缝集成到三方系统里，使其和三方系统融为一体。通过使用 Davinci 的分享功能就可以做到这点。分享有两个层级，一是分享单个 Widget，二是分享 Dashboard/Display。分享都支持“普通分享”和“授权分享”。同时，Schedule 功能能以邮件的形式定时分享若干个 Widget/Dashboard/Display。另外，Davinci 还具备让用户下载的能力，无论是在登录的页面还是在分享页面，你都能做到。
 
