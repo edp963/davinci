@@ -26,7 +26,6 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class SourceTest {
 
-    @NotBlank(message = "connection username cannot be empty")
     private String username;
     private String password;
 
