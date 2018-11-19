@@ -1,11 +1,8 @@
 ---
 layout: global
-title: Dashboard
+title: 仪表板管理
 ---
 
-
-
-## 仪表板管理
 
 ### 1 数据应用层
 
