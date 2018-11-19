@@ -30,10 +30,11 @@ public enum DataTypeEnum {
 
     SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\"", "\"", "\"", "\""),
 
-    H2("h2", "h2", "org.h2.Driver", "`", "`", "'", "'"),
+    H2("h2", "h2", "org.h2.Driver", "`", "`", "\"", "\""),
 
     PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", "", "", "\"", "\""),
 
+    //TODO
     MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", "", "", "'", "'"),
 
     ELASTICSEARCH("sql4es", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
@@ -46,7 +47,7 @@ public enum DataTypeEnum {
 
     CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", "", "", "\"", "\""),
 
-    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", "", "", "'", "'"),
+    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", "\"", "\"", "\"", "\""),
 
     VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver", "", "", "'", "'"),
 
