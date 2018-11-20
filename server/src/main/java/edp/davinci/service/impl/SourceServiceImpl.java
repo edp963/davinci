@@ -451,10 +451,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 //传输数据
                 insertData(csvEntity.getHeaders(), csvEntity.getValues(), csvUpload, source);
             }
-        } catch (SourceException e) {
-            e.printStackTrace();
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        } catch (ServerException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }

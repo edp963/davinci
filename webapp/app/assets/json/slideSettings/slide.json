@@ -23,13 +23,6 @@
       "title": "背景颜色",
       "component": "colorPicker",
       "default": [255,255,255]
-    }, {
-      "name": "opacity",
-      "title": "透明度",
-      "component": "inputnumber",
-      "default": 50,
-      "min": 0,
-      "max": 100
     }]
   }, {
     "name": "scale",

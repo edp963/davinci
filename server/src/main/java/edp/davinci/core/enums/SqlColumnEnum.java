@@ -68,7 +68,12 @@ public enum SqlColumnEnum {
         type = type.toUpperCase();
         for (SqlColumnEnum sqlTypeEnum : values()) {
             if (sqlTypeEnum.type.equals(type)) {
-                Object object = s2dbValue(type, value);
+                Object object = null;
+                try {
+                    object = s2dbValue(type, value);
+                } catch (Exception e) {
+                    throw new ServerException(e.toString() + ":[" + type + ":" + value + "]");
+                }
                 return object;
             }
         }
@@ -89,7 +94,7 @@ public enum SqlColumnEnum {
         return null;
     }
 
-    private static Object s2dbValue(String type, String value) {
+    private static Object s2dbValue(String type, String value) throws Exception {
         Object result = value.trim();
         if (StringUtils.isEmpty(value)) {
             return null;
@@ -113,7 +118,9 @@ public enum SqlColumnEnum {
             case "NUMERIC":
                 if ("".equals(value.trim())) {
                     result = new BigDecimal("0.0").stripTrailingZeros();
-                } else result = new BigDecimal(value.trim()).stripTrailingZeros();
+                } else {
+                    result = new BigDecimal(value.trim()).stripTrailingZeros();
+                }
                 break;
 
             case "FLOAT":

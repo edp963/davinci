@@ -33,6 +33,8 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
+const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
+const defaultThemeColors = defaultTheme.theme.color
 
 export default function (chartProps: IChartProps) {
   const {
@@ -70,7 +72,7 @@ export default function (chartProps: IChartProps) {
   } = spec
 
   const labelOption = {
-    label: getLabelOption(label)
+    label: getLabelOption('line', label)
   }
 
   let xAxisData = data.map((d) => d[cols[0]] || '')
@@ -83,7 +85,7 @@ export default function (chartProps: IChartProps) {
   const series = []
   const seriesData = []
 
-  metrics.forEach((m) => {
+  metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
     if (color.items.length) {
@@ -153,7 +155,7 @@ export default function (chartProps: IChartProps) {
         itemStyle: {
           normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
-            color: color.value[m.name] || color.value['all']
+            color: color.value[m.name] || defaultThemeColors[i]
           }
         },
         smooth,
@@ -213,7 +215,7 @@ export default function (chartProps: IChartProps) {
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
     series,
     tooltip: {
-      formatter: getChartTooltipLabel(seriesData, { cols, metrics, color, tip })
+      formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
     grid: getGridPositions(legend, seriesNames)

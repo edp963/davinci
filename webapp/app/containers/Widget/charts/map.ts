@@ -22,14 +22,14 @@
  * map chart options generator
  */
 
-// import geoData from '../../../assets/json/geo.json'
+// import geoData from '../../../assets/json/city.json'
 import { safeAddition } from '../../../utils/util'
 import { DEFAULT_ECHARTS_THEME } from '../../../globalConstants'
 
 let geoData
 
 export default function (dataSource, flatInfo, chartParams, interactIndex) {
-  return import('../../../assets/json/geo.json').then((d) => {
+  return import('../../../assets/json/geo').then((d) => {
     geoData = d
 
     const {

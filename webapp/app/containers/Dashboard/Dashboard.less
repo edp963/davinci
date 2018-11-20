@@ -250,6 +250,8 @@
     flex: 1;
     min-height: 0;
     padding: 16px;
+    display: flex;
+    flex-direction: column;
   }
 }
 
@@ -568,4 +570,22 @@
   height: 400px;
   display: flex;
   flex-direction: column;
+}
+.dataDrillPanel {
+  position: absolute;
+  color: rgba(0,0,0,.54);
+  background: #fff;
+  box-shadow: 0 0 6px 0 rgba(0,0,0,.1), 0 10px 12px 0 rgba(170,182,206,.36);
+}
+.dataDrillHistory {
+  position: absolute;
+  color: rgba(0,0,0,.4);
+  left: 22px;
+  bottom: 8px;
+  span {
+    cursor: pointer;
+    &:hover {
+      color: @rich-text;
+    }
+  }
 }

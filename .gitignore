@@ -25,8 +25,8 @@ spark-warehouse
 *.log
 *.conf
 config/application.yml
+config/datasource_driver.yml
 swagger-ui/
-lib/
 tempFiles/
 userfiles/
 .vscode

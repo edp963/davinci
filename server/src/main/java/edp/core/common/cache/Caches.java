@@ -20,7 +20,7 @@ package edp.core.common.cache;
 
 public enum Caches {
     datasource,
-    query(10, 100)
+    query(10, 10000)
     ;
 
     private int maxSize = 1000; //默认最大缓存数量

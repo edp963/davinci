@@ -66,7 +66,7 @@ export default function (chartProps: IChartProps) {
   } = splitLine
 
   const labelOption = {
-    label: getLabelOption(labelStyleConfig, true, {
+    label: getLabelOption('scatter', labelStyleConfig, true, {
       formatter (param) {
         return param.data.value[2]
       }
@@ -217,7 +217,7 @@ export default function (chartProps: IChartProps) {
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, decodeMetricName(metrics[1].name)),
     series,
     tooltip: {
-      formatter: getChartTooltipLabel(seriesData, { cols, metrics, color, tip })
+      formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
     grid: getGridPositions(legend, seriesNames)

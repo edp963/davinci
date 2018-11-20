@@ -27,12 +27,15 @@ import edp.core.enums.SqlTypeEnum;
 import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
-import edp.core.model.BaseSource;
-import edp.core.model.CustomDataSource;
-import edp.core.model.QueryColumn;
-import edp.core.model.TableInfo;
+import edp.core.model.*;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jsqlparser.JSQLParserException;
+import net.sf.jsqlparser.parser.CCJSqlParserManager;
+import net.sf.jsqlparser.schema.Column;
+import net.sf.jsqlparser.statement.select.PlainSelect;
+import net.sf.jsqlparser.statement.select.Select;
+import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
@@ -42,12 +45,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.io.StringReader;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -111,14 +112,99 @@ public class SqlUtils {
         return list;
     }
 
+    @CachePut(value = "query", keyGenerator = "keyGenerator")
+    public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws ServerException {
 
-    @Cacheable(value = "query", key = "#sql", sync = true)
+        sql = filterAnnotate(sql);
+        checkSensitiveSql(sql);
+
+        final Paginate<Map<String, Object>> paginate = new Paginate<>();
+        try {
+            if (pageNo < 1 && pageSize < 1) {
+                if (limit < 1) {
+                    paginate.setResultList(syncQuery4List(sql));
+                } else {
+                    List<Map<String, Object>> list = syncQuery4ListByLimit(sql, limit);
+                    paginate.setResultList(list);
+                    paginate.setTotalCount(list.size());
+                }
+            } else {
+
+                JdbcTemplate jdbcTemplate = jdbcTemplate();
+
+                paginate.setPageNo(pageNo);
+                paginate.setPageSize(pageSize);
+
+                final int startRow = (pageNo - 1) * pageSize;
+                String finalSql = sql;
+                jdbcTemplate.query(finalSql, (ResultSet resultSet) -> {
+
+                    int total = 0;
+                    try {
+                        resultSet.last();
+                        total = resultSet.getRow();
+                        resultSet.first();
+                    } catch (SQLException e) {
+                        String countSql = getCountSql(finalSql);
+                        total = jdbcTemplate.queryForObject(countSql, Integer.class);
+                    }
+
+                    if (limit > 0) {
+                        total = limit < total ? limit : total;
+                    }
+                    paginate.setTotalCount(total);
+
+                    final List<Map<String, Object>> resultList = paginate.getResultList();
+                    int currentRow = 0;
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+
+                    while (resultSet.next() && currentRow < startRow + pageSize) {
+                        if (currentRow >= startRow && currentRow < total) {
+                            Map<String, Object> map = new HashMap<>();
+                            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                                String c = metaData.getColumnName(i);
+                                Object v = resultSet.getObject(c);
+                                map.put(c, v);
+                            }
+                            resultList.add(map);
+                        }
+                        currentRow++;
+                    }
+                    return paginate;
+                });
+            }
+
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        }
+        return paginate;
+    }
+
+
+    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
+    public Paginate<Map<String, Object>> syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer limit) throws ServerException {
+        if (null == pageNo) {
+            pageNo = -1;
+        }
+        if (null == pageSize) {
+            pageSize = -1;
+        }
+
+        if (null == limit) {
+            limit = -1;
+        }
+
+        Paginate<Map<String, Object>> paginate = query4Paginate(sql, pageNo, pageSize, limit);
+        return paginate;
+    }
+
+    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public List<Map<String, Object>> syncQuery4List(String sql) throws ServerException {
         List<Map<String, Object>> list = query4List(sql, -1);
         return list;
     }
 
-    @Cacheable(value = "query", key = "T(String).valueOf(#limit).concat('-').concat(#sql)", sync = true)
+    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
     public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws ServerException {
         List<Map<String, Object>> list = query4List(sql, limit);
         return list;
@@ -152,7 +238,8 @@ public class SqlUtils {
             if (null != connection) {
                 DatabaseMetaData metaData = connection.getMetaData();
                 String schemaPattern = null;
-                if (DataTypeEnum.ORACLE.getFeature().equals(DataTypeEnum.urlOf(this.jdbcUrl).getFeature())) {
+                DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(this.jdbcUrl);
+                if (null != dataTypeEnum && dataTypeEnum.getFeature().equals(DataTypeEnum.ORACLE.getFeature())) {
                     schemaPattern = this.username;
                     if (null != schemaPattern) {
                         schemaPattern = schemaPattern.toUpperCase();
@@ -531,7 +618,7 @@ public class SqlUtils {
     }
 
     public static String getAliasPrefix(String jdbcUrl) {
-        String aliasPrefix = "'";
+        String aliasPrefix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasPrefix = dataTypeEnum.getAliasPrefix();
@@ -541,11 +628,11 @@ public class SqlUtils {
                 aliasPrefix = customDataSource.getAlias_prefix();
             }
         }
-        return StringUtils.isEmpty(aliasPrefix) ? "'" : aliasPrefix;
+        return StringUtils.isEmpty(aliasPrefix) ? "" : aliasPrefix;
     }
 
     public static String getAliasSuffix(String jdbcUrl) {
-        String aliasSuffix = "'";
+        String aliasSuffix = "";
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         if (null != dataTypeEnum) {
             aliasSuffix = dataTypeEnum.getAliasSuffix();
@@ -555,7 +642,7 @@ public class SqlUtils {
                 aliasSuffix = customDataSource.getAlias_suffix();
             }
         }
-        return StringUtils.isEmpty(aliasSuffix) ? "'" : aliasSuffix;
+        return StringUtils.isEmpty(aliasSuffix) ? "" : aliasSuffix;
     }
 
 
@@ -581,7 +668,29 @@ public class SqlUtils {
             Matcher matcher = pattern.matcher(type);
             if (!matcher.find()) {
                 return SqlTypeEnum.getType(type);
+            } else {
+                return type;
             }
+        }
+        return null;
+    }
+
+    private String getCountSql(String sql) {
+        try {
+            CCJSqlParserManager parserManager = new CCJSqlParserManager();
+            net.sf.jsqlparser.statement.Statement parse = parserManager.parse(new StringReader(sql));
+
+            if (parse instanceof Select) {
+                Select select = (Select) parse;
+                PlainSelect selectBody = (PlainSelect) select.getSelectBody();
+                SelectExpressionItem selectExpressionItem = new SelectExpressionItem();
+                selectExpressionItem.setExpression(new Column("count(*)"));
+
+                selectBody.setSelectItems(Arrays.asList(selectExpressionItem));
+                return select.toString();
+            }
+        } catch (JSQLParserException e) {
+            return null;
         }
         return null;
     }

@@ -208,7 +208,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   public componentDidMount () {
-    console.log('index')
     this.props.onHideNavigator()
   }
 
@@ -583,7 +582,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private cancel = () => {
-    this.props.router.goBack()
+    const { router, params } = this.props
+    router.replace(`/project/${params.pid}/vizs`)
   }
 
   public render () {
@@ -670,12 +670,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       return <TreeNode icon={<Icon type="smile-o" />} key={item.id} title={dashboardAction} />
     })
 
-    console.log({currentProject})
     const AdminIcon = ModulePermission<IconProps>(currentProject, 'viz', true)(Icon)
 
     let portalDec = ''
     if (portals) {
-      portalDec = portals.find((p) => p.name === params.portalName).description
+      portalDec = portals.find((p) => p.id === Number(params.portalId)).description
     }
     return (
       <div className={styles.portal}>

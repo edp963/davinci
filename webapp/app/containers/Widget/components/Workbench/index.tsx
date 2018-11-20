@@ -19,7 +19,8 @@ import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
-import { getStyleConfig, getTable } from 'containers/Widget/components/util'
+import { getStyleConfig } from 'containers/Widget/components/util'
+import ChartTypes from '../../config/chart/ChartTypes'
 const message = require('antd/lib/message')
 const styles = require('./Workbench.less')
 
@@ -103,12 +104,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         metrics: [],
         filters: [],
         chartStyles: getStyleConfig({}),
-        selectedChart: getTable().id,
+        selectedChart: ChartTypes.Table,
         orders: [],
         queryParams: [],
         cache: false,
         expired: 300,
-        mode: 'pivot'
+        mode: 'pivot',
+        model: {}
       }
     }
   }
@@ -226,11 +228,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
-        const editSign = localStorage.getItem('editWidgetFromDashboard')
-        if (editSign) {
-          localStorage.removeItem('editWidgetFromDashboard')
-          const [pid, portalId, portalName, dashboardId, itemId] = editSign.split(DEFAULT_SPLITER)
+        const editSignDashboard = sessionStorage.getItem('editWidgetFromDashboard')
+        const editSignDisplay = sessionStorage.getItem('editWidgetFromDisplay')
+        if (editSignDashboard) {
+          sessionStorage.removeItem('editWidgetFromDashboard')
+          const [pid, portalId, portalName, dashboardId, itemId] = editSignDashboard.split(DEFAULT_SPLITER)
           this.props.router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+        } else if (editSignDisplay) {
+          sessionStorage.removeItem('editWidgetFromDisplay')
+          const [pid, displayId] = editSignDisplay.split(DEFAULT_SPLITER)
+          this.props.router.replace(`/project/${pid}/display/${displayId}`)
         } else {
           this.props.router.replace(`/project/${params.pid}/widgets`)
         }
@@ -244,7 +251,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private cancel = () => {
-    localStorage.removeItem('editWidgetFromDashboard')
+    sessionStorage.removeItem('editWidgetFromDashboard')
+    sessionStorage.removeItem('editWidgetFromDisplay')
     this.props.router.goBack()
   }
 
@@ -272,6 +280,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     return (
       <div className={styles.workbench}>
         <EditorHeader
+          currentType="workbench"
           className={styles.header}
           name={name}
           description={description}
@@ -301,7 +310,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             onLoadDistinctValue={onLoadDistinctValue}
           />
           <div className={styles.viewPanel}>
-            <div className={styles.pivotBlock}>
+            <div className={styles.widgetBlock}>
               <Widget
                 {...widgetProps}
                 loading={dataLoading}

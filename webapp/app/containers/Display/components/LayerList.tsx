@@ -2,7 +2,7 @@ import * as React from 'react'
 import {
   selectLayer
 } from '../actions'
-import { OrderDirection } from '../../../utils/util'
+import { OrderDirection } from './util'
 
 const Icon = require('antd/lib/icon')
 const Tooltip = require('antd/lib/tooltip')
@@ -151,11 +151,11 @@ export class LayerList extends React.Component <ILayerListProps, ILayerListState
   }]
 
   private changeLayerStatus = (layerId) => (e: React.MouseEvent<HTMLElement>) => {
-    const { ctrlKey, metaKey } = e
-    const { layersStatus, onSelectLayer } = this.props
-    const exclusive = !ctrlKey && !metaKey
-    onSelectLayer({ id: layerId, selected: !layersStatus[layerId].selected, exclusive})
     e.stopPropagation()
+    const { altKey, metaKey } = e
+    const { layersStatus, onSelectLayer } = this.props
+    const exclusive = !altKey && !metaKey
+    onSelectLayer({ id: layerId, selected: !layersStatus[layerId].selected, exclusive})
   }
 
   private getLayersByIndexDesc = (layers: any[]) => {

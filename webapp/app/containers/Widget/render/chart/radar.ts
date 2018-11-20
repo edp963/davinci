@@ -18,140 +18,119 @@
  * >>
  */
 
-export default function (dataSource, flatInfo, chartParams, interactIndex) {
+import { IChartProps } from '../../components/Chart'
+import {
+  decodeMetricName,
+  getChartTooltipLabel,
+  getSizeValue,
+  getSizeRate
+} from '../../components/util'
+import {
+  getMetricAxisOption,
+  getLabelOption,
+  getLegendOption,
+  getGridPositions,
+  getSymbolSize
+} from './util'
+
+export default function (chartProps: IChartProps) {
   const {
-    dimension,
+    width,
+    height,
+    data,
+    cols,
     metrics,
-    hasLegend,
-    legendSelected,
+    chartStyles,
+    color,
+    tip
+  } = chartProps
+
+  const {
+    label,
+    legend,
+    spec,
+    toolbox
+  } = chartStyles
+
+  const {
     legendPosition,
-    toolbox,
-    top,
-    bottom,
-    left,
-    right
-  } = chartParams
+    fontSize
+  } = legend
 
-  let metricOptions
-  let legendOptions
-  let toolboxOptions
-  let gridOptions
-  let data
-  let radarOptions
+  const { shape } = spec
 
-  if (dimension && dimension.length) {
-    if (metrics && metrics.length) {
-      const metricData = metrics.map((me) => dataSource.map((data) => data[me]))
-      data = metrics.map((me, index) => ({
-        name: me,
-        value: metricData[index]
-      }))
-
-      radarOptions = {
-        radar: {
-          name: {
-            textStyle: {
-              color: '#fff',
-              backgroundColor: '#999',
-              borderRadius: 3,
-              padding: [3, 5]
-            }
-          },
-          indicator: dataSource.map((data) => data[dimension]).map((name, index) => {
-            const max = Math.max.apply(null, metrics.map((me) => dataSource.map((data) => data[me])).map((list) => list[index]).map((arr) => parseFloat(arr)))
-            return {
-              name,
-              max: max + Math.floor(max * 0.1)
-            }
-          })
-        }
-      }
-    }
+  const labelOption = {
+    label: getLabelOption('radar', label)
   }
-  metricOptions = {
-    series: [{
-     // name: metricName && metricName.length ? metricName : '',
-      type: 'radar',
-      data
-    }]
+
+  let dimensions = []
+  if (cols.length) {
+    dimensions = dimensions.concat(cols)
   }
-  // legend
-  let adjustedBottom = 0
-  let adjustedRight = 0
-
-  if (hasLegend && hasLegend.length) {
-    let orient
-    let positions
-
-    switch (legendPosition) {
-      case 'right':
-        orient = { orient: 'vertical' }
-        positions = { right: 8, top: 40, bottom: 16 }
-        adjustedRight = 108
-        break
-      case 'bottom':
-        orient = { orient: 'horizontal' }
-        positions = { bottom: 16, left: 8, right: 8 }
-        adjustedBottom = 72
-        break
-      default:
-        orient = { orient: 'horizontal' }
-        positions = { top: 3, left: 8, right: 120 }
-        break
-    }
-
-    const selected = legendSelected === 'unselectAll'
-      ? {
-        selected: metrics.reduce((obj, m) => ({ ...obj, [m]: false }), {})
-      } : null
-
-    legendOptions = {
-      legend: {
-        data: metrics,
-        type: 'scroll',
-        ...orient,
-        ...positions,
-        ...selected
-      }
-    }
+  if (color.items.length) {
+    dimensions = dimensions.concat(color.items.map((c) => c.name))
   }
-  // toolbox
-  toolboxOptions = toolbox && toolbox.length
-    ? {
-      toolbox: {
-        feature: {
-          dataZoom: {
-            yAxisIndex: 'none'
-          },
-          restore: {},
-          saveAsImage: {
-            pixelRatio: 2
-          }
-        },
-        right: 8
-      }
-    } : null
-  // grid
-  gridOptions = {
-    grid: {
-      top,
-      left,
-      right: Math.max(right, adjustedRight),
-      bottom: Math.max(bottom, adjustedBottom)
+  const dimension = dimensions[0]
+
+  const metricsNames = metrics.map((m) => decodeMetricName(m.name))
+  const legendData = metricsNames
+  const indicatorData = {}
+  let indicatorMax = -Infinity
+  const dimensionData = metricsNames.reduce((acc, name) => ({
+    ...acc,
+    [name]: {}
+  }), {})
+  data.forEach((row) => {
+    if (!indicatorData[row[dimension]]) {
+      indicatorData[row[dimension]] = -Infinity
     }
+
+    metrics.forEach((m) => {
+      const name = decodeMetricName(m.name)
+      const cellVal = row[`${m.agg}(${name})`]
+      indicatorMax = Math.max(indicatorMax, cellVal)
+      if (!dimensionData[name][row[dimension]]) {
+        dimensionData[name][row[dimension]] = 0
+      }
+      dimensionData[name][row[dimension]] += cellVal
+    })
+  })
+  const indicator = Object.keys(indicatorData).map((name: string) => ({
+    name,
+    max: indicatorMax + Math.round(indicatorMax * 0.1)
+  }))
+  const seriesData = Object.entries(dimensionData).map(([name, value]) => ({
+    name,
+    value: Object.values(value)
+  }))
+
+  const {
+    showLabel,
+    labelColor,
+    labelFontFamily,
+    labelFontSize
+  } = label
+
+  const radarName = {
+    show: showLabel,
+    color: labelColor,
+    fontFamily: labelFontFamily,
+    fontSize: labelFontSize
   }
 
   return {
-    tooltip: {
-      trigger: 'item',
-      axisPointer: {
-        type: 'shadow'
-      }
+    tooltip : {},
+    legend: getLegendOption(legend, legendData),
+    radar: {
+      // type: 'log',
+      shape,
+      indicator,
+      name: radarName
     },
-    ...metricOptions,
-    ...radarOptions,
-    ...legendOptions,
-    ...gridOptions,
-    ...toolboxOptions
+    series: [{
+      name: '',
+      type: 'radar',
+      data: seriesData
+    }]
   }
 }

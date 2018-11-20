@@ -34,7 +34,7 @@ const Modal = require('antd/lib/modal')
 
 const styles = require('../Display.less')
 
-import slideSettings from '../../../assets/json/slideSettings'
+import { slideSettings, GraphTypes, SecondaryGraphTypes } from './util'
 import LayerSelector from './LayerSelector'
 import SharePanel from '../../../components/SharePanel'
 
@@ -44,10 +44,7 @@ import {
   makeSelectCurrentDisplayShareInfoLoading
 } from '../selectors'
 
-import {
-  uuid,
-  GraphTypes,
-  SecondaryGraphTypes } from 'utils/util'
+import { uuid } from 'utils/util'
 
 interface IDisplayHeaderProps {
   params: any
@@ -240,6 +237,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
             className="iconfont icon-rect-text"
             onClick={this.addSecondaryGraph(SecondaryGraphTypes.Label)}
           > 标签
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-video"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Video)}
+          > 视频
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-clock"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Timer)}
+          > 时间器
           </i>
         </Menu.Item>
       </Menu>

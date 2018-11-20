@@ -1,9 +1,11 @@
 import * as React from 'react'
 import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
+import moment from 'moment'
 
 const Tooltip = require('antd/lib/tooltip')
-import Draggable from '../../../../libs/react-draggable/react-draggable'
+import Draggable from 'libs/react-draggable'
+import Video from 'components/Video'
 
 // @TODO contentMenu
 // const Dropdown = require('antd/lib/dropdown')
@@ -13,12 +15,14 @@ import Draggable from '../../../../libs/react-draggable/react-draggable'
 import {
   GraphTypes,
   SecondaryGraphTypes
-} from 'utils/util'
+} from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
 import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import { IModel } from '../../Widget/components/Workbench/index'
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 
-const Resizable = require('../../../../libs/react-resizable').Resizable
+const Icon = require('antd/lib/icon')
+const Resizable = require('libs/react-resizable').Resizable
 
 const styles = require('../Display.less')
 
@@ -32,6 +36,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
+  view: any
   data: any
   loading: boolean
   polling: string
@@ -43,17 +48,20 @@ interface ILayerItemProps {
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
-  onDragLayer?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
-  onDragLayerStop?: (itemId: number, delta: { deltaX: number, deltaY: number }) => void
-  onResizeLayer?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
-  onResizeLayerStop?: (itemId: number, delta: { deltaWidth: number, deltaHeight: number }) => void
+  onDragLayer?: (itemId: number, deltaPosition: IDeltaPosition) => void
+  onDragLayerStop?: (itemId: number, deltaPosition: IDeltaPosition) => void
+  onResizeLayer?: (itemId: number, deltaSize: IDeltaSize) => void
+  onResizeLayerStop?: (itemId: number, deltaSize: IDeltaSize) => void
+  onEditWidget?: (itemId: number, widgetId: number) => void
 }
 
 interface ILayerItemStates {
-  layerParams: any
+  layerParams: ILayerParams
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetProps
+  model: IModel
+  currentTime: string
 }
 
 export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemStates> {
@@ -67,16 +75,19 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerParams,
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
-      widgetProps: null
+      widgetProps: null,
+      model: null,
+      currentTime: ''
     }
   }
 
   public componentWillMount () {
-    const { widget } = this.props
+    const { widget, view } = this.props
     if (!widget) { return }
 
     this.setState({
-      widgetProps: JSON.parse(widget.config)
+      widgetProps: JSON.parse(widget.config),
+      model: JSON.parse(view.model)
     })
   }
 
@@ -91,7 +102,14 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   public componentWillReceiveProps (nextProps: ILayerItemProps) {
     const { layer } = this.props
     if (layer.params !== nextProps.layer.params) {
-      const layerParams = JSON.parse(nextProps.layer.params)
+      const layerParams: ILayerParams = JSON.parse(nextProps.layer.params)
+      if (layer.subType === SecondaryGraphTypes.Timer) {
+        const { timeFormat } = layerParams
+        this.setState({
+          layerParams,
+          currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
+        })
+      }
       this.setState({
         layerParams
       })
@@ -99,7 +117,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     if (this.props.widget !== nextProps.widget) {
       this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config)
+        widgetProps: JSON.parse(nextProps.widget.config),
+        model: nextProps.view && JSON.parse(nextProps.view.model)
       })
     }
   }
@@ -131,6 +150,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
   public componentWillUnmount () {
     clearInterval(this.frequent)
+    clearInterval(this.timer)
   }
 
   private frequent: number
@@ -158,19 +178,24 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     this.setState({
       mousePos: [e.pageX, e.pageY]
     })
+    console.log('drag starts')
     return e.target !== data.node.lastElementChild
   }
 
-  private dragOnStop = (e: Event, data) => {
+  private dragOnStop = (e, data: IDeltaPosition) => {
     e.stopPropagation()
-    const { deltaX, deltaY } = data
     const {
       itemId,
       onDragLayerStop } = this.props
-    onDragLayerStop(itemId, { deltaX, deltaY })
+    const { mousePos } = this.state
+    if (mousePos[0] === e.pageX && mousePos[1] === e.pageY) {
+      return
+    }
+    console.log('drag stops')
+    onDragLayerStop(itemId, data)
   }
 
-  private onDrag = (e, { deltaX, deltaY }) => {
+  private onDrag = (e, { deltaX, deltaY }: IDeltaPosition) => {
     e.stopPropagation()
     const { itemId, onDragLayer } = this.props
     if (onDragLayer) { onDragLayer(itemId, { deltaX, deltaY }) }
@@ -200,7 +225,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     onResizeLayerStop(itemId, delta)
   }
 
-  private onClickLayer = (e) => {
+  private onClickLayer = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     if (this.props.pure) { return }
     const mousePos = [e.pageX, e.pageY]
@@ -214,9 +239,14 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       onSelectLayer
     } = this.props
 
-    const { ctrlKey, metaKey } = e
-    const exclusive = !ctrlKey && !metaKey
+    const { altKey, metaKey } = e
+    const exclusive = !altKey && !metaKey
     onSelectLayer({ id: layer.id, selected: !selected, exclusive})
+  }
+
+  private toWorkbench = () => {
+    const { itemId, widget, onEditWidget } = this.props
+    onEditWidget(itemId, widget.id)
   }
 
   private renderLayer = (layer) => {
@@ -247,7 +277,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      widgetProps } = this.state
+      widgetProps,
+      model } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -265,12 +296,18 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         style={layerStyle}
         onClick={this.onClickLayer}
       >
+        <div className={styles.tools}>
+          <Tooltip title="编辑">
+            <Icon type="edit" onClick={this.toWorkbench} />
+          </Tooltip>
+        </div>
         {this.wrapLayerTooltip(
           (<Widget
             {...widgetProps}
             data={data || []}
             loading={loading}
             renderType={renderType}
+            model={model}
           />)
         )}
       </div>
@@ -281,19 +318,27 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { pure, scale } = this.props
     const {
       width, height,
-      backgroundImage, backgroundRepeat, backgroundSize, backgroundColor, opacity,
+      backgroundImage, backgroundRepeat, backgroundSize, backgroundColor,
       borderWidth, borderStyle, borderColor, borderRadius } = layerParams
+
     let layerStyle: React.CSSProperties = {
       width: `${width}px`,
       height: `${height}px`,
-      backgroundColor: `rgb(${backgroundColor.join()},${opacity / 100})`,
-      border: `${borderWidth}px ${borderStyle} rgb(${borderColor.join()}`,
-      borderRadius: `${borderRadius}px`,
       zIndex: layer.index
     }
-    if (backgroundImage) {
-      layerStyle.background = `${backgroundRepeat} ${backgroundSize} url("${backgroundImage}")`
+
+    if (borderWidth && borderStyle && borderColor) {
+      layerStyle.border = `${borderWidth}px ${borderStyle} rgba(${borderColor.join()}`
     }
+    if (borderRadius) {
+      layerStyle.borderRadius = `${borderRadius}px`
+    }
+    if (backgroundImage) {
+      layerStyle.background = `url("${backgroundImage}") 0% 0% / ${backgroundSize} ${backgroundRepeat}`
+    } else if (backgroundColor) {
+      layerStyle.backgroundColor = `rgba(${backgroundColor.join()})`
+    }
+
     if (pure) {
       layerStyle = {
         ...layerStyle,
@@ -313,6 +358,10 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         return this.renderRectangleLayer(layer)
       case SecondaryGraphTypes.Label:
         return this.renderLabelLayer(layer)
+      case SecondaryGraphTypes.Video:
+        return this.renderVideoLayer(layer)
+      case SecondaryGraphTypes.Timer:
+        return this.renderTimerLayer(layer)
       default:
         return null
     }
@@ -360,6 +409,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     })
     const layerStyle = this.getLayerStyle(layer, layerParams)
     const {
+      fontWeight,
       fontFamily,
       fontColor,
       fontSize,
@@ -378,8 +428,9 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const labelStyle: React.CSSProperties = {
       wordBreak: 'break-all',
       overflow: 'hidden',
+      fontWeight,
       fontFamily,
-      color: `rgb(${fontColor.join()})`,
+      color: `rgba(${fontColor.join()})`,
       fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
       textAlign,
       lineHeight: `${lineHeight * exactScaleHeight}px`,
@@ -390,9 +441,8 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       paddingLeft: `${paddingLeft * exactScaleWidth}px`
     }
     if (textStyle) {
-      layerStyle.fontWeight = textStyle.indexOf('bold') > -1 ? 'bold' : 'normal'
-      layerStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
-      layerStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
+      labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
+      labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
     }
     return (
       <div
@@ -404,6 +454,117 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         {this.wrapLayerTooltip(
           <p style={labelStyle}>
             {layerParams.contentText}
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  private renderVideoLayer = (layer) => {
+    const { layerParams } = this.state
+    const { src, controlSetting, start, end } = layerParams
+    const { pure, selected } = this.props
+
+    const layerClass = classnames({
+      [styles.layer]: true,
+      [styles.view]: !pure,
+      [styles.selected]: selected
+    })
+
+    const layerStyle = this.getLayerStyle(layer, layerParams)
+
+    const setting = controlSetting.reduce((acc, key) => ({
+      ...acc,
+      [key]: true
+    }), {})
+
+    return (
+      <div
+        ref={(f) => this.refLayer = f}
+        className={layerClass}
+        style={layerStyle}
+        onClick={this.onClickLayer}
+      >
+        {this.wrapLayerTooltip(
+          <Video
+            key={`video_${layer.id}`}
+            src={src}
+            start={start}
+            end={end}
+            {...setting}
+          />
+        )}
+      </div>
+    )
+  }
+
+
+  private timer = null
+  private renderTimerLayer = (layer) => {
+    const { layerParams, currentTime } = this.state
+    const { pure, scale, selected } = this.props
+
+    const layerClass = classnames({
+      [styles.layer]: true,
+      [styles.view]: !pure,
+      [styles.selected]: selected
+    })
+    const layerStyle = this.getLayerStyle(layer, layerParams)
+    const {
+      fontWeight,
+      fontFamily,
+      fontColor,
+      fontSize,
+      textAlign,
+      textStyle,
+      lineHeight,
+      textIndent,
+      paddingTop,
+      paddingBottom,
+      paddingLeft,
+      paddingRight,
+
+      timeFormat,
+      timeDuration
+    } = layerParams
+
+    const exactScaleWidth = pure ? scale[0] : 1
+    const exactScaleHeight = pure ? scale[1] : 1
+    const labelStyle: React.CSSProperties = {
+      wordBreak: 'break-all',
+      overflow: 'hidden',
+      fontWeight,
+      fontFamily,
+      color: `rgba(${fontColor.join()})`,
+      fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
+      textAlign,
+      lineHeight: `${lineHeight * exactScaleHeight}px`,
+      textIndent: `${textIndent * exactScaleWidth}px`,
+      paddingTop: `${paddingTop * exactScaleHeight}px`,
+      paddingRight: `${paddingRight * exactScaleWidth}px`,
+      paddingBottom: `${paddingBottom * exactScaleHeight}px`,
+      paddingLeft: `${paddingLeft * exactScaleWidth}px`
+    }
+    if (textStyle) {
+      labelStyle.fontStyle = textStyle.indexOf('italic') > -1 ? 'italic' : 'normal'
+      labelStyle.textDecoration = textStyle.indexOf('underline') > -1 ? 'underline' : 'none'
+    }
+    if (this.timer) { clearInterval(this.timer) }
+    this.timer = setInterval(() => {
+      this.setState({
+        currentTime: moment().format(timeFormat || 'YYYY-MM-dd HH:mm:ss')
+      })
+    }, timeDuration)
+    return (
+      <div
+        ref={(f) => this.refLayer = f}
+        className={layerClass}
+        style={layerStyle}
+        onClick={this.onClickLayer}
+      >
+        {this.wrapLayerTooltip(
+          <p style={labelStyle}>
+            {currentTime}
           </p>
         )}
       </div>
@@ -436,7 +597,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const { layerParams } = this.state
     const { positionX: x, positionY: y, width, height } = layerParams
 
-    const position = { x, y}
+    const position = { x, y }
 
     const content = this.renderLayer(layer)
     if (pure) { return content }
@@ -473,3 +634,68 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 }
 
 export default LayerItem
+
+export interface ILayer {
+  id: number
+  displaySlideId: number
+  index: number
+  name: string
+  params: string
+  subType: SecondaryGraphTypes
+  type: GraphTypes
+  widgetId: number
+}
+
+export interface ILayerParams {
+  backgroundColor: [number, number, number]
+  borderColor: [number, number, number]
+  borderRadius: number
+  borderStyle: string
+  borderWidth: number
+  frequency: number
+  height: number
+  polling: 'true' | 'false'
+  positionX: number
+  positionY: number
+  width: number
+  fontWeight: React.CSSProperties['fontWeight']
+  fontFamily: string
+  fontColor: [number, number, number]
+  fontSize: number
+  textAlign: string
+  textStyle: string
+  lineHeight: number
+  textIndent: number
+  paddingTop: number
+  paddingBottom: number
+  paddingLeft: number
+  paddingRight: number
+  contentText: string
+
+  src: string
+  controlSetting: string[]
+  start?: number
+  end?: number
+
+  timeFormat: string
+  timeDuration: number
+}
+
+export interface IDeltaPosition {
+  deltaX: number
+  deltaY: number
+}
+
+export interface IDeltaSize {
+  deltaWidth: number
+  deltaHeight: number
+}
+export interface IBaseline {
+  top: number
+  right: number
+  bottom: number
+  left: number
+  adjust: [number, number]
+  adjustType: 'position' | 'size'
+}
+

@@ -16,7 +16,7 @@ import sagaBizlogic from '../Bizlogic/sagas'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
-import { GraphTypes, SecondaryGraphTypes } from 'utils/util'
+import { GraphTypes, SecondaryGraphTypes } from './components/util'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 
 import Container from '../../components/Container'
@@ -33,9 +33,7 @@ import {
   makeSelectCurrentLayersInfo } from './selectors'
 
 import { hideNavigator } from '../App/actions'
-import { loadWidgets } from '../Widget/actions'
 import {
-  loadBizlogics,
   loadDataFromItem,
   loadCascadeSource, // TODO global filter in Display Preview
   loadBizdataSchema  } from '../Bizlogic/actions'
@@ -87,9 +85,7 @@ interface IPreviewProps {
     }
   }
   onHideNavigator: () => void
-  onLoadWidgets: (projectId: number) => void
-  onLoadBizlogics: () => any
-  onLoadDisplayDetail: (id: any) => void
+  onLoadDisplayDetail: (projectId: number, displayId: number) => void
   onLoadDataFromItem: (
     renderType: RenderType,
     layerItemId: number,
@@ -128,14 +124,11 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public componentWillMount () {
     const {
       params,
-      onLoadWidgets,
-      onLoadBizlogics,
       onLoadDisplayDetail
     } = this.props
     const projectId = +params.pid
     const displayId = +params.displayId
-    onLoadWidgets(projectId)
-    onLoadDisplayDetail(displayId)
+    onLoadDisplayDetail(projectId, displayId)
   }
 
   public componentDidMount () {
@@ -270,7 +263,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       width,
       height,
       backgroundColor,
-      opacity,
       backgroundImage
     } = slideParams
 
@@ -278,12 +270,13 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     slideStyle  = {
       overflow: 'visible',
       width: `${width * scale[0]}px`,
-      height: `${height * scale[1]}px`
+      height: `${height * scale[1]}px`,
+      backgroundSize: 'cover'
     }
 
     if (backgroundColor) {
-      const rgb = [...backgroundColor, (opacity / 100)].join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      const rgb = backgroundColor.join()
+      slideStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
       slideStyle.backgroundImage = `url("${backgroundImage}")`
@@ -294,6 +287,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public render () {
     const {
       widgets,
+      bizlogics,
       currentDisplay,
       currentSlide,
       currentLayers,
@@ -304,6 +298,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
+      const view = widget && bizlogics.find((b) => b.id === widget.viewId)
       const layerId = layer.id
 
       const { polling, frequency } = layer.params
@@ -318,6 +313,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           layer={layer}
           itemId={layerId}
           widget={widget}
+          view={view}
           data={datasource}
           loading={loading}
           polling={polling}
@@ -352,9 +348,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadDisplayDetail: (id) => dispatch(loadDisplayDetail(id)),
-    onLoadWidgets: (projectId: number) => dispatch(loadWidgets(projectId)),
-    onLoadBizlogics: (projectId: number, resolve?: any) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
     onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display'))
   }
 }

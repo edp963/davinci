@@ -164,7 +164,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     }, () => {
       const { id, name, description, config } = (this.props.schedule as any[]).find((s) => s.id === scheduleId)
       const config2json = JSON.parse(config)
-      const { time_range, range, contentList, month, hour, week, time } = config2json
+      const { time_range, range, contentList, month, hour, week, minute, time } = config2json
       const formatterContentList = this.json2arr(contentList)
       this.setState({
         emailConfig: config2json,
@@ -176,7 +176,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       }
       this.setState({
         rangeTime: time_range
-      }, () => this.scheduleForm.setFieldsValue({ id, name, description, range: momentRange, time_range, month, hour, week, time: moment(time) })
+      }, () => this.scheduleForm.setFieldsValue({ id, name, description, range: momentRange, time_range, month, hour, week, minute, time: moment(time) })
       )
     })
   }
@@ -255,6 +255,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
           } else {
             onUpdateSchedule(params, () => {
               this.hideForm()
+              this.props.onLoadSchedules(pid)
             })
           }
         })
@@ -428,7 +429,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
   }
 
   private onChangeRange = (value) => {
-    const rangeArr = ['month', 'hour', 'week', 'time']
+    const rangeArr = ['minute', 'month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
     })

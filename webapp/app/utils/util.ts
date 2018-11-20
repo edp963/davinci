@@ -101,22 +101,6 @@ export function getBase64 (img, callback) {
   reader.readAsDataURL(img)
 }
 
-export enum SecondaryGraphTypes {
-  Rectangle = 20,
-  Label = 21
-}
-
-export enum GraphTypes {
-  Slide,
-  Chart,
-  Secondary
-}
-
-export enum OrderDirection {
-  Asc,
-  Desc
-}
-
 /**
  * View 组件
  */

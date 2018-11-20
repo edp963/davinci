@@ -4,9 +4,10 @@ import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import chartOptionGenerator from '../../render/pivot'
 import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
-import { decodeMetricName, getScatter, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getBar, getTriggeringRecord } from '../util'
+import { decodeMetricName, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getTriggeringRecord } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
+import PivotTypes from '../../config/pivot/PivotTypes'
 const styles = require('./Pivot.less')
 
 export interface IChartUnit {
@@ -57,6 +58,9 @@ interface IChartProps {
   legend: ILegend
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: any) => void
+  getDataDrillDetail?: (position: string) => void
+  isDrilling?: boolean
+  // onHideDrillPanel?: (swtich: boolean) => void
 }
 
 interface IChartStates {
@@ -259,7 +263,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                   .concat(currentLabelItem && currentLabelItem.type === 'category' && currentLabelItem)
                   .filter((i) => !!i)
 
-                if (!(currentScatterXAxisItem && m.chart.id === getScatter().id)) {
+                if (!(currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter)) {
                   grid.push({
                     top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
                     left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
@@ -297,7 +301,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       }
                     })
 
-                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       xAxisData.forEach((colKey, xdIndex) => {
@@ -373,7 +377,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         const data = []
                         const backupData = []
                         xAxisData.forEach((colKey) => {
-                          if (m.chart.id === getScatter().id) {
+                          if (m.chart.id === PivotTypes.Scatter) {
                             const result = groupedRecords[colKey]
                               ? groupedRecords[colKey].reduce(([value, size], record) => [
                                   value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
@@ -404,7 +408,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           ...currentLabelItem && {
                             label: {
                               show: true,
-                              position: m.chart.id === getBar().id ? 'inside' : 'top',
+                              position: m.chart.id === PivotTypes.Bar ? 'inside' : 'top',
                               formatter: getChartLabel(seriesData, currentLabelItem)
                             }
                           },
@@ -420,7 +424,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       })
                     }
                   } else {
-                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       records.forEach((recordCollection, rcIndex) => {
@@ -488,7 +492,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     } else {
                       series.push({
                         data: records.map((recordCollection) => {
-                          if (m.chart.id === getScatter().id) {
+                          if (m.chart.id === PivotTypes.Scatter) {
                             const result = recordCollection.value
                               ? recordCollection.value.reduce(([value, size], record) => [
                                   value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
@@ -625,12 +629,27 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
           // console.log(xAxis)
           // console.log(yAxis)
           // console.log(series)
+          const { isDrilling } = this.props
+          const brushedOptions = isDrilling === true ? {
+            brush: {
+              toolbox: ['rect', 'polygon', 'keep', 'clear'],
+            //  toolbox: ['rect', 'polygon', 'lineX', 'lineY', 'keep', 'clear'],
+              throttleType: 'debounce',
+              throttleDelay: 300,
+              brushStyle: {
+                borderWidth: 1,
+                color: 'rgba(255,255,255,0.2)',
+                borderColor: 'rgba(120,140,180,0.6)'
+              }
+            }
+          } : null
 
           instance.setOption({
             tooltip: {
               position: getTooltipPosition,
               formatter: getPivotTooltipLabel(seriesData, cols, rows, metrics, color, label, size, scatterXAxis, tip)
             },
+            ...brushedOptions,
             grid,
             xAxis,
             yAxis,
@@ -646,6 +665,53 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                 onDoInteract(triggerData)
               }
             })
+          }
+
+          const { getDataDrillDetail} = this.props
+          if (isDrilling) {
+          //  instance.off('brushselected')
+            instance.on('brushselected', brushselected)
+            setTimeout(function () {
+              instance.dispatchAction({
+                type: 'takeGlobalCursor',
+                key: 'brush',
+                brushOption: {
+                  brushType: 'rect',
+                  brushMode: 'multiple'
+                }
+              })
+            }, 0)
+          }
+
+          function brushselected (params) {
+            const brushComponent = params.batch[0]
+            const brushed = []
+            let sourceData = []
+            let range: any[] = []
+            if (brushComponent.areas && brushComponent.areas.length) {
+              brushComponent.areas.forEach((area) => {
+                range = range.concat(area.range)
+              })
+            }
+            if (brushComponent.selected && brushComponent.selected.length) {
+              for (let i = 0; i < brushComponent.selected.length; i++) {
+                const rawIndices = brushComponent.selected[i].dataIndex
+                const seriesIndex = brushComponent.selected[i].seriesIndex
+                brushed.push({[i]: rawIndices})
+                if (rawIndices && rawIndices.length) {
+                  rawIndices.forEach((raw) => {
+                    const params = {
+                      dataIndex: raw,
+                      seriesIndex
+                    }
+                    sourceData = sourceData.concat(getTriggeringRecord(params, seriesData))
+                  })
+                }
+              }
+            }
+            if (getDataDrillDetail) {
+              getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+            }
           }
           instance.resize()
         })

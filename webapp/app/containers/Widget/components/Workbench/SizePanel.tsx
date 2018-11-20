@@ -7,10 +7,12 @@ const Tabs = require('antd/lib/tabs')
 const TabPane = Tabs.TabPane
 const Slider = require('antd/lib/slider')
 const styles = require('./Workbench.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
 interface ISizePanelProps {
   list: IDataParamSource[]
   value: object
+  hasTabs: boolean
   onValueChange: (key: string, value: string) => void
 }
 
@@ -62,8 +64,9 @@ export class SizePanel extends React.PureComponent<ISizePanelProps, ISizePanelSt
   }
 
   public render () {
-    const { list } = this.props
+    const { list, hasTabs } = this.props
     const { size, selectedTab } = this.state
+
     const tabPanes = [(
       <TabPane tab="应用全部" key="all" />
     )].concat(list.map((l) => (
@@ -73,12 +76,14 @@ export class SizePanel extends React.PureComponent<ISizePanelProps, ISizePanelSt
         key={l.name}
       />
     )))
+
     return (
       <div className={styles.sizePanel}>
         <Tabs
           size="small"
           activeKey={selectedTab}
           onChange={this.tabSelect}
+          className={!hasTabs ? utilStyles.hide : ''}
         >
           {tabPanes}
         </Tabs>

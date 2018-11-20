@@ -30,7 +30,7 @@ module.exports = (options) => ({
       },
       {
         test: /\.js$/, // Transform all .js files required somewhere with Babel
-        exclude: /node_modules|libs/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: options.babelQuery
@@ -139,7 +139,8 @@ module.exports = (options) => ({
       'main'
     ],
     alias: {
-      libs: path.resolve(process.cwd(), 'libs')
+      libs: path.resolve(process.cwd(), 'libs'),
+      fonts: path.resolve(process.cwd(), 'app/assets/fonts')
     }
   },
   devtool: options.devtool,

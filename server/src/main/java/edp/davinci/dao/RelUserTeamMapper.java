@@ -60,6 +60,12 @@ public interface RelUserTeamMapper {
 
 
     @Select({
+            "SELECT userTeamStruct(#{userId})"
+    })
+    String getUserFullTeam(@Param("userId") Long userId);
+
+
+    @Select({
             "SELECT u.id, u.username, u.avatar, t.id as 'teamId' FROM `user` u, rel_user_team rut, team t ",
             "where rut.user_id = u.id and t.id = rut.team_id and FIND_IN_SET(t.id,childTeamIds(#{teamId}))"
     })
@@ -78,7 +84,6 @@ public interface RelUserTeamMapper {
 
     /**
      * 查询用户和project所在team结构中的最大权限
-     * <p>
      * project和用户所在team交集的 完整team结构
      *
      * @param projectId

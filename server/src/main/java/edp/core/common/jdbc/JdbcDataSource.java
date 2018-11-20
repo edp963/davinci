@@ -73,18 +73,14 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.connection-error-retry-attempts:3}")
     private int connectionErrorRetryAttempts;
 
-//    @Value("${spring.datasource.validation-query}")
-//    private String validationQuery;
-
-    private static volatile Map<String, Object> map = new HashMap<>();
+    private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
+        if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {
             DruidDataSource instance = new JdbcDataSource();
             String className = null;
             try {
-                className = DriverManager.getDriver(url).getClass().getName();
+                className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
             } catch (SQLException e) {
             }
 
@@ -109,9 +105,9 @@ public class JdbcDataSource extends DruidDataSource {
                 instance.setDriverClassName(className);
             }
 
-            instance.setUrl(url);
-            instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
-            instance.setPassword((url.indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
+            instance.setUrl(jdbcUrl.trim());
+            instance.setUsername(jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
+            instance.setPassword((jdbcUrl.toLowerCase().indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
                     null : password);
             instance.setInitialSize(initialSize);
             instance.setMinIdle(minIdle);
@@ -124,17 +120,16 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setTestOnReturn(testOnReturn);
             instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
             instance.setBreakAfterAcquireFailure(breakAfterAcquireFailure);
-//            instance.setValidationQuery(validationQuery);
 
             try {
                 instance.init();
             } catch (SQLException e) {
                 log.error("Exception during pool initialization", e);
-                throw new SourceException("Exception during pool initialization");
+                throw new SourceException(e.getMessage());
             }
-            map.put(username + "@" + url, instance);
+            map.put(username + "@" + jdbcUrl.trim(), instance);
         }
 
-        return (DruidDataSource) map.get(username + "@" + url);
+        return map.get(username + "@" + jdbcUrl.trim());
     }
 }

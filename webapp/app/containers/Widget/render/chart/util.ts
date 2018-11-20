@@ -37,6 +37,7 @@ export function getDimetionAxisOption (
   data: string[]
 ) {
   const {
+    inverse,
     showLine: showLineX,
     lineStyle: lineStyleX,
     lineSize: lineSizeX,
@@ -44,7 +45,10 @@ export function getDimetionAxisOption (
     showLabel: showLabelX,
     labelFontFamily: labelFontFamilyX,
     labelFontSize: labelFontSizeX,
-    labelColor: labelColorX
+    labelColor: labelColorX,
+    nameLocation,
+    nameGap,
+    nameRotate
   } = dimetionAxisConfig
 
   const {
@@ -56,6 +60,7 @@ export function getDimetionAxisOption (
 
   return {
     data,
+    inverse,
     axisLabel: {
       show: showLabelX,
       color: labelColorX,
@@ -71,7 +76,7 @@ export function getDimetionAxisOption (
       }
     },
     axisTick: {
-      show: showLineX,
+      show: showLabelX,
       lineStyle: {
         color: lineColorX
       }
@@ -83,7 +88,10 @@ export function getDimetionAxisOption (
         width: lineSize,
         type: lineStyle
       }
-    }
+    },
+    nameLocation,
+    nameRotate,
+    nameGap
   }
 }
 
@@ -94,6 +102,7 @@ export function getMetricAxisOption (
   axis: 'x' | 'y' = 'y'
 ) {
   const {
+    inverse,
     showLine: showLineY,
     lineStyle: lineStyleY,
     lineSize: lineSizeY,
@@ -105,7 +114,10 @@ export function getMetricAxisOption (
     showTitleAndUnit,
     titleFontFamily,
     titleFontSize,
-    titleColor
+    titleColor,
+    nameLocation,
+    nameRotate,
+    nameGap
   } = metricAxisConfig
 
   const {
@@ -117,6 +129,7 @@ export function getMetricAxisOption (
 
   return {
     type: 'value',
+    inverse,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
@@ -133,14 +146,15 @@ export function getMetricAxisOption (
       }
     },
     axisTick: {
-      show: showLineY,
+      show: showLabelY,
       lineStyle: {
         color: lineColorY
       }
     },
     name: showTitleAndUnit ? title : '',
-    nameLocation: axis === 'y' ? 'middle' : 'center',
-    nameGap: axis === 'y' ? 45 : 30,
+    nameLocation,
+    nameGap,
+    nameRotate,
     nameTextStyle: {
       color: titleColor,
       fontFamily: titleFontFamily,
@@ -157,19 +171,34 @@ export function getMetricAxisOption (
   }
 }
 
-export function getLabelOption (labelConfig: ILabelConfig, emphasis?: boolean, options?: object) {
+export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasis?: boolean, options?: object) {
   const {
     showLabel,
     labelPosition,
     labelFontFamily,
     labelFontSize,
-    labelColor
+    labelColor,
+    pieLabelPosition,
+    funnelLabelPosition
   } = labelConfig
+
+  let positionVale
+  switch (type) {
+    case 'pie':
+      positionVale = pieLabelPosition
+      break
+    case 'funnel':
+      positionVale = funnelLabelPosition
+      break
+    default:
+      positionVale = labelPosition
+      break
+  }
 
   return {
     normal: {
-      show: showLabel,
-      position: labelPosition,
+      show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
+      position: positionVale,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
@@ -178,7 +207,7 @@ export function getLabelOption (labelConfig: ILabelConfig, emphasis?: boolean, o
     ...emphasis && {
       emphasis: {
         show: showLabel,
-        position: labelPosition,
+        position: positionVale,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,
@@ -242,7 +271,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: ILegendConfig, seriesNames) {
+export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value

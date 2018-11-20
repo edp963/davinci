@@ -107,13 +107,55 @@
       }],
       "default": "justify"
     }, {
-      "name": "textStyle",
-      "title": "样式",
-      "component": "checkbox",
+      "name": "fontWeight",
+      "title": "字体粗细",
+      "component": "select",
       "values": [{
-        "label": "粗体",
+        "name": "normal",
+        "value": "normal"
+      }, {
+        "name": "bold",
         "value": "bold"
       }, {
+        "name": "bolder",
+        "value": "bolder"
+      }, {
+        "name": "lighter",
+        "value": "lighter"
+      }, {
+        "name": "100",
+        "value": "100"
+      }, {
+        "name": "200",
+        "value": "200"
+      }, {
+        "name": "300",
+        "value": "300"
+      }, {
+        "name": "400",
+        "value": "400"
+      }, {
+        "name": "500",
+        "value": "500"
+      }, {
+        "name": "600",
+        "value": "600"
+      }, {
+        "name": "700",
+        "value": "700"
+      }, {
+        "name": "800",
+        "value": "800"
+      }, {
+        "name": "900",
+        "value": "900"
+      }],
+      "default": "normal"
+    }, {
+      "name": "textStyle",
+      "title": "样式",
+      "component": "checkboxGroup",
+      "values": [{
         "label": "斜体",
         "value": "italic"
       }, {
@@ -171,16 +213,7 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255],
-      "span": 12
-    }, {
-      "name": "opacity",
-      "tip": "0-100",
-      "title": "透明度",
-      "component": "inputnumber",
-      "default": 100,
-      "min": 0,
-      "max": 100,
+      "default": [255,255,255,0],
       "span": 12
     }]
   }, {
@@ -195,7 +228,7 @@
       "name": "borderWidth",
       "title": "边框粗细（像素）",
       "component": "inputnumber",
-      "default": 1
+      "default": 0
     }, {
       "name": "borderStyle",
       "title": "边框样式",

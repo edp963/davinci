@@ -859,8 +859,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { teamParams } = this.state
     const { params, bizlogics } = this.props
     if (!teamParams.length) {
-      const { sql } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
-      this.getTeamTreeData(sql)
+      const sqlVal = params.bid
+        ? (bizlogics as any[]).find((b) => b.id === Number(params.bid)).sql
+        : bizlogics[0].sql
+      this.getTeamTreeData(sqlVal)
     }
   }
 
@@ -1025,13 +1027,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const optionSource = sqlVisualTypes.map((opt) => <Option key={opt} value={opt}>{opt}</Option>)
 
     const modelColumns = [{
-      title: '表名',
+      title: '字段名称',
       dataIndex: 'name',
       className: `${utilStyles.textAlignLeft}`,
       key: 'name',
       width: '25%'
     }, {
-      title: '类型',
+      title: '数据类型',
       dataIndex: 'modelType',
       key: 'modelType',
       className: `${utilStyles.textAlignLeft}`,
@@ -1044,7 +1046,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           onChange={this.selectModelItem(record, 'modelType')}
         />)}
     }, {
-      title: '字段类型',
+      title: '可视化类型',
       dataIndex: 'visualType',
       className: `${utilStyles.textAlignLeft}`,
       key: 'visualType',

@@ -23,6 +23,8 @@ import {
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import widgetlibs from '../config'
+import PivotTypes from '../config/pivot/PivotTypes'
+import ChartTypes from '../config/chart/ChartTypes'
 const pivotlibs = widgetlibs['pivot']
 const chartlibs = widgetlibs['chart']
 import { uuid } from '../../../utils/util'
@@ -296,19 +298,11 @@ export function metricAxisLabelFormatter (value) {
 }
 
 export function getPivot (): IChartInfo {
-  return pivotlibs[0]
-}
-
-export function getBar (): IChartInfo {
-  return pivotlibs[2]
-}
-
-export function getScatter (): IChartInfo {
-  return pivotlibs[3]
+  return pivotlibs.find((p) => p.id === PivotTypes.PivotTable)
 }
 
 export function getTable (): IChartInfo {
-  return chartlibs[0]
+  return chartlibs.find((c) => c.id === ChartTypes.Table)
 }
 
 export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {
@@ -567,7 +561,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }
 }
 
-export function getChartTooltipLabel (seriesData, options) {
+export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
   let dimetionColumns = cols
   let metricColumns = [...metrics]
@@ -600,7 +594,9 @@ export function getChartTooltipLabel (seriesData, options) {
 
   return function (params) {
     const { seriesIndex, dataIndex } = params
-    const record = seriesData[seriesIndex][dataIndex]
+    const record = (type === 'funnel' || type === 'map')
+      ? seriesData[dataIndex]
+      : seriesData[seriesIndex][dataIndex]
     return dimetionColumns
       .map((dc) => {
         const value = record

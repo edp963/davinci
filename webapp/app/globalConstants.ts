@@ -28,6 +28,9 @@ export const GRID_COLS = { lg: 12, md: 12, sm: 12, xs: 2, xxs: 2 }
 export const GRID_ITEM_MARGIN = 16
 export const GRID_ROW_HEIGHT = 30
 
+export const DEFAULT_BASELINE_THICKNESS = 1.5
+export const DEFAULT_BASELINE_COLOR = '#ecc302'
+
 export const TABLE_HEADER_HEIGHT = 50
 export const TABLE_PAGINATION_HEIGHT = 61
 export const COLUMN_WIDTH = 150
@@ -92,12 +95,69 @@ export const CHART_LABEL_POSITIONS = [
   { name: '内右上', value: 'insideTopRight' },
   { name: '内右下', value: 'insideBottomRight' }
 ]
+export const CHART_PIE_LABEL_POSITIONS = [
+  { name: '外侧', value: 'outside'},
+  { name: '内部', value: 'inside'},
+  { name: '中心', value: 'center'}
+]
+export const CHART_FUNNEL_LABEL_POSITIONS = [
+  { name: '左侧', value: 'left'},
+  { name: '右侧', value: 'right'},
+  { name: '内部', value: 'inside'}
+]
+
+export const CHART_SORT_MODES = [
+  { name: '降序', value: 'descending'},
+  { name: '升序', value: 'ascending'},
+  { name: '无', value: 'none'}
+]
+
+export const CHART_ALIGNMENT_MODES = [
+  { name: '居中', value: 'center'},
+  { name: '居左', value: 'left'},
+  { name: '居右', value: 'right'}
+]
+
+export const AXIS_NAME_LOCATIONS = [
+  { name: '开始', value: 'start' },
+  { name: '结束', value: 'end' },
+  { name: '中间', value: 'center' }
+]
 
 export const CHART_LEGEND_POSITIONS = [
   { name: '右', value: 'right' },
   { name: '上', value: 'top' },
   { name: '下', value: 'bottom' },
   { name: '左', value: 'left' }
+]
+
+export const CHART_VISUALMAP_POSITIONS = [
+  { name: '左下', value: 'leftBottom' },
+  { name: '左上', value: 'leftTop' },
+  { name: '右上', value: 'rightTop' },
+  { name: '右下', value: 'rightBottom' }
+]
+
+export const CHART_LAYER_TYPES = [
+  { name: '地图', value: 'map' },
+  { name: '气泡图', value: 'scatter' },
+  { name: '热力图', value: 'heatmap' },
+  { name: '飞行图', value: 'lines' }
+]
+
+export const CHART_LINES_SYMBOL_TYPE = [
+  {name: '圆形', value: 'circle'},
+  {name: '矩形', value: 'rect'},
+  {name: '圆角矩形', value: 'roundRect'},
+  {name: '三角形', value: 'triangle'},
+  {name: '菱形', value: 'diamond'},
+  {name: '大头针形', value: 'pin'},
+  {name: '箭头形', value: 'arrow'}
+]
+
+export const CHART_VISUALMAP_DIRECYTIONS = [
+  { name: '竖直', value: 'vertical' },
+  { name: '水平', value: 'horizontal' }
 ]
 
 export const SQL_STRING_TYPES = [
@@ -119,6 +179,7 @@ export const KEY_COLUMN = 'davinciUniqueId'
 export const ECHARTS_RENDERER = 'echarts'
 
 export const DEFAULT_FONT_WEIGHT = 'normal'
+export const DEFAULT_FONT_STYLE = 'normal'
 export const DEFAULT_FONT_SIZE = '12px'
 export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
 

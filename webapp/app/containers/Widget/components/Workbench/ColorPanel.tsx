@@ -6,10 +6,12 @@ import { getAggregatorLocale, decodeMetricName } from '../util'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')
+const utilStyles = require('../../../../assets/less/util.less')
 
 interface IColorPanelProps {
   list: IDataParamSource[]
   value: object
+  showAll: boolean
   onValueChange: (key: string, value: string) => void
 }
 
@@ -61,12 +63,17 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
   }
 
   public render () {
-    const { list } = this.props
+    const { list, showAll } = this.props
     const { color, selectedTab } = this.state
+
+    const allTabClass = classnames({
+      [styles.selected]: selectedTab === 'all',
+      [utilStyles.hide]: !showAll
+    })
 
     const tabs = [(
       <li
-        className={classnames({ [styles.selected]: selectedTab === 'all' })}
+        className={allTabClass}
         key="all"
         onClick={this.tabSelect('all')}
       >
@@ -81,6 +88,7 @@ export class ColorPanel extends React.PureComponent<IColorPanelProps, IColorPane
         {`[${getAggregatorLocale(l.agg)}] ${decodeMetricName(l.name)}`}
       </li>
     )))
+
     return (
       <div className={styles.colorPanel}>
         <ul className={styles.tabs}>
