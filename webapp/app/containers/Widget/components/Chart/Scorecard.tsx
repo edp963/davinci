@@ -28,18 +28,13 @@ const styles = require('./Chart.less')
 export class Scorecard extends React.PureComponent<IChartProps, {}> {
 
   private prettifyContent = (content) => {
-    if (!isNaN(Number(content))) {
-      const arr = content.toString().split('.')
-      arr[0] = arr[0].split('').reduceRight((formatted, str, index, oarr) => {
-        formatted = index % 3 === 2 && index !== oarr.length - 1
-          ? `,${str}${formatted}`
-          : `${str}${formatted}`
-        return formatted
-      }, '')
-      return arr.join('.')
-    }
+    if (isNaN(+content)) { return content }
 
-    return ''
+    const parts = content.toString().split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    const formatted = parts.join('.')
+
+    return formatted
   }
 
   private getMetricText = (metric: IWidgetMetric, visible: boolean) => {
