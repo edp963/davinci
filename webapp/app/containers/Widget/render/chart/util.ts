@@ -23,6 +23,7 @@ import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSec
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
+import { dataFromItemLoaded } from 'containers/Bizlogic/actions'
 
 interface ISplitLineConfig {
   showLine: boolean
@@ -48,7 +49,10 @@ export function getDimetionAxisOption (
     labelColor: labelColorX,
     nameLocation,
     nameGap,
-    nameRotate
+    nameRotate,
+    showInterval,
+    xAxisInterval,
+    xAxisRotate
   } = dimetionAxisConfig
 
   const {
@@ -58,6 +62,10 @@ export function getDimetionAxisOption (
     lineColor
   } = splitLineConfig
 
+  const intervalOption = showInterval
+    ? { interval: xAxisInterval }
+    : null
+
   return {
     data,
     inverse,
@@ -65,7 +73,9 @@ export function getDimetionAxisOption (
       show: showLabelX,
       color: labelColorX,
       fontFamily: labelFontFamilyX,
-      fontSize: labelFontSizeX
+      fontSize: labelFontSizeX,
+      rotate: xAxisRotate,
+      ...intervalOption
     },
     axisLine: {
       show: showLineX,
@@ -271,11 +281,11 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames) {
+export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val)
+    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData)
     if (showLegend) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
@@ -287,12 +297,15 @@ export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNa
   }, {})
 }
 
-function getGridBase (pos) {
+function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]) {
+  const { labelFontSize, xAxisRotate } = dimetionAxisConfig
+  const maxWidth = Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+
   switch (pos) {
     case 'top': return 24
     case 'left': return 64
     case 'right': return 24
-    case 'bottom': return 50
+    case 'bottom': return xAxisRotate ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth : 50
   }
 }
 
