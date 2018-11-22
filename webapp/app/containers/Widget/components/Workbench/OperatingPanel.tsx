@@ -92,8 +92,6 @@ interface IOperatingPanelStates {
   filterModalVisible: boolean
   variableConfigModalVisible: boolean
   variableConfigControl: object
-  isLabelSection: boolean
-  isLegendSection: boolean
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -122,9 +120,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       variableConfigModalVisible: false,
-      variableConfigControl: {},
-      isLabelSection: true,
-      isLegendSection: false
+      variableConfigControl: {}
     }
   }
 
@@ -580,8 +576,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           func: l.agg
         })))
     }
-    groups.sort()
-    aggregators.sort()
 
     const orders = []
     Object.values(commonParams).concat(Object.values(specificParams))
@@ -719,9 +713,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     } else {
       this.setState({
-        chartModeSelectedChart: chart,
-        isLegendSection: chart.name !== 'map',
-        isLabelSection: true
+        chartModeSelectedChart: chart
       }, () => {
         const { specificParams, styleParams } = this.getChartDataConfig([chart])
         this.getVisualData(commonParams, specificParams, styleParams)
@@ -823,7 +815,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private styleChange = (name) => (prop, value) => {
-    const { commonParams, specificParams, styleParams } = this.state
+    console.log('12', name, prop, value)
+    const { commonParams, specificParams, styleParams, chartModeSelectedChart } = this.state
     styleParams[name][prop] = value
     let renderType = 'clear'
     switch (prop) {
@@ -836,10 +829,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     }
     this.getVisualData(commonParams, specificParams, styleParams, renderType)
     const { layerType } = styleParams.spec
-    this.setState({
-      isLabelSection: !(layerType && layerType === 'heatmap'),
-      isLegendSection: !(layerType && (layerType === 'heatmap' || layerType === 'map' || layerType === 'scatter'))
-    })
+    // chartModeSelectedChart.style.spec.layerType = layerType
   }
 
   private confirmColorModal = (config) => {
@@ -978,10 +968,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       variableConfigModalVisible,
-      variableConfigControl,
-      isLabelSection,
-      isLegendSection
+      variableConfigControl
     } = this.state
+
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
     const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard, iframe } = styleParams
@@ -1127,6 +1116,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
     }
 
+    let mapLegendLayerType
+    let mapLabelLayerType
+    if (spec) {
+      const { layerType } = spec
+      mapLabelLayerType = !(layerType && layerType === 'heatmap')
+      mapLegendLayerType = !(layerType && (layerType === 'heatmap' || layerType === 'map' || layerType === 'scatter'))
+    }
+
     let tabPane
     switch (selectedTab) {
       case 'data':
@@ -1151,9 +1148,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               title={chartModeSelectedChart.title}
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
-              isLegendSection={isLegendSection}
+              isLegendSection={mapLegendLayerType}
             />}
-            { isLabelSection
+            { mapLabelLayerType
                 ? label && <LabelSection
                   title="标签"
                   config={label as ILabelConfig}
@@ -1162,7 +1159,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 />
                 : null
             }
-            { isLegendSection
+            { mapLegendLayerType
                 ? legend && <LegendSection
                   title="图例"
                   config={legend as ILegendConfig}
@@ -1170,7 +1167,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 />
                 : null
             }
-            { isLegendSection
+            { mapLegendLayerType
                 ? null
                 : visualMap && <VisualMapSection
                   title="视觉映射"

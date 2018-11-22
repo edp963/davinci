@@ -61,7 +61,7 @@ export interface IChartInfo {
   requireMetrics: number | number[],
   dimetionAxis?: DimetionType
   data: object,
-  style: object
+  style: IChartStyles
 }
 
 export interface IWidgetProps {

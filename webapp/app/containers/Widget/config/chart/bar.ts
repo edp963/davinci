@@ -46,7 +46,9 @@ const bar: IChartInfo = {
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      xAxisInterval: 0,
+      xAxisRotate: 0
     },
     yAxis: {
       showLine: true,
