@@ -815,7 +815,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private styleChange = (name) => (prop, value) => {
-    console.log('12', name, prop, value)
     const { commonParams, specificParams, styleParams, chartModeSelectedChart } = this.state
     styleParams[name][prop] = value
     let renderType = 'clear'
