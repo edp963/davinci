@@ -22,7 +22,7 @@ title: 安装
 
    解压后目录结构如下图所示：
 
-   <img src="https://github.com/edp963/davinci/raw/master/docs/img/dir.png" alt="" width="600"/>
+   ![dir](./img/dir.png)
 
 2. **配置环境变量，将上述解压后的目录配置到环境变量 DAVINCI3_HOME**
 

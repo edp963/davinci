@@ -44,7 +44,7 @@ Dashboard 面板右上角点击“分享”，选择分享方式，你将看到�
   IHsiZiI6ImNpdHk9ICYjMzk75YyX5LqsJiMzOTsiLCJwIjpbeyJrIjoic3RhcnRUaW1lIiwidiI6IiYjMzk7Mj AxNy0wNy0wMSAwMDowMDowMCYjMzk7In0seyJrIjoiZW5kVGltZSIsInYiOiImIzM5OzIwMTgtMDctMDIgMDA6 MDA6MDAmIzM5OyJ9XX0%3d
   ```
 
-- **并入 share url 中**，如
+- **并入 share url 中**，如：
 
   Widget
 
