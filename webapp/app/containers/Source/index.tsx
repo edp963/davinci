@@ -332,14 +332,14 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     const formValues = this.sourceForm.props.form.getFieldsValue() as ISourceObject
     const { user, password, url } = formValues
 
-    if (user && password && url) {
+    if (url) {
       this.props.onTestSourceConnection({
         username: user,
         password,
         url
       })
     } else {
-      message.error('用户名，密码和连接Url都不能为空')
+      message.error('连接 Url 都不能为空')
     }
   }
 
