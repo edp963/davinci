@@ -34,8 +34,7 @@ public enum DataTypeEnum {
 
     PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", "", "", "\"", "\""),
 
-    //TODO
-    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", "", "", "'", "'"),
+    MONGODB("mongo", "mongodb", "mongodb.jdbc.MongoDriver", "`", "`", "\"", "\""),
 
     ELASTICSEARCH("sql4es", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
 

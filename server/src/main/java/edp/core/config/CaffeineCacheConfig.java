@@ -55,7 +55,7 @@ public class CaffeineCacheConfig {
     }
 
 
-    @Bean
+    @Bean(name = "keyGenerator")
     public KeyGenerator keyGenerator() {
         return new KeyGenerator() {
             @Override
