@@ -301,7 +301,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       const view = widget && bizlogics.find((b) => b.id === widget.viewId)
       const layerId = layer.id
 
-      const { polling, frequency } = layer.params
+      const { polling, frequency } = JSON.parse(layer.params)
       const { datasource, loading, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (
