@@ -588,13 +588,17 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         ...slideParams,
         [field]: val
       }
-      const newConfig = {
-        ...JSON.parse(currentSlide.config),
-        slideParams: newSlideParams
-      }
-      onEditCurrentSlide(currentDisplay.id, {
-        ...currentSlide,
-        config: JSON.stringify(newConfig)
+      this.setState({
+        slideParams: { ...newSlideParams }
+      }, () => {
+        const newConfig = {
+          ...JSON.parse(currentSlide.config),
+          slideParams: newSlideParams
+        }
+        onEditCurrentSlide(currentDisplay.id, {
+          ...currentSlide,
+          config: JSON.stringify(newConfig)
+        })
       })
     }
   }
