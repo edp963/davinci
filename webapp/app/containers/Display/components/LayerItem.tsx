@@ -126,12 +126,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   public componentWillUpdate (nextProps: ILayerItemProps) {
     const {
       polling,
+      frequency,
       layer
     } = nextProps
     if (layer.type !== GraphTypes.Chart) {
       return
     }
-    if (polling !== this.props.polling) {
+    if (polling !== this.props.polling || frequency !== this.props.frequency) {
       this.setFrequent(nextProps)
     }
   }
@@ -287,6 +288,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     })
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
+    const isLoading = !pure && loading
 
     return (
       <div
@@ -305,7 +307,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
           (<Widget
             {...widgetProps}
             data={data || []}
-            loading={loading}
+            loading={isLoading}
             renderType={renderType}
             model={model}
           />)
