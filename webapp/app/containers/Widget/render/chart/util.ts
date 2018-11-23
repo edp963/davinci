@@ -298,8 +298,9 @@ export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNa
 }
 
 function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]) {
-  const { labelFontSize, xAxisRotate } = dimetionAxisConfig
-  const maxWidth = Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+  const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
+  const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
+  const maxWidth = Math.max(...(xAxisData || []).map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
 
   switch (pos) {
     case 'top': return 24
