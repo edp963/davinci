@@ -26,6 +26,8 @@ import java.util.List;
 public class LdapPerson {
     private String name;
     private String sAMAccountName;
+    private String dept;
+    private String email;
 
     @Override
     public String toString() {

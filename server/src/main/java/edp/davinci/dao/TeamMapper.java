@@ -35,6 +35,9 @@ public interface TeamMapper {
     @Select({"select * from team where org_id= #{orgId}"})
     List<Team> getByOrgId(@Param("orgId") Long orgId);
 
+    @Select({"select * from team where description= #{desc}"})
+    List<Team> getByDesc(@Param("desc") String desc);
+
 //    @Select({
 //            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t, rel_user_team rut",
 //            "where rut.team_id = t.id and t.org_id = #{orgId} and rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)"

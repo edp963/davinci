@@ -36,4 +36,19 @@
             #{role, jdbcType=SMALLINT}
         </trim>
     </insert>
+
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert ignore into rel_user_organization
+        (org_id,user_id, role)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.orgId,jdbcType=BIGINT},
+            #{record.userId,jdbcType=BIGINT},
+            #{record.role,jdbcType=SMALLINT}
+            )
+        </foreach>
+    </insert>
 </mapper>
