@@ -143,4 +143,7 @@ public interface RelUserTeamMapper {
 
 
     int deleteBatch(@Param("list") List<Long> list);
+
+
+    int insertBatch(@Param("list") Set<RelUserTeam> list);
 }

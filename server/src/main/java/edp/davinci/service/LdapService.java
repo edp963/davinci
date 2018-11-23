@@ -18,10 +18,15 @@
 
 package edp.davinci.service;
 
+import edp.davinci.core.common.ResultMap;
+import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.model.LdapPerson;
-
-import javax.naming.NamingException;
+import edp.davinci.model.User;
 
 public interface LdapService {
-    public LdapPerson findByUsername(String username, String password) throws NamingException;
+    LdapPerson findByUsername(String username, String password) throws Exception;
+
+    ResultMap userLogin(UserLogin userLogin);
+
+    User registUser(LdapPerson ldapPerson);
 }
