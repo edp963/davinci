@@ -261,30 +261,34 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentSlide, currentLayers } = nextProps
+
+    let { slideParams, currentLocalLayers } = this.state
+    let init = false
     if (currentSlide !== this.props.currentSlide) {
-      const { slideParams } = JSON.parse(currentSlide.config)
-      this.setState({
-        slideParams
-      }, () => {
-        this.doScale(1)
-      })
+      slideParams = JSON.parse(currentSlide.config).slideParams
+      init = true
     }
     if (currentLayers !== this.props.currentLayers) {
-      const currentLocalLayers = fromJS(currentLayers).toJS()
-      this.setState({
-        currentLocalLayers
-      })
+      currentLocalLayers = fromJS(currentLayers).toJS()
     }
-    this.getSettingInfo(nextProps)
+    const settingInfo = this.getSettingInfo(nextProps, slideParams, currentLocalLayers)
+    this.setState({
+      slideParams,
+      currentLocalLayers,
+      settingInfo
+    }, () => {
+      if (init) {
+        this.doScale(1)
+      }
+    })
   }
 
-  private getSettingInfo = (nextProps: IEditorProps) => {
-    const { currentSlide, currentSelectedLayers, currentLayers } = nextProps
-    const { slideParams } = this.state
+  private getSettingInfo = (nextProps: IEditorProps, slideParams, currentLocalLayers) => {
+    const { currentSlide, currentSelectedLayers } = nextProps
 
-    let settingInfo = null
+    let settingInfo = this.state.settingInfo
     if (currentSelectedLayers.length === 1) {
-      const selectedLayer = currentLayers.find((layer) => layer.id === currentSelectedLayers[0].id)
+      const selectedLayer = currentLocalLayers.find((layer) => layer.id === currentSelectedLayers[0].id)
       const type = selectedLayer.subType || selectedLayer.type
       const param = JSON.parse(selectedLayer['params'])
       settingInfo = {
@@ -301,11 +305,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         param: slideParams
       }
     }
-    if (settingInfo) {
-      this.setState({
-        settingInfo
-      })
-    }
+    return settingInfo
   }
 
   private containerResize = () => {
@@ -555,7 +555,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private formItemChange = (field, val) => {
-    const { slideParams } = this.state
+    const { slideParams, currentLocalLayers } = this.state
 
     const {
       currentDisplay,
@@ -565,14 +565,24 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     if (currentSelectedLayers.length === 1) {
       const selectedLayer = currentSelectedLayers[0]
-      const layerParams = {
+      const newParams = JSON.stringify({
         ...JSON.parse(selectedLayer['params']),
         [field]: val
-      }
-      this.onEditLayers([{
-        ...selectedLayer,
-        params: JSON.stringify(layerParams)
-      }])
+      })
+      this.setState({
+        currentLocalLayers: currentLocalLayers.map((layer) => (
+          layer.id !== selectedLayer.id ? layer
+            : {
+              ...layer,
+              params: newParams
+            }
+        ))
+      }, () => {
+        this.onEditLayers([{
+          ...selectedLayer,
+          params: newParams
+        }])
+      })
     } else {
       const newSlideParams = {
         ...slideParams,
