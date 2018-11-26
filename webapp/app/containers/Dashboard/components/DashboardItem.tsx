@@ -146,6 +146,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       itemId,
       widget,
       polling,
+      frequency,
       onGetChartData,
       rendered,
       container
@@ -158,7 +159,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
 
-    if (polling !== this.props.polling) {
+    if (polling !== this.props.polling || frequency !== this.props.frequency) {
       this.setFrequent(nextProps)
     }
   }

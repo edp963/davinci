@@ -69,7 +69,7 @@ public class FileUtils {
      * @return
      */
     public boolean isCsv(MultipartFile file) {
-        return file.getOriginalFilename().endsWith(".csv");
+        return file.getOriginalFilename().toLowerCase().endsWith(".csv");
     }
 
     /**

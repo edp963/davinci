@@ -115,7 +115,7 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setMaxWait(maxWait);
             instance.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
             instance.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-            instance.setTestWhileIdle(testWhileIdle);
+            instance.setTestWhileIdle(false);
             instance.setTestOnBorrow(testOnBorrow);
             instance.setTestOnReturn(testOnReturn);
             instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
@@ -123,7 +123,7 @@ public class JdbcDataSource extends DruidDataSource {
 
             try {
                 instance.init();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error("Exception during pool initialization", e);
                 throw new SourceException(e.getMessage());
             }

@@ -73,26 +73,25 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     this.debounceFormItemChange = debounce(this.props.onFormItemChange, 1000)
   }
 
-  public componentDidUpdate () {
-    const {
-      form,
-      settingParams
-    } = this.props
-    form.setFieldsValue({...settingParams})
-  }
-
-  public shouldComponentUpdate (nextProps: ISettingFormProps) {
+  public shouldComponentUpdate (nextProps: ISettingFormProps, nextState: ISettingFormStates) {
     const { settingInfo, settingParams } = nextProps
-    const needUpdate = settingInfo !== this.props.settingInfo || settingParams !== this.props.settingParams
+    const { collapse } = nextState
+    const needUpdate = settingInfo !== this.props.settingInfo
+      || settingParams !== this.props.settingParams
+      || collapse !== this.state.collapse
     return needUpdate
   }
 
   public componentWillReceiveProps (nextProps: ISettingFormProps) {
     const {
-      onFormItemChange
-    } = this.props
+      onFormItemChange,
+      settingParams
+    } = nextProps
     if (onFormItemChange !== this.props.onFormItemChange) {
       this.debounceFormItemChange = debounce(onFormItemChange, 1000)
+    }
+    if (settingParams !== this.props.settingParams) {
+      this.props.form.setFieldsValue({...settingParams})
     }
   }
 
