@@ -24,16 +24,25 @@ import java.util.List;
 
 @Data
 public class LdapPerson {
-    private String name;
-    private String sAMAccountName;
-    private String dept;
-    private String email;
 
-    @Override
-    public String toString() {
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append("name:"+name+",");
-        stringBuffer.append("sAMAccountName:"+ sAMAccountName);
-        return stringBuffer.toString();
-    }
+    /**
+     * 姓名
+     */
+    private String name;
+
+    /**
+     * 用户名
+     */
+    private String sAMAccountName;
+
+
+    /**
+     * 机构信息
+     */
+    private String dept;
+
+    /**
+     * 邮箱
+     */
+    private String email;
 }

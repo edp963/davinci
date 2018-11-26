@@ -49,7 +49,7 @@
         insert ignore into rel_user_team
         (team_id,user_id, role)
         VALUES
-        <foreach collection="list" item="record" index="index" separator=",">
+        <foreach collection="set" item="record" index="index" separator=",">
             (
             #{record.teamId,jdbcType=BIGINT},
             #{record.userId,jdbcType=BIGINT},

@@ -43,7 +43,7 @@
         insert ignore into rel_user_organization
         (org_id,user_id, role)
         VALUES
-        <foreach collection="list" item="record" index="index" separator=",">
+        <foreach collection="set" item="record" index="index" separator=",">
             (
             #{record.orgId,jdbcType=BIGINT},
             #{record.userId,jdbcType=BIGINT},
@@ -51,4 +51,12 @@
             )
         </foreach>
     </insert>
+
+
+    <delete id="deleteBatch" parameterType="java.util.List">
+        DELETE FROM rel_user_organization WHERE id in
+        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>

@@ -122,8 +122,11 @@ public class CommonService<T> {
                 .append("/share.html#/share/")
                 .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
                 .append("?shareInfo=")
-                .append(shareToken)
-                .append("&type=" + type);
+                .append(shareToken);
+
+        if (!StringUtils.isEmpty(type)) {
+            sb.append("&type=" + type);
+        }
 
         return sb.toString();
     }
