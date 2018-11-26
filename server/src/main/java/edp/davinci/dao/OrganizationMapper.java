@@ -85,7 +85,7 @@ public interface OrganizationMapper {
 
     int updateMemberNum(Organization organization);
 
-    int addOneMemberNum(@Param("list") Set<Long> orgIds);
+    int addOneMemberNum(@Param("set") Set<Long> orgIds);
 
     int updateTeamNum(Organization organization);
 

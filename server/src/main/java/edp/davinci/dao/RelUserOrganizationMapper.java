@@ -26,6 +26,7 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -73,6 +74,9 @@ public interface RelUserOrganizationMapper {
     RelUserOrganization getRelByProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
 
 
-    int insertBatch(@Param("list") Set<RelUserOrganization> list);
+    int insertBatch(@Param("set") Set<RelUserOrganization> set);
+
+
+    int deleteBatch(@Param("set") Set<Long> set);
 
 }

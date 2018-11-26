@@ -405,14 +405,14 @@ public class TeamServiceImpl implements TeamService {
         RelUserOrganization relUserOrg = relUserOrganizationMapper.getRel(user.getId(), team.getOrgId());
 
         RelUserTeam rel = relUserTeamMapper.getRel(user.getId(), id);
-        if ((null == relUserOrg || relUserOrg.getRole() == UserOrgRoleEnum.MEMBER.getRole()) &&
-                (null == rel || rel.getRole() == UserTeamRoleEnum.MEMBER.getRole())) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
-        }
+//        if ((null == relUserOrg || relUserOrg.getRole() == UserOrgRoleEnum.MEMBER.getRole()) &&
+//                (null == rel || rel.getRole() == UserTeamRoleEnum.MEMBER.getRole())) {
+//            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
+//        }
 
         TeamDetail teamDetail = new TeamDetail();
         BeanUtils.copyProperties(team, teamDetail);
-        teamDetail.setRole(rel.getRole());
+        teamDetail.setRole(null == rel ? (short) -1 : rel.getRole());
 
         Organization organization = organizationMapper.getById(team.getOrgId());
         TeamOrgBaseInfo teamOrgBaseInfo = new TeamOrgBaseInfo();

@@ -24,9 +24,30 @@ import edp.davinci.model.LdapPerson;
 import edp.davinci.model.User;
 
 public interface LdapService {
+
+
+    /**
+     * 查找 ldap 用户
+     * @param username
+     * @param password
+     * @return
+     * @throws Exception
+     */
     LdapPerson findByUsername(String username, String password) throws Exception;
 
+
+    /**
+     * 用户登录
+     * @param userLogin
+     * @return
+     */
     ResultMap userLogin(UserLogin userLogin);
 
+
+    /**
+     * 将ldap 用户注册到 davinci系统
+     * @param ldapPerson
+     * @return
+     */
     User registUser(LdapPerson ldapPerson);
 }

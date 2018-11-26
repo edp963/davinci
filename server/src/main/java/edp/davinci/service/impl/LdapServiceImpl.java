@@ -24,6 +24,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
+import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.model.*;
@@ -69,6 +70,9 @@ public class LdapServiceImpl implements LdapService {
     private TeamMapper teamMapper;
 
     @Autowired
+    private PsCommentMapper psCommentMapper;
+
+    @Autowired
     private RelUserTeamMapper relUserTeamMapper;
 
     @Autowired
@@ -81,6 +85,16 @@ public class LdapServiceImpl implements LdapService {
     @Autowired
     private TokenUtils tokenUtils;
 
+
+    /**
+     * 查找 ldap 用户
+     *
+     * @param username
+     * @param password
+     * @return
+     * @throws Exception
+     */
+    @Override
     public LdapPerson findByUsername(String username, String password) throws Exception {
         LdapPerson ldapPerson = null;
 
@@ -136,30 +150,43 @@ public class LdapServiceImpl implements LdapService {
     }
 
 
+    /**
+     * 用户登录
+     *
+     * @param userLogin
+     * @return
+     */
     @Override
     public ResultMap userLogin(UserLogin userLogin) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         User user = userMapper.selectByUsername(userLogin.getUsername());
-        if (null == user) {
-            LdapPerson ldapPerson = null;
-            try {
-                ldapPerson = findByUsername(userLogin.getUsername(), userLogin.getPassword());
-                if (null != ldapPerson) {
-                    user = registUser(ldapPerson);
-                }
-            } catch (Exception e) {
-                log.info("user not found: {}", userLogin.getUsername());
-                return resultMap.fail().message("user not found").payload("username or password is wrong");
-            }
 
-            if (null == ldapPerson) {
-                log.info("user not found: {}", userLogin.getUsername());
-                return resultMap.fail().message("user not found").payload("username or password is wrong");
+        LdapPerson ldapPerson = null;
+        try {
+            ldapPerson = findByUsername(userLogin.getUsername(), userLogin.getPassword());
+        } catch (Exception e) {
+            log.info("ldap user not found: {}", userLogin.getUsername());
+        }
+
+        if (null == user) {
+            if (null != ldapPerson) {
+                user = registUser(ldapPerson);
+            } else {
+                return resultMap.fail().message("password is wrong").payload("username or password is wrong");
             }
         }
+
+        if (null != user && null != ldapPerson) {
+            final User u = user;
+            final LdapPerson p = ldapPerson;
+            checkUserTeam(u, p);
+//            new Thread(() -> checkUserTeam(u, p)).start();
+        }
+
         //校验密码
-        if (!BCrypt.checkpw(userLogin.getPassword(), user.getPassword())) {
+        if ("-1".equals(user.getPassword()) || BCrypt.checkpw(userLogin.getPassword(), user.getPassword())) {
+        } else {
             log.info("password is wrong: {}", userLogin.getUsername());
             return resultMap.fail().message("password is wrong").payload("username or password is wrong");
         }
@@ -175,7 +202,79 @@ public class LdapServiceImpl implements LdapService {
     }
 
 
+    /**
+     * 检测同步团队是否变化
+     *
+     * @param user
+     * @param ldapPerson
+     */
+    @Transactional
+    protected void checkUserTeam(User user, LdapPerson ldapPerson) {
+        List<Team> psTeams = psCommentMapper.getPsTeamByUserId(user.getId());
 
+        List<OrganizationInfo> organizations = organizationMapper.getOrganizationByUser(user.getId());
+
+        if (null != ldapPerson) {
+            //ldap用户存
+            List<Team> teams = psCommentMapper.getByDesc(ldapPerson.getDept());
+            Set<Long> collect = teams.stream().map(t -> t.getId()).collect(Collectors.toSet());
+
+            Set<RelUserTeam> teamSet = new HashSet<>();
+            Set<RelUserOrganization> orgSet = new HashSet<>();
+            for (Team team : teams) {
+                if (!organizations.contains(team.getOrgId())) {
+                    orgSet.add(new RelUserOrganization(team.getOrgId(), user.getId(), UserOrgRoleEnum.MEMBER.getRole()));
+                }
+
+                // 同步已经加入的team
+                if (null != psTeams && psTeams.size() > 0) {
+                    for (Team psTeam : psTeams) {
+                        if (team.getOrgId() == psTeam.getOrgId() && !collect.contains(psTeam.getId())) {
+                            teamSet.add(new RelUserTeam(psTeam.getId(), user.getId(), UserTeamRoleEnum.MEMBER.getRole()));
+                        }
+                    }
+                } else {
+                    teamSet.add(new RelUserTeam(team.getId(), user.getId(), UserTeamRoleEnum.MEMBER.getRole()));
+                    if (!orgSet.stream().map(o -> o.getOrgId()).collect(Collectors.toSet()).contains(team.getOrgId())) {
+                        orgSet.add(new RelUserOrganization(team.getOrgId(), user.getId(), UserOrgRoleEnum.MEMBER.getRole()));
+                    }
+                }
+            }
+
+            //加入新的team
+            for (Team psTeam : psTeams) {
+                if (!collect.contains(psTeam.getId())) {
+                    teamSet.add(new RelUserTeam(psTeam.getId(), user.getId(), UserTeamRoleEnum.MEMBER.getRole()));
+                }
+            }
+
+            if (orgSet.size() > 0) {
+                relUserOrganizationMapper.insertBatch(orgSet);
+                Set<Long> orgIds = orgSet.stream().map(o -> o.getId()).collect(Collectors.toSet());
+                organizationMapper.addOneMemberNum(orgIds);
+            }
+
+            if (teamSet.size() > 0) {
+                relUserTeamMapper.insertBatch(teamSet);
+            }
+
+        } else {
+            //ldap用户不存在，删除机构、团队关联信息
+            List<Long> teamIds = psTeams.stream().map(t -> t.getId()).collect(Collectors.toList());
+            Set<Long> orgIds = psTeams.stream().map(t -> t.getOrgId()).collect(Collectors.toSet());
+
+            relUserTeamMapper.deleteBatch(teamIds);
+            relUserOrganizationMapper.deleteBatch(orgIds);
+        }
+    }
+
+
+    /**
+     * 将ldap 用户注册到 davinci系统
+     *
+     * @param ldapPerson
+     * @return
+     */
     @Override
     @Transactional
     public User registUser(LdapPerson ldapPerson) {
@@ -191,7 +290,7 @@ public class LdapServiceImpl implements LdapService {
 
                 int insert = userMapper.insert(user);
                 if (insert > 0) {
-                    List<Team> teams = teamMapper.getByDesc(ldapPerson.getDept());
+                    List<Team> teams = psCommentMapper.getByDesc(ldapPerson.getDept());
                     if (null != teams && teams.size() > 0) {
                         Set<Long> orgIds = new HashSet<>();
                         Set<RelUserTeam> relUserTeamSet = new HashSet<>();
@@ -216,5 +315,6 @@ public class LdapServiceImpl implements LdapService {
         }
         return user;
     }
+
 
 }
