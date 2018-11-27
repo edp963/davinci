@@ -22,6 +22,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.service.LdapService;
 import edp.davinci.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -54,6 +55,9 @@ public class LoginController {
     @Autowired
     private UserService userService;
 
+    @Autowired(required = false)
+    private LdapService ldapService;
+
     /**
      * 登录
      *
@@ -69,8 +73,13 @@ public class LoginController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         try {
-            ResultMap resultMap = userService.userLogin(userLogin);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            if (null == ldapService) {
+                ResultMap resultMap = userService.userLogin(userLogin);
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            } else {
+                ResultMap resultMap = ldapService.userLogin(userLogin);
+                return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             log.error(e.getMessage());

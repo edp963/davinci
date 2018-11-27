@@ -38,6 +38,6 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap runtimeExceptionHandler(HttpServletRequest request, Exception e) {
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
 }
