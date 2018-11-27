@@ -20,13 +20,16 @@ package edp.core.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import edp.core.common.cache.Caches;
+import edp.core.utils.MD5Util;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCache;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -49,5 +52,22 @@ public class CaffeineCacheConfig {
         }
         manager.setCaches(cacheList);
         return manager;
+    }
+
+
+    @Bean(name = "keyGenerator")
+    public KeyGenerator keyGenerator() {
+        return new KeyGenerator() {
+            @Override
+            public Object generate(Object o, Method method, Object... params) {
+                StringBuilder sb = new StringBuilder();
+                sb.append(o.getClass().getName());
+                sb.append(method.getName());
+                for (Object obj : params) {
+                    sb.append(obj.toString());
+                }
+                return MD5Util.getMD5(sb.toString(), false, 32);
+            }
+        };
     }
 }

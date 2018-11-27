@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -8,7 +9,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const bar: IChartInfo = {
-  id: 3,
+  id: ChartTypes.Bar,
   name: 'bar',
   title: '柱状图',
   icon: 'icon-chart-bar',
@@ -45,7 +46,9 @@ const bar: IChartInfo = {
       showLabel: true,
       labelFontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
       labelFontSize: '12',
-      labelColor: PIVOT_DEFAULT_FONT_COLOR
+      labelColor: PIVOT_DEFAULT_FONT_COLOR,
+      xAxisInterval: 0,
+      xAxisRotate: 0
     },
     yAxis: {
       showLine: true,

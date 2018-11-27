@@ -1,6 +1,7 @@
+import ChartTypes from './ChartTypes'
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const wordCloud: IChartInfo = {
-  id: 11,
+  id: ChartTypes.WordCloud,
   name: 'wordCloud',
   title: '词云',
   icon: 'icon-chartwordcloud',

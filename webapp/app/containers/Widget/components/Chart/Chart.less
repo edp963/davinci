@@ -1,3 +1,35 @@
+@import '../../../../assets/less/variable';
+
 .chartContainer {
   flex: 1;
+}
+
+.scorecard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .scorecardContainer {
+    max-width: 100%;
+
+    .scorecardTitle {
+      padding: 8px 0 0;
+      display: block;
+
+      .ellipsis;
+
+      span {
+        display: inline-block;
+        line-height: 1;
+        white-space: pre;
+      }
+    }
+  }
+}
+
+.iframePage {
+  flex: 1;
+  border: none;
 }

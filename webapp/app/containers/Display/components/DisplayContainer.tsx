@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 import * as html2canvas from 'html2canvas'
-import { getBase64 } from 'utils/util'
+import { captureVideosWithImages } from './util'
 const styles = require('../Display.less')
 
 export enum Keys {
@@ -76,7 +76,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
   public createCoverCut = () => {
     const { onCoverCutCreated, scale } = this.props
     this.content.style.transform = 'scale(1)'
-    html2canvas(this.content).then((canvas) => {
+    // captureVideosWithImages()
+    html2canvas(this.content, { useCORS: true }).then((canvas) => {
       this.content.style.transform = `scale(${scale})`
       canvas.toBlob((blob) => {
         onCoverCutCreated(blob)
@@ -94,8 +95,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     }
 
     if (slideParams.backgroundColor) {
-      const rgb = [...slideParams.backgroundColor, (slideParams.opacity / 100)].join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      const rgb = slideParams.backgroundColor.join()
+      slideStyle.backgroundColor = `rgba(${rgb})`
     }
     if (slideParams.backgroundImage) {
       slideStyle.backgroundImage = `url("${slideParams.backgroundImage}")`

@@ -139,7 +139,8 @@ module.exports = (options) => ({
       'main'
     ],
     alias: {
-      libs: path.resolve(process.cwd(), 'libs')
+      libs: path.resolve(process.cwd(), 'libs'),
+      fonts: path.resolve(process.cwd(), 'app/assets/fonts')
     }
   },
   devtool: options.devtool,

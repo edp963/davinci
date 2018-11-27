@@ -27,7 +27,6 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 
 @Component
 public interface TeamMapper {
@@ -43,8 +42,8 @@ public interface TeamMapper {
 
 
     @Select({
-            "select distinct t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t, rel_user_team rut",
-            "where rut.team_id = t.id and t.org_id = #{orgId}"
+            "select distinct t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t left join rel_user_team rut on rut.team_id = t.id",
+            "where t.org_id = #{orgId}"
     })
     List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId);
 
@@ -91,14 +90,12 @@ public interface TeamMapper {
 //    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id, @Param("userId") Long userId);
 
 
-
     @Select({
             "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
-            "from team t, rel_user_team rut",
-            "where  rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id}))",
+            "from team t left join rel_user_team rut on rut.team_id = t.id ",
+            "where FIND_IN_SET(t.id,childTeamIds(#{id}))",
     })
     List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id);
-
 
 
     @Select({

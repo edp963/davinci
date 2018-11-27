@@ -146,6 +146,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       itemId,
       widget,
       polling,
+      frequency,
       onGetChartData,
       rendered,
       container
@@ -158,7 +159,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
 
-    if (polling !== this.props.polling) {
+    if (polling !== this.props.polling || frequency !== this.props.frequency) {
       this.setFrequent(nextProps)
     }
   }
@@ -394,7 +395,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
-
     const {
       controlPanelVisible,
       sharePanelAuthorized,
@@ -525,7 +525,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     const drillButton = (
     <Tooltip title="钻取">
-      <span style={{marginLeft: '8px', cursor: 'pointer', color: `${isDrilling ? '#000' : '#ccc'}`}}  onClick={this.doDrill} className="iconfont icon-iconxiazuan"/>
+      <span style={{marginLeft: '8px', cursor: 'pointer', fontSize: '18px'}}  onClick={this.doDrill} className={`iconfont ${isDrilling ? 'icon-cube1' : 'icon-cube2'}`}/>
     </Tooltip>)
 
     const gridItemClass = classnames({

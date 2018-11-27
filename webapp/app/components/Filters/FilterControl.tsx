@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
+import * as debounce from 'lodash/debounce'
 
 const Input = require('antd/lib/input')
 const InputNumber = require('antd/lib/input-number')
@@ -35,12 +36,16 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   public componentWillMount () {
     this.loadOptions()
+    this.debouncedOnChange = debounce(this.props.onChange, 800)
   }
 
   public componentWillReceiveProps (nextProps: IFilterControlProps) {
-    const { filter } = nextProps
+    const { filter, onChange } = nextProps
     if (filter && filter !== this.props.filter) {
       this.loadOptions()
+    }
+    if (onChange !== this.props.onChange) {
+      this.debouncedOnChange = debounce(this.props.onChange, 800)
     }
   }
 
@@ -154,44 +159,44 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     )
   }
 
-  private renderControl = (filter, onChange) => {
+  private renderControl = (filter) => {
     const { currentOptions, formToAppend } = this.props
     const { fromModel } = filter
     const options = currentOptions[fromModel] || []
     let control
     switch (filter.type) {
       case FilterTypes.InputText:
-        control = this.renderInputText(filter, onChange)
+        control = this.renderInputText(filter, this.onInputChange)
         break
       case FilterTypes.InputNumber:
-        control = this.renderInputNumber(filter, onChange)
+        control = this.renderInputNumber(filter, this.change)
         break
       case FilterTypes.NumberRange:
-        control = this.renderNumberRange(filter, onChange)
+        control = this.renderNumberRange(filter, this.change)
         break
       case FilterTypes.Select:
-        control = this.renderSelect(filter, onChange, options)
+        control = this.renderSelect(filter, this.change, options)
         break
       case FilterTypes.MultiSelect:
-        control = this.renderMultiSelect(filter, onChange, options)
+        control = this.renderMultiSelect(filter, this.change, options)
         break
       case FilterTypes.CascadeSelect:
         control = this.renderCascadeSelect()
         break
       case FilterTypes.InputDate:
-        control = this.renderInputDate(filter, onChange)
+        control = this.renderInputDate(filter, this.change)
         break
       case FilterTypes.MultiDate:
-        control = this.renderMultiDate(filter, onChange)
+        control = this.renderMultiDate(filter, this.change)
         break
       case FilterTypes.DateRange:
-        control = this.renderDateRange(filter, onChange)
+        control = this.renderDateRange(filter, this.change)
         break
       case FilterTypes.Datetime:
-        control = this.renderDatetime(filter, onChange)
+        control = this.renderDatetime(filter, this.change)
         break
       case FilterTypes.DatetimeRange:
-        control = this.renderDatetimeRange(filter, onChange)
+        control = this.renderDatetimeRange(filter, this.change)
         break
     }
     return this.wrapFormItem(filter, formToAppend, control)
@@ -202,9 +207,17 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     onChange(filter, val)
   }
 
+  private debouncedOnChange = null
+  private onInputChange = (e) => {
+    const { filter } = this.props
+    let val = e.target.value
+    if (val === '') { val = undefined }
+    this.debouncedOnChange(filter, val)
+  }
+
   public render () {
     const { filter } = this.props
-    return this.renderControl(filter, this.change)
+    return this.renderControl(filter)
   }
 }
 

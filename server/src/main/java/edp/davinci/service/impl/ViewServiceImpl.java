@@ -771,7 +771,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return map;
     }
 
-
     private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user, String sqlTempDelimiter) {
         if (null != view && !StringUtils.isEmpty(view.getConfig())) {
             JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
@@ -780,23 +779,26 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 if (!StringUtils.isEmpty(teamVarString)) {
                     List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
                     if (null != varList && varList.size() > 0) {
-                        Set<Long> tIds = relUserTeamMapper.getUserTeamId(user.getId());
-                        for (String key : paramMap.keySet()) {
-                            List<String> params = new ArrayList<>();
-                            for (TeamVar teamVar : varList) {
-                                if (tIds.contains(teamVar.getId())) {
-                                    for (TeamParam teamParam : teamVar.getParams()) {
+                        String fullTeam = relUserTeamMapper.getUserFullTeam(user.getId());
+                        if (!StringUtils.isEmpty(fullTeam.trim())) {
+                            List<String> teamIdlist = Arrays.asList(fullTeam.trim().split(conditionSeparator));
+                            for (String key : paramMap.keySet()) {
+                                List<String> params = new ArrayList<>();
+                                for (TeamVar teamVar : varList) {
+                                    if (teamIdlist.contains(String.valueOf(teamVar.getId()))) {
+                                        for (TeamParam teamParam : teamVar.getParams()) {
 
-                                        String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
-                                        if (teamParam.getK().equals(k)) {
-                                            params.add(teamParam.getV());
+                                            String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
+                                            if (teamParam.getK().equals(k)) {
+                                                params.add(teamParam.getV());
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            if (params.size() > 0) {
-                                paramMap.put(key, params);
+                                if (params.size() > 0) {
+                                    paramMap.put(key, params);
+                                }
                             }
                         }
                     }

@@ -1,3 +1,4 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
@@ -8,7 +9,7 @@ import {
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const funnel: IChartInfo = {
-  id: 6,
+  id: ChartTypes.Funnel,
   name: 'funnel',
   title: '漏斗图',
   icon: 'icon-iconloudoutu',

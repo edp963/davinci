@@ -263,7 +263,6 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       width,
       height,
       backgroundColor,
-      opacity,
       backgroundImage
     } = slideParams
 
@@ -276,8 +275,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     }
 
     if (backgroundColor) {
-      const rgb = [...backgroundColor, (opacity / 100)].join()
-      slideStyle.backgroundColor = `rgb(${rgb})`
+      const rgb = backgroundColor.join()
+      slideStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
       slideStyle.backgroundImage = `url("${backgroundImage}")`
@@ -302,7 +301,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       const view = widget && bizlogics.find((b) => b.id === widget.viewId)
       const layerId = layer.id
 
-      const { polling, frequency } = layer.params
+      const { polling, frequency } = JSON.parse(layer.params)
       const { datasource, loading, interactId, rendered, renderType } = currentLayersInfo[layerId]
 
       return (

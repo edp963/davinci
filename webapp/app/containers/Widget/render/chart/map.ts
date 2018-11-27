@@ -67,8 +67,22 @@ export default function (chartProps: IChartProps) {
 
   const {
     layerType,
-    roam
+    roam,
+    linesSpeed,
+    symbolType
   } = spec
+
+  const tooltipOptions = {
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        const { name, data} = params
+        if (data) {
+          return name + ' : ' + data.value[2]
+        }
+      }
+    }
+  }
 
   const labelOption = {
     label: {
@@ -177,37 +191,57 @@ export default function (chartProps: IChartProps) {
   }
 
   let serieObj
-  if (layerType === 'map') {
-    serieObj = {
-      name: '地图',
-      type: 'map',
-      mapType: 'china',
-      roam,
-      data: Object.keys(dataTree).map((key, index) => {
-        const { lon, lat, value } = dataTree[key]
-        return {
-          name: key,
-          value: [lon, lat, value]
-        }
-      }),
-      ...labelOption
-    }
-  } else if (layerType === 'scatter' || layerType === 'heatmap') {
-    serieObj = {
-      name: layerType === 'scatter' ? '气泡图' : '热力图',
-      type: layerType || 'scatter',
-      coordinateSystem: 'geo',
-      data: Object.keys(dataTree).map((key, index) => {
-        const { lon, lat, value } = dataTree[key]
-        return {
-          name: key,
-          value: [lon, lat, value],
-          symbolSize: getSymbolSize(sizeRate, value) / 2
-        }
-      }),
-      ...labelOption,
-      ...optionsType
-    }
+  switch (layerType) {
+    case 'map':
+      serieObj = {
+        name: '地图',
+        type: 'map',
+        mapType: 'china',
+        roam,
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
+          return {
+            name: key,
+            value: [lon, lat, value]
+          }
+        }),
+        ...labelOption
+      }
+      break
+    case 'scatter':
+      serieObj = {
+        name: '气泡图',
+        type: 'scatter',
+        coordinateSystem: 'geo',
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
+          return {
+            name: key,
+            value: [lon, lat, value],
+            symbolSize: getSymbolSize(sizeRate, value) / 2
+          }
+        }),
+        ...labelOption,
+        ...optionsType
+      }
+      break
+    case 'heatmap':
+      serieObj = {
+        name: '热力图',
+        type: 'heatmap',
+        coordinateSystem: 'geo',
+        data: Object.keys(dataTree).map((key, index) => {
+          const { lon, lat, value } = dataTree[key]
+          return {
+            name: key,
+            value: [lon, lat, value],
+            symbolSize: getSymbolSize(sizeRate, value) / 2
+          }
+        }),
+        ...labelOption,
+        ...optionsType
+      }
+      break
   }
 
   metricArr.push(serieObj)
@@ -270,25 +304,12 @@ export default function (chartProps: IChartProps) {
     }
   }
 
-  const tooltipOptions = {
-    tooltip: {
-      trigger: 'item'
-      // formatter: (params) => {
-      //   const treeNode = dataTree[params.name]
-      //   let content = treeNode ? `${params.name}：${treeNode.value}` : ''
-
-      //   const groupContent = Object.keys(treeNode.children).map((k) => `${k}：${treeNode.children[k]}<br/>`).join('')
-      //   content += `<br/>${groupContent}`
-
-      //   return content
-      // }
-    }
-  }
-
   const getGeoCity = cols.filter((c) => model[c].visualType === 'geoCity')
   const getGeoProvince = cols.filter((c) => model[c].visualType === 'geoProvince')
   const linesSeries = []
   const legendData = []
+  let effectScatterType
+  let linesType
   data.forEach((d, index) => {
     let linesSeriesData = []
     let scatterData = []
@@ -321,10 +342,9 @@ export default function (chartProps: IChartProps) {
         value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
       }]
     } else {
-      linesSeriesData = []
+      return
     }
 
-    let effectScatterType
     effectScatterType = {
       name: d[getGeoCity[0]] || d[getGeoProvince[0]],
       type: 'effectScatter',
@@ -335,12 +355,12 @@ export default function (chartProps: IChartProps) {
       },
       ...labelOptionLines,
       symbolSize: (val) => {
-          return val[2] / 6
+          return 12
       },
       data: scatterData
     }
 
-    linesSeries.push({
+    linesType = {
       name: d[getGeoCity[0]] || d[getGeoProvince[0]],
       type: 'lines',
       zlevel: index,
@@ -348,10 +368,11 @@ export default function (chartProps: IChartProps) {
       symbolSize: 10,
       effect: {
           show: true,
-          period: 6,
+          // period: 600,
           trailLength: 0,
-          symbol: 'arrow',
-          symbolSize: 15
+          symbol: symbolType,
+          symbolSize: 15,
+          constantSpeed: linesSpeed
       },
       lineStyle: {
           normal: {
@@ -361,9 +382,8 @@ export default function (chartProps: IChartProps) {
           }
       },
       data: linesSeriesData
-    },
-    effectScatterType
-  )
+    }
+    linesSeries.push(linesType, effectScatterType)
   })
 
   let legendOption
@@ -388,7 +408,8 @@ export default function (chartProps: IChartProps) {
     case 'map':
       mapOptions = {
         ...metricOptions,
-        ...visualMapOptions
+        ...visualMapOptions,
+        ...tooltipOptions
       }
       break
     case 'lines':
@@ -402,18 +423,18 @@ export default function (chartProps: IChartProps) {
         ...visualMapOptions
       }
       break
-    default:
+    case 'scatter':
       mapOptions = {
         geo: {
           map: 'china',
           itemStyle: {
             normal: {
-              areaColor: '#0000003F',
-              borderColor: '#FFFFFF',
+              areaColor: '#cccccc',
+              borderColor: '#ffffff',
               borderWidth: 1
             },
             emphasis: {
-              areaColor: '#00000059'
+              areaColor: '#bbbbbb'
             }
           },
           roam
@@ -421,6 +442,32 @@ export default function (chartProps: IChartProps) {
         ...metricOptions,
         ...visualMapOptions,
         ...tooltipOptions
+      }
+      break
+    case 'heatmap':
+      mapOptions = {
+        geo: {
+          map: 'china',
+          itemStyle: {
+            normal: {
+              areaColor: '#cccccc',
+              borderColor: '#ffffff',
+              borderWidth: 1
+            },
+            emphasis: {
+              areaColor: '#bbbbbb'
+            }
+          },
+          label: {
+            emphasis: {
+                show: true
+            }
+          },
+          roam
+        },
+        ...metricOptions,
+        ...visualMapOptions
+        // ...tooltipOptions
       }
       break
   }

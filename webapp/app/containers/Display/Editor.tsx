@@ -97,7 +97,7 @@ import {
   loadBizdataSchema  } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR } from '../../globalConstants'
+import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams, ISlide } from './'
@@ -194,6 +194,12 @@ interface IEditorStates {
   editorPadding: string
   scale: number
   sliderValue: number
+  settingInfo: {
+    key: string
+    id: number
+    setting: any
+    param: ILayerParams | Partial<ISlideParams>
+  }
 }
 
 export class Editor extends React.Component<IEditorProps, IEditorStates> {
@@ -207,7 +213,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       editorHeight: 0,
       editorPadding: '',
       scale: 1,
-      sliderValue: 20
+      sliderValue: 20,
+      settingInfo: {
+        key: '',
+        id: 0,
+        setting: null,
+        param: null
+      }
     }
 
     this.refHandlers = {
@@ -244,24 +256,56 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.containerResize, false)
+    this.props.onClearLayersSelection()
   }
 
   public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentSlide, currentLayers } = nextProps
+
+    let { slideParams, currentLocalLayers } = this.state
+    let init = false
     if (currentSlide !== this.props.currentSlide) {
-      const { slideParams } = JSON.parse(currentSlide.config)
-      this.setState({
-        slideParams
-      }, () => {
-        this.doScale(1)
-      })
+      slideParams = JSON.parse(currentSlide.config).slideParams
+      init = true
     }
     if (currentLayers !== this.props.currentLayers) {
-      const currentLocalLayers = fromJS(currentLayers).toJS()
-      this.setState({
-        currentLocalLayers
-      })
+      currentLocalLayers = fromJS(currentLayers).toJS()
     }
+    const settingInfo = this.getSettingInfo(nextProps, slideParams, currentLocalLayers)
+    this.setState({
+      slideParams,
+      currentLocalLayers,
+      settingInfo
+    }, () => {
+      if (init) {
+        this.doScale(1)
+      }
+    })
+  }
+
+  private getSettingInfo = (nextProps: IEditorProps, slideParams, currentLocalLayers) => {
+    const { currentSlide, currentSelectedLayers } = nextProps
+
+    let settingInfo = this.state.settingInfo
+    if (currentSelectedLayers.length === 1) {
+      const selectedLayer = currentLocalLayers.find((layer) => layer.id === currentSelectedLayers[0].id)
+      const type = selectedLayer.subType || selectedLayer.type
+      const param = JSON.parse(selectedLayer['params'])
+      settingInfo = {
+        key: `layer_${selectedLayer.id}`,
+        id: selectedLayer.id,
+        setting: slideSettings[type],
+        param
+      }
+    } else if (currentSlide) {
+      settingInfo = {
+        key: 'slide',
+        id: currentSlide.id,
+        setting: slideSettings[GraphTypes.Slide],
+        param: slideParams
+      }
+    }
+    return settingInfo
   }
 
   private containerResize = () => {
@@ -511,7 +555,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private formItemChange = (field, val) => {
-    const { slideParams } = this.state
+    const { slideParams, currentLocalLayers } = this.state
 
     const {
       currentDisplay,
@@ -521,49 +565,41 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     if (currentSelectedLayers.length === 1) {
       const selectedLayer = currentSelectedLayers[0]
-      const layerParams = {
+      const newParams = JSON.stringify({
         ...JSON.parse(selectedLayer['params']),
         [field]: val
-      }
-      this.onEditLayers([{
-        ...selectedLayer,
-        params: JSON.stringify(layerParams)
-      }])
+      })
+      this.setState({
+        currentLocalLayers: currentLocalLayers.map((layer) => (
+          layer.id !== selectedLayer.id ? layer
+            : {
+              ...layer,
+              params: newParams
+            }
+        ))
+      }, () => {
+        this.onEditLayers([{
+          ...selectedLayer,
+          params: newParams
+        }])
+      })
     } else {
       const newSlideParams = {
         ...slideParams,
         [field]: val
       }
-      const newConfig = {
-        ...JSON.parse(currentSlide.config),
-        slideParams: newSlideParams
-      }
-      onEditCurrentSlide(currentDisplay.id, {
-        ...currentSlide,
-        config: JSON.stringify(newConfig)
+      this.setState({
+        slideParams: { ...newSlideParams }
+      }, () => {
+        const newConfig = {
+          ...JSON.parse(currentSlide.config),
+          slideParams: newSlideParams
+        }
+        onEditCurrentSlide(currentDisplay.id, {
+          ...currentSlide,
+          config: JSON.stringify(newConfig)
+        })
       })
-    }
-  }
-
-  private getSettingInfo = () => {
-    const { currentSlide, currentSelectedLayers } = this.props
-    const { slideParams } = this.state
-
-    if (currentSelectedLayers.length === 1) {
-      const selectedLayer = currentSelectedLayers[0]
-      const type = selectedLayer.subType || selectedLayer.type
-      return {
-        key: `layer_${selectedLayer.id}`,
-        id: selectedLayer.id,
-        setting: slideSettings[type],
-        param: JSON.parse(selectedLayer['params'])
-      }
-    }
-    return {
-      key: 'slide',
-      id: currentSlide.id,
-      setting: slideSettings[GraphTypes.Slide],
-      param: slideParams
     }
   }
 
@@ -669,16 +705,16 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const { slideParams } = this.state
     switch (key) {
       case Keys.Up:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: - GRID_ITEM_MARGIN })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: -1 })
         break
       case Keys.Down:
-        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: GRID_ITEM_MARGIN })
+        this.moveSelectedLayersPosition({ positionXD: 0, positionYD: 1 })
         break
       case Keys.Left:
-        this.moveSelectedLayersPosition({ positionXD: - GRID_ITEM_MARGIN, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: -1, positionYD: 0 })
         break
       case Keys.Right:
-        this.moveSelectedLayersPosition({ positionXD: GRID_ITEM_MARGIN, positionYD: 0 })
+        this.moveSelectedLayersPosition({ positionXD: 1, positionYD: 0 })
         break
       case Keys.Delete:
         this.deleteLayers()
@@ -708,8 +744,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const layers = currentSelectedLayers.map((layer) => {
       const layerParams: ILayerParams = JSON.parse(layer.params)
       const { positionX, positionY, width, height } = layerParams
-      let newPositionX = positionXD === 0 ? positionX : (positionX - positionX % GRID_ITEM_MARGIN + positionXD)
-      let newPositionY = positionYD === 0 ? positionY : (positionY - positionY % GRID_ITEM_MARGIN + positionYD)
+      let newPositionX = positionXD === 0 ? positionX : (positionX + positionXD)
+      let newPositionY = positionYD === 0 ? positionY : (positionY + positionYD)
       if (newPositionX < 0) {
         newPositionX = 0
       }
@@ -773,6 +809,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     return domBaselines
   }
 
+  private toWorkbench = (_, widgetId) => {
+    const { params } = this.props
+    const { pid, displayId } = params
+    const editSign = [pid, displayId].join(DEFAULT_SPLITER)
+    sessionStorage.setItem('editWidgetFromDisplay', editSign)
+    this.props.router.push(`/project/${pid}/widget/${widgetId}`)
+  }
+
   public render () {
     const {
       params,
@@ -795,7 +839,8 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       editorHeight,
       editorPadding,
       scale,
-      sliderValue
+      sliderValue,
+      settingInfo
     } = this.state
 
     if (!currentDisplay) { return null }
@@ -836,13 +881,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onResizeLayer={this.resizeLayer}
           onResizeLayerStop={this.resizeLayerStop}
           onDragLayerStop={this.dragLayerStop}
+          onEditWidget={this.toWorkbench}
         />
         // </LayerContextMenu>
       )
     })
 
     const baselines = this.getEditorBaselines()
-    const settingInfo = this.getSettingInfo()
 
     let settingContent = null
     if (currentSelectedLayers.length > 1) {
@@ -853,7 +898,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           onCollapseChange={this.collapseChange}
         />
       )
-    } else {
+    } else if (settingInfo.id) {
       settingContent = (
         <SettingForm
           key={settingInfo.key}

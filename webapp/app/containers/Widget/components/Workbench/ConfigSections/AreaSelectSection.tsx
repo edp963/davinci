@@ -59,6 +59,7 @@ export class AreaSelectSection extends React.PureComponent<IAreaSelectSectionPro
               <ColorPicker
                 value={color}
                 onChange={this.colorChange('color')}
+                disableAlpha
               />
             </Col>
           </Row>
@@ -77,6 +78,7 @@ export class AreaSelectSection extends React.PureComponent<IAreaSelectSectionPro
               <ColorPicker
                 value={borderColor}
                 onChange={this.colorChange('borderColor')}
+                disableAlpha
               />
             </Col>
           </Row>

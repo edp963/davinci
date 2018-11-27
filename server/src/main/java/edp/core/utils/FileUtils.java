@@ -69,7 +69,7 @@ public class FileUtils {
      * @return
      */
     public boolean isCsv(MultipartFile file) {
-        return file.getOriginalFilename().endsWith(".csv");
+        return file.getOriginalFilename().toLowerCase().endsWith(".csv");
     }
 
     /**
@@ -87,7 +87,7 @@ public class FileUtils {
         String format = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
         String newFilename = fileName + "." + format;
 
-        String returnPath = (path.endsWith(File.separator) ? path : path + File.separator) + newFilename;
+        String returnPath = (path.endsWith("/") ? path : path + "/") + newFilename;
 
         String filePath = fileBasePath + returnPath;
 

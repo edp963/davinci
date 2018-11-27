@@ -196,22 +196,29 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
             return resultMap.failAndRefreshToken(request).message("the name is already taken");
         }
 
+        if (CronJobStatusEnum.START.getStatus().equals(cronJobWithProject.getJobStatus())) {
+            return resultMap.failAndRefreshToken(request).message("Please stop the job before updating");
+        }
+
         CronJob cronJob = new CronJob();
         BeanUtils.copyProperties(cronJobUpdate, cronJob);
         try {
             cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
+
+            cronJob.setUpdateTime(new Date());
+            int update = cronJobMapper.update(cronJob);
+            if (update > 0) {
+                quartzUtils.modifyJob(cronJob);
+            }
         } catch (Exception e) {
+            quartzUtils.removeJob(cronJob);
             cronJobWithProject.setJobStatus(CronJobStatusEnum.FAILED.getStatus());
             cronJobMapper.update(cronJobWithProject);
 
             e.printStackTrace();
         }
-        cronJob.setUpdateTime(new Date());
-        int update = cronJobMapper.update(cronJob);
-        if (update > 0) {
-            quartzUtils.modifyJob(cronJob);
-        }
+
 
         return resultMap.successAndRefreshToken(request);
     }

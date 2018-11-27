@@ -1,3 +1,4 @@
+import PivotTypes from './PivotTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -8,7 +9,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const bar: IChartInfo = {
-  id: 3,
+  id: PivotTypes.Bar,
   name: 'bar',
   title: '柱状图',
   icon: 'icon-chart-bar',

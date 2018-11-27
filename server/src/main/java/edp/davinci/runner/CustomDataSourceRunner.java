@@ -26,8 +26,10 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+@Order(1)
 @Component
 @Slf4j
 public class CustomDataSourceRunner implements ApplicationRunner {
@@ -40,7 +42,6 @@ public class CustomDataSourceRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        log.info("======= Load custom datasource config =======>>");
         try {
             CustomDataSourceUtils.loadAllFromYaml(dataSourceYamlPath);
         } catch (Exception e) {
@@ -48,5 +49,6 @@ public class CustomDataSourceRunner implements ApplicationRunner {
             SpringApplication.exit(applicationContext);
             log.info("Server shutdown");
         }
+        log.info("Load custom datasource finish");
     }
 }
