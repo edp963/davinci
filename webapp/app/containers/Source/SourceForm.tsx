@@ -107,10 +107,10 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
           <Col span={24}>
             <FormItem label="用户名" {...commonFormItemStyle}>
               {getFieldDecorator('user', {
-                rules: [{
-                  required: true,
-                  message: 'User 不能为空'
-                }],
+                // rules: [{
+                //   required: true,
+                //   message: 'User 不能为空'
+                // }],
                 initialValue: ''
               })(
                 <Input placeholder="User" />
@@ -120,10 +120,10 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
           <Col span={24}>
             <FormItem label="密码" {...commonFormItemStyle}>
               {getFieldDecorator('password', {
-                rules: [{
-                  required: true,
-                  message: 'Password 不能为空'
-                }],
+                // rules: [{
+                //   required: true,
+                //   message: 'Password 不能为空'
+                // }],
                 initialValue: ''
               })(
                 <Input placeholder="Password" type="password" />

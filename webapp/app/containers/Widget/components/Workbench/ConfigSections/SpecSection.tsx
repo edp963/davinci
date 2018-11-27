@@ -8,7 +8,7 @@ const Select = require('antd/lib/select')
 const Option = Select.Option
 const InputNumber = require('antd/lib/input-number')
 const styles = require('../Workbench.less')
-import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES } from '../../../../../globalConstants'
+import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES_SYMBOL_TYPE } from '../../../../../globalConstants'
 
 export interface ISpecConfig {
   smooth?: boolean
@@ -21,6 +21,8 @@ export interface ISpecConfig {
   shape?: 'polygon' | 'circle'
   roam?: boolean
   layerType?: string
+  linesSpeed: number
+  symbolType: string
   layout?: 'horizontal' | 'vertical'
 
   // for sankey
@@ -35,6 +37,7 @@ interface ISpecSectionProps {
   title: string
   config: ISpecConfig
   onChange: (prop: string, value: any) => void
+  isLegendSection: boolean
 }
 
 export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
@@ -51,7 +54,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
   }
 
   public render () {
-    const { name, title, config } = this.props
+    const { name, title, config, isLegendSection } = this.props
 
     const {
       smooth,
@@ -63,6 +66,8 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       gapNumber,
       shape,
       layerType,
+      linesSpeed,
+      symbolType,
       roam,
       layout,
       // for sankey
@@ -81,6 +86,10 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
     ))
 
     const layerTypes = CHART_LAYER_TYPES.map((p) => (
+      <Option key={p.value} value={p.value}>{p.name}</Option>
+    ))
+
+    const symbolTypes = CHART_LINES_SYMBOL_TYPE.map((p) => (
       <Option key={p.value} value={p.value}>{p.name}</Option>
     ))
 
@@ -233,7 +242,36 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     {layerTypes}
                   </Select>
                 </Col>
-              </Row>
+                </Row>
+                {
+                  isLegendSection
+                    ? (
+                        <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                          <Col span={4}>速度</Col>
+                          <Col span={6}>
+                            <InputNumber
+                              placeholder="speed"
+                              className={styles.blockElm}
+                              value={linesSpeed}
+                              min={0}
+                              onChange={this.inputNumberChange('linesSpeed')}
+                            />
+                          </Col>
+                          <Col span={4}>标记</Col>
+                          <Col span={10}>
+                            <Select
+                              placeholder="标记"
+                              className={styles.blockElm}
+                              value={symbolType}
+                              onChange={this.selectChange('symbolType')}
+                            >
+                              {symbolTypes}
+                            </Select>
+                          </Col>
+                        </Row>
+                    )
+                    : null
+                }
             </div>
           </div>
         )

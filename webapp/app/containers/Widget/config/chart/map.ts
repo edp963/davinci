@@ -1,16 +1,18 @@
+import ChartTypes from './ChartTypes'
 import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_DEFAULT_FONT_COLOR,
   CHART_LABEL_POSITIONS,
   CHART_VISUALMAP_POSITIONS,
-  CHART_LEGEND_POSITIONS
+  CHART_LEGEND_POSITIONS,
+  CHART_LINES_SYMBOL_TYPE
 } from '../../../../globalConstants'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 const map: IChartInfo = {
-  id: 7,
+  id: ChartTypes.CMap,
   name: 'map',
   title: '地图',
   icon: 'icon-china',
@@ -48,7 +50,9 @@ const map: IChartInfo = {
     },
     spec: {
       layerType: 'map',
-      roam: false
+      roam: false,
+      symbolType: CHART_LINES_SYMBOL_TYPE[0].value,
+      linesSpeed: '10'
     }
   }
 }

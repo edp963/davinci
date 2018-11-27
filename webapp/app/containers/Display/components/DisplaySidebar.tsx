@@ -15,6 +15,7 @@ export function DisplaySidebar (props: IDisplaySidebarProps) {
   let settingContent
 
   props.children.forEach(((c) => {
+    if (!c) { return }
     if (c.type === LayerList) {
       layerList = c
     } else {

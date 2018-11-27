@@ -14,6 +14,8 @@ import { ILegendConfig } from '../Workbench/ConfigSections/LegendSection'
 import { IVisualMapConfig } from '../Workbench/ConfigSections/VisualMapSection'
 import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
+import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
+import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
@@ -45,6 +47,8 @@ export interface IChartStyles {
   areaSelect?: IAreaSelectConfig
   spec?: ISpecConfig
   visualMap?: IVisualMapConfig
+  scorecard?: IScorecardConfig
+  iframe?: IframeConfig
 }
 
 export interface IChartInfo {

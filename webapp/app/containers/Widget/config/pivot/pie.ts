@@ -1,3 +1,4 @@
+import PivotTypes from './PivotTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -8,7 +9,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const pie: IChartInfo = {
-  id: 5,
+  id: PivotTypes.Pie,
   name: 'pie',
   title: '饼图',
   icon: 'icon-chartpie',

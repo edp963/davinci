@@ -199,6 +199,6 @@ export default function (chartProps: IChartProps) {
         }
       }
     },
-    grid: getGridPositions({ showLegend: false }, seriesNames)
+    grid: getGridPositions({ showLegend: false }, seriesNames, xAxis, xAxisData)
   }
 }

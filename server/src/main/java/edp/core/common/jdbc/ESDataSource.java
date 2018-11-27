@@ -41,19 +41,18 @@ public class ESDataSource {
     private static volatile Map<String, DataSource> map = new HashMap<>();
 
     public static synchronized DataSource getDataSource(String jdbcUrl) throws SourceException {
-        String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(url) || null == map.get(url)) {
+        if (!map.containsKey(jdbcUrl.trim()) || null == map.get(jdbcUrl.trim())) {
             Properties properties = new Properties();
-            properties.setProperty(PROP_URL, url);
+            properties.setProperty(PROP_URL, jdbcUrl.trim());
             properties.put(PROP_CONNECTIONPROPERTIES, "client.transport.ignore_cluster_name=true");
             try {
                 dataSource = ElasticSearchDruidDataSourceFactory.createDataSource(properties);
-                map.put(url, dataSource);
+                map.put(jdbcUrl.trim(), dataSource);
             } catch (Exception e) {
                 log.error("Exception during pool initialization, ", e);
-                throw new SourceException("Exception during pool initialization: jdbcUrl=" + jdbcUrl);
+                throw new SourceException(e.getMessage());
             }
         }
-        return map.get(url);
+        return map.get(jdbcUrl.trim());
     }
 }

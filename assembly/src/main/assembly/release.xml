@@ -24,7 +24,7 @@
 
 
 <assembly>
-    <id>release</id>
+    <id>release-beta.4</id>
     <formats>
         <format>zip</format>
     </formats>

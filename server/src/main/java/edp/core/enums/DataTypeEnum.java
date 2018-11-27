@@ -30,13 +30,13 @@ public enum DataTypeEnum {
 
     SQLSERVER("sqlserver", "sqlserver", "com.microsoft.sqlserver.jdbc.SQLServerDriver", "\"", "\"", "\"", "\""),
 
-    H2("h2", "h2", "org.h2.Driver", "`", "`", "'", "'"),
+    H2("h2", "h2", "org.h2.Driver", "`", "`", "\"", "\""),
 
     PHOENIX("phoenix", "hbase phoenix", "org.apache.phoenix.jdbc.PhoenixDriver", "", "", "\"", "\""),
 
-    MONGODB("mongodb", "mongodb", "mongodb.jdbc.MongoDriver", "", "", "'", "'"),
+    MONGODB("mongo", "mongodb", "mongodb.jdbc.MongoDriver", "`", "`", "\"", "\""),
 
-    ELASTICSEARCH("elasticsearch", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
+    ELASTICSEARCH("sql4es", "elasticsearch", "nl.anchormen.sql4es.jdbc.ESDriver", "", "", "'", "'"),
 
     PRESTO("presto", "presto", "com.facebook.presto.jdbc.PrestoDriver", "", "", "'", "'"),
 
@@ -44,9 +44,9 @@ public enum DataTypeEnum {
 
     CASSANDRA("cassandra", "cassandra", "com.github.adejanovski.cassandra.jdbc.CassandraDriver", "", "", "'", "'"),
 
-    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", "", "", "'", "'"),
+    CLICKHOUSE("clickhouse", "clickhouse", "ru.yandex.clickhouse.ClickHouseDriver", "", "", "\"", "\""),
 
-    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", "", "", "'", "'"),
+    KYLIN("kylin", "kylin", "org.apache.kylin.jdbc.Driver", "\"", "\"", "\"", "\""),
 
     VERTICA("vertica", "vertica", "com.vertica.jdbc.Driver", "", "", "'", "'"),
 

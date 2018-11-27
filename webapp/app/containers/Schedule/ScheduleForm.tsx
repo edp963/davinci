@@ -269,7 +269,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                   })(
                     <Select>
                       {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                        .map((dimensions, index) => <Option key={index} value={`${index}`}>{dimensions}</Option>)}
+                        .map((dimensions, index) => <Option key={index} value={`${index + 1}`}>{dimensions}</Option>)}
                     </Select>
                   )
                 }

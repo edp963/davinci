@@ -4,9 +4,10 @@ import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import chartOptionGenerator from '../../render/pivot'
 import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
-import { decodeMetricName, getScatter, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getBar, getTriggeringRecord } from '../util'
+import { decodeMetricName, getTooltipPosition, getPivotTooltipLabel, getSizeValue, getChartLabel, getTriggeringRecord } from '../util'
 import { uuid } from '../../../../utils/util'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
+import PivotTypes from '../../config/pivot/PivotTypes'
 const styles = require('./Pivot.less')
 
 export interface IChartUnit {
@@ -262,7 +263,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                   .concat(currentLabelItem && currentLabelItem.type === 'category' && currentLabelItem)
                   .filter((i) => !!i)
 
-                if (!(currentScatterXAxisItem && m.chart.id === getScatter().id)) {
+                if (!(currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter)) {
                   grid.push({
                     top: dimetionAxis === 'col' ? (xSum + l * height) : ySum,
                     left: dimetionAxis === 'col' ? ySum - 1 : (xSum - 1 + l * width),    // 隐藏yaxisline
@@ -300,7 +301,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       }
                     })
 
-                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       xAxisData.forEach((colKey, xdIndex) => {
@@ -376,7 +377,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                         const data = []
                         const backupData = []
                         xAxisData.forEach((colKey) => {
-                          if (m.chart.id === getScatter().id) {
+                          if (m.chart.id === PivotTypes.Scatter) {
                             const result = groupedRecords[colKey]
                               ? groupedRecords[colKey].reduce(([value, size], record) => [
                                   value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),
@@ -407,7 +408,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                           ...currentLabelItem && {
                             label: {
                               show: true,
-                              position: m.chart.id === getBar().id ? 'inside' : 'top',
+                              position: m.chart.id === PivotTypes.Bar ? 'inside' : 'top',
                               formatter: getChartLabel(seriesData, currentLabelItem)
                             }
                           },
@@ -423,7 +424,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                       })
                     }
                   } else {
-                    if (currentScatterXAxisItem && m.chart.id === getScatter().id) {
+                    if (currentScatterXAxisItem && m.chart.id === PivotTypes.Scatter) {
                       let tempXsum = xSum
                       let tempYsum = ySum
                       records.forEach((recordCollection, rcIndex) => {
@@ -491,7 +492,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
                     } else {
                       series.push({
                         data: records.map((recordCollection) => {
-                          if (m.chart.id === getScatter().id) {
+                          if (m.chart.id === PivotTypes.Scatter) {
                             const result = recordCollection.value
                               ? recordCollection.value.reduce(([value, size], record) => [
                                   value + (Number(record[`${m.agg}(${decodedMetricName})`]) || 0),

@@ -417,13 +417,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItemsInfo,
       widgets
     } = this.props
-
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
-
     let linkageFilters
     let globalFilters
     let params
@@ -444,10 +442,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
-      const drillHistory = cachedQueryParams.drillHistory
-      if (drillHistory && drillHistory.length) {
-        drillStatus = drillHistory[drillHistory.length - 1]
-      }
     }
 
     let groups = cols.concat(rows).filter((g) => g !== '指标名称')
@@ -491,6 +485,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
+    // console.log(!!(drillStatus && drillStatus.groups), groups)
+    // console.log(!!(drillStatus && drillStatus.filter), filters.map((i) => i.config.sql))
     callback(
       renderType,
       itemId,
@@ -897,7 +893,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { params } = this.props
     const { pid, portalId, portalName, dashboardId } = params
     const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
-    localStorage.setItem('editWidgetFromDashboard', editSign)
+    sessionStorage.setItem('editWidgetFromDashboard', editSign)
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 

@@ -28,6 +28,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface OrganizationMapper {
@@ -83,6 +84,8 @@ public interface OrganizationMapper {
     int updateProjectNum(Organization organization);
 
     int updateMemberNum(Organization organization);
+
+    int addOneMemberNum(@Param("set") Set<Long> orgIds);
 
     int updateTeamNum(Organization organization);
 

@@ -5,6 +5,7 @@ const styles = require('./ColorPicker.less')
 
 interface IColorPickerProps {
   value: string
+  disableAlpha?: boolean
   onChange: (value: string) => void
 }
 
@@ -17,6 +18,7 @@ export function ColorPicker (props: IColorPickerProps) {
             color={props.value}
             presetColors={[]}
             onChangeComplete={colorChange(props)}
+            disableAlpha={props.disableAlpha}
           />
         </div>}
       trigger="click"
