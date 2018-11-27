@@ -201,7 +201,7 @@ public class CronJobServiceImpl extends CommonService<CronJob> implements CronJo
         }
 
         CronJob cronJob = new CronJob();
-        BeanUtils.copyProperties(cronJobWithProject, cronJob);
+        BeanUtils.copyProperties(cronJobUpdate, cronJob);
         try {
             cronJob.setStartDate(DateUtils.toDate(cronJobUpdate.getStartDate()));
             cronJob.setEndDate(DateUtils.toDate(cronJobUpdate.getEndDate()));
