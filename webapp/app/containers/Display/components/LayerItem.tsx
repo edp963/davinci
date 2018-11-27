@@ -298,11 +298,13 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         style={layerStyle}
         onClick={this.onClickLayer}
       >
-        <div className={styles.tools}>
-          <Tooltip title="编辑">
-            <Icon type="edit" onClick={this.toWorkbench} />
-          </Tooltip>
-        </div>
+        {pure ? null : (
+          <div className={styles.tools}>
+            <Tooltip title="编辑">
+              <Icon type="edit" onClick={this.toWorkbench} />
+            </Tooltip>
+          </div>
+        )}
         {this.wrapLayerTooltip(
           (<Widget
             {...widgetProps}
