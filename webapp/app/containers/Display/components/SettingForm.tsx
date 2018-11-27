@@ -77,7 +77,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     const { settingInfo, settingParams } = nextProps
     const { collapse } = nextState
     const needUpdate = settingInfo !== this.props.settingInfo
-      || settingParams !== this.props.settingParams
+      || !(this.compareSettingParams(this.props.settingParams, settingParams) && this.compareSettingParams(this.props.settingParams, this.props.form.getFieldsValue()))
       || collapse !== this.state.collapse
     return needUpdate
   }
@@ -90,9 +90,19 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     if (onFormItemChange !== this.props.onFormItemChange) {
       this.debounceFormItemChange = debounce(onFormItemChange, 1000)
     }
-    if (settingParams !== this.props.settingParams) {
+
+    if (!this.compareSettingParams(this.props.settingParams, settingParams)) {
       this.props.form.setFieldsValue({...settingParams})
     }
+  }
+
+  private compareSettingParams = (
+    params1: ISettingFormProps['settingParams'],
+    params2: ISettingFormProps['settingParams']
+  ) => {
+    const isSame = Object.keys(params1)
+      .every((key) => JSON.stringify(params1[key]) === JSON.stringify(params2[key]))
+    return isSame
   }
 
   private getFormItemLayout = (item) => {
@@ -145,7 +155,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
     this.debounceFormItemChange(field, val)
   }
   private formInputItemChange = (field) => (e) => {
-    this.debounceFormItemChange(field, e.target.value)
+    this.props.onFormItemChange(field, e.target.value)
   }
   private formRadioItemChange = (field) => (e) => {
     this.props.onFormItemChange(field, e.target.value)
@@ -163,7 +173,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       let control
       switch (item.component) {
         case 'input':
-          control = this.renderInput(item, this.formDebouncedItemChange)
+          control = this.renderInput(item, this.formInputItemChange)
           break
         case 'inputnumber':
           control = this.renderInputNumber(item, this.formDebouncedItemChange)
