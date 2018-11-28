@@ -499,26 +499,30 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
         if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
             if (null != executeParam) {
-                //构造参数， 原有的被传入的替换
-                if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                    executeParam.setGroups(null);
+                if (executeParam.isOriginalSql()) {
+                    querySqlList.set(querySqlList.size() - 1, querySqlList.get(querySqlList.size() - 1));
+                } else {
+                    //构造参数， 原有的被传入的替换
+                    if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
+                        executeParam.setGroups(null);
+                    }
+
+                    if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
+                        executeParam.setFilters(null);
+                    }
+                    STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                    ST st = stg.getInstanceOf("querySql");
+                    st.add("groups", executeParam.getGroups());
+                    st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
+                    st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
+                    st.add("filters", executeParam.getFilters());
+                    st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                    st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+                    st.add("sql", querySqlList.get(querySqlList.size() - 1));
+
+                    querySqlList.set(querySqlList.size() - 1, st.render());
                 }
 
-                if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                    executeParam.setFilters(null);
-                }
-
-                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                ST st = stg.getInstanceOf("querySql");
-                st.add("groups", executeParam.getGroups());
-                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
-                st.add("filters", executeParam.getFilters());
-                st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
-                st.add("sql", querySqlList.get(querySqlList.size() - 1));
-
-                querySqlList.set(querySqlList.size() - 1, st.render());
             }
         }
     }
