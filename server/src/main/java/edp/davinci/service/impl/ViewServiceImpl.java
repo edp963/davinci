@@ -499,7 +499,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
         if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
             if (null != executeParam) {
-                if (executeParam.isOriginalSql()) {
+                if (executeParam.isNativeQuery()) {
                     querySqlList.set(querySqlList.size() - 1, querySqlList.get(querySqlList.size() - 1));
                 } else {
                     //构造参数， 原有的被传入的替换
