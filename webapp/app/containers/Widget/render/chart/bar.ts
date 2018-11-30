@@ -56,6 +56,11 @@ export default function (chartProps: IChartProps) {
   } = chartStyles
 
   const {
+    stack,
+    barChart
+  } = spec
+
+  const {
     showVerticalLine,
     verticalLineColor,
     verticalLineSize,
@@ -83,6 +88,7 @@ export default function (chartProps: IChartProps) {
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
+    const stackOption = stack ? { stack: 'stack' } : null
     if (color.items.length) {
       Object
         .entries(grouped)
@@ -90,7 +96,7 @@ export default function (chartProps: IChartProps) {
           const serieObj = {
             name: `${k} ${localeMetricName}`,
             type: 'bar',
-            stack: m.name,
+            ...stackOption,
             sampling: 'average',
             data: v.map((g, index) => {
               // if (index === interactIndex) {
@@ -121,6 +127,7 @@ export default function (chartProps: IChartProps) {
       const serieObj = {
         name: decodedMetricName,
         type: 'bar',
+        ...stackOption,
         sampling: 'average',
         data: data.map((d, index) => {
           // if (index === interactIndex) {
@@ -202,14 +209,16 @@ export default function (chartProps: IChartProps) {
     lineStyle: horizontalLineStyle
   }
 
+  const dimetionAxisOption = getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData)
+  const metricAxisOption = getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `))
   return {
-    xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
-    yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
+    xAxis: barChart ? metricAxisOption : dimetionAxisOption,
+    yAxis: barChart ? dimetionAxisOption : metricAxisOption,
     series,
     tooltip: {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
   }
 }
