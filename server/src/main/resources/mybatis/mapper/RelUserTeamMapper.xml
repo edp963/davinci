@@ -43,4 +43,18 @@
             #{item}
         </foreach>
     </delete>
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert ignore into rel_user_team
+        (team_id,user_id, role)
+        VALUES
+        <foreach collection="set" item="record" index="index" separator=",">
+            (
+            #{record.teamId,jdbcType=BIGINT},
+            #{record.userId,jdbcType=BIGINT},
+            #{record.role,jdbcType=SMALLINT}
+            )
+        </foreach>
+    </insert>
 </mapper>

@@ -353,6 +353,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
         }
 
         countDownLatch.await();
+        executorService.shutdown();
 
         File file = new File(excelFilePath);
         File dir = new File(file.getParent());

@@ -12,6 +12,8 @@ import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES
 
 export interface ISpecConfig {
   smooth?: boolean
+  stack?: boolean
+  barChart?: boolean
   step?: boolean
   roseType?: boolean
   circle?: boolean
@@ -58,6 +60,8 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
 
     const {
       smooth,
+      stack,
+      barChart,
       step,
       roseType,
       circle,
@@ -115,6 +119,33 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     onChange={this.checkboxChange('step')}
                   >
                     阶梯
+                  </Checkbox>
+                </Col>
+              </Row>
+            </div>
+          </div>
+        )
+        break
+      case 'bar':
+        renderHtml = (
+          <div className={styles.paneBlock}>
+            <h4>{title}</h4>
+            <div className={styles.blockBody}>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={12}>
+                  <Checkbox
+                    checked={stack}
+                    onChange={this.checkboxChange('stack')}
+                  >
+                    堆叠
+                  </Checkbox>
+                </Col>
+                <Col span={12}>
+                  <Checkbox
+                    checked={barChart}
+                    onChange={this.checkboxChange('barChart')}
+                  >
+                    条形图
                   </Checkbox>
                 </Col>
               </Row>
@@ -365,6 +396,41 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
           </div>
         )
         break
+      // case 'doubleYAxis':
+      //   renderHtml = (
+      //     <div className={styles.paneBlock}>
+      //       <h4>{title}</h4>
+      //       <div className={styles.blockBody}>
+      //         <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+      //           <Col span={7}>
+      //             <Checkbox
+      //               checked={smooth}
+      //               onChange={this.checkboxChange('smooth')}
+      //             >
+      //               平滑
+      //             </Checkbox>
+      //           </Col>
+      //           <Col span={7}>
+      //             <Checkbox
+      //               checked={smooth}
+      //               onChange={this.checkboxChange('smooth')}
+      //             >
+      //               阶梯
+      //             </Checkbox>
+      //           </Col>
+      //           <Col span={10}>
+      //             <Checkbox
+      //               checked={smooth}
+      //               onChange={this.checkboxChange('smooth')}
+      //             >
+      //               节点标记
+      //             </Checkbox>
+      //           </Col>
+      //         </Row>
+      //       </div>
+      //     </div>
+      //   )
+      //   break
       default:
         renderHtml = (
           <div />

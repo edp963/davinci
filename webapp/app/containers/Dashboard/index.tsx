@@ -674,7 +674,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
     let portalDec = ''
     if (portals) {
-      portalDec = portals.find((p) => p.name === params.portalName).description
+      portalDec = portals.find((p) => p.id === Number(params.portalId)).description
     }
     return (
       <div className={styles.portal}>

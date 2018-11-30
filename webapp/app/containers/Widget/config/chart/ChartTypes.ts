@@ -13,6 +13,7 @@ export enum ChartTypes {
   Waterfall = 12,
   Scorecard = 13,
   Iframe = 14
+  // DoubleYAxis = 15
 }
 
 export default ChartTypes

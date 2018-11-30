@@ -108,6 +108,13 @@
         </where>
     </update>
 
+    <update id="addOneMemberNum" parameterType="java.util.Set">
+        update organization set team_num=(team_num + 1) where id in
+        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </update>
+
     <select id="getJointlyOrganization" resultType="edp.davinci.dto.organizationDto.OrganizationInfo" parameterType="java.util.Set">
         SELECT o.* FROM
         (organization o,

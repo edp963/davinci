@@ -193,11 +193,12 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormCategory,
       organizationMembers
     } = this.state
-    let isHidden = false
+    let isHidden = void 0
     if (organizationMembers && organizationMembers.length) {
-      organizationMembers.forEach((m) => {
-        isHidden = m && m.user && m.user.role === 1 ? true : false
-      })
+      isHidden = organizationMembers.every(isAllOwner)
+    }
+    function isAllOwner (m, index, array) {
+      return (m && m.user && m.user.role === 1)
     }
     const { inviteMemberList, currentOrganization } = this.props
     let CreateButton = void 0

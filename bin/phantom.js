@@ -35,7 +35,7 @@ page.open(pageUrl, function (status) {
     }, function () {
       page.render(picName)
       phantom.exit();
-    }, 12000);
+    }, 120000);
   }
 });
 

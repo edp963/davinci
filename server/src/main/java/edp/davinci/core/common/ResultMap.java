@@ -20,6 +20,7 @@ package edp.davinci.core.common;
 
 import edp.core.enums.HttpCodeEnum;
 import edp.core.utils.TokenUtils;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
@@ -112,7 +113,9 @@ public class ResultMap extends HashMap<String, Object> {
         this.header = new HashMap<>();
         this.header.put("code", code);
         this.header.put("msg", HttpCodeEnum.FAIL.getMessage());
-        this.header.put("token", this.tokenUtils.refreshToken(token));
+        if (!StringUtils.isEmpty(token)) {
+            this.header.put("token", this.tokenUtils.refreshToken(token));
+        }
         this.put("header", header);
         this.put("payload", "");
         return this;

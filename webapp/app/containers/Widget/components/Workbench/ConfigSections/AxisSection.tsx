@@ -29,6 +29,9 @@ export interface IAxisConfig {
   titleFontStyle?: string
   titleFontSize?: string
   titleColor?: string
+  showInterval?: boolean
+  xAxisInterval?: number
+  xAxisRotate?: number
 }
 
 interface IAxisSectionProps {
@@ -76,7 +79,10 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       titleFontFamily,
       titleFontStyle,
       titleFontSize,
-      titleColor
+      titleColor,
+      showInterval,
+      xAxisInterval,
+      xAxisRotate
     } = config
 
     const lineStyles = PIVOT_CHART_LINE_STYLES.map((l) => (
@@ -88,6 +94,40 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
       <Option key={f} value={`${f}`}>{f}</Option>
     ))
+
+    const xAxisLabel = showTitleAndUnit === void 0 && [(
+      <Row key="gap1" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={2} />
+        <Col span={8}>旋转角度</Col>
+        <Col span={10}>
+            <InputNumber
+              placeholder="xAxisRotate"
+              className={styles.blockElm}
+              value={xAxisRotate}
+              onChange={this.inputNumberChange('xAxisRotate')}
+            />
+        </Col>
+      </Row>
+    ), (
+      <Row key="gap" gutter={8} type="flex" align="middle" className={styles.blockRow}>
+        <Col span={2}>
+          <Checkbox
+            checked={showInterval}
+            onChange={this.checkboxChange('showInterval')}
+          />
+        </Col>
+        <Col span={8}>刻度间隔</Col>
+        <Col span={10}>
+          <InputNumber
+            placeholder="xAxisInterval"
+            className={styles.blockElm}
+            value={xAxisInterval}
+            onChange={this.inputNumberChange('xAxisInterval')}
+            disabled={!showInterval}
+          />
+        </Col>
+      </Row>
+    )]
 
     const titleAndUnit = showTitleAndUnit !== void 0 && [(
       <Row key="title" gutter={8} type="flex" align="middle" className={styles.blockRow}>
@@ -260,6 +300,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
               />
             </Col>
           </Row>
+          {xAxisLabel}
           {titleAndUnit}
         </div>
       </div>

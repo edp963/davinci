@@ -34,12 +34,22 @@ public class QuartzUtils {
     private SchedulerFactoryBean schedulerFactoryBean;
 
     public void addJob(ScheduleJob scheduleJob) throws ServerException {
+
+        if (null == scheduleJob) {
+            throw new ServerException("empty job");
+        }
+
+        if (System.currentTimeMillis() < scheduleJob.getStartDate().getTime()
+                || System.currentTimeMillis() > scheduleJob.getEndDate().getTime()) {
+            throw new ServerException("Current time is not within the planned execution time!");
+        }
+
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getId().toString());
             CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
             if (null != trigger) {
-                throw new ServerException("job already exists!");
+                throw new ServerException("job already started!");
             }
 
             JobDetail jobDetail = JobBuilder.newJob(QuartzJobFactory.class).withIdentity(scheduleJob.getId().toString()).build();
@@ -64,6 +74,7 @@ public class QuartzUtils {
     }
 
     public void removeJob(ScheduleJob scheduleJob) throws ServerException {
+
         Scheduler scheduler = schedulerFactoryBean.getScheduler();
         try {
             TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getId().toString());

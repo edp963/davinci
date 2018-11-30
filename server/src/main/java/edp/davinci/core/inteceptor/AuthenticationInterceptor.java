@@ -81,7 +81,6 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             log.info("{} : Unknown token", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("The resource requires authentication, which was not supplied with the request");
-            new RuntimeException("The resource requires authentication, which was not supplied with the request ");
             return false;
         }
         String username = tokenUtils.getUsername(token);
@@ -90,7 +89,6 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             log.info("{} : token user not found", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("ERROR Permission denied");
-            new RuntimeException("token user not found ");
             return false;
 
         }
@@ -98,7 +96,6 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             log.info("{} : token validation fails", request.getServletPath());
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
             response.getWriter().print("Invalid token ");
-            new RuntimeException("token validation fails ");
             return false;
         }
 
@@ -111,7 +108,6 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
             response.setStatus(HttpCodeEnum.FAIL.getCode());
             ResultMap resultMap = new ResultMap(tokenUtils);
             response.getWriter().print(JSONObject.toJSONString(resultMap.failAndRefreshToken(request).message("Account not active yet. Please check your email to activate your account")));
-            new RuntimeException("current user is not activated ");
             return false;
         }
         request.setAttribute(Constants.CURRENT_USER, user);

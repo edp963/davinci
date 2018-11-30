@@ -97,16 +97,21 @@
         flex: 3;
         border-top: 1px solid @border-color-base;
         padding-left: 16px;
+        display: flex;
+        flex-direction: column;
       }
       .formBottomNone {
         display: none;
       }
 
       .tabCol {
-        height: 100%;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
         .viewTab {
-          position: relative;
-          height: 100%;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
           margin-right: 16px;
           .viewTabPane {
             position: absolute;

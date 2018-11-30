@@ -499,26 +499,30 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
         if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
             if (null != executeParam) {
-                //构造参数， 原有的被传入的替换
-                if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                    executeParam.setGroups(null);
+                if (executeParam.isOriginalSql()) {
+                    querySqlList.set(querySqlList.size() - 1, querySqlList.get(querySqlList.size() - 1));
+                } else {
+                    //构造参数， 原有的被传入的替换
+                    if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
+                        executeParam.setGroups(null);
+                    }
+
+                    if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
+                        executeParam.setFilters(null);
+                    }
+                    STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                    ST st = stg.getInstanceOf("querySql");
+                    st.add("groups", executeParam.getGroups());
+                    st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
+                    st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
+                    st.add("filters", executeParam.getFilters());
+                    st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                    st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+                    st.add("sql", querySqlList.get(querySqlList.size() - 1));
+
+                    querySqlList.set(querySqlList.size() - 1, st.render());
                 }
 
-                if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                    executeParam.setFilters(null);
-                }
-
-                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                ST st = stg.getInstanceOf("querySql");
-                st.add("groups", executeParam.getGroups());
-                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
-                st.add("filters", executeParam.getFilters());
-                st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
-                st.add("sql", querySqlList.get(querySqlList.size() - 1));
-
-                querySqlList.set(querySqlList.size() - 1, st.render());
             }
         }
     }
@@ -771,7 +775,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return map;
     }
 
-
     private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user, String sqlTempDelimiter) {
         if (null != view && !StringUtils.isEmpty(view.getConfig())) {
             JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
@@ -780,23 +783,26 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 if (!StringUtils.isEmpty(teamVarString)) {
                     List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
                     if (null != varList && varList.size() > 0) {
-                        Set<Long> tIds = relUserTeamMapper.getUserTeamId(user.getId());
-                        for (String key : paramMap.keySet()) {
-                            List<String> params = new ArrayList<>();
-                            for (TeamVar teamVar : varList) {
-                                if (tIds.contains(teamVar.getId())) {
-                                    for (TeamParam teamParam : teamVar.getParams()) {
+                        String fullTeam = relUserTeamMapper.getUserFullTeam(user.getId());
+                        if (!StringUtils.isEmpty(fullTeam.trim())) {
+                            List<String> teamIdlist = Arrays.asList(fullTeam.trim().split(conditionSeparator));
+                            for (String key : paramMap.keySet()) {
+                                List<String> params = new ArrayList<>();
+                                for (TeamVar teamVar : varList) {
+                                    if (teamIdlist.contains(String.valueOf(teamVar.getId()))) {
+                                        for (TeamParam teamParam : teamVar.getParams()) {
 
-                                        String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
-                                        if (teamParam.getK().equals(k)) {
-                                            params.add(teamParam.getV());
+                                            String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
+                                            if (teamParam.getK().equals(k)) {
+                                                params.add(teamParam.getV());
+                                            }
                                         }
                                     }
                                 }
-                            }
 
-                            if (params.size() > 0) {
-                                paramMap.put(key, params);
+                                if (params.size() > 0) {
+                                    paramMap.put(key, params);
+                                }
                             }
                         }
                     }
