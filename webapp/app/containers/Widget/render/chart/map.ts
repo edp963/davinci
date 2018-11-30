@@ -28,7 +28,6 @@ import {
 import {
   getLegendOption,
   getLabelOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 import {

@@ -29,9 +29,9 @@ export interface IAxisConfig {
   titleFontStyle?: string
   titleFontSize?: string
   titleColor?: string
-  showInterval: boolean
-  xAxisInterval: number
-  xAxisRotate: number
+  showInterval?: boolean
+  xAxisInterval?: number
+  xAxisRotate?: number
 }
 
 interface IAxisSectionProps {
