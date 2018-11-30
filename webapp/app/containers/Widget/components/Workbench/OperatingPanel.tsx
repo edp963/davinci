@@ -5,6 +5,7 @@ import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, DimetionType, WidgetMode } from '../Widget'
+import FieldConfigForm from './FieldConfigForm'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -21,6 +22,7 @@ import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
+import TableSection, { ITableConfig } from './ConfigSections/TableSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
@@ -51,7 +53,7 @@ export interface IDataParamProperty {
   items: IDataParamSource[]
 }
 
-interface IDataParams {
+export interface IDataParams {
   [key: string]: IDataParamProperty
 }
 
@@ -86,6 +88,8 @@ interface IOperatingPanelStates {
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
   modalDataFrom: string
+  fieldModalVisible: boolean
+  formatModalVisible: boolean
   colorModalVisible: boolean
   actOnModalVisible: boolean
   actOnModalList: IDataParamSource[]
@@ -117,6 +121,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCachedData: null,
       modalCallback: null,
       modalDataFrom: void 0,
+      fieldModalVisible: false,
+      formatModalVisible: false,
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -135,12 +141,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     { key: 'cache', title: '缓存' }
   ]
   private lastRequestParamString = null
+
+  private fieldSettingForm = null
   private colorSettingForm = null
   private actOnSettingForm = null
   private filterSettingForm = null
 
   private variableConfigForm = null
   private refHandlers = {
+    fieldSettingForm: (ref) => this.fieldSettingForm = ref,
     variableConfigForm: (ref) => this.variableConfigForm = ref
   }
 
@@ -460,6 +469,25 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.getVisualData(commonParams, specificParams, styleParams)
   }
 
+  private dropboxItemChangeFieldConfig = (item: IDataParamSource) => {
+    const { commonParams } = this.state
+    this.setState({
+      modalCachedData: item,
+      modalDataFrom: item.from,
+      modalCallback: (config) => {
+        if (!config) { return }
+        const prop = commonParams[item.from]
+        prop.items = prop.items.map((p) =>
+          (p.name === item.name ? { ...p, ...config as IDataParamConfig } : p))
+      },
+      fieldModalVisible: true
+    })
+  }
+
+  private dropboxItemChangeFormatConfig = (item) => {
+
+  }
+
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
     const { commonParams, specificParams, styleParams } = this.state
@@ -585,9 +613,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(commonParams).concat(Object.values(specificParams))
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
+        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
         if (item.sort) {
           orders.push({
-            column: item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`,
+            column,
             direction: item.sort
           })
         }
@@ -840,6 +869,23 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
+  private confirmFieldModal = (config) => {
+    this.state.modalCallback(config)
+    this.closeFieldModal()
+  }
+
+  private cancelFieldModal = () => {
+    this.state.modalCallback(false)
+    this.closeFieldModal()
+  }
+
+  private closeFieldModal = () => {
+    this.setState({
+      fieldModalVisible: false,
+      modalCallback: null
+    })
+  }
+
   private confirmColorModal = (config) => {
     this.state.modalCallback(config)
     this.closeColorModal()
@@ -888,6 +934,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setState({
       filterModalVisible: false
     })
+  }
+
+  private afterFieldModalClose = () => {
+    this.fieldSettingForm.resetForm()
   }
 
   private afterColorModalClose = () => {
@@ -971,6 +1021,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       styleParams,
       modalCachedData,
       modalDataFrom,
+      fieldModalVisible,
       colorModalVisible,
       actOnModalVisible,
       actOnModalList,
@@ -982,7 +1033,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } = this.state
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard, iframe } = styleParams
+    const {
+      spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
+      visualMap, toolbox, areaSelect, scorecard, iframe, table } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1048,6 +1101,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             value={v.value}
             items={v.items}
             mode={mode}
+            selectedChartId={chartModeSelectedChart.id}
             dragged={dragged}
             panelList={panelList}
             dimetionsCount={dimetionsCount}
@@ -1058,6 +1112,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onItemRemove={this.removeDropboxItem(k)}
             onItemSort={this.getDropboxItemSortDirection(k)}
             onItemChangeAgg={this.getDropboxItemAggregator(k)}
+            onItemChangeFieldConfig={this.dropboxItemChangeFieldConfig}
+            onItemChangeFormatConfig={this.dropboxItemChangeFormatConfig}
             onItemChangeColorConfig={this.dropboxItemChangeColorConfig}
             onItemChangeFilterConfig={this.dropboxItemChangeFilterConfig}
             onItemChangeChart={this.getDropboxItemChart}
@@ -1216,6 +1272,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={iframe as IframeConfig}
               onChange={this.styleChange('iframe')}
             />}
+            {table && <TableSection
+              commonParams={commonParams}
+              config={table as ITableConfig}
+              onChange={this.styleChange('table')}
+            />}
             {pivotConfig && <PivotSection
               title="透视表"
               config={pivotConfig as IPivotConfig}
@@ -1293,10 +1354,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     let colorSettingConfig
     let actOnSettingConfig
     let filterSettingConfig
+    let fieldSettingConfig
     if (modalCachedData) {
-      const selectedItem = modalDataFrom === 'filters'
-        ? commonParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
-        : specificParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
+      const selectedItem = (commonParams[modalDataFrom] || specificParams[modalDataFrom])
+        .items.find((i) => i.name === modalCachedData.name)
       switch (modalDataFrom) {
         case 'color':
           colorSettingConfig = selectedItem ? selectedItem.config : {}
@@ -1304,6 +1365,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         case 'filters':
           filterSettingConfig = selectedItem ? selectedItem.config : {}
           break
+        case 'cols':
+        case 'rows':
+        case 'metrics':
+          fieldSettingConfig = selectedItem || {}
         default:
           actOnSettingConfig = selectedItem ? selectedItem.config : {}
           break
@@ -1393,6 +1458,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             {tabPane}
           </div>
         </div>
+        <Modal
+          wrapClassName="ant-modal-small"
+          visible={fieldModalVisible}
+          onCancel={this.cancelFieldModal}
+          afterClose={this.afterFieldModalClose}
+          footer={null}
+        >
+          <FieldConfigForm
+            fieldInfo={fieldSettingConfig}
+            onSave={this.confirmFieldModal}
+            onCancel={this.cancelFieldModal}
+            wrappedComponentRef={this.refHandlers.fieldSettingForm}
+          />
+        </Modal>
         <Modal
           wrapClassName="ant-modal-small"
           visible={colorModalVisible}

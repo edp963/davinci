@@ -4,13 +4,13 @@ import * as classnames from 'classnames'
 
 import DropboxItem from './DropboxItem'
 import DropboxContent from './DropboxContent'
-import ColorPanel from './ColorPanel'
-import SizePanel from './SizePanel'
-import { IChartInfo, WidgetMode } from '../Widget'
-import { decodeMetricName } from '../util'
+import ColorPanel from '../ColorPanel'
+import SizePanel from '../SizePanel'
+import { IChartInfo, WidgetMode } from '../../Widget'
+import { decodeMetricName } from '../../util'
 const Popover = require('antd/lib/popover')
 const Icon = require('antd/lib/icon')
-const styles = require('./Workbench.less')
+const styles = require('../Workbench.less')
 
 export type DragType = 'category' | 'value'
 export type DropboxType = DragType | 'all'
@@ -25,6 +25,8 @@ interface IDataColumn {
   from?: string
   sort?: SortType
   agg?: AggregatorType
+  alias?: string
+  desc?: string
 }
 
 export interface IDataParamSource extends IDataColumn {
@@ -41,6 +43,10 @@ export interface IDataParamConfig {
   },
   sql?: string
   filterSource?: any
+  field?: {
+    alias: string,
+    desc: string
+  }
 }
 
 export interface IDataParamSourceInBox extends IDataColumn {
@@ -57,6 +63,7 @@ interface IDropboxProps {
   value: object
   items: IDataParamSource[]
   mode: WidgetMode
+  selectedChartId: number
   dragged: IDataParamSource
   panelList: IDataParamSource[]
   dimetionsCount: number
@@ -69,6 +76,8 @@ interface IDropboxProps {
   onItemChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
   onItemChangeColorConfig: (item: IDataParamSource) => void
   onItemChangeFilterConfig: (item: IDataParamSource) => void
+  onItemChangeFieldConfig: (item: IDataParamSource) => void
+  onItemChangeFormatConfig: (item: IDataParamSource) => void
   onItemChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
   beforeDrop: (name: string, cachedItem: IDataParamSource, resolve: (next: boolean) => void) => void
   onDrop: (name: string, dropIndex: number, dropType: DropType, changedItems: IDataParamSource[], config?: IDataParamConfig) => void
@@ -260,6 +269,7 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       value,
       panelList,
       mode,
+      selectedChartId,
       dragged,
       dimetionsCount,
       metricsCount,
@@ -269,6 +279,8 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
       onItemChangeAgg,
       onItemChangeColorConfig,
       onItemChangeFilterConfig,
+      onItemChangeFieldConfig,
+      onItemChangeFormatConfig,
       onItemChangeChart,
       onItemRemove
     } = this.props
@@ -349,7 +361,9 @@ export class Dropbox extends React.PureComponent<IDropboxProps, IDropboxStates> 
           onDragStart={onItemDragStart}
           onDragEnd={this.itemDragEnd}
           onSort={onItemSort}
-          onChangAgg={onItemChangeAgg}
+          onChangeAgg={onItemChangeAgg}
+          onChangeFieldConfig={onItemChangeFieldConfig}
+          onChangeFormatConfig={onItemChangeFormatConfig}
           onChangeColorConfig={onItemChangeColorConfig}
           onChangeFilterConfig={onItemChangeFilterConfig}
           onChangeChart={onItemChangeChart}

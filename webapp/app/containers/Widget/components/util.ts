@@ -657,3 +657,23 @@ export function getSizeValue (value) {
     ? value - PIVOT_DEFAULT_SCATTER_SIZE_TIMES + 1
     : 1 / Math.pow(2, PIVOT_DEFAULT_SCATTER_SIZE_TIMES - value)
 }
+
+export enum FieldFormatTypes {
+  Default = 'default',
+  Numeric = 'numeric',
+  Currency = 'currency',
+  Percentage = 'percentage',
+  ScientificNotation = 'scientificNotation',
+  Date = 'date',
+  Custom = 'custom'
+}
+
+export const AvailableFieldFormatTypes = {
+  [FieldFormatTypes.Default]: '默认',
+  [FieldFormatTypes.Numeric]: '数值',
+  [FieldFormatTypes.Currency]: '货币',
+  [FieldFormatTypes.Percentage]: '百分比',
+  [FieldFormatTypes.ScientificNotation]: '科学型',
+  [FieldFormatTypes.Date]: '日期',
+  [FieldFormatTypes.Custom]: '自定义'
+}

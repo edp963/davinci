@@ -33,3 +33,21 @@
   flex: 1;
   border: none;
 }
+
+.formattedCell {
+  display: flex;
+  flex-direction: row;
+
+  &.left {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  &.center {
+    align-items: center;
+    justify-content: center;
+  }
+  &.right {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+}

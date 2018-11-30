@@ -32,7 +32,7 @@
         display: flex;
         flex-direction: column;
       }
-  
+
       .config {
         width: 241px;
         background-color: @white;
@@ -252,8 +252,19 @@
         color: @light-text-color;
         line-height: 18px;
         font-weight: bold;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        span {
+          flex: 1;
+        }
+
+        i:hover {
+          cursor: pointer;
+        }
       }
-      
+
       .blockBody {
 
       }
@@ -268,7 +279,7 @@
     }
 
     .toggleRowsAndCols {
-      right: 10px; 
+      right: 10px;
     }
 
     .switchRowsAndCols {
@@ -378,7 +389,7 @@
           background-color: fade(@primary-color, 20);
         }
         &.value {
-          background-color: fade(@light-green, 20); 
+          background-color: fade(@light-green, 20);
         }
       }
 
@@ -389,7 +400,7 @@
           border-color: @primary-color;
         }
         &.value {
-          border-color: @light-green; 
+          border-color: @light-green;
         }
       }
     }
@@ -417,8 +428,8 @@
       border: 1px solid lighten(@primary-color, 5%);
     }
     &.value {
-      background-color: lighten(@light-green, 5%); 
-      border: 1px solid lighten(@light-green, 5%); 
+      background-color: lighten(@light-green, 5%);
+      border: 1px solid lighten(@light-green, 5%);
     }
     &.add {
       background-color: @white;
@@ -588,7 +599,7 @@
         &:hover {
           background-color: color(~`colorPalette("@{primary-color}", 1)`);
         }
-  
+
         &.selected {
           background-color: @light-bg;
           border-right: 2px solid @primary-color;
@@ -618,6 +629,17 @@
 .actOnSettingForm {
   .footer {
     margin-top: 8px;
+    text-align: right;
+
+    button {
+      margin-left: 8px;
+    }
+  }
+}
+
+.fieldSettingForm {
+  .footer {
+    margin-top: 16px;
     text-align: right;
 
     button {

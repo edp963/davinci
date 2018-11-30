@@ -32,6 +32,7 @@ import DateFilterDropdown from '../../../../components/DateFilterDropdown/index'
 
 import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
 const styles = require('../../../Dashboard/Dashboard.less')
+const chartStyles = require('./Chart.less')
 
 interface ITableProps {
   id?: string
@@ -370,7 +371,8 @@ export class Table extends React.PureComponent<ITableProps, ITableStates> {
           title: k.toUpperCase(),
           dataIndex: k,
           key: k,
-          width: COLUMN_WIDTH
+          width: COLUMN_WIDTH,
+          render: null
         }
 
         return {
