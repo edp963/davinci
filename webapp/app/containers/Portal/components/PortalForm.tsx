@@ -49,6 +49,9 @@ export class PortalForm extends React.PureComponent<IDashboardFormProps, {}> {
       id: type === 'add' ? '' : id,
       name: value
     }
+    if (!value) {
+      callback()
+    }
     onCheckUniqueName('dashboardPortal', data,
       () => {
         callback()

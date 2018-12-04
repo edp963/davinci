@@ -51,6 +51,9 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
       id: type === 'add' ? '' : id,
       name: value
     }
+    if (!value) {
+      callback()
+    }
     onCheckUniqueName('source', data,
       () => {
         callback()
