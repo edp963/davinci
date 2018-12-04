@@ -85,9 +85,9 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
       const params = [
-        ...[...cols, ...rows].filter((key) => modelObj[key]).map((key) => ({
+        ...[...cols, ...rows].filter(({ name }) => modelObj[name]).map((key) => ({
           label: key,
-          value: [key, modelObj[key].sqlType, 'parameter'].join(DEFAULT_SPLITER)
+          value: [key, modelObj[name].sqlType, 'parameter'].join(DEFAULT_SPLITER)
         })),
         ...metrics.map(({ name, agg }) => ({
           label: `${getAggregatorLocale(agg)} ${decodeMetricName(name)}`,

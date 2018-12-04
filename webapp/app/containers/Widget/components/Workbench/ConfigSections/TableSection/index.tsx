@@ -134,7 +134,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
       return acc.concat(value.items.map((item) => ({
         ...item,
-        alias: item.alias || decodeMetricName(item.name)
+        alias: (item.field && item.field.alias) || decodeMetricName(item.name)
       })))
     }, [])
     return validColumns
@@ -152,7 +152,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     validColumns.forEach((c) => {
       localHeaderConfig.push({
         headerName: c.name,
-        alias: c.alias,
+        alias: c.field && c.field.alias,
         visualType: c.visualType,
         isGroup: false,
         style: { ...this.defaultTableCellStyle },
@@ -177,7 +177,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       } else {
         validColumnConfig.push({
           columnName: column.name,
-          alias: column.alias,
+          alias: column.field && column.field.alias,
           visualType: column.visualType,
           styleType: TableCellStyleTypes.Column,
           style: { ...this.defaultTableCellStyle },
@@ -276,7 +276,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       headerConfigModalVisible, columnConfigModalVisible } = this.state
 
     const fixedColumnOptions = validColumns.map((c) => {
-      const displayName = c.alias || c.name
+      const displayName = (c.field && c.field.alias) || c.name
       return (<Option key={c.name} value={c.name}>{displayName}</Option>)
     })
 

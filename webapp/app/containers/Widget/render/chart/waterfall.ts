@@ -67,7 +67,7 @@ export default function (chartProps: IChartProps) {
     label: getLabelOption('bar', label)
   }
 
-  const xAxisData = data.map((d) => d[cols[0]] || '')
+  const xAxisData = data.map((d) => d[cols[0].name] || '')
   let sourceData = []
 
   const series = []

@@ -5,7 +5,8 @@ import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, DimetionType, WidgetMode } from '../Widget'
-import FieldConfigForm from './FieldConfigForm'
+import FieldConfigModal, { IFieldConfig } from './FieldConfigModal'
+import FormatConfigModal, { IFieldFormatConfig } from './FormatConfigModal'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -88,8 +89,14 @@ interface IOperatingPanelStates {
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
   modalDataFrom: string
+
+  currentEditingCommonParamKey: string
+  currentEditingItem: IDataParamSource
   fieldModalVisible: boolean
+
   formatModalVisible: boolean
+  selectedFormatVisualType: string
+
   colorModalVisible: boolean
   actOnModalVisible: boolean
   actOnModalList: IDataParamSource[]
@@ -119,8 +126,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCachedData: null,
       modalCallback: null,
       modalDataFrom: void 0,
+      currentEditingCommonParamKey: '',
+      currentEditingItem: null,
       fieldModalVisible: false,
       formatModalVisible: false,
+      selectedFormatVisualType: '',
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -138,14 +148,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   ]
   private lastRequestParamString = null
 
-  private fieldSettingForm = null
   private colorSettingForm = null
   private actOnSettingForm = null
   private filterSettingForm = null
 
   private variableConfigForm = null
   private refHandlers = {
-    fieldSettingForm: (ref) => this.fieldSettingForm = ref,
     variableConfigForm: (ref) => this.variableConfigForm = ref
   }
 
@@ -163,19 +171,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
       const model = JSON.parse(selectedView.model)
       commonParams.cols.items = cols.map((c) => ({
-        name: c,
+        ...c,
         from: 'cols',
         type: 'category' as DragType,
-        visualType: c === '指标名称' ? 'string' : model[c].visualType
+        visualType: c.name === '指标名称' ? 'string' : model[c.name].visualType
       }))
       commonParams.rows.items = rows.map((r) => ({
-        name: r,
+        ...r,
         from: 'rows',
         type: 'category' as DragType,
-        visualType: r === '指标名称' ? 'string' :  model[r].visualType
+        visualType: r.name === '指标名称' ? 'string' :  model[r.name].visualType
       }))
       commonParams.metrics.items = metrics.map((m) => ({
         ...m,
+        from: 'metrics',
         type: 'value' as DragType,
         visualType: model[decodeMetricName(m.name)].visualType,
         chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
@@ -465,23 +474,57 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.getVisualData(commonParams, specificParams, styleParams)
   }
 
-  private dropboxItemChangeFieldConfig = (item: IDataParamSource) => {
-    const { commonParams } = this.state
+  private dropboxItemChangeFieldConfig = (from: string) => (item: IDataParamSource) => {
     this.setState({
-      modalCachedData: item,
-      modalDataFrom: item.from,
-      modalCallback: (config) => {
-        if (!config) { return }
-        const prop = commonParams[item.from]
-        prop.items = prop.items.map((p) =>
-          (p.name === item.name ? { ...p, ...config as IDataParamConfig } : p))
-      },
+      currentEditingCommonParamKey: from,
+      currentEditingItem: item,
       fieldModalVisible: true
     })
   }
 
-  private dropboxItemChangeFormatConfig = (item) => {
+  private saveFieldConfig = (fieldConfig: IFieldConfig) => {
+    const {
+      currentEditingCommonParamKey, currentEditingItem,
+      commonParams, specificParams, styleParams } = this.state
+    const item = commonParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.field = fieldConfig
+    this.getVisualData(commonParams, specificParams, styleParams)
+    this.setState({
+      fieldModalVisible: false
+    })
+  }
 
+  private cancelFieldConfig = () => {
+    this.setState({
+      fieldModalVisible: false
+    })
+  }
+
+
+  private dropboxItemChangeFormatConfig = (from: string) => (item: IDataParamSource) => {
+    this.setState({
+      currentEditingCommonParamKey: from,
+      currentEditingItem: item,
+      formatModalVisible: true
+    })
+  }
+
+  private saveFormatConfig = (formatConfig: IFieldFormatConfig) => {
+    const {
+      currentEditingCommonParamKey, currentEditingItem,
+      commonParams, specificParams, styleParams } = this.state
+    const item = commonParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.format = formatConfig
+    this.getVisualData(commonParams, specificParams, styleParams)
+    this.setState({
+      formatModalVisible: false
+    })
+  }
+
+  private cancelFormatConfig = () => {
+    this.setState({
+      formatModalVisible: false
+    })
   }
 
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
@@ -648,8 +691,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       onLoadData(selectedView.id, requestParams, (data) => {
         if (data.length) {
           onSetWidgetProps({
-            cols: cols.items.map((i) => i.name),
-            rows: rows.items.map((i) => i.name),
+            cols: cols.items.map((item) => ({...item})),
+            rows: rows.items.map((item) => ({...item})),
             metrics: metrics.items.map((item) => ({...item})),
             filters: filters.items,
             ...color && {color},
@@ -691,8 +734,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       })
     } else {
       onSetWidgetProps({
-        cols: cols.items.map((i) => i.name),
-        rows: rows.items.map((i) => i.name),
+        cols: cols.items.map((item) => ({...item})),
+        rows: rows.items.map((item) => ({...item})),
         metrics: metrics.items.map((item) => ({...item})),
         filters: filters.items,
         ...color && {color},
@@ -860,23 +903,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     // chartModeSelectedChart.style.spec.layerType = layerType
   }
 
-  private confirmFieldModal = (config) => {
-    this.state.modalCallback(config)
-    this.closeFieldModal()
-  }
-
-  private cancelFieldModal = () => {
-    this.state.modalCallback(false)
-    this.closeFieldModal()
-  }
-
-  private closeFieldModal = () => {
-    this.setState({
-      fieldModalVisible: false,
-      modalCallback: null
-    })
-  }
-
   private confirmColorModal = (config) => {
     this.state.modalCallback(config)
     this.closeColorModal()
@@ -925,10 +951,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setState({
       filterModalVisible: false
     })
-  }
-
-  private afterFieldModalClose = () => {
-    this.fieldSettingForm.resetForm()
   }
 
   private afterColorModalClose = () => {
@@ -1013,6 +1035,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCachedData,
       modalDataFrom,
       fieldModalVisible,
+      formatModalVisible,
+      selectedFormatVisualType,
+      currentEditingItem,
       colorModalVisible,
       actOnModalVisible,
       actOnModalList,
@@ -1102,8 +1127,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onItemRemove={this.removeDropboxItem(k)}
             onItemSort={this.getDropboxItemSortDirection(k)}
             onItemChangeAgg={this.getDropboxItemAggregator(k)}
-            onItemChangeFieldConfig={this.dropboxItemChangeFieldConfig}
-            onItemChangeFormatConfig={this.dropboxItemChangeFormatConfig}
+            onItemChangeFieldConfig={this.dropboxItemChangeFieldConfig(k)}
+            onItemChangeFormatConfig={this.dropboxItemChangeFormatConfig(k)}
             onItemChangeColorConfig={this.dropboxItemChangeColorConfig}
             onItemChangeFilterConfig={this.dropboxItemChangeFilterConfig}
             onItemChangeChart={this.getDropboxItemChart}
@@ -1352,7 +1377,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     let colorSettingConfig
     let actOnSettingConfig
     let filterSettingConfig
-    let fieldSettingConfig
     if (modalCachedData) {
       const selectedItem = (commonParams[modalDataFrom] || specificParams[modalDataFrom])
         .items.find((i) => i.name === modalCachedData.name)
@@ -1363,10 +1387,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         case 'filters':
           filterSettingConfig = selectedItem ? selectedItem.config : {}
           break
-        case 'cols':
-        case 'rows':
-        case 'metrics':
-          fieldSettingConfig = selectedItem || {}
         default:
           actOnSettingConfig = selectedItem ? selectedItem.config : {}
           break
@@ -1458,20 +1478,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         </div>
         <Modal
           wrapClassName="ant-modal-small"
-          visible={fieldModalVisible}
-          onCancel={this.cancelFieldModal}
-          afterClose={this.afterFieldModalClose}
-          footer={null}
-        >
-          <FieldConfigForm
-            fieldInfo={fieldSettingConfig}
-            onSave={this.confirmFieldModal}
-            onCancel={this.cancelFieldModal}
-            wrappedComponentRef={this.refHandlers.fieldSettingForm}
-          />
-        </Modal>
-        <Modal
-          wrapClassName="ant-modal-small"
           visible={colorModalVisible}
           onCancel={this.cancelColorModal}
           afterClose={this.afterColorModalClose}
@@ -1537,6 +1543,25 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             wrappedComponentRef={this.refHandlers.variableConfigForm}
           />
         </Modal>
+        {!currentEditingItem ? null : [(
+          <FieldConfigModal
+            key="fieldConfigModal"
+            visible={fieldModalVisible}
+            fieldConfig={currentEditingItem.field}
+            onSave={this.saveFieldConfig}
+            onCancel={this.cancelFieldConfig}
+          />
+        ), (
+          <FormatConfigModal
+            key="formatConfigModal"
+            visible={formatModalVisible}
+            visualType={selectedFormatVisualType}
+            formatConfig={currentEditingItem.format}
+            onSave={this.saveFormatConfig}
+            onCancel={this.cancelFormatConfig}
+          />
+        )
+        ]}
       </div>
     )
   }

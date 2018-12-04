@@ -7,6 +7,8 @@ import DropboxContent from './DropboxContent'
 import ColorPanel from '../ColorPanel'
 import SizePanel from '../SizePanel'
 import { IChartInfo, WidgetMode } from '../../Widget'
+import { IFieldConfig } from '../FieldConfigModal'
+import { IFieldFormatConfig } from '../FormatConfigModal'
 import { decodeMetricName } from '../../util'
 const Popover = require('antd/lib/popover')
 const Icon = require('antd/lib/icon')
@@ -25,8 +27,8 @@ interface IDataColumn {
   from?: string
   sort?: SortType
   agg?: AggregatorType
-  alias?: string
-  desc?: string
+  field?: IFieldConfig
+  format?: IFieldFormatConfig
 }
 
 export interface IDataParamSource extends IDataColumn {

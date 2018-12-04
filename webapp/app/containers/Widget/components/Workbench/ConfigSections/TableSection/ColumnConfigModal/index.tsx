@@ -220,6 +220,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
       <Modal
         title="单元格样式"
         wrapClassName="ant-modal-medium"
+        maskClosable={false}
         footer={this.modalFooter}
         visible={visible}
         onCancel={this.cancel}

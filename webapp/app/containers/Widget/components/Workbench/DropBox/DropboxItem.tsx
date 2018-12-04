@@ -10,6 +10,7 @@ const Icon = require('antd/lib/icon')
 const Menu = require('antd/lib/menu')
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
 const Dropdown = require('antd/lib/dropdown')
+const Tooltip = require('antd/lib/tooltip')
 const styles = require('../Workbench.less')
 
 interface IDropboxItemProps {
@@ -99,7 +100,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
 
   public render () {
     const { container, item, dimetionsCount, metricsCount, onChangeChart, onRemove } = this.props
-    const { name: originalName, type, sort, agg, alias, desc } = item
+    const { name: originalName, type, sort, agg, field } = item
     const { dragging } = this.state
 
     const name = type === 'value' ? decodeMetricName(originalName) : originalName
@@ -130,11 +131,17 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       'icon-sortdescending': sort === 'desc'
     })
 
+    const alias = field ? field.alias : ''
+    const desc = field ? field.desc : ''
     const content = (
-      <p title={desc}>
+      <p>
         <Icon type="down" />
         {agg ? ` [${getAggregatorLocale(agg)}] ${name} ` : ` ${name} `}
-        {alias ? `[${alias}]` : ''}
+        {alias && (
+          <Tooltip title={desc} placement="right">
+            {`[${alias}]`}
+          </Tooltip>
+        )}
         {sort && <i className={sortClass} />}
       </p>
     )

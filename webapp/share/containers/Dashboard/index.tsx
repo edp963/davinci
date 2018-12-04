@@ -316,7 +316,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -514,7 +514,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let sql = void 0
     let name = void 0
     let filterSource = void 0
-    let widgetConfigGroups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg

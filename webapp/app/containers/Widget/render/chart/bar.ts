@@ -75,7 +75,7 @@ export default function (chartProps: IChartProps) {
     label: getLabelOption('bar', label)
   }
 
-  let xAxisData = data.map((d) => d[cols[0]] || '')
+  let xAxisData = data.map((d) => d[cols[0].name] || '')
   let grouped = {}
   if (color.items.length) {
     xAxisData = distinctXaxis(data, cols[0])

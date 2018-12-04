@@ -269,6 +269,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
       <Modal
         title="条件格式"
         wrapClassName="ant-modal-small"
+        maskClosable={false}
         footer={this.modalFooter}
         visible={visible}
         onCancel={this.cancel}

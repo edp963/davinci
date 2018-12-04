@@ -69,7 +69,7 @@ export default function (chartProps: IChartProps) {
   metrics.forEach((m) => {
     const decodedMetricName = decodeMetricName(m.name)
     if (cols.length || color.items.length) {
-      const groupColumns = color.items.map((c) => c.name).concat(cols)
+      const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
       .reduce((distinctColumns, col) => {
         if (!distinctColumns.includes(col)) {
           distinctColumns.push(col)

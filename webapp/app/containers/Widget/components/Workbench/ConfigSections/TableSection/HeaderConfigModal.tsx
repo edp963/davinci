@@ -236,6 +236,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       <Modal
         title="表头样式与分组"
         width={1000}
+        maskClosable={false}
         footer={this.modalFooter}
         visible={visible}
         onCancel={this.cancel}
