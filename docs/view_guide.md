@@ -38,7 +38,7 @@ title: 数据视图管理
     group by city,name;
     ```
 
-- 支持简单的条件判断
+- 支持简单的条件判断（如空值或布尔类型，不支持运算）
 
   - 变量声明
 
@@ -59,7 +59,19 @@ title: 数据视图管理
     $endif$
     ```
 
-    若 x 有值，则选择 if 分支的 sql；若 y 有值，选择 elseif 分支的 sql；否则，选择 else 分支的 sql。
+    若 x 有值，则选择 if 分支的 sql；若 y 有值，选择 elseif 分支的 sql；否则，选择 else 分支的 sql。如：
+
+    ```
+    query@var $area$;
+    ```
+
+    ```
+    select * from personinfo
+    $if(area)$
+    	where area in ($area$);
+    $endif$
+    	order by score desc limit 100;
+    ```
 
 ### 2 配置视图
 
@@ -76,22 +88,24 @@ title: 数据视图管理
    - 配置普通视图![view_nodec_sql](./img/view_nodec_sql.png)
    - 配置带有 query 查询变量或 team 团队权限变量定义的视图。
 
-  ![view_dec_sql](./img/view_dec_sql.png)
+     ![view_dec_sql](./img/view_dec_sql.png)
 
-1. **执行 SQL。**测试 SQL 正确性，成功后可预览查询结果集。
+4. **执行 SQL。**测试 SQL 正确性，成功后可预览查询结果集。
+
+   注意：“保存”前，**必须先点击“Execute”**执行 SQL。
 
    ![view_execute](./img/view_execute.png)
 
-2. **数据建模。**SQL 执行成功后，系统默认分配给每个字段一种数据类型和一种可视化类型，用户也可以配置字段的类型，进行可视化建模。
+5. **数据建模。**SQL 执行成功后，系统默认分配给每个字段一种数据类型和一种可视化类型，用户也可以配置它们，进行可视化建模。
 
    ![view_model](./img/view_model.png)
 
-3. **团队数据权限控制。**
+6. **团队数据权限控制。**
 
-   团队的数据权限根据 Team 树的层级呈递减关系，父级团队能访问子孙级团队的数据。通过配置 Team 实现行权限控制。这里需要结合[团队与权限管理]()章节一起配置。
+   团队的数据权限根据 Team 树的层级呈递减关系，父级团队能访问子孙级团队的数据。通过配置 Team 实现行权限控制。这里需要结合“团队与权限管理”https://edp963.github.io/davinci/project_org_team_user_auth_guide.html#2-%E5%9B%A2%E9%98%9F%E4%B8%8E%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86章节一起配置。
 
-   勾选不同的团队，输入参数，当参数为字符串时，用英文单引号或双引号包裹，多条时用英文逗号隔开。
+   勾选团队，编辑参数，多条参数用英文逗号隔开。String 类型需要用单/双引号包裹。
 
-   示例：Team 按下图配置后，通过该 View 创建 Widget，并添加到 Dashboard，“test_auth” 团队的普通成员登录 Davinci，并进入 Dashboard 查看创建的 Widget，能看到北京、天津、武汉和西安的书架；“childTeam”团队的 Member 能看到武汉和西安的数据；“grandson”的 Member 只能看到西安的数据。
+   示例：Team 按下图配置后，通过该 View 创建 Widget，并添加到 Dashboard，“test_auth” 团队的普通成员登录 Davinci，并进入 Dashboard 查看创建的 Widget，能看到北京、天津、武汉和西安的数据；“childTeam”团队的 Member 能看到武汉和西安的数据；“grandson”的 Member 只能看到西安的数据。
 
    ![view_team](./img/view_team.png)
