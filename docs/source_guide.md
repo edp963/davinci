@@ -4,7 +4,7 @@ title: 数据源管理
 ---
 
 
-数据源管理（Source）主要是指数据源的导入和相关编辑工作。Davinci 0.3 目前支持通过 JDBC 连接的数据源，例如 mysql、oracle、es、spark、hive 等，也支持 CSV 数据文件上传。
+数据源管理（Source）主要是指数据源的导入和相关编辑工作。Davinci 0.3 目前支持通过 JDBC 连接的数据源，如：https://edp963.github.io/davinci/deployment.html#3-%E6%95%B0%E6%8D%AE%E6%BA%90%E9%85%8D%E7%BD%AE，也支持 CSV 数据文件上传。
 
 ### 1 新增数据源
 
@@ -24,13 +24,11 @@ title: 数据源管理
 
 1. 准备 CSV 文件。
 
-   模板第一行为保存在数据库的字段名称，建议使用英文；模板第二行为数据库的类型，使用大写字母；第三行之后为要导入的数据。
+   模板第一行为保存在数据库的字段名称，建议使用英文；第二行为数据库的类型，使用大写字母；第三行之后为要导入的数据。如：
 
    ![source_edit_csv2](./img/source_edit_csv2.jpg)
 
-   使用 Excel 保存 CSV 文件为 UTF-8 格式。
-
-   ![source_edit_csv1](./img/source_edit_csv1.jpg)
+   注意：使用 Excel 保存 CSV 文件为 **UTF-8 格式**。
 
 2. 点击“上传”按钮。
 
