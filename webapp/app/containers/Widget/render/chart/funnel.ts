@@ -133,8 +133,8 @@ export default function (chartProps: IChartProps) {
       seriesObj = {
         name: '',
         type: 'funnel',
-        min: minValue,
-        max: maxValue,
+        // min: minValue,
+        // max: maxValue,
         sort: sortMode,
         funnelAlign: alignmentMode,
         gap: gapNumber || 0,
