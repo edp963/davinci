@@ -30,7 +30,8 @@ const bar: IChartInfo = {
   style: {
     spec: {
       stack: false,
-      barChart: false
+      barChart: false,
+      percentage: false
     },
     label: {
       showLabel: false,

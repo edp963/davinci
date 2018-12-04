@@ -109,7 +109,8 @@ export function getMetricAxisOption (
   metricAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   title: string,
-  axis: 'x' | 'y' = 'y'
+  axis: 'x' | 'y' = 'y',
+  percentage?: boolean
 ) {
   const {
     inverse,
@@ -140,12 +141,14 @@ export function getMetricAxisOption (
   return {
     type: 'value',
     inverse,
+    min: percentage ? 0 : null,
+    max: percentage ? 100 : null,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
       fontFamily: labelFontFamilyY,
       fontSize: labelFontSizeY,
-      formatter: metricAxisLabelFormatter
+      formatter: percentage ? '{value}%' : metricAxisLabelFormatter
     },
     axisLine: {
       show: showLineY,

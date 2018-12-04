@@ -14,6 +14,7 @@ export interface ISpecConfig {
   smooth?: boolean
   stack?: boolean
   barChart?: boolean
+  percentage?: boolean
   step?: boolean
   roseType?: boolean
   circle?: boolean
@@ -62,6 +63,7 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
       smooth,
       stack,
       barChart,
+      percentage,
       step,
       roseType,
       circle,
@@ -146,6 +148,16 @@ export class SpecSection extends React.PureComponent<ISpecSectionProps, {}> {
                     onChange={this.checkboxChange('barChart')}
                   >
                     条形图
+                  </Checkbox>
+                </Col>
+              </Row>
+              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                <Col span={12}>
+                  <Checkbox
+                    checked={percentage}
+                    onChange={this.checkboxChange('percentage')}
+                  >
+                    百分比堆积
                   </Checkbox>
                 </Col>
               </Row>
