@@ -41,7 +41,7 @@
 }
 
 .rows {
-  padding: 16px;
+  padding: 8px;
 
   .rowBlock {
     min-height: 40px;
@@ -143,6 +143,21 @@
 
     .table {
       padding: 8px;
+    }
+  }
+}
+
+.tableInput {
+  // width: calc(~"100% - 32px");
+  width: 80px; // @FIXME auto size according to tree node depth
+}
+
+.tableEditCell {
+  i {
+    margin-left: 8px;
+
+    &:hover {
+      cursor: pointer;
     }
   }
 }

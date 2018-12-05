@@ -54,11 +54,12 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     }
   }
 
-  public componentWillReceiveProps (props) {
-    const localConfig: ITableColumnConfig[] = fromJS(props.config).toJS()
+  public componentWillReceiveProps (nextProps: IColumnStyleConfigProps) {
+    if (nextProps.config === this.props.config) { return }
+    const localConfig: ITableColumnConfig[] = fromJS(nextProps.config).toJS()
     this.setState({
       localConfig,
-      selectedColumnName: localConfig[0].columnName,
+      selectedColumnName: localConfig.length > 0 ? localConfig[0].columnName : '',
       conditionStyleConfigModalVisible: false,
       currentConditionStyle: null
     })

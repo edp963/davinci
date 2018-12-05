@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { uuid } from 'utils/util'
 import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
 import { ViewModelType, IDataParamSource } from '../../Dropbox'
@@ -16,14 +17,6 @@ const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const Modal = require('antd/lib/modal')
 
-import {
-  PIVOT_DEFAULT_FONT_COLOR,
-  PIVOT_CHART_FONT_FAMILIES,
-  PIVOT_CHART_FONT_SIZES,
-  PIVOT_CHART_FONT_WEIGHTS,
-  PIVOT_CHART_FONT_STYLE,
-  DEFAULT_FONT_STYLE,
-  PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR } from '../../../../../../../app/globalConstants'
 
 const styles = require('../../Workbench.less')
 
@@ -38,6 +31,7 @@ export interface ITableCellStyle {
 }
 
 export interface ITableHeaderConfig {
+  key: string
   headerName: string
   alias: string
   visualType: ViewModelType
@@ -96,20 +90,10 @@ interface ITableSectionStates {
   validColumnConfig: ITableColumnConfig[]
 }
 
-import HeaderConfigModal from './HeaderConfigModal'
+import HeaderConfigModal, { DefaultTableCellStyle } from './HeaderConfigModal'
 import ColumnConfigModal from './ColumnConfigModal'
 
 export class TableSection extends React.PureComponent<ITableSectionProps, ITableSectionStates> {
-
-  private defaultTableCellStyle: ITableCellStyle = {
-    fontSize: '12',
-    fontFamily: PIVOT_CHART_FONT_FAMILIES[0].value,
-    fontWeight: PIVOT_CHART_FONT_WEIGHTS[0],
-    fontColor: PIVOT_DEFAULT_FONT_COLOR,
-    fontStyle: DEFAULT_FONT_STYLE,
-    backgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR,
-    textAlign: 'left'
-  }
 
   private pageSizeOptions = PageSizes.map((size) => (
     <Option key={size} value={size.toString()}>{size}条/页</Option>
@@ -151,11 +135,12 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
     validColumns.forEach((c) => {
       localHeaderConfig.push({
+        key: uuid(5),
         headerName: c.name,
-        alias: c.field && c.field.alias,
+        alias: c.field && c.field.alias || decodeMetricName(c.name),
         visualType: c.visualType,
         isGroup: false,
-        style: { ...this.defaultTableCellStyle },
+        style: { ...DefaultTableCellStyle },
         children: null
       })
     })
@@ -177,10 +162,10 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       } else {
         validColumnConfig.push({
           columnName: column.name,
-          alias: column.field && column.field.alias,
+          alias: column.field && column.field.alias || decodeMetricName(column.name),
           visualType: column.visualType,
           styleType: TableCellStyleTypes.Column,
-          style: { ...this.defaultTableCellStyle },
+          style: { ...DefaultTableCellStyle },
           conditionStyles: []
         })
       }
