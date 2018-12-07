@@ -3,7 +3,7 @@ import { fromJS } from 'immutable'
 const Row = require('antd/lib/row')
 const Col = require('antd/lib/col')
 import { FormComponentProps } from 'antd/lib/form/Form'
-import { FieldFormatTypes, AvailableFieldFormatTypes } from '../util'
+import { NumericUnit, FieldFormatTypes, AvailableFieldFormatTypes } from '../util'
 
 const Form = require('antd/lib/form')
 const FormItem = Form.Item
@@ -16,15 +16,6 @@ const Select = require('antd/lib/select')
 const { Option } = Select
 const Button = require('antd/lib/button')
 const Modal = require('antd/lib/modal')
-
-export enum NumericUnit {
-  None = '无',
-  TenThousand = '万',
-  OneHundredMillion = '亿',
-  Thousand = 'k',
-  Million = 'M',
-  Giga = 'G'
-}
 
 export const NumericUnitList = [
   NumericUnit.None,
@@ -117,11 +108,17 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     }
   }
 
+  public componentDidMount () {
+    this.props.form.setFieldsValue(this.state.localConfig)
+  }
+
   public componentWillReceiveProps (nextProps: IFormatConfigFormProps & FormComponentProps) {
-    const { formatConfig } = nextProps
+    const { formatConfig, form } = nextProps
     if (formatConfig === this.props.formatConfig) { return }
     this.setState({
       localConfig: formatConfig ? fromJS(formatConfig).toJS() : { formatType: FieldFormatTypes.Default }
+    }, () => {
+      form.setFieldsValue(this.state.localConfig)
     })
   }
 
@@ -181,9 +178,10 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const formItems = [(
       <FormItem key={`${FieldFormatTypes.Numeric}.decimalPlaces`} label="小数位数：" {...this.formItemLayout}>
         {getFieldDecorator(`${FieldFormatTypes.Numeric}.decimalPlaces`, {
-          initialValue: decimalPlaces
+          initialValue: decimalPlaces,
+          rules: [{ required: true, message: '不能为空' }]
         })(
-          <InputNumber min={0}/>
+          <InputNumber min={0} max={6} />
         )}
       </FormItem>
     ), (
@@ -216,9 +214,10 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const formItems = [(
       <FormItem key={`${FieldFormatTypes.Currency}.decimalPlaces`} label="小数位数：" {...this.formItemLayout}>
         {getFieldDecorator(`${FieldFormatTypes.Currency}.decimalPlaces`, {
-          initialValue: decimalPlaces
+          initialValue: decimalPlaces,
+          rules: [{ required: true, message: '不能为空' }]
         })(
-          <InputNumber min={0}/>
+          <InputNumber min={0} max={6} />
         )}
       </FormItem>
     ), (
@@ -267,9 +266,10 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const formItem = (
       <FormItem label="小数位数：" {...this.formItemLayout}>
         {getFieldDecorator(`${FieldFormatTypes.Percentage}.decimalPlaces`, {
-          initialValue: decimalPlaces
+          initialValue: decimalPlaces,
+          rules: [{ required: true, message: '不能为空' }]
         })(
-          <InputNumber min={0}/>
+          <InputNumber min={0} max={6} />
         )}
       </FormItem>
     )
@@ -285,9 +285,10 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const formItem = (
       <FormItem label="小数位数：" {...this.formItemLayout}>
         {getFieldDecorator(`${FieldFormatTypes.ScientificNotation}.decimalPlaces`, {
-          initialValue: decimalPlaces
+          initialValue: decimalPlaces,
+          rules: [{ required: true, message: '不能为空' }]
         })(
-          <InputNumber min={0}/>
+          <InputNumber min={0} max={6} />
         )}
       </FormItem>
     )
@@ -321,7 +322,8 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const formItem = (
       <FormItem label="格式：" {...this.formItemLayout}>
         {getFieldDecorator(`${FieldFormatTypes.Date}.format`, {
-          initialValue: format
+          initialValue: format,
+          rules: [{ required: true, message: '不能为空' }]
         })(
           <Input />
         )}
@@ -351,16 +353,18 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
 
   private save = () => {
     const { form } = this.props
-    const formValues = form.getFieldsValue()
-    const formatType = formValues['formatType']
-    const config: IFieldFormatConfig = {
-      formatType
-    }
-    if (formatType !== FieldFormatTypes.Default) {
-      config[formatType] = formValues[formatType]
-    }
-    console.log(config)
-    this.props.onSave(config)
+    form.validateFieldsAndScroll((err, fieldsValues) => {
+      if (err) { return }
+
+      const formatType = fieldsValues['formatType']
+      const config: IFieldFormatConfig = {
+        formatType
+      }
+      if (formatType !== FieldFormatTypes.Default) {
+        config[formatType] = fieldsValues[formatType]
+      }
+      this.props.onSave(config)
+    })
   }
 
   private cancel = () => {

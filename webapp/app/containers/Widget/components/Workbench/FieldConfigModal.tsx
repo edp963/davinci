@@ -36,20 +36,30 @@ export class FieldConfigModal extends React.PureComponent<IFieldConfigModalProps
     }
   }
 
+  public componentDidMount () {
+    this.props.form.setFieldsValue(this.state.localConfig)
+  }
+
   public componentWillReceiveProps (nextProps: IFieldConfigModalProps) {
     const { fieldConfig, form } = nextProps
     if (fieldConfig !== this.props.fieldConfig) {
       form.resetFields()
       this.setState({
         localConfig: fieldConfig ? { ...fieldConfig } : { alias: '', desc: '' }
+      }, () => {
+        form.setFieldsValue(this.state.localConfig)
       })
     }
   }
 
   private save = () => {
     const { form, onSave } = this.props
-    const config = form.getFieldsValue() as IFieldConfig
-    onSave(config)
+    form.validateFieldsAndScroll((err, fieldValues) => {
+      if (err) { return }
+
+      const config = fieldValues as IFieldConfig
+      onSave(config)
+    })
   }
 
   private cancel = () => {
@@ -92,7 +102,7 @@ export class FieldConfigModal extends React.PureComponent<IFieldConfigModalProps
           <FormItem label="字段别名">
             {getFieldDecorator('alias', {
               initialValue: alias,
-              rules: [{ required: true }]
+              rules: [{ required: true, message: '不能为空' }]
             })(<Input />)}
           </FormItem>
           <FormItem label="字段描述">
