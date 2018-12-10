@@ -59,14 +59,14 @@ export const FilterTypesViewSetting = {
 
 export const FilterTypesOperatorSetting = {
   [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.InputNumber]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
   [FilterTypes.NumberRange]: [],
   [FilterTypes.Select]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
   [FilterTypes.MultiSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
-  [FilterTypes.InputDate]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.MultiDate]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.InputDate]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.MultiDate]: [OperatorTypes.Equal, OperatorTypes.In, OperatorTypes.NotIn],
   [FilterTypes.DateRange]: [],
-  [FilterTypes.Datetime]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  [FilterTypes.Datetime]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
   [FilterTypes.DatetimeRange]: []
 }
 
