@@ -259,6 +259,7 @@ CREATE TABLE `team` (
   `description` varchar(255) DEFAULT NULL,
   `org_id` bigint(20) NOT NULL,
   `parent_team_id` bigint(20) DEFAULT NULL,
+  `full_team_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '-1',
   `avatar` varchar(255) DEFAULT NULL,
   `visibility` tinyint(1) DEFAULT '1',
   PRIMARY KEY (`id`)
@@ -351,21 +352,22 @@ DROP FUNCTION IF EXISTS `parentTeamIds`;
 delimiter ;;
 CREATE DEFINER=`root`@`localhost` FUNCTION `parentTeamIds`(teamId BIGINT(20)) RETURNS varchar(4000) CHARSET utf8
 BEGIN
-  DECLARE childId BIGINT(20);
-  DECLARE parentId VARCHAR(4000);
-  DECLARE childIds VARCHAR(4000);
+  DECLARE parentIds TEXT;
+	SELECT
+		GROUP_CONCAT(T2.id) into parentIds
+	FROM (
+    SELECT
+        @r AS _id,
+        (SELECT @r := parent_team_id FROM team WHERE id = _id) AS parent_team_id,
+        @l := @l + 1 AS lvl
+      FROM
+        (SELECT @l := 0, @r := teamId) vars,
+        team
+      WHERE
+       @r <> 0 and parent_team_id <> 0
+  ) T1 JOIN team T2 ON T1._id = T2.id ORDER BY T1.lvl DESC;
 
-	SET parentId = 0;
-  SET childIds = '';
-
-	SELECT id into childId from team where id = teamId;
-
-  WHILE (IFNULL(parentId,'') <> '' and childId <> '')  DO
-  SELECT `id`, parent_team_id INTO parentId,childId  FROM team WHERE id = childId;
-  SET childIds = CONCAT(',',parentId,childIds);
-  END WHILE;
-
-  RETURN SUBSTRING(childIds ,2);
+  RETURN parentIds;
 END;
 ;;
 delimiter ;
@@ -448,3 +450,7 @@ END;
 delimiter ;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+ALTER TABLE `team` ADD COLUMN `full_team_id` varchar(255) NOT NULL DEFAULT '-1' AFTER `parent_team_id`;
+UPDATE `team` set full_team_id = parentTeamIds(id) WHERE full_team_id = '-1'

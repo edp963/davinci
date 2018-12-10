@@ -27,6 +27,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface RelTeamProjectMapper {
@@ -216,4 +217,8 @@ public interface RelTeamProjectMapper {
     })
     UserMaxProjectPermission getUserMaxPermission(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
+    @Select({
+            "SELECT team_id FROM rel_team_project WHERE project_id = #{projectId}"
+    })
+    Set<Long> getByProjectId(@Param("projectId") Long projectId);
 }

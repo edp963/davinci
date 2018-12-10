@@ -26,7 +26,6 @@ import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -44,7 +43,7 @@ public interface RelUserOrganizationMapper {
 
     @Select({
             "SELECT ruo.id, tm.team_num, ",
-            "u.id AS 'user.id', u.username AS 'user.username', u.avatar AS 'user.avatar', ruo.role AS 'user.role'",
+            "u.id AS 'user.id', IF(u.`name` is NULL,u.username,u.`name`) AS 'user.username', u.avatar AS 'user.avatar', ruo.role AS 'user.role'",
             "FROM rel_user_organization ruo",
             "LEFT JOIN `user` u on u.id = ruo.user_id",
             "LEFT JOIN organization o on o.id = ruo.org_id",

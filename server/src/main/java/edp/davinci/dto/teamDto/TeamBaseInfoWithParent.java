@@ -28,5 +28,7 @@ public class TeamBaseInfoWithParent extends TeamBaseInfo {
 
     private Long parentTeamId;
 
+    private String fullTeamId;
+
     private List<UserBaseInfo> users;
 }
