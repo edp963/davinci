@@ -26,8 +26,7 @@ import {
 } from '../../components/util'
 import {
   getLegendOption,
-  getLabelOption,
-  getGridPositions
+  getLabelOption
 } from './util'
 
 export default function (chartProps: IChartProps) {
@@ -104,6 +103,10 @@ export default function (chartProps: IChartProps) {
       const maxValue = Math.max(...data.map((s) => s[`${m.agg}(${decodedMetricName})`]))
       const minValue = Math.min(...data.map((s) => s[`${m.agg}(${decodedMetricName})`]))
 
+      const numValueArr = data.map((d) => d[`${m.agg}(${decodedMetricName})`] >= 0)
+      const minSizePer = minValue / maxValue * 100
+      const minSizeValue = numValueArr.indexOf(false) === -1 ? `${minSizePer}%` : '0%'
+
       const funnelLeft = 56 + Math.max(...legendData.map((s) => getTextWidth(s, '', `${fontSize}px`)))
       const leftValue = legendPosition === 'left'
       ? width * 0.15 + funnelLeft
@@ -136,6 +139,8 @@ export default function (chartProps: IChartProps) {
         type: 'funnel',
         min: minValue,
         max: maxValue,
+        minSize: minSizeValue,
+        maxSize: '100%',
         sort: sortMode,
         funnelAlign: alignmentMode,
         gap: gapNumber || 0,

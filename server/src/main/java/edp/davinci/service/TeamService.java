@@ -53,11 +53,13 @@ public interface TeamService extends CheckEntityService {
 
     ResultMap updateTeamMemberRole(Long relationId, Integer role, User user, HttpServletRequest request);
 
-    List<TeamWithMembers> getStructuredList(List<TeamBaseInfoWithParent> list);
+    List<TeamWithMembers> getStructuredList(List<TeamBaseInfoWithParent> list, Long parentId);
 
     ResultMap getTeams(User user, HttpServletRequest request);
 
     ResultMap addProject(Long id, Long projectId, User user, HttpServletRequest request);
 
     ResultMap addTeamMember(Long id, Long memberId, User user, HttpServletRequest request);
+
+    ResultMap getTeamsByProject(Long projectId, User user, HttpServletRequest request);
 }

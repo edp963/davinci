@@ -19,6 +19,7 @@
 
 package edp.davinci.core.config;
 
+import edp.core.exception.ServerException;
 import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.ResultMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.SQLException;
 
 @ControllerAdvice(annotations = RestController.class)
 public class RestExceptionHandler {
@@ -38,6 +40,14 @@ public class RestExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     private ResultMap runtimeExceptionHandler(HttpServletRequest request, Exception e) {
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+
+        e.printStackTrace();
+
+        String message = HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase();
+        if (e instanceof ServerException || e instanceof SQLException) {
+            message = e.getMessage();
+        }
+
+        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(message);
     }
 }

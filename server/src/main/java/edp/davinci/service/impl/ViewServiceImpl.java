@@ -20,6 +20,7 @@ import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.dto.sourceDto.SourceBaseInfo;
 import edp.davinci.dto.sourceDto.SourceWithProject;
+import edp.davinci.dto.teamDto.TeamFullId;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.ViewService;
@@ -36,6 +37,7 @@ import org.stringtemplate.v4.STGroupFile;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.*;
 
@@ -60,6 +62,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
     @Autowired
     private WidgetMapper widgetMapper;
+
+    @Autowired
+    private TeamMapper teamMapper;
 
     @Autowired
     private RelTeamProjectMapper relTeamProjectMapper;
@@ -262,6 +267,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         if (testConnection) {
             View view = new View();
             BeanUtils.copyProperties(viewUpdate, view);
+            updateViewTeamVar(view, viewUpdate.getConfig(), viewWithProjectAndSource.getProject(), user);
             view.setProjectId(project.getId());
             viewMapper.update(view);
             return resultMap.successAndRefreshToken(request);
@@ -269,6 +275,65 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message("get source connection fail");
         }
     }
+
+    /**
+     * 修改用户有权限修改的View TeamVar
+     * @param view
+     * @param config
+     * @param project
+     * @param user
+     */
+    private void updateViewTeamVar(View view, String config, Project project, User user) {
+        if (null != view && !StringUtils.isEmpty(view.getConfig()) && !StringUtils.isEmpty(config)) {
+            //origin
+            JSONObject originJson = JSONObject.parseObject(view.getConfig());
+
+            //update
+            JSONObject updateJson = JSONObject.parseObject(config);
+
+            if (null != originJson && originJson.containsKey(viewTeamVarKey)
+                    && null != updateJson && updateJson.containsKey(viewTeamVarKey)) {
+
+                String originTeamVarString = originJson.getString(viewTeamVarKey);
+                String updateTeamVarString = updateJson.getString(viewTeamVarKey);
+
+                List<TeamVar> filterList = null;
+
+                if (!StringUtils.isEmpty(originTeamVarString)) {
+                    List<TeamVar> list = JSONObject.parseArray(originTeamVarString, TeamVar.class);
+
+                    filterList = teamVarFilter(list, user, project.getId());
+
+                    if (null == filterList || filterList.size() == 0) {
+                        view.setConfig(config);
+                    } else {
+                        if (!StringUtils.isEmpty(updateTeamVarString)) {
+                            Map<Long, TeamVar> map = new HashMap<>();
+
+                            list.stream().forEach(t -> map.put(t.getId(), t));
+
+                            List<TeamVar> list1 = JSONObject.parseArray(originTeamVarString, TeamVar.class);
+                            list1.stream().forEach(t -> {
+                                if (map.containsKey(t.getId())) {
+                                    map.put(t.getId(), t);
+                                }
+                            });
+
+                            List<TeamVar> afterUpdate = new ArrayList<>();
+                            afterUpdate.addAll(filterList);
+                            for (Long id : map.keySet()) {
+                                afterUpdate.add(map.get(id));
+                            }
+
+                            originJson.put(viewTeamVarKey, JSONObject.toJSONString(afterUpdate));
+                            view.setConfig(originJson.toJSONString());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * 删除View
@@ -499,26 +564,30 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
         if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
             if (null != executeParam) {
-                //构造参数， 原有的被传入的替换
-                if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                    executeParam.setGroups(null);
+                if (executeParam.isNativeQuery()) {
+                    querySqlList.set(querySqlList.size() - 1, querySqlList.get(querySqlList.size() - 1));
+                } else {
+                    //构造参数， 原有的被传入的替换
+                    if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
+                        executeParam.setGroups(null);
+                    }
+
+                    if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
+                        executeParam.setFilters(null);
+                    }
+                    STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                    ST st = stg.getInstanceOf("querySql");
+                    st.add("groups", executeParam.getGroups());
+                    st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
+                    st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
+                    st.add("filters", executeParam.getFilters());
+                    st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                    st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+                    st.add("sql", querySqlList.get(querySqlList.size() - 1));
+
+                    querySqlList.set(querySqlList.size() - 1, st.render());
                 }
 
-                if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                    executeParam.setFilters(null);
-                }
-
-                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                ST st = stg.getInstanceOf("querySql");
-                st.add("groups", executeParam.getGroups());
-                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
-                st.add("filters", executeParam.getFilters());
-                st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
-                st.add("sql", querySqlList.get(querySqlList.size() - 1));
-
-                querySqlList.set(querySqlList.size() - 1, st.render());
             }
         }
     }
@@ -710,6 +779,52 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
 
+    /**
+     * 允许获取数据
+     *
+     * @param project
+     * @param user
+     * @return
+     */
+    @Override
+    public boolean allowGetData(Project project, User user) {
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+        if (isProjectAdmin(project, user)) {
+            return true;
+        }
+        if (null != orgRel && UserOrgRoleEnum.OWNER.getRole() == orgRel.getRole()) {
+            return true;
+        }
+
+        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+        if (UserTeamRoleEnum.MAINTAINER.getRole() == maxTeamRole) {
+            return true;
+        } else {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                UserMaxProjectPermission userMaxPermission = relTeamProjectMapper.getUserMaxPermission(project.getId(), user.getId());
+                if (null != userMaxPermission && 0L != userMaxPermission.getProjectId().longValue()) {
+                    if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSchedulePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                            || userMaxPermission.getSharePermission()
+                            || userMaxPermission.getDownloadPermission()) {
+                        return true;
+                    }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (project.getVisibility() && organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
     public Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
         Map<String, Object> map = null;
         try {
@@ -771,34 +886,61 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return map;
     }
 
-    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, View view, User user, String sqlTempDelimiter) {
+
+    /**
+     * 获取用户所能访问的当前view的team@var
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        ViewWithProjectAndSource view = viewMapper.getViewWithProjectAndSourceById(id);
+        if (null == view) {
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message("view is not found");
+        }
+
+        List<TeamVar> list = null;
         if (null != view && !StringUtils.isEmpty(view.getConfig())) {
             JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
             if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
                 String teamVarString = jsonObject.getString(viewTeamVarKey);
                 if (!StringUtils.isEmpty(teamVarString)) {
-                    List<TeamVar> varList = JSONObject.parseArray(teamVarString, TeamVar.class);
-                    if (null != varList && varList.size() > 0) {
-                        String fullTeam = relUserTeamMapper.getUserFullTeam(user.getId());
-                        if (!StringUtils.isEmpty(fullTeam.trim())) {
-                            List<String> teamIdlist = Arrays.asList(fullTeam.trim().split(conditionSeparator));
-                            for (String key : paramMap.keySet()) {
-                                List<String> params = new ArrayList<>();
-                                for (TeamVar teamVar : varList) {
-                                    if (teamIdlist.contains(String.valueOf(teamVar.getId()))) {
-                                        for (TeamParam teamParam : teamVar.getParams()) {
+                    list = JSONObject.parseArray(teamVarString, TeamVar.class);
+                    teamVarFilter(list, user, view.getProject().getId());
+                }
+            }
+        }
 
-                                            String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
-                                            if (teamParam.getK().equals(k)) {
-                                                params.add(teamParam.getV());
-                                            }
-                                        }
+        return resultMap.successAndRefreshToken(request).payloads(list);
+    }
+
+    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, ViewWithProjectAndSource view, User user, String sqlTempDelimiter) {
+        if (null != view && !StringUtils.isEmpty(view.getConfig())) {
+            JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
+            if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
+                String teamVarString = jsonObject.getString(viewTeamVarKey);
+                if (!StringUtils.isEmpty(teamVarString)) {
+                    List<TeamVar> teamVarList = JSONObject.parseArray(teamVarString, TeamVar.class);
+                    teamVarFilter(teamVarList, user, view.getProject().getId());
+                    if (null != teamVarList && teamVarList.size() > 0) {
+                        for (String key : paramMap.keySet()) {
+                            Set<String> params = new HashSet<>();
+                            for (TeamVar teamVar : teamVarList) {
+                                for (TeamParam teamParam : teamVar.getParams()) {
+                                    String k = key.replace(String.valueOf(SqlParseUtils.getSqlTempDelimiter(sqlTempDelimiter)), "");
+                                    if (teamParam.getK().equals(k)) {
+                                        params.add(teamParam.getV());
                                     }
                                 }
+                            }
 
-                                if (params.size() > 0) {
-                                    paramMap.put(key, params);
-                                }
+                            if (params.size() > 0) {
+                                paramMap.put(key, params.stream().collect(Collectors.toList()));
                             }
                         }
                     }
@@ -806,6 +948,69 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             }
         }
         return paramMap;
+    }
+
+
+    /**
+     * 过滤TeamVar 列表
+     *
+     * @param teamVarList
+     * @param user
+     * @param proejctId
+     * @return 返回不在用户与project所在team 及其 子级团队的teamvar列表
+     */
+    private List<TeamVar> teamVarFilter(List<TeamVar> teamVarList, User user, Long proejctId) {
+
+        List<TeamVar> list = null;
+        if (null != teamVarList && teamVarList.size() > 0) {
+            Set<Long> teamvarIds = teamVarList.stream().map(t -> t.getId()).collect(Collectors.toSet());
+
+            Set<Long> teamIds = relUserTeamMapper.selectTeamIdByUserAndProject(user.getId(), proejctId);
+
+            if (null == teamIds || teamIds.size() == 0) {
+                teamVarList.clear();
+                return null;
+            }
+
+            Set<Long> filterIds = teamvarIds.stream().filter(id -> !teamIds.contains(id)).collect(Collectors.toSet());
+
+            if (null == filterIds || filterIds.size() == 0) {
+                return null;
+            }
+
+            Set<TeamFullId> teamFullIds = teamMapper.getTeamsByIds(filterIds);
+
+            Set<Long> rmIds = new HashSet<>();
+
+            teamFullIds.stream().forEach(t -> {
+                if (null == t.getFullTeamId() || StringUtils.isEmpty(t.getFullTeamId().trim())) {
+                    rmIds.add(t.getId());
+                } else {
+
+                    List<String> teamIdStrList = new ArrayList<>();
+                    teamIds.stream().forEach(id -> teamIdStrList.add(String.valueOf(id)));
+
+                    //var 对应team的路径和用户所在路径没有交集则加到将要删除列表中
+                    if (Collections.disjoint(teamIdStrList, Arrays.asList(t.getFullTeamId().trim().split(conditionSeparator)))) {
+                        rmIds.add(t.getId());
+                    }
+                }
+            });
+
+            if (rmIds.size() > 0) {
+                list = new ArrayList<>();
+                Iterator<TeamVar> iterator = teamVarList.iterator();
+                while (iterator.hasNext()) {
+                    TeamVar next = iterator.next();
+                    if (rmIds.contains(next.getId())) {
+                        list.add(next);
+                        iterator.remove();
+                    }
+                }
+            }
+        }
+
+        return list;
     }
 
     private Map<String, String> getQueryParam(SqlEntity sqlEntity, ViewExecuteParam viewExecuteParam) {
@@ -823,52 +1028,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
         return map;
     }
-
-
-    /**
-     * 允许获取数据
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowGetData(Project project, User user) {
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-        if (isProjectAdmin(project, user)) {
-            return true;
-        }
-        if (null != orgRel && UserOrgRoleEnum.OWNER.getRole() == orgRel.getRole()) {
-            return true;
-        }
-
-        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-        if (UserTeamRoleEnum.MAINTAINER.getRole() == maxTeamRole) {
-            return true;
-        } else {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                UserMaxProjectPermission userMaxPermission = relTeamProjectMapper.getUserMaxPermission(project.getId(), user.getId());
-                if (null != userMaxPermission && 0L != userMaxPermission.getProjectId().longValue()) {
-                    if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                            || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                            || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                            || userMaxPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()
-                            || userMaxPermission.getSchedulePermission() > UserPermissionEnum.HIDDEN.getPermission()
-                            || userMaxPermission.getSharePermission()
-                            || userMaxPermission.getDownloadPermission()) {
-                        return true;
-                    }
-                }
-            } else {
-                Organization organization = organizationMapper.getById(project.getOrgId());
-                if (project.getVisibility() && organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
 
     private String getCacheKey(String prefix, ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, Map<String, List<String>> teamParams, Map<String, String> queryParams) {
 

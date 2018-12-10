@@ -25,6 +25,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.User;
+import edp.davinci.service.TeamVarService;
 import edp.davinci.service.ViewService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,6 +53,10 @@ public class ViewController extends BaseController {
     private ViewService viewService;
 
 
+    @Autowired(required = false)
+    private TeamVarService teamVarService;
+
+
     /**
      * 获取view
      *
@@ -72,6 +77,66 @@ public class ViewController extends BaseController {
         }
         try {
             ResultMap resultMap = viewService.getViews(projectId, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取用户可见的当前view对应的team@var
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get views")
+    @GetMapping("{id}/config/teamvar")
+    public ResponseEntity getViewTeamVarConfig(@PathVariable Long id,
+                                               @ApiIgnore @CurrentUser User user,
+                                               HttpServletRequest request) {
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = viewService.getViewConfigTeamVar(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    /**
+     * 获取TeamVar 来源信息及默认值
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get team variables sources")
+    @GetMapping("{id}/teamvar/source")
+    public ResponseEntity getTeamVarSource(@PathVariable Long id,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
+        if (null == teamVarService) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = teamVarService.getTeamVarSource(id, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

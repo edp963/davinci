@@ -52,6 +52,11 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
       id: type === ('add' || 'copy') ? '' : id,
       name: value
     }
+
+    if (!value) {
+      callback()
+    }
+
     type === 'move'
       ? callback()
       : onCheckUniqueName('dashboard', data,

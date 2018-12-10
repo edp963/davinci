@@ -402,6 +402,24 @@ public class SqlUtils {
         }
     }
 
+
+    /**
+     * 释放失效数据源
+     *
+     * @param jdbcUrl
+     * @param userename
+     * @param password
+     * @return
+     * @throws SourceException
+     */
+    private void releaseDataSource(String jdbcUrl, String userename, String password) throws SourceException {
+        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
+            ESDataSource.removeDataSource(jdbcUrl);
+        } else {
+            jdbcDataSource.removeDatasource(jdbcUrl, userename);
+        }
+    }
+
     /**
      * 检查敏感操作
      *
@@ -424,8 +442,16 @@ public class SqlUtils {
         try {
             connection = dataSource.getConnection();
         } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+            connection = null;
+        }
+        if (null == connection) {
+            releaseDataSource(this.jdbcUrl, this.username, this.password);
+            try {
+                connection = dataSource.getConnection();
+            } catch (Exception e) {
+                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
+                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+            }
         }
         return connection;
     }

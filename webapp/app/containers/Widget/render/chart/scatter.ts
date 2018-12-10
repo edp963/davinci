@@ -220,6 +220,6 @@ export default function (chartProps: IChartProps) {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames)
+    grid: getGridPositions(legend, seriesNames, false, yAxis)
   }
 }

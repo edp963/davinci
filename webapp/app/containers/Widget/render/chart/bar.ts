@@ -56,6 +56,12 @@ export default function (chartProps: IChartProps) {
   } = chartStyles
 
   const {
+    stack,
+    barChart,
+    percentage
+  } = spec
+
+  const {
     showVerticalLine,
     verticalLineColor,
     verticalLineSize,
@@ -72,25 +78,38 @@ export default function (chartProps: IChartProps) {
 
   let xAxisData = data.map((d) => d[cols[0]] || '')
   let grouped = {}
+  let percentGrouped = {}
   if (color.items.length) {
     xAxisData = distinctXaxis(data, cols[0])
     grouped = makeGrouped(data, color.items.map((c) => c.name), cols[0], metrics, xAxisData)
+
+    const configValue = color.items[0].config.values
+    const configKeys = []
+    Object.entries(configValue).forEach(([k, v]: [string, string]) => {
+      configKeys.push(k)
+    })
+    percentGrouped = makeGrouped(data, cols, color.items[0].name, metrics, configKeys)
   }
 
   const series = []
   const seriesData = []
-
   metrics.forEach((m, i) => {
     const decodedMetricName = decodeMetricName(m.name)
     const localeMetricName = `[${getAggregatorLocale(m.agg)}] ${decodedMetricName}`
+    const stackOption = (stack || percentage) ? { stack: 'stack' } : null
     if (color.items.length) {
+      const sumArr = []
+      Object.entries(percentGrouped).forEach(([k, v]: [string, any[]]) => {
+        sumArr.push(getColorDataSum(v, metrics))
+      })
+
       Object
         .entries(grouped)
         .forEach(([k, v]: [string, any[]]) => {
           const serieObj = {
             name: `${k} ${localeMetricName}`,
             type: 'bar',
-            stack: m.name,
+            ...stackOption,
             sampling: 'average',
             data: v.map((g, index) => {
               // if (index === interactIndex) {
@@ -103,7 +122,11 @@ export default function (chartProps: IChartProps) {
               //     }
               //   }
               // } else {
+              if (percentage) {
+                return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+              } else {
                 return g[`${m.agg}(${decodedMetricName})`]
+              }
               // }
             }),
             itemStyle: {
@@ -121,6 +144,7 @@ export default function (chartProps: IChartProps) {
       const serieObj = {
         name: decodedMetricName,
         type: 'bar',
+        ...stackOption,
         sampling: 'average',
         data: data.map((d, index) => {
           // if (index === interactIndex) {
@@ -138,7 +162,11 @@ export default function (chartProps: IChartProps) {
           //     }
           //   }
           // } else {
-            return d[`${m.agg}(${decodedMetricName})`]
+            if (percentage) {
+              return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+            } else {
+              return d[`${m.agg}(${decodedMetricName})`]
+            }
           // }
         }),
         // lineStyle: {
@@ -149,7 +177,7 @@ export default function (chartProps: IChartProps) {
         itemStyle: {
           normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
-            color: color.value[m.name] || defaultThemeColors[i]
+            // color: color.value[m.name] || defaultThemeColors[i]
           }
         },
         ...labelOption
@@ -202,14 +230,52 @@ export default function (chartProps: IChartProps) {
     lineStyle: horizontalLineStyle
   }
 
+  const dimetionAxisOption = getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData)
+  const metricAxisOption = getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `), 'x', percentage)
   return {
-    xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
-    yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
+    xAxis: barChart ? metricAxisOption : dimetionAxisOption,
+    yAxis: barChart ? dimetionAxisOption : metricAxisOption,
     series,
     tooltip: {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
   }
+}
+
+export function getDataSum (data, metrics) {
+  const dataSum = data.map((d, index) => {
+    const metricArr = []
+    let maSum = 0
+    metrics.forEach((m, i) => {
+      const decodedMetricName = decodeMetricName(m.name)
+      const metricName = d[`${m.agg}(${decodedMetricName})`]
+      metricArr.push(metricName)
+      if (metricArr.length === metrics.length) {
+        metricArr.forEach((mr) => {
+          maSum += mr
+        })
+      }
+    })
+    return maSum
+  })
+  return dataSum
+}
+
+export function getColorDataSum (data, metrics) {
+  let maSum = 0
+  const dataSum = data.map((d, index) => {
+    let metricArr = 0
+    metrics.forEach((m, i) => {
+      const decodedMetricName = decodeMetricName(m.name)
+      const metricName = d[`${m.agg}(${decodedMetricName})`]
+      metricArr += metricName
+    })
+    return metricArr
+  })
+  dataSum.forEach((mr) => {
+    maSum += mr
+  })
+  return maSum
 }

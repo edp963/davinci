@@ -30,6 +30,7 @@ import sankey from './sankey'
 import parallel from './parallel'
 import wordCloud from './wordCloud'
 import waterfall from './waterfall'
+// import doubleYAxis from './doubleYAxis'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
 
@@ -47,5 +48,6 @@ export default function (type, chartProps: IChartProps): EChartOption {
     case 'map': return map(chartProps)
     case 'wordCloud': return wordCloud(chartProps)
     case 'waterfall': return waterfall(chartProps)
+    // case 'doubleYAxis': return doubleYAxis(chartProps)
   }
 }

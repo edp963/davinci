@@ -399,7 +399,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       }, () => {
         const declareTextarea = document.querySelector('#declaration')
         this.handleDelareCodeMirror(declareTextarea)
-        this.codeMirrorInstanceOfDeclaration.doc.setValue(sql.includes('{') ? sql.substring(0, sql.lastIndexOf('{')) : sql)
+        this.codeMirrorInstanceOfDeclaration.doc.setValue(sql.includes('{') ? sql.substring(0, sql.indexOf('{')) : sql)
       })
     } else {
       this.codeMirrorInstanceOfDeclaration = false

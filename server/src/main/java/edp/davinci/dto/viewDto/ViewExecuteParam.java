@@ -41,6 +41,8 @@ public class ViewExecuteParam {
     private int pageNo = -1;
     private int pageSize = -1;
 
+    private boolean nativeQuery = false;
+
     public List<Order> getOrders(String jdbcUrl) {
         List<Order> list = null;
         if (null != this.orders && this.orders.size() > 0) {

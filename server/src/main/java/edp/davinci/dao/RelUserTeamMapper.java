@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 
+import edp.davinci.dto.teamDto.TeamFullId;
 import edp.davinci.dto.userDto.UserWithTeamId;
 import edp.davinci.model.RelUserTeam;
 import org.apache.ibatis.annotations.Delete;
@@ -146,4 +147,35 @@ public interface RelUserTeamMapper {
 
 
     int insertBatch(@Param("set") Set<RelUserTeam> set);
+
+    /**
+     * 查询用户和project所在team id 交集
+     *
+     * @param userId
+     * @param projectId
+     * @return
+     */
+    @Select({
+            "SELECT DISTINCT t.id FROM team t",
+            "LEFT JOIN rel_team_project rtp on rtp.team_id = t.id",
+            "LEFT JOIN rel_user_team rut on rut.team_id = t.id",
+            "WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}"
+    })
+    Set<Long> selectTeamIdByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+
+    /**
+     * 查询用户和project所在team id 交集
+     *
+     * @param userId
+     * @param projectId
+     * @return
+     */
+    @Select({
+            "SELECT DISTINCT t.id, t.full_team_id as fullTeamId FROM team t",
+            "LEFT JOIN rel_team_project rtp on rtp.team_id = t.id",
+            "LEFT JOIN rel_user_team rut on rut.team_id = t.id",
+            "WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}"
+    })
+    List<TeamFullId> selectTeamFullParentByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
 }

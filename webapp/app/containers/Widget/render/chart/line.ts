@@ -218,6 +218,6 @@ export default function (chartProps: IChartProps) {
       formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, false, yAxis, xAxis, xAxisData)
   }
 }
