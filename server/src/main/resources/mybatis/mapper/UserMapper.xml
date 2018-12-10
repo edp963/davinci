@@ -18,14 +18,14 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.UserMapper" >
+<mapper namespace="edp.davinci.dao.UserMapper">
 
     <insert id="insert" parameterType="edp.davinci.model.User">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
         insert user
-        <trim prefix="(" suffix=")" suffixOverrides="," >
+        <trim prefix="(" suffix=")" suffixOverrides=",">
             email,
             username,
             password,
@@ -47,7 +47,7 @@
             </if>
         </trim>
         values
-        <trim prefix=" (" suffix=")" suffixOverrides="," >
+        <trim prefix=" (" suffix=")" suffixOverrides=",">
             #{email, jdbcType=VARCHAR},
             #{username, jdbcType=VARCHAR},
             #{password, jdbcType=VARCHAR},
@@ -70,12 +70,12 @@
         </trim>
     </insert>
 
-    
+
     <select id="getUsersByKeyword" resultType="edp.davinci.dto.userDto.UserBaseInfo">
-      select DISTINCT u.id, u.username, u.avatar
-      from `user` u
-      LEFT JOIN rel_user_organization r on r.user_id = u.id
-      where
+        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.avatar
+        from `user` u
+        LEFT JOIN rel_user_organization r on r.user_id = u.id
+        where
         <if test='orgId != null and orgId > 0 '>
             r.org_id = #{orgId} and
         </if>

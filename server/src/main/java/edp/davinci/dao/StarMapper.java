@@ -20,9 +20,10 @@ package edp.davinci.dao;
 
 import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.starDto.StarUser;
-import edp.davinci.model.Project;
 import edp.davinci.model.Star;
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -33,8 +34,8 @@ public interface StarMapper {
     int insert(Star star);
 
     @Delete({
-        "delete from star",
-        "where id = #{id,jdbcType=BIGINT}"
+            "delete from star",
+            "where id = #{id,jdbcType=BIGINT}"
     })
     int deleteById(Long id);
 
@@ -53,14 +54,14 @@ public interface StarMapper {
 
 
     @Select({
-            "select p.*, u.id as 'createBy.id', u.username as 'createBy.username', u.avatar as 'createBy.avatar'  from project p left join user u on u.id = p.user_id ",
+            "select p.*, u.id as 'createBy.id', IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username', u.avatar as 'createBy.avatar'  from project p left join user u on u.id = p.user_id ",
             "where p.id in (select target_id from star where target = #{target} and user_id = #{userId})"
     })
     List<ProjectWithCreateBy> getStarProjectListByUser(@Param("userId") Long userId, @Param("target") String target);
 
 
     @Select({
-            "select u.id, u.username, u.avatar, s.star_time from star s left join user u on u.id = s.user_id",
+            "select u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.avatar, s.star_time from star s left join user u on u.id = s.user_id",
             "where s.target = #{target} and s.target_id = #{targetId}"
     })
     List<StarUser> getStarUserListByTarget(@Param("targetId") Long targetId, @Param("target") String target);

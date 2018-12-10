@@ -55,4 +55,10 @@ public class ESDataSource {
         }
         return map.get(jdbcUrl.trim());
     }
+
+    public static void removeDataSource(String jdbcUrl) {
+        if (map.containsKey(map.containsKey(jdbcUrl.trim()))) {
+            map.remove(jdbcUrl.trim());
+        }
+    }
 }

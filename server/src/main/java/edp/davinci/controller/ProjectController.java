@@ -28,6 +28,7 @@ import edp.davinci.dto.projectDto.ProjectCreat;
 import edp.davinci.dto.projectDto.ProjectUpdate;
 import edp.davinci.model.User;
 import edp.davinci.service.ProjectService;
+import edp.davinci.service.TeamService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -53,6 +54,9 @@ public class ProjectController extends BaseController {
     @Autowired
     private ProjectService projectService;
 
+    @Autowired
+    private TeamService teamService;
+
 
     /**
      * 获取项目列表：用户创建和用户所在组可访问的
@@ -66,6 +70,21 @@ public class ProjectController extends BaseController {
     public ResponseEntity getProjects(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
         try {
             ResultMap resultMap = projectService.getProjects(user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "get teams where proejct is located")
+    @GetMapping("/{id}/teams")
+    public ResponseEntity getTeamsOfProject(@ApiIgnore @CurrentUser User user,
+                                            @PathVariable Long id,
+                                            HttpServletRequest request) {
+        try {
+            ResultMap resultMap = teamService.getTeamsByProject(id, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -314,7 +333,7 @@ public class ProjectController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get favorite projects")
+    @ApiOperation(value = "remove favorite projects")
     @DeleteMapping(value = "/remove/favorites")
     public ResponseEntity removeFavoriteProjects(@ApiIgnore @CurrentUser User user,
                                                  @RequestBody Long[] projectIds,
