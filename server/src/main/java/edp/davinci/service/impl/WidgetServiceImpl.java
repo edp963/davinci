@@ -23,6 +23,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
 import edp.core.utils.TokenUtils;
@@ -571,7 +572,10 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
 
-        List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+        executeParam.setPageNo(-1);
+        executeParam.setPageSize(-1);
+        executeParam.setLimit(-1);
+        Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
 
         if (null != columns && columns.size() > 0) {
             String csvPath = fileUtils.fileBasePath + File.separator + "csv";
@@ -581,7 +585,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             }
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
             String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
-            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
+            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
             filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
         }
         return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);

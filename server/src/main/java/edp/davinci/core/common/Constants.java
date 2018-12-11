@@ -31,6 +31,12 @@ public class Constants extends Consts {
      */
     public static final String BASE_API_PATH = "/api/v3";
 
+
+    /**
+     * auth基本路径
+     */
+    public static final String AUTH_API_PATH = "/auth/v3";
+
     /**
      * 用户激活 / 重发激活邮件模板
      */

@@ -61,6 +61,19 @@ public class Consts {
      */
     public static final String CURRENT_USER = "CURRENT_USER";
 
+
+    /**
+     * 当前平台
+     */
+    public static final String CURRENT_PLATFORM = "CURRENT_PLATFORM";
+
+
+    /**
+     * auth code key
+     */
+    public static final String AUTH_CODE = "authCode";
+
+
     /**
      * Token 前缀
      */
