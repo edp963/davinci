@@ -22,6 +22,7 @@ import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.job.ScheduleService;
 import edp.core.exception.ServerException;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
@@ -336,11 +337,15 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
 
                     ViewExecuteParam executeParam = widgetService.buildViewExecuteParam(widget);
 
+                    executeParam.setPageNo(-1);
+                    executeParam.setPageSize(-1);
+                    executeParam.setLimit(-1);
+
                     List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
-                    List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName + "_" + widget.getName());
-                    writeSheet(sheet, columns, dataList, cellStyle);
+                    writeSheet(sheet, columns, paginate.getResultList(), cellStyle);
                 } catch (ServerException e) {
                     e.printStackTrace();
                 } finally {

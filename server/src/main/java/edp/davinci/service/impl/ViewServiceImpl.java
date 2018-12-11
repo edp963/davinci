@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.core.model.TableInfo;
 import edp.core.utils.*;
@@ -518,7 +519,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Override
     public ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
-        List<Map<String, Object>> list = null;
+        Paginate<Map<String, Object>> paginate = null;
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return resultMap.successAndRefreshToken(request).payloads(null);
@@ -545,12 +546,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         try {
-            list = getResultDataList(viewWithProjectAndSource, executeParam, user);
+            paginate = getResultDataList(viewWithProjectAndSource, executeParam, user);
         } catch (ServerException e) {
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payloads(list);
+        return resultMap.successAndRefreshToken(request).payload(paginate);
     }
 
 
@@ -603,8 +604,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @throws ServerException
      */
     @Override
-    public List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
-        List<Map<String, Object>> list = null;
+    public Paginate<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
+        Paginate paginate = null;
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
@@ -628,8 +629,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     try {
                         Object object = redisUtils.get(cacheKey);
                         if (null != object && executeParam.getCache()) {
-                            list = (List<Map<String, Object>>) object;
-                            return list;
+                            paginate = (Paginate) object;
+                            return paginate;
                         }
                     } catch (Exception e) {
                         log.warn("get data by cache: {}", e.getMessage());
@@ -648,7 +649,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     if (null != querySqlList && querySqlList.size() > 0) {
                         buildQuerySql(querySqlList, sqlEntity, executeParam, source);
                         for (String sql : querySqlList) {
-                            list = sqlUtils.syncQuery4ListByLimit(sql, executeParam.getLimit());
+                            paginate = sqlUtils.syncQuery4Paginate(sql, executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getLimit());
                         }
                     }
                 }
@@ -662,11 +663,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 && null != executeParam.getCache()
                 && executeParam.getCache()
                 && executeParam.getExpired() > 0L
-                && null != list && list.size() > 0) {
-            redisUtils.set(cacheKey, list, executeParam.getExpired(), TimeUnit.SECONDS);
+                && null != paginate && paginate.getResultList().size() > 0) {
+            redisUtils.set(cacheKey, paginate, executeParam.getExpired(), TimeUnit.SECONDS);
         }
 
-        return list;
+        return paginate;
     }
 
     /**
