@@ -40,7 +40,7 @@ export const DefaultTableCellStyle: ITableCellStyle = {
   fontColor: PIVOT_DEFAULT_FONT_COLOR,
   fontStyle: DEFAULT_FONT_STYLE,
   backgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR,
-  textAlign: 'left'
+  justifyContent: 'flex-start'
 }
 
 interface IHeaderConfigModalProps {
@@ -360,17 +360,17 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     }
   }, {
     title: '对齐',
-    dataIndex: 'textAlign',
-    key: 'textAlign',
+    dataIndex: 'justifyContent',
+    key: 'justifyContent',
     width: 215,
     render: (_, record: ITableHeaderConfig) => {
       const { style } = record
-      const { textAlign } = style
+      const { justifyContent } = style
       return (
-        <RadioGroup value={textAlign} onChange={this.propChange(record, 'textAlign')}>
-          <RadioButton value="left">左对齐</RadioButton>
+        <RadioGroup value={justifyContent} onChange={this.propChange(record, 'justifyContent')}>
+          <RadioButton value="flex-start">左对齐</RadioButton>
           <RadioButton value="center">居中</RadioButton>
-          <RadioButton value="right">右对齐</RadioButton>
+          <RadioButton value="flex-end">右对齐</RadioButton>
         </RadioGroup>
       )
     }

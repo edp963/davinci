@@ -27,7 +27,7 @@ export interface ITableCellStyle {
   fontColor: string
   fontStyle: 'normal' | 'oblique'
   backgroundColor: string
-  textAlign: 'left' | 'center' | 'right'
+  justifyContent: 'flex-start' | 'center' | 'flex-end'
 }
 
 export interface ITableHeaderConfig {

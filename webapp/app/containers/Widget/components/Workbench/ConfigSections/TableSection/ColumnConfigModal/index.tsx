@@ -215,7 +215,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     }
 
     const { style, visualType, conditionStyles } = localConfig.find((c) => c.columnName === selectedColumnName)
-    const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, textAlign } = style
+    const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, justifyContent } = style
 
     return (
       <Modal
@@ -254,10 +254,10 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                 <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
                   <Col span={4}>对齐</Col>
                   <Col span={20}>
-                    <RadioGroup value={textAlign} onChange={this.propChange('textAlign')}>
-                      <RadioButton value="left">左对齐</RadioButton>
+                    <RadioGroup value={justifyContent} onChange={this.propChange('justifyContent')}>
+                      <RadioButton value="flex-start">左对齐</RadioButton>
                       <RadioButton value="center">居中</RadioButton>
-                      <RadioButton value="right">右对齐</RadioButton>
+                      <RadioButton value="flex-end">右对齐</RadioButton>
                     </RadioGroup>
                   </Col>
                 </Row>
