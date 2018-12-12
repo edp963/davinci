@@ -150,7 +150,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = {
-            datasource: [],
+            datasource: { resultList: [] },
             loading: false,
             queryParams: {
               linkageFilters: [],
@@ -181,7 +181,7 @@ function dashboardReducer (state = initialState, action) {
       const infoTemp = new Object()
       payload.result.forEach((pr) => {
         infoTemp[pr.id] = {
-          datasource: [],
+          datasource: { resultList: [] },
           loading: false,
           queryParams: {
             linkageFilters: [],
@@ -256,7 +256,7 @@ function dashboardReducer (state = initialState, action) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: false,
-          datasource: payload.data,
+          datasource: payload.result,
           renderType: payload.renderType
         }
       })
@@ -384,7 +384,7 @@ function dashboardReducer (state = initialState, action) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           renderType: 'resize',
-          datasource: [...itemsInfo[payload.itemId].datasource]
+          datasource: {...itemsInfo[payload.itemId].datasource}
         }
       })
     case RESIZE_ALL_DASHBOARDITEM:
@@ -394,7 +394,7 @@ function dashboardReducer (state = initialState, action) {
           info[key] = {
             ...prop,
             renderType: 'resize',
-            datasource: [...prop.datasource]
+            datasource: {...prop.datasource}
           }
           return info
         }, {})

@@ -39,14 +39,13 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 export function* getPortals (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.portal}?projectId=${payload.projectId}`)
-    const portals = readListAdapter(asyncData)
+    const portals = asyncData.payload
     yield put(portalsLoaded(portals))
   } catch (err) {
     yield put(loadPortalsFail())
