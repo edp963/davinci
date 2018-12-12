@@ -19,6 +19,7 @@
 package edp.davinci.service;
 
 import edp.core.exception.ServerException;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
@@ -46,7 +47,7 @@ public interface ViewService extends CheckEntityService {
 
     ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
 
-    List<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
+    Paginate<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
     List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
@@ -55,4 +56,6 @@ public interface ViewService extends CheckEntityService {
     boolean allowGetData(Project project, User user);
 
     Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
+
+    ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request);
 }

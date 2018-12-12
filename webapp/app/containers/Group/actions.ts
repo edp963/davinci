@@ -35,8 +35,6 @@ import {
   EDIT_GROUP_FAILURE
 } from './constants'
 
-// import { promiseActionCreator } from '../../utils/reduxPromisation'
-
 // export const loadGroupDetail = promiseActionCreator(LOAD_GROUP_DETAIL, ['id'])
 
 export function loadGroups () {

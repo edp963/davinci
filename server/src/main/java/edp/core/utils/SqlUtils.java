@@ -40,6 +40,7 @@ import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -121,13 +122,16 @@ public class SqlUtils {
         final Paginate<Map<String, Object>> paginate = new Paginate<>();
         try {
             if (pageNo < 1 && pageSize < 1) {
+                List<Map<String, Object>> list = null;
                 if (limit < 1) {
-                    paginate.setResultList(syncQuery4List(sql));
+                    list = syncQuery4List(sql);
                 } else {
-                    List<Map<String, Object>> list = syncQuery4ListByLimit(sql, limit);
-                    paginate.setResultList(list);
-                    paginate.setTotalCount(list.size());
+                    list = syncQuery4ListByLimit(sql, limit);
                 }
+                paginate.setPageNo(1);
+                paginate.setPageSize(null == list ? 0 : list.size());
+                paginate.setTotalCount(null == list ? 0 : list.size());
+                paginate.setResultList(list);
             } else {
 
                 JdbcTemplate jdbcTemplate = jdbcTemplate();
@@ -177,6 +181,8 @@ public class SqlUtils {
         } catch (Exception e) {
             throw new ServerException(e.getMessage());
         }
+
+
         return paginate;
     }
 
@@ -402,6 +408,24 @@ public class SqlUtils {
         }
     }
 
+
+    /**
+     * 释放失效数据源
+     *
+     * @param jdbcUrl
+     * @param userename
+     * @param password
+     * @return
+     * @throws SourceException
+     */
+    private void releaseDataSource(String jdbcUrl, String userename, String password) throws SourceException {
+        if (jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getDesc().toLowerCase()) > -1) {
+            ESDataSource.removeDataSource(jdbcUrl);
+        } else {
+            jdbcDataSource.removeDatasource(jdbcUrl, userename);
+        }
+    }
+
     /**
      * 检查敏感操作
      *
@@ -424,8 +448,16 @@ public class SqlUtils {
         try {
             connection = dataSource.getConnection();
         } catch (Exception e) {
-            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+            connection = null;
+        }
+        if (null == connection) {
+            releaseDataSource(this.jdbcUrl, this.username, this.password);
+            try {
+                connection = dataSource.getConnection();
+            } catch (Exception e) {
+                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
+                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
+            }
         }
         return connection;
     }

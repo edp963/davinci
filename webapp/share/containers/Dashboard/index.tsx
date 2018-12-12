@@ -84,7 +84,12 @@ interface IDashboardProps {
   currentItems: any[],
   currentItemsInfo: {
     [key: string]: {
-      datasource: any[]
+      datasource: {
+        pageNo: number
+        pageSize: number
+        resultList: any[]
+        totalCount: number
+      }
       loading: boolean
       queryParams: {
         filters: string
@@ -232,7 +237,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   public componentWillReceiveProps (nextProps: IDashboardProps) {
     const { currentItems, currentItemsInfo } = nextProps
     if (currentItemsInfo) {
-      if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.length).length === currentItems.length) {
+      if (Object.values(currentItemsInfo).filter((info) => !!info.datasource.resultList.length).length === currentItems.length) {
         // FIXME
         setTimeout(() => {
           this.setState({
@@ -654,7 +659,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               itemId={id}
               widget={widget}
               view={view}
-              data={datasource}
+              datasource={datasource}
               loading={loading}
               polling={polling}
               onDrillData={this.dataDrill}
@@ -707,7 +712,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         <FullScreenPanel
           widgets={widgets}
           currentDashboard={{ widgets: currentItems }}
-          currentDatasources={currentItemsInfo}
+          currentItemsInfo={currentItemsInfo}
           visible={allowFullScreen}
           isVisible={this.visibleFullScreen}
           currentDataInFullScreen={this.state.currentDataInFullScreen}

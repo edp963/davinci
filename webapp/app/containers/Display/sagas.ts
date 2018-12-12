@@ -23,7 +23,6 @@ import { call, fork, put, all } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import { getDefaultSlideParams } from './components/util'
 import { errorHandler } from '../../utils/util'
 
@@ -75,7 +74,7 @@ export function* getDisplays (action): IterableIterator<any> {
   const { projectId } = action.payload
   try {
     const asyncData = yield call(request, `${api.display}?projectId=${projectId}`)
-    const displays = readListAdapter(asyncData)
+    const displays = asyncData.payload
     yield put(displaysLoaded(displays))
   } catch (err) {
     yield put(loadDisplaysFail(err))
@@ -89,7 +88,7 @@ export function* addDisplay (action) {
       method: 'post',
       data: display
     })
-    const resultDisplay = readObjectAdapter(asyncDisplayData)
+    const resultDisplay = asyncDisplayData.payload
     const { id } = resultDisplay
     const slide = {
       displayId: id,
@@ -183,7 +182,7 @@ export function* uploadCurrentSlideCover (action): IterableIterator<any> {
       method: 'post',
       data: formData
     })
-    const coverPath = readObjectAdapter(asyncData)
+    const coverPath = asyncData.payload
     yield put(currentSlideCoverUploaded(coverPath))
     resolve(coverPath)
   } catch (err) {
@@ -212,7 +211,7 @@ export function* addDisplayLayers (action) {
       method: 'post',
       data: layers
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(displayLayersAdded(result))
     return result
   } catch (err) {
@@ -256,7 +255,7 @@ export function* pasteSlideLayers (action) {
       method: 'post',
       data: layers
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(slideLayersPasted(result))
     return result
   } catch (err) {
@@ -273,7 +272,7 @@ export function* getDisplayShareLink (action) {
       url: `${api.display}/${id}/share`,
       params: { username: authName }
     })
-    const shareInfo = readListAdapter(asyncData)
+    const shareInfo = asyncData.payload
     if (authName) {
       yield put(displaySecretLinkLoaded(shareInfo))
     } else {

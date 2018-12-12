@@ -2,7 +2,6 @@ import {SIGNUP, SEND_MAIL_AGAIN} from './constants'
 import { signupSuccess, signupError, sendMailAgainSuccess, sendMailAgainFail } from './actions'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 import {call, put} from 'redux-saga/effects'
@@ -20,7 +19,7 @@ export function* signup (action): IterableIterator<any> {
         password
       }
     })
-    const resPayload = readListAdapter(asyncData)
+    const resPayload = asyncData.payload
     yield put(signupSuccess())
     resolve(resPayload)
   } catch (err) {

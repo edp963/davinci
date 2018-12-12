@@ -24,7 +24,7 @@ interface IFullScreenPanelProps {
   }
   currentItems?: any[]
   widgets: any[]
-  currentDatasources: boolean | object
+  currentItemsInfo: boolean | object
   currentDashboard: {
     widgets?: any[]
   }
@@ -67,25 +67,6 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     onCurrentWidgetInFullScreen(itemId)
   }
 
-  // public componentDidUpdate (prevProps, prevState) {
-  //   console.log(this.props.currentDataInFullScreen)
-  //   const {chartInfo, widget, itemId} = this.props.currentDataInFullScreen
-  //   const {currentDatasources, visible} = this.props
-  //  // const data = currentDatasources[itemId]['datasource']
-  //   // console.log(currentDatasources)
-  //   // console.log(itemId)
-  //   const chartInstanceId = 'fsChartsWrapper'
-  //   if (chartInfo && chartInfo.renderer !== ECHARTS_RENDERER) {
-  //     return false
-  //   }
-  //   if (itemId && visible) {
-  //     if (this.chartInstance) {
-  //       this.chartInstance.dispose()
-  //     }
-  //     this.chartInstance = echarts.init(document.getElementById(chartInstanceId) as any, 'default')
-  //     this.renderChart(this.chartInstance, itemId, widget, data.dataSource, chartInfo)
-  //   }
-  // }
   private isShowSideMenu = () => {
     this.setState({
       isShowMenu: !this.state.isShowMenu
@@ -102,7 +83,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
   }
   public render () {
     const {isShowMenu, controlPanelVisible} = this.state
-    const {visible, currentDataInFullScreen, currentDatasources, currentDashboard, widgets, currentItems} = this.props
+    const {visible, currentDataInFullScreen, currentItemsInfo, currentDashboard, widgets, currentItems} = this.props
     const fsClassName = classnames({
       [styles.fullScreen]: true,
       [styles.displayNone]: !visible,
@@ -112,7 +93,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     let menus: any
     let title: string = ''
     let renderType: string = ''
-    let data: any = null
+    let itemInfo: any = null
     const chartClass = {
       chart: styles.chartBlock,
       table: styles.tableBlock,
@@ -153,15 +134,16 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       const c = currentDataInFullScreen
       title = c.widget.name
       renderType = c.renderType
-      data = currentDatasources[c.itemId]
+      itemInfo = currentItemsInfo[c.itemId]
       const widgetProps = JSON.parse(currentDataInFullScreen.widget.config)
+      const data = itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []
       charts = renderType !== 'echarts'
         ?
         (
           <Widget
             {...widgetProps}
             renderType="rerender"
-            data={data && data.datasource ? data.datasource : []}
+            data={data}
             model={currentDataInFullScreen.model}
           />
         )

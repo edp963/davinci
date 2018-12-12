@@ -30,7 +30,7 @@ Davinci 0.3 的 Dashboard 有菜单了，能将 Dashboard 分门别类，更好�
 
 在 Dashboard 内展示的 Widget，可以被随意地拖动改变位置、缩放改变大小。这些 Widget 之间还可以进行联动，可以轻松查看不同数据之间的关系。 同时，Dashboard 上可以定义全局控制器，对 Dashboard 内的 Widget 进行全局控制。
 
-选中 Dashboard，右上角分别是“新增”、“分享”、“联动关系配置”和“全局筛选器控制”按钮。
+选中 Dashboard，右上角按钮是对当前 Dashboard 的全局操作。
 
 ![dashboard_button](./img/dashboard_button.jpg)
 
@@ -86,9 +86,9 @@ Davinci 0.3 的 Dashboard 有菜单了，能将 Dashboard 分门别类，更好�
 
   ![dashboard_global_filter](./img/dashboard_global_filter.jpg)
 
-### 4 单个 Widget 组件
+### 4 Dashboard Item
 
-在 Dashboard 里，每个 Widget 也有自己独立的功能。
+Dashboard Item 是 Dashboard 的最小组成部分，Dashboard Item 对应 Widget 组件，并拥有独立的功能。
 
 ![dashboard_widget_all](./img/dashboard_widget_all.png)
 
@@ -100,7 +100,7 @@ Davinci 0.3 的 Dashboard 有菜单了，能将 Dashboard 分门别类，更好�
 
 #### 4.2 自由钻取
 
-钻取是上卷下钻的统称。上卷，当前数据往上回归到上一层数据。下钻，从当前数据往下展开下一层数据。自由钻取让你能多层面了解业务数据，直观地看出变化和问题，充分了解数据背后的意义。
+钻取是上卷下钻的统称。上卷，当前数据往上回归到上一层数据。下钻，从当前数据往下展开下一层数据。
 
 - 点击“钻取”，在图表上框选区域，选择上卷或下钻的字段。再次单击取消钻取。
 

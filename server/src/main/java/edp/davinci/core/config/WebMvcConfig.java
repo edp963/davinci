@@ -25,7 +25,9 @@ import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
 import edp.core.inteceptor.RequestJsonHandlerArgumentResolver;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.inteceptor.AuthenticationInterceptor;
+import edp.davinci.core.inteceptor.CurrentPlatformMethodArgumentResolver;
 import edp.davinci.core.inteceptor.CurrentUserMethodArgumentResolver;
+import edp.davinci.core.inteceptor.PlatformAuthInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -48,24 +50,59 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     @Value("${file.web_resources}")
     private String webResources;
 
+    /**
+     * 登录校验拦截器
+     * @return
+     */
     @Bean
     public AuthenticationInterceptor loginRequiredInterceptor() {
         return new AuthenticationInterceptor();
     }
 
+    /**
+     * 授权平台校验拦截器
+     * @return
+     */
+    @Bean
+    public PlatformAuthInterceptor platformAuthInterceptor() {
+        return new PlatformAuthInterceptor();
+    }
+
+    /**
+     * CurrentUser 注解参数解析器
+     * @return
+     */
     @Bean
     public CurrentUserMethodArgumentResolver currentUserMethodArgumentResolver() {
         return new CurrentUserMethodArgumentResolver();
     }
 
+    /**
+     * CurrentPlatform 注解参数解析器
+     * @return
+     */
+    @Bean
+    public CurrentPlatformMethodArgumentResolver currentPlatformMethodArgumentResolver() {
+        return new CurrentPlatformMethodArgumentResolver();
+    }
+
+    /**
+     * JsonParam 参数解析器
+     * @return
+     */
     @Bean
     public RequestJsonHandlerArgumentResolver requestJsonHandlerArgumentResolver() {
         return new RequestJsonHandlerArgumentResolver();
     }
 
+    /**
+     * 参数解析器
+     * @param argumentResolvers
+     */
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(currentUserMethodArgumentResolver());
+        argumentResolvers.add(currentPlatformMethodArgumentResolver());
         argumentResolvers.add(requestJsonHandlerArgumentResolver());
         super.addArgumentResolvers(argumentResolvers);
     }
@@ -75,6 +112,9 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         registry.addInterceptor(loginRequiredInterceptor())
                 .addPathPatterns(Constants.BASE_API_PATH + "/**")
                 .excludePathPatterns(Constants.BASE_API_PATH + "/login");
+
+        registry.addInterceptor(platformAuthInterceptor())
+                .addPathPatterns(Constants.AUTH_API_PATH + "/**");
 
         super.addInterceptors(registry);
     }

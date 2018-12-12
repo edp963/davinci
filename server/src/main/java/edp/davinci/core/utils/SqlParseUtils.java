@@ -318,9 +318,16 @@ public class SqlParseUtils {
                                                     .append(list.stream().collect(Collectors.joining(",", "(", ")")));
                                             break;
                                         default:
-                                            expBuilder
-                                                    .append(left).append(space)
-                                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            if (list.get(0).split(",").length > 0) {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                                        .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                            } else {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            }
                                             break;
                                     }
                                 } else {

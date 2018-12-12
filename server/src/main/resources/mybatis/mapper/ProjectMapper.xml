@@ -62,7 +62,7 @@
             p.*,
             IF(s.id IS NULL, FALSE, TRUE) AS 'isStar',
             u.id AS 'createBy.id',
-            u.username AS 'createBy.username',
+            IF(u.`name` is NULL,u.username,u.`name`) AS 'createBy.username',
             u.avatar AS 'createBy.avatar'
         from
             (SELECT * FROM project WHERE
@@ -111,7 +111,7 @@
             p.*,
             IF(s.id is NULL, FALSE, TRUE) AS 'isStar',
             u.id AS 'createBy.id',
-            u.username AS 'createBy.username',
+            IF(u.`name` is NULL,u.username,u.`name`) AS 'createBy.username',
             u.avatar AS 'createBy.avatar'
         FROM (SELECT * FROM project WHERE org_id = #{orgId}) p
            LEFT JOIN `user` u ON u.id = p.user_id
@@ -150,7 +150,7 @@
             p.*,
             IF(s.id is NULL, FALSE, TRUE) as 'isStar',
             u.id as 'createBy.id',
-            u.username as 'createBy.username',
+            IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',
             u.avatar as 'createBy.avatar'
         FROM project p
         left join `user` u on u.id = p.user_id
@@ -182,7 +182,7 @@
             p.*,
             IF(s.id is NULL, FALSE, TRUE) as 'isStar',
             u.id as 'createBy.id',
-            u.username as 'createBy.username',
+            IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',
             u.avatar as 'createBy.avatar'
         FROM (SELECT p1.* FROM project p1 LEFT JOIN favorite f on p1.id = f.project_id WHERE f.user_id = #{userId}) as p
         left join `user` u on u.id = p.user_id
