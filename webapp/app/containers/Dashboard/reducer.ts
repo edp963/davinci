@@ -150,9 +150,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
           obj[w.id] = {
-            datasource: {
-              resultList: []
-            },
+            datasource: { resultList: [] },
             loading: false,
             queryParams: {
               linkageFilters: [],
@@ -183,7 +181,7 @@ function dashboardReducer (state = initialState, action) {
       const infoTemp = new Object()
       payload.result.forEach((pr) => {
         infoTemp[pr.id] = {
-          datasource: [],
+          datasource: { resultList: [] },
           loading: false,
           queryParams: {
             linkageFilters: [],
