@@ -41,14 +41,12 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { promiseSagaCreator } from '../../utils/reduxPromisation'
-import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 export function* getGroups () {
   try {
     const asyncData = yield call(request, api.group)
-    const groups = readListAdapter(asyncData)
+    const groups = asyncData.payload
     yield put(groupsLoaded(groups))
   } catch (err) {
     yield put(loadGroupFail())
@@ -61,9 +59,9 @@ export function* addGroup ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.group,
-      data: writeAdapter(payload.group)
+      data: [payload.group]
     })
-    const result = readObjectAdapter(asyncData)
+    const result = asyncData.payload
     yield put(groupAdded(result))
     payload.resolve()
   } catch (err) {
@@ -85,24 +83,12 @@ export function* deleteGroup ({ payload }) {
   }
 }
 
-// export const getGroupDetail = promiseSagaCreator(
-//   function* (payload) {
-//     const asyncData = yield call(request, `${api.group}/${payload.id}`)
-//     const group = readObjectAdapter(asyncData)
-//     yield put(groupDetailLoaded(group))
-//     return group
-//   },
-//   function (err) {
-//     console.log('getGroupDetail', err)
-//   }
-// )
-
 export function* editGroup ({ payload }) {
   try {
     yield call(request, {
       method: 'put',
       url: api.group,
-      data: writeAdapter(payload.group)
+      data: [payload.group]
     })
     yield put(groupEdited(payload.group))
     payload.resolve()

@@ -133,7 +133,12 @@ interface IGridProps {
   currentItems: any[]
   currentItemsInfo: {
     [key: string]: {
-      datasource: any[]
+      datasource: {
+        pageNo: number
+        pageSize: number
+        resultList: any[]
+        totalCount: number
+      }
       loading: boolean
       queryParams: {
         filters: string
@@ -860,18 +865,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
     const model = JSON.parse(bizlogics.find((b) => b.id === widget.viewId).model)
-    const data = currentItemsInfo[id]
-    const loading = currentItemsInfo['loading']
+    const loading = currentItemsInfo[id].loading
     this.setState({
       currentDataInFullScreen: {
-            itemId: id,
-            widgetId: widget.id,
-            widget,
-            model,
-            data,
-            loading,
-            onGetChartData: this.getChartData
-        }
+        itemId: id,
+        widgetId: widget.id,
+        widget,
+        model,
+        loading,
+        onGetChartData: this.getChartData
+      }
     })
   }
   private changeDashboardSharePanelAuthorizeState = (state) => () => {
@@ -1098,7 +1101,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             <DashboardItem
               itemId={id}
               widget={widget}
-              data={datasource}
+              datasource={datasource}
               loading={loading}
               polling={polling}
               interacting={interacting}
@@ -1306,7 +1309,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           widgets={widgets}
           currentItems={currentItems}
           currentDashboard={currentDashboard}
-          currentDatasources={currentItemsInfo}
+          currentItemsInfo={currentItemsInfo}
           visible={allowFullScreen}
           isVisible={this.visibleFullScreen}
           currentDataInFullScreen={this.state.currentDataInFullScreen}

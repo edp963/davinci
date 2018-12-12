@@ -26,8 +26,6 @@ import {
   LOAD_VIZS_FAILUER
 } from './constants'
 
-// import { promiseActionCreator } from '../../utils/reduxPromisation'
-
 // export const loadScheduleDetail = promiseActionCreator(LOAD_SHEDULE_DETAIL, ['id'])
 
 export function loadSchedules (pid) {

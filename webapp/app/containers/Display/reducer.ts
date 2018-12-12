@@ -117,7 +117,7 @@ function displayReducer (state = initialState, action) {
         .set('currentLayers', payload.layers || [])
         .set('currentLayersInfo', payload.layers.reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
-            datasource: [],
+            datasource: { resultList: [] },
             loading: false,
             queryParams: {
               linkageFilters: [],
@@ -132,7 +132,7 @@ function displayReducer (state = initialState, action) {
             renderType: 'rerender'
           } : {
             loading: false,
-            datasource: []
+            datasource: { resultList: [] }
           }
           return obj
         }, {}))
@@ -164,7 +164,7 @@ function displayReducer (state = initialState, action) {
           ...layersInfo,
           ...payload.result.reduce((obj, layer) => {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
-              datasource: [],
+              datasource: { resultList: [] },
               loading: false,
               queryParams: {
                 linkageFilters: [],
@@ -178,7 +178,7 @@ function displayReducer (state = initialState, action) {
               rendered: false,
               renderType: 'rerender'
             } : {
-              datasource: [],
+              datasource: { resultList: [] },
               loading: false
             }
             return obj
@@ -247,7 +247,7 @@ function displayReducer (state = initialState, action) {
           [payload.itemId]: {
             ...layersInfo[payload.itemId],
             loading: false,
-            datasource: payload.data,
+            datasource: payload.result,
             renderType: payload.renderType
           }
         })
@@ -281,7 +281,7 @@ function displayReducer (state = initialState, action) {
             obj[key] = {
               ...prop,
               renderType: 'resize',
-              datasource: [...prop.datasource]
+              datasource: {...prop.datasource}
             }
           } else {
             obj[key] = prop
@@ -348,7 +348,7 @@ function displayReducer (state = initialState, action) {
           ...layersInfo,
           ...payload.result.reduce((obj, layer) => {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
-              datasource: [],
+              datasource: { resultList: [] },
               loading: false,
               queryParams: {
                 linkageFilters: [],
@@ -362,7 +362,7 @@ function displayReducer (state = initialState, action) {
               rendered: false,
               renderType: 'rerender'
             } : {
-              datasource: [],
+              datasource: { resultList: [] },
               loading: false
             }
             return obj

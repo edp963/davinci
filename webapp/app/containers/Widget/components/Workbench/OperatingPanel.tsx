@@ -68,7 +68,7 @@ interface IOperatingPanelProps {
   onSetQueryParams: (queryParams: any[]) => void
   onCacheChange: (cache: boolean) => void
   onExpiredChange: (expired: number) => void
-  onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
+  onLoadData: (viewId: number, params: object, resolve: (result: any) => void) => void
   onSetWidgetProps: (widgetProps: Partial<IWidgetProps>) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
 }
@@ -616,7 +616,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const requestParamString = JSON.stringify(requestParams)
     if (selectedView && requestParamString !== this.lastRequestParamString) {
       this.lastRequestParamString = requestParamString
-      onLoadData(selectedView.id, requestParams, (data) => {
+      onLoadData(selectedView.id, requestParams, (result) => {
+        const { resultList: data } = result
         if (data.length) {
           onSetWidgetProps({
             cols: cols.items.map((i) => i.name),

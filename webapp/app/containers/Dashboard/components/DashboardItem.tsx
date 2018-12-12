@@ -52,7 +52,7 @@ interface IDashboardItemProps {
   itemId: number
   widget: any
   view?: Partial<IView>
-  data: any
+  datasource: any
   loading: boolean
   polling: string
   interacting: boolean
@@ -216,7 +216,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       onShowFullScreen,
       itemId,
-      data,
       widget,
       loading,
       renderType,
@@ -228,7 +227,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         itemId,
         widget,
         model: this.state.model,
-        data,
         loading,
         renderType,
         onGetChartData
@@ -379,7 +377,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {
       itemId,
       widget,
-      data,
+      datasource,
       loading,
       interacting,
       shareInfo,
@@ -395,6 +393,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
+    const data = datasource.resultList
     const {
       controlPanelVisible,
       sharePanelAuthorized,

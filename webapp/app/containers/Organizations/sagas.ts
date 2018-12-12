@@ -67,14 +67,13 @@ import {
 const message = require('antd/lib/message')
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import {userPasswordChanged} from '../App/actions'
+import { userPasswordChanged } from '../App/actions'
 import { errorHandler } from '../../utils/util'
 
 export function* getOrganizations () {
   try {
     const asyncData = yield call(request, api.organizations)
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsFail())
@@ -90,7 +89,7 @@ export function* addOrganization (action) {
       url: api.organizations,
       data: organization
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(organizationAdded(result))
     resolve()
   } catch (err) {
@@ -133,7 +132,7 @@ export function* deleteOrganization (action) {
 export function* getOrganizationDetail ({ payload }) {
   try {
     const asyncData = yield call(request, `${api.organizations}/${payload.id}`)
-    const organization = readListAdapter(asyncData)
+    const organization = asyncData.payload
     yield put(organizationDetailLoaded(organization))
   } catch (err) {
     errorHandler(err)
@@ -150,7 +149,7 @@ export function* getOrganizationsProjects ({payload}) {
       method: 'get',
       url: requestUrl
     })
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsProjectsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsProjectsFail())
@@ -162,7 +161,7 @@ export function* getOrganizationsMembers ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/members`)
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsMembersLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsMembersFail())
@@ -174,7 +173,7 @@ export function* getOrganizationsTeams ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/teams`)
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsTeamsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsTeamsFail())
@@ -189,9 +188,8 @@ export function* addTeam (action) {
       method: 'post',
       url: api.teams,
       data: team
-      // data: writeAdapter(project)
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(teamAdded(result))
     resolve()
   } catch (err) {
@@ -210,7 +208,7 @@ export function* searchMember ({payload}) {
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
 
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(memberSearched(result))
   } catch (err) {
     yield put(searchMemberFail())
@@ -229,7 +227,7 @@ export function* inviteMember ({payload}) {
         memId
       }
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(inviteMemberSuccess(result))
   } catch (err) {
     yield put(inviteMemberFail())
@@ -260,7 +258,7 @@ export function* changeOrganizationMemberRole ({payload}) {
       method: 'put',
       data: {role: newRole}
     })
-    const member = readListAdapter(asyncData)
+    const member = asyncData.payload
     yield put(organizationMemberRoleChanged(relationId, member))
     yield resolve()
   } catch (err) {
