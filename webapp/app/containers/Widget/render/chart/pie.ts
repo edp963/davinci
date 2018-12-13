@@ -27,6 +27,7 @@ import {
   getLegendOption,
   getLabelOption
 } from './util'
+import { EChartOption } from 'echarts'
 
 export default function (chartProps: IChartProps) {
   const {
@@ -182,11 +183,13 @@ export default function (chartProps: IChartProps) {
     seriesArr.push(seriesObj)
   })
 
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    formatter: '{b} <br/>{c} ({d}%)'
+}
+
   return {
-    tooltip : {
-        trigger: 'item',
-        formatter: '{b} <br/>{c} ({d}%)'
-    },
+    tooltip,
     legend: getLegendOption(legend, legendData),
     series: seriesArr
   }

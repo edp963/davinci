@@ -3,13 +3,13 @@ import * as React from 'react'
 import NumberRange from '../../../../components/NumberRange'
 import MultiDatePicker from '../../../../components/MultiDatePicker'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-// const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const DatePicker = require('antd/lib/date-picker')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+// import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import DatePicker from 'antd/lib/date-picker'
 const FormItem = Form.Item
 const Option = Select.Option
 const Search = Input.Search
@@ -22,7 +22,7 @@ interface IGlobalFiltersProps {
   form: WrappedFormUtils
   filters: any[]
   cascadeSources: object
-  onChange: (filter: any) => (value: string) => void
+  onChange: (filter: any) => (value: any) => void
   onCascadeSelectChange: (key: string, flatTableId: number, column: string, parents: any[]) => void
 }
 
@@ -166,7 +166,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
               sm={12}
             >
               <FormItem className={styles.item}>
-                {getFieldDecorator(f.key, {})(
+                {getFieldDecorator(`${f.key}`, {})(
                   <Select {...cascadeProperties}>
                     {cascadeOptions}
                   </Select>
@@ -248,7 +248,7 @@ export class GlobalFilters extends React.PureComponent<IGlobalFiltersProps, {}> 
               onChange: onChange(f)
             }
           const rangeProperties = {
-            placeholder: [`${f.name}从`, '到'],
+            placeholder: [`${f.name}从`, '到'] as [string, string],
             className: styles.input,
             ...rangeFormat
           }

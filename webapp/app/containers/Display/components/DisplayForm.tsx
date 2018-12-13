@@ -20,11 +20,12 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Radio from 'antd/lib/radio/radio'
+const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 import { checkNameUniqueAction } from '../../App/actions'
@@ -105,9 +106,8 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
               {getFieldDecorator('description', {
                 initialValue: ''
               })(
-                <Input
+                <TextArea
                   placeholder="Description"
-                  type="textarea"
                   autosize={{minRows: 2, maxRows: 6}}
                 />
               )}

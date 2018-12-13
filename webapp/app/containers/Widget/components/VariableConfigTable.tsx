@@ -20,13 +20,13 @@
 
 import * as React from 'react'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Button = require('antd/lib/button')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Table from 'antd/lib/table'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import Button from 'antd/lib/button'
 const FormItem = Form.Item
 const Option = Select.Option
 

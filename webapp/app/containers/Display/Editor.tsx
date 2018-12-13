@@ -86,7 +86,7 @@ import {
   loadDisplayShareLink,
   showEditorBaselines,
   clearEditorBaselines    } from './actions'
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 const styles = require('./Display.less')
 
 import { IWidgetProps, RenderType } from '../Widget/components/Widget'

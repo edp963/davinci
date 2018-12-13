@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { decodeMetricName } from '../util'
-const radios = require('antd/lib/radio')
+import radios from 'antd/lib/radio'
 const Radio = radios.default
 const RadioGroup = radios.Group
-const Button = require('antd/lib/button')
+import Button from 'antd/lib/button'
 const styles = require('./Workbench.less')
 
 interface IActOnSettingFormProps {

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 import { Link } from 'react-router'
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -10,9 +10,9 @@ import Setting from './component/Setting'
 import TeamList from './component/TeamList'
 const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
-const Tabs = require('antd/lib/tabs')
+import Tabs from 'antd/lib/tabs'
 const TabPane = Tabs.TabPane
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
 import {compose} from 'redux'
 import injectReducer from '../../utils/injectReducer'
@@ -228,6 +228,7 @@ export class Teams extends React.Component<ITeamsProps> {
       currentOrganizationProjects,
       currentOrganizationMembers
     } = this.props
+
     const { avatar, name } = currentTeam
     const  projectNum = currentTeamProjects.length
     const  memberNum = currentTeamMembers.length

@@ -20,11 +20,11 @@
 
 import * as React from 'react'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Button = require('antd/lib/button')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Button from 'antd/lib/button'
 const FormItem = Form.Item
 
 const utilStyles = require('../../../assets/less/util.less')

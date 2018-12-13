@@ -5,8 +5,8 @@ import { FilterTypesLocale } from './filterTypes'
 
 const styles = require('./filter.less')
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
+import Icon from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
 
 interface IFilterListProps {
   list: any[]

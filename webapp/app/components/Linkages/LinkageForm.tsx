@@ -1,11 +1,11 @@
 import * as React from 'react'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Cascader = require('antd/lib/cascader')
-const Select = require('antd/lib/select')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Cascader from 'antd/lib/cascader'
+import Select from 'antd/lib/select'
 const FormItem = Form.Item
 const Option = Select.Option
 

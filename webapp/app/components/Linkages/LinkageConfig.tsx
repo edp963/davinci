@@ -4,11 +4,11 @@ import * as echarts from 'echarts/lib/echarts'
 
 import LinkageForm, { ILinkageForm } from './LinkageForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Table = require('antd/lib/table')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import Table from 'antd/lib/table'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
 
 import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
 import { uuid } from 'utils/util'

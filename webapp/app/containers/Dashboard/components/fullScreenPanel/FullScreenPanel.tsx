@@ -1,6 +1,6 @@
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu/')
+import Icon from 'antd/lib/icon'
+import Menu from 'antd/lib/menu/'
 import * as classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
@@ -119,7 +119,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
                 (widget, i) => {
                   const w = widgets.find((w) => w.id === widget.widgetId)
                // const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
-                  return <Menu.Item key={widget.id} itemId={widget.id} >
+                  return <Menu.Item key={widget.id}>
                     <i style={{marginRight: '8px'}}/>
                     {w['name']}
                   </Menu.Item>

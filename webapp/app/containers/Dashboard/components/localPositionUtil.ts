@@ -79,7 +79,7 @@ export function findFirstLeaf (tree) {
     if (child.type === 1) {
       return child.id
     } else {
-      const leafId = this.findFirstLeaf(child)
+      const leafId = findFirstLeaf(child)
       if (leafId > 0) {
         return leafId
       }

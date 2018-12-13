@@ -18,7 +18,7 @@
  * >>
  */
 
-import 'babel-polyfill'
+import '@babel/polyfill'
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
@@ -26,6 +26,7 @@ import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
 import { useScroll } from 'react-router-scroll'
+import { hot } from 'react-hot-loader'
 
 import App from './containers/App'
 import { makeSelectLocationState } from './containers/App/selectors'
@@ -33,7 +34,6 @@ import LanguageProvider from './containers/LanguageProvider'
 import { translationMessages } from './i18n'
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
-import '!file-loader?name=[name].[ext]!./manifest.json'
 import 'file-loader?name=[name].[ext]!./.htaccess'
 import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
@@ -85,13 +85,14 @@ import createRoutes from './routes'
 
 const initialState = {}
 const store = configureStore(initialState, hashHistory)
+const MOUNT_NODE = document.getElementById('app')
 const history = syncHistoryWithStore(hashHistory, store, {
   selectLocationState: makeSelectLocationState()
 })
 
 const rootRoute = {
   path: '/',
-  component: App,
+  component: hot(module)(App),
   childRoutes: createRoutes(store),
   indexRoute: {
     onEnter: (_, replace) => {
@@ -112,12 +113,13 @@ const render = (messages) => {
         />
       </LanguageProvider>
     </Provider>,
-    document.getElementById('app')
+    MOUNT_NODE
   )
 }
-
+// declare const module: any
 if (module.hot) {
-  module.hot.accept('./i18n', () => {
+  module.hot.accept(['./i18n', 'containers/App'], () => {
+    ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
 }

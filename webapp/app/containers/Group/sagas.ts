@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_GROUPS,
   ADD_GROUP,
@@ -99,11 +98,11 @@ export function* editGroup ({ payload }) {
 }
 
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_GROUPS, getGroups),
     takeEvery(ADD_GROUP, addGroup as any),
     takeEvery(DELETE_GROUP, deleteGroup as any),
     // takeLatest(LOAD_GROUP_DETAIL, getGroupDetail),
     takeEvery(EDIT_GROUP, editGroup as any)
-  ]
+  ])
 }

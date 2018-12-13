@@ -19,6 +19,6 @@
  */
 
 module.exports = {
-  'primary-color': '#1B98E0',
-  'icon-url': '"~fonts/antd/antd"'
+  'primary-color': '#1B98E0'
+  // 'icon-url': '"~fonts/antd/antd"'
 }

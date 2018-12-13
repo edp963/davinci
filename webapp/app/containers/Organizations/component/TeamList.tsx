@@ -12,13 +12,13 @@ import {WrappedFormUtils} from 'antd/lib/form/Form'
 import {InjectedRouter} from 'react-router/lib/Router'
 import teamSaga from '../../Teams/sagas'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
-const Table = require('antd/lib/table')
-const Modal = require('antd/lib/modal')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tooltip from 'antd/lib/tooltip'
+import Button from 'antd/lib/button'
+import Input from 'antd/lib/input'
+import Table from 'antd/lib/table'
+import Modal from 'antd/lib/modal'
 const styles = require('../Organization.less')
 import * as Organization from '../Organization'
 import {checkNameUniqueAction} from '../../App/actions'

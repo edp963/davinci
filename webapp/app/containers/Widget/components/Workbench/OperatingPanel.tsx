@@ -25,19 +25,19 @@ import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getTabl
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Icon from 'antd/lib/icon'
+import Menu from 'antd/lib/menu'
 const MenuItem = Menu.Item
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio/radio')
+import Table from 'antd/lib/table'
+import Button from 'antd/lib/button'
+import Radio from 'antd/lib/radio/radio'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-const InputNumber = require('antd/lib/input-number')
-const Dropdown = require('antd/lib/dropdown')
-const Modal = require('antd/lib/modal')
+import InputNumber from 'antd/lib/input-number'
+import Dropdown from 'antd/lib/dropdown'
+import Modal from 'antd/lib/modal'
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
@@ -1356,10 +1356,15 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         </div>
         <div className={styles.config}>
           <div className={styles.mode}>
-            <RadioGroup size="small" value={mode} onChange={this.changeMode}>
+            <RadioGroup
+              size="small"
+              className={styles.radio}
+              value={mode}
+              onChange={this.changeMode}
+            >
               <RadioButton
                 className={classnames({
-                  [styles.button]: mode !== 'pivot'
+                  [styles.selected]: mode !== 'pivot'
                 })}
                 value="pivot"
               >
@@ -1367,7 +1372,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               </RadioButton>
               <RadioButton
                 className={classnames({
-                  [styles.button]: mode !== 'chart'
+                  [styles.selected]: mode !== 'chart'
                 })}
                 value="chart"
               >

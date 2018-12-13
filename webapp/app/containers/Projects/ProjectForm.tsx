@@ -20,14 +20,15 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Tag = require('antd/lib/tag')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Radio from 'antd/lib/radio/radio'
+import Tag from 'antd/lib/tag'
+import Button from 'antd/lib/button'
+import Select from 'antd/lib/select'
+const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
 const styles = require('./Project.less')
@@ -181,9 +182,8 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     hidden: this.props.type === 'transfer',
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}

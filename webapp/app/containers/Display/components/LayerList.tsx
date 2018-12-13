@@ -4,10 +4,10 @@ import {
 } from '../actions'
 import { OrderDirection } from './util'
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Checkbox = require('antd/lib/checkbox')
+import Icon from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
+import Popconfirm from 'antd/lib/popconfirm'
+import Checkbox from 'antd/lib/checkbox'
 const CheckboxGroup = Checkbox.Group
 
 const styles = require('../Display.less')

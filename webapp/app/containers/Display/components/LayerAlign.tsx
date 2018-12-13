@@ -1,7 +1,7 @@
 import * as React from 'react'
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
+import Icon from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
 const styles = require('../Display.less')
 
 export enum AlignTypes {

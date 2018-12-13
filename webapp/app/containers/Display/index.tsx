@@ -17,16 +17,16 @@ import DisplayList from './components/DisplayList'
 import DisplayForm from './components/DisplayForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Popconfirm = require('antd/lib/popconfirm')
-const Input = require('antd/lib/input')
-const Pagination = require('antd/lib/pagination')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Icon from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
+import Modal from 'antd/lib/modal'
+import Breadcrumb from 'antd/lib/breadcrumb'
+import Popconfirm from 'antd/lib/popconfirm'
+import Input from 'antd/lib/input'
+import Pagination from 'antd/lib/pagination'
 const Search = Input.Search
 
 const utilStyles = require('../../assets/less/util.less')
@@ -194,7 +194,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
     const addButton = loginUser.admin
       ? (
-        <Col xl={2} lg={2} md={2} sm={2} xs={24} className={stylesDashboard.addCol}>
+        <Col md={2} sm={24} className={stylesDashboard.addCol}>
           <Tooltip placement="bottom" title="新增">
             <Button
               size="large"
@@ -213,7 +213,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         <Helmet title="Display" />
         <Container.Title>
           <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+            <Col xl={18} lg={16} md={12} sm={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="/">
@@ -222,9 +222,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+            <Col xl={6} lg={8} md={12} sm={24}>
               <Row>
-                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
+                <Col md={22} sm={24} className={searchCol}>
                   <Search
                     size="large"
                     className={`${utilStyles.searchInput} ${loginUser.admin ? stylesDashboard.searchInputAdmin : ''}`}

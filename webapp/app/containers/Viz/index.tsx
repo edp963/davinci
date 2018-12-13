@@ -19,13 +19,13 @@ import { makeSelectDisplays } from '../Display/selectors'
 import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 
-const Icon = require('antd/lib/icon')
-const Collapse = require('antd/lib/collapse')
+import Icon from 'antd/lib/icon'
+import Collapse from 'antd/lib/collapse'
 import * as classnames from 'classnames'
 import Box from '../../components/Box'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Breadcrumb from 'antd/lib/breadcrumb'
 const Panel = Collapse.Panel
 const styles = require('./Viz.less')
 const utilStyles = require('../../assets/less/util.less')

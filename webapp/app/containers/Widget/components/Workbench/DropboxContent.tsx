@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { DropboxType, IDataParamSource } from './Dropbox'
 import ColorPanel from './ColorPanel'
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 const Popover =  require('antd/lib/popover')
 
 const styles = require('./Workbench.less')

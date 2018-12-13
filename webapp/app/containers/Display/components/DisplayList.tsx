@@ -2,20 +2,19 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Tooltip from 'antd/lib/tooltip'
+import Icon, { IconProps } from 'antd/lib/icon'
+import Popconfirm from 'antd/lib/popconfirm'
+import Modal from 'antd/lib/modal'
+import Row from 'antd/lib/row'
 const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
 import DisplayForm from './DisplayForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
-import { IconProps } from 'antd/lib/icon'
 
 export interface IDisplay {
   id: number
@@ -27,7 +26,7 @@ export interface IDisplay {
 }
 
 export interface IDisplayEvent {
-  onDisplayClick: (display: IDisplay) => void
+  onDisplayClick: (display: IDisplay) => () => void
   onAdd: (display: IDisplay, resolve: () => void) => void
   onEdit: (display: IDisplay, resolve: () => void) => void
   onCopy: (display: IDisplay) => void
@@ -109,11 +108,11 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   private renderCreate () {
     return (
       <Col
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         key="createDisplay"
       >
         <div className={styles.display}>
@@ -145,11 +144,11 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
     return (
       <Col
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         key={display.id}
         onClick={onDisplayClick(display)}
       >

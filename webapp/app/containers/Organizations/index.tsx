@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tag = require('antd/lib/tag')
-const Modal = require('antd/lib/modal')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tag from 'antd/lib/tag'
+import Modal from 'antd/lib/modal'
 import { Link } from 'react-router'
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -21,7 +21,7 @@ import {WrappedFormUtils} from 'antd/lib/form/Form'
 const styles = require('./Organization.less')
 import OrganizationForm from './component/OrganizationForm'
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
 // import sagaApp from '../App/sagas'
 // import reducerApp from '../App/reducer'

@@ -6,13 +6,13 @@ import ConditionalFilterForm from './ConditionalFilterForm'
 import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
-const Transfer = require('antd/lib/transfer')
-const radios = require('antd/lib/radio')
+import Transfer from 'antd/lib/transfer'
+import radios from 'antd/lib/radio'
 const Radio = radios.default
 const RadioGroup = radios.Group
 const RadioButton = radios.Button
-const Button = require('antd/lib/button')
-const DatePicker = require('antd/lib/date-picker')
+import Button from 'antd/lib/button'
+import DatePicker from 'antd/lib/date-picker'
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
 const utilStyles = require('../../../../assets/less/util.less')

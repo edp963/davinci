@@ -1,10 +1,10 @@
 import * as React from 'react'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Table = require('antd/lib/table')
-const Input = require('antd/lib/input')
-const Button = require('antd/lib/button')
+import Form from 'antd/lib/form'
+import Table from 'antd/lib/table'
+import Input from 'antd/lib/input'
+import Button from 'antd/lib/button'
 const FormItem = Form.Item
 
 const styles = require('./GlobalFilter.less')

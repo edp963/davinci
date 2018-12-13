@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import Pivot from '../Pivot'
 import Chart from '../Chart'
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'

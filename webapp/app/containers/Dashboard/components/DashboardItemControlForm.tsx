@@ -22,14 +22,14 @@ import * as React from 'react'
 
 import MultiDatePicker from '../../../components/MultiDatePicker'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const DatePicker = require('antd/lib/date-picker')
-const Button = require('antd/lib/button')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Form from 'antd/lib/form'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import DatePicker from 'antd/lib/date-picker'
+import Button from 'antd/lib/button'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 const FormItem = Form.Item
 const Option = Select.Option
 const RangePicker = DatePicker.RangePicker

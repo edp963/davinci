@@ -21,13 +21,13 @@
 import * as React from 'react'
 
 import VariableConfigTable from './VariableConfigTable'
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Form from 'antd/lib/form'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import Radio from 'antd/lib/radio/radio'
+import Button from 'antd/lib/button'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 const FormItem = Form.Item
 const Option = Select.Option
 const RadioButton = Radio.Button

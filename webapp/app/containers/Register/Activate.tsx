@@ -10,7 +10,7 @@ import {active} from '../App/actions'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectSignupLoading} from './selectors'
 import {InjectedRouter} from 'react-router/lib/Router'
-const Spin = require('antd/lib/spin')
+import Spin from 'antd/lib/spin'
 const styles = require('./register.less')
 
 

@@ -42,27 +42,25 @@ require('codemirror/addon/hint/show-hint')
 require('codemirror/addon/hint/sql-hint')
 require('codemirror/addon/display/placeholder')
 
-const Form = require('antd/lib/form')
-const Checkbox = require('antd/lib/checkbox')
-const Radio = require('antd/lib/radio')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
-const Tabs = require('antd/lib/tabs')
-const Table = require('antd/lib/table')
-const Alert = require('antd/lib/alert')
-const Tree = require('antd/lib/tree').default
-const message = require('antd/lib/message')
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Dropdown = require('antd/lib/dropdown')
-
-const Menu = require('antd/lib/menu')
+import Form from 'antd/lib/form'
+import Checkbox from 'antd/lib/checkbox'
+import Radio from 'antd/lib/radio'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import Button from 'antd/lib/button'
+import Icon from 'antd/lib/icon'
+import Tabs from 'antd/lib/tabs'
+import Table from 'antd/lib/table'
+import Alert from 'antd/lib/alert'
+import Tree from 'antd/lib/tree'
+import message from 'antd/lib/message'
+import Tooltip from 'antd/lib/tooltip'
+import Popover from 'antd/lib/popover'
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 const MenuItem = Menu.Item
-
 const TreeNode = Tree.TreeNode
 const Search = Input.Search
 const FormItem = Form.Item
@@ -1084,7 +1082,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               className={styles.sqlAlertText}
               message={`syntax check ${sqlExecuteCode === 200 ? 'success' : 'error'}`}
               description={`${sqlValidateMessage || ''}`}
-              type={`${sqlExecuteCode === 200 ? 'success' : 'error'}`}
+              type={sqlExecuteCode === 200 ? 'success' : 'error'}
               showIcon
               closable
               onClose={this.handleClose}

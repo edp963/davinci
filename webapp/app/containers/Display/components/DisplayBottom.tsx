@@ -1,7 +1,7 @@
 import * as React from 'react'
 
-const Slider = require('antd/lib/slider')
-const Icon = require('antd/lib/icon')
+import Slider from 'antd/lib/slider'
+import Icon from 'antd/lib/icon'
 
 const styles = require('../Display.less')
 

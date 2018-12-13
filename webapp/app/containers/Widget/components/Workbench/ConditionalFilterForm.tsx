@@ -23,13 +23,13 @@ import * as classnames from 'classnames'
 import { uuid } from '../../../../utils/util'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Radio = require('antd/lib/radio')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
+import Form from 'antd/lib/form'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import Radio from 'antd/lib/radio'
+import Button from 'antd/lib/button'
+import Icon from 'antd/lib/icon'
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group

@@ -4,10 +4,10 @@ import { SketchPicker } from 'react-color'
 import { decodeMetricName } from '../util'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { WidgetMode } from '../Widget'
-const radios = require('antd/lib/radio')
+import radios from 'antd/lib/radio'
 const Radio = radios.default
 const RadioGroup = radios.Group
-const Button = require('antd/lib/button')
+import Button from 'antd/lib/button'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 const styles = require('./Workbench.less')

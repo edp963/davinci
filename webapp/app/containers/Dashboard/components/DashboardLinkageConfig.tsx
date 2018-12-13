@@ -19,8 +19,8 @@
  */
 
 import * as React from 'react'
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'

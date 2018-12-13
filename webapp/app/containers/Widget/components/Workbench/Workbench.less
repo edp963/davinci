@@ -2,6 +2,7 @@
 
 .workbench {
   background-color: @body-bg;
+  font-size: 12px;
   position: absolute;
   top: 0;
   bottom: 0;
@@ -154,8 +155,12 @@
   justify-content: center;
   align-items: center;
 
-  .button {
-    color: @disabled-text-color;
+  .radio {
+    font-size: 12px;
+
+    .selected {
+      color: @disabled-text-color;
+    }
   }
 }
 

@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 
 export interface IDownloadCsvProps {
   id?: number

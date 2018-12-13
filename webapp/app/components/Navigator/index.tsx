@@ -18,21 +18,28 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 import classnames from 'classnames'
 
+import { makeSelectLoginUser } from '../../containers/App/selectors'
 import Icon from 'antd/lib/icon'
 import Dropdown from 'antd/lib/dropdown'
 import Menu from 'antd/lib/menu'
-import { makeSelectLoginUser } from '../../containers/App/selectors'
 
-import styles from './Navigator.less'
+const styles = require('./Navigator.less')
 
 const goGithub = () => window.open('https://github.com/edp963/davinci')
-export function Navigator (props) {
+
+interface INavigatorProps {
+  show: boolean
+  loginUser: object
+  onLogout: () => void
+}
+
+export function Navigator (props: INavigatorProps) {
   const headerClass = classnames({
     [styles.header]: true,
     [styles.hide]: !props.show
@@ -81,18 +88,12 @@ export function Navigator (props) {
         <li>
           <Dropdown overlay={menu} trigger={['click']} placement="bottomRight">
             {/*<Icon type="user" />*/}
-            <i className="iconfont icon-user_circle" style={{fontSize:'26px'}}/>
+            <i className="iconfont icon-user_circle" style={{fontSize: '26px'}}/>
           </Dropdown>
         </li>
       </ul>
     </nav>
   )
-}
-
-Navigator.propTypes = {
-  show: PropTypes.bool,
-  loginUser: PropTypes.object,
-  onLogout: PropTypes.func
 }
 
 const mapStateToProps = createStructuredSelector({
