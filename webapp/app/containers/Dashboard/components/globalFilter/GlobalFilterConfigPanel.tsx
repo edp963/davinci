@@ -4,11 +4,11 @@ import BaseForm, { IBaseForm } from './BaseForm'
 import ItemSelectorForm from './ItemSelectorForm'
 import OptionForm from './OptionForm'
 import AntdFormType from 'antd/lib/form/Form'
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
-const Tooltip = require('antd/lib/tooltip')
-const Tabs = require('antd/lib/tabs')
+import Table from 'antd/lib/table'
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
+import Tooltip from 'antd/lib/tooltip'
+import Tabs from 'antd/lib/tabs'
 const TabPane = Tabs.TabPane
 
 import { uuid } from '../../../../utils/util'
@@ -288,7 +288,7 @@ export class GlobalFilterPanel extends React.PureComponent<IGlobalFilterPanelPro
               flatTableColumns={flatTableColumns}
               onTypeSelectChange={this.typeSelectChange}
               onFlatTableSelectChange={this.flatTableSelectChange}
-              onLoadBizdataSchema={onLoadBizdataSchema}
+              // onLoadBizdataSchema={onLoadBizdataSchema}
               wrappedComponentRef={this.refHandles.baseForm}
             />
             <Tabs

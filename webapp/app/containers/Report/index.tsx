@@ -20,25 +20,28 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
+import { compose } from 'redux'
 import { createStructuredSelector } from 'reselect'
 import {InjectedRouter} from 'react-router/lib/Router'
+
+import Icon from 'antd/lib/icon'
+import { IProject } from '../Projects'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
-import {loadProjectDetail, killProjectDetail} from '../Projects/actions'
+import { loadProjectDetail, killProjectDetail } from '../Projects/actions'
 import reducer from '../Projects/reducer'
 import injectReducer from 'utils/injectReducer'
 import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
-import {compose} from 'redux'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import {IProject} from '../Projects'
-const styles = require('./Report.less')
+import { makeSelectCurrentProject } from '../Projects/selectors'
+
 import MenuPermission from '../Account/components/checkMenuPermission'
 import { PermissionLevel } from '../Teams/component/PermissionLevel'
+const styles = require('./Report.less')
 
 interface IReportProps {
   router: InjectedRouter
@@ -55,7 +58,7 @@ interface IReportProps {
 }
 
 interface IsidebarDetail {
-  icon?: string
+  icon?: React.ReactNode
   route?: string[]
   permission?: string
 }
@@ -103,7 +106,6 @@ export class Report extends React.Component<IReportProps, {}> {
     } = this.props
     const sidebarOptions = sidebar && (sidebar as IsidebarDetail[]).map((item) => {
       const isOptionActive = item.route.indexOf(routes[3].name) >= 0
-      const iconClassName = `iconfont ${item.icon}`
       const ProviderSidebar = MenuPermission(currentProject, item.permission)(SidebarOption)
 
       return (
@@ -113,7 +115,7 @@ export class Report extends React.Component<IReportProps, {}> {
           active={isOptionActive}
           params={this.props.params}
         >
-          <i className={iconClassName} />
+          {item.icon}
         </ProviderSidebar>
       )
     })
@@ -146,11 +148,11 @@ export function mapDispatchToProps (dispatch) {
   return {
     onPageLoad: () => {
       const sidebarSource = [
-        { icon: 'icon-dashboard', route: ['vizs', 'dashboard'], permission: 'viz' },
-        { icon: 'icon-widget-gallery', route: ['widgets'], permission: 'widget' },
-        { icon: 'icon-custom-business', route: ['bizlogics', 'bizlogic'], permission: 'view' },
-        { icon: 'icon-datasource24', route: ['sources'], permission: 'source' },
-        { icon: 'anticon anticon-clock-circle-o', route: ['schedule'], permission: 'schedule' }
+        { icon: (<i className="iconfont icon-dashboard" />), route: ['vizs', 'dashboard'], permission: 'viz' },
+        { icon: (<i className="iconfont icon-widget-gallery" />), route: ['widgets'], permission: 'widget' },
+        { icon: (<i className="iconfont icon-custom-business" />), route: ['bizlogics', 'bizlogic'], permission: 'view' },
+        { icon: (<i className="iconfont icon-datasource24" />), route: ['sources'], permission: 'source' },
+        { icon: (<Icon type="clock-circle" />), route: ['schedule'], permission: 'schedule' }
       ]
       dispatch(loadSidebar(sidebarSource))
     },

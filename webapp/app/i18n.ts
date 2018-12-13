@@ -24,36 +24,42 @@
  * This will setup the i18n language files and locale data for your app.
  *
  */
-import { addLocaleData } from 'react-intl'
-import enLocaleData from 'react-intl/locale-data/en'
-import deLocaleData from 'react-intl/locale-data/de'
+const addLocaleData = require('react-intl').addLocaleData
+const enLocaleData = require('react-intl/locale-data/en')
+const zhLocaleData = require('react-intl/locale-data/zh')
 
-import { DEFAULT_LOCALE } from '../app/containers/App/constants'
-
-import enTranslationMessages from './translations/en.json'
-import deTranslationMessages from './translations/de.json'
+const enTranslationMessages = require('./translations/en.json')
+const zhTranslationMessages = require('./translations/zh.json')
 
 addLocaleData(enLocaleData)
-addLocaleData(deLocaleData)
+addLocaleData(zhLocaleData)
+
+export const DEFAULT_LOCALE = 'en'
 
 export const appLocales = [
   'en',
-  'de'
+  'zh'
 ]
 
 export const formatTranslationMessages = (locale, messages) => {
-  const defaultFormattedMessages = locale !== DEFAULT_LOCALE
-    ? formatTranslationMessages(DEFAULT_LOCALE, enTranslationMessages)
-    : {}
-  return Object.keys(messages).reduce((formattedMessages, key) => {
-    const formattedMessage = !messages[key] && locale !== DEFAULT_LOCALE
-      ? defaultFormattedMessages[key]
-      : messages[key]
-    return Object.assign(formattedMessages, { [key]: formattedMessage })
-  }, {})
+  const defaultFormattedMessages =
+    locale !== DEFAULT_LOCALE
+      ? formatTranslationMessages(DEFAULT_LOCALE, enTranslationMessages)
+      : {}
+  const flattenFormattedMessages = (formattedMessages, key) => {
+    const formattedMessage =
+      !messages[key] && locale !== DEFAULT_LOCALE
+        ? defaultFormattedMessages[key]
+        : messages[key]
+    return {
+      ...formattedMessages,
+      [key]: formattedMessage
+    }
+  }
+  return Object.keys(messages).reduce(flattenFormattedMessages, {})
 }
 
 export const translationMessages = {
   en: formatTranslationMessages('en', enTranslationMessages),
-  de: formatTranslationMessages('de', deTranslationMessages)
+  zh: formatTranslationMessages('zh', zhTranslationMessages)
 }

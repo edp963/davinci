@@ -21,13 +21,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { connect } from 'react-redux'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Steps = require('antd/lib/steps')
-const Transfer = require('antd/lib/transfer')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Radio from 'antd/lib/radio/radio'
+import Steps from 'antd/lib/steps'
+import Transfer from 'antd/lib/transfer'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const Step = Steps.Step
@@ -42,7 +42,7 @@ interface IUserFormProps {
   step: number
   groupSource: any[]
   groupTarget: any[]
-  onGroupChange: () => any
+  onGroupChange: (targets) => any
   onCheckName: (
     id: number,
     name: string,

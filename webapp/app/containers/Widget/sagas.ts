@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_WIDGETS,
   ADD_WIDGET,
@@ -112,11 +111,11 @@ export function* editWidget ({ payload }) {
 }
 
 export default function* rootWidgetSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_WIDGETS, getWidgets as any),
     takeEvery(ADD_WIDGET, addWidget as any),
     takeEvery(DELETE_WIDGET, deleteWidget as any),
     takeLatest(LOAD_WIDGET_DETAIL, getWidgetDetail),
     takeEvery(EDIT_WIDGET, editWidget as any)
-  ]
+  ])
 }

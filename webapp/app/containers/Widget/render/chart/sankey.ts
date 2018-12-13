@@ -34,6 +34,7 @@ import {
   getGridPositions,
   getSymbolSize
 } from './util'
+import { EChartOption } from 'echarts'
 
 export default function (chartProps: IChartProps) {
   const {
@@ -88,11 +89,13 @@ export default function (chartProps: IChartProps) {
     })
   })
 
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    triggerOn: 'mousemove'
+  }
+
   return {
-    tooltip: {
-      trigger: 'item',
-      triggerOn: 'mousemove'
-    },
+    tooltip,
     series: [{
       type: 'sankey',
       layout: 'none',

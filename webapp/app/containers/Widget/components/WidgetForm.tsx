@@ -23,16 +23,16 @@ import { connect } from 'react-redux'
 import * as classnames from 'classnames'
 import { checkNameAction } from '../../App/actions'
 
-const Table = require('antd/lib/table')
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Checkbox = require('antd/lib/checkbox')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Table from 'antd/lib/table'
+import Form from 'antd/lib/form'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import Checkbox from 'antd/lib/checkbox'
+import Radio from 'antd/lib/radio/radio'
+import Button from 'antd/lib/button'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 const FormItem = Form.Item
 const Option = Select.Option
 const CheckboxGroup = Checkbox.Group

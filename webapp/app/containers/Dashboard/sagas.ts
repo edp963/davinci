@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, all, put } from 'redux-saga/effects'
+import { call, all, put, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import {
   LOAD_DASHBOARDS,
@@ -295,7 +294,7 @@ export function* getWidgetCsv (action) {
 }
 
 export default function* rootDashboardSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_DASHBOARDS, getDashboards as any),
     takeLatest(ADD_DASHBOARD, addDashboard as any),
     takeEvery(EDIT_DASHBOARD, editDashboard as any),
@@ -309,5 +308,5 @@ export default function* rootDashboardSaga (): IterableIterator<any> {
     takeLatest(LOAD_DASHBOARD_SHARE_LINK, getDashboardShareLink),
     takeLatest(LOAD_WIDGET_SHARE_LINK, getWidgetShareLink),
     takeLatest(LOAD_WIDGET_CSV, getWidgetCsv)
-  ]
+  ])
 }

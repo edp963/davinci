@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
 import {
   LOAD_SOURCES,
   ADD_SOURCE,
@@ -49,7 +48,7 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 
 export function* getSources (action) {
   const { payload } = action
@@ -171,7 +170,7 @@ export function* getCsvMetaId (action) {
 }
 
 export default function* rootSourceSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_SOURCES, getSources),
     takeEvery(ADD_SOURCE, addSource),
     takeEvery(DELETE_SOURCE, deleteSource),
@@ -179,5 +178,5 @@ export default function* rootSourceSaga (): IterableIterator<any> {
     takeEvery(EDIT_SOURCE, editSource),
     takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection),
     takeEvery(GET_CSV_META_ID, getCsvMetaId)
-  ]
+  ])
 }

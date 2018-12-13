@@ -18,7 +18,7 @@
  * >>
  */
 
-import 'babel-polyfill'
+import '@babel/polyfill'
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
@@ -26,6 +26,7 @@ import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
 import { useScroll } from 'react-router-scroll'
+import { hot } from 'react-hot-loader'
 
 import App from './containers/App/index'
 
@@ -34,7 +35,6 @@ import { makeSelectLocationState } from '../app/containers/App/selectors'
 import LanguageProvider from '../app/containers/LanguageProvider'
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
-import '!file-loader?name=[name].[ext]!../app/manifest.json'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
 
 import configureStore from './store'
@@ -88,6 +88,7 @@ echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 const initialState = {}
 const store = configureStore(initialState, hashHistory)
+const MOUNT_NODE = document.getElementById('app')
 
 const history = syncHistoryWithStore(hashHistory, store, {
   selectLocationState: makeSelectLocationState()
@@ -95,7 +96,7 @@ const history = syncHistoryWithStore(hashHistory, store, {
 
 const rootRoute = {
   path: '/',
-  component: App,
+  component: hot(module)(App),
   childRoutes: createRoutes(store),
   indexRoute: {
     onEnter: (_, replace) => {
@@ -119,15 +120,14 @@ const render = (messages) => {
         />
       </LanguageProvider>
     </Provider>,
-    document.getElementById('app')
+    MOUNT_NODE
   )
 }
 
 // Hot reloadable translation json files
 if (module.hot) {
-  // modules.hot.accept does not accept dynamic dependencies,
-  // have to be constants at compile-time
-  module.hot.accept('../app/i18n', () => {
+  module.hot.accept(['../app/i18n', 'containers/App'], () => {
+    ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
 }
@@ -144,8 +144,7 @@ if (!window.Intl) {
     resolve(import('intl'))
   }))
     .then(() => Promise.all([
-      import('intl/locale-data/jsonp/en.js'),
-      import('intl/locale-data/jsonp/de.js')
+      import('intl/locale-data/jsonp/en.js')
     ]))
     .then(() => render(translationMessages))
     .catch((err) => {

@@ -10,7 +10,7 @@ import sagaTeam from '../Teams/sagas'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 import Menus from './components/Menus'
-const Tooltip = require('antd/lib/tooltip')
+import Tooltip from 'antd/lib/tooltip'
 import {createStructuredSelector} from 'reselect'
 import {makeSelectLoginUser} from '../App/selectors'
 

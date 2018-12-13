@@ -46,14 +46,14 @@ import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Lin
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Icon = require('antd/lib/icon')
-const Dropdown = require('antd/lib/dropdown')
-const Menu = require('antd/lib/menu')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
+import Breadcrumb from 'antd/lib/breadcrumb'
+import Icon from 'antd/lib/icon'
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
@@ -1061,7 +1061,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const navDropdownItems = currentItems.map((d) => {
         const wid = (widgets.find((widget) => widget.id === d.widgetId))
         return (
-        <Menu.Item key={d.id} widgetId={d.widgetId}>
+        <Menu.Item key={d.id}>
           {d.widgetId ?
               wid && wid.name ? wid.name : ''
               : ''}

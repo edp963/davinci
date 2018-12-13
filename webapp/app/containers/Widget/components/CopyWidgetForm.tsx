@@ -21,10 +21,10 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
 const FormItem = Form.Item
 
 import { checkNameAction } from '../../App/actions'

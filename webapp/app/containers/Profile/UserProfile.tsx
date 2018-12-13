@@ -1,16 +1,16 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Message = require('antd/lib/message')
-const Row = require('antd/lib/row')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/Form')
+import Icon from 'antd/lib/icon'
+import Col from 'antd/lib/col'
+import Message from 'antd/lib/message'
+import Row from 'antd/lib/row'
+import Input from 'antd/lib/input'
+import Form from 'antd/lib/Form'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
+import Button from 'antd/lib/button'
+import Tooltip from 'antd/lib/tooltip'
 import Box from '../../components/Box'
 import Avatar from '../../components/Avatar'
 import {createStructuredSelector} from 'reselect'
@@ -22,7 +22,7 @@ import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 
 interface IProfileProps {
   form: any
@@ -51,12 +51,13 @@ export class UserProfile extends React.PureComponent<IProfileProps, {}> {
     }
     let organizations = void 0
     if (userProfile) {
-        organizations = userProfile.organizations.map((org, index) =>
+        organizations = userProfile.organizations.map((org, index) => (
           <Tooltip key={`${org}_${index}_tooltip`} placement="bottom" title={org.name}>
             <div key={`${org}_${index}`} className={styles.avatarWrapper}>
-                <Avatar path={org.avatar} size="small"/>
+              <Avatar path={org.avatar} size="small"/>
             </div>
           </Tooltip>)
+        )
     }
     const name = userProfile.name ? userProfile.name : '他'
     const { getFieldDecorator } = this.props.form

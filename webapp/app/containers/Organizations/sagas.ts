@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
 import {
   LOAD_ORGANIZATIONS,
   ADD_ORGANIZATION,
@@ -64,7 +63,7 @@ import {
   changeOrganizationMemberRoleFail
 } from './actions'
 
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { userPasswordChanged } from '../App/actions'
@@ -268,7 +267,7 @@ export function* changeOrganizationMemberRole ({payload}) {
 }
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_ORGANIZATIONS, getOrganizations),
     takeEvery(ADD_ORGANIZATION, addOrganization),
     takeEvery(EDIT_ORGANIZATION, editOrganization),
@@ -282,5 +281,5 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     throttle(600, SEARCH_MEMBER, searchMember as any),
     takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
-  ]
+  ])
 }

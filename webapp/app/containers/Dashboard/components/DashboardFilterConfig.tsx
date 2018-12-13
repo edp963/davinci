@@ -19,8 +19,8 @@
  */
 
 import * as React from 'react'
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
 
 import FilterConfig from 'components/Filters/FilterConfig'
 

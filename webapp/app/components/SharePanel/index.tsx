@@ -21,12 +21,12 @@
 import * as React from 'react'
 
 import ShareForm from './ShareForm'
-const Icon = require('antd/lib/icon')
-const Input = require('antd/lib/input')
-const Button = require('antd/lib/button')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Radio = require('antd/lib/radio')
+import Icon from 'antd/lib/icon'
+import Input from 'antd/lib/input'
+import Button from 'antd/lib/button'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Radio from 'antd/lib/radio'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 

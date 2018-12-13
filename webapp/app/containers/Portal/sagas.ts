@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_PORTALS,
   ADD_PORTAL,
@@ -100,10 +99,10 @@ export function* editPortal (action) {
 }
 
 export default function* rootPortalSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_PORTALS, getPortals),
     takeEvery(ADD_PORTAL, addPortal),
     takeEvery(DELETE_PORTAL, deletePortal),
     takeEvery(EDIT_PORTAL, editPortal)
-  ]
+  ])
 }

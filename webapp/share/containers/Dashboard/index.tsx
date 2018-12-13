@@ -39,8 +39,8 @@ import { IFilterChangeParam } from '../../../app/components/Filters'
 import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
 
 import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 
 import {
   getDashboard,

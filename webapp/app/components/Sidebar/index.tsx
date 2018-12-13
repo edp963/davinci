@@ -18,21 +18,20 @@
  * >>
  */
 
-import React, { PropTypes } from 'react'
+import * as React from 'react'
 
-import styles from './Sidebar.less'
+const styles = require('./Sidebar.less')
 
-export default class Sidebar extends React.Component {
-  render () {
-    return (
-      <div className={styles.sidebar}>
-        {this.props.children}
-      </div>
-    )
-  }
+interface ISidebarProps {
+  children: React.ReactNode
 }
 
-Sidebar.propTypes = {
-  children: PropTypes.node
+export function Sidebar (props: ISidebarProps) {
+  return (
+    <div className={styles.sidebar}>
+      {props.children}
+    </div>
+  )
 }
 
+export default Sidebar

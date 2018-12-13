@@ -1,13 +1,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
+import Icon, { IconProps } from 'antd/lib/icon'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Tooltip from 'antd/lib/tooltip'
+import Popconfirm from 'antd/lib/popconfirm'
+import Modal from 'antd/lib/modal'
+import Row from 'antd/lib/row'
 const styles = require('../Portal.less')
 
 import AntdFormType from 'antd/lib/form/Form'
@@ -16,13 +16,12 @@ import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 import {IPortal} from '../../Portal'
-import { IconProps } from 'antd/lib/icon'
 
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]
   currentProject: IProject
-  onPortalClick: (portal: any) => void
+  onPortalClick: (portal: any) => () => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
@@ -55,7 +54,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     e.stopPropagation()
   }
 
-  private delegate = (func: (...args) => void, ...args) => (e: MouseEvent) => {
+  private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent) => {
     func.apply(this, args)
     e.stopPropagation()
   }
@@ -117,11 +116,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     return (
       <Col
         key="createPortal"
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
       >
         <div className={styles.unit} onClick={this.showPortalForm('add')}>
             <div className={styles.central}>
@@ -147,11 +146,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     return (
       <Col
         key={portal.id}
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         onClick={onPortalClick(portal)}
       >
         <div

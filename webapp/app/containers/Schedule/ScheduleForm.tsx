@@ -22,13 +22,14 @@ import * as React from 'react'
 import {connect} from 'react-redux'
 import {checkNameAction, checkNameUniqueAction} from '../App/actions'
 import moment from 'moment'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const DatePicker = require('antd/lib/date-picker')
-const TimePicker = require('antd/lib/time-picker').default
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import DatePicker from 'antd/lib/date-picker'
+import TimePicker from 'antd/lib/time-picker'
+const TextArea = Input.TextArea
 const Option = Select.Option
 const { RangePicker } = DatePicker
 const FormItem = Form.Item
@@ -39,7 +40,7 @@ interface IScheduleFormProps {
   rangeTime: string
   form: any
   projectId: number
-  changeRange: () => any
+  changeRange: (value: string) => any
   configValue: string
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
   onShowConfig: () => any
@@ -77,11 +78,11 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
     const minuteOptions = []
     const monthOptions = []
     while (minuteIndex < 60) {
-      minuteOptions.push(<Option key={minuteIndex} value={`${minuteIndex}`}>{minuteIndex}</Option>)
+      minuteOptions.push(<Option key={`${minuteIndex}`} value={`${minuteIndex}`}>{minuteIndex}</Option>)
       minuteIndex++
     }
     while (monthIndex < 32) {
-      monthOptions.push(<Option key={monthIndex} value={`${monthIndex}`}>{monthIndex}</Option>)
+      monthOptions.push(<Option key={`${monthIndex}`} value={`${monthIndex}`}>{monthIndex}</Option>)
       monthIndex++
     }
     return (
@@ -118,9 +119,8 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
               {getFieldDecorator('description', {
                 initialValue: ''
               })(
-                <Input
+                <TextArea
                   placeholder="Description"
-                  type="textarea"
                   autosize={{minRows: 2, maxRows: 6}}
                 />
               )}
@@ -269,7 +269,7 @@ export class ScheduleForm extends React.PureComponent<IScheduleFormProps> {
                   })(
                     <Select>
                       {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-                        .map((dimensions, index) => <Option key={index} value={`${index + 1}`}>{dimensions}</Option>)}
+                        .map((dimensions, index) => <Option key={`${index}`} value={`${index + 1}`}>{dimensions}</Option>)}
                     </Select>
                   )
                 }

@@ -1,5 +1,4 @@
-import { takeEvery } from 'redux-saga'
-import { call, put, all } from 'redux-saga/effects'
+import { call, put, all, takeEvery } from 'redux-saga/effects'
 
 import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES, LOAD_VIZS} from './constants'
 import {
@@ -20,7 +19,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 import { PortalList } from '../Portal/components/PortalList'
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 
 export function* getSchedules ({payload}) {
   try {
@@ -213,12 +212,12 @@ export function* getVizsData ({ payload }) {
 }
 
 export default function* rootScheduleSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeEvery(LOAD_SCHEDULES, getSchedules as any),
     takeEvery(ADD_SCHEDULES, addSchedules as any),
     takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
     takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
     takeEvery(UPDATE_SCHEDULES, updateSchedule as any),
     takeEvery(LOAD_VIZS, getVizsData as any)
-  ]
+  ])
 }

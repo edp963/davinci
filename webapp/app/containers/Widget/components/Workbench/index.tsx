@@ -21,7 +21,7 @@ import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 const styles = require('./Workbench.less')
 
 export interface IView {

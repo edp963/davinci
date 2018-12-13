@@ -1,13 +1,13 @@
 import * as React from 'react'
 import api from 'utils/api'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Upload = require('antd/lib/upload')
-const Icon = require('antd/lib/icon')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Upload from 'antd/lib/upload'
+import Icon from 'antd/lib/icon'
 const FormItem = Form.Item
-const Button = require('antd/lib/button')
+import Button from 'antd/lib/button'
 
 const styles = require('../Display.less')
 

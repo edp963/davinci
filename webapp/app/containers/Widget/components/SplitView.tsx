@@ -24,9 +24,9 @@ import TableChart from '../../Dashboard/components/TableChart'
 import SegmentControl from '../../../components/SegmentControl/index'
 import WidgetChart from './WidgetChart'
 
-const Icon = require('antd/lib/icon')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
+import Icon from 'antd/lib/icon'
+import Button from 'antd/lib/button'
+import Input from 'antd/lib/input'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
 const styles = require('../Widget.less')

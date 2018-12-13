@@ -22,12 +22,13 @@ import * as React from 'react'
 // import {connect} from 'react-redux'
 // import {checkNameAction} from '../App/actions'
 const Form  = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const TreeSelect = require('antd/lib/tree-select')
+import TreeSelect from 'antd/lib/tree-select'
+import { ButtonSize } from 'antd/lib/button'
 const SHOW_PARENT = TreeSelect.SHOW_PARENT
 const FormItem = Form.Item
 const utilStyles =  require('../../assets/less/util.less')
@@ -54,7 +55,7 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
       wrapperCol: { span: 18 }
     }
     const treeSelectProps = {
-      size: 'large',
+      size: 'large' as ButtonSize,
       multiple: true,
       maxHeight: 400,
       overflow: 'auto',

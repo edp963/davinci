@@ -18,8 +18,7 @@
  * >>
  */
 
-import {takeLatest, takeEvery, throttle} from 'redux-saga'
-import { call, all, put } from 'redux-saga/effects'
+import { call, all, put, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
 import {
   LOAD_PROJECTS,
   ADD_PROJECT,
@@ -235,7 +234,7 @@ export function* editCollectProject ({payload}) {
 }
 
 export default function* rootProjectSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_PROJECTS, getProjects as any),
     takeEvery(ADD_PROJECT, addProject as any),
     takeEvery(EDIT_PROJECT, editProject as any),
@@ -247,5 +246,5 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     throttle(1000, SEARCH_PROJECT, searchProject as any),
     takeLatest(LOAD_COLLECT_PROJECTS, getCollectProjects as any),
     takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any)
-  ]
+  ])
 }

@@ -1,11 +1,11 @@
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
+import Icon from 'antd/lib/icon'
+import Message from 'antd/lib/message'
 import { Link } from 'react-router'
 import Box from '../../components/Box'
 const styles = require('../Profile/profile.less')
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 import ResetPasswordForm from './ResetPasswordForm'
 
 import {changeUserPassword} from '../App/actions'

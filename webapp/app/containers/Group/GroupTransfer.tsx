@@ -20,9 +20,9 @@
 
 import * as React from 'react'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Transfer = require('antd/lib/transfer')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Transfer from 'antd/lib/transfer'
 
 interface IGroupTransferProps {
   source: any[]

@@ -19,13 +19,14 @@
  */
 
 import * as React from 'react'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio/radio')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Button from 'antd/lib/button'
+import Radio from 'antd/lib/radio/radio'
 const FormItem = Form.Item
+const TextArea = Input.TextArea
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
@@ -89,9 +90,8 @@ export class OrganizationForm extends React.PureComponent<IProjectsFormProps, {}
                   {getFieldDecorator('description', {
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}

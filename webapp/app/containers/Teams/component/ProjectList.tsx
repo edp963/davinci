@@ -1,19 +1,19 @@
 import * as React from 'react'
-const Collapse = require('antd/lib/collapse')
-const Popconfirm = require('antd/lib/popconfirm')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
-const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Modal = require('antd/lib/modal')
-const Input = require('antd/lib/input')
+import Collapse from 'antd/lib/collapse'
+import Popconfirm from 'antd/lib/popconfirm'
+import Tooltip from 'antd/lib/tooltip'
+import Button from 'antd/lib/button'
+import Select from 'antd/lib/select'
+import Table from 'antd/lib/table'
+import Icon from 'antd/lib/icon'
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Modal from 'antd/lib/modal'
+import Input from 'antd/lib/input'
 const styles = require('../Team.less')
-const Checkbox = require('antd/lib/checkbox')
-const Radio = require('antd/lib/radio')
+import Checkbox from 'antd/lib/checkbox'
+import Radio from 'antd/lib/radio'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 import PermissionLevel from './PermissionLevel'
@@ -172,19 +172,21 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     if (currentTeam) {
       CreateButton = ComponentPermission(currentTeam, '')(Button)
     }
-    const projectList = <Collapse  defaultActiveKey={['project0']}>
-      {
-        currentTeamProjects ? currentTeamProjects.map((project, index) =>
-          (<Collapse.Panel header={this.headerPanel(project)} key={`project${index}`}>
-            <PermissionLevel
-              param={project}
-              role={currentTeam.role}
-              selectChanged={this.selectChanged(`${project.project.id}permissionForm`)}
-              ref={(f) => { this[`${project.project.id}permissionForm`] = f }}
-            />
-          </Collapse.Panel>)) : ''
-      }
-    </Collapse>
+    const projectList = (
+      <Collapse  defaultActiveKey={['project0']}>
+        {
+          currentTeamProjects ? currentTeamProjects.map((project, index) =>
+            (<Collapse.Panel header={this.headerPanel(project)} key={`project${index}`}>
+              <PermissionLevel
+                param={project}
+                role={currentTeam.role}
+                selectChanged={this.selectChanged(`${project.project.id}permissionForm`)}
+                ref={(f) => { this[`${project.project.id}permissionForm`] = f }}
+              />
+            </Collapse.Panel>)) : ''
+        }
+      </Collapse>
+    )
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <CreateButton

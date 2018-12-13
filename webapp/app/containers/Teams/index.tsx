@@ -3,10 +3,10 @@
 // TEAM PROJECT
 import * as React from 'react'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tag = require('antd/lib/tag')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tag from 'antd/lib/tag'
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
 import { loadTeams } from './actions'
@@ -23,7 +23,7 @@ import {connect} from 'react-redux'
 import {compose} from 'redux'
 const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
 
 interface ITeam {

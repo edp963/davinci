@@ -19,8 +19,8 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
+import Icon from 'antd/lib/icon'
+import Col from 'antd/lib/col'
 
 const styles = require('../Dashboard.less')
 

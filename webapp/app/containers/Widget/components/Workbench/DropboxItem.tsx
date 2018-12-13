@@ -5,10 +5,10 @@ import PivotChartSelector from './PivotChartSelector'
 import { getAggregatorLocale, decodeMetricName } from '../util'
 import { IChartInfo } from '../Widget'
 
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu')
+import Icon from 'antd/lib/icon'
+import Menu from 'antd/lib/menu'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
-const Dropdown = require('antd/lib/dropdown')
+import Dropdown from 'antd/lib/dropdown'
 const styles = require('./Workbench.less')
 
 interface IDropboxItemProps {

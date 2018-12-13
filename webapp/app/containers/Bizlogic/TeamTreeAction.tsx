@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-const Input = require('antd/lib/input')
+import Input from 'antd/lib/input'
 const styles = require('./Bizlogic.less')
 import { ITeamParams } from '../Bizlogic'
 

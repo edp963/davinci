@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 import Box from '../../components/Box'
 const styles = require('./Organization.less')
 import {InjectedRouter} from 'react-router/lib/Router'
@@ -9,9 +9,9 @@ import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
 import TeamList from './component/TeamList'
 const utilStyles = require('../../assets/less/util.less')
-const Tabs = require('antd/lib/tabs')
+import Tabs from 'antd/lib/tabs'
 const TabPane = Tabs.TabPane
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
 import {connect} from 'react-redux'
 import saga from './sagas'

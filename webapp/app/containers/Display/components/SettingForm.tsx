@@ -25,19 +25,19 @@ import * as debounce from 'lodash/debounce'
 import api from 'utils/api'
 import { getBase64 } from 'utils/util'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Radio = require('antd/lib/radio/radio')
-const Checkbox = require('antd/lib/checkbox')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
-const Upload = require('antd/lib/upload')
-const Icon = require('antd/lib/icon')
-const Popover = require('antd/lib/popover')
-const Tooltip = require('antd/lib/tooltip')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Radio from 'antd/lib/radio/radio'
+import Checkbox from 'antd/lib/checkbox'
+import Button from 'antd/lib/button'
+import Select from 'antd/lib/select'
+import Upload from 'antd/lib/upload'
+import Icon from 'antd/lib/icon'
+import Popover from 'antd/lib/popover'
+import Tooltip from 'antd/lib/tooltip'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const CheckboxGroup = Checkbox.Group
@@ -51,6 +51,7 @@ interface ISettingFormProps {
   id: number
   settingInfo: any
   settingParams: any
+  onDisplaySizeChange: (width: number, height: number) => void
   onFormItemChange: (field: any, value: any) => any
   onCollapseChange: () => void
 }
@@ -363,7 +364,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       }
     }
 
-    const deleteUpload = (e: MouseEvent) => {
+    const deleteUpload = (e: React.MouseEvent) => {
       formItemChange(item.name)(null)
       e.stopPropagation()
     }

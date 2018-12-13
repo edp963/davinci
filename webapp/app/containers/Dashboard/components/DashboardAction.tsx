@@ -19,10 +19,10 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Popconfirm = require('antd/lib/popconfirm')
+import Icon from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
+import Popover from 'antd/lib/popover'
+import Popconfirm from 'antd/lib/popconfirm'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
 

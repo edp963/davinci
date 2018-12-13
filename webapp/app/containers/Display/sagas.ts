@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put, all } from 'redux-saga/effects'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
@@ -371,7 +370,7 @@ export function* redoOperation (action) {
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
     takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
     takeLatest(ActionTypes.LOAD_DISPLAY_DETAIL, getDisplayDetail),
@@ -387,5 +386,5 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
     takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
     takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
-  ]
+  ])
 }
