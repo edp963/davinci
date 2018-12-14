@@ -26,6 +26,9 @@ interface ILayerListStates {
 }
 
 export class LayerList extends React.Component <ILayerListProps, ILayerListStates> {
+
+  private displayName = 'LayerList'
+
   constructor (props) {
     super(props)
     this.state = {

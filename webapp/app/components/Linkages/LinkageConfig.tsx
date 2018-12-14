@@ -3,7 +3,7 @@ import * as classnames from 'classnames'
 import * as echarts from 'echarts/lib/echarts'
 
 import LinkageForm, { ILinkageForm } from './LinkageForm'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import AntdFormType from 'antd/lib/form/Form'
 import Table from 'antd/lib/table'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -35,10 +35,14 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
       formVisible: false,
       localLinkages: []
     }
+    this.refHandlers = {
+      linkageForm: (ref) => this.linkageForm = ref
+    }
   }
 
   private chart: echarts.ECharts = null
-  private linkageForm: WrappedFormUtils = null
+  private refHandlers: { linkageForm: (ref: AntdFormType) => void }
+  private linkageForm: AntdFormType = null
 
   public componentDidMount () {
     const { linkages, onGetWidgetInfo } = this.props
@@ -155,11 +159,11 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
   }
 
   private resetForm = () => {
-    this.linkageForm.resetFields()
+    this.linkageForm.props.form.resetFields()
   }
 
   private addToTable = () => {
-    this.linkageForm.validateFieldsAndScroll((err, values) => {
+    this.linkageForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         const { localLinkages } = this.state
         this.setState({
@@ -276,7 +280,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
         >
           <LinkageForm
             cascaderSource={cascaderSource}
-            ref={(f) => { this.linkageForm = f }}
+            wrappedComponentRef={this.refHandlers.linkageForm}
           />
         </Modal>
       </Row>

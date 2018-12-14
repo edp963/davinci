@@ -7,16 +7,19 @@ import LayerAlign from './LayerAlign'
 const styles = require('../Display.less')
 
 interface IDisplaySidebarProps {
-  children: JSX.Element[]
+  children: Array<React.ReactElement<any>>
 }
 
-export function DisplaySidebar (props: IDisplaySidebarProps) {
+export const DisplaySidebar: React.SFC<IDisplaySidebarProps> = (props) => {
   let layerList
   let settingContent
 
   props.children.forEach(((c) => {
     if (!c) { return }
-    if (c.type === LayerList) {
+
+    const displayName = (c.type as React.ComponentClass<any> | React.FunctionComponent<any>).displayName
+
+    if (displayName === 'LayerList') {
       layerList = c
     } else {
       settingContent = c
@@ -30,5 +33,7 @@ export function DisplaySidebar (props: IDisplaySidebarProps) {
     </div>
   )
 }
+
+DisplaySidebar.displayName = 'DisplaySidebar'
 
 export default DisplaySidebar

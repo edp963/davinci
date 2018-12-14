@@ -61,7 +61,7 @@ interface ISettingFormStates {
   collapse: boolean
 }
 
-export class SettingForm extends React.PureComponent<ISettingFormProps & FormComponentProps, ISettingFormStates> {
+export class SettingForm extends React.Component<ISettingFormProps & FormComponentProps, ISettingFormStates> {
 
   private debounceFormItemChange = null
 

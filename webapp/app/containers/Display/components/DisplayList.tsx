@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import AntdFormType from 'antd/lib/form/Form'
 
 import Col from 'antd/lib/col'
 import Button from 'antd/lib/button'
@@ -47,7 +47,8 @@ interface IDisplayListStates {
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
 
-  private displayForm: WrappedFormUtils
+  private refHandlers: { displayForm: (ref: AntdFormType) => void }
+  private displayForm: AntdFormType
 
   constructor (props: IDisplayListProps) {
     super(props)
@@ -55,6 +56,9 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       modalLoading: false,
       formType: 'add',
       formVisible: false
+    }
+    this.refHandlers = {
+      displayForm: (ref) => this.displayForm = ref
     }
   }
 
@@ -69,7 +73,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       formVisible: true
     }, () => {
       if (display) {
-        this.displayForm.setFieldsValue(display)
+        this.displayForm.props.form.setFieldsValue(display)
       }
     })
   }
@@ -79,13 +83,13 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       formVisible: false,
       modalLoading: false
     }, () => {
-      this.displayForm.resetFields()
+      this.displayForm.props.form.resetFields()
     })
   }
 
   private onModalOk = () => {
     const { onAdd, onEdit, projectId } = this.props
-    this.displayForm.validateFieldsAndScroll((err, values) => {
+    this.displayForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
@@ -236,7 +240,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
           <DisplayForm
             projectId={projectId}
             type={formType}
-            ref={(f) => { this.displayForm = f }}
+            wrappedComponentRef={this.refHandlers.displayForm}
           />
         </Modal>
       </div>

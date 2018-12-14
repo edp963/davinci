@@ -229,7 +229,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     this.refHandlers = {
       settingForm: (ref) => this.settingForm = ref,
-      editor: (ref) => this.editor = ref
+      editor: (ref) => {
+        this.editor = ref
+      }
     }
   }
 

@@ -15,7 +15,7 @@ import injectSaga from '../../utils/injectSaga'
 import Container from '../../components/Container'
 import DisplayList from './components/DisplayList'
 import DisplayForm from './components/DisplayForm'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import AntdFormType from 'antd/lib/form/Form'
 
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -57,6 +57,10 @@ interface IDisplayStates {
 }
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
+
+  private refHandlers: { displayForm: (ref: AntdFormType) => void }
+  private displayForm: AntdFormType
+
   constructor (props) {
     super(props)
     this.state = {
@@ -66,9 +70,10 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       currentDisplay: null,
       kwDisplay: ''
     }
+    this.refHandlers = {
+      displayForm: (ref) => this.displayForm = ref
+    }
   }
-
-  private displayForm: WrappedFormUtils
 
   public componentWillMount () {
     const {
@@ -120,7 +125,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       formVisible: true
     }, () => {
       if (display) {
-        this.displayForm.setFieldsValue(display)
+        this.displayForm.props.form.setFieldsValue(display)
       }
     })
   }
@@ -130,12 +135,12 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       formVisible: false,
       modalLoading: false
     }, () => {
-      this.displayForm.resetFields()
+      this.displayForm.props.form.resetFields()
     })
   }
 
   private onModalOk = () => {
-    this.displayForm.validateFieldsAndScroll((err, values) => {
+    this.displayForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
@@ -258,7 +263,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           <DisplayForm
             projectId={projectId}
             type={formType}
-            ref={(f) => { this.displayForm = f }}
+            ref={this.refHandlers.displayForm}
           />
         </Modal>
       </Container>

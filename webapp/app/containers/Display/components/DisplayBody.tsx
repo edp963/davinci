@@ -1,36 +1,36 @@
 import * as React from 'react'
 
-import DisplayContainer from './DisplayContainer'
-import DisplayBottom from './DisplayBottom'
-import DisplaySidebar from './DisplaySidebar'
-
 const styles = require('../Display.less')
 
 interface IDisplayBodyProps {
-  children: JSX.Element[],
+  children: Array<React.ReactElement<any>>
 }
 
-export function DisplayBody (props: IDisplayBodyProps) {
-  let editor
+export const DisplayBody: React.SFC<IDisplayBodyProps> = (props) => {
+  let container
   let bottom
   let sidebar
 
   props.children.forEach((c) => {
-    if (c.type === DisplayContainer) {
-      editor = c
-    }
-    if (c.type === DisplayBottom) {
-      bottom = c
-    }
-    if (c.type === DisplaySidebar) {
-      sidebar = c
+    const displayName = (c.type as React.ComponentClass<any> | React.FunctionComponent<any>).displayName
+
+    switch (displayName) {
+      case 'DisplayContainer':
+        container = c
+        break
+      case 'DisplayBottom':
+        bottom = c
+        break
+      case 'DisplaySidebar':
+        sidebar = c
+        break
     }
   })
 
   return (
     <div className={styles.body}>
       <div className={styles.main}>
-        {editor}
+        {container}
         {bottom}
       </div>
       {sidebar}
