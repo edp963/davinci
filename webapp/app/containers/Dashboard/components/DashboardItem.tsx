@@ -32,13 +32,12 @@ import {IView, IModel} from '../../../containers/Widget/components/Workbench/ind
 
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
-import { IconProps } from 'antd/lib/icon'
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Popover = require('antd/lib/popover')
-const Dropdown = require('antd/lib/dropdown')
-const Menu = require('antd/lib/menu')
+import Icon, { IconProps } from 'antd/lib/icon'
+import Tooltip from 'antd/lib/tooltip'
+import Popconfirm from 'antd/lib/popconfirm'
+import Popover from 'antd/lib/popover'
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 
 import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'

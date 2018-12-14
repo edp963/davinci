@@ -24,10 +24,11 @@ import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendS
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
 import { dataFromItemLoaded } from 'containers/Bizlogic/actions'
+import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {
   showLine: boolean
-  lineStyle: string
+  lineStyle: 'solid' | 'dashed' | 'dotted'
   lineSize: string
   lineColor: string
 }
@@ -36,7 +37,7 @@ export function getDimetionAxisOption (
   dimetionAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   data: string[]
-) {
+): EChartOption.XAxis {
   const {
     inverse,
     showLine: showLineX,
@@ -73,7 +74,7 @@ export function getDimetionAxisOption (
       show: showLabelX,
       color: labelColorX,
       fontFamily: labelFontFamilyX,
-      fontSize: labelFontSizeX,
+      fontSize: Number(labelFontSizeX),
       rotate: xAxisRotate,
       ...intervalOption
     },
@@ -81,7 +82,7 @@ export function getDimetionAxisOption (
       show: showLineX,
       lineStyle: {
         color: lineColorX,
-        width: lineSizeX,
+        width: Number(lineSizeX),
         type: lineStyleX
       }
     },
@@ -95,7 +96,7 @@ export function getDimetionAxisOption (
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
     },
@@ -111,7 +112,7 @@ export function getMetricAxisOption (
   title: string,
   axis: 'x' | 'y' = 'y',
   percentage?: boolean
-) {
+): EChartOption.YAxis {
   const {
     inverse,
     showLine: showLineY,
@@ -147,14 +148,14 @@ export function getMetricAxisOption (
       show: showLabelY,
       color: labelColorY,
       fontFamily: labelFontFamilyY,
-      fontSize: labelFontSizeY,
+      fontSize: Number(labelFontSizeY),
       formatter: percentage ? '{value}%' : metricAxisLabelFormatter
     },
     axisLine: {
       show: showLineY,
       lineStyle: {
         color: lineColorY,
-        width: lineSizeY,
+        width: Number(lineSizeY),
         type: lineStyleY
       }
     },
@@ -171,13 +172,13 @@ export function getMetricAxisOption (
     nameTextStyle: {
       color: titleColor,
       fontFamily: titleFontFamily,
-      fontSize: titleFontSize
+      fontSize: Number(titleFontSize)
     },
     splitLine: {
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
     }

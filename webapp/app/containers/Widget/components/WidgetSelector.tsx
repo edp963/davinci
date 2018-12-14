@@ -2,12 +2,12 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { iconMapping } from './chartUtil'
 
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Pagination = require('antd/lib/pagination')
-const Input = require('antd/lib/input')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Checkbox from 'antd/lib/checkbox'
+import Pagination from 'antd/lib/pagination'
+import Input from 'antd/lib/input'
 const Search = Input.Search
 const styles = require('../Widget.less')
 
@@ -169,7 +169,7 @@ export class WidgetSelector extends React.Component<IWidgetSelectorProps, IWidge
         : ''
 
       return (
-        <Col md={8} sm={12} xs={24} key={w.id} onClick={this.onWidgetSelect(w)}>
+        <Col lg={8} md={12} sm={24} key={w.id} onClick={this.onWidgetSelect(w)}>
           <div className={widgetClassName}>
             <h3 className={styles.title}>{w.name}</h3>
             <p className={styles.content}>{w.desc}</p>

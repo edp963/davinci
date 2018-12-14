@@ -21,14 +21,14 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Modal = require('antd/lib/modal')
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Steps = require('antd/lib/steps')
+import Modal from 'antd/lib/modal'
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import Steps from 'antd/lib/steps'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step

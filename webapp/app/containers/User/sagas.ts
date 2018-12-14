@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeEvery, takeLatest } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 import {
   LOAD_USERS,
   ADD_USER,
@@ -144,12 +143,12 @@ export function* changeUserPassword ({ payload }) {
 }
 
 export default function* rootUserSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_USERS, getUsers),
     takeEvery(ADD_USER, addUser as any),
     takeEvery(DELETE_USER, deleteUser as any),
     takeLatest(LOAD_USER_GROUPS, getUserGroups as any),
     takeEvery(EDIT_USER_INFO, editUserInfo as any),
     takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any)
-  ]
+  ])
 }

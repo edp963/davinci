@@ -1,13 +1,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import {IOrganizationMembers} from '../../Organizations/Organization'
-const Button = require('antd/lib/button')
-const Form = require('antd/lib/form')
+import Button from 'antd/lib/button'
+import Form from 'antd/lib/form'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
+import Input from 'antd/lib/input'
 const InputGroup = Input.Group
 const styles = require('../Team.less')
-const Icon = require('antd/lib/icon')
+import Icon from 'antd/lib/icon'
 const utilStyles =  require('../../../assets/less/util.less')
 
 

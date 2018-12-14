@@ -1,6 +1,6 @@
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Button = require('antd/lib/button')
+import Icon from 'antd/lib/icon'
+import Button from 'antd/lib/button'
 const styles = require('./EditorHeader.less')
 const utilStyles = require('../../assets/less/util.less')
 

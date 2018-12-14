@@ -1,15 +1,15 @@
 import * as React from 'react'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Table = require('antd/lib/table')
-const Icon = require('antd/lib/icon')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tooltip from 'antd/lib/tooltip'
+import Button from 'antd/lib/button'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import Popconfirm from 'antd/lib/popconfirm'
+import Modal from 'antd/lib/modal'
+import Table from 'antd/lib/table'
+import Icon from 'antd/lib/icon'
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
 import MemberForm from '../../Teams/component/AddForm'
@@ -77,8 +77,10 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
     }, () => {
-      const {user: {role}, id} = obj
-      this.ChangeRoleForm.setFieldsValue({id, role})
+      setTimeout(() => {
+        const {user: {role}, id} = obj
+        this.ChangeRoleForm.setFieldsValue({id, role})
+      }, 0)
     })
   }
 

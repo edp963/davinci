@@ -7,9 +7,9 @@ import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
 import FilterControl from './FilterControl'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Form = require('antd/lib/form')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Form from 'antd/lib/form'
 
 const styles = require('./filter.less')
 

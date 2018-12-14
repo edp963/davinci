@@ -1,9 +1,9 @@
 import * as React from 'react'
-const Modal = require('antd/lib/modal')
-const Icon = require('antd/lib/icon')
+import Modal from 'antd/lib/modal'
+import Icon from 'antd/lib/icon'
 import {IProject, IStarUser} from '../../containers/Projects'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 const styles = require('./Star.less')
 import Avatar from '../../components/Avatar'
 import * as Organization from '../../containers/Organizations/Organization'
@@ -68,7 +68,6 @@ export class Star extends React.PureComponent <IStar, IStarState> {
         </span>
         <Modal
           title={null}
-          size="large"
           width="760"
           visible={this.state.visible}
           footer={null}
@@ -86,11 +85,11 @@ export class Star extends React.PureComponent <IStar, IStarState> {
                   {
                     starUser ? starUser.map((user: IStarUser, index) => (
                       <Col
+                        xxl={12}
                         xl={12}
                         lg={12}
-                        md={12}
+                        md={24}
                         sm={24}
-                        xs={24}
                         key={user.id}
                       >
                         <li className={styles.userList} key={`star${index}list`}>

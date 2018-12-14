@@ -10,8 +10,9 @@ import { IChartInfo, WidgetMode } from '../../Widget'
 import { IFieldConfig } from '../FieldConfigModal'
 import { IFieldFormatConfig } from '../FormatConfigModal'
 import { decodeMetricName } from '../../util'
-const Popover = require('antd/lib/popover')
-const Icon = require('antd/lib/icon')
+import Popover from 'antd/lib/popover'
+import Icon from 'antd/lib/icon'
+
 const styles = require('../Workbench.less')
 
 export type DragType = 'category' | 'value'

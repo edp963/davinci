@@ -27,9 +27,9 @@ import { IChartStyles } from '../Widget'
 import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditionStyle } from '../Workbench/ConfigSections/TableSection'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
-const AntTable = require('antd/lib/table')
-const Select = require('antd/lib/select')
-const Message = require('antd/lib/message')
+import AntTable from 'antd/lib/table'
+import Select from 'antd/lib/select'
+import Message from 'antd/lib/message'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../../components/NumberFilterDropdown/index'

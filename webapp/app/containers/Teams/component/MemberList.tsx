@@ -1,12 +1,12 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
-const Table = require('antd/lib/table')
-const Modal = require('antd/lib/modal')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tooltip from 'antd/lib/tooltip'
+import Popconfirm from 'antd/lib/popconfirm'
+import Button from 'antd/lib/button'
+import Input from 'antd/lib/input'
+import Table from 'antd/lib/table'
+import Modal from 'antd/lib/modal'
 const styles = require('../Team.less')
 import AddForm from './AddForm'
 import {WrappedFormUtils} from 'antd/lib/form/Form'
@@ -142,8 +142,10 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
     }, () => {
-      const {user: {role}, id} = obj
-      this.ChangeRoleForm.setFieldsValue({id, role})
+      setTimeout(() => {
+        const {user: {role}, id} = obj
+        this.ChangeRoleForm.setFieldsValue({id, role})
+      }, 0)
     })
   }
   public render () {

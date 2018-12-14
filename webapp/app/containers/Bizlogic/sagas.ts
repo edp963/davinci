@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_BIZLOGICS,
   ADD_BIZLOGIC,
@@ -295,7 +294,7 @@ export function* getViewTeams (action) {
 }
 
 export default function* rootBizlogicSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
@@ -308,5 +307,5 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(LOAD_DISTINCT_VALUE, getDistinctValue),
     takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem),
     takeLatest(LOAD_VIEW_TEAM, getViewTeams)
-  ]
+  ])
 }

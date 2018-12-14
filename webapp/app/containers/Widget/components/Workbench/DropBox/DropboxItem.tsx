@@ -6,11 +6,11 @@ import { getAggregatorLocale, decodeMetricName } from '../../util'
 import { IChartInfo } from '../../Widget'
 import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes } from './settings'
 
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu')
+import Icon from 'antd/lib/icon'
+import Menu from 'antd/lib/menu'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
-const Dropdown = require('antd/lib/dropdown')
-const Tooltip = require('antd/lib/tooltip')
+import Dropdown from 'antd/lib/dropdown'
+import Tooltip from 'antd/lib/tooltip'
 const styles = require('../Workbench.less')
 
 interface IDropboxItemProps {

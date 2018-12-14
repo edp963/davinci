@@ -1,15 +1,15 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Message = require('antd/lib/message')
-const Row = require('antd/lib/row')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/Form')
+import Icon from 'antd/lib/icon'
+import Col from 'antd/lib/col'
+import Message from 'antd/lib/message'
+import Row from 'antd/lib/row'
+import Input from 'antd/lib/input'
+import Form from 'antd/lib/Form'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-const Button = require('antd/lib/button')
+import Button from 'antd/lib/button'
 import Box from '../../components/Box'
 import UploadAvatar from '../../components/UploadAvatar'
 import {createStructuredSelector} from 'reselect'
@@ -21,7 +21,7 @@ import injectSaga from '../../utils/injectSaga'
 // import reducer from '../App/reducer'
 // import saga from '../App/sagas'
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Breadcrumb from 'antd/lib/breadcrumb'
 
 interface IProfileProps {
   form: any

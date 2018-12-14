@@ -21,16 +21,16 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Icon = require('antd/lib/icon')
-const Steps = require('antd/lib/steps')
-const Pagination = require('antd/lib/pagination')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Table, { SortOrder } from 'antd/lib/table'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
+import Icon from 'antd/lib/icon'
+import Steps from 'antd/lib/steps'
+import Pagination from 'antd/lib/pagination'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
@@ -62,7 +62,10 @@ interface IDashboardItemFormStates {
   screenWidth: number
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   selectedRowKeys: any[]
 }
 
@@ -215,7 +218,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
         nameFilterDropdownVisible: visible
       }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',
@@ -229,7 +232,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
 
     const rowSelection = {
-      selectedRowKeys: selectedWidget,
+      selectedRowKeys: [selectedWidget],
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange
     }

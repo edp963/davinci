@@ -151,13 +151,15 @@ export function naturalSort (a, b): number {
   return ra.length - rb.length
 }
 
+let utilCanvas = null
+
 export const getTextWidth = (
   text: string,
   fontWeight: string = DEFAULT_FONT_WEIGHT,
   fontSize: string = DEFAULT_FONT_SIZE,
   fontFamily: string = DEFAULT_FONT_FAMILY
 ): number => {
-  const canvas = this.canvas || (this.canvas = document.createElement('canvas'))
+  const canvas = utilCanvas || (utilCanvas = document.createElement('canvas'))
   const context = canvas.getContext('2d')
   context.font = `${fontWeight} ${fontSize} ${fontFamily}`
   const metrics = context.measureText(text)

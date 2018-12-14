@@ -1,9 +1,9 @@
 import * as React from 'react'
-const Form = require('antd/lib/form')
+import Form from 'antd/lib/form'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
+import Input from 'antd/lib/input'
+import Radio from 'antd/lib/radio/radio'
+import Button from 'antd/lib/button'
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')

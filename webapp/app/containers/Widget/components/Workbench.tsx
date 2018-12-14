@@ -27,7 +27,7 @@
 // import WidgetForm from './WidgetForm'
 // import SplitView from './SplitView'
 // import { WrappedFormUtils } from 'antd/lib/form/Form'
-// const Modal = require('antd/lib/modal')
+// import Modal from 'antd/lib/modal'
 
 // import { addWidget, editWidget } from '../actions'
 // import { loadBizdatas, clearBizdatas } from '../../Bizlogic/actions'

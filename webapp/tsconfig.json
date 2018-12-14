@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noEmit": true,
     "target": "es6",
-    "module": "commonjs",
+    "module": "esnext",
     "noImplicitAny": false,
     "sourceMap": true,
     "preserveConstEnums": true,
@@ -28,10 +28,5 @@
   },
   "exclude": [
     "node_modules"
-  ],
-  "awesomeTypescriptLoaderOptions": {
-    "useBabel": true,
-    "forkChecker": true,
-    "useCache": false
-  }
+  ]
 }

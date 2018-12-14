@@ -38,20 +38,20 @@ import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
 import AntdFormType from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Button from 'antd/lib/button'
+import Icon from 'antd/lib/icon'
 import {IconProps} from 'antd/lib/icon/index'
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Popconfirm = require('antd/lib/popconfirm')
-const Input = require('antd/lib/input')
-const Menu = require('antd/lib/menu')
+import Tooltip from 'antd/lib/tooltip'
+import Popover from 'antd/lib/popover'
+import Modal from 'antd/lib/modal'
+import Breadcrumb from 'antd/lib/breadcrumb'
+import Popconfirm from 'antd/lib/popconfirm'
+import Input from 'antd/lib/input'
+import Menu from 'antd/lib/menu'
 
-const Tree = require('antd/lib/tree').default
+import Tree from 'antd/lib/tree'
 const TreeNode = Tree.TreeNode
 
 const Search = Input.Search

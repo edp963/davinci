@@ -3,13 +3,13 @@ import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
 import * as debounce from 'lodash/debounce'
 
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const DatePicker = require('antd/lib/date-picker')
+import DatePicker from 'antd/lib/date-picker'
 const RangePicker = DatePicker.RangePicker
-const Form = require('antd/lib/form')
+import Form from 'antd/lib/form'
 const FormItem = Form.Item
 
 const styles = require('./filter.less')
@@ -109,7 +109,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderDateRange = (filter, onChange) => {
-    const placeholder = [`${filter.name}从`, '到']
+    const placeholder: [string, string] = [`${filter.name}从`, '到']
     return (
       <RangePicker format="YYYY-MM-DD" placeholder={placeholder} onChange={onChange} />
     )
@@ -133,7 +133,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderDatetimeRange = (filter, onChange) => {
-    const placeholder = [`${filter.name}从`, '到']
+    const placeholder: [string, string] = [`${filter.name}从`, '到']
     const change = (val) => {
       if (!val.length) {
         onChange(val)
@@ -153,8 +153,8 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private wrapFormItem = (filter, form: WrappedFormUtils, control) => {
     const { getFieldDecorator } = form
     return (
-      <FormItem wrapCol={{span: 24}} className={styles.item}>
-        {getFieldDecorator(filter.key, {})(control)}
+      <FormItem wrapperCol={{span: 24}} className={styles.item}>
+        {getFieldDecorator(`${filter.key}`, {})(control)}
       </FormItem>
     )
   }

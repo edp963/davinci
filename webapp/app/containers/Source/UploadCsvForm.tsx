@@ -21,17 +21,17 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const RadioGroup = require('antd/lib/radio/group')
-const Upload = require('antd/lib/upload')
-const Icon = require('antd/lib/icon')
-const Popover = require('antd/lib/popover')
-const Button = require('antd/lib/button')
-const Steps = require('antd/lib/steps')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Radio from 'antd/lib/radio/radio'
+import RadioGroup from 'antd/lib/radio/group'
+import Upload from 'antd/lib/upload'
+import Icon from 'antd/lib/icon'
+import Popover from 'antd/lib/popover'
+import Button from 'antd/lib/button'
+import Steps from 'antd/lib/steps'
 const Step = Steps.Step
 const FormItem = Form.Item
 

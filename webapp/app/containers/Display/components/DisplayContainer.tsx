@@ -58,6 +58,8 @@ interface IDisplayStyle {
 
 export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
 
+  private displayName = 'DisplayContainer'
+
   private container: HTMLDivElement
   private content: HTMLDivElement
   private refHandlers = {

@@ -1,8 +1,8 @@
 {
   "extends": ["tslint:latest", "tslint-react"],
   "rules": {
-    "indent": [ true, "spaces" ],
     "semicolon": [true, "never"],
+    "indent": [ true, "spaces" ],
     "quotemark": [ true, "single", "jsx-double" ],
     "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ],
     "space-before-function-paren": [true, "always"],
@@ -23,5 +23,8 @@
     "jsx-no-multiline-js": false,
     "jsx-boolean-value": false,
     "no-implicit-dependencies": false
+  },
+  "linterOptions": {
+    "exclude": ["**/*.js"]
   }
 }

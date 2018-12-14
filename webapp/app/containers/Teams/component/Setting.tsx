@@ -1,18 +1,18 @@
 import * as React from 'react'
 const styles = require('../Team.less')
-const Button = require('antd/lib/Button')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import Button from 'antd/lib/Button'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const Form = require('antd/lib/form')
-const Radio = require('antd/lib/radio/radio')
+import Form from 'antd/lib/form'
+import Radio from 'antd/lib/radio/radio'
 const RadioGroup = Radio.Group
 const FormItem = Form.Item
-const Row = require('antd/lib/row')
-const Tag = require('antd/lib/tag')
+import Row from 'antd/lib/row'
+import Tag from 'antd/lib/tag'
 import Avatar from '../../../components/Avatar'
 const utilStyles = require('../../../assets/less/util.less')
-const Col = require('antd/lib/col')
+import Col from 'antd/lib/col'
 import UploadAvatar from '../../../components/UploadAvatar'
 import {ITeam} from '../Team'
 
@@ -37,7 +37,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
 
   private setFieldData = (currentTeam) => {
     const { id, name, description, parentTeamId, visibility } = currentTeam
-    console.log({currentTeam})
+
     this.parentTeamChange(`${parentTeamId}`).then(() => {
       this.props.form.setFieldsValue({id, name, description, parentTeamId: `${parentTeamId}`, visibility})
     })

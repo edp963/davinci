@@ -1,12 +1,12 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Pagination = require('antd/lib/pagination')
-const Input = require('antd/lib/input')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Tooltip from 'antd/lib/tooltip'
+import Button from 'antd/lib/button'
+import Pagination from 'antd/lib/pagination'
+import Input from 'antd/lib/input'
 const styles = require('../Organization.less')
-const Modal = require('antd/lib/modal')
+import Modal from 'antd/lib/modal'
 import ProjectItem from './ProjectItem'
 import AntdFormType from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
@@ -76,15 +76,17 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       formType,
       formVisible: true
     }, () => {
-      const {orgId, id, name, pic, description, visibility} = option
-      this.ProjectForm.props.form.setFieldsValue({
-        orgId: `${orgId}`,
-        id,
-        name,
-        pic,
-        description,
-        visibility: `${visibility}`
-      })
+      setTimeout(() => {
+        const {orgId, id, name, pic, description, visibility} = option
+        this.ProjectForm.props.form.setFieldsValue({
+          orgId: `${orgId}`,
+          id,
+          name,
+          pic,
+          description,
+          visibility: `${visibility}`
+        })
+      }, 0)
     })
   }
 

@@ -18,7 +18,7 @@
  * >>
  */
 
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 
 /*
  * Sankey chart options generator

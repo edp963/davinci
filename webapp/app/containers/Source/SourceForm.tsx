@@ -19,15 +19,15 @@
  */
 
 import * as React from 'react'
-import {connect} from 'react-redux'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
-const Icon = require('antd/lib/icon')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
+import Icon from 'antd/lib/icon'
 const FormItem = Form.Item
+const TextArea = Input.TextArea
 const Option = Select.Option
 const utilStyles = require('../../assets/less/util.less')
 
@@ -158,9 +158,8 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
               {getFieldDecorator('desc', {
                 initialValue: ''
               })(
-                <Input
+                <TextArea
                   placeholder="Description"
-                  type="textarea"
                   autosize={{minRows: 2, maxRows: 6}}
                 />
               )}
@@ -171,9 +170,8 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
               {getFieldDecorator('config', {
                 initialValue: ''
               })(
-                <Input
+                <TextArea
                   placeholder="Config"
-                  type="textarea"
                   autosize={{minRows: 2, maxRows: 6}}
                 />
               )}

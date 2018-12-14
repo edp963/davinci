@@ -34,15 +34,15 @@ import {loadWidgets} from '../Widget/actions'
 import Box from '../../components/Box'
 
 const Modal =  require ('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Table from 'antd/lib/table'
+import Button from 'antd/lib/button'
 import {ButtonProps} from 'antd/lib/button/button'
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Tooltip from 'antd/lib/tooltip'
+import Icon from 'antd/lib/icon'
+import Popconfirm from 'antd/lib/popconfirm'
+import Breadcrumb from 'antd/lib/breadcrumb'
 const utilStyles = require('../../assets/less/util.less')
 import { PaginationProps } from 'antd/lib/pagination'
 import ModulePermission from '../Account/components/checkModulePermission'
@@ -375,10 +375,12 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       configVisible: true,
       configType: 'add'
     }, () => {
-      if (jsonStringify && jsonStringify.length > 2) {
-        const { to, cc, subject, bcc } = emailConfig
-        this.configForm.setFieldsValue({to, cc, subject, bcc})
-      }
+      setTimeout(() => {
+        if (jsonStringify && jsonStringify.length > 2) {
+          const { to, cc, subject, bcc } = emailConfig
+          this.configForm.setFieldsValue({to, cc, subject, bcc})
+        }
+      }, 0)
     })
   }
 
@@ -428,7 +430,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     })
   }
 
-  private onChangeRange = (value) => {
+  private onChangeRange = (value: string) => {
     const rangeArr = ['minute', 'month', 'hour', 'week', 'time']
     this.setState({
       rangeTime: value
@@ -535,7 +537,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       {
         title: '操作',
         key: 'action',
-        width: 135,
+        width: 150,
         className: `${utilStyles.textAlignCenter}`,
         render: (text, record) => (
           <span className="ant-table-action-column">

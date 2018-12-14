@@ -19,8 +19,8 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu')
+import Icon from 'antd/lib/icon'
+import Menu from 'antd/lib/menu'
 
 export interface IDataDrillProps {
   onDataDrill?: (e: any) => any

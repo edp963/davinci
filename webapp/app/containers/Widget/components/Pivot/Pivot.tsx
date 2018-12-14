@@ -560,7 +560,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
               dimetionAxis={dimetionAxis}
               metricAxisConfig={this.metricAxisConfig}
               hasMetricNameDimetion={hasMetricNameDimension}
-              ref={(f) => this.rowHeader = findDOMNode(f)}
+              ref={(f) => this.rowHeader = findDOMNode(f) as HTMLElement}
             />
           </div>
           <RowFooter />
@@ -582,7 +582,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
-            ref={(f) => this.columnHeader = findDOMNode(f)}
+            ref={(f) => this.columnHeader = findDOMNode(f) as HTMLElement}
           />
           <TableBody
             cols={colNames}
@@ -610,7 +610,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             getDataDrillDetail={getDataDrillDetail}
             isDrilling={isDrilling}
             // onHideDrillPanel={onHideDrillPanel}
-            ref={(f) => this.tableBody = findDOMNode(f)}
+            ref={(f) => this.tableBody = findDOMNode(f) as HTMLElement}
           />
           <ColumnFooter
             rowKeys={this.rowKeys}
@@ -623,7 +623,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             chartStyles={chartStyles}
             drawingData={this.drawingData}
             dimetionAxis={dimetionAxis}
-            ref={(f) => this.columnFooter = findDOMNode(f)}
+            ref={(f) => this.columnFooter = findDOMNode(f) as HTMLElement}
           />
         </div>
         <Legend

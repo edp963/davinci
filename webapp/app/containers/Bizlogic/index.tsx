@@ -35,14 +35,14 @@ import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Table, { SortOrder } from 'antd/lib/table'
+import Button from 'antd/lib/button'
+import Tooltip from 'antd/lib/tooltip'
+import Icon from 'antd/lib/icon'
+import Popconfirm from 'antd/lib/popconfirm'
+import Breadcrumb from 'antd/lib/breadcrumb'
 
 import { loadBizlogics, deleteBizlogic } from './actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
@@ -67,7 +67,10 @@ interface IBizlogicsProps  {
 
 interface IBizlogicsStates {
   tableSource: any[]
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
   screenWidth: number
@@ -185,7 +188,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       filterDropdownVisible: nameFilterDropdownVisible,
       onFilterDropdownVisibleChange: (visible) => this.setState({ nameFilterDropdownVisible: visible }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',

@@ -1,11 +1,11 @@
 import * as React from 'react'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+import Select from 'antd/lib/select'
 const FormItem = Form.Item
 const Option = Select.Option
 
@@ -18,8 +18,8 @@ interface IBaseFormProps {
   bizlogics: any[]
   isCascadeSelect: boolean
   flatTableColumns: any[]
-  onTypeSelectChange: () => any
-  onFlatTableSelectChange: () => any
+  onTypeSelectChange: (val: string) => any
+  onFlatTableSelectChange: (val: string, stayColumnValue: any) => any
 }
 
 export interface IBaseForm {

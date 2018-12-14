@@ -20,15 +20,16 @@
 
 import * as React from 'react'
 import { connect } from 'react-redux'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
+import Form from 'antd/lib/form'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Input from 'antd/lib/input'
+const TextArea = Input.TextArea
+import Radio from 'antd/lib/radio/radio'
+import Button from 'antd/lib/button'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const Tag = require('antd/lib/tag')
+import Tag from 'antd/lib/tag'
 import Avatar from '../../../components/Avatar'
 const styles = require('../Organization.less')
 const FormItem = Form.Item
@@ -127,9 +128,8 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                   {getFieldDecorator('description', {
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}

@@ -29,8 +29,8 @@ import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
+import Icon from 'antd/lib/icon'
+import Message from 'antd/lib/message'
 import RegisterForm from './RegisterForm'
 import SendEmailTips from './SendEmailTips'
 const styles = require('../Login/Login.less')

@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Row = require('antd/lib/row')
+import Row from 'antd/lib/row'
 const styles = require('./EllipsisList.less')
 
 interface IEllipsisListProps {

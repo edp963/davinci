@@ -86,7 +86,7 @@ import {
   loadDisplayShareLink,
   showEditorBaselines,
   clearEditorBaselines    } from './actions'
-const message = require('antd/lib/message')
+import message from 'antd/lib/message'
 const styles = require('./Display.less')
 
 import { IWidgetProps, RenderType } from '../Widget/components/Widget'
@@ -229,7 +229,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     this.refHandlers = {
       settingForm: (ref) => this.settingForm = ref,
-      editor: (ref) => this.editor = ref
+      editor: (ref) => {
+        this.editor = ref
+      }
     }
   }
 
@@ -693,7 +695,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
-  private coverUploaded = (avatar) => {
+  private coverUpdated = (avatar) => {
     const { onEditCurrentDisplay, currentDisplay } = this.props
     onEditCurrentDisplay({
       ...currentDisplay,
@@ -920,7 +922,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
               key="displaySetting"
               display={currentDisplay}
               onCoverCut={this.coverCut}
-              onCoverUploaded={this.coverUploaded}
+              onCoverUpdated={this.coverUpdated}
             />
           ) : null}
         </SettingForm>

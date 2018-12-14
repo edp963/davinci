@@ -18,7 +18,6 @@
  * >>
  */
 
-import { DEFAULT_LOCALE } from '../containers/App/constants'
 import { formatTranslationMessages } from '../i18n'
 
 jest.mock('../translations/en.json', () => (
@@ -35,7 +34,7 @@ const esTranslationMessages = {
 
 describe('formatTranslationMessages', () => {
   it('should build only defaults when DEFAULT_LOCALE', () => {
-    const result = formatTranslationMessages(DEFAULT_LOCALE, { a: 'a' })
+    const result = formatTranslationMessages('en', { a: 'a' })
 
     expect(result).toEqual({ a: 'a' })
   })

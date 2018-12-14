@@ -33,6 +33,7 @@ import {
   makeGrouped,
   distinctXaxis
 } from './util'
+import { EChartOption } from 'echarts'
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
@@ -179,26 +180,28 @@ export default function (chartProps: IChartProps) {
     lineStyle: horizontalLineStyle
   }
 
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'axis',
+    formatter (param: any[]) {
+      const text = param.map((pa, index) => {
+        const data = !index ? parseFloat(sourceData[pa.dataIndex]) : pa.data
+        return `${pa.seriesName}: ${data}`
+      })
+      const xAxis = param[0]['axisValue']
+      if (xAxis === '累计') {
+        return ''
+      } else {
+        text.unshift(xAxis)
+        return text.join('<br/>')
+      }
+    }
+  }
+
   return {
     xAxis: getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData),
     yAxis: getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `)),
     series,
-    tooltip: {
-      trigger: 'axis',
-      formatter (param) {
-        const text = param.map((pa, index) => {
-          const data = !index ? parseFloat(sourceData[pa.dataIndex]) : pa.data
-          return `${pa.seriesName}: ${data}`
-        })
-        const xAxis = param[0]['axisValue']
-        if (xAxis === '累计') {
-          return ''
-        } else {
-          text.unshift(xAxis)
-          return text.join('<br/>')
-        }
-      }
-    },
+    tooltip,
     grid: getGridPositions({ showLegend: false }, seriesNames, false, yAxis, xAxis, xAxisData)
   }
 }

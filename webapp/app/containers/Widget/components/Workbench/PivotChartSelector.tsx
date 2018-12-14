@@ -1,8 +1,8 @@
 import * as React from 'react'
 import widgetlibs from '../../config'
 const pivotlibs = widgetlibs['pivot']
-const Dropdown = require('antd/lib/dropdown')
-const Menu = require('antd/lib/menu')
+import Dropdown from 'antd/lib/dropdown'
+import Menu from 'antd/lib/menu'
 const MenuItem = Menu.Item
 import { checkChartEnable, getPivot } from '../util'
 import { IChartInfo } from '../Widget'
