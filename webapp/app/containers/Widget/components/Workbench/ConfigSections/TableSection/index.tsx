@@ -84,8 +84,9 @@ interface ITableSectionProps {
 }
 
 interface ITableSectionStates {
-  headerConfigModalVisible: boolean,
-  columnConfigModalVisible: boolean,
+  headerConfigModalVisible: boolean
+  columnConfigModalVisible: boolean
+  validColumns: IDataParamSource[]
   validHeaderConfig: ITableHeaderConfig[]
   validColumnConfig: ITableColumnConfig[]
 }
@@ -101,16 +102,31 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
   public constructor (props) {
     super(props)
+    const validColumns = this.getCurrentTableColumns(props)
+    const validHeaderConfig = this.getValidHeaderConfig(props, validColumns)
+    const validColumnConfig = this.getValidColumnConfig(props, validColumns)
     this.state = {
       headerConfigModalVisible: false,
       columnConfigModalVisible: false,
-      validHeaderConfig: [],
-      validColumnConfig: []
+      validColumns,
+      validHeaderConfig,
+      validColumnConfig
     }
   }
 
-  private getCurrentTableColumns = () => {
-    const { commonParams } = this.props
+  public componentWillReceiveProps (nextProps: ITableSectionProps) {
+    const validColumns = this.getCurrentTableColumns(nextProps)
+    const validHeaderConfig = this.getValidHeaderConfig(nextProps, validColumns)
+    const validColumnConfig = this.getValidColumnConfig(nextProps, validColumns)
+    this.setState({
+      validColumns,
+      validHeaderConfig,
+      validColumnConfig
+    })
+  }
+
+  private getCurrentTableColumns (props: ITableSectionProps) {
+    const { commonParams } = props
     const keyNames = ['cols', 'metrics', 'rows']
     const validColumns: IDataParamSource[] = Object.entries(commonParams).reduce((acc, [key, value]) => {
       if (!~keyNames.indexOf(key)) { return acc }
@@ -124,16 +140,16 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     return validColumns
   }
 
-  private getValidHeaderConfig = (cb: () => void) => {
-    const { config } = this.props
-    const validColumns = this.getCurrentTableColumns()
+  private getValidHeaderConfig = (props: ITableSectionProps, validColumns: IDataParamSource[]) => {
+    const { config } = props
+    const columns = [...validColumns]
 
     const localHeaderConfig: ITableHeaderConfig[] = config.headerConfig
     localHeaderConfig.forEach((c) => {
-      this.traverseHeaderConfig(c, null, validColumns)
+      this.traverseHeaderConfig(c, null, columns)
     })
 
-    validColumns.forEach((c) => {
+    columns.forEach((c) => {
       localHeaderConfig.push({
         key: uuid(5),
         headerName: c.name,
@@ -145,14 +161,11 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       })
     })
 
-    this.setState({
-      validHeaderConfig: localHeaderConfig
-    }, cb)
+    return localHeaderConfig
   }
 
-  private getValidColumnConfig = (cb: () => void) => {
-    const { config } = this.props
-    const validColumns = this.getCurrentTableColumns()
+  private getValidColumnConfig = (props: ITableSectionProps, validColumns: IDataParamSource[]) => {
+    const { config } = props
     const validColumnConfig: ITableColumnConfig[] = []
 
     validColumns.forEach((column) => {
@@ -171,9 +184,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       }
     })
 
-    this.setState({
-      validColumnConfig
-    }, cb)
+    return validColumnConfig
   }
 
   private traverseHeaderConfig = (
@@ -207,10 +218,8 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   }
 
   private showHeaderConfig = () => {
-    this.getValidHeaderConfig(() => {
-      this.setState({
-        headerConfigModalVisible: true
-      })
+    this.setState({
+      headerConfigModalVisible: true
     })
   }
 
@@ -223,16 +232,21 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   private saveHeaderConfig = (config: ITableHeaderConfig[]) => {
     const { onChange } = this.props
     onChange('headerConfig', config)
+    const validFixedColumns = config.map((c) => c.headerName)
+    const { config: tableConfig } = this.props
+    let { leftFixedColumns, rightFixedColumns } = tableConfig
+    leftFixedColumns = leftFixedColumns.filter((col) => ~validFixedColumns.indexOf(col))
+    rightFixedColumns = rightFixedColumns.filter((col) => ~validFixedColumns.indexOf(col))
+    this.selectChange('leftFixedColumns')(leftFixedColumns)
+    this.selectChange('rightFixedColumns')(rightFixedColumns)
     this.setState({
       headerConfigModalVisible: false
     })
   }
 
   private showColumnConfig = () => {
-    this.getValidColumnConfig(() => {
-      this.setState({
-        columnConfigModalVisible: true
-      })
+    this.setState({
+      columnConfigModalVisible: true
     })
   }
 
@@ -250,20 +264,38 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     })
   }
 
+  private getValidFixedColumns (headerConfig: ITableHeaderConfig[], columns: IDataParamSource[]) {
+    let options: JSX.Element[]
+    if (!headerConfig.length) {
+      options = columns.map((c) => {
+        const displayName = (c.field && c.field.alias) || c.name
+        return (<Option key={c.name} value={c.name}>{displayName}</Option>)
+      })
+    } else {
+      options = headerConfig.map((c) => {
+        let displayName
+        if (c.isGroup) {
+          displayName = c.headerName
+        } else {
+          const column = columns.find((column) => column.name === c.headerName)
+          displayName = (column.field && column.field.alias) || column.name
+        }
+        return (<Option key={c.headerName} value={c.headerName}>{displayName}</Option>)
+      })
+    }
+    return options
+  }
+
   public render () {
     const { config } = this.props
-    const validColumns = this.getCurrentTableColumns()
     const {
       leftFixedColumns, rightFixedColumns,
       autoMergeCell, withPaging, pageSize, withNoAggregators } = config
     const {
-      validHeaderConfig, validColumnConfig,
+      validColumns, validHeaderConfig, validColumnConfig,
       headerConfigModalVisible, columnConfigModalVisible } = this.state
+    const fixedColumnOptions = this.getValidFixedColumns(validHeaderConfig, validColumns)
 
-    const fixedColumnOptions = validColumns.map((c) => {
-      const displayName = (c.field && c.field.alias) || c.name
-      return (<Option key={c.name} value={c.name}>{displayName}</Option>)
-    })
 
     return (
       <div>
@@ -318,7 +350,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
               <Col span={24}>
-                <RadioGroup value={autoMergeCell} onChange={this.switchChange('autoMergeCell')}>
+                <RadioGroup size="small" value={autoMergeCell} onChange={this.switchChange('autoMergeCell')}>
                   <RadioButton value={true}>开启</RadioButton>
                   <RadioButton value={false}>关闭</RadioButton>
                 </RadioGroup>
@@ -331,7 +363,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
               <Col span={14}>
-                <RadioGroup value={withPaging} onChange={this.switchChange('withPaging')}>
+                <RadioGroup size="small" value={withPaging} onChange={this.switchChange('withPaging')}>
                   <RadioButton value={true}>开启</RadioButton>
                   <RadioButton value={false}>关闭</RadioButton>
                 </RadioGroup>
@@ -354,7 +386,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
               <Col span={24}>
-                <RadioGroup value={withNoAggregators} onChange={this.switchChange('withNoAggregators')}>
+                <RadioGroup size="small" value={withNoAggregators} onChange={this.switchChange('withNoAggregators')}>
                   <RadioButton value={true}>开启</RadioButton>
                   <RadioButton value={false}>关闭</RadioButton>
                 </RadioGroup>

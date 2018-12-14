@@ -62,12 +62,17 @@ interface ITableStates {
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
+  private table
+  private defaultColumnWidth = 500
+
   constructor (props: IChartProps) {
     super(props)
     const { chartStyles, data } = props
     const mapMetaConfig = this.getMapMetaConfig(props)
+    const columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
+    this.setFixedColumns(columns, chartStyles)
     this.state = {
-      columns: this.getTableHeader(chartStyles, data, mapMetaConfig),
+      columns,
       pagination: {},
       mapMetaConfig,
       headerHeight: 0
@@ -130,22 +135,22 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public componentWillReceiveProps (nextProps: IChartProps) {
     const { chartStyles, width, data } = nextProps
+    let { columns, pagination } = this.state
     const mapMetaConfig = this.getMapMetaConfig(nextProps)
-    this.setState({
-      mapMetaConfig
-    })
     if (chartStyles !== this.props.chartStyles) {
-      this.setState({
-        columns: this.getTableHeader(chartStyles, data, mapMetaConfig)
-      })
+      columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
+      this.setFixedColumns(columns, chartStyles)
     }
     if (width !== this.props.width) {
-      this.setState({
-        pagination: nextProps.width <= 768
-          ? this.pageAutoAdapted('mobile')
-          : this.pageAutoAdapted('pc')
-      })
+      pagination = nextProps.width <= 768
+        ? this.pageAutoAdapted('mobile')
+        : this.pageAutoAdapted('pc')
     }
+    this.setState({
+      mapMetaConfig,
+      columns,
+      pagination
+    })
   }
 
   private getMapMetaConfig (props: IChartProps) {
@@ -163,7 +168,33 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return map
   }
 
-  private getTableHeader (
+  private setFixedColumns (columns: any[], chartStyles: IChartStyles) {
+    if (!columns.length) { return }
+
+    const { leftFixedColumns, rightFixedColumns } = chartStyles.table
+    columns.forEach((col) => {
+      this.traverseFixedColumns(col, leftFixedColumns, rightFixedColumns)
+    })
+  }
+
+  private traverseFixedColumns (cursorColumn, leftFixedColumns: string[], rightFixedColumns: string[]) {
+    if (!leftFixedColumns.length && !rightFixedColumns.length) { return }
+
+    if (~leftFixedColumns.indexOf(cursorColumn.dataIndex)) {
+      cursorColumn.width = this.defaultColumnWidth
+      cursorColumn.fixed = 'left'
+    }
+    if (~rightFixedColumns.indexOf(cursorColumn.dataIndex)) {
+      cursorColumn.width = this.defaultColumnWidth
+      cursorColumn.fixed = 'right'
+    }
+    if (!cursorColumn.children) { return }
+    cursorColumn.children.forEach((child) => {
+      this.traverseFixedColumns(child, leftFixedColumns, rightFixedColumns)
+    })
+  }
+
+  private getTableColumns (
     chartStyles: IChartStyles,
     data: any[],
     mapMetaConfig: IMapMetaConfig
@@ -208,7 +239,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       return {
         title: (<div className={styles.headerCell}>{titleText}</div>),
         dataIndex: key,
-        width: 200,
+        width: this.defaultColumnWidth,
         key,
         render: (val, _, idx) => {
           let span = 1
@@ -256,19 +287,18 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       justifyContent
     }
 
-    const header: any = {
-      width: 200
-    }
+    const header: any = {}
+    header.dataIndex = headerName
     let titleText
     if (isGroup) {
       titleText = headerName
       header.children = []
     } else {
+      header.width = this.defaultColumnWidth
       const metaConfig = mapMetaConfig[headerName]
       const { name, field, format, expression } = metaConfig
       titleText = field ? field.alias : (expression || headerName)
       header.key = key
-      header.dataIndex = headerName
       const propName = expression || headerName
       const cellValRange = this.getTableCellValueRange(data, propName)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
@@ -504,12 +534,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return cssStyle
   }
 
-  private table
-
   public render () {
     const { data } = this.props
     const { pagination, columns, headerHeight } = this.state
     const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
+    const scroll = { x: 1300, y: headerHeight }
 
     return (
       <AntTable
@@ -519,7 +548,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         dataSource={data}
         columns={columns}
         pagination={pagination}
-        scroll={{x: true, y: headerHeight}}
+        scroll={scroll}
         bordered
       />
     )
