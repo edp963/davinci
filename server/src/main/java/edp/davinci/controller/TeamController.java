@@ -527,16 +527,11 @@ public class TeamController extends BaseController {
 
 
     @ApiOperation(value = "get team variables sources")
-    @GetMapping("{id}/departments")
-    public ResponseEntity getTeamVarSource(@PathVariable Long id,
-                                           @RequestParam String type,
+    @GetMapping("/departments")
+    public ResponseEntity getTeamVarSource(@RequestParam("type") String type,
+                                           @RequestParam("projectId") Long projectId,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
-
-        if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
 
         if (StringUtils.isEmpty(type)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid type");
@@ -544,7 +539,7 @@ public class TeamController extends BaseController {
         }
 
         try {
-            ResultMap resultMap = departmentService.getDepartments(id, type, user, request);
+            ResultMap resultMap = departmentService.getdepartments(projectId, type, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

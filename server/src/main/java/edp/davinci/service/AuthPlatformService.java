@@ -20,10 +20,21 @@
 package edp.davinci.service;
 
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.model.Platform;
 import edp.davinci.model.User;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface AuthPlatformService {
 
+    ConcurrentHashMap map = new ConcurrentHashMap();
 
-    ResultMap getProjectVizs(User user);
+    /**
+     * 获取用户可见project 下的 可见vizs
+     * @param
+     * @return
+     */
+    ResultMap getProjectVizs(String authCode, String email);
+
+    String getAuthShareToken(Platform platform, String type, Long id, User user);
 }

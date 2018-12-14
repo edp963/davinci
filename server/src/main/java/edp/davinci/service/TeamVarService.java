@@ -25,5 +25,5 @@ import edp.davinci.model.User;
 import javax.servlet.http.HttpServletRequest;
 
 public interface TeamVarService {
-    ResultMap getTeamVarSource(Long viewId, User user, HttpServletRequest request);
+    ResultMap getTeamVarSource(Long projectId, User user, HttpServletRequest request);
 }

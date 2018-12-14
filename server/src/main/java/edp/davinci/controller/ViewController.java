@@ -116,14 +116,14 @@ public class ViewController extends BaseController {
 
     /**
      * 获取TeamVar 来源信息及默认值
-     * @param id
+     * @param projectId
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "get team variables sources")
-    @GetMapping("{id}/teamvar/source")
-    public ResponseEntity getTeamVarSource(@PathVariable Long id,
+    @GetMapping("/teamvar/source")
+    public ResponseEntity getTeamVarSource(@RequestParam("projectId") Long projectId,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {
         if (null == teamVarService) {
@@ -131,12 +131,12 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(id)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+        if (invalidId(projectId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
         try {
-            ResultMap resultMap = teamVarService.getTeamVarSource(id, user, request);
+            ResultMap resultMap = teamVarService.getTeamVarSource(projectId, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
