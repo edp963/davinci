@@ -232,7 +232,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
 
     const rowSelection = {
-      selectedRowKeys: selectedWidget,
+      selectedRowKeys: [selectedWidget],
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange
     }
