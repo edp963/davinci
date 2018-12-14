@@ -17,15 +17,12 @@
  *
  */
 
-package edp.davinci.service;
+package edp.davinci.dto.platform;
 
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.model.User;
+import lombok.Data;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Set;
-
-public interface DepartmentService {
-
-    ResultMap getdepartments(Long projectId, String type, User user, HttpServletRequest request);
+@Data
+public class VizTokenDto {
+    String userToken;
+    String vizToke;
 }

@@ -20,8 +20,11 @@
 package edp.davinci.core.inteceptor;
 
 import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
+import edp.core.annotation.AuthIgnore;
 import edp.core.enums.HttpCodeEnum;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.AuthenticationService;
 import edp.davinci.dao.PlatformMapper;
 import edp.davinci.model.Platform;
@@ -29,10 +32,12 @@ import edp.davinci.model.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import static edp.core.consts.Consts.AUTH_CODE;
@@ -50,30 +55,56 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
+
+        HandlerMethod handlerMethod = null;
+        try {
+            handlerMethod = (HandlerMethod) handler;
+        } catch (Exception e) {
+            response.setStatus(HttpCodeEnum.NOT_FOUND.getCode());
+            return false;
+        }
+        Method method = handlerMethod.getMethod();
+
+        AuthIgnore ignoreAuthMethod = method.getAnnotation(AuthIgnore.class);
+        if (handler instanceof HandlerMethod && null != ignoreAuthMethod) {
+            return true;
+        }
+
+
+        ResultMap resultMap = new ResultMap();
+
         Map<String, String[]> parameterMap = request.getParameterMap();
         if (null == parameterMap) {
-            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
+                    .message("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 
         if (!parameterMap.containsKey(AUTH_CODE) || null == parameterMap.get(AUTH_CODE) || parameterMap.get(AUTH_CODE).length == 0) {
-            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
+                    .message("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 
         String authCode = parameterMap.get(AUTH_CODE)[0];
         if (StringUtils.isEmpty(authCode)) {
-            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
+                    .message("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 
         Platform platform = platformMapper.getPlatformByCode(authCode);
         if (null == platform) {
-            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
+            response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+            resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
+                    .message("The resource requires authentication, which was not supplied with the request");
+            response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 
@@ -83,14 +114,16 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
             user = authenticationService.checkUser(platform ,parameterMap);
             if (null == user) {
                 response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-                response.getWriter().print("ERROR Permission denied");
-                new RuntimeException("check user token error");
+                resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
+                        .message("ERROR Permission denied");
+                response.getWriter().print(JSONObject.toJSONString(resultMap));
                 return false;
             }
         } catch (Exception e) {
             response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            response.getWriter().print("The resource requires authentication, which was not supplied with the request");
-            new RuntimeException(e.getMessage());
+            resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
+                    .message("ERROR Permission denied");
+            response.getWriter().print(JSONObject.toJSONString(resultMap));
             return false;
         }
 

@@ -823,10 +823,27 @@ public class TeamServiceImpl implements TeamService {
             return resultMap.successAndRefreshToken(request).payloads(null);
         }
 
-        List<TeamFullId> teamFullIds = relUserTeamMapper.selectTeamFullParentByUserAndProject(user.getId(), projectId);
+        Set<Long> rootIds = getRootTeamIds(user.getId(), projectId);
+        if (null == rootIds || rootIds.size() == 0) {
+            return resultMap.successAndRefreshToken(request).payloads(null);
+        }
+
+        List<TeamWithMembers> structuredList = new ArrayList<>();
+        if (rootIds.size() > 0) {
+            List<TeamBaseInfoWithParent> list = teamMapper.getTeamsByOrgId(projectWithOrganization.getOrgId());
+            Map<Long, List<TeamWithMembers>> childMap = getChildMap(list, rootIds);
+            structuredList = getChildsByMap(childMap, null);
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(structuredList);
+    }
+
+
+    public Set<Long> getRootTeamIds(Long userId, Long projectId) {
+        List<TeamFullId> teamFullIds = relUserTeamMapper.selectTeamFullParentByUserAndProject(userId, projectId);
 
         if (null == teamFullIds || teamFullIds.size() == 0) {
-            return resultMap.successAndRefreshToken(request).payloads(null);
+            return null;
         }
 
         Set<Long> rootIds = new HashSet<>();
@@ -860,16 +877,7 @@ public class TeamServiceImpl implements TeamService {
                 }
             }
         });
-
-        List<TeamWithMembers> structuredList = new ArrayList<>();
-
-        if (rootIds.size() > 0) {
-            List<TeamBaseInfoWithParent> list = teamMapper.getTeamsByOrgId(projectWithOrganization.getOrgId());
-            Map<Long, List<TeamWithMembers>> childMap = getChildMap(list, rootIds);
-            structuredList = getChildsByMap(childMap, null);
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(structuredList);
+        return rootIds;
     }
 
 

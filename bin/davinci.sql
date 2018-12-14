@@ -111,6 +111,7 @@ CREATE TABLE `mem_dashboard_widget` (
   `height` int(12) NOT NULL COMMENT '高',
   `polling` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否开启轮询',
   `frequency` int(12) DEFAULT NULL COMMENT '轮询频率',
+  `config` text CHARACTER SET utf8 COLLATE utf8_general_ci NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `idx_protal_id` (`dashboard_id`) USING BTREE,
   KEY `idx_widget_id` (`widget_Id`) USING BTREE
@@ -472,6 +473,8 @@ delimiter ;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
+
+ALTER TABLE `mem_dashboard_widget` ADD COLUMN `confg` text NULL AFTER `frequency`;
 
 ALTER TABLE `team` ADD COLUMN `full_team_id` varchar(255) NOT NULL DEFAULT '-1' AFTER `parent_team_id`;
 UPDATE `team` set full_team_id = parentTeamIds(id) WHERE full_team_id = '-1'

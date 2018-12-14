@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Set;
 
 public interface TeamService extends CheckEntityService {
 
@@ -62,4 +63,6 @@ public interface TeamService extends CheckEntityService {
     ResultMap addTeamMember(Long id, Long memberId, User user, HttpServletRequest request);
 
     ResultMap getTeamsByProject(Long projectId, User user, HttpServletRequest request);
+
+    Set<Long> getRootTeamIds(Long userId, Long projectId);
 }

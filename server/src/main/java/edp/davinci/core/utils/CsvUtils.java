@@ -132,7 +132,10 @@ public class CsvUtils {
             try {
                 CSVFormat csvFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
 
+
                 fileWriter = new FileWriter(csvFullName, true);
+
+                fileWriter.write("\uFEFF"); //解决csv用excel打开乱码问题
 
                 csvPrinter = new CSVPrinter(fileWriter, csvFormat);
 
