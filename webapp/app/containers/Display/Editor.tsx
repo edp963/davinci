@@ -695,7 +695,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
-  private coverUploaded = (avatar) => {
+  private coverUpdated = (avatar) => {
     const { onEditCurrentDisplay, currentDisplay } = this.props
     onEditCurrentDisplay({
       ...currentDisplay,
@@ -922,7 +922,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
               key="displaySetting"
               display={currentDisplay}
               onCoverCut={this.coverCut}
-              onCoverUploaded={this.coverUploaded}
+              onCoverUpdated={this.coverUpdated}
             />
           ) : null}
         </SettingForm>

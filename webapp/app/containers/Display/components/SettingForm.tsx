@@ -374,7 +374,7 @@ export class SettingForm extends React.Component<ISettingFormProps & FormCompone
         <Col span={24}>
           <Upload
             className={styles.upload}
-            showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
+            showUploadList={false}
             name={item.name}
             disabled={loading[item.name]}
             action={action}
