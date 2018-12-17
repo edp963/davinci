@@ -199,7 +199,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       globalParams = cachedQueryParams.globalParams
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg

@@ -86,7 +86,7 @@ export default function (chartProps: IChartProps) {
   const seriesData = []
 
   if (cols.length || color.items.length) {
-    const groupColumns = color.items.map((c) => c.name).concat(cols)
+    const groupColumns = color.items.map((c) => c.name).concat(cols.map((c) => c.name))
       .reduce((distinctColumns, col) => {
         if (!distinctColumns.includes(col)) {
           distinctColumns.push(col)
@@ -106,7 +106,7 @@ export default function (chartProps: IChartProps) {
 
     const labelItemName = color.items.length
       ? color.items[0].name
-      : cols[0]
+      : cols[0].name
 
     Object.entries(grouped).forEach(([key, value]) => {
       series.push({

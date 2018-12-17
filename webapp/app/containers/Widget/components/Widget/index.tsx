@@ -5,6 +5,8 @@ import Chart from '../Chart'
 import Icon from 'antd/lib/icon'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
+import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
+import { IFieldConfig } from '../Workbench/FieldConfigModal'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
@@ -16,6 +18,7 @@ import { IToolboxConfig } from '../Workbench/ConfigSections/ToolboxSection'
 import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection'
 import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
+import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
 import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
@@ -23,10 +26,18 @@ export type DimetionType = 'row' | 'col'
 export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
 export type WidgetMode = 'pivot' | 'chart'
 
+export interface IWidgetDimension {
+  name: string
+  field: IFieldConfig
+  format: IFieldFormatConfig
+}
+
 export interface IWidgetMetric {
   name: string
   agg: AggregatorType
   chart: IChartInfo
+  field: IFieldConfig
+  format: IFieldFormatConfig
 }
 
 export interface IWidgetFilter {
@@ -49,6 +60,7 @@ export interface IChartStyles {
   visualMap?: IVisualMapConfig
   scorecard?: IScorecardConfig
   iframe?: IframeConfig
+  table?: ITableConfig
 }
 
 export interface IChartInfo {
@@ -66,8 +78,8 @@ export interface IChartInfo {
 
 export interface IWidgetProps {
   data: object[]
-  cols: string[]
-  rows: string[]
+  cols: IWidgetDimension[]
+  rows: IWidgetDimension[]
   metrics: IWidgetMetric[]
   filters: IWidgetFilter[]
   chartStyles: IChartStyles

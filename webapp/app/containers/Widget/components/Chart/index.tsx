@@ -22,11 +22,7 @@ export function CombinedChart (props: IChartProps) {
   switch (selectedChart) {
     case ChartTypes.Table:
       return (
-        <Table
-          data={data}
-          width={width}
-          height={height}
-        />
+        <Table {...props}/>
       )
     case ChartTypes.Scorecard:
       return (

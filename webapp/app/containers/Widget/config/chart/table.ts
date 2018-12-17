@@ -24,7 +24,19 @@ const table: IChartInfo = {
       color: PIVOT_DEFAULT_FONT_COLOR,
       lineStyle: 'solid',
       lineColor: PIVOT_DEFAULT_AXIS_LINE_COLOR,
-      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR
+      headerBackgroundColor: PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR,
+
+      headerConfig: [],
+      columnsConfig: [],
+      leftFixedColumns: [],
+      rightFixedColumns: [],
+      autoMergeCell: true,
+      withPaging: true,
+      pageSize: '20',
+      withNoAggregators: false
+    },
+    spec: {
+
     }
   }
 }

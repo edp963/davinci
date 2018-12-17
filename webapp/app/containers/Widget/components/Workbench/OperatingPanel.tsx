@@ -5,6 +5,8 @@ import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, DimetionType, WidgetMode } from '../Widget'
+import FieldConfigModal, { IFieldConfig } from './FieldConfigModal'
+import FormatConfigModal, { IFieldFormatConfig } from './FormatConfigModal'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -21,6 +23,7 @@ import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
+import TableSection, { ITableConfig } from './ConfigSections/TableSection'
 import { encodeMetricName, decodeMetricName, checkChartEnable, getPivot, getTable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
@@ -51,7 +54,7 @@ export interface IDataParamProperty {
   items: IDataParamSource[]
 }
 
-interface IDataParams {
+export interface IDataParams {
   [key: string]: IDataParamProperty
 }
 
@@ -86,6 +89,14 @@ interface IOperatingPanelStates {
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
   modalDataFrom: string
+
+  currentEditingCommonParamKey: string
+  currentEditingItem: IDataParamSource
+  fieldModalVisible: boolean
+
+  formatModalVisible: boolean
+  selectedFormatVisualType: string
+
   colorModalVisible: boolean
   actOnModalVisible: boolean
   actOnModalList: IDataParamSource[]
@@ -115,6 +126,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       modalCachedData: null,
       modalCallback: null,
       modalDataFrom: void 0,
+      currentEditingCommonParamKey: '',
+      currentEditingItem: null,
+      fieldModalVisible: false,
+      formatModalVisible: false,
+      selectedFormatVisualType: '',
       colorModalVisible: false,
       actOnModalVisible: false,
       actOnModalList: null,
@@ -131,6 +147,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     { key: 'cache', title: '缓存' }
   ]
   private lastRequestParamString = null
+
   private colorSettingForm = null
   private actOnSettingForm = null
   private filterSettingForm = null
@@ -154,19 +171,20 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
       const model = JSON.parse(selectedView.model)
       commonParams.cols.items = cols.map((c) => ({
-        name: c,
+        ...c,
         from: 'cols',
         type: 'category' as DragType,
-        visualType: c === '指标名称' ? 'string' : model[c].visualType
+        visualType: c.name === '指标名称' ? 'string' : model[c.name].visualType
       }))
       commonParams.rows.items = rows.map((r) => ({
-        name: r,
+        ...r,
         from: 'rows',
         type: 'category' as DragType,
-        visualType: r === '指标名称' ? 'string' :  model[r].visualType
+        visualType: r.name === '指标名称' ? 'string' :  model[r.name].visualType
       }))
       commonParams.metrics.items = metrics.map((m) => ({
         ...m,
+        from: 'metrics',
         type: 'value' as DragType,
         visualType: model[decodeMetricName(m.name)].visualType,
         chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
@@ -456,6 +474,59 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.getVisualData(commonParams, specificParams, styleParams)
   }
 
+  private dropboxItemChangeFieldConfig = (from: string) => (item: IDataParamSource) => {
+    this.setState({
+      currentEditingCommonParamKey: from,
+      currentEditingItem: item,
+      fieldModalVisible: true
+    })
+  }
+
+  private saveFieldConfig = (fieldConfig: IFieldConfig) => {
+    const {
+      currentEditingCommonParamKey, currentEditingItem,
+      commonParams, specificParams, styleParams } = this.state
+    const item = commonParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.field = fieldConfig
+    this.getVisualData(commonParams, specificParams, styleParams)
+    this.setState({
+      fieldModalVisible: false
+    })
+  }
+
+  private cancelFieldConfig = () => {
+    this.setState({
+      fieldModalVisible: false
+    })
+  }
+
+
+  private dropboxItemChangeFormatConfig = (from: string) => (item: IDataParamSource) => {
+    this.setState({
+      currentEditingCommonParamKey: from,
+      currentEditingItem: item,
+      formatModalVisible: true
+    })
+  }
+
+  private saveFormatConfig = (formatConfig: IFieldFormatConfig) => {
+    const {
+      currentEditingCommonParamKey, currentEditingItem,
+      commonParams, specificParams, styleParams } = this.state
+    const item = commonParams[currentEditingCommonParamKey].items.find((i) => i.name === currentEditingItem.name)
+    item.format = formatConfig
+    this.getVisualData(commonParams, specificParams, styleParams)
+    this.setState({
+      formatModalVisible: false
+    })
+  }
+
+  private cancelFormatConfig = () => {
+    this.setState({
+      formatModalVisible: false
+    })
+  }
+
   private dropboxItemChangeColorConfig = (item: IDataParamSource) => {
     const { selectedView, onLoadDistinctValue } = this.props
     const { commonParams, specificParams, styleParams } = this.state
@@ -581,9 +652,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     Object.values(commonParams).concat(Object.values(specificParams))
       .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
       .forEach((item) => {
+        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
         if (item.sort) {
           orders.push({
-            column: item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`,
+            column,
             direction: item.sort
           })
         }
@@ -620,8 +692,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         const { resultList: data } = result
         if (data.length) {
           onSetWidgetProps({
-            cols: cols.items.map((i) => i.name),
-            rows: rows.items.map((i) => i.name),
+            cols: cols.items.map((item) => ({...item})),
+            rows: rows.items.map((item) => ({...item})),
             metrics: metrics.items.map((item) => ({...item})),
             filters: filters.items,
             ...color && {color},
@@ -663,8 +735,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       })
     } else {
       onSetWidgetProps({
-        cols: cols.items.map((i) => i.name),
-        rows: rows.items.map((i) => i.name),
+        cols: cols.items.map((item) => ({...item})),
+        rows: rows.items.map((item) => ({...item})),
         metrics: metrics.items.map((item) => ({...item})),
         filters: filters.items,
         ...color && {color},
@@ -963,6 +1035,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       styleParams,
       modalCachedData,
       modalDataFrom,
+      fieldModalVisible,
+      formatModalVisible,
+      selectedFormatVisualType,
+      currentEditingItem,
       colorModalVisible,
       actOnModalVisible,
       actOnModalList,
@@ -973,7 +1049,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
     const { metrics } = commonParams
     const [dimetionsCount, metricsCount] = this.getDiemtionsAndMetricsCount()
-    const { spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend, visualMap, toolbox, areaSelect, scorecard, iframe } = styleParams
+    const {
+      spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
+      visualMap, toolbox, areaSelect, scorecard, iframe, table } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1039,6 +1117,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             value={v.value}
             items={v.items}
             mode={mode}
+            selectedChartId={chartModeSelectedChart.id}
             dragged={dragged}
             panelList={panelList}
             dimetionsCount={dimetionsCount}
@@ -1049,6 +1128,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             onItemRemove={this.removeDropboxItem(k)}
             onItemSort={this.getDropboxItemSortDirection(k)}
             onItemChangeAgg={this.getDropboxItemAggregator(k)}
+            onItemChangeFieldConfig={this.dropboxItemChangeFieldConfig(k)}
+            onItemChangeFormatConfig={this.dropboxItemChangeFormatConfig(k)}
             onItemChangeColorConfig={this.dropboxItemChangeColorConfig}
             onItemChangeFilterConfig={this.dropboxItemChangeFilterConfig}
             onItemChangeChart={this.getDropboxItemChart}
@@ -1215,6 +1296,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={iframe as IframeConfig}
               onChange={this.styleChange('iframe')}
             />}
+            {table && <TableSection
+              commonParams={commonParams}
+              config={table as ITableConfig}
+              onChange={this.styleChange('table')}
+            />}
             {pivotConfig && <PivotSection
               title="透视表"
               config={pivotConfig as IPivotConfig}
@@ -1293,9 +1379,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     let actOnSettingConfig
     let filterSettingConfig
     if (modalCachedData) {
-      const selectedItem = modalDataFrom === 'filters'
-        ? commonParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
-        : specificParams[modalDataFrom].items.find((i) => i.name === modalCachedData.name)
+      const selectedItem = (commonParams[modalDataFrom] || specificParams[modalDataFrom])
+        .items.find((i) => i.name === modalCachedData.name)
       switch (modalDataFrom) {
         case 'color':
           colorSettingConfig = selectedItem ? selectedItem.config : {}
@@ -1464,6 +1549,25 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             wrappedComponentRef={this.refHandlers.variableConfigForm}
           />
         </Modal>
+        {!currentEditingItem ? null : [(
+          <FieldConfigModal
+            key="fieldConfigModal"
+            visible={fieldModalVisible}
+            fieldConfig={currentEditingItem.field}
+            onSave={this.saveFieldConfig}
+            onCancel={this.cancelFieldConfig}
+          />
+        ), (
+          <FormatConfigModal
+            key="formatConfigModal"
+            visible={formatModalVisible}
+            visualType={selectedFormatVisualType}
+            formatConfig={currentEditingItem.format}
+            onSave={this.saveFormatConfig}
+            onCancel={this.cancelFormatConfig}
+          />
+        )
+        ]}
       </div>
     )
   }

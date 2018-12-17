@@ -76,7 +76,7 @@ export default function (chartProps: IChartProps) {
     label: getLabelOption('bar', label)
   }
 
-  let xAxisData = data.map((d) => d[cols[0]] || '')
+  let xAxisData = data.map((d) => d[cols[0].name] || '')
   let grouped = {}
   let percentGrouped = {}
   if (color.items.length) {

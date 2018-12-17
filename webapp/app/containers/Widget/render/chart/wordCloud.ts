@@ -41,7 +41,7 @@ export default function (chartProps: IChartProps) {
 
   } = spec
 
-  const title = cols[0]
+  const title = cols[0].name
   const agg = metrics[0].agg
   const metricName = decodeMetricName(metrics[0].name)
 

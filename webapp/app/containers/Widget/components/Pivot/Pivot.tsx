@@ -274,7 +274,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       metricNames.push('无指标值')
     }
 
-    if (rows.includes('指标名称')) {
+    if (~rows.findIndex((r) => r.name === '指标名称')) {
       metricNames.forEach((mn) => {
         const keyArr = []
         const [name, id, agg] = mn.split(DEFAULT_SPLITER)
@@ -283,8 +283,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           'bold'
         )
         rows.forEach((r, i) => {
-          const value = r === '指标名称' ? mn : record[r]
-          const textWidth = r === '指标名称'
+          const value = r.name === '指标名称' ? mn : record[r.name]
+          const textWidth = r.name === '指标名称'
             ? metricTextWidth
             : getPivotContentTextWidth(value, 'bold')
           this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
@@ -295,7 +295,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       flatRowKeys = rowKey.reduce((arr, keys) => arr.concat(keys.join(String.fromCharCode(0))), [])
     } else {
       rows.forEach((r, i) => {
-        const value = record[r]
+        const value = record[r.name]
         const textWidth = getPivotContentTextWidth(value, 'bold')
         this.rowHeaderWidths[i] = Math.max(textWidth, this.rowHeaderWidths[i] || 0)
         rowKey.push(value)
@@ -303,11 +303,11 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       flatRowKeys = [rowKey.join(String.fromCharCode(0))]
     }
 
-    if (cols.includes('指标名称')) {
+    if (~cols.find((c) => c.name === '指标名称')) {
       metricNames.forEach((mn) => {
         const keyArr = []
         cols.forEach((c) => {
-          const value = c === '指标名称' ? mn : record[c]
+          const value = c.name === '指标名称' ? mn : record[c.name]
           keyArr.push(value)
         })
         colKey.push(keyArr)
@@ -315,7 +315,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       flatColKeys = colKey.reduce((arr, keys) => arr.concat(keys.join(String.fromCharCode(0))), [])
     } else {
       cols.forEach((c) => {
-        colKey.push(record[c])
+        colKey.push(record[c.name])
       })
       flatColKeys = [colKey.join(String.fromCharCode(0))]
     }
@@ -332,7 +332,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
 
           if (metrics.length) {
             if (!hasDimetionAxis) {
-              const cellHeight = (rows.includes('指标名称') || cols.includes('指标名称'))
+              const cellHeight = [rows, cols].some((items) => items.findIndex((item) => item.name === '指标名称') >= 0)
                 ? PIVOT_LINE_HEIGHT
                 : (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
               this.rowTree[flatRowKey].height = cellHeight
@@ -363,7 +363,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
           if (metrics.length) {
             if (!hasDimetionAxis) {
               const maxTextWidth = Math.max(...metrics.map((m) => getPivotContentTextWidth(record[`${m.agg}(${decodeMetricName(m.name)})`])))
-              const cellHeight = (rows.includes('指标名称') || cols.includes('指标名称'))
+              const cellHeight = [rows, cols].some((items) => items.findIndex((item) => item.name === '指标名称') >= 0)
                 ? PIVOT_LINE_HEIGHT
                 : (PIVOT_LINE_HEIGHT + 1) * metrics.length - 1
               this.colTree[flatColKey].width = Math.max(this.colTree[flatColKey].width, maxTextWidth)
@@ -413,7 +413,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         (color.items.find((item) => item.config.actOn === metric.name) ||
          color.items.find((item) => item.config.actOn === 'all'))
       const labelConditions = label && label.items
-        .filter((i) => i.type === 'category' && !colAndRows.includes(i.name))
+        .filter((i) => i.type === 'category' && !~colAndRows.findIndex((item) => item.name === i.name))
         .filter((i) => i.config.actOn === metric.name || i.config.actOn === 'all')
       const actingConditions = [].concat(colorConditions).concat(labelConditions).filter((i) => !!i)
 
@@ -524,27 +524,30 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public render () {
     const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract, getDataDrillDetail, isDrilling } = this.props
     const { legendSelected, renderType } = this.state
+    const rowNames = rows.map((r) => r.name)
+    const colNames = cols.map((c) => c.name)
+    const hasMetricNameDimension = [rows, cols].some((items) => items.findIndex((item) => item.name === '指标名称') >= 0)
 
     return (
       <div className={styles.block}>
         <div className={styles.leftSide}>
           <Corner
-            cols={cols}
-            rows={rows}
+            cols={colNames}
+            rows={rowNames}
             rowWidths={this.rowHeaderWidths}
             chartStyles={chartStyles}
             dimetionAxis={dimetionAxis}
           />
           <div className={styles.rowHeader}>
             <RowTitle
-              rows={rows}
+              rows={rowNames}
               rowKeys={this.rowKeys}
               chartStyles={chartStyles}
               drawingData={this.drawingData}
               dimetionAxis={dimetionAxis}
             />
             <RowHeader
-              rows={rows}
+              rows={rowNames}
               rowKeys={this.rowKeys}
               colKeys={this.colKeys}
               rowWidths={this.rowHeaderWidths}
@@ -556,7 +559,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
               drawingData={this.drawingData}
               dimetionAxis={dimetionAxis}
               metricAxisConfig={this.metricAxisConfig}
-              hasMetricNameDimetion={cols.includes('指标名称') || rows.includes('指标名称')}
+              hasMetricNameDimetion={hasMetricNameDimension}
               ref={(f) => this.rowHeader = findDOMNode(f) as HTMLElement}
             />
           </div>
@@ -564,7 +567,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         </div>
         <div className={styles.rightSide}>
           <ColumnTitle
-            cols={cols}
+            cols={colNames}
             colKeys={this.colKeys}
             colTree={this.colTree}
             chartStyles={chartStyles}
@@ -572,7 +575,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             dimetionAxis={dimetionAxis}
           />
           <ColumnHeader
-            cols={cols}
+            cols={colNames}
             colKeys={this.colKeys}
             colTree={this.colTree}
             metrics={metrics}
@@ -582,8 +585,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             ref={(f) => this.columnHeader = findDOMNode(f) as HTMLElement}
           />
           <TableBody
-            cols={cols}
-            rows={rows}
+            cols={colNames}
+            rows={rowNames}
             rowKeys={this.rowKeys}
             colKeys={this.colKeys}
             rowWidths={this.rowHeaderWidths}

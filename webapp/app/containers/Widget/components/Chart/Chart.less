@@ -33,3 +33,67 @@
   flex: 1;
   border: none;
 }
+
+.formattedCell {
+  display: flex;
+  flex-direction: row;
+
+  &.left {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+  &.center {
+    align-items: center;
+    justify-content: center;
+  }
+  &.right {
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+}
+
+.table {
+  :global(.ant-table-thead th) {
+    padding: 0;
+  }
+
+  :global(.ant-table-body) {
+    background: transparent !important;
+
+    :global(.ant-table-row:hover) {
+      background: transparent !important;
+    }
+
+    td {
+      padding: 0;
+      height: 1px;
+    }
+  }
+
+  .mergedCell {
+    background-color: transparent;
+  }
+
+  .headerCell {
+    padding: 10px 8px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+  }
+
+  .tableCell {
+    height: 100%;
+
+    .valCell {
+      height: 100%;
+      padding: 10px 8px;
+      display: flex;
+      align-items: center;
+    }
+    .cdtCell {
+
+    }
+    position: relative;
+  }
+}
+

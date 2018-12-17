@@ -1,15 +1,17 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox } from './Dropbox'
-import PivotChartSelector from './PivotChartSelector'
-import { getAggregatorLocale, decodeMetricName } from '../util'
-import { IChartInfo } from '../Widget'
+import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox, IDataParamConfig } from '../Dropbox'
+import PivotChartSelector from '../PivotChartSelector'
+import { getAggregatorLocale, decodeMetricName } from '../../util'
+import { IChartInfo } from '../../Widget'
+import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes } from './settings'
 
 import Icon from 'antd/lib/icon'
 import Menu from 'antd/lib/menu'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
 import Dropdown from 'antd/lib/dropdown'
-const styles = require('./Workbench.less')
+import Tooltip from 'antd/lib/tooltip'
+const styles = require('../Workbench.less')
 
 interface IDropboxItemProps {
   container: string
@@ -19,15 +21,13 @@ interface IDropboxItemProps {
   onDragStart: (item: IDataParamSource, e: React.DragEvent<HTMLLIElement | HTMLParagraphElement>) => void
   onDragEnd: () => void
   onSort: (item: IDataParamSource, sort: SortType) => void
-  onChangAgg: (item: IDataParamSource, agg: AggregatorType) => void
+  onChangeAgg: (item: IDataParamSource, agg: AggregatorType) => void
+  onChangeFieldConfig: (item: IDataParamSource) => void
+  onChangeFormatConfig: (item: IDataParamSource) => void
   onChangeColorConfig: (item: IDataParamSource) => void
   onChangeFilterConfig: (item: IDataParamSource) => void
   onChangeChart: (item: IDataParamSource) => (chart: IChartInfo) => void
   onRemove: (e) => void
-}
-
-interface IDropdownItem {
-  subs?: IDropdownItem[]
 }
 
 interface IDropboxItemStates {
@@ -40,31 +40,6 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     this.state = {
       dragging: false
     }
-  }
-
-  private dropdownList = {
-    category: [{
-      default: '默认顺序',
-      asc: '升序',
-      desc: '降序'
-    }],
-    value: [{
-      sum: getAggregatorLocale('sum'),
-      avg: getAggregatorLocale('avg'),
-      count: getAggregatorLocale('count'),
-      COUNTDISTINCT: getAggregatorLocale('COUNTDISTINCT'),
-      max: getAggregatorLocale('max'),
-      min: getAggregatorLocale('min')
-    }, {
-      sort: {
-        name: '排序',
-        subs: [{
-          default: '默认顺序',
-          asc: '升序',
-          desc: '降序'
-        }]
-      }
-    }]
   }
 
   private dragStart = (e) => {
@@ -90,50 +65,42 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     })
   }
 
-  private getDropdownList = (source: IDropdownItem[]) => {
-    return source.reduce((menuItems, group, index) => {
-      menuItems = menuItems.concat(Object.entries(group).map(([k, v]) => {
-        if (v.subs) {
-          const subItems = this.getDropdownList(v.subs)
-          return (<SubMenu key={k} title={v.name}>{subItems}</SubMenu>)
-        } else {
-          return (<MenuItem key={k}>{v}</MenuItem>)
-        }
-      }))
-      if (index !== source.length - 1) {
-        menuItems = menuItems.concat(<MenuDivider key={index} />)
-      }
-      return menuItems
-    }, [])
-  }
+  private dropdownMenuClick = ({ key }: { key: string }) => {
+    const {
+      item,
+      onChangeAgg,
+      onChangeFieldConfig,
+      onChangeFormatConfig,
+      onSort,
+      onChangeColorConfig,
+      onChangeFilterConfig } = this.props
+    const settingKey = getSettingKeyByDropItem(key)
 
-  private dropdownMenuClick = ({key}) => {
-    const { item, onSort, onChangAgg, onChangeColorConfig, onChangeFilterConfig } = this.props
-    if (['default', 'asc', 'desc'].indexOf(key) >= 0) {
-      onSort(item as IDataParamSource, key)
-    } else if (key === 'color') {
-      onChangeColorConfig(item as IDataParamSource)
-    } else if (key === 'filters') {
-      onChangeFilterConfig(item as IDataParamSource)
-    } else {
-      onChangAgg(item as IDataParamSource, key)
+    switch (settingKey) {
+      case 'aggregator':
+        onChangeAgg(item as IDataParamSource, key as AggregatorType)
+        break
+      case 'color':
+        onChangeColorConfig(item as IDataParamSource)
+        break
+      case 'field':
+        onChangeFieldConfig(item as IDataParamSource)
+        break
+      case 'filters':
+        onChangeFilterConfig(item as IDataParamSource)
+        break
+      case 'format':
+        onChangeFormatConfig(item as IDataParamSource)
+        break
+      case 'sort':
+        onSort(item as IDataParamSource, key as SortType)
+        break
     }
-  }
-
-  private getSpecificDropdownList = (type) => {
-    const { container } = this.props
-    let dropdownList = this.dropdownList[type]
-    if (container === 'color') {
-      dropdownList = [{ color: '配置颜色' }].concat(dropdownList)
-    } else if (container === 'filters') {
-      dropdownList = [{ filters: '配置筛选' }].concat(dropdownList)
-    }
-    return dropdownList
   }
 
   public render () {
     const { container, item, dimetionsCount, metricsCount, onChangeChart, onRemove } = this.props
-    const { name: originalName, type, sort, agg } = item
+    const { name: originalName, type, sort, agg, field } = item
     const { dragging } = this.state
 
     const name = type === 'value' ? decodeMetricName(originalName) : originalName
@@ -164,10 +131,17 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       'icon-sortdescending': sort === 'desc'
     })
 
+    const alias = field ? field.alias : ''
+    const desc = field ? field.desc : ''
     const content = (
       <p>
         <Icon type="down" />
         {agg ? ` [${getAggregatorLocale(agg)}] ${name} ` : ` ${name} `}
+        {alias && (
+          <Tooltip title={desc} placement="right">
+            {`[${alias}]`}
+          </Tooltip>
+        )}
         {sort && <i className={sortClass} />}
       </p>
     )
@@ -176,7 +150,8 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
     if (type === 'add') {
       contentWithDropdownList = content
     } else {
-      const dropdownListSource = this.getSpecificDropdownList(type)
+      const availableSettings =  getAvailableSettings(MapSettingTypes[container], MapItemTypes[item.type])
+      const dropdownList = getSettingsDropdownList(availableSettings)
       let menuClass = ''
       if (type === 'value') {
         menuClass = styles.valueDropDown
@@ -185,7 +160,7 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
         <Dropdown
           overlay={(
             <Menu className={menuClass} onClick={this.dropdownMenuClick}>
-              {this.getDropdownList(dropdownListSource)}
+              {dropdownList}
             </Menu>
           )}
           trigger={['click']}
