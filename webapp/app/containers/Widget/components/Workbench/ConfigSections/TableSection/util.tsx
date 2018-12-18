@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-const Select = require('antd/lib/select')
+import Select from 'antd/lib/select'
 const { Option } = Select
 
 import {

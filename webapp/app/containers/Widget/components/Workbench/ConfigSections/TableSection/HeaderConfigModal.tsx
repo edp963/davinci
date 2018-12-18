@@ -12,21 +12,21 @@ import { uuid } from 'utils/util'
 import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from './util'
 import TableSection, { ITableHeaderConfig, ITableCellStyle } from './'
 
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Modal = require('antd/lib/modal')
-const Input = require('antd/lib/input')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Modal from 'antd/lib/modal'
+import Input from 'antd/lib/input'
 const Search = Input.Search
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio')
+import Button from 'antd/lib/button'
+import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import Checkbox from 'antd/lib/checkbox'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const Table = require('antd/lib/table')
-const Message = require('antd/lib/message')
+import Table from 'antd/lib/table'
+import Message from 'antd/lib/message'
 
 import ColorPicker from 'components/ColorPicker'
 import { fromJS } from 'immutable'
