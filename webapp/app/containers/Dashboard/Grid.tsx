@@ -147,6 +147,10 @@ interface IGridProps {
         params: Array<{name: string, value: string}>
         linkageParams: Array<{name: string, value: string}>
         globalParams: Array<{name: string, value: string}>
+        pagination: {
+          pageNo: number
+          pageSize: number
+        }
         drillHistory?: Array<{filter?: any, type?: string, groups?: string[], name: string}>
       }
       shareInfo: string
@@ -426,13 +430,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = currentItemsInfo[itemId].queryParams
+    const { queryParams: cachedQueryParams } = currentItemsInfo[itemId]
     let linkageFilters
     let globalFilters
     let params
     let linkageParams
     let globalParams
     let drillStatus
+    let pagination
 
     if (queryParams) {
       linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
@@ -441,12 +446,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
       drillStatus = queryParams.drillStatus || void 0
+      pagination = queryParams.pagination || cachedQueryParams.pagination
     } else {
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
+      pagination = cachedQueryParams.pagination
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -490,25 +497,35 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           func: t.agg
         })))
     }
-    // console.log(!!(drillStatus && drillStatus.groups), groups)
-    // console.log(!!(drillStatus && drillStatus.filter), filters.map((i) => i.config.sql))
+
+    const mergedQueryParams = {
+      groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
+      aggregators,
+      filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
+      linkageFilters,
+      globalFilters,
+      params,
+      linkageParams,
+      globalParams,
+      orders,
+      cache,
+      expired,
+      pageNo: 0,
+      pageSize: 0
+    }
+
+    if (pagination.pageNo) {
+      mergedQueryParams.pageNo = pagination.pageNo
+    }
+    if (pagination.pageSize) {
+      mergedQueryParams.pageSize = pagination.pageSize
+    }
+
     callback(
       renderType,
       itemId,
       widget,
-      {
-        groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
-        aggregators,
-        filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
-        linkageFilters,
-        globalFilters,
-        params,
-        linkageParams,
-        globalParams,
-        orders,
-        cache,
-        expired
-      }
+      mergedQueryParams
     )
   }
 

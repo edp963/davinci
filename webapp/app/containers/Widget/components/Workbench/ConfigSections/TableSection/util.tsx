@@ -7,7 +7,8 @@ import {
   PIVOT_CHART_FONT_FAMILIES,
   PIVOT_CHART_FONT_SIZES,
   PIVOT_CHART_FONT_WEIGHTS,
-  PIVOT_CHART_FONT_STYLE } from '../../../../../../../app/globalConstants'
+  PIVOT_CHART_FONT_STYLE,
+  TABLE_PAGE_SIZES } from '../../../../../../../app/globalConstants'
 
 export const fontWeightOptions = PIVOT_CHART_FONT_WEIGHTS.map((w) => (
   <Option value={w} key={w}>{w}</Option>
@@ -22,6 +23,10 @@ export const fontFamilyOptions = PIVOT_CHART_FONT_FAMILIES.map((f) => (
 ))
 
 export const fontSizeOptions = PIVOT_CHART_FONT_SIZES.map((s) => (
+  <Option value={s.toString()} key={s}>{s}</Option>
+))
+
+export const pageSizeOptions = TABLE_PAGE_SIZES.map((s) => (
   <Option value={s.toString()} key={s}>{s}</Option>
 ))
 

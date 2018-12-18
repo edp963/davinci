@@ -4,18 +4,21 @@ import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
 import { ViewModelType, IDataParamSource } from '../../Dropbox'
 import { decodeMetricName } from 'containers/Widget/components/util'
-import { TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes } from './util'
+import {
+  fontSizeOptions,
+  TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
 
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Select = require('antd/lib/select')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Select from 'antd/lib/select'
 const { Option } = Select
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio')
+import Button from 'antd/lib/button'
+import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-const Modal = require('antd/lib/modal')
+import Checkbox from 'antd/lib/checkbox'
+import Modal from 'antd/lib/modal'
 
 
 const styles = require('../../Workbench.less')
@@ -69,13 +72,12 @@ export interface ITableConfig {
   columnsConfig: ITableColumnConfig[]
   leftFixedColumns: string[]
   rightFixedColumns: string[]
+  headerFixed: boolean
   autoMergeCell: boolean
   withPaging: boolean
   pageSize: string
   withNoAggregators: boolean
 }
-
-export const PageSizes = [10, 20, 40, 50, 100]
 
 interface ITableSectionProps {
   commonParams: IDataParams
@@ -95,10 +97,6 @@ import HeaderConfigModal, { DefaultTableCellStyle } from './HeaderConfigModal'
 import ColumnConfigModal from './ColumnConfigModal'
 
 export class TableSection extends React.PureComponent<ITableSectionProps, ITableSectionStates> {
-
-  private pageSizeOptions = PageSizes.map((size) => (
-    <Option key={size} value={size.toString()}>{size}条/页</Option>
-  ))
 
   public constructor (props) {
     super(props)
@@ -217,6 +215,10 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     this.props.onChange(name, e.target.value)
   }
 
+  private checkboxChange = (name) => (e) => {
+    this.props.onChange(name, e.target.checked)
+  }
+
   private showHeaderConfig = () => {
     this.setState({
       headerConfigModalVisible: true
@@ -289,7 +291,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   public render () {
     const { config } = this.props
     const {
-      leftFixedColumns, rightFixedColumns,
+      leftFixedColumns, rightFixedColumns, headerFixed,
       autoMergeCell, withPaging, pageSize, withNoAggregators } = config
     const {
       validColumns, validHeaderConfig, validColumnConfig,
@@ -310,6 +312,15 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
             <span>单元格样式与条件</span>
             <Icon type="edit" onClick={this.showColumnConfig} />
           </h4>
+        </div>
+        <div className={styles.paneBlock}>
+          <div className={styles.blockBody}>
+            <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+              <Col span={24}>
+                <Checkbox checked={headerFixed} onChange={this.checkboxChange('headerFixed')}>固定表头</Checkbox>
+              </Col>
+            </Row>
+          </div>
         </div>
         <div className={styles.paneBlock}>
           <h4>左固定列</h4>
@@ -375,7 +386,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
                     value={pageSize}
                     onChange={this.selectChange('pageSize')}
                   >
-                    {this.pageSizeOptions}
+                    {pageSizeOptions}
                   </Select>
                 </Col>}
             </Row>

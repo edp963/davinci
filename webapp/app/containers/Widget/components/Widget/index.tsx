@@ -76,6 +76,12 @@ export interface IChartInfo {
   style: object
 }
 
+export interface IPaginationParams {
+  pageNo: number
+  pageSize: number
+  withPaging: boolean
+}
+
 export interface IWidgetProps {
   data: object[]
   cols: IWidgetDimension[]
@@ -98,9 +104,11 @@ export interface IWidgetProps {
   expired: number
   mode: WidgetMode
   model: IModel
+  pagination?: IPaginationParams
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
+  onPaginationChange?: (pageNo: number, pageSize: number) => void
   isDrilling?: boolean
   // onHideDrillPanel?: (swtich: boolean) => void
 }
