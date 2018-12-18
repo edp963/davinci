@@ -22,6 +22,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 
 import Form from 'antd/lib/form'
+import { FormComponentProps } from 'antd/lib/form/Form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Table, { SortOrder } from 'antd/lib/table'
@@ -44,10 +45,9 @@ const widgetStyles = require('../../Widget/Widget.less')
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemFormProps {
-  form: any
   type: string
   widgets: any[]
-  selectedWidget: number
+  selectedWidgets: number[]
   polling: boolean,
   step: number
   onWidgetSelect: (selectedRowKeys: any[]) => void
@@ -69,7 +69,7 @@ interface IDashboardItemFormStates {
   selectedRowKeys: any[]
 }
 
-export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps, IDashboardItemFormStates> {
+export class DashboardItemForm extends React.PureComponent<IDashboardItemFormProps & FormComponentProps, IDashboardItemFormStates> {
 
   constructor (props) {
     super(props)
@@ -182,7 +182,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       widgets,
       type,
       form,
-      selectedWidget,
+      selectedWidgets,
       polling,
       step,
       onWidgetSelect,
@@ -232,7 +232,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
     }
 
     const rowSelection = {
-      selectedRowKeys: [selectedWidget],
+      selectedRowKeys: selectedWidgets,
       onChange: this.onSelectChange,
       onShowSizeChange: this.onShowSizeChange
     }
@@ -283,9 +283,7 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
           <Row gutter={8}>
             <Col sm={8}>
               <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('id', {
-                  hidden: type === 'add'
-                })(
+                {getFieldDecorator('id')(
                   <Input />
                 )}
               </FormItem>
@@ -328,4 +326,4 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
   }
 }
 
-export default Form.create()(DashboardItemForm)
+export default Form.create<IDashboardItemFormProps>()(DashboardItemForm)
