@@ -61,7 +61,7 @@ import { hideNavigator } from '../App/actions'
 import { loadProjectDetail } from '../Projects/actions'
 import {
   loadDashboardDetail,
-  addDashboardItem,
+  addDashboardItems,
   editCurrentDashboard,
   editDashboardItem,
   editDashboardItems,
@@ -169,7 +169,7 @@ interface IGridProps {
   }
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
-  onAddDashboardItem: (portalId: number, item: [IDashboardItem], resolve: (item: IDashboardItem) => void) => any
+  onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
   onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
   onEditDashboardItems: (item: IDashboardItem[]) => void
@@ -232,7 +232,7 @@ interface IGridStates {
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
   modalLoading: boolean
-  selectedWidget: any[]
+  selectedWidgets: number[]
   polling: boolean
   linkageConfigVisible: boolean
   interactingStatus: { [itemId: number]: boolean }
@@ -276,7 +276,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormVisible: false,
       dashboardItemFormStep: 0,
       modalLoading: false,
-      selectedWidget: [],
+      selectedWidgets: [],
       polling: false,
 
       linkageConfigVisible: false,
@@ -578,7 +578,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
       dashboardItemFormStep: 1,
-      selectedWidget: [dashboardItem.widgetId],
+      selectedWidgets: [dashboardItem.widgetId],
       polling: dashboardItem.polling
     }, () => {
       this.dashboardItemForm.props.form.setFieldsValue({
@@ -593,13 +593,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.setState({
       modalLoading: false,
       dashboardItemFormVisible: false,
-      selectedWidget: []
+      selectedWidgets: []
     })
   }
 
   private afterDashboardItemFormClose = () => {
     this.setState({
-      selectedWidget: [],
+      selectedWidgets: [],
       polling: false,
       dashboardItemFormStep: 0
     })
@@ -609,7 +609,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private widgetSelect = (selectedRowKeys) => {
     this.setState({
-      selectedWidget: selectedRowKeys
+      selectedWidgets: selectedRowKeys
     })
   }
 
@@ -627,7 +627,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private saveDashboardItem = () => {
     const { params, currentDashboard, currentItems, widgets } = this.props
-    const { selectedWidget, dashboardItemFormType } = this.state
+    const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
 
@@ -659,7 +659,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: 6
       }
 
-      const newItemsArr = selectedWidget.map((key, index) => {
+      const newItems = selectedWidgets.map((key, index) => {
         const xAxisTemp = index % 2 !== 0 ? 6 : 0
         const yAxisTemp = index % 2 === 0
           ? secondMaxY + 6 * Math.floor(index / 2)
@@ -686,7 +686,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         return item
       })
 
-      this.props.onAddDashboardItem(Number(params.portalId), (newItemsArr as any), (dashboardItem: IDashboardItem) => {
+      this.props.onAddDashboardItems(Number(params.portalId), newItems, () => {
         this.hideDashboardItemForm()
       })
     } else {
@@ -694,7 +694,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const modifiedDashboardItem = {
         ...dashboardItem,
         ...newItem,
-        widgetId: selectedWidget[0]
+        widgetId: selectedWidgets[0]
       }
 
       this.props.onEditDashboardItem(modifiedDashboardItem, () => {
@@ -1047,7 +1047,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       dashboardItemFormType,
       dashboardItemFormVisible,
       modalLoading,
-      selectedWidget,
+      selectedWidgets,
       polling,
       dashboardItemFormStep,
       linkageConfigVisible,
@@ -1207,7 +1207,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             key="forward"
             size="large"
             type="primary"
-            disabled={selectedWidget.length === 0}
+            disabled={selectedWidgets.length === 0}
             onClick={this.changeDashboardItemFormStep(1)}
           >
             下一步
@@ -1289,7 +1289,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           <DashboardItemForm
             type={dashboardItemFormType}
             widgets={widgets || []}
-            selectedWidget={selectedWidget}
+            selectedWidgets={selectedWidgets}
             polling={polling}
             step={dashboardItemFormStep}
             onWidgetSelect={this.widgetSelect}
@@ -1356,7 +1356,7 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboardDetail: (projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
-    onAddDashboardItem: (portalId, item, resolve) => dispatch(addDashboardItem(portalId, item, resolve)),
+    onAddDashboardItems: (portalId, items, resolve) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),

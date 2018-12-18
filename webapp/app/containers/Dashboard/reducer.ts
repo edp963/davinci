@@ -34,8 +34,8 @@ import {
   LOAD_DASHBOARD_DETAIL,
   LOAD_DASHBOARD_DETAIL_SUCCESS,
   LOAD_DASHBOARD_DETAIL_FAILURE,
-  ADD_DASHBOARD_ITEM_SUCCESS,
-  ADD_DASHBOARD_ITEM_FAILURE,
+  ADD_DASHBOARD_ITEMS_SUCCESS,
+  ADD_DASHBOARD_ITEMS_FAILURE,
   EDIT_DASHBOARD_ITEM_SUCCESS,
   EDIT_DASHBOARD_ITEM_FAILURE,
   EDIT_DASHBOARD_ITEMS_SUCCESS,
@@ -85,7 +85,7 @@ function dashboardReducer (state = initialState, action) {
   const { type, payload } = action
   const dashboards = state.get('dashboards')
   const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
-  let items = state.get('currentItems')
+  const items = state.get('currentItems')
   const itemsInfo = state.get('currentItemsInfo')
 
   switch (type) {
@@ -173,40 +173,35 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_DASHBOARD_DETAIL_FAILURE:
       return state.set('currentDashboardLoading', false)
 
-    case ADD_DASHBOARD_ITEM_SUCCESS:
-      if (!items) {
-        items = []
-      }
-
-      const infoTemp = new Object()
-      payload.result.forEach((pr) => {
-        infoTemp[pr.id] = {
-          datasource: { resultList: [] },
-          loading: false,
-          queryParams: {
-            linkageFilters: [],
-            globalFilters: [],
-            params: [],
-            linkageParams: [],
-            globalParams: [],
-            pagination: {}
-          },
-          shareInfo: '',
-          shareInfoLoading: false,
-          secretInfo: '',
-          downloadCsvLoading: false,
-          interactId: '',
-          rendered: false,
-          renderType: 'rerender'
-        }
-      })
+    case ADD_DASHBOARD_ITEMS_SUCCESS:
       return state
-        .set('currentItems', items.concat(payload.result))
+        .set('currentItems', (items || []).concat(payload.result))
         .set('currentItemsInfo', {
           ...itemsInfo,
-          ...infoTemp
+          ...payload.result.reduce((obj, item) => {
+            obj[item.id] = {
+              datasource: { resultList: [] },
+              loading: false,
+              queryParams: {
+                linkageFilters: [],
+                globalFilters: [],
+                params: [],
+                linkageParams: [],
+                globalParams: [],
+                pagination: {}
+              },
+              shareInfo: '',
+              shareInfoLoading: false,
+              secretInfo: '',
+              downloadCsvLoading: false,
+              interactId: '',
+              rendered: false,
+              renderType: 'rerender'
+            }
+            return obj
+          }, {})
         })
-    case ADD_DASHBOARD_ITEM_FAILURE:
+    case ADD_DASHBOARD_ITEMS_FAILURE:
       return state
 
     case EDIT_DASHBOARD_ITEM_SUCCESS:
