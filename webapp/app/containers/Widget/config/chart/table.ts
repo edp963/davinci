@@ -30,6 +30,7 @@ const table: IChartInfo = {
       columnsConfig: [],
       leftFixedColumns: [],
       rightFixedColumns: [],
+      headerFixed: true,
       autoMergeCell: true,
       withPaging: true,
       pageSize: '20',

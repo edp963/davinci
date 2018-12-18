@@ -254,6 +254,12 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onDoTableInteract(itemId, triggerData)
   }
 
+  private paginationChange = (pageNo: number, pageSize: number) => {
+    const { onGetChartData, itemId, widget } = this.props
+    const pagination = { pageNo, pageSize }
+    onGetChartData('clear', itemId, widget.id, pagination)
+  }
+
   private turnOffInteract = () => {
     const { onTurnOffInteract, itemId } = this.props
     onTurnOffInteract(itemId)
@@ -636,6 +642,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             model={model}
             onCheckTableInteract={this.checkTableInteract}
             onDoInteract={this.doInteract}
+            onPaginationChange={this.paginationChange}
             getDataDrillDetail={this.getDataDrillDetail}
             isDrilling={this.state.isDrilling}
           //  onHideDrillPanel={this.onHideDrillPanel}

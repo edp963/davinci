@@ -53,6 +53,13 @@
 }
 
 .table {
+  :global(.ant-table-header) {
+    // @FIXME
+    margin-right: 15px;
+    margin-bottom: 0 !important;
+    .hideScrollbar
+  }
+
   :global(.ant-table-thead th) {
     padding: 0;
   }
@@ -83,17 +90,18 @@
 
   .tableCell {
     height: 100%;
+    display: flex;
 
     .valCell {
-      height: 100%;
       padding: 10px 8px;
+      flex: 1;
       display: flex;
       align-items: center;
     }
     .cdtCell {
+      padding: 4px 0;
 
     }
-    position: relative;
   }
 }
 

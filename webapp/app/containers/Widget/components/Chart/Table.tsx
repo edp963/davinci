@@ -27,7 +27,7 @@ import { IChartStyles } from '../Widget'
 import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditionStyle } from '../Workbench/ConfigSections/TableSection'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
-import AntTable from 'antd/lib/table'
+import AntTable, { TableProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
 import Message from 'antd/lib/message'
 const Option = Select.Option
@@ -35,7 +35,9 @@ import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/in
 import NumberFilterDropdown from '../../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../../components/DateFilterDropdown/index'
 
-import { COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
+import {
+  COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZES,
+  SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
 import { decodeMetricName, FieldFormatTypes, getFormattedValue, getTextWidth } from 'containers/Widget/components/util'
 import { IFieldConfig } from '../Workbench/FieldConfigModal'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
@@ -55,7 +57,18 @@ interface IMapMetaConfig {
 
 interface ITableStates {
   columns: any[]
-  pagination: object
+  pagination: {
+    current: number
+    pageSize: number
+    pageSizeOptions: string[]
+    showQuickJumper: boolean
+    showSizeChanger: boolean
+    showTotal: (total: number) => string
+    onChange: (current: number, pageSize: number) => void
+    onShowSizeChange: (current: number, pageSize: number) => void
+    simple: boolean
+    total: number
+  }
   mapMetaConfig: object
   headerHeight: number
 }
@@ -63,7 +76,7 @@ interface ITableStates {
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table
-  private defaultColumnWidth = 500
+  private defaultColumnWidth = 250
 
   constructor (props: IChartProps) {
     super(props)
@@ -73,7 +86,18 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     this.setFixedColumns(columns, chartStyles)
     this.state = {
       columns,
-      pagination: {},
+      pagination: {
+        current: 0,
+        pageSize: chartStyles.table ? +chartStyles.table.pageSize : 0,
+        pageSizeOptions: TABLE_PAGE_SIZES.map((s) => s.toString()),
+        showQuickJumper: true,
+        showSizeChanger: true,
+        showTotal: (total: number) => `共${total}条`,
+        onChange: this.onPaginationChange,
+        onShowSizeChange: this.onPaginationChange,
+        simple: false,
+        total: props.data.length
+      },
       mapMetaConfig,
       headerHeight: 0
     }
@@ -88,7 +112,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private adjustTableCell () {
-    const tableDom = findDOMNode(this.table)
+    const tableDom = findDOMNode(this.table) as Element
     const cells = tableDom.querySelectorAll(`.${styles.tableCell}.${styles.mergedCell}`)
     Array.prototype.forEach.call(cells, (cell: HTMLDivElement) => {
       let td = cell.parentElement
@@ -98,38 +122,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       cell.style.height = `${td.getBoundingClientRect().height - 2}px`
     })
     const excludeElems = ['.ant-table-thead', '.ant-pagination.ant-table-pagination']
-    const excludeElemsHeight = excludeElems.reduce((acc, exp) =>
-      acc + tableDom.querySelector(exp).getBoundingClientRect().height, 0)
+    const excludeElemsHeight = excludeElems.reduce((acc, exp) => {
+      const elem = tableDom.querySelector(exp)
+      return acc + (elem ? elem.getBoundingClientRect().height : 0)
+    }, 0)
     const headerHeight = this.props.height - excludeElemsHeight - 32
     this.setState({
       headerHeight
-    })
-  }
-
-  private pageAutoAdapted = (value) => {
-    const paginationState = value === 'pc'
-      ? {
-        simple: false,
-        pageSize: DEFAULT_TABLE_PAGE_SIZE,
-        current: DEFAULT_TABLE_PAGE,
-        showSizeChanger: true,
-        showTotal: (total) => `共 ${total} 条`,
-        pageSizeOptions: ['10', '20', '30', '40', '50', '100']
-      }
-      : {
-        simple: true,
-        pageSize: DEFAULT_TABLE_PAGE_SIZE,
-        current: DEFAULT_TABLE_PAGE,
-        showSizeChanger: true
-      }
-    return paginationState
-  }
-
-  public componentWillMount () {
-    this.setState({
-      pagination: this.props.width <= 768
-        ? this.pageAutoAdapted('mobile')
-        : this.pageAutoAdapted('pc')
     })
   }
 
@@ -140,17 +139,40 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (chartStyles !== this.props.chartStyles) {
       columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
       this.setFixedColumns(columns, chartStyles)
-    }
-    if (width !== this.props.width) {
-      pagination = nextProps.width <= 768
-        ? this.pageAutoAdapted('mobile')
-        : this.pageAutoAdapted('pc')
+      pagination = {
+        ...pagination,
+        ...this.getPaginationOptions(nextProps)
+      }
     }
     this.setState({
       mapMetaConfig,
       columns,
       pagination
     })
+  }
+
+  private getPaginationOptions (props: IChartProps) {
+    const { chartStyles, width } = props
+    const { pageSize } = chartStyles.table
+
+    const pagination: Partial<ITableStates['pagination']> = {
+      showSizeChanger: true,
+      pageSize: +pageSize
+    }
+    pagination.simple = width <= 768
+    return pagination
+  }
+
+  private onPaginationChange = (current: number, pageSize: number) => {
+    this.setState({
+      pagination: {
+        ...this.state.pagination,
+        pageSize,
+        current
+      }
+    })
+    const { onPaginationChange } = this.props
+    onPaginationChange(current, pageSize)
   }
 
   private getMapMetaConfig (props: IChartProps) {
@@ -339,8 +361,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     })
     const cellStyle = { ...basicStyle, ...conditionStyle }
     return (
-      <div className={cellCls}>
-        <div className={styles.valCell} style={cellStyle}>{formattedValue}</div>
+      <div className={cellCls} style={basicStyle}>
+        <div className={styles.valCell} style={conditionStyle}>{formattedValue}</div>
       </div>
     )
   }
@@ -515,39 +537,49 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }
 
     const cssStyle: React.CSSProperties = {
-      color: fore,
-      position: 'absolute',
-      top: 4,
-      bottom: 4,
-      left: `${barZeroPosition}%`,
-      width: `${cellBarPercentage}%`
+      padding: '0',
+      margin: '10px 8px' // number bar do not fill 100% height
     }
-    if (cellBarPercentage > 0) {
-      cssStyle.minWidth = '1px'
-    }
+    const divisions = ['transparent 0%']
     if (cellVal < 0) {
-      cssStyle.backgroundColor = negative
-      cssStyle.transform = `translateX(-100%)`
+      divisions.push(`transparent ${barZeroPosition - cellBarPercentage}%`)
+      divisions.push(`${negative} ${barZeroPosition - cellBarPercentage}%`)
+      divisions.push(`${negative} ${barZeroPosition}%`)
+      divisions.push(`transparent ${barZeroPosition}%`)
     } else {
-      cssStyle.backgroundColor = positive
+      divisions.push(`transparent ${barZeroPosition}%`)
+      divisions.push(`${positive} ${barZeroPosition}%`)
+      divisions.push(`${positive} ${barZeroPosition + cellBarPercentage}%`)
+      divisions.push(`transparent ${barZeroPosition + cellBarPercentage}%`)
     }
+    divisions.push('transparent 100%')
+
+    cssStyle.background = `linear-gradient(90deg, ${divisions.join(',')})`
     return cssStyle
   }
 
   public render () {
-    const { data } = this.props
+    const { data, chartStyles, height } = this.props
+    const { headerFixed, withPaging } = chartStyles.table
     const { pagination, columns, headerHeight } = this.state
     const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
-    const scroll = { x: 1300, y: headerHeight }
+    const scroll: TableProps<any>['scroll'] = { x: '130%' }
+    const tableStyle: React.CSSProperties = {}
+    if (headerFixed) {
+      scroll.y = headerHeight
+    } else {
+      tableStyle.height = 500
+    }
 
     return (
       <AntTable
         key={key}
+        style={tableStyle}
         className={styles.table}
         ref={(f) => this.table = f}
         dataSource={data}
         columns={columns}
-        pagination={pagination}
+        pagination={withPaging && pagination}
         scroll={scroll}
         bordered
       />

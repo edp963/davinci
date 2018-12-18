@@ -110,7 +110,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         cache: false,
         expired: 300,
         mode: 'pivot',
-        model: {}
+        model: {},
+        onPaginationChange: this.paginationChange
       }
     }
   }
@@ -198,6 +199,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.setState({
       widgetProps: {
         ...widgetProps,
+        onPaginationChange: this.paginationChange,
         data
       }
     })
@@ -254,6 +256,20 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     sessionStorage.removeItem('editWidgetFromDashboard')
     sessionStorage.removeItem('editWidgetFromDisplay')
     this.props.router.goBack()
+  }
+
+  private paginationChange = (pageNo: number, pageSize: number) => {
+    const { widgetProps } = this.state
+    this.setState({
+      widgetProps: {
+        ...widgetProps,
+        pagination: {
+          ...widgetProps.pagination,
+          pageNo,
+          pageSize
+        }
+      }
+    })
   }
 
   public render () {
