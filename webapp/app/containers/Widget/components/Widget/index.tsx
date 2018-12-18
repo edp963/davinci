@@ -79,6 +79,7 @@ export interface IChartInfo {
 export interface IPaginationParams {
   pageNo: number
   pageSize: number
+  totalCount: number
   withPaging: boolean
 }
 

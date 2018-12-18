@@ -99,6 +99,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       currentWidgetConfig: null,
       widgetProps: {
         data: [],
+        pagination: {
+          pageNo: 0,
+          pageSize: 0,
+          totalCount: 0,
+          withPaging: false
+        },
         cols: [],
         rows: [],
         metrics: [],

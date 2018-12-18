@@ -21,12 +21,12 @@
 import * as React from 'react'
 import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
-import * as moment from 'moment'
 import { IChartProps } from './'
 import { IChartStyles } from '../Widget'
 import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditionStyle } from '../Workbench/ConfigSections/TableSection'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
+import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
 import Message from 'antd/lib/message'
@@ -60,12 +60,6 @@ interface ITableStates {
   pagination: {
     current: number
     pageSize: number
-    pageSizeOptions: string[]
-    showQuickJumper: boolean
-    showSizeChanger: boolean
-    showTotal: (total: number) => string
-    onChange: (current: number, pageSize: number) => void
-    onShowSizeChange: (current: number, pageSize: number) => void
     simple: boolean
     total: number
   }
@@ -78,26 +72,34 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   private table
   private defaultColumnWidth = 250
 
+  private onPaginationChange = (current: number, pageSize: number) => {
+    const { pagination } = this.state
+    if (pageSize !== pagination.pageSize) {
+      current = 1
+    }
+    const { onPaginationChange } = this.props
+    onPaginationChange(current, pageSize)
+  }
+
+  private basePagination: PaginationConfig = {
+    pageSizeOptions: TABLE_PAGE_SIZES.map((s) => s.toString()),
+    showQuickJumper: true,
+    showSizeChanger: true,
+    showTotal: (total: number) => `共${total}条`,
+    onChange: this.onPaginationChange,
+    onShowSizeChange: this.onPaginationChange
+  }
+
   constructor (props: IChartProps) {
     super(props)
     const { chartStyles, data } = props
     const mapMetaConfig = this.getMapMetaConfig(props)
     const columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
     this.setFixedColumns(columns, chartStyles)
+    const pagination = this.getPaginationOptions(props)
     this.state = {
       columns,
-      pagination: {
-        current: 0,
-        pageSize: chartStyles.table ? +chartStyles.table.pageSize : 0,
-        pageSizeOptions: TABLE_PAGE_SIZES.map((s) => s.toString()),
-        showQuickJumper: true,
-        showSizeChanger: true,
-        showTotal: (total: number) => `共${total}条`,
-        onChange: this.onPaginationChange,
-        onShowSizeChange: this.onPaginationChange,
-        simple: false,
-        total: props.data.length
-      },
+      pagination,
       mapMetaConfig,
       headerHeight: 0
     }
@@ -133,17 +135,14 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   public componentWillReceiveProps (nextProps: IChartProps) {
-    const { chartStyles, width, data } = nextProps
+    const { chartStyles, data } = nextProps
     let { columns, pagination } = this.state
     const mapMetaConfig = this.getMapMetaConfig(nextProps)
-    if (chartStyles !== this.props.chartStyles) {
+    if (chartStyles !== this.props.chartStyles || data !== this.props.data) {
       columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
       this.setFixedColumns(columns, chartStyles)
-      pagination = {
-        ...pagination,
-        ...this.getPaginationOptions(nextProps)
-      }
     }
+    pagination = this.getPaginationOptions(nextProps)
     this.setState({
       mapMetaConfig,
       columns,
@@ -152,27 +151,17 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getPaginationOptions (props: IChartProps) {
-    const { chartStyles, width } = props
-    const { pageSize } = chartStyles.table
+    const { chartStyles, width, pagination } = props
+    const { pageNo, pageSize, totalCount } = pagination
+    const { pageSize: initialPageSize } = chartStyles.table
 
-    const pagination: Partial<ITableStates['pagination']> = {
-      showSizeChanger: true,
-      pageSize: +pageSize
+    const paginationOptions: ITableStates['pagination'] = {
+      current: pageNo,
+      pageSize: pageSize || +initialPageSize,
+      total: totalCount,
+      simple: width <= 768
     }
-    pagination.simple = width <= 768
-    return pagination
-  }
-
-  private onPaginationChange = (current: number, pageSize: number) => {
-    this.setState({
-      pagination: {
-        ...this.state.pagination,
-        pageSize,
-        current
-      }
-    })
-    const { onPaginationChange } = this.props
-    onPaginationChange(current, pageSize)
+    return paginationOptions
   }
 
   private getMapMetaConfig (props: IChartProps) {
@@ -562,6 +551,10 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { data, chartStyles, height } = this.props
     const { headerFixed, withPaging } = chartStyles.table
     const { pagination, columns, headerHeight } = this.state
+    const paginationConfig: PaginationConfig = {
+      ...this.basePagination,
+      ...pagination
+    }
     const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
     const scroll: TableProps<any>['scroll'] = { x: '130%' }
     const tableStyle: React.CSSProperties = {}
@@ -579,7 +572,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         ref={(f) => this.table = f}
         dataSource={data}
         columns={columns}
-        pagination={withPaging && pagination}
+        pagination={withPaging && paginationConfig}
         scroll={scroll}
         bordered
       />

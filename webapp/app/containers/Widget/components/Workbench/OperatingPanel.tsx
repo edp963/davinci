@@ -123,7 +123,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         filters: { title: '筛选', type: 'all', items: [] }
       },
       specificParams: {},
-      pagination: { pageNo: 0, pageSize: 0, withPaging: false },
+      pagination: { pageNo: 0, pageSize: 0, withPaging: false, totalCount: 0 },
       styleParams: {},
       modalCachedData: null,
       modalCallback: null,
@@ -595,11 +595,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  private getVisualData = (commonParams, specificParams, styleParams, pagination?: IPaginationParams, renderType?) => {
+  private getVisualData = (commonParams, specificParams, styleParams, renderType?) => {
     const { cols, rows, metrics, filters } = commonParams
     const { color, label, size, xAxis, tip, yAxis } = specificParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
-    const { mode, chartModeSelectedChart } = this.state
+    const { mode, chartModeSelectedChart, pagination } = this.state
     let groups = cols.items.map((c) => c.name)
       .concat(rows.items.map((r) => r.name))
       .filter((g) => g !== '指标名称')
@@ -663,13 +663,18 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         }
       })
 
-    if (!pagination && styleParams.table) {
-      const { withPaging, pageSize } = styleParams.table
-      pagination = {
-        withPaging,
-        pageNo: 1,
-        pageSize: +pageSize
+    let noAggregators = false
+    if (styleParams.table) { // @FIXME pagination in table style config
+      const { withPaging, pageSize, withNoAggregators } = styleParams.table
+      noAggregators = withNoAggregators
+      if (withPaging) {
+        pagination.pageNo = 1
+        pagination.pageSize = +pageSize
+      } else {
+        pagination.pageNo = 0
+        pagination.pageSize = 0
       }
+      pagination.withPaging = withPaging
     }
 
     const requestParams = {
@@ -677,7 +682,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       aggregators,
       filters: filters.items.map((i) => i.config.sql),
       orders,
-      ...pagination,
+      pageNo: pagination.pageNo,
+      pageSize: pagination.pageSize,
+      nativeQuery: noAggregators,
       cache: false,
       expired: 0
     }
@@ -701,7 +708,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     if (selectedView && requestParamString !== this.lastRequestParamString) {
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (result) => {
-        const { resultList: data } = result
+        const { resultList: data, pageNo, pageSize, totalCount } = result
+        const updatedPagination = {
+          ...pagination,
+          pageNo,
+          pageSize,
+          totalCount
+        }
         if (data.length) {
           onSetWidgetProps({
             cols: cols.items.map((item) => ({...item})),
@@ -717,6 +730,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             chartStyles: styleParams,
             selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             data,
+            pagination: updatedPagination,
             dimetionAxis: this.getDimetionAxis(selectedCharts),
             renderType: renderType || 'rerender',
             orders,
@@ -730,6 +744,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             metrics: [],
             filters: [],
             data: [],
+            pagination: updatedPagination,
             chartStyles: styleParams,
             selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
             dimetionAxis: this.getDimetionAxis([getPivot()]),
@@ -741,6 +756,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         }
         this.setState({
           commonParams,
+          pagination: updatedPagination,
           ...this.getChartDataConfig(selectedCharts),
           chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0]
         })
@@ -751,6 +767,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         rows: rows.items.map((item) => ({...item})),
         metrics: metrics.items.map((item) => ({...item})),
         filters: filters.items,
+        pagination,
         ...color && {color},
         ...label && {label},
         ...size && {size},
@@ -767,6 +784,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       })
       this.setState({
         commonParams,
+        pagination,
         ...this.getChartDataConfig(selectedCharts),
         chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0]
       })
@@ -878,7 +896,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {
-    const { mode, commonParams, specificParams, pagination, styleParams } = this.state
+    const { mode, commonParams, specificParams, styleParams } = this.state
     const { color, size } = specificParams
     switch (name) {
       case 'color':
@@ -899,25 +917,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           size.value[key] = value
         }
     }
-    this.getVisualData(commonParams, specificParams, styleParams, pagination, 'refresh')
+    this.getVisualData(commonParams, specificParams, styleParams, 'refresh')
   }
 
   private styleChange = (name) => (prop, value) => {
-    const { commonParams, specificParams, styleParams, pagination, chartModeSelectedChart } = this.state
+    const { commonParams, specificParams, styleParams, chartModeSelectedChart } = this.state
     styleParams[name][prop] = value
-    if (styleParams.table) { // @FIXME pagination in table style config
-      const { withPaging, pageSize } = styleParams.table
-      if (withPaging) {
-        if (+pageSize !== pagination.pageSize) {
-          pagination.pageNo = 1
-        }
-        pagination.pageSize = +pageSize
-      } else {
-        pagination.pageSize = 0
-        pagination.pageNo = 0
-      }
-      pagination.withPaging = withPaging
-    }
     let renderType = 'clear'
     switch (prop) {
       case 'layerType':
@@ -927,7 +932,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         renderType = 'clear'
         break
     }
-    this.getVisualData(commonParams, specificParams, styleParams, pagination, renderType)
+    this.getVisualData(commonParams, specificParams, styleParams, renderType)
     const { layerType } = styleParams.spec
     // chartModeSelectedChart.style.spec.layerType = layerType
   }

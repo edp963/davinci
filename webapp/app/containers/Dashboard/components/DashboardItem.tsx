@@ -31,7 +31,7 @@ import DataDrillHistory from '../../../components/DataDrill/History'
 import {IView, IModel} from '../../../containers/Widget/components/Workbench/index'
 
 import Widget from '../../Widget/components/Widget/WidgetInViz'
-import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import { IWidgetProps, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import Icon, { IconProps } from 'antd/lib/icon'
 import Tooltip from 'antd/lib/tooltip'
 import Popconfirm from 'antd/lib/popconfirm'
@@ -84,6 +84,7 @@ interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
   widgetProps: IWidgetProps
+  pagination: IPaginationParams
   model: IModel
   isDrilling: boolean
   dataDrillPanelPosition: boolean | object
@@ -100,6 +101,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible: false,
       sharePanelAuthorized: false,
       widgetProps: null,
+      pagination: null,
       model: null,
       isDrilling: false,
       dataDrillPanelPosition: false,
@@ -118,26 +120,36 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private container: HTMLDivElement = null
 
   public componentWillMount () {
-    const { itemId, widget, view, onGetChartData, container } = this.props
+    const { itemId, widget, view, onGetChartData, container, datasource } = this.props
+    const widgetProps = JSON.parse(widget.config)
+    const pagination = this.getPagination(widgetProps, datasource)
     if (container === 'share') {
-      onGetChartData('clear', itemId, widget.id)
+      onGetChartData('clear', itemId, widget.id, { pagination })
       this.setFrequent(this.props)
     }
-    const widgetProps = JSON.parse(widget.config)
     this.setState({
       widgetProps,
+      pagination,
       model: JSON.parse(view.model),
       cacheWidgetProps: {...widgetProps}
     })
   }
 
-  public componentWillReceiveProps (nextProps) {
-    if (nextProps.widget !== this.props.widget) {
-      this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config),
-        model: JSON.parse(nextProps.view.model)
-      })
+  public componentWillReceiveProps (nextProps: IDashboardItemProps) {
+    const { widget } = this.props
+    let { widgetProps, pagination, model } = this.state
+
+    if (nextProps.widget !== widget) {
+      widgetProps = JSON.parse(nextProps.widget.config)
+      model = JSON.parse(nextProps.view.model)
     }
+    pagination = this.getPagination(widgetProps, nextProps.datasource)
+
+    this.setState({
+      widgetProps,
+      pagination,
+      model
+    })
   }
 
   public componentWillUpdate (nextProps: IDashboardItemProps) {
@@ -150,10 +162,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       rendered,
       container
     } = nextProps
+    const { pagination } = this.state
 
     if (!container) {
       if (!this.props.rendered && rendered) {
-        onGetChartData('clear', itemId, widget.id)
+        onGetChartData('clear', itemId, widget.id, { pagination })
         this.setFrequent(this.props)
       }
     }
@@ -165,6 +178,22 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public componentWillUnmount () {
     clearInterval(this.frequent)
+  }
+
+  // @FIXME need refactor
+  private getPagination = (widgetProps: IWidgetProps, datasource) => {
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (!table) { return null }
+
+    const { withPaging, pageSize } = table
+    const pagination: IPaginationParams = {
+      withPaging,
+      pageSize: datasource.pageSize || +pageSize,
+      pageNo: datasource.pageNo || 1,
+      totalCount: datasource.totalCount || 0
+    }
+    return pagination
   }
 
   private setFrequent = (props: IDashboardItemProps) => {
@@ -179,8 +208,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     clearInterval(this.frequent)
 
     if (polling) {
+      const { pagination } = this.state
       this.frequent = window.setInterval(() => {
-        onGetChartData('refresh', itemId, widget.id)
+        onGetChartData('refresh', itemId, widget.id, { pagination })
       }, Number(frequency) * 1000)
     }
   }
@@ -191,8 +221,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       onGetChartData
     } = this.props
+    const { pagination } = this.state
 
-    onGetChartData('refresh', itemId, widget.id)
+    onGetChartData('refresh', itemId, widget.id, { pagination })
   }
 
   private onControlSearch = (queryParams) => {
@@ -201,8 +232,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       onGetChartData
     } = this.props
+    const { pagination } = this.state
 
-    onGetChartData('clear', itemId, widget.id, queryParams)
+    onGetChartData('clear', itemId, widget.id, { ...queryParams, pagination })
   }
 
   private toggleControlPanel = () => {
@@ -256,8 +288,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   private paginationChange = (pageNo: number, pageSize: number) => {
     const { onGetChartData, itemId, widget } = this.props
-    const pagination = { pageNo, pageSize }
-    onGetChartData('clear', itemId, widget.id, pagination)
+    let { pagination } = this.state
+    pagination = {
+      ...pagination,
+      pageNo,
+      pageSize
+    }
+    onGetChartData('clear', itemId, widget.id, { pagination })
   }
 
   private turnOffInteract = () => {
@@ -271,6 +308,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       const { onSelectDrillHistory, itemId, widget, onGetChartData } = this.props
       if (isDrilling) {
         onSelectDrillHistory(false, -1, itemId, widget.id)
+        // @FIXME pagination in drill
         this.setState({widgetProps: cacheWidgetProps}, () => onGetChartData('rerender', itemId, widget.id))
       }
     })
@@ -403,6 +441,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
+      pagination,
       isDrilling,
       model
     } = this.state
@@ -638,6 +677,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             {...widgetProps}
             renderType={loading ? 'refresh' : renderType}
             data={data}
+            pagination={pagination}
             loading={loading}
             model={model}
             onCheckTableInteract={this.checkTableInteract}
