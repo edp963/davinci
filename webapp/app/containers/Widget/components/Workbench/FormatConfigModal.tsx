@@ -1,21 +1,21 @@
 import * as React from 'react'
 import { fromJS } from 'immutable'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import { NumericUnit, FieldFormatTypes, AvailableFieldFormatTypes } from '../util'
 
-const Form = require('antd/lib/form')
+import Form from 'antd/lib/form'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Radio = require('antd/lib/radio/radio')
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import Radio from 'antd/lib/radio/radio'
 const RadioGroup = Radio.Group
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import Checkbox from 'antd/lib/checkbox'
+import Select from 'antd/lib/select'
 const { Option } = Select
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
 
 export const NumericUnitList = [
   NumericUnit.None,

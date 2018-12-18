@@ -1,12 +1,12 @@
 import * as React from 'react'
 import { FormComponentProps } from 'antd/lib/form/Form'
 
-const Form = require('antd/lib/form')
+import Form from 'antd/lib/form'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
+import Input from 'antd/lib/input'
 const { TextArea } = Input
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import Button from 'antd/lib/button'
+import Modal from 'antd/lib/modal'
 
 const styles = require('./Workbench.less')
 

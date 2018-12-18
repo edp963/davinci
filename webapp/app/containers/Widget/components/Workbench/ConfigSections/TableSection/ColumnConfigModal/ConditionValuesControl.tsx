@@ -3,24 +3,24 @@ import * as classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import OperatorTypes from 'utils/operatorTypes'
 
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Modal = require('antd/lib/modal')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const DatePicker = require('antd/lib/date-picker')
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Modal from 'antd/lib/modal'
+import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
+import DatePicker from 'antd/lib/date-picker'
 const Search = Input.Search
-const Button = require('antd/lib/button')
-const Radio = require('antd/lib/radio')
+import Button from 'antd/lib/button'
+import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import Checkbox from 'antd/lib/checkbox'
+import Select from 'antd/lib/select'
 const Option = Select.Option
-const Tag = require('antd/lib/tag')
-const Table = require('antd/lib/table')
-const Message = require('antd/lib/message')
+import Tag from 'antd/lib/tag'
+import Table from 'antd/lib/table'
+import Message from 'antd/lib/message'
 
 const styles = require('../TableSection.less')
 
@@ -132,10 +132,10 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
         control = (<Input value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
         break
       case 'number':
-        control = (<InputNumber value={localValues[idx]} onChange={this.localValuesChange(idx)} />)
+        control = (<InputNumber value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
         break
       case 'date':
-        control = (<DatePicker value={localValues[idx]} onChange={this.localValuesChange(idx)} />)
+        control = (<DatePicker value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
         break
     }
 
@@ -205,7 +205,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
               type="text"
               size="small"
               className={styles.tagInput}
-              value={tagInputValue}
+              value={(tagInputValue as string)}
               onChange={this.tagInputValueChange}
               onBlur={this.addTag}
               onPressEnter={this.addTag}
@@ -218,7 +218,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
               key="inputNumber"
               size="small"
               className={styles.tagInput}
-              value={tagInputValue}
+              value={(tagInputValue as number)}
               onChange={this.tagInputValueChange}
             />
           )
@@ -229,7 +229,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
               key="datePicker"
               size="small"
               className={styles.tagInput}
-              value={tagInputValue}
+              value={(tagInputValue as Moment)}
               onChange={this.tagInputValueChange}
             />
           )
