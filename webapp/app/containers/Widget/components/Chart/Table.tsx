@@ -165,7 +165,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getMapMetaConfig (props: IChartProps) {
-    const { cols, rows, metrics } = props
+    const { cols, rows, metrics, chartStyles } = props
+    const { withNoAggregators } = chartStyles.table
     const map: IMapMetaConfig = {}
     cols.concat(rows).forEach((item) => {
       const { name, format, field } = item
@@ -173,7 +174,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     })
     metrics.forEach((item) => {
       const { name, agg, format, field } = item
-      const expression = `${agg}(${decodeMetricName(name)})`
+      let expression = decodeMetricName(name)
+      expression = withNoAggregators ? expression : `${agg}(${expression})`
       map[name] = { name, format, field, expression }
     })
     return map
