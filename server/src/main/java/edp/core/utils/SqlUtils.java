@@ -147,10 +147,13 @@ public class SqlUtils {
                     try {
                         resultSet.last();
                         total = resultSet.getRow();
-                        resultSet.first();
                     } catch (SQLException e) {
                         String countSql = getCountSql(finalSql);
                         total = jdbcTemplate.queryForObject(countSql, Integer.class);
+                    }
+
+                    if (!resultSet.isBeforeFirst()) {
+                        resultSet.beforeFirst();
                     }
 
                     if (limit > 0) {

@@ -67,4 +67,12 @@ public class RedisUtils {
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         return valueOperations.get(key);
     }
+
+    public boolean hasKey(String key) {
+        return null != redisTemplate && redisTemplate.hasKey(key);
+    }
+
+    public boolean delete(String key) {
+        return null != redisTemplate && redisTemplate.delete(key);
+    }
 }
