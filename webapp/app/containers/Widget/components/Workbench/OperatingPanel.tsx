@@ -709,7 +709,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (result) => {
         const { resultList: data, pageNo, pageSize, totalCount } = result
-        const updatedPagination = {
+        const updatedPagination = !pagination.withPaging ? pagination : {
           ...pagination,
           pageNo,
           pageSize,
@@ -816,7 +816,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     } else {
       this.setState({
-        chartModeSelectedChart: chart
+        chartModeSelectedChart: chart,
+        pagination: { pageNo: 0, pageSize: 0, withPaging: false, totalCount: 0 }
       }, () => {
         const { specificParams, styleParams } = this.getChartDataConfig([chart])
         this.getVisualData(commonParams, specificParams, styleParams)
