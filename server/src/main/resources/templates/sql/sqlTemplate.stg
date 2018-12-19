@@ -56,7 +56,7 @@ SELECT * FROM <tableName>
 >>
 
 
-querySql(groups, aggregators, filters, orders, sql, keywordPrefix, keywordSuffix)
+querySql(nativeQuery, groups, aggregators, filters, orders, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(!groups && !aggregators && !filters && !orders)>
 <sql>
@@ -70,17 +70,27 @@ SELECT
 <endif>
 <if(groups && aggregators)>,<endif>
 <if(aggregators)>
+<if(nativeQuery)>
+ <aggregators:{agg|<if(agg)><if(keywordPrefix && keywordSuffix)><keywordPrefix><agg.column><keywordSuffix><else><agg.column><endif><endif>}; separator=",">
+<else>
  <aggregators:{agg|<if(agg)><agg><endif>}; separator=",">
+<endif>
 <endif>
 FROM (<sql>) T
 <if(filters)>
 WHERE <filters:{filter|<if(filter)><filter><endif>}; separator=" AND ">
 <endif>
 <if(groups)>
+<if(!nativeQuery)>
 GROUP BY <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><group><keywordSuffix><else><group><endif>}; separator=",">
 <endif>
+<endif>
 <if(orders)>
+<if(nativeQuery)>
+ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)><keywordPrefix><order.column><keywordSuffix><else><order.column><endif> <order.direction><endif>}; separator=",">
+<else>
 ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=",">
+<endif>
 <endif>
 <endif>
 >>
