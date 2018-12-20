@@ -23,7 +23,7 @@ import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading'
 export type WidgetMode = 'pivot' | 'chart'
 
 export interface IWidgetDimension {
@@ -36,6 +36,13 @@ export interface IWidgetMetric {
   name: string
   agg: AggregatorType
   chart: IChartInfo
+  field: IFieldConfig
+  format: IFieldFormatConfig
+}
+
+export interface IWidgetSecondaryMetric {
+  name: string
+  agg: AggregatorType
   field: IFieldConfig
   format: IFieldFormatConfig
 }
@@ -88,6 +95,7 @@ export interface IWidgetProps {
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
   metrics: IWidgetMetric[]
+  secondaryMetrics?: IWidgetSecondaryMetric[]
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
@@ -100,9 +108,6 @@ export interface IWidgetProps {
   dimetionAxis?: DimetionType
   renderType?: RenderType
   orders: Array<{column: string, direction: string}>
-  queryParams: any[]
-  cache: boolean
-  expired: number
   mode: WidgetMode
   model: IModel
   pagination?: IPaginationParams
@@ -111,7 +116,14 @@ export interface IWidgetProps {
   getDataDrillDetail?: (position: string) => void
   onPaginationChange?: (pageNo: number, pageSize: number) => void
   isDrilling?: boolean
+  whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
+}
+
+export interface IWdigetConfig extends IWidgetProps {
+  queryParams: any[]
+  cache: boolean
+  expired: number
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {

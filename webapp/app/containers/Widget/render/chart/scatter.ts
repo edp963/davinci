@@ -34,7 +34,7 @@ import {
 } from './util'
 import { PIVOT_DEFAULT_SCATTER_SIZE } from '../../../../globalConstants'
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     data,
     cols,
@@ -197,7 +197,57 @@ export default function (chartProps: IChartProps) {
   //     }
   //   }]
   // }
-
+  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const brushedOptions = isDrilling === true ? {
+    brush: {
+      toolbox: ['rect', 'polygon', 'keep', 'clear'],
+      throttleType: 'debounce',
+      throttleDelay: 300,
+      brushStyle: {
+        borderWidth: 1,
+        color: 'rgba(255,255,255,0.2)',
+        borderColor: 'rgba(120,140,180,0.6)'
+      }
+    }
+  } : null
+  if (isDrilling) {
+    //  instance.off('brushselected')
+     // instance.on('brushselected', brushselected)
+      setTimeout(() => {
+          instance.dispatchAction({
+          type: 'takeGlobalCursor',
+          key: 'brush',
+          brushOption: {
+            brushType: 'rect',
+            brushMode: 'multiple'
+          }
+        })
+      }, 0)
+    }
+  function brushselected (params) {
+    console.log({params})
+  //  console.log({seriesData})
+    const brushComponent = params.batch[0]
+    const brushed = []
+    const sourceData = seriesData[0]
+    let range: any[] = []
+    if (brushComponent && brushComponent.areas && brushComponent.areas.length) {
+      brushComponent.areas.forEach((area) => {
+        range = range.concat(area.range)
+      })
+    }
+    if (brushComponent && brushComponent.selected && brushComponent.selected.length) {
+      for (let i = 0; i < brushComponent.selected.length; i++) {
+        const rawIndices = brushComponent.selected[i].dataIndex
+        const seriesIndex = brushComponent.selected[i].seriesIndex
+        brushed.push({[i]: rawIndices})
+      }
+    }
+   // console.log({sourceData})
+    if (getDataDrillDetail) {
+      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+    }
+  }
   const xAxisSplitLineConfig = {
     showLine: showVerticalLine,
     lineColor: verticalLineColor,
@@ -220,6 +270,8 @@ export default function (chartProps: IChartProps) {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, false, yAxis)
+    grid: getGridPositions(legend, seriesNames, false, yAxis),
+    ...drillOptions
+    //...brushedOptions
   }
 }

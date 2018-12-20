@@ -589,3 +589,73 @@
     }
   }
 }
+
+.drillPathSetting {
+  margin: 16px 0 0 0;
+  .drillStyle {
+    margin-bottom:16px;
+    .label  {
+      margin-right: 24px;
+    }
+  }
+  .path {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    .pathNodeWrap{
+      .pathNode{
+        width: 240px;
+        display: flex;
+        .pathBox {
+          width: 140px;
+          padding: 4px 8px 0 8px;
+          flex: 0 0 auto;
+          border: 1px solid #d9d9d9;
+          border-radius: 4px;
+          .delete{
+            height: 8px;
+            i {
+              display: none;
+            }
+          }
+          .title{
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 8px;
+          }
+          &:hover{
+            i {
+              padding: 4px 0px;
+              text-align: right;
+              display: block;
+              cursor: pointer;
+            }
+          }
+          .errorMessage {
+            margin: 0 0 4px 4px;
+            font-weight: 500;
+            color: red;
+          }
+        }
+
+        .relation{
+          width: 60px;
+          margin-left: 20px;
+          align-self: center;
+        }
+      } 
+    }
+    .add{
+      align-self: center;
+      i {
+        font-size: 14px;
+      }
+    }
+  }
+  .footer{
+    text-align: right;
+    button {
+      margin-left: 20px;
+    }
+  }
+}

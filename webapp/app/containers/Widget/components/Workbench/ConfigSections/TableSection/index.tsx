@@ -80,7 +80,7 @@ export interface ITableConfig {
 }
 
 interface ITableSectionProps {
-  commonParams: IDataParams
+  dataParams: IDataParams
   config: ITableConfig
   onChange: (prop: string, value: any) => void
 }
@@ -124,9 +124,9 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   }
 
   private getCurrentTableColumns (props: ITableSectionProps) {
-    const { commonParams } = props
+    const { dataParams } = props
     const keyNames = ['cols', 'metrics', 'rows']
-    const validColumns: IDataParamSource[] = Object.entries(commonParams).reduce((acc, [key, value]) => {
+    const validColumns: IDataParamSource[] = Object.entries(dataParams).reduce((acc, [key, value]) => {
       if (!~keyNames.indexOf(key)) { return acc }
       if (key !== 'metrics') { return acc.concat(value.items) }
 

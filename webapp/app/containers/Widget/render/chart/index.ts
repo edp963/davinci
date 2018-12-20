@@ -34,11 +34,11 @@ import waterfall from './waterfall'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
 
-export default function (type, chartProps: IChartProps): EChartOption {
+export default function (type, chartProps: IChartProps, drillOptions?: any): EChartOption {
   switch (type) {
     case 'line': return line(chartProps)
-    case 'bar': return bar(chartProps)
-    case 'scatter': return scatter(chartProps)
+    case 'bar': return bar(chartProps, drillOptions)
+    case 'scatter': return scatter(chartProps, drillOptions)
     case 'pie': return pie(chartProps)
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
