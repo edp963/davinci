@@ -188,7 +188,6 @@ export class DashboardItemForm extends React.PureComponent<IDashboardItemFormPro
       onWidgetSelect,
       onPollingSelect
     } = this.props
-
     const {
       filteredWidgets,
       pageSize,

@@ -36,7 +36,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     data,
     cols,
@@ -186,7 +186,54 @@ export default function (chartProps: IChartProps) {
       seriesData.push([...data])
     }
   })
-
+  const {isDrilling, getDataDrillDetail, instance } = drillOptions
+  const brushedOptions = isDrilling === true ? {
+    brush: {
+      toolbox: ['rect', 'polygon', 'keep', 'clear'],
+      throttleType: 'debounce',
+      throttleDelay: 300,
+      brushStyle: {
+        borderWidth: 1,
+        color: 'rgba(255,255,255,0.2)',
+        borderColor: 'rgba(120,140,180,0.6)'
+      }
+    }
+  } : null
+  if (isDrilling) {
+    //  instance.off('brushselected')
+      instance.on('brushselected', brushselected)
+      setTimeout(() => {
+          instance.dispatchAction({
+          type: 'takeGlobalCursor',
+          key: 'brush',
+          brushOption: {
+            brushType: 'rect',
+            brushMode: 'multiple'
+          }
+        })
+      }, 0)
+    }
+  function brushselected (params) {
+    const brushComponent = params.batch[0]
+    const brushed = []
+    const sourceData = seriesData[0]
+    let range: any[] = []
+    if (brushComponent && brushComponent.areas && brushComponent.areas.length) {
+      brushComponent.areas.forEach((area) => {
+        range = range.concat(area.range)
+      })
+    }
+    if (brushComponent && brushComponent.selected && brushComponent.selected.length) {
+      for (let i = 0; i < brushComponent.selected.length; i++) {
+        const rawIndices = brushComponent.selected[i].dataIndex
+        const seriesIndex = brushComponent.selected[i].seriesIndex
+        brushed.push({[i]: rawIndices})
+      }
+    }
+    if (getDataDrillDetail) {
+      getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+    }
+  }
   const seriesNames = series.map((s) => s.name)
 
   let legendOption
@@ -240,7 +287,8 @@ export default function (chartProps: IChartProps) {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData),
+    ...brushedOptions
   }
 }
 

@@ -19,7 +19,7 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
   }
 
   private renderChart = (props: IChartProps) => {
-    const { selectedChart, renderType } = props
+    const { selectedChart, renderType, getDataDrillDetail, isDrilling } = props
     if (!this.instance) {
       this.instance = echarts.init(this.container, 'default')
     } else {
@@ -31,12 +31,19 @@ export class Chart extends React.PureComponent<IChartProps, {}> {
         this.instance.clear()
       }
     }
+
     this.instance.setOption(
       chartOptionGenerator(
         chartlibs.find((cl) => cl.id === selectedChart).name,
-        props
+        props,
+        {
+          instance: this.instance,
+          isDrilling,
+          getDataDrillDetail
+        }
       )
     )
+
     this.instance.resize()
   }
 

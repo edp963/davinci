@@ -68,6 +68,7 @@ export interface IPivotProps extends IWidgetProps {
 interface IPivotStates {
   legendSelected: ILegend
   renderType: RenderType
+  cellSelected: object
 }
 
 export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
@@ -75,7 +76,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     super(props)
     this.state = {
       legendSelected: {},
-      renderType: 'rerender'
+      renderType: 'rerender',
+      cellSelected: {}
     }
   }
 
@@ -130,7 +132,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public columnFooter: HTMLElement = null
 
   public componentWillReceiveProps (nextProps) {
-    const { renderType, color } = nextProps
+    const { renderType, color, isDrilling } = nextProps
     const { legendSelected } = this.state
     this.setState({
       renderType,
@@ -138,6 +140,21 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
         ? {}
         : legendSelected
     })
+    if (isDrilling === false) {
+      this.setState({
+        cellSelected: {}
+      })
+    }
+    if (nextProps.data !== this.props.data) {
+      this.setState({
+        cellSelected: {}
+      })
+    }
+  }
+
+  public shouldComponentUpdate (nextProps: IPivotProps) {
+    const { renderType } = nextProps
+    return renderType === 'loading' ? false : true
   }
 
   public componentWillUpdate (nextProps: IPivotProps) {
@@ -521,6 +538,36 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     return 0
   }
 
+  private ifSelectedTdToDrill = (obj) => {
+    const {getDataDrillDetail} = this.props
+    const {cellSelected} = this.state
+    let assignObj = {}
+    const values = Object.values(obj.data)
+    if (values[0]) {
+      assignObj = {
+        ...cellSelected,
+        ...obj.data
+      }
+    } else {
+      const key = Object.keys(obj.data)[0]
+      assignObj = {
+        ...cellSelected
+      }
+      delete assignObj[key]
+    }
+    this.setState({
+      cellSelected: assignObj
+    }, () => {
+      const {cellSelected} = this.state
+      setTimeout(() => {
+        const range = obj.range
+        const brushed = [{0: Object.values(this.state.cellSelected)}]
+        const sourceData = Object.values(this.state.cellSelected)
+        getDataDrillDetail(JSON.stringify({range, brushed, sourceData}))
+      }, 500)
+    })
+  }
+
   public render () {
     const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract, getDataDrillDetail, isDrilling } = this.props
     const { legendSelected, renderType } = this.state
@@ -609,6 +656,8 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
             onDoInteract={onDoInteract}
             getDataDrillDetail={getDataDrillDetail}
             isDrilling={isDrilling}
+            whichDataDrillBrushed={this.props.whichDataDrillBrushed}
+            ifSelectedTdToDrill={this.ifSelectedTdToDrill}
             // onHideDrillPanel={onHideDrillPanel}
             ref={(f) => this.tableBody = findDOMNode(f) as HTMLElement}
           />
