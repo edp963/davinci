@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { TableRowSelection } from 'antd/lib/table/Table'
 import {
   PIVOT_DEFAULT_FONT_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -25,7 +24,7 @@ const RadioButton = Radio.Button
 import Checkbox from 'antd/lib/checkbox'
 import Select from 'antd/lib/select'
 const Option = Select.Option
-import Table from 'antd/lib/table'
+import Table, { TableRowSelection } from 'antd/lib/table'
 import Message from 'antd/lib/message'
 
 import ColorPicker from 'components/ColorPicker'
@@ -284,23 +283,27 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     title: '背景色',
     dataIndex: 'backgroundColor',
     key: 'backgroundColor',
-    width: 55,
+    width: 60,
     render: (_, record: ITableHeaderConfig) => {
       const { style } = record
       const { backgroundColor } = style
       return (
-        <ColorPicker
-          className={styles.color}
-          value={backgroundColor}
-          onChange={this.propChange(record, 'backgroundColor')}
-        />
+        <Row type="flex" justify="center">
+          <Col>
+            <ColorPicker
+              className={styles.color}
+              value={backgroundColor}
+              onChange={this.propChange(record, 'backgroundColor')}
+            />
+          </Col>
+        </Row>
       )
     }
   }, {
     title: '字体',
     dataIndex: 'font',
     key: 'font',
-    width: 250,
+    width: 285,
     render: (_, record: ITableHeaderConfig) => {
       const { style } = record
       const { fontSize, fontFamily, fontColor, fontStyle, fontWeight } = style
@@ -309,6 +312,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
           <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
             <Col span={14}>
               <Select
+                size="small"
                 className={styles.colControl}
                 placeholder="字体"
                 value={fontFamily}
@@ -319,6 +323,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
             </Col>
             <Col span={6}>
               <Select
+                size="small"
                 className={styles.colControl}
                 placeholder="文字大小"
                 value={fontSize}
@@ -338,6 +343,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
           <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
             <Col span={12}>
               <Select
+                size="small"
                 className={styles.colControl}
                 value={fontStyle}
                 onChange={this.propChange(record, 'fontStyle')}
@@ -347,6 +353,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
             </Col>
             <Col span={12}>
               <Select
+                size="small"
                 className={styles.colControl}
                 value={fontWeight}
                 onChange={this.propChange(record, 'fontWeight')}
@@ -362,12 +369,12 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     title: '对齐',
     dataIndex: 'justifyContent',
     key: 'justifyContent',
-    width: 215,
+    width: 180,
     render: (_, record: ITableHeaderConfig) => {
       const { style } = record
       const { justifyContent } = style
       return (
-        <RadioGroup value={justifyContent} onChange={this.propChange(record, 'justifyContent')}>
+        <RadioGroup size="small" value={justifyContent} onChange={this.propChange(record, 'justifyContent')}>
           <RadioButton value="flex-start">左对齐</RadioButton>
           <RadioButton value="center">居中</RadioButton>
           <RadioButton value="flex-end">右对齐</RadioButton>

@@ -143,14 +143,14 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     return (
       <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
         <Col span={6}>颜色：</Col>
-        <Col span={5} className={styles.colColor}>
+        <Col span={6} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={background}
             onChange={this.colorChange('background')}
           /><label>背景</label>
         </Col>
-        <Col span={5} className={styles.colColor}>
+        <Col span={6} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={fore}
@@ -169,29 +169,29 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const { positive, negative, fore } = colors
     return [(
       <Row key="zeroPosition" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={6}>坐标轴位置：</Col>
-        <Col span={18}>
+        <Col span={8}>坐标轴位置：</Col>
+        <Col span={16}>
           <RadioGroup options={this.zeroPositionOptions} onChange={this.propChange('zeroPosition')} value={zeroPosition} />
         </Col>
       </Row>
     ), (
       <Row key="zeroPositionValues" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
         <Col span={6}>颜色：</Col>
-        <Col span={5} className={styles.colColor}>
+        <Col span={6} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={positive}
             onChange={this.colorChange('positive')}
           /><label>正值</label>
         </Col>
-        <Col span={5} className={styles.colColor}>
+        <Col span={6} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={negative}
             onChange={this.colorChange('negative')}
           /><label>负值</label>
         </Col>
-        <Col span={5} className={styles.colColor}>
+        <Col span={6} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={fore}
@@ -280,6 +280,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
             <Col span={6}>样式类型：</Col>
             <Col span={18}>
               <Select
+                size="small"
                 className={styles.colControl}
                 value={type}
                 onChange={this.propChange('type')}
@@ -292,6 +293,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
             <Col span={6}>关系：</Col>
             <Col span={18}>
               <Select
+                size="small"
                 className={styles.colControl}
                 value={operatorType}
                 onChange={this.propChange('operatorType')}

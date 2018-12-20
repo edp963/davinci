@@ -3,7 +3,7 @@ import { uuid } from 'utils/util'
 import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
 import { ViewModelType, IDataParamSource } from '../../Dropbox'
-import { decodeMetricName } from 'containers/Widget/components/util'
+import { decodeMetricName, getAggregatorLocale } from 'containers/Widget/components/util'
 import {
   fontSizeOptions,
   TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
@@ -132,7 +132,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
       return acc.concat(value.items.map((item) => ({
         ...item,
-        alias: (item.field && item.field.alias) || decodeMetricName(item.name)
+        alias: this.getColumnDisplayName(item)
       })))
     }, [])
     return validColumns
@@ -151,7 +151,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       localHeaderConfig.push({
         key: uuid(5),
         headerName: c.name,
-        alias: c.field && c.field.alias || decodeMetricName(c.name),
+        alias: this.getColumnDisplayName(c),
         visualType: c.visualType,
         isGroup: false,
         style: { ...DefaultTableCellStyle },
@@ -169,11 +169,13 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     validColumns.forEach((column) => {
       const existedConfig = config.columnsConfig.find((item) => item.columnName === column.name)
       if (existedConfig) {
+        existedConfig.alias = this.getColumnDisplayName(column)
+        existedConfig.visualType = column.visualType
         validColumnConfig.push(existedConfig)
       } else {
         validColumnConfig.push({
           columnName: column.name,
-          alias: column.field && column.field.alias || decodeMetricName(column.name),
+          alias: this.getColumnDisplayName(column),
           visualType: column.visualType,
           styleType: TableCellStyleTypes.Column,
           style: { ...DefaultTableCellStyle },
@@ -198,6 +200,9 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           parent.children.splice(parent.children.findIndex((c) => c.headerName === headerName), 1)
         }
       } else {
+        const column = validColumns[idx]
+        cursorConfig.alias = this.getColumnDisplayName(column)
+        cursorConfig.visualType = column.visualType
         validColumns.splice(idx, 1)
       }
       return
@@ -217,6 +222,16 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
   private checkboxChange = (name) => (e) => {
     this.props.onChange(name, e.target.checked)
+  }
+
+  private deleteHeaderConfig = () => {
+    const { onChange } = this.props
+    Modal.confirm({
+      title: '确认删除表头样式与分组？',
+      onOk: () => {
+        onChange('headerConfig', [])
+      }
+    })
   }
 
   private showHeaderConfig = () => {
@@ -246,6 +261,16 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     })
   }
 
+  private deleteColumnConfig = () => {
+    const { onChange } = this.props
+    Modal.confirm({
+      title: '确认删除单元格样式与条件？',
+      onOk: () => {
+        onChange('columnsConfig', [])
+      }
+    })
+  }
+
   private showColumnConfig = () => {
     this.setState({
       columnConfigModalVisible: true
@@ -266,11 +291,24 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     })
   }
 
+  private getColumnDisplayName (column: IDataParamSource) {
+    let displayName
+    if (column.field) {
+      displayName = column.field.alias
+    }
+    if (displayName) { return displayName }
+    displayName = column.name
+    if (column.agg) {
+      displayName = `[${getAggregatorLocale(column.agg)}]${decodeMetricName(displayName)}`
+    }
+    return displayName
+  }
+
   private getValidFixedColumns (headerConfig: ITableHeaderConfig[], columns: IDataParamSource[]) {
     let options: JSX.Element[]
     if (!headerConfig.length) {
       options = columns.map((c) => {
-        const displayName = (c.field && c.field.alias) || c.name
+        const displayName = this.getColumnDisplayName(c)
         return (<Option key={c.name} value={c.name}>{displayName}</Option>)
       })
     } else {
@@ -280,7 +318,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           displayName = c.headerName
         } else {
           const column = columns.find((column) => column.name === c.headerName)
-          displayName = (column.field && column.field.alias) || column.name
+          displayName = this.getColumnDisplayName(column)
         }
         return (<Option key={c.headerName} value={c.headerName}>{displayName}</Option>)
       })
@@ -304,12 +342,14 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         <div className={styles.paneBlock}>
           <h4>
             <span>表头样式与分组</span>
+            <Icon type="delete" onClick={this.deleteHeaderConfig} />
             <Icon type="edit" onClick={this.showHeaderConfig} />
           </h4>
         </div>
         <div className={styles.paneBlock}>
           <h4>
             <span>单元格样式与条件</span>
+            <Icon type="delete" onClick={this.deleteColumnConfig} />
             <Icon type="edit" onClick={this.showColumnConfig} />
           </h4>
         </div>
@@ -325,7 +365,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         <div className={styles.paneBlock}>
           <h4>左固定列</h4>
           <div className={styles.blockBody}>
-            <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
               <Col span={24}>
                 <Select
                   className={styles.blockElm}
@@ -342,7 +382,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         <div className={styles.paneBlock}>
           <h4>右固定列</h4>
           <div className={styles.blockBody}>
-            <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
               <Col span={24}>
                 <Select
                   className={styles.blockElm}
@@ -373,15 +413,16 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
           <h4>分页</h4>
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-              <Col span={14}>
+              <Col span={12}>
                 <RadioGroup size="small" value={withPaging} onChange={this.switchChange('withPaging')}>
                   <RadioButton value={true}>开启</RadioButton>
                   <RadioButton value={false}>关闭</RadioButton>
                 </RadioGroup>
               </Col>
               {!withPaging ? null :
-                <Col span={10}>
+                <Col span={12}>
                   <Select
+                    size="small"
                     className={styles.blockElm}
                     value={pageSize}
                     onChange={this.selectChange('pageSize')}

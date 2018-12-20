@@ -27,7 +27,7 @@ import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditio
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
-import AntTable, { TableProps } from 'antd/lib/table'
+import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
 import Message from 'antd/lib/message'
 const Option = Select.Option
@@ -56,21 +56,21 @@ interface IMapMetaConfig {
 }
 
 interface ITableStates {
-  columns: any[]
+  columns: Array<ColumnProps<any>>
   pagination: {
     current: number
     pageSize: number
     simple: boolean
     total: number
   }
-  mapMetaConfig: object
-  headerHeight: number
+  mapMetaConfig: IMapMetaConfig
+  tableBodyHeight: number
 }
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table
-  private defaultColumnWidth = 250
+  private defaultColumnWidth = 200
 
   private onPaginationChange = (current: number, pageSize: number) => {
     const { pagination } = this.state
@@ -92,54 +92,55 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   constructor (props: IChartProps) {
     super(props)
-    const { chartStyles, data } = props
+    const { chartStyles, data, width } = props
     const mapMetaConfig = this.getMapMetaConfig(props)
-    const columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
+    const columns = this.getTableColumns(width, chartStyles, data, mapMetaConfig)
     this.setFixedColumns(columns, chartStyles)
     const pagination = this.getPaginationOptions(props)
     this.state = {
       columns,
       pagination,
       mapMetaConfig,
-      headerHeight: 0
+      tableBodyHeight: 0
     }
   }
 
   public componentDidMount () {
-    this.adjustTableCell()
+    const { headerFixed, withPaging } = this.props.chartStyles.table
+    this.adjustTableCell(headerFixed, withPaging)
   }
 
   public componentDidUpdate () {
-    this.adjustTableCell()
+    const { headerFixed, withPaging } = this.props.chartStyles.table
+    this.adjustTableCell(headerFixed, withPaging)
   }
 
-  private adjustTableCell () {
+  private adjustTableCell (headerFixed: boolean, withPaging: boolean) {
     const tableDom = findDOMNode(this.table) as Element
-    const cells = tableDom.querySelectorAll(`.${styles.tableCell}.${styles.mergedCell}`)
-    Array.prototype.forEach.call(cells, (cell: HTMLDivElement) => {
-      let td = cell.parentElement
-      if (td.nodeName.toLowerCase() !== 'td') {
-        td = td.parentElement
-      }
-      cell.style.height = `${td.getBoundingClientRect().height - 2}px`
-    })
-    const excludeElems = ['.ant-table-thead', '.ant-pagination.ant-table-pagination']
+    const excludeElems = []
+    let paginationMargin = 0
+    if (headerFixed && withPaging) {
+      excludeElems.push('.ant-table-thead', '.ant-pagination.ant-table-pagination')
+      paginationMargin = 32
+    }
     const excludeElemsHeight = excludeElems.reduce((acc, exp) => {
       const elem = tableDom.querySelector(exp)
       return acc + (elem ? elem.getBoundingClientRect().height : 0)
-    }, 0)
-    const headerHeight = this.props.height - excludeElemsHeight - 32
+    }, paginationMargin)
+    const tableBodyHeight = this.props.height - excludeElemsHeight
     this.setState({
-      headerHeight
+      tableBodyHeight
     })
   }
 
   public componentWillReceiveProps (nextProps: IChartProps) {
-    const { chartStyles, data } = nextProps
+    const { chartStyles, data, width } = nextProps
     let { columns, pagination } = this.state
     const mapMetaConfig = this.getMapMetaConfig(nextProps)
-    if (chartStyles !== this.props.chartStyles || data !== this.props.data) {
-      columns = this.getTableColumns(chartStyles, data, mapMetaConfig)
+    if (chartStyles !== this.props.chartStyles
+      || data !== this.props.data
+      || width !== this.props.width) {
+      columns = this.getTableColumns(width, chartStyles, data, mapMetaConfig)
       this.setFixedColumns(columns, chartStyles)
     }
     pagination = this.getPaginationOptions(nextProps)
@@ -181,7 +182,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return map
   }
 
-  private setFixedColumns (columns: any[], chartStyles: IChartStyles) {
+  private setFixedColumns (columns: Array<ColumnProps<any>>, chartStyles: IChartStyles) {
     if (!columns.length) { return }
 
     const { leftFixedColumns, rightFixedColumns } = chartStyles.table
@@ -190,24 +191,33 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     })
   }
 
-  private traverseFixedColumns (cursorColumn, leftFixedColumns: string[], rightFixedColumns: string[]) {
+  private traverseFixedColumns (
+    cursorColumn: ColumnProps<any>,
+    leftFixedColumns: string[],
+    rightFixedColumns: string[]
+  ) {
     if (!leftFixedColumns.length && !rightFixedColumns.length) { return }
 
     if (~leftFixedColumns.indexOf(cursorColumn.dataIndex)) {
-      cursorColumn.width = this.defaultColumnWidth
       cursorColumn.fixed = 'left'
     }
     if (~rightFixedColumns.indexOf(cursorColumn.dataIndex)) {
-      cursorColumn.width = this.defaultColumnWidth
       cursorColumn.fixed = 'right'
     }
+
     if (!cursorColumn.children) { return }
+
     cursorColumn.children.forEach((child) => {
       this.traverseFixedColumns(child, leftFixedColumns, rightFixedColumns)
     })
+
+    cursorColumn.width = cursorColumn.children.reduce((
+      totalWidth: number,
+      child: ColumnProps<any>) => totalWidth + (child.width as number), 0)
   }
 
   private getTableColumns (
+    containerWidth: number,
     chartStyles: IChartStyles,
     data: any[],
     mapMetaConfig: IMapMetaConfig
@@ -215,9 +225,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { table } = chartStyles
     if (!table) { return [] }
     const { headerConfig, columnsConfig, autoMergeCell } = table
+    const columnsCount = Object.keys(mapMetaConfig).length
+    const columnWidth = Math.max(containerWidth / columnsCount, this.defaultColumnWidth)
+
     const tableColumns = headerConfig.length
-      ? this.getMergedColumns(data, autoMergeCell, headerConfig, columnsConfig, mapMetaConfig)
-      : this.getPlainColumns(data, autoMergeCell, columnsConfig, mapMetaConfig)
+      ? this.getMergedColumns(data, columnWidth, autoMergeCell, headerConfig, columnsConfig, mapMetaConfig)
+      : this.getPlainColumns(data, columnWidth, autoMergeCell, columnsConfig, mapMetaConfig)
     return tableColumns
   }
 
@@ -237,6 +250,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private getPlainColumns (
     data: any[],
+    columnWidth: number,
     autoMergeCell: boolean,
     columnsConfig: ITableColumnConfig[],
     mapMetaConfig: IMapMetaConfig
@@ -248,11 +262,10 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const titleText = field ? field.alias : key.toUpperCase()
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, key)
-
-      return {
+      const column: ColumnProps<any> = {
         title: (<div className={styles.headerCell}>{titleText}</div>),
         dataIndex: key,
-        width: this.defaultColumnWidth,
+        width: columnWidth,
         key,
         render: (val, _, idx) => {
           let span = 1
@@ -264,29 +277,35 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
         }
       }
+      return column
     })
     return tableColumns
   }
 
   private getMergedColumns (
     data: any[],
+    columnWidth: number,
     autoMergeCell: boolean,
     headerConfig: ITableHeaderConfig[],
     columnsConfig: ITableColumnConfig[],
     mapMetaConfig: IMapMetaConfig
   ) {
-    const tableColumns = []
-    headerConfig.forEach((config) => this.traverseHeaderConfig(data, autoMergeCell, config, columnsConfig, mapMetaConfig, null, tableColumns))
+    const tableColumns: Array<ColumnProps<any>> = []
+
+    headerConfig.forEach((config) =>
+      this.traverseHeaderConfig(columnWidth, data, autoMergeCell, config, columnsConfig, mapMetaConfig, null, tableColumns))
     return tableColumns
   }
 
   private traverseHeaderConfig (
+    columnWidth: number,
     data: any[],
     autoMergeCell: boolean,
     headerConfig: ITableHeaderConfig,
     columnsConfig: ITableColumnConfig[],
     mapMetaConfig: IMapMetaConfig,
-    parent, columns
+    parent: ColumnProps<any>,
+    columns: Array<ColumnProps<any>>
   ) {
     const { key, isGroup, headerName, style } = headerConfig
     const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
@@ -300,14 +319,14 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       justifyContent
     }
 
-    const header: any = {}
+    const header: ColumnProps<any> = {}
     header.dataIndex = headerName
     let titleText
     if (isGroup) {
       titleText = headerName
       header.children = []
     } else {
-      header.width = this.defaultColumnWidth
+      header.width = columnWidth
       const metaConfig = mapMetaConfig[headerName]
       const { name, field, format, expression } = metaConfig
       titleText = field ? field.alias : (expression || headerName)
@@ -332,7 +351,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     parent ? parent.children.push(header) : columns.push(header)
     if (isGroup) {
       headerConfig.children.forEach((c) =>
-        this.traverseHeaderConfig(data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns))
+        this.traverseHeaderConfig(columnWidth, data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns))
     }
   }
 
@@ -549,27 +568,49 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return cssStyle
   }
 
+  private getTableScroll (
+    columns: Array<ColumnProps<any>>,
+    containerWidth: number,
+    headerFixed: boolean,
+    tableBodyHeght: number
+  ) {
+    const scroll: TableProps<any>['scroll'] = {}
+    const columnsTotalWidth = columns.reduce((acc, c) => acc + (c.width as number), 0)
+    scroll.x = Math.max(columnsTotalWidth, containerWidth)
+    if (headerFixed) {
+      scroll.y = tableBodyHeght
+    }
+    return scroll
+  }
+
+  private getTableStyle (
+    headerFixed: boolean,
+    tableBodyHeght: number
+  ) {
+    const tableStyle: React.CSSProperties = { }
+    if (!headerFixed) {
+      tableStyle.height = tableBodyHeght
+      tableStyle.overflowY = 'scroll'
+    }
+    return tableStyle
+  }
+
   public render () {
-    const { data, chartStyles, height } = this.props
+    const { data, chartStyles, height, width } = this.props
     const { headerFixed, withPaging } = chartStyles.table
-    const { pagination, columns, headerHeight } = this.state
+    const { pagination, columns, tableBodyHeight } = this.state
     const paginationConfig: PaginationConfig = {
       ...this.basePagination,
       ...pagination
     }
     const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
-    const scroll: TableProps<any>['scroll'] = { x: '130%' }
-    const tableStyle: React.CSSProperties = {}
-    if (headerFixed) {
-      scroll.y = headerHeight
-    } else {
-      tableStyle.height = 500
-    }
+    const scroll = this.getTableScroll(columns, width, headerFixed, tableBodyHeight)
+    const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
     return (
       <AntTable
         key={key}
-        style={tableStyle}
+        style={style}
         className={styles.table}
         ref={(f) => this.table = f}
         dataSource={data}

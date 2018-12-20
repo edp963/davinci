@@ -72,7 +72,20 @@
     }
 
     td {
-      padding: 0;
+      padding: 0 !important;
+      height: 1px;
+    }
+  }
+
+  :global(.ant-table-tbody) {
+    background: transparent !important;
+
+    :global(.ant-table-row:hover) {
+      background: transparent !important;
+    }
+
+    td {
+      padding: 0 !important;
       height: 1px;
     }
   }

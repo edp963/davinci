@@ -129,13 +129,13 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
       case 'geoCountry':
       case 'geoProvince':
       case 'geoCity':
-        control = (<Input value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
+        control = (<Input size="small" value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
         break
       case 'number':
-        control = (<InputNumber value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
+        control = (<InputNumber size="small" value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
         break
       case 'date':
-        control = (<DatePicker value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
+        control = (<DatePicker size="small" value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
         break
     }
 
