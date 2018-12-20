@@ -69,10 +69,8 @@ public class SqlParseUtils {
      */
     public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
         if (!StringUtils.isEmpty(sqlStr.trim())) {
-            log.info("original sql >>>>>>: {}", sqlStr);
             //过滤注释
             sqlStr = SqlUtils.filterAnnotate(sqlStr);
-            log.info("after filter annotate sql >>>>>>: {}", sqlStr);
 
             //sql体
             String sqlStruct = null, queryParam = null;
@@ -99,7 +97,6 @@ public class SqlParseUtils {
                 if (sqlStruct.endsWith(sqlSeparator)) {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
-                log.info("after structed sql >>>>>>: {}", sqlStruct);
             }
 
             Map<String, String> queryParamMap = new HashMap<>();
@@ -120,7 +117,7 @@ public class SqlParseUtils {
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                             }
@@ -129,7 +126,7 @@ public class SqlParseUtils {
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 teamParamMap.put(k.trim(), Arrays.asList(v));
                             }
