@@ -38,9 +38,9 @@ import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -60,6 +60,9 @@ public class SqlUtils {
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
+
+    @Value("${source.enable-query-log:false}")
+    private boolean isQueryLogEnable;
 
     private String jdbcUrl;
 
@@ -88,6 +91,9 @@ public class SqlUtils {
     public void execute(String sql) throws ServerException {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
+        if (isQueryLogEnable) {
+            log.info("execute sql >>>> {}", sql);
+        }
         try {
             jdbcTemplate().execute(sql);
         } catch (Exception e) {
@@ -101,11 +107,13 @@ public class SqlUtils {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         List<Map<String, Object>> list = null;
+        if (isQueryLogEnable) {
+            log.info("query sql >>>> {}", sql);
+        }
         try {
             JdbcTemplate jdbcTemplate = jdbcTemplate();
             jdbcTemplate.setMaxRows(limit);
             list = jdbcTemplate.queryForList(sql);
-            log.info("query by database");
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
@@ -118,6 +126,9 @@ public class SqlUtils {
 
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
+        if (isQueryLogEnable) {
+            log.info("query sql >>>> {}", sql);
+        }
 
         final Paginate<Map<String, Object>> paginate = new Paginate<>();
         try {
@@ -688,10 +699,8 @@ public class SqlUtils {
      * @return
      */
     public static String filterAnnotate(String sql) {
-        log.info("befor filter annotate sql >>: {}", sql);
         Pattern p = Pattern.compile(Consts.REG_SQL_ANNOTATE);
         sql = p.matcher(sql).replaceAll("$1");
-        log.info("after filter annotate sql >>: {}", sql);
         return sql;
     }
 

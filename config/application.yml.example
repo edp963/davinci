@@ -43,6 +43,7 @@ source:
   max-active: 10
   break-after-acquire-failure: true
   connection-error-retry-attempts: 3
+  enable-query-log: false
 
 
 spring:
