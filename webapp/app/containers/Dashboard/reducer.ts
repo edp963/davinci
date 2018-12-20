@@ -58,7 +58,8 @@ import {
   RESIZE_DASHBOARDITEM,
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
-  DELETE_DRILL_HISTORY
+  DELETE_DRILL_HISTORY,
+  DRILL_PATH_SETTING
 } from './constants'
 
 import {
@@ -149,6 +150,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentDashboardCascadeSources', {})
         .set('currentItems', payload.dashboardDetail.widgets)
         .set('currentItemsInfo', payload.dashboardDetail.widgets.reduce((obj, w) => {
+          const drillpathSetting = w.config && w.config.length ? JSON.parse(w.config) : void 0
           obj[w.id] = {
             datasource: { resultList: [] },
             loading: false,
@@ -158,7 +160,9 @@ function dashboardReducer (state = initialState, action) {
               params: [],
               linkageParams: [],
               globalParams: [],
-              pagination: {}
+              pagination: {},
+              drillpathInstance: [],
+              ...drillpathSetting
             },
             shareInfo: '',
             shareInfoLoading: false,
@@ -188,7 +192,8 @@ function dashboardReducer (state = initialState, action) {
                 params: [],
                 linkageParams: [],
                 globalParams: [],
-                pagination: {}
+                pagination: {},
+                drillpathInstance: []
               },
               shareInfo: '',
               shareInfoLoading: false,
@@ -266,6 +271,21 @@ function dashboardReducer (state = initialState, action) {
           queryParams: {
             ...itemsInfo[payload.itemId]['queryParams'],
             drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          }
+        }
+      })
+    case DRILL_PATH_SETTING:
+      console.log({payload})
+      if (!itemsInfo[payload.itemId]['queryParams']['drillSetting']) {
+        itemsInfo[payload.itemId]['queryParams']['drillSetting'] = []
+      }
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          queryParams: {
+            ...itemsInfo[payload.itemId]['queryParams'],
+            drillSetting: itemsInfo[payload.itemId]['queryParams']['drillSetting'].concat(payload.history)
           }
         }
       })

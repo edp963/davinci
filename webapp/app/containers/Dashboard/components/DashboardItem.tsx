@@ -50,6 +50,7 @@ const utilStyles = require('../../../assets/less/util.less')
 interface IDashboardItemProps {
   itemId: number
   widget: any
+  widgets: any
   view?: Partial<IView>
   datasource: any
   loading: boolean
@@ -61,6 +62,8 @@ interface IDashboardItemProps {
   shareInfoLoading?: boolean
   downloadCsvLoading: boolean
   drillHistory?: any
+  drillpathSetting?: any
+  drillpathInstance?: any
   rendered?: boolean
   renderType: RenderType
   router?: InjectedRouter
@@ -69,6 +72,7 @@ interface IDashboardItemProps {
   onSelectDrillHistory?: (history?: any, item?: number, itemId?: number, widgetId?: number) => void
   onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
+  onShowDrillEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
   onDownloadCsv: (itemId: number, widgetId: number, shareInfo: string) => void
@@ -78,6 +82,7 @@ interface IDashboardItemProps {
   onDoTableInteract: (itemId: number, triggerData: object) => void
   onEditWidget?: (itemId: number, widgetId: number) => void
   onDrillData?: (e: object) => void
+  onDrillPathData?: (e: object) => void
 }
 
 interface IDashboardItemStates {
@@ -114,6 +119,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public static defaultProps = {
     onShowEdit: () => void 0,
+    onShowDrillEdit: () => void 0,
     onDeleteDashboardItem: () => void 0
   }
   private frequent: number
@@ -142,13 +148,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (nextProps.widget !== widget) {
       widgetProps = JSON.parse(nextProps.widget.config)
       model = JSON.parse(nextProps.view.model)
+      this.setState({
+        widgetProps,
+        model
+      })
     }
     pagination = this.getPagination(widgetProps, nextProps.datasource)
 
     this.setState({
-      widgetProps,
-      pagination,
-      model
+      pagination
     })
   }
 
@@ -303,13 +311,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private doDrill = () => {
-    const {isDrilling, cacheWidgetProps} = this.state
-    this.setState({isDrilling: !isDrilling}, () => {
+    const {cacheWidgetProps} = this.state
+    this.setState({isDrilling: !this.state.isDrilling}, () => {
       const { onSelectDrillHistory, itemId, widget, onGetChartData } = this.props
-      if (isDrilling) {
-        onSelectDrillHistory(false, -1, itemId, widget.id)
-        // @FIXME pagination in drill
-        this.setState({widgetProps: cacheWidgetProps}, () => onGetChartData('rerender', itemId, widget.id))
+      onSelectDrillHistory(false, -1, itemId, widget.id)
+      this.setState({widgetProps: cacheWidgetProps}, () => onGetChartData('rerender', itemId, widget.id))
+      if (!this.state.isDrilling) {
+        this.setState({whichDataDrillBrushed: false})
       }
     })
   }
@@ -330,7 +338,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         let whichDataDrillBrushed = void 0
         let sourceDataOfBrushed = void 0
         if (range && range.length > 0) {
-          dataDrillPanelPosition = {top: `${range[range.length - 1][1] + 120}px`, left: `${range[range.length - 2][1] - 40}px`}
+        //  dataDrillPanelPosition = {top: `${range[range.length - 1][1] + 120}px`, left: `${range[range.length - 2][1] - 40}px`}
+        // todo
+        dataDrillPanelPosition = {top: `${range[range.length - 1][1]}px`, left: `${range[range.length - 2][1]}px`}
+      } else {
+          dataDrillPanelPosition = {top: `120px`, left: `120px`}
         }
         if (brushed && brushed.length) {
           whichDataDrillBrushed = brushed
@@ -353,8 +365,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const {onSelectDrillHistory, drillHistory} = this.props
     const { widgetProps, cacheWidgetProps } = this.state
     if (onSelectDrillHistory) {
-      let historyGroups = void 0
-      historyGroups = history ? drillHistory[item]['groups'] : []
+      const historyGroups = history ? drillHistory[item]['groups'] : []
+      const historyCols = history && drillHistory[item]['col'] ? drillHistory[item]['col'] : cacheWidgetProps.cols
+      const historyRows = history && drillHistory[item]['row'] ? drillHistory[item]['row'] : cacheWidgetProps.rows
       if (widgetProps.dimetionAxis === 'col') {
         this.setState({
           widgetProps: {
@@ -364,7 +377,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             }
           }
         })
-      } else {
+      } else if (widgetProps.dimetionAxis === 'row') {
         this.setState({
           widgetProps: {
             ...widgetProps,
@@ -373,49 +386,179 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             }
           }
         })
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: historyCols,
+              rows: historyRows
+            }
+          }
+        })
       }
       onSelectDrillHistory(history, item, itemId, widgetId)
     }
   }
-  private drillData = (e) => {
-    const { onDrillData, widget, itemId, drillHistory } = this.props
+  private drillpathData = () => {
+    const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
+    const { drillpathInstance, drillpathSetting, drillHistory, itemId, widgets, onDrillPathData, onGetChartData } = this.props
+    let out = void 0
+    let enter = void 0
+    let widget = void 0
+    let prevDrillHistory = void 0
+    if (!drillHistory || (drillHistory && drillHistory.length === 0)) {
+      out = drillpathSetting[0]['out']
+      enter = drillpathSetting[1]['enter']
+      widget = drillpathSetting[1]['widget']
+    } else if (drillpathSetting && drillpathSetting.length > 2) {
+      prevDrillHistory = drillHistory[drillHistory.length - 1]
+      const currentItem = drillHistory.length + 1
+      out = drillpathSetting[currentItem - 1]['out']
+      widget = drillpathSetting[currentItem]['widget']
+      enter = drillpathSetting[currentItem]['enter']
+    }
+    const value = (sourceDataOfBrushed as object[]).map((source) => {
+      return source[out]
+    })
+    console.log({widgets})
+    console.log({widget})
+    const nextWidget = widgets.find((w) => w.id === Number(widget))
+    console.log({nextWidget})
+    const widgetProps = JSON.parse(nextWidget.config)
+    const sql = `${enter} in (${value.map((key) => `'${key}'`).join(',')})`
+    let sqls = widgetProps.filters.map((i) => i.config.sql)
+    sqls.push(sql)
+    if (prevDrillHistory && prevDrillHistory.filter.sqls) {
+      const prevSqls = prevDrillHistory.filter.sqls
+      sqls = sqls.concat(prevSqls)
+    }
+    console.log({sqls})
+    const currentDrillStatus = {
+      filter: {
+        out,
+        enter,
+        value,
+        sql,
+        sqls
+      },
+      name: nextWidget.name,
+      widgetConfig: widgetProps
+    }
+    this.setState({
+      widgetProps
+    })
+    onGetChartData('rerender', itemId, Number(widget), {
+      drillStatus: currentDrillStatus
+    })
+    onDrillPathData({
+       sourceDataFilter: sourceDataOfBrushed,
+       widget,
+       itemId,
+       widgetProps,
+       out,
+       enter,
+       value,
+       currentDrillStatus
+    })
+  }
+  private drillData = (name, dimensions) => {
+    const { onDrillData, widget, itemId } = this.props
     const { widgetProps, cacheWidgetProps } = this.state
+    let mode = void 0
+    if (widget && widget.config) {
+      const cf = JSON.parse(widget.config)
+      mode = cf.mode
+    }
     if (onDrillData) {
       onDrillData({
+        row: dimensions === 'row' ? name : void 0,
+        col: dimensions === 'col' ? name : void 0,
+        mode,
         itemId,
         widgetId: widget.id,
-        groups: e,
+        groups: name,
         filters: this.state.whichDataDrillBrushed,
         sourceDataFilter: this.state.sourceDataOfBrushed
       })
     }
-    if (widgetProps.dimetionAxis === 'col') {
-      const isDrillUp = widgetProps.cols.some((col) => col === e)
+    this.setState({whichDataDrillBrushed: false})
+    const isDrillUp = widgetProps.cols.some((col) => col.name === name) || widgetProps.rows.some((row) => row.name === name)
+    if (isDrillUp) {
+      const newCols = widgetProps.cols.filter((col) => col.name !== name)
+      const newRows = widgetProps.rows.filter((row) => row.name !== name)
+      console.log(newCols)
       this.setState({
         widgetProps: {
           ...widgetProps,
           ...{
-            cols: e && e.length
-            ? isDrillUp ? widgetProps.cols.filter((col) => col !== e) : widgetProps.cols.concat(e)
-            : cacheWidgetProps.cols
+            cols: newCols,
+            rows: newRows
           }
         }
-      })
+      }, () => console.log({widgetProps: this.state.widgetProps}))
     } else {
-      const isDrillUp = widgetProps.rows.some((row) => row === e)
-      this.setState({
-        widgetProps: {
-          ...widgetProps,
-          ...{
-            rows: e && e.length
-            ? isDrillUp ? widgetProps.rows.filter((col) => col !== e) : widgetProps.rows.concat(e)
-            : cacheWidgetProps.rows
+      if (dimensions && dimensions.length) { // pivot table
+        switch (dimensions) {
+          case 'row':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                ...{
+                  rows: name && name.length
+                  ? widgetProps.rows.concat({name})
+                  : cacheWidgetProps.rows
+                }
+              }
+            })
+            break
+          case 'col':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                cols: name && name.length
+                ? widgetProps.cols.concat({name})
+                : cacheWidgetProps.cols
+              }
+            })
+            break
+          default:
+            return
+        }
+      } else {
+        if (widgetProps && widgetProps.dimetionAxis) {
+          switch (widgetProps.dimetionAxis) {
+            case 'col':
+              this.setState({
+                  widgetProps: {
+                    ...widgetProps,
+                    ...{
+                      cols: name && name.length
+                      ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
+                      : cacheWidgetProps.cols
+                    }
+                  }
+              })
+              break
+            case 'row':
+              this.setState({
+                widgetProps: {
+                  ...widgetProps,
+                  ...{
+                    rows: name && name.length
+                    ? mode === 'pivot' ? widgetProps.rows.concat({name}) : [{name}]
+                    : cacheWidgetProps.rows
+                  }
+                }
+              })
+              break
+            default:
+              break
           }
         }
-      })
+      }
     }
   }
-
   public render () {
     const {
       itemId,
@@ -426,11 +569,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       shareInfo,
       secretInfo,
       drillHistory,
+      drillpathSetting,
       shareInfoLoading,
       downloadCsvLoading,
       renderType,
       currentProject,
       onShowEdit,
+      onShowDrillEdit,
       onSelectDrillHistory,
       onDeleteDashboardItem,
       onLoadWidgetShareLink,
@@ -441,7 +586,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
-      pagination,
       isDrilling,
       model
     } = this.state
@@ -523,6 +667,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             <InfoButton className={styles.menuText} onClick={onShowEdit(itemId)}>基本信息</InfoButton>
           </Menu.Item>
           <Menu.Item className={styles.menuItem}>
+            <InfoButton className={styles.menuText} onClick={onShowDrillEdit(itemId)}>钻取设置</InfoButton>
+          </Menu.Item>
+          <Menu.Item className={styles.menuItem}>
             <Popconfirm
               title="确定删除？"
               placement="bottom"
@@ -602,12 +749,24 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (this.state.dataDrillPanelPosition) {
       positionStyle = this.state.dataDrillPanelPosition
     }
+    let mode = void 0
+    let cf = void 0
+    if (widget && widget.config) {
+      cf = JSON.parse(widget.config)
+      mode = cf.mode
+    }
+    console.log({cf})
     const dataDrillPanel =
     (
-      <div className={dataDrillPanelClass} style={positionStyle}>
+      <div className={dataDrillPanelClass}>
         <DataDrill
+          widgetConfig={cf}
           categoriesCol={categoriesCol}
+          onDataDrillPath={this.drillpathData}
           onDataDrill={this.drillData}
+          drillHistory={drillHistory}
+          drillpathSetting={drillpathSetting}
+          widgetMode={mode}
           currentData={data}
         />
       </div>
@@ -672,24 +831,25 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             />
           </DashboardItemControlPanel>
         </Animate>
-        <div className={styles.block}>
-          <Widget
-            {...widgetProps}
-            renderType={loading ? 'refresh' : renderType}
-            data={data}
-            pagination={pagination}
-            loading={loading}
-            model={model}
-            onCheckTableInteract={this.checkTableInteract}
-            onDoInteract={this.doInteract}
-            onPaginationChange={this.paginationChange}
-            getDataDrillDetail={this.getDataDrillDetail}
-            isDrilling={this.state.isDrilling}
-          //  onHideDrillPanel={this.onHideDrillPanel}
-          />
-          {dataDrillPanel}
-          {dataDrillHistory}
-        </div>
+        <Dropdown overlay={dataDrillPanel} placement="topCenter" trigger={['contextMenu']}>
+          <div className={styles.block}>
+            <Widget
+              {...widgetProps}
+              renderType={loading ? 'loading' : renderType}
+              data={data}
+              loading={loading}
+              model={model}
+              onCheckTableInteract={this.checkTableInteract}
+              onDoInteract={this.doInteract}
+              onPaginationChange={this.paginationChange}
+              getDataDrillDetail={this.getDataDrillDetail}
+              isDrilling={this.state.isDrilling}
+              whichDataDrillBrushed={this.state.whichDataDrillBrushed}
+            //  onHideDrillPanel={this.onHideDrillPanel}
+            />
+            {dataDrillHistory}
+          </div>
+        </Dropdown>
       </div>
     )
   }

@@ -23,7 +23,7 @@ import { IModel } from '../Workbench/index'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading'
 export type WidgetMode = 'pivot' | 'chart'
 
 export interface IWidgetDimension {
@@ -111,6 +111,7 @@ export interface IWidgetProps {
   getDataDrillDetail?: (position: string) => void
   onPaginationChange?: (pageNo: number, pageSize: number) => void
   isDrilling?: boolean
+  whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 

@@ -42,10 +42,22 @@ export interface ITableBodyProps {
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
   isDrilling?: boolean
+  ifSelectedTdToDrill: (obj: any) => any
+  whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
-export class TableBody extends React.Component<ITableBodyProps, {}> {
+interface ITableBodyState {
+  selectedPivotTds: any[]
+}
+
+export class TableBody extends React.Component<ITableBodyProps, ITableBodyState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      selectedPivotTds: []
+    }
+  }
   private gridCutting = (width, height, chartGrid) => {
     // console.log(chartGrid)
     const chunks = this.horizontalCutting(height, chartGrid)
@@ -204,7 +216,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       onCheckTableInteract,
       onDoInteract,
       getDataDrillDetail,
-      isDrilling
+      isDrilling,
+      ifSelectedTdToDrill
       // onHideDrillPanel
     } = this.props
     const { elementSize, unitMetricWidth, unitMetricHeight, tableBodyCollapsed } = drawingData
@@ -484,6 +497,7 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           onDoInteract={onDoInteract}
           getDataDrillDetail={getDataDrillDetail}
           isDrilling={isDrilling}
+          whichDataDrillBrushed={this.props.whichDataDrillBrushed}
           // onHideDrillPanel={onHideDrillPanel}
         />
       )
@@ -513,6 +527,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
+                ifSelectedTdToDrill={ifSelectedTdToDrill}
+                isDrilling={isDrilling}
               />
             )
           })
@@ -526,7 +542,6 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
       } else if (colKeys.length) {
         const line = []
         tableWidth = 0
-
         colKeys.forEach((ck) => {
           const flatColKey = ck.join(String.fromCharCode(0))
           const { width, height, records } = colTree[flatColKey]
@@ -543,16 +558,20 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               chartStyles={chartStyles}
               color={color}
               legend={legend}
+              ifSelectedTdToDrill={ifSelectedTdToDrill}
+              isDrilling={isDrilling}
             />
           )
         })
 
         cells.push(
-          <tr key={uuid(8, 16)}>
+          // <tr key={uuid(8, 16)}>
+          <tr key="colKeyLength">
             {line}
           </tr>
         )
       } else if (rowKeys.length) {
+        console.log({rowKeys})
         rowKeys.forEach((rk) => {
           const flatRowKey = rk.join(String.fromCharCode(0))
           const { height, records } = rowTree[flatRowKey]
@@ -572,12 +591,14 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
               chartStyles={chartStyles}
               color={color}
               legend={legend}
+              ifSelectedTdToDrill={ifSelectedTdToDrill}
+              isDrilling={isDrilling}
             />
           )
 
           if (line.length) {
             cells.push(
-              <tr key={flatRowKey}>
+              <tr key="rowKeyLength">
                 {line}
               </tr>
             )
@@ -593,9 +614,9 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
           })
           const height = getPivotCellHeight()
           cells.push(
-            <tr key={uuid(8, 16)}>
+            <tr key="metricLength">
               <Cell
-                key={uuid(8, 16)}
+                key="metricsLength"
                 width={width}
                 height={height}
                 metrics={metrics}
@@ -603,6 +624,8 @@ export class TableBody extends React.Component<ITableBodyProps, {}> {
                 chartStyles={chartStyles}
                 color={color}
                 legend={legend}
+                ifSelectedTdToDrill={ifSelectedTdToDrill}
+                isDrilling={isDrilling}
               />
             </tr>
           )

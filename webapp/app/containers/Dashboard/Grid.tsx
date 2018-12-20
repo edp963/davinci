@@ -34,8 +34,10 @@ import reducerBizlogic from '../Bizlogic/reducer'
 import sagaBizlogic from '../Bizlogic/sagas'
 
 import Container from '../../components/Container'
+// import DataDrill from '../../components/DataDrill/Panel'
 import DashboardToolbar from './components/DashboardToolbar'
 import DashboardItemForm from './components/DashboardItemForm'
+import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
@@ -54,7 +56,7 @@ import Breadcrumb from 'antd/lib/breadcrumb'
 import Icon from 'antd/lib/icon'
 import Dropdown from 'antd/lib/dropdown'
 import Menu from 'antd/lib/menu'
-
+import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
 import { hideNavigator } from '../App/actions'
@@ -74,7 +76,8 @@ import {
   loadDashboardShareLink,
   loadWidgetShareLink,
   drillDashboardItem,
-  deleteDrillHistory
+  deleteDrillHistory,
+  drillPathsetting
 } from './actions'
 import {
   makeSelectDashboards,
@@ -151,7 +154,7 @@ interface IGridProps {
           pageNo: number
           pageSize: number
         }
-        drillHistory?: Array<{filter?: any, type?: string, groups?: string[], name: string}>
+        drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
       }
       shareInfo: string
       secretInfo: string
@@ -220,25 +223,28 @@ interface IGridProps {
   onLoadDashboardShareLink: (id: number, authName: string) => void
   onLoadWidgetShareLink: (id: number, itemId: number, authName: string, resolve?: () => void) => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
+  onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
 }
 
 interface IGridStates {
   mounted: boolean
-  layoutInitialized: boolean,
+  layoutInitialized: boolean
   allowFullScreen: boolean
   currentDataInFullScreen: object
   dashboardItemFormType: string
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
   modalLoading: boolean
-  selectedWidgets: number[]
+  selectedWidget: number[]
+  currentItemId: number | boolean
   polling: boolean
   linkageConfigVisible: boolean
   interactingStatus: { [itemId: number]: boolean }
   globalFilterConfigVisible: boolean
   dashboardSharePanelAuthorized: boolean
   nextMenuTitle: string
+  drillPathSettingVisible: boolean
 }
 
 interface IDashboardItemForm extends AntdFormType {
@@ -274,10 +280,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
       dashboardItemFormType: '',
       dashboardItemFormVisible: false,
+      drillPathSettingVisible: false,
       dashboardItemFormStep: 0,
       modalLoading: false,
       selectedWidgets: [],
       polling: false,
+      currentItemId: false,
 
       linkageConfigVisible: false,
       interactingStatus: {},
@@ -573,7 +581,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private showEditDashboardItemForm = (itemId) => () => {
     const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
-
     this.setState({
       dashboardItemFormType: 'edit',
       dashboardItemFormVisible: true,
@@ -588,7 +595,19 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       })
     })
   }
-
+  private showDrillDashboardItemForm = (itemId) => () => {
+    const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
+    this.setState({
+      drillPathSettingVisible: true,
+      selectedWidget: [dashboardItem.widgetId],
+      currentItemId: itemId
+    })
+  }
+  private hideDrillPathSettingModal = () => {
+    this.setState({
+      drillPathSettingVisible: false
+    })
+  }
   private hideDashboardItemForm = () => {
     this.setState({
       modalLoading: false,
@@ -917,13 +936,24 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
   }
 
+  private onDrillPathData = (e) => {
+    const {
+      widgets,
+      currentItemsInfo,
+      onDrillDashboardItem
+    } = this.props
+    const { widgetProps, out, enter, value, itemId, widget, sourceDataFilter, currentDrillStatus } = e
+    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    onDrillDashboardItem(itemId, currentDrillStatus)
+  }
+
   private dataDrill = (e) => {
     const {
       widgets,
       currentItemsInfo,
       onDrillDashboardItem
     } = this.props
-    const { itemId, groups, widgetId, sourceDataFilter } = e
+    const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetProps = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
@@ -932,6 +962,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let name = void 0
     let filterSource = void 0
     let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
+    console.log({widgetConfigGroups})
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -952,15 +983,30 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })))
     }
     let currentDrillStatus = void 0
+    let widgetConfigRows = []
+    let widgetConfigCols = []
     if ((!drillHistory) || drillHistory.length === 0) {
       if (widgetConfig) {
         const dimetionAxis = widgetConfig.dimetionAxis
-        if (dimetionAxis === 'col') {
-          const cols = widgetConfig.cols
-          name = cols[cols.length - 1]
+        widgetConfigRows = widgetConfig.rows && widgetConfig.rows.length ? widgetConfig.rows : []
+        widgetConfigCols = widgetConfig.cols && widgetConfig.cols.length ? widgetConfig.cols : []
+        const mode = widgetConfig.mode
+        if (mode && mode === 'pivot') {
+          if (cols && cols.length !== 0) {
+            const cols = widgetConfig.cols
+            name = cols[cols.length - 1]['name']
+          } else {
+            const rows = widgetConfig.rows
+            name = rows[rows.length - 1]['name']
+          }
         } else {
-          const rows = widgetConfig.rows
-          name = rows[rows.length - 1]
+          if (dimetionAxis === 'col') {
+            const cols = widgetConfig.cols
+            name = cols[cols.length - 1]['name']
+          } else {
+            const rows = widgetConfig.rows
+            name = rows[rows.length - 1]['name']
+          }
         }
         filterSource = sourceDataFilter.map((source) => {
           if (source && source[name]) {
@@ -983,7 +1029,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           visualType: 'string'
         },
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? widgetConfigGroups.filter((cg) => cg !== groups) : widgetConfigGroups.concat([groups]),
+        col: col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0,
+        row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
+        groups: isDrillUp
+                ? widgetConfigGroups.filter((cg) => cg !== groups)
+                : mode === 'pivot' ? widgetConfigGroups.concat([groups])
+                                  : [groups],
         name: groups
       }
     } else {
@@ -993,6 +1044,14 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
       const sqls = lastDrillHistory.filter.sqls.concat(sql)
       const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
+      let currentCol = void 0
+      let currentRow = void 0
+      if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
+        currentCol = col && col.length ? lastDrillHistory.col.concat(col) : lastDrillHistory.col
+      }
+      if (lastDrillHistory && lastDrillHistory.row && lastDrillHistory.row.length) {
+        currentRow = row && row.length ? lastDrillHistory.row.concat(row) : lastDrillHistory.row
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -1001,8 +1060,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           sqls,
           visualType: 'string'
         },
+        col: currentCol,
+        row: currentRow,
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp ? lastDrillHistory.groups.filter((cg) => cg !== groups) : lastDrillHistory.groups.concat([groups]),
+        groups: isDrillUp
+                ? lastDrillHistory.groups.filter((cg) => cg !== groups)
+                : mode === 'pivot' ? lastDrillHistory.groups.concat([groups])
+                                   : [groups],
         name: groups
       }
     }
@@ -1022,6 +1086,43 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
     onDeleteDrillHistory(itemId, item)
   }
+
+  private saveDrillPathSetting = (flag) => {
+    // const { onDrillPathSetting } = this.props
+    // onDrillPathSetting(currentItemId as number, flag)
+
+    const {currentItems, params, onLoadDashboardDetail} = this.props
+    const { currentItemId } = this.state
+    const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
+    const config = dashboardItem.config
+    let configObj = null
+    try {
+       configObj = config && config.length > 0 ? JSON.parse(config) : {}
+    } catch (err) {
+      throw new Error(err)
+    }
+
+    if (!configObj) {
+      configObj = {
+        drillpathSetting: flag
+      }
+    }
+    configObj['drillpathSetting'] = flag
+
+    const modifiedDashboardItem = {
+      ...dashboardItem,
+      config: JSON.stringify(configObj)
+    }
+
+    this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+     // this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
+      if (params.dashboardId && Number(params.dashboardId) !== -1) {
+        onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
+      }
+      this.hideDrillPathSettingModal()
+    })
+  }
+
   public render () {
     const {
       dashboards,
@@ -1049,17 +1150,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       modalLoading,
       selectedWidgets,
       polling,
+      currentItemId,
       dashboardItemFormStep,
       linkageConfigVisible,
       interactingStatus,
       globalFilterConfigVisible,
       allowFullScreen,
-      dashboardSharePanelAuthorized
+      dashboardSharePanelAuthorized,
+      drillPathSettingVisible
     } = this.state
-
     let navDropdown = (<span />)
     let grids = void 0
-
+    //   const drillPanels = []
+    let drillpathSetting = void 0
+    if (currentItemsInfo && currentItemId) {
+      drillpathSetting = currentItemsInfo[currentItemId as number]['queryParams']['drillpathSetting']
+    }
     if (dashboards) {
       const navDropdownItems = dashboards.map((d) => (
         <Menu.Item key={d.id}>
@@ -1112,11 +1218,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
         const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
+        const drillpathSetting = currentItemsInfo[id]['queryParams']['drillpathSetting'] ? currentItemsInfo[id]['queryParams']['drillpathSetting'] : void 0
+        const drillpathInstance = currentItemsInfo[id]['queryParams']['drillpathInstance'] ? currentItemsInfo[id]['queryParams']['drillpathInstance'] : void 0
+
+
 
         itemblocks.push((
           <div key={id}>
             <DashboardItem
               itemId={id}
+              widgets={widgets}
               widget={widget}
               datasource={datasource}
               loading={loading}
@@ -1130,9 +1241,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               downloadCsvLoading={downloadCsvLoading}
               currentProject={currentProject}
               drillHistory={drillHistory}
+              drillpathSetting={drillpathSetting}
+              drillpathInstance={drillpathInstance}
               onSelectDrillHistory={this.selectDrillHistory}
               onGetChartData={this.getChartData}
               onShowEdit={this.showEditDashboardItemForm}
+              onShowDrillEdit={this.showDrillDashboardItemForm}
               onDeleteDashboardItem={this.deleteItem}
               onLoadWidgetShareLink={onLoadWidgetShareLink}
               onDownloadCsv={this.downloadCsv}
@@ -1142,6 +1256,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onShowFullScreen={this.visibleFullScreen}
               onEditWidget={this.toWorkbench}
               onDrillData={this.dataDrill}
+              onDrillPathData={this.onDrillPathData}
               rendered={rendered}
               renderType={renderType}
               router={router}
@@ -1149,7 +1264,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             />
           </div>
         ))
-
         layouts.lg.push({
           x,
           y,
@@ -1297,6 +1411,24 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             wrappedComponentRef={this.refHandles.dashboardItemForm}
           />
         </Modal>
+        <Modal
+          key={`dfd${uuid(8, 16)}`}
+          title="钻取设置"
+          wrapClassName="ant-modal-large"
+          visible={drillPathSettingVisible}
+          footer={null}
+          onCancel={this.hideDrillPathSettingModal}
+        >
+          <DrillPathSetting
+             itemId={currentItemId}
+             drillpathSetting={drillpathSetting}
+             selectedWidget={this.state.selectedWidget}
+             widgets={widgets || []}
+             views={bizlogics || []}
+             saveDrillPathSetting={this.saveDrillPathSetting}
+             cancel={this.hideDrillPathSettingModal}
+          />
+        </Modal>
         <DashboardLinkageConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
@@ -1374,6 +1506,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadDashboardShareLink: (id, authName) => dispatch(loadDashboardShareLink(id, authName)),
     onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
+    onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
   }
 }
