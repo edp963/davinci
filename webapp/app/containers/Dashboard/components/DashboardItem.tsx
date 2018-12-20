@@ -586,6 +586,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
+      pagination,
       isDrilling,
       model
     } = this.state
@@ -837,6 +838,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
+              pagination={pagination}
               loading={loading}
               model={model}
               onCheckTableInteract={this.checkTableInteract}
