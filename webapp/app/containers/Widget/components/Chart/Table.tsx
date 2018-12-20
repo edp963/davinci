@@ -119,8 +119,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const tableDom = findDOMNode(this.table) as Element
     const excludeElems = []
     let paginationMargin = 0
-    if (headerFixed && withPaging) {
-      excludeElems.push('.ant-table-thead', '.ant-pagination.ant-table-pagination')
+    if (headerFixed) {
+      excludeElems.push('.ant-table-thead')
+    }
+    if (withPaging) {
+      excludeElems.push('.ant-pagination.ant-table-pagination')
       paginationMargin = 32
     }
     const excludeElemsHeight = excludeElems.reduce((acc, exp) => {
