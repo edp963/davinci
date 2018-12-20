@@ -301,15 +301,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       })
 
     let noAggregators = false
-    if (styleParams.table && !fromPagination) { // @FIXME pagination in table style config
+    if (styleParams.table) { // @FIXME pagination in table style config
       const { withPaging, pageSize, withNoAggregators } = styleParams.table
       noAggregators = withNoAggregators
-      if (withPaging) {
-        updatedPagination.pageNo = 1
-        updatedPagination.pageSize = +pageSize
-      } else {
-        updatedPagination.pageNo = 0
-        updatedPagination.pageSize = 0
+      if (!fromPagination) {
+        if (withPaging) {
+          updatedPagination.pageNo = 1
+          updatedPagination.pageSize = +pageSize
+        } else {
+          updatedPagination.pageNo = 0
+          updatedPagination.pageSize = 0
+        }
       }
       updatedPagination.withPaging = withPaging
     }
