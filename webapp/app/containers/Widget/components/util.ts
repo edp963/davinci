@@ -23,6 +23,7 @@ import {
 } from '../../../globalConstants'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
+import { IDataParamSource } from './Workbench/Dropbox'
 import { IFieldFormatConfig } from './Workbench/FormatConfigModal'
 import widgetlibs from '../config'
 import PivotTypes from '../config/pivot/PivotTypes'
@@ -307,6 +308,10 @@ export function getPivot (): IChartInfo {
 
 export function getTable (): IChartInfo {
   return chartlibs.find((c) => c.id === ChartTypes.Table)
+}
+
+export function getPivotModeSelectedCharts (items: IDataParamSource[]): IChartInfo[] {
+  return items.length ? items.map((i) => i.chart) : [getPivot()]
 }
 
 export function getStyleConfig (chartStyles: IChartStyles): IChartStyles {

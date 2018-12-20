@@ -17,7 +17,7 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
+import { IWdigetConfig, RenderType } from '../../Widget/components/Widget'
 import { IModel } from '../../Widget/components/Workbench/index'
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 import { TextAlignProperty } from 'csstype'
@@ -65,7 +65,7 @@ interface ILayerItemStates {
   layerParams: ILayerParams
   layerTooltipPosition: [number, number]
   mousePos: number[]
-  widgetProps: IWidgetProps
+  widgetProps: IWdigetConfig
   model: IModel
   currentTime: string
 }

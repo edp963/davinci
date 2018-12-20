@@ -112,7 +112,7 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IWidgetProps, RenderType } from '../Widget/components/Widget'
+import { IWdigetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 
@@ -435,7 +435,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       widgets
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const { queryParams: cachedQueryParams } = currentItemsInfo[itemId]
@@ -955,7 +955,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
     const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
     let sql = void 0

@@ -136,6 +136,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public componentWillReceiveProps (nextProps: IChartProps) {
     const { chartStyles, data } = nextProps
+    console.log(chartStyles)
     let { columns, pagination } = this.state
     const mapMetaConfig = this.getMapMetaConfig(nextProps)
     if (chartStyles !== this.props.chartStyles || data !== this.props.data) {
