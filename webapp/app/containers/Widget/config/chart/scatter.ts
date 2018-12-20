@@ -18,6 +18,22 @@ const scatter: IChartInfo = {
   requireMetrics: 2,
   dimetionAxis: 'col',
   data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    },
     size: {
       title: '尺寸',
       type: 'value'

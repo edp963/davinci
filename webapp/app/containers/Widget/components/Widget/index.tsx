@@ -40,6 +40,13 @@ export interface IWidgetMetric {
   format: IFieldFormatConfig
 }
 
+export interface IWidgetSecondaryMetric {
+  name: string
+  agg: AggregatorType
+  field: IFieldConfig
+  format: IFieldFormatConfig
+}
+
 export interface IWidgetFilter {
   name: string
   type: DragType
@@ -88,6 +95,7 @@ export interface IWidgetProps {
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
   metrics: IWidgetMetric[]
+  secondaryMetrics?: IWidgetSecondaryMetric[]
   filters: IWidgetFilter[]
   chartStyles: IChartStyles
   selectedChart: number
@@ -100,9 +108,6 @@ export interface IWidgetProps {
   dimetionAxis?: DimetionType
   renderType?: RenderType
   orders: Array<{column: string, direction: string}>
-  queryParams: any[]
-  cache: boolean
-  expired: number
   mode: WidgetMode
   model: IModel
   pagination?: IPaginationParams
@@ -113,6 +118,12 @@ export interface IWidgetProps {
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   // onHideDrillPanel?: (swtich: boolean) => void
+}
+
+export interface IWdigetConfig extends IWidgetProps {
+  queryParams: any[]
+  cache: boolean
+  expired: number
 }
 
 export interface IWidgetWrapperProps extends IWidgetProps {

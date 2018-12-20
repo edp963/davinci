@@ -24,7 +24,7 @@ import Modal from 'antd/lib/modal'
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
-import { IWidgetProps } from '../../Widget/components/Widget'
+import { IWdigetConfig } from '../../Widget/components/Widget'
 import LinkageConfig from 'components/Linkages/LinkageConfig'
 
 const styles = require('../Dashboard.less')
@@ -75,7 +75,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
     Object.keys(currentItemsInfo).forEach((k) => {
       const dashboardItem = currentItems.find((ci) => `${ci.id}` === k)
       const widget = widgets.find((w) => w.id === dashboardItem.widgetId)
-      const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+      const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
       const { cols, rows, metrics } = widgetConfig
 
       const view = views.find((bl) => bl.id === widget.viewId)

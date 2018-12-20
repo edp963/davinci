@@ -31,7 +31,7 @@ import DataDrillHistory from '../../../components/DataDrill/History'
 import {IView, IModel} from '../../../containers/Widget/components/Workbench/index'
 
 import Widget from '../../Widget/components/Widget/WidgetInViz'
-import { IWidgetProps, IPaginationParams, RenderType } from '../../Widget/components/Widget'
+import { IWdigetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import Icon, { IconProps } from 'antd/lib/icon'
 import Tooltip from 'antd/lib/tooltip'
 import Popconfirm from 'antd/lib/popconfirm'
@@ -88,7 +88,7 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
-  widgetProps: IWidgetProps
+  widgetProps: IWdigetConfig
   pagination: IPaginationParams
   model: IModel
   isDrilling: boolean
@@ -96,7 +96,7 @@ interface IDashboardItemStates {
   whichDataDrillBrushed: boolean | object []
   sourceDataOfBrushed: boolean | object []
   // isShowDrillPanel: boolean
-  cacheWidgetProps: IWidgetProps
+  cacheWidgetProps: IWdigetConfig
 }
 
 export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
@@ -189,7 +189,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   // @FIXME need refactor
-  private getPagination = (widgetProps: IWidgetProps, datasource) => {
+  private getPagination = (widgetProps: IWdigetConfig, datasource) => {
     const { chartStyles } = widgetProps
     const { table } = chartStyles
     if (!table) { return null }

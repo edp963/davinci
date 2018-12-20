@@ -320,7 +320,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       flatRowKeys = [rowKey.join(String.fromCharCode(0))]
     }
 
-    if (~cols.find((c) => c.name === '指标名称')) {
+    if (~cols.findIndex((c) => c.name === '指标名称')) {
       metricNames.forEach((mn) => {
         const keyArr = []
         cols.forEach((c) => {

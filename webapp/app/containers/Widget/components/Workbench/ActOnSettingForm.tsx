@@ -1,9 +1,8 @@
 import * as React from 'react'
 import { IDataParamSource, IDataParamConfig } from './Dropbox'
 import { decodeMetricName } from '../util'
-import radios from 'antd/lib/radio'
-const Radio = radios.default
-const RadioGroup = radios.Group
+import Radio from 'antd/lib/radio'
+const RadioGroup = Radio.Group
 import Button from 'antd/lib/button'
 const styles = require('./Workbench.less')
 
