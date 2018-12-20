@@ -101,8 +101,7 @@ export class FieldConfigModal extends React.PureComponent<IFieldConfigModalProps
         <Form>
           <FormItem label="字段别名">
             {getFieldDecorator('alias', {
-              initialValue: alias,
-              rules: [{ required: true, message: '不能为空' }]
+              initialValue: alias
             })(<Input />)}
           </FormItem>
           <FormItem label="字段描述">

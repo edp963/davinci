@@ -27,7 +27,7 @@ export const fontSizeOptions = PIVOT_CHART_FONT_SIZES.map((s) => (
 ))
 
 export const pageSizeOptions = TABLE_PAGE_SIZES.map((s) => (
-  <Option value={s.toString()} key={s}>{s}</Option>
+  <Option value={s.toString()} key={s.toString()}>{s}条/页</Option>
 ))
 
 export enum TableCellStyleTypes {

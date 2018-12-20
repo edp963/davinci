@@ -92,6 +92,9 @@ interface IWorkbenchStates {
 }
 
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
+
+  private operatingPanel: OperatingPanel = null
+
   constructor (props) {
     super(props)
     this.state = {
@@ -221,10 +224,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     }
   }
 
-  private setWidgetProps = (callback, dataParams, styleParams, renderType?) => {
+  private setWidgetProps = (callback, dataParams, styleParams, renderType?, updatedPagination?: IPaginationParams) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { onLoadData } = this.props
     const { selectedView, mode, chartModeSelectedChart, pagination } = this.state
+    const fromPagination = !!updatedPagination
+    updatedPagination = { ...pagination, ...updatedPagination }
     let groups = cols.items.map((c) => c.name)
       .concat(rows.items.map((r) => r.name))
       .filter((g) => g !== '指标名称')
@@ -296,17 +301,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       })
 
     let noAggregators = false
-    if (styleParams.table) { // @FIXME pagination in table style config
+    if (styleParams.table && !fromPagination) { // @FIXME pagination in table style config
       const { withPaging, pageSize, withNoAggregators } = styleParams.table
       noAggregators = withNoAggregators
       if (withPaging) {
-        pagination.pageNo = 1
-        pagination.pageSize = +pageSize
+        updatedPagination.pageNo = 1
+        updatedPagination.pageSize = +pageSize
       } else {
-        pagination.pageNo = 0
-        pagination.pageSize = 0
+        updatedPagination.pageNo = 0
+        updatedPagination.pageSize = 0
       }
-      pagination.withPaging = withPaging
+      updatedPagination.withPaging = withPaging
     }
 
     const requestParams = {
@@ -314,8 +319,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       aggregators,
       filters: filters.items.map((i) => i.config.sql),
       orders,
-      pageNo: pagination.pageNo,
-      pageSize: pagination.pageSize,
+      pageNo: updatedPagination.pageNo,
+      pageSize: updatedPagination.pageSize,
       nativeQuery: noAggregators,
       cache: false,
       expired: 0
@@ -341,8 +346,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (result) => {
         const { resultList: data, pageNo, pageSize, totalCount } = result
-        const updatedPagination = !pagination.withPaging ? pagination : {
-          ...pagination,
+        updatedPagination = !updatedPagination.withPaging ? updatedPagination : {
+          ...updatedPagination,
           pageNo,
           pageSize,
           totalCount
@@ -418,7 +423,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           ...yAxis && {yAxis},
           chartStyles: styleParams,
           selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
-          pagination,
+          pagination: updatedPagination,
           dimetionAxis: this.getDimetionAxis(selectedCharts),
           renderType: renderType || 'clear',
           orders,
@@ -426,7 +431,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           model: selectedView ? JSON.parse(selectedView.model) : {}
         },
         chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-        pagination
+        pagination: updatedPagination
       })
       callback(selectedCharts)
     }
@@ -510,17 +515,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private paginationChange = (pageNo: number, pageSize: number) => {
-    const { widgetProps } = this.state
-    this.setState({
-      widgetProps: {
-        ...widgetProps,
-        pagination: {
-          ...widgetProps.pagination,
-          pageNo,
-          pageSize
-        }
-      }
-    })
+    const pagination = {
+      ...this.state.pagination,
+      pageNo,
+      pageSize
+    }
+    this.operatingPanel.triggerWidgetRefresh(pagination)
   }
 
   public render () {
@@ -563,6 +563,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         />
         <div className={styles.body}>
           <OperatingPanel
+            ref={(f) => this.operatingPanel = f}
             views={views}
             originalWidgetProps={originalWidgetProps}
             selectedView={selectedView}

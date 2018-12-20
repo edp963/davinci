@@ -77,7 +77,12 @@ interface IOperatingPanelProps {
   onSetQueryParams: (queryParams: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
-  onSetWidgetProps: (callback: (selectedCharts: IChartInfo[]) => void, dataParams: IDataParams, styleParams: IChartStyles, renderType?: RenderType) => void
+  onSetWidgetProps: (
+    callback: (selectedCharts: IChartInfo[]) => void,
+    dataParams: IDataParams,
+    styleParams: IChartStyles,
+    renderType?: RenderType,
+    pagination?: IPaginationParams) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
 }
 
@@ -595,6 +600,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const dcount = cols.items.length + rows.items.length
     const mcount = metrics.items.length
     return [dcount, mcount]
+  }
+
+  public triggerWidgetRefresh = (pagination: IPaginationParams) => {
+    const { dataParams, styleParams } = this.state
+    this.props.onSetWidgetProps(
+      (selectedCharts) => {
+        this.setState({
+          ...this.getChartDataConfig(selectedCharts)
+        })
+      },
+      dataParams,
+      styleParams,
+      'rerender',
+      pagination
+    )
   }
 
   private setWidgetProps = (dataParams: IDataParams, styleParams: IChartStyles, renderType?: RenderType) => {

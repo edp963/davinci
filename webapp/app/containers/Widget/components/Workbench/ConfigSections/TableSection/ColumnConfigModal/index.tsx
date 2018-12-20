@@ -254,7 +254,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                 <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
                   <Col span={4}>对齐</Col>
                   <Col span={20}>
-                    <RadioGroup value={justifyContent} onChange={this.propChange('justifyContent')}>
+                    <RadioGroup size="small" value={justifyContent} onChange={this.propChange('justifyContent')}>
                       <RadioButton value="flex-start">左对齐</RadioButton>
                       <RadioButton value="center">居中</RadioButton>
                       <RadioButton value="flex-end">右对齐</RadioButton>
@@ -263,8 +263,9 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                 </Row>
                 <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
                   <Col span={4}>字体</Col>
-                  <Col span={6}>
+                  <Col span={12}>
                     <Select
+                      size="small"
                       className={styles.colControl}
                       placeholder="字体"
                       value={fontFamily}
@@ -273,8 +274,9 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       {fontFamilyOptions}
                     </Select>
                   </Col>
-                  <Col span={6}>
+                  <Col span={5}>
                     <Select
+                      size="small"
                       className={styles.colControl}
                       placeholder="文字大小"
                       value={fontSize}
@@ -283,7 +285,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       {fontSizeOptions}
                     </Select>
                   </Col>
-                  <Col span={4}>
+                  <Col span={3}>
                     <ColorPicker
                       className={styles.color}
                       value={fontColor}
@@ -295,6 +297,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                   <Col span={4}>样式</Col>
                   <Col span={6}>
                     <Select
+                      size="small"
                       className={styles.colControl}
                       value={fontStyle}
                       onChange={this.propChange('fontStyle')}
@@ -302,8 +305,9 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
                       {fontStyleOptions}
                     </Select>
                   </Col>
-                  <Col span={6}>
+                  <Col span={13}>
                     <Select
+                      size="small"
                       className={styles.colControl}
                       value={fontWeight}
                       onChange={this.propChange('fontWeight')}
