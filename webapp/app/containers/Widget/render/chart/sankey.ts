@@ -75,14 +75,14 @@ export default function (chartProps: IChartProps) {
   const nodesValues = []
   const links = []
   data.forEach((row) => {
-    dimensions.forEach((dim, idx) => {
-      if (nodesValues.indexOf(row[dim]) < 0) {
-        nodesValues.push(row[dim])
+    dimensions.forEach(({ name }, idx) => {
+      if (nodesValues.indexOf(row[name]) < 0) {
+        nodesValues.push(row[name])
       }
       if (dimensions[idx - 1]) {
         links.push({
-          source: row[dimensions[idx - 1]],
-          target: row[dimensions[idx]],
+          source: row[dimensions[idx - 1].name],
+          target: row[dimensions[idx].name],
           value: row[`${agg}(${metricsName})`]
         })
       }
