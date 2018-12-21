@@ -144,7 +144,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
     const localHeaderConfig: ITableHeaderConfig[] = config.headerConfig
     localHeaderConfig.forEach((c) => {
-      this.traverseHeaderConfig(c, null, columns)
+      this.traverseHeaderConfig(c, localHeaderConfig, columns)
     })
 
     columns.forEach((c) => {
@@ -189,16 +189,14 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
 
   private traverseHeaderConfig = (
     cursorConfig: ITableHeaderConfig,
-    parent: ITableHeaderConfig,
+    siblings: ITableHeaderConfig[],
     validColumns: IDataParamSource[]
   ) => {
     const { isGroup, headerName } = cursorConfig
     if (!isGroup) {
       const idx = validColumns.findIndex((c) => c.name === headerName)
       if (idx < 0) {
-        if (parent) {
-          parent.children.splice(parent.children.findIndex((c) => c.headerName === headerName), 1)
-        }
+        siblings.splice(siblings.findIndex((c) => c.headerName === headerName), 1)
       } else {
         const column = validColumns[idx]
         cursorConfig.alias = this.getColumnDisplayName(column)
@@ -208,7 +206,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
       return
     }
     cursorConfig.children.forEach((c) => {
-      this.traverseHeaderConfig(c, cursorConfig, validColumns)
+      this.traverseHeaderConfig(c, cursorConfig.children, validColumns)
     })
   }
 
@@ -312,16 +310,18 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         return (<Option key={c.name} value={c.name}>{displayName}</Option>)
       })
     } else {
-      options = headerConfig.map((c) => {
-        let displayName
-        if (c.isGroup) {
-          displayName = c.headerName
-        } else {
-          const column = columns.find((column) => column.name === c.headerName)
-          displayName = this.getColumnDisplayName(column)
-        }
-        return (<Option key={c.headerName} value={c.headerName}>{displayName}</Option>)
-      })
+      options = headerConfig
+        .filter((c) => c.isGroup || ~columns.findIndex((column) => column.name === c.headerName))
+        .map((c) => {
+          let displayName
+          if (c.isGroup) {
+            displayName = c.headerName
+          } else {
+            const column = columns.find((column) => column.name === c.headerName)
+            displayName = this.getColumnDisplayName(column)
+          }
+          return (<Option key={c.headerName} value={c.headerName}>{displayName}</Option>)
+        })
     }
     return options
   }
