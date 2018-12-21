@@ -30,6 +30,7 @@ import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSecti
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
+import Tooltip from 'antd/lib/tooltip'
 import Message from 'antd/lib/message'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/index'
@@ -266,7 +267,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
       const { name, field, format, expression } = metaConfig
-      const titleText = field ? field.alias : expression.toUpperCase()
+      let titleText: string | React.ReactNode = expression
+      if (field) {
+        titleText = field.alias || titleText
+        if (field.desc) {
+          titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
+        }
+      }
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
       const column: ColumnProps<any> = {
@@ -385,7 +392,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         const metaConfig = mapMetaConfig[headerName]
         metaKeys.push(headerName)
         const { name, field, format, expression } = metaConfig
-        titleText = field ? field.alias : expression
+        titleText = expression
+        if (field) {
+          titleText = field.alias || titleText
+          if (field.desc) {
+            titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
+          }
+        }
         header.key = key
         const cellValRange = this.getTableCellValueRange(data, expression)
         const columnConfig = columnsConfig.find((config) => config.columnName === name)
