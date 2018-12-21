@@ -344,6 +344,21 @@ CREATE TABLE `platform` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+
+-- ----------------------------
+-- Table structure for rel_view_variable
+-- ----------------------------
+-- CREATE TABLE `rel_view_variable`  (
+--   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+--   `view_id` bigint(20) NOT NULL,
+--   `team_var` longtext DEFAULT NULL COMMENT 'teamvar',
+--   `var1` longtext DEFAULT NULL,
+--   `var2` longtext DEFAULT NULL,
+--   PRIMARY KEY (`id`) USING BTREE,
+--   INDEX `idx_view_id`(`view_id`) USING BTREE
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
 -- ----------------------------
 -- Function structure for childTeamIds
 -- ----------------------------

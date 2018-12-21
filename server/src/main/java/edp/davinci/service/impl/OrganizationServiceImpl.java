@@ -389,7 +389,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             //构造组织团队返回结果
             if (null != userList && userList.size() > 0) {
                 Map<Long, TeamBaseInfoWithParent> map = new HashMap<>();
-                teams.stream().forEach(t -> map.put(t.getId(), t));
+                teams.forEach(t -> map.put(t.getId(), t));
 
                 //成员列表
                 for (TeamUserBaseInfo teamUserBaseInfo : userList) {

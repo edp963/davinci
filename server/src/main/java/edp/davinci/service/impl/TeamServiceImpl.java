@@ -850,7 +850,7 @@ public class TeamServiceImpl implements TeamService {
         Set<Long> teamIds = new HashSet<>();
         Map<Long, Set<Long>> teamFullParentsMap = new HashMap<>();
 
-        teamFullIds.stream().forEach(t -> {
+        teamFullIds.forEach(t -> {
             teamIds.add(t.getId());
             if (StringUtils.isEmpty(t.getFullTeamId())) {
                 rootIds.add(t.getId());
@@ -869,7 +869,7 @@ public class TeamServiceImpl implements TeamService {
             }
         });
 
-        teamIds.stream().forEach(teamId -> {
+        teamIds.forEach(teamId -> {
             if (teamFullParentsMap.containsKey(teamId)) {
                 Set<Long> parentIds = teamFullParentsMap.get(teamId);
                 if (Collections.disjoint(parentIds, teamIds)) {
@@ -907,7 +907,7 @@ public class TeamServiceImpl implements TeamService {
                     } else {
                         Set<Long> fullIds = new HashSet<>();
                         Arrays.asList(t.getFullTeamId().split(conditionSeparator))
-                                .stream().forEach(s -> fullIds.add(Long.parseLong(s)));
+                                .forEach(s -> fullIds.add(Long.parseLong(s)));
 
                         if (!Collections.disjoint(fullIds, roots)) {
                             return true;
@@ -927,7 +927,7 @@ public class TeamServiceImpl implements TeamService {
                 list = filter;
             }
 
-            list.stream().forEach(t -> {
+            list.forEach(t -> {
                 TeamWithMembers teamWithMembers = new TeamWithMembers();
                 BeanUtils.copyProperties(t, teamWithMembers);
 

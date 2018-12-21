@@ -88,9 +88,8 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         PortalWithProject portal = dashboardPortalMapper.getPortalWithProjectById(portalId);
-
         if (null == portal) {
-            return resultMap.failAndRefreshToken(request).message("dashboard portal not found");
+            return resultMap.failAndRefreshToken(request).message("");
         }
 
         Project project = portal.getProject();
@@ -102,34 +101,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
-        List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portalId);
-
-        //获取当前用户在organization的role
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
-                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        dashboardList = null;
-                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
-                        if (!portal.getPublish()) {
-                            dashboardList = null;
-                        }
-                    }
-                }
-            } else {
-                Organization organization = organizationMapper.getById(project.getOrgId());
-                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
-                    dashboardList = null;
-                }
-            }
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(dashboardList);
+        return resultMap.successAndRefreshToken(request).payloads(getDashboardListByPortal(portal, user, portal.getProject()));
     }
 
     /**
@@ -499,5 +471,38 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         dashboardMapper.deleteByProject(projectId);
         //删除dashboardPortal
         dashboardPortalMapper.deleteByProject(projectId);
+    }
+
+
+    public List<Dashboard> getDashboardListByPortal(DashboardPortal portal, User user, Project project) {
+
+        List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portal.getId());
+
+        //获取当前用户在organization的role
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
+                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        dashboardList = null;
+                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
+                        if (!portal.getPublish()) {
+                            dashboardList = null;
+                        }
+                    }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
+                    dashboardList = null;
+                }
+            }
+        }
+
+        return dashboardList;
     }
 }

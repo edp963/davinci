@@ -22,11 +22,14 @@ package edp.davinci.core.inteceptor;
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.annotation.AuthIgnore;
+import edp.core.annotation.AuthShare;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.utils.TokenUtils;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.AuthenticationService;
 import edp.davinci.dao.PlatformMapper;
+import edp.davinci.dao.UserMapper;
 import edp.davinci.model.Platform;
 import edp.davinci.model.User;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +52,13 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
     private PlatformMapper platformMapper;
 
     @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
     private BeanFactory beanFactory;
+
+    @Autowired
+    private TokenUtils tokenUtils;
 
 
     @Override
@@ -69,7 +78,6 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
         if (handler instanceof HandlerMethod && null != ignoreAuthMethod) {
             return true;
         }
-
 
         ResultMap resultMap = new ResultMap();
 
@@ -108,23 +116,42 @@ public class PlatformAuthInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        AuthenticationService authenticationService = (AuthenticationService) beanFactory.getBean(platform.getPlatform() + "AuthenticationService");
         User user = null;
-        try {
-            user = authenticationService.checkUser(platform ,parameterMap);
-            if (null == user) {
+
+        AuthShare authShareMethoed = method.getAnnotation(AuthShare.class);
+        if (handler instanceof HandlerMethod && null != authShareMethoed) {
+            String token = request.getHeader(Constants.TOKEN_HEADER_STRING);
+            if (!StringUtils.isEmpty(token) && token.startsWith(Constants.TOKEN_PREFIX)) {
+                String username = tokenUtils.getUsername(token);
+                user = userMapper.selectByUsername(username);
+                if (null != user) {
+                    request.setAttribute(Constants.CURRENT_USER, user);
+                } else {
+                    response.setStatus(HttpCodeEnum.UNAUTHORIZED.getCode());
+                    resultMap.fail(HttpCodeEnum.UNAUTHORIZED.getCode())
+                            .message("The resource requires authentication, which was not supplied with the request");
+                    response.getWriter().print(JSONObject.toJSONString(resultMap));
+                    return false;
+                }
+            }
+        } else {
+            AuthenticationService authenticationService = (AuthenticationService) beanFactory.getBean(platform.getPlatform() + "AuthenticationService");
+            try {
+                user = authenticationService.checkUser(platform ,parameterMap);
+                if (null == user) {
+                    response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
+                    resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
+                            .message("ERROR Permission denied");
+                    response.getWriter().print(JSONObject.toJSONString(resultMap));
+                    return false;
+                }
+            } catch (Exception e) {
                 response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
                 resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
                         .message("ERROR Permission denied");
                 response.getWriter().print(JSONObject.toJSONString(resultMap));
                 return false;
             }
-        } catch (Exception e) {
-            response.setStatus(HttpCodeEnum.FORBIDDEN.getCode());
-            resultMap.fail(HttpCodeEnum.FORBIDDEN.getCode())
-                    .message("ERROR Permission denied");
-            response.getWriter().print(JSONObject.toJSONString(resultMap));
-            return false;
         }
 
         request.setAttribute(Constants.CURRENT_USER, user);

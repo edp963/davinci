@@ -24,4 +24,12 @@ import lombok.Data;
 public class TeamParam {
     private String k;
     private String v;
+
+    public TeamParam(String k, String v) {
+        this.k = k;
+        this.v = v;
+    }
+
+    public TeamParam() {
+    }
 }

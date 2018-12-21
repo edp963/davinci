@@ -26,6 +26,7 @@ import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.Project;
 import edp.davinci.model.User;
+import edp.davinci.model.View;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -58,4 +59,6 @@ public interface ViewService extends CheckEntityService {
     Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
 
     ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request);
+
+    void updateViewTeamVar(View view, String config, Project project, User user);
 }
