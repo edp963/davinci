@@ -24,17 +24,20 @@ import * as classnames from 'classnames'
 import { IChartProps } from './'
 import { IChartStyles } from '../Widget'
 import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditionStyle } from '../Workbench/ConfigSections/TableSection'
+import { DefaultTableCellStyle } from '../Workbench/ConfigSections/TableSection/HeaderConfigModal'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
+import Tooltip from 'antd/lib/tooltip'
 import Message from 'antd/lib/message'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../../components/DateFilterDropdown/index'
 
+import { uuid } from 'utils/util'
 import {
   COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZES,
   SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
@@ -42,10 +45,12 @@ import { decodeMetricName, FieldFormatTypes, getFormattedValue, getTextWidth } f
 import { IFieldConfig } from '../Workbench/FieldConfigModal'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
 import OperatorTypes from 'utils/operatorTypes'
+import { AggregatorType } from '../Workbench/Dropbox'
 const styles = require('./Chart.less')
 
 interface IMetaConfig {
   name: string
+  agg?: AggregatorType
   field: IFieldConfig
   format: IFieldFormatConfig
   expression?: string
@@ -69,7 +74,7 @@ interface ITableStates {
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
-  private table
+  private table: AntTable<any>
   private defaultColumnWidth = 200
 
   private onPaginationChange = (current: number, pageSize: number) => {
@@ -174,13 +179,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const map: IMapMetaConfig = {}
     cols.concat(rows).forEach((item) => {
       const { name, format, field } = item
-      map[name] = { name, format, field }
+      map[name] = { name, format, field, expression: name }
     })
     metrics.forEach((item) => {
       const { name, agg, format, field } = item
       let expression = decodeMetricName(name)
       expression = withNoAggregators ? expression : `${agg}(${expression})`
-      map[name] = { name, format, field, expression }
+      map[name] = { name, format, field, expression, agg }
     })
     return map
   }
@@ -260,20 +265,26 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   ) {
     if (!data.length) { return [] }
 
-    const tableColumns = Object.keys(data[0]).map((key) => {
-      const { name, field, format } = mapMetaConfig[key] || this.findMetaConfigByExpression(key, mapMetaConfig)
-      const titleText = field ? field.alias : key.toUpperCase()
+    const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
+      const { name, field, format, expression } = metaConfig
+      let titleText: string | React.ReactNode = expression
+      if (field) {
+        titleText = field.alias || titleText
+        if (field.desc) {
+          titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
+        }
+      }
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
-      const cellValRange = this.getTableCellValueRange(data, key)
+      const cellValRange = this.getTableCellValueRange(data, expression)
       const column: ColumnProps<any> = {
         title: (<div className={styles.headerCell}>{titleText}</div>),
-        dataIndex: key,
+        dataIndex: expression,
         width: columnWidth,
-        key,
+        key: expression,
         render: (val, _, idx) => {
           let span = 1
           if (autoMergeCell) {
-            span = this.getMergedCellSpan(data, key, idx)
+            span = this.getMergedCellSpan(data, expression, idx)
           }
           const isMerged = span !== 1
           const cellJsx = this.getCellReactNode(val, cellValRange, format, columnConfig, isMerged)
@@ -294,9 +305,54 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     mapMetaConfig: IMapMetaConfig
   ) {
     const tableColumns: Array<ColumnProps<any>> = []
+    const metaKeys = []
 
     headerConfig.forEach((config) =>
-      this.traverseHeaderConfig(columnWidth, data, autoMergeCell, config, columnsConfig, mapMetaConfig, null, tableColumns))
+      this.traverseHeaderConfig(columnWidth, data, autoMergeCell, config, columnsConfig, mapMetaConfig, null, tableColumns, metaKeys))
+
+    let dimensionIdx = 0
+    Object.entries<IMetaConfig>(mapMetaConfig).forEach(([key, metaConfig]) => {
+      if (~metaKeys.indexOf(key)) { return }
+
+      const { name, field, format, expression, agg } = metaConfig
+      const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = DefaultTableCellStyle
+      const headerStyle: React.CSSProperties = {
+        color,
+        fontFamily,
+        fontSize: `${fontSize}px`,
+        fontStyle,
+        fontWeight: fontWeight as React.CSSProperties['fontWeight'],
+        backgroundColor,
+        justifyContent
+      }
+      const titleText = field ? field.alias : expression
+      const column: ColumnProps<any> = {
+        key: uuid(5),
+        dataIndex: name,
+        width: columnWidth,
+        title: (
+          <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
+        )
+      }
+      const cellValRange = this.getTableCellValueRange(data, expression)
+      const columnConfig = columnsConfig.find((config) => config.columnName === name)
+      column.render = (_, record, idx) => {
+        let span = 1
+        if (autoMergeCell) {
+          span = this.getMergedCellSpan(data, expression, idx)
+        }
+        const isMerged = span !== 1
+        const cellVal = record[expression]
+        const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
+        return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
+      }
+
+      if (agg) {
+        tableColumns.push(column)
+      } else {
+        tableColumns.splice(dimensionIdx++, 0, column)
+      }
+    })
     return tableColumns
   }
 
@@ -308,53 +364,64 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     columnsConfig: ITableColumnConfig[],
     mapMetaConfig: IMapMetaConfig,
     parent: ColumnProps<any>,
-    columns: Array<ColumnProps<any>>
+    columns: Array<ColumnProps<any>>,
+    metaKeys: string[]
   ) {
     const { key, isGroup, headerName, style } = headerConfig
-    const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
-    const headerStyle: React.CSSProperties = {
-      color,
-      fontFamily,
-      fontSize: `${fontSize}px`,
-      fontStyle,
-      fontWeight: fontWeight as React.CSSProperties['fontWeight'],
-      backgroundColor,
-      justifyContent
-    }
-
     const header: ColumnProps<any> = {}
-    header.dataIndex = headerName
-    let titleText
-    if (isGroup) {
-      titleText = headerName
-      header.children = []
-    } else {
-      header.width = columnWidth
-      const metaConfig = mapMetaConfig[headerName]
-      const { name, field, format, expression } = metaConfig
-      titleText = field ? field.alias : (expression || headerName)
-      header.key = key
-      const propName = expression || headerName
-      const cellValRange = this.getTableCellValueRange(data, propName)
-      const columnConfig = columnsConfig.find((config) => config.columnName === name)
-      header.render = (_, record, idx) => {
-        let span = 1
-        if (autoMergeCell) {
-          span = this.getMergedCellSpan(data, propName, idx)
-        }
-        const isMerged = span !== 1
-        const cellVal = record[propName]
-        const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
-        return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
+    const isValidHeader = isGroup || !!mapMetaConfig[headerName]
+    if (isValidHeader) {
+      const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
+      const headerStyle: React.CSSProperties = {
+        color,
+        fontFamily,
+        fontSize: `${fontSize}px`,
+        fontStyle,
+        fontWeight: fontWeight as React.CSSProperties['fontWeight'],
+        backgroundColor,
+        justifyContent
       }
+
+      header.dataIndex = headerName
+      let titleText
+      if (isGroup) {
+        titleText = headerName
+        header.children = []
+      } else {
+        header.width = columnWidth
+        const metaConfig = mapMetaConfig[headerName]
+        metaKeys.push(headerName)
+        const { name, field, format, expression } = metaConfig
+        titleText = expression
+        if (field) {
+          titleText = field.alias || titleText
+          if (field.desc) {
+            titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
+          }
+        }
+        header.key = key
+        const cellValRange = this.getTableCellValueRange(data, expression)
+        const columnConfig = columnsConfig.find((config) => config.columnName === name)
+        header.render = (_, record, idx) => {
+          let span = 1
+          if (autoMergeCell) {
+            span = this.getMergedCellSpan(data, expression, idx)
+          }
+          const isMerged = span !== 1
+          const cellVal = record[expression]
+          const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
+          return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
+        }
+      }
+      header.title = (
+        <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
+      )
+      // @FIXME need update columns order when drag items in OperatingPanel
+      parent ? parent.children.push(header) : columns.push(header)
     }
-    header.title = (
-      <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
-    )
-    parent ? parent.children.push(header) : columns.push(header)
     if (isGroup) {
       headerConfig.children.forEach((c) =>
-        this.traverseHeaderConfig(columnWidth, data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns))
+        this.traverseHeaderConfig(columnWidth, data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns, metaKeys))
     }
   }
 

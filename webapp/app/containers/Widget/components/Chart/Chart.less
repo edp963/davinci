@@ -67,6 +67,11 @@
 
   :global(.ant-table-thead th) {
     padding: 0;
+    height: 1px;
+
+    & > div {
+      height: 100%;
+    }
   }
 
   :global(.ant-table-body) {
@@ -100,6 +105,7 @@
   }
 
   .headerCell {
+    height: 100%;
     padding: 10px 8px;
     background-color: transparent;
     display: flex;
