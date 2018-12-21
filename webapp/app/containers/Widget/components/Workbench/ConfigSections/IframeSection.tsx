@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as debounce from 'lodash/debounce'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
@@ -16,8 +17,15 @@ interface IframeSectionProps {
 
 export class IframeSection extends React.PureComponent<IframeSectionProps, {}> {
 
+  private debounceInputChange = null
+
+  constructor (props: IframeSectionProps) {
+    super(props)
+    this.debounceInputChange = debounce(props.onChange, 2000)
+  }
+
   private inputChange = (prop) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(prop, e.target.value)
+    this.debounceInputChange(prop, e.target.value)
   }
 
   public render () {
