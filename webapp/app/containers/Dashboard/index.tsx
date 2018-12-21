@@ -457,22 +457,24 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       formVisible: true,
       itemId
     }, () => {
-      const {
-        config,
-        id,
-        name,
-        parentId,
-        type,
-        index
-      } = (dashboards as any[]).find((g) => g.id === itemId)
-      this.dashboardForm.props.form.setFieldsValue({
-        id,
-        folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
-        config,
-        name: formType === 'copy' ? `${name}_copy` : name,
-        selectType: type === 1,
-        index
-      })
+      setTimeout(() => {
+        const {
+          config,
+          id,
+          name,
+          parentId,
+          type,
+          index
+        } = (dashboards as any[]).find((g) => g.id === itemId)
+        this.dashboardForm.props.form.setFieldsValue({
+          id,
+          folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
+          config,
+          name: formType === 'copy' ? `${name}_copy` : name,
+          selectType: type === 1,
+          index
+        })
+      }, 0)
     })
   }
 

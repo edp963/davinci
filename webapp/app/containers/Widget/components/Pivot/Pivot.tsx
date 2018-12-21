@@ -211,8 +211,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
       data.forEach((record) => {
         this.getRowKeyAndColKey(props, record, !!dimetionAxis)
       })
-      this.rowKeys.sort(this.sortingKeys(rows))
-      this.colKeys.sort(this.sortingKeys(cols))
     }
 
     if (dimetionAxis) {

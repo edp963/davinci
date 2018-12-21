@@ -325,6 +325,37 @@
         color: @primary-color;
       }
     }
+
+    :global(.ant-select),
+    :global(.ant-radio-group),
+    :global(.ant-checkbox-wrapper),
+    :global(.ant-input-number) {
+      font-size: 12px;
+    }
+
+    :global(.ant-select-selection--single),
+    :global(.ant-input-number) {
+      height: 28px;
+    }
+
+    :global(.ant-select-selection--multiple) {
+      min-height: 28px;
+      padding-bottom: 2px;
+    }
+    :global(.ant-select-selection--multiple > ul > li),
+    :global(.ant-select-selection--multiple .ant-select-selection__rendered > ul > li) {
+      margin-top: 2px;
+      height: 22px;
+      line-height: 20px;
+    }
+
+    :global(.ant-input-number-input) {
+      height: 26px;
+    }
+
+    :global(.ant-select-selection__rendered){
+      line-height: 26px;
+    }
   }
 }
 
