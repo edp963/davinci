@@ -21,7 +21,7 @@ export class IframeSection extends React.PureComponent<IframeSectionProps, {}> {
 
   constructor (props: IframeSectionProps) {
     super(props)
-    this.debounceInputChange = debounce(props.onChange, 2000)
+    this.debounceInputChange = debounce(props.onChange, 1500)
   }
 
   private inputChange = (prop) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +38,7 @@ export class IframeSection extends React.PureComponent<IframeSectionProps, {}> {
         <div className={styles.blockBody}>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={24}>
-              <Input onChange={this.inputChange('src')} placeholder="网页地址" value={src}/>
+              <Input onChange={this.inputChange('src')} placeholder="网页地址" defaultValue={src}/>
             </Col>
           </Row>
         </div>
