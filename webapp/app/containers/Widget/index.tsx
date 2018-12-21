@@ -441,7 +441,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
           <CopyWidgetForm
             type={workbenchType}
             projectId={params.pid}
-            widget={currentWidget}
             onCheckUniqueName={onCheckUniqueName}
             ref={(f) => { this.copyWidgetForm = f }}
           />

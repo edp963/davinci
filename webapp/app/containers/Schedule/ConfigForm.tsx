@@ -29,7 +29,6 @@ import Select from 'antd/lib/select'
 const Option = Select.Option
 import TreeSelect from 'antd/lib/tree-select'
 import { ButtonSize } from 'antd/lib/button'
-const SHOW_PARENT = TreeSelect.SHOW_PARENT
 const FormItem = Form.Item
 const utilStyles =  require('../../assets/less/util.less')
 
@@ -56,17 +55,15 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
     }
     const treeSelectProps = {
       size: 'large' as ButtonSize,
-      multiple: true,
-      maxHeight: 400,
-      overflow: 'auto',
+      dropdownStyle: { maxHeight: 400, overflow: 'auto' },
       treeCheckable: true,
       onChange: treeChange,
       onSelect: treeSelect,
       treeData: vizs,
       value: dashboardTreeValue,
       loadData: loadTreeData,
-      showCheckedStrategy: SHOW_PARENT,
-      searchPlaceholder: 'Please select'
+      showCheckedStrategy: TreeSelect.SHOW_PARENT,
+      searchPlaceholder: '请选择要发送的 Dashboard 或 Display'
     }
     return (
       <Form>
