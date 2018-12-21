@@ -403,6 +403,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       header.title = (
         <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
       )
+      // @FIXME need update columns order when drag items in OperatingPanel
       parent ? parent.children.push(header) : columns.push(header)
     }
     if (isGroup) {
