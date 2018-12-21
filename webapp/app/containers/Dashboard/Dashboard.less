@@ -427,6 +427,9 @@
 .more {
   cursor: pointer;
   font-weight: 900;
+  -moz-transform:rotate(-90deg);
+  -webkit-transform:rotate(-90deg);
+  filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
   &:before {
     padding: 0 8px;
   }
@@ -492,6 +495,7 @@
 
         .search, .plus {
           cursor: pointer;
+          margin-right: 8px;
         }
         .search:before, .plus:before {
           padding: 0 8px;
