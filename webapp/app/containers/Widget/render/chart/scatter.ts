@@ -271,7 +271,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     },
     ...legendOption,
     grid: getGridPositions(legend, seriesNames, false, yAxis),
-    ...drillOptions
     //...brushedOptions
   }
 }
