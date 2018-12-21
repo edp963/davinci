@@ -114,13 +114,14 @@ export function* getVizsData ({ payload }) {
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = portalsData.payload
-    const displayList = displayData.payload.map((display) => ({...display, ...{
+    const displayList = displayData.payload.map((display) => ({
+      ...display,
       contentType: 'display',
-      label: `${display.name}`,
+      title: `${display.name}`,
       key: display.name,
       value: `${display.id}(d)`,
       isLeaf: true
-    }}))
+    }))
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
@@ -128,29 +129,25 @@ export function* getVizsData ({ payload }) {
       portal.children =  buildTree(list[index].payload)
       return {
         ...portal,
-        ...{
-          contentType: 'portal',
-          label: `${portal.name}`,
-          key: portal.name,
-          value: `${portal.id}(p)`,
-          isLeaf: true
-        }
+        contentType: 'portal',
+        title: `${portal.name}`,
+        key: portal.name,
+        value: `${portal.id}(p)`,
+        isLeaf: !portal.children.length
       }
     })
     const result = [{
       contentType: 'display',
-      label: `Display`,
+      title: `Display`,
       key: 'display',
       value: 'display',
-      isLeaf: true,
       children: displayList
     },
     {
       contentType: 'portal',
-      label: `Dashboard`,
+      title: `Dashboard`,
       key: 'portal',
       value: 'portal',
-      isLeaf: true,
       children: portals
     }]
     yield put(vizsLoaded(result))
