@@ -109,7 +109,7 @@ export class RowHeader extends React.Component<IRowHeaderProps, {}> {
                 style={{
                   width: getPivotCellWidth(rowWidths[j]),
                   ...(!!cellHeight && {height: cellHeight}),
-                  backgroundColor: headerBackgroundColor,
+                  ...!dimetionAxis && {backgroundColor: headerBackgroundColor},
                   color: fontColor,
                   fontSize: Number(fontSize),
                   fontFamily,

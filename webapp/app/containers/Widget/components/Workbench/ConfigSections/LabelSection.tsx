@@ -85,7 +85,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-      <Option key={f} value={`${f}`}>{f}</Option>
+      <Option key={`${f}`} value={`${f}`}>{f}</Option>
     ))
 
     const labelPositionSetting = positionName !== void 0 && [(

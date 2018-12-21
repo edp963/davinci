@@ -94,7 +94,7 @@ export class ColumnHeader extends React.Component<IColumnHeaderProps, {}> {
                 className={columnClass}
                 style={{
                   ...(!!cellWidth && {width: cellWidth}),
-                  backgroundColor: headerBackgroundColor,
+                  ...!dimetionAxis && {backgroundColor: headerBackgroundColor},
                   color: fontColor,
                   fontSize: Number(fontSize),
                   fontFamily,

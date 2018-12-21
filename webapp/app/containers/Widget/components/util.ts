@@ -572,7 +572,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
 
 export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
-  let dimetionColumns = cols
+  let dimetionColumns = cols.map((c) => c.name)
   let metricColumns = [...metrics]
   if (color) {
     dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))

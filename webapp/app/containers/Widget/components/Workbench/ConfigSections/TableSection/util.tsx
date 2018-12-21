@@ -23,7 +23,7 @@ export const fontFamilyOptions = PIVOT_CHART_FONT_FAMILIES.map((f) => (
 ))
 
 export const fontSizeOptions = PIVOT_CHART_FONT_SIZES.map((s) => (
-  <Option value={s.toString()} key={s}>{s}</Option>
+  <Option value={s.toString()} key={`${s}`}>{s}</Option>
 ))
 
 export const pageSizeOptions = TABLE_PAGE_SIZES.map((s) => (

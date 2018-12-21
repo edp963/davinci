@@ -571,7 +571,6 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
           </tr>
         )
       } else if (rowKeys.length) {
-        console.log({rowKeys})
         rowKeys.forEach((rk) => {
           const flatRowKey = rk.join(String.fromCharCode(0))
           const { height, records } = rowTree[flatRowKey]
