@@ -69,6 +69,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
     @Autowired
     private RelTeamProjectMapper relTeamProjectMapper;
+    
 
     @Autowired
     private SqlUtils sqlUtils;
@@ -82,11 +83,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
 
-    private static final String viewDataCacheKey = "view_data_";
+    protected static final String viewDataCacheKey = "view_data_";
 
-    private static final String viewMetaCacheKey = "view_meta_";
+    protected static final String viewMetaCacheKey = "view_meta_";
 
-    private static final String viewTeamVarKey = "team";
+    protected static final String viewTeamVarKey = "team";
 
 
     @Override
@@ -279,12 +280,13 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
     /**
      * 修改用户有权限修改的View TeamVar
+     *
      * @param view
      * @param config
      * @param project
      * @param user
      */
-    private void updateViewTeamVar(View view, String config, Project project, User user) {
+    public void updateViewTeamVar(View view, String config, Project project, User user) {
         if (null != view && !StringUtils.isEmpty(view.getConfig()) && !StringUtils.isEmpty(config)) {
             //origin
             JSONObject originJson = JSONObject.parseObject(view.getConfig());
@@ -311,10 +313,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         if (!StringUtils.isEmpty(updateTeamVarString)) {
                             Map<Long, TeamVar> map = new HashMap<>();
 
-                            list.stream().forEach(t -> map.put(t.getId(), t));
+                            list.forEach(t -> map.put(t.getId(), t));
 
                             List<TeamVar> list1 = JSONObject.parseArray(originTeamVarString, TeamVar.class);
-                            list1.stream().forEach(t -> {
+                            list1.forEach(t -> {
                                 if (map.containsKey(t.getId())) {
                                     map.put(t.getId(), t);
                                 }
@@ -986,13 +988,13 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             Set<Long> rmIds = new HashSet<>();
 
-            teamFullIds.stream().forEach(t -> {
+            teamFullIds.forEach(t -> {
                 if (null == t.getFullTeamId() || StringUtils.isEmpty(t.getFullTeamId().trim())) {
                     rmIds.add(t.getId());
                 } else {
 
                     List<String> teamIdStrList = new ArrayList<>();
-                    teamIds.stream().forEach(id -> teamIdStrList.add(String.valueOf(id)));
+                    teamIds.forEach(id -> teamIdStrList.add(String.valueOf(id)));
 
                     //var 对应team的路径和用户所在路径没有交集则加到将要删除列表中
                     if (Collections.disjoint(teamIdStrList, Arrays.asList(t.getFullTeamId().trim().split(conditionSeparator)))) {

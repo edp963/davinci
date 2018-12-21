@@ -19,10 +19,12 @@
 
 package edp.davinci.service;
 
+import edp.core.exception.ServerException;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.model.Platform;
 import edp.davinci.model.User;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.concurrent.ConcurrentHashMap;
 
 public interface AuthPlatformService {
@@ -31,10 +33,17 @@ public interface AuthPlatformService {
 
     /**
      * 获取用户可见project 下的 可见vizs
+     *
      * @param
      * @return
      */
     ResultMap getProjectVizs(String authCode, String email);
 
-    String getAuthShareToken(Platform platform, String type, Long id, User user);
+    String getAuthShareToken(Platform platform, String type, Long id, User user) throws ServerException;
+
+    boolean verifyUser(String token, User user);
+
+    boolean verifyPlatform(String token, Platform platform);
+
+    ResultMap getShareContent(String token, User user, Platform platform, HttpServletRequest request);
 }

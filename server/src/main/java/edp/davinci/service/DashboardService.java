@@ -22,11 +22,10 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardCreate;
 import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
-import edp.davinci.model.Dashboard;
-import edp.davinci.model.MemDashboardWidget;
-import edp.davinci.model.User;
+import edp.davinci.model.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface DashboardService extends CheckEntityService {
 
@@ -49,4 +48,7 @@ public interface DashboardService extends CheckEntityService {
     ResultMap shareDashboard(Long dashboardId, String username, User user, HttpServletRequest request);
 
     void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException;
+
+
+    List<Dashboard> getDashboardListByPortal(DashboardPortal portal, User user, Project project);
 }
