@@ -1052,22 +1052,22 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         st.add("keywordSuffix", sqlUtils.getKeywordSuffix(viewWithProjectAndSource.getSource().getJdbcUrl()));
         st.add("sql", sqlKey.toString());
 
-        StringBuilder keyBuilder = new StringBuilder(st.render()).append("-");
+        StringBuilder keyBuilder = new StringBuilder(st.render()).append(minus);
 
         if (null != queryParams && queryParams.size() > 0) {
             for (String key : teamParams.keySet()) {
-                keyBuilder.append(key).append(":").append(teamParams.get(key)).append(",");
+                keyBuilder.append(key).append(colon).append(teamParams.get(key)).append(conditionSeparator);
             }
         }
         if (null != teamParams && teamParams.size() > 0) {
             for (String key : teamParams.keySet()) {
                 List<String> list = teamParams.get(key);
                 if (null != list && list.size() > 0) {
-                    keyBuilder.append(key).append(":").append("[");
+                    keyBuilder.append(key).append(colon).append(squareBracketStart);
                     for (String str : list) {
-                        keyBuilder.append(str).append(",");
+                        keyBuilder.append(str).append(conditionSeparator);
                     }
-                    keyBuilder.append(key).append(":").append("]");
+                    keyBuilder.append(key).append(colon).append(squareBracketEnd);
                 }
             }
         }
