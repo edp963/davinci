@@ -35,15 +35,24 @@ public class Consts {
 
     public static final String colon = ":";
 
+    public static final String minus = "-";
+
+    public static final String underline = "_";
+
     public static final char CSVHeaderSeparator = ':';
 
     public static final char delimiterStartChar = '<';
+
+    public static final char delimiterEndChar = '>';
 
     public static final String parenthesesStart = "(";
 
     public static final String parenthesesEnd = ")";
 
-    public static final char delimiterEndChar = '>';
+    public static final String squareBracketStart = "[";
+
+    public static final String squareBracketEnd = "]";
+
 
     public static final char assignmentChar = '=';
 
