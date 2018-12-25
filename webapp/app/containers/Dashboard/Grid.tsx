@@ -115,7 +115,7 @@ import { InjectedRouter } from 'react-router/lib/Router'
 import { IWdigetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
-
+import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 
@@ -963,7 +963,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let name = void 0
     let filterSource = void 0
     let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
-    console.log({widgetConfigGroups})
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -986,6 +985,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let currentDrillStatus = void 0
     let widgetConfigRows = []
     let widgetConfigCols = []
+    let coustomTableSqls = []
+    let sqls = widgetConfig.filters.map((i) => i.config.sql)
+    filterSource = sourceDataFilter.map((source) => {
+      if (source && source[name]) {
+        return source[name]
+      }
+    })
     if ((!drillHistory) || drillHistory.length === 0) {
       if (widgetConfig) {
         const dimetionAxis = widgetConfig.dimetionAxis
@@ -1000,27 +1006,44 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             const rows = widgetConfig.rows
             name = rows[rows.length - 1]['name']
           }
-        } else {
-          if (dimetionAxis === 'col') {
-            const cols = widgetConfig.cols
-            name = cols[cols.length - 1]['name']
-          } else {
-            const rows = widgetConfig.rows
-            name = rows[rows.length - 1]['name']
+        } else if (dimetionAxis === 'col') {
+          const cols = widgetConfig.cols
+          name = cols[cols.length - 1]['name']
+        } else if (dimetionAxis === 'row') {
+          const rows = widgetConfig.rows
+          name = rows[rows.length - 1]['name']
+        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+          const coustomTable = sourceDataFilter.reduce((a, b) => {
+            a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+            return a
+          }, {})
+          for (const attr in coustomTable) {
+            if (coustomTable[attr] !== undefined && attr) {
+              coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+            }
           }
         }
-        filterSource = sourceDataFilter.map((source) => {
-          if (source && source[name]) {
-            return source[name]
-          } else {
-            return source
-          }
-        })
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
       }
-      const sqls = widgetConfig.filters.map((i) => i.config.sql)
-      sqls.push(sql)
+      if (name && name.length) {
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls.push(sql)
+      }
+      if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+        sqls = sqls.concat(coustomTableSqls)
+      }
       const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = widgetConfigGroups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -1032,10 +1055,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         type: isDrillUp ? 'up' : 'down',
         col: col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0,
         row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
-        groups: isDrillUp
-                ? widgetConfigGroups.filter((cg) => cg !== groups)
-                : mode === 'pivot' ? widgetConfigGroups.concat([groups])
-                                  : [groups],
+        groups: currentDrillGroups,
+        // groups: isDrillUp
+        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
+        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
+        //                           : [groups],
         name: groups
       }
     } else {
@@ -1143,7 +1167,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentProject,
       currentLinkages
     } = this.props
-
     const {
       mounted,
       dashboardItemFormType,

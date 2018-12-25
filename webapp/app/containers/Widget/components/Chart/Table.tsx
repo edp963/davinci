@@ -68,6 +68,7 @@ interface ITableStates {
     simple: boolean
     total: number
   }
+  selectedRow: object[]
   mapMetaConfig: IMapMetaConfig
   tableBodyHeight: number
 }
@@ -106,7 +107,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       columns,
       pagination,
       mapMetaConfig,
-      tableBodyHeight: 0
+      tableBodyHeight: 0,
+      selectedRow: []
     }
   }
 
@@ -653,6 +655,80 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return scroll
   }
 
+  private isSameObj (
+    prevObj: object,
+    nextObj: object,
+    isSourceData?: boolean
+  ): boolean {
+    let isb = void 0
+    const clonePrevObj = {...prevObj}
+    const cloneNextObj = {...nextObj}
+    if (isSourceData === true) {
+      delete clonePrevObj['key']
+      delete clonePrevObj['value']
+      delete cloneNextObj['key']
+      delete cloneNextObj['value']
+    }
+    for (const attr in clonePrevObj) {
+      if (clonePrevObj[attr] !== undefined && clonePrevObj[attr] === cloneNextObj[attr]) {
+        isb = true
+      } else {
+        isb = false
+        break
+      }
+    }
+    return isb
+  }
+
+  private rowClick = (record, row, event) => {
+    const { getDataDrillDetail } = this.props
+    const selectedRow = [...this.state.selectedRow]
+    let filterObj = void 0
+    if (event.target && event.target.innerHTML) {
+      for (const attr in record) {
+        if (record[attr].toString() === event.target.innerHTML) {
+          const re = /\(\S+\)/
+          const key = re.test(attr) ? attr.match(/\((\S+)\)/)[1] : attr
+          filterObj = {
+            key,
+            value: event.target.innerHTML
+          }
+        }
+      }
+    }
+    const recordConcatFilter = {
+      ...record,
+      ...filterObj
+    }
+    if (selectedRow.length === 0) {
+      selectedRow.push(recordConcatFilter)
+    } else {
+      for (let index = 0, l = selectedRow.length; index < l; index++) {
+        const isb = this.isSameObj(selectedRow[index], recordConcatFilter, true)
+        if (isb) {
+          selectedRow.splice(index, 1)
+          break
+        } else {
+          selectedRow.push(recordConcatFilter)
+          break
+        }
+      }
+    }
+    this.setState({
+      selectedRow
+    }, () => {
+      const brushed = [{0: Object.values(this.state.selectedRow)}]
+      const sourceData = Object.values(this.state.selectedRow)
+      setTimeout(() => {
+        getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
+      }, 500)
+    })
+  }
+
+  private setRowClassName = (record, row) =>
+   this.state.selectedRow.some((sr) => this.isSameObj(sr, record, true)) ? styles.selectedRow : styles.unSelectedRow
+
+
   private getTableStyle (
     headerFixed: boolean,
     tableBodyHeght: number
@@ -688,6 +764,8 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         pagination={withPaging && paginationConfig}
         scroll={scroll}
         bordered
+        rowClassName={this.setRowClassName}
+        onRowClick={this.rowClick}
       />
     )
   }
