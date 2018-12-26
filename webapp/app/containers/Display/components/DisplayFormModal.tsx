@@ -34,7 +34,7 @@ import { IDisplay } from './DisplayList'
 
 const utilStyles = require('../../../assets/less/util.less')
 
-interface IDisplayFormProps {
+interface IDisplayFormModalProps {
   projectId: number
   display: IDisplay,
   visible: boolean
@@ -45,9 +45,9 @@ interface IDisplayFormProps {
   onCancel: () => void
 }
 
-export class DisplayForm extends React.PureComponent<IDisplayFormProps & FormComponentProps, {}> {
+export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps & FormComponentProps, {}> {
 
-  public componentWillReceiveProps (nextProps: IDisplayFormProps & FormComponentProps) {
+  public componentWillReceiveProps (nextProps: IDisplayFormModalProps & FormComponentProps) {
     const { form, display } = nextProps
     if (display !== this.props.display) {
       this.initFormValue(form, display)
@@ -195,4 +195,4 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps & FormCom
   }
 }
 
-export default Form.create<IDisplayFormProps>()(DisplayForm)
+export default Form.create<IDisplayFormModalProps>()(DisplayFormModal)

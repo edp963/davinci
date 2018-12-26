@@ -12,7 +12,7 @@ import Row from 'antd/lib/row'
 const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
-import DisplayForm from './DisplayForm'
+import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 
@@ -67,9 +67,9 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     this.setState({ modalLoading: true })
     const { onAdd, onEdit } = this.props
     if (type === 'add') {
-      onAdd(display, () => { this.hideDisplayForm() })
+      onAdd(display, () => { this.hideDisplayFormModal() })
     } else {
-      onEdit(display, () => { this.hideDisplayForm() })
+      onEdit(display, () => { this.hideDisplayFormModal() })
     }
   }
 
@@ -80,7 +80,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
       editingDisplay: display,
@@ -89,7 +89,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     })
   }
 
-  private hideDisplayForm = () => {
+  private hideDisplayFormModal = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
@@ -112,7 +112,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         key="createDisplay"
       >
         <div className={styles.display}>
-          <div className={styles.container} onClick={this.showDisplayForm('add')}>
+          <div className={styles.container} onClick={this.showDisplayFormModal('add')}>
             <div className={styles.central}>
               <div className={`${styles.item} ${styles.icon}`}><Icon type="plus-circle-o" /></div>
               <div className={`${styles.item} ${styles.text}`}>创建新 Display</div>
@@ -156,7 +156,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
             </header>
             <div className={styles.displayActions}>
               <Tooltip title="编辑">
-                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
+                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
               <Tooltip title="复制">
                 <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
@@ -201,7 +201,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         >
           {addAction}
         </Row>
-        <DisplayForm
+        <DisplayFormModal
           projectId={projectId}
           display={editingDisplay}
           visible={formVisible}
