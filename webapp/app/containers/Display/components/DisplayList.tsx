@@ -37,9 +37,11 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
+  onCheckName: (type, data, resolve, reject) => void
 }
 
 interface IDisplayListStates {
+  editingDisplay: IDisplay
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
@@ -47,18 +49,13 @@ interface IDisplayListStates {
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
 
-  private refHandlers: { displayForm: (ref: AntdFormType) => void }
-  private displayForm: AntdFormType
-
   constructor (props: IDisplayListProps) {
     super(props)
     this.state = {
+      editingDisplay: null,
       modalLoading: false,
       formType: 'add',
       formVisible: false
-    }
-    this.refHandlers = {
-      displayForm: (ref) => this.displayForm = ref
     }
   }
 
@@ -66,15 +63,29 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
+  private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
+    this.setState({ modalLoading: true })
+    const { onAdd, onEdit } = this.props
+    if (type === 'add') {
+      onAdd(display, () => { this.hideDisplayForm() })
+    } else {
+      onEdit(display, () => { this.hideDisplayForm() })
+    }
+  }
+
+  private cancel = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
+    })
+  }
+
   private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
+      editingDisplay: display,
       formType,
       formVisible: true
-    }, () => {
-      if (display) {
-        this.displayForm.props.form.setFieldsValue(display)
-      }
     })
   }
 
@@ -82,25 +93,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.displayForm.props.form.resetFields()
-    })
-  }
-
-  private onModalOk = () => {
-    const { onAdd, onEdit, projectId } = this.props
-    this.displayForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        this.setState({ modalLoading: true })
-        if (this.state.formType === 'add') {
-          onAdd({
-            ...values,
-            projectId
-          }, () => { this.hideDisplayForm() })
-        } else {
-          onEdit(values, () => { this.hideDisplayForm() })
-        }
-      }
     })
   }
 
@@ -186,31 +178,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, currentProject } = this.props
+    const { displays, projectId, currentProject, onCheckName } = this.props
     if (!Array.isArray(displays)) { return null }
 
-    const { formType, formVisible, modalLoading } = this.state
-
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideDisplayForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
+    const { editingDisplay, formType, formVisible, modalLoading } = this.state
 
     let addAction
     if (currentProject && currentProject.permission) {
@@ -230,19 +201,16 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         >
           {addAction}
         </Row>
-        <Modal
-          title={`${formType === 'add' ? '新增' : '修改'} Display`}
-          wrapClassName="ant-modal-small"
+        <DisplayForm
+          projectId={projectId}
+          display={editingDisplay}
           visible={formVisible}
-          footer={modalButtons}
-          onCancel={this.hideDisplayForm}
-        >
-          <DisplayForm
-            projectId={projectId}
-            type={formType}
-            wrappedComponentRef={this.refHandlers.displayForm}
-          />
-        </Modal>
+          loading={modalLoading}
+          type={formType}
+          onCheckName={onCheckName}
+          onSave={this.saveDisplay}
+          onCancel={this.cancel}
+        />
       </div>
     )
   }

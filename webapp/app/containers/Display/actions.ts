@@ -464,3 +464,9 @@ export function loadDisplayShareLinkFail () {
     type: ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE
   }
 }
+
+export function resetDisplayState () {
+  return {
+    type: ActionTypes.RESET_DISPLAY_STATE
+  }
+}

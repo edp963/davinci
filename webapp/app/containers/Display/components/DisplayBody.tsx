@@ -1,41 +1,40 @@
 import * as React from 'react'
+import { areComponentsEqual } from 'react-hot-loader'
+import DisplayContainer from './DisplayContainer'
+import DisplayBottom from './DisplayBottom'
+import DisplaySidebar from './DisplaySidebar'
 
 const styles = require('../Display.less')
 
-interface IDisplayBodyProps {
-  children: Array<React.ReactElement<any>>
-}
+export class DisplayBody extends React.Component<{}, {}> {
 
-export const DisplayBody: React.SFC<IDisplayBodyProps> = (props) => {
-  let container
-  let bottom
-  let sidebar
+  private container
+  private bottom
+  private sidebar
 
-  props.children.forEach((c) => {
-    const displayName = (c.type as React.ComponentClass<any> | React.FunctionComponent<any>).displayName
+  public render () {
+    React.Children.forEach(this.props.children, (c) => {
+      if (!c) { return }
 
-    switch (displayName) {
-      case 'DisplayContainer':
-        container = c
-        break
-      case 'DisplayBottom':
-        bottom = c
-        break
-      case 'DisplaySidebar':
-        sidebar = c
-        break
-    }
-  })
-
-  return (
-    <div className={styles.body}>
-      <div className={styles.main}>
-        {container}
-        {bottom}
+      const type = (c as React.ReactElement<any>).type as React.ComponentClass<any>
+      if (areComponentsEqual(type, DisplayContainer)) {
+        this.container = c
+      } else if (areComponentsEqual(type, DisplayBottom)) {
+        this.bottom = c
+      } else if (areComponentsEqual(type, DisplaySidebar)) {
+        this.sidebar = c
+      }
+    })
+    return (
+      <div className={styles.body}>
+        <div className={styles.main}>
+          {this.container}
+          {this.bottom}
+        </div>
+        {this.sidebar}
       </div>
-      {sidebar}
-    </div>
-  )
+    )
+  }
 }
 
 export default DisplayBody

@@ -33,6 +33,7 @@ const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
+import { checkNameUniqueAction } from '../App/actions'
 import { loadDisplays, deleteDisplay, addDisplay, editDisplay } from './actions'
 import { makeSelectDisplays } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -46,6 +47,7 @@ interface IDisplayProps {
   onDeleteDisplay: (id: any) => void
   onAddDisplay: (display: any, resolve: () => void) => void
   onEditDisplay: (display: any, resolve: () => void) => void
+  onCheckName: (type, data, resolve, reject) => void
 }
 
 interface IDisplayStates {
@@ -163,7 +165,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       displays,
       loginUser,
       onAddDisplay,
-      onDeleteDisplay
+      onDeleteDisplay,
+      onCheckName
     } = this.props
     const projectId = params.pid
 
@@ -263,6 +266,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           <DisplayForm
             projectId={projectId}
             type={formType}
+            onCheckName={onCheckName}
             ref={this.refHandlers.displayForm}
           />
         </Modal>
@@ -281,7 +285,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
     onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id)),
     onAddDisplay: (display, resolve) => dispatch(addDisplay(display, resolve)),
-    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve))
+    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve)),
+    onCheckName: (type, data, resolve, reject) => dispatch(checkNameUniqueAction(type, data, resolve, reject))
   }
 }
 

@@ -94,7 +94,7 @@
     "redux": "4.0.1",
     "redux-immutable": "4.0.0",
     "redux-saga": "0.16.2",
-    "redux-undo": "^0.6.1",
+    "redux-undo": "1.0.0-beta9-9-7",
     "reselect": "4.0.0",
     "three": "^0.89.0",
     "warning": "4.0.2"
