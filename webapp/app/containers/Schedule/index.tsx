@@ -33,7 +33,7 @@ import { loadSchedules, addSchedule, deleteSchedule, changeSchedulesStatus, upda
 import {loadWidgets} from '../Widget/actions'
 import Box from '../../components/Box'
 
-const Modal =  require ('antd/lib/modal')
+import Modal from 'antd/lib/modal'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Table from 'antd/lib/table'

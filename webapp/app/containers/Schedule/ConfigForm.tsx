@@ -21,7 +21,7 @@
 import * as React from 'react'
 // import {connect} from 'react-redux'
 // import {checkNameAction} from '../App/actions'
-const Form  = require('antd/lib/form')
+import Form from 'antd/lib/form'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
