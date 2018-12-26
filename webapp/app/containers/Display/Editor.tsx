@@ -85,7 +85,8 @@ import {
   redoOperation,
   loadDisplayShareLink,
   showEditorBaselines,
-  clearEditorBaselines    } from './actions'
+  clearEditorBaselines,
+  resetDisplayState } from './actions'
 import message from 'antd/lib/message'
 const styles = require('./Display.less')
 
@@ -189,16 +190,15 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
 
   onShowEditorBaselines: (baselines: IBaseline[]) => void
   onClearEditorBaselines: () => void
+  onResetDisplayState: () => void
 }
 
 interface IEditorStates {
   slideParams: Partial<ISlideParams>
   currentLocalLayers: any[]
-  editorWidth: number
-  editorHeight: number
-  editorPadding: string
-  scale: number
+  zoomRatio: number
   sliderValue: number
+  scale: number
   settingInfo: {
     key: string
     id: number
@@ -214,11 +214,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     this.state = {
       slideParams: {},
       currentLocalLayers: [],
-      editorWidth: 0,
-      editorHeight: 0,
-      editorPadding: '',
-      scale: 1,
+      zoomRatio: 1,
       sliderValue: 20,
+      scale: 1,
       settingInfo: {
         key: '',
         id: 0,
@@ -228,17 +226,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     }
 
     this.refHandlers = {
-      settingForm: (ref) => this.settingForm = ref,
       editor: (ref) => {
         this.editor = ref
       }
     }
   }
 
-  private refHandlers: { settingForm: (ref: any) => void, editor: (ref: any) => void }
-  private settingForm: any
+  private refHandlers: { editor: (ref: any) => void }
   private editor: any
-  private charts: object = {}
 
   public componentWillMount () {
     const {
@@ -251,29 +246,20 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   public componentDidMount () {
-    const {
-      slideParams,
-      scale
-    } = this.state
-
     this.props.onHideNavigator()
-    window.addEventListener('resize', this.containerResize, false)
     // onHideNavigator 导致页面渲染
   }
 
   public componentWillUnmount () {
-    window.removeEventListener('resize', this.containerResize, false)
-    this.props.onClearLayersSelection()
+    this.props.onResetDisplayState()
   }
 
   public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentSlide, currentLayers } = nextProps
 
     let { slideParams, currentLocalLayers } = this.state
-    let init = false
     if (currentSlide !== this.props.currentSlide) {
       slideParams = JSON.parse(currentSlide.config).slideParams
-      init = true
     }
     if (currentLayers !== this.props.currentLayers) {
       currentLocalLayers = fromJS(currentLayers).toJS()
@@ -283,10 +269,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       slideParams,
       currentLocalLayers,
       settingInfo
-    }, () => {
-      if (init) {
-        this.doScale(1)
-      }
     })
   }
 
@@ -315,14 +297,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     return settingInfo
   }
 
-  private containerResize = () => {
-    this.sliderChange(this.state.sliderValue)
-  }
-
-  private sliderChange = (value) => {
-    this.doScale(value / 40 + 0.5)
+  private sliderChange = (sliderValue: number) => {
+    const zoomRatio = sliderValue / 40 + 0.5
     this.setState({
-      sliderValue: value
+      sliderValue,
+      zoomRatio
     })
   }
 
@@ -336,31 +315,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     if (this.state.sliderValue !== 100) {
       this.sliderChange(Math.min(this.state.sliderValue + 10, 100))
     }
-  }
-
-  private doScale = (times) => {
-    const { slideParams } = this.state
-    const { offsetWidth, offsetHeight } = this.editor.container
-
-    const editorWidth = Math.max(offsetWidth * times, offsetWidth)
-    const editorHeight = Math.max(offsetHeight * times, offsetHeight)
-
-    let scale = (slideParams.width / slideParams.height > editorWidth / editorHeight) ?
-      // landscape
-      (editorWidth - 64) / slideParams.width * times :
-      // portrait
-      (editorHeight - 64) / slideParams.height * times
-    scale = +(Math.floor(scale / 0.05) * 0.05).toFixed(2)
-
-    const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
-
-    this.setState({
-      editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
-      editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
-      editorPadding: `${topBottomPadding}px ${leftRightPadding}px`,
-      scale
-    })
   }
 
   private displaySizeChange = (width, height) => {
@@ -477,7 +431,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   ) => {
     const editLayers = []
     const { currentLayersOperationInfo, onShowEditorBaselines } = this.props
-    const { currentLocalLayers, slideParams, scale } = this.state
+    const { currentLocalLayers, slideParams, zoomRatio } = this.state
     const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
 
     editLayers.push(copyCurrentLocalLayers.find((localLayer) => localLayer.id === itemId))
@@ -487,7 +441,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const otherLayers = copyCurrentLocalLayers.filter((localLayer) => editLayers.map((l) => l.id).indexOf(localLayer.id) < 0)
 
     const baselines = computeEditorBaselines(otherLayers, editLayers, slideParams as ISlideParams,
-      GRID_ITEM_MARGIN / 2, scale, { deltaX, deltaY, deltaWidth, deltaHeight }, adjustType)
+      GRID_ITEM_MARGIN / 2, zoomRatio, { deltaX, deltaY, deltaWidth, deltaHeight }, adjustType)
     onShowEditorBaselines(baselines)
     const adjustPosition = [0, 0]
     const adjustSize = [0, 0]
@@ -681,6 +635,10 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onPasteSlideLayers(currentDisplay.id, currentSlide.id, clipboardLayers)
   }
 
+  private scaleChange = (nextScale: number) => {
+    this.setState({ scale: nextScale })
+  }
+
   private coverCut = () => {
     this.editor.createCoverCut()
   }
@@ -704,8 +662,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private collapseChange = () => {
-    const { sliderValue } = this.state
-    this.doScale(sliderValue / 40 + 0.5)
+    this.setState({
+      zoomRatio: this.state.zoomRatio - 0.0001
+    })
   }
 
   private keyDown = (key: Keys) => {
@@ -842,11 +801,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const {
       slideParams,
       currentLocalLayers,
-      editorWidth,
-      editorHeight,
-      editorPadding,
-      scale,
+      zoomRatio,
       sliderValue,
+      scale,
       settingInfo
     } = this.state
 
@@ -914,7 +871,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           settingParams={settingInfo.param}
           onDisplaySizeChange={this.displaySizeChange}
           onFormItemChange={this.formItemChange}
-          wrappedComponentRef={this.refHandlers.settingForm}
           onCollapseChange={this.collapseChange}
         >
           {currentSelectedLayers.length === 0 ? (
@@ -949,11 +905,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         <DisplayBody>
           <DisplayContainer
             key="editor"
-            width={editorWidth}
-            height={editorHeight}
-            padding={editorPadding}
             slideParams={slideParams}
-            scale={scale}
+            zoomRatio={zoomRatio}
+            onScaleChange={this.scaleChange}
             onCoverCutCreated={this.coverCutCreated}
             onKeyDown={this.keyDown}
             onLayersSelectionRemove={this.layersSelectionRemove}
@@ -1027,7 +981,8 @@ function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
 
     onShowEditorBaselines: (baselines) => dispatch(showEditorBaselines(baselines)),
-    onClearEditorBaselines: () => dispatch(clearEditorBaselines())
+    onClearEditorBaselines: () => dispatch(clearEditorBaselines()),
+    onResetDisplayState: () => dispatch(resetDisplayState())
   }
 }
 

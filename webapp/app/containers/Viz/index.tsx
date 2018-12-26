@@ -177,6 +177,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditDisplay}
                 onCopy={this.onCopy}
                 onDelete={onDeleteDisplay}
+                onCheckName={onCheckUniqueName}
               />
             </div>
           </Box>
