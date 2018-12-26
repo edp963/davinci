@@ -654,7 +654,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     if (null != querySqlList && querySqlList.size() > 0) {
                         buildQuerySql(querySqlList, sqlEntity, executeParam, source);
                         for (String sql : querySqlList) {
-                            paginate = sqlUtils.syncQuery4Paginate(sql, executeParam.getPageNo(), executeParam.getPageSize(), executeParam.getLimit());
+                            paginate = sqlUtils.syncQuery4Paginate(
+                                            sql,
+                                            executeParam.getPageNo(),
+                                            executeParam.getPageSize(),
+                                            executeParam.getLimit()
+                                        );
                         }
                     }
                 }
@@ -685,7 +690,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @throws ServerException
      */
     @Override
-    public List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException {
+    public List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource,
+                                           ViewExecuteParam executeParam,
+                                           User user) throws ServerException {
         List<QueryColumn> columns = null;
 
         String cacheKey = null;
@@ -822,7 +829,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 }
             } else {
                 Organization organization = organizationMapper.getById(project.getOrgId());
-                if (project.getVisibility() && organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
+                if (project.getVisibility()
+                        && organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
                     return true;
                 }
             }
@@ -925,7 +933,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return resultMap.successAndRefreshToken(request).payloads(list);
     }
 
-    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap, ViewWithProjectAndSource view, User user, String sqlTempDelimiter) {
+    private Map<String, List<String>> parseTeamParams(Map<String, List<String>> paramMap,
+                                                      ViewWithProjectAndSource view,
+                                                      User user,
+                                                      String sqlTempDelimiter) {
         if (null != view && !StringUtils.isEmpty(view.getConfig())) {
             JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
             if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
@@ -1035,7 +1046,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         return map;
     }
 
-    private String getCacheKey(String prefix, ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, Map<String, List<String>> teamParams, Map<String, String> queryParams) {
+    private String getCacheKey(String prefix,
+                               ViewWithProjectAndSource viewWithProjectAndSource,
+                               ViewExecuteParam executeParam,
+                               Map<String, List<String>> teamParams,
+                               Map<String, String> queryParams) {
 
         StringBuilder sqlKey = new StringBuilder(prefix)
                 .append(String.valueOf(viewWithProjectAndSource.getSource().getId()))

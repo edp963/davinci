@@ -130,6 +130,6 @@ public class Consts {
     /**
      * 匹配多行sql注解正则
      */
-    public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/";
+    public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
 
 }
