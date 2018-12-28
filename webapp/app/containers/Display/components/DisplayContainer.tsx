@@ -37,28 +37,24 @@ export enum Keys {
 
 interface IDisplayContainerProps {
   slideParams: any
-  width: number,
-  height: number,
-  padding: string,
-  scale: number
+  zoomRatio: number
   children: JSX.Element[],
+  onScaleChange: (scale: number) => void
   onCoverCutCreated: (blob: Blob) => void
   onKeyDown: (key: Keys) => void
   onLayersSelectionRemove: () => void
 }
 
-interface IDisplayStyle {
-  width: string
-  height: string
-  transform: string
-  backgroundColor?: string
-  backgroundImage?: string
-  backgroundSize: string
+interface IDisplayContainerStates {
+  scale: number
+  width: number
+  height: number
+  padding: string
 }
 
-export class DisplayContainer extends React.PureComponent<IDisplayContainerProps, {}> {
+export class DisplayContainer extends React.Component<IDisplayContainerProps, IDisplayContainerStates> {
 
-  private displayName = 'DisplayContainer'
+  public static displayName = 'DisplayContainer'
 
   private container: HTMLDivElement
   private content: HTMLDivElement
@@ -67,16 +63,66 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     content: (f) => { this.content = f }
   }
 
+  constructor (props: IDisplayContainerProps) {
+    super(props)
+    this.state = {
+      scale: 1,
+      width: 0,
+      height: 0,
+      padding: ''
+    }
+  }
+
   public componentDidMount () {
     document.addEventListener('keydown', this.keyDown, false)
+    window.addEventListener('resize', this.containerResize, false)
+    const { zoomRatio, slideParams, onScaleChange } = this.props
+    this.updateStyle(zoomRatio, slideParams, onScaleChange)
   }
 
   public componentWillUnmount () {
     document.removeEventListener('keydown', this.keyDown, false)
+    window.removeEventListener('resize', this.containerResize, false)
+  }
+
+  public componentWillReceiveProps (nextProps: IDisplayContainerProps) {
+    const { zoomRatio, slideParams, onScaleChange } = nextProps
+    if (zoomRatio !== this.props.zoomRatio || slideParams !== this.props.slideParams) {
+      this.updateStyle(zoomRatio, slideParams, onScaleChange)
+    }
+  }
+
+  private containerResize = () => {
+    const { zoomRatio, slideParams, onScaleChange } = this.props
+    this.updateStyle(zoomRatio, slideParams, onScaleChange)
+  }
+
+  private updateStyle = (zoomRatio: number, slideParams: any, onScaleChange: (scale: number) => void) => {
+    const { offsetHeight, offsetWidth } = this.container
+    const [containerWidth, containerHeight] = [offsetWidth, offsetHeight].map((item) => Math.max(zoomRatio, 1) * item)
+
+    let scale = (slideParams.width / slideParams.height > containerWidth / containerHeight) ?
+      // landscape
+      (containerWidth - 64) / slideParams.width * zoomRatio :
+      // portrait
+      (containerHeight - 64) / slideParams.height * zoomRatio
+    scale = +(Math.floor(scale / 0.05) * 0.05).toFixed(2)
+
+    const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
+    const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
+    const nextStyle = {
+      width: containerWidth,
+      height: containerHeight,
+      padding: `${topBottomPadding}px ${leftRightPadding}px`,
+      scale
+    }
+    this.setState({ ...nextStyle })
+    onScaleChange(nextStyle.scale)
   }
 
   public createCoverCut = () => {
-    const { onCoverCutCreated, scale } = this.props
+    const { onCoverCutCreated } = this.props
+    const { scale } = this.state
     this.content.style.transform = 'scale(1)'
     // captureVideosWithImages()
     html2canvas(this.content, { useCORS: true }).then((canvas) => {
@@ -87,8 +133,8 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
     })
   }
 
-  private getSlideStyle = (slideParams, scale) => {
-    let slideStyle: IDisplayStyle
+  private getSlideStyle = (slideParams, scale: number) => {
+    let slideStyle: React.CSSProperties
     slideStyle  = {
       width: `${slideParams.width}px`,
       height: `${slideParams.height}px`,
@@ -162,13 +208,11 @@ export class DisplayContainer extends React.PureComponent<IDisplayContainerProps
   public render () {
     const {
       slideParams,
-      width,
-      height,
-      padding,
-      scale,
       children,
       onLayersSelectionRemove
     } = this.props
+
+    const { width, height, padding, scale } = this.state
 
     const slideStyle = this.getSlideStyle(slideParams, scale)
 

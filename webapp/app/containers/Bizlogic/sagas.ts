@@ -142,18 +142,17 @@ export function* editBizlogic (action) {
 export function* getCascadeSource (action) {
   const { payload } = action
   try {
-    const { controlId, viewId, column, parents } = payload
+    const { controlId, viewId, columns, parents } = payload
 
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
       data: {
-        column,
+        columns,
         parents: parents || []
       }
     })
-    const values = asyncData.payload[column]
-    yield put(cascadeSourceLoaded(controlId, column, values))
+    yield put(cascadeSourceLoaded(controlId, columns, asyncData.payload))
   } catch (err) {
     yield put(loadCascadeSourceFail(err))
     errorHandler(err)
@@ -240,13 +239,14 @@ export function* getDistinctValue (action) {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
       data: {
-        column: fieldName,
+        columns: [fieldName],
         parents: filters
           ? Object.entries(filters).map(([column, value]) => ({ column, value }))
           : []
       }
     })
-    yield put(distinctValueLoaded(asyncData.payload, fieldName))
+    const result = asyncData.payload.map((item) => item[fieldName])
+    yield put(distinctValueLoaded(result, fieldName))
     if (resolve) {
       resolve(asyncData.payload)
     }

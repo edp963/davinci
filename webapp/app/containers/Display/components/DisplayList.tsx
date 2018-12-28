@@ -12,7 +12,7 @@ import Row from 'antd/lib/row'
 const styles = require('../Display.less')
 
 import EllipsisList from '../../../components/EllipsisList'
-import DisplayForm from './DisplayForm'
+import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 
@@ -37,9 +37,11 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
+  onCheckName: (type, data, resolve, reject) => void
 }
 
 interface IDisplayListStates {
+  editingDisplay: IDisplay
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
@@ -47,18 +49,13 @@ interface IDisplayListStates {
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
 
-  private refHandlers: { displayForm: (ref: AntdFormType) => void }
-  private displayForm: AntdFormType
-
   constructor (props: IDisplayListProps) {
     super(props)
     this.state = {
+      editingDisplay: null,
       modalLoading: false,
       formType: 'add',
       formVisible: false
-    }
-    this.refHandlers = {
-      displayForm: (ref) => this.displayForm = ref
     }
   }
 
@@ -66,41 +63,36 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
-  private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation()
-    this.setState({
-      formType,
-      formVisible: true
-    }, () => {
-      if (display) {
-        this.displayForm.props.form.setFieldsValue(display)
-      }
-    })
+  private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
+    this.setState({ modalLoading: true })
+    const { onAdd, onEdit } = this.props
+    if (type === 'add') {
+      onAdd(display, () => { this.hideDisplayFormModal() })
+    } else {
+      onEdit(display, () => { this.hideDisplayFormModal() })
+    }
   }
 
-  private hideDisplayForm = () => {
+  private cancel = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.displayForm.props.form.resetFields()
     })
   }
 
-  private onModalOk = () => {
-    const { onAdd, onEdit, projectId } = this.props
-    this.displayForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        this.setState({ modalLoading: true })
-        if (this.state.formType === 'add') {
-          onAdd({
-            ...values,
-            projectId
-          }, () => { this.hideDisplayForm() })
-        } else {
-          onEdit(values, () => { this.hideDisplayForm() })
-        }
-      }
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    this.setState({
+      editingDisplay: display,
+      formType,
+      formVisible: true
+    })
+  }
+
+  private hideDisplayFormModal = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false
     })
   }
 
@@ -120,7 +112,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         key="createDisplay"
       >
         <div className={styles.display}>
-          <div className={styles.container} onClick={this.showDisplayForm('add')}>
+          <div className={styles.container} onClick={this.showDisplayFormModal('add')}>
             <div className={styles.central}>
               <div className={`${styles.item} ${styles.icon}`}><Icon type="plus-circle-o" /></div>
               <div className={`${styles.item} ${styles.text}`}>创建新 Display</div>
@@ -164,7 +156,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
             </header>
             <div className={styles.displayActions}>
               <Tooltip title="编辑">
-                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
+                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
               <Tooltip title="复制">
                 <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
@@ -186,31 +178,10 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, currentProject } = this.props
+    const { displays, projectId, currentProject, onCheckName } = this.props
     if (!Array.isArray(displays)) { return null }
 
-    const { formType, formVisible, modalLoading } = this.state
-
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideDisplayForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
+    const { editingDisplay, formType, formVisible, modalLoading } = this.state
 
     let addAction
     if (currentProject && currentProject.permission) {
@@ -230,19 +201,16 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         >
           {addAction}
         </Row>
-        <Modal
-          title={`${formType === 'add' ? '新增' : '修改'} Display`}
-          wrapClassName="ant-modal-small"
+        <DisplayFormModal
+          projectId={projectId}
+          display={editingDisplay}
           visible={formVisible}
-          footer={modalButtons}
-          onCancel={this.hideDisplayForm}
-        >
-          <DisplayForm
-            projectId={projectId}
-            type={formType}
-            wrappedComponentRef={this.refHandlers.displayForm}
-          />
-        </Modal>
+          loading={modalLoading}
+          type={formType}
+          onCheckName={onCheckName}
+          onSave={this.saveDisplay}
+          onCancel={this.cancel}
+        />
       </div>
     )
   }

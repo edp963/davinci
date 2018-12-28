@@ -193,6 +193,7 @@ interface IGridProps {
       orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
+      nativeQuery: boolean
     }
   ) => void
   onLoadWidgetCsv: (
@@ -214,7 +215,7 @@ interface IGridProps {
     token: string
   ) => void
   onClearCurrentDashboard: () => any
-  onLoadCascadeSource: (controlId: number, viewId: number, column: string, parents: Array<{ column: string, value: string }>) => void
+  onLoadCascadeSource: (controlId: number, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) => void
   onLoadBizdataSchema: () => any
   onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
   onRenderDashboardItem: (itemId: number) => void
@@ -236,7 +237,7 @@ interface IGridStates {
   dashboardItemFormVisible: boolean
   dashboardItemFormStep: number
   modalLoading: boolean
-  selectedWidget: number[]
+  selectedWidgets: number[]
   currentItemId: number | boolean
   polling: boolean
   linkageConfigVisible: boolean
@@ -599,7 +600,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const dashboardItem = this.props.currentItems.find((c) => c.id === itemId)
     this.setState({
       drillPathSettingVisible: true,
-      selectedWidget: [dashboardItem.widgetId],
+      selectedWidgets: [dashboardItem.widgetId],
       currentItemId: itemId
     })
   }
@@ -873,7 +874,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSource(controlId, viewId, column, parents)
+    this.props.onLoadCascadeSource(controlId, viewId, [column], parents)
   }
 
   private globalFilterChange = (queryParams: IFilterChangeParam) => {
@@ -1422,7 +1423,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           <DrillPathSetting
              itemId={currentItemId}
              drillpathSetting={drillpathSetting}
-             selectedWidget={this.state.selectedWidget}
+             selectedWidget={this.state.selectedWidgets}
              widgets={widgets || []}
              views={bizlogics || []}
              saveDrillPathSetting={this.saveDrillPathSetting}
@@ -1497,7 +1498,7 @@ export function mapDispatchToProps (dispatch) {
                         dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, params, token) => dispatch(loadWidgetCsv(itemId, widgetId, params, token)),
-    onLoadCascadeSource: (controlId, viewId, column, parents) => dispatch(loadCascadeSource(controlId, viewId, column, parents)),
+    onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeSource(controlId, viewId, columns, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),

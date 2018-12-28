@@ -20,7 +20,6 @@ import { GraphTypes, SecondaryGraphTypes } from './components/util'
 import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 
 import Container from '../../components/Container'
-import DisplayForm from './components/DisplayForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { makeSelectWidgets } from '../Widget/selectors'

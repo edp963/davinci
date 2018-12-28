@@ -163,24 +163,24 @@ export function clearBizdatas () {
   }
 }
 
-export function loadCascadeSource (controlId, viewId, column, parents) {
+export function loadCascadeSource (controlId, viewId, columns, parents) {
   return {
     type: LOAD_CASCADESOURCE,
     payload: {
       controlId,
       viewId,
-      column,
+      columns,
       parents
     }
   }
 }
 
-export function cascadeSourceLoaded (controlId, column, values) {
+export function cascadeSourceLoaded (controlId, columns, values) {
   return {
     type: LOAD_CASCADESOURCE_SUCCESS,
     payload: {
       controlId,
-      column,
+      columns,
       values
     }
   }

@@ -29,7 +29,7 @@ import {
   LOAD_DATA_FROM_ITEM_FAILURE
 } from '../Bizlogic/constants'
 
-const initialState = fromJS({
+const emptyDisplayState = {
   displays: [],
   currentDisplay: null,
   currentDisplayLoading: false,
@@ -49,7 +49,9 @@ const initialState = fromJS({
   lastLayers: [],
 
   editorBaselines: []
-})
+}
+
+const initialState = fromJS(emptyDisplayState)
 
 function displayReducer (state = initialState, action) {
   const { type, payload } = action
@@ -392,14 +394,18 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayShareInfoLoading', false)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
       return state.set('currentDisplayShareInfoLoading', false)
-
+    case ActionTypes.RESET_DISPLAY_STATE:
+      return fromJS(emptyDisplayState)
     default:
       return state
   }
 }
 
-export default undoable(displayReducer, {
+const undoableDisplayReducer = undoable(displayReducer, {
+  initTypes: [ActionTypes.LOAD_DISPLAY_DETAIL],
+  ignoreInitialState: true,
   filter: includeAction([
+    ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
     ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
     ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
@@ -409,3 +415,5 @@ export default undoable(displayReducer, {
   undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
   redoType: ActionTypes.REDO_OPERATION_SUCCESS
 })
+
+export default undoableDisplayReducer
