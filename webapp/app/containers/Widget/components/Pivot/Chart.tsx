@@ -668,6 +668,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             })
           }
 
+
           if (isDrilling &&  whichDataDrillBrushed === false) {
           //  instance.off('brushselected')
             console.log('`````````````````')

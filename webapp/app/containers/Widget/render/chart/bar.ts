@@ -72,6 +72,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     horizontalLineStyle
   } = splitLine
 
+  const { selectedItems } = drillOptions
   const labelOption = {
     label: getLabelOption('bar', label)
   }
@@ -122,17 +123,33 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
               //     }
               //   }
               // } else {
-              if (percentage) {
-                return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
-              } else {
-                return g[`${m.agg}(${decodedMetricName})`]
-              }
+              // if (percentage) {
+              //   return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+              // } else {
+              //   return g[`${m.agg}(${decodedMetricName})`]
               // }
+              // }
+               if (selectedItems.some((item) => item === index)) {
+                return {
+                  value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
+                  itemStyle: {
+                    normal: {
+                      opacity: 1
+                    }
+                  }
+                }
+              } else {
+                if (percentage) {
+                  return g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100
+                } else {
+                  return g[`${m.agg}(${decodedMetricName})`]
+                }
+              }
             }),
             itemStyle: {
               normal: {
-                // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k]
+                opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+                // color: color.items[0].config.values[k]
               }
             },
             ...labelOption
@@ -162,24 +179,46 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           //     }
           //   }
           // } else {
-            if (percentage) {
+            // if (percentage) {
+            //   return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
+            // } else {
+            //   return d[`${m.agg}(${decodedMetricName})`]
+            // }
+          // }
+          if (selectedItems.some((item) => item === index)) {
+            return {
+              value: percentage ? d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100 : d[`${m.agg}(${decodedMetricName})`],
+              itemStyle: {
+                normal: {
+                  opacity: 1
+                }
+              }
+            }
+          } else {
+             if (percentage) {
               return d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100
             } else {
               return d[`${m.agg}(${decodedMetricName})`]
             }
-          // }
+          }
         }),
+        itemStyle: {
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
+            // color: color.items[0].config.values[k]
+          }
+        },
         // lineStyle: {
         //   normal: {
         //     opacity: interactIndex === undefined ? 1 : 0.25
         //   }
         // },
-        itemStyle: {
-          normal: {
+        // itemStyle: {
+        //   normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
             // color: color.value[m.name] || defaultThemeColors[i]
-          }
-        },
+          // }
+        // },
         ...labelOption
       }
       series.push(serieObj)

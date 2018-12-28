@@ -43,30 +43,24 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     const pagex = event.pageX
     const pagey = event.pageY
     const {ifSelectedTdToDrill, data, isDrilling, colKey = '', rowKey = ''} = this.props
-    if (isDrilling) {
-      this.setState({
-        isSelected: !this.state.isSelected
-      }, () => {
-        const {isSelected} = this.state
-        const key = [colKey, rowKey].join(String.fromCharCode(0))
-        if (ifSelectedTdToDrill && isSelected) {
-          const obj = {
-            data: {[key]: data && data.length === 1 ? data[0] : data},
-            range: [[pagex, pagex], [pagey, pagey]]
-          }
-          ifSelectedTdToDrill(obj)
-        } else {
-          const obj = {
-            data: {[key]: false}
-          }
-          ifSelectedTdToDrill(obj)
+    this.setState({
+      isSelected: !this.state.isSelected
+    }, () => {
+      const {isSelected} = this.state
+      const key = [colKey, rowKey].join(String.fromCharCode(0))
+      if (ifSelectedTdToDrill && isSelected) {
+        const obj = {
+          data: {[key]: data && data.length === 1 ? data[0] : data},
+          range: [[pagex, pagex], [pagey, pagey]]
         }
-      })
-    } else {
-      this.setState ({
-        isSelected: false
-      })
-    }
+        ifSelectedTdToDrill(obj)
+      } else {
+        const obj = {
+          data: {[key]: false}
+        }
+        ifSelectedTdToDrill(obj)
+      }
+    })
   }
   public render () {
     const { colKey = '', rowKey = '', width, height, data, chartStyles, color, legend } = this.props

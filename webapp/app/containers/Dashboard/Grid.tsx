@@ -115,7 +115,7 @@ import { InjectedRouter } from 'react-router/lib/Router'
 import { IWdigetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
-
+import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
 
@@ -955,6 +955,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onDrillDashboardItem
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
+    console.log({e})
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
@@ -963,7 +964,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let name = void 0
     let filterSource = void 0
     let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
-    console.log({widgetConfigGroups})
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -986,7 +986,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let currentDrillStatus = void 0
     let widgetConfigRows = []
     let widgetConfigCols = []
+    const coustomTableSqls = []
+    let sqls = widgetConfig.filters.map((i) => i.config.sql)
     if ((!drillHistory) || drillHistory.length === 0) {
+      let currentCol = void 0
       if (widgetConfig) {
         const dimetionAxis = widgetConfig.dimetionAxis
         widgetConfigRows = widgetConfig.rows && widgetConfig.rows.length ? widgetConfig.rows : []
@@ -1000,27 +1003,51 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             const rows = widgetConfig.rows
             name = rows[rows.length - 1]['name']
           }
-        } else {
-          if (dimetionAxis === 'col') {
-            const cols = widgetConfig.cols
-            name = cols[cols.length - 1]['name']
-          } else {
-            const rows = widgetConfig.rows
-            name = rows[rows.length - 1]['name']
+        } else if (dimetionAxis === 'col') {
+          const cols = widgetConfig.cols
+          name = cols[cols.length - 1]['name']
+        } else if (dimetionAxis === 'row') {
+          const rows = widgetConfig.rows
+          name = rows[rows.length - 1]['name']
+        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+          const coustomTable = sourceDataFilter.reduce((a, b) => {
+            a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+            return a
+          }, {})
+          for (const attr in coustomTable) {
+            if (coustomTable[attr] !== undefined && attr) {
+              coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+            }
           }
+          currentCol = groups && groups.length ? widgetConfigCols.concat([{name: groups}]) : void 0
         }
-        filterSource = sourceDataFilter.map((source) => {
-          if (source && source[name]) {
-            return source[name]
-          } else {
-            return source
-          }
-        })
-        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
       }
-      const sqls = widgetConfig.filters.map((i) => i.config.sql)
-      sqls.push(sql)
+      filterSource = sourceDataFilter.map((source) => {
+        if (source && source[name]) {
+          return source[name]
+        }
+      })
+      if (name && name.length) {
+        currentCol = col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls.push(sql)
+      }
+      if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+        sqls = sqls.concat(coustomTableSqls)
+      }
       const isDrillUp = widgetConfigGroups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = widgetConfigGroups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = widgetConfigGroups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
+      }
       currentDrillStatus = {
         filter: {
           filterSource,
@@ -1030,28 +1057,59 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           visualType: 'string'
         },
         type: isDrillUp ? 'up' : 'down',
-        col: col && col.length ? widgetConfigCols.concat([{name: col}]) : void 0,
+        col: currentCol,
         row: row && row.length ? widgetConfigRows.concat([{name: row}]) : void 0,
-        groups: isDrillUp
-                ? widgetConfigGroups.filter((cg) => cg !== groups)
-                : mode === 'pivot' ? widgetConfigGroups.concat([groups])
-                                  : [groups],
+        groups: currentDrillGroups,
+        // groups: isDrillUp
+        //         ? widgetConfigGroups.filter((cg) => cg !== groups)
+        //         : mode === 'pivot' ? widgetConfigGroups.concat([groups])
+        //                           : [groups],
         name: groups
       }
     } else {
       const lastDrillHistory = drillHistory[drillHistory.length - 1]
-      name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
-      filterSource = sourceDataFilter.map((source) => source[name])
-      sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
-      const sqls = lastDrillHistory.filter.sqls.concat(sql)
-      const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
       let currentCol = void 0
       let currentRow = void 0
-      if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
-        currentCol = col && col.length ? lastDrillHistory.col.concat(col) : lastDrillHistory.col
+      if (widgetConfig.selectedChart === ChartTypes.Table) {
+        const coustomTable = sourceDataFilter.reduce((a, b) => {
+          a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
+          return a
+        }, {})
+        for (const attr in coustomTable) {
+          if (coustomTable[attr] !== undefined && attr) {
+            coustomTableSqls.push(`${attr} in (${coustomTable[attr].map((key) => `'${key}'`).join(',')})`)
+          }
+        }
+        if (Array.isArray(coustomTableSqls) && coustomTableSqls.length > 0) {
+          sqls = sqls.concat(coustomTableSqls)
+        }
+        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
+          currentCol = groups && groups.length ? lastDrillHistory.col.concat(groups) : lastDrillHistory.col
+        }
+      } else {
+        name = lastDrillHistory.groups[lastDrillHistory.groups.length - 1]
+        filterSource = sourceDataFilter.map((source) => source[name])
+        sql = `${name} in (${filterSource.map((key) => `'${key}'`).join(',')})`
+        sqls = lastDrillHistory.filter.sqls.concat(sql)
+        if (lastDrillHistory && lastDrillHistory.col && lastDrillHistory.col.length) {
+          currentCol = col && col.length ? lastDrillHistory.col.concat(col) : lastDrillHistory.col
+        }
+        if (lastDrillHistory && lastDrillHistory.row && lastDrillHistory.row.length) {
+          currentRow = row && row.length ? lastDrillHistory.row.concat(row) : lastDrillHistory.row
+        }
       }
-      if (lastDrillHistory && lastDrillHistory.row && lastDrillHistory.row.length) {
-        currentRow = row && row.length ? lastDrillHistory.row.concat(row) : lastDrillHistory.row
+      const isDrillUp = lastDrillHistory.groups.some((cg) => cg === groups)
+      let currentDrillGroups = void 0
+      if (isDrillUp) {
+        currentDrillGroups = lastDrillHistory.groups.filter((cg) => cg !== groups)
+      } else {
+        if (mode === 'pivot') {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+          currentDrillGroups = lastDrillHistory.groups.concat([groups])
+        } else {
+          currentDrillGroups = [groups]
+        }
       }
       currentDrillStatus = {
         filter: {
@@ -1064,10 +1122,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         col: currentCol,
         row: currentRow,
         type: isDrillUp ? 'up' : 'down',
-        groups: isDrillUp
-                ? lastDrillHistory.groups.filter((cg) => cg !== groups)
-                : mode === 'pivot' ? lastDrillHistory.groups.concat([groups])
-                                   : [groups],
+        groups: currentDrillGroups,
         name: groups
       }
     }
@@ -1143,7 +1198,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentProject,
       currentLinkages
     } = this.props
-
     const {
       mounted,
       dashboardItemFormType,
