@@ -763,7 +763,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     public ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        Map<String, Object> map = null;
+        List<Map<String, Object>> list = null;
 
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(id);
         if (null == viewWithProjectAndSource) {
@@ -783,12 +783,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         try {
-            map = getDistinctValueData(viewWithProjectAndSource, param, user);
+            list = getDistinctValueData(viewWithProjectAndSource, param, user);
         } catch (ServerException e) {
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payload(map);
+        return resultMap.successAndRefreshToken(request).payloads(list);
     }
 
 
@@ -839,8 +839,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
     @Override
-    public Map<String, Object> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
-        Map<String, Object> map = null;
+    public List<Map<String, Object>> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
         try {
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
@@ -865,7 +864,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         if (null != param) {
                             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
                             ST st = stg.getInstanceOf("queryDistinctSql");
-                            st.add("column", param.getColumn());
+                            st.add("columns", param.getColumns());
                             st.add("params", param.getParents());
                             st.add("sql", querySqlList.get(querySqlList.size() - 1));
                             st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
@@ -877,17 +876,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         for (String sql : querySqlList) {
                             list = sqlUtils.query4List(sql, -1);
                         }
-                        if (null != list && list.size() > 0) {
-                            List<Object> objects = new ArrayList<>();
-                            for (Map<String, Object> objMap : list) {
-                                if (null != objMap.get(param.getColumn())) {
-                                    objects.add(objMap.get(param.getColumn()));
-                                }
-                            }
-                            if (null != objects) {
-                                map = new HashMap<>();
-                                map.put(param.getColumn(), objects);
-                            }
+                        if (null != list) {
+                            return list;
                         }
                     }
                 }
@@ -897,7 +887,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             throw new ServerException(e.getMessage());
         }
 
-        return map;
+        return null;
     }
 
 
