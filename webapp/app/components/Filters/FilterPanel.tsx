@@ -1,7 +1,9 @@
 import * as React from 'react'
 import moment from 'moment'
-import { FormComponentProps, WrappedFormUtils } from 'antd/lib/form/Form'
-import { IFilterViewConfig, IFilterItem, IFilterValue, IFilterChangeParam } from './'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import {
+  IFilterViewConfig, IFilterItem, IFilterValue, IMapItemFilterValue,
+  OnGetFilterControlOptions, OnFilterValueChange, MapFilterControlOptions } from './'
 import { FilterTypes } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
@@ -15,21 +17,9 @@ const styles = require('./filter.less')
 
 interface IFilterPanelProps {
   filters: IFilterItem[]
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  },
-  onChange: (
-    queryParams: IFilterChangeParam,
-    filterKey: string
-  ) => void
+  mapOptions: MapFilterControlOptions
+  onGetOptions: OnGetFilterControlOptions
+  onChange: OnFilterValueChange
 }
 
 export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps> {
@@ -69,7 +59,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       })
     })
 
-    const filterChangeParam: IFilterChangeParam = relatedItemIds.reduce((acc, itemId) => {
+    const mapItemFilterValue: IMapItemFilterValue = relatedItemIds.reduce((acc, itemId) => {
       acc[itemId] = Object.values(this.itemsFilterValues[itemId]).reduce((filterValue, val) => {
         filterValue.params.push(...val.params)
         filterValue.filters.push(...val.filters)
@@ -82,7 +72,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
     }, {})
 
     const { onChange } = this.props
-    onChange(filterChangeParam, key)
+    onChange(mapItemFilterValue, key)
   }
 
   private getParamValue = (type: FilterTypes, config: IFilterViewConfig, value) => {
@@ -99,6 +89,11 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         param = value.filter((val) => val !== '').map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
         break
       case FilterTypes.MultiSelect:
+        if (value.length && value.length > 0) {
+          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
+        }
+        break
+      case FilterTypes.TreeSelect:
         if (value.length && value.length > 0) {
           param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
         }
@@ -163,6 +158,11 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
           filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
         }
         break
+      case FilterTypes.TreeSelect:
+        if (value.length && value.length > 0) {
+          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
+        }
+        break
       case FilterTypes.CascadeSelect: // @TODO
         break
       case FilterTypes.InputDate:
@@ -209,7 +209,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
   }
 
   public render () {
-    const { filters, onGetOptions, filterOptions, form } = this.props
+    const { filters, onGetOptions, mapOptions, form } = this.props
     return (
       <Form className={styles.filterPanel}>
         <Row gutter={8}>
@@ -222,10 +222,10 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
               key={f.key}
             >
               <FilterControl
+                formToAppend={form}
                 filter={f}
                 onGetOptions={onGetOptions}
-                currentOptions={filterOptions[f.key] || {}}
-                formToAppend={form}
+                currentOptions={mapOptions[f.key] || []}
                 onChange={this.change}
               />
             </Col>

@@ -25,6 +25,8 @@ export interface IFilterItem {
   type: FilterTypes
   fromView: string
   fromModel: string
+  fromParent?: string
+  fromChild?: string
   operator: OperatorTypes
   relatedViews: {
     [viewId: string]: IFilterViewConfig
@@ -36,6 +38,31 @@ export interface IFilterValue {
   filters: string[]
 }
 
-export interface IFilterChangeParam {
+export interface IMapItemFilterValue {
   [itemId: number]: IFilterValue
 }
+
+export type OnGetFilterControlOptions = (
+  controlKey: string,
+  viewId: string,
+  columns: string[],
+  parents: Array<{ column: string, value: string }>
+) => void
+
+export type FilterControlOptions = Array<{
+  [key: string]: Array<number | string>
+}>
+
+export type MapFilterControlOptions = {
+  [controlKey: string]: FilterControlOptions
+}
+
+export type OnFilterControlValueChange = (
+  filterItem: IFilterItem,
+  value: number | string
+) => void
+
+export type OnFilterValueChange = (
+  mapItemFilterValue: IMapItemFilterValue,
+  filterKey: string
+) => void

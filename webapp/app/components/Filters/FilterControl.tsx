@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { IFilterItem, OnGetFilterControlOptions, OnFilterControlValueChange, FilterControlOptions } from './'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
 import * as debounce from 'lodash/debounce'
 
@@ -7,6 +8,7 @@ import Input from 'antd/lib/input'
 import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
 const Option = Select.Option
+import TreeSelect from 'antd/lib/tree-select'
 import DatePicker from 'antd/lib/date-picker'
 const RangePicker = DatePicker.RangePicker
 import Form from 'antd/lib/form'
@@ -19,17 +21,10 @@ import MultiDatePicker from '../MultiDatePicker'
 
 interface IFilterControlProps {
   formToAppend: WrappedFormUtils
-  filter: any
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  currentOptions: {
-    [key: string]: Array<number | string>
-  }
-  onChange: (filter, val) => void
+  filter: IFilterItem
+  currentOptions: FilterControlOptions
+  onGetOptions: OnGetFilterControlOptions
+  onChange: OnFilterControlValueChange
 }
 
 export class FilterControl extends React.Component<IFilterControlProps, {}> {
@@ -54,8 +49,11 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     if (!filter) { return }
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
-    const { key, fromView, fromModel } = filter
-    onGetOptions(key, fromView, fromModel, [])
+    const { key, fromView, fromModel, fromChild, fromParent } = filter
+    const columns = [fromModel]
+    if (fromChild) { columns.push(fromChild) }
+    if (fromParent) { columns.push(fromParent) }
+    onGetOptions(key, fromView, columns, [])
   }
 
   private renderInputText = (filter, onChange) => {
@@ -77,18 +75,42 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderSelect = (filter, onChange, options) => {
+    const { fromModel } = filter
+    const fromModelOptions = options.map((opt) => opt[fromModel])
     return (
       <Select allowClear={true} placeholder={filter.name} onChange={onChange}>
-        {options.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
       </Select>
     )
   }
 
   private renderMultiSelect = (filter, onChange, options) => {
+    const { fromModel } = filter
+    const fromModelOptions = options.map((opt) => opt[fromModel])
     return (
       <Select mode="multiple" placeholder={filter.name} onChange={onChange}>
-        {options.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
       </Select>
+    )
+  }
+
+  private renderTreeSelect = (filter: IFilterItem, onChange, options) => {
+    const { fromModel, fromParent, fromChild } = filter
+    const treeData = options.map((item) => ({
+      id: item[fromChild],
+      pId: item[fromParent],
+      value: item[fromChild],
+      title: item[fromModel]
+    }))
+    return (
+      <TreeSelect
+        showSearch
+        allowClear
+        multiple
+        treeDataSimpleMode
+        treeData={treeData}
+        onChange={onChange}
+      />
     )
   }
 
@@ -153,7 +175,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private wrapFormItem = (filter, form: WrappedFormUtils, control) => {
     const { getFieldDecorator } = form
     return (
-      <FormItem wrapperCol={{span: 24}} className={styles.item}>
+      <FormItem wrapperCol={{span: 24}} className={styles.filterControl}>
         {getFieldDecorator(`${filter.key}`, {})(control)}
       </FormItem>
     )
@@ -161,8 +183,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   private renderControl = (filter) => {
     const { currentOptions, formToAppend } = this.props
-    const { fromModel } = filter
-    const options = currentOptions[fromModel] || []
+    const options = currentOptions || []
     let control
     switch (filter.type) {
       case FilterTypes.InputText:
@@ -179,6 +200,9 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
         break
       case FilterTypes.MultiSelect:
         control = this.renderMultiSelect(filter, this.change, options)
+        break
+      case FilterTypes.TreeSelect:
+        control = this.renderTreeSelect(filter, this.change, options)
         break
       case FilterTypes.CascadeSelect:
         control = this.renderCascadeSelect()

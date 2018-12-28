@@ -23,27 +23,15 @@ import * as classnames from 'classnames'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 const utilStyles = require('assets/less/util.less')
-import { IFilterChangeParam } from 'components/Filters'
+import { MapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
 import FilterPanel from 'components/Filters/FilterPanel'
 
 interface IDashboardFilterPanelProps {
   currentDashboard
   currentItems
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  },
-  onChange: (
-    queryParams: IFilterChangeParam,
-    filterKey: string
-  ) => void
+  onGetOptions: OnGetFilterControlOptions
+  mapOptions: MapFilterControlOptions,
+  onChange: OnFilterValueChange
 }
 
 interface IDashboardFilterPanelStates {
@@ -85,7 +73,7 @@ export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelP
   }
 
   public render () {
-    const { onGetOptions, filterOptions, onChange } = this.props
+    const { onGetOptions, mapOptions, onChange } = this.props
     const { filters } = this.state
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !filters.length
@@ -97,7 +85,7 @@ export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelP
           <FilterPanel
             filters={filters}
             onGetOptions={onGetOptions}
-            filterOptions={filterOptions}
+            mapOptions={mapOptions}
             onChange={onChange}
           />
         </Col>

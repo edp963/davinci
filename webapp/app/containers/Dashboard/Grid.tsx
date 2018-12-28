@@ -41,7 +41,7 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IFilterChangeParam } from 'components/Filters'
+import { IMapItemFilterValue, MapFilterControlOptions } from 'components/Filters'
 import DashboardFilterPanel from './components/DashboardFilterPanel'
 import DashboardFilterConfig from './components/DashboardFilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
@@ -165,11 +165,7 @@ interface IGridProps {
       renderType: RenderType
     }
   }
-  currentDashboardCascadeSources: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  }
+  currentDashboardCascadeSources: MapFilterControlOptions
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
@@ -873,11 +869,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     )
   }
 
-  private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSource(controlId, viewId, [column], parents)
+  private getOptions = (controlId, viewId, columns, parents) => {
+    this.props.onLoadCascadeSource(controlId, viewId, columns, parents)
   }
 
-  private globalFilterChange = (queryParams: IFilterChangeParam) => {
+  private globalFilterChange = (queryParams: IMapItemFilterValue) => {
     const { currentItems } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
@@ -1439,7 +1435,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             currentDashboard={currentDashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            filterOptions={currentDashboardCascadeSources}
+            mapOptions={currentDashboardCascadeSources}
             onChange={this.globalFilterChange}
           />
         </Container.Title>
@@ -1504,7 +1500,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}
-          filterOptions={currentDashboardCascadeSources}
+          mapOptions={currentDashboardCascadeSources}
           onCancel={this.toggleGlobalFilterConfig(false)}
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}

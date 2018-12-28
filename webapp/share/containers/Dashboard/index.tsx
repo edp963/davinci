@@ -35,7 +35,7 @@ import DashboardItem from '../../../app/containers/Dashboard/components/Dashboar
 import FullScreenPanel from '../../../app/containers/Dashboard/components/fullScreenPanel/FullScreenPanel'
 import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 
-import { IFilterChangeParam } from '../../../app/components/Filters'
+import { IMapItemFilterValue } from '../../../app/components/Filters'
 import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
 
 import { RenderType, IWdigetConfig } from '../../../app/containers/Widget/components/Widget'
@@ -492,11 +492,11 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     })
   }
 
-  private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, [column], parents)
+  private getOptions = (controlId, viewId, columns, parents) => {
+    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, columns, parents)
   }
 
-  private globalFilterChange = (queryParams: IFilterChangeParam) => {
+  private globalFilterChange = (queryParams: IMapItemFilterValue) => {
     const { currentItems } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
@@ -746,7 +746,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
             currentDashboard={dashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            filterOptions={dashboardCascadeSources}
+            mapOptions={dashboardCascadeSources}
             onChange={this.globalFilterChange}
           />
         </Container.Title>

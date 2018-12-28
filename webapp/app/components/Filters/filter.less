@@ -58,10 +58,9 @@
     flex-direction: column;
   }
 
-  .right {
-    border: 1px solid @border-color-base;
-    border-left: none;
-    width: 200px;
+  .bottom {
+    min-height: 90px;
+    border-top: 1px solid @border-color-base;
     display: flex;
     flex-direction: column;
   }
@@ -106,10 +105,16 @@
   display: flex;
   flex-direction: column;
 
-  .form {
-    padding: 16px;
+  .formContent {
+    padding: 16px 0 16px 16px;
     flex: 1;
-    overflow-y: auto;
+    display: flex;
+
+    .form {
+      flex: 1;
+      padding-right: 16px;
+      overflow-y: auto;
+    }
   }
 
   .configItem {
@@ -131,8 +136,7 @@
     }
 
     .item {
-      margin-top: 8px;
-      margin-bottom: 8px;
+      margin: 8px;
     }
   }
 
@@ -145,6 +149,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .previewContent {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+  }
 
   ul {
     overflow-y: auto;
@@ -161,11 +171,12 @@
 
 .filterPanel {
   background-color: @white;
-  padding: 8px 8px 0;
+  padding: 0 8px;
   margin-top: 16px;
   border-radius: 3px;
+}
 
-  .item {
-    margin-bottom: 8px;
-  }
+.filterControl {
+  margin-top: 8px;
+  margin-bottom: 8px;
 }

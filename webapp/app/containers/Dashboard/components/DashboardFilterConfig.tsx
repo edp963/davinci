@@ -22,6 +22,7 @@ import * as React from 'react'
 import Button from 'antd/lib/button'
 import Modal from 'antd/lib/modal'
 
+import { MapFilterControlOptions, OnGetFilterControlOptions } from 'components/Filters'
 import FilterConfig from 'components/Filters/FilterConfig'
 
 const styles = require('../Dashboard.less')
@@ -33,19 +34,10 @@ interface IDashboardFilterConfigProps {
   widgets: any[]
   visible: boolean
   loading: boolean
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  }
+  mapOptions: MapFilterControlOptions
   onCancel: () => void
   onSave: (filterItems: any[]) => void
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
+  onGetOptions: OnGetFilterControlOptions
 }
 
 interface IDashboardFilterConfigStates {
@@ -95,7 +87,7 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
   }
 
   public render () {
-    const { visible, loading, currentItems, widgets, views, onSave, onGetOptions, filterOptions, onCancel } = this.props
+    const { visible, loading, currentItems, widgets, views, onSave, onGetOptions, mapOptions, onCancel } = this.props
     const { filters, savingFilterConfig } = this.state
 
     if (!visible) { return null }
@@ -138,8 +130,8 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
             filters={filters}
             saving={savingFilterConfig}
             onOk={onSave}
-            onGetPreviewData={onGetOptions}
-            previewData={filterOptions}
+            onGetOptions={onGetOptions}
+            mapOptions={mapOptions}
           />
         </div>
       </Modal>
