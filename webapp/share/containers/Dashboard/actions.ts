@@ -145,25 +145,25 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, column, parents) {
+export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, columns, parents) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
     payload: {
       controlId,
       viewId,
       dataToken,
-      column,
+      columns,
       parents
     }
   }
 }
 
-export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
+export function cascadeSourceFromDashboardLoaded (controlId, columns, values) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
     payload: {
       controlId,
-      column,
+      columns,
       values
     }
   }

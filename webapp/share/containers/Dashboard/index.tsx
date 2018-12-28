@@ -144,7 +144,7 @@ interface IDashboardProps {
     },
     dataToken: string
   ) => void,
-  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => void
+  onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => void
   onResizeAllDashboardItem: () => void
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
@@ -493,7 +493,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private getOptions = (controlId, viewId, column, parents) => {
-    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, column, parents)
+    this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, [column], parents)
   }
 
   private globalFilterChange = (queryParams: IFilterChangeParam) => {
@@ -778,7 +778,7 @@ export function mapDispatchToProps (dispatch) {
     onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
     onLoadWidgetCsv: (itemId, params, dataToken) => dispatch(loadWidgetCsv(itemId, params, dataToken)),
-    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, column, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, column, parents)),
+    onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, columns, parents)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
