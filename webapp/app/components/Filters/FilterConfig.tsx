@@ -28,7 +28,7 @@ interface IFilterConfigStates {
   previewFilter: {
     key: string
     viewId: string
-    fromModel: string
+    columns: string[]
   }
 }
 
@@ -45,7 +45,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       previewFilter: {
         key: '',
         viewId: '',
-        fromModel: ''
+        columns: []
       }
     }
     this.refHandlers = {
@@ -88,7 +88,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
       previewFilter: {
         key: '',
         viewId: '',
-        fromModel: ''
+        columns: []
       }
     }, () => {
       this.filterForm.setFieldsValue(selectedFilter)
@@ -164,23 +164,23 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     }
   }
 
-  private getPreviewData = (filterKey, viewId, fieldName, parents) => {
+  private getPreviewData = (filterKey, viewId, columns: string[], parents) => {
     const { onGetOptions } = this.props
     this.setState({
       previewFilter: {
         key: filterKey,
         viewId,
-        fromModel: fieldName
+        columns
       }
     }, () => {
-      onGetOptions(filterKey, viewId, fieldName, parents)
+      onGetOptions(filterKey, viewId, columns, parents)
     })
   }
 
   public render () {
     const { views, widgets, items, mapOptions, onGetOptions } = this.props
     const { localFilters, selectedFilter } = this.state
-    const { previewFilter: { key, fromModel } } = this.state
+    const { previewFilter: { key, columns } } = this.state
 
     return (
       <div className={styles.filterConfig}>
@@ -215,7 +215,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
                 !selectedFilter.key ? null : (
                   <FilterValuePreview
                     filter={selectedFilter}
-                    currentOptions={mapOptions[selectedFilter.key] || {}}
+                    currentOptions={mapOptions[selectedFilter.key] || []}
                     onGetOptions={onGetOptions}
                   />
                 )

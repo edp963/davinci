@@ -148,13 +148,15 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
 
   public setFieldsValue = (filterItem) => {
     const { views, widgets, items } = this.props
-    const { key, name, type, fromView, fromModel, operator } = filterItem
+    const { key, name, type, fromView, fromModel, fromChild, fromParent, operator } = filterItem
     const fieldsValue = {
       key,
       name,
       type,
       fromView,
       fromModel,
+      fromChild,
+      fromParent,
       operator
     }
     if (fromView) {
@@ -192,7 +194,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
       availableOperatorTypes: FilterTypesOperatorSetting[type],
       modelOrParam
     }, () => {
-      const { form, onGetPreviewData } = this.props
+      const { form } = this.props
       form.setFieldsValue(fieldsValue)
     })
   }

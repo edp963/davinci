@@ -23,18 +23,13 @@ import * as classnames from 'classnames'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 const utilStyles = require('assets/less/util.less')
-import { MapFilterControlOptions, OnFilterValueChange } from 'components/Filters'
+import { MapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
 import FilterPanel from 'components/Filters/FilterPanel'
 
 interface IDashboardFilterPanelProps {
   currentDashboard
   currentItems
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
+  onGetOptions: OnGetFilterControlOptions
   mapOptions: MapFilterControlOptions,
   onChange: OnFilterValueChange
 }

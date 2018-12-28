@@ -380,10 +380,7 @@ function dashboardReducer (state = initialState, action) {
     case LOAD_CASCADESOURCE_SUCCESS:
       return state.set('currentDashboardCascadeSources', {
         ...dashboardCascadeSources,
-        [payload.controlId]: payload.columns.reduce((obj, col) => ({
-          ...obj,
-          [col]: payload.values.map((val) => val[col])
-        }), { ...dashboardCascadeSources[payload.controlId] })
+        [payload.controlId]: payload.values
       })
     case RENDER_DASHBOARDITEM:
       return state.set('currentItemsInfo', {

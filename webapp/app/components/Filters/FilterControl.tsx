@@ -49,8 +49,11 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     if (!filter) { return }
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
-    const { key, fromView, fromModel } = filter
-    onGetOptions(key, fromView, fromModel, [])
+    const { key, fromView, fromModel, fromChild, fromParent } = filter
+    const columns = [fromModel]
+    if (fromChild) { columns.push(fromChild) }
+    if (fromParent) { columns.push(fromParent) }
+    onGetOptions(key, fromView, columns, [])
   }
 
   private renderInputText = (filter, onChange) => {
@@ -72,27 +75,31 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderSelect = (filter, onChange, options) => {
+    const { fromModel } = filter
+    const fromModelOptions = options.map((opt) => opt[fromModel])
     return (
       <Select allowClear={true} placeholder={filter.name} onChange={onChange}>
-        {options.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
       </Select>
     )
   }
 
   private renderMultiSelect = (filter, onChange, options) => {
+    const { fromModel } = filter
+    const fromModelOptions = options.map((opt) => opt[fromModel])
     return (
       <Select mode="multiple" placeholder={filter.name} onChange={onChange}>
-        {options.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
       </Select>
     )
   }
 
-  private renderTreeSelect = (filter: IFilterItem, onChange, options: any[]) => {
+  private renderTreeSelect = (filter: IFilterItem, onChange, options) => {
     const { fromModel, fromParent, fromChild } = filter
     const treeData = options.map((item) => ({
       id: item[fromChild],
       pId: item[fromParent],
-      value: item[fromModel],
+      value: item[fromChild],
       title: item[fromModel]
     }))
     return (
@@ -176,8 +183,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   private renderControl = (filter) => {
     const { currentOptions, formToAppend } = this.props
-    const { fromModel } = filter
-    const options = currentOptions[fromModel] || []
+    const options = currentOptions || []
     let control
     switch (filter.type) {
       case FilterTypes.InputText:

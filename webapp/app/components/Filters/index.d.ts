@@ -44,14 +44,14 @@ export interface IMapItemFilterValue {
 
 export type OnGetFilterControlOptions = (
   controlKey: string,
-  fromViewId: string,
-  fromModel: string,
+  viewId: string,
+  columns: string[],
   parents: Array<{ column: string, value: string }>
 ) => void
 
-export type FilterControlOptions = {
-  [modelKey: string]: Array<number | string>
-}
+export type FilterControlOptions = Array<{
+  [key: string]: Array<number | string>
+}>
 
 export type MapFilterControlOptions = {
   [controlKey: string]: FilterControlOptions

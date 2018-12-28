@@ -93,6 +93,11 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
           param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
         }
         break
+      case FilterTypes.TreeSelect:
+        if (value.length && value.length > 0) {
+          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
+        }
+        break
       case FilterTypes.CascadeSelect: // TODO
         break
       case FilterTypes.InputDate:
@@ -149,6 +154,11 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         }
         break
       case FilterTypes.MultiSelect:
+        if (value.length && value.length > 0) {
+          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
+        }
+        break
+      case FilterTypes.TreeSelect:
         if (value.length && value.length > 0) {
           filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
         }
@@ -215,7 +225,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
                 formToAppend={form}
                 filter={f}
                 onGetOptions={onGetOptions}
-                currentOptions={mapOptions[f.key] || {}}
+                currentOptions={mapOptions[f.key] || []}
                 onChange={this.change}
               />
             </Col>
