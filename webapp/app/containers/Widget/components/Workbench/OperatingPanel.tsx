@@ -1,9 +1,10 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
+import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
-import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType } from '../Widget'
+import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import FieldConfigModal, { IFieldConfig } from './FieldConfigModal'
 import FormatConfigModal, { IFieldFormatConfig } from './FormatConfigModal'
 import ColorSettingForm from './ColorSettingForm'
@@ -23,7 +24,7 @@ import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelec
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
 import TableSection, { ITableConfig } from './ConfigSections/TableSection'
-import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts } from '../util'
+import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
 
@@ -63,35 +64,28 @@ interface IOperatingPanelProps {
   selectedView: IView
   distinctColumnValues: any[]
   columnValueLoading: boolean
-  mode: WidgetMode
-  currentWidgetlibs: IChartInfo[]
-  chartModeSelectedChart: IChartInfo
-  pagination: IPaginationParams
   queryParams: any[]
   cache: boolean
   expired: number
   onViewSelect: (selectedView: IView) => void
-  onChartSelect: (selectedChart: IChartInfo, callback: () => void) => void
-  onModeChange: (mode: WidgetMode, callback: () => void) => void
-  onReset: () => void
   onSetQueryParams: (queryParams: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
-  onSetWidgetProps: (
-    callback: (selectedCharts: IChartInfo[]) => void,
-    dataParams: IDataParams,
-    styleParams: IChartStyles,
-    renderType?: RenderType,
-    pagination?: IPaginationParams) => void
+  onSetWidgetProps: (widgetProps: IWidgetProps) => void
+  onLoadData: (viewId: number, params: object, resolve: (data: any) => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
 }
 
 interface IOperatingPanelStates {
   dragged: IDataParamSource
   showColsAndRows: boolean
+  mode: WidgetMode
+  currentWidgetlibs: IChartInfo[]
+  chartModeSelectedChart: IChartInfo
   selectedTab: 'data' | 'style' | 'variable' | 'cache'
   dataParams: IDataParams
   styleParams: IChartStyles
+  pagination: IPaginationParams
   modalCachedData: IDataParamSource
   modalCallback: (data: boolean | IDataParamConfig) => void
   modalDataFrom: string
@@ -117,6 +111,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.state = {
       dragged: null,
       showColsAndRows: false,
+      mode: 'pivot',
+      currentWidgetlibs: widgetlibs['pivot'],
+      chartModeSelectedChart: getTable(),
       selectedTab: 'data',
       dataParams: Object.entries(getPivot().data)
         .reduce((params: IDataParams, [key, value]) => {
@@ -124,6 +121,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           return params
         }, {}),
       styleParams: {},
+      pagination: { pageNo: 0, pageSize: 0, withPaging: false, totalCount: 0 },
       modalCachedData: null,
       modalCallback: null,
       modalDataFrom: void 0,
@@ -140,6 +138,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       variableConfigControl: {}
     }
   }
+
+  private lastRequestParamString: string = ''
 
   private tabKeys = [
     { key: 'data', title: '数据' },
@@ -164,11 +164,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
-    const { selectedView, currentWidgetlibs, originalWidgetProps } = nextProps
+    const { selectedView, originalWidgetProps } = nextProps
     if (originalWidgetProps && originalWidgetProps !== this.props.originalWidgetProps) {
-      const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, chartStyles } = originalWidgetProps
+      const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, chartStyles, mode, selectedChart } = originalWidgetProps
       const { dataParams } = this.state
       const model = JSON.parse(selectedView.model)
+      const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
       dataParams.cols.items = cols.map((c) => ({
         ...c,
         from: 'cols',
@@ -188,7 +189,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         visualType: model[decodeMetricName(m.name)].visualType,
         chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
       }))
-      if (dataParams.secondaryMetrics) {
+      if (dataParams.secondaryMetrics && secondaryMetrics) {
         dataParams.secondaryMetrics.items = secondaryMetrics.map((m) => ({
           ...m,
           from: 'secondaryMetrics',
@@ -210,6 +211,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         ...tip && {tip}
       }
       this.setState({
+        mode: mode || 'pivot', // FIXME 兼容 0.3.0-beta.1 之前版本
+        currentWidgetlibs,
+        ...selectedChart && {chartModeSelectedChart: widgetlibs['chart'].find((wl) => wl.id === selectedChart)},
         dataParams: mergedDataParams,
         styleParams: chartStyles,
         showColsAndRows: !!rows.length
@@ -220,7 +224,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private getChartDataConfig = (selectedCharts: IChartInfo[]) => {
-    const { mode } = this.props
+    const { mode } = this.state
     const { dataParams, styleParams } = this.state
     const { metrics, color, size } = dataParams
     const dataConfig = {}
@@ -332,8 +336,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private beforeDrop = (name, cachedItem, resolve) => {
-    const { selectedView, mode, onLoadDistinctValue } = this.props
-    const { dataParams } = this.state
+    const { selectedView, onLoadDistinctValue } = this.props
+    const { mode, dataParams } = this.state
     const { metrics } = dataParams
 
     switch (name) {
@@ -602,37 +606,249 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     return [dcount, mcount]
   }
 
-  public triggerWidgetRefresh = (pagination: IPaginationParams) => {
-    const { dataParams, styleParams } = this.state
-    this.props.onSetWidgetProps(
-      (selectedCharts) => {
-        this.setState({
-          ...this.getChartDataConfig(selectedCharts)
-        })
-      },
-      dataParams,
-      styleParams,
-      'rerender',
-      pagination
-    )
+  public triggerWidgetRefresh = (pageNo: number, pageSize: number) => {
+    const { dataParams, styleParams, pagination } = this.state
+    this.setWidgetProps(dataParams, styleParams, 'rerender', {
+      ...pagination,
+      pageNo,
+      pageSize
+    })
   }
 
-  private setWidgetProps = (dataParams: IDataParams, styleParams: IChartStyles, renderType?: RenderType) => {
-    this.props.onSetWidgetProps(
-      (selectedCharts) => {
+  private setWidgetProps = (dataParams, styleParams, renderType?, updatedPagination?: IPaginationParams) => {
+    const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
+    const { selectedView, onLoadData, onSetWidgetProps } = this.props
+    const { mode, chartModeSelectedChart, pagination } = this.state
+    const fromPagination = !!updatedPagination
+    updatedPagination = { ...pagination, ...updatedPagination }
+    let groups = cols.items.map((c) => c.name)
+      .concat(rows.items.map((r) => r.name))
+      .filter((g) => g !== '指标名称')
+    let aggregators = metrics.items.map((m) => ({
+      column: decodeMetricName(m.name),
+      func: m.agg
+    }))
+    if (secondaryMetrics) {
+      aggregators = aggregators.concat(secondaryMetrics.items
+        .map((m) => ({
+          column: decodeMetricName(m.name),
+          func: m.agg
+        })))
+    }
+    if (color) {
+      groups = groups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      groups = groups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+      aggregators = aggregators.concat(label.items
+        .filter((l) => l.type === 'value')
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (size) {
+      aggregators = aggregators.concat(size.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (xAxis) {
+      aggregators = aggregators.concat(xAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (tip) {
+      aggregators = aggregators.concat(tip.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+    if (yAxis) {
+      aggregators = aggregators.concat(yAxis.items
+        .map((l) => ({
+          column: decodeMetricName(l.name),
+          func: l.agg
+        })))
+    }
+
+    const orders = []
+    Object.values(dataParams)
+      .reduce<IDataParamSource[]>((items, param: IDataParamProperty) => items.concat(param.items), [])
+      .forEach((item) => {
+        const column = item.type === 'category' ? item.name : `${item.agg}(${decodeMetricName(item.name)})`
+        if (item.sort) {
+          orders.push({
+            column,
+            direction: item.sort
+          })
+        }
+      })
+
+    let selectedCharts
+    let dimetionsCount
+
+    if (mode === 'pivot') {
+      selectedCharts = getPivotModeSelectedCharts(metrics.items)
+      dimetionsCount = groups.length
+    } else {
+      selectedCharts = [chartModeSelectedChart]
+      dimetionsCount = cols.items.length
+    }
+
+    if (!checkChartEnable(dimetionsCount, metrics.items.length, selectedCharts)) {
+      selectedCharts = mode === 'pivot'
+        ? getPivotModeSelectedCharts([])
+        : [getTable()]
+    }
+    const mergedParams = this.getChartDataConfig(selectedCharts)
+    const mergedDataParams = mergedParams.dataParams
+    const mergedStyleParams = mergedParams.styleParams
+
+    let noAggregators = false
+    if (styleParams.table) { // @FIXME pagination in table style config
+      const { withPaging, pageSize, withNoAggregators } = styleParams.table
+      noAggregators = withNoAggregators
+      if (!fromPagination) {
+        if (withPaging) {
+          updatedPagination.pageNo = 1
+          updatedPagination.pageSize = +pageSize
+        } else {
+          updatedPagination.pageNo = 0
+          updatedPagination.pageSize = 0
+        }
+      }
+      updatedPagination.withPaging = withPaging
+    }
+
+    const requestParams = {
+      groups,
+      aggregators,
+      filters: filters.items.map((i) => i.config.sql),
+      orders,
+      pageNo: updatedPagination.pageNo,
+      pageSize: updatedPagination.pageSize,
+      nativeQuery: noAggregators,
+      cache: false,
+      expired: 0
+    }
+
+    const requestParamString = JSON.stringify(requestParams)
+    if (selectedView && requestParamString !== this.lastRequestParamString) {
+      this.lastRequestParamString = requestParamString
+      onLoadData(selectedView.id, requestParams, (result) => {
+        const { resultList: data, pageNo, pageSize, totalCount } = result
+        updatedPagination = !updatedPagination.withPaging ? updatedPagination : {
+          ...updatedPagination,
+          pageNo,
+          pageSize,
+          totalCount
+        }
+        if (data.length) {
+          onSetWidgetProps({
+            cols: cols.items.map((item) => ({...item})),
+            rows: rows.items.map((item) => ({...item})),
+            metrics: metrics.items.map((item) => ({...item})),
+            ...secondaryMetrics && {
+              secondaryMetrics: secondaryMetrics.items.map((item) => ({...item}))
+            },
+            filters: filters.items,
+            ...color && {color},
+            ...label && {label},
+            ...size && {size},
+            ...xAxis && {xAxis},
+            ...tip && {tip},
+            ...yAxis && {yAxis},
+            chartStyles: mergedStyleParams,
+            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
+            data,
+            pagination: updatedPagination,
+            dimetionAxis: this.getDimetionAxis(selectedCharts),
+            renderType: renderType || 'rerender',
+            orders,
+            mode,
+            model: JSON.parse(selectedView.model)
+          })
+          this.setState({
+            chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
+            pagination: updatedPagination
+          })
+        } else {
+          onSetWidgetProps({
+            cols: [],
+            rows: [],
+            metrics: [],
+            filters: [],
+            data: [],
+            pagination: updatedPagination,
+            chartStyles: mergedStyleParams,
+            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
+            dimetionAxis: this.getDimetionAxis([getPivot()]),
+            renderType: 'rerender',
+            orders,
+            mode,
+            model: JSON.parse(selectedView.model)
+          })
+          this.setState({
+            chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
+            pagination: updatedPagination
+          })
+        }
         this.setState({
-          ...this.getChartDataConfig(selectedCharts)
+          dataParams: mergedDataParams,
+          styleParams: mergedStyleParams
         })
-      },
-      dataParams,
-      styleParams,
-      renderType
-    )
+      })
+    } else {
+      onSetWidgetProps({
+        data: null,
+        cols: cols.items.map((item) => ({...item})),
+        rows: rows.items.map((item) => ({...item})),
+        metrics: metrics.items.map((item) => ({...item})),
+        ...secondaryMetrics && {
+          secondaryMetrics: secondaryMetrics.items.map((item) => ({...item}))
+        },
+        filters: filters.items,
+        ...color && {color},
+        ...label && {label},
+        ...size && {size},
+        ...xAxis && {xAxis},
+        ...tip && {tip},
+        ...yAxis && {yAxis},
+        chartStyles: mergedStyleParams,
+        selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
+        pagination: updatedPagination,
+        dimetionAxis: this.getDimetionAxis(selectedCharts),
+        renderType: renderType || 'clear',
+        orders,
+        mode,
+        model: selectedView ? JSON.parse(selectedView.model) : {}
+      })
+      this.setState({
+        chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
+        pagination: updatedPagination,
+        dataParams: mergedDataParams,
+        styleParams: mergedStyleParams
+      })
+    }
+  }
+
+  private getDimetionAxis = (selectedCharts): DimetionType => {
+    const pivotChart = getPivot()
+    const onlyPivot = !selectedCharts.filter((sc) => sc.id !== pivotChart.id).length
+    if (!onlyPivot) {
+      return 'col'
+    }
   }
 
   private chartSelect = (chart: IChartInfo) => {
-    const { mode, onChartSelect } = this.props
-    const { dataParams } = this.state
+    const { mode, dataParams } = this.state
     const { cols, rows, metrics } = dataParams
     if (mode === 'pivot') {
       if (!(metrics.items.length === 1 && metrics.items[0].chart.id === chart.id)) {
@@ -647,7 +863,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         this.setWidgetProps(selectedParams.dataParams, selectedParams.styleParams)
       }
     } else {
-      onChartSelect(chart, () => {
+      this.setState({
+        chartModeSelectedChart: chart,
+        pagination: { pageNo: 0, pageSize: 0, withPaging: false, totalCount: 0 }
+      }, () => {
         const selectedParams = this.getChartDataConfig([chart])
         this.setWidgetProps(selectedParams.dataParams, selectedParams.styleParams)
       })
@@ -655,8 +874,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private viewSelect = ({key}) => {
-    const { mode } = this.props
-    const { dataParams } = this.state
+    const { mode, dataParams } = this.state
     const hasItems = Object.values(dataParams)
       .filter((param) => !!param.items.length)
     if (hasItems.length) {
@@ -674,7 +892,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private changeMode = (e) => {
     const mode = e.target.value
-    const { onModeChange } = this.props
     const { dataParams } = this.state
     const hasItems = Object.values(dataParams)
       .filter((param) => !!param.items.length)
@@ -682,13 +899,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       confirm({
         title: '切换图表模式会清空所有配置项，是否继续？',
         onOk: () => {
-          onModeChange(mode, () => {
+          this.setState({
+            mode,
+            currentWidgetlibs: widgetlibs[mode]
+          }, () => {
             this.resetWorkbench(mode)
           })
         }
       })
     } else {
-      onModeChange(mode, () => {
+      this.setState({
+        mode,
+        currentWidgetlibs: widgetlibs[mode]
+      }, () => {
         this.resetWorkbench(mode)
       })
     }
@@ -703,9 +926,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       }
     })
     this.setState({
-      showColsAndRows: false
+      showColsAndRows: false,
+      chartModeSelectedChart: getTable()
     })
-    this.props.onReset()
     const selectedCharts = mode === 'pivot'
       ? getPivotModeSelectedCharts([])
       : [getTable()]
@@ -714,8 +937,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private dropboxValueChange = (name) => (key: string, value: string | number) => {
-    const { mode } = this.props
-    const { dataParams, styleParams } = this.state
+    const { mode, dataParams, styleParams } = this.state
     const { color, size } = dataParams
     switch (name) {
       case 'color':
@@ -866,9 +1088,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const {
       views,
       selectedView,
-      mode,
-      currentWidgetlibs,
-      chartModeSelectedChart,
       distinctColumnValues,
       columnValueLoading,
       queryParams,
@@ -880,6 +1099,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const {
       dragged,
       showColsAndRows,
+      mode,
+      currentWidgetlibs,
+      chartModeSelectedChart,
       selectedTab,
       dataParams,
       styleParams,

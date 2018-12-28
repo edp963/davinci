@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 import { IDrawingData, IMetricAxisConfig, ILegend } from './Pivot'
 import { IWidgetMetric, DimetionType, RenderType, IChartStyles } from '../Widget'
 import Cell from './Cell'
@@ -597,7 +597,7 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
 
           if (line.length) {
             cells.push(
-              <tr key="rowKeyLength">
+              <tr key={flatRowKey}>
                 {line}
               </tr>
             )

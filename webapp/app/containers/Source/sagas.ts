@@ -150,15 +150,15 @@ export function* testSourceConnection (action) {
 }
 
 export function* getCsvMetaId (action) {
-  const { resolve, reject } = action.payload
-  const { source_id, replace_mode, table_name } = action.payload.csvMeta
+  const { resolve } = action.payload
+  const { sourceId, replaceMode, tableName } = action.payload.csvMeta
   try {
-    const res = yield call(request, {
-      url: `${api.source}/${source_id}/csvmeta`,
+    yield call(request, {
+      url: `${api.source}/${sourceId}/csvmeta`,
       method: 'post',
       data: {
-        mode: replace_mode,
-        tableName: table_name
+        mode: replaceMode,
+        tableName
       }
     })
     yield put(csvMetaIdGeted())
