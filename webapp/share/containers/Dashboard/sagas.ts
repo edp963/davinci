@@ -119,15 +119,15 @@ export function* getWidgetCsv (action) {
 export function* getCascadeSourceFromDashboard (action) {
   try {
     const { payload } = action
-    const { controlId, viewId, dataToken, column, parents } = payload
-    const params = { column, parents }
+    const { controlId, viewId, dataToken, columns, parents } = payload
+    const params = { columns, parents }
 
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
       data: params
     })
-    yield put(cascadeSourceFromDashboardLoaded(controlId, column, asyncData.payload[column]))
+    yield put(cascadeSourceFromDashboardLoaded(controlId, columns, asyncData.payload))
   } catch (err) {
     yield put(loadCascadeSourceFromDashboardFail(err))
     errorHandler(err)

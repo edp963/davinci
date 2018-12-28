@@ -131,7 +131,7 @@ function widgetReducer (state = initialState, action) {
     case LOAD_DISTINCT_VALUE_SUCCESS:
       return state
         .set('columnValueLoading', false)
-        .set('distinctColumnValues', payload.data[payload.fieldName].slice(0, 100))
+        .set('distinctColumnValues', payload.data.slice(0, 100))
     case LOAD_DISTINCT_VALUE_FAILURE:
       return state.set('columnValueLoading', false)
     case CLEAR_CURRENT_WIDGET:
