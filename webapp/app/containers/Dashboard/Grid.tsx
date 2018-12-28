@@ -1384,7 +1384,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
             currentDashboard={currentDashboard}
             currentItems={currentItems}
             onGetOptions={this.getOptions}
-            filterOptions={currentDashboardCascadeSources}
+            mapOptions={currentDashboardCascadeSources}
             onChange={this.globalFilterChange}
           />
         </Container.Title>
@@ -1449,7 +1449,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}
-          filterOptions={currentDashboardCascadeSources}
+          mapOptions={currentDashboardCascadeSources}
           onCancel={this.toggleGlobalFilterConfig(false)}
           onSave={this.saveFilters}
           onGetOptions={this.getOptions}

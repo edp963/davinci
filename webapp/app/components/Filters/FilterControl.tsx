@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { IFilterItem, OnGetFilterControlOptions, OnFilterControlValueChange, FilterControlOptions } from './'
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
 import * as debounce from 'lodash/debounce'
 
@@ -7,6 +8,7 @@ import Input from 'antd/lib/input'
 import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
 const Option = Select.Option
+import TreeSelect from 'antd/lib/tree-select'
 import DatePicker from 'antd/lib/date-picker'
 const RangePicker = DatePicker.RangePicker
 import Form from 'antd/lib/form'
@@ -19,17 +21,10 @@ import MultiDatePicker from '../MultiDatePicker'
 
 interface IFilterControlProps {
   formToAppend: WrappedFormUtils
-  filter: any
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  currentOptions: {
-    [key: string]: Array<number | string>
-  }
-  onChange: (filter, val) => void
+  filter: IFilterItem
+  currentOptions: FilterControlOptions
+  onGetOptions: OnGetFilterControlOptions
+  onChange: OnFilterControlValueChange
 }
 
 export class FilterControl extends React.Component<IFilterControlProps, {}> {
@@ -89,6 +84,26 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
       <Select mode="multiple" placeholder={filter.name} onChange={onChange}>
         {options.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
       </Select>
+    )
+  }
+
+  private renderTreeSelect = (filter: IFilterItem, onChange, options: any[]) => {
+    const { fromModel, fromParent, fromChild } = filter
+    const treeData = options.map((item) => ({
+      id: item[fromChild],
+      pId: item[fromParent],
+      value: item[fromModel],
+      title: item[fromModel]
+    }))
+    return (
+      <TreeSelect
+        showSearch
+        allowClear
+        multiple
+        treeDataSimpleMode
+        treeData={treeData}
+        onChange={onChange}
+      />
     )
   }
 
@@ -153,7 +168,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   private wrapFormItem = (filter, form: WrappedFormUtils, control) => {
     const { getFieldDecorator } = form
     return (
-      <FormItem wrapperCol={{span: 24}} className={styles.item}>
+      <FormItem wrapperCol={{span: 24}} className={styles.filterControl}>
         {getFieldDecorator(`${filter.key}`, {})(control)}
       </FormItem>
     )
@@ -179,6 +194,9 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
         break
       case FilterTypes.MultiSelect:
         control = this.renderMultiSelect(filter, this.change, options)
+        break
+      case FilterTypes.TreeSelect:
+        control = this.renderTreeSelect(filter, this.change, options)
         break
       case FilterTypes.CascadeSelect:
         control = this.renderCascadeSelect()

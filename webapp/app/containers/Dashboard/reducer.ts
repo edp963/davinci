@@ -76,7 +76,7 @@ const initialState = fromJS({
   currentDashboardShareInfo: '',
   currentDashboardSecretInfo: '',
   currentDashboardShareInfoLoading: false,
-  currentDashboardCascadeSources: null,
+  currentDashboardCascadeSources: {},
   currentItems: null,
   currentItemsInfo: null,
   modalLoading: false
