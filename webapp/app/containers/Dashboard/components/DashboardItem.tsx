@@ -559,7 +559,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               : cacheWidgetProps.cols
             }
           }
-        }, () => {console.log(this.state.widgetProps)})
+        })
       } else {
         this.setState({
           widgetProps: {
@@ -570,7 +570,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               : cacheWidgetProps.cols
             }
           }
-        }, () => console.log({widgetProps: this.state.widgetProps}))
+        })
       }
     }
   }
@@ -596,7 +596,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
-    console.log({wp: JSON.parse(widget.config)})
     const data = datasource.resultList
     const {
       controlPanelVisible,

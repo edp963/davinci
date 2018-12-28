@@ -703,17 +703,19 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (selectedRow.length === 0) {
       selectedRow.push(recordConcatFilter)
     } else {
-      for (let index = 0, l = selectedRow.length; index < l; index++) {
-        const isb = this.isSameObj(selectedRow[index], recordConcatFilter, true)
-        if (isb) {
-          selectedRow.splice(index, 1)
-          break
-        } else {
-          selectedRow.push(recordConcatFilter)
-          break
+      const isb = selectedRow.some((sr) => this.isSameObj(sr, recordConcatFilter, true))
+      if (isb) {
+        for (let index = 0, l = selectedRow.length; index < l; index++) {
+            if (this.isSameObj(selectedRow[index], recordConcatFilter, true)) {
+              selectedRow.splice(index, 1)
+              break
+            }
         }
+      } else  {
+        selectedRow.push(recordConcatFilter)
       }
     }
+
     this.setState({
       selectedRow
     }, () => {
