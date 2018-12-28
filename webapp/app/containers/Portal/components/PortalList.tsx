@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
 import Icon, { IconProps } from 'antd/lib/icon'
 import Col from 'antd/lib/col'
@@ -106,9 +106,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       formType,
       formVisible: true
     }, () => {
-      if (portal) {
-        this.portalForm.props.form.setFieldsValue(portal)
-      }
+      setTimeout(() => {
+        if (portal) {
+          this.portalForm.props.form.setFieldsValue(portal)
+        }
+      }, 0)
     })
   }
 

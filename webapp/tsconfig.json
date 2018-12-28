@@ -23,6 +23,8 @@
       "containers/*": ["app/containers/*"],
       "libs/*": ["libs/*"]
     }
+    // "strict": true,
+    // "strictFunctionTypes": false
     // "noUnusedLocals": true,
     // "noUnusedParameters": true
   },

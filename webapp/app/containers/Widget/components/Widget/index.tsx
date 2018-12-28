@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React, { createRef } from 'react'
+import classnames from 'classnames'
 import Pivot from '../Pivot'
 import Chart from '../Chart'
 import Icon from 'antd/lib/icon'
@@ -133,7 +133,7 @@ export interface IWidgetWrapperProps extends IWidgetProps {
 export class Widget extends React.Component<IWidgetWrapperProps, {}> {
   private width = 0
   private height = 0
-  private container: HTMLElement = null
+  private container = createRef<HTMLDivElement>()
 
   public componentDidMount () {
     this.getContainerSize()
@@ -146,7 +146,7 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
   }
 
   private getContainerSize = () => {
-    const { offsetWidth, offsetHeight } = this.container
+    const { offsetWidth, offsetHeight } = this.container.current as HTMLDivElement
     this.width = offsetWidth
     this.height = offsetHeight
   }
@@ -161,7 +161,7 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
     delete combinedProps.loading
 
     return (
-      <div className={styles.wrapper} ref={(f) => this.container = f}>
+      <div className={styles.wrapper} ref={this.container}>
         {/* FIXME */}
         {mode === 'chart'
           ? (
