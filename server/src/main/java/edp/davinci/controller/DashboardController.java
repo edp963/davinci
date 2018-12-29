@@ -24,10 +24,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
-import edp.davinci.dto.dashboardDto.DashboardCreate;
-import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
-import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
-import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
+import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.User;
@@ -47,6 +44,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/dashboardPortals", tags = "dashboardPortals", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "dashboardPortal not found"))
@@ -116,6 +114,63 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
     }
+
+
+    /**
+     * 获取Dashboard 排除访问的团队列表
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get dashboard exclude teams")
+    @GetMapping("/dashboard/{id}/exclude/teams")
+    public ResponseEntity getDashboardExcludeTeams(@PathVariable Long id,
+                                                   HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            List<Long> excludeTeams = dashboardService.getExcludeTeams(id);
+            ResultMap resultMap = new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeTeams);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取Dashboardportal 排除访问的团队列表
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get dashboard portal exclude teams")
+    @GetMapping("/{id}/exclude/teams")
+    public ResponseEntity getPortalExcludeTeams(@PathVariable Long id,
+                                                HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            List<Long> excludeTeams = dashboardPortalService.getExcludeTeams(id);
+            ResultMap resultMap = new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeTeams);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
 
     /**
      * 获取dashboard下widgets关联信息列表
@@ -304,7 +359,7 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "update dashboards")
     @PutMapping(value = "{id}/dashboards", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateDashboards(@PathVariable("id") Long portalId,
-                                           @Valid @RequestBody Dashboard[] dashboards,
+                                           @Valid @RequestBody DashboardDto[] dashboards,
                                            @ApiIgnore BindingResult bindingResult,
                                            @ApiIgnore @CurrentUser User user,
                                            HttpServletRequest request) {

@@ -21,6 +21,7 @@ package edp.davinci.service;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardCreate;
+import edp.davinci.dto.dashboardDto.DashboardDto;
 import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
 import edp.davinci.model.*;
 
@@ -35,7 +36,7 @@ public interface DashboardService extends CheckEntityService {
 
     ResultMap createDashboard(DashboardCreate dashboardCreate, User user, HttpServletRequest request);
 
-    ResultMap updateDashboards(Long portalId, Dashboard[] dashboards, User user, HttpServletRequest request);
+    ResultMap updateDashboards(Long portalId, DashboardDto[] dashboards, User user, HttpServletRequest request);
 
     ResultMap deleteDashboard(Long id, User user, HttpServletRequest request);
 
@@ -51,4 +52,6 @@ public interface DashboardService extends CheckEntityService {
 
 
     List<Dashboard> getDashboardListByPortal(DashboardPortal portal, User user, Project project);
+
+    List<Long> getExcludeTeams(Long id);
 }

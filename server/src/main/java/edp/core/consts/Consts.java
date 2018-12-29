@@ -124,7 +124,7 @@ public class Consts {
     /**
      * 敏感sql操作
      */
-    public static final String REG_SENSITIVE_SQL = "drop\\s|alert\\s|grant\\s|delete\\s|update\\s|remove\\s";
+    public static final String REG_SENSITIVE_SQL = "drop\\s|alert\\s|grant\\s|delete\\s|truncate\\s|update\\s|remove\\s";
 
 
     /**

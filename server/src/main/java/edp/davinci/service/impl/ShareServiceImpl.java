@@ -441,7 +441,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      */
     @Override
     public ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
-        Map<String, Object> map = null;
+        List<Map<String, Object>> list = null;
         try {
 
             ShareInfo shareInfo = getShareInfo(token, user);
@@ -472,7 +472,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             }
 
             try {
-                map = viewService.getDistinctValueData(viewWithProjectAndSource, param, shareInfo.getShareUser());
+                list = viewService.getDistinctValueData(viewWithProjectAndSource, param, shareInfo.getShareUser());
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }
@@ -482,7 +482,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
-        return resultSuccess(user, request).payload(map);
+        return resultSuccess(user, request).payloads(list);
     }
 
 
