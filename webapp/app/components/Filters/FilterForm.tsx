@@ -512,6 +512,11 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                                   rules: [{
                                     required: true,
                                     message: '不能为空'
+                                  }, {
+                                    validator: (_, value: string, callback) => {
+                                      const fromParent = this.props.form.getFieldValue('fromParent')
+                                      value === fromParent ? callback('子级字段不能与父级字段相同') : callback()
+                                    }
                                   }]
                                 })(
                                   <Select>
@@ -536,6 +541,11 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                                   rules: [{
                                     required: true,
                                     message: '不能为空'
+                                  }, {
+                                    validator: (_, value: string, callback) => {
+                                      const fromChild = this.props.form.getFieldValue('fromChild')
+                                      value === fromChild ? callback('父级字段不能与子级字段相同') : callback()
+                                    }
                                   }]
                                 })(
                                   <Select>
