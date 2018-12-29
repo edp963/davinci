@@ -40,7 +40,6 @@ public interface DisplayMapper {
     int deleteByProject(@Param("projectId") Long projectId);
 
 
-
     @Select({"select * from display where id = #{id}"})
     Display getById(@Param("id") Long id);
 
@@ -74,8 +73,19 @@ public interface DisplayMapper {
     })
     DisplayWithProject getDisplayWithProjectById(@Param("id") Long id);
 
-    @Select({"select * from display where project_id = #{projectId}"})
-    List<Display> getByProject(@Param("projectId") Long projectId);
+    @Select({
+            "select * from display where project_id = #{projectId}",
+            "   and id not in (",
+            "       SELECT display_id FROM exclude_display_team ept",
+            "       LEFT JOIN rel_user_team rut on rut.team_id = ept.team_id",
+            "       LEFT JOIN rel_team_project rtp on rtp.team_id = ept.team_id",
+            "       LEFT JOIN team t on t.id = ept.team_id",
+            "       LEFT JOIN rel_user_organization ruo on ruo.org_id = t.org_id",
+            "       WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}",
+            "       and (rut.role = 0 and ruo.role = 0)",
+            "   )"
+    })
+    List<Display> getByProject(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
     @Select({"select id from display where project_id = #{projectId} and `name` = #{name}"})
     Long getByNameWithProjectId(@Param("name") String name, @Param("projectId") Long projectId);

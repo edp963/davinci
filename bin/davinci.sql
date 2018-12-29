@@ -346,17 +346,68 @@ CREATE TABLE `platform` (
 
 
 -- ----------------------------
--- Table structure for rel_view_variable
+-- Table structure for exclude_dashboard_team
 -- ----------------------------
--- CREATE TABLE `rel_view_variable`  (
---   `id` bigint(20) NOT NULL AUTO_INCREMENT,
---   `view_id` bigint(20) NOT NULL,
---   `team_var` longtext DEFAULT NULL COMMENT 'teamvar',
---   `var1` longtext DEFAULT NULL,
---   `var2` longtext DEFAULT NULL,
---   PRIMARY KEY (`id`) USING BTREE,
---   INDEX `idx_view_id`(`view_id`) USING BTREE
--- ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+DROP TABLE IF EXISTS `exclude_dashboard_team`;
+CREATE TABLE `exclude_dashboard_team` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `team_id` bigint(20) NOT NULL,
+  `dashboard_id` bigint(20) NOT NULL,
+  `update_by` bigint(20) NOT NULL,
+  `update_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `idx_team_dashboard` (`team_id`,`dashboard_id`) USING BTREE,
+  KEY `idx_team` (`team_id`) USING BTREE,
+  KEY `idx_dashboard` (`dashboard_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for exclude_display_team
+-- ----------------------------
+DROP TABLE IF EXISTS `exclude_display_team`;
+CREATE TABLE `exclude_display_team` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `team_id` bigint(20) NOT NULL,
+  `display_id` bigint(20) NOT NULL,
+  `update_by` bigint(20) NOT NULL,
+  `update_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `idx_team_display` (`team_id`,`display_id`) USING BTREE,
+  KEY `idx_team` (`team_id`) USING BTREE,
+  KEY `idx_display` (`display_id`) USING BTREE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for exclude_portal_team
+-- ----------------------------
+DROP TABLE IF EXISTS `exclude_portal_team`;
+CREATE TABLE `exclude_portal_team` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `team_id` bigint(20) NOT NULL,
+  `portal_id` bigint(20) NOT NULL,
+  `update_by` bigint(20) NOT NULL,
+  `update_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `idx_team_portal` (`team_id`,`portal_id`) USING BTREE,
+  KEY `idx_team` (`team_id`) USING BTREE,
+  KEY `idx_portal` (`portal_id`) USING BTREE
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+-- Table structure for exclude_slide_team
+-- ----------------------------
+DROP TABLE IF EXISTS `exclude_slide_team`;
+CREATE TABLE `exclude_slide_team` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `team_id` bigint(20) NOT NULL,
+  `slide_id` bigint(20) NOT NULL,
+  `update_by` bigint(20) NOT NULL,
+  `update_time` datetime NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `idx_team_slide` (`team_id`,`slide_id`) USING BTREE,
+  KEY `idx_team` (`team_id`) USING BTREE,
+  KEY `idx_slide` (`slide_id`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 -- ----------------------------

@@ -71,8 +71,20 @@ public interface DashboardMapper {
     int updateBatch(List<Dashboard> list);
 
 
-    @Select({"select * from dashboard where dashboard_portal_id = #{portalId} order by `index`"})
-    List<Dashboard> getByPortalId(@Param("portalId") Long portalId);
+    @Select({
+            "select * from dashboard where dashboard_portal_id = #{portalId} ",
+            "and id not in (",
+            "    SELECT dashboard_id FROM exclude_dashboard_team ept",
+            "    LEFT JOIN rel_user_team rut on rut.team_id = ept.team_id",
+            "    LEFT JOIN rel_team_project rtp on rtp.team_id = ept.team_id",
+            "    LEFT JOIN team t on t.id = ept.team_id",
+            "    LEFT JOIN rel_user_organization ruo on ruo.org_id = t.org_id",
+            "    WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}",
+            "    and (rut.role = 0 and ruo.role = 0)",
+            ")",
+            "order by `index`"
+    })
+    List<Dashboard> getByPortalId(@Param("portalId") Long portalId, @Param("userId") Long userId, @Param("projectId") Long projectId);
 
 
     @Select({
