@@ -30,27 +30,28 @@ interface IFilterControlProps {
 export class FilterControl extends React.Component<IFilterControlProps, {}> {
 
   public componentWillMount () {
-    this.loadOptions()
-    this.debouncedOnChange = debounce(this.props.onChange, 800)
+    const { filter, onChange } = this.props
+    this.loadOptions(filter)
+    this.debouncedOnChange = debounce(onChange, 800)
   }
 
   public componentWillReceiveProps (nextProps: IFilterControlProps) {
     const { filter, onChange } = nextProps
     if (filter && filter !== this.props.filter) {
-      this.loadOptions()
+      this.loadOptions(filter)
     }
     if (onChange !== this.props.onChange) {
       this.debouncedOnChange = debounce(this.props.onChange, 800)
     }
   }
 
-  private loadOptions = () => {
-    const { filter, onGetOptions } = this.props
+  private loadOptions = (filter: IFilterItem) => {
+    const { onGetOptions } = this.props
     if (!filter) { return }
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
-    const { key, fromView, fromModel, fromChild, fromParent } = filter
-    const columns = [fromModel]
+    const { key, fromView, fromModel, fromText, fromChild, fromParent } = filter
+    const columns = [fromModel, fromText]
     if (fromChild) { columns.push(fromChild) }
     if (fromParent) { columns.push(fromParent) }
     onGetOptions(key, fromView, columns, [])
@@ -75,32 +76,30 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderSelect = (filter, onChange, options) => {
-    const { fromModel } = filter
-    const fromModelOptions = options.map((opt) => opt[fromModel])
+    const { fromModel, fromText } = filter
     return (
       <Select allowClear={true} placeholder={filter.name} onChange={onChange}>
-        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {options.map((opt) => (<Option key={opt[fromModel]} value={opt[fromModel]}>{opt[fromText]}</Option>))}
       </Select>
     )
   }
 
   private renderMultiSelect = (filter, onChange, options) => {
-    const { fromModel } = filter
-    const fromModelOptions = options.map((opt) => opt[fromModel])
+    const { fromModel, fromText } = filter
     return (
       <Select mode="multiple" placeholder={filter.name} onChange={onChange}>
-        {fromModelOptions.map((opt) => (<Option key={opt} value={opt}>{opt}</Option>))}
+        {options.map((opt) => (<Option key={opt[fromModel]} value={opt[fromModel]}>{opt[fromText]}</Option>))}
       </Select>
     )
   }
 
   private renderTreeSelect = (filter: IFilterItem, onChange, options) => {
-    const { fromModel, fromParent, fromChild } = filter
+    const { fromModel, fromText, fromChild, fromParent } = filter
     const treeData = options.map((item) => ({
       id: item[fromChild],
       pId: item[fromParent],
-      value: item[fromChild],
-      title: item[fromModel]
+      value: item[fromModel],
+      title: item[fromText]
     }))
     return (
       <TreeSelect

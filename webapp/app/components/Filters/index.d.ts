@@ -24,6 +24,7 @@ export interface IFilterItem {
   name: string
   type: FilterTypes
   fromView: string
+  fromText: string
   fromModel: string
   fromParent?: string
   fromChild?: string

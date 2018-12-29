@@ -146,18 +146,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     })
   }
 
-  public setFieldsValue = (filterItem) => {
+  public setFieldsValue = (filterItem: IFilterItem) => {
     const { views, widgets, items } = this.props
-    const { key, name, type, fromView, fromModel, fromChild, fromParent, operator } = filterItem
+    const { type, fromView, fromModel } = filterItem
     const fieldsValue = {
-      key,
-      name,
-      type,
-      fromView,
-      fromModel,
-      fromChild,
-      fromParent,
-      operator
+      ...filterItem,
+      relatedViews: undefined
     }
     if (fromView) {
       this.onFromViewChange(fromView, fromModel)
@@ -369,91 +363,6 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     onFilterTypeChange(val)
   }
 
-  private renderTreeSelectViewSetting () {
-    const { form, views } = this.props
-    const { getFieldDecorator } = form
-    const { modelItems, availableOperatorTypes } = this.state
-
-    const rows = (
-      <Row>
-        <Col span={12}>
-            <FormItem
-              label="来源 View"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-            >
-              {
-                getFieldDecorator('fromView', {
-                  rules: [{
-                    required: true,
-                    message: '不能为空'
-                  }]
-                })(
-                  <Select
-                    onChange={this.onFromViewChange}
-                  >
-                    {
-                      views.map((view) => (
-                        <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
-                      ))
-                    }
-                  </Select>
-                )
-              }
-            </FormItem>
-        </Col>
-        <Col span={12}>
-          <FormItem
-              label="来源字段"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-          >
-            {
-              getFieldDecorator('fromModel', {
-                rules: [{
-                  required: true,
-                  message: '不能为空'
-                }]
-              })(
-                <Select onChange={this.onFromModelChange}>
-                  {
-                    modelItems.map((itemName) => (
-                      <Option key={itemName} value={itemName}>{itemName}</Option>
-                    ))
-                  }
-                </Select>
-              )
-            }
-          </FormItem>
-        </Col>
-        <Col span={12}>
-          <FormItem
-              label="父级字段"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-          >
-            {
-              getFieldDecorator('fromParent', {
-                rules: [{
-                  required: true,
-                  message: '不能为空'
-                }]
-              })(
-                <Select onChange={this.onFromModelChange}>
-                  {
-                    modelItems.map((itemName) => (
-                      <Option key={itemName} value={itemName}>{itemName}</Option>
-                    ))
-                  }
-                </Select>
-              )
-            }
-          </FormItem>
-        </Col>
-      </Row>
-    )
-  }
-
   private renderConfigForm (usedViews, mappingViewItems) {
     const { form, views } = this.props
     const { getFieldDecorator } = form
@@ -543,12 +452,36 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                     </Col>
                     <Col span={12}>
                       <FormItem
-                          label="来源字段"
+                          label="值字段"
                           labelCol={{span: 8}}
                           wrapperCol={{span: 16}}
                       >
                         {
                           getFieldDecorator('fromModel', {
+                            rules: [{
+                              required: true,
+                              message: '不能为空'
+                            }]
+                          })(
+                            <Select onChange={this.onFromModelChange}>
+                              {
+                                modelItems.map((itemName) => (
+                                  <Option key={itemName} value={itemName}>{itemName}</Option>
+                                ))
+                              }
+                            </Select>
+                          )
+                        }
+                      </FormItem>
+                    </Col>
+                    <Col span={12}>
+                      <FormItem
+                          label="文本字段"
+                          labelCol={{span: 8}}
+                          wrapperCol={{span: 16}}
+                      >
+                        {
+                          getFieldDecorator('fromText', {
                             rules: [{
                               required: true,
                               message: '不能为空'
