@@ -112,7 +112,7 @@ interface IBizlogicFormProps {
   onEditBizlogic: (values: object, resolve: any) => any
   onLoadSources: (projectId: number) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
-  onLoadViewTeam: (projectId: number) => any
+  onLoadViewTeam: (projectId: number, resolve?: any) => any
 }
 
 interface IBizlogicFormState {
@@ -1316,8 +1316,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           checkStrictly
                           checkable
                           onExpand={this.onTeamExpand}
-                          expandedKeys={this.state.teamExpandedKeys}
-                          autoExpandParent={this.state.teamAutoExpandParent}
+                          // expandedKeys={this.state.teamExpandedKeys}
+                          // autoExpandParent={this.state.teamAutoExpandParent}
                           defaultExpandAll={true}
                           onCheck={this.onCheck}
                           checkedKeys={this.state.teamCheckedKeys}
@@ -1360,7 +1360,7 @@ function mapDispatchToProps (dispatch) {
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
     onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadViewTeam: (projectId) => dispatch(loadViewTeam(projectId))
+    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve))
   }
 }
 

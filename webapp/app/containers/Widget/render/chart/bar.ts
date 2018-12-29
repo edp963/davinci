@@ -326,7 +326,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
     ...legendOption,
-    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData),
+    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
    // ...brushedOptions
   }
 }

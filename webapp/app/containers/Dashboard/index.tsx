@@ -33,6 +33,8 @@ import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
 import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
+import bizlogicReducer from '../Bizlogic/reducer'
+import bizlogicSaga from '../Bizlogic/sagas'
 
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
@@ -66,9 +68,11 @@ import {
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
 import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
-import { loadPortals } from '../Portal/actions'
+import { loadPortals, loadSelectTeams } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail } from '../Projects/actions'
+import {makeSelectViewTeam} from '../Bizlogic/selectors'
+import { loadViewTeam } from '../Bizlogic/actions'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -78,6 +82,7 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
+import { toListBF } from '../Bizlogic/viewUtil'
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -86,6 +91,7 @@ interface IDashboardProps {
   params: any
   currentProject: IProject
   portals: any[]
+  viewTeam: any[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -94,6 +100,8 @@ interface IDashboardProps {
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
+  onLoadViewTeam: (projectId: number, resolve?: any) => any
+  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
   // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
@@ -124,6 +132,7 @@ interface IDashboardStates {
   isExpand: boolean
   searchVisible: boolean
   isGrid: boolean
+  checkedKeys: any[]
 }
 
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
@@ -140,7 +149,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       dataList: [],
       isExpand: true,
       searchVisible: false,
-      isGrid: true
+      isGrid: true,
+      checkedKeys: []
     }
   }
 
@@ -151,10 +161,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   public componentWillMount () {
     // this.props.onHideNavigator()
-    const { params, router, dashboards } = this.props
+    const { params, router, dashboards, onLoadDashboards, onLoadPortals, onLoadProjectDetail } = this.props
     const { pid, portalId, portalName, dashboardId } = params
 
-    this.props.onLoadDashboards(params.portalId, (result) => {
+    onLoadDashboards(params.portalId, (result) => {
       let defaultDashboardId = 0
       const dashboardData = listToTree(result, 0)
       const treeData = {
@@ -190,8 +200,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     //     })
     //   }
     // })
-    this.props.onLoadPortals(pid)
-    this.props.onLoadProjectDetail(pid)
+    onLoadPortals(pid)
+    onLoadProjectDetail(pid)
   }
 
   private initalDashboardData (dashboards) {
@@ -223,7 +233,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
   private hideDashboardForm = () => {
     this.setState({
-      formVisible: false
+      formVisible: false,
+      checkedKeys: []
     }, () => {
       this.dashboardForm.props.form.resetFields()
     })
@@ -232,9 +243,10 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   private onModalOk = () => {
     this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { dashboards, params, router, onEditDashboard, onAddDashboard } = this.props
-        const { formType } = this.state
+        const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
+        const { formType, checkedKeys } = this.state
         const { id, name, folder, selectType, index } = values
+        const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
 
         const dashArr = folder === '0'
           ? dashboards.filter((d) => d.parentId === 0)
@@ -251,14 +263,16 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         const addObj = {
           ...obj,
           parentId: Number(folder),
-          index: indexTemp
+          index: indexTemp,
+          teamIds
         }
 
         const editObj = [{
           ...obj,
           parentId: Number(folder),
           id,
-          index
+          index,
+          teamIds
         }]
 
         const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
@@ -266,12 +280,13 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           ...obj,
           parentId: Number(folder),
           id,
-          index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0
+          index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0,
+          teamIds
         }]
 
         switch (formType) {
           case 'add':
-          case 'copy':
+          // case 'copy':
             onAddDashboard(addObj, (dashboardId) => {
               this.hideDashboardForm()
               const { pid, portalId, portalName } = params
@@ -424,6 +439,13 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.setState({
       formVisible: true,
       formType: 'add'
+    }, () => {
+      const { params, onLoadViewTeam } = this.props
+      onLoadViewTeam(params.pid, (result) => {
+        this.setState({
+          checkedKeys: toListBF(result).map((t) => t.id)
+        })
+      })
     })
   }
 
@@ -483,6 +505,21 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       formType: type
     }, () => {
       this.onShowDashboardForm(itemId, this.state.formType)
+      const { formType } = this.state
+      if (formType === 'edit' || formType === 'move') {
+        const { onLoadViewTeam, onLoadSelectTeams, params } = this.props
+        new Promise((resolve) => {
+          onLoadViewTeam(params.pid, (teams) => {
+            resolve(teams)
+          })
+        }).then((teams) => {
+          onLoadSelectTeams('dashboard', itemId, (result) => {
+            this.setState({
+              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+            })
+          })
+        })
+      }
     })
   }
 
@@ -588,6 +625,12 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     router.replace(`/project/${params.pid}/vizs`)
   }
 
+  private initCheckNodes = (checkedKeys) => {
+    this.setState({
+      checkedKeys
+    })
+  }
+
   public render () {
     const {
       params,
@@ -596,7 +639,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       children,
       currentProject,
       onCheckUniqueName,
-      portals
+      portals,
+      viewTeam
     } = this.props
 
     const {
@@ -605,7 +649,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       searchValue,
       dashboardData,
       isGrid,
-      searchVisible
+      searchVisible,
+      checkedKeys
     } = this.state
 
     const items = searchValue.map((s) => {
@@ -783,6 +828,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             dashboards={dashboards}
             portalId={params.portalId}
             onCheckUniqueName={onCheckUniqueName}
+            checkedKeys={checkedKeys}
+            viewTeam={viewTeam}
+            initCheckNodes={this.initCheckNodes}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -795,7 +843,8 @@ const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
-  portals: makeSelectPortals()
+  portals: makeSelectPortals(),
+  viewTeam: makeSelectViewTeam()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -808,7 +857,9 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
+    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
+    onLoadSelectTeams: (type, id, resolve) => dispatch(loadSelectTeams(type, id, resolve))
   }
 }
 
@@ -823,6 +874,9 @@ const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
 
+const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
+const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+
 export default compose(
   withReducer,
   withReducerProject,
@@ -830,5 +884,7 @@ export default compose(
   withSaga,
   withSagaProject,
   withPortalSaga,
-  withConnect
+  withConnect,
+  withReducerBizlogic,
+  withSagaBizlogic
 )(Dashboard)
