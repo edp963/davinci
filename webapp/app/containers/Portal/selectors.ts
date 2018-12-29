@@ -26,8 +26,13 @@ const makeSelectPortals = () => createSelector(
   selectPortal,
   (portalState) => portalState.get('portals')
 )
+const makeSelectTeams = () => createSelector(
+  selectPortal,
+  (portalState) => portalState.get('selectTeams')
+)
 
 export {
   selectPortal,
-  makeSelectPortals
+  makeSelectPortals,
+  makeSelectTeams
 }
