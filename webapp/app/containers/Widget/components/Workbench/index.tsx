@@ -16,10 +16,10 @@ import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, make
 import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
 import OperatingPanel from './OperatingPanel'
-import Widget, { IWidgetProps, WidgetMode, IChartInfo, IPaginationParams } from '../Widget'
+import Widget, { IWidgetProps } from '../Widget'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
-import { getStyleConfig, getTable } from 'containers/Widget/components/util'
+import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import message from 'antd/lib/message'
 const styles = require('./Workbench.less')
@@ -143,7 +143,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
     if (currentWidget && currentWidget !== this.props.currentWidget) {
-      const { mode, selectedChart, queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
+      const { queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
