@@ -98,6 +98,7 @@ interface IDashboardItemStates {
   sourceDataOfBrushed: boolean | object []
   // isShowDrillPanel: boolean
   cacheWidgetProps: IWdigetConfig
+  cacheWidgetId: boolean | number
 }
 
 export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
@@ -113,7 +114,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       dataDrillPanelPosition: false,
       whichDataDrillBrushed: false,
       sourceDataOfBrushed: false,
-      cacheWidgetProps: null
+      cacheWidgetProps: null,
+      cacheWidgetId: false
       //   isShowDrillPanel: true
     }
   }
@@ -128,6 +130,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public componentWillMount () {
     const { itemId, widget, view, onGetChartData, container, datasource } = this.props
+    const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
     const pagination = this.getPagination(widgetProps, datasource)
     if (container === 'share') {
@@ -137,9 +140,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.setState({
       widgetProps,
       pagination,
-      model: JSON.parse(view.model),
-      cacheWidgetProps: {...widgetProps}
+      model: JSON.parse(view.model)
     })
+    if (!cacheWidgetProps) {
+      this.setState({
+        cacheWidgetProps: {...widgetProps},
+        cacheWidgetId: widget.id
+      })
+    }
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
@@ -361,45 +369,62 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private drillDataHistory = (history, item, itemId, widgetId) => {
-    const {onSelectDrillHistory, drillHistory} = this.props
+    const {onSelectDrillHistory, drillHistory, widget, onGetChartData} = this.props
     const { widgetProps, cacheWidgetProps } = this.state
+    const wid = !history && item > -1 ? widgetId : this.state.cacheWidgetId
     if (onSelectDrillHistory) {
       const historyGroups = history ? drillHistory[item]['groups'] : []
       const historyCols = history && drillHistory[item]['col'] ? drillHistory[item]['col'] : cacheWidgetProps.cols
       const historyRows = history && drillHistory[item]['row'] ? drillHistory[item]['row'] : cacheWidgetProps.rows
-      if (widgetProps.dimetionAxis === 'col') {
+      if (drillHistory && drillHistory[item] && drillHistory[item]['widgetConfig']) {
+        const dw = drillHistory[item].widgetConfig
         this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
-            }
-          }
+          widgetProps: dw
         })
-      } else if (widgetProps.dimetionAxis === 'row') {
-        this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
-            }
-          }
-        })
-      } else {
-        this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              cols: historyCols,
-              rows: historyRows
-            }
-          }
-        })
+        onSelectDrillHistory(history, item, itemId, wid)
+        return
       }
-      onSelectDrillHistory(history, item, itemId, widgetId)
+
+      if (widgetProps.dimetionAxis) {
+        if (widgetProps.dimetionAxis === 'col') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
+              }
+            }
+          })
+        } else if (widgetProps.dimetionAxis === 'row') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
+              }
+            }
+          })
+        } else {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyCols,
+                rows: historyRows
+              }
+            }
+          })
+        }
+      }
+      if (item === -1 && !history) {
+        this.setState({widgetProps: {...this.state.cacheWidgetProps}})
+      }
+      onSelectDrillHistory(history, item, itemId, wid)
     }
   }
   private drillpathData = () => {
+    // todo
+    // 由于前端拿不到全量数据，所以在model中选取的没有数值的纬度列，可能会导致filter不合法的情况。
     const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
     const { drillpathInstance, drillpathSetting, drillHistory, itemId, widgets, onDrillPathData, onGetChartData } = this.props
     let out = void 0
@@ -429,6 +454,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       const prevSqls = prevDrillHistory.filter.sqls
       sqls = sqls.concat(prevSqls)
     }
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
+    let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
+
+    if (color) {
+      widgetConfigGroups = widgetConfigGroups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      widgetConfigGroups = widgetConfigGroups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+    }
     const currentDrillStatus = {
       filter: {
         out,
@@ -437,6 +473,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         sql,
         sqls
       },
+      groups: widgetConfigGroups,
       name: nextWidget.name,
       widgetConfig: widgetProps
     }
@@ -458,7 +495,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     })
   }
   private drillData = (name, dimensions) => {
-    console.log(name, dimensions)
     const { onDrillData, widget, itemId } = this.props
     const { widgetProps, cacheWidgetProps } = this.state
     let mode = void 0

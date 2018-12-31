@@ -951,7 +951,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onDrillDashboardItem
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
-    console.log({e})
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
@@ -1005,7 +1004,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         } else if (dimetionAxis === 'row') {
           const rows = widgetConfig.rows
           name = rows[rows.length - 1]['name']
-        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart'  && widgetConfig.selectedChart === ChartTypes.Table) {
           const coustomTable = sourceDataFilter.reduce((a, b) => {
             a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
             return a
@@ -1038,7 +1037,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       } else {
         if (mode === 'pivot') {
           currentDrillGroups = widgetConfigGroups.concat([groups])
-        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
           currentDrillGroups = widgetConfigGroups.concat([groups])
         } else {
           currentDrillGroups = [groups]
@@ -1066,7 +1065,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       const lastDrillHistory = drillHistory[drillHistory.length - 1]
       let currentCol = void 0
       let currentRow = void 0
-      if (widgetConfig.selectedChart === ChartTypes.Table) {
+     // todo
+      if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
         const coustomTable = sourceDataFilter.reduce((a, b) => {
           a[b['key']] === undefined ? a[b['key']] = [b['value']] : a[b['key']].push(b['value'])
           return a
@@ -1101,7 +1101,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       } else {
         if (mode === 'pivot') {
           currentDrillGroups = lastDrillHistory.groups.concat([groups])
-        } else if (widgetConfig.selectedChart === ChartTypes.Table) {
+        } else if (mode === 'chart' && widgetConfig.selectedChart === ChartTypes.Table) {
           currentDrillGroups = lastDrillHistory.groups.concat([groups])
         } else {
           currentDrillGroups = [groups]
