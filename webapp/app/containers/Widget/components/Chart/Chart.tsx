@@ -25,6 +25,16 @@ export class Chart extends React.PureComponent<IChartProps, IChartState> {
     this.renderChart(this.props)
   }
 
+  public componentWillReceiveProps (nextProps) {
+    const nextData = nextProps.data
+    const {data} = this.props
+    if (data !== nextData) {
+      this.setState({
+        selectedItems: []
+      })
+    }
+  }
+
   private renderChart = (props: IChartProps) => {
     const { selectedChart, renderType, getDataDrillDetail, isDrilling } = props
     if (!this.instance) {
@@ -58,6 +68,7 @@ export class Chart extends React.PureComponent<IChartProps, IChartState> {
     this.instance.resize()
   }
   public collectSelectedItems = (params) => {
+    const { data } = this.props
     const selectedItems = [...this.state.selectedItems]
     const { getDataDrillDetail } = this.props
     const dataIndex = params.dataIndex
@@ -79,12 +90,14 @@ export class Chart extends React.PureComponent<IChartProps, IChartState> {
     this.setState({
       selectedItems
     }, () => {
-      console.log(params)
-      // const brushed = [{0: Object.values(this.state.selectedItems)}]
-      // const sourceData = Object.values(this.state.selectedItems)
-      // setTimeout(() => {
-      //   getDataDrillDetail(JSON.stringify({filterObj, brushed, sourceData}))
-      // }, 500)
+      const resultData = this.state.selectedItems.map((item) => {
+        return data[item]
+      })
+      const brushed = [{0: Object.values(resultData)}]
+      const sourceData = Object.values(resultData)
+      setTimeout(() => {
+        getDataDrillDetail(JSON.stringify({range: null, brushed, sourceData}))
+      }, 500)
     })
   }
   public render () {
