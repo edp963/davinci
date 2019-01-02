@@ -23,7 +23,7 @@ import * as classnames from 'classnames'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 const utilStyles = require('assets/less/util.less')
-import { MapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
+import { IFilterItem, MapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
 import FilterPanel from 'components/Filters/FilterPanel'
 
 interface IDashboardFilterPanelProps {
@@ -35,7 +35,7 @@ interface IDashboardFilterPanelProps {
 }
 
 interface IDashboardFilterPanelStates {
-  filters: any[]
+  filters: IFilterItem[]
 }
 
 export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelProps, IDashboardFilterPanelStates> {
@@ -50,23 +50,28 @@ export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelP
   public componentWillReceiveProps (nextProps: IDashboardFilterPanelProps) {
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard || currentItems !== this.props.currentItems) {
-      this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
+      this.getValidGlobalFilterItems(currentDashboard, currentItems)
     }
   }
 
-  private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
+  private getValidGlobalFilterItems = (currentDashboard, currentItems) => {
     if (!currentDashboard) { return [] }
 
     const config = JSON.parse(currentDashboard.config || '{}')
-    const globalFilterTableSource = config.filters || []
+    const globalFilters: IFilterItem[] = config.filters || []
 
-    const filters =  globalFilterTableSource.map((gfts) => {
-      const { relatedViews } = gfts
-      let { items } = relatedViews
-      if (items) {
-        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+    const filters = globalFilters.map((filter) => {
+      const { relatedViews } = filter
+      Object.values(relatedViews).forEach((viewConfig) => {
+        let { items } = viewConfig
+        if (items.length) {
+          items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+        }
+      })
+      if (!filter.fromText) {
+        filter.fromText = filter.fromModel
       }
-      return gfts
+      return filter
     })
 
     this.setState({ filters })

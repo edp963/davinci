@@ -28,12 +28,7 @@ interface IFilterFormProps {
   onFilterTypeChange: (filterType: FilterTypes) => void
   onFilterItemSave: (filterItem) => void
   onFilterItemNameChange: (key: string, name: string) => void
-  onGetPreviewData: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
+  onPreviewControl: (filterItem: IFilterItem) => void
 }
 
 interface IFilterFormStates {
@@ -84,16 +79,18 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
   public componentWillReceiveProps (nextProps: IFilterFormProps) {
     const { views, widgets, items, filterItem } = nextProps
 
-    if (views && widgets && items
-      && views !== this.props.views
-      && widgets !== this.props.widgets
-      && items !== this.props.items) {
-        this.initFormSetting(views, widgets, items)
-      }
+    if (
+      views && widgets && items
+        && views !== this.props.views
+        && widgets !== this.props.widgets
+        && items !== this.props.items
+    ) {
+      this.initFormSetting(views, widgets, items)
+    }
 
     const previousFilterItem = this.props.filterItem
     if (filterItem && filterItem !== previousFilterItem) {
-      if (previousFilterItem.key) {
+      if (previousFilterItem && previousFilterItem.key) {
         this.saveFilterItem()
       }
     }
@@ -146,18 +143,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     })
   }
 
-  public setFieldsValue = (filterItem) => {
+  public setFieldsValue = (filterItem: IFilterItem) => {
     const { views, widgets, items } = this.props
-    const { key, name, type, fromView, fromModel, fromChild, fromParent, operator } = filterItem
+    const { type, fromView, fromModel } = filterItem
     const fieldsValue = {
-      key,
-      name,
-      type,
-      fromView,
-      fromModel,
-      fromChild,
-      fromParent,
-      operator
+      ...filterItem,
+      relatedViews: undefined
     }
     if (fromView) {
       this.onFromViewChange(fromView, fromModel)
@@ -335,20 +326,18 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     this.setState({
       modelItems
     }, () => {
-      const { form, filterItem, onGetPreviewData } = this.props
+      const { form } = this.props
       if (!fromModel || modelItems.indexOf(fromModel) < 0) {
-        form.setFieldsValue({ fromModel: modelItems[0] })
-        onGetPreviewData(filterItem.key, viewId, modelItems[0], [])
-      } else {
-        onGetPreviewData(filterItem.key, viewId, fromModel, [])
+        form.setFieldsValue({
+          fromModel: modelItems[0], fromText: modelItems[0],
+          fromParent: null, fromChild: null
+        })
       }
     })
   }
 
-  private onFromModelChange = (modelItemName) => {
-    const { onGetPreviewData, form, filterItem } = this.props
-    const viewId = form.getFieldValue('fromView')
-    onGetPreviewData(filterItem.key, viewId, modelItemName, [])
+  private onFromModelChange = (fromModel) => {
+    this.props.form.setFieldsValue({ fromModel, fromText: fromModel })
   }
 
   private filterTypeChange = (val) => {
@@ -367,91 +356,6 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
 
     const { onFilterTypeChange } = this.props
     onFilterTypeChange(val)
-  }
-
-  private renderTreeSelectViewSetting () {
-    const { form, views } = this.props
-    const { getFieldDecorator } = form
-    const { modelItems, availableOperatorTypes } = this.state
-
-    const rows = (
-      <Row>
-        <Col span={12}>
-            <FormItem
-              label="来源 View"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-            >
-              {
-                getFieldDecorator('fromView', {
-                  rules: [{
-                    required: true,
-                    message: '不能为空'
-                  }]
-                })(
-                  <Select
-                    onChange={this.onFromViewChange}
-                  >
-                    {
-                      views.map((view) => (
-                        <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
-                      ))
-                    }
-                  </Select>
-                )
-              }
-            </FormItem>
-        </Col>
-        <Col span={12}>
-          <FormItem
-              label="来源字段"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-          >
-            {
-              getFieldDecorator('fromModel', {
-                rules: [{
-                  required: true,
-                  message: '不能为空'
-                }]
-              })(
-                <Select onChange={this.onFromModelChange}>
-                  {
-                    modelItems.map((itemName) => (
-                      <Option key={itemName} value={itemName}>{itemName}</Option>
-                    ))
-                  }
-                </Select>
-              )
-            }
-          </FormItem>
-        </Col>
-        <Col span={12}>
-          <FormItem
-              label="父级字段"
-              labelCol={{span: 8}}
-              wrapperCol={{span: 16}}
-          >
-            {
-              getFieldDecorator('fromParent', {
-                rules: [{
-                  required: true,
-                  message: '不能为空'
-                }]
-              })(
-                <Select onChange={this.onFromModelChange}>
-                  {
-                    modelItems.map((itemName) => (
-                      <Option key={itemName} value={itemName}>{itemName}</Option>
-                    ))
-                  }
-                </Select>
-              )
-            }
-          </FormItem>
-        </Col>
-      </Row>
-    )
   }
 
   private renderConfigForm (usedViews, mappingViewItems) {
@@ -543,7 +447,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                     </Col>
                     <Col span={12}>
                       <FormItem
-                          label="来源字段"
+                          label="值字段"
                           labelCol={{span: 8}}
                           wrapperCol={{span: 16}}
                       >
@@ -555,6 +459,30 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                             }]
                           })(
                             <Select onChange={this.onFromModelChange}>
+                              {
+                                modelItems.map((itemName) => (
+                                  <Option key={itemName} value={itemName}>{itemName}</Option>
+                                ))
+                              }
+                            </Select>
+                          )
+                        }
+                      </FormItem>
+                    </Col>
+                    <Col span={12}>
+                      <FormItem
+                          label="文本字段"
+                          labelCol={{span: 8}}
+                          wrapperCol={{span: 16}}
+                      >
+                        {
+                          getFieldDecorator('fromText', {
+                            rules: [{
+                              required: true,
+                              message: '不能为空'
+                            }]
+                          })(
+                            <Select>
                               {
                                 modelItems.map((itemName) => (
                                   <Option key={itemName} value={itemName}>{itemName}</Option>
@@ -579,6 +507,11 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                                   rules: [{
                                     required: true,
                                     message: '不能为空'
+                                  }, {
+                                    validator: (_, value: string, callback) => {
+                                      const fromParent = this.props.form.getFieldValue('fromParent')
+                                      value === fromParent ? callback('子级字段不能与父级字段相同') : callback()
+                                    }
                                   }]
                                 })(
                                   <Select>
@@ -603,6 +536,11 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                                   rules: [{
                                     required: true,
                                     message: '不能为空'
+                                  }, {
+                                    validator: (_, value: string, callback) => {
+                                      const fromChild = this.props.form.getFieldValue('fromChild')
+                                      value === fromChild ? callback('父级字段不能与子级字段相同') : callback()
+                                    }
                                   }]
                                 })(
                                   <Select>
@@ -672,4 +610,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
   }
 }
 
-export default Form.create<IFilterFormProps>()(FilterForm)
+export default Form.create<IFilterFormProps>({
+  onValuesChange: (props: IFilterFormProps, changedValues, allValues) => {
+    const changedKeys = ['type', 'name', 'fromModel', 'fromText', 'fromParent', 'fromChild']
+    const refreshPreview = Object.keys(changedValues).some((key) => changedKeys.includes(key))
+    if (!refreshPreview) { return }
+    const { onPreviewControl } = props
+    onPreviewControl(allValues as IFilterItem)
+  }
+})(FilterForm)
