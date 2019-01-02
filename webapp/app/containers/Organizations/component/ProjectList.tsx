@@ -113,9 +113,11 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.ProjectForm.props.form.resetFields()
     })
+  }
+
+  private afterProjectFormClose = () => {
+    this.ProjectForm.props.form.resetFields()
   }
 
   private checkUniqueName = (rule, value = '', callback) => {
@@ -283,6 +285,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           visible={formVisible}
           footer={null}
           onCancel={this.hideProjectForm}
+          afterClose={this.afterProjectFormClose}
         >
           <ProjectForm
             type={formType}

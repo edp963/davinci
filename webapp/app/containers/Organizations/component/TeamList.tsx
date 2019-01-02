@@ -123,10 +123,13 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
   private hideTeamForm = () => {
     this.setState({
       formVisible: false
-    }, () => {
-      this.TeamForm.resetFields()
     })
   }
+
+  private afterTeamFormClose = () => {
+    this.TeamForm.resetFields()
+  }
+
   private organizationTypeChange = () =>
     new Promise((resolve) => {
       this.forceUpdate(() => resolve())
@@ -241,6 +244,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
           visible={formVisible}
           footer={null}
           onCancel={this.hideTeamForm}
+          afterClose={this.afterTeamFormClose}
         >
           <TeamForm
             orgId={id}

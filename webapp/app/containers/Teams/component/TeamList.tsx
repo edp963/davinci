@@ -83,7 +83,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
 
   private filter = (array) => {
     if (!Array.isArray(array)) {
-      return array
+      return []
     }
     array.forEach((d) => {
       if (!this.isEmptyObj(d)) {
@@ -121,9 +121,11 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       teamFormVisible: true,
       listType: 'teamTeamList'
     }, () => {
-      this.TeamForm.setFieldsValue({
-        parentTeamId: currentTeam.name
-      })
+      setTimeout(() => {
+        this.TeamForm.setFieldsValue({
+          parentTeamId: currentTeam.name
+        })
+      }, 0)
     })
   }
 
@@ -159,7 +161,6 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
   public render () {
     const { formVisible, teamFormVisible, listType } = this.state
     const { currentTeamTeams, currentTeam, teamModalLoading } = this.props
-    this.filter(currentTeamTeams)
 
     let CreateButton = void 0
     if (currentTeam) {
@@ -223,7 +224,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
             <Table
               bordered
               columns={columns}
-              dataSource={currentTeamTeams}
+              dataSource={this.filter(currentTeamTeams)}
             />
           </div>
         </Row>

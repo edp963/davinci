@@ -974,7 +974,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         break
     }
     this.setWidgetProps(dataParams, styleParams, renderType)
-    const { layerType } = styleParams.spec
+    // const { layerType } = styleParams.spec
     // chartModeSelectedChart.style.spec.layerType = layerType
   }
 
