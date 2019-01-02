@@ -67,7 +67,7 @@ export const FilterTypesOperatorSetting = {
   [FilterTypes.NumberRange]: [],
   [FilterTypes.Select]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
   [FilterTypes.MultiSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
-  [FilterTypes.TreeSelect]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+  [FilterTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
   [FilterTypes.InputDate]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
   [FilterTypes.MultiDate]: [OperatorTypes.Equal, OperatorTypes.In, OperatorTypes.NotIn],
   [FilterTypes.DateRange]: [],
