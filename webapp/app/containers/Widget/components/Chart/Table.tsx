@@ -163,7 +163,16 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private getPaginationOptions (props: IChartProps) {
     const { chartStyles, width, pagination } = props
-    const { pageNo, pageSize, totalCount } = pagination
+    // fixme
+    let pageNo = void 0
+    let pageSize = void 0
+    let totalCount = void 0
+    if (pagination) {
+      pageNo = pagination.pageNo
+      pageSize =  pagination.pageSize
+      totalCount = pagination.totalCount
+    }
+    // const { pageNo, pageSize, totalCount } = pagination
     const { pageSize: initialPageSize } = chartStyles.table
 
     const paginationOptions: ITableStates['pagination'] = {
