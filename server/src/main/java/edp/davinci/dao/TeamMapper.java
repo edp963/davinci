@@ -85,21 +85,10 @@ public interface TeamMapper {
             "FROM `user` u, rel_user_team rut WHERE u.id = rut.user_id AND rut.team_id = #{id}"})
     List<TeamMember> getTeamMembers(@Param("id") Long id);
 
-
-//    @Select({
-//            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
-//            "from team t, rel_user_team rut",
-//            "where ",
-//            "	rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id})) and ",
-//            "	rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)",
-//    })
-//    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id, @Param("userId") Long userId);
-
-
     @Select({
-            "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
+            "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id, t.full_team_id",
             "from team t left join rel_user_team rut on rut.team_id = t.id ",
-            "where FIND_IN_SET(t.id,childTeamIds(#{id}))",
+            "where FIND_IN_SET(#{id}, t.full_team_id) > 0",
     })
     List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id);
 
