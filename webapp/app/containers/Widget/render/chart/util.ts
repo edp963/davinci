@@ -338,7 +338,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
 
   data.forEach((d) => {
     const groupingKey = groupColumns.map((col) => d[col]).join(' ')
-    const colKey = d[xAxisColumn]
+    const colKey = d[xAxisColumn] || 'default'
     if (!grouped[groupingKey]) {
       grouped[groupingKey] = {}
     }
@@ -351,13 +351,15 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
   Object.keys(grouped).map((groupingKey) => {
     const currentGroupValues = grouped[groupingKey]
 
-    grouped[groupingKey] = xAxisData.map((xd) => {
-      if (currentGroupValues[xd]) {
-        return currentGroupValues[xd][0]
-      } else {
-        return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
-      }
-    })
+    grouped[groupingKey] = xAxisData.length
+      ? xAxisData.map((xd) => {
+        if (currentGroupValues[xd]) {
+          return currentGroupValues[xd][0]
+        } else {
+          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
+        }
+      })
+      : [currentGroupValues['default'][0]]
   })
 
   return grouped

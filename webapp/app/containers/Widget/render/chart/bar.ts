@@ -77,12 +77,14 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     label: getLabelOption('bar', label)
   }
 
-  let xAxisData = data.map((d) => d[cols[0].name] || '')
+  const xAxisColumnName = cols.length ? cols[0].name : ''
+
+  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
   let grouped = {}
   let percentGrouped = {}
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, cols[0])
-    grouped = makeGrouped(data, color.items.map((c) => c.name), cols[0], metrics, xAxisData)
+    xAxisData = distinctXaxis(data, xAxisColumnName)
+    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
 
     const configValue = color.items[0].config.values
     const configKeys = []
@@ -318,6 +320,18 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const dimetionAxisOption = getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData)
   const metricAxisOption = getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `), 'x', percentage)
+  console.log(dimetionAxisOption)
+  console.log(metricAxisOption)
+  console.log(JSON.stringify({
+    xAxis: barChart ? metricAxisOption : dimetionAxisOption,
+    yAxis: barChart ? dimetionAxisOption : metricAxisOption,
+    series,
+    tooltip: {
+      formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
+    },
+    ...legendOption,
+    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
+  }, null, 2))
   return {
     xAxis: barChart ? metricAxisOption : dimetionAxisOption,
     yAxis: barChart ? dimetionAxisOption : metricAxisOption,
