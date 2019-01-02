@@ -38,15 +38,19 @@ import {
   TEST_SOURCE_CONNECTION_FAILURE,
   GET_CSV_META_ID,
   GET_CSV_META_ID_SUCCESS,
-  GET_CSV_META_ID_FAILURE
+  GET_CSV_META_ID_FAILURE,
+  SET_SOURCE_FORM_VALUE,
+  SET_UPLOAD_FORM_VALUE
 } from './constants'
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
-  sources: false,
+  sources: null,
   listLoading: false,
   formLoading: false,
-  testLoading: false
+  testLoading: false,
+  sourceFormValues: null,
+  uploadFormValues: null
 })
 
 function sourceReducer (state = initialState, action) {
@@ -103,6 +107,10 @@ function sourceReducer (state = initialState, action) {
     case TEST_SOURCE_CONNECTION_SUCCESS:
     case TEST_SOURCE_CONNECTION_FAILURE:
       return state.set('testLoading', false)
+    case SET_SOURCE_FORM_VALUE:
+      return state.set('sourceFormValues', payload.values)
+    case SET_UPLOAD_FORM_VALUE:
+      return state.set('uploadFormValues', payload.values)
     default:
       return state
   }

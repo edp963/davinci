@@ -360,11 +360,11 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
           footer={modalButtons}
           onCancel={this.hidePortalForm}
         >
-          <PortalForm
+          {/* <PortalForm
             projectId={params.pid}
             type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
-          />
+          /> */}
         </Modal>
       </Container>
     )

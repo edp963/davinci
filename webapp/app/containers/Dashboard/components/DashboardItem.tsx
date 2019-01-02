@@ -31,6 +31,7 @@ import DataDrillHistory from '../../../components/DataDrill/History'
 import {IView, IModel} from '../../../containers/Widget/components/Workbench/index'
 
 import Widget from '../../Widget/components/Widget/WidgetInViz'
+import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
 import { IWdigetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import Icon, { IconProps } from 'antd/lib/icon'
 import Tooltip from 'antd/lib/tooltip'
@@ -97,6 +98,7 @@ interface IDashboardItemStates {
   sourceDataOfBrushed: boolean | object []
   // isShowDrillPanel: boolean
   cacheWidgetProps: IWdigetConfig
+  cacheWidgetId: boolean | number
 }
 
 export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDashboardItemStates> {
@@ -112,7 +114,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       dataDrillPanelPosition: false,
       whichDataDrillBrushed: false,
       sourceDataOfBrushed: false,
-      cacheWidgetProps: null
+      cacheWidgetProps: null,
+      cacheWidgetId: false
       //   isShowDrillPanel: true
     }
   }
@@ -127,6 +130,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
   public componentWillMount () {
     const { itemId, widget, view, onGetChartData, container, datasource } = this.props
+    const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
     const pagination = this.getPagination(widgetProps, datasource)
     if (container === 'share') {
@@ -136,9 +140,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     this.setState({
       widgetProps,
       pagination,
-      model: JSON.parse(view.model),
-      cacheWidgetProps: {...widgetProps}
+      model: JSON.parse(view.model)
     })
+    if (!cacheWidgetProps) {
+      this.setState({
+        cacheWidgetProps: {...widgetProps},
+        cacheWidgetId: widget.id
+      })
+    }
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
@@ -334,16 +343,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         const range = ps.range
         const brushed = ps.brushed
         const sourceData = ps.sourceData
-        let dataDrillPanelPosition = void 0
+        const dataDrillPanelPosition = void 0
         let whichDataDrillBrushed = void 0
         let sourceDataOfBrushed = void 0
-        if (range && range.length > 0) {
-        //  dataDrillPanelPosition = {top: `${range[range.length - 1][1] + 120}px`, left: `${range[range.length - 2][1] - 40}px`}
-        // todo
-        dataDrillPanelPosition = {top: `${range[range.length - 1][1]}px`, left: `${range[range.length - 2][1]}px`}
-      } else {
-          dataDrillPanelPosition = {top: `120px`, left: `120px`}
-        }
+        // if (range && range.length > 0) {
+        //   dataDrillPanelPosition = {top: `${range[range.length - 1][1]}px`, left: `${range[range.length - 2][1]}px`}
+        // } else {
+        //   dataDrillPanelPosition = {top: `120px`, left: `120px`}
+        // }
         if (brushed && brushed.length) {
           whichDataDrillBrushed = brushed
         }
@@ -362,45 +369,62 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   private drillDataHistory = (history, item, itemId, widgetId) => {
-    const {onSelectDrillHistory, drillHistory} = this.props
+    const {onSelectDrillHistory, drillHistory, widget, onGetChartData} = this.props
     const { widgetProps, cacheWidgetProps } = this.state
+    const wid = !history && item > -1 ? widgetId : this.state.cacheWidgetId
     if (onSelectDrillHistory) {
       const historyGroups = history ? drillHistory[item]['groups'] : []
       const historyCols = history && drillHistory[item]['col'] ? drillHistory[item]['col'] : cacheWidgetProps.cols
       const historyRows = history && drillHistory[item]['row'] ? drillHistory[item]['row'] : cacheWidgetProps.rows
-      if (widgetProps.dimetionAxis === 'col') {
+      if (drillHistory && drillHistory[item] && drillHistory[item]['widgetConfig']) {
+        const dw = drillHistory[item].widgetConfig
         this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
-            }
-          }
+          widgetProps: dw
         })
-      } else if (widgetProps.dimetionAxis === 'row') {
-        this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
-            }
-          }
-        })
-      } else {
-        this.setState({
-          widgetProps: {
-            ...widgetProps,
-            ...{
-              cols: historyCols,
-              rows: historyRows
-            }
-          }
-        })
+        onSelectDrillHistory(history, item, itemId, wid)
+        return
       }
-      onSelectDrillHistory(history, item, itemId, widgetId)
+
+      if (widgetProps.dimetionAxis) {
+        if (widgetProps.dimetionAxis === 'col') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.cols
+              }
+            }
+          })
+        } else if (widgetProps.dimetionAxis === 'row') {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                rows: historyGroups && historyGroups.length ? historyGroups : cacheWidgetProps.rows
+              }
+            }
+          })
+        } else {
+          this.setState({
+            widgetProps: {
+              ...widgetProps,
+              ...{
+                cols: historyCols,
+                rows: historyRows
+              }
+            }
+          })
+        }
+      }
+      if (item === -1 && !history) {
+        this.setState({widgetProps: {...this.state.cacheWidgetProps}})
+      }
+      onSelectDrillHistory(history, item, itemId, wid)
     }
   }
   private drillpathData = () => {
+    // todo
+    // 由于前端拿不到全量数据，所以在model中选取的没有数值的纬度列，可能会导致filter不合法的情况。
     const { whichDataDrillBrushed, sourceDataOfBrushed } = this.state
     const { drillpathInstance, drillpathSetting, drillHistory, itemId, widgets, onDrillPathData, onGetChartData } = this.props
     let out = void 0
@@ -421,10 +445,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const value = (sourceDataOfBrushed as object[]).map((source) => {
       return source[out]
     })
-    console.log({widgets})
-    console.log({widget})
     const nextWidget = widgets.find((w) => w.id === Number(widget))
-    console.log({nextWidget})
     const widgetProps = JSON.parse(nextWidget.config)
     const sql = `${enter} in (${value.map((key) => `'${key}'`).join(',')})`
     let sqls = widgetProps.filters.map((i) => i.config.sql)
@@ -433,7 +454,17 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       const prevSqls = prevDrillHistory.filter.sqls
       sqls = sqls.concat(prevSqls)
     }
-    console.log({sqls})
+    const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetProps
+    let widgetConfigGroups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
+
+    if (color) {
+      widgetConfigGroups = widgetConfigGroups.concat(color.items.map((c) => c.name))
+    }
+    if (label) {
+      widgetConfigGroups = widgetConfigGroups.concat(label.items
+        .filter((l) => l.type === 'category')
+        .map((l) => l.name))
+    }
     const currentDrillStatus = {
       filter: {
         out,
@@ -442,6 +473,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         sql,
         sqls
       },
+      groups: widgetConfigGroups,
       name: nextWidget.name,
       widgetConfig: widgetProps
     }
@@ -487,7 +519,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (isDrillUp) {
       const newCols = widgetProps.cols.filter((col) => col.name !== name)
       const newRows = widgetProps.rows.filter((row) => row.name !== name)
-      console.log(newCols)
       this.setState({
         widgetProps: {
           ...widgetProps,
@@ -496,7 +527,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             rows: newRows
           }
         }
-      }, () => console.log({widgetProps: this.state.widgetProps}))
+      })
     } else {
       if (dimensions && dimensions.length) { // pivot table
         switch (dimensions) {
@@ -525,37 +556,57 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
           default:
             return
         }
-      } else {
-        if (widgetProps && widgetProps.dimetionAxis) {
-          switch (widgetProps.dimetionAxis) {
-            case 'col':
-              this.setState({
-                  widgetProps: {
-                    ...widgetProps,
-                    ...{
-                      cols: name && name.length
-                      ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
-                      : cacheWidgetProps.cols
-                    }
-                  }
-              })
-              break
-            case 'row':
-              this.setState({
+      } else if (widgetProps && widgetProps.dimetionAxis) {
+        switch (widgetProps.dimetionAxis) {
+          case 'col':
+            this.setState({
                 widgetProps: {
                   ...widgetProps,
                   ...{
-                    rows: name && name.length
-                    ? mode === 'pivot' ? widgetProps.rows.concat({name}) : [{name}]
-                    : cacheWidgetProps.rows
+                    cols: name && name.length
+                    ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
+                    : cacheWidgetProps.cols
                   }
                 }
-              })
-              break
-            default:
-              break
-          }
+            })
+            break
+          case 'row':
+            this.setState({
+              widgetProps: {
+                ...widgetProps,
+                ...{
+                  rows: name && name.length
+                  ? mode === 'pivot' ? widgetProps.rows.concat({name}) : [{name}]
+                  : cacheWidgetProps.rows
+                }
+              }
+            })
+            break
+          default:
+            break
         }
+      } else if (widgetProps.selectedChart === ChartTypes.Table) {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: name && name.length
+              ? widgetProps.cols.concat({name})
+              : cacheWidgetProps.cols
+            }
+          }
+        })
+      } else {
+        this.setState({
+          widgetProps: {
+            ...widgetProps,
+            ...{
+              cols: name && name.length
+              ? mode === 'pivot' ? widgetProps.cols.concat({name}) : [{name}]
+              : cacheWidgetProps.cols
+            }
+          }
+        })
       }
     }
   }
@@ -756,7 +807,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       cf = JSON.parse(widget.config)
       mode = cf.mode
     }
-    console.log({cf})
     const dataDrillPanel =
     (
       <div className={dataDrillPanelClass}>

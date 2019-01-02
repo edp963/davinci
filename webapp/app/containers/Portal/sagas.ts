@@ -23,7 +23,8 @@ import {
   LOAD_PORTALS,
   ADD_PORTAL,
   DELETE_PORTAL,
-  EDIT_PORTAL
+  EDIT_PORTAL,
+  LOAD_SELECT_TEAMS
 } from './constants'
 import {
   portalsLoaded,
@@ -33,7 +34,9 @@ import {
   portalDeleted,
   deletePortalFail,
   portalEdited,
-  editPortalFail
+  editPortalFail,
+  selectTeamsLoaded,
+  loadSelectTeamsFail
 } from './actions'
 
 import request from '../../utils/request'
@@ -98,11 +101,37 @@ export function* editPortal (action) {
   }
 }
 
+export function* getSelectTeams (action) {
+  const { type, id, resolve } = action.payload
+  try {
+    let url
+    if (type === 'portal') {
+      url = `${api.portal}/${id}/exclude/teams`
+    } else if (type === 'dashboard') {
+      url = `${api.portal}/dashboard/${id}/exclude/teams`
+    } else if (type === 'display') {
+      url = `${api.display}/${id}/exclude/teams`
+    }
+    const result = yield call(request, {
+      method: 'get',
+      url
+    })
+    yield put(selectTeamsLoaded(result.payload))
+    if (resolve) {
+      resolve(result.payload)
+    }
+  } catch (err) {
+    yield put(loadSelectTeamsFail())
+    errorHandler(err)
+  }
+}
+
 export default function* rootPortalSaga (): IterableIterator<any> {
   yield all([
     takeLatest(LOAD_PORTALS, getPortals),
     takeEvery(ADD_PORTAL, addPortal),
     takeEvery(DELETE_PORTAL, deletePortal),
-    takeEvery(EDIT_PORTAL, editPortal)
+    takeEvery(EDIT_PORTAL, editPortal),
+    takeEvery(LOAD_SELECT_TEAMS, getSelectTeams)
   ])
 }

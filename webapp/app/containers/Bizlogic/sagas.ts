@@ -280,13 +280,16 @@ export function* getDataFromItem (action) {
 }
 
 export function* getViewTeams (action) {
-  const { payload } = action
+  const { projectId, resolve } = action.payload
   try {
-    const project = yield call(request, `${api.projects}/${payload.projectId}`)
+    const project = yield call(request, `${api.projects}/${projectId}`)
     const currentProject = project.payload
     const organization = yield call(request, `${api.organizations}/${currentProject.orgId}/teams`)
     const orgTeam = organization.payload
     yield put(viewTeamLoaded(orgTeam))
+    if (resolve) {
+      resolve(orgTeam)
+    }
   } catch (err) {
     yield put(loadViewTeamFail(err))
     errorHandler(err)

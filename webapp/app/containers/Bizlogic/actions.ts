@@ -367,11 +367,12 @@ export function loadDataFromItemFail (itemId, vizType: 'dashboard' | 'display') 
   }
 }
 
-export function loadViewTeam (projectId) {
+export function loadViewTeam (projectId, resolve) {
   return {
     type: LOAD_VIEW_TEAM,
     payload: {
-      projectId
+      projectId,
+      resolve
     }
   }
 }

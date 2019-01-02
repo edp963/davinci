@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -183,7 +183,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   private interactCallbacks: object = {}
   private interactingLinkagers: object = {}
   private interactGlobalFilters: object = {}
-  private resizeSign: number
+  private resizeSign: number = 0
 
   /**
    * object
@@ -390,7 +390,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     this.resizeSign = window.setTimeout(() => {
       this.props.onResizeAllDashboardItem()
       clearTimeout(this.resizeSign)
-      this.resizeSign = void 0
+      this.resizeSign = 0
     }, 500)
   }
 
@@ -636,7 +636,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let loginPanel = null
 
     if (currentItems) {
-      const itemblocks = []
+      const itemblocks: React.ReactNode[] = []
       const layouts = {lg: []}
 
       currentItems.forEach((dashboardItem) => {

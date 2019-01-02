@@ -39,3 +39,5 @@ export const TEST_SOURCE_CONNECTION_FAILURE = 'davinci/Source/TEST_SOURCE_CONNEC
 export const GET_CSV_META_ID = 'davinci/Source/GET_CSV_META_ID'
 export const GET_CSV_META_ID_SUCCESS = 'davinci/Source/GET_CSV_META_ID_SUCCESS'
 export const GET_CSV_META_ID_FAILURE = 'davinci/Source/GET_CSV_META_ID_FAILURE'
+export const SET_SOURCE_FORM_VALUE = 'davinci/Source/SET_SOURCE_FORM_VALUE'
+export const SET_UPLOAD_FORM_VALUE = 'davinci/Source/SET_UPLOAD_FORM_VALUE'
