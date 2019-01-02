@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { fromJS } from 'immutable'
 import { uuid } from 'utils/util'
-import { OnGetFilterControlOptions, MapFilterControlOptions, OnFilterValueChange } from './'
+import { OnGetFilterControlOptions, MapFilterControlOptions, OnFilterValueChange, IFilterItem } from './'
 import { FilterTypes, FilterTypesViewSetting, FilterTypesOperatorSetting } from './filterTypes'
 
 import FilterList from './FilterList'
@@ -23,13 +23,9 @@ interface IFilterConfigProps {
 }
 
 interface IFilterConfigStates {
-  localFilters: any[]
-  selectedFilter: any,
-  previewFilter: {
-    key: string
-    viewId: string
-    columns: string[]
-  }
+  localFilters: IFilterItem[]
+  selectedFilter: IFilterItem,
+  previewFilter: IFilterItem
 }
 
 export class FilterConfig extends React.Component<IFilterConfigProps, IFilterConfigStates> {
@@ -41,12 +37,8 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     super(props)
     this.state = {
       localFilters: [],
-      selectedFilter: {},
-      previewFilter: {
-        key: '',
-        viewId: '',
-        columns: []
-      }
+      selectedFilter: null,
+      previewFilter: null
     }
     this.refHandlers = {
       filterForm: (ref) => this.filterForm = ref
@@ -84,12 +76,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     const { localFilters } = this.state
     const selectedFilter = localFilters.find((f) => f.key === key)
     this.setState({
-      selectedFilter,
-      previewFilter: {
-        key: '',
-        viewId: '',
-        columns: []
-      }
+      selectedFilter
     }, () => {
       this.filterForm.setFieldsValue(selectedFilter)
     })
@@ -97,7 +84,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
 
   private addFilter = () => {
     const { localFilters } = this.state
-    const newFilter = {
+    const newFilter: IFilterItem = {
       key: uuid(8, 16),
       name: '新建全局筛选',
       type: FilterTypes.InputText,
@@ -112,11 +99,11 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     })
   }
 
-  private deleteFilter = (key) => {
+  private deleteFilter = (key: string) => {
     const { localFilters, selectedFilter } = this.state
     const newLocalFilters = localFilters.filter((f) => f.key !== key)
     const newSelectedFilter = (selectedFilter.key !== key) ?
-      selectedFilter : (newLocalFilters.length > 0 ? newLocalFilters[0] : {})
+      selectedFilter : (newLocalFilters.length > 0 ? newLocalFilters[0] : null)
     this.setState({
       localFilters: newLocalFilters,
       selectedFilter: newSelectedFilter
@@ -164,23 +151,15 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     }
   }
 
-  private getPreviewData = (filterKey, viewId, columns: string[], parents) => {
-    const { onGetOptions } = this.props
+  private previewControl = (filter: IFilterItem) => {
     this.setState({
-      previewFilter: {
-        key: filterKey,
-        viewId,
-        columns
-      }
-    }, () => {
-      onGetOptions(filterKey, viewId, columns, parents)
+      previewFilter: filter
     })
   }
 
   public render () {
     const { views, widgets, items, mapOptions, onGetOptions } = this.props
-    const { localFilters, selectedFilter } = this.state
-    const { previewFilter: { key, columns } } = this.state
+    const { localFilters, selectedFilter, previewFilter } = this.state
 
     return (
       <div className={styles.filterConfig}>
@@ -205,17 +184,17 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
                   onFilterTypeChange={this.filterTypeChange}
                   onFilterItemNameChange={this.filterItemNameChange}
                   onFilterItemSave={this.filterItemSave}
-                  onGetPreviewData={this.getPreviewData}
+                  onPreviewControl={this.previewControl}
                   wrappedComponentRef={this.refHandlers.filterForm}
                 />
               )
             }
             <div className={styles.bottom}>
               {
-                !selectedFilter.key ? null : (
+                !previewFilter ? null : (
                   <FilterValuePreview
-                    filter={selectedFilter}
-                    currentOptions={mapOptions[selectedFilter.key] || []}
+                    filter={previewFilter}
+                    currentOptions={mapOptions[previewFilter.key] || []}
                     onGetOptions={onGetOptions}
                   />
                 )

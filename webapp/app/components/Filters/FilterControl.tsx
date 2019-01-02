@@ -51,7 +51,9 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
     const { type } = filter
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
     const { key, fromView, fromModel, fromText, fromChild, fromParent } = filter
+    if (!fromView) { return }
     const columns = [fromModel, fromText]
+    if (!columns.join('').length) { return }
     if (fromChild) { columns.push(fromChild) }
     if (fromParent) { columns.push(fromParent) }
     onGetOptions(key, fromView, columns, [])
@@ -94,7 +96,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
   }
 
   private renderTreeSelect = (filter: IFilterItem, onChange, options) => {
-    const { fromModel, fromText, fromChild, fromParent } = filter
+    const { name, fromModel, fromText, fromChild, fromParent } = filter
     const treeData = options.map((item) => ({
       id: item[fromChild],
       pId: item[fromParent],
@@ -107,6 +109,7 @@ export class FilterControl extends React.Component<IFilterControlProps, {}> {
         allowClear
         multiple
         treeDataSimpleMode
+        placeholder={name}
         treeData={treeData}
         onChange={onChange}
       />

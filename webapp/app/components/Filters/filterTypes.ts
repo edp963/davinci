@@ -1,5 +1,5 @@
 
-import OperatorTypes from './operatorTypes'
+import OperatorTypes from 'utils/operatorTypes'
 
 export enum FilterTypes {
   InputText = 'inputText',

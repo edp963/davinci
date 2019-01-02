@@ -28,12 +28,7 @@ interface IFilterFormProps {
   onFilterTypeChange: (filterType: FilterTypes) => void
   onFilterItemSave: (filterItem) => void
   onFilterItemNameChange: (key: string, name: string) => void
-  onGetPreviewData: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
+  onPreviewControl: (filterItem: IFilterItem) => void
 }
 
 interface IFilterFormStates {
@@ -84,16 +79,18 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
   public componentWillReceiveProps (nextProps: IFilterFormProps) {
     const { views, widgets, items, filterItem } = nextProps
 
-    if (views && widgets && items
-      && views !== this.props.views
-      && widgets !== this.props.widgets
-      && items !== this.props.items) {
-        this.initFormSetting(views, widgets, items)
-      }
+    if (
+      views && widgets && items
+        && views !== this.props.views
+        && widgets !== this.props.widgets
+        && items !== this.props.items
+    ) {
+      this.initFormSetting(views, widgets, items)
+    }
 
     const previousFilterItem = this.props.filterItem
     if (filterItem && filterItem !== previousFilterItem) {
-      if (previousFilterItem.key) {
+      if (previousFilterItem && previousFilterItem.key) {
         this.saveFilterItem()
       }
     }
@@ -329,20 +326,18 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     this.setState({
       modelItems
     }, () => {
-      const { form, filterItem, onGetPreviewData } = this.props
+      const { form } = this.props
       if (!fromModel || modelItems.indexOf(fromModel) < 0) {
-        form.setFieldsValue({ fromModel: modelItems[0] })
-        onGetPreviewData(filterItem.key, viewId, modelItems[0], [])
-      } else {
-        onGetPreviewData(filterItem.key, viewId, fromModel, [])
+        form.setFieldsValue({
+          fromModel: modelItems[0], fromText: modelItems[0],
+          fromParent: null, fromChild: null
+        })
       }
     })
   }
 
-  private onFromModelChange = (modelItemName) => {
-    const { onGetPreviewData, form, filterItem } = this.props
-    const viewId = form.getFieldValue('fromView')
-    onGetPreviewData(filterItem.key, viewId, modelItemName, [])
+  private onFromModelChange = (fromModel) => {
+    this.props.form.setFieldsValue({ fromModel, fromText: fromModel })
   }
 
   private filterTypeChange = (val) => {
@@ -487,7 +482,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                               message: '不能为空'
                             }]
                           })(
-                            <Select onChange={this.onFromModelChange}>
+                            <Select>
                               {
                                 modelItems.map((itemName) => (
                                   <Option key={itemName} value={itemName}>{itemName}</Option>
@@ -615,4 +610,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
   }
 }
 
-export default Form.create<IFilterFormProps>()(FilterForm)
+export default Form.create<IFilterFormProps>({
+  onValuesChange: (props: IFilterFormProps, changedValues, allValues) => {
+    const changedKeys = ['type', 'name', 'fromModel', 'fromText', 'fromParent', 'fromChild']
+    const refreshPreview = Object.keys(changedValues).some((key) => changedKeys.includes(key))
+    if (!refreshPreview) { return }
+    const { onPreviewControl } = props
+    onPreviewControl(allValues as IFilterItem)
+  }
+})(FilterForm)
