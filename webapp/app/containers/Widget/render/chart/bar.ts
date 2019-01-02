@@ -320,18 +320,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const dimetionAxisOption = getDimetionAxisOption(xAxis, xAxisSplitLineConfig, xAxisData)
   const metricAxisOption = getMetricAxisOption(yAxis, yAxisSplitLineConfig, metrics.map((m) => decodeMetricName(m.name)).join(` / `), 'x', percentage)
-  console.log(dimetionAxisOption)
-  console.log(metricAxisOption)
-  console.log(JSON.stringify({
-    xAxis: barChart ? metricAxisOption : dimetionAxisOption,
-    yAxis: barChart ? dimetionAxisOption : metricAxisOption,
-    series,
-    tooltip: {
-      formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
-    },
-    ...legendOption,
-    grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
-  }, null, 2))
   return {
     xAxis: barChart ? metricAxisOption : dimetionAxisOption,
     yAxis: barChart ? dimetionAxisOption : metricAxisOption,

@@ -124,7 +124,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       pagination: { pageNo: 0, pageSize: 0, withPaging: false, totalCount: 0 },
       modalCachedData: null,
       modalCallback: null,
-      modalDataFrom: void 0,
+      modalDataFrom: '',
       currentEditingCommonParamKey: '',
       currentEditingItem: null,
       fieldModalVisible: false,
@@ -559,9 +559,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           }
           item.config = config as IDataParamConfig
           this.setWidgetProps(dataParams, styleParams)
-          this.setState({
-            modalCachedData: null
-          })
         }
       },
       colorModalVisible: true
@@ -581,9 +578,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         if (config) {
           item.config = config as IDataParamConfig
           this.setWidgetProps(dataParams, styleParams)
-          this.setState({
-            modalCachedData: null
-          })
         }
       },
       filterModalVisible: true
@@ -991,7 +985,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private closeColorModal = () => {
     this.setState({
       colorModalVisible: false,
-      modalCallback: null
+      modalCachedData: null,
+      modalCallback: null,
+      modalDataFrom: ''
     })
   }
 
@@ -1008,7 +1004,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private closeActOnModal = () => {
     this.setState({
       actOnModalVisible: false,
-      actOnModalList: null
+      actOnModalList: null,
+      modalCachedData: null,
+      modalCallback: null,
+      modalDataFrom: ''
     })
   }
 
@@ -1024,7 +1023,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private closeFilterModal = () => {
     this.setState({
-      filterModalVisible: false
+      filterModalVisible: false,
+      modalCachedData: null,
+      modalCallback: null,
+      modalDataFrom: ''
     })
   }
 
