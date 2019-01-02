@@ -152,11 +152,6 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     }
   }
 
-  // public shouldComponentUpdate (nextProps: IPivotProps) {
-  //   const { renderType } = nextProps
-  //   return renderType === 'loading' ? false : true
-  // }
-
   public componentWillUpdate (nextProps: IPivotProps) {
     const { renderType } = nextProps
     if (renderType !== 'refresh') {

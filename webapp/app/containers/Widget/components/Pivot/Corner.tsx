@@ -59,7 +59,7 @@ export function Corner (props: ICornerProps) {
         marginTop,
         marginLeft,
         ...(cols.length || rows.length) && {
-          backgroundColor: headerBackgroundColor,
+          ...!dimetionAxis && {backgroundColor: headerBackgroundColor},
           color: fontColor,
           fontSize: Number(fontSize),
           fontFamily,

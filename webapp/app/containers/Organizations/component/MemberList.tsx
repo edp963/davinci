@@ -89,9 +89,11 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       formKey: this.state.formKey + 10,
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.MemberForm.resetFields()
     })
+  }
+
+  private afterMemberFormClose = () => {
+    this.MemberForm.resetFields()
   }
 
   private removeMemberForm = (text, obj) => () => {
@@ -175,10 +177,13 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     this.setState({
       changeRoleFormVisible: false,
       changeRoleModalLoading: false
-    }, () => {
-      this.ChangeRoleForm.resetFields()
     })
   }
+
+  private afterChangeRoleFormClose = () => {
+    this.ChangeRoleForm.resetFields()
+  }
+
   private toUserProfile = (obj) => () => {
     const {id} = obj
     if (id) {
@@ -317,6 +322,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           visible={formVisible}
           footer={null}
           onCancel={this.hideMemberForm}
+          afterClose={this.afterMemberFormClose}
         >
           <MemberForm
             category={category}
@@ -333,6 +339,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           visible={changeRoleFormVisible}
           footer={null}
           onCancel={this.hideChangeRoleForm}
+          afterClose={this.afterChangeRoleFormClose}
         >
           <ChangeRoleForm
             category={changeRoleFormCategory}
