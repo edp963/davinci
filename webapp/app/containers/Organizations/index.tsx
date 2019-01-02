@@ -97,15 +97,16 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.OrganizationForm.resetFields()
     })
+  }
+
+  private afterOrganizationFormClose = () => {
+    this.OrganizationForm.resetFields()
   }
 
   public render () {
     const { formVisible, modalLoading } = this.state
     const { organizations } = this.props
-    console.log({organizations})
     const organizationArr = organizations ? organizations.map((org) => (
         <div className={styles.groupList} key={org.id} onClick={this.toOrganization(org)}>
           <div className={styles.orgHeader}>
@@ -152,6 +153,7 @@ export class Organizations extends React.PureComponent<IOrganizationsProps, IOrg
           visible={formVisible}
           footer={null}
           onCancel={this.hideOrganizationForm}
+          afterClose={this.afterOrganizationFormClose}
         >
           <OrganizationForm
             ref={(f) => { this.OrganizationForm = f }}
