@@ -127,4 +127,10 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where view_id = #{viewId}"})
     List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
+
+    @Select({"SELECT * from widget WHERE IFNULL(config,'') != ''"})
+    List<Widget> queryUpgrade();
+
+
+    int updateConfigBatch(@Param("list") List<Widget> list);
 }
