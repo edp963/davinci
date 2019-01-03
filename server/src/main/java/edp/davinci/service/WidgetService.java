@@ -21,7 +21,6 @@ package edp.davinci.service;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.dto.viewDto.ViewExecuteSql;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.model.User;
@@ -45,4 +44,6 @@ public interface WidgetService extends CheckEntityService {
     ViewExecuteParam buildViewExecuteParam(Widget widget);
 
     ResultMap generationCsv(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
+
+    void upgradeWidgetConfig();
 }

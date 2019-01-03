@@ -590,4 +590,57 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         }
         return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);
     }
+
+
+    @Transactional
+    public void upgradeWidgetConfig() {
+        List<Widget> widgets = widgetMapper.queryUpgrade();
+        List<Widget> updateList = null;
+        if (null != widgets && widgets.size() > 0) {
+            updateList = new ArrayList<>();
+
+            for (Widget widget : widgets) {
+                if (StringUtils.isEmpty(widget.getConfig())) {
+                    continue;
+                }
+
+                JSONObject jsonObject = JSONObject.parseObject(widget.getConfig());
+                if (null != jsonObject) {
+                    if (jsonObject.containsKey("cols")) {
+                        JSONArray cols = jsonObject.getJSONArray("cols");
+                        if (null != cols && cols.size() > 0) {
+                            Map<Long, List<JSONObject>> map = null;
+                            for (Object obj : cols) {
+                                if (obj instanceof String) {
+                                    if (null == map) {
+                                        map = new HashMap<>();
+                                    }
+
+                                    List<JSONObject> list = null;
+                                    if (map.containsKey(widget.getId())) {
+                                        list = map.get(widget.getId());
+                                    } else {
+                                        list = new ArrayList<>();
+                                        map.put(widget.getId(), list);
+                                    }
+                                    JSONObject col = new JSONObject();
+                                    col.put("name", String.valueOf(obj));
+                                    list.add(col);
+                                }
+                            }
+                            if (null != map && map.size() > 0) {
+                                jsonObject.put("cols", map.get(widget.getId()));
+                                widget.setConfig(jsonObject.toJSONString());
+                                updateList.add(widget);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (null != updateList && updateList.size() > 0) {
+            widgetMapper.updateConfigBatch(updateList);
+        }
+    }
 }
