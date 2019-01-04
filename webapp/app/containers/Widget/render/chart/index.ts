@@ -39,7 +39,7 @@ export default function (type, chartProps: IChartProps, drillOptions?: any): ECh
     case 'line': return line(chartProps)
     case 'bar': return bar(chartProps, drillOptions)
     case 'scatter': return scatter(chartProps, drillOptions)
-    case 'pie': return pie(chartProps)
+    case 'pie': return pie(chartProps, drillOptions)
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
     case 'radar': return radar(chartProps)
