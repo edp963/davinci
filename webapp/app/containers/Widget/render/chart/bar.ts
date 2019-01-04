@@ -240,20 +240,20 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       }
     }
   } : null
-  if (isDrilling) {
-    //  instance.off('brushselected')
-      instance.on('brushselected', brushselected)
-      setTimeout(() => {
-          instance.dispatchAction({
-          type: 'takeGlobalCursor',
-          key: 'brush',
-          brushOption: {
-            brushType: 'rect',
-            brushMode: 'multiple'
-          }
-        })
-      }, 0)
-    }
+  // if (isDrilling) {
+  //   //  instance.off('brushselected')
+  //     instance.on('brushselected', brushselected)
+  //     setTimeout(() => {
+  //         instance.dispatchAction({
+  //         type: 'takeGlobalCursor',
+  //         key: 'brush',
+  //         brushOption: {
+  //           brushType: 'rect',
+  //           brushMode: 'multiple'
+  //         }
+  //       })
+  //     }, 0)
+  //   }
   function brushselected (params) {
     const brushComponent = params.batch[0]
     const brushed = []

@@ -157,7 +157,7 @@ export function DataDrill (props: IDataDrillProps) {
 
   function drill (e) {
     const path = e.keyPath
-    console.log(path)   // row name sub1
+    // console.log(path)   // row name sub1
     if (path && path.length > 2) {
       onDataDrill(path[1], path[0])
     } else {
