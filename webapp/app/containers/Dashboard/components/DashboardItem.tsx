@@ -206,9 +206,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const { withPaging, pageSize } = table
     const pagination: IPaginationParams = {
       withPaging,
-      pageSize: datasource.pageSize || +pageSize,
-      pageNo: datasource.pageNo || 1,
+      pageSize: 0,
+      pageNo: 0,
       totalCount: datasource.totalCount || 0
+    }
+    if (pagination.withPaging) {
+      pagination.pageSize = datasource.pageSize || +pageSize
+      pagination.pageNo = datasource.pageNo || 1
     }
     return pagination
   }
