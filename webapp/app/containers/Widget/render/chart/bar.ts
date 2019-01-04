@@ -277,13 +277,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
   }
   const seriesNames = series.map((s) => s.name)
 
-  let legendOption
-  if (color.items.length || metrics.length > 1) {
-    legendOption = {
-      legend: getLegendOption(legend, seriesNames)
-    }
-  }
-
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
   //     type: 'inside',
@@ -327,7 +320,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     tooltip: {
       formatter: getChartTooltipLabel('bar', seriesData, { cols, metrics, color, tip })
     },
-    ...legendOption,
+    legend: getLegendOption(legend, seriesNames),
     grid: getGridPositions(legend, seriesNames, barChart, yAxis, xAxis, xAxisData)
    // ...brushedOptions
   }
