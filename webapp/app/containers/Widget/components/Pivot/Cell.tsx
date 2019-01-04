@@ -36,7 +36,7 @@ export class Cell extends React.PureComponent <ICellProps, ICellState> {
     if (nextProps.isDrilling === false) {
       this.setState({
         isSelected: false
-      })
+      }, () => console.log(this.state.isSelected))
     }
   }
   private selectTd  = (event) => {

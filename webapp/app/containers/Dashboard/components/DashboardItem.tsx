@@ -110,7 +110,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widgetProps: null,
       pagination: null,
       model: null,
-      isDrilling: false,
+      isDrilling: true,
       dataDrillPanelPosition: false,
       whichDataDrillBrushed: false,
       sourceDataOfBrushed: false,
@@ -340,23 +340,10 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (position && position.length) {
       try {
         const ps = JSON.parse(position)
-        const range = ps.range
-        const brushed = ps.brushed
-        const sourceData = ps.sourceData
+        const {range, brushed, sourceData} = ps
         const dataDrillPanelPosition = void 0
-        let whichDataDrillBrushed = void 0
-        let sourceDataOfBrushed = void 0
-        // if (range && range.length > 0) {
-        //   dataDrillPanelPosition = {top: `${range[range.length - 1][1]}px`, left: `${range[range.length - 2][1]}px`}
-        // } else {
-        //   dataDrillPanelPosition = {top: `120px`, left: `120px`}
-        // }
-        if (brushed && brushed.length) {
-          whichDataDrillBrushed = brushed
-        }
-        if (sourceData && sourceData.length) {
-          sourceDataOfBrushed = sourceData
-        }
+        const sourceDataOfBrushed = sourceData && sourceData.length ? sourceData : void 0
+        const whichDataDrillBrushed = brushed && brushed.length ? brushed : void 0
         this.setState({
           dataDrillPanelPosition,
           whichDataDrillBrushed,
@@ -854,7 +841,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               <Icon type="arrows-alt" onClick={this.onFullScreen} className={styles.fullScreen} />
             </Tooltip>
             {shareButton}
-            {drillButton}
             {downloadButton}
             {dropdownMenu}
           </div>
