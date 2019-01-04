@@ -271,7 +271,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 
   return {
-    show: showLegend,
+    show: showLegend && seriesNames.length > 1,
     data: seriesNames,
     type: 'scroll',
     textStyle: {
@@ -286,13 +286,18 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
 }
 
 export function getGridPositions (
-  legendConfig: Partial<ILegendConfig>, seriesNames, barChart?: boolean, yAxisConfig?: IAxisConfig, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]
+  legendConfig: Partial<ILegendConfig>,
+  seriesNames,
+  isHorizontalBar?: boolean,
+  yAxisConfig?: IAxisConfig,
+  dimetionAxisConfig?: IAxisConfig,
+  xAxisData?: string[]
 ) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, barChart, yAxisConfig)
-    if (showLegend) {
+    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
+    if (showLegend && seriesNames.length > 1) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
           ? 32
@@ -303,13 +308,15 @@ export function getGridPositions (
   }, {})
 }
 
-function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], barChart?: boolean, yAxisConfig?: IAxisConfig) {
+function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
   const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
   const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
-  const maxWidth = Math.max(...(xAxisData || []).map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+  const maxWidth = xAxisData && xAxisData.length
+    ? Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+    : 0
 
   const bottomDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? barChart
+    ? isHorizontalBar
       ? 50
       : xAxisRotate
         ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth
@@ -318,12 +325,12 @@ function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[
 
   const yAxisConfigLeft = yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit ? 24 : 64
   const leftDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
-    ? barChart
-      ? xAxisRotate === undefined
+    ? isHorizontalBar
+      ? xAxisRotate === void 0
         ? 64
         : 24 + Math.cos(xAxisRotate * Math.PI / 180) * maxWidth
       : yAxisConfigLeft
-    : barChart ? 24 : yAxisConfigLeft
+    : isHorizontalBar ? 24 : yAxisConfigLeft
 
   switch (pos) {
     case 'top': return 24

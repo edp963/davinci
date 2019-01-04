@@ -171,13 +171,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const seriesNames = series.map((s) => s.name)
 
-  let legendOption
-  if (cols.length || color.items.length) {
-    legendOption = {
-      legend: getLegendOption(legend, seriesNames)
-    }
-  }
-
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
   //     type: 'inside',
@@ -269,8 +262,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     tooltip: {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
-    ...legendOption,
-    grid: getGridPositions(legend, seriesNames, false, yAxis),
+    legend: getLegendOption(legend, seriesNames),
+    grid: getGridPositions(legend, seriesNames, false, yAxis)
     //...brushedOptions
   }
 }

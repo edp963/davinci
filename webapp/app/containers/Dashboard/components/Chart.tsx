@@ -22,7 +22,7 @@ import * as React from 'react'
 
 import TableChart from './TableChart'
 import ScorecardChart from './ScorecardChart'
-import TextChart from './TextChart'
+// import TextChart from './TextChart'
 
 import { TABLE_HEADER_HEIGHT, TABLE_PAGINATION_HEIGHT } from '../../../globalConstants'
 
@@ -144,18 +144,18 @@ export class Chart extends React.PureComponent<IChartProps, IChartStates> {
             />
           )
           break
-        case 'text':
-          chartContent = (
-            <TextChart
-              className={classNames.chart}
-              data={data}
-              loading={loading}
-              editing={id === 'commonChart'}
-              chartParams={chartParams}
-              onTextEditorChange={onTextEditorChange}
-            />
-          )
-          break
+        // case 'text':
+        //   chartContent = (
+        //     <TextChart
+        //       className={classNames.chart}
+        //       data={data}
+        //       loading={loading}
+        //       editing={id === 'commonChart'}
+        //       chartParams={chartParams}
+        //       onTextEditorChange={onTextEditorChange}
+        //     />
+        //   )
+        //   break
       }
     }
 

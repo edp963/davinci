@@ -23,6 +23,7 @@
   
     .formLeft {
       width: 230px;
+      background-color: @light-bg;
       flex-shrink: 0;
       overflow: auto;
       border-right: 1px solid @border-color-base;
@@ -42,14 +43,16 @@
 
       .treeSearch {
         padding: 8px 8px 0;
-        background-color: @light-bg;
       }
 
       .sourceTree {
         flex-shrink: 1;
         padding: 0 8px 8px;
         overflow: auto;
-        background-color: @light-bg;
+
+        .tree {
+          font-size: 12px;
+        }
       }
     }
     
@@ -61,13 +64,17 @@
 
       .declareSelect {
         max-width: 272px;
-        margin-top: 16px;
-        margin-bottom: 6px;
+        margin: 16px 0 6px 16px;
+
+        :global(.ant-form-item) {
+          margin-bottom: 0;
+        }
       }
   
       .formTop {
         flex: 2;
         padding: 0 16px;
+        font-size: 12px;
         display: flex;
         flex-direction: column;
   
@@ -80,18 +87,11 @@
           flex: 1;
           overflow-y: auto;
           height: 100%;
-          .declareForm {
-            height: 100%;
-            margin-bottom: 0 !important;
-          }
         }
 
         .sqlText {
           height: 100%;
           flex: 1;
-          .sqlForm {
-            height: 100%;
-          }
         }
       }
       .formBottom {
@@ -109,11 +109,13 @@
         display: flex;
         flex-direction: column;
         flex: 1;
+
         .viewTab {
           display: flex;
           flex-direction: column;
           flex: 1;
           margin-right: 16px;
+
           .viewTabPane {
             position: absolute;
             overflow-y: auto;
@@ -121,6 +123,11 @@
             height: 100%;
             width: 100%;
             padding-bottom: 30px;
+            font-size: 12px;
+
+            :global(.ant-table) {
+              font-size: 12px;
+            }
           }
         }
       }
@@ -174,9 +181,10 @@
 
 .foldIcon, .noFoldIcon {
   float: right;
+  font-size: 18px;
   line-height: 2;
   cursor: pointer;
-  margin-right: 35px;
+  margin: 2px 16px 0 0;
 }
 
 .foldIcon:before, .noFoldIcon:before {

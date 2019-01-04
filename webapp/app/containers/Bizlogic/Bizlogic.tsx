@@ -22,7 +22,6 @@ import * as React from 'react'
 import {connect} from 'react-redux'
 import {createStructuredSelector} from 'reselect'
 import { InjectedRouter } from 'react-router/lib/Router'
-import axios, { AxiosRequestConfig, AxiosPromise } from 'axios'
 
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
@@ -422,7 +421,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         width: '100%',
         height: '100%',
         lineNumbers: true,
-        lineWrapping: true
+        lineWrapping: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        foldGutter: true
       })
       // this.codeMirrorInstanceOfDeclaration.setSize('100%', 160)
     }
@@ -433,10 +435,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       this.codeMirrorInstanceOfQuerySQL = codeMirror.fromTextArea(queryWrapperDOM, {
         mode: 'text/x-sql',
         theme: '3024-day',
-        lineNumbers: true,
         width: '100%',
         height: '100%',
-        lineWrapping: true
+        lineNumbers: true,
+        lineWrapping: true,
+        autoCloseBrackets: true,
+        matchBrackets: true,
+        foldGutter: true
       })
     }
   }
@@ -1147,7 +1152,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const operations = (
       <Icon
         className={`${isFold ? styles.foldIcon : styles.noFoldIcon}`}
-        type={`${isFold ? 'down-circle-o' : 'left-circle-o'}`}
+        type={`${isFold ? 'down' : 'up'}`}
         onClick={this.foldBoard}
       />
     )
@@ -1222,6 +1227,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Col>
             <Col span={24} className={`${schemaData.length !== 0 ? styles.sourceTree : utilStyles.hide}`}>
               <Tree
+                className={styles.tree}
                 onExpand={this.onExpand}
                 expandedKeys={expandedKeys}
                 autoExpandParent={autoExpandParent}
@@ -1237,7 +1243,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 {getFieldDecorator('isDeclarate', {
                   initialValue: 'no'
                 })(
-                  <RadioGroup size="default" onChange={this.changeIsDeclarate}>
+                  <RadioGroup size="small" onChange={this.changeIsDeclarate}>
                     <RadioButton value="yes">是</RadioButton>
                     <RadioButton value="no">否</RadioButton>
                   </RadioGroup>
@@ -1246,28 +1252,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Col>
             <Row className={styles.formTop}>
               <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
-                <FormItem label="" className={styles.declareForm}>
-                  {getFieldDecorator('declaration', {
-                    initialValue: ''
-                  })(
-                    <Input
-                      placeholder="Declare Variables"
-                      type="textarea"
-                    />
-                  )}
-                </FormItem>
+                <textarea id="declaration" placeholder="在这里声明变量" />
               </Col>
               <Col span={24} className={`no-item-margin ${styles.sqlText}`}>
-                <FormItem label="" className={styles.sqlForm}>
-                  {getFieldDecorator('sql_tmpl', {
-                    initialValue: ''
-                  })(
-                    <Input
-                      placeholder="QUERY SQL Template"
-                      type="textarea"
-                    />
-                  )}
-                </FormItem>
+                <textarea id="sql_tmpl" placeholder="输入SQL语句" />
               </Col>
             </Row>
 
@@ -1278,12 +1266,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               <Button
                 className={styles.executeBtn}
                 key="forward"
-                size="large"
                 type="primary"
+                icon="caret-right"
                 loading={executeLoading}
                 onClick={this.executeSql}
               >
-                <Icon type="caret-right" />Execute
+                Execute
               </Button>
             </Row>
             {
@@ -1291,7 +1279,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 ? (
                 <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
                   <Col span={24} className={styles.tabCol}>
-                    <Tabs defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
+                    <Tabs size="small" defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
                       <TabPane tab="Data" key="data">
                         <Table
                           className={styles.viewTabPane}
