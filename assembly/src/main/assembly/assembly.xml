@@ -50,6 +50,9 @@
                 ${project.parent.basedir}/bin
             </directory>
             <outputDirectory>bin</outputDirectory>
+            <excludes>
+                <exclude>upgrade.go</exclude>
+            </excludes>
         </fileSet>
         <fileSet>
             <directory>

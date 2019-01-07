@@ -540,7 +540,7 @@ delimiter ;
 SET FOREIGN_KEY_CHECKS = 1;
 
 
-ALTER TABLE `mem_dashboard_widget` ADD COLUMN `confg` text NULL AFTER `frequency`;
+ALTER TABLE `mem_dashboard_widget` ADD COLUMN `config` text NULL AFTER `frequency`;
 
 ALTER TABLE `team` ADD COLUMN `full_team_id` varchar(255) NOT NULL DEFAULT '-1' AFTER `parent_team_id`;
 UPDATE `team` set full_team_id = parentTeamIds(id) WHERE full_team_id = '-1'
