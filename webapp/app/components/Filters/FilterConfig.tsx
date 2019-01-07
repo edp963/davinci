@@ -1,8 +1,9 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { fromJS } from 'immutable'
-import { uuid } from 'utils/util'
-import { OnGetFilterControlOptions, MapFilterControlOptions, OnFilterValueChange, IFilterItem } from './'
+import {
+  getDefaultFilterItem, traverseFilters,
+  OnGetFilterControlOptions, IMapFilterControlOptions, OnFilterValueChange, IFilterItem } from './'
 import { FilterTypes, FilterTypesViewSetting, FilterTypesOperatorSetting } from './filterTypes'
 
 import FilterList from './FilterList'
@@ -19,7 +20,7 @@ interface IFilterConfigProps {
   saving: boolean
   onOk: (filters: any[]) => void
   onGetOptions: OnGetFilterControlOptions
-  mapOptions: MapFilterControlOptions
+  mapOptions: IMapFilterControlOptions
 }
 
 interface IFilterConfigStates {
@@ -72,25 +73,20 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     })
   }
 
-  private selectFilter = (key) => {
+  private selectFilter = (key: string) => {
     const { localFilters } = this.state
-    const selectedFilter = localFilters.find((f) => f.key === key)
-    this.setState({
-      selectedFilter
-    }, () => {
-      this.filterForm.setFieldsValue(selectedFilter)
+    traverseFilters(localFilters, key, (selectedFilter) => {
+      this.setState({
+        selectedFilter
+      }, () => {
+        this.filterForm.setFieldsValue(selectedFilter)
+      })
     })
   }
 
   private addFilter = () => {
     const { localFilters } = this.state
-    const newFilter: IFilterItem = {
-      key: uuid(8, 16),
-      name: '新建全局筛选',
-      type: FilterTypes.InputText,
-      operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
-      relatedViews: {}
-    }
+    const newFilter: IFilterItem = getDefaultFilterItem()
     this.setState({
       localFilters: [...localFilters, newFilter],
       selectedFilter: newFilter
@@ -110,6 +106,12 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     }, () => {
       if (!newSelectedFilter.key) { return }
       this.filterForm.setFieldsValue(newSelectedFilter)
+    })
+  }
+
+  private filtersChange = (filters: IFilterItem[]) => {
+    this.setState({
+      localFilters: filters
     })
   }
 
@@ -170,6 +172,7 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
               onSelectFilter={this.selectFilter}
               onAddFilter={this.addFilter}
               onDeleteFilter={this.deleteFilter}
+              onFiltersChange={this.filtersChange}
               selectedFilterKey={selectedFilter.key}
             />
           </div>

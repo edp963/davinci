@@ -3,7 +3,7 @@ import moment from 'moment'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import {
   IFilterViewConfig, IFilterItem, IFilterValue, IMapItemFilterValue,
-  OnGetFilterControlOptions, OnFilterValueChange, MapFilterControlOptions } from './'
+  OnGetFilterControlOptions, OnFilterValueChange, IMapFilterControlOptions } from './'
 import { FilterTypes } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
@@ -17,7 +17,7 @@ const styles = require('./filter.less')
 
 interface IFilterPanelProps {
   filters: IFilterItem[]
-  mapOptions: MapFilterControlOptions
+  mapOptions: IMapFilterControlOptions
   onGetOptions: OnGetFilterControlOptions
   onChange: OnFilterValueChange
 }
