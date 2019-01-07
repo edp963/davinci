@@ -22,7 +22,7 @@ import * as React from 'react'
 import Button from 'antd/lib/button'
 import Modal from 'antd/lib/modal'
 
-import { MapFilterControlOptions, OnGetFilterControlOptions } from 'components/Filters'
+import { IMapFilterControlOptions, OnGetFilterControlOptions } from 'components/Filters'
 import FilterConfig from 'components/Filters/FilterConfig'
 
 const styles = require('../Dashboard.less')
@@ -34,7 +34,7 @@ interface IDashboardFilterConfigProps {
   widgets: any[]
   visible: boolean
   loading: boolean
-  mapOptions: MapFilterControlOptions
+  mapOptions: IMapFilterControlOptions
   onCancel: () => void
   onSave: (filterItems: any[]) => void
   onGetOptions: OnGetFilterControlOptions

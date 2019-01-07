@@ -41,7 +41,7 @@ import DrillPathSetting from './components/DrillPathSetting'
 import DashboardItem from './components/DashboardItem'
 import DashboardLinkageConfig from './components/DashboardLinkageConfig'
 
-import { IMapItemFilterValue, MapFilterControlOptions } from 'components/Filters'
+import { IMapItemFilterValue, IMapFilterControlOptions } from 'components/Filters'
 import DashboardFilterPanel from './components/DashboardFilterPanel'
 import DashboardFilterConfig from './components/DashboardFilterConfig'
 import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Linkages'
@@ -165,7 +165,7 @@ interface IGridProps {
       renderType: RenderType
     }
   }
-  currentDashboardCascadeSources: MapFilterControlOptions
+  currentDashboardCascadeSources: IMapFilterControlOptions
   currentLinkages: any[]
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
