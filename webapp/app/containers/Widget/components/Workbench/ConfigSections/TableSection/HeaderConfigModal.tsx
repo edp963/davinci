@@ -18,13 +18,14 @@ import Modal from 'antd/lib/modal'
 import Input from 'antd/lib/input'
 const Search = Input.Search
 import Button from 'antd/lib/button'
+const ButtonGroup = Button.Group
 import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 import Checkbox from 'antd/lib/checkbox'
 import Select from 'antd/lib/select'
 const Option = Select.Option
-import Table, { TableRowSelection } from 'antd/lib/table'
+import Table, { TableRowSelection, ColumnProps } from 'antd/lib/table'
 import Message from 'antd/lib/message'
 
 import ColorPicker from 'components/ColorPicker'
@@ -52,7 +53,6 @@ interface IHeaderConfigModalProps {
 interface IHeaderConfigModalStates {
   localConfig: ITableHeaderConfig[]
   currentEditingConfig: ITableHeaderConfig
-  expandedRowKeys: string[]
   currentSelectedKeys: string[]
   mapHeader: { [key: string]: ITableHeaderConfig }
   mapHeaderParent: { [key: string]: ITableHeaderConfig }
@@ -67,7 +67,6 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     this.state = {
       localConfig,
       currentEditingConfig: null,
-      expandedRowKeys: [],
       mapHeader,
       mapHeaderParent,
       currentSelectedKeys: []
@@ -97,6 +96,46 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     return [map, mapParent]
   }
 
+  private moveUp = () => {
+    const { localConfig, mapHeaderParent, currentSelectedKeys } = this.state
+    if (currentSelectedKeys.length <= 0) {
+      Message.warning('请勾选要上移的列')
+      return
+    }
+    currentSelectedKeys.forEach((key) => {
+      const parent = mapHeaderParent[key]
+      const siblings = parent ? parent.children : localConfig
+      const idx = siblings.findIndex((s) => s.key === key)
+      if (idx < 1) { return }
+      const temp = siblings[idx - 1]
+      siblings[idx - 1] = siblings[idx]
+      siblings[idx] = temp
+    })
+    this.setState({
+      localConfig: [...localConfig]
+    })
+  }
+
+  private moveDown = () => {
+    const { localConfig, mapHeaderParent, currentSelectedKeys } = this.state
+    if (currentSelectedKeys.length <= 0) {
+      Message.warning('请勾选要下移的列')
+      return
+    }
+    currentSelectedKeys.forEach((key) => {
+      const parent = mapHeaderParent[key]
+      const siblings = parent ? parent.children : localConfig
+      const idx = siblings.findIndex((s) => s.key === key)
+      if (idx >= siblings.length - 1) { return }
+      const temp = siblings[idx]
+      siblings[idx] = siblings[idx + 1]
+      siblings[idx + 1] = temp
+    })
+    this.setState({
+      localConfig: [...localConfig]
+    })
+  }
+
   private mergeColumns = () => {
     const { localConfig, mapHeader, mapHeaderParent, currentSelectedKeys } = this.state
     if (currentSelectedKeys.length <= 0) {
@@ -107,7 +146,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     currentSelectedKeys.forEach((key) => {
       let cursorConfig = mapHeader[key]
       while (true) {
-        if (~currentSelectedKeys.indexOf(cursorConfig.key)) {
+        if (currentSelectedKeys.includes(cursorConfig.key)) {
           const parent = mapHeaderParent[cursorConfig.key]
           if (!parent) { break }
           cursorConfig = parent
@@ -149,7 +188,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       mapHeader: newMapHeader,
       mapHeaderParent: newMapHeaderParent,
       currentEditingConfig: insertConfig,
-      expandedRowKeys: [insertConfig.key]
+      currentSelectedKeys: []
     })
   }
 
@@ -254,7 +293,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     })
   }
 
-  private columns = [{
+  private columns: Array<ColumnProps<any>> = [{
     title: '表格列',
     dataIndex: 'headerName',
     key: 'headerName',
@@ -402,11 +441,9 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
     </Button>
   )]
 
-  private rowSelection: TableRowSelection<ITableHeaderConfig> = {
+  private tableRowSelection: TableRowSelection<ITableHeaderConfig> = {
     hideDefaultSelections: true,
-    onChange: (selectedRowKeys: string[], selectedRows) => {
-      console.log(selectedRowKeys)
-      console.log(selectedRows)
+    onChange: (selectedRowKeys: string[]) => {
       this.setState({
         currentSelectedKeys: selectedRowKeys
       })
@@ -415,7 +452,11 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
 
   public render () {
     const { visible } = this.props
-    const { localConfig, expandedRowKeys } = this.state
+    const { localConfig, currentSelectedKeys } = this.state
+    const rowSelection: TableRowSelection<ITableHeaderConfig> = {
+      ...this.tableRowSelection,
+      selectedRowKeys: currentSelectedKeys
+    }
 
     return (
       <Modal
@@ -429,8 +470,16 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       >
         <div className={styles.rows}>
           <Row gutter={8} className={styles.rowBlock}>
-            <Col span={24}>
+            <Col span={4}>
               <Button type="primary" onClick={this.mergeColumns}>合并</Button>
+            </Col>
+            <Col span={20}>
+              <Row type="flex" justify="end">
+                <ButtonGroup>
+                  <Button onClick={this.moveUp}><Icon type="arrow-up" />上移</Button>
+                  <Button onClick={this.moveDown}>下移<Icon type="arrow-down" /></Button>
+                </ButtonGroup>
+              </Row>
             </Col>
           </Row>
           <Row gutter={8} className={styles.rowBlock}>
@@ -440,7 +489,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
                 pagination={false}
                 columns={this.columns}
                 dataSource={localConfig}
-                rowSelection={this.rowSelection}
+                rowSelection={rowSelection}
               />
             </Col>
           </Row>
