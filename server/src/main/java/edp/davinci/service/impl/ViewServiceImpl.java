@@ -622,10 +622,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
 
-                Source source = viewWithProjectAndSource.getSource();
-                if (null == viewWithProjectAndSource) {
+                if (null == viewWithProjectAndSource.getSource()) {
                     throw new ServerException("source not found");
                 }
+
+                Source source = viewWithProjectAndSource.getSource();
+
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);

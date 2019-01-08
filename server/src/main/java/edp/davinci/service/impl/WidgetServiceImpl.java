@@ -393,15 +393,25 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                         JSONArray cols = jsonObject.getJSONArray("cols");
                         if (null != cols && cols.size() > 0) {
                             for (Object obj : cols) {
-                                groups.add(String.valueOf(obj));
+                                if (obj instanceof String) {
+                                    groups.add(String.valueOf(obj));
+                                } else {
+                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
+                                    groups.add(col.getString("name"));
+                                }
                             }
                         }
                     }
                     if (jsonObject.containsKey("rows")) {
-                        JSONArray cols = jsonObject.getJSONArray("cols");
-                        if (null != cols && cols.size() > 0) {
-                            for (Object obj : cols) {
-                                groups.add(String.valueOf(obj));
+                        JSONArray rows = jsonObject.getJSONArray("rows");
+                        if (null != rows && rows.size() > 0) {
+                            for (Object obj : rows) {
+                                if (obj instanceof String) {
+                                    groups.add(String.valueOf(obj));
+                                } else {
+                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
+                                    groups.add(col.getString("name"));
+                                }
                             }
                         }
                     }
@@ -630,6 +640,36 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                             }
                             if (null != map && map.size() > 0) {
                                 jsonObject.put("cols", map.get(widget.getId()));
+                                widget.setConfig(jsonObject.toJSONString());
+                                updateList.add(widget);
+                            }
+                        }
+                    }
+
+                    if (jsonObject.containsKey("rows")) {
+                        JSONArray cols = jsonObject.getJSONArray("rows");
+                        if (null != cols && cols.size() > 0) {
+                            Map<Long, List<JSONObject>> map = null;
+                            for (Object obj : cols) {
+                                if (obj instanceof String) {
+                                    if (null == map) {
+                                        map = new HashMap<>();
+                                    }
+
+                                    List<JSONObject> list = null;
+                                    if (map.containsKey(widget.getId())) {
+                                        list = map.get(widget.getId());
+                                    } else {
+                                        list = new ArrayList<>();
+                                        map.put(widget.getId(), list);
+                                    }
+                                    JSONObject col = new JSONObject();
+                                    col.put("name", String.valueOf(obj));
+                                    list.add(col);
+                                }
+                            }
+                            if (null != map && map.size() > 0) {
+                                jsonObject.put("rows", map.get(widget.getId()));
                                 widget.setConfig(jsonObject.toJSONString());
                                 updateList.add(widget);
                             }
