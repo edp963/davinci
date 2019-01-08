@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { SortType, AggregatorType, IDataParamSource, IDataParamSourceInBox, IDataParamConfig } from '../Dropbox'
 import PivotChartSelector from '../PivotChartSelector'
-import { getAggregatorLocale, decodeMetricName } from '../../util'
+import { getAggregatorLocale, decodeMetricName, getFieldAlias } from '../../util'
 import { IChartInfo } from '../../Widget'
 import { getAvailableSettings, getSettingsDropdownList, getSettingKeyByDropItem, MapSettingTypes, MapItemTypes } from './settings'
 
@@ -131,15 +131,15 @@ export class DropboxItem extends React.PureComponent<IDropboxItemProps, IDropbox
       'icon-sortdescending': sort === 'desc'
     })
 
-    const alias = field ? field.alias : ''
     const desc = field ? field.desc : ''
+    const aliasText = getFieldAlias(field, {})
     const content = (
       <p>
         <Icon type="down" />
         {agg ? ` [${getAggregatorLocale(agg)}] ${name} ` : ` ${name} `}
-        {alias && (
+        {aliasText && (
           <Tooltip title={desc} placement="right">
-            {`[${alias}]`}
+            {`[${aliasText}]`}
           </Tooltip>
         )}
         {sort && <i className={sortClass} />}

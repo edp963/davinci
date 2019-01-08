@@ -1,4 +1,5 @@
 import moment from 'moment'
+import Message from 'antd/lib/message'
 import {
   DEFAULT_SPLITER,
   DEFAULT_FONT_SIZE,
@@ -24,6 +25,7 @@ import {
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { IDataParamSource } from './Workbench/Dropbox'
+import { IFieldConfig } from './Workbench/FieldConfigModal'
 import { IFieldFormatConfig } from './Workbench/FormatConfigModal'
 import widgetlibs from '../config'
 import PivotTypes from '../config/pivot/PivotTypes'
@@ -784,4 +786,33 @@ function formatByUnit (value, unit: NumericUnit) {
       break
   }
   return numericValue / Math.pow(10, exponent)
+}
+
+export function getFieldAlias (fieldConfig: IFieldConfig, queryVars: { [key: string]: string }) {
+  if (!fieldConfig) { return '' }
+
+  const { alias, useExpression } = fieldConfig
+  if (!useExpression) { return alias }
+
+  const queryKeysVals = Object.entries(queryVars).reduce((acc, [key, val]) => {
+    const [keys, vals] = acc
+    keys.push(key)
+    vals.push(val)
+    return acc
+  }, [[], []])
+  const Moment = moment
+  let funcBody = alias
+  if (!alias.includes('return')) {
+    funcBody = 'return ' + funcBody
+  }
+  const paramNames = ['Moment', ...queryKeysVals[0], funcBody]
+  try {
+    const func = Function.apply(null, paramNames)
+    const params = [Moment, ...queryKeysVals[1]]
+    const dynamicAlias = func(...params)
+    return dynamicAlias
+  } catch (e) {
+    Message.error(`字段别名转换错误：${e.message}`)
+    return ''
+  }
 }
