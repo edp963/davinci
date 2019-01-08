@@ -41,7 +41,7 @@ import { uuid } from 'utils/util'
 import {
   COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZES,
   SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
-import { decodeMetricName, FieldFormatTypes, getFormattedValue, getTextWidth } from 'containers/Widget/components/util'
+import { decodeMetricName, getFieldAlias, getFormattedValue } from 'containers/Widget/components/util'
 import { IFieldConfig } from '../Workbench/FieldConfigModal'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
 import OperatorTypes from 'utils/operatorTypes'
@@ -217,10 +217,10 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   ) {
     if (!leftFixedColumns.length && !rightFixedColumns.length) { return }
 
-    if (~leftFixedColumns.indexOf(cursorColumn.dataIndex)) {
+    if (leftFixedColumns.includes(cursorColumn.dataIndex as string)) {
       cursorColumn.fixed = 'left'
     }
-    if (~rightFixedColumns.indexOf(cursorColumn.dataIndex)) {
+    if (rightFixedColumns.includes(cursorColumn.dataIndex as string)) {
       cursorColumn.fixed = 'right'
     }
 
@@ -229,10 +229,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     cursorColumn.children.forEach((child) => {
       this.traverseFixedColumns(child, leftFixedColumns, rightFixedColumns)
     })
-
-    cursorColumn.width = cursorColumn.children.reduce((
-      totalWidth: number,
-      child: ColumnProps<any>) => totalWidth + (child.width as number), 0)
   }
 
   private getTableColumns (
@@ -253,18 +249,15 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableColumns
   }
 
-  private findMetaConfigByExpression = (expression: string, mapMetaConfig: IMapMetaConfig) => {
-    if (!expression) { return null }
-
-    let metaConfig: IMetaConfig
-    Object.keys(mapMetaConfig).some((key) => {
-      const config = mapMetaConfig[key]
-      if (config.expression === expression) {
-        metaConfig = config
-        return true
+  private getColumnTitleText (field: IFieldConfig, expression: string) {
+    let titleText: string | React.ReactNode = expression
+    if (field) {
+      titleText = getFieldAlias(field, {}) || titleText
+      if (field.desc) {
+        titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
       }
-    })
-    return metaConfig
+    }
+    return titleText
   }
 
   private getPlainColumns (
@@ -278,13 +271,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
       const { name, field, format, expression } = metaConfig
-      let titleText: string | React.ReactNode = expression
-      if (field) {
-        titleText = field.alias || titleText
-        if (field.desc) {
-          titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
-        }
-      }
+      const titleText = this.getColumnTitleText(field, expression)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
       const column: ColumnProps<any> = {
@@ -323,7 +310,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
     let dimensionIdx = 0
     Object.entries<IMetaConfig>(mapMetaConfig).forEach(([key, metaConfig]) => {
-      if (~metaKeys.indexOf(key)) { return }
+      if (metaKeys.includes(key)) { return }
 
       const { name, field, format, expression, agg } = metaConfig
       const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = DefaultTableCellStyle
@@ -336,7 +323,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         backgroundColor,
         justifyContent
       }
-      const titleText = field ? field.alias : expression
+      const titleText = this.getColumnTitleText(field, expression)
       const column: ColumnProps<any> = {
         key: uuid(5),
         dataIndex: name,
@@ -379,60 +366,62 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     metaKeys: string[]
   ) {
     const { key, isGroup, headerName, style } = headerConfig
-    const header: ColumnProps<any> = {}
     const isValidHeader = isGroup || !!mapMetaConfig[headerName]
-    if (isValidHeader) {
-      const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
-      const headerStyle: React.CSSProperties = {
-        color,
-        fontFamily,
-        fontSize: `${fontSize}px`,
-        fontStyle,
-        fontWeight: fontWeight as React.CSSProperties['fontWeight'],
-        backgroundColor,
-        justifyContent
-      }
+    if (!isValidHeader) { return }
 
-      header.dataIndex = headerName
-      let titleText
-      if (isGroup) {
-        titleText = headerName
-        header.children = []
-      } else {
-        header.width = columnWidth
-        const metaConfig = mapMetaConfig[headerName]
-        metaKeys.push(headerName)
-        const { name, field, format, expression } = metaConfig
-        titleText = expression
-        if (field) {
-          titleText = field.alias || titleText
-          if (field.desc) {
-            titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
-          }
-        }
-        header.key = key
-        const cellValRange = this.getTableCellValueRange(data, expression)
-        const columnConfig = columnsConfig.find((config) => config.columnName === name)
-        header.render = (_, record, idx) => {
-          let span = 1
-          if (autoMergeCell) {
-            span = this.getMergedCellSpan(data, expression, idx)
-          }
-          const isMerged = span !== 1
-          const cellVal = record[expression]
-          const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
-          return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
-        }
-      }
-      header.title = (
-        <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
-      )
-      // @FIXME need update columns order when drag items in OperatingPanel
-      parent ? parent.children.push(header) : columns.push(header)
+    const header: ColumnProps<any> = {
+      key,
+      dataIndex: headerName
     }
     if (isGroup) {
       headerConfig.children.forEach((c) =>
         this.traverseHeaderConfig(columnWidth, data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns, metaKeys))
+    }
+
+    const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
+    const headerStyle: React.CSSProperties = {
+      color,
+      fontFamily,
+      fontSize: `${fontSize}px`,
+      fontStyle,
+      fontWeight: fontWeight as React.CSSProperties['fontWeight'],
+      backgroundColor,
+      justifyContent
+    }
+
+    let titleText
+    if (isGroup) {
+      titleText = headerName
+    } else {
+      header.width = columnWidth
+      const metaConfig = mapMetaConfig[headerName]
+      metaKeys.push(headerName)
+      const { name, field, format, expression } = metaConfig
+      titleText = this.getColumnTitleText(field, expression)
+      const cellValRange = this.getTableCellValueRange(data, expression)
+      const columnConfig = columnsConfig.find((config) => config.columnName === name)
+      header.render = (_, record, idx) => {
+        let span = 1
+        if (autoMergeCell) {
+          span = this.getMergedCellSpan(data, expression, idx)
+        }
+        const isMerged = span !== 1
+        const cellVal = record[expression]
+        const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
+        return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
+      }
+    }
+    header.title = (
+      <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
+    )
+    // @FIXME need update columns order when drag items in OperatingPanel
+    if (parent && !parent.children) {
+      parent.children = []
+    }
+    const parentChildren = parent ? parent.children : columns
+    parentChildren.push(header)
+    if (parent) {
+      parent.width = parent.children.reduce((acc,  child) => (acc + (child.width as number)), 0)
     }
   }
 
