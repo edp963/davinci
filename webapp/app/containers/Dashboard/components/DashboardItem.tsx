@@ -91,6 +91,7 @@ interface IDashboardItemStates {
   sharePanelAuthorized: boolean
   widgetProps: IWdigetConfig
   pagination: IPaginationParams
+  nativeQuery: boolean
   model: IModel
   isDrilling: boolean
   dataDrillPanelPosition: boolean | object
@@ -109,6 +110,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       sharePanelAuthorized: false,
       widgetProps: null,
       pagination: null,
+      nativeQuery: false,
       model: null,
       isDrilling: true,
       dataDrillPanelPosition: false,
@@ -133,13 +135,15 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     const { cacheWidgetProps, cacheWidgetId } = this.state
     const widgetProps = JSON.parse(widget.config)
     const pagination = this.getPagination(widgetProps, datasource)
+    const nativeQuery = this.getNativeQuery(widgetProps)
     if (container === 'share') {
-      onGetChartData('clear', itemId, widget.id, { pagination })
+      onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
       this.setFrequent(this.props)
     }
     this.setState({
       widgetProps,
       pagination,
+      nativeQuery,
       model: JSON.parse(view.model)
     })
     if (!cacheWidgetProps) {
@@ -179,11 +183,11 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       rendered,
       container
     } = nextProps
-    const { pagination } = this.state
+    const { pagination, nativeQuery } = this.state
 
     if (!container) {
       if (!this.props.rendered && rendered) {
-        onGetChartData('clear', itemId, widget.id, { pagination })
+        onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
         this.setFrequent(this.props)
       }
     }
@@ -217,6 +221,16 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     return pagination
   }
 
+  private getNativeQuery = (widgetProps: IWdigetConfig) => {
+    let noAggregators = false
+    const { chartStyles } = widgetProps
+    const { table } = chartStyles
+    if (table) {
+      noAggregators = table.withNoAggregators
+    }
+    return noAggregators
+  }
+
   private setFrequent = (props: IDashboardItemProps) => {
     const {
       polling,
@@ -229,9 +243,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     clearInterval(this.frequent)
 
     if (polling) {
-      const { pagination } = this.state
+      const { pagination, nativeQuery } = this.state
       this.frequent = window.setInterval(() => {
-        onGetChartData('refresh', itemId, widget.id, { pagination })
+        onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
       }, Number(frequency) * 1000)
     }
   }
@@ -242,9 +256,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       onGetChartData
     } = this.props
-    const { pagination } = this.state
+    const { pagination, nativeQuery } = this.state
 
-    onGetChartData('refresh', itemId, widget.id, { pagination })
+    onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
   }
 
   private onControlSearch = (queryParams) => {
@@ -253,9 +267,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widget,
       onGetChartData
     } = this.props
-    const { pagination } = this.state
+    const { pagination, nativeQuery } = this.state
 
-    onGetChartData('clear', itemId, widget.id, { ...queryParams, pagination })
+    onGetChartData('clear', itemId, widget.id, { ...queryParams, pagination, nativeQuery })
   }
 
   private toggleControlPanel = () => {
@@ -310,12 +324,13 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   private paginationChange = (pageNo: number, pageSize: number) => {
     const { onGetChartData, itemId, widget } = this.props
     let { pagination } = this.state
+    const { nativeQuery } = this.state
     pagination = {
       ...pagination,
       pageNo,
       pageSize
     }
-    onGetChartData('clear', itemId, widget.id, { pagination })
+    onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
   }
 
   private turnOffInteract = () => {

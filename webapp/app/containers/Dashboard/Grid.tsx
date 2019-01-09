@@ -154,6 +154,7 @@ interface IGridProps {
           pageNo: number
           pageSize: number
         }
+        nativeQuery: boolean
         drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
       }
       shareInfo: string
@@ -443,6 +444,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let globalParams
     let drillStatus
     let pagination
+    let nativeQuery
 
     if (queryParams) {
       linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
@@ -452,6 +454,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
       drillStatus = queryParams.drillStatus || void 0
       pagination = queryParams.pagination || cachedQueryParams.pagination
+      nativeQuery = queryParams.nativeQuery || cachedQueryParams.nativeQuery
     } else {
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
@@ -459,6 +462,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
       pagination = cachedQueryParams.pagination
+      nativeQuery = cachedQueryParams.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -516,7 +520,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       cache,
       expired,
       pageNo: 0,
-      pageSize: 0
+      pageSize: 0,
+      nativeQuery
     }
 
     if (pagination.pageNo) {
