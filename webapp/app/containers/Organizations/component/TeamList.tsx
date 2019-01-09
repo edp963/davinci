@@ -212,7 +212,7 @@ export class TeamList extends React.PureComponent<ITeamsProps, ITeamsState> {
     //   title: 'Visibility',
     //   dataIndex: 'visibility',
     //   key: 'visibility',
-    //   render: (text) => text ? '公开（可见）' : '私密（不可见）'
+    //   render: (text) => text ? '公开（可见）' : '授权（不可见）'
     // }
   ]
 

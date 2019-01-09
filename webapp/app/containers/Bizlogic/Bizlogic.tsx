@@ -479,7 +479,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         obj = {}
       }
 
-      if (change.origin === '+input') {
+      if (change.origin === '+input'
+          && change.text[0] !== ';'
+          && change.text[0].trim() !== ''
+          && change.text[1] !== '') {
         this.codeMirrorInstanceOfQuerySQL.showHint({
           completeSingle: false,
           tables: {...obj, ...tableDatas, ...filedDatas}

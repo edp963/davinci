@@ -124,7 +124,7 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
         <Row>
           <Col span={12}>
             <FormItem
-              label="私密发送"
+              label="密送"
               {...commonFormItemStyle}
             >
               {getFieldDecorator('bcc', {
