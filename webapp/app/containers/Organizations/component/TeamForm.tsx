@@ -156,7 +156,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     initialValue: ''
                   })(
                     <RadioGroup>
-                      <Radio value="0" className={styles.radioStyle}>私密（只对该团队成员可见）</Radio>
+                      <Radio value="0" className={styles.radioStyle}>授权（只对该团队成员可见）</Radio>
                       <Radio value="1" className={styles.radioStyle}>公开 <Tag>推荐</Tag>（对该组织内所有成员可见）</Radio>
                     </RadioGroup>
                   )}

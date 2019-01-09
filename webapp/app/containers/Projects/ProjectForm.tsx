@@ -200,7 +200,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                         公开
                       </Option>
                       <Option key="hidden" value="false">
-                        私密
+                        授权
                       </Option>
                     </Select>
                   )}
