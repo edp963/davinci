@@ -5,7 +5,7 @@ import widgetlibs from '../../config'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
-import FieldConfigModal, { IFieldConfig } from './FieldConfigModal'
+import FieldConfigModal, { IFieldConfig } from './FieldConfig'
 import FormatConfigModal, { IFieldFormatConfig } from './FormatConfigModal'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
@@ -1264,7 +1264,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       )
     }]
 
-    let queryInfo = []
+    let queryInfo: string[] = []
     if (selectedView) {
       queryInfo = (selectedView.sql.match(/query@var\s+\$\w+\$/g) || [])
         .map((q) => q.substring(q.indexOf('$') + 1, q.lastIndexOf('$')))
@@ -1625,6 +1625,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         {!currentEditingItem ? null : [(
           <FieldConfigModal
             key="fieldConfigModal"
+            queryInfo={queryInfo}
             visible={fieldModalVisible}
             fieldConfig={currentEditingItem.field}
             onSave={this.saveFieldConfig}

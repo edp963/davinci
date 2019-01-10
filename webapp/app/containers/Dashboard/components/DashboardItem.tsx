@@ -54,6 +54,7 @@ interface IDashboardItemProps {
   widgets: any
   view?: Partial<IView>
   datasource: any
+  queryVars: { [key: string]: number | string }
   loading: boolean
   polling: string
   interacting: boolean
@@ -621,6 +622,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       itemId,
       widget,
       datasource,
+      queryVars,
       loading,
       interacting,
       shareInfo,
@@ -893,6 +895,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
+              queryVars={queryVars}
               pagination={pagination}
               loading={loading}
               model={model}

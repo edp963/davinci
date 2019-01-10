@@ -1,0 +1,363 @@
+import * as React from 'react'
+import classnames from 'classnames'
+import { findDOMNode } from 'react-dom'
+
+import Icon from 'antd/lib/icon'
+import Row from 'antd/lib/row'
+import Col from 'antd/lib/col'
+import Form, { FormComponentProps } from 'antd/lib/form'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const FormItem = Form.Item
+import Input from 'antd/lib/input'
+const { TextArea } = Input
+import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox'
+import Select from 'antd/lib/select'
+const { Option } = Select
+import Button from 'antd/lib/button'
+import Popover from 'antd/lib/popover'
+import Message from 'antd/lib/message'
+import Modal from 'antd/lib/modal'
+
+import 'codemirror/lib/codemirror.css'
+import 'assets/override/codemirror_theme.css'
+import 'codemirror/addon/hint/show-hint.css'
+const codeMirror = require('codemirror/lib/codemirror')
+require('codemirror/addon/edit/matchbrackets')
+require('codemirror/mode/javascript/javascript')
+require('codemirror/addon/hint/show-hint')
+require('codemirror/addon/hint/javascript-hint')
+require('codemirror/addon/display/placeholder')
+
+const utilStyles = require('assets/less/util.less')
+import { extractQueryVars, getFieldAlias } from 'containers/Widget/components/util'
+import AliasExpressionTestModal from './AliasExpressionTest'
+
+export interface IFieldConfig {
+  alias: string
+  useExpression: boolean
+  desc: string
+}
+
+interface IFieldConfigProps extends FormComponentProps {
+  visible: boolean
+  fieldConfig: IFieldConfig
+  queryInfo: string[]
+  onSave: (config) => void
+  onCancel: () => void
+}
+
+interface IFieldConfigStates {
+  localConfig: IFieldConfig
+  expressionQueryVars: string[]
+  testResult: string
+  testModalVisible: boolean
+}
+
+export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigStates> {
+
+  private refHandlers: { codeEditor: (ref: any) => void }
+  private codeEditor: any
+  private codeMirrorInst: any
+  private isInitEditor: boolean = true
+
+  private defaultFieldConfig: IFieldConfig = {
+    alias: '',
+    desc: '',
+    useExpression: false
+  }
+
+  constructor (props: IFieldConfigProps) {
+    super(props)
+    const { fieldConfig } = this.props
+    this.state = {
+      localConfig: fieldConfig ? { ...fieldConfig } : { ...this.defaultFieldConfig },
+      expressionQueryVars: [],
+      testResult: '',
+      testModalVisible: false
+    }
+    this.refHandlers = {
+      codeEditor: (ref) => this.codeEditor = ref
+    }
+  }
+
+  public componentDidMount () {
+    const { form } = this.props
+    const { localConfig } = this.state
+    this.setFieldsValue(form, localConfig)
+  }
+
+  public componentDidUpdate () {
+    if (this.state.localConfig.useExpression) {
+      this.initCodeEditor(this.isInitEditor)
+      this.isInitEditor = false
+    }
+  }
+
+  public componentWillReceiveProps (nextProps: IFieldConfigProps) {
+    const { fieldConfig, form } = nextProps
+    if (fieldConfig !== this.props.fieldConfig) {
+      this.isInitEditor = true
+      form.resetFields()
+      this.setState({
+        localConfig: fieldConfig ? { ...fieldConfig } : { ...this.defaultFieldConfig },
+        expressionQueryVars: [],
+        testResult: ''
+      }, () => {
+        this.setFieldsValue(form, this.state.localConfig)
+      })
+    }
+  }
+
+  private useExpressionChange = (e: CheckboxChangeEvent) => {
+    const useExpression = e.target.checked
+    this.setState({
+      localConfig: {
+        ...this.state.localConfig,
+        useExpression
+      }
+    })
+  }
+
+  private setFieldsValue = (form: WrappedFormUtils, config: IFieldConfig) => {
+    const { alias, desc, useExpression } = config
+    form.setFieldsValue({
+      [`alias_${useExpression ? 1 : 0}`]: alias,
+      desc,
+      useExpression
+    })
+  }
+
+  private getFieldsValue (form: WrappedFormUtils): IFieldConfig {
+    const fieldsValue: any = form.getFieldsValue()
+    const { useExpression, desc } = fieldsValue
+    const alias = useExpression
+      ? this.codeMirrorInst.doc.getValue()
+      : fieldsValue['alias_0']
+    const config: IFieldConfig = {
+      alias,
+      useExpression,
+      desc
+    }
+    return config
+  }
+
+  private initCodeEditor = (isInit: boolean) => {
+    if (!this.codeMirrorInst) {
+      const codeEditorDom = findDOMNode(this.codeEditor)
+      this.codeMirrorInst = codeMirror.fromTextArea(codeEditorDom, {
+        mode: 'text/javascript',
+        theme: '3024-day',
+        lineNumbers: true,
+        lineWrapping: true
+      })
+      this.codeMirrorInst.setSize('100%', 300)
+    }
+    if (isInit && this.state.localConfig.useExpression) {
+      this.codeMirrorInst.doc.setValue(this.state.localConfig.alias)
+    }
+  }
+
+  private addQueryVar = () => {
+    const { form } = this.props
+    const queryVar = form.getFieldValue('queryVar')
+    this.codeMirrorInst.replaceSelection(` $${queryVar}$ `)
+  }
+
+  private testExpression = () => {
+    const expression: string = this.codeMirrorInst.doc.getValue()
+    const queryVars = extractQueryVars(expression)
+    const testModalVisible = queryVars.length > 0
+    this.setState({
+      expressionQueryVars: queryVars,
+      testModalVisible
+    })
+    if (!testModalVisible) {
+      this.testExpressionResult()
+    }
+  }
+
+  private testExpressionResult = (queryVarsObj: { [key: string]: string } = {}) => {
+    const { form } = this.props
+    const fieldConfig = this.getFieldsValue(form)
+    const testResult = getFieldAlias(fieldConfig, queryVarsObj)
+    this.setState({
+      testResult,
+      testModalVisible: false
+    })
+    return testResult
+  }
+
+  private clearExpressionResult = () => {
+    this.setState({
+      testResult: ''
+    })
+  }
+
+  private closeTestModal = () => {
+    this.setState({ testModalVisible: false })
+  }
+
+  private save = () => {
+    const { form, onSave } = this.props
+    form.validateFieldsAndScroll((err) => {
+      if (err) { return }
+      const config = this.getFieldsValue(form)
+      if (!config.alias) {
+        Message.error('字段别名不能为空')
+        return
+      }
+
+      const testResult = this.testExpressionResult()
+      if (testResult === undefined) { return }
+
+      onSave(config)
+    })
+  }
+
+  private cancel = () => {
+    this.props.onCancel()
+  }
+
+  private modalFooter = [(
+    <Button
+      key="cancel"
+      size="large"
+      onClick={this.cancel}
+    >
+      取 消
+    </Button>
+  ), (
+    <Button
+      key="submit"
+      size="large"
+      type="primary"
+      onClick={this.save}
+    >
+      保 存
+    </Button>
+  )]
+
+  private useExprInstr = (
+    <div>
+      <pre>
+{`1. 编辑器中编辑 JavaScript Function 代码片段，最后需要 return 别名值。
+2. 若当前编辑的 Widget 对应的 View 中含有查询变量 queryVar 的定义，则字段别名中可添加查询变量。
+  在使用该 Widget 时，由界面中提供的查询变量值参与动态别名运算，生成对应的别名结果。
+3. 可使用时间辅助函数生成格式时间字符串参与别名运算。
+  Moment() // 取当前时间
+  Moment('2018-01-01') // 转换指定的日期
+  Moment().format('YYYY-MM-DD HH:mm:ss') // 时间的格式化，其中两位的重复字母依次代表“年”、“月”、“日”、“时”、“分”、“秒”
+4. 编写完毕后，可点击“测试”按钮查看显示效果，若含有参数，则需要在弹窗中需要测试的参数值，若报错，请调整编写。
+5. 例子
+  var province = $province$ // $province 为 View 中查询变量
+  var currentYearMonth = Moment().format('YYYY年MM月') // 格式化当前年月
+  var alias = province + '(' + currentYearMonth + ')' // 拼写最后显示的别名
+  return alias
+`}
+      </pre>
+    </div>
+  )
+
+  public render () {
+    const { visible, queryInfo, form } = this.props
+    const { getFieldDecorator } = form
+    const { localConfig, testResult, testModalVisible, expressionQueryVars } = this.state
+    const { desc, useExpression } = localConfig
+    const variableOptions = (queryInfo || []).map((q) => (
+      <Option key={q} value={q}>{q}</Option>
+    ))
+
+    const textAreaCls = classnames({ [utilStyles.hide]: !useExpression })
+    const inputCls = classnames({ [utilStyles.hide]: useExpression })
+
+    return (
+      <Modal
+        title="字段设置"
+        wrapClassName="ant-modal-medium"
+        footer={this.modalFooter}
+        visible={visible}
+        maskClosable={false}
+        onCancel={this.cancel}
+      >
+        <Form>
+          <FormItem label="字段别名" className={inputCls}>
+            {getFieldDecorator('alias_0')(<Input />)}
+          </FormItem>
+          <FormItem label="字段别名" className={textAreaCls} style={{ height: '325px' }}>
+            {getFieldDecorator('alias_1')(
+              <TextArea ref={this.refHandlers.codeEditor} placeholder="请输入动态表达式" />
+            )}
+          </FormItem>
+          {useExpression && <Row type="flex" align="middle" gutter={8}>
+            {variableOptions.length > 0 && (
+              <>
+                <Col span={9}>
+                  <FormItem label="查询变量" labelCol={{span: 8}} wrapperCol={{span: 16}}>
+                    {getFieldDecorator('queryVar', {
+                      initialValue: queryInfo[0]
+                    })(
+                      <Select>
+                        {variableOptions}
+                      </Select>
+                    )}
+                  </FormItem>
+                </Col>
+                <Col span={4}>
+                  <Row type="flex" align="middle">
+                    <FormItem>
+                      <Button onClick={this.addQueryVar}>添加</Button>
+                    </FormItem>
+                  </Row>
+                </Col>
+              </>
+            )}
+            <Col span={3}>
+              <FormItem>
+                <Button type="primary" onClick={this.testExpression}>测试</Button>
+              </FormItem>
+            </Col>
+            <Col span={8}>
+              <FormItem>
+                <Input
+                  readOnly
+                  placeholder="别名结果"
+                  value={testResult}
+                  addonAfter={<Icon type="close" onClick={this.clearExpressionResult} title="清除结果" />}
+                />
+              </FormItem>
+            </Col>
+          </Row>}
+          <Row gutter={8} align="middle" justify="center">
+            <Col span={9}>
+              <FormItem>
+                {getFieldDecorator('useExpression', {
+                  initialValue: useExpression,
+                  valuePropName: 'checked'
+                })(<Checkbox onChange={this.useExpressionChange}>动态别名</Checkbox>)}
+                <Popover
+                  title="动态别名使用说明"
+                  content={this.useExprInstr}
+                >
+                  <Icon type="info-circle" />
+                </Popover>
+              </FormItem>
+            </Col>
+          </Row>
+          <FormItem label="字段描述">
+            {getFieldDecorator('desc', {
+              initialValue: desc
+            })(<TextArea rows={4} />)}
+          </FormItem>
+        </Form>
+        <AliasExpressionTestModal
+          visible={testModalVisible}
+          queryVars={expressionQueryVars}
+          onClose={this.closeTestModal}
+          onTest={this.testExpressionResult}
+        />
+      </Modal>
+    )
+  }
+}
+
+export default Form.create()(FieldConfig)

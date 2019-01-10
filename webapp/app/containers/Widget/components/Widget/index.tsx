@@ -6,7 +6,7 @@ import Icon from 'antd/lib/icon'
 import { AggregatorType, DragType, IDataParamConfig } from '../Workbench/Dropbox'
 import { IDataParamProperty } from '../Workbench/OperatingPanel'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
-import { IFieldConfig } from '../Workbench/FieldConfigModal'
+import { IFieldConfig } from '../Workbench/FieldConfig'
 import { IAxisConfig } from '../Workbench/ConfigSections/AxisSection'
 import { ISplitLineConfig } from '../Workbench/ConfigSections/SplitLineSection'
 import { IPivotConfig } from '../Workbench/ConfigSections/PivotSection'
@@ -92,6 +92,7 @@ export interface IPaginationParams {
 
 export interface IWidgetProps {
   data: object[]
+  queryVars?: { [key: string]: number | string }
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
   metrics: IWidgetMetric[]

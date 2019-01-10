@@ -42,7 +42,7 @@ import {
   COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZES,
   SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
 import { decodeMetricName, getFieldAlias, getFormattedValue } from 'containers/Widget/components/util'
-import { IFieldConfig } from '../Workbench/FieldConfigModal'
+import { IFieldConfig } from '../Workbench/FieldConfig'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
 import OperatorTypes from 'utils/operatorTypes'
 import { AggregatorType } from '../Workbench/Dropbox'
@@ -249,10 +249,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return tableColumns
   }
 
-  private getColumnTitleText (field: IFieldConfig, expression: string) {
+  private getColumnTitleText = (field: IFieldConfig, expression: string) => {
+    const { queryVars } = this.props
     let titleText: string | React.ReactNode = expression
     if (field) {
-      titleText = getFieldAlias(field, {}) || titleText
+      titleText = getFieldAlias(field, queryVars) || titleText
       if (field.desc) {
         titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
       }
