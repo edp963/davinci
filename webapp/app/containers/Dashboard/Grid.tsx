@@ -1262,7 +1262,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           downloadCsvLoading,
           interactId,
           rendered,
-          renderType
+          renderType,
+          queryParams
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
@@ -1272,7 +1273,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const drillpathSetting = currentItemsInfo[id]['queryParams']['drillpathSetting'] ? currentItemsInfo[id]['queryParams']['drillpathSetting'] : void 0
         const drillpathInstance = currentItemsInfo[id]['queryParams']['drillpathInstance'] ? currentItemsInfo[id]['queryParams']['drillpathInstance'] : void 0
 
-
+        const { globalParams, linkageParams, params } = queryParams
+        const queryVars = [...globalParams, ...linkageParams, ...params]
+          .reduce((obj, { name, value }) => {
+            obj[`$${name}$`] = value
+            return obj
+          }, {})
 
         itemblocks.push((
           <div key={id}>
@@ -1281,6 +1287,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               widgets={widgets}
               widget={widget}
               datasource={datasource}
+              queryVars={queryVars}
               loading={loading}
               polling={polling}
               interacting={interacting}

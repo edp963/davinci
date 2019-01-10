@@ -25,7 +25,7 @@ import {
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { IDataParamSource } from './Workbench/Dropbox'
-import { IFieldConfig } from './Workbench/FieldConfigModal'
+import { IFieldConfig } from './Workbench/FieldConfig'
 import { IFieldFormatConfig } from './Workbench/FormatConfigModal'
 import widgetlibs from '../config'
 import PivotTypes from '../config/pivot/PivotTypes'
@@ -788,31 +788,51 @@ function formatByUnit (value, unit: NumericUnit) {
   return numericValue / Math.pow(10, exponent)
 }
 
-export function getFieldAlias (fieldConfig: IFieldConfig, queryVars: { [key: string]: string }) {
+export function extractQueryVars (expression: string, withBoundaryToken: boolean = false) {
+  const queryVars = []
+  if (!expression) { return queryVars }
+  const varReg = /\$(\w+)\$/g
+  expression.replace(varReg, (match: string, p: string) => {
+    const queryVar = withBoundaryToken ? match : p
+    if (!queryVars.includes(queryVar)) {
+      queryVars.push(queryVar)
+    }
+    return queryVar
+  })
+  return queryVars
+}
+
+export function getFieldAlias (fieldConfig: IFieldConfig, queryVars: { [key: string]: number | string }) {
   if (!fieldConfig) { return '' }
 
   const { alias, useExpression } = fieldConfig
   if (!useExpression) { return alias }
 
-  const queryKeysVals = Object.entries(queryVars).reduce((acc, [key, val]) => {
-    const [keys, vals] = acc
-    keys.push(key)
-    vals.push(val)
-    return acc
-  }, [[], []])
+  const queryKeys = extractQueryVars(alias, true)
+  const keys = []
+  const vals = []
+  queryKeys.forEach((queryKey) => {
+    keys.push(queryKey)
+    const queryVarVal = queryVars[queryKey]
+    if (queryVarVal === undefined) {
+      vals.push('')
+    } else {
+      vals.push(queryVarVal)
+    }
+  })
+
   const Moment = moment
   let funcBody = alias
   if (!alias.includes('return')) {
     funcBody = 'return ' + funcBody
   }
-  const paramNames = ['Moment', ...queryKeysVals[0], funcBody]
+  const paramNames = ['Moment', ...keys, funcBody]
   try {
     const func = Function.apply(null, paramNames)
-    const params = [Moment, ...queryKeysVals[1]]
-    const dynamicAlias = func(...params)
+    const params = [Moment, ...vals]
+    const dynamicAlias: string = func(...params)
     return dynamicAlias
   } catch (e) {
     Message.error(`字段别名转换错误：${e.message}`)
-    return ''
   }
 }
