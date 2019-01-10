@@ -192,13 +192,16 @@ export function* getSchema (action) {
 
 export function* executeSql (action) {
   const { payload } = action
+  const { sourceIdGeted, sql, pageNo, pageSize} = payload.requestObj
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/executesql`,
       data: {
-        sql: payload.sql,
-        sourceId: payload.sourceId
+        sourceId: sourceIdGeted,
+        sql,
+        pageNo,
+        pageSize
       }
     })
     const result = asyncData && asyncData.header

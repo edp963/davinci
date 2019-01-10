@@ -248,12 +248,11 @@ export function loadSchemaFail () {
   }
 }
 
-export function executeSql (sourceId, sql, resolve) {
+export function executeSql (requestObj, resolve) {
   return {
     type: EXECUTE_SQL,
     payload: {
-      sourceId,
-      sql,
+      requestObj,
       resolve
     }
   }

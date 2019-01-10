@@ -71,7 +71,6 @@ const RadioButton = Radio.Button
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Bizlogic.less')
 import { uuid, generateData } from '../../utils/util'
-import { SQL_NUMBER_TYPES } from '../../globalConstants'
 
 import {
   makeSelectSqlValidateCode,
@@ -86,7 +85,7 @@ import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadV
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
 import TeamTreeAction from './TeamTreeAction'
-import { toListBF, SQL_FIELD_TYPES } from './viewUtil'
+import { toListBF, SQL_FIELD_TYPES, getColumns } from './viewUtil'
 import { ITeamParams } from '../Bizlogic'
 import EditorHeader from '../../components/EditorHeader'
 
@@ -106,7 +105,7 @@ interface IBizlogicFormProps {
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadSchema: (sourceId: number, resolve: any) => any
-  onExecuteSql: (sourceId: number, sql: any, resolve: any) => any
+  onExecuteSql: (requestObj: any, resolve: any) => any
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
   onLoadSources: (projectId: number) => any
@@ -123,7 +122,7 @@ interface IBizlogicFormState {
   sourceIdGeted: number
   isDeclarate: string
   isShowSqlValidateAlert: boolean
-  executeResultset: any[]
+  executeResultList: any[]
   executeColumns: any[]
   schemaData: any[]
 
@@ -144,6 +143,9 @@ interface IBizlogicFormState {
   isNameExited: boolean
   selectedSourceName: string
   sqlExecuteCode: boolean | number
+  isDataPagination: boolean
+  sql: string
+  totalCount: number
 }
 
 interface IViewTeams {
@@ -174,7 +176,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       sourceIdGeted: 0,
       isDeclarate: 'no',
       isShowSqlValidateAlert: false,
-      executeResultset: [],
+      executeResultList: [],
       executeColumns: [],
       schemaData: [],
 
@@ -196,7 +198,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       description: '',
       isNameExited: false,
       selectedSourceName: '',
-      sqlExecuteCode: false
+      sqlExecuteCode: false,
+      isDataPagination: true,
+      sql: '',
+      totalCount: 0
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
@@ -355,13 +360,31 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       this.setState({ executeColumns : [] })
     }
 
-    this.props.onExecuteSql(sourceId, sql, (result) => {
+    const configTeam = config ? JSON.parse(config).team : ''
+    const pageObj = {
+      sourceIdGeted: sourceId,
+      sql,
+      pageNo: 1,
+      pageSize: 100
+    }
+    const noPageObj = {
+      sourceIdGeted: sourceId,
+      sql,
+      pageNo: 0,
+      pageSize: 0,
+      limit: 10000
+    }
+    const requestObj = config
+      ? JSON.parse(config).pagination ? pageObj : noPageObj
+      : pageObj
+
+    this.props.onExecuteSql(requestObj, (result) => {
+      const { resultList, totalCount } = result
       this.setState({
-        executeResultset: result.resultset
+        executeResultList: resultList,
+        totalCount
       })
     })
-
-    const configTeam = config ? JSON.parse(config).team : ''
 
     const listDataFinal = listData.map((ld) => {
       const currentparam = configTeam.find((ct) => ld.id === ct.id)
@@ -371,6 +394,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     this.setState({
+      sql,
       selectedSourceName: source.name,
       name,
       description,
@@ -559,12 +583,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private executeSql = () => {
-    const { sourceIdGeted, listData, isDeclarate } = this.state
-
-    this.setState({
-      isFold: true,
-      alertVisible: true
-    })
+    const { sourceIdGeted, listData, isDeclarate, isDataPagination } = this.state
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
@@ -592,29 +611,35 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
     }
 
-    this.props.onExecuteSql(sourceIdGeted, sql, (result) => {
+
+    this.setState({
+      isFold: true,
+      alertVisible: true,
+      sql
+    })
+
+    const requestObj = isDataPagination
+    ? {
+      sourceIdGeted,
+      sql,
+      pageNo: 1,
+      pageSize: 100
+    }
+    : {
+      sourceIdGeted,
+      sql,
+      pageNo: 0,
+      pageSize: 0,
+      limit: 10000
+    }
+
+    this.props.onExecuteSql(requestObj, (result) => {
       if (result) {
-        const { resultset, columns } = result
-
-        columns.map((i) => {
-          const { date } = SQL_FIELD_TYPES
-          let iVisualType
-          for (const item in SQL_FIELD_TYPES) {
-            if (SQL_FIELD_TYPES.hasOwnProperty(item)) {
-              if (SQL_FIELD_TYPES[item].indexOf(i.type) >= 0) {
-                iVisualType = item
-              }
-            }
-          }
-
-          i.visualType = iVisualType || 'string'
-          i.modelType = SQL_NUMBER_TYPES.indexOf(i.type) < 0 ? 'category' : 'value'
-          i.sqlType = i.type
-          return i
-        })
+        const { resultList, columns, totalCount } = result
         this.setState({
-          executeResultset: resultset,
-          executeColumns: columns
+          executeResultList: resultList,
+          executeColumns: getColumns(columns),
+          totalCount
         })
       }
     })
@@ -654,7 +679,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode } = this.state
+        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode, isDataPagination } = this.state
         const { route, params } = this.props
         const { id, source_id, source_name } = values
         if (!name.trim()) {
@@ -703,7 +728,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               description,
               sql: querySql,
               model: JSON.stringify(modelObj),
-              config: configTeamStr.length !== 0 ? JSON.stringify({team: configTeamStr}) : '',
+              config: configTeamStr.length !== 0
+                ? JSON.stringify({
+                    team: configTeamStr,
+                    pagination: isDataPagination
+                  })
+                : JSON.stringify({ pagination: isDataPagination }),
               projectId: params.pid
             }
 
@@ -737,7 +767,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private hideForm = () => {
     this.setState({
-      executeResultset: [],
+      executeResultList: [],
       executeColumns: [],
       isDeclarate: 'no'
     }, () => {
@@ -942,6 +972,33 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
   }
 
+  private onChangePage = (e) => {
+    this.setState({
+      isDataPagination:  e.target.checked
+    })
+  }
+
+  private onChangeDataTable = (pagination) => {
+    const { current, pageSize} = pagination
+    const { sourceIdGeted, sql } = this.state
+
+    this.props.onExecuteSql({
+      sourceIdGeted,
+      sql,
+      pageNo: current,
+      pageSize
+    }, (result) => {
+      if (result) {
+        const { resultList, columns, totalCount } = result
+        this.setState({
+          executeResultList: resultList,
+          executeColumns: getColumns(columns),
+          totalCount
+        })
+      }
+    })
+  }
+
   public render () {
     const {
       form,
@@ -959,7 +1016,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       autoExpandParent,
       isDeclarate,
       isShowSqlValidateAlert,
-      executeResultset,
+      executeResultList,
       executeColumns,
       schemaData,
       treeData,
@@ -969,7 +1026,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       name,
       description,
       selectedSourceName,
-      sqlExecuteCode
+      sqlExecuteCode,
+      totalCount,
+      isDataPagination
     } = this.state
 
     const itemStyle = {
@@ -977,8 +1036,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       wrapperCol: { span: 16 }
     }
 
-    const tableData = executeResultset
-      ? executeResultset.map((i) => {
+    const tableData = executeResultList
+      ? executeResultList.map((i) => {
         // i.key = uuid()
         return i
       })
@@ -1145,11 +1204,19 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       return <TreeNode key={item.key} title={item.key} />
     })
 
-    const pagination = {
+    const paginationModel = {
+      simple: screenWidth < 768 || screenWidth === 768,
+      defaultPageSize: 10,
+      showSizeChanger: true,
+      pageSizeOptions: ['10', '20', '30', '40']
+    }
+
+    const paginationData = {
       simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 100,
       showSizeChanger: true,
-      pageSizeOptions: ['100', '200', '300', '400']
+      pageSizeOptions: ['100', '200', '300', '400'],
+      total: totalCount
     }
 
     const operations = (
@@ -1263,6 +1330,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Row>
 
             <Row className={styles.fromBtn}>
+              <Checkbox
+                onChange={this.onChangePage}
+                className={styles.pageCheckbox}
+                checked={this.state.isDataPagination}
+              >查询结果分页展示
+              </Checkbox>
               <span className={styles.sqlAlert}>
                 {sqlValidatePanel}
               </span>
@@ -1288,7 +1361,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           className={styles.viewTabPane}
                           dataSource={tableData}
                           columns={tableColumns}
-                          pagination={pagination}
+                          pagination={isDataPagination ? paginationData : false}
+                          onChange={this.onChangeDataTable}
                           // scroll={{ y:  }}
                         />
                       </TabPane>
@@ -1297,7 +1371,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           className={styles.viewTabPane}
                           dataSource={modelData}
                           columns={modelColumns}
-                          pagination={pagination}
+                          pagination={paginationModel}
                           // scroll={{y: }}
                         />
                       </TabPane>
@@ -1346,7 +1420,7 @@ function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
-    onExecuteSql: (sourceId, sql, resolve) => dispatch(executeSql(sourceId, sql, resolve)),
+    onExecuteSql: (requestObj, resolve) => dispatch(executeSql(requestObj, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
     onLoadSources: (projectId) => dispatch(loadSources(projectId)),

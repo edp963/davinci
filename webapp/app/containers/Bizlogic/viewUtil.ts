@@ -72,6 +72,26 @@ export const SQL_FIELD_TYPES = {
     geoCity: []
 }
 
+import { SQL_NUMBER_TYPES } from '../../globalConstants'
+export function getColumns (columns) {
+    columns.map((i) => {
+        const { date } = SQL_FIELD_TYPES
+        let iVisualType
+        for (const item in SQL_FIELD_TYPES) {
+          if (SQL_FIELD_TYPES.hasOwnProperty(item)) {
+            if (SQL_FIELD_TYPES[item].indexOf(i.type) >= 0) {
+              iVisualType = item
+            }
+          }
+        }
+
+        i.visualType = iVisualType || 'string'
+        i.modelType = SQL_NUMBER_TYPES.indexOf(i.type) < 0 ? 'category' : 'value'
+        i.sqlType = i.type
+        return i
+      })
+    return columns
+}
 
 
 
