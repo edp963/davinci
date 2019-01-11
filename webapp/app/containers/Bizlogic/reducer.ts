@@ -38,7 +38,8 @@ import {
   EXECUTE_SQL_FAILURE,
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
-  LOAD_VIEW_TEAM_FAILURE
+  LOAD_VIEW_TEAM_FAILURE,
+  RESET_VIEW_STATE
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import { ActionTypes } from '../Display/constants'
@@ -51,7 +52,8 @@ const initialState = fromJS({
   tableLoading: false,
   modalLoading: false,
   schemaData: [],
-  viewTeam: []
+  viewTeam: [],
+  executeLoading: false
 })
 
 function bizlogicReducer (state = initialState, action) {
@@ -121,6 +123,8 @@ function bizlogicReducer (state = initialState, action) {
       return state.set('bizlogics', payload.bizlogics)
     case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state.set('bizlogics', payload.bizlogics)
+    case RESET_VIEW_STATE:
+      return fromJS(initialState)
     default:
       return state
   }

@@ -55,3 +55,4 @@ export const LOAD_DATA_FROM_ITEM_FAILURE = 'davinci/View/LOAD_DATA_FROM_ITEM_FAI
 export const LOAD_VIEW_TEAM = 'davinci/View/LOAD_VIEW_TEAM'
 export const LOAD_VIEW_TEAM_SUCCESS = 'davinci/View/LOAD_VIEW_TEAM_SUCCESS'
 export const LOAD_VIEW_TEAM_FAILURE = 'davinci/View/LOAD_VIEW_TEAM_FAILURE'
+export const RESET_VIEW_STATE = 'davinci/View/RESET_VIEW_STATE'
