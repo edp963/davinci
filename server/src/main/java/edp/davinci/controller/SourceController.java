@@ -219,7 +219,7 @@ public class SourceController extends BaseController {
      * 生成csv对应的表结构
      *
      * @param id
-     * @param csvmeta
+     * @param uploadMeta
      * @param bindingResult
      * @param user
      * @param request
@@ -228,7 +228,7 @@ public class SourceController extends BaseController {
     @ApiOperation(value = "create csv meta", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "{id}/csvmeta", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createCsvmeta(@PathVariable Long id,
-                                        @Valid @RequestBody Csvmeta csvmeta,
+                                        @Valid @RequestBody UploadMeta uploadMeta,
                                         @ApiIgnore BindingResult bindingResult,
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
@@ -244,7 +244,7 @@ public class SourceController extends BaseController {
         }
 
         try {
-            ResultMap resultMap = sourceService.validCsvmeta(id, csvmeta, user, request);
+            ResultMap resultMap = sourceService.validCsvmeta(id, uploadMeta, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -257,7 +257,7 @@ public class SourceController extends BaseController {
      * 上csv文件
      *
      * @param id
-     * @param csvUpload
+     * @param sourceDataUpload
      * @param bindingResult
      * @param file
      * @param user
@@ -265,9 +265,10 @@ public class SourceController extends BaseController {
      * @return
      */
     @ApiOperation(value = "upload csv file")
-    @PostMapping("{id}/uploadcsv")
+    @PostMapping("{id}/upload{type}")
     public ResponseEntity uploadCsv(@PathVariable Long id,
-                                    @Valid @ModelAttribute(value = "csvUpload") CsvUpload csvUpload,
+                                    @PathVariable String type,
+                                    @Valid @ModelAttribute(value = "sourceDataUpload") SourceDataUpload sourceDataUpload,
                                     @ApiIgnore BindingResult bindingResult,
                                     @RequestParam("file") MultipartFile file,
                                     @ApiIgnore @CurrentUser User user,
@@ -284,12 +285,12 @@ public class SourceController extends BaseController {
         }
 
         if (file.isEmpty() || StringUtils.isEmpty(file.getOriginalFilename())) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("csv file can not be empty");
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("upload file can not be empty");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
         try {
-            ResultMap resultMap = sourceService.uploadCsv(id, csvUpload, file, user, request);
+            ResultMap resultMap = sourceService.dataUpload(id, sourceDataUpload, file, user, type, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

@@ -39,7 +39,7 @@ public interface SourceService extends CheckEntityService {
 
     ResultMap testSource(SourceTest sourceTest, User user, HttpServletRequest request);
 
-    ResultMap validCsvmeta(Long sourceId, Csvmeta csvmeta, User user, HttpServletRequest request);
+    ResultMap validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user, HttpServletRequest request);
 
-    ResultMap uploadCsv(Long sourceId, CsvUpload csvUpload, MultipartFile file, User user, HttpServletRequest request);
+    ResultMap dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type, HttpServletRequest request);
 }
