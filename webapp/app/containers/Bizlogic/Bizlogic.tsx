@@ -48,6 +48,15 @@ import Input from 'antd/lib/input'
 import Select from 'antd/lib/select'
 import message from 'antd/lib/message'
 const FormItem = Form.Item
+import Tooltip from 'antd/lib/tooltip'
+import Popover from 'antd/lib/popover'
+import Dropdown from 'antd/lib/dropdown'
+import Modal from 'antd/lib/modal'
+import Menu from 'antd/lib/menu'
+const MenuItem = Menu.Item
+const Search = Input.Search
+const Option = Select.Option
+import AntdFormType from 'antd/lib/form/Form'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Bizlogic.less')
@@ -59,18 +68,25 @@ import {
   makeSelectExecuteLoading,
   makeSelectModalLoading,
   makeSelectBizlogics,
-  makeSelectViewTeam
+  makeSelectViewTeam,
+  makeSelectTeamAuth,
+  makeSelectTeamConfig,
+  makeSelectTeamSelectData
  } from './selectors'
 import { checkNameUniqueAction, hideNavigator } from '../App/actions'
-import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState } from './actions'
+import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, getTeamAuth, loadTeamConfig, resetViewState } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
-import { toListBF, getColumns } from './components/viewUtil'
+import { toListBF, getColumns, getTeamVariables } from './components/viewUtil'
 import { ITeamParams, IViewTeams } from '../Bizlogic'
 import EditorHeader from '../../components/EditorHeader'
 import PaginationWithoutTotal from '../../components/PaginationWithoutTotal'
 import SourcerSchema from './components/SourceSchema'
 import ExecuteSql from './components/ExecuteSql'
+import CompanyTreeAction from './CompanyTreeAction'
+
+import CompanyForm from './CompanyForm'
+import { PaginationProps } from 'antd/lib/pagination'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -84,16 +100,21 @@ interface IBizlogicFormProps {
   bizlogics: boolean | any[]
   executeLoading: boolean
   modalLoading: boolean
+  teamAuth: any
   viewTeam: IViewTeams[]
+  teamConfig: any[]
+  teamSelectData: any[]
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadSchema: (sourceId: number, resolve: any) => any
   onExecuteSql: (requestObj: any, resolve: any) => any
-  onAddBizlogic: (values: object, resolve: any) => any
-  onEditBizlogic: (values: object, resolve: any) => any
+  onAddBizlogic: (type: string, values: object, resolve: any) => any
+  onEditBizlogic: (type: string, values: object, resolve: any) => any
   onLoadSources: (projectId: number) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
   onLoadViewTeam: (projectId: number, resolve?: any) => any
+  onGetTeamAuth: (projectId: number, resolve?: any) => any
+  onLoadTeamConfig: (viewId: number, resolve: any) => any
   onResetViewState: () => void
 }
 
@@ -122,6 +143,7 @@ interface IBizlogicFormState {
   limit: number
   sql: string
   totalCount: number
+  teamVarArr: any[]
 }
 
 declare interface IObjectConstructor {
@@ -160,10 +182,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       sqlExecuteCode: false,
       limit: 500,
       sql: '',
-      totalCount: 0
+      totalCount: 0,
+      teamVarArr: []
     }
     this.codeMirrorInstanceOfDeclaration = false
     this.codeMirrorInstanceOfQuerySQL = false
+  }
+  private companyForm: AntdFormType = null
+  private refHandlers = {
+    companyForm: (ref) => this.companyForm = ref
   }
 
   private placeholder = {
@@ -179,25 +206,32 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       onLoadSources,
       onLoadSchema,
       onLoadBizlogics,
-      onLoadViewTeam
+      onLoadViewTeam,
+      teamSelectData,
+      onGetTeamAuth
     } = this.props
     const { selectedSourceName, schemaData } = this.state
+    const { pid, bid } = params
 
     this.setState({
       screenWidth: document.documentElement.clientWidth
     })
 
     if (!bizlogics) {
-      onLoadBizlogics(params.pid)
+      onLoadBizlogics(pid)
     }
 
-    onLoadSources(params.pid)
-    onLoadViewTeam(params.pid)
+    onLoadSources(pid)
+    onLoadViewTeam(pid)
+
+    if (route.path === '/project/:pid/bizlogic') {
+      onGetTeamAuth(pid)
+    }
   }
 
   public componentWillReceiveProps (nextProps) {
-    const { viewTeam, sqlValidateCode } =  nextProps
-    const { listData, teamParams, teamCheckedKeys, schemaData } = this.state
+    const { viewTeam, sqlValidateCode, teamConfig, teamSelectData } =  nextProps
+    const { listData, teamCheckedKeys, schemaData } = this.state
     const { route, params, bizlogics } = this.props
 
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
@@ -218,14 +252,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             checkedTemp = teamCheckedKeys.indexOf(`${td.id}`) >= 0
           } else {
             // 修改
-            const currentView = (bizlogics as any[]).find((v) => v.id === Number(params.bid))
-            if (currentView.config) {
-              const teamArr = JSON.parse(currentView.config).team
-              const currentTeam = teamArr.find((ta) => ta.id === td.id)
-              paramsTemp = currentTeam ? currentTeam.params : []
-              checkedTemp = currentTeam ? true : false
+            if (teamConfig.length !== 0) {
+              const currentConfig = teamConfig.find((ta) => ta.id === td.id)
+              paramsTemp = currentConfig ? currentConfig.params : []
+              checkedTemp = currentConfig ? true : false
             } else {
               paramsTemp = arr
+              checkedTemp = false
             }
           }
         } else {
@@ -261,8 +294,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
    }
 
   public componentDidMount () {
-    const { params, bizlogics, onLoadBizlogics } = this.props
-    const { schemaData, listData, teamParams } = this.state
+    const { params, bizlogics, onLoadBizlogics, viewTeam } = this.props
+    const { schemaData } = this.state
 
     this.props.onHideNavigator()
 
@@ -272,28 +305,36 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     if (params.bid) {
       if (bizlogics) {
-        this.showViewInfo(bizlogics)
+        this.props.onLoadViewTeam(params.pid, (result) => {
+          this.showViewInfo(bizlogics, toListBF(result))
+        })
       } else {
-        onLoadBizlogics(params.pid, (result) => {
-          this.showViewInfo(result)
+        new Promise((resolve) => {
+          onLoadBizlogics(params.pid, (bzs) => {
+            resolve(bzs)
+          })
+        }).then((bzs) => {
+          this.props.onLoadViewTeam(params.pid, (result) => {
+            this.showViewInfo(bzs, toListBF(result))
+          })
         })
       }
     }
   }
 
-  private showViewInfo (bizlogics) {
-    const { params, onLoadSchema } = this.props
+  private showViewInfo (bizlogics, viewTeam) {
+    const { params, onLoadSchema, teamAuth } = this.props
     const { listData, limit } = this.state
 
+    const currentViewItem = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
     const {
       name,
       description,
       source,
       sourceId,
       sql,
-      model,
-      config
-    } = (bizlogics as any[]).find((b) => b.id === Number(params.bid))
+      model
+    } = currentViewItem
     const dec = (sql.includes('{') && sql.substring(0, sql.lastIndexOf('{')) !== '')
 
     onLoadSchema(sourceId, (res) => {
@@ -318,7 +359,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       this.setState({ executeColumns : [] })
     }
 
-    const configTeam = config ? JSON.parse(config).team : ''
+    // const configTeam = config ? JSON.parse(config).team : ''
     const requestObj = {
       sourceIdGeted: sourceId,
       sql,
@@ -335,25 +376,47 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
     })
 
-    const listDataFinal = listData.map((ld) => {
-      const currentparam = configTeam.find((ct) => ld.id === ct.id)
+    new Promise((resolve) => {
+      this.props.onGetTeamAuth(params.pid, (result) => {
+        resolve(result)
+      })
+    }).then((result) => {
+      if (!(result as any).sourceOrg) {
+        this.props.onLoadTeamConfig(params.bid, (teamConfig) => {
+          const listDataFinal = viewTeam.map((ld) => {
+            ld.params = teamConfig.length !== 0
+              ? teamConfig.find((ct) => ld.id === ct.id)
+                ? teamConfig.find((ct) => ld.id === ct.id).params
+                : []
+              : []
+            ld.checked = teamConfig.length !== 0
+              ? teamConfig.find((ct) => ld.id === ct.id)
+                ? true
+                : false
+              : false
+            return ld
+          })
+          const teamKeyArr = listDataFinal.filter((ldf) => ldf.checked).map((arr) => `${arr.id}`)
 
-      ld.params = currentparam.params
-      return ld
+          this.setState({
+            listData: listDataFinal,
+            teamCheckedKeys: teamKeyArr,
+            teamParams: teamConfig.length !== 0 ? teamConfig[0].params.map((o) => {
+              return {
+                k: o.k,
+                v: o.v
+              }
+            }) : []
+          })
+        })
+      }
     })
 
     this.setState({
       sql,
       selectedSourceName: source.name,
       name,
-      description,
-      listData: listDataFinal,
-      teamParams: configTeam ? (configTeam[0].params).map((o) => {
-        return {
-          k: o.k,
-          v: o.v
-        }
-      }) : []
+      description
     })
 
     this.props.form.setFieldsValue({
@@ -370,6 +433,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         const declareTextarea = document.querySelector('#declaration')
         this.handleDelareCodeMirror(declareTextarea)
         this.codeMirrorInstanceOfDeclaration.doc.setValue(sql.includes('{') ? sql.substring(0, sql.indexOf('{')) : sql)
+        this.setState({
+          teamVarArr: getTeamVariables(sql)
+        })
       })
     } else {
       this.codeMirrorInstanceOfDeclaration = false
@@ -497,6 +563,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private initExecuteSql = () => {
     const { sourceIdGeted, listData, isDeclarate, limit } = this.state
 
+    const { onExecuteSql, params } = this.props
+    const { pid, bid } = params
+
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
     let sql = ''
@@ -543,6 +612,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
         })
       }
     })
+
     this.asyncValidateResult = setTimeout(() => {
       this.setState({
         isShowSqlValidateAlert: true
@@ -567,7 +637,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private onTeamParamChange = (id, paramIndex) => (e) => {
-    const { configTeam, teamParams, listData } = this.state
+    const { listData } = this.state
 
     const changed = listData.find((i) => i.id === id)
     changed.params[paramIndex].v = e.target.value
@@ -579,8 +649,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode, limit } = this.state
-        const { route, params } = this.props
+        const { executeColumns, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode, limit } = this.state
+        const { route, params, teamAuth } = this.props
+
         const { id, source_id, source_name } = values
         if (!name.trim()) {
           message.error('View名称不能为空')
@@ -637,14 +708,14 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             }
 
             if (route.path === '/project/:pid/bizlogic') {
-              this.props.onAddBizlogic({
+              this.props.onAddBizlogic(teamAuth.sourceOrg, {
                 ...requestValue,
                 sourceId: Number(source_id)
               }, () => {
                 this.hideForm()
               })
             } else {
-              this.props.onEditBizlogic({
+              this.props.onEditBizlogic(teamAuth.sourceOrg, {
                 ...requestValue,
                 id,
                 source: {
@@ -759,10 +830,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private getTeamTreeData (sql) {
     const { listData } = this.state
 
-    const sqlTeamVariables = sql.match(/team@var\s+\$\w+\$/g)
-    const teamParamsTemp = sqlTeamVariables
-      ? sqlTeamVariables.map((gv) => gv.substring(gv.indexOf('$') + 1, gv.lastIndexOf('$')))
-      : []
+    const teamParamsTemp = getTeamVariables(sql)
+
     const paramsTemp = teamParamsTemp.map((gp) => {
       return {
         k: gp,
@@ -790,7 +859,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
     this.setState({
       teamParams: paramsTemp,
-      listData: listDataFinal.slice()
+      listData: listDataFinal.slice(),
+      teamVarArr: teamParamsTemp
     })
   }
 
@@ -827,8 +897,11 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       executeLoading,
       modalLoading,
       route,
-      viewTeam
+      viewTeam,
+      teamAuth,
+      teamSelectData
     } = this.props
+
     const { getFieldDecorator } = form
     const {
       isDeclarate,
@@ -922,7 +995,10 @@ const mapStateToProps = createStructuredSelector({
   sources: makeSelectSources(),
   modalLoading: makeSelectModalLoading(),
   bizlogics: makeSelectBizlogics(),
-  viewTeam: makeSelectViewTeam()
+  viewTeam: makeSelectViewTeam(),
+  teamAuth: makeSelectTeamAuth(),
+  teamConfig: makeSelectTeamConfig(),
+  teamSelectData: makeSelectTeamSelectData()
 })
 
 function mapDispatchToProps (dispatch) {
@@ -931,11 +1007,13 @@ function mapDispatchToProps (dispatch) {
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onExecuteSql: (requestObj, resolve) => dispatch(executeSql(requestObj, resolve)),
-    onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
-    onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
+    onAddBizlogic: (type, bizlogic, resolve) => dispatch(addBizlogic(type, bizlogic, resolve)),
+    onEditBizlogic: (type, bizlogic, resolve) => dispatch(editBizlogic(type, bizlogic, resolve)),
     onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
+    onGetTeamAuth: (projectId, resolve) => dispatch(getTeamAuth(projectId, resolve)),
+    onLoadTeamConfig: (viewId, resolve) => dispatch(loadTeamConfig(viewId, resolve)),
     onResetViewState: () => dispatch(resetViewState())
   }
 }

@@ -45,6 +45,42 @@ export function toListBF (tree) {
   return res
 }
 
+export function authTreeToList (tree) {
+    const tempList = tree.slice(0)
+    const res = []
+    for (const node of tempList) {
+        const { title, value, key, children } = node
+        res.push({
+            title,
+            key,
+            value,
+            children: []
+        })
+        if (node.children && node.children.length !== 0) {
+            tempList.push(...node.children.map((item) => {
+              return item
+            }))
+        }
+    }
+    return res
+  }
+
+export function getHrTreeData (tree) {
+    const tempList = tree.slice(0)
+    const res = tempList.map((node, index) => {
+        const { deptId, name } = node
+        const children = node.childrens ? { children: getHrTreeData(node.childrens) } : null
+        const i = {
+            title: name,
+            value: deptId,
+            key: deptId,
+            ...children
+        }
+        return i
+    })
+    return res
+}
+
 /**
  * View Model Type:
  * 时间日期
@@ -93,5 +129,12 @@ export function getColumns (columns) {
     return columns
 }
 
+export function getTeamVariables (sql) {
+    const sqlTeamVariables = sql.match(/team@var\s+\$\w+\$/g)
+    const teamParamsTemp = sqlTeamVariables
+      ? sqlTeamVariables.map((gv) => gv.substring(gv.indexOf('$') + 1, gv.lastIndexOf('$')))
+      : []
+    return teamParamsTemp
+}
 
 

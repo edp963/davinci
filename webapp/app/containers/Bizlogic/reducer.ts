@@ -39,7 +39,16 @@ import {
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
   LOAD_VIEW_TEAM_FAILURE,
+  LOAD_TEAM_AUTH,
+  LOAD_TEAM_AUTH_SUCCESS,
+  LOAD_TEAM_AUTH_FAILURE,
+  LOAD_TEAM_CONFIG_SUCCESS,
+  LOAD_TEAM_CONFIG_FAILURE,
+  LOAD_TEAM_CONFIG,
   RESET_VIEW_STATE
+  // LOAD_TREE_SELECT,
+  // LOAD_TREE_SELECT_SUCCESS,
+  // LOAD_TREE_SELECT_FAILURE
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
 import { ActionTypes } from '../Display/constants'
@@ -53,6 +62,9 @@ const initialState = fromJS({
   modalLoading: false,
   schemaData: [],
   viewTeam: [],
+  teamAuth: null,
+  teamConfig: [],
+  teamSelectData: [],
   executeLoading: false
 })
 
@@ -123,8 +135,26 @@ function bizlogicReducer (state = initialState, action) {
       return state.set('bizlogics', payload.bizlogics)
     case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       return state.set('bizlogics', payload.bizlogics)
+    case LOAD_TEAM_AUTH:
+      return state
+    case LOAD_TEAM_AUTH_SUCCESS:
+      return state.set('teamAuth', payload.result)
+    case LOAD_TEAM_AUTH_FAILURE:
+      return state
+    case LOAD_TEAM_CONFIG:
+      return state
+    case LOAD_TEAM_CONFIG_SUCCESS:
+      return state.set('teamConfig', payload.result)
+    case LOAD_TEAM_CONFIG_FAILURE:
+      return state
     case RESET_VIEW_STATE:
       return fromJS(initialState)
+    // case LOAD_TREE_SELECT:
+    //   return state
+    // case LOAD_TREE_SELECT_SUCCESS:
+    //   return state.set('teamSelectData', payload.result)
+    // case LOAD_TREE_SELECT_FAILURE:
+    //   return state
     default:
       return state
   }

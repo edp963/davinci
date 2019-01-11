@@ -655,7 +655,7 @@ export class Chart extends React.Component<IChartProps, IChartStates> {
             xAxis,
             yAxis,
             series
-          })
+          } as any)
           const { onDoInteract, onCheckTableInteract } = this.props
           if (onDoInteract) {
             instance.off('click')

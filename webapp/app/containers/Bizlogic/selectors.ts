@@ -57,6 +57,21 @@ const makeSelectViewTeam = () => createSelector(
   (bizlogicState) => bizlogicState.get('viewTeam')
 )
 
+const makeSelectTeamAuth = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('teamAuth')
+)
+
+const makeSelectTeamConfig = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('teamConfig')
+)
+
+const makeSelectTeamSelectData = () => createSelector(
+  selectBizlogic,
+  (bizlogicState) => bizlogicState.get('teamSelectData')
+)
+
 export {
   selectBizlogic,
   makeSelectBizlogics,
@@ -65,5 +80,8 @@ export {
   makeSelectTableLoading,
   makeSelectModalLoading,
   makeSelectExecuteLoading,
-  makeSelectViewTeam
+  makeSelectViewTeam,
+  makeSelectTeamAuth,
+  makeSelectTeamConfig,
+  makeSelectTeamSelectData
 }

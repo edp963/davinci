@@ -7,6 +7,7 @@ import Icon from 'antd/lib/icon'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Tag from 'antd/lib/tag'
+import Pagination from 'antd/lib/pagination'
 import Box from '../../components/Box'
 import {InjectedRouter} from 'react-router/lib/Router'
 import { loadTeams } from './actions'
@@ -26,7 +27,6 @@ const utilStyles = require('../../assets/less/util.less')
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
 import { PaginationConfig } from 'antd/lib/table'
-import Pagination from 'antd/lib/pagination'
 
 interface ITeam {
   id: number
@@ -47,8 +47,6 @@ interface ITeamProps {
 interface ITeamStates {
   pagination: PaginationConfig
 }
-
-
 
 export class Teams extends React.PureComponent <ITeamProps, ITeamStates> {
   constructor (props) {

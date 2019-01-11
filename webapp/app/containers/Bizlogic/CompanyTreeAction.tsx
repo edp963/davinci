@@ -19,55 +19,52 @@
  */
 
 import * as React from 'react'
-import Input from 'antd/lib/input'
-const styles = require('../Bizlogic.less')
-import { ITeamParams } from '../../Bizlogic'
+const Tag = require('antd/lib/tag')
+const Input = require('antd/lib/input')
+const styles = require('./Bizlogic.less')
+import { ITeamParams } from '../Bizlogic'
 
-interface ITeamTreeActionProps {
+interface ICompanyTreeActionProps {
   depth: number
   currentItem: {
     id: number,
     name: string,
     checked: boolean,
     params: [ITeamParams]
+    initValue?: any
+    value?: any
   },
   // teamParams: [ITeamParams]
   teamParams: any
-  onTeamParamChange: (id: number, index: number) => any
+  teamSelectData: any
 }
 
-export class TeamTreeAction extends React.PureComponent<ITeamTreeActionProps, {}> {
+export class CompanyTreeAction extends React.PureComponent<ICompanyTreeActionProps, {}> {
   public render () {
     const {
       depth,
       currentItem,
       teamParams,
-      onTeamParamChange
+      teamSelectData
     } = this.props
-
-    const paramsInput = (teamParams.length === 1 && teamParams[0].k === '')
-    ? ''
-    : teamParams.map((tp, index) => {
-        return (
-          <Input
-            defaultValue={(currentItem.params.length && currentItem.params[index]) ? currentItem.params[index].v : ''}
-            className={styles.teamInput}
-            key={index}
-            onChange={onTeamParamChange(currentItem.id, index)}
-            disabled={!currentItem.checked}
-            placeholder={tp.k}
-          />
-          )
-      })
 
     const titleWidth = `${-18 * depth}px`
     return (
       <div className={styles.teamTree}>
         <span className={styles.teamTreeTitle} title={currentItem.name}>{currentItem.name}</span>
-        <span style={{ marginLeft: titleWidth }}>{paramsInput}</span>
+        <span style={{ marginLeft: titleWidth }}>
+          <Input
+            type="textarea"
+            autosize={{minRows: 2, maxRows: 6}}
+            key={currentItem.id}
+            className={styles.treeTag}
+            defaultValue={currentItem.value.toString()}
+            disabled
+          />
+        </span>
       </div>
     )
   }
 }
 
-export default TeamTreeAction
+export default CompanyTreeAction
