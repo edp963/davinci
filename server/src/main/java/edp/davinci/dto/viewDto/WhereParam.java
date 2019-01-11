@@ -20,9 +20,11 @@ package edp.davinci.dto.viewDto;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class WhereParam {
     private String column;
 
-    private String value;
+    private List<String> value;
 }

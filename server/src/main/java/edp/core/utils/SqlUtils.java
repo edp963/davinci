@@ -43,6 +43,7 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -152,7 +153,7 @@ public class SqlUtils {
 
                 final int startRow = (pageNo - 1) * pageSize;
                 String finalSql = sql;
-                jdbcTemplate.query(finalSql, (ResultSet resultSet) -> {
+                jdbcTemplate.query(new StreamingStatementCreator(finalSql), (ResultSet resultSet) -> {
 
                     int total = 0;
                     try {
@@ -163,8 +164,11 @@ public class SqlUtils {
                             resultSet.beforeFirst();
                         }
                     } catch (SQLException e) {
-                        String countSql = getCountSql(finalSql);
-                        total = jdbcTemplate.queryForObject(countSql, Integer.class);
+                        log.info(">>>>>>> ResultSet Forward Only");
+                        log.info(">>>>>>> get count sql");
+//                        String countSql = getCountSql(finalSql);
+//                        total = jdbcTemplate.queryForObject(countSql, Integer.class);
+                        total = -1;
                     }
 
                     if (limit > 0) {
@@ -177,7 +181,7 @@ public class SqlUtils {
                     ResultSetMetaData metaData = resultSet.getMetaData();
 
                     while (resultSet.next() && currentRow < startRow + pageSize) {
-                        if (currentRow >= startRow && currentRow < total) {
+                        if (currentRow >= startRow && (currentRow < total || total == -1)) {
                             Map<String, Object> map = new HashMap<>();
                             for (int i = 1; i <= metaData.getColumnCount(); i++) {
                                 String c = metaData.getColumnName(i);
@@ -740,4 +744,21 @@ public class SqlUtils {
         return null;
     }
 
+}
+
+
+class StreamingStatementCreator implements PreparedStatementCreator {
+    private final String sql;
+
+    public StreamingStatementCreator(String sql) {
+        this.sql = sql;
+    }
+
+    @Override
+    public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
+//        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        statement.setFetchSize(Integer.MIN_VALUE);
+        return statement;
+    }
 }
