@@ -20,6 +20,7 @@ package edp.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.consts.Consts;
+import edp.davinci.core.enums.FileTypeEnum;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -68,9 +69,22 @@ public class FileUtils {
      * @param file
      * @return
      */
-    public boolean isCsv(MultipartFile file) {
-        return file.getOriginalFilename().toLowerCase().endsWith(".csv");
+    public static boolean isCsv(MultipartFile file) {
+        return file.getOriginalFilename().toLowerCase().endsWith(FileTypeEnum.CSV.getFormat());
     }
+
+
+    /**
+     * 校验MultipartFile 是否csv文件
+     *
+     * @param file
+     * @return
+     */
+    public static boolean isExcel(MultipartFile file) {
+        return file.getOriginalFilename().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())
+                || file.getOriginalFilename().toLowerCase().endsWith(FileTypeEnum.XLS.getFormat());
+    }
+
 
     /**
      * 上传文件
@@ -114,7 +128,7 @@ public class FileUtils {
             File file = null;
             if (!filePath.startsWith(fileBasePath)) {
                 file = new File(fileBasePath + filePath);
-            }else {
+            } else {
                 file = new File(filePath);
             }
             if (file.exists()) {
@@ -172,13 +186,14 @@ public class FileUtils {
 
     /**
      * 删除文件夹及其下文件
+     *
      * @param dir
      * @return
      */
     public static boolean deleteDir(File dir) {
         if (dir.isDirectory()) {
             String[] children = dir.list();
-            for (int i=0; i<children.length; i++) {
+            for (int i = 0; i < children.length; i++) {
                 boolean success = deleteDir(new File(dir, children[i]));
                 if (!success) {
                     return false;
@@ -189,7 +204,18 @@ public class FileUtils {
     }
 
     /**
+     * 格式化文件目录
+     *
+     * @param filePath
+     * @return
+     */
+    public String formatFilePath(String filePath) {
+        return filePath.replace(fileBasePath, "").replaceAll(File.separator + "{2,}", File.separator);
+    }
+
+    /**
      * 压缩文件到zip
+     *
      * @param files
      * @param targetFile
      */

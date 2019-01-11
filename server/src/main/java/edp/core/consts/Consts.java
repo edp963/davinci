@@ -18,6 +18,8 @@
 
 package edp.core.consts;
 
+import java.io.File;
+
 public class Consts {
 
     /**
@@ -131,5 +133,12 @@ public class Consts {
      * 匹配多行sql注解正则
      */
     public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
+
+
+    public static final String DIR_DOWNLOAD = File.separator + "download" + File.separator;
+
+    public static final String DIR_EMAIL = File.separator + "email" + File.separator;
+
+    public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
 
 }

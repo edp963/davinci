@@ -16,24 +16,19 @@
  * >>
  */
 
-package edp.davinci.dto.sourceDto;
+package edp.davinci.core.model;
 
-import edp.davinci.core.enums.CsvmetaModeEnum;
+import edp.core.model.QueryColumn;
 import lombok.Data;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Data
-@NotNull(message = "csv meta cannot be null")
-public class Csvmeta {
+public class DataUploadEntity {
 
-    @NotBlank(message = "table name cannot be empty")
-    private String tableName;
+    private Set<QueryColumn> headers;
 
-    @Min(value = (short) 0, message = "Invalid mode")
-    @Max(value = (short) 2, message = "Invalid mode")
-    private short mode = CsvmetaModeEnum.NEW.getMode();
+    private List<Map<String, Object>> values;
 }

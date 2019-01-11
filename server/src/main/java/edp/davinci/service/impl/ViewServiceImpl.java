@@ -69,7 +69,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
     @Autowired
     private RelTeamProjectMapper relTeamProjectMapper;
-    
+
 
     @Autowired
     private SqlUtils sqlUtils;
@@ -478,26 +478,33 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         //结构化Sql
-        List<Map<String, Object>> resultList = null;
-        List<QueryColumn> columns = null;
+        ExecuteSqlResult executeSqlResult = null;
         try {
             SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql(), sqlTempDelimiter);
             if (null != sqlUtils && null != sqlEntity) {
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getTeamParams(), sqlTempDelimiter);
+
                     SqlUtils sqlUtils = this.sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword());
+
                     List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
+
                     List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
+
                     if (null != executeSqlList && executeSqlList.size() > 0) {
                         for (String sql : executeSqlList) {
                             sqlUtils.execute(sql);
                         }
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
+                        Paginate<Map<String, Object>> paginate = null;
                         for (String sql : querySqlList) {
-                            resultList = sqlUtils.syncQuery4List(sql);
+                            paginate = sqlUtils.query4Paginate(sql, executeSql.getPageNo(), executeSql.getPageSize(), executeSql.getLimit());
                         }
-                        columns = sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1));
+
+                        if (null != paginate) {
+                            executeSqlResult = new ExecuteSqlResult(sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1)), paginate);
+                        }
                     }
                 }
             }
@@ -506,7 +513,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payload(new ExecuteSqlResult(columns, resultList));
+        return resultMap.successAndRefreshToken(request).payload(executeSqlResult);
     }
 
     /**
@@ -622,10 +629,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
 
-                Source source = viewWithProjectAndSource.getSource();
-                if (null == viewWithProjectAndSource) {
+                if (null == viewWithProjectAndSource.getSource()) {
                     throw new ServerException("source not found");
                 }
+
+                Source source = viewWithProjectAndSource.getSource();
+
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
@@ -655,11 +664,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         buildQuerySql(querySqlList, sqlEntity, executeParam, source);
                         for (String sql : querySqlList) {
                             paginate = sqlUtils.syncQuery4Paginate(
-                                            sql,
-                                            executeParam.getPageNo(),
-                                            executeParam.getPageSize(),
-                                            executeParam.getLimit()
-                                        );
+                                    sql,
+                                    executeParam.getPageNo(),
+                                    executeParam.getPageSize(),
+                                    executeParam.getLimit()
+                            );
                         }
                     }
                 }

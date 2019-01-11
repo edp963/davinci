@@ -16,23 +16,24 @@
  * >>
  */
 
-package edp.davinci.core.enums;
+package edp.davinci.dto.sourceDto;
 
-public enum  CsvmetaModeEnum {
+import edp.davinci.core.enums.UploadModeEnum;
+import lombok.Data;
 
-    NEW((short) 0),
-    REPLACE((short) 1),
-    APPEND((short) 2),
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
-    ;
+@Data
+@NotNull(message = "csv meta cannot be null")
+public class UploadMeta {
 
-    private short mode;
+    @NotBlank(message = "table name cannot be empty")
+    private String tableName;
 
-    CsvmetaModeEnum(short mode) {
-        this.mode = mode;
-    }
-
-    public short getMode() {
-        return mode;
-    }
+    @Min(value = (short) 0, message = "Invalid mode")
+    @Max(value = (short) 2, message = "Invalid mode")
+    private short mode = UploadModeEnum.NEW.getMode();
 }

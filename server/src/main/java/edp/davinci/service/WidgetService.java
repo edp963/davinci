@@ -27,6 +27,9 @@ import edp.davinci.model.User;
 import edp.davinci.model.Widget;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.util.Map;
+import java.util.Set;
 
 public interface WidgetService extends CheckEntityService {
     ResultMap getWidgets(Long projectId, User user, HttpServletRequest request);
@@ -41,9 +44,9 @@ public interface WidgetService extends CheckEntityService {
 
     ResultMap getWidget(Long id, User user, HttpServletRequest request);
 
-    ViewExecuteParam buildViewExecuteParam(Widget widget);
-
-    ResultMap generationCsv(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
+    ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request);
 
     void upgradeWidgetConfig();
+
+    File writeExcel(Set<Widget> widgets, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
 }

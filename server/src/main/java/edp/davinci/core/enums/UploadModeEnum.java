@@ -16,19 +16,23 @@
  * >>
  */
 
-package edp.davinci.core.model;
+package edp.davinci.core.enums;
 
-import edp.core.model.QueryColumn;
-import lombok.Data;
+public enum UploadModeEnum {
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+    NEW((short) 0),
+    REPLACE((short) 1),
+    APPEND((short) 2),
 
-@Data
-public class CsvEntity {
+    ;
 
-    private Set<QueryColumn> headers;
+    private short mode;
 
-    private List<Map<String, Object>> values;
+    UploadModeEnum(short mode) {
+        this.mode = mode;
+    }
+
+    public short getMode() {
+        return mode;
+    }
 }

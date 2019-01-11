@@ -281,6 +281,7 @@ public class SqlUtils {
                 tables.close();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
         } finally {
             releaseConnection(connection);

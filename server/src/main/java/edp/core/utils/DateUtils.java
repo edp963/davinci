@@ -122,6 +122,16 @@ public class DateUtils {
         return formatter.format(currentData());
     }
 
+    public static String getTheDayBeforNowDateYYYYMMDD() {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentData());
+        calendar.add(Calendar.DAY_OF_MONTH, -1);
+
+        return formatter.format(calendar.getTime());
+    }
+
     public static String getNowDateFormatCustom(String format) {
         SimpleDateFormat formatter = new SimpleDateFormat(format);
 

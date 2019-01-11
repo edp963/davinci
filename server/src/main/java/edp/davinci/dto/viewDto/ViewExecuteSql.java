@@ -30,4 +30,8 @@ public class ViewExecuteSql {
 
     @NotBlank(message = "sql cannot be empty")
     private String sql;
+
+    private int limit = 0;
+    private int pageNo = -1;
+    private int pageSize = -1;
 }
