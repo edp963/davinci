@@ -1079,8 +1079,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
           title: k,
           dataIndex: k,
           // key: k,
-          className: `${utilStyles.textAlignLeft}`,
-          width: 80
+          className: `${utilStyles.textAlignLeft}`
+          // width: 80
         } as any)
       // }
     })
@@ -1365,7 +1365,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           columns={tableColumns}
                           pagination={isDataPagination ? paginationData : false}
                           onChange={this.onChangeDataTable}
-                          // scroll={{ y:  }}
+                          scroll={{ x: 160 * tableDataKey.length }}
                         />
                       </TabPane>
                       <TabPane tab="Model" key="model">
