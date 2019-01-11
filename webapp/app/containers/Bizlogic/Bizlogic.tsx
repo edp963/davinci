@@ -81,7 +81,7 @@ import {
   makeSelectViewTeam
  } from './selectors'
 import { checkNameUniqueAction, hideNavigator } from '../App/actions'
-import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam } from './actions'
+import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
 import TeamTreeAction from './TeamTreeAction'
@@ -111,6 +111,7 @@ interface IBizlogicFormProps {
   onLoadSources: (projectId: number) => any
   onLoadBizlogics: (id: number, resolve?: any) => any
   onLoadViewTeam: (projectId: number, resolve?: any) => any
+  onResetViewState: () => void
 }
 
 interface IBizlogicFormState {
@@ -784,6 +785,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   public componentWillUnmount () {
     clearTimeout(this.asyncValidateResult)
+    this.props.onResetViewState()
   }
 
   private changeName = (e) => {
@@ -1425,7 +1427,8 @@ function mapDispatchToProps (dispatch) {
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),
     onLoadSources: (projectId) => dispatch(loadSources(projectId)),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
-    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve))
+    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
+    onResetViewState: () => dispatch(resetViewState())
   }
 }
 

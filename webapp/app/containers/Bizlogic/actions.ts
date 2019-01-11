@@ -55,7 +55,8 @@ import {
   LOAD_DATA_FROM_ITEM_FAILURE,
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
-  LOAD_VIEW_TEAM_FAILURE
+  LOAD_VIEW_TEAM_FAILURE,
+  RESET_VIEW_STATE
 } from './constants'
 
 export function loadBizlogics (projectId, resolve) {
@@ -391,5 +392,11 @@ export function loadViewTeamFail (error) {
     payload: {
       error
     }
+  }
+}
+
+export function resetViewState () {
+  return {
+    type: RESET_VIEW_STATE
   }
 }
