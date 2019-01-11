@@ -24,5 +24,5 @@ import lombok.Data;
 public class WhereParam {
     private String column;
 
-    private String value;
+    private Object value;
 }

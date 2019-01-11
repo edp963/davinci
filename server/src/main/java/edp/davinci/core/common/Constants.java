@@ -103,6 +103,12 @@ public class Constants extends Consts {
 
 
     /**
+     * 用户激活 / 重发激活邮件模板
+     */
+    public static final String TABLE_FORMAT_JS = "templates/js/formatCellValue.js";
+
+
+    /**
      * 定时任务发送邮件模板
      */
     public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";

@@ -155,6 +155,7 @@ public class SqlUtils {
                 jdbcTemplate.query(finalSql, (ResultSet resultSet) -> {
 
                     int total = 0;
+                    System.out.println(resultSet.TYPE_FORWARD_ONLY);
                     try {
                         resultSet.last();
                         total = resultSet.getRow();

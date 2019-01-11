@@ -34,6 +34,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.utils.CsvUtils;
+import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.dto.viewDto.Aggregator;
@@ -748,7 +749,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("excel file path is empty");
         }
-        if (!filePath.trim().toLowerCase().endsWith(".xlsx")) {
+        if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
             throw new ServerException("unknow file format");
         }
 
@@ -785,7 +786,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                     Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
-                    writeSheet(sheet, columns, paginate.getResultList(), cellStyle, containType);
+                    ExcelUtils.writeSheet(sheet, columns, paginate.getResultList() ,cellStyle, containType, widget.getConfig());
                 } catch (ServerException e) {
                     e.printStackTrace();
                 } finally {
@@ -811,61 +812,5 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         out.flush();
         out.close();
         return file;
-    }
-
-    /**
-     * 写入数据到excel sheet页
-     *
-     * @param sheet
-     * @param columns
-     * @param dataList
-     * @param cellStyle
-     */
-    private void writeSheet(XSSFSheet sheet, List<QueryColumn> columns, List<Map<String, Object>> dataList,
-                            XSSFCellStyle cellStyle, boolean containType) {
-        XSSFRow row = null;
-        row = sheet.createRow(0);
-        //header
-        for (int i = 0; i < columns.size(); i++) {
-            row.createCell(i).setCellValue(columns.get(i).getName());
-        }
-
-        //type
-        if (containType) {
-            row = sheet.createRow(1);
-            for (int i = 0; i < columns.size(); i++) {
-                row.createCell(i).setCellValue(columns.get(i).getType());
-            }
-        }
-
-        //data
-        for (int i = 0; i < dataList.size(); i++) {
-            int rownum = i + 1;
-            if (containType) {
-                rownum += 1;
-            }
-            row = sheet.createRow(rownum);
-            Map<String, Object> map = dataList.get(i);
-            for (int j = 0; j < columns.size(); j++) {
-                Object obj = map.get(columns.get(j).getName());
-                String v = "";
-                if (null != obj) {
-                    if (obj instanceof Double || obj instanceof Float) {
-                        DecimalFormat decimalFormat = new DecimalFormat("#,###.####");
-                        v = decimalFormat.format(obj);
-                    } else {
-                        v = obj.toString();
-                    }
-                }
-                XSSFCell cell = row.createCell(j);
-                cell.setCellValue(v);
-                cell.setCellStyle(cellStyle);
-            }
-        }
-
-        sheet.setDefaultRowHeight((short) (16.5 * 20));
-        for (int i = 0; i < columns.size(); i++) {
-            sheet.autoSizeColumn(i);
-        }
     }
 }

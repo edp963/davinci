@@ -19,10 +19,13 @@
 
 package edp.davinci.core.utils;
 
+import com.alibaba.druid.util.StringUtils;
+import com.alibaba.fastjson.JSONObject;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import edp.davinci.core.model.DataUploadEntity;
@@ -30,11 +33,17 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.*;
 
 public class ExcelUtils {
@@ -131,5 +140,140 @@ public class ExcelUtils {
                 throw new ServerException(e.getMessage());
             }
         }
+    }
+
+
+    /**
+     * 写入数据到excel sheet页
+     *
+     * @param sheet
+     * @param columns
+     * @param dataList
+     * @param cellStyle
+     */
+    public static void writeSheet(XSSFSheet sheet,
+                                  List<QueryColumn> columns,
+                                  List<Map<String, Object>> dataList,
+                                  XSSFCellStyle cellStyle,
+                                  boolean containType,
+                                  String json) {
+
+        boolean isTable = isTable(json);
+
+        XSSFRow row = null;
+        row = sheet.createRow(0);
+        //header
+        for (int i = 0; i < columns.size(); i++) {
+            row.createCell(i).setCellValue(columns.get(i).getName());
+        }
+
+        //type
+        if (containType) {
+            row = sheet.createRow(1);
+            for (int i = 0; i < columns.size(); i++) {
+                String type = columns.get(i).getType();
+                if (isTable) {
+                    type = "VARCHAR";
+                }
+                row.createCell(i).setCellValue(type);
+            }
+        }
+
+        Invocable invocable = null;
+        if (isTable) {
+            invocable = getInvocable();
+        }
+
+        //data
+        for (int i = 0; i < dataList.size(); i++) {
+            int rownum = i + 1;
+            if (containType) {
+                rownum += 1;
+            }
+            row = sheet.createRow(rownum);
+            Map<String, Object> map = dataList.get(i);
+            if (isTable(json)) {
+                map = formatValue(invocable ,map, json);
+            }
+
+            for (int j = 0; j < columns.size(); j++) {
+                Object obj = map.get(columns.get(j).getName());
+                String v = "";
+                if (null != obj) {
+                    if (obj instanceof Double || obj instanceof Float) {
+                        DecimalFormat decimalFormat = new DecimalFormat("#,###.####");
+                        v = decimalFormat.format(obj);
+                    } else {
+                        v = obj.toString();
+                    }
+                }
+                XSSFCell cell = row.createCell(j);
+                cell.setCellValue(v);
+                cell.setCellStyle(cellStyle);
+            }
+        }
+
+        sheet.setDefaultRowHeight((short) (16.5 * 20));
+        for (int i = 0; i < columns.size(); i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+
+
+    private static Map<String, Object> formatValue(Invocable invocable ,Map<String, Object> map, String json) {
+        try {
+            Object obj = invocable.invokeFunction("test", map, json);
+            if (obj instanceof HashMap) {
+                return (Map<String, Object>)obj;
+            }
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+
+    private static Invocable getInvocable() {
+        FileReader fileReader = null;
+        try {
+            ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+            fileReader = new FileReader(Constants.TABLE_FORMAT_JS);
+            engine.eval(fileReader);
+            return (Invocable) engine;
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (null != fileReader) {
+                    fileReader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
+
+
+    private static boolean isTable(String json) {
+        if (!StringUtils.isEmpty(json)) {
+            try {
+                JSONObject jsonObject = JSONObject.parseObject(json);
+                if (null != jsonObject) {
+                    if (jsonObject.containsKey("selectedChart") && jsonObject.containsKey("mode")) {
+                        Integer selectedChart = jsonObject.getInteger("selectedChart");
+                        String mode = jsonObject.getString("mode");
+                        if (selectedChart.equals(1) && mode.equals("chart")) {
+                            return true;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return false;
     }
 }
