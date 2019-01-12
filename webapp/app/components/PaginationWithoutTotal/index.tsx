@@ -30,15 +30,15 @@ const Option = Select.Option
 const styles = require('./PaginationWithoutTotal.less')
 
 interface IPaginationWithoutTotalProps {
-  loading: boolean
-  size?: ButtonSize
   dataLength: number
+  loading?: boolean
+  size?: ButtonSize
   defaultPageSize?: number
   showSizeChanger?: boolean
   showQuickJumper?: boolean
   pageSizeOptions?: string[]
   className?: string
-  onChange: (pagination) => void
+  onChange: (current: number, pageSize: number) => void
 }
 
 interface IPaginationWithoutTotalStates {
@@ -58,6 +58,7 @@ export class PaginationWithoutTotal extends PureComponent<IPaginationWithoutTota
   }
 
   private static defaultProps = {
+    loading: false,
     size: 'default',
     defaultPageSize: 10,
     showSizeChanger: true,
@@ -86,7 +87,6 @@ export class PaginationWithoutTotal extends PureComponent<IPaginationWithoutTota
   }
 
   private change = (action: string) => (val) => {
-    const { defaultPageSize, pageSizeOptions, showSizeChanger } = this.props
     let { current, pageSize, jumpTo } = this.state
     switch (action) {
       case 'prev':
@@ -111,13 +111,7 @@ export class PaginationWithoutTotal extends PureComponent<IPaginationWithoutTota
         current = 1
         break
     }
-    this.props.onChange({
-      current,
-      pageSize,
-      defaultPageSize,
-      pageSizeOptions,
-      showSizeChanger
-    })
+    this.props.onChange(current, pageSize)
     this.setState({
       current,
       pageSize,

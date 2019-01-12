@@ -981,8 +981,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private onChangeDataTable = (pagination) => {
-    const { current, pageSize} = pagination
+  private onChangeDataTable = (current: number, pageSize: number) => {
     const { sourceIdGeted, sql } = this.state
 
     this.props.onExecuteSql({
@@ -1219,15 +1218,16 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       defaultPageSize: 100,
       showSizeChanger: true,
       pageSizeOptions: ['100', '200', '500', '1000'],
-      total: totalCount
+      total: totalCount,
+      onChange: this.onChangeDataTable,
+      onShowSizeChange: this.onChangeDataTable
     }
     const tablePagination = isDataPagination && totalCount !== -1 ? paginationData : false
     const paginationWithoutTotal = isDataPagination && totalCount === -1 ? (
       <PaginationWithoutTotal
+        dataLength={tableData.length}
         loading={executeLoading}
         size="small"
-        dataLength={tableData.length}
-        onChange={this.onChangeDataTable}
         {...paginationData}
       />
     ) : null
@@ -1375,7 +1375,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                             dataSource={tableData}
                             columns={tableColumns}
                             pagination={tablePagination}
-                            onChange={this.onChangeDataTable}
                             scroll={{ x: 160 * tableDataKey.length }}
                           />
                           {paginationWithoutTotal}
