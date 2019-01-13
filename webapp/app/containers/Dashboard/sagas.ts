@@ -282,7 +282,7 @@ export function* getWidgetCsv (action) {
   try {
     const path = yield call(request, {
       method: 'post',
-      url: `${api.widget}/${widgetId}/csv`,
+      url: `${api.widget}/${widgetId}/excel`,
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
