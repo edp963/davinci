@@ -253,7 +253,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { queryVars } = this.props
     let titleText: string | React.ReactNode = expression
     if (field) {
-      titleText = getFieldAlias(field, queryVars) || titleText
+      titleText = getFieldAlias(field, queryVars || {}) || titleText
       if (field.desc) {
         titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
       }
