@@ -24,9 +24,20 @@ import PropTypes from 'prop-types'
 import Input from 'antd/lib/input'
 const InputGroup = Input.Group
 
-import styles from './NumberRange.less'
+const styles = require('./NumberRange.less')
 
-export class NumberRange extends PureComponent {
+interface INumberRangeProps {
+  placeholder?: string
+  value?: string[]
+  onChange?: (value: string[]) => void
+  onSearch: (value: string[]) => void
+}
+
+interface INumberRangeStates {
+  value: string[]
+}
+
+export class NumberRange extends PureComponent<INumberRangeProps, INumberRangeStates> {
   constructor (props) {
     super(props)
     this.state = {
@@ -34,18 +45,24 @@ export class NumberRange extends PureComponent {
     }
   }
 
-  componentWillUpdate (nextProps) {
+  private static defaultProps = {
+    placeholder: ''
+  }
+
+  public componentWillReceiveProps (nextProps) {
     const nextValue = nextProps.value
     const { value } = this.state
 
     if (nextValue) {
       if (nextValue[0] !== value[0] || nextValue[1] !== value[1]) {
-        this.state.value = nextValue.slice()
+        this.setState({
+          value: nextValue.slice()
+        })
       }
     }
   }
 
-  inputChange = (dir) => {
+  private inputChange = (dir) => {
     const { onChange } = this.props
     const { value } = this.state
 
@@ -58,16 +75,16 @@ export class NumberRange extends PureComponent {
     }
   }
 
-  inputSearch = () => {
+  private inputSearch = () => {
     this.props.onSearch(this.state.value)
   }
 
-  render () {
+  public render () {
     const { placeholder } = this.props
     const { value } = this.state
 
     return (
-      <InputGroup size="large" className={`${styles.range} ${styles.group}`} compact>
+      <InputGroup className={styles.range} compact>
         <Input
           className={styles.number}
           value={value[0]}
@@ -75,9 +92,9 @@ export class NumberRange extends PureComponent {
           onChange={this.inputChange('from')}
           onPressEnter={this.inputSearch}
         />
-        <Input className={styles.numberDivider} placeholder="~" readOnly tabIndex="-1" />
+        <Input className={styles.numberDivider} placeholder="~" readOnly tabIndex={-1} />
         <Input
-          className={`${styles.number} ${styles.to}`}
+          className={styles.number}
           value={value[1]}
           placeholder="到"
           onChange={this.inputChange('to')}
@@ -86,13 +103,6 @@ export class NumberRange extends PureComponent {
       </InputGroup>
     )
   }
-}
-
-NumberRange.propTypes = {
-  placeholder: PropTypes.string,
-  value: PropTypes.array,
-  onChange: PropTypes.func,
-  onSearch: PropTypes.func
 }
 
 export default NumberRange

@@ -1,10 +1,18 @@
-import * as React from 'react'
-import moment from 'moment'
+import React from 'react'
 import { FormComponentProps } from 'antd/lib/form/Form'
 import {
-  IFilterViewConfig, IFilterItem, IFilterValue, IMapItemFilterValue,
-  OnGetFilterControlOptions, OnFilterValueChange, IMapFilterControlOptions } from './'
-import { FilterTypes } from './filterTypes'
+  IFilterViewConfig,
+  IFilterItem,
+  IFilterValue,
+  IMapItemFilterValue,
+  OnGetFilterControlOptions,
+  OnFilterValueChange,
+  IMapFilterControlOptions,
+  getParamValue,
+  getModelValue,
+  getValidValue
+} from './'
+import { FilterTypes, CascadeFilterTypes, defaultFilterControlGridProps } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
 import FilterControl from './FilterControl'
@@ -12,6 +20,7 @@ import FilterControl from './FilterControl'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Form from 'antd/lib/form'
+import Button from 'antd/lib/button'
 
 const styles = require('./filter.less')
 
@@ -22,7 +31,19 @@ interface IFilterPanelProps {
   onChange: OnFilterValueChange
 }
 
-export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps> {
+interface IFilterPanelStates {
+  filterValues: {
+    [key: string]: any
+  }
+}
+
+export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, IFilterPanelStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      filterValues: {}
+    }
+  }
 
   private itemsFilterValues: {
     [itemId: number]: {
@@ -37,8 +58,7 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       const { items, isParam } = config
       if (items.length <= 0) { return }
 
-      const filterValue = isParam ?
-        this.getParamValue(type, config, val) : this.getModelValue(type, config, operator, val)
+      const filterValue = isParam ? getParamValue(filter, config, val) : getModelValue(filter, config, operator, val)
 
       items.forEach((itemId) => {
         relatedItemIds.push(itemId)
@@ -71,165 +91,77 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       return acc
     }, {})
 
-    const { onChange } = this.props
-    onChange(mapItemFilterValue, key)
+    this.props.onChange(mapItemFilterValue, key)
+    this.setState({
+      filterValues: {
+        ...this.state.filterValues,
+        [key]: Array.isArray(val)
+          ? val.map((v) => getValidValue(v, filter.fromSqlType))
+          : getValidValue(val, filter.fromSqlType)
+      }
+    })
   }
 
-  private getParamValue = (type: FilterTypes, config: IFilterViewConfig, value) => {
-    const { key, sqlType } = config
-    let param = []
-
-    switch (type) {
-      case FilterTypes.InputText:
-      case FilterTypes.InputNumber:
-      case FilterTypes.Select:
-        if (value !== undefined) { param.push({ name: key, value: this.getValidValue(value, sqlType) }) }
-        break
-      case FilterTypes.NumberRange:
-        param = value.filter((val) => val !== '').map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
-        break
-      case FilterTypes.MultiSelect:
-        if (value.length && value.length > 0) {
-          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
-        }
-        break
-      case FilterTypes.TreeSelect:
-        if (value.length && value.length > 0) {
-          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
-        }
-        break
-      case FilterTypes.CascadeSelect: // TODO
-        break
-      case FilterTypes.InputDate:
-        if (value) {
-          param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD')}'` })
-        }
-        break
-      case FilterTypes.MultiDate:
-        if (value) {
-          param.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
-        }
-        break
-      case FilterTypes.DateRange:
-        if (value.length) {
-          param.push(...value.map((v) => ({ name: key, value: `'${moment(v).format('YYYY-MM-DD')}'` })))
-        }
-        break
-      case FilterTypes.Datetime:
-        if (value) {
-          param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD HH:mm:ss')}'` })
-        }
-        break
-      case FilterTypes.DatetimeRange:
-        if (value.length) {
-          param.push(...value.map((v) => ({ name: key, value: `'${moment(v).format('YYYY-MM-DD HH:mm:ss')}'` })))
-        }
-        break
-      default:
-        const val = value.target.value.trim()
-        if (val) {
-          param.push({ name: key, value: this.getValidValue(val, sqlType) })
-        }
-        break
-    }
-    return param
-  }
-
-  private getModelValue = (type: FilterTypes, config: IFilterViewConfig, operator: OperatorTypes, value) => {
-    const { key, sqlType } = config
-    const filters = []
-
-    switch (type) {
-      case FilterTypes.InputText:
-      case FilterTypes.InputNumber:
-      case FilterTypes.Select:
-        if (value !== undefined) { filters.push(`${key} ${operator} ${this.getValidValue(value, sqlType)}`) }
-        break
-      case FilterTypes.NumberRange:
-        if (value[0] !== '' && !isNaN(value[0])) {
-          filters.push(`${key} >= ${this.getValidValue(value[0], sqlType)}`)
-        }
-        if (value[1] !== '' && !isNaN(value[1])) {
-          filters.push(`${key} <= ${this.getValidValue(value[1], sqlType)}`)
-        }
-        break
-      case FilterTypes.MultiSelect:
-        if (value.length && value.length > 0) {
-          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
-        }
-        break
-      case FilterTypes.TreeSelect:
-        if (value.length && value.length > 0) {
-          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
-        }
-        break
-      case FilterTypes.CascadeSelect: // @TODO
-        break
-      case FilterTypes.InputDate:
-        if (value) {
-          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD'), sqlType)}`)
-        }
-        break
-      case FilterTypes.MultiDate:
-        if (value) {
-          filters.push(`${key} ${operator} (${value.split(',').map((val) => this.getValidValue(val, sqlType)).join(',')})`)
-        }
-        break
-      case FilterTypes.DateRange:
-        if (value.length) {
-          filters.push(`${key} >= ${this.getValidValue(moment(value[0]).format('YYYY-MM-DD'), sqlType)}`)
-          filters.push(`${key} <= ${this.getValidValue(moment(value[1]).format('YYYY-MM-DD'), sqlType)}`)
-        }
-        break
-      case FilterTypes.Datetime:
-        if (value) {
-          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-        }
-        break
-      case FilterTypes.DatetimeRange:
-        if (value.length) {
-          filters.push(`${key} >= ${this.getValidValue(moment(value[0]).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-          filters.push(`${key} <= ${this.getValidValue(moment(value[1]).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-        }
-        break
-      default:
-        const inputValue = value.target.value.trim()
-        if (inputValue) {
-          filters.push(`${key} ${operator} ${this.getValidValue(inputValue, sqlType)}`)
-        }
-        break
-    }
-
-    return filters
-  }
-
-  private getValidValue = (value, sqlType) => {
-    if (!sqlType) { return value }
-    return SQL_NUMBER_TYPES.indexOf(sqlType) >= 0 ? value : `'${value}'`
+  private renderFilterControls = (filters: IFilterItem[], parents?: IFilterItem[]) => {
+    const { onGetOptions, mapOptions, form } = this.props
+    const { filterValues } = this.state
+    let controls = []
+    filters.forEach((filter) => {
+      const parentValues = parents
+        ? parents.reduce((values, p) => {
+            const parentSelectedValue = filterValues[p.key]
+            if (parentSelectedValue
+                && !(Array.isArray(parentSelectedValue) && !parentSelectedValue.length)
+                && CascadeFilterTypes.includes(p.type)) {
+              values = values.concat({
+                column: p.fromModel,
+                value: parentSelectedValue
+              })
+            }
+            return values
+          }, [])
+        : null
+      const controlGridProps = filter.width
+          ? {
+              lg: filter.width,
+              md: filter.width < 8 ? 12 : 24
+            }
+          : defaultFilterControlGridProps
+      controls = controls.concat(
+        <Col
+          key={filter.key}
+          {...controlGridProps}
+        >
+          <FilterControl
+            formToAppend={form}
+            filter={filter}
+            currentOptions={mapOptions[filter.key] || []}
+            parentValues={parentValues}
+            onGetOptions={onGetOptions}
+            onChange={this.change}
+          />
+        </Col>
+      )
+      if (filter.children) {
+        controls = controls.concat(
+          this.renderFilterControls(filter.children, parents ? parents.concat(filter) : [filter])
+        )
+      }
+    })
+    return controls
   }
 
   public render () {
-    const { filters, onGetOptions, mapOptions, form } = this.props
+    const { filters } = this.props
+
     return (
       <Form className={styles.filterPanel}>
         <Row gutter={8}>
-          {filters.map((f) => (
-            <Col
-              xl={3}
-              lg={4}
-              md={6}
-              sm={12}
-              key={f.key}
-            >
-              <FilterControl
-                formToAppend={form}
-                filter={f}
-                onGetOptions={onGetOptions}
-                currentOptions={mapOptions[f.key] || []}
-                onChange={this.change}
-              />
-            </Col>
-          ))}
+          {this.renderFilterControls(filters)}
+          {/* <Col span={4}>
+            <Button type="primary" size="small" icon="search">查询</Button>
+            <Button size="small" icon="reload">重置</Button>
+          </Col> */}
         </Row>
       </Form>
     )

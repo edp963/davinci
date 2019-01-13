@@ -14,17 +14,40 @@ const { TreeNode } = Tree
 
 interface IFilterListProps {
   list: any[]
-  selectedFilterKey: string
+  selectedFilter: IFilterItem
   onSelectFilter: (id: string) => void
   onAddFilter: () => void
   onDeleteFilter: (id) => void
   onFiltersChange: (filters: IFilterItem[]) => void
 }
 
-export class FilterList extends React.Component<IFilterListProps, {}> {
+interface IFilterListStates {
+  selectedKeys: string[]
+}
+
+export class FilterList extends React.Component<IFilterListProps, IFilterListStates> {
 
   constructor (props) {
     super(props)
+    this.state = {
+      selectedKeys: []
+    }
+  }
+
+  public componentWillMount () {
+    this.setSelectedKeys(this.props.selectedFilter)
+  }
+
+  public componentWillReceiveProps (nextProps: IFilterListProps) {
+    if (nextProps.selectedFilter !== this.props.selectedFilter) {
+      this.setSelectedKeys(nextProps.selectedFilter)
+    }
+  }
+
+  private setSelectedKeys = (selectedFilter: IFilterItem) => {
+    this.setState({
+      selectedKeys: selectedFilter ? [selectedFilter.key] : []
+    })
   }
 
   private onAddFilterClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -35,9 +58,10 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
 
   private onDeleteFilterClick = (e: React.MouseEvent<HTMLElement>) => {
     e.stopPropagation()
-    const { onDeleteFilter, selectedFilterKey } = this.props
-    if (!selectedFilterKey) { return }
-    onDeleteFilter(selectedFilterKey)
+    const { onDeleteFilter, selectedFilter } = this.props
+    if (selectedFilter) {
+      onDeleteFilter(selectedFilter.key)
+    }
   }
 
   // private selectFilter = (e: React.MouseEvent<HTMLUListElement>) => {
@@ -56,9 +80,9 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
   }
 
   private renderFilter (item) {
-    const { selectedFilterKey } = this.props
+    const { selectedFilter } = this.props
     const itemClass = classnames({
-      [styles.selected]: selectedFilterKey === item.key
+      [styles.selected]: selectedFilter ? selectedFilter.key === item.key : false
     })
     return (
       <li className={itemClass} key={item.key}>
@@ -82,11 +106,10 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
   }
 
   private dragEnter = (info) => {
-    console.log(info)
+    // console.log(info)
   }
 
   private drop = (info) => {
-    console.log(info)
     const dropKey = info.node.props.eventKey
     const dragKey = info.dragNode.props.eventKey
     const dropPos = info.node.props.pos.split('-')
@@ -151,37 +174,40 @@ export class FilterList extends React.Component<IFilterListProps, {}> {
     const { key, name, children } = filter
     if (children) {
       return (
-        <TreeNode icon={this.renderTreeNodeIcon} title={name} key={key} dataRef={filter}>
+        <TreeNode title={name} key={key} dataRef={filter}>
           {this.renderTreeNodes(filter.children)}
         </TreeNode>
       )
     }
-    return <TreeNode icon={this.renderTreeNodeIcon} title={name} key={key} dataRef={filter} />
+    return <TreeNode title={name} key={key} dataRef={filter} />
   })
 
   public render () {
     const { list } = this.props
+    const { selectedKeys } = this.state
     return (
       <div className={styles.filterList}>
         <div className={styles.title}>
-          <h2>全局筛选列表</h2>
-          <ul className={styles.cmds}>
-            <li onClick={this.onAddFilterClick}><Icon type="plus" /></li>
-            <li onClick={this.onDeleteFilterClick}><Icon type="delete" /></li>
-          </ul>
+          <h2>筛选项列表</h2>
+          <Icon type="plus" onClick={this.onAddFilterClick} />
+          <Icon type="delete" onClick={this.onDeleteFilterClick} />
         </div>
         {/* <ul className={styles.list} onClick={this.selectFilter}>
           {list.map((item) => this.renderFilter(item))}
         </ul> */}
-        <Tree
-          showIcon
-          draggable
-          onSelect={this.selectFilter}
-          onDragEnter={this.dragEnter}
-          onDrop={this.drop}
-        >
-          {this.renderTreeNodes(list)}
-        </Tree>
+        <div className={styles.treeContainer}>
+          <Tree
+            className={styles.tree}
+            selectedKeys={selectedKeys}
+            onSelect={this.selectFilter}
+            onDragEnter={this.dragEnter}
+            onDrop={this.drop}
+            draggable
+            defaultExpandAll
+          >
+            {this.renderTreeNodes(list)}
+          </Tree>
+        </div>
       </div>
     )
   }
