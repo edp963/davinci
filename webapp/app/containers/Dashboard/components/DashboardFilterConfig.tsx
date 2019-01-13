@@ -115,25 +115,23 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
 
     return (
       <Modal
-        wrapClassName="ant-modal-large"
+        wrapClassName="ant-modal-large ant-modal-center"
         title="全局筛选配置"
         maskClosable={false}
         visible={visible}
         footer={modalButtons}
         onCancel={onCancel}
       >
-        <div className={styles.modalFilterConfig}>
-          <FilterConfig
-            views={views}
-            widgets={widgets}
-            items={currentItems}
-            filters={filters}
-            saving={savingFilterConfig}
-            onOk={onSave}
-            onGetOptions={onGetOptions}
-            mapOptions={mapOptions}
-          />
-        </div>
+        <FilterConfig
+          views={views}
+          widgets={widgets}
+          items={currentItems}
+          filters={filters}
+          saving={savingFilterConfig}
+          onOk={onSave}
+          onGetOptions={onGetOptions}
+          mapOptions={mapOptions}
+        />
       </Modal>
     )
   }

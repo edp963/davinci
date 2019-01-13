@@ -69,6 +69,13 @@ import {
   LOAD_CASCADESOURCE_SUCCESS
 } from '../Bizlogic/constants'
 
+import {
+  IFilterItem,
+  getParamValue,
+  getModelValue,
+  getDefaultValue
+} from '../../components/Filters'
+
 const initialState = fromJS({
   dashboards: null,
   currentDashboard: null,
@@ -144,6 +151,37 @@ function dashboardReducer (state = initialState, action) {
         .set('currentDashboardSecretInfo', '')
 
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
+      const { dashboardDetail } = payload
+      const dashboardConfig = JSON.parse(dashboardDetail.config)
+      const globalFilters = dashboardConfig.filters || []
+      const globalFiltersInitialValue = {}
+      globalFilters.forEach((filter: IFilterItem) => {
+        const { key, type, relatedViews, operator } = filter
+        const defaultValue = getDefaultValue(filter)
+        if (defaultValue) {
+          Object.entries(relatedViews).forEach(([viewId, config]) => {
+            const { items, isParam } = config
+            if (items.length) {
+              const filterValue = isParam
+                ? getParamValue(filter, config, defaultValue)
+                : getModelValue(filter, config, operator, defaultValue)
+              items.forEach((itemId) => {
+                if (!globalFiltersInitialValue[itemId]) {
+                  globalFiltersInitialValue[itemId] = {
+                    filters: [],
+                    params: []
+                  }
+                }
+                if (isParam) {
+                  globalFiltersInitialValue[itemId].params = globalFiltersInitialValue[itemId].params.concat(filterValue)
+                } else {
+                  globalFiltersInitialValue[itemId].filters = globalFiltersInitialValue[itemId].filters.concat(filterValue)
+                }
+              })
+            }
+          })
+        }
+      })
       return state
         .set('currentDashboardLoading', false)
         .set('currentDashboard', payload.dashboardDetail)
@@ -156,10 +194,10 @@ function dashboardReducer (state = initialState, action) {
             loading: false,
             queryParams: {
               linkageFilters: [],
-              globalFilters: [],
+              globalFilters: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].filters : [],
               params: [],
               linkageParams: [],
-              globalParams: [],
+              globalParams: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].params : [],
               pagination: {},
               drillpathInstance: [],
               ...drillpathSetting
