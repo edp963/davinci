@@ -158,7 +158,7 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: false,
-          datasource: payload.resultset,
+          datasource: payload.resultset || { resultList: [] },
           renderType: payload.renderType
         }
       })

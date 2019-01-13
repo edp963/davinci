@@ -70,7 +70,7 @@ const RadioButton = Radio.Button
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Bizlogic.less')
-import { uuid, generateData } from '../../utils/util'
+import { generateData } from '../../utils/util'
 
 import {
   makeSelectSqlValidateCode,
@@ -88,6 +88,7 @@ import TeamTreeAction from './TeamTreeAction'
 import { toListBF, SQL_FIELD_TYPES, getColumns } from './viewUtil'
 import { ITeamParams } from '../Bizlogic'
 import EditorHeader from '../../components/EditorHeader'
+import PaginationWithoutTotal from '../../components/PaginationWithoutTotal'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -620,19 +621,19 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     const requestObj = isDataPagination
-    ? {
-      sourceIdGeted,
-      sql,
-      pageNo: 1,
-      pageSize: 100
-    }
-    : {
-      sourceIdGeted,
-      sql,
-      pageNo: 0,
-      pageSize: 0,
-      limit: 10000
-    }
+      ? {
+          sourceIdGeted,
+          sql,
+          pageNo: 1,
+          pageSize: 100
+        }
+      : {
+          sourceIdGeted,
+          sql,
+          pageNo: 0,
+          pageSize: 0,
+          limit: 10000
+        }
 
     this.props.onExecuteSql(requestObj, (result) => {
       if (result) {
@@ -980,8 +981,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private onChangeDataTable = (pagination) => {
-    const { current, pageSize} = pagination
+  private onChangeDataTable = (current: number, pageSize: number) => {
     const { sourceIdGeted, sql } = this.state
 
     this.props.onExecuteSql({
@@ -1217,9 +1217,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 100,
       showSizeChanger: true,
-      pageSizeOptions: ['100', '200', '300', '400'],
-      total: totalCount
+      pageSizeOptions: ['100', '200', '500', '1000'],
+      total: totalCount,
+      onChange: this.onChangeDataTable,
+      onShowSizeChange: this.onChangeDataTable
     }
+    const tablePagination = isDataPagination && totalCount !== -1 ? paginationData : false
+    const paginationWithoutTotal = isDataPagination && totalCount === -1 ? (
+      <PaginationWithoutTotal
+        dataLength={tableData.length}
+        loading={executeLoading}
+        size="small"
+        {...paginationData}
+      />
+    ) : null
 
     const operations = (
       <Icon
@@ -1336,7 +1347,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                 onChange={this.onChangePage}
                 className={styles.pageCheckbox}
                 checked={this.state.isDataPagination}
-              >查询结果分页展示
+              >分页展示
               </Checkbox>
               <span className={styles.sqlAlert}>
                 {sqlValidatePanel}
@@ -1359,14 +1370,15 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                   <Col span={24} className={styles.tabCol}>
                     <Tabs size="small" defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
                       <TabPane tab="Data" key="data">
-                        <Table
-                          className={styles.viewTabPane}
-                          dataSource={tableData}
-                          columns={tableColumns}
-                          pagination={isDataPagination ? paginationData : false}
-                          onChange={this.onChangeDataTable}
-                          scroll={{ x: 160 * tableDataKey.length }}
-                        />
+                        <div className={styles.viewTabPane}>
+                          <Table
+                            dataSource={tableData}
+                            columns={tableColumns}
+                            pagination={tablePagination}
+                            scroll={{ x: 160 * tableDataKey.length }}
+                          />
+                          {paginationWithoutTotal}
+                        </div>
                       </TabPane>
                       <TabPane tab="Model" key="model">
                         <Table

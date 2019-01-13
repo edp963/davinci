@@ -27,6 +27,7 @@ import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditio
 import { DefaultTableCellStyle } from '../Workbench/ConfigSections/TableSection/HeaderConfigModal'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
+import PaginationWithoutTotal from '../../../../components/PaginationWithoutTotal'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
@@ -119,25 +120,30 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public componentDidUpdate () {
     const { headerFixed, withPaging } = this.props.chartStyles.table
-    this.adjustTableCell(headerFixed, withPaging)
+    this.adjustTableCell(headerFixed, withPaging, this.state.pagination.total)
   }
 
-  private adjustTableCell (headerFixed: boolean, withPaging: boolean) {
+  private adjustTableCell (headerFixed: boolean, withPaging: boolean, dataTotal?: number) {
     const tableDom = findDOMNode(this.table) as Element
     const excludeElems = []
     let paginationMargin = 0
+    let paginationWithoutTotalHeight = 0
     if (headerFixed) {
       excludeElems.push('.ant-table-thead')
     }
     if (withPaging) {
       excludeElems.push('.ant-pagination.ant-table-pagination')
       paginationMargin = 32
+
+      if (dataTotal === -1) {
+        paginationWithoutTotalHeight = 45
+      }
     }
     const excludeElemsHeight = excludeElems.reduce((acc, exp) => {
       const elem = tableDom.querySelector(exp)
       return acc + (elem ? elem.getBoundingClientRect().height : 0)
     }, paginationMargin)
-    const tableBodyHeight = this.props.height - excludeElemsHeight
+    const tableBodyHeight = this.props.height - excludeElemsHeight - paginationWithoutTotalHeight
     this.setState({
       tableBodyHeight
     })
@@ -754,20 +760,31 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const scroll = this.getTableScroll(columns, width, headerFixed, tableBodyHeight)
     const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
-    return (
-      <AntTable
-        key={key}
-        style={style}
-        className={styles.table}
-        ref={(f) => this.table = f}
-        dataSource={data}
-        columns={columns}
-        pagination={withPaging && paginationConfig}
-        scroll={scroll}
-        bordered
-        rowClassName={this.setRowClassName}
-        onRowClick={this.rowClick}
+    const paginationWithoutTotal = withPaging && pagination.total === -1 ? (
+      <PaginationWithoutTotal
+        dataLength={data.length}
+        size="small"
+        {...paginationConfig}
       />
+    ) : null
+
+    return (
+      <>
+        <AntTable
+          key={key}
+          style={style}
+          className={styles.table}
+          ref={(f) => this.table = f}
+          dataSource={data}
+          columns={columns}
+          pagination={withPaging && pagination.total !== -1 ? paginationConfig : false}
+          scroll={scroll}
+          bordered
+          rowClassName={this.setRowClassName}
+          onRowClick={this.rowClick}
+        />
+        {paginationWithoutTotal}
+      </>
     )
   }
 }
