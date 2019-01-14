@@ -133,27 +133,33 @@
       }
       .sqlAlertText {
         margin-right: 16px;
-        a {
-          top: 0 !important;
-          padding-bottom: 22px !important;
-        }
       }
       .fromBtn {
         margin: 10px 16px;
         display: flex;
         flex-direction: row;
-        .pageCheckbox {
-          width: 187px;
-          line-height: 32px;
-        }
+        align-items: center;
+
         .sqlAlert {
-          flex: 1 1 auto;
-          width: 100%;
+          flex: 1;
         }
-        .executeBtn {
-          width: 112px;
+
+        .limit {
           flex-shrink: 0;
-          float: right;
+          margin: 0 16px;
+          color: @disabled-text-color;
+          font-weight: bold;
+          line-height: 32px;
+          
+          .input {
+            width: 80px;
+            margin: 0 2px;
+            display: inline-block;
+          }
+        }
+
+        .executeBtn {
+          flex-shrink: 0;
         }
       }
     }

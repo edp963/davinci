@@ -121,7 +121,7 @@ export interface IWidgetProps {
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
-export interface IWdigetConfig extends IWidgetProps {
+export interface IWidgetConfig extends IWidgetProps {
   queryParams: any[]
   cache: boolean
   expired: number

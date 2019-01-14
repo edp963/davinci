@@ -182,8 +182,6 @@ export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
-export const ECHARTS_RENDERER = 'echarts'
-
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_STYLE = 'normal'
 export const DEFAULT_FONT_SIZE = '12px'

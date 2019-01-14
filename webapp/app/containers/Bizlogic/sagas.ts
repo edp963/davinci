@@ -192,7 +192,7 @@ export function* getSchema (action) {
 
 export function* executeSql (action) {
   const { payload } = action
-  const { sourceIdGeted, sql, pageNo, pageSize} = payload.requestObj
+  const { sourceIdGeted, sql, pageNo, pageSize, limit} = payload.requestObj
   try {
     const asyncData = yield call(request, {
       method: 'post',
@@ -201,7 +201,8 @@ export function* executeSql (action) {
         sourceId: sourceIdGeted,
         sql,
         pageNo,
-        pageSize
+        pageSize,
+        limit
       }
     })
     const result = asyncData && asyncData.header

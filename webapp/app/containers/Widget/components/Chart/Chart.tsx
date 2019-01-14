@@ -37,6 +37,9 @@ export class Chart extends React.PureComponent<IChartProps, IChartState> {
 
   private renderChart = (props: IChartProps) => {
     const { selectedChart, renderType, getDataDrillDetail, isDrilling } = props
+    if (renderType === 'loading') {
+      return
+    }
     if (!this.instance) {
       this.instance = echarts.init(this.container, 'default')
     } else {

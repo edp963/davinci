@@ -38,7 +38,7 @@ import { Responsive, WidthProvider } from '../../../libs/react-grid-layout'
 import { IMapItemFilterValue } from '../../../app/components/Filters'
 import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
 
-import { RenderType, IWdigetConfig } from '../../../app/containers/Widget/components/Widget'
+import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 
@@ -294,7 +294,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = currentItemsInfo[itemId].queryParams
@@ -513,7 +513,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter } = e
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
     const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
     let sql = void 0

@@ -2,13 +2,9 @@ import * as React from 'react'
 import Icon from 'antd/lib/icon'
 import Menu from 'antd/lib/menu/'
 import * as classnames from 'classnames'
-import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
-import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
-import Chart from '../Chart'
 import { IModel } from '../../../Widget/components/Workbench/index'
 import Widget from '../../../Widget/components/Widget/WidgetInViz'
-import {ECHARTS_RENDERER} from '../../../../globalConstants'
 const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {

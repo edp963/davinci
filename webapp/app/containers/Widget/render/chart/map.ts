@@ -37,7 +37,7 @@ import {
 import {
   DEFAULT_ECHARTS_THEME
 } from '../../../../globalConstants'
-import geoData from '../../../../assets/json/geo'
+import geoData from '../../../../assets/js/geo.js'
 
 const provinceSuffix = ['省', '自治区', '市']
 const citySuffix = ['自治州', '市', '区', '县', '旗', '盟', '镇']

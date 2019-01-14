@@ -32,13 +32,10 @@ import injectSaga from 'utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 
-import { echartsOptionsGenerator } from '../../../app/containers/Widget/components/chartUtil'
-import {
-  ECHARTS_RENDERER,
-  DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
+import { DEFAULT_PRIMARY_COLOR } from '../../../app/globalConstants'
 import Login from '../../components/Login/index'
 import LayerItem from '../../../app/containers/Display/components/LayerItem'
-import { RenderType, IWidgetProps } from '../../../app/containers/Widget/components/Widget'
+import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
 import { decodeMetricName } from '../../../app/containers/Widget/components/util'
 
 const styles = require('../../../app/containers/Display/Display.less')
@@ -168,7 +165,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const cachedQueryParams = layersInfo[itemId].queryParams
@@ -253,29 +250,6 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         expired
       }
     )
-  }
-
-  private renderChart = (itemId, widget, dataSource, chartInfo, interactIndex?): void => {
-    const chartInstance = this.charts[`widget_${itemId}`]
-
-    echartsOptionsGenerator({
-      dataSource,
-      chartInfo,
-      chartParams: {
-        id: widget.id,
-        name: widget.name,
-        desc: widget.desc,
-        flatTable_id: widget.viewId,
-        widgetlib_id: widget.type,
-        ...JSON.parse(widget.config).chartParams
-      },
-      interactIndex
-    })
-      .then((chartOptions) => {
-        chartInstance.setOption(chartOptions)
-        // this.registerChartInteractListener(chartInstance, itemId)
-        chartInstance.hideLoading()
-      })
   }
 
   private getSlideStyle = (slideParams) => {
