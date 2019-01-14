@@ -152,7 +152,7 @@ function dashboardReducer (state = initialState, action) {
 
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       const { dashboardDetail } = payload
-      const dashboardConfig = JSON.parse(dashboardDetail.config)
+      const dashboardConfig = dashboardDetail.config ? JSON.parse(dashboardDetail.config) : {}
       const globalFilters = dashboardConfig.filters || []
       const globalFiltersInitialValue = {}
       globalFilters.forEach((filter: IFilterItem) => {
