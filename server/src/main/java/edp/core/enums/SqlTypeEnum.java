@@ -57,6 +57,10 @@ public enum SqlTypeEnum {
         this.type = type;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public static String getType(String name) throws ServerException {
         name = name.toUpperCase();
         for (SqlTypeEnum sqlTypeEnum : values()) {

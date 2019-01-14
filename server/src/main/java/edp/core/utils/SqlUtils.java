@@ -165,9 +165,6 @@ public class SqlUtils {
                         }
                     } catch (SQLException e) {
                         log.info(">>>>>>> ResultSet Forward Only");
-                        log.info(">>>>>>> get count sql");
-//                        String countSql = getCountSql(finalSql);
-//                        total = jdbcTemplate.queryForObject(countSql, Integer.class);
                         total = -1;
                     }
 
@@ -197,6 +194,7 @@ public class SqlUtils {
             }
 
         } catch (Exception e) {
+            log.error(e.getMessage());
             throw new ServerException(e.getMessage());
         }
 
@@ -756,8 +754,7 @@ class StreamingStatementCreator implements PreparedStatementCreator {
 
     @Override
     public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-//        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+        final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
         statement.setFetchSize(Integer.MIN_VALUE);
         return statement;
     }
