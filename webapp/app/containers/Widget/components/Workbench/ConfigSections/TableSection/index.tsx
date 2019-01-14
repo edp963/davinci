@@ -3,7 +3,7 @@ import { uuid } from 'utils/util'
 import OperatorTypes from 'utils/operatorTypes'
 import { IDataParams } from '../../OperatingPanel'
 import { ViewModelType, IDataParamSource } from '../../Dropbox'
-import { decodeMetricName, getAggregatorLocale } from 'containers/Widget/components/util'
+import { decodeMetricName, getAggregatorLocale, getFieldAlias } from 'containers/Widget/components/util'
 import {
   fontSizeOptions,
   TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
@@ -290,14 +290,12 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   }
 
   private getColumnDisplayName (column: IDataParamSource) {
-    let displayName
-    if (column.field) {
-      displayName = column.field.alias
-    }
-    if (displayName) { return displayName }
-    displayName = column.name
-    if (column.agg) {
-      displayName = `[${getAggregatorLocale(column.agg)}]${decodeMetricName(displayName)}`
+    let displayName = getFieldAlias(column.field, {})
+    if (!displayName) {
+      displayName = column.name
+      if (column.agg) {
+        displayName = `[${getAggregatorLocale(column.agg)}]${decodeMetricName(displayName)}`
+      }
     }
     return displayName
   }
