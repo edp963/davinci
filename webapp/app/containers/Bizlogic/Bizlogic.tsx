@@ -42,11 +42,11 @@ require('codemirror/addon/hint/sql-hint')
 require('codemirror/addon/display/placeholder')
 
 import Form from 'antd/lib/form'
-import Checkbox from 'antd/lib/checkbox'
 import Radio from 'antd/lib/radio'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
+import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
 import Button from 'antd/lib/button'
 import Icon from 'antd/lib/icon'
@@ -145,7 +145,8 @@ interface IBizlogicFormState {
   isNameExited: boolean
   selectedSourceName: string
   sqlExecuteCode: boolean | number
-  isDataPagination: boolean
+  // isDataPagination: boolean
+  limit: number
   sql: string
   totalCount: number
 }
@@ -201,7 +202,8 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       isNameExited: false,
       selectedSourceName: '',
       sqlExecuteCode: false,
-      isDataPagination: true,
+      // isDataPagination: true,
+      limit: 500,
       sql: '',
       totalCount: 0
     }
@@ -327,7 +329,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private showViewInfo (bizlogics) {
     const { params, onLoadSchema } = this.props
-    const { listData, teamParams } = this.state
+    const { listData, limit } = this.state
 
     const {
       name,
@@ -363,22 +365,13 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
 
     const configTeam = config ? JSON.parse(config).team : ''
-    const pageObj = {
-      sourceIdGeted: sourceId,
-      sql,
-      pageNo: 1,
-      pageSize: 100
-    }
-    const noPageObj = {
+    const requestObj = {
       sourceIdGeted: sourceId,
       sql,
       pageNo: 0,
       pageSize: 0,
-      limit: 10000
+      limit
     }
-    const requestObj = config
-      ? JSON.parse(config).pagination ? pageObj : noPageObj
-      : pageObj
 
     this.props.onExecuteSql(requestObj, (result) => {
       const { resultList, totalCount } = result
@@ -585,7 +578,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private executeSql = () => {
-    const { sourceIdGeted, listData, isDeclarate, isDataPagination } = this.state
+    const { sourceIdGeted, listData, isDeclarate, limit } = this.state
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
 
@@ -620,20 +613,28 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       sql
     })
 
-    const requestObj = isDataPagination
-      ? {
-          sourceIdGeted,
-          sql,
-          pageNo: 1,
-          pageSize: 100
-        }
-      : {
-          sourceIdGeted,
-          sql,
-          pageNo: 0,
-          pageSize: 0,
-          limit: 10000
-        }
+    // const requestObj = isDataPagination
+    //   ? {
+    //       sourceIdGeted,
+    //       sql,
+    //       pageNo: 1,
+    //       pageSize: 100
+    //     }
+    //   : {
+    //       sourceIdGeted,
+    //       sql,
+    //       pageNo: 0,
+    //       pageSize: 0,
+    //       limit: 10000
+    //     }
+
+    const requestObj = {
+      sourceIdGeted,
+      sql,
+      pageNo: 0,
+      pageSize: 0,
+      limit
+    }
 
     this.props.onExecuteSql(requestObj, (result) => {
       if (result) {
@@ -681,7 +682,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   private onModalOk = () => {
     this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode, isDataPagination } = this.state
+        const { executeColumns, configTeam, listData, isDeclarate, name, description, isNameExited, sqlExecuteCode, limit } = this.state
         const { route, params } = this.props
         const { id, source_id, source_name } = values
         if (!name.trim()) {
@@ -732,10 +733,9 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               model: JSON.stringify(modelObj),
               config: configTeamStr.length !== 0
                 ? JSON.stringify({
-                    team: configTeamStr,
-                    pagination: isDataPagination
+                    team: configTeamStr
                   })
-                : JSON.stringify({ pagination: isDataPagination }),
+                : '',
               projectId: params.pid
             }
 
@@ -975,10 +975,14 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
   }
 
-  private onChangePage = (e) => {
-    this.setState({
-      isDataPagination:  e.target.checked
-    })
+  // private onChangePage = (e) => {
+  //   this.setState({
+  //     isDataPagination:  e.target.checked
+  //   })
+  // }
+
+  private limitChange = (val) => {
+    this.setState({ limit: val })
   }
 
   private onChangeDataTable = (current: number, pageSize: number) => {
@@ -1030,7 +1034,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       selectedSourceName,
       sqlExecuteCode,
       totalCount,
-      isDataPagination
+      limit
     } = this.state
 
     const itemStyle = {
@@ -1218,19 +1222,19 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       defaultPageSize: 100,
       showSizeChanger: true,
       pageSizeOptions: ['100', '200', '500', '1000'],
-      total: totalCount,
-      onChange: this.onChangeDataTable,
-      onShowSizeChange: this.onChangeDataTable
+      total: totalCount
+      // onChange: this.onChangeDataTable,
+      // onShowSizeChange: this.onChangeDataTable
     }
-    const tablePagination = isDataPagination && totalCount !== -1 ? paginationData : false
-    const paginationWithoutTotal = isDataPagination && totalCount === -1 ? (
-      <PaginationWithoutTotal
-        dataLength={tableData.length}
-        loading={executeLoading}
-        size="small"
-        {...paginationData}
-      />
-    ) : null
+    // const tablePagination = isDataPagination && totalCount !== -1 ? paginationData : false
+    // const paginationWithoutTotal = isDataPagination && totalCount === -1 ? (
+    //   <PaginationWithoutTotal
+    //     dataLength={tableData.length}
+    //     loading={executeLoading}
+    //     size="small"
+    //     {...paginationData}
+    //   />
+    // ) : null
 
     const operations = (
       <Icon
@@ -1343,14 +1347,23 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             </Row>
 
             <Row className={styles.fromBtn}>
-              <Checkbox
+              <span className={styles.sqlAlert}>
+                {sqlValidatePanel}
+              </span>
+              {/* <Checkbox
                 onChange={this.onChangePage}
                 className={styles.pageCheckbox}
                 checked={this.state.isDataPagination}
               >分页展示
-              </Checkbox>
-              <span className={styles.sqlAlert}>
-                {sqlValidatePanel}
+              </Checkbox> */}
+              <span className={styles.limit}>
+                展示前
+                <InputNumber
+                  value={limit}
+                  onChange={this.limitChange}
+                  className={styles.input}
+                />
+                条数据
               </span>
               <Button
                 className={styles.executeBtn}
@@ -1374,10 +1387,10 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           <Table
                             dataSource={tableData}
                             columns={tableColumns}
-                            pagination={tablePagination}
+                            pagination={paginationData}
                             scroll={{ x: 160 * tableDataKey.length }}
                           />
-                          {paginationWithoutTotal}
+                          {/* {paginationWithoutTotal} */}
                         </div>
                       </TabPane>
                       <TabPane tab="Model" key="model">

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import { iconMapping } from './chartUtil'
+import { iconMapping } from './util'
 
 import Icon from 'antd/lib/icon'
 import Row from 'antd/lib/row'

@@ -102,7 +102,6 @@ import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import {
-  ECHARTS_RENDERER,
   SQL_NUMBER_TYPES,
   DEFAULT_SPLITER,
   GRID_BREAKPOINTS,
@@ -112,7 +111,7 @@ import {
   KEY_COLUMN
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
-import { IWdigetConfig, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { IProject } from '../Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
@@ -156,6 +155,8 @@ interface IGridProps {
         }
         nativeQuery: boolean
         drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
+        drillpathSetting?: any
+        drillpathInstance?: any
       }
       shareInfo: string
       secretInfo: string
@@ -433,7 +434,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       widgets
     } = this.props
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
     const { queryParams: cachedQueryParams } = currentItemsInfo[itemId]
@@ -957,7 +958,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     } = this.props
     const { itemId, groups, widgetId, sourceDataFilter, mode, col, row } = e
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWdigetConfig = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
     const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
     let sql = void 0
@@ -1274,11 +1275,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         const widget = widgets.find((w) => w.id === widgetId)
         const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
-        const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
-        const drillpathSetting = currentItemsInfo[id]['queryParams']['drillpathSetting'] ? currentItemsInfo[id]['queryParams']['drillpathSetting'] : void 0
-        const drillpathInstance = currentItemsInfo[id]['queryParams']['drillpathInstance'] ? currentItemsInfo[id]['queryParams']['drillpathInstance'] : void 0
+        const drillHistory = queryParams.drillHistory
+        const drillpathSetting = queryParams.drillpathSetting
+        const drillpathInstance = queryParams.drillpathInstance
 
         const { globalParams, linkageParams, params } = queryParams
+        // const queryVars = null
         const queryVars = [...globalParams, ...linkageParams, ...params]
           .reduce((obj, { name, value }) => {
             obj[`$${name}$`] = value

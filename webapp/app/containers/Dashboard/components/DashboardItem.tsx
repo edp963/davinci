@@ -32,7 +32,7 @@ import {IView, IModel} from '../../../containers/Widget/components/Workbench/ind
 
 import Widget from '../../Widget/components/Widget/WidgetInViz'
 import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
-import { IWdigetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
+import { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import Icon, { IconProps } from 'antd/lib/icon'
 import Tooltip from 'antd/lib/tooltip'
 import Popconfirm from 'antd/lib/popconfirm'
@@ -90,7 +90,7 @@ interface IDashboardItemProps {
 interface IDashboardItemStates {
   controlPanelVisible: boolean
   sharePanelAuthorized: boolean
-  widgetProps: IWdigetConfig
+  widgetProps: IWidgetConfig
   pagination: IPaginationParams
   nativeQuery: boolean
   model: IModel
@@ -99,7 +99,7 @@ interface IDashboardItemStates {
   whichDataDrillBrushed: boolean | object []
   sourceDataOfBrushed: boolean | object []
   // isShowDrillPanel: boolean
-  cacheWidgetProps: IWdigetConfig
+  cacheWidgetProps: IWidgetConfig
   cacheWidgetId: boolean | number
 }
 
@@ -175,6 +175,14 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillUpdate (nextProps: IDashboardItemProps) {
+    // console.log('---------------- in ------------------')
+    // Object.entries(nextProps).forEach(([k, v]) => {
+    //   if (v !== this.props[k]) {
+    //     console.log(k)
+    //     console.log(v)
+    //     console.log(this.props[k])
+    //   }
+    // })
     const {
       itemId,
       widget,
@@ -196,6 +204,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
       this.setFrequent(nextProps)
     }
+    // console.log('---------------- out ------------------')
   }
 
   public componentWillUnmount () {
@@ -203,7 +212,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   // @FIXME need refactor
-  private getPagination = (widgetProps: IWdigetConfig, datasource) => {
+  private getPagination = (widgetProps: IWidgetConfig, datasource) => {
     const { chartStyles } = widgetProps
     const { table } = chartStyles
     if (!table) { return null }
@@ -222,7 +231,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     return pagination
   }
 
-  private getNativeQuery = (widgetProps: IWdigetConfig) => {
+  private getNativeQuery = (widgetProps: IWidgetConfig) => {
     let noAggregators = false
     const { chartStyles } = widgetProps
     const { table } = chartStyles

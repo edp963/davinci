@@ -836,3 +836,28 @@ export function getFieldAlias (fieldConfig: IFieldConfig, queryVars: { [key: str
     Message.error(`字段别名转换错误：${e.message}`)
   }
 }
+
+export const iconMapping = {
+  line: 'icon-chart-line',
+  bar: 'icon-chart-bar',
+  scatter: 'icon-scatter-chart',
+  pie: 'icon-chartpie',
+  area: 'icon-area-chart',
+  sankey: 'icon-kongjiansangjitu',
+  funnel: 'icon-iconloudoutu',
+  treemap: 'icon-chart-treemap',
+  wordCloud: 'icon-chartwordcloud',
+  table: 'icon-table',
+  scorecard: 'icon-calendar1',
+  text: 'icon-text',
+  map: 'icon-china',
+  doubleYAxis: 'icon-duplex',
+  boxplot: 'icon-508tongji_xiangxiantu',
+  markBoxplot: 'icon-508tongji_xiangxiantu',
+  graph: 'icon-510tongji_guanxitu',
+  waterfall: 'icon-waterfall',
+  gauge: 'icon-gauge',
+  radar: 'icon-radarchart',
+  parallel: 'icon-parallel',
+  confidenceBand: 'icon-confidence-band'
+}
