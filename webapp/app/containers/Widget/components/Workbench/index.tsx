@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -85,6 +85,8 @@ interface IWorkbenchStates {
   widgetProps: IWidgetProps
 }
 
+const SplitPane = React.lazy(() => import('react-split-pane'))
+
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
 
   private operatingPanel: OperatingPanel = null
@@ -128,6 +130,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillMount () {
+    import('assets/less/resizer.less')
     const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
     onLoadBizlogics(Number(params.pid), () => {
       if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
@@ -302,33 +305,43 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           loading={loading}
         />
         <div className={styles.body}>
-          <OperatingPanel
-            ref={(f) => this.operatingPanel = f}
-            views={views}
-            originalWidgetProps={originalWidgetProps}
-            selectedView={selectedView}
-            distinctColumnValues={distinctColumnValues}
-            columnValueLoading={columnValueLoading}
-            queryParams={queryParams}
-            cache={cache}
-            expired={expired}
-            onViewSelect={this.viewSelect}
-            onSetQueryParams={this.setQueryParams}
-            onCacheChange={this.cacheChange}
-            onExpiredChange={this.expiredChange}
-            onSetWidgetProps={this.setWidgetProps}
-            onLoadData={onLoadData}
-            onLoadDistinctValue={onLoadDistinctValue}
-          />
-          <div className={styles.viewPanel}>
-            <div className={styles.widgetBlock}>
-              <Widget
-                {...widgetProps}
-                loading={dataLoading}
-                onPaginationChange={this.paginationChange}
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              minSize={440}
+              maxSize={660}
+              pane1Style={{ display: 'flex' }}
+              pane2Style={{ display: 'flex' }}
+            >
+              <OperatingPanel
+                ref={(f) => this.operatingPanel = f}
+                views={views}
+                originalWidgetProps={originalWidgetProps}
+                selectedView={selectedView}
+                distinctColumnValues={distinctColumnValues}
+                columnValueLoading={columnValueLoading}
+                queryParams={queryParams}
+                cache={cache}
+                expired={expired}
+                onViewSelect={this.viewSelect}
+                onSetQueryParams={this.setQueryParams}
+                onCacheChange={this.cacheChange}
+                onExpiredChange={this.expiredChange}
+                onSetWidgetProps={this.setWidgetProps}
+                onLoadData={onLoadData}
+                onLoadDistinctValue={onLoadDistinctValue}
               />
-            </div>
-          </div>
+              <div className={styles.viewPanel}>
+                <div className={styles.widgetBlock}>
+                  <Widget
+                    {...widgetProps}
+                    loading={dataLoading}
+                    onPaginationChange={this.paginationChange}
+                  />
+                </div>
+              </div>
+            </SplitPane>
+          </Suspense>
         </div>
       </div>
     )
