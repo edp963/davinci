@@ -170,37 +170,63 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const { dataParams } = this.state
       const model = JSON.parse(selectedView.model)
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
-      dataParams.cols.items = cols.map((c) => ({
-        ...c,
-        from: 'cols',
-        type: 'category' as DragType,
-        visualType: c.name === '指标名称' ? 'string' : model[c.name].visualType
-      }))
-      dataParams.rows.items = rows.map((r) => ({
-        ...r,
-        from: 'rows',
-        type: 'category' as DragType,
-        visualType: r.name === '指标名称' ? 'string' :  model[r.name].visualType
-      }))
-      dataParams.metrics.items = metrics.map((m) => ({
-        ...m,
-        from: 'metrics',
-        type: 'value' as DragType,
-        visualType: model[decodeMetricName(m.name)].visualType,
-        chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
-      }))
+
+      cols.forEach((c) => {
+        const modelColumn = model[c.name]
+        if (modelColumn) {
+          dataParams.cols.items = dataParams.cols.items.concat({
+            ...c,
+            from: 'cols',
+            type: 'category' as DragType,
+            visualType: c.name === '指标名称' ? 'string' : modelColumn.visualType
+          })
+        }
+      })
+      rows.forEach((r) => {
+        const modelColumn = model[r.name]
+        if (modelColumn) {
+          dataParams.rows.items = dataParams.rows.items.concat({
+            ...r,
+            from: 'rows',
+            type: 'category' as DragType,
+            visualType: r.name === '指标名称' ? 'string' :  modelColumn.visualType
+          })
+        }
+      })
+      metrics.forEach((m) => {
+        const modelColumn = model[decodeMetricName(m.name)]
+        if (modelColumn) {
+          dataParams.metrics.items = dataParams.metrics.items.concat({
+            ...m,
+            from: 'metrics',
+            type: 'value' as DragType,
+            visualType: modelColumn.visualType,
+            chart: currentWidgetlibs.find((wl) => wl.id === m.chart.id) // FIXME 兼容 0.3.0-beta.1 之前版本，widgetlib requireDimetions requireMetrics 有发生变更
+          })
+        }
+      })
       if (dataParams.secondaryMetrics && secondaryMetrics) {
-        dataParams.secondaryMetrics.items = secondaryMetrics.map((m) => ({
-          ...m,
-          from: 'secondaryMetrics',
-          type: 'value' as DragType,
-          visualType: model[decodeMetricName(m.name)].visualType
-        }))
+        secondaryMetrics.forEach((m) => {
+          const modelColumn = model[decodeMetricName(m.name)]
+          if (modelColumn) {
+            dataParams.secondaryMetrics.items = dataParams.secondaryMetrics.items.concat({
+              ...m,
+              from: 'secondaryMetrics',
+              type: 'value' as DragType,
+              visualType: modelColumn.visualType
+            })
+          }
+        })
       }
-      dataParams.filters.items = filters.map((f) => ({
-        ...f,
-        visualType: model[f.name]
-      }))
+      filters.forEach((f) => {
+        const modelColumn = model[f.name]
+        if (modelColumn) {
+          dataParams.filters.items = dataParams.filters.items.concat({
+            ...f,
+            visualType: modelColumn.visualType
+          })
+        }
+      })
 
       const mergedDataParams = {
         ...dataParams,
