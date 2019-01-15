@@ -24,9 +24,11 @@ import edp.davinci.dto.sourceDto.SourceWithProject;
 import edp.davinci.dto.teamDto.TeamFullId;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
+import edp.davinci.service.AdditionalTeamVarService;
 import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -80,6 +82,12 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Autowired
     private RedisUtils redisUtils;
 
+    @Autowired
+    private BeanFactory beanFactory;
+
+    @Autowired(required = false)
+    private AdditionalTeamVarService additionalTeamVarService;
+
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
 
@@ -88,7 +96,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     protected static final String viewMetaCacheKey = "view_meta_";
 
     protected static final String viewTeamVarKey = "team";
-
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -941,9 +948,23 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
                 String teamVarString = jsonObject.getString(viewTeamVarKey);
                 if (!StringUtils.isEmpty(teamVarString)) {
+                    //配置的teamVar列表
                     List<TeamVar> teamVarList = JSONObject.parseArray(teamVarString, TeamVar.class);
+                    //过滤掉不生效的 teamvar
                     teamVarFilter(teamVarList, user, view.getProject().getId());
+
                     if (null != teamVarList && teamVarList.size() > 0) {
+
+                        List<TeamVar> additionalList = null;
+
+
+                        if (null != additionalTeamVarService) {
+                            additionalList = additionalTeamVarService.getTeamValList(view.getProject(), user);
+                            if (null != additionalList && additionalList.size() > 0) {
+                                teamVarList.addAll(additionalList);
+                            }
+                        }
+
                         for (String key : paramMap.keySet()) {
                             Set<String> params = new HashSet<>();
                             for (TeamVar teamVar : teamVarList) {
@@ -1052,9 +1073,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                                Map<String, String> queryParams) {
 
         StringBuilder sqlKey = new StringBuilder(prefix)
-                .append(String.valueOf(viewWithProjectAndSource.getSource().getId()))
+                .append(viewWithProjectAndSource.getSource().getId())
                 .append("-")
-                .append(String.valueOf(viewWithProjectAndSource.getId()));
+                .append(viewWithProjectAndSource.getId());
 
         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
         ST st = stg.getInstanceOf("querySql");

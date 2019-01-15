@@ -102,7 +102,7 @@ queryDistinctSql(columns, params, sql, keywordPrefix, keywordSuffix)
 <if(keywordPrefix && keywordSuffix)>
 SELECT DISTINCT <columns:{column|<if(column)><keywordPrefix><column><keywordSuffix><endif>}; separator=","> FROM (<sql>) T
 <if(params)>
-WHERE <params:{param|<if(param)><keywordPrefix><param.column><keywordSuffix> = <param.value><endif>}; separator=" AND ">
+WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|<keywordPrefix><k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
 <endif>
 ORDER BY <columns:{column|<if(column)><keywordPrefix><column><keywordSuffix><endif>}; separator=",">
 <else>

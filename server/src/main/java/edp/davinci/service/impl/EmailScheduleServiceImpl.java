@@ -29,6 +29,7 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
@@ -268,7 +269,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                 if (dashboard != null) {
                     Set<Widget> widgets = widgetMapper.getByDashboard(dashboard.getId());
                     if (widgets != null && widgets.size() > 0) {
-                        String filePath = fileBasePath + baseUrl + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + ".xlsx";
+                        String filePath = fileBasePath + baseUrl + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
 
                         filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
 
@@ -281,7 +282,7 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                 if (display != null) {
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
                     if (widgets != null && widgets.size() > 0) {
-                        String filePath = fileBasePath + baseUrl + File.separator + display.getName() + "-" + UUID.randomUUID() + ".xlsx";
+                        String filePath = fileBasePath + baseUrl + File.separator + display.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
                         filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
                         File file = widgetService.writeExcel(widgets, null, filePath, user, false);
                         files.add(file);
