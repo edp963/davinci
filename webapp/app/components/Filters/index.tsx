@@ -404,6 +404,8 @@ export function getDefaultValue (filter: IFilterItem) {
           default:
             return defaultValue && moment(defaultValue)
         }
+      } else {
+        return defaultValue && moment(defaultValue)
       }
     default:
       return defaultValue
