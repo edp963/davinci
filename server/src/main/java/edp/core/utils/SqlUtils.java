@@ -467,14 +467,14 @@ public class SqlUtils {
         } catch (Exception e) {
             connection = null;
         }
-        if (null == connection) {
-            releaseDataSource(this.jdbcUrl, this.username, this.password);
-            try {
+        try {
+            if (null == connection || connection.isClosed() || !connection.isValid(5)) {
+                releaseDataSource(this.jdbcUrl, this.username, this.password);
                 connection = dataSource.getConnection();
-            } catch (Exception e) {
-                log.error("create connection error, jdbcUrl: {}", jdbcUrl);
-                throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
             }
+        } catch (Exception e) {
+            log.error("create connection error, jdbcUrl: {}", jdbcUrl);
+            throw new SourceException("create connection error, jdbcUrl: " + this.jdbcUrl);
         }
         return connection;
     }

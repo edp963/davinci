@@ -169,24 +169,8 @@ public class ExcelUtils {
                                   boolean containType,
                                   String json) {
 
-        boolean isTable = isTable(json);
 
         XSSFRow row = null;
-
-
-        ScriptEngine engine = null;
-        if (isTable) {
-            try {
-                engine = getScriptEngine();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        long l = System.currentTimeMillis();
-        List<ExcelHeader> excelHeaders = formatHeader(engine, json);
-        long l1 = System.currentTimeMillis();
-        System.out.println("header format: >>>>>" + (l1 - l));
 
         XSSFCellStyle cellStyle = workbook.createCellStyle();
         XSSFCellStyle headerCellStyle = workbook.createCellStyle();
@@ -203,6 +187,19 @@ public class ExcelUtils {
         headerCellStyle.setFont(font);
         headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
         headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+        boolean isTable = isTable(json);
+
+        ScriptEngine engine = null;
+        List<ExcelHeader> excelHeaders = null;
+        if (isTable) {
+            try {
+                engine = getScriptEngine();
+                excelHeaders = formatHeader(engine, json);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
         int rownum = 0;
 
