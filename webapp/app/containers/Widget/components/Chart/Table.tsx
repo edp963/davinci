@@ -277,7 +277,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (!data.length) { return [] }
 
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
-      const { name, field, format, expression } = metaConfig
+      const { name, field, format, expression, agg } = metaConfig
       const titleText = this.getColumnTitleText(field, expression)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
@@ -288,7 +288,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         key: expression,
         render: (val, _, idx) => {
           let span = 1
-          if (autoMergeCell) {
+          if (autoMergeCell && !agg) {
             span = this.getMergedCellSpan(data, expression, idx)
           }
           const isMerged = span !== 1
@@ -343,7 +343,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       column.render = (_, record, idx) => {
         let span = 1
-        if (autoMergeCell) {
+        if (autoMergeCell && !agg) {
           span = this.getMergedCellSpan(data, expression, idx)
         }
         const isMerged = span !== 1
@@ -403,13 +403,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       header.width = columnWidth
       const metaConfig = mapMetaConfig[headerName]
       metaKeys.push(headerName)
-      const { name, field, format, expression } = metaConfig
+      const { name, field, format, expression, agg } = metaConfig
       titleText = this.getColumnTitleText(field, expression)
       const cellValRange = this.getTableCellValueRange(data, expression)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       header.render = (_, record, idx) => {
         let span = 1
-        if (autoMergeCell) {
+        if (autoMergeCell && !agg) {
           span = this.getMergedCellSpan(data, expression, idx)
         }
         const isMerged = span !== 1
