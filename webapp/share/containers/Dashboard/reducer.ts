@@ -68,7 +68,8 @@ function shareReducer (state = initialState, { type, payload }) {
               globalFilters: [],
               params: [],
               linkageParams: [],
-              globalParams: []
+              globalParams: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
@@ -98,7 +99,8 @@ function shareReducer (state = initialState, { type, payload }) {
               globalFilters: [],
               params: [],
               linkageParams: [],
-              globalParams: []
+              globalParams: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
@@ -123,7 +125,9 @@ function shareReducer (state = initialState, { type, payload }) {
             globalFilters: payload.params.globalFilters,
             params: payload.params.params,
             linkageParams: payload.params.linkageParams,
-            globalParams: payload.params.globalParams
+            globalParams: payload.params.globalParams,
+            pagination: payload.params.pagination,
+            nativeQuery: payload.params.nativeQuery
           }
         }
       })

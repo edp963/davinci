@@ -262,7 +262,16 @@ export function* getDistinctValue (action) {
 
 export function* getDataFromItem (action) {
   const { renderType, itemId, viewId, params: parameters, vizType } = action.payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    params,
+    linkageParams,
+    globalParams,
+    pagination,
+    ...rest } = parameters
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const response = yield call(request, {
@@ -271,7 +280,9 @@ export function* getDataFromItem (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: params.concat(linkageParams).concat(globalParams),
+        pageSize,
+        pageNo
       }
     })
     const { resultList } = response.payload

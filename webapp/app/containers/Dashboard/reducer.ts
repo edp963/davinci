@@ -283,7 +283,9 @@ function dashboardReducer (state = initialState, action) {
               globalFilters: payload.params.globalFilters,
               params: payload.params.params,
               linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams
+              globalParams: payload.params.globalParams,
+              pagination: payload.params.pagination,
+              nativeQuery: payload.params.nativeQuery
             }
           }
         })

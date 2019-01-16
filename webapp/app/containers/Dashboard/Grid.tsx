@@ -191,6 +191,10 @@ interface IGridProps {
       orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
+      pagination: {
+        pageNo: number
+        pageSize: number
+      }
       nativeQuery: boolean
     }
   ) => void
@@ -520,16 +524,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       orders,
       cache,
       expired,
-      pageNo: 0,
-      pageSize: 0,
+      pagination,
       nativeQuery
-    }
-
-    if (pagination.pageNo) {
-      mergedQueryParams.pageNo = pagination.pageNo
-    }
-    if (pagination.pageSize) {
-      mergedQueryParams.pageSize = pagination.pageSize
     }
 
     callback(
@@ -880,11 +876,18 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private globalFilterChange = (queryParams: IMapItemFilterValue) => {
-    const { currentItems } = this.props
+    const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
+      let pageNo = 0
+      const { pagination } = currentItemsInfo[itemId].queryParams
+      if (pagination.pageNo) { pageNo = 1 }
       const { params: globalParams, filters: globalFilters } = queryParam
-      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
+      this.getChartData('rerender', +itemId, item.widgetId, {
+        globalParams,
+        globalFilters,
+        pagination: { ...pagination, pageNo }
+      })
     })
   }
 
