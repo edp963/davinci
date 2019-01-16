@@ -290,12 +290,13 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   }
 
   private getColumnDisplayName (column: IDataParamSource) {
-    let displayName = getFieldAlias(column.field, {})
-    if (!displayName) {
-      displayName = column.name
-      if (column.agg) {
-        displayName = `[${getAggregatorLocale(column.agg)}]${decodeMetricName(displayName)}`
-      }
+    let displayName = `${decodeMetricName(column.name)}`
+    if (column.agg) {
+      displayName = `[${getAggregatorLocale(column.agg)}]${displayName}`
+    }
+    const alias = getFieldAlias(column.field, {})
+    if (alias) {
+      displayName = `${displayName}[${alias}]`
     }
     return displayName
   }
