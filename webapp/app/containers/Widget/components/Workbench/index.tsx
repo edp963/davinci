@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -81,16 +81,22 @@ interface IWorkbenchStates {
   queryParams: any[]
   cache: boolean
   expired: number
+  splitSize: number
   originalWidgetProps: IWidgetProps
   widgetProps: IWidgetProps
 }
 
+const SplitPane = React.lazy(() => import('react-split-pane'))
+
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
 
   private operatingPanel: OperatingPanel = null
+  private defaultSplitSize = 440
+  private maxSplitSize = this.defaultSplitSize * 1.5
 
   constructor (props) {
     super(props)
+    const splitSize = +localStorage.getItem('workbenchSplitSize') || this.defaultSplitSize
     this.state = {
       id: 0,
       name: '',
@@ -99,6 +105,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       queryParams: [],
       cache: false,
       expired: 300,
+      splitSize,
       originalWidgetProps: null,
       widgetProps: {
         data: [],
@@ -128,6 +135,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillMount () {
+    import('assets/less/resizer.less')
     const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
     onLoadBizlogics(Number(params.pid), () => {
       if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
@@ -266,6 +274,19 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.operatingPanel.triggerWidgetRefresh(pageNo, pageSize)
   }
 
+  private saveSplitSize (newSize: number) {
+    localStorage.setItem('workbenchSplitSize', newSize.toString())
+  }
+
+  private resizeChart = () => {
+    this.setState({
+      widgetProps: {
+        ...this.state.widgetProps,
+        renderType: 'resize'
+      }
+    })
+  }
+
   public render () {
     const {
       views,
@@ -283,6 +304,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       queryParams,
       cache,
       expired,
+      splitSize,
       originalWidgetProps,
       widgetProps
     } = this.state
@@ -302,33 +324,44 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           loading={loading}
         />
         <div className={styles.body}>
-          <OperatingPanel
-            ref={(f) => this.operatingPanel = f}
-            views={views}
-            originalWidgetProps={originalWidgetProps}
-            selectedView={selectedView}
-            distinctColumnValues={distinctColumnValues}
-            columnValueLoading={columnValueLoading}
-            queryParams={queryParams}
-            cache={cache}
-            expired={expired}
-            onViewSelect={this.viewSelect}
-            onSetQueryParams={this.setQueryParams}
-            onCacheChange={this.cacheChange}
-            onExpiredChange={this.expiredChange}
-            onSetWidgetProps={this.setWidgetProps}
-            onLoadData={onLoadData}
-            onLoadDistinctValue={onLoadDistinctValue}
-          />
-          <div className={styles.viewPanel}>
-            <div className={styles.widgetBlock}>
-              <Widget
-                {...widgetProps}
-                loading={dataLoading}
-                onPaginationChange={this.paginationChange}
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              defaultSize={splitSize}
+              minSize={this.defaultSplitSize}
+              maxSize={this.maxSplitSize}
+              onChange={this.saveSplitSize}
+              onDragFinished={this.resizeChart}
+            >
+              <OperatingPanel
+                ref={(f) => this.operatingPanel = f}
+                views={views}
+                originalWidgetProps={originalWidgetProps}
+                selectedView={selectedView}
+                distinctColumnValues={distinctColumnValues}
+                columnValueLoading={columnValueLoading}
+                queryParams={queryParams}
+                cache={cache}
+                expired={expired}
+                onViewSelect={this.viewSelect}
+                onSetQueryParams={this.setQueryParams}
+                onCacheChange={this.cacheChange}
+                onExpiredChange={this.expiredChange}
+                onSetWidgetProps={this.setWidgetProps}
+                onLoadData={onLoadData}
+                onLoadDistinctValue={onLoadDistinctValue}
               />
-            </div>
-          </div>
+              <div className={styles.viewPanel}>
+                <div className={styles.widgetBlock}>
+                  <Widget
+                    {...widgetProps}
+                    loading={dataLoading}
+                    onPaginationChange={this.paginationChange}
+                  />
+                </div>
+              </div>
+            </SplitPane>
+          </Suspense>
         </div>
       </div>
     )
