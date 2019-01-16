@@ -76,7 +76,7 @@ interface ITableStates {
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
-  private table: AntTable<any>
+  private table = React.createRef<AntTable<any>>()
   private defaultColumnWidth = 200
 
   private onPaginationChange = (current: number, pageSize: number) => {
@@ -124,7 +124,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private adjustTableCell (headerFixed: boolean, withPaging: boolean, dataTotal?: number) {
-    const tableDom = findDOMNode(this.table) as Element
+    const tableDom = findDOMNode(this.table.current) as Element
     const excludeElems = []
     let paginationMargin = 0
     let paginationWithoutTotalHeight = 0
@@ -774,7 +774,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           key={key}
           style={style}
           className={styles.table}
-          ref={(f) => this.table = f}
+          ref={this.table}
           dataSource={data}
           columns={columns}
           pagination={withPaging && pagination.total !== -1 ? paginationConfig : false}

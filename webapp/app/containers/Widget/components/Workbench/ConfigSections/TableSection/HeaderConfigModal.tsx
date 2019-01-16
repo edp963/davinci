@@ -1,4 +1,5 @@
 import * as React from 'react'
+import classnames from 'classnames'
 import {
   PIVOT_DEFAULT_FONT_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -59,6 +60,8 @@ interface IHeaderConfigModalStates {
 }
 
 export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalProps, IHeaderConfigModalStates> {
+
+  private headerNameInput = React.createRef<Input>()
 
   public constructor (props: IHeaderConfigModalProps) {
     super(props)
@@ -171,7 +174,10 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       alias: null,
       visualType: null,
       isGroup: true,
-      style: { ...DefaultTableCellStyle },
+      style: {
+        ...DefaultTableCellStyle,
+        justifyContent: 'center'
+      },
       children: ancestors
     }
 
@@ -189,6 +195,9 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       mapHeaderParent: newMapHeaderParent,
       currentEditingConfig: insertConfig,
       currentSelectedKeys: []
+    }, () => {
+      this.headerNameInput.current.focus()
+      this.headerNameInput.current.select()
     })
   }
 
@@ -237,6 +246,9 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
         if (hasFound) {
           this.setState({
             currentEditingConfig: cursorConfig
+          }, () => {
+            this.headerNameInput.current.focus()
+            this.headerNameInput.current.select()
           })
         }
         return hasFound
@@ -312,6 +324,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       const { headerName: currentEditingHeaderName } = currentEditingConfig
       return (
         <Input
+          ref={this.headerNameInput}
           className={styles.tableInput}
           defaultValue={currentEditingHeaderName}
           onPressEnter={this.saveEditingHeaderName}
@@ -347,7 +360,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       const { style } = record
       const { fontSize, fontFamily, fontColor, fontStyle, fontWeight } = style
       return (
-        <div className={styles.rows}>
+        <>
           <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
             <Col span={14}>
               <Select
@@ -401,7 +414,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
               </Select>
             </Col>
           </Row>
-        </div>
+        </>
       )
     }
   }, {
@@ -457,6 +470,10 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       ...this.tableRowSelection,
       selectedRowKeys: currentSelectedKeys
     }
+    const wrapTableCls = classnames({
+      [styles.rows]: true,
+      [styles.headerTable]: true
+    })
 
     return (
       <Modal
@@ -482,6 +499,8 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
               </Row>
             </Col>
           </Row>
+        </div>
+        <div className={wrapTableCls}>
           <Row gutter={8} className={styles.rowBlock}>
             <Col span={24}>
               <Table

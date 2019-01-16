@@ -22,6 +22,7 @@ import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
 import message from 'antd/lib/message'
+import 'assets/less/resizer.less'
 const styles = require('./Workbench.less')
 
 export interface IView {
@@ -135,7 +136,6 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillMount () {
-    import('assets/less/resizer.less')
     const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
     onLoadBizlogics(Number(params.pid), () => {
       if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
