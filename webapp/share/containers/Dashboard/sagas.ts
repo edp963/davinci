@@ -73,7 +73,16 @@ export function* getWidget (action) {
 export function* getResultset (action) {
   const { payload } = action
   const { renderType, itemId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    params,
+    linkageParams,
+    globalParams,
+    pagination,
+    ...rest } = parameters
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const resultset = yield call(request, {
@@ -82,7 +91,9 @@ export function* getResultset (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: params.concat(linkageParams).concat(globalParams),
+        pageSize,
+        pageNo
       }
     })
     yield put(resultsetGetted(renderType, itemId, resultset.payload))

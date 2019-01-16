@@ -98,6 +98,11 @@ interface IDashboardProps {
         params: Array<{name: string, value: string}>
         linkageParams: Array<{name: string, value: string}>
         globalParams: Array<{name: string, value: string}>
+        pagination: {
+          pageNo: number
+          pageSize: number
+        }
+        nativeQuery: boolean
       }
       downloadCsvLoading: boolean
       renderType: RenderType
@@ -124,6 +129,11 @@ interface IDashboardProps {
       orders: Array<{column: string, direction: string}>
       cache: boolean
       expired: number
+      pagination: {
+        pageNo: number
+        pageSize: number
+      }
+      nativeQuery: boolean
     }
   ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
@@ -305,6 +315,8 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     let linkageParams
     let globalParams
     let drillStatus
+    let pagination
+    let nativeQuery
 
     if (queryParams) {
       linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
@@ -313,12 +325,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
       globalParams = queryParams.globalParams || cachedQueryParams.globalParams
       drillStatus = queryParams.drillStatus || void 0
+      pagination = queryParams.pagination || cachedQueryParams.pagination
+      nativeQuery = queryParams.nativeQuery || cachedQueryParams.nativeQuery
     } else {
       linkageFilters = cachedQueryParams.linkageFilters
       globalFilters = cachedQueryParams.globalFilters
       params = cachedQueryParams.params
       linkageParams = cachedQueryParams.linkageParams
       globalParams = cachedQueryParams.globalParams
+      pagination = cachedQueryParams.pagination
+      nativeQuery = cachedQueryParams.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -378,7 +394,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         globalParams,
         orders,
         cache,
-        expired
+        expired,
+        pagination,
+        nativeQuery
       }
     )
   }
@@ -497,11 +515,18 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
   }
 
   private globalFilterChange = (queryParams: IMapItemFilterValue) => {
-    const { currentItems } = this.props
+    const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryParams).forEach(([itemId, queryParam]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
+      let pageNo = 0
+      const { pagination } = currentItemsInfo[itemId].queryParams
+      if (pagination.pageNo) { pageNo = 1 }
       const { params: globalParams, filters: globalFilters } = queryParam
-      this.getChartData('rerender', +itemId, item.widgetId, { globalParams, globalFilters })
+      this.getChartData('rerender', +itemId, item.widgetId, {
+        globalParams,
+        globalFilters,
+        pagination: { ...pagination, pageNo }
+      })
     })
   }
 
