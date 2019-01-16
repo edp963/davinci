@@ -246,6 +246,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
 3. 可使用时间辅助函数生成格式时间字符串参与别名运算。
   Moment() // 取当前时间
   Moment('2018-01-01') // 转换指定的日期
+  Moment().add(1, 'days').add(-1, 'months') // 日期推算，可链式调用，其中参数分别为数量和单位（'hours', days', 'weeks', 'months', 'years' 等）
   Moment().format('YYYY-MM-DD HH:mm:ss') // 时间的格式化，其中两位的重复字母依次代表“年”、“月”、“日”、“时”、“分”、“秒”
 4. 编写完毕后，可点击“测试”按钮查看显示效果，若含有参数，则需要在弹窗中需要测试的参数值，若报错，请调整编写。
 5. 例子
