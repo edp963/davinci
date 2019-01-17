@@ -5,7 +5,7 @@ import Tooltip from 'antd/lib/tooltip'
 import Popconfirm from 'antd/lib/popconfirm'
 import Button from 'antd/lib/button'
 import Input from 'antd/lib/input'
-import Table from 'antd/lib/table'
+import Table, { PaginationConfig } from 'antd/lib/table'
 import Modal from 'antd/lib/modal'
 const styles = require('../Team.less')
 import AddForm from './AddForm'
@@ -28,6 +28,7 @@ interface IMemberListState {
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
   currentTeamMembers: any[]
+  pagination: PaginationConfig
 }
 
 interface IMemberListProps {
@@ -53,7 +54,12 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       currentMember: {},
       changeRoleFormVisible: false,
       changeRoleModalLoading: false,
-      currentTeamMembers: []
+      currentTeamMembers: [],
+      pagination: {
+        defaultPageSize: 50,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100']
+      }
     }
   }
   public componentDidMount () {
@@ -155,7 +161,8 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormVisible,
       changeRoleModalLoading,
       changeRoleFormCategory,
-      currentTeamMembers
+      currentTeamMembers,
+      pagination
     } = this.state
     const { currentTeam} = this.props
     let CreateButton = void 0
@@ -250,6 +257,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
               bordered
               columns={columns}
               dataSource={currentTeamMembers as Team.ITeamMembers[]}
+              pagination={pagination}
             />
           </div>
         </Row>

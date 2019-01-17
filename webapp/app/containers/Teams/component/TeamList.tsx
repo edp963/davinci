@@ -5,7 +5,7 @@ import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Tooltip from 'antd/lib/tooltip'
 import Input from 'antd/lib/input'
-import Table from 'antd/lib/table'
+import Table, { PaginationConfig } from 'antd/lib/table'
 import Modal from 'antd/lib/modal'
 import Button from 'antd/lib/button'
 const styles = require('../Team.less')
@@ -26,6 +26,7 @@ interface ITeamListState {
   formVisible: boolean
   teamFormVisible: boolean
   listType: string
+  pagination: PaginationConfig
 }
 
 interface ITeamListProps {
@@ -47,7 +48,12 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       formType: '',
       formVisible: false,
       teamFormVisible: false,
-      listType: ''
+      listType: '',
+      pagination: {
+        defaultPageSize: 50,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100']
+      }
     }
   }
 
@@ -159,7 +165,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
   }
 
   public render () {
-    const { formVisible, teamFormVisible, listType } = this.state
+    const { formVisible, teamFormVisible, listType, pagination } = this.state
     const { currentTeamTeams, currentTeam, teamModalLoading } = this.props
 
     let CreateButton = void 0
@@ -225,6 +231,7 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
               bordered
               columns={columns}
               dataSource={this.filter(currentTeamTeams)}
+              pagination={pagination}
             />
           </div>
         </Row>

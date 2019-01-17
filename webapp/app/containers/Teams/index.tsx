@@ -25,6 +25,8 @@ const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
 import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
+import { PaginationConfig } from 'antd/lib/table'
+import Pagination from 'antd/lib/pagination'
 
 interface ITeam {
   id: number
@@ -42,33 +44,79 @@ interface ITeamProps {
   onLoadTeams?: () => any
 }
 
+interface ITeamStates {
+  pagination: PaginationConfig
+}
 
 
-export class Teams extends React.PureComponent <ITeamProps> {
+
+export class Teams extends React.PureComponent <ITeamProps, ITeamStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      pagination: {
+        current: 1,
+        pageSize: 20,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        total: 0
+      }
+    }
+  }
+
   private toTeam = (team) => () => {
     this.props.router.push(`/account/team/${team.id}`)
   }
+
   public componentWillMount () {
     const { onLoadTeams } = this.props
     onLoadTeams()
   }
+
+  public componentWillReceiveProps (nextProps: ITeamProps) {
+    const { teams } = this.props
+    const { pagination } = this.state
+    if (nextProps.teams !== teams) {
+      this.setState({
+        pagination: {
+          ...pagination,
+          current: 1,
+          total: nextProps.teams.length
+        }
+      })
+    }
+  }
+
+  private change = (current, pageSize) => {
+    this.setState({
+      pagination: {
+        ...this.state.pagination,
+        current,
+        pageSize
+      }
+    })
+  }
+
   public render () {
     const { teams } = this.props
-    const teamArr = teams ? teams.map((team) => (
-        <div className={styles.groupList} key={`team${team.id}`} onClick={this.toTeam(team)}>
-          <div className={styles.orgHeader}>
-            <div className={styles.avatar}>
-              <Avatar path={team.avatar} enlarge={false} size="small"/>
-              <Tag className={styles.orgName} color="#2db7f5">{team.organization.name}</Tag>/
-              &nbsp;<div className={styles.title}>{team.name}</div>
-            </div>
-          </div>
-          <div className={styles.setting}>
-            <Icon type="setting"/>
+    const { pagination } = this.state
+    const { current, pageSize } = pagination
+    const currentIndex = (current - 1) * pageSize
+    const currentPageTeams = teams ? teams.slice(currentIndex, currentIndex + pageSize) : []
+    const teamArr = currentPageTeams.map((team) => (
+      <div className={styles.groupList} key={`team${team.id}`} onClick={this.toTeam(team)}>
+        <div className={styles.orgHeader}>
+          <div className={styles.avatar}>
+            <Avatar path={team.avatar} enlarge={false} size="small"/>
+            <Tag className={styles.orgName} color="#2db7f5">{team.organization.name}</Tag>/
+            &nbsp;<div className={styles.title}>{team.name}</div>
           </div>
         </div>
-      )
-    ) : ''
+        <div className={styles.setting}>
+          <Icon type="setting"/>
+        </div>
+      </div>
+    ))
 
     return (
       <Box>
@@ -88,6 +136,12 @@ export class Teams extends React.PureComponent <ITeamProps> {
           </Box.Title>
         </Box.Header>
         {teamArr}
+        <Pagination
+          className={styles.teamPagination}
+          {...pagination}
+          onChange={this.change}
+          onShowSizeChange={this.change}
+        />
       </Box>
     )
   }
