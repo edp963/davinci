@@ -1,5 +1,6 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
+import _ from 'lodash'
 import {IOrganizationMembers} from '../../Organizations/Organization'
 import Button from 'antd/lib/button'
 import Form from 'antd/lib/form'
@@ -93,7 +94,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
   }
 
-  private inputChange = (e) => {
+  private change = _.debounce((e) => {
     const { category, inviteMemberList, currentOrganizationMembers, handleSearchMember } = this.props
 
     this.setState({
@@ -102,7 +103,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
 
     if (category === 'member') {
-      if (inviteMemberList.length) {
+      if (inviteMemberList) {
         const currentList = inviteMemberList.find((list) => list.username === e.target.value)
         this.setState({
           isDisabled: currentList ? false : true
@@ -116,10 +117,15 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
         isDisabled: currentList ? false : true
       })
     }
+  }, 300)
+
+  private debouncedChange = (e) => {
+    e.persist()
+    this.change(e)
   }
 
   private bootstrapOptionsLi = (searchLi, data) => {
-    const Options =  data ? data.map((o) => {
+    const Options =  data ? data.slice(0, 20).map((o) => {
       if (o && o.user) {
         return (
           <li key={o.id} className={searchLi} onClick={this.selectOption(o)}>
@@ -216,7 +222,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
               <InputGroup size="large" compact>
                 {getFieldDecorator('searchValue', {
                   initialValue: '',
-                  onChange: this.inputChange
+                  onChange: this.debouncedChange
                 })(
                   <Input style={{width: '65%'}} autoComplete="off"/>
                 )}

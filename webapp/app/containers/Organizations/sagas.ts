@@ -18,7 +18,7 @@
  * >>
  */
 
-import { call, put, all, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_ORGANIZATIONS,
   ADD_ORGANIZATION,
@@ -278,7 +278,7 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
     takeEvery(ADD_TEAM, addTeam),
     takeLatest(INVITE_MEMBER, inviteMember as any),
-    throttle(600, SEARCH_MEMBER, searchMember as any),
+    takeLatest(SEARCH_MEMBER, searchMember as any),
     takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
   ])

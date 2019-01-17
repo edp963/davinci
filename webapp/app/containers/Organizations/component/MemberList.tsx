@@ -167,7 +167,9 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
       this.MemberForm.validateFieldsAndScroll((err, values) => {
         if (!err) {
           const { searchValue } = values
-          this.props.handleSearchMember(searchValue)
+          if (searchValue) {
+            this.props.handleSearchMember(searchValue)
+          }
         }
       })
     })

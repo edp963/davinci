@@ -49,8 +49,8 @@ const initialState = fromJS({
   currentOrganizationProjects: [],
   currentOrganizationProjectsDetail: false,
   currentOrganizationTeams: [],
-  currentOrganizationMembers: [],
-  inviteMemberLists: [],
+  currentOrganizationMembers: null,
+  inviteMemberLists: null,
   teamModalLoading: false
 })
 
