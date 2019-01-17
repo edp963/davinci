@@ -335,7 +335,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
           <Col span={12}>
             <FormItem>
               {getFieldDecorator(`${prefixView}${view.id}`)(
-                <Select size="small">
+                <Select size="small" dropdownMatchSelectWidth={false}>
                   {
                     modelOrParam[viewId] ? (
                       view.param.map((p) => (
@@ -634,7 +634,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                           message: '不能为空'
                         }]
                       })(
-                        <Select size="small" onChange={this.onFromViewChange}>
+                        <Select size="small" dropdownMatchSelectWidth={false} onChange={this.onFromViewChange}>
                           {
                             views.map((view) => (
                               <Option key={view.id} value={view.id.toString()}>{view.name}</Option>
@@ -652,7 +652,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                           message: '不能为空'
                         }]
                       })(
-                        <Select size="small" onChange={this.onFromModelChange}>
+                        <Select size="small" dropdownMatchSelectWidth={false} onChange={this.onFromModelChange}>
                           {
                             modelItems.map((item) => (
                               <Option key={item.name} value={item.name}>{item.name}</Option>
@@ -675,7 +675,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                           message: '不能为空'
                         }]
                       })(
-                        <Select size="small">
+                        <Select size="small" dropdownMatchSelectWidth={false}>
                           {
                             modelItems.map((item) => (
                               <Option key={item.name} value={item.name}>{item.name}</Option>
@@ -724,7 +724,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
                                 // }
                               }]
                             })(
-                              <Select size="small">
+                              <Select size="small" dropdownMatchSelectWidth={false}>
                                 {
                                   modelItems.map((item) => (
                                     <Option key={item.name} value={item.name}>{item.name}</Option>
