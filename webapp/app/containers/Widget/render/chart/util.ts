@@ -291,6 +291,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
 export function getGridPositions (
   legendConfig: Partial<ILegendConfig>,
   seriesNames,
+  chartName?: string,
   isHorizontalBar?: boolean,
   yAxisConfig?: IAxisConfig,
   dimetionAxisConfig?: IAxisConfig,
@@ -299,7 +300,7 @@ export function getGridPositions (
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
+    grid[val] = getGridBase(val, chartName, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
     if (showLegend && seriesNames.length > 1) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
@@ -311,7 +312,7 @@ export function getGridPositions (
   }, {})
 }
 
-function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
+function getGridBase (pos, chartName, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
   const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
   const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
   const maxWidth = xAxisData && xAxisData.length
@@ -338,7 +339,7 @@ function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[
   switch (pos) {
     case 'top': return 24
     case 'left': return leftDistance
-    case 'right': return 24
+    case 'right': return chartName === 'doubleYAxis' ? 64 : 24
     case 'bottom': return bottomDistance
   }
 }

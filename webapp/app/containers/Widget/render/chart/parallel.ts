@@ -33,7 +33,6 @@ import {
   getMetricAxisOption,
   getLabelOption,
   getLegendOption,
-  getGridPositions,
   getSymbolSize
 } from './util'
 

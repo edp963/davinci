@@ -35,7 +35,7 @@ import waterfall from './waterfall'
 import scorecard from './scorecard'
 import iframe from './iframe'
 import richText from './richText'
-// import doubleYAxis from './doubleYAxis'
+import doubleYAxis from './doubleYAxis'
 
 const widgetlibs: IChartInfo[] = [
   table,
@@ -52,8 +52,8 @@ const widgetlibs: IChartInfo[] = [
   wordCloud,
   waterfall,
   iframe,
-  richText
-  // doubleYAxis
+  richText,
+  doubleYAxis
 ]
 
 export default widgetlibs
