@@ -34,6 +34,7 @@ interface IDashboardActionProps {
     type: number,
     name: string
   }
+  splitWidth: number
   onInitOperateMore: (id: number, type: string) => any
   initChangeDashboard: (id: number) => any
 }
@@ -73,7 +74,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       currentProject,
       depth,
       item,
-      initChangeDashboard
+      initChangeDashboard,
+      splitWidth
     } = this.props
     const { popoverVisible } = this.state
 
@@ -133,7 +135,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       }
     }
 
-    const titleWidth = `${130 - 18 * depth}px`
+    const titleWidth = `${splitWidth - 60 - 18 * depth}px`
 
     return (
       <span className={styles.portalTreeItem}>

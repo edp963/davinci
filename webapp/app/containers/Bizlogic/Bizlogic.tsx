@@ -1210,12 +1210,12 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       return <TreeNode key={item.key} title={item.key} />
     })
 
-    const paginationModel = {
-      simple: screenWidth < 768 || screenWidth === 768,
-      defaultPageSize: 10,
-      showSizeChanger: true,
-      pageSizeOptions: ['10', '20', '30', '40']
-    }
+    // const paginationModel = {
+    //   simple: screenWidth < 768 || screenWidth === 768,
+    //   defaultPageSize: 10,
+    //   showSizeChanger: true,
+    //   pageSizeOptions: ['10', '20', '30', '40']
+    // }
 
     const paginationData = {
       simple: screenWidth < 768 || screenWidth === 768,
@@ -1398,7 +1398,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
                           className={styles.viewTabPane}
                           dataSource={modelData}
                           columns={modelColumns}
-                          pagination={paginationModel}
+                          pagination={false}
                           // scroll={{y: }}
                         />
                       </TabPane>
