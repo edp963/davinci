@@ -278,14 +278,13 @@
 
 .avatarWrapper {
   display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 .avatarName {
-  margin-left: 8px;
   font-size: 14px;
   font-weight: 600;
-  // color: @blue;
-  line-height: 40px;
-  // cursor: pointer;
+  line-height: 30px;
 }
 
 .radioStyle {
@@ -315,4 +314,18 @@
   }
 }
 
+.teamTableExpandIcon {
+  cursor: pointer;
+}
 
+.childTable {
+  background-color: @white;
+  margin: -11px -9px !important;
+}
+
+.childTableCell {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-right: 8px;
+}

@@ -217,7 +217,6 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
     const addButton =  (
       <Tooltip placement="bottom" title="邀请">
         <CreateButton
-          size="large"
           type="primary"
           icon="plus"
           onClick={this.showMemberForm('member')}
@@ -251,6 +250,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
           dataIndex: 'user',
           className: isHidden ? utilStyles.hide : '',
           key: 'settings',
+          width: 200,
           render: (text, record) => {
             if (text.role === 1) {
               return ''
@@ -300,8 +300,7 @@ export class MemberList extends React.PureComponent<IMembersProps, IMembersState
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="placeholder"
+              placeholder="搜索成员"
               onChange={this.search}
             />
           </Col>

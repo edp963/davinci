@@ -207,6 +207,8 @@
 
 .avatarWrapper {
   display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .permissionZone {
@@ -289,4 +291,20 @@
 .teamPagination {
   margin: 16px 0;
   float: right
+}
+
+.teamTableExpandIcon {
+  cursor: pointer;
+}
+
+.childTable {
+  background-color: @white;
+  margin: -11px -9px !important;
+}
+
+.childTableCell {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-right: 8px;
 }

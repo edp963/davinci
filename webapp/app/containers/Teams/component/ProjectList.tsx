@@ -190,7 +190,6 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <CreateButton
-          size="large"
           type="primary"
           icon="plus"
           onClick={this.showAddForm('project')}
@@ -202,8 +201,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="Project 名称"
+              placeholder="搜索项目"
               onChange={this.onSearchProject}
             />
           </Col>

@@ -87,7 +87,6 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     const modalButtons = [(
       <Button
         key="submit"
-        size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}

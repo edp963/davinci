@@ -49,7 +49,7 @@ const initialState = fromJS({
   currentTeamMembers: [],
   currentOrganizationProjects: [],
   currentOrganizationTeams: [],
-  currentOrganizationMembers: []
+  currentOrganizationMembers: null
 })
 
 function teamReducer (state = initialState, action) {

@@ -172,7 +172,6 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <CreateButton
-          size="large"
           type="primary"
           icon="plus"
           onClick={this.showAddForm('teamMember')}
@@ -191,33 +190,32 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <span className={styles.avatarName}>{text.username}</span>
           </div>
         )
-      },
-        {
-          title: 'role',
-          dataIndex: 'user',
-          key: 'userKey',
-          render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
-        },
-        {
-          title: 'settings',
-          dataIndex: 'user',
-          key: 'settings',
-          render: (text, record) => (
-            <span>
-          <Popconfirm
-            title="确定删除此成员吗？"
-            placement="bottom"
-            onConfirm={this.removeMemberForm(text, record)}
-          >
-            <Tooltip title="删除">
-              <a href="javascript:;">从团队里移除</a>
-            </Tooltip>
-          </Popconfirm>
-          <span className="ant-divider" />
-          <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
-        </span>
-          )
-        }]
+      }, {
+        title: 'role',
+        dataIndex: 'user',
+        key: 'userKey',
+        render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+      }, {
+        title: 'settings',
+        dataIndex: 'user',
+        key: 'settings',
+        width: 200,
+        render: (text, record) => (
+          <span>
+        <Popconfirm
+          title="确定删除此成员吗？"
+          placement="bottom"
+          onConfirm={this.removeMemberForm(text, record)}
+        >
+          <Tooltip title="删除">
+            <a href="javascript:;">从团队里移除</a>
+          </Tooltip>
+        </Popconfirm>
+        <span className="ant-divider" />
+        <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
+      </span>
+        )
+      }]
     } else {
       columns = [{
         title: 'Name',
@@ -242,8 +240,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="placeholder"
+              placeholder="搜索成员"
               onChange={this.onSearchMember}
             />
           </Col>
