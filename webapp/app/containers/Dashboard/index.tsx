@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { Suspense } from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -83,6 +83,7 @@ import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
 import { toListBF } from '../Bizlogic/viewUtil'
+const SplitPane = React.lazy(() => import('react-split-pane'))
 
 interface IDashboardProps {
   modalLoading: boolean
@@ -133,11 +134,16 @@ interface IDashboardStates {
   searchVisible: boolean
   isGrid: boolean
   checkedKeys: any[]
+  splitSize: number
+  portalTreeWidth: number
 }
 
 export class Dashboard extends React.Component<IDashboardProps, IDashboardStates> {
+  private defaultSplitSize = 190
+  private maxSplitSize = this.defaultSplitSize * 1.5
   constructor (props) {
     super(props)
+    const splitSize = +localStorage.getItem('dashboardSplitSize') || this.defaultSplitSize
     this.state = {
       formType: '',
       formVisible: false,
@@ -150,7 +156,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       isExpand: true,
       searchVisible: false,
       isGrid: true,
-      checkedKeys: []
+      checkedKeys: [],
+      splitSize,
+      portalTreeWidth: 0
     }
   }
 
@@ -631,6 +639,13 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
+  private saveSplitSize = (newSize: number) => {
+    localStorage.setItem('dashboardSplitSize', newSize.toString())
+    this.setState({
+      portalTreeWidth: newSize
+    })
+  }
+
   public render () {
     const {
       params,
@@ -650,7 +665,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       dashboardData,
       isGrid,
       searchVisible,
-      checkedKeys
+      checkedKeys,
+      splitSize,
+      portalTreeWidth
     } = this.state
 
     const items = searchValue.map((s) => {
@@ -702,6 +719,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           currentProject={currentProject}
           depth={depth}
           item={item}
+          splitWidth={portalTreeWidth || 190}
           onInitOperateMore={this.onOperateMore}
           initChangeDashboard={this.changeDashboard}
         />
@@ -734,86 +752,96 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
         />
         <Helmet title={params.portalName} />
         <div className={styles.portalBody}>
-          <div className={styles.portalTree}>
-            <div className={styles.portalRow}>
-              <span className={styles.portalAction}>
-                <Popover
-                  placement="bottom"
-                  content={
-                    <div className={styles.portalTreeSearch}>
-                      <Search
-                        placeholder="Search"
-                        onChange={this.searchDashboard}
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              defaultSize={splitSize}
+              minSize={this.defaultSplitSize}
+              maxSize={this.maxSplitSize}
+              onChange={this.saveSplitSize}
+            >
+              <div className={styles.portalTree} style={{ width: portalTreeWidth || 190 }}>
+                <div className={styles.portalRow}>
+                  <span className={styles.portalAction}>
+                    <Popover
+                      placement="bottom"
+                      content={
+                        <div className={styles.portalTreeSearch}>
+                          <Search
+                            placeholder="Search"
+                            onChange={this.searchDashboard}
+                          />
+                          <ul>
+                            {items}
+                          </ul>
+                        </div>}
+                      trigger="click"
+                      visible={searchVisible}
+                      onVisibleChange={this.searchVisibleChange}
+                    >
+                      <Tooltip placement="top" title="搜索">
+                        <Icon
+                          type="search"
+                          className={styles.search}
+                        />
+                      </Tooltip>
+                    </Popover>
+                    <Tooltip placement="top" title="新增">
+                      <AdminIcon
+                        type="plus"
+                        className={styles.plus}
+                        onClick={this.onAddItem}
                       />
-                      <ul>
-                        {items}
-                      </ul>
-                    </div>}
-                  trigger="click"
-                  visible={searchVisible}
-                  onVisibleChange={this.searchVisibleChange}
-                >
-                  <Tooltip placement="top" title="搜索">
-                    <Icon
-                      type="search"
-                      className={styles.search}
-                    />
-                  </Tooltip>
-                </Popover>
-                <Tooltip placement="top" title="新增">
-                  <AdminIcon
-                    type="plus"
-                    className={styles.plus}
-                    onClick={this.onAddItem}
-                  />
-                </Tooltip>
-                <Popover
-                  placement="bottom"
-                  content={
-                    <ul className={styles.menu}>
-                      <li onClick={this.onCollapseAll}>收起全部</li>
-                      <li onClick={this.onExpandAll}>展开全部</li>
-                    </ul>}
-                  trigger="click"
-                >
-                  <Tooltip placement="top" title="更多">
-                    <Icon
-                      type="ellipsis"
-                      className={styles.more}
-                    />
-                  </Tooltip>
-                </Popover>
-              </span>
-            </div>
-            { dashboardData.length
-              ? <div className={styles.portalTreeNode}>
-                <Tree
-                  onExpand={this.onExpand}
-                  expandedKeys={this.state.expandedKeys}
-                  autoExpandParent={this.state.autoExpandParent}
-                  selectedKeys={[this.props.params.dashboardId]}
-                  draggable={initializePermission(currentProject, 'vizPermission')}
-                  onDrop={this.onDrop}
-                  onSelect={this.handleTree}
-                >
-                {loop(dashboardData)}
-                </Tree>
-              </div>
-              : isGrid ? <h3 className={styles.loadingTreeMsg}>Loading tree......</h3> : ''
-            }
-          </div>
-          <div className={styles.gridClass}>
-            {
-              isGrid
-              ? children
-              : (
-                <div className={styles.noDashboard}>
-                  <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
-                  <p>请创建文件夹或 Dashboard</p>
+                    </Tooltip>
+                    <Popover
+                      placement="bottom"
+                      content={
+                        <ul className={styles.menu}>
+                          <li onClick={this.onCollapseAll}>收起全部</li>
+                          <li onClick={this.onExpandAll}>展开全部</li>
+                        </ul>}
+                      trigger="click"
+                    >
+                      <Tooltip placement="top" title="更多">
+                        <Icon
+                          type="ellipsis"
+                          className={styles.more}
+                        />
+                      </Tooltip>
+                    </Popover>
+                  </span>
                 </div>
-              )
-            }
-          </div>
+                { dashboardData.length
+                  ? <div className={styles.portalTreeNode}>
+                    <Tree
+                      onExpand={this.onExpand}
+                      expandedKeys={this.state.expandedKeys}
+                      autoExpandParent={this.state.autoExpandParent}
+                      selectedKeys={[this.props.params.dashboardId]}
+                      draggable={initializePermission(currentProject, 'vizPermission')}
+                      onDrop={this.onDrop}
+                      onSelect={this.handleTree}
+                    >
+                    {loop(dashboardData)}
+                    </Tree>
+                  </div>
+                  : isGrid ? <h3 className={styles.loadingTreeMsg}>Loading tree......</h3> : ''
+                }
+              </div>
+              <div className={styles.gridClass}>
+                {
+                  isGrid
+                  ? children
+                  : (
+                    <div className={styles.noDashboard}>
+                      <img src={require('../../assets/images/noDashboard.png')} onClick={this.onAddItem}/>
+                      <p>请创建文件夹或 Dashboard</p>
+                    </div>
+                  )
+                }
+              </div>
+            </SplitPane>
+          </Suspense>
         </div>
         <Modal
           title={modalTitle}
