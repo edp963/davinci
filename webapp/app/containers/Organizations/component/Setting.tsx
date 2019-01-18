@@ -89,7 +89,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                        // validator: this.checkNameUnique
                       }]
                     })(
-                      <Input size="large" placeholder="Name"/>
+                      <Input placeholder="Name"/>
                     )}
                   </FormItem>
                 </Col>
@@ -169,7 +169,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 </Col>
                 <Col>
                   <Button
-                    size="large"
                     onClick={this.props.editOrganization(this.props.form.getFieldsValue())}
                     disabled={isDisabled}
                   >
@@ -184,7 +183,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <div className={styles.titleDesc}>
                   <p className={styles.desc}>删除后无法恢复，请确定此次操作</p>
                   <p className={styles.button}>
-                    <Button size="large" type="danger" onClick={this.props.deleteOrganization(this.props.form.getFieldsValue().id)}>删除{name}</Button>
+                    <Button type="danger" onClick={this.props.deleteOrganization(this.props.form.getFieldsValue().id)}>删除{name}</Button>
                   </p>
                 </div>
               </Row>

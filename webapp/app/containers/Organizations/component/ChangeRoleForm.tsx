@@ -80,7 +80,6 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
     const modalButtons = [(
       <Button
         key="submit"
-        size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}

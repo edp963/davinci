@@ -160,8 +160,7 @@ export function* getOrganizationsMembers ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/members`)
-    const organizations = asyncData.payload
-    yield put(organizationsMembersLoaded(organizations))
+    yield put(organizationsMembersLoaded(asyncData.payload))
   } catch (err) {
     yield put(loadOrganizationsMembersFail())
     errorHandler(err)
