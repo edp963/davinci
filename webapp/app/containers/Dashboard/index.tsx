@@ -190,7 +190,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
       this.setState({
         dashboardData,
-        isGrid: defaultDashboardId >= 0
+        isGrid: defaultDashboardId >= 0,
+        portalTreeWidth: Number(localStorage.getItem('dashboardSplitSize'))
       })
       this.expandAll(result)
     })
