@@ -50,7 +50,9 @@ export class Canvas extends React.Component<{}, {}> {
   }
 
   public componentWillUnmount () {
-    this.removeListeners()
+    if (this.removeListeners) {
+      this.removeListeners()
+    }
   }
 
   private drawBackground = () => {
