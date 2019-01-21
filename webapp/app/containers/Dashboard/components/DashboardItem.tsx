@@ -675,7 +675,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             shareInfo={shareInfo}
             shareInfoLoading={shareInfoLoading}
             downloadCsvLoading={downloadCsvLoading}
-            onLoadWidgetShareLink={onLoadWidgetShareLink}
             onDownloadCsv={this.downloadCsv}
           />
         </Tooltip>
@@ -722,7 +721,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
             itemId={itemId}
             shareInfo={shareInfo}
             downloadCsvLoading={downloadCsvLoading}
-            onLoadWidgetShareLink={onLoadWidgetShareLink}
             onDownloadCsv={this.downloadCsv}
           />
         </Tooltip>

@@ -69,17 +69,6 @@ export class ConditionalFilterPanel extends React.PureComponent<IConditionalFilt
     }
   }
 
-  private initTree = (props) => {
-    // const filterTreeStr = localStorage.getItem(`${loginUser.id}_${itemId}_filterTree`)
-    // if (filterTreeStr) {
-    //   const filterTree = JSON.parse(filterTreeStr)
-    //   this.setState({
-    //     filterTree,
-    //     flattenTree: this.initFlattenTree(filterTree, {})
-    //   })
-    // }
-  }
-
   private initFlattenTree = (tree, flatten) => {
     flatten[tree.id] = tree
     if (tree.children) {

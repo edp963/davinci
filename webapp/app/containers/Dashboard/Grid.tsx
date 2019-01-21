@@ -266,10 +266,6 @@ interface IDashboardItem {
   frequency?: number
 }
 
-interface IDashboardItemFilters extends AntdFormType {
-  resetTree: () => void
-}
-
 export class Grid extends React.Component<IGridProps, IGridStates> {
   constructor (props) {
     super(props)
@@ -305,10 +301,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private interactGlobalFilters: object = {}
   private resizeSign: number
   private dashboardItemForm: IDashboardItemForm = null
-  private dashboardItemFilters: IDashboardItemFilters = null
   private refHandles = {
-    dashboardItemForm: (f) => { this.dashboardItemForm = f },
-    dashboardItemFilters: (f) => { this.dashboardItemFilters = f }
+    dashboardItemForm: (f) => { this.dashboardItemForm = f }
   }
 
   private containerBody: any = null
