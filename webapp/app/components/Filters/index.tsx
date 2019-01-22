@@ -370,7 +370,6 @@ export function getDefaultValue (filter: IFilterItem) {
   const { type, dynamicDefaultValue, defaultValue } = filter
   switch (type) {
     case FilterTypes.Date:
-    case FilterTypes.DateRange:
       if (dynamicDefaultValue) {
         switch (dynamicDefaultValue) {
           case DatePickerDefaultValues.Today:
@@ -405,7 +404,7 @@ export function getDefaultValue (filter: IFilterItem) {
             return defaultValue && moment(defaultValue)
         }
       } else {
-        return defaultValue && moment(defaultValue)
+        return null
       }
     default:
       return defaultValue

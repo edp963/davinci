@@ -31,7 +31,7 @@ interface IFilterControlProps {
   onChange: OnFilterControlValueChange
 }
 
-export class FilterControl extends React.Component<IFilterControlProps, {}> {
+export class FilterControl extends React.PureComponent<IFilterControlProps, {}> {
 
   public componentWillMount () {
     const { filter, parentValues, onGetOptions, onChange } = this.props
