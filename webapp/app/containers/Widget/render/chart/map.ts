@@ -317,29 +317,35 @@ export default function (chartProps: IChartProps) {
     if (getGeoCity.length > 1 && d[getGeoCity[0].name] && d[getGeoCity[1].name]) {
       const fromCityInfo = getCityArea(d[getGeoCity[0].name])
       const toCityInfo = getCityArea(d[getGeoCity[1].name])
-      legendData.push(d[getGeoCity[0].name])
-      linesSeriesData = [{
-        fromName: d[getGeoCity[0].name],
-        toName: d[getGeoCity[1].name],
-        coords: [[fromCityInfo.lon, fromCityInfo.lat], [toCityInfo.lon, toCityInfo.lat]]
-      }]
-      scatterData = [{
-        name: d[getGeoCity[1].name],
-        value: [toCityInfo.lon, toCityInfo.lat, value]
-      }]
+
+      if (fromCityInfo && toCityInfo) {
+        legendData.push(d[getGeoCity[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoCity[0].name],
+          toName: d[getGeoCity[1].name],
+          coords: [[fromCityInfo.lon, fromCityInfo.lat], [toCityInfo.lon, toCityInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoCity[1].name],
+          value: [toCityInfo.lon, toCityInfo.lat, value]
+        }]
+      }
     } else if (getGeoProvince.length > 1 && d[getGeoProvince[0].name] && d[getGeoProvince[1].name]) {
       const fromProvinceInfo = getProvinceArea(d[getGeoProvince[0].name])
       const toProvinceInfo = getProvinceArea(d[getGeoProvince[1].name])
-      legendData.push(d[getGeoProvince[0].name])
-      linesSeriesData = [{
-        fromName: d[getGeoProvince[0].name],
-        toName: d[getGeoProvince[1].name],
-        coords: [[fromProvinceInfo.lon, fromProvinceInfo.lat], [toProvinceInfo.lon, toProvinceInfo.lat]]
-      }]
-      scatterData = [{
-        name: d[getGeoProvince[1].name],
-        value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
-      }]
+
+      if (fromProvinceInfo && toProvinceInfo) {
+        legendData.push(d[getGeoProvince[0].name])
+        linesSeriesData = [{
+          fromName: d[getGeoProvince[0].name],
+          toName: d[getGeoProvince[1].name],
+          coords: [[fromProvinceInfo.lon, fromProvinceInfo.lat], [toProvinceInfo.lon, toProvinceInfo.lat]]
+        }]
+        scatterData = [{
+          name: d[getGeoProvince[1].name],
+          value: [toProvinceInfo.lon, toProvinceInfo.lat, value]
+        }]
+      }
     } else {
       return
     }
