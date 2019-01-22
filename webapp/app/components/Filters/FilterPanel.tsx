@@ -10,7 +10,8 @@ import {
   IMapFilterControlOptions,
   getParamValue,
   getModelValue,
-  getValidValue
+  getValidValue,
+  getDefaultValue
 } from './'
 import { FilterTypes, CascadeFilterTypes, defaultFilterControlGridProps } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
@@ -31,29 +32,42 @@ interface IFilterPanelProps {
   onChange: OnFilterValueChange
 }
 
-interface IFilterPanelStates {
-  filterValues: {
+export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, null> {
+  private filterValues: {
     [key: string]: any
-  }
-}
-
-export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, IFilterPanelStates> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      filterValues: {}
-    }
-  }
-
-  private itemsFilterValues: {
+  } = {}
+  private filterValuesByItem: {
     [itemId: number]: {
       [filterKey: string]: IFilterValue
     }
   } = {}
 
-  private change = (filter: IFilterItem, val) => {
-    const { key, type, relatedViews, operator } = filter
-    const relatedItemIds = []
+  public componentWillReceiveProps (nextProps: IFilterPanelProps & FormComponentProps) {
+    const { filters } = this.props
+    if (nextProps.filters !== filters) {
+      this.initFilterValues(nextProps.filters)
+    }
+  }
+
+  private initFilterValues = (filters: IFilterItem[]) => {
+    filters.forEach((f) => {
+      const defaultFilterValue = getDefaultValue(f)
+      if (defaultFilterValue) {
+        this.setFilterValues(f, defaultFilterValue)
+      }
+    })
+  }
+
+  private setFilterValues = (filter: IFilterItem, val, callback?) => {
+    const { key, relatedViews, operator } = filter
+
+    this.filterValues = {
+      ...this.filterValues,
+      [key]: Array.isArray(val)
+        ? val.map((v) => getValidValue(v, filter.fromSqlType))
+        : getValidValue(val, filter.fromSqlType)
+    }
+
     Object.entries(relatedViews).forEach(([_, config]) => {
       const { items, isParam } = config
       if (items.length <= 0) { return }
@@ -61,26 +75,37 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
       const filterValue = isParam ? getParamValue(filter, config, val) : getModelValue(filter, config, operator, val)
 
       items.forEach((itemId) => {
-        relatedItemIds.push(itemId)
-        if (!this.itemsFilterValues[itemId]) {
-          this.itemsFilterValues[itemId] = {}
+        if (callback) {
+          callback(itemId)
         }
-        if (!this.itemsFilterValues[itemId][key]) {
-          this.itemsFilterValues[itemId][key] = {
+        if (!this.filterValuesByItem[itemId]) {
+          this.filterValuesByItem[itemId] = {}
+        }
+        if (!this.filterValuesByItem[itemId][key]) {
+          this.filterValuesByItem[itemId][key] = {
             params: [],
             filters: []
           }
         }
         if (isParam) {
-          this.itemsFilterValues[itemId][key].params = filterValue
+          this.filterValuesByItem[itemId][key].params = filterValue
         } else {
-          this.itemsFilterValues[itemId][key].filters = filterValue
+          this.filterValuesByItem[itemId][key].filters = filterValue
         }
       })
     })
+  }
+
+  private change = (filter: IFilterItem, val) => {
+    const { key } = filter
+    const relatedItemIds = []
+
+    this.setFilterValues(filter, val, (itemId) => {
+      relatedItemIds.push(itemId)
+    })
 
     const mapItemFilterValue: IMapItemFilterValue = relatedItemIds.reduce((acc, itemId) => {
-      acc[itemId] = Object.values(this.itemsFilterValues[itemId]).reduce((filterValue, val) => {
+      acc[itemId] = Object.values(this.filterValuesByItem[itemId]).reduce((filterValue, val) => {
         filterValue.params.push(...val.params)
         filterValue.filters.push(...val.filters)
         return filterValue
@@ -92,24 +117,15 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
     }, {})
 
     this.props.onChange(mapItemFilterValue, key)
-    this.setState({
-      filterValues: {
-        ...this.state.filterValues,
-        [key]: Array.isArray(val)
-          ? val.map((v) => getValidValue(v, filter.fromSqlType))
-          : getValidValue(val, filter.fromSqlType)
-      }
-    })
   }
 
   private renderFilterControls = (filters: IFilterItem[], parents?: IFilterItem[]) => {
     const { onGetOptions, mapOptions, form } = this.props
-    const { filterValues } = this.state
     let controls = []
     filters.forEach((filter) => {
       const parentValues = parents
         ? parents.reduce((values, p) => {
-            const parentSelectedValue = filterValues[p.key]
+            const parentSelectedValue = this.filterValues[p.key]
             if (parentSelectedValue
                 && !(Array.isArray(parentSelectedValue) && !parentSelectedValue.length)
                 && CascadeFilterTypes.includes(p.type)) {
