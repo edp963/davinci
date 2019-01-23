@@ -32,17 +32,14 @@ import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
 import Select from 'antd/lib/select'
 import Tooltip from 'antd/lib/tooltip'
-import Message from 'antd/lib/message'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../../components/NumberFilterDropdown/index'
 import DateFilterDropdown from '../../../../components/DateFilterDropdown/index'
 
 import { uuid } from 'utils/util'
-import {
-  COLUMN_WIDTH, DEFAULT_TABLE_PAGE, DEFAULT_TABLE_PAGE_SIZE, TABLE_PAGE_SIZES,
-  SQL_NUMBER_TYPES, SQL_DATE_TYPES, KEY_COLUMN } from '../../../../globalConstants'
-import { decodeMetricName, getFieldAlias, getFormattedValue } from 'containers/Widget/components/util'
+import { TABLE_PAGE_SIZES } from '../../../../globalConstants'
+import { getTextWidth, decodeMetricName, getFieldAlias, getFormattedValue } from 'containers/Widget/components/util'
 import { IFieldConfig } from '../Workbench/FieldConfig'
 import { IFieldFormatConfig } from '../Workbench/FormatConfigModal'
 import OperatorTypes from 'utils/operatorTypes'
@@ -70,14 +67,12 @@ interface ITableStates {
     total: number
   }
   selectedRow: object[]
-  mapMetaConfig: IMapMetaConfig
   tableBodyHeight: number
 }
 
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
-  private defaultColumnWidth = 200
 
   private onPaginationChange = (current: number, pageSize: number) => {
     const { pagination } = this.state
@@ -99,15 +94,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   constructor (props: IChartProps) {
     super(props)
-    const { chartStyles, data, width } = props
-    const mapMetaConfig = this.getMapMetaConfig(props)
-    const columns = this.getTableColumns(width, chartStyles, data, mapMetaConfig)
+    const { chartStyles } = props
+    const columns = this.getTableColumns(props)
     this.setFixedColumns(columns, chartStyles)
     const pagination = this.getPaginationOptions(props)
     this.state = {
       columns,
       pagination,
-      mapMetaConfig,
       tableBodyHeight: 0,
       selectedRow: []
     }
@@ -152,16 +145,14 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   public componentWillReceiveProps (nextProps: IChartProps) {
     const { chartStyles, data, width } = nextProps
     let { columns, pagination } = this.state
-    const mapMetaConfig = this.getMapMetaConfig(nextProps)
     if (chartStyles !== this.props.chartStyles
       || data !== this.props.data
       || width !== this.props.width) {
-      columns = this.getTableColumns(width, chartStyles, data, mapMetaConfig)
+      columns = this.getTableColumns(nextProps)
       this.setFixedColumns(columns, chartStyles)
     }
     pagination = this.getPaginationOptions(nextProps)
     this.setState({
-      mapMetaConfig,
       columns,
       pagination
     })
@@ -237,54 +228,76 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     })
   }
 
-  private getTableColumns (
-    containerWidth: number,
-    chartStyles: IChartStyles,
-    data: any[],
-    mapMetaConfig: IMapMetaConfig
-  ) {
+  private getTableColumns (props: IChartProps) {
+    const { chartStyles, width } = props
     const { table } = chartStyles
     if (!table) { return [] }
-    const { headerConfig, columnsConfig, autoMergeCell } = table
-    const columnsCount = Object.keys(mapMetaConfig).length
-    const columnWidth = Math.max(containerWidth / columnsCount, this.defaultColumnWidth)
+    const { headerConfig } = table
+    const mapMetaConfig = this.getMapMetaConfig(props)
 
-    const tableColumns = headerConfig.length
-      ? this.getMergedColumns(data, columnWidth, autoMergeCell, headerConfig, columnsConfig, mapMetaConfig)
-      : this.getPlainColumns(data, columnWidth, autoMergeCell, columnsConfig, mapMetaConfig)
+    let tableColumns = headerConfig.length
+      ? this.getMergedColumns(props, mapMetaConfig)
+      : this.getPlainColumns(props, mapMetaConfig)
+    tableColumns = this.adjustTableColumns(tableColumns, width)
     return tableColumns
   }
 
-  private getColumnTitleText = (field: IFieldConfig, expression: string) => {
-    const { queryVars } = this.props
-    let titleText: string | React.ReactNode = expression
-    if (field) {
-      titleText = getFieldAlias(field, queryVars || {}) || titleText
-      if (field.desc) {
-        titleText = (<Tooltip title={field.desc}>{titleText}</Tooltip>)
-      }
-    }
-    return titleText
+  private getMaxCellWidth (
+    expression: string,
+    columnConfig: ITableColumnConfig,
+    format: IFieldFormatConfig,
+    data: any[]
+  ) {
+    const style = columnConfig ? columnConfig.style : DefaultTableCellStyle
+    const maxCellWidth = data.reduce((w, row) => {
+      const formattedValue = getFormattedValue(row[expression], format)
+      const cellWidth = this.computeCellWidth(style, formattedValue)
+      return Math.max(w, cellWidth)
+    }, 0)
+    return maxCellWidth
   }
 
-  private getPlainColumns (
-    data: any[],
-    columnWidth: number,
-    autoMergeCell: boolean,
-    columnsConfig: ITableColumnConfig[],
-    mapMetaConfig: IMapMetaConfig
-  ) {
+  private computeCellWidth (style: ITableCellStyle, cellValue: number | string) {
+    const { fontWeight, fontSize, fontFamily } = style
+    const cellWidth = !cellValue ? 0 : getTextWidth(cellValue.toString(), fontWeight, `${fontSize}px`, fontFamily)
+    return cellWidth + 16 + 2
+  }
+
+  private getHeaderText = (field: IFieldConfig, expression: string) => {
+    const { queryVars } = this.props
+    let headerText = expression
+    if (field) {
+      headerText = getFieldAlias(field, queryVars || {}) || headerText
+    }
+    return headerText
+  }
+
+  private getHeaderNode = (field: IFieldConfig, headerText: string) => {
+    let headerNode: string | React.ReactElement<Tooltip> = headerText
+    if (field && field.desc) {
+      headerNode = (<Tooltip title={field.desc}>{headerNode}</Tooltip>)
+    }
+    return headerNode
+  }
+
+  private getPlainColumns (props: IChartProps, mapMetaConfig: IMapMetaConfig) {
+    const { data, chartStyles } = props
     if (!data.length) { return [] }
 
+    const { columnsConfig, autoMergeCell } = chartStyles.table
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
       const { name, field, format, expression, agg } = metaConfig
-      const titleText = this.getColumnTitleText(field, expression)
+      const headerText = this.getHeaderText(field, expression)
+      const headerNode = this.getHeaderNode(field, headerText)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
+      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
+      const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
+      const width = Math.max(headerWidth, maxCellWidth)
       const column: ColumnProps<any> = {
-        title: (<div className={styles.headerCell}>{titleText}</div>),
+        title: (<div className={styles.headerCell}>{headerNode}</div>),
         dataIndex: expression,
-        width: columnWidth,
+        width,
         key: expression,
         render: (val, _, idx) => {
           let span = 1
@@ -298,28 +311,42 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }
       return column
     })
+
     return tableColumns
   }
 
-  private getMergedColumns (
-    data: any[],
-    columnWidth: number,
-    autoMergeCell: boolean,
-    headerConfig: ITableHeaderConfig[],
-    columnsConfig: ITableColumnConfig[],
-    mapMetaConfig: IMapMetaConfig
-  ) {
+  private adjustTableColumns (tableColumns: Array<ColumnProps<any>>, containerWidth: number) {
+    const totalWidth = tableColumns.reduce((acc, col) => acc + Number(col.width), 0)
+    if (totalWidth < containerWidth) {
+      const ratio = containerWidth / totalWidth
+      const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
+        columns.forEach((col) => {
+          col.width = Math.ceil(ratio * Number(col.width))
+          if (Array.isArray(col.children) && col.children.length) {
+            loop(col.children, ratio)
+          }
+        })
+      }
+      loop(tableColumns, ratio)
+    }
+    return tableColumns
+  }
+
+  private getMergedColumns (props: IChartProps, mapMetaConfig: IMapMetaConfig) {
     const tableColumns: Array<ColumnProps<any>> = []
     const metaKeys = []
 
+    const { data, chartStyles, width: containerWidth } = props
+    const { headerConfig, columnsConfig, autoMergeCell } = chartStyles.table
     headerConfig.forEach((config) =>
-      this.traverseHeaderConfig(columnWidth, data, autoMergeCell, config, columnsConfig, mapMetaConfig, null, tableColumns, metaKeys))
+      this.traverseHeaderConfig(config, props, mapMetaConfig, null, tableColumns, metaKeys))
 
     let dimensionIdx = 0
     Object.entries<IMetaConfig>(mapMetaConfig).forEach(([key, metaConfig]) => {
       if (metaKeys.includes(key)) { return }
 
       const { name, field, format, expression, agg } = metaConfig
+      const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = DefaultTableCellStyle
       const headerStyle: React.CSSProperties = {
         color,
@@ -330,17 +357,20 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         backgroundColor,
         justifyContent
       }
-      const titleText = this.getColumnTitleText(field, expression)
+      const headerText = this.getHeaderText(field, expression)
+      const headerNode = this.getHeaderNode(field, headerText)
+      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
+      const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
+      const width = Math.max(headerWidth, maxCellWidth)
       const column: ColumnProps<any> = {
         key: uuid(5),
         dataIndex: name,
-        width: columnWidth,
+        width,
         title: (
-          <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
+          <div className={styles.headerCell} style={headerStyle}>{headerNode}</div>
         )
       }
       const cellValRange = this.getTableCellValueRange(data, expression)
-      const columnConfig = columnsConfig.find((config) => config.columnName === name)
       column.render = (_, record, idx) => {
         let span = 1
         if (autoMergeCell && !agg) {
@@ -358,21 +388,21 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         tableColumns.splice(dimensionIdx++, 0, column)
       }
     })
+
     return tableColumns
   }
 
   private traverseHeaderConfig (
-    columnWidth: number,
-    data: any[],
-    autoMergeCell: boolean,
-    headerConfig: ITableHeaderConfig,
-    columnsConfig: ITableColumnConfig[],
+    currentConfig: ITableHeaderConfig,
+    props: IChartProps,
     mapMetaConfig: IMapMetaConfig,
     parent: ColumnProps<any>,
     columns: Array<ColumnProps<any>>,
     metaKeys: string[]
   ) {
-    const { key, isGroup, headerName, style } = headerConfig
+    const { data, chartStyles } = props
+    const { columnsConfig, autoMergeCell } = chartStyles.table
+    const { key, isGroup, headerName, style } = currentConfig
     const isValidHeader = isGroup || !!mapMetaConfig[headerName]
     if (!isValidHeader) { return }
 
@@ -381,8 +411,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       dataIndex: headerName
     }
     if (isGroup) {
-      headerConfig.children.forEach((c) =>
-        this.traverseHeaderConfig(columnWidth, data, autoMergeCell, c, columnsConfig, mapMetaConfig, header, columns, metaKeys))
+      currentConfig.children.forEach((c) =>
+        this.traverseHeaderConfig(c, props, mapMetaConfig, header, columns, metaKeys))
+      header.width = Math.max(this.computeCellWidth(style, headerName), +header.width)
     }
 
     const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
@@ -396,17 +427,20 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       justifyContent
     }
 
-    let titleText
+    let headerText
     if (isGroup) {
-      titleText = headerName
+      headerText = headerName
     } else {
-      header.width = columnWidth
-      const metaConfig = mapMetaConfig[headerName]
       metaKeys.push(headerName)
+      const metaConfig = mapMetaConfig[headerName]
       const { name, field, format, expression, agg } = metaConfig
-      titleText = this.getColumnTitleText(field, expression)
-      const cellValRange = this.getTableCellValueRange(data, expression)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
+      headerText = this.getHeaderText(field, expression)
+      const headerWidth = this.computeCellWidth(style, headerText)
+      const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
+      header.width = Math.max(headerWidth, maxCellWidth)
+      headerText = this.getHeaderNode(field, headerText)
+      const cellValRange = this.getTableCellValueRange(data, expression)
       header.render = (_, record, idx) => {
         let span = 1
         if (autoMergeCell && !agg) {
@@ -419,7 +453,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }
     }
     header.title = (
-      <div className={styles.headerCell} style={headerStyle}>{titleText}</div>
+      <div className={styles.headerCell} style={headerStyle}>{headerText}</div>
     )
     // @FIXME need update columns order when drag items in OperatingPanel
     if (parent && !parent.children) {
@@ -428,7 +462,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const parentChildren = parent ? parent.children : columns
     parentChildren.push(header)
     if (parent) {
-      parent.width = parent.children.reduce((acc,  child) => (acc + (child.width as number)), 0)
+      parent.width = parent.children.reduce((acc,  child) => (acc + (+child.width)), 0)
     }
   }
 
@@ -508,8 +542,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getBasicStyledCell (columnConfig: ITableColumnConfig) {
-    if (!columnConfig) { return {} }
-    const { style } = columnConfig
+    const style = columnConfig ? columnConfig.style : DefaultTableCellStyle
     const { fontSize, fontFamily, fontWeight, fontColor, fontStyle, backgroundColor, justifyContent } = style
     const cssStyle: React.CSSProperties = {
       fontSize: `${fontSize}px`,
@@ -749,7 +782,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   public render () {
-    const { data, chartStyles, height, width } = this.props
+    const { data, chartStyles, width } = this.props
     const { headerFixed, withPaging } = chartStyles.table
     const { pagination, columns, tableBodyHeight } = this.state
     const paginationConfig: PaginationConfig = {
