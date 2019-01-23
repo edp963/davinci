@@ -11,7 +11,7 @@ import saga from '../../sagas'
 import bizlogicSaga from '../../../Bizlogic/sagas'
 import { hideNavigator } from '../../../App/actions'
 import { loadBizlogics, loadData, loadDistinctValue } from '../../../Bizlogic/actions'
-import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget } from '../../actions'
+import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from '../../actions'
 import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
 import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
@@ -72,6 +72,7 @@ interface IWorkbenchProps {
   onEditWidget: (widget: IWidget, resolve: () => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
   onClearCurrentWidget: () => void
+  onExecuteComputed: (sql: string) => void
 }
 
 interface IWorkbenchStates {
@@ -80,10 +81,12 @@ interface IWorkbenchStates {
   description: string
   selectedView: IView
   queryParams: any[]
+  computed: any[]
   cache: boolean
   expired: number
   splitSize: number
   originalWidgetProps: IWidgetProps
+  originalComputed: any[]
   widgetProps: IWidgetProps
 }
 
@@ -104,6 +107,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       description: '',
       selectedView: null,
       queryParams: [],
+      computed: [],
+      originalComputed: [],
       cache: false,
       expired: 300,
       splitSize,
@@ -151,7 +156,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
     if (currentWidget && currentWidget !== this.props.currentWidget) {
-      const { queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
+      const { queryParams, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -160,7 +165,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         queryParams,
         cache,
         expired,
-        originalWidgetProps: {...rest}
+        originalWidgetProps: {...rest},
+        originalComputed: computed
       })
     }
   }
@@ -196,6 +202,101 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
+  private deleteComputed = (computeField) => {
+    console.log({computeField})
+    const { from } = computeField
+    const { params, onEditWidget } = this.props
+    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    if (from === 'originalComputed') {
+      this.setState({
+        originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedView.id,
+          projectId: Number(params.pid),
+          config: JSON.stringify({
+            ...widgetProps,
+            queryParams,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    } else if (from === 'computed') {
+      this.setState({
+        computed: computed.filter((cm) => cm.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedView.id,
+          projectId: Number(params.pid),
+          config: JSON.stringify({
+            ...widgetProps,
+            queryParams,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    }
+  }
+
+  private setComputed = (computeField) => {
+    const {computed, originalComputed} = this.state
+    const {from, sqlExpression} = computeField
+    // todo  首先做sql合法校验； sqlExpression
+    let isEdit = void 0
+    let newComputed = null
+    if (from === 'originalComputed') {
+      isEdit = originalComputed ? originalComputed.some((cm) => cm.id === computeField.id) : false
+      newComputed =  isEdit ? originalComputed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : originalComputed.concat(computeField)
+      this.setState({
+        originalComputed: newComputed
+      })
+    } else if (from === 'computed') {
+      isEdit = computed.some((cm) => cm.id === computeField.id)
+      newComputed =  isEdit ? computed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : computed.concat(computeField)
+      this.setState({
+        computed: newComputed
+      })
+    } else {
+      this.setState({
+        computed: computed.concat(computeField)
+      })
+    }
+  }
+
   private cacheChange = (e) => {
     this.setState({
       cache: e.target.value
@@ -219,7 +320,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps } = this.state
+    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -233,12 +334,16 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       config: JSON.stringify({
         ...widgetProps,
         queryParams,
+        computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
         data: []
       }),
       publish: true
     }
+    console.info({
+      widget
+    })
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
@@ -304,11 +409,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       queryParams,
       cache,
       expired,
+      computed,
       splitSize,
       originalWidgetProps,
+      originalComputed,
       widgetProps
     } = this.state
-
+    console.log({originalComputed})
     return (
       <div className={styles.workbench}>
         <EditorHeader
@@ -333,33 +440,37 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
               onChange={this.saveSplitSize}
               onDragFinished={this.resizeChart}
             >
-              <OperatingPanel
-                ref={(f) => this.operatingPanel = f}
-                views={views}
-                originalWidgetProps={originalWidgetProps}
-                selectedView={selectedView}
-                distinctColumnValues={distinctColumnValues}
-                columnValueLoading={columnValueLoading}
-                queryParams={queryParams}
-                cache={cache}
-                expired={expired}
-                onViewSelect={this.viewSelect}
-                onSetQueryParams={this.setQueryParams}
-                onCacheChange={this.cacheChange}
-                onExpiredChange={this.expiredChange}
-                onSetWidgetProps={this.setWidgetProps}
-                onLoadData={onLoadData}
-                onLoadDistinctValue={onLoadDistinctValue}
+          <OperatingPanel
+            ref={(f) => this.operatingPanel = f}
+            views={views}
+            originalWidgetProps={originalWidgetProps}
+            originalComputed={originalComputed}
+            selectedView={selectedView}
+            distinctColumnValues={distinctColumnValues}
+            columnValueLoading={columnValueLoading}
+            queryParams={queryParams}
+            cache={cache}
+            expired={expired}
+            computed={computed}
+            onViewSelect={this.viewSelect}
+            onSetQueryParams={this.setQueryParams}
+            onCacheChange={this.cacheChange}
+            onExpiredChange={this.expiredChange}
+            onSetWidgetProps={this.setWidgetProps}
+            onSetComputed={this.setComputed}
+            onDeleteComputed={this.deleteComputed}
+            onLoadData={onLoadData}
+            onLoadDistinctValue={onLoadDistinctValue}
+          />
+          <div className={styles.viewPanel}>
+            <div className={styles.widgetBlock}>
+              <Widget
+                {...widgetProps}
+                loading={dataLoading}
+                onPaginationChange={this.paginationChange}
               />
-              <div className={styles.viewPanel}>
-                <div className={styles.widgetBlock}>
-                  <Widget
-                    {...widgetProps}
-                    loading={dataLoading}
-                    onPaginationChange={this.paginationChange}
-                  />
-                </div>
-              </div>
+            </div>
+          </div>
             </SplitPane>
           </Suspense>
         </div>
@@ -386,7 +497,8 @@ export function mapDispatchToProps (dispatch) {
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
     onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),
-    onClearCurrentWidget: () => dispatch(clearCurrentWidget())
+    onClearCurrentWidget: () => dispatch(clearCurrentWidget()),
+    onExecuteComputed: (sql) => dispatch(executeComputed(sql))
   }
 }
 

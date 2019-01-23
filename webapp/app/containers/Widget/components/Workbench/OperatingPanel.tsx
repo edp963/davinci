@@ -11,6 +11,7 @@ import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
 import VariableConfigForm from '../VariableConfigForm'
+import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
 import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
 import SplitLineSection, { ISplitLineConfig } from './ConfigSections/SplitLineSection'
@@ -27,6 +28,7 @@ import TableSection, { ITableConfig } from './ConfigSections/TableSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
+import { uuid } from '../../../../utils/util'
 
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
@@ -41,6 +43,7 @@ const RadioGroup = Radio.Group
 import InputNumber from 'antd/lib/input-number'
 import Dropdown from 'antd/lib/dropdown'
 import Modal from 'antd/lib/modal'
+import Popconfirm from 'antd/lib/popconfirm'
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
@@ -67,10 +70,14 @@ interface IOperatingPanelProps {
   queryParams: any[]
   cache: boolean
   expired: number
+  computed: any[]
+  originalComputed: any[]
   onViewSelect: (selectedView: IView) => void
   onSetQueryParams: (queryParams: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
+  onSetComputed: (computesField: any[]) => void
+  onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
   onLoadData: (viewId: number, params: object, resolve: (data: any) => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
@@ -103,6 +110,8 @@ interface IOperatingPanelStates {
   filterModalVisible: boolean
   variableConfigModalVisible: boolean
   variableConfigControl: object
+  computedConfigModalVisible: boolean
+  selectedComputed: object
 }
 
 export class OperatingPanel extends React.Component<IOperatingPanelProps, IOperatingPanelStates> {
@@ -135,7 +144,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList: null,
       filterModalVisible: false,
       variableConfigModalVisible: false,
-      variableConfigControl: {}
+      variableConfigControl: {},
+      computedConfigModalVisible: false,
+      selectedComputed: null
     }
   }
 
@@ -153,8 +164,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private filterSettingForm = null
 
   private variableConfigForm = null
+  private computedConfigForm = null
   private refHandlers = {
-    variableConfigForm: (ref) => this.variableConfigForm = ref
+    variableConfigForm: (ref) => this.variableConfigForm = ref,
+    computedConfigForm: (ref) => this.computedConfigForm = ref
   }
 
   public componentWillMount () {
@@ -1112,6 +1125,82 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     onSetQueryParams(queryParams.filter((q) => q.id !== id))
   }
 
+  private coustomFieldSelect = (event) => {
+    const {key} = event
+    switch (key) {
+      case 'computed':
+        this.setState({
+          computedConfigModalVisible: true
+        })
+        break
+      default:
+        break
+    }
+  }
+
+  private hideComputedConfigModal = () => {
+    this.setState({computedConfigModalVisible: false, selectedComputed: null})
+  }
+
+  private saveComputedConfig = (config) => {
+    console.log({config})
+    const {onSetComputed} = this.props
+    if (config) {
+      onSetComputed(config)
+    }
+  }
+
+  private onShowEditComputed = (tag) => () => {
+    console.log({tag})
+    this.setState({
+      computedConfigModalVisible: true,
+      selectedComputed: tag
+    }, () => {
+      const {id, name, visualType, sqlExpression} = tag
+      this.forceUpdate(() => {
+        this.computedConfigForm.props.form.setFieldsValue({id, name, visualType})
+      })
+    })
+  }
+
+  private onDeleteComputed = (tag) => () => {
+    const { onDeleteComputed } = this.props
+    if (onDeleteComputed) {
+      onDeleteComputed(tag)
+    }
+  }
+
+  private bootstrapMorePanel = (tag) => {
+    const columnMenu = (
+      <Menu>
+        <Menu.Item className={styles.menuItem}>
+          <span
+            className={styles.menuText}
+            onClick={this.onShowEditComputed(tag)}
+          >
+          字段信息
+          </span>
+        </Menu.Item>
+        <Menu.Item className={styles.menuItem}>
+          <Popconfirm
+            title={`确定删除 ${tag.name}?`}
+            placement="bottom"
+            onConfirm={this.onDeleteComputed(tag)}
+          >
+            <span className={styles.menuText}>删除</span>
+          </Popconfirm>
+        </Menu.Item>
+      </Menu>
+    )
+
+    return (
+      <span className={styles.more}>
+        <Dropdown overlay={columnMenu} placement="bottomRight" trigger={['click']}>
+          <Icon type="ellipsis" />
+        </Dropdown>
+      </span>
+    )
+  }
   public render () {
     const {
       views,
@@ -1121,8 +1210,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       queryParams,
       cache,
       expired,
+      computed,
       onCacheChange,
-      onExpiredChange
+      onExpiredChange,
+      originalWidgetProps,
+      originalComputed
     } = this.props
     const {
       dragged,
@@ -1144,7 +1236,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       actOnModalList,
       filterModalVisible,
       variableConfigModalVisible,
-      variableConfigControl
+      variableConfigControl,
+      computedConfigModalVisible,
+      selectedComputed
     } = this.state
 
     const { metrics } = dataParams
@@ -1158,6 +1252,12 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         {(views || []).map((v) => (
           <MenuItem key={v.id}>{v.name}</MenuItem>
         ))}
+      </Menu>
+    )
+
+    const coustomFieldSelectMenu = (
+      <Menu onClick={this.coustomFieldSelect}>
+        <MenuItem key="computed">计算字段</MenuItem>
       </Menu>
     )
     const categories = []
@@ -1496,6 +1596,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const selectedCharts = mode === 'pivot'
       ? getPivotModeSelectedCharts(metrics.items)
       : [chartModeSelectedChart]
+    const computedAddFrom = computed.map((c) => ({...c, from: 'computed'}))
+    const originalWidgetPropsAddFrom = originalComputed ? originalComputed.map((c) => ({...c, from: 'originalComputed'})) : []
+    const combineComputedFields = originalComputed
+    ? [...computedAddFrom, ...originalWidgetPropsAddFrom]
+    : [...computedAddFrom]
+
+    combineComputedFields.forEach((compute) => {
+      if (compute.visualType === 'number') {
+        values.push(compute)
+      } else if (compute.visualType === 'string') {
+        categories.push(compute)
+      }
+    })
+    console.log({categories})
+    console.log({values})
 
     return (
       <div className={styles.operatingPanel}>
@@ -1504,12 +1619,16 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
               <a>{selectedView ? selectedView.name : '选择一个View'}</a>
             </Dropdown>
+            {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
+              <Icon type="plus" />
+            </Dropdown> */}
           </div>
           <div className={styles.columnContainer}>
             <h4>分类型</h4>
             <ul className={`${styles.columnList} ${styles.categories}`}>
               {categories.map((cat) => (
                 <li
+                  className={`${cat.title === 'computedField' ? styles.computed : ''}`}
                   key={cat.name}
                   onDragStart={this.dragStart(cat)}
                   onDragEnd={this.dragEnd}
@@ -1517,6 +1636,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 >
                   <i className={`iconfont ${this.getDragItemIconClass(cat.visualType)}`} />
                   <p>{cat.name}</p>
+                  {cat.title === 'computedField' ? this.bootstrapMorePanel(cat) : null}
                 </li>
               ))}
             </ul>
@@ -1526,6 +1646,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <ul className={`${styles.columnList} ${styles.values}`}>
               {values.map((v) => (
                 <li
+                  className={`${v.title === 'computedField' ? styles.computed : ''}`}
                   key={v.name}
                   onDragStart={this.dragStart({...v, name: encodeMetricName(v.name), agg: 'sum'})}
                   onDragEnd={this.dragEnd}
@@ -1533,6 +1654,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 >
                   <i className={`iconfont ${this.getDragItemIconClass(v.visualType)}`} />
                   <p>{v.name}</p>
+                  {v.title === 'computedField' ? this.bootstrapMorePanel(v) : null}
                 </li>
               ))}
             </ul>
@@ -1668,6 +1790,24 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           />
         )
         ]}
+        <Modal
+          title="计算字段配置"
+          wrapClassName="ant-modal-large"
+          visible={computedConfigModalVisible}
+          onCancel={this.hideComputedConfigModal}
+          closable={false}
+          footer={false}
+          maskClosable={false}
+        >
+          <ComputedConfigForm
+            queryInfo={queryInfo}
+            categories={categories}
+            onSave={this.saveComputedConfig}
+            onClose={this.hideComputedConfigModal}
+            selectedComputed={selectedComputed}
+            wrappedComponentRef={this.refHandlers.computedConfigForm}
+          />
+        </Modal>
       </div>
     )
   }
