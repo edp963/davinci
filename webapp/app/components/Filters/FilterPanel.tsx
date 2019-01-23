@@ -50,6 +50,8 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
   }
 
   private initFilterValues = (filters: IFilterItem[]) => {
+    this.filterValues = {}
+    this.filterValuesByItem = {}
     filters.forEach((f) => {
       const defaultFilterValue = getDefaultValue(f)
       if (defaultFilterValue) {
