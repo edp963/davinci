@@ -118,6 +118,7 @@ export interface IWidgetProps {
   onPaginationChange?: (pageNo: number, pageSize: number) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
+  computed?: any[]
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 

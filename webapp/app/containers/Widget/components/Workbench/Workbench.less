@@ -67,9 +67,12 @@
 }
 
 .viewSelect {
+  display: flex;
   padding: 8px;
   line-height: 24px;
   flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .columnContainer {
@@ -103,6 +106,9 @@
         i {
           color: @text-color;
         }
+        .more{
+          display: block;
+        }
       }
 
       i {
@@ -110,6 +116,9 @@
         font-size: 0.8em;
         text-align: center;
         flex-shrink: 0;
+      }
+      .more{
+        display: none;
       }
 
       .iconDate {
@@ -134,6 +143,14 @@
       color: @primary-color;
     }
   }
+  .computed {
+    &:hover {
+      background-color: lighten(orange, 30%);
+    }
+    i {
+      color: orange;
+    }
+  }
 }
 
 .values {
@@ -141,9 +158,16 @@
     &:hover {
       background-color: lighten(@light-green, 30%);
     }
-
     i {
       color: @light-green;
+    }
+  }
+  .computed {
+    &:hover {
+      background-color: lighten(orange, 30%);
+    }
+    i {
+      color: orange;
     }
   }
 }
