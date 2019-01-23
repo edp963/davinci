@@ -220,7 +220,7 @@ export class ColumnStyleConfig extends React.PureComponent<IColumnStyleConfigPro
     return (
       <Modal
         title="单元格样式"
-        wrapClassName="ant-modal-medium"
+        wrapClassName="ant-modal-large"
         maskClosable={false}
         footer={this.modalFooter}
         visible={visible}
