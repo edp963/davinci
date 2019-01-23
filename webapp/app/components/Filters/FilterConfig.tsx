@@ -47,21 +47,20 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   public componentWillMount () {
-    this.initState()
+    this.initState(this.props.filters)
   }
 
   public componentWillReceiveProps (nextProps: IFilterConfigProps) {
     const { filters, saving } = nextProps
     if (filters !== this.props.filters) {
-      this.initState()
+      this.initState(filters)
     }
     if (saving !== this.props.saving) {
       this.ok()
     }
   }
 
-  private initState = () => {
-    const { filters } = this.props
+  private initState = (filters: any[]) => {
     const localFilters = fromJS(filters).toJS()
     const selectedFilter = localFilters[0]
     this.setState({
