@@ -141,28 +141,25 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public componentWillUpdate (nextProps: IPivotProps) {
-    const { renderType } = nextProps
-    if (renderType !== 'refresh') {
-      this.rowKeys = []
-      this.colKeys = []
-      this.rowTree = {}
-      this.colTree = {}
-      this.tree = {}
-      this.drawingData = {
-        elementSize: 0,
-        unitMetricWidth: 0,
-        unitMetricHeight: 0,
-        tableBodyCollapsed: false,
-        multiCoordinate: false,
-        sizeRate: {}
-      }
-      this.groupedData = {}
-      this.metricAxisConfig = void 0
-      this.getRenderData(nextProps)
-      this.rowHeader.scrollTop = 0
-      this.columnHeader.scrollLeft = 0
-      this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
+    this.rowKeys = []
+    this.colKeys = []
+    this.rowTree = {}
+    this.colTree = {}
+    this.tree = {}
+    this.drawingData = {
+      elementSize: 0,
+      unitMetricWidth: 0,
+      unitMetricHeight: 0,
+      tableBodyCollapsed: false,
+      multiCoordinate: false,
+      sizeRate: {}
     }
+    this.groupedData = {}
+    this.metricAxisConfig = void 0
+    this.getRenderData(nextProps)
+    this.rowHeader.scrollTop = 0
+    this.columnHeader.scrollLeft = 0
+    this.tableBody.scrollTop = this.tableBody.scrollLeft = 0
   }
 
   public componentWillUnmount () {
