@@ -1,6 +1,6 @@
 import * as React from 'react'
 import classnames from 'classnames'
-import { findDOMNode } from 'react-dom'
+import ReactDOM, { findDOMNode } from 'react-dom'
 
 import Icon from 'antd/lib/icon'
 import Row from 'antd/lib/row'
@@ -55,8 +55,7 @@ interface IFieldConfigStates {
 
 export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldConfigStates> {
 
-  private refHandlers: { codeEditor: (ref: any) => void }
-  private codeEditor: any
+  private codeEditor = React.createRef<any>()
   private codeMirrorInst: any
   private isInitEditor: boolean = true
 
@@ -75,9 +74,6 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
       testResult: '',
       testModalVisible: false
     }
-    this.refHandlers = {
-      codeEditor: (ref) => this.codeEditor = ref
-    }
   }
 
   public componentDidMount () {
@@ -88,8 +84,11 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
 
   public componentDidUpdate () {
     if (this.state.localConfig.useExpression) {
-      this.initCodeEditor(this.isInitEditor)
-      this.isInitEditor = false
+      // @FIXME refactor to remove setTimeout usage
+      const tId = setTimeout(() => {
+        this.isInitEditor = this.initCodeEditor(this.isInitEditor)
+        clearTimeout(tId)
+      }, 0)
     }
   }
 
@@ -143,7 +142,9 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
 
   private initCodeEditor = (isInit: boolean) => {
     if (!this.codeMirrorInst) {
-      const codeEditorDom = findDOMNode(this.codeEditor)
+      // @FIXME ref is null in componentDidUpdate
+      if (!this.codeEditor.current) { return true }
+      const codeEditorDom = findDOMNode(this.codeEditor.current)
       this.codeMirrorInst = codeMirror.fromTextArea(codeEditorDom, {
         mode: 'text/javascript',
         theme: '3024-day',
@@ -155,6 +156,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
     if (isInit && this.state.localConfig.useExpression) {
       this.codeMirrorInst.doc.setValue(this.state.localConfig.alias)
     }
+    return false
   }
 
   private addQueryVar = () => {
@@ -285,9 +287,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
             {getFieldDecorator('alias_0')(<Input />)}
           </FormItem>
           <FormItem label="字段别名" className={textAreaCls} style={{ height: '325px' }}>
-            {getFieldDecorator('alias_1')(
-              <TextArea ref={this.refHandlers.codeEditor} placeholder="请输入动态表达式" />
-            )}
+            <TextArea ref={this.codeEditor} placeholder="请输入动态表达式" />
           </FormItem>
           {useExpression && <Row type="flex" align="middle" gutter={8}>
             {variableOptions.length > 0 && (
