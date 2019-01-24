@@ -81,6 +81,15 @@ export interface ITeamParams {
   v: string
 }
 
+export interface IViewTeams {
+  id: number
+  orgId: number
+  name: string,
+  description: string,
+  parentTeamId: number,
+  visibility: boolean
+}
+
 export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsStates> {
   constructor (props) {
     super(props)

@@ -72,7 +72,7 @@ export const SQL_FIELD_TYPES = {
     geoCity: []
 }
 
-import { SQL_NUMBER_TYPES } from '../../globalConstants'
+import { SQL_NUMBER_TYPES } from '../../../globalConstants'
 export function getColumns (columns) {
     columns.map((i) => {
         const { date } = SQL_FIELD_TYPES
