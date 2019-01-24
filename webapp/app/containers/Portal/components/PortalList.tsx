@@ -16,7 +16,7 @@ import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
 import {IPortal} from '../../Portal'
-import { toListBF } from '../../Bizlogic/viewUtil'
+import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 interface IPortalListProps {
   projectId: number

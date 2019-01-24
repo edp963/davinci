@@ -15,7 +15,7 @@ import EllipsisList from '../../../components/EllipsisList'
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import {IProject} from '../../Projects'
-import { toListBF } from '../../Bizlogic/viewUtil'
+import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 export interface IDisplay {
   id: number

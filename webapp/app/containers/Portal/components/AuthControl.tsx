@@ -35,7 +35,7 @@ const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
 
 const utilStyles = require('../../../assets/less/util.less')
-import { toListBF } from '../../Bizlogic/viewUtil'
+import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 interface IAuthControlProps {
   checkedKeys: any[]
