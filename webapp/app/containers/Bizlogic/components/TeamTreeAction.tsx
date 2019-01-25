@@ -20,8 +20,8 @@
 
 import * as React from 'react'
 import Input from 'antd/lib/input'
-const styles = require('./Bizlogic.less')
-import { ITeamParams } from '../Bizlogic'
+const styles = require('../Bizlogic.less')
+import { ITeamParams } from '../../Bizlogic'
 
 interface ITeamTreeActionProps {
   depth: number

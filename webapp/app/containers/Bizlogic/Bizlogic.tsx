@@ -42,31 +42,12 @@ require('codemirror/addon/hint/sql-hint')
 require('codemirror/addon/display/placeholder')
 
 import Form from 'antd/lib/form'
-import Radio from 'antd/lib/radio'
 import Row from 'antd/lib/row'
 import Col from 'antd/lib/col'
 import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
 import Select from 'antd/lib/select'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
-import Tabs from 'antd/lib/tabs'
-import Table from 'antd/lib/table'
-import Alert from 'antd/lib/alert'
-import Tree from 'antd/lib/tree'
 import message from 'antd/lib/message'
-import Tooltip from 'antd/lib/tooltip'
-import Popover from 'antd/lib/popover'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
-const MenuItem = Menu.Item
-const TreeNode = Tree.TreeNode
-const Search = Input.Search
 const FormItem = Form.Item
-const Option = Select.Option
-const TabPane = Tabs.TabPane
-const RadioGroup = Radio.Group
-const RadioButton = Radio.Button
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Bizlogic.less')
@@ -84,11 +65,12 @@ import { checkNameUniqueAction, hideNavigator } from '../App/actions'
 import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
-import TeamTreeAction from './TeamTreeAction'
-import { toListBF, SQL_FIELD_TYPES, getColumns } from './viewUtil'
-import { ITeamParams } from '../Bizlogic'
+import { toListBF, getColumns } from './components/viewUtil'
+import { ITeamParams, IViewTeams } from '../Bizlogic'
 import EditorHeader from '../../components/EditorHeader'
 import PaginationWithoutTotal from '../../components/PaginationWithoutTotal'
+import SourcerSchema from './components/SourceSchema'
+import ExecuteSql from './components/ExecuteSql'
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -116,9 +98,6 @@ interface IBizlogicFormProps {
 }
 
 interface IBizlogicFormState {
-  expandedKeys: string[]
-  searchValue: string
-  autoExpandParent: boolean
   modelType: string
   dataList: any[]
   sourceIdGeted: number
@@ -130,34 +109,19 @@ interface IBizlogicFormState {
 
   treeData: any[]
   listData: any[]
-  teamExpandedKeys: string[]
-  teamAutoExpandParent: boolean
   teamCheckedKeys: any[]
-  selectedKeys: any[]
   teamParams: [ITeamParams]
   configTeam: any[]
-  alertVisible: boolean
   screenWidth: number
-  isFold: boolean
 
   name: string
   description: string
   isNameExited: boolean
   selectedSourceName: string
   sqlExecuteCode: boolean | number
-  // isDataPagination: boolean
   limit: number
   sql: string
   totalCount: number
-}
-
-interface IViewTeams {
-  id: number
-  orgId: number
-  name: string,
-  description: string,
-  parentTeamId: number,
-  visibility: boolean
 }
 
 declare interface IObjectConstructor {
@@ -171,9 +135,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   constructor (props) {
     super(props)
     this.state = {
-      expandedKeys: [],
-      searchValue: '',
-      autoExpandParent: true,
       modelType: '',
       dataList: [],
       sourceIdGeted: 0,
@@ -185,24 +146,18 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
       treeData: [],
       listData: [],
-      teamExpandedKeys: [],
-      teamAutoExpandParent: true,
       teamCheckedKeys: [],
-      selectedKeys: [],
       teamParams: [{
         k: '',
         v: ''
       }],
       configTeam: [],
-      alertVisible: true,
       screenWidth: 0,
-      isFold: true,
       name: '',
       description: '',
       isNameExited: false,
       selectedSourceName: '',
       sqlExecuteCode: false,
-      // isDataPagination: true,
       limit: 500,
       sql: '',
       totalCount: 0
@@ -229,8 +184,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     const { selectedSourceName, schemaData } = this.state
 
     this.setState({
-      screenWidth: document.documentElement.clientWidth,
-      isFold: route.path === '/project/:pid/bizlogic' ? false : true
+      screenWidth: document.documentElement.clientWidth
     })
 
     if (!bizlogics) {
@@ -423,7 +377,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.codeMirrorInstanceOfQuerySQL.doc.setValue(sql.includes('{') ? sql.substring(sql.indexOf('{') + 1, sql.lastIndexOf('}')) : '')
   }
 
-  private changeIsDeclarate  = (e) => {
+  private initChangeIsDeclarate  = (e) => {
     this.setState({
       isDeclarate: e.target.value
     }, () => {
@@ -520,21 +474,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private getParentKey = (key, tree) => {
-    let parentKey
-    tree.forEach((i) => {
-      if (i.children) {
-        if (i.children.some((item) => item.key === key)) {
-          parentKey = i.key
-        } else if (this.getParentKey(key, i.children)) {
-          parentKey = this.getParentKey(key, i.children)
-        }
-      }
-    })
-    return parentKey
-  }
-
-  private selectSource = (source) => {
+  private initSelectSource = (source) => {
     const { sources, onLoadSchema } = this.props
     const currentSource = (sources as any[]).find((s) => s.id === Number(source.key))
     this.setState({
@@ -554,30 +494,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private onExpand = (expandedKeys) => {
-    this.setState({
-      expandedKeys,
-      autoExpandParent: false
-    })
-  }
-
-  private searchSchema = (e) => {
-    const { dataList, schemaData } = this.state
-    const value = e.target.value
-    const expandedKeys = dataList.map((item) => {
-      if (item.key.indexOf(value) > -1) {
-        return this.getParentKey(item.key, generateData(schemaData))
-      }
-      return null
-    }).filter((item, i, self) => item && self.indexOf(item) === i)
-    this.setState({
-      expandedKeys,
-      searchValue: value,
-      autoExpandParent: true
-    })
-  }
-
-  private executeSql = () => {
+  private initExecuteSql = () => {
     const { sourceIdGeted, listData, isDeclarate, limit } = this.state
 
     const sqlTmpl = this.codeMirrorInstanceOfQuerySQL.getValue()
@@ -606,27 +523,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       })
     }
 
-
-    this.setState({
-      isFold: true,
-      alertVisible: true,
-      sql
-    })
-
-    // const requestObj = isDataPagination
-    //   ? {
-    //       sourceIdGeted,
-    //       sql,
-    //       pageNo: 1,
-    //       pageSize: 100
-    //     }
-    //   : {
-    //       sourceIdGeted,
-    //       sql,
-    //       pageNo: 0,
-    //       pageSize: 0,
-    //       limit: 10000
-    //     }
+    this.setState({ sql })
 
     const requestObj = {
       sourceIdGeted,
@@ -653,7 +550,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }, 100)
   }
 
-  private selectModelItem = (record, item) => (val) => {
+  private initSelectModelItem = (record, item) => (val) => {
     const { executeColumns } = this.state
     const obj = {
       name: record.name,
@@ -818,13 +715,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private onTeamExpand = (expandedKeys) => {
-    this.setState({
-      teamExpandedKeys: expandedKeys,
-      teamAutoExpandParent: false
-    })
-  }
-
   private getListData (checkedKeys) {
     const { listData, teamParams } = this.state
     const listDataFinal = listData.map((td) => {
@@ -848,45 +738,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     this.setState({
       listData: this.getListData(checkedKeys.checked),
       teamCheckedKeys: checkedKeys.checked
-    })
-  }
-
-  private onSelect = (selectedKeys, info) => {
-    this.setState({ selectedKeys })
-  }
-
-  private renderTreeNodes = (data, depth = 0) => {
-    return data.map((item) => {
-      const { listData, teamParams } = this.state
-      const currentItem = listData.find((ld) => ld.id === item.id)
-      const treeTitle = (
-        <TeamTreeAction
-          depth={depth}
-          onTeamParamChange={this.onTeamParamChange}
-          teamParams={teamParams}
-          currentItem={currentItem}
-        />
-      )
-      if (item.children) {
-        return (
-          <TreeNode key={item.id} title={treeTitle} dataRef={item}>
-            {this.renderTreeNodes(item.children, depth + 1)}
-          </TreeNode>
-        )
-      }
-      return <TreeNode key={item.id} title={treeTitle} className={styles.test} />
-    })
-  }
-
-  private handleClose = () => {
-    this.setState({
-      alertVisible: false
-    })
-  }
-
-  private foldBoard = () => {
-    this.setState({
-      isFold: !this.state.isFold
     })
   }
 
@@ -943,44 +794,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
   }
 
-  private handleTree = (clickKey, obj) => {
-    const { expandedKeys } = this.state
-
-    this.setState({
-      autoExpandParent: false
-    })
-
-    if (obj.selected) {
-      if (expandedKeys.indexOf(clickKey[0]) < 0) {
-        expandedKeys.push(clickKey[0])
-        this.setState({
-          expandedKeys
-        })
-      } else {
-        this.setState({
-          expandedKeys: expandedKeys.filter((e) => e !== clickKey[0])
-        })
-      }
-    } else {
-      let currentKey = []
-      if (expandedKeys.length === 0) {
-        expandedKeys.push(obj.node.props.title)
-        currentKey = expandedKeys
-      } else {
-        currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
-      }
-      this.setState({
-        expandedKeys: currentKey
-      })
-    }
-  }
-
-  // private onChangePage = (e) => {
-  //   this.setState({
-  //     isDataPagination:  e.target.checked
-  //   })
-  // }
-
   private limitChange = (val) => {
     this.setState({ limit: val })
   }
@@ -1008,6 +821,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   public render () {
     const {
       form,
+      type,
       sources,
       sqlValidateMessage,
       executeLoading,
@@ -1017,254 +831,24 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     } = this.props
     const { getFieldDecorator } = form
     const {
-      searchValue,
-      expandedKeys,
-      autoExpandParent,
       isDeclarate,
       isShowSqlValidateAlert,
       executeResultList,
       executeColumns,
       schemaData,
       treeData,
-      alertVisible,
       screenWidth,
-      isFold,
       name,
       description,
       selectedSourceName,
       sqlExecuteCode,
       totalCount,
-      limit
+      limit,
+      dataList,
+      teamParams,
+      listData,
+      teamCheckedKeys
     } = this.state
-
-    const itemStyle = {
-      labelCol: { span: 8 },
-      wrapperCol: { span: 16 }
-    }
-
-    const tableData = executeResultList
-      ? executeResultList.map((i) => {
-        // i.key = uuid()
-        return i
-      })
-      : []
-    const modelData = executeColumns
-      ? executeColumns.map((i) => {
-        // i.key = uuid()
-        return i
-      })
-      : []
-
-    let sourceSelectMenu
-    if (sources) {
-      sourceSelectMenu = (
-        <Menu onClick={this.selectSource}>
-          {((sources as any[]) || []).map((v) => (
-            <MenuItem key={v.id}>{v.name}</MenuItem>
-          ))}
-        </Menu>
-      )
-    } else {
-      sourceSelectMenu = (
-        <Menu />
-      )
-    }
-
-    const tableDataKey = []
-    for (const key in tableData[0]) {
-      if (tableData[0].hasOwnProperty(key)) {
-        tableDataKey.push(key)
-      }
-    }
-    const tableColumns = []
-    tableDataKey.forEach((k, index) => {
-      // if (k !== 'key') {
-        tableColumns.push({
-          title: k,
-          dataIndex: k,
-          // key: k,
-          className: `${utilStyles.textAlignLeft}`
-          // width: 80
-        } as any)
-      // }
-    })
-
-    const sqlVisualTypes = []
-    for (const item in SQL_FIELD_TYPES) {
-      if (SQL_FIELD_TYPES.hasOwnProperty(item)) {
-        sqlVisualTypes.push(item)
-      }
-    }
-    const optionSource = sqlVisualTypes.map((opt) => <Option key={opt} value={opt}>{opt}</Option>)
-
-    const modelColumns = [{
-      title: '字段名称',
-      dataIndex: 'name',
-      className: `${utilStyles.textAlignLeft}`,
-      key: 'name',
-      width: '25%'
-    }, {
-      title: '数据类型',
-      dataIndex: 'modelType',
-      key: 'modelType',
-      className: `${utilStyles.textAlignLeft}`,
-      width: '25%',
-      render: (text, record) => {
-        return (
-        <RadioGroup
-          options={['维度', '指标']}
-          value={record.modelType === 'category' ? '维度' : '指标'}
-          onChange={this.selectModelItem(record, 'modelType')}
-        />)}
-    }, {
-      title: '可视化类型',
-      dataIndex: 'visualType',
-      className: `${utilStyles.textAlignLeft}`,
-      key: 'visualType',
-      width: '25%',
-      render: (text, record) => {
-        return (
-          <Select
-            size="small"
-            style={{ width: '50%' }}
-            value={record.visualType}
-            onChange={this.selectModelItem(record, 'visualType')}
-          >
-            {optionSource}
-          </Select>
-        )
-      }
-    }, {
-      title: '类型',
-      dataIndex: 'sqlType',
-      className: `${utilStyles.hide}`,
-      key: 'sqlType',
-      render: (text, record) => {
-        return (
-          <Input />
-        )
-      }
-    }]
-
-    let sqlValidatePanel
-    if (isShowSqlValidateAlert) {
-      if (sqlExecuteCode) {
-        sqlValidatePanel = alertVisible
-          ? (
-            <Alert
-              className={styles.sqlAlertText}
-              message={`syntax check ${sqlExecuteCode === 200 ? 'success' : 'error'}`}
-              description={`${sqlValidateMessage || ''}`}
-              type={sqlExecuteCode === 200 ? 'success' : 'error'}
-              showIcon
-              closable
-              onClose={this.handleClose}
-            />
-            )
-          : null
-      } else {
-        sqlValidatePanel = ''
-      }
-    } else {
-      sqlValidatePanel = ''
-    }
-
-    const data = []
-    generateData(schemaData).forEach((item) => {
-      const index = item.key.search(searchValue)
-
-      if (index >= 0) {
-        data.push(item)
-      } else {
-        if (item.children) {
-          const child = []
-          item.children.forEach((c) => {
-            const cIndex = c.key.search(searchValue)
-            if (cIndex >= 0) {
-              child.push(c)
-
-              const obj = {
-                title: item.title,
-                key: item.key,
-                children: child
-              }
-              if (child.length > 1) {
-                return
-              } else {
-                data.push(obj)
-              }
-            }
-          })
-        }
-      }
-    })
-
-    const loop = (data) => data.map((item) => {
-      if (item.children) {
-        return (
-          <TreeNode key={item.key} title={item.key}>
-            {loop(item.children)}
-          </TreeNode>
-        )
-      }
-      return <TreeNode key={item.key} title={item.key} />
-    })
-
-    // const paginationModel = {
-    //   simple: screenWidth < 768 || screenWidth === 768,
-    //   defaultPageSize: 10,
-    //   showSizeChanger: true,
-    //   pageSizeOptions: ['10', '20', '30', '40']
-    // }
-
-    const paginationData = {
-      simple: screenWidth < 768 || screenWidth === 768,
-      defaultPageSize: 100,
-      showSizeChanger: true,
-      pageSizeOptions: ['100', '200', '500', '1000'],
-      total: totalCount
-      // onChange: this.onChangeDataTable,
-      // onShowSizeChange: this.onChangeDataTable
-    }
-    // const tablePagination = isDataPagination && totalCount !== -1 ? paginationData : false
-    // const paginationWithoutTotal = isDataPagination && totalCount === -1 ? (
-    //   <PaginationWithoutTotal
-    //     dataLength={tableData.length}
-    //     loading={executeLoading}
-    //     size="small"
-    //     {...paginationData}
-    //   />
-    // ) : null
-
-    const operations = (
-      <Icon
-        className={`${isFold ? styles.foldIcon : styles.noFoldIcon}`}
-        type={`${isFold ? 'down' : 'up'}`}
-        onClick={this.foldBoard}
-      />
-    )
-
-    const declareMsg = (
-      <span>
-        声明变量
-        <Tooltip title="帮助">
-          <Popover
-            placement="left"
-            content={
-              <div className={styles.declareMsg}>
-                <p className={styles.textMsg}>查询变量：query@var $变量名称$</p>
-                <p className={styles.exampleMsg}>query@var $age$ = '29'; </p>
-                <p className={styles.textMsg}>团队权限变量：team@var $变量名称$</p>
-                <p className={styles.exampleMsg}>team@var $city$ = '北京'; </p>
-              </div>}
-            title={<h5>示例：</h5>}
-            trigger="click"
-          >
-            <Icon type="question-circle-o" className={styles.questionClass} />
-          </Popover>
-        </Tooltip>
-      </span>
-    )
 
     return (
       <div className={styles.bizlogic}>
@@ -1285,147 +869,46 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
             <Col span={24} className={styles.leftInput}>
               <FormItem className={utilStyles.hide}>
                 {getFieldDecorator('id', {
-                  hidden: this.props.type === 'add'
+                  hidden: type === 'add'
                 })(
                   <Input />
                 )}
               </FormItem>
-              <FormItem label="" className={utilStyles.hide}>
-                {getFieldDecorator('source_id', {})(
-                  <Input />
-                )}
-              </FormItem>
-              <FormItem label="" className={utilStyles.hide}>
-                {getFieldDecorator('source_name', {})(
-                  <Input />
-                )}
-              </FormItem>
-              <div className={styles.sourceSelect}>
-                <Dropdown overlay={sourceSelectMenu} trigger={['click']} placement="bottomLeft">
-                  <a>{selectedSourceName || '选择一个Source'}</a>
-                </Dropdown>
-              </div>
             </Col>
-            <Col span={24} className={`${schemaData.length !== 0 ? styles.treeSearch : utilStyles.hide}`}>
-              <Search
-                placeholder="Search the Schema"
-                onChange={this.searchSchema}
-              />
-            </Col>
-            <Col span={24} className={`${schemaData.length !== 0 ? styles.sourceTree : utilStyles.hide}`}>
-              <Tree
-                className={styles.tree}
-                onExpand={this.onExpand}
-                expandedKeys={expandedKeys}
-                autoExpandParent={autoExpandParent}
-                onSelect={this.handleTree}
-              >
-              {loop(data || [])}
-              </Tree>
-            </Col>
+            <SourcerSchema
+              form={form}
+              selectedSourceName={selectedSourceName}
+              dataList={dataList}
+              schemaData={schemaData}
+              sources={sources}
+              initSelectSource={this.initSelectSource}
+            />
           </Row>
-          <Row className={styles.formRight}>
-            <Col span={24} className={`small-item-margin ${styles.declareSelect}`}>
-              <FormItem label={declareMsg} {...itemStyle}>
-                {getFieldDecorator('isDeclarate', {
-                  initialValue: 'no'
-                })(
-                  <RadioGroup size="small" onChange={this.changeIsDeclarate}>
-                    <RadioButton value="yes">是</RadioButton>
-                    <RadioButton value="no">否</RadioButton>
-                  </RadioGroup>
-                )}
-              </FormItem>
-            </Col>
-            <Row className={styles.formTop}>
-              <Col span={24} className={`${isDeclarate === 'no' ? styles.noDeclaration : ''} ${styles.declareText}`}>
-                <textarea id="declaration" placeholder="在这里声明变量" />
-              </Col>
-              <Col span={24} className={`no-item-margin ${styles.sqlText}`}>
-                <textarea id="sql_tmpl" placeholder="输入SQL语句" />
-              </Col>
-            </Row>
-
-            <Row className={styles.fromBtn}>
-              <span className={styles.sqlAlert}>
-                {sqlValidatePanel}
-              </span>
-              {/* <Checkbox
-                onChange={this.onChangePage}
-                className={styles.pageCheckbox}
-                checked={this.state.isDataPagination}
-              >分页展示
-              </Checkbox> */}
-              <span className={styles.limit}>
-                展示前
-                <InputNumber
-                  value={limit}
-                  onChange={this.limitChange}
-                  className={styles.input}
-                />
-                条数据
-              </span>
-              <Button
-                className={styles.executeBtn}
-                key="forward"
-                type="primary"
-                icon="caret-right"
-                loading={executeLoading}
-                onClick={this.executeSql}
-              >
-                Execute
-              </Button>
-            </Row>
-            {
-              isFold
-                ? (
-                <Row className={`${isFold ? styles.formBottom : styles.formBottomNone}`}>
-                  <Col span={24} className={styles.tabCol}>
-                    <Tabs size="small" defaultActiveKey="data" tabBarExtraContent={operations} className={styles.viewTab} onChange={this.changeTabs}>
-                      <TabPane tab="Data" key="data">
-                        <div className={styles.viewTabPane}>
-                          <Table
-                            dataSource={tableData}
-                            columns={tableColumns}
-                            pagination={paginationData}
-                            scroll={{ x: 160 * tableDataKey.length }}
-                          />
-                          {/* {paginationWithoutTotal} */}
-                        </div>
-                      </TabPane>
-                      <TabPane tab="Model" key="model">
-                        <Table
-                          className={styles.viewTabPane}
-                          dataSource={modelData}
-                          columns={modelColumns}
-                          pagination={false}
-                          // scroll={{y: }}
-                        />
-                      </TabPane>
-                      <TabPane tab="Team" key="team">
-                        <Tree
-                          className={styles.viewTabPane}
-                          checkStrictly
-                          checkable
-                          onExpand={this.onTeamExpand}
-                          // expandedKeys={this.state.teamExpandedKeys}
-                          // autoExpandParent={this.state.teamAutoExpandParent}
-                          defaultExpandAll={true}
-                          onCheck={this.onCheck}
-                          checkedKeys={this.state.teamCheckedKeys}
-                          onSelect={this.onSelect}
-                          selectedKeys={this.state.selectedKeys}
-                        >
-                          {this.renderTreeNodes(viewTeam || [])}
-                        </Tree>
-                      </TabPane>
-                    </Tabs>
-                  </Col>
-                </Row>
-                )
-                : operations
-            }
-          </Row>
+          <ExecuteSql
+            form={form}
+            route={route}
+            executeResultList={executeResultList}
+            executeColumns={executeColumns}
+            screenWidth={screenWidth}
+            isShowSqlValidateAlert={isShowSqlValidateAlert}
+            sqlExecuteCode={sqlExecuteCode}
+            sqlValidateMessage={sqlValidateMessage}
+            totalCount={totalCount}
+            isDeclarate={isDeclarate}
+            limit={limit}
+            executeLoading={executeLoading}
+            teamParams={teamParams}
+            listData={listData}
+            viewTeam={viewTeam}
+            teamCheckedKeys={teamCheckedKeys}
+            initSelectModelItem={this.initSelectModelItem}
+            initExecuteSql={this.initExecuteSql}
+            initChangeIsDeclarate={this.initChangeIsDeclarate}
+            limitChange={this.limitChange}
+            onTeamParamChange={this.onTeamParamChange}
+            onCheck={this.onCheck}
+            changeTabs={this.changeTabs}
+          />
         </Form>
       </div>
     )

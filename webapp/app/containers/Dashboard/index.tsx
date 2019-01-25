@@ -82,7 +82,7 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
-import { toListBF } from '../Bizlogic/viewUtil'
+import { toListBF } from '../Bizlogic/components/viewUtil'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 
 interface IDashboardProps {
