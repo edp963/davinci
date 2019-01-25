@@ -17,9 +17,8 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
 import { IModel } from '../../Widget/components/Workbench/index'
-import Widget from '../../Widget/components/Widget/WidgetInViz'
+import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
 import Icon from 'antd/lib/icon'

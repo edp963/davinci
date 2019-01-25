@@ -4,7 +4,7 @@ import Menu from 'antd/lib/menu/'
 import * as classnames from 'classnames'
 import DashboardItemControlForm from '../DashboardItemControlForm'
 import { IModel } from '../../../Widget/components/Workbench/index'
-import Widget from '../../../Widget/components/Widget/WidgetInViz'
+import Widget from '../../../Widget/components/Widget'
 const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {
