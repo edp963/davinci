@@ -166,6 +166,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         cache,
         expired,
         originalWidgetProps: {...rest},
+        widgetProps: {...rest},
         originalComputed: computed
       })
     }
@@ -323,6 +324,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     const { id, name, description, selectedView, queryParams, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
+      return
+    }
+    if (!selectedView) {
+      message.error('请选择一个View')
       return
     }
     const widget = {

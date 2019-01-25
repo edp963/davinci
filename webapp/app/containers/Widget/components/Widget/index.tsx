@@ -20,6 +20,8 @@ import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
 import { IModel } from '../Workbench/index'
+import { getStyleConfig } from '../util'
+import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
@@ -137,6 +139,20 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
   private height = 0
   private container = createRef<HTMLDivElement>()
 
+  private clearProps: IWidgetWrapperProps = {
+    data: [],
+    cols: [],
+    rows: [],
+    metrics: [],
+    filters: [],
+    chartStyles: getStyleConfig({}),
+    selectedChart: ChartTypes.Table,
+    orders: [],
+    loading: false,
+    mode: 'pivot',
+    model: {}
+  }
+
   public componentDidMount () {
     this.getContainerSize()
   }
@@ -154,18 +170,49 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
   }
 
   public render () {
-    const { loading, mode } = this.props
-    const combinedProps = {
-      width: this.width,
-      height: this.height,
-      ...this.props
-    }
+    const { data, loading, selectedChart, mode } = this.props
+    const isIframeChart = selectedChart === ChartTypes.Iframe && mode === 'chart'
+    const empty = !(data.length || isIframeChart)
+
+    const combinedProps = !empty
+      ? {
+        width: this.width,
+        height: this.height,
+        ...this.props
+      }
+      : {
+        width: this.width,
+        height: this.height,
+        ...this.clearProps
+      }
+
     delete combinedProps.loading
+
+    const maskClass = classnames({
+      [styles.mask]: true,
+      [styles.active]: loading || empty
+    })
+    let maskContent
+    if (loading) {
+      maskContent = (
+        <>
+          <Icon type="loading" />
+          <p>加载中…</p>
+        </>
+      )
+    } else if (empty) {
+      maskContent = (
+        <>
+          <Icon type="inbox" className={styles.emptyIcon} />
+          <p>暂无数据</p>
+        </>
+      )
+    }
 
     return (
       <div className={styles.wrapper} ref={this.container}>
         {/* FIXME */}
-        {mode === 'chart'
+        {combinedProps.mode === 'chart'
           ? (
             <Chart {...combinedProps} />
           )
@@ -173,14 +220,8 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
             <Pivot {...combinedProps} />
           )
         }
-        <div
-          className={classnames({
-            [styles.mask]: true,
-            [styles.loading]: loading
-          })}
-        >
-          <Icon type="loading" />
-          <p>加载中…</p>
+        <div className={maskClass}>
+          {maskContent}
         </div>
       </div>
     )
