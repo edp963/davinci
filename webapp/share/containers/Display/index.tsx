@@ -341,7 +341,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         const widget = widgets.find((w) => w.id === layer.widgetId)
         const view = { model: widget && widget.model }
         const layerId = layer.id
-        const { polling, frequency } = layer.params
+        const { polling, frequency } = JSON.parse(layer.params)
         const { datasource, loading, interactId, renderType } = layersInfo[layerId]
 
         return (
