@@ -118,7 +118,6 @@ public class SqlParseUtils {
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
                                 String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                             }
                         } else if (param.startsWith(TEAM_VAR_KEY)) {
@@ -127,7 +126,6 @@ public class SqlParseUtils {
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
                                 String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                                 teamParamMap.put(k.trim(), Arrays.asList(v));
                             }
                         }

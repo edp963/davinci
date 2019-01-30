@@ -21,16 +21,19 @@ package edp.davinci.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.core.enums.SqlTypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
+import edp.davinci.core.enums.FieldFormatTypeEnum;
 import edp.davinci.core.enums.FileTypeEnum;
+import edp.davinci.core.enums.NumericUnitEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
-import edp.davinci.core.model.DataUploadEntity;
-import edp.davinci.core.model.ExcelHeader;
+import edp.davinci.core.model.*;
+import edp.davinci.dto.viewDto.Param;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
@@ -47,8 +50,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.DecimalFormat;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import static edp.core.consts.Consts.*;
+import static edp.davinci.core.common.Constants.EXCEL_FORMAT_TYPE_KEY;
 
 public class ExcelUtils {
 
@@ -161,30 +168,36 @@ public class ExcelUtils {
      * @param columns
      * @param dataList
      * @param workbook
+     * @param params
      */
     public static void writeSheet(XSSFSheet sheet,
                                   List<QueryColumn> columns,
                                   List<Map<String, Object>> dataList,
                                   XSSFWorkbook workbook,
                                   boolean containType,
-                                  String json) {
+                                  String json,
+                                  List<Param> params) {
 
 
         XSSFRow row = null;
 
+        //默认格式
         XSSFCellStyle cellStyle = workbook.createCellStyle();
         XSSFCellStyle headerCellStyle = workbook.createCellStyle();
 
 
         XSSFDataFormat format = workbook.createDataFormat();
-        cellStyle.setDataFormat(format.getFormat("@"));
-        headerCellStyle.setDataFormat(format.getFormat("@"));
+
+        //常规格式
+        XSSFCellStyle generalStyle = workbook.createCellStyle();
+        generalStyle.setDataFormat(format.getFormat("General"));
 
         //表头粗体居中
         XSSFFont font = workbook.createFont();
         font.setFontName("黑体");
         font.setBold(true);
         headerCellStyle.setFont(font);
+        headerCellStyle.setDataFormat(format.getFormat("@"));
         headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
         headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
 
@@ -195,7 +208,7 @@ public class ExcelUtils {
         if (isTable) {
             try {
                 engine = getScriptEngine();
-                excelHeaders = formatHeader(engine, json);
+                excelHeaders = formatHeader(engine, json, params);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -203,8 +216,20 @@ public class ExcelUtils {
 
         int rownum = 0;
 
+
+        //用于记录表头对应数据格式
+        Map<String, XSSFCellStyle> headerFormatMap = null;
+        //用于标记标记数字格式单位
+        Map<String, NumericUnitEnum> dataUnitMap = null;
+
+        //记录列最大字符数
+        Map<String, Integer> columnWidthMap = new HashMap<>();
+
         //header
         if (isTable && null != excelHeaders && excelHeaders.size() > 0) {
+
+            headerFormatMap = new HashMap<>();
+            dataUnitMap = new HashMap<>();
 
             int colnum = 0;
 
@@ -220,7 +245,32 @@ public class ExcelUtils {
                 //调整数据渲染顺序
                 for (QueryColumn queryColumn : columns) {
                     if (queryColumn.getName().equals(excelHeader.getKey())) {
+                        queryColumn.setType(excelHeader.getType());
                         columnList.add(queryColumn);
+                        columnWidthMap.put(queryColumn.getName(), queryColumn.getName().getBytes().length >= queryColumn.getType().getBytes().length ?
+                                queryColumn.getName().getBytes().length : queryColumn.getType().getBytes().length);
+
+                        //获取对应数据格式
+                        if (null != excelHeader.getFormat()) {
+
+                            Object o = excelHeader.getFormat();
+                            //标记数组和货币数值的单位
+                            if (o instanceof FieldNumeric || o instanceof FieldCurrency) {
+                                FieldNumeric fieldNumeric = (FieldNumeric) o;
+                                if (null != fieldNumeric.getUnit()) {
+                                    dataUnitMap.put(excelHeader.getKey(), fieldNumeric.getUnit());
+                                }
+                            }
+
+                            //生成excel数据格式
+                            String dataFormat = getDataFormat(excelHeader.getFormat());
+                            if (!StringUtils.isEmpty(dataFormat)) {
+                                XSSFCellStyle dataStyle = workbook.createCellStyle();
+                                XSSFDataFormat xssfDataFormat = workbook.createDataFormat();
+                                dataStyle.setDataFormat(xssfDataFormat.getFormat(dataFormat));
+                                headerFormatMap.put(queryColumn.getName(), dataStyle);
+                            }
+                        }
                     }
                 }
             }
@@ -255,9 +305,14 @@ public class ExcelUtils {
         } else {
             row = sheet.createRow(rownum);
             for (int i = 0; i < columns.size(); i++) {
+                QueryColumn queryColumn = columns.get(i);
+
+                columnWidthMap.put(queryColumn.getName(), queryColumn.getName().getBytes().length >= queryColumn.getType().getBytes().length ?
+                        queryColumn.getName().getBytes().length : queryColumn.getType().getBytes().length);
+
                 XSSFCell cell = row.createCell(i);
                 cell.setCellStyle(headerCellStyle);
-                cell.setCellValue(columns.get(i).getName());
+                cell.setCellValue(queryColumn.getName());
             }
         }
 
@@ -274,12 +329,6 @@ public class ExcelUtils {
             }
         }
 
-        if (isTable(json)) {
-            long l2 = System.currentTimeMillis();
-            dataList = formatValue(engine, dataList, json);
-            long l3 = System.currentTimeMillis();
-            System.out.println("data format: >>>>>" + (l3 - l2));
-        }
 
         //data
         for (int i = 0; i < dataList.size(); i++) {
@@ -291,27 +340,182 @@ public class ExcelUtils {
             Map<String, Object> map = dataList.get(i);
 
             for (int j = 0; j < columns.size(); j++) {
-                Object obj = map.get(columns.get(j).getName());
-                String v = "";
-                if (null != obj) {
-                    if (obj instanceof Double || obj instanceof Float) {
-                        DecimalFormat decimalFormat = new DecimalFormat("#,###.####");
-                        v = decimalFormat.format(obj);
-                    } else {
-                        v = obj.toString();
-                    }
-                }
+                QueryColumn queryColumn = columns.get(j);
+                cellStyle.setDataFormat(format.getFormat("@"));
+                Object obj = map.get(queryColumn.getName());
                 XSSFCell cell = row.createCell(j);
-                cell.setCellValue(v);
-                cell.setCellStyle(cellStyle);
+                if (null != obj) {
+                    if (obj instanceof Number || queryColumn.getType().equals("value")) {
+                        try {
+                            Double d = Double.parseDouble(String.valueOf(obj));
+
+                            if (dataUnitMap.containsKey(queryColumn.getName())) {
+                                NumericUnitEnum numericUnitEnum = dataUnitMap.get(queryColumn.getName());
+                                //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
+                                switch (numericUnitEnum) {
+                                    case TenThousand:
+                                    case OneHundredMillion:
+                                        d = d / 10;
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            cell.setCellValue(d);
+                        } catch (NumberFormatException e) {
+                            cell.setCellValue(String.valueOf(obj));
+                        }
+                        if (null != headerFormatMap && headerFormatMap.containsKey(queryColumn.getName())) {
+                            cell.setCellStyle(headerFormatMap.get(queryColumn.getName()));
+                        } else {
+                            cell.setCellStyle(generalStyle);
+                        }
+                    } else {
+                        cell.setCellValue(String.valueOf(obj));
+                    }
+
+                    if (columnWidthMap.containsKey(queryColumn.getName())) {
+                        if (String.valueOf(obj).getBytes().length > columnWidthMap.get(queryColumn.getName())) {
+                            columnWidthMap.put(queryColumn.getName(), String.valueOf(obj).getBytes().length);
+                        }
+                    }
+
+                } else {
+                    cell.setCellValue("");
+                    cell.setCellStyle(cellStyle);
+                }
             }
         }
 
-
-        sheet.setDefaultRowHeight((short) (16.5 * 20));
+        sheet.setDefaultRowHeight((short) (20 * 20));
         for (int i = 0; i < columns.size(); i++) {
-            sheet.autoSizeColumn(i);
+            sheet.autoSizeColumn(i, true);
+
+            QueryColumn queryColumn = columns.get(i);
+            if (columnWidthMap.containsKey(queryColumn.getName())) {
+                Integer width = columnWidthMap.get(queryColumn.getName());
+                if (width > 0) {
+                    sheet.setColumnWidth(i, width * 256);
+                }
+            } else {
+                sheet.setColumnWidth(i, sheet.getColumnWidth(i) * 12 / 10);
+            }
         }
+    }
+
+    /**
+     * 获取数据Excel格式
+     *
+     * @param fieldTypeObject
+     * @return
+     */
+    public static String getDataFormat(Object fieldTypeObject) {
+        if (null != fieldTypeObject) {
+            String formatExpr = "@";
+            if (fieldTypeObject instanceof FieldCurrency || fieldTypeObject instanceof FieldNumeric) {
+                FieldNumeric fieldNumeric = (FieldNumeric) fieldTypeObject;
+                StringBuilder fmtSB = new StringBuilder();
+
+                if (fieldTypeObject instanceof FieldCurrency) {
+                    FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
+                    fmtSB.append(fieldCurrency.getPrefix());
+                }
+
+                fmtSB.append(octothorpe);
+
+                if (fieldNumeric.isUseThousandSeparator()) {
+                    fmtSB.append(conditionSeparator)
+                            .append(makeNTimesString(2, octothorpe))
+                            .append("0");
+                }
+
+                String nzero = makeNTimesString(fieldNumeric.getDecimalPlaces(), 0);
+                if (!StringUtils.isEmpty(nzero)) {
+                    fmtSB.append(".").append(nzero);
+                }
+
+                if (null != fieldNumeric.getUnit() && !StringUtils.isEmpty(getUnitExpr(fieldNumeric))) {
+                    fmtSB.append(getUnitExpr(fieldNumeric));
+                }
+
+                if (fieldTypeObject instanceof FieldCurrency) {
+                    FieldCurrency fieldCurrency = (FieldCurrency) fieldTypeObject;
+                    fmtSB.append(fieldCurrency.getSuffix());
+                }
+
+                formatExpr = fmtSB.toString();
+
+            } else if (fieldTypeObject instanceof FieldCustom) {
+
+            } else if (fieldTypeObject instanceof FieldDate) {
+
+                FieldCustom fieldCustom = (FieldCustom) fieldTypeObject;
+                formatExpr = fieldCustom.getFormat().toLowerCase();
+
+            } else if (fieldTypeObject instanceof FieldPercentage) {
+                FieldPercentage fieldPercentage = (FieldPercentage) fieldTypeObject;
+
+                StringBuilder fmtSB = new StringBuilder("0");
+                if (fieldPercentage.getDecimalPlaces() > 0) {
+                    fmtSB.append(".").append(makeNTimesString(fieldPercentage.getDecimalPlaces(), 0));
+
+                }
+                fmtSB.append(percentSign);
+
+                formatExpr = fmtSB.toString();
+
+            } else if (fieldTypeObject instanceof FieldScientificNotation) {
+                FieldScientificNotation fieldScientificNotation = (FieldScientificNotation) fieldTypeObject;
+                StringBuilder fmtSB = new StringBuilder("0");
+                if (fieldScientificNotation.getDecimalPlaces() > 0) {
+                    fmtSB.append(".")
+                            .append(makeNTimesString(fieldScientificNotation.getDecimalPlaces(), 0));
+                }
+                fmtSB.append("E+00");
+                formatExpr = fmtSB.toString();
+
+            }
+
+            return formatExpr;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * 根据单位获取Excel格式表达式
+     *
+     * @param fieldNumeric
+     * @return
+     */
+    private static String getUnitExpr(FieldNumeric fieldNumeric) {
+        String unitExpr = null;
+        switch (fieldNumeric.getUnit()) {
+            case None:
+                break;
+            case Thousand:
+            case TenThousand:
+                unitExpr = conditionSeparator + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                break;
+            case Million:
+            case OneHundredMillion:
+                unitExpr = makeNTimesString(2, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                break;
+            case Giga:
+                unitExpr = makeNTimesString(3, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                break;
+
+            default:
+                break;
+        }
+
+        return unitExpr;
+    }
+
+
+    private static String makeNTimesString(int n, Object s) {
+        return IntStream.range(0, n).mapToObj(i -> String.valueOf(s)).collect(Collectors.joining(""));
     }
 
 
@@ -354,10 +558,11 @@ public class ExcelUtils {
         return list;
     }
 
-    private static List<ExcelHeader> formatHeader(ScriptEngine engine, String json) {
+    private static List<ExcelHeader> formatHeader(ScriptEngine engine, String json, List<Param> params) {
         try {
             Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFieldsHeader", json);
+
+            Object obj = invocable.invokeFunction("getFieldsHeader", json, params);
 
 
             if (obj instanceof ScriptObjectMirror) {
@@ -393,6 +598,56 @@ public class ExcelUtils {
                                                 }
                                                 header.setStyle(list);
                                             }
+                                        } else if ("format".equals(key)) {
+                                            String formatType = mirror.get(EXCEL_FORMAT_TYPE_KEY).toString();
+                                            ScriptObjectMirror format = (ScriptObjectMirror) mirror.get(formatType);
+
+                                            if (null != format) {
+                                                FieldFormatTypeEnum typeEnum = FieldFormatTypeEnum.typeOf(formatType);
+                                                ObjectMapper mapper = new ObjectMapper();
+
+                                                NumericUnitEnum numericUnit = null;
+                                                if (format.containsKey("unit")) {
+                                                    numericUnit = NumericUnitEnum.unitOf(String.valueOf(format.get("unit")));
+                                                }
+
+                                                switch (typeEnum) {
+                                                    case Currency:
+                                                        FieldCurrency fieldCurrency = mapper.convertValue(format, FieldCurrency.class);
+                                                        if (null != fieldCurrency) {
+                                                            fieldCurrency.setUnit(numericUnit);
+                                                            header.setFormat(fieldCurrency);
+                                                        }
+                                                        break;
+                                                    case Custom:
+                                                        FieldCustom fieldCustom = mapper.convertValue(format, FieldCustom.class);
+                                                        header.setFormat(fieldCustom);
+                                                        break;
+                                                    case Date:
+                                                        FieldDate fieldDate = mapper.convertValue(format, FieldDate.class);
+                                                        header.setFormat(fieldDate);
+
+                                                        break;
+                                                    case Numeric:
+                                                        FieldNumeric fieldNumeric = mapper.convertValue(format, FieldNumeric.class);
+                                                        fieldNumeric.setUnit(numericUnit);
+                                                        header.setFormat(fieldNumeric);
+
+                                                        break;
+                                                    case Percentage:
+                                                        FieldPercentage fieldPercentage = mapper.convertValue(format, FieldPercentage.class);
+                                                        header.setFormat(fieldPercentage);
+
+                                                        break;
+                                                    case ScientificNotation:
+                                                        FieldScientificNotation scientificNotation = mapper.convertValue(format, FieldScientificNotation.class);
+                                                        header.setFormat(scientificNotation);
+                                                        break;
+                                                    default:
+                                                        break;
+                                                }
+                                            }
+
                                         }
 
                                     } else {

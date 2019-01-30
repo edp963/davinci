@@ -27,6 +27,7 @@ import java.util.List;
 public class ExcelHeader {
     private String key;
     private String alias;
+    private String type;
     private boolean isMerged;
     private int row;
     private int col;
@@ -34,6 +35,7 @@ public class ExcelHeader {
     private int colspan;
     private int[] range;
     private List style;
+    private Object format;
 
     public void setKey(String key) {
         this.key = key;

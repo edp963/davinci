@@ -77,6 +77,7 @@ public class SqlUtils {
         sqlUtils.jdbcUrl = source.getJdbcUrl();
         sqlUtils.username = source.getUsername();
         sqlUtils.password = source.getPassword();
+        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
         return sqlUtils;
     }
 
@@ -86,6 +87,7 @@ public class SqlUtils {
         sqlUtils.jdbcUrl = jdbcUrl;
         sqlUtils.username = username;
         sqlUtils.password = password;
+        sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
         return sqlUtils;
     }
 
@@ -125,6 +127,9 @@ public class SqlUtils {
     @CachePut(value = "query", keyGenerator = "keyGenerator")
     public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws ServerException {
 
+
+        long millis = System.currentTimeMillis();
+
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
@@ -136,9 +141,15 @@ public class SqlUtils {
             if (pageNo < 1 && pageSize < 1) {
                 List<Map<String, Object>> list = null;
                 if (limit < 1) {
+                    long l = System.currentTimeMillis();
                     list = syncQuery4List(sql);
+                    long l1 = System.currentTimeMillis();
+                    log.info("query for >>> : {} ms", l1 - l);
                 } else {
+                    long l = System.currentTimeMillis();
                     list = syncQuery4ListByLimit(sql, limit);
+                    long l1 = System.currentTimeMillis();
+                    log.info("query for >>> : {} ms", l1 - l);
                 }
                 paginate.setPageNo(1);
                 paginate.setPageSize(null == list ? 0 : list.size());
@@ -154,6 +165,7 @@ public class SqlUtils {
                 final int startRow = (pageNo - 1) * pageSize;
                 String finalSql = sql;
                 jdbcTemplate.query(new StreamingStatementCreator(finalSql), (ResultSet resultSet) -> {
+                    long l = System.currentTimeMillis();
 
                     int total = 0;
                     try {
@@ -189,6 +201,9 @@ public class SqlUtils {
                         }
                         currentRow++;
                     }
+
+                    long l1 = System.currentTimeMillis();
+                    log.info("query for >>> : {} ms", l1 - l);
                     return paginate;
                 });
             }
@@ -198,6 +213,9 @@ public class SqlUtils {
             throw new ServerException(e.getMessage());
         }
 
+
+        long millis1 = System.currentTimeMillis();
+        log.info("query data set for >>> : {} ms", millis1 - millis);
 
         return paginate;
     }
@@ -330,6 +348,7 @@ public class SqlUtils {
      * @throws ServerException
      */
     public List<QueryColumn> getColumns(String sql) throws ServerException {
+        long l = System.currentTimeMillis();
         checkSensitiveSql(sql);
         Connection connection = null;
         List<QueryColumn> columnList = new ArrayList<>();
@@ -337,6 +356,7 @@ public class SqlUtils {
             connection = getConnection();
             if (null != connection) {
                 Statement statement = connection.createStatement();
+                statement.setMaxRows(1);
                 ResultSet resultSet = statement.executeQuery(sql);
                 ResultSetMetaData rsmd = resultSet.getMetaData();
                 int columnCount = rsmd.getColumnCount();
@@ -354,6 +374,8 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
+        long l1 = System.currentTimeMillis();
+        log.info("get columns for >>> {} ms", l1 - l);
         return columnList;
     }
 
@@ -469,6 +491,7 @@ public class SqlUtils {
         }
         try {
             if (null == connection || connection.isClosed() || !connection.isValid(5)) {
+                log.info("connection is closed or invalid, retry get connection!");
                 releaseDataSource(this.jdbcUrl, this.username, this.password);
                 connection = dataSource.getConnection();
             }

@@ -116,6 +116,7 @@ public class ViewController extends BaseController {
 
     /**
      * 获取TeamVar 来源信息及默认值
+     *
      * @param projectId
      * @param user
      * @param request
@@ -291,6 +292,7 @@ public class ViewController extends BaseController {
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
 
+        long l = System.currentTimeMillis();
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -298,6 +300,8 @@ public class ViewController extends BaseController {
 
         try {
             ResultMap resultMap = viewService.executeSql(executeSql, user, request);
+            long l1 = System.currentTimeMillis();
+            log.info("request getData for: >> {}ms", l1 - l);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -322,6 +326,7 @@ public class ViewController extends BaseController {
                                   @RequestBody(required = false) ViewExecuteParam executeParam,
                                   @ApiIgnore @CurrentUser User user,
                                   HttpServletRequest request) {
+        long l = System.currentTimeMillis();
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -329,6 +334,9 @@ public class ViewController extends BaseController {
 
         try {
             ResultMap resultMap = viewService.getData(id, executeParam, user, request);
+
+            long l1 = System.currentTimeMillis();
+            log.info("request getData for: >> {}ms", l1 - l);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
