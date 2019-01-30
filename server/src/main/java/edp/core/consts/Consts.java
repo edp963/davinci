@@ -33,6 +33,10 @@ public class Consts {
 
     public static final String sqlUrlSeparator = "&";
 
+    public static final String octothorpe = "#";
+
+    public static final String percentSign = "%";
+
     public static final String newLineChar = "\n";
 
     public static final String colon = ":";

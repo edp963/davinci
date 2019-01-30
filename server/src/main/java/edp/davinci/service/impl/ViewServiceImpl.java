@@ -715,7 +715,15 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         try {
 
             if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
+
+                //TODO parse sql log
+                long l = System.currentTimeMillis();
+
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
+
+                //TODO parse sql log
+                long l1 = System.currentTimeMillis();
+                log.info("parse sql for >>> {} ms", l1 - l);
 
                 Source source = viewWithProjectAndSource.getSource();
                 if (null == viewWithProjectAndSource) {
@@ -724,8 +732,23 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
                     SqlUtils sqlUtils = this.sqlUtils.init(source);
                     //解析team@var查询参数
+
+                    //TODO parse sql log
+                    long l2 = System.currentTimeMillis();
+
                     Map<String, List<String>> teamParams = parseTeamParams(sqlEntity.getTeamParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
+
+                    //TODO parse sql log
+                    long l3 = System.currentTimeMillis();
+
                     Map<String, String> queryParam = getQueryParam(sqlEntity, executeParam);
+
+                    //TODO parse sql log
+                    long l4 = System.currentTimeMillis();
+                    log.info("parse team params for >>> {} ms", l3 - l2);
+                    log.info("parse query params for >>> {} ms", l4 - l3);
+                    log.info("parse params for >>> {} ms", l4 - l2);
+
 
                     cacheKey = getCacheKey(viewMetaCacheKey, viewWithProjectAndSource, executeParam, teamParams, queryParam);
                     try {
@@ -738,7 +761,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         log.warn("get data meta by cache: {}", e.getMessage());
                     }
 
+                    long l5 = System.currentTimeMillis();
                     String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), queryParam, teamParams, sqlTempDelimiter);
+                    long l6 = System.currentTimeMillis();
+                    log.info("replace param for >>> {} ms", l6 - l5);
                     List<String> executeSqlList = SqlParseUtils.getExecuteSqlList(srcSql);
                     List<String> querySqlList = SqlParseUtils.getQuerySqlList(srcSql);
                     if (null != executeSqlList && executeSqlList.size() > 0) {
@@ -1019,14 +1045,13 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             Set<Long> rmIds = new HashSet<>();
 
+            List<String> teamIdStrList = new ArrayList<>();
+            teamIds.forEach(id -> teamIdStrList.add(String.valueOf(id)));
+
             teamFullIds.forEach(t -> {
                 if (null == t.getFullTeamId() || StringUtils.isEmpty(t.getFullTeamId().trim())) {
                     rmIds.add(t.getId());
                 } else {
-
-                    List<String> teamIdStrList = new ArrayList<>();
-                    teamIds.forEach(id -> teamIdStrList.add(String.valueOf(id)));
-
                     //var 对应team的路径和用户所在路径没有交集则加到将要删除列表中
                     if (Collections.disjoint(teamIdStrList, Arrays.asList(t.getFullTeamId().trim().split(conditionSeparator)))) {
                         rmIds.add(t.getId());
@@ -1088,6 +1113,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         st.add("sql", sqlKey.toString());
 
         StringBuilder keyBuilder = new StringBuilder(st.render()).append(minus);
+        keyBuilder.append(executeParam.getPageNo()).append(executeParam.getPageSize()).append(executeParam.getLimit());
 
         if (null != queryParams && queryParams.size() > 0) {
             for (String key : teamParams.keySet()) {

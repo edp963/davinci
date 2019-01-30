@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 import edp.davinci.dto.projectDto.UserMaxProjectPermission;
+import edp.davinci.dto.teamDto.TeamFullId;
 import edp.davinci.model.RelTeamProject;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -221,4 +222,9 @@ public interface RelTeamProjectMapper {
             "SELECT team_id FROM rel_team_project WHERE project_id = #{projectId}"
     })
     Set<Long> getByProjectId(@Param("projectId") Long projectId);
+
+    @Select({
+            "SELECT t.id, t.full_team_id FROM team t left join rel_team_project rtp on rtp.team_id = t.id where rtp.project_id = #{projectId}"
+    })
+    Set<TeamFullId> getTeamsByProjectId(@Param("projectId") Long projectId);
 }
