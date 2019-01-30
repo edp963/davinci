@@ -56,7 +56,6 @@ import { makeSelectWidgets, makeSelectLoading } from './selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { checkNameUniqueAction } from '../App/actions'
-import { iconMapping } from './components/chartUtil'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
@@ -85,7 +84,6 @@ interface IWidgetStates {
   currentWidget: object
   workbenchVisible: boolean
   copyWidgetVisible: boolean
-  copyQueryInfo: object
   filteredWidgets: any[]
   filteredWidgetsName: RegExp
   filteredWidgetsType: object
@@ -110,7 +108,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
       currentWidget: null,
       workbenchVisible: false,
       copyWidgetVisible: false,
-      copyQueryInfo: null,
       filteredWidgets: null,
       filteredWidgetsName: null,
       filteredWidgetsType: undefined,
@@ -177,28 +174,18 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
       currentWidget: widget,
       copyWidgetVisible: true
     }, () => {
-      const copyItem = (this.props.widgets as any[]).find((i) => i.id === widget.id)
-      this.setState({
-        copyQueryInfo: {
-          widgetlib_id: copyItem.widgetlib_id,
-          flatTable_id: copyItem.flatTable_id,
-          adhoc_sql: copyItem.adhoc_sql,
-          config: copyItem.config,
-          chart_params: copyItem.chart_params,
-          query_params: copyItem.query_params,
-          publish: copyItem.publish
-        }
-      })
-
-      const { name, description, type, viewId, config, publish } = copyItem
-      this.copyWidgetForm.setFieldsValue({
-        name: `${name}_copy`,
-        description: description || '',
-        type,
-        viewId,
-        config,
-        publish
-      })
+      setTimeout(() => {
+        const copyItem = (this.props.widgets as any[]).find((i) => i.id === widget.id)
+        const { name, description, type, viewId, config, publish } = copyItem
+        this.copyWidgetForm.setFieldsValue({
+          name: `${name}_copy`,
+          description: description || '',
+          type,
+          viewId,
+          config,
+          publish
+        })
+      }, 0)
     })
   }
 
@@ -215,7 +202,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   private onModalOk = () => new Promise((resolve, reject) => {
     this.copyWidgetForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { workbenchType, copyQueryInfo } = this.state
         const { params } = this.props
 
         const widgetValue = {
