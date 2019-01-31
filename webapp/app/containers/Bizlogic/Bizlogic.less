@@ -19,6 +19,7 @@
     flex: 1;
     display: flex;
     flex-direction: row;
+    min-height: 0;
     border-bottom: 1px solid @border-color-base;
   
     .formLeft {
@@ -77,6 +78,7 @@
         font-size: 12px;
         display: flex;
         flex-direction: column;
+        min-height: 0;
   
         .noDeclaration {
           display: none;
@@ -119,7 +121,7 @@
           .viewTabPane {
             position: absolute;
             overflow-y: auto;
-            // top: 36px;
+            top: 36px;
             height: 100%;
             width: 100%;
             padding-bottom: 30px;

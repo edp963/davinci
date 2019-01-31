@@ -83,24 +83,25 @@ export function widgetGetted (widget) {
   }
 }
 
-export function getResultset (renderType, itemId, dataToken, params) {
+export function getResultset (renderType, itemId, dataToken, requestParams) {
   return {
     type: LOAD_SHARE_RESULTSET,
     payload: {
       renderType,
       itemId,
       dataToken,
-      params
+      requestParams
     }
   }
 }
 
-export function resultsetGetted (renderType, itemId, resultset) {
+export function resultsetGetted (renderType, itemId, requestParams, resultset) {
   return {
     type: LOAD_SHARE_RESULTSET_SUCCESS,
     payload: {
       renderType,
       itemId,
+      requestParams,
       resultset
     }
   }
@@ -116,12 +117,12 @@ export function setIndividualDashboard (widgetId, token) {
   }
 }
 
-export function loadWidgetCsv (itemId, params, token) {
+export function loadWidgetCsv (itemId, requestParams, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
-      params,
+      requestParams,
       token
     }
   }

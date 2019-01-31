@@ -20,6 +20,7 @@ import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
 import { IModel } from '../Workbench/index'
+import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
 import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
@@ -94,7 +95,6 @@ export interface IPaginationParams {
 
 export interface IWidgetProps {
   data: object[]
-  queryVars?: { [key: string]: number | string }
   cols: IWidgetDimension[]
   rows: IWidgetDimension[]
   metrics: IWidgetMetric[]
@@ -114,6 +114,7 @@ export interface IWidgetProps {
   mode: WidgetMode
   model: IModel
   pagination?: IPaginationParams
+  queryVariables?: IQueryVariableMap
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
@@ -125,7 +126,7 @@ export interface IWidgetProps {
 }
 
 export interface IWidgetConfig extends IWidgetProps {
-  queryParams: any[]
+  controls: any[]
   cache: boolean
   expired: number
 }
@@ -134,30 +135,27 @@ export interface IWidgetWrapperProps extends IWidgetProps {
   loading: boolean
 }
 
-export class Widget extends React.Component<IWidgetWrapperProps, {}> {
-  private width = 0
-  private height = 0
-  private container = createRef<HTMLDivElement>()
+export interface IWidgetWrapperStates {
+  width: number
+  height: number
+}
 
-  private clearProps: IWidgetWrapperProps = {
-    data: [],
-    cols: [],
-    rows: [],
-    metrics: [],
-    filters: [],
-    chartStyles: getStyleConfig({}),
-    selectedChart: ChartTypes.Table,
-    orders: [],
-    loading: false,
-    mode: 'pivot',
-    model: {}
+export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      width: 0,
+      height: 0
+    }
   }
+
+  private container = createRef<HTMLDivElement>()
 
   public componentDidMount () {
     this.getContainerSize()
   }
 
-  public componentWillUpdate (nextProps: IWidgetProps) {
+  public componentWillReceiveProps (nextProps: IWidgetProps) {
     if (nextProps.renderType === 'resize') {
       this.getContainerSize()
     }
@@ -165,33 +163,38 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
 
   private getContainerSize = () => {
     const { offsetWidth, offsetHeight } = this.container.current as HTMLDivElement
-    this.width = offsetWidth
-    this.height = offsetHeight
+    const { width, height } = this.state
+    if (offsetWidth && offsetHeight && (offsetWidth !== width ||  offsetHeight !== height)) {
+      this.setState({
+        width: offsetWidth,
+        height: offsetHeight
+      })
+    }
   }
 
   public render () {
     const { data, loading, selectedChart, mode } = this.props
+    const { width, height } = this.state
     const isIframeChart = selectedChart === ChartTypes.Iframe && mode === 'chart'
     const empty = !(data.length || isIframeChart)
 
-    const combinedProps = !empty
-      ? {
-        width: this.width,
-        height: this.height,
-        ...this.props
-      }
-      : {
-        width: this.width,
-        height: this.height,
-        ...this.clearProps
-      }
+    const widgetProps = { width, height, ...this.props }
 
-    delete combinedProps.loading
+    delete widgetProps.loading
 
     const maskClass = classnames({
       [styles.mask]: true,
       [styles.active]: loading || empty
     })
+
+    let widgetContent
+    if (width && height) {
+      // FIXME
+      widgetContent =  widgetProps.mode === 'chart'
+        ? (<Chart {...widgetProps} />)
+        : (<Pivot {...widgetProps} />)
+    }
+
     let maskContent
     if (loading) {
       maskContent = (
@@ -211,15 +214,7 @@ export class Widget extends React.Component<IWidgetWrapperProps, {}> {
 
     return (
       <div className={styles.wrapper} ref={this.container}>
-        {/* FIXME */}
-        {combinedProps.mode === 'chart'
-          ? (
-            <Chart {...combinedProps} />
-          )
-          : (
-            <Pivot {...combinedProps} />
-          )
-        }
+        {widgetContent}
         <div className={maskClass}>
           {maskContent}
         </div>

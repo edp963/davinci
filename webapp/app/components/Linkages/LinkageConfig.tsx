@@ -226,7 +226,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                 render: (val) => {
                   const { cascaderSource } = this.props
                   const triggerData = cascaderSource.find((ts) => ts.value === val[0])
-                  const triggerColumnData = triggerData.children.params.find((c) => c.value === val[1])
+                  const triggerColumnData = triggerData.children.columns.find((c) => c.value === val[1])
                   return `${triggerData.label} - ${triggerColumnData.label}`
                 }
               }, {
@@ -238,7 +238,7 @@ export class LinkageConfig extends React.PureComponent<ILinkageConfigProps, ILin
                   const { cascaderSource } = this.props
                   const linkagerData = cascaderSource.find((fs) => fs.value === val[0])
                   const linkagerColumnData = val[1].split(DEFAULT_SPLITER)
-                  const linkagerColumnText = `${linkagerColumnData[0]}[${linkagerColumnData[2] === 'parameter' ? '参数' : '变量'}]`
+                  const linkagerColumnText = `${linkagerColumnData[0]}[${linkagerColumnData[2] === 'column' ? '字段' : '变量'}]`
                   return `${linkagerData.label} - ${linkagerColumnText}`
                 }
               }, {

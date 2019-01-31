@@ -604,8 +604,8 @@ export class TableBody extends React.Component<ITableBodyProps, ITableBodyState>
           }
         })
       } else {
-        if (metrics.length) {
-          const records = tree[0]
+        const records = tree[0]
+        if (records && metrics.length) {
           let width = 0
           metrics.forEach((m) => {
             const text = records[`${m.agg}(${m.name})`]

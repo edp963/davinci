@@ -35,12 +35,13 @@ const Option = Select.Option
 const RangePicker = DatePicker.RangePicker
 
 import { KEY_COLUMN } from '../../../globalConstants'
+import { QueryVariable } from '../Grid'
 const styles = require('../Dashboard.less')
 
 interface IDashboardItemControlFormProps {
   form: WrappedFormUtils
   controls: any[]
-  onSearch: (queayParams: { params: any[] }) => void
+  onSearch: (queayConditions: { variables: QueryVariable }) => void
   onHide: () => void
 }
 
@@ -266,7 +267,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
 
     const formValues = this.props.form.getFieldsValue()
 
-    const params = Object.keys(formValues).reduce((arr, key) => {
+    const variables = Object.keys(formValues).reduce((arr, key) => {
       let val = formValues[key]
 
       let valControl
@@ -370,9 +371,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
       return arr
     }, [])
 
-    onSearch({
-      params
-    })
+    onSearch({ variables })
 
     onHide()
   }
