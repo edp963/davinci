@@ -41,9 +41,9 @@ import Menu from 'antd/lib/menu'
 
 import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'
-import { InjectedRouter } from 'react-router'
 import { IProject } from '../../Projects'
 import { DEFAULT_SPLITER } from '../../../globalConstants'
+import { IQueryConditions, IQueryVariableMap } from '../Grid'
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -53,7 +53,6 @@ interface IDashboardItemProps {
   widgets: any
   view?: Partial<IView>
   datasource: any
-  queryVars: { [key: string]: number | string }
   loading: boolean
   polling: string
   interacting: boolean
@@ -67,16 +66,16 @@ interface IDashboardItemProps {
   drillpathInstance?: any
   rendered?: boolean
   renderType: RenderType
-  router?: InjectedRouter
   currentProject?: IProject
+  queryConditions: IQueryConditions
   container?: string
   onSelectDrillHistory?: (history?: any, item?: number, itemId?: number, widgetId?: number) => void
-  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: any) => void
   onShowEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onShowDrillEdit?: (itemId: number) => (e: React.MouseEvent<HTMLSpanElement>) => void
   onDeleteDashboardItem?: (itemId: number) => () => void
   onLoadWidgetShareLink?: (id: number, itemId: number, authName: string) => void
-  onDownloadCsv: (itemId: number, widgetId: number, shareInfo: string) => void
+  onDownloadCsv: (itemId: number, widgetId: number, shareInfo?: string) => void
   onTurnOffInteract: (itemId: number) => void
   onShowFullScreen: (chartData: any) => void
   onCheckTableInteract: (itemId: number) => boolean
@@ -91,6 +90,7 @@ interface IDashboardItemStates {
   sharePanelAuthorized: boolean
   widgetProps: IWidgetConfig
   pagination: IPaginationParams
+  queryVariables: IQueryVariableMap
   nativeQuery: boolean
   model: IModel
   isDrilling: boolean
@@ -110,6 +110,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       sharePanelAuthorized: false,
       widgetProps: null,
       pagination: null,
+      queryVariables: {},
       nativeQuery: false,
       model: null,
       isDrilling: true,
@@ -155,7 +156,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
-    const { widget } = this.props
+    const { widget, queryConditions } = this.props
     let { widgetProps, pagination, model } = this.state
 
     if (nextProps.widget !== widget) {
@@ -166,8 +167,19 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         model
       })
     }
-    pagination = this.getPagination(widgetProps, nextProps.datasource)
 
+    if (nextProps.queryConditions !== queryConditions) {
+      const { variables, linkageVariables, globalVariables } = nextProps.queryConditions
+      this.setState({
+        queryVariables: [...variables, ...linkageVariables, ...globalVariables]
+          .reduce((obj, { name, value }) => {
+            obj[`$${name}$`] = value
+            return obj
+          }, {})
+      })
+    }
+
+    pagination = this.getPagination(widgetProps, nextProps.datasource)
     this.setState({
       pagination
     })
@@ -270,7 +282,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     onGetChartData('refresh', itemId, widget.id, { pagination, nativeQuery })
   }
 
-  private onControlSearch = (queryParams) => {
+  private onControlSearch = (queryConditions: Partial<IQueryConditions>) => {
     const {
       itemId,
       widget,
@@ -278,7 +290,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     } = this.props
     const { pagination, nativeQuery } = this.state
 
-    onGetChartData('clear', itemId, widget.id, { ...queryParams, pagination, nativeQuery })
+    onGetChartData('clear', itemId, widget.id, { ...queryConditions, pagination, nativeQuery })
   }
 
   private toggleControlPanel = () => {
@@ -630,7 +642,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       itemId,
       widget,
       datasource,
-      queryVars,
       loading,
       interacting,
       shareInfo,
@@ -653,6 +664,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       controlPanelVisible,
       sharePanelAuthorized,
       widgetProps,
+      queryVariables,
       pagination,
       isDrilling,
       model
@@ -753,7 +765,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       )
     }
 
-    const controls = widgetProps.queryParams.filter((c) => c.type)
+    const controls = widgetProps.controls.filter((c) => c.type)
     const controlPanelHandle = controls.length
       ? (
         <Tooltip title="选择参数">
@@ -901,7 +913,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               {...widgetProps}
               renderType={loading ? 'loading' : renderType}
               data={data}
-              queryVars={queryVars}
+              queryVariables={queryVariables}
               pagination={pagination}
               loading={loading}
               model={model}

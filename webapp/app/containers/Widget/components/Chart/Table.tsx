@@ -264,10 +264,10 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getHeaderText = (field: IFieldConfig, expression: string) => {
-    const { queryVars } = this.props
+    const { queryVariables } = this.props
     let headerText = expression
     if (field) {
-      headerText = getFieldAlias(field, queryVars || {}) || headerText
+      headerText = getFieldAlias(field, queryVariables || {}) || headerText
     }
     return headerText
   }

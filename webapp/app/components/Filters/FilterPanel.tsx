@@ -8,7 +8,7 @@ import {
   OnGetFilterControlOptions,
   OnFilterValueChange,
   IMapFilterControlOptions,
-  getParamValue,
+  getVariableValue,
   getModelValue,
   getValidValue,
   getDefaultValue
@@ -71,10 +71,10 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
     }
 
     Object.entries(relatedViews).forEach(([_, config]) => {
-      const { items, isParam } = config
+      const { items, isVariable } = config
       if (items.length <= 0) { return }
 
-      const filterValue = isParam ? getParamValue(filter, config, val) : getModelValue(filter, config, operator, val)
+      const filterValue = isVariable ? getVariableValue(filter, config, val) : getModelValue(filter, config, operator, val)
 
       items.forEach((itemId) => {
         if (callback) {
@@ -85,12 +85,12 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
         }
         if (!this.filterValuesByItem[itemId][key]) {
           this.filterValuesByItem[itemId][key] = {
-            params: [],
+            variables: [],
             filters: []
           }
         }
-        if (isParam) {
-          this.filterValuesByItem[itemId][key].params = filterValue
+        if (isVariable) {
+          this.filterValuesByItem[itemId][key].variables = filterValue
         } else {
           this.filterValuesByItem[itemId][key].filters = filterValue
         }
@@ -108,11 +108,11 @@ export class FilterPanel extends React.Component<IFilterPanelProps & FormCompone
 
     const mapItemFilterValue: IMapItemFilterValue = relatedItemIds.reduce((acc, itemId) => {
       acc[itemId] = Object.values(this.filterValuesByItem[itemId]).reduce((filterValue, val) => {
-        filterValue.params.push(...val.params)
+        filterValue.variables.push(...val.variables)
         filterValue.filters.push(...val.filters)
         return filterValue
       }, {
-        params: [],
+        variables: [],
         filters: []
       })
       return acc

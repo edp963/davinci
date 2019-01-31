@@ -120,6 +120,66 @@ const styles = require('./Dashboard.less')
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
+export type QueryVariable = Array<{name: string, value: string | number}>
+export interface IQueryVariableMap {
+  [key: string]: string | number
+}
+
+export interface IQueryConditions {
+  filters: string[]
+  linkageFilters: string[]
+  globalFilters: string[]
+  variables: QueryVariable
+  linkageVariables: QueryVariable
+  globalVariables: QueryVariable
+  pagination?: {
+    pageNo: number
+    pageSize: number
+  }
+  nativeQuery?: boolean
+  drillStatus?: any
+  drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
+  drillpathSetting?: any
+  drillpathInstance?: any
+}
+
+interface IDashboardItemInfo {
+  datasource: {
+    pageNo: number
+    pageSize: number
+    resultList: any[]
+    totalCount: number
+  }
+  loading: boolean
+  queryConditions: IQueryConditions
+  shareInfo: string
+  secretInfo: string
+  shareInfoLoading: boolean
+  downloadCsvLoading: boolean
+  interactId: string
+  rendered: boolean
+  renderType: RenderType
+}
+
+export interface IDataRequestParams {
+  groups: string[]
+  aggregators: Array<{column: string, func: string}>
+  filters: string[]
+  linkageFilters?: string[]
+  globalFilters?: string[]
+  variables?: QueryVariable
+  linkageVariables?: QueryVariable
+  globalVariables?: QueryVariable
+  orders: Array<{column: string, direction: string}>
+  cache: boolean
+  expired: number
+  pagination?: {
+    pageNo: number
+    pageSize: number
+  }
+  nativeQuery?: boolean
+}
+
 interface IGridProps {
   dashboards: any[]
   widgets: any[]
@@ -134,38 +194,7 @@ interface IGridProps {
   currentDashboardShareInfoLoading: boolean
   currentItems: any[]
   currentItemsInfo: {
-    [key: string]: {
-      datasource: {
-        pageNo: number
-        pageSize: number
-        resultList: any[]
-        totalCount: number
-      }
-      loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-        pagination: {
-          pageNo: number
-          pageSize: number
-        }
-        nativeQuery: boolean
-        drillHistory?: Array<{filter?: any, type?: string, col?: string[], row?: string[], groups?: string[], name: string}>
-        drillpathSetting?: any
-        drillpathInstance?: any
-      }
-      shareInfo: string
-      secretInfo: string
-      shareInfoLoading: boolean
-      downloadCsvLoading: boolean
-      interactId: string
-      rendered: boolean
-      renderType: RenderType
-    }
+    [key: string]: IDashboardItemInfo
   }
   currentDashboardCascadeSources: IMapFilterControlOptions
   currentLinkages: any[]
@@ -179,42 +208,12 @@ interface IGridProps {
     renderType: RenderType,
     dashboardItemId: number,
     viewId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-      pagination: {
-        pageNo: number
-        pageSize: number
-      }
-      nativeQuery: boolean
-    }
+    requestParams: IDataRequestParams
   ) => void
   onLoadWidgetCsv: (
     itemId: number,
     widgetId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    },
-    token: string
+    requestParams: IDataRequestParams
   ) => void
   onClearCurrentDashboard: () => any
   onLoadCascadeSource: (controlId: number, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) => void
@@ -392,22 +391,22 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private calcItemTop = (y: number) => Math.round((GRID_ROW_HEIGHT + GRID_ITEM_MARGIN) * y)
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     this.getData(
-      (renderType, itemId, widget, queryParams) => {
-        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, queryParams)
+      (renderType, itemId, widget, requestParams) => {
+        this.props.onLoadDataFromItem(renderType, itemId, widget.viewId, requestParams)
       },
       renderType,
       itemId,
       widgetId,
-      queryParams
+      queryConditions
     )
   }
 
-  private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
+  private downloadCsv = (itemId: number, widgetId: number) => {
     this.getData(
-      (renderType, itemId, widget, queryParams) => {
-        this.props.onLoadWidgetCsv(itemId, widget.id, queryParams, shareInfo)
+      (renderType, itemId, widget, requestParams) => {
+        this.props.onLoadWidgetCsv(itemId, widget.id, requestParams)
       },
       'rerender',
       itemId,
@@ -420,12 +419,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       renderType: RenderType,
       itemId: number,
       widget: any,
-      queryParams?: any
+      requestParams?: IDataRequestParams
     ) => void,
     renderType: RenderType,
     itemId: number,
     widgetId: number,
-    queryParams?: any
+    queryConditions?: Partial<IQueryConditions>
   ) => {
     const {
       currentItemsInfo,
@@ -435,33 +434,33 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const { queryParams: cachedQueryParams } = currentItemsInfo[itemId]
+    const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
     let drillStatus
     let pagination
     let nativeQuery
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== void 0 ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params || cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      drillStatus = queryParams.drillStatus || void 0
-      pagination = queryParams.pagination || cachedQueryParams.pagination
-      nativeQuery = queryParams.nativeQuery || cachedQueryParams.nativeQuery
+    if (queryConditions) {
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      drillStatus = queryConditions.drillStatus || void 0
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
-      nativeQuery = cachedQueryParams.nativeQuery
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -506,15 +505,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         })))
     }
 
-    const mergedQueryParams = {
+    const requestParams = {
       groups: drillStatus && drillStatus.groups ? drillStatus.groups : groups,
       aggregators,
       filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
       linkageFilters,
       globalFilters,
-      params,
-      linkageParams,
-      globalParams,
+      variables,
+      linkageVariables,
+      globalVariables,
       orders,
       cache,
       expired,
@@ -526,7 +525,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       renderType,
       itemId,
       widget,
-      mergedQueryParams
+      requestParams
     )
   }
 
@@ -581,11 +580,13 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       selectedWidgets: [dashboardItem.widgetId],
       polling: dashboardItem.polling
     }, () => {
-      this.dashboardItemForm.props.form.setFieldsValue({
-        id: dashboardItem.id,
-        polling: dashboardItem.polling ? 'true' : 'false',
-        frequency: dashboardItem.frequency
-      })
+      setTimeout(() => {
+        this.dashboardItemForm.props.form.setFieldsValue({
+          id: dashboardItem.id,
+          polling: dashboardItem.polling ? 'true' : 'false',
+          frequency: dashboardItem.frequency
+        })
+      }, 0)
     })
   }
   private showDrillDashboardItemForm = (itemId) => () => {
@@ -765,8 +766,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private checkInteract = (itemId: number) => {
     const { currentLinkages } = this.props
-    const isInteractiveItem = currentLinkages.some((lts) => {
-      const { trigger, linkager, relation } = lts
+    const isInteractiveItem = currentLinkages.some((c) => {
+      const { trigger } = c
       const triggerId = +trigger[0]
       return triggerId === itemId
     })
@@ -777,9 +778,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   private doInteract = (itemId: number, triggerData) => {
     const {
       currentItems,
-      currentItemsInfo,
-      currentLinkages,
-      widgets
+      currentLinkages
     } = this.props
 
     const mappingLinkage = getMappingLinkage(itemId, currentLinkages)
@@ -787,10 +786,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
-      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
+      this.getChartData('clear', +linkagerItemId, item.widgetId, {
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -805,9 +804,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems } = this.props
     Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      this.getChartData('rerender', +linkagerItemId, item.widgetId, {
+      this.getChartData('clear', +linkagerItemId, item.widgetId, {
         linkageFilters: [],
-        linkageParams: []
+        linkageVariables: []
       })
     })
     this.interactingLinkagers = {} // FIXME need remove interact effect
@@ -823,10 +822,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const refreshItemIds = removeLinkage(itemId, currentLinkages, this.interactingLinkagers)
     refreshItemIds.forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
       this.getChartData('rerender', linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -869,16 +868,16 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     this.props.onLoadCascadeSource(controlId, viewId, columns, parents)
   }
 
-  private globalFilterChange = (queryParams: IMapItemFilterValue) => {
+  private globalFilterChange = (queryConditions: IMapItemFilterValue) => {
     const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
+    Object.entries(queryConditions).forEach(([itemId, condition]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
       let pageNo = 0
-      const { pagination } = currentItemsInfo[itemId].queryParams
+      const { pagination } = currentItemsInfo[itemId].queryConditions
       if (pagination.pageNo) { pageNo = 1 }
-      const { params: globalParams, filters: globalFilters } = queryParam
+      const { variables: globalVariables, filters: globalFilters } = condition
       this.getChartData('rerender', +itemId, item.widgetId, {
-        globalParams,
+        globalVariables,
         globalFilters,
         pagination: { ...pagination, pageNo }
       })
@@ -929,8 +928,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private toWorkbench = (itemId, widgetId) => {
-    const { params } = this.props
-    const { pid, portalId, portalName, dashboardId } = params
+    const { pid, portalId, portalName, dashboardId } = this.props.params
     const editSign = [pid, portalId, portalName, dashboardId, itemId].join(DEFAULT_SPLITER)
     sessionStorage.setItem('editWidgetFromDashboard', editSign)
     this.props.router.push(`/project/${pid}/widget/${widgetId}`)
@@ -943,7 +941,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       onDrillDashboardItem
     } = this.props
     const { widgetProps, out, enter, value, itemId, widget, sourceDataFilter, currentDrillStatus } = e
-    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     onDrillDashboardItem(itemId, currentDrillStatus)
   }
 
@@ -957,7 +955,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
-    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
     let filterSource = void 0
@@ -1193,7 +1191,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       bizlogics,
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
-      router,
       currentProject,
       currentLinkages
     } = this.props
@@ -1218,7 +1215,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     //   const drillPanels = []
     let drillpathSetting = void 0
     if (currentItemsInfo && currentItemId) {
-      drillpathSetting = currentItemsInfo[currentItemId as number]['queryParams']['drillpathSetting']
+      drillpathSetting = currentItemsInfo[Number(currentItemId)].queryConditions.drillpathSetting
     }
     if (dashboards) {
       const navDropdownItems = dashboards.map((d) => (
@@ -1266,23 +1263,15 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           interactId,
           rendered,
           renderType,
-          queryParams
+          queryConditions
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
         const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
-        const drillHistory = queryParams.drillHistory
-        const drillpathSetting = queryParams.drillpathSetting
-        const drillpathInstance = queryParams.drillpathInstance
-
-        const { globalParams, linkageParams, params } = queryParams
-        // const queryVars = null
-        const queryVars = [...globalParams, ...linkageParams, ...params]
-          .reduce((obj, { name, value }) => {
-            obj[`$${name}$`] = value
-            return obj
-          }, {})
+        const drillHistory = queryConditions.drillHistory
+        const drillpathSetting = queryConditions.drillpathSetting
+        const drillpathInstance = queryConditions.drillpathInstance
 
         itemblocks.push((
           <div key={id}>
@@ -1291,7 +1280,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               widgets={widgets}
               widget={widget}
               datasource={datasource}
-              queryVars={queryVars}
               loading={loading}
               polling={polling}
               interacting={interacting}
@@ -1302,6 +1290,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               shareInfoLoading={shareInfoLoading}
               downloadCsvLoading={downloadCsvLoading}
               currentProject={currentProject}
+              rendered={rendered}
+              renderType={renderType}
+              queryConditions={queryConditions}
               drillHistory={drillHistory}
               drillpathSetting={drillpathSetting}
               drillpathInstance={drillpathInstance}
@@ -1319,9 +1310,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onEditWidget={this.toWorkbench}
               onDrillData={this.dataDrill}
               onDrillPathData={this.onDrillPathData}
-              rendered={rendered}
-              renderType={renderType}
-              router={router}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
@@ -1555,10 +1543,10 @@ export function mapDispatchToProps (dispatch) {
     onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
     onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, params) =>
-                        dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'dashboard')),
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
+                        dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
-    onLoadWidgetCsv: (itemId, widgetId, params, token) => dispatch(loadWidgetCsv(itemId, widgetId, params, token)),
+    onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
     onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeSource(controlId, viewId, columns, parents)),
     onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),

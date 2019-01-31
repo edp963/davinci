@@ -218,12 +218,12 @@ export function* executeSql (action) {
 export function* getData (action) {
   const { payload } = action
   try {
-    const { id, params, resolve } = payload
+    const { id, requestParams, resolve } = payload
 
     const response = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/getdata`,
-      data: params
+      data: requestParams
     })
     yield put(dataLoaded())
     const { resultList } = response.payload
@@ -261,16 +261,17 @@ export function* getDistinctValue (action) {
 }
 
 export function* getDataFromItem (action) {
-  const { renderType, itemId, viewId, params: parameters, vizType } = action.payload
+  const { renderType, itemId, viewId, requestParams, vizType } = action.payload
   const {
     filters,
     linkageFilters,
     globalFilters,
-    params,
-    linkageParams,
-    globalParams,
+    variables,
+    linkageVariables,
+    globalVariables,
     pagination,
-    ...rest } = parameters
+    ...rest
+  } = requestParams
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
@@ -280,14 +281,14 @@ export function* getDataFromItem (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams),
+        params: variables.concat(linkageVariables).concat(globalVariables),
         pageSize,
         pageNo
       }
     })
     const { resultList } = response.payload
     response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
-    yield put(dataFromItemLoaded(renderType, itemId, response.payload, vizType))
+    yield put(dataFromItemLoaded(renderType, itemId, requestParams, response.payload, vizType))
   } catch (err) {
     yield put(loadDataFromItemFail(itemId, vizType))
     errorHandler(err)

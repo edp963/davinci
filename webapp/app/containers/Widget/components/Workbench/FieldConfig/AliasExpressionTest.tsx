@@ -5,12 +5,13 @@ import Button from 'antd/lib/button'
 import Form, { FormComponentProps } from 'antd/lib/form'
 const FormItem = Form.Item
 import Modal from 'antd/lib/modal'
+import { IQueryVariableMap } from 'app/containers/Dashboard/Grid'
 
 interface IAliasExpressionTestProps extends FormComponentProps {
   visible: boolean
-  queryVars: string[]
+  queryVariableNames: string[]
   onClose: () => void
-  onTest: (queryVarsObj: { [key: string]: string }) => void
+  onTest: (queryVariableMap: IQueryVariableMap) => void
 }
 
 export class AliasExpressionTest extends React.PureComponent<IAliasExpressionTestProps> {
@@ -18,24 +19,24 @@ export class AliasExpressionTest extends React.PureComponent<IAliasExpressionTes
   private labelCol = {span: 8}
   private wrapperCol = {span: 14}
 
-  private renderQueryVarItem = (queryVar: string) => {
+  private renderQueryVarItem = (queryVariableName: string) => {
     const { form } = this.props
     const { getFieldDecorator } = form
     return (
-      <FormItem key={queryVar} label={queryVar} labelCol={this.labelCol} wrapperCol={this.wrapperCol}>
-        {getFieldDecorator(queryVar)(<Input />)}
+      <FormItem key={queryVariableName} label={queryVariableName} labelCol={this.labelCol} wrapperCol={this.wrapperCol}>
+        {getFieldDecorator(queryVariableName)(<Input />)}
       </FormItem>
     )
   }
 
   private ok = () => {
     const { form, onTest } = this.props
-    let queryVarsObj = form.getFieldsValue() as { [key: string]: string }
-    queryVarsObj = Object.entries(queryVarsObj).reduce((obj, [key, value]) => {
+    let queryVariables = form.getFieldsValue() as { [key: string]: string }
+    queryVariables = Object.entries(queryVariables).reduce((obj, [key, value]) => {
       obj[`$${key}$`] = value
       return obj
     }, {})
-    onTest(queryVarsObj)
+    onTest(queryVariables)
   }
 
   private close = () => {
@@ -62,7 +63,7 @@ export class AliasExpressionTest extends React.PureComponent<IAliasExpressionTes
   )]
 
   public render () {
-    const { visible, queryVars } = this.props
+    const { visible, queryVariableNames } = this.props
 
     return (
       <Modal
@@ -73,7 +74,7 @@ export class AliasExpressionTest extends React.PureComponent<IAliasExpressionTes
         onCancel={this.close}
       >
         <Form>
-          {queryVars.map((queryVar) => this.renderQueryVarItem(queryVar))}
+          {queryVariableNames.map((name) => this.renderQueryVarItem(name))}
         </Form>
       </Modal>
     )

@@ -131,6 +131,10 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   public tableBody: HTMLElement = null
   public columnFooter: HTMLElement = null
 
+  public componentWillMount () {
+    this.getRenderData(this.props)
+  }
+
   public componentWillReceiveProps (nextProps) {
     const { renderType, color, isDrilling } = nextProps
     const { legendSelected } = this.state
@@ -264,7 +268,7 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
     } else if (this.rowKeys.length) {
       return Object.values(this.rowTree).map((row: any) => row.records)
     } else {
-      return [this.tree[0] as any]
+      return [this.tree[0] as any || []]
     }
   }
 
@@ -559,7 +563,22 @@ export class Pivot extends React.PureComponent<IPivotProps, IPivotStates> {
   }
 
   public render () {
-    const { cols, rows, metrics, chartStyles, color, label, size, xAxis, tip, dimetionAxis, onCheckTableInteract, onDoInteract, getDataDrillDetail, isDrilling } = this.props
+    const {
+      cols,
+      rows,
+      metrics,
+      chartStyles,
+      color,
+      label,
+      size,
+      xAxis,
+      tip,
+      dimetionAxis,
+      onCheckTableInteract,
+      onDoInteract,
+      getDataDrillDetail,
+      isDrilling
+    } = this.props
     const { legendSelected, renderType } = this.state
     const rowNames = rows.map((r) => r.name)
     const colNames = cols.map((c) => c.name)

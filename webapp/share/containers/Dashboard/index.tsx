@@ -74,6 +74,7 @@ import {
 const styles = require('../../../app/containers/Dashboard/Dashboard.less')
 
 import Login from '../../components/Login/index'
+import { IQueryConditions, IDataRequestParams, QueryVariable } from '../../../app/containers/Dashboard/Grid'
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive)
 
@@ -91,19 +92,7 @@ interface IDashboardProps {
         totalCount: number
       }
       loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-        pagination: {
-          pageNo: number
-          pageSize: number
-        }
-        nativeQuery: boolean
-      }
+      queryConditions: IQueryConditions
       downloadCsvLoading: boolean
       renderType: RenderType
     }
@@ -117,41 +106,12 @@ interface IDashboardProps {
     renderType: RenderType,
     dashboardItemId: number,
     dataToken: string,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-      pagination: {
-        pageNo: number
-        pageSize: number
-      }
-      nativeQuery: boolean
-    }
+    requestParams: IDataRequestParams
   ) => void,
   onSetIndividualDashboard: (id, shareInfo) => void,
   onLoadWidgetCsv: (
     itemId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    },
+    requestParams: IDataRequestParams,
     dataToken: string
   ) => void,
   onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => void
@@ -271,14 +231,14 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     }, {})
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
-    this.getData(this.props.onLoadResultset, renderType, itemId, widgetId, queryParams)
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
+    this.getData(this.props.onLoadResultset, renderType, itemId, widgetId, queryConditions)
   }
 
   private downloadCsv = (itemId: number, widgetId: number, shareInfo: string) => {
     this.getData(
-      (renderType, itemId, dataToken, queryParams) => {
-        this.props.onLoadWidgetCsv(itemId, queryParams, dataToken)
+      (renderType, itemId, dataToken, queryConditions) => {
+        this.props.onLoadWidgetCsv(itemId, queryConditions, dataToken)
       },
       'rerender',
       itemId,
@@ -291,12 +251,12 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
       renderType: RenderType,
       itemId: number,
       dataToken: string,
-      queryParams?: any
+      requestParams?: IDataRequestParams
     ) => void,
     renderType: RenderType,
     itemId: number,
     widgetId: number,
-    queryParams?: any
+    queryConditions?: Partial<IQueryConditions>
   ) => {
     const {
       currentItemsInfo,
@@ -307,34 +267,34 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = currentItemsInfo[itemId].queryParams
+    const cachedQueryConditions = currentItemsInfo[itemId].queryConditions
 
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
     let drillStatus
     let pagination
     let nativeQuery
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== void 0 ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== void 0 ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params ? queryParams.params : cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
-      drillStatus = queryParams.drillStatus || void 0
-      pagination = queryParams.pagination || cachedQueryParams.pagination
-      nativeQuery = queryParams.nativeQuery || cachedQueryParams.nativeQuery
+    if (queryConditions) {
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
+      drillStatus = queryConditions.drillStatus || void 0
+      pagination = queryConditions.pagination || cachedQueryConditions.pagination
+      nativeQuery = queryConditions.nativeQuery || cachedQueryConditions.nativeQuery
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
-      pagination = cachedQueryParams.pagination
-      nativeQuery = cachedQueryParams.nativeQuery
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
+      pagination = cachedQueryConditions.pagination
+      nativeQuery = cachedQueryConditions.nativeQuery
     }
 
     let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
@@ -389,9 +349,9 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
         filters: drillStatus && drillStatus.filter ? drillStatus.filter.sqls : filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
-        params,
-        linkageParams,
-        globalParams,
+        variables,
+        linkageVariables,
+        globalVariables,
         orders,
         cache,
         expired,
@@ -473,10 +433,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
 
     Object.keys(mappingLinkage).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
       this.getChartData('rerender', +linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -496,10 +456,10 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const refreshItemIds = removeLinkage(itemId, linkages, this.interactingLinkagers)
     refreshItemIds.forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === linkagerItemId)
-      const { filters, params } = this.interactingLinkagers[linkagerItemId]
+      const { filters, variables } = this.interactingLinkagers[linkagerItemId]
       this.getChartData('rerender', linkagerItemId, item.widgetId, {
-        linkageFilters: Object.values(filters).reduce((arr: any[], f: any[]) => arr.concat(...f), []),
-        linkageParams: Object.values(params).reduce((arr: any[], p: any[]) => arr.concat(...p), [])
+        linkageFilters: Object.values(filters).reduce<string[]>((arr, f: string[]) => arr.concat(...f), []),
+        linkageVariables: Object.values(variables).reduce<QueryVariable>((arr, p: QueryVariable) => arr.concat(...p), [])
       })
     })
     this.setState({
@@ -514,16 +474,16 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     this.props.onLoadCascadeSourceFromDashboard(controlId, viewId, this.state.shareInfo, columns, parents)
   }
 
-  private globalFilterChange = (queryParams: IMapItemFilterValue) => {
+  private globalFilterChange = (queryConditions: IMapItemFilterValue) => {
     const { currentItems, currentItemsInfo } = this.props
-    Object.entries(queryParams).forEach(([itemId, queryParam]) => {
+    Object.entries(queryConditions).forEach(([itemId, condition]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
       let pageNo = 0
-      const { pagination } = currentItemsInfo[itemId].queryParams
+      const { pagination } = currentItemsInfo[itemId].queryConditions
       if (pagination.pageNo) { pageNo = 1 }
-      const { params: globalParams, filters: globalFilters } = queryParam
+      const { variables: globalVariables, filters: globalFilters } = condition
       this.getChartData('rerender', +itemId, item.widgetId, {
-        globalParams,
+        globalVariables,
         globalFilters,
         pagination: { ...pagination, pageNo }
       })
@@ -540,7 +500,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
     const widget = widgets.find((w) => w.id === widgetId)
     const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
-    const drillHistory = currentItemsInfo[itemId]['queryParams']['drillHistory']
+    const drillHistory = currentItemsInfo[itemId].queryConditions.drillHistory
     let sql = void 0
     let name = void 0
     let filterSource = void 0
@@ -670,19 +630,21 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
           datasource,
           loading,
           downloadCsvLoading,
-          renderType
+          renderType,
+          queryConditions
         } = currentItemsInfo[id]
 
         const widget = widgets.find((w) => w.id === widgetId)
         const view = { model: widget.model }
         const interacting = interactingStatus[id] || false
-        const drillHistory = currentItemsInfo[id]['queryParams']['drillHistory'] ? currentItemsInfo[id]['queryParams']['drillHistory'] : void 0
+        const drillHistory = queryConditions.drillHistory
 
         itemblocks.push((
           <div key={id}>
             <DashboardItem
               itemId={id}
               widget={widget}
+              widgets={widgets}
               view={view}
               datasource={datasource}
               loading={loading}
@@ -701,6 +663,7 @@ export class Share extends React.Component<IDashboardProps, IDashboardStates> {
               onDoTableInteract={this.doInteract}
               onShowFullScreen={this.visibleFullScreen}
               renderType={renderType}
+              queryConditions={queryConditions}
               container="share"
             />
           </div>
@@ -800,9 +763,9 @@ export function mapDispatchToProps (dispatch) {
   return {
     onLoadDashboard: (token, reject) => dispatch(getDashboard(token, reject)),
     onLoadWidget: (token, resolve, reject) => dispatch(getWidget(token, resolve, reject)),
-    onLoadResultset: (renderType, itemid, dataToken, params) => dispatch(getResultset(renderType, itemid, dataToken, params)),
+    onLoadResultset: (renderType, itemid, dataToken, requestParams) => dispatch(getResultset(renderType, itemid, dataToken, requestParams)),
     onSetIndividualDashboard: (widgetId, token) => dispatch(setIndividualDashboard(widgetId, token)),
-    onLoadWidgetCsv: (itemId, params, dataToken) => dispatch(loadWidgetCsv(itemId, params, dataToken)),
+    onLoadWidgetCsv: (itemId, requestParams, dataToken) => dispatch(loadWidgetCsv(itemId, requestParams, dataToken)),
     onLoadCascadeSourceFromDashboard: (controlId, viewId, dataToken, columns, parents) => dispatch(loadCascadeSourceFromDashboard(controlId, viewId, dataToken, columns, parents)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
