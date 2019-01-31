@@ -2,11 +2,12 @@ import React from 'react'
 import classnames from 'classnames'
 
 import widgetlibs from '../../config'
+import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import { IView, IModel } from './index'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
-import FieldConfigModal, { IFieldConfig } from './FieldConfig'
-import FormatConfigModal, { IFieldFormatConfig } from './FormatConfigModal'
+import FieldConfigModal, { IFieldConfig, getDefaultFieldConfig } from './FieldConfig'
+import FormatConfigModal, { IFieldFormatConfig, getDefaultFieldFormatConfig } from './FormatConfigModal'
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
@@ -67,19 +68,19 @@ interface IOperatingPanelProps {
   selectedView: IView
   distinctColumnValues: any[]
   columnValueLoading: boolean
-  queryParams: any[]
+  controls: any[]
   cache: boolean
   expired: number
   computed: any[]
   originalComputed: any[]
   onViewSelect: (selectedView: IView) => void
-  onSetQueryParams: (queryParams: any[]) => void
+  onSetControls: (controls: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
   onSetComputed: (computesField: any[]) => void
   onDeleteComputed: (computesField: any[]) => void
   onSetWidgetProps: (widgetProps: IWidgetProps) => void
-  onLoadData: (viewId: number, params: object, resolve: (data: any) => void) => void
+  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
 }
 
@@ -648,7 +649,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
   }
 
-  private setWidgetProps = (dataParams, styleParams, renderType?, updatedPagination?: IPaginationParams) => {
+  private setWidgetProps = (dataParams: IDataParams, styleParams: IChartStyles, renderType?: RenderType, updatedPagination?: IPaginationParams) => {
     const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, yAxis } = dataParams
     const { selectedView, onLoadData, onSetWidgetProps } = this.props
     const { mode, chartModeSelectedChart, pagination } = this.state
@@ -785,13 +786,33 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         }
         if (data.length) {
           onSetWidgetProps({
-            cols: cols.items.map((item) => ({...item})),
-            rows: rows.items.map((item) => ({...item})),
-            metrics: metrics.items.map((item) => ({...item})),
+            cols: cols.items.map((item) => ({
+              ...item,
+              field: item.field || getDefaultFieldConfig(),
+              format: item.format || getDefaultFieldFormatConfig()
+            })),
+            rows: rows.items.map((item) => ({
+              ...item,
+              field: item.field || getDefaultFieldConfig(),
+              format: item.format || getDefaultFieldFormatConfig()
+            })),
+            metrics: metrics.items.map((item) => ({
+              ...item,
+              agg: item.agg || 'sum',
+              chart: item.chart || getPivot(),
+              field: item.field || getDefaultFieldConfig(),
+              format: item.format || getDefaultFieldFormatConfig()
+            })),
             ...secondaryMetrics && {
-              secondaryMetrics: secondaryMetrics.items.map((item) => ({...item}))
+              secondaryMetrics: secondaryMetrics.items.map((item) => ({
+                ...item,
+                agg: item.agg || 'sum',
+                chart: item.chart || getPivot(),
+                field: item.field || getDefaultFieldConfig(),
+                format: item.format || getDefaultFieldFormatConfig()
+              }))
             },
-            filters: filters.items,
+            filters: filters.items.map(({name, type, config}) => ({ name, type, config })),
             ...color && {color},
             ...label && {label},
             ...size && {size},
@@ -841,13 +862,33 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     } else {
       onSetWidgetProps({
         data: null,
-        cols: cols.items.map((item) => ({...item})),
-        rows: rows.items.map((item) => ({...item})),
-        metrics: metrics.items.map((item) => ({...item})),
+        cols: cols.items.map((item) => ({
+          ...item,
+          field: item.field || getDefaultFieldConfig(),
+          format: item.format || getDefaultFieldFormatConfig()
+        })),
+        rows: rows.items.map((item) => ({
+          ...item,
+          field: item.field || getDefaultFieldConfig(),
+          format: item.format || getDefaultFieldFormatConfig()
+        })),
+        metrics: metrics.items.map((item) => ({
+          ...item,
+          agg: item.agg || 'sum',
+          chart: item.chart || getPivot(),
+          field: item.field || getDefaultFieldConfig(),
+          format: item.format || getDefaultFieldFormatConfig()
+        })),
         ...secondaryMetrics && {
-          secondaryMetrics: secondaryMetrics.items.map((item) => ({...item}))
+          secondaryMetrics: secondaryMetrics.items.map((item) => ({
+            ...item,
+            agg: item.agg || 'sum',
+            chart: item.chart || getPivot(),
+            field: item.field || getDefaultFieldConfig(),
+            format: item.format || getDefaultFieldFormatConfig()
+          }))
         },
-        filters: filters.items,
+        filters: filters.items.map(({name, type, config}) => ({ name, type, config })),
         ...color && {color},
         ...label && {label},
         ...size && {size},
@@ -1091,7 +1132,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setState({
       variableConfigModalVisible: true,
       variableConfigControl: id
-        ? this.props.queryParams.find((q) => q.id === id)
+        ? this.props.controls.find((q) => q.id === id)
         : {}
     })
   }
@@ -1108,21 +1149,21 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   }
 
   private saveControl = (control) => {
-    const { queryParams, onSetQueryParams } = this.props
+    const { controls, onSetControls } = this.props
     const { dataParams, styleParams } = this.state
-    const itemIndex = queryParams.findIndex((q) => q.id === control.id)
+    const itemIndex = controls.findIndex((q) => q.id === control.id)
 
     if (itemIndex >= 0) {
-      queryParams.splice(itemIndex, 1, control)
-      onSetQueryParams([...queryParams.slice(0, itemIndex), control, ...queryParams.slice(itemIndex + 1)])
+      controls.splice(itemIndex, 1, control)
+      onSetControls([...controls.slice(0, itemIndex), control, ...controls.slice(itemIndex + 1)])
     } else {
-      onSetQueryParams(queryParams.concat(control))
+      onSetControls(controls.concat(control))
     }
   }
 
   private deleteControl = (id) => () => {
-    const { queryParams, onSetQueryParams } = this.props
-    onSetQueryParams(queryParams.filter((q) => q.id !== id))
+    const { controls, onSetControls } = this.props
+    onSetControls(controls.filter((q) => q.id !== id))
   }
 
   private coustomFieldSelect = (event) => {
@@ -1207,7 +1248,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       selectedView,
       distinctColumnValues,
       columnValueLoading,
-      queryParams,
+      controls,
       cache,
       expired,
       computed,
@@ -1522,7 +1563,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
                 </Col>
               </Row>
               <Table
-                dataSource={queryParams}
+                dataSource={controls}
                 columns={queryConfigColumns}
                 rowKey="id"
                 pagination={false}

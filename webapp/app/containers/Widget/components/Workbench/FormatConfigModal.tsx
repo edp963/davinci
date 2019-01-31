@@ -104,7 +104,7 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     super(props)
     const { formatConfig } = props
     this.state = {
-      localConfig: formatConfig ? fromJS(formatConfig).toJS() : { formatType: FieldFormatTypes.Default }
+      localConfig: formatConfig ? fromJS(formatConfig).toJS() : getDefaultFieldFormatConfig()
     }
   }
 
@@ -116,7 +116,7 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
     const { formatConfig, form } = nextProps
     if (formatConfig === this.props.formatConfig) { return }
     this.setState({
-      localConfig: formatConfig ? fromJS(formatConfig).toJS() : { formatType: FieldFormatTypes.Default }
+      localConfig: formatConfig ? fromJS(formatConfig).toJS() : getDefaultFieldFormatConfig()
     }, () => {
       form.setFieldsValue(this.state.localConfig)
     })
@@ -410,6 +410,12 @@ export class FormatConfigForm extends React.PureComponent<IFormatConfigFormProps
         </Form>
       </Modal>
     )
+  }
+}
+
+export function getDefaultFieldFormatConfig (): IFieldFormatConfig {
+  return {
+    formatType: FieldFormatTypes.Default
   }
 }
 

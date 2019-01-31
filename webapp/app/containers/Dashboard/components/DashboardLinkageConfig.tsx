@@ -84,25 +84,28 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
       const variableArr = (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
-      const params = [
+      const columns = [
         ...[...cols, ...rows]
           .filter(({ name }) => modelObj[name])
           .map(({ name }) => {
             return {
               label: name,
-              value: [name, modelObj[name].sqlType, 'parameter'].join(DEFAULT_SPLITER)
+              value: [name, modelObj[name].sqlType, 'column'].join(DEFAULT_SPLITER)
             }
           }),
-        ...metrics.map(({ name, agg }) => ({
-          label: `${getAggregatorLocale(agg)} ${decodeMetricName(name)}`,
-          value: [name, SQL_NUMBER_TYPES[SQL_NUMBER_TYPES.length - 1], 'parameter'].join(DEFAULT_SPLITER)
-        }))
+        ...metrics.map(({ name, agg }) => {
+          const metricName = decodeMetricName(name)
+          return {
+            label: `${getAggregatorLocale(agg)} ${metricName}`,
+            value: [`${agg}(${metricName})`, SQL_NUMBER_TYPES[SQL_NUMBER_TYPES.length - 1], 'column'].join(DEFAULT_SPLITER)
+          }
+        })
       ]
 
       const variables = variableArr.map((val) => {
         return {
           label: `${val}[变量]`,
-          value: [val, 'variable'].join(DEFAULT_SPLITER)
+          value: [val, null, 'variable'].join(DEFAULT_SPLITER)
         }
       })
 
@@ -110,7 +113,7 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
         label: widget.name,
         value: k,
         children: {
-          params,
+          columns,
           variables
         }
       })

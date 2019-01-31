@@ -49,14 +49,14 @@ export function loadDisplayFail (error) {
   }
 }
 
-export function loadLayerData (renderType, layerId, dataToken, params) {
+export function loadLayerData (renderType, layerId, dataToken, requestParams) {
   return {
     type: ActionTypes.LOAD_LAYER_DATA,
     payload: {
       renderType,
       layerId,
       dataToken,
-      params
+      requestParams
     }
   }
 }
