@@ -143,12 +143,15 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     const columns = [...validColumns]
 
     const localHeaderConfig: ITableHeaderConfig[] = config.headerConfig
+    if (!localHeaderConfig.length) { return [] }
+
     localHeaderConfig.forEach((c) => {
       this.traverseHeaderConfig(c, localHeaderConfig, columns)
     })
 
+    let dimensionIdx = 0
     columns.forEach((c) => {
-      localHeaderConfig.push({
+      const cfg = {
         key: uuid(5),
         headerName: c.name,
         alias: this.getColumnDisplayName(c),
@@ -156,7 +159,13 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         isGroup: false,
         style: { ...DefaultTableCellStyle },
         children: null
-      })
+      }
+
+      if (c.agg) {
+        localHeaderConfig.push(cfg)
+      } else {
+        localHeaderConfig.splice(dimensionIdx++, 0, cfg)
+      }
     })
 
     return localHeaderConfig

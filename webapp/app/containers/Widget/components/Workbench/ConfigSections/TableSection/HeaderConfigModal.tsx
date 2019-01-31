@@ -157,7 +157,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
           break
         }
       }
-      if (!~ancestors.findIndex((c) => c.key === cursorConfig.key)) {
+      if (ancestors.findIndex((c) => c.key === cursorConfig.key) < 0) {
         ancestors.push(cursorConfig)
       }
     })
@@ -181,11 +181,11 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
       children: ancestors
     }
 
-    let minIdx = localConfig.length - ancestors.length - 1
+    let minIdx = localConfig.length - ancestors.length
     minIdx = ancestors.reduce((min, config) => Math.min(min,
       localConfig.findIndex((c) => c.key === config.key)), minIdx)
     const ancestorKeys = ancestors.map((c) => c.key)
-    const newLocalConfig = localConfig.filter((c) => !~ancestorKeys.indexOf(c.key))
+    const newLocalConfig = localConfig.filter((c) => !ancestorKeys.includes(c.key))
     newLocalConfig.splice(minIdx, 0, insertConfig)
     const [newMapHeader, newMapHeaderParent] = this.getMapHeaderKeyAndConfig(newLocalConfig)
 
