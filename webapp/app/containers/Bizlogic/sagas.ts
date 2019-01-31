@@ -31,7 +31,10 @@ import {
   LOAD_DATA,
   LOAD_DISTINCT_VALUE,
   LOAD_DATA_FROM_ITEM,
-  LOAD_VIEW_TEAM
+  LOAD_VIEW_TEAM,
+  LOAD_TEAM_AUTH,
+  LOAD_TEAM_CONFIG
+  // LOAD_TREE_SELECT
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -57,7 +60,13 @@ import {
   dataFromItemLoaded,
   loadDataFromItemFail,
   viewTeamLoaded,
-  loadViewTeamFail
+  loadViewTeamFail,
+  teamAuthLoaded,
+  loadTeamAuthFail,
+  teamConfigLoaded,
+  loadTeamConfigFail
+  // treeSelectDataLoaded,
+  // loadTreeSelectFail
 } from './actions'
 
 import request from '../../utils/request'
@@ -85,15 +94,15 @@ export function* getBizlogics (action) {
 }
 
 export function* addBizlogic (action) {
-  const { payload } = action
+  const { type, bizlogic, resolve } = action.payload
   try {
     const asyncData = yield call(request, {
       method: 'post',
-      url: api.bizlogic,
-      data: payload.bizlogic
+      url: type ? `${api.bizlogic}/${type}` : api.bizlogic,
+      data: bizlogic
     })
     yield put(bizlogicAdded(asyncData.payload))
-    payload.resolve()
+    resolve()
   } catch (err) {
     yield put(addBizlogicFail())
     errorHandler(err)
@@ -115,12 +124,12 @@ export function* deleteBizlogic (action) {
 }
 
 export function* editBizlogic (action) {
-  const { payload } = action
-  const { config, description, id, model, name, source, sql } = payload.bizlogic
+  const { type, bizlogic, resolve } = action.payload
+  const { config, description, id, model, name, source, sql } = bizlogic
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.bizlogic}/${id}`,
+      url: type ? `${api.bizlogic}/${type}/${id}` : `${api.bizlogic}/${id}`,
       data: {
         config,
         description,
@@ -131,8 +140,8 @@ export function* editBizlogic (action) {
         sql
       }
     })
-    yield put(bizlogicEdited(payload.bizlogic))
-    payload.resolve()
+    yield put(bizlogicEdited(bizlogic))
+    resolve()
   } catch (err) {
     yield put(editBizlogicFail())
     errorHandler(err)
@@ -297,9 +306,9 @@ export function* getDataFromItem (action) {
 export function* getViewTeams (action) {
   const { projectId, resolve } = action.payload
   try {
-    const project = yield call(request, `${api.projects}/${projectId}`)
-    const currentProject = project.payload
-    const organization = yield call(request, `${api.organizations}/${currentProject.orgId}/teams`)
+    // const project = yield call(request, `${api.projects}/${payload.projectId}`)
+    // const currentProject = readListAdapter(project)
+    const organization = yield call(request, `${api.projects}/${projectId}/teams`)
     const orgTeam = organization.payload
     yield put(viewTeamLoaded(orgTeam))
     if (resolve) {
@@ -310,6 +319,61 @@ export function* getViewTeams (action) {
     errorHandler(err)
   }
 }
+
+export function* getViewAuth (action) {
+  const { projectId, resolve } = action.payload
+  try {
+    const result = yield call(request, {
+      method: 'get',
+      url: `${api.bizlogic}/teamvar/source?projectId=${projectId}`,
+      data: {
+        projetcId: projectId
+      }
+    })
+    const auth = result.payload
+    if (result.payload.header === 404) {
+      auth.sourceOrg = ''
+    }
+    if (resolve) {
+      resolve(auth)
+    }
+    yield put(teamAuthLoaded(auth))
+  } catch (err) {
+    yield put(loadTeamAuthFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* getTeamConfig (action) {
+  const { viewId, resolve } = action.payload
+  try {
+    const config = yield call(request, `${api.bizlogic}/${viewId}/config/teamvar`)
+    yield put(teamConfigLoaded(config.payload))
+    resolve(config.payload)
+  } catch (err) {
+    yield put(loadTeamConfigFail(err))
+    errorHandler(err)
+  }
+}
+
+// export function* getTreeSelectData (action) {
+//   const { projectId, sourceOrg } = action.payload
+//   try {
+//     const selectData = yield call(request, {
+//       method: 'get',
+//       url: `${api.teams}/departments?type=${sourceOrg}&projectId=${projectId}`,
+//       data: {
+//         projetcId: projectId,
+//         type: sourceOrg
+//       }
+//     })
+//     yield put(treeSelectDataLoaded(selectData.payload))
+//     action.payload.resolve(selectData.payload)
+//   } catch (err) {
+//     yield put(loadTreeSelectFail(err))
+//     errorHandler(err)
+//   }
+// }
 
 export default function* rootBizlogicSaga (): IterableIterator<any> {
   yield all([
@@ -324,6 +388,9 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(LOAD_DATA, getData),
     takeEvery(LOAD_DISTINCT_VALUE, getDistinctValue),
     takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem),
-    takeLatest(LOAD_VIEW_TEAM, getViewTeams)
+    takeLatest(LOAD_VIEW_TEAM, getViewTeams),
+    takeLatest(LOAD_TEAM_AUTH, getViewAuth),
+    takeEvery(LOAD_TEAM_CONFIG, getTeamConfig)
+    // takeEvery(LOAD_TREE_SELECT, getTreeSelectData)
   ])
 }

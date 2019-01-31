@@ -56,7 +56,16 @@ import {
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
   LOAD_VIEW_TEAM_FAILURE,
+  LOAD_TEAM_AUTH,
+  LOAD_TEAM_AUTH_SUCCESS,
+  LOAD_TEAM_AUTH_FAILURE,
+  LOAD_TEAM_CONFIG,
+  LOAD_TEAM_CONFIG_SUCCESS,
+  LOAD_TEAM_CONFIG_FAILURE,
   RESET_VIEW_STATE
+  // LOAD_TREE_SELECT,
+  // LOAD_TREE_SELECT_SUCCESS,
+  // LOAD_TREE_SELECT_FAILURE
 } from './constants'
 
 export function loadBizlogics (projectId, resolve) {
@@ -84,10 +93,11 @@ export function loadBizlogicsFail () {
   }
 }
 
-export function addBizlogic (bizlogic, resolve) {
+export function addBizlogic (type, bizlogic, resolve) {
   return {
     type: ADD_BIZLOGIC,
     payload: {
+      type,
       bizlogic,
       resolve
     }
@@ -133,10 +143,11 @@ export function deleteBizlogicFail () {
   }
 }
 
-export function editBizlogic (bizlogic, resolve) {
+export function editBizlogic (type, bizlogic, resolve) {
   return {
     type: EDIT_BIZLOGIC,
     payload: {
+      type,
       bizlogic,
       resolve
     }
@@ -395,8 +406,93 @@ export function loadViewTeamFail (error) {
   }
 }
 
+export function getTeamAuth (projectId, resolve) {
+  return {
+    type: LOAD_TEAM_AUTH,
+    payload: {
+      projectId,
+      resolve
+    }
+  }
+}
+
+export function teamAuthLoaded (result) {
+  return {
+    type: LOAD_TEAM_AUTH_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadTeamAuthFail (error) {
+  return {
+    type: LOAD_TEAM_AUTH_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadTeamConfig (viewId, resolve) {
+  return {
+    type: LOAD_TEAM_CONFIG,
+    payload: {
+      viewId,
+      resolve
+    }
+  }
+}
+
+export function teamConfigLoaded (result) {
+  return {
+    type: LOAD_TEAM_CONFIG_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadTeamConfigFail (error) {
+  return {
+    type: LOAD_TEAM_CONFIG_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
 export function resetViewState () {
   return {
     type: RESET_VIEW_STATE
   }
 }
+
+// export function loadTreeSelectData (projectId, sourceOrg, resolve) {
+//   return {
+//     type: LOAD_TREE_SELECT,
+//     payload: {
+//       projectId,
+//       sourceOrg,
+//       resolve
+//     }
+//   }
+// }
+
+// export function treeSelectDataLoaded (result) {
+//   return {
+//     type: LOAD_TREE_SELECT_SUCCESS,
+//     payload: {
+//       result
+//     }
+//   }
+// }
+
+// export function loadTreeSelectFail (error) {
+//   return {
+//     type: LOAD_TREE_SELECT_FAILURE,
+//     payload: {
+//       error
+//     }
+//   }
+// }
