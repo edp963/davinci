@@ -38,16 +38,17 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
     if (value && linkagerValue && value.length && linkagerValue.length) {
       const triggerValueArr = value[1].split(DEFAULT_SPLITER)
       const linkagerValueArr = linkagerValue[1].split(DEFAULT_SPLITER)
-      const triggerColumnType = triggerValueArr[1]
-      const linkagerColumnType = linkagerValueArr[1]
+      const triggerSqlType = triggerValueArr[1]
+      const linkagerSqlType = linkagerValueArr[1]
+      const linkagerColumnType = linkagerValueArr[2]
 
       if (value[0] === linkagerValue[0]) {
         callback('不能联动自身')
       }
 
-      if (triggerColumnType !== 'variable' && linkagerColumnType !== 'variable') {
-        if (triggerColumnType !== linkagerColumnType) {
-          callback('参数类型不一致')
+      if (linkagerColumnType !== 'variable') {
+        if (triggerSqlType !== linkagerSqlType) {
+          callback('字段类型不一致')
         } else {
           callback()
         }
@@ -80,8 +81,8 @@ export class LinkageForm extends React.PureComponent<ILinkageFormProps, {}> {
       wrapperCol: { span: 12 }
     }
 
-    const triggerOptions = cascaderSource.map(({ label, value, children: { params } }) => ({ label, value, children: params }))
-    const linkagerOptions = cascaderSource.map(({ label, value, children: { params, variables } }) => ({ label, value, children: [].concat(params, variables) }))
+    const triggerOptions = cascaderSource.map(({ label, value, children: { columns } }) => ({ label, value, children: columns }))
+    const linkagerOptions = cascaderSource.map(({ label, value, children: { columns, variables } }) => ({ label, value, children: [].concat(columns, variables) }))
 
     return (
       <Form className={styles.linkageForm}>

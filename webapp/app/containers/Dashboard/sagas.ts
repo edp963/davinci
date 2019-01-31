@@ -276,8 +276,8 @@ export function* getWidgetShareLink (action) {
 }
 
 export function* getWidgetCsv (action) {
-  const { itemId, widgetId, params: parameters, token } = action.payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { itemId, widgetId, requestParams } = action.payload
+  const { filters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -286,7 +286,7 @@ export function* getWidgetCsv (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
     yield put(widgetCsvLoaded(itemId))

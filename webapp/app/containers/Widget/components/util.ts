@@ -22,6 +22,7 @@ import {
   PIVOT_CANVAS_AXIS_SIZE_LIMIT,
   PIVOT_DEFAULT_SCATTER_SIZE_TIMES
 } from '../../../globalConstants'
+import { IQueryVariableMap } from '../../Dashboard/Grid'
 import { DimetionType, IChartStyles, IChartInfo } from './Widget'
 import { IChartLine, IChartUnit } from './Pivot/Chart'
 import { IDataParamSource } from './Workbench/Dropbox'
@@ -788,36 +789,36 @@ function formatByUnit (value, unit: NumericUnit) {
   return numericValue / Math.pow(10, exponent)
 }
 
-export function extractQueryVars (expression: string, withBoundaryToken: boolean = false) {
-  const queryVars = []
-  if (!expression) { return queryVars }
+export function extractQueryVariableNames (expression: string, withBoundaryToken: boolean = false) {
+  const names = []
+  if (!expression) { return names }
   const varReg = /\$(\w+)\$/g
   expression.replace(varReg, (match: string, p: string) => {
-    const queryVar = withBoundaryToken ? match : p
-    if (!queryVars.includes(queryVar)) {
-      queryVars.push(queryVar)
+    const name = withBoundaryToken ? match : p
+    if (!names.includes(name)) {
+      names.push(name)
     }
-    return queryVar
+    return name
   })
-  return queryVars
+  return names
 }
 
-export function getFieldAlias (fieldConfig: IFieldConfig, queryVars: { [key: string]: number | string }) {
+export function getFieldAlias (fieldConfig: IFieldConfig, queryVariableMap: IQueryVariableMap) {
   if (!fieldConfig) { return '' }
 
   const { alias, useExpression } = fieldConfig
   if (!useExpression) { return alias }
 
-  const queryKeys = extractQueryVars(alias, true)
+  const queryKeys = extractQueryVariableNames(alias, true)
   const keys = []
   const vals = []
   queryKeys.forEach((queryKey) => {
     keys.push(queryKey)
-    const queryVarVal = queryVars[queryKey]
-    if (queryVarVal === undefined) {
+    const queryValue = queryVariableMap[queryKey]
+    if (queryValue === undefined) {
       vals.push('')
     } else {
-      vals.push(queryVarVal)
+      vals.push(queryValue)
     }
   })
 

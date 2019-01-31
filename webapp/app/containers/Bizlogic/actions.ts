@@ -59,6 +59,9 @@ import {
   RESET_VIEW_STATE
 } from './constants'
 
+import { IDataRequestParams } from '../Dashboard/Grid'
+import { RenderType } from '../Widget/components/Widget'
+
 export function loadBizlogics (projectId, resolve) {
   return {
     type: LOAD_BIZLOGICS,
@@ -277,12 +280,12 @@ export function executeSqlFail (error) {
   }
 }
 
-export function loadData (id, params, resolve) {
+export function loadData (id: number, requestParams: IDataRequestParams, resolve: () => void) {
   return {
     type: LOAD_DATA,
     payload: {
       id,
-      params,
+      requestParams,
       resolve
     }
   }
@@ -332,25 +335,32 @@ export function loadDistinctValueFail (error) {
   }
 }
 
-export function loadDataFromItem (renderType, itemId, viewId, params, vizType: 'dashboard' | 'display') {
+export function loadDataFromItem (
+  renderType: RenderType,
+  itemId: number,
+  viewId: number,
+  requestParams: IDataRequestParams,
+  vizType: 'dashboard' | 'display'
+) {
   return {
     type: LOAD_DATA_FROM_ITEM,
     payload: {
       renderType,
       itemId,
       viewId,
-      params,
+      requestParams,
       vizType
     }
   }
 }
 
-export function dataFromItemLoaded (renderType, itemId, result, vizType: 'dashboard' | 'display') {
+export function dataFromItemLoaded (renderType, itemId, requestParams, result, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM_SUCCESS,
     payload: {
       renderType,
       itemId,
+      requestParams,
       result,
       vizType
     }

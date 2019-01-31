@@ -55,7 +55,7 @@ interface IFilterFormStates {
         visualType: string
         sqlType: string
       }]
-      param: string[]
+      variables: string[]
     }
 
   }
@@ -64,7 +64,7 @@ interface IFilterFormStates {
   needSetParentModel: boolean
   showDefaultValue: boolean
   modelItems: IFilterModelItem[]
-  modelOrParam: object
+  modelOrVariable: object
   availableOperatorTypes: OperatorTypes[]
   checkAll: boolean
 }
@@ -80,7 +80,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
       needSetParentModel: false,
       showDefaultValue: false,
       modelItems: [],
-      modelOrParam: {},
+      modelOrVariable: {},
       availableOperatorTypes: [],
       checkAll: false
     }
@@ -143,12 +143,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
         .forEach((name) => {
           const val = fieldsValue[name]
           const viewId = +name.substr(prefixView.length)
-          const isParam = !!fieldsValue[prefixOther + viewId]
-          const sqlType = isParam ? undefined : usedViews[viewId].model.find((m) => m.key === val).sqlType
+          const isVariable = !!fieldsValue[prefixOther + viewId]
+          const sqlType = isVariable ? undefined : usedViews[viewId].model.find((m) => m.key === val).sqlType
           filterItem.relatedViews[viewId] = {
             key: val,
             name: val,
-            isParam,
+            isVariable,
             sqlType,
             items: mappingViewItems[viewId].filter((item) => fieldsValue[prefixItem + item.id]).map((item) => item.id)
           }
@@ -187,12 +187,12 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
       this.onFromViewChange(fromView, fromModel)
     }
     const { relatedViews } = filterItem
-    const modelOrParam = {}
+    const modelOrVariable = {}
     views.forEach((view) => {
       const viewId = view.id
       if (relatedViews[viewId]) {
         fieldsValue[`${prefixView}${viewId}`] = relatedViews[viewId].key
-        fieldsValue[`${prefixOther}${viewId}`] = relatedViews[viewId].isParam
+        fieldsValue[`${prefixOther}${viewId}`] = relatedViews[viewId].isVariable
       } else {
         const model = JSON.parse(view.model)
         const defaultKey = Object.keys(model)[0]
@@ -206,10 +206,10 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
       const { viewId } = widget
       if (relatedViews[viewId]) {
         fieldsValue[`${prefixItem}${itemId}`] = relatedViews[viewId].items.indexOf(itemId) >= 0
-        modelOrParam[viewId] = relatedViews[viewId].isParam
+        modelOrVariable[viewId] = relatedViews[viewId].isVariable
       } else {
         fieldsValue[`${prefixItem}${itemId}`] = false
-        modelOrParam[viewId] = false
+        modelOrVariable[viewId] = false
       }
     })
     this.setState({
@@ -217,7 +217,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
       needSetParentModel: type === FilterTypes.TreeSelect,
       availableOperatorTypes: this.getOperatorType(type, multiple),
       showDefaultValue: dynamicDefaultValue === DatePickerDefaultValues.Custom,
-      modelOrParam
+      modelOrVariable
     }, () => {
       const { form } = this.props
       form.setFieldsValue(fieldsValue)
@@ -253,7 +253,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
             visualType,
             sqlType
           })),
-          param: (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
+          variables: (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
         }
       }
       if (!mappingViewItems[viewId]) {
@@ -276,15 +276,15 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
     onFilterItemNameChange(filterItem.key, name)
   }
 
-  private modelOrParamChange = (viewId) => (e) => {
-    const { modelOrParam, usedViews } = this.state
-    const { param, model } = usedViews[viewId]
+  private modelOrVariableChange = (viewId) => (e) => {
+    const { modelOrVariable, usedViews } = this.state
+    const { variables, model } = usedViews[viewId]
     const isVariable = e.target.value
-    const options = isVariable ? param : model
-    const newVal = options.length <= 0 ? null : (isVariable ? param[0] : model[0].key)
+    const options = isVariable ? variables : model
+    const newVal = options.length <= 0 ? null : (isVariable ? variables[0] : model[0].key)
     this.setState({
-      modelOrParam: {
-        ...modelOrParam,
+      modelOrVariable: {
+        ...modelOrVariable,
         [viewId]: isVariable
       }
     }, () => {
@@ -294,14 +294,14 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
 
   private renderConfigItem (usedViews, mappingViewItems) {
     const { form } = this.props
-    const { modelOrParam } = this.state
+    const { modelOrVariable } = this.state
     const { getFieldDecorator } = form
 
     // const view = usedViews[viewId]
     // const items = mappingViewItems[viewId]
 
     let widgetCheckboxes = []
-    let viewParamSelects = []
+    let viewVariableSelects = []
 
     Object.entries(usedViews).forEach(([viewId, view]: [string, any]) => {
       widgetCheckboxes = widgetCheckboxes.concat(
@@ -315,7 +315,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
           </FormItem>
         ))
       )
-      viewParamSelects = viewParamSelects.concat(
+      viewVariableSelects = viewVariableSelects.concat(
         <Row key={viewId}>
           <Col span={24}>
             <h3>{`${view.name}：`}</h3>
@@ -325,7 +325,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
               {getFieldDecorator(`${prefixOther}${view.id}`, {
                 initialValue: false
               })(
-                <RadioGroup size="small" onChange={this.modelOrParamChange(viewId)}>
+                <RadioGroup size="small" onChange={this.modelOrVariableChange(viewId)}>
                   <RadioButton value={false}>字段</RadioButton>
                   <RadioButton value={true}>变量</RadioButton>
                 </RadioGroup>
@@ -337,8 +337,8 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
               {getFieldDecorator(`${prefixView}${view.id}`)(
                 <Select size="small" dropdownMatchSelectWidth={false}>
                   {
-                    modelOrParam[viewId] ? (
-                      view.param.map((p) => (
+                    modelOrVariable[viewId] ? (
+                      view.variables.map((p) => (
                         <Option key={p} value={p}>{p}</Option>
                       ))
                     ) : (
@@ -361,7 +361,7 @@ export class FilterForm extends React.Component<IFilterFormProps & FormComponent
           {widgetCheckboxes}
         </Col>
         <Col className={styles.viewSet}>
-          {viewParamSelects}
+          {viewVariableSelects}
         </Col>
       </Row>
     )

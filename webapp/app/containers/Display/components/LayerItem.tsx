@@ -49,7 +49,7 @@ interface ILayerItemProps {
   interactId: string
   rendered?: boolean
   renderType: RenderType
-  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: any) => void
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
