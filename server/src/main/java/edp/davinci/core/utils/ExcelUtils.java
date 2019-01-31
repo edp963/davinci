@@ -558,12 +558,17 @@ public class ExcelUtils {
         return list;
     }
 
+    /**
+     * 格式化表头
+     * @param engine
+     * @param json
+     * @param params
+     * @return
+     */
     private static List<ExcelHeader> formatHeader(ScriptEngine engine, String json, List<Param> params) {
         try {
             Invocable invocable = (Invocable) engine;
-
             Object obj = invocable.invokeFunction("getFieldsHeader", json, params);
-
 
             if (obj instanceof ScriptObjectMirror) {
                 ScriptObjectMirror som = (ScriptObjectMirror) obj;
@@ -647,7 +652,6 @@ public class ExcelUtils {
                                                         break;
                                                 }
                                             }
-
                                         }
 
                                     } else {
