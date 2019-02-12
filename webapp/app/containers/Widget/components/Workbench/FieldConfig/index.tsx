@@ -29,7 +29,8 @@ require('codemirror/addon/hint/javascript-hint')
 require('codemirror/addon/display/placeholder')
 
 const utilStyles = require('assets/less/util.less')
-import { extractQueryVars, getFieldAlias } from 'containers/Widget/components/util'
+import { extractQueryVariableNames, getFieldAlias } from 'containers/Widget/components/util'
+import { IQueryVariableMap } from '../../../../Dashboard/Grid'
 import AliasExpressionTestModal from './AliasExpressionTest'
 
 export interface IFieldConfig {
@@ -48,7 +49,7 @@ interface IFieldConfigProps extends FormComponentProps {
 
 interface IFieldConfigStates {
   localConfig: IFieldConfig
-  expressionQueryVars: string[]
+  queryVariableNames: string[]
   testResult: string
   testModalVisible: boolean
 }
@@ -59,18 +60,12 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
   private codeMirrorInst: any
   private isInitEditor: boolean = true
 
-  private defaultFieldConfig: IFieldConfig = {
-    alias: '',
-    desc: '',
-    useExpression: false
-  }
-
   constructor (props: IFieldConfigProps) {
     super(props)
     const { fieldConfig } = this.props
     this.state = {
-      localConfig: fieldConfig ? { ...fieldConfig } : { ...this.defaultFieldConfig },
-      expressionQueryVars: [],
+      localConfig: fieldConfig ? { ...fieldConfig } : getDefaultFieldConfig(),
+      queryVariableNames: [],
       testResult: '',
       testModalVisible: false
     }
@@ -98,8 +93,8 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
       this.isInitEditor = true
       form.resetFields()
       this.setState({
-        localConfig: fieldConfig ? { ...fieldConfig } : { ...this.defaultFieldConfig },
-        expressionQueryVars: [],
+        localConfig: fieldConfig ? { ...fieldConfig } : getDefaultFieldConfig(),
+        queryVariableNames: [],
         testResult: ''
       }, () => {
         this.setFieldsValue(form, this.state.localConfig)
@@ -159,18 +154,18 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
     return false
   }
 
-  private addQueryVar = () => {
+  private addQueryVariable = () => {
     const { form } = this.props
-    const queryVar = form.getFieldValue('queryVar')
-    this.codeMirrorInst.replaceSelection(` $${queryVar}$ `)
+    const queryVariable = form.getFieldValue('queryVariable')
+    this.codeMirrorInst.replaceSelection(` $${queryVariable}$ `)
   }
 
   private testExpression = () => {
     const expression: string = this.codeMirrorInst.doc.getValue()
-    const queryVars = extractQueryVars(expression)
-    const testModalVisible = queryVars.length > 0
+    const queryVariableNames = extractQueryVariableNames(expression)
+    const testModalVisible = queryVariableNames.length > 0
     this.setState({
-      expressionQueryVars: queryVars,
+      queryVariableNames,
       testModalVisible
     })
     if (!testModalVisible) {
@@ -178,10 +173,10 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
     }
   }
 
-  private testExpressionResult = (queryVarsObj: { [key: string]: string } = {}) => {
+  private testExpressionResult = (queryVariableMap: IQueryVariableMap = {}) => {
     const { form } = this.props
     const fieldConfig = this.getFieldsValue(form)
-    const testResult = getFieldAlias(fieldConfig, queryVarsObj)
+    const testResult = getFieldAlias(fieldConfig, queryVariableMap)
     this.setState({
       testResult,
       testModalVisible: false
@@ -264,7 +259,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
   public render () {
     const { visible, queryInfo, form } = this.props
     const { getFieldDecorator } = form
-    const { localConfig, testResult, testModalVisible, expressionQueryVars } = this.state
+    const { localConfig, testResult, testModalVisible, queryVariableNames } = this.state
     const { desc, useExpression } = localConfig
     const variableOptions = (queryInfo || []).map((q) => (
       <Option key={q} value={q}>{q}</Option>
@@ -294,7 +289,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
               <>
                 <Col span={9}>
                   <FormItem label="查询变量" labelCol={{span: 8}} wrapperCol={{span: 16}}>
-                    {getFieldDecorator('queryVar', {
+                    {getFieldDecorator('queryVariable', {
                       initialValue: queryInfo[0]
                     })(
                       <Select>
@@ -306,7 +301,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
                 <Col span={4}>
                   <Row type="flex" align="middle">
                     <FormItem>
-                      <Button onClick={this.addQueryVar}>添加</Button>
+                      <Button onClick={this.addQueryVariable}>添加</Button>
                     </FormItem>
                   </Row>
                 </Col>
@@ -352,12 +347,20 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
         </Form>
         <AliasExpressionTestModal
           visible={testModalVisible}
-          queryVars={expressionQueryVars}
+          queryVariableNames={queryVariableNames}
           onClose={this.closeTestModal}
           onTest={this.testExpressionResult}
         />
       </Modal>
     )
+  }
+}
+
+export function getDefaultFieldConfig (): IFieldConfig {
+  return {
+    alias: '',
+    desc: '',
+    useExpression: false
   }
 }
 

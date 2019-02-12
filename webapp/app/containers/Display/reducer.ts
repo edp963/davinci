@@ -121,12 +121,12 @@ function displayReducer (state = initialState, action) {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: [],
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
               pagination: {}
             },
             interactId: '',
@@ -168,12 +168,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',
@@ -233,12 +233,12 @@ function displayReducer (state = initialState, action) {
           [payload.itemId]: {
             ...layersInfo[payload.itemId],
             loading: true,
-            queryParams: {
-              linkageFilters: payload.params.linkageFilters,
-              globalFilters: payload.params.globalFilters,
-              params: payload.params.params,
-              linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams
+            queryConditions: {
+              linkageFilters: payload.requestParams.linkageFilters,
+              globalFilters: payload.requestParams.globalFilters,
+              variables: payload.requestParams.variables,
+              linkageVariables: payload.requestParams.linkageVariables,
+              globalVariables: payload.requestParams.globalVariables
             }
           }
         })
@@ -352,12 +352,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',

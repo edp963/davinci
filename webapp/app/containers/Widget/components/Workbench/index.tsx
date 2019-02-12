@@ -17,6 +17,7 @@ import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
+import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
@@ -67,7 +68,7 @@ interface IWorkbenchProps {
   onHideNavigator: () => void
   onLoadBizlogics: (projectId: number, resolve?: any) => void
   onLoadWidgetDetail: (id: number) => void
-  onLoadData: (viewId: number, params: object, resolve: (data: any) => void) => void
+  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
@@ -80,7 +81,7 @@ interface IWorkbenchStates {
   name: string
   description: string
   selectedView: IView
-  queryParams: any[]
+  controls: any[]
   computed: any[]
   cache: boolean
   expired: number
@@ -106,7 +107,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       name: '',
       description: '',
       selectedView: null,
-      queryParams: [],
+      controls: [],
       computed: [],
       originalComputed: [],
       cache: false,
@@ -156,13 +157,13 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
     if (currentWidget && currentWidget !== this.props.currentWidget) {
-      const { queryParams, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
         selectedView: views.find((v) => v.id === currentWidget.viewId),
-        queryParams,
+        controls,
         cache,
         expired,
         originalWidgetProps: {...rest},
@@ -191,15 +192,15 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private viewSelect = (selectedView: IView) => {
     this.setState({
       selectedView,
-      queryParams: [],
+      controls: [],
       cache: false,
       expired: 300
     })
   }
 
-  private setQueryParams = (queryParams: any[]) => {
+  private setControls = (controls: any[]) => {
     this.setState({
-      queryParams
+      controls
     })
   }
 
@@ -207,7 +208,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     console.log({computeField})
     const { from } = computeField
     const { params, onEditWidget } = this.props
-    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (from === 'originalComputed') {
       this.setState({
         originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
@@ -221,7 +222,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           projectId: Number(params.pid),
           config: JSON.stringify({
             ...widgetProps,
-            queryParams,
+            controls,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
             expired,
@@ -246,7 +247,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           projectId: Number(params.pid),
           config: JSON.stringify({
             ...widgetProps,
-            queryParams,
+            controls,
             computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
             cache,
             expired,
@@ -321,7 +322,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
@@ -338,7 +339,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       projectId: Number(params.pid),
       config: JSON.stringify({
         ...widgetProps,
-        queryParams,
+        controls,
         computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
@@ -411,7 +412,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       name,
       description,
       selectedView,
-      queryParams,
+      controls,
       cache,
       expired,
       computed,
@@ -453,12 +454,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             selectedView={selectedView}
             distinctColumnValues={distinctColumnValues}
             columnValueLoading={columnValueLoading}
-            queryParams={queryParams}
+            controls={controls}
             cache={cache}
             expired={expired}
             computed={computed}
             onViewSelect={this.viewSelect}
-            onSetQueryParams={this.setQueryParams}
+            onSetControls={this.setControls}
             onCacheChange={this.cacheChange}
             onExpiredChange={this.expiredChange}
             onSetWidgetProps={this.setWidgetProps}
@@ -498,7 +499,7 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
-    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
+    onLoadData: (viewId, requestParams, resolve) => dispatch(loadData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
     onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),

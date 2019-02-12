@@ -3,6 +3,7 @@ import moment from 'moment'
 import { uuid } from 'utils/util'
 import { FilterTypes, FilterTypesOperatorSetting } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
+import { QueryVariable } from '../../containers/Dashboard/Grid'
 
 import Input from 'antd/lib/input'
 // import InputNumber from 'antd/lib/input-number'
@@ -31,7 +32,7 @@ export interface IModel {
 export interface IFilterViewConfig {
   key: number
   name: string
-  isParam: boolean
+  isVariable: boolean
   sqlType: string
   items: number[]
 }
@@ -59,7 +60,7 @@ export interface IFilterItem {
 }
 
 export interface IFilterValue {
-  params: Array<{ name: string, value: string | number }>
+  variables: QueryVariable
   filters: string[]
 }
 
@@ -250,10 +251,10 @@ function datetimePickerChange (onChange) {
   }
 }
 
-export function getParamValue (filter: IFilterItem, config: IFilterViewConfig, value) {
+export function getVariableValue (filter: IFilterItem, config: IFilterViewConfig, value) {
   const { type, dateFormat, multiple } = filter
   const { key, sqlType } = config
-  let param = []
+  let variable = []
 
   switch (type) {
     case FilterTypes.InputText:
@@ -261,45 +262,45 @@ export function getParamValue (filter: IFilterItem, config: IFilterViewConfig, v
     case FilterTypes.Select:
       if (multiple) {
         if (value.length && value.length > 0) {
-          param.push({ name: key, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
+          variable.push({ name: key, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
         }
       } else {
         if (value !== void 0) {
-          param.push({ name: key, value: getValidValue(value, sqlType) })
+          variable.push({ name: key, value: getValidValue(value, sqlType) })
         }
       }
       break
     case FilterTypes.NumberRange:
-      param = value.filter((val) => val !== '').map((val) => ({ name: key, value: getValidValue(val, sqlType) }))
+      variable = value.filter((val) => val !== '').map((val) => ({ name: key, value: getValidValue(val, sqlType) }))
       break
     case FilterTypes.TreeSelect:
       if (value.length && value.length > 0) {
-        param.push({ name: key, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
+        variable.push({ name: key, value: value.map((val) => getValidValue(val, sqlType)).join(',') })
       }
       break
     case FilterTypes.Date:
       if (value) {
-        param.push({ name: key, value: `'${moment(value).format(dateFormat)}'` })
+        variable.push({ name: key, value: `'${moment(value).format(dateFormat)}'` })
       }
       break
     case FilterTypes.MultiDate:
       if (value) {
-        param.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
+        variable.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
       }
       break
     case FilterTypes.DateRange:
       if (value.length) {
-        param.push(...value.map((v) => ({ name: key, value: `'${moment(v).format(dateFormat)}'` })))
+        variable.push(...value.map((v) => ({ name: key, value: `'${moment(v).format(dateFormat)}'` })))
       }
       break
     default:
       const val = value.target.value.trim()
       if (val) {
-        param.push({ name: key, value: getValidValue(val, sqlType) })
+        variable.push({ name: key, value: getValidValue(val, sqlType) })
       }
       break
   }
-  return param
+  return variable
 }
 
 export function getModelValue (filter: IFilterItem, config: IFilterViewConfig, operator: OperatorTypes, value) {

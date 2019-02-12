@@ -71,7 +71,7 @@ import {
 
 import {
   IFilterItem,
-  getParamValue,
+  getVariableValue,
   getModelValue,
   getDefaultValue
 } from '../../components/Filters'
@@ -160,20 +160,20 @@ function dashboardReducer (state = initialState, action) {
         const defaultValue = getDefaultValue(filter)
         if (defaultValue) {
           Object.entries(relatedViews).forEach(([viewId, config]) => {
-            const { items, isParam } = config
+            const { items, isVariable } = config
             if (items.length) {
-              const filterValue = isParam
-                ? getParamValue(filter, config, defaultValue)
+              const filterValue = isVariable
+                ? getVariableValue(filter, config, defaultValue)
                 : getModelValue(filter, config, operator, defaultValue)
               items.forEach((itemId) => {
                 if (!globalFiltersInitialValue[itemId]) {
                   globalFiltersInitialValue[itemId] = {
                     filters: [],
-                    params: []
+                    variables: []
                   }
                 }
-                if (isParam) {
-                  globalFiltersInitialValue[itemId].params = globalFiltersInitialValue[itemId].params.concat(filterValue)
+                if (isVariable) {
+                  globalFiltersInitialValue[itemId].variables = globalFiltersInitialValue[itemId].variables.concat(filterValue)
                 } else {
                   globalFiltersInitialValue[itemId].filters = globalFiltersInitialValue[itemId].filters.concat(filterValue)
                 }
@@ -192,12 +192,12 @@ function dashboardReducer (state = initialState, action) {
           obj[w.id] = {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].filters : [],
-              params: [],
-              linkageParams: [],
-              globalParams: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].params : [],
+              variables: [],
+              linkageVariables: [],
+              globalVariables: globalFiltersInitialValue[w.id] ? globalFiltersInitialValue[w.id].variables : [],
               pagination: {},
               drillpathInstance: [],
               ...drillpathSetting
@@ -224,12 +224,12 @@ function dashboardReducer (state = initialState, action) {
             obj[item.id] = {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {},
                 drillpathInstance: []
               },
@@ -276,17 +276,7 @@ function dashboardReducer (state = initialState, action) {
           ...itemsInfo,
           [payload.itemId]: {
             ...itemsInfo[payload.itemId],
-            loading: true,
-            queryParams: {
-              ...itemsInfo[payload.itemId]['queryParams'],
-              linkageFilters: payload.params.linkageFilters,
-              globalFilters: payload.params.globalFilters,
-              params: payload.params.params,
-              linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams,
-              pagination: payload.params.pagination,
-              nativeQuery: payload.params.nativeQuery
-            }
+            loading: true
           }
         })
 
@@ -297,46 +287,55 @@ function dashboardReducer (state = initialState, action) {
           ...itemsInfo[payload.itemId],
           loading: false,
           datasource: payload.result,
-          renderType: payload.renderType
+          renderType: payload.renderType,
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            linkageFilters: payload.requestParams.linkageFilters,
+            globalFilters: payload.requestParams.globalFilters,
+            variables: payload.requestParams.variables,
+            linkageVariables: payload.requestParams.linkageVariables,
+            globalVariables: payload.requestParams.globalVariables,
+            pagination: payload.requestParams.pagination,
+            nativeQuery: payload.requestParams.nativeQuery
+          }
         }
       })
     case DRILL_DASHBOARDITEM:
-      if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
-        itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
+      if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
+        itemsInfo[payload.itemId].queryConditions.drillHistory = []
       }
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillHistory: itemsInfo[payload.itemId].queryConditions.drillHistory.concat(payload.drillHistory)
           }
         }
       })
     case DRILL_PATH_SETTING:
-      console.log({payload})
-      if (!itemsInfo[payload.itemId]['queryParams']['drillSetting']) {
-        itemsInfo[payload.itemId]['queryParams']['drillSetting'] = []
+      if (!itemsInfo[payload.itemId].queryConditions.drillSetting) {
+        itemsInfo[payload.itemId].queryConditions.drillSetting = []
       }
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillSetting: itemsInfo[payload.itemId]['queryParams']['drillSetting'].concat(payload.history)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillSetting: itemsInfo[payload.itemId].queryConditions.drillSetting.concat(payload.history)
           }
         }
       })
     case DELETE_DRILL_HISTORY:
-      const drillHistoryArray = itemsInfo[payload.itemId]['queryParams']['drillHistory']
+      const drillHistoryArray = itemsInfo[payload.itemId].queryConditions.drillHistory
       return state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
             drillHistory: Array.isArray(drillHistoryArray) ? drillHistoryArray.slice(0, payload.index + 1) : drillHistoryArray
           }
         }

@@ -18,8 +18,7 @@ export class ScrollablePivot extends React.Component<IPivotProps, {}> {
   private pivot: Pivot = null
 
   public shouldComponentUpdate (nextProps: IPivotProps) {
-    const { renderType } = nextProps
-    return renderType === 'loading' ? false : true
+    return nextProps.renderType !== 'loading'
   }
 
   public componentDidMount () {
@@ -115,4 +114,3 @@ export class ScrollablePivot extends React.Component<IPivotProps, {}> {
 }
 
 export default ScrollablePivot
-
