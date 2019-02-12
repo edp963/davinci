@@ -872,15 +872,17 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     const { currentItems, currentItemsInfo } = this.props
     Object.entries(queryConditions).forEach(([itemId, condition]) => {
       const item = currentItems.find((ci) => ci.id === +itemId)
-      let pageNo = 0
-      const { pagination } = currentItemsInfo[itemId].queryConditions
-      if (pagination.pageNo) { pageNo = 1 }
-      const { variables: globalVariables, filters: globalFilters } = condition
-      this.getChartData('rerender', +itemId, item.widgetId, {
-        globalVariables,
-        globalFilters,
-        pagination: { ...pagination, pageNo }
-      })
+      if (item) {
+        let pageNo = 0
+        const { pagination } = currentItemsInfo[itemId].queryConditions
+        if (pagination.pageNo) { pageNo = 1 }
+        const { variables: globalVariables, filters: globalFilters } = condition
+        this.getChartData('rerender', +itemId, item.widgetId, {
+          globalVariables,
+          globalFilters,
+          pagination: { ...pagination, pageNo }
+        })
+      }
     })
   }
 
