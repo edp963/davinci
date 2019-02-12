@@ -27,6 +27,7 @@ import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditio
 import { DefaultTableCellStyle } from '../Workbench/ConfigSections/TableSection/HeaderConfigModal'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
+import { Resizable } from 'libs/react-resizable'
 import PaginationWithoutTotal from '../../../../components/PaginationWithoutTotal'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
@@ -70,9 +71,51 @@ interface ITableStates {
   tableBodyHeight: number
 }
 
+const ResizableHeader = (props) => {
+  const { onResize, width, ...rest } = props
+  if (!width) {
+    return <th {...rest} />
+  }
+  return (
+    <Resizable draggableOpts={{grid: [10, 10]}} scale={1} width={width} height={0} onResize={onResize}>
+      <th {...rest} />
+    </Resizable>
+  )
+}
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
+
+  private components = {
+    header: {
+      cell: (props) => {
+        console.log('header props: ', props)
+        return (<th {...props} />)
+      }
+    }
+  }
+
+  private handleResize = (idx) => (e, { size }) => {
+    const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
+      columns.forEach((col) => {
+        col.width = Math.ceil(ratio * Number(col.width))
+        if (Array.isArray(col.children) && col.children.length) {
+          loop(col.children, ratio)
+        }
+      })
+    }
+    const nextColumns = [...this.state.columns]
+    const ratio = size.width / (+nextColumns[idx].width)
+    nextColumns[idx] = {
+      ...nextColumns[idx],
+      width: size.width
+    }
+    if (nextColumns[idx].children) {
+      loop(nextColumns[idx].children, ratio)
+    }
+
+    this.setState({ columns: nextColumns })
+  }
 
   private onPaginationChange = (current: number, pageSize: number) => {
     const { pagination } = this.state
@@ -329,6 +372,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }
       loop(tableColumns, ratio)
     }
+    tableColumns.forEach((col, idx) => {
+      col.onHeaderCell = (column) => ({
+        width: column.width,
+        onResize: this.handleResize(idx)
+      })
+    })
     return tableColumns
   }
 
@@ -809,6 +858,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           className={styles.table}
           ref={this.table}
           dataSource={data}
+          components={this.components}
           columns={columns}
           pagination={withPaging && pagination.total !== -1 ? paginationConfig : false}
           scroll={scroll}
