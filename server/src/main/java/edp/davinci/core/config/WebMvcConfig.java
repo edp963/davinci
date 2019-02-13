@@ -38,6 +38,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,6 +53,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * 登录校验拦截器
+     *
      * @return
      */
     @Bean
@@ -61,6 +63,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * 授权平台校验拦截器
+     *
      * @return
      */
     @Bean
@@ -70,6 +73,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * CurrentUser 注解参数解析器
+     *
      * @return
      */
     @Bean
@@ -79,6 +83,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * CurrentPlatform 注解参数解析器
+     *
      * @return
      */
     @Bean
@@ -88,6 +93,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * JsonParam 参数解析器
+     *
      * @return
      */
     @Bean
@@ -97,6 +103,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
     /**
      * 参数解析器
+     *
      * @param argumentResolvers
      */
     @Override
@@ -144,11 +151,13 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
                 SerializerFeature.WriteDateUseDateFormat,
                 SerializerFeature.DisableCircularReferenceDetect);
         fastJsonConfig.setSerializeFilters((ValueFilter) (o, s, source) -> {
-            if (null == source) {
-                return "";
+            if (null != source && (source instanceof Long || source instanceof BigInteger) && source.toString().length() > 15) {
+                return source.toString();
+            } else {
+                return null == source ? "" : source;
             }
-            return source;
         });
+
         //处理中文乱码问题
         List<MediaType> fastMediaTypes = new ArrayList<>();
         fastMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
@@ -156,4 +165,6 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         fastConverter.setFastJsonConfig(fastJsonConfig);
         converters.add(fastConverter);
     }
+
+
 }

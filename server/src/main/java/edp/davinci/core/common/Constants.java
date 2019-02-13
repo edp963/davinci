@@ -125,4 +125,8 @@ public class Constants extends Consts {
 
 
     public static final String REG_USER_PASSWORD = ".{6,20}";
+
+    public static final String EXCEL_FORMAT_KEY = "format";
+
+    public static final String EXCEL_FORMAT_TYPE_KEY = "formatType";
 }

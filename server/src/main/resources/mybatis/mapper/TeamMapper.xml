@@ -57,7 +57,7 @@
 
 
     <select id="getTeamsByIds" resultType="edp.davinci.dto.teamDto.TeamFullId">
-        SELECT id, full_team_id as fullParentId FROM team WHERE id in
+        SELECT id, full_team_id as fullTeamId FROM team WHERE id in
         <foreach collection="set" open="(" close=")" separator="," item="item">
             #{item}
         </foreach>

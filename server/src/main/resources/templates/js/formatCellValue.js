@@ -4859,20 +4859,21 @@ function colsToUse(cfg) {
   return colspan
 }
 
-function getCells(cfg, row, col, rowsLeft, fields) {
+function getCells(cfg, row, col, rowsLeft, fields, queryVars) {
   var rootRows = rowsLeft / rowsToUse(cfg)
   var alias = cfg.headerName
   var dataKey = cfg.headerName
+  var field = null
   if (!cfg.isGroup) {
-    var field = findFieldByKey(fields, cfg.headerName)
+    field = findFieldByKey(fields, cfg.headerName)
     dataKey = getDecodeName(field)
-    alias = getFieldAlias(field, {})
+    alias = getFieldAlias(field, queryVars)
     if (!alias) {
       alias = getDecodeName(field)
     }
   }
   var cells = []
-  cells.push({
+  var currentCell = {
     key: dataKey,
     alias: alias,
     row: row,
@@ -4880,20 +4881,27 @@ function getCells(cfg, row, col, rowsLeft, fields) {
     rowspan: rootRows,
     colspan: colsToUse(cfg),
     style: cfg.style
-  })
+  }
+  if (field) {
+    currentCell.type = field.type
+    if (field.format) {
+      currentCell.format = field.format
+    }
+  }
+  cells.push(currentCell)
 
   if (!cfg.isGroup || !cfg.children.length) {
     return cells
   }
 
   for (var i = 0; i < cfg.children.length; i++) {
-    cells = cells.concat(getCells(cfg.children[i], row + rootRows, col, rowsLeft - rootRows, fields))
+    cells = cells.concat(getCells(cfg.children[i], row + rootRows, col, rowsLeft - rootRows, fields, queryVars))
     col += colsToUse(cfg.children[i])
   }
   return cells
 }
 
-function parseTableHeader(headerConfig, fields) {
+function parseTableHeader(headerConfig, fields, queryVars) {
   var rootHeaderConfig = {
     key: 'root',
     headerName: 'root',
@@ -4901,7 +4909,7 @@ function parseTableHeader(headerConfig, fields) {
     children: headerConfig
   }
 
-  var headerCells = getCells(rootHeaderConfig, 0, 0, rowsToUse(rootHeaderConfig), fields)
+  var headerCells = getCells(rootHeaderConfig, 0, 0, rowsToUse(rootHeaderConfig), fields, queryVars)
   headerCells.splice(0, 1)
   for (var i = 0; i < headerCells.length; i++) {
     var cell = headerCells[i];
@@ -4922,9 +4930,17 @@ function parseTableHeader(headerConfig, fields) {
   return headerCells
 }
 
-function getFieldsHeader(widgetConfigJson) {
+function getFieldsHeader(widgetConfigJson, queryVars) {
   if (!widgetConfigJson) {
     return []
+  }
+
+  var queryVarsObj = {}
+  if (queryVars && queryVars.length) {
+    for (var i = 0; i < queryVars.length; i++) {
+      var queryVar = queryVars[i];
+      queryVarsObj['$' + queryVar.name + '$'] = queryVar.value
+    }
   }
 
   var headerCells = []
@@ -4934,21 +4950,28 @@ function getFieldsHeader(widgetConfigJson) {
     var headerConfig = chartStyles.table.headerConfig
     var fields = getWidgetFields(widgetConfig)
     if (headerConfig.length > 0) {
-      headerCells = parseTableHeader(headerConfig, fields)
+      headerCells = parseTableHeader(headerConfig, fields, queryVarsObj)
     } else {
       for (var i = 0; i < fields.length; i++) {
         var field = fields[i];
         var dataKey = getDecodeName(field)
-        headerCells.push({
+        var currentCell = {
           key: dataKey,
-          alias: getFieldAlias(field, {}),
+          alias: getFieldAlias(field, queryVarsObj),
           isMerged: false,
           row: '0',
           col: i.toString(),
           rowspan: '1',
           colspan: '1',
           range: [0, 0, i, i].join(',').split(',')
-        })
+        }
+        if (field) {
+          currentCell.type = field.type
+          if (field.format) {
+            currentCell.format = field.format
+          }
+        }
+        headerCells.push(currentCell)
       }
     }
   }
@@ -4970,8 +4993,10 @@ function getFieldsHeader(widgetConfigJson) {
 
 
 // @TEST table header config parse
-
-// var cells = getFieldsHeader(`{"data":[],"cols":[{"name":"单据日期","type":"category","visualType":"date","config":true,"from":"cols","field":{"alias":"Moment().format('YYYY年MM日')","useExpression":true,"desc":""}},{"name":"客户分类","type":"category","visualType":"string","config":true,"from":"cols"},{"name":"存货分类","type":"category","visualType":"string","config":true,"from":"cols"},{"name":"部门名称","type":"category","visualType":"string","config":true,"from":"cols"}],"rows":[],"metrics":[{"name":"单价@davinci@869F8EA4","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"numeric","numeric":{"decimalPlaces":2,"unit":"k","useThousandSeparator":true}},"field":{"alias":"平均单价","useExpression":false,"desc":"分答"}},{"name":"数量@davinci@79C58EFC","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"numeric","numeric":{"decimalPlaces":2,"unit":"无","useThousandSeparator":false}}},{"name":"订单金额@davinci@9AEA36FC","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"currency","currency":{"decimalPlaces":2,"unit":"万","useThousandSeparator":true,"prefix":"上午","suffix":"的事"}}},{"name":"利润@davinci@462B3FE0","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics"},{"name":"税费@davinci@2720E8BF","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"percentage","percentage":{"decimalPlaces":3}}},{"name":"不含税金额@davinci@665BB656","type":"value","visualType":"number","agg":"sum","config":true,"chart":{"id":1,"name":"table","title":"表格","icon":"icon-table","coordinate":"other","requireDimetions":[0,9999],"requireMetrics":[0,9999],"data":{"cols":{"title":"列","type":"category"},"rows":{"title":"行","type":"category"},"metrics":{"title":"指标","type":"value"},"filters":{"title":"筛选","type":"all"}},"style":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}}},"from":"metrics","format":{"formatType":"scientificNotation","scientificNotation":{"decimalPlaces":2}}}],"filters":[],"chartStyles":{"table":{"fontFamily":"PingFang SC","fontSize":"12","color":"#666","lineStyle":"solid","lineColor":"#D9D9D9","headerBackgroundColor":"#f7f7f7","headerConfig":[{"key":"TUtG5","headerName":"日期","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"PQV0e","headerName":"单据日期","alias":"Moment().format('YYYY年MM日')","visualType":"date","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"JkI5M","headerName":"分类","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"XdnzE","headerName":"客户分类","alias":"客户分类","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"ZRBeV","headerName":"存货分类","alias":"存货分类","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null}]}]},{"key":"LPvKp","headerName":"名称","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"F8B7x","headerName":"部门名称","alias":"部门名称","visualType":"string","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null}]},{"key":"ZF7AN","headerName":"订单","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"oKJcH","headerName":"订单金额@davinci@9AEA36FC","alias":"[总计]订单金额","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"0JdCB","headerName":"单价数量","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"gDGDu","headerName":"单价@davinci@869F8EA4","alias":"平均单价","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"TQyFt","headerName":"数量@davinci@79C58EFC","alias":"[总计]数量","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null}]}]},{"key":"xDMlC","headerName":"利润税","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"g8Qxk","headerName":"利润@davinci@462B3FE0","alias":"[总计]利润","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"1nqLf","headerName":"税","alias":null,"visualType":null,"isGroup":true,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":[{"key":"oEndN","headerName":"税费@davinci@2720E8BF","alias":"[总计]税费","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null},{"key":"2S7yE","headerName":"不含税金额@davinci@665BB656","alias":"[总计]不含税金额","visualType":"number","isGroup":false,"style":{"fontSize":"12","fontFamily":"PingFang SC","fontWeight":"normal","fontColor":"#666","fontStyle":"normal","backgroundColor":"#f7f7f7","justifyContent":"flex-start"},"children":null}]}]}],"columnsConfig":[],"leftFixedColumns":[],"rightFixedColumns":[],"headerFixed":true,"autoMergeCell":true,"withPaging":true,"pageSize":"20","withNoAggregators":false},"spec":{}},"selectedChart":1,"pagination":{"pageNo":1,"pageSize":20,"withPaging":true,"totalCount":55},"renderType":"clear","orders":[],"mode":"chart","model":{"单据日期":{"sqlType":"DATE","visualType":"date","modelType":"category"},"订单号":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"订单金额":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"利润":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"税费":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"客户分类":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"部门编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货分类":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"业务员编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"客户名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"地区名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"存货名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"部门名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"业务员名称":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"单价":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"数量":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"},"客户编码":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"订单明细号":{"sqlType":"VARCHAR","visualType":"string","modelType":"category"},"不含税金额":{"sqlType":"DECIMAL","visualType":"number","modelType":"value"}},"queryParams":[],"cache":false,"expired":300}`)
+// var fs = require('fs')
+// var config = fs.readFileSync('./widgetConfig.txt', 'UTF-8')
+// var cells = getFieldsHeader(config, [{"name":"month_var","value":"'2018-08'"}])
 // console.log(JSON.stringify(cells))
+// fs.writeFileSync('./result.txt', JSON.stringify(cells))
 
 // #endregion
