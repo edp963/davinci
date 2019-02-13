@@ -306,8 +306,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return cellWidth + 16 + 2
   }
 
-  private getHeaderText = (field: IFieldConfig, expression: string) => {
-    const { queryVariables } = this.props
+  private getHeaderText = (field: IFieldConfig, expression: string, queryVariables) => {
     let headerText = expression
     if (field) {
       headerText = getFieldAlias(field, queryVariables || {}) || headerText
@@ -324,13 +323,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getPlainColumns (props: IChartProps, mapMetaConfig: IMapMetaConfig) {
-    const { data, chartStyles } = props
+    const { data, chartStyles, queryVariables } = props
     if (!data.length) { return [] }
 
     const { columnsConfig, autoMergeCell } = chartStyles.table
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
       const { name, field, format, expression, agg } = metaConfig
-      const headerText = this.getHeaderText(field, expression)
+      const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
@@ -385,7 +384,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const tableColumns: Array<ColumnProps<any>> = []
     const metaKeys = []
 
-    const { data, chartStyles, width: containerWidth } = props
+    const { data, chartStyles, queryVariables } = props
     const { headerConfig, columnsConfig, autoMergeCell } = chartStyles.table
     headerConfig.forEach((config) =>
       this.traverseHeaderConfig(config, props, mapMetaConfig, null, tableColumns, metaKeys))
@@ -406,7 +405,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         backgroundColor,
         justifyContent
       }
-      const headerText = this.getHeaderText(field, expression)
+      const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
       const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
@@ -449,7 +448,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     columns: Array<ColumnProps<any>>,
     metaKeys: string[]
   ) {
-    const { data, chartStyles } = props
+    const { data, chartStyles, queryVariables } = props
     const { columnsConfig, autoMergeCell } = chartStyles.table
     const { key, isGroup, headerName, style } = currentConfig
     const isValidHeader = isGroup || !!mapMetaConfig[headerName]
@@ -484,7 +483,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const metaConfig = mapMetaConfig[headerName]
       const { name, field, format, expression, agg } = metaConfig
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
-      headerText = this.getHeaderText(field, expression)
+      headerText = this.getHeaderText(field, expression, queryVariables)
       const headerWidth = this.computeCellWidth(style, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       header.width = Math.max(headerWidth, maxCellWidth)
