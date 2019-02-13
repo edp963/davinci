@@ -27,6 +27,7 @@ import { ITableHeaderConfig, ITableColumnConfig, ITableCellStyle, ITableConditio
 import { DefaultTableCellStyle } from '../Workbench/ConfigSections/TableSection/HeaderConfigModal'
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
+import { Resizable } from 'libs/react-resizable'
 import PaginationWithoutTotal from '../../../../components/PaginationWithoutTotal'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
@@ -70,9 +71,51 @@ interface ITableStates {
   tableBodyHeight: number
 }
 
+const ResizableHeader = (props) => {
+  const { onResize, width, ...rest } = props
+  if (!width) {
+    return <th {...rest} />
+  }
+  return (
+    <Resizable draggableOpts={{grid: [10, 10]}} scale={1} width={width} height={0} onResize={onResize}>
+      <th {...rest} />
+    </Resizable>
+  )
+}
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private table = React.createRef<AntTable<any>>()
+
+  private components = {
+    header: {
+      cell: (props) => {
+        console.log('header props: ', props)
+        return (<th {...props} />)
+      }
+    }
+  }
+
+  private handleResize = (idx) => (e, { size }) => {
+    const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
+      columns.forEach((col) => {
+        col.width = Math.ceil(ratio * Number(col.width))
+        if (Array.isArray(col.children) && col.children.length) {
+          loop(col.children, ratio)
+        }
+      })
+    }
+    const nextColumns = [...this.state.columns]
+    const ratio = size.width / (+nextColumns[idx].width)
+    nextColumns[idx] = {
+      ...nextColumns[idx],
+      width: size.width
+    }
+    if (nextColumns[idx].children) {
+      loop(nextColumns[idx].children, ratio)
+    }
+
+    this.setState({ columns: nextColumns })
+  }
 
   private onPaginationChange = (current: number, pageSize: number) => {
     const { pagination } = this.state
@@ -263,8 +306,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return cellWidth + 16 + 2
   }
 
-  private getHeaderText = (field: IFieldConfig, expression: string) => {
-    const { queryVariables } = this.props
+  private getHeaderText = (field: IFieldConfig, expression: string, queryVariables) => {
     let headerText = expression
     if (field) {
       headerText = getFieldAlias(field, queryVariables || {}) || headerText
@@ -281,13 +323,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   }
 
   private getPlainColumns (props: IChartProps, mapMetaConfig: IMapMetaConfig) {
-    const { data, chartStyles } = props
+    const { data, chartStyles, queryVariables } = props
     if (!data.length) { return [] }
 
     const { columnsConfig, autoMergeCell } = chartStyles.table
     const tableColumns = Object.values<IMetaConfig>(mapMetaConfig).map((metaConfig) => {
       const { name, field, format, expression, agg } = metaConfig
-      const headerText = this.getHeaderText(field, expression)
+      const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression)
@@ -329,6 +371,12 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }
       loop(tableColumns, ratio)
     }
+    tableColumns.forEach((col, idx) => {
+      col.onHeaderCell = (column) => ({
+        width: column.width,
+        onResize: this.handleResize(idx)
+      })
+    })
     return tableColumns
   }
 
@@ -336,7 +384,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const tableColumns: Array<ColumnProps<any>> = []
     const metaKeys = []
 
-    const { data, chartStyles, width: containerWidth } = props
+    const { data, chartStyles, queryVariables } = props
     const { headerConfig, columnsConfig, autoMergeCell } = chartStyles.table
     headerConfig.forEach((config) =>
       this.traverseHeaderConfig(config, props, mapMetaConfig, null, tableColumns, metaKeys))
@@ -357,7 +405,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         backgroundColor,
         justifyContent
       }
-      const headerText = this.getHeaderText(field, expression)
+      const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
       const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
@@ -400,7 +448,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     columns: Array<ColumnProps<any>>,
     metaKeys: string[]
   ) {
-    const { data, chartStyles } = props
+    const { data, chartStyles, queryVariables } = props
     const { columnsConfig, autoMergeCell } = chartStyles.table
     const { key, isGroup, headerName, style } = currentConfig
     const isValidHeader = isGroup || !!mapMetaConfig[headerName]
@@ -435,7 +483,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const metaConfig = mapMetaConfig[headerName]
       const { name, field, format, expression, agg } = metaConfig
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
-      headerText = this.getHeaderText(field, expression)
+      headerText = this.getHeaderText(field, expression, queryVariables)
       const headerWidth = this.computeCellWidth(style, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       header.width = Math.max(headerWidth, maxCellWidth)
@@ -809,6 +857,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
           className={styles.table}
           ref={this.table}
           dataSource={data}
+          components={this.components}
           columns={columns}
           pagination={withPaging && pagination.total !== -1 ? paginationConfig : false}
           scroll={scroll}
