@@ -282,6 +282,9 @@
       }
     }
   }
+  .wrapperForm {
+    margin: 16px 0;
+  }
   .footer{
     .foot{
       text-align: right;
@@ -291,6 +294,24 @@
         margin-right: 16px;
       }
     }
+  }
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+  :global(.ant-form-item-label) {
+    line-height: 1em;
+  }
+  :global(.ant-form-item-label label) {
+    color: @disabled-text-color;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  :global(.ant-form-item-required:before) {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+  :global(.ant-form-item-control) {
+    line-height: 32px;
   }
 }
 
@@ -309,6 +330,7 @@
 .searchCol, .addCol {
   padding: 0 4px;
   text-align: right;
+  margin-bottom: 8px;
 }
 
 @media (max-width: 768px) {
@@ -353,6 +375,8 @@
     }
   }
 }
+
+
 
 
 

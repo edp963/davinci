@@ -72,6 +72,24 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
     })
   }
 
+// {
+// 	"id": "96F6258E",
+// 	"type": "multiSelect",
+// 	"variables": ["city"],
+// 	"sub": [{
+// 		"id": "FB0DF8A8",
+// 		"text": "北京",
+// 		"value": "beijing",
+// 		"variables": ["city"],
+// 		"status": 1
+// 	}, {
+// 		"id": "57940A50",
+// 		"text": "上海",
+// 		"value": "shanghai",
+// 		"variables": ["city"],
+// 		"status": 1
+// 	}]
+// }
   private generateFormComponent = (c) => {
     const {
       form,
@@ -108,7 +126,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           if (c.type === 'select' &&
               c.hasRelatedComponent === 'yes' &&
               sub.variableType &&
-              this.state.parentSelValues[c.id] === index) {
+              this.state.parentSelValues[c.id] === index) {   // todo 变量关联控件
             followComponents = followComponents.concat(this.generateFormComponent({
               ...sub,
               id: `sub_${c.id}_${sub.id}`,
@@ -231,9 +249,10 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
   }
 
   private parentSelectChange = (control) => (val) => {
+    console.log({val})
     const { parentSelValues } = this.state
 
-    if (Object.prototype.toString.call(val) !== '[object Array]') {
+    if (Object.prototype.toString.call(val) !== '[object Array]') { // 下拉多选
       let selIndex = -1
 
       if (val) {

@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 
-import { Form, Row, Col, Table, Input, Select, Button } from 'antd'
+import { Form, Row, Col, Table, Input, Select, Button, Checkbox } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 
@@ -38,7 +38,23 @@ interface IVariableConfigTableProps {
   onDeleteConfigValue: (id: any) => any
 }
 
-export class VariableConfigTable extends React.Component<IVariableConfigTableProps, {}> {
+interface IVariableConfigTableState {
+  isRelationcCtrl: boolean
+}
+
+export class VariableConfigTable extends React.Component<IVariableConfigTableProps, IVariableConfigTableState> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      isRelationcCtrl: false
+    }
+  }
+  private isRelationcCtrl = (e) => {
+    this.setState({
+      isRelationcCtrl: !this.state.isRelationcCtrl
+    })
+  }
+
   public render () {
     const {
       form,
@@ -129,7 +145,11 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
           return (
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${record.id}Variables`, {
-                initialValue: record.variables
+                rules: [{
+                  required: true,
+                  message: '关联变量不能为空'
+                }],
+                initialValue: record.variables && record.variables.length ? record.variables : variableSource[0]
               })(
                 <Select placeholder="未选择" allowClear mode="multiple">
                   {variableOptions}
@@ -141,12 +161,15 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
       }
     }, {
       title: '操作',
-      width: 80,
+      width: 200,
       className: `${utilStyles.textAlignCenter}`,
       render: (text, record) => {
         if (record.status) {
           return (
             <span className={styles.actions}>
+              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl}>
+                <span className={`${this.state.isRelationcCtrl ? utilStyles.highlight : utilStyles.unSelected}`}>关联控件</span>
+              </Checkbox>
               <a onClick={onChangeConfigValueStatus(record.id)}>修改</a>
               <a onClick={onDeleteConfigValue(record.id)}>删除</a>
             </span>
@@ -154,6 +177,9 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
         } else {
           return (
             <span className={styles.actions}>
+              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl}>
+                <span className={`${this.state.isRelationcCtrl ? utilStyles.highlight : utilStyles.unSelected}`}>关联控件</span>
+              </Checkbox>
               <a onClick={onUpdateConfigValue(record.id)}>保存</a>
               <a onClick={onDeleteConfigValue(record.id)}>删除</a>
             </span>
@@ -162,7 +188,8 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
       }
     }]
 
-    if (hasRelatedComponent === 'yes') {
+    // if (hasRelatedComponent === 'yes') {
+    if (this.state.isRelationcCtrl) {
       columns.splice(3, 0, {
         title: '关联控件类别',
         dataIndex: 'variableType',
