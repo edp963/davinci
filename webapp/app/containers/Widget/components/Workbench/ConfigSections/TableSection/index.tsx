@@ -142,12 +142,9 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
     const { config } = props
     const columns = [...validColumns]
 
-    const localHeaderConfig: ITableHeaderConfig[] = config.headerConfig
-    if (!localHeaderConfig.length) { return [] }
+    const localHeaderConfig: ITableHeaderConfig[] = [...config.headerConfig]
 
-    localHeaderConfig.forEach((c) => {
-      this.traverseHeaderConfig(c, localHeaderConfig, columns)
-    })
+    this.traverseHeaderConfig(localHeaderConfig, columns)
 
     let dimensionIdx = 0
     columns.forEach((c) => {
@@ -197,26 +194,27 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   }
 
   private traverseHeaderConfig = (
-    cursorConfig: ITableHeaderConfig,
-    siblings: ITableHeaderConfig[],
+    cursorConfig: ITableHeaderConfig[],
     validColumns: IDataParamSource[]
   ) => {
-    const { isGroup, headerName } = cursorConfig
-    if (!isGroup) {
-      const idx = validColumns.findIndex((c) => c.name === headerName)
-      if (idx < 0) {
-        siblings.splice(siblings.findIndex((c) => c.headerName === headerName), 1)
-      } else {
-        const column = validColumns[idx]
-        cursorConfig.alias = this.getColumnDisplayName(column)
-        cursorConfig.visualType = column.visualType
-        validColumns.splice(idx, 1)
+    for (let idx = cursorConfig.length - 1; idx >= 0; idx--) {
+      const currentConfig = cursorConfig[idx]
+      const { isGroup, headerName } = currentConfig
+      if (!isGroup) {
+        const columnIdx = validColumns.findIndex((c) => c.name === headerName)
+        if (columnIdx < 0) {
+          cursorConfig.splice(idx, 1)
+        } else {
+          const column = validColumns[columnIdx]
+          currentConfig.alias = this.getColumnDisplayName(column)
+          currentConfig.visualType = column.visualType
+          validColumns.splice(columnIdx, 1)
+        }
       }
-      return
+      if (Array.isArray(currentConfig.children) && currentConfig.children.length) {
+        this.traverseHeaderConfig(currentConfig.children, validColumns)
+      }
     }
-    cursorConfig.children.forEach((c) => {
-      this.traverseHeaderConfig(c, cursorConfig.children, validColumns)
-    })
   }
 
   private selectChange = (prop) => (value) => {
