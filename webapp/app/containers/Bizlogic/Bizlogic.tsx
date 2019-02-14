@@ -337,14 +337,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     } = currentViewItem
     const dec = (sql.includes('{') && sql.substring(0, sql.lastIndexOf('{')) !== '')
 
-    onLoadSchema(sourceId, (res) => {
-      this.setState({
-        schemaData: res,
-        sourceIdGeted: sourceId
-      }, () => {
-        this.promptCodeMirror(generateData(this.state.schemaData))
-      })
-    })
+    this.sqlGetSchema(sourceId)
 
     if (model) {
       const modelObj = JSON.parse(model)
@@ -413,6 +406,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     })
 
     this.setState({
+      sourceIdGeted: sourceId,
       sql,
       selectedSourceName: source.name,
       name,
@@ -541,19 +535,24 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private initSelectSource = (source) => {
-    const { sources, onLoadSchema } = this.props
+    const { sources } = this.props
     const currentSource = (sources as any[]).find((s) => s.id === Number(source.key))
     this.setState({
-      selectedSourceName: currentSource.name
+      selectedSourceName: currentSource.name,
+      sourceIdGeted: Number(source.key)
     })
     this.props.form.setFieldsValue({
       source_id: Number(currentSource.id),
       source_name: currentSource.name
     })
-    onLoadSchema(Number(source.key), (result) => {
+    this.sqlGetSchema(Number(source.key))
+  }
+
+  private sqlGetSchema (sourceId) {
+    this.promptCodeMirror([])
+    this.props.onLoadSchema(sourceId, (result) => {
       this.setState({
-        schemaData: result,
-        sourceIdGeted: Number(source.key)
+        schemaData: result
       }, () => {
         this.promptCodeMirror(generateData(this.state.schemaData))
       })
