@@ -62,7 +62,7 @@ import {
   makeSelectViewTeam
  } from './selectors'
 import { checkNameUniqueAction, hideNavigator } from '../App/actions'
-import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState } from './actions'
+import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState, loadSourceTable, loadSourceTableColumn } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
 import { toListBF, getColumns } from './components/viewUtil'
@@ -71,6 +71,7 @@ import EditorHeader from '../../components/EditorHeader'
 import PaginationWithoutTotal from '../../components/PaginationWithoutTotal'
 import SourcerSchema from './components/SourceSchema'
 import ExecuteSql from './components/ExecuteSql'
+import table from '../Widget/config/chart/table';
 
 interface IBizlogicFormProps {
   router: InjectedRouter
@@ -88,6 +89,8 @@ interface IBizlogicFormProps {
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadSchema: (sourceId: number, resolve: any) => any
+  onLoadSourceTable: (sourceId: number, resolve: (result: any) => any) => any
+  onLoadSourceTableColumn: (sourceId: number, tableName: string, resolve: (result: any) => any) => any
   onExecuteSql: (requestObj: any, resolve: any) => any
   onAddBizlogic: (values: object, resolve: any) => any
   onEditBizlogic: (values: object, resolve: any) => any
@@ -484,10 +487,21 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private sqlGetSchema (sourceId) {
     this.promptCodeMirror([])
-    this.props.onLoadSchema(sourceId, (result) => {
+    this.props.onLoadSourceTable(sourceId, (result) => {
+      const data = result.map((re) => ({tableName: re, columns: [], primaryKeys: []}))
       this.setState({
-        schemaData: result
+        schemaData: data
       }, () => {
+        this.promptCodeMirror(generateData(this.state.schemaData))
+      })
+    })
+  }
+
+  private loadTableColumn = (tableName) => {
+    const { sourceIdGeted, schemaData } = this.state
+    this.props.onLoadSourceTableColumn(sourceIdGeted, tableName, (result) => {
+      const data = schemaData.map((schema) => schema.tableName === result[0]['tableName'] ? result[0] : schema)
+      this.setState({schemaData: data}, () => {
         this.promptCodeMirror(generateData(this.state.schemaData))
       })
     })
@@ -879,6 +893,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
               selectedSourceName={selectedSourceName}
               dataList={dataList}
               schemaData={schemaData}
+              onLoadTableColumn={this.loadTableColumn}
               sources={sources}
               initSelectSource={this.initSelectSource}
             />
@@ -929,6 +944,8 @@ function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
+    onLoadSourceTable: (sourceId, resolve) => dispatch(loadSourceTable(sourceId, resolve)),
+    onLoadSourceTableColumn: (sourceId, tableName, resolve) => dispatch(loadSourceTableColumn(sourceId, tableName, resolve)),
     onExecuteSql: (requestObj, resolve) => dispatch(executeSql(requestObj, resolve)),
     onAddBizlogic: (bizlogic, resolve) => dispatch(addBizlogic(bizlogic, resolve)),
     onEditBizlogic: (bizlogic, resolve) => dispatch(editBizlogic(bizlogic, resolve)),

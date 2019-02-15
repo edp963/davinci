@@ -31,7 +31,9 @@ import {
   LOAD_DATA,
   LOAD_DISTINCT_VALUE,
   LOAD_DATA_FROM_ITEM,
-  LOAD_VIEW_TEAM
+  LOAD_VIEW_TEAM,
+  LOAD_SOURCE_TABLE,
+  LOAD_SOURCE_TABLE_COLUMN
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -57,7 +59,11 @@ import {
   dataFromItemLoaded,
   loadDataFromItemFail,
   viewTeamLoaded,
-  loadViewTeamFail
+  loadViewTeamFail,
+  sourceTableLoaded,
+  sourceTableColumnLoaded,
+  loadSourceTableFail,
+  loadSourceTableColumnFail
 } from './actions'
 
 import request from '../../utils/request'
@@ -186,6 +192,32 @@ export function* getSchema (action) {
     payload.resolve(schema)
   } catch (err) {
     yield put(loadSchemaFail())
+    errorHandler(err)
+  }
+}
+
+export function* loadSourceTable (action) {
+  const { payload } = action
+  try {
+    const asyncData = yield call(request, `${api.source}/${payload.sourceId}/tables`)
+    const table = asyncData.payload
+    yield put(sourceTableLoaded(table))
+    payload.resolve(table)
+  } catch (err) {
+    yield put(loadSourceTableFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* loadSourceTableColumn (action) {
+  const { payload } = action
+  try {
+    const asyncData = yield call(request, `${api.source}/${payload.sourceId}/table/columns?tableName=${payload.tableName}`)
+    const column = asyncData.payload
+    yield put(sourceTableColumnLoaded(column))
+    payload.resolve(column)
+  } catch (err) {
+    yield put(loadSourceTableColumnFail(err))
     errorHandler(err)
   }
 }
@@ -321,6 +353,8 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(LOAD_CASCADESOURCE, getCascadeSource),
     takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
     takeLatest(LOAD_SCHEMA, getSchema),
+    takeEvery(LOAD_SOURCE_TABLE, loadSourceTable),
+    takeEvery(LOAD_SOURCE_TABLE_COLUMN, loadSourceTableColumn),
     takeLatest(EXECUTE_SQL, executeSql),
     takeEvery(LOAD_DATA, getData),
     takeEvery(LOAD_DISTINCT_VALUE, getDistinctValue),
