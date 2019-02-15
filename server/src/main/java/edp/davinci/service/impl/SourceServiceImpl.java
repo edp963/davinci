@@ -24,6 +24,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.QueryColumn;
+import edp.core.model.TableInfo;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
@@ -476,6 +477,94 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         return resultMap.successAndRefreshToken(request);
     }
 
+
+    /**
+     * 获取Source的data tables
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getSourceTables(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        SourceWithProject sourceWithProject = sourceMapper.getSourceWithProjectById(id);
+        if (null == sourceWithProject) {
+            log.info("source (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("source not found");
+        }
+
+        Project project = sourceWithProject.getProject();
+        if (null == project) {
+            log.info("project (:{}) not found", sourceWithProject.getProjectId());
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //获取当前用户在organization的role
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+        List<String> tableList = null;
+
+        try {
+            tableList = sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword()).getTableList();
+        } catch (SourceException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+
+        if (null != tableList) {
+            //当前用户是project的创建者和organization的owner，直接返回
+            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                //查询project所属team中当前用户最高角色
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+
+                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+
+                    //查询当前用户在的 project所属team对project source的最高权限
+                    short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
+
+                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        tableList = null;
+                    }
+                }
+            }
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(tableList);
+    }
+
+
+
+    /**
+     * 获取Source的data tables
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getTableColumns(Long id, String tableName,User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("source not found");
+        }
+
+        List<TableInfo> tableInfoList = null;
+
+        try {
+            tableInfoList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableColumns(tableName);
+        } catch (SourceException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(tableInfoList);
+    }
 
     /**
      * 建表

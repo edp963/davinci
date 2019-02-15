@@ -247,34 +247,6 @@ public class ViewController extends BaseController {
         }
     }
 
-    /**
-     * 获取数据库schema信息
-     *
-     * @param sourceId
-     * @param user
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "get view data schema")
-    @GetMapping("/database")
-    public ResponseEntity getSourceSchema(@RequestParam Long sourceId,
-                                          @ApiIgnore @CurrentUser User user,
-                                          HttpServletRequest request) {
-        if (invalidId(sourceId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        try {
-            ResultMap resultMap = viewService.getSourceSchema(sourceId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
-
 
     /**
      * 执行sql

@@ -4866,6 +4866,7 @@ function getCells(cfg, row, col, rowsLeft, fields, queryVars) {
   var field = null
   if (!cfg.isGroup) {
     field = findFieldByKey(fields, cfg.headerName)
+    if (!field) { return [] }
     dataKey = getDecodeName(field)
     alias = getFieldAlias(field, queryVars)
     if (!alias) {
