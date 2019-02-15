@@ -499,12 +499,20 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
 
   private loadTableColumn = (tableName) => {
     const { sourceIdGeted, schemaData } = this.state
-    this.props.onLoadSourceTableColumn(sourceIdGeted, tableName, (result) => {
-      const data = schemaData.map((schema) => schema.tableName === result[0]['tableName'] ? result[0] : schema)
-      this.setState({schemaData: data}, () => {
-        this.promptCodeMirror(generateData(this.state.schemaData))
+    if (tableName && tableName.length && !this.isTableHasColumn(tableName)) {
+      this.props.onLoadSourceTableColumn(sourceIdGeted, tableName, (result) => {
+        const data = schemaData.map((schema) => schema.tableName === result[0]['tableName'] ? result[0] : schema)
+        this.setState({schemaData: data}, () => {
+          this.promptCodeMirror(generateData(this.state.schemaData))
+        })
       })
-    })
+    }
+  }
+
+  private isTableHasColumn = (tableName) => {
+    const {schemaData} = this.state
+    const schema = schemaData.find((schema) => schema.tableName === tableName)
+    return schema.columns && schema.columns.length > 0 ? true : false
   }
 
   private initExecuteSql = () => {
