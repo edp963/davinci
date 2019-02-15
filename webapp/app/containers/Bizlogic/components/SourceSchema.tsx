@@ -102,7 +102,6 @@ export class SourceSchema extends React.PureComponent<ISourceSchemaProps, ISourc
   }
 
   private handleTree = (clickKey, obj) => {
-    console.log({clickKey})
     const { expandedKeys } = this.state
     const { onLoadTableColumn } = this.props
     onLoadTableColumn(clickKey[0])
