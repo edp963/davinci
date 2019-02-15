@@ -70,7 +70,7 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.break-after-acquire-failure:true}")
     private boolean breakAfterAcquireFailure;
 
-    @Value("${source.connection-error-retry-attempts:3}")
+    @Value("${source.connection-error-retry-attempts:0}")
     private int connectionErrorRetryAttempts;
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();

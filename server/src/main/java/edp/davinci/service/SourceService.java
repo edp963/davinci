@@ -42,4 +42,8 @@ public interface SourceService extends CheckEntityService {
     ResultMap validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user, HttpServletRequest request);
 
     ResultMap dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type, HttpServletRequest request);
+
+    ResultMap getSourceTables(Long id, User user, HttpServletRequest request);
+
+    ResultMap getTableColumns(Long id, String tableName, User user, HttpServletRequest request);
 }

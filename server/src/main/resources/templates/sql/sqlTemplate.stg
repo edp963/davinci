@@ -87,9 +87,9 @@ GROUP BY <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><grou
 <endif>
 <if(orders)>
 <if(nativeQuery)>
-ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)><keywordPrefix><order.column><keywordSuffix><else><order.column><endif> <order.direction><endif>}; separator=",">
+ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)>T.<keywordPrefix><order.column><keywordSuffix><else>T.<order.column><endif> <order.direction><endif>}; separator=",">
 <else>
-ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=",">
+ORDER BY <orders:{order|<if(order)>T.<order.column> <order.direction><endif>}; separator=",">
 <endif>
 <endif>
 <endif>
@@ -100,17 +100,17 @@ queryDistinctSql(columns, params, sql, keywordPrefix, keywordSuffix)
 ::=<<
 <if(columns && sql)>
 <if(keywordPrefix && keywordSuffix)>
-SELECT DISTINCT <columns:{column|<if(column)><keywordPrefix><column><keywordSuffix><endif>}; separator=","> FROM (<sql>) T
+SELECT DISTINCT <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=","> FROM (<sql>) T
 <if(params)>
-WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|<keywordPrefix><k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
+WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|<keywordPrefix>T.<k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
 <endif>
-ORDER BY <columns:{column|<if(column)><keywordPrefix><column><keywordSuffix><endif>}; separator=",">
+ORDER BY <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=",">
 <else>
-SELECT DISTINCT <columns:{column|<if(column)><column><endif>}; separator=","> FROM (<sql>) T
+SELECT DISTINCT <columns:{column|<if(column)>T.<column><endif>}; separator=","> FROM (<sql>) T
 <if(params)>
-WHERE <params:{param|<if(param)><param.column> = <param.value><endif>}; separator=" AND ">
+WHERE <params:{param|<if(param)>T.<param.column> = <param.value><endif>}; separator=" AND ">
 <endif>
-ORDER BY <columns:{column|<if(column)><column><endif>}; separator=",">
+ORDER BY <columns:{column|<if(column)>T.<column><endif>}; separator=",">
 <endif>
 <endif>
 >>
