@@ -56,7 +56,13 @@ import {
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
   LOAD_VIEW_TEAM_FAILURE,
-  RESET_VIEW_STATE
+  RESET_VIEW_STATE,
+  LOAD_SOURCE_TABLE,
+  LOAD_SOURCE_TABLE_FAILURE,
+  LOAD_SOURCE_TABLE_SUCCESS,
+  LOAD_SOURCE_TABLE_COLUMN,
+  LOAD_SOURCE_TABLE_COLUMN_FAILURE,
+  LOAD_SOURCE_TABLE_COLUMN_SUCCESS
 } from './constants'
 
 import { IDataRequestParams } from '../Dashboard/Grid'
@@ -221,6 +227,63 @@ export function bizdataSchemaLoaded (scheme) {
 export function loadBizdataSchemaFail (error) {
   return {
     type: LOAD_BIZDATA_SCHEMA_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadSourceTable (sourceId, resolve) {
+  return {
+    type: LOAD_SOURCE_TABLE,
+    payload: {
+      sourceId,
+      resolve
+    }
+  }
+}
+
+export function sourceTableLoaded (table) {
+  return {
+    type: LOAD_SOURCE_TABLE_SUCCESS,
+    payload: {
+      table
+    }
+  }
+}
+
+export function loadSourceTableFail (error) {
+  return {
+    type: LOAD_SOURCE_TABLE_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function loadSourceTableColumn (sourceId, tableName, resolve) {
+  return {
+    type: LOAD_SOURCE_TABLE_COLUMN,
+    payload: {
+      sourceId,
+      tableName,
+      resolve
+    }
+  }
+}
+
+export function sourceTableColumnLoaded (column) {
+  return {
+    type: LOAD_SOURCE_TABLE_COLUMN_SUCCESS,
+    payload: {
+      column
+    }
+  }
+}
+
+export function loadSourceTableColumnFail (error) {
+  return {
+    type: LOAD_SOURCE_TABLE_COLUMN_FAILURE,
     payload: {
       error
     }

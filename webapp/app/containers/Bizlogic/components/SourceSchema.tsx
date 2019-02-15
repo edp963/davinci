@@ -41,6 +41,7 @@ interface ISourceSchemaProps {
   schemaData: any[]
   sources: any
   initSelectSource: (source: any) => any
+  onLoadTableColumn: (tableName: string) => any
 }
 
 interface ISourceSchemaStates {
@@ -101,8 +102,10 @@ export class SourceSchema extends React.PureComponent<ISourceSchemaProps, ISourc
   }
 
   private handleTree = (clickKey, obj) => {
+    console.log({clickKey})
     const { expandedKeys } = this.state
-
+    const { onLoadTableColumn } = this.props
+    onLoadTableColumn(clickKey[0])
     this.setState({
       autoExpandParent: false
     })
@@ -145,7 +148,6 @@ export class SourceSchema extends React.PureComponent<ISourceSchemaProps, ISourc
       autoExpandParent
     } = this.state
     const { getFieldDecorator } = form
-
     const data = []
     generateData(schemaData).forEach((item) => {
       const index = item.key.search(searchValue)
