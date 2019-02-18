@@ -129,13 +129,13 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
       case 'geoCountry':
       case 'geoProvince':
       case 'geoCity':
-        control = (<Input size="small" value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
+        control = (<Input className={styles.colControl} size="small" value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
         break
       case 'number':
-        control = (<InputNumber size="small" value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
+        control = (<InputNumber className={styles.colControl} size="small" value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
         break
       case 'date':
-        control = (<DatePicker size="small" value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
+        control = (<DatePicker className={styles.colControl} size="small" value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
         break
     }
 
@@ -176,8 +176,8 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
 
     return (
       <Row key="valueControls" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={6}>值：</Col>
-        <Col span={18}>
+        <Col span={8}>值：</Col>
+        <Col span={16}>
           {controls}
         </Col>
       </Row>
