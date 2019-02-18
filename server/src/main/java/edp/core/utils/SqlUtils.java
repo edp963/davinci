@@ -44,6 +44,9 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Scope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.ResultSetExtractor;
+import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -71,6 +74,8 @@ public class SqlUtils {
 
     private String password;
 
+    private DataTypeEnum dataTypeEnum;
+
     public SqlUtils init(BaseSource source) {
         SqlUtils sqlUtils = new SqlUtils();
         sqlUtils.jdbcDataSource = jdbcDataSource;
@@ -78,6 +83,7 @@ public class SqlUtils {
         sqlUtils.username = source.getUsername();
         sqlUtils.password = source.getPassword();
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
         return sqlUtils;
     }
 
@@ -88,6 +94,7 @@ public class SqlUtils {
         sqlUtils.username = username;
         sqlUtils.password = password;
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+        sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         return sqlUtils;
     }
 
@@ -124,9 +131,57 @@ public class SqlUtils {
         return list;
     }
 
+
+    public PaginateWithQueryColumns query4PaginateWithQueryColumns(String sql, int limit) throws ServerException {
+        sql = filterAnnotate(sql);
+        checkSensitiveSql(sql);
+        if (isQueryLogEnable) {
+            log.info("query sql >>>> {}", sql);
+        }
+        PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
+        try {
+            JdbcTemplate jdbcTemplate = jdbcTemplate();
+            if (limit > 0) {
+                jdbcTemplate.setMaxRows(limit);
+            }
+            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
+            if (null != sqlRowSet) {
+                SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+                paginateWithQueryColumns.setPageNo(1);
+
+                List<Map<String, Object>> resultList = new ArrayList<>();
+                List<QueryColumn> queryColumns = new ArrayList<>();
+                Map<String, Integer> columnMap = new HashMap<>();
+                int size = 0;
+                while (sqlRowSet.next()) {
+                    Map<String, Object> map = new HashMap<>();
+                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                        String key = metaData.getColumnName(i);
+                        if (!columnMap.containsKey(key)) {
+                            columnMap.put(key, i);
+                            QueryColumn queryColumn = new QueryColumn(key, metaData.getColumnTypeName(i));
+                            queryColumns.add(queryColumn);
+                        }
+                        Object value = sqlRowSet.getObject(key);
+                        map.put(key, value);
+                    }
+                    resultList.add(map);
+                    size++;
+                }
+                paginateWithQueryColumns.setPageSize(size);
+                paginateWithQueryColumns.setTotalCount(size);
+                paginateWithQueryColumns.setColumns(queryColumns);
+                paginateWithQueryColumns.setResultList(resultList);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
+        }
+        return paginateWithQueryColumns;
+    }
+
     @CachePut(value = "query", keyGenerator = "keyGenerator")
     public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws ServerException {
-
 
         long millis = System.currentTimeMillis();
 
@@ -164,48 +219,15 @@ public class SqlUtils {
 
                 final int startRow = (pageNo - 1) * pageSize;
                 String finalSql = sql;
-                jdbcTemplate.query(new StreamingStatementCreator(finalSql), (ResultSet resultSet) -> {
-                    long l = System.currentTimeMillis();
-
-                    int total = 0;
-                    try {
-                        resultSet.last();
-                        total = resultSet.getRow();
-
-                        if (!resultSet.isBeforeFirst()) {
-                            resultSet.beforeFirst();
-                        }
-                    } catch (SQLException e) {
-                        log.info(">>>>>>> ResultSet Forward Only");
-                        total = -1;
-                    }
-
-                    if (limit > 0) {
-                        total = limit < total ? limit : total;
-                    }
-                    paginate.setTotalCount(total);
-
-                    final List<Map<String, Object>> resultList = paginate.getResultList();
-                    int currentRow = 0;
-                    ResultSetMetaData metaData = resultSet.getMetaData();
-
-                    while (resultSet.next() && currentRow < startRow + pageSize) {
-                        if (currentRow >= startRow && (currentRow < total || total == -1)) {
-                            Map<String, Object> map = new HashMap<>();
-                            for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                                String c = metaData.getColumnName(i);
-                                Object v = resultSet.getObject(c);
-                                map.put(c, v);
-                            }
-                            resultList.add(map);
-                        }
-                        currentRow++;
-                    }
-
-                    long l1 = System.currentTimeMillis();
-                    log.info("query for >>> : {} ms", l1 - l);
-                    return paginate;
-                });
+                switch (this.dataTypeEnum) {
+                    case MOONBOX:
+                        jdbcTemplate.query(finalSql, getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
+                        break;
+                    default:
+                        jdbcTemplate.query(new StreamingStatementCreator(finalSql, this.dataTypeEnum),
+                                getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
+                        break;
+                }
             }
 
         } catch (Exception e) {
@@ -218,6 +240,50 @@ public class SqlUtils {
         log.info("query data set for >>> : {} ms", millis1 - millis);
 
         return paginate;
+    }
+
+    private ResultSetExtractor<Paginate<Map<String, Object>>> getPaginateResultSetExtractor(int pageSize, int limit, Paginate<Map<String, Object>> paginate, int startRow) {
+        return (ResultSet resultSet) -> {
+            long l = System.currentTimeMillis();
+
+            int total = 0;
+            try {
+                resultSet.last();
+                total = resultSet.getRow();
+
+                if (!resultSet.isBeforeFirst()) {
+                    resultSet.beforeFirst();
+                }
+            } catch (SQLException e) {
+                total = -1;
+            }
+
+            if (limit > 0) {
+                total = limit < total ? limit : total;
+            }
+            paginate.setTotalCount(total);
+
+            final List<Map<String, Object>> resultList = paginate.getResultList();
+            int currentRow = 0;
+            ResultSetMetaData metaData = resultSet.getMetaData();
+
+            while (resultSet.next() && currentRow < startRow + pageSize) {
+                if (currentRow >= startRow && (currentRow < total || total == -1)) {
+                    Map<String, Object> map = new HashMap<>();
+                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                        String c = metaData.getColumnName(i);
+                        Object v = resultSet.getObject(c);
+                        map.put(c, v);
+                    }
+                    resultList.add(map);
+                }
+                currentRow++;
+            }
+
+            long l1 = System.currentTimeMillis();
+            log.info("query for >>> : {} ms", l1 - l);
+            return paginate;
+        };
     }
 
 
@@ -270,8 +336,8 @@ public class SqlUtils {
      * @return
      * @throws SourceException
      */
-    public List<TableInfo> getTableList() throws SourceException {
-        List<TableInfo> tableInfoList = null;
+    public List<String> getTableList() throws SourceException {
+        List<String> tableList = null;
         Connection connection = null;
         try {
             connection = getConnection();
@@ -287,14 +353,11 @@ public class SqlUtils {
                 }
                 ResultSet tables = metaData.getTables(null, schemaPattern, "%", null);
                 if (null != tables) {
-                    tableInfoList = new ArrayList<>();
+                    tableList = new ArrayList<>();
                     while (tables.next()) {
                         String tableName = tables.getString("TABLE_NAME");
                         if (!StringUtils.isEmpty(tableName)) {
-                            List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
-                            List<QueryColumn> columns = getColumns(tableName, metaData);
-                            TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
-                            tableInfoList.add(tableInfo);
+                            tableList.add(tableName);
                         }
                     }
                 }
@@ -306,7 +369,37 @@ public class SqlUtils {
         } finally {
             releaseConnection(connection);
         }
+        return tableList;
+    }
+
+    /**
+     * 获取指定表列信息
+     *
+     * @param tableName
+     * @return
+     * @throws SourceException
+     */
+    public List<TableInfo> getTableColumns(String tableName) throws SourceException {
+        List<TableInfo> tableInfoList = null;
+        Connection connection = null;
+        try {
+            connection = getConnection();
+            if (null != connection) {
+                tableInfoList = new ArrayList<>();
+                DatabaseMetaData metaData = connection.getMetaData();
+                List<String> primaryKeys = getPrimaryKeys(tableName, metaData);
+                List<QueryColumn> columns = getColumns(tableName, metaData);
+                TableInfo tableInfo = new TableInfo(tableName, primaryKeys, columns);
+                tableInfoList.add(tableInfo);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new SourceException(e.getMessage() + ", jdbcUrl=" + this.jdbcUrl);
+        } finally {
+            releaseConnection(connection);
+        }
         return tableInfoList;
+
     }
 
 
@@ -770,15 +863,24 @@ public class SqlUtils {
 
 class StreamingStatementCreator implements PreparedStatementCreator {
     private final String sql;
+    private DataTypeEnum dataTypeEnum;
 
-    public StreamingStatementCreator(String sql) {
+    public StreamingStatementCreator(String sql, DataTypeEnum dataTypeEnum) {
         this.sql = sql;
+        this.dataTypeEnum = dataTypeEnum;
     }
 
     @Override
     public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
         final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        statement.setFetchSize(Integer.MIN_VALUE);
+        switch (dataTypeEnum) {
+            case ORACLE:
+                statement.setFetchSize(0xFFFF); //65535
+                break;
+            default:
+                statement.setFetchSize(Integer.MIN_VALUE);
+                break;
+        }
         return statement;
     }
 }

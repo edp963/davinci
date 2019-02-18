@@ -299,4 +299,68 @@ public class SourceController extends BaseController {
         }
     }
 
+
+    /**
+     * source 的数据库表
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get data tables")
+    @GetMapping("/{id}/tables")
+    public ResponseEntity getSourceTables(@PathVariable Long id,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = sourceService.getSourceTables(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * source 的数据库表
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get data table columns")
+    @GetMapping("/{id}/table/columns")
+    public ResponseEntity getTableColumns(@PathVariable Long id,
+                                          @RequestParam(name = "tableName") String tableName,
+                                          @ApiIgnore @CurrentUser User user,
+                                          HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (StringUtils.isEmpty(tableName)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Table cannot be empty");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = sourceService.getTableColumns(id, tableName, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
 }

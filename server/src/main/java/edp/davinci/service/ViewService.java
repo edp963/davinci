@@ -42,8 +42,6 @@ public interface ViewService extends CheckEntityService {
 
     ResultMap deleteView(Long id, User user, HttpServletRequest request);
 
-    ResultMap getSourceSchema(Long sourceId, User user, HttpServletRequest request);
-
     ResultMap executeSql(ViewExecuteSql executeSql, User user, HttpServletRequest request);
 
     ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
