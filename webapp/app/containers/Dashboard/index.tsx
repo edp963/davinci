@@ -254,7 +254,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       if (!err) {
         const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
         const { formType, checkedKeys } = this.state
-        const { id, name, folder, selectType, index } = values
+        const { id, name, folder, selectType, index, config } = values
         const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
 
         const dashArr = folder === '0'
@@ -263,7 +263,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
 
         const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
         const obj = {
-          config: '',
+          config,
           dashboardPortalId: Number(params.portalId),
           name,
           type: selectType ? 1 : 0
@@ -482,38 +482,40 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     })
   }
 
-  private onShowDashboardForm (itemId, formType) {
-    const { dashboards } = this.props
+  private onShowDashboardForm (item, formType) {
+    const { dashboards, params, onLoadDashboards } = this.props
     this.setState({
       formVisible: true,
-      itemId
+      itemId: item.id
     }, () => {
-      setTimeout(() => {
-        const {
-          config,
-          id,
-          name,
-          parentId,
-          type,
-          index
-        } = (dashboards as any[]).find((g) => g.id === itemId)
-        this.dashboardForm.props.form.setFieldsValue({
-          id,
-          folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
-          config,
-          name: formType === 'copy' ? `${name}_copy` : name,
-          selectType: type === 1,
-          index
-        })
-      }, 0)
+      onLoadDashboards(params.portalId, (result) => {
+        setTimeout(() => {
+          const {
+            config,
+            id,
+            name,
+            parentId,
+            type,
+            index
+          } = (result as any[]).find((g) => g.id === item.id)
+          this.dashboardForm.props.form.setFieldsValue({
+            id,
+            folder: parentId ? `${(dashboards as any[]).find((g) => g.id === parentId).id}` : '0',
+            config,
+            name: formType === 'copy' ? `${name}_copy` : name,
+            selectType: type === 1,
+            index
+          })
+        }, 0)
+      })
     })
   }
 
-  private onOperateMore = (itemId, type) => {
+  private onOperateMore = (item, type) => {
     this.setState({
       formType: type
     }, () => {
-      this.onShowDashboardForm(itemId, this.state.formType)
+      this.onShowDashboardForm(item, this.state.formType)
       const { formType } = this.state
       if (formType === 'edit' || formType === 'move') {
         const { onLoadViewTeam, onLoadSelectTeams, params } = this.props
@@ -522,9 +524,9 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             resolve(teams)
           })
         }).then((teams) => {
-          onLoadSelectTeams('dashboard', itemId, (result) => {
+          onLoadSelectTeams('dashboard', item.id, (result) => {
             this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+              checkedKeys: toListBF(teams).map((t) => t.id).filter((it) => !result.includes(it))
             })
           })
         })
