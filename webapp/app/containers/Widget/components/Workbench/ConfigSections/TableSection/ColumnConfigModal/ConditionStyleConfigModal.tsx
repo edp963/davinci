@@ -25,7 +25,7 @@ import Message from 'antd/lib/message'
 import ColorPicker from 'components/ColorPicker'
 import ConditionValuesControl from './ConditionValuesControl'
 
-import OperatorTypes, { TableCellConditionOperatorTypes } from 'utils/operatorTypes'
+import OperatorTypes, { OperatorTypesLocale, TableCellConditionOperatorTypes } from 'utils/operatorTypes'
 import { ITableConditionStyle } from '../'
 import { TableConditionStyleTypes } from '../util'
 
@@ -55,6 +55,9 @@ export const defaultConditionStyle: ITableConditionStyle = {
     negative: '#5cc504'
   },
   zeroPosition: 'auto',
+  bar: {
+    mode: 'auto'
+  },
   customTemplate: ''
 }
 
@@ -87,26 +90,20 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     })
   }
 
-  private propChange = (propName: 'operatorType' | 'zeroPosition' | 'type') => (e) => {
-    const { localStyle } = this.state
+  private propChange = (propName: string, propPath?: 'colors' | 'bar') => (e) => {
     const value = e.target ? e.target.value : e
-    this.setState({
-      localStyle: {
-        ...localStyle,
-        [propName]: value
-      }
-    })
-  }
-
-  private colorChange = (colorName: string) => (e) => {
-    const { localStyle } = this.state
-    const value = e.target ? e.target.value : e
-    this.setState({
-      localStyle: {
-        ...localStyle,
-        colors: {
-          ...localStyle.colors,
-          [colorName]: value
+    this.setState(({ localStyle }) => {
+      if (!propPath) {
+        return {
+          localStyle: { ...localStyle, [propName]: value }
+        }
+      } else {
+        const subProp = localStyle[propPath]
+        return {
+          localStyle: {
+            ...localStyle,
+            [propPath]: { ...subProp, [propName]: value }
+          }
         }
       }
     })
@@ -116,7 +113,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const options = Object.entries(TableCellConditionOperatorTypes)
       .filter(([_, values]) => ~values.indexOf(visualType))
       .map(([type]) => (
-        <Option key={type} value={type}>{type}</Option>
+        <Option key={type} value={type}>{OperatorTypesLocale[type]}</Option>
       ))
     return options
   }
@@ -142,19 +139,19 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     const { background, fore } = colors
     return (
       <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={6}>颜色：</Col>
-        <Col span={6} className={styles.colColor}>
+        <Col span={8}>颜色：</Col>
+        <Col span={4} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={background}
-            onChange={this.colorChange('background')}
+            onChange={this.propChange('background', 'colors')}
           /><label>背景</label>
         </Col>
-        <Col span={6} className={styles.colColor}>
+        <Col span={4} className={styles.colColor}>
           <ColorPicker
             className={styles.color}
             value={fore}
-            onChange={this.colorChange('fore')}
+            onChange={this.propChange('fore', 'colors')}
           /><label>文字</label>
         </Col>
       </Row>
@@ -162,44 +159,65 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
   }
 
   private zeroPositionOptions = [{ label: '自动', value: 'auto' }, { label: '中部', value: 'center' }]
+  private barModeOptions = [{ label: '自动', value: 'auto' }, { label: '指定值', value: 'fixed' }]
 
   private renderNumericBar = () => {
     const { localStyle } = this.state
-    const { zeroPosition, colors } = localStyle
+    const { zeroPosition, colors, bar } = localStyle
     const { positive, negative, fore } = colors
-    return [(
-      <Row key="zeroPosition" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={8}>坐标轴位置：</Col>
-        <Col span={16}>
-          <RadioGroup options={this.zeroPositionOptions} onChange={this.propChange('zeroPosition')} value={zeroPosition} />
-        </Col>
-      </Row>
-    ), (
-      <Row key="zeroPositionValues" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={6}>颜色：</Col>
-        <Col span={6} className={styles.colColor}>
-          <ColorPicker
-            className={styles.color}
-            value={positive}
-            onChange={this.colorChange('positive')}
-          /><label>正值</label>
-        </Col>
-        <Col span={6} className={styles.colColor}>
-          <ColorPicker
-            className={styles.color}
-            value={negative}
-            onChange={this.colorChange('negative')}
-          /><label>负值</label>
-        </Col>
-        <Col span={6} className={styles.colColor}>
-          <ColorPicker
-            className={styles.color}
-            value={fore}
-            onChange={this.colorChange('fore')}
-          /><label>文字</label>
-        </Col>
-      </Row>
-    )]
+    const { mode: barMode, max: barMax, min: barMin } = bar
+    return (
+      <>
+        <Row key="zeroPosition" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Col span={8}>坐标轴位置：</Col>
+          <Col span={16}>
+            <RadioGroup options={this.zeroPositionOptions} onChange={this.propChange('zeroPosition')} value={zeroPosition} />
+          </Col>
+        </Row>
+        <Row key="zeroPositionValues" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Col span={8}>颜色：</Col>
+          <Col span={4} className={styles.colColor}>
+            <ColorPicker
+              className={styles.color}
+              value={positive}
+              onChange={this.propChange('positive', 'colors')}
+            /><label>正值</label>
+          </Col>
+          <Col span={4} className={styles.colColor}>
+            <ColorPicker
+              className={styles.color}
+              value={negative}
+              onChange={this.propChange('negative', 'colors')}
+            /><label>负值</label>
+          </Col>
+          <Col span={4} className={styles.colColor}>
+            <ColorPicker
+              className={styles.color}
+              value={fore}
+              onChange={this.propChange('fore', 'colors')}
+            /><label>文字</label>
+          </Col>
+        </Row>
+        <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+          <Col span={8}>最大(小)值：</Col>
+          <Col span={16}>
+            <RadioGroup options={this.barModeOptions} onChange={this.propChange('mode', 'bar')} value={barMode} />
+          </Col>
+        </Row>
+        {barMode === 'fixed' && (
+          <>
+            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+              <Col offset={13} span={4}>最小值：</Col>
+              <Col span={7}><InputNumber size="small" className={styles.colControl} value={barMin} onChange={this.propChange('min', 'bar')} /></Col>
+            </Row>
+            <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+              <Col offset={13} span={4}>最大值：</Col>
+              <Col span={7}><InputNumber size="small" className={styles.colControl} value={barMax} onChange={this.propChange('max', 'bar')} /></Col>
+            </Row>
+          </>
+        )}
+      </>
+    )
   }
 
   private renderCustom = () => {
@@ -268,7 +286,7 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
     return (
       <Modal
         title="条件格式"
-        wrapClassName="ant-modal-small"
+        width={500}
         maskClosable={false}
         footer={this.modalFooter}
         visible={visible}
@@ -277,8 +295,8 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
       >
         <div className={styles.rows}>
           <Row gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-            <Col span={6}>样式类型：</Col>
-            <Col span={18}>
+            <Col span={8}>样式类型：</Col>
+            <Col span={16}>
               <Select
                 size="small"
                 className={styles.colControl}
@@ -290,8 +308,8 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
             </Col>
           </Row>
           <Row key="operatorType" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-            <Col span={6}>关系：</Col>
-            <Col span={18}>
+            <Col span={8}>关系：</Col>
+            <Col span={16}>
               <Select
                 size="small"
                 className={styles.colControl}

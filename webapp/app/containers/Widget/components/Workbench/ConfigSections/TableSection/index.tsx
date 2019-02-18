@@ -54,6 +54,11 @@ export interface ITableConditionStyle {
     positive?: string
     negative?: string
   },
+  bar: {
+    mode: 'auto' | 'fixed',
+    min?: number,
+    max?: number
+  },
   zeroPosition?: 'auto' | 'center'
   customTemplate?: string
 }

@@ -28,6 +28,7 @@ import { DefaultTableCellStyle } from '../Workbench/ConfigSections/TableSection/
 import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSection/util'
 
 import { Resizable } from 'libs/react-resizable'
+import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
 import PaginationWithoutTotal from '../../../../components/PaginationWithoutTotal'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
 import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
@@ -77,7 +78,7 @@ const ResizableHeader = (props) => {
     return <th {...rest} />
   }
   return (
-    <Resizable draggableOpts={{grid: [10, 10]}} scale={1} width={width} height={0} onResize={onResize}>
+    <Resizable width={width} height={0} onResize={onResize}>
       <th {...rest} />
     </Resizable>
   )
@@ -88,14 +89,11 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   private components = {
     header: {
-      cell: (props) => {
-        console.log('header props: ', props)
-        return (<th {...props} />)
-      }
+      cell: ResizableHeader
     }
   }
 
-  private handleResize = (idx) => (e, { size }) => {
+  private handleResize = (idx: number) => (_, { size }: IResizeCallbackData) => {
     const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
       columns.forEach((col) => {
         col.width = Math.ceil(ratio * Number(col.width))
@@ -104,17 +102,19 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         }
       })
     }
-    const nextColumns = [...this.state.columns]
-    const ratio = size.width / (+nextColumns[idx].width)
-    nextColumns[idx] = {
-      ...nextColumns[idx],
-      width: size.width
-    }
-    if (nextColumns[idx].children) {
-      loop(nextColumns[idx].children, ratio)
-    }
 
-    this.setState({ columns: nextColumns })
+    this.setState(({ columns }) => {
+      const nextColumns = [...columns]
+      const ratio = size.width / (+nextColumns[idx].width)
+      nextColumns[idx] = {
+        ...nextColumns[idx],
+        width: size.width
+      }
+      if (nextColumns[idx].children) {
+        loop(nextColumns[idx].children, ratio)
+      }
+      return { columns: nextColumns }
+    })
   }
 
   private onPaginationChange = (current: number, pageSize: number) => {
@@ -332,7 +332,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
-      const cellValRange = this.getTableCellValueRange(data, expression)
+      const cellValRange = this.getTableCellValueRange(data, expression, columnConfig)
       const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       const width = Math.max(headerWidth, maxCellWidth)
@@ -488,7 +488,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       header.width = Math.max(headerWidth, maxCellWidth)
       headerText = this.getHeaderNode(field, headerText)
-      const cellValRange = this.getTableCellValueRange(data, expression)
+      const cellValRange = this.getTableCellValueRange(data, expression, columnConfig)
       header.render = (_, record, idx) => {
         let span = 1
         if (autoMergeCell && !agg) {
@@ -554,19 +554,37 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return span
   }
 
-  private getTableCellValueRange (data: any[], propName: string): [number, number] {
+  private getTableCellValueRange (data: any[], propName: string, columnConfig?: ITableColumnConfig): [number, number] {
     if (data.length <= 0) { return [0, 0] }
 
     let minVal = Infinity
     let maxVal = -Infinity
+
+    if (columnConfig) {
+      const { conditionStyles } = columnConfig
+      conditionStyles.forEach((style) => {
+        if (!style.bar) { return }
+        const { mode, min, max } = style.bar
+        if (mode === 'auto') { return }
+        if (typeof min === 'number') { minVal = min }
+        if (typeof max === 'number') { maxVal = max }
+      })
+    }
+
+    const validMinVal = minVal !== Infinity
+    const validMaxVal = maxVal !== -Infinity
+
+    if (validMinVal && validMaxVal) {
+      return [minVal, maxVal]
+    }
 
     data.forEach((item) => {
       const cellVal = item[propName]
       if (typeof cellVal !== 'number' && (typeof cellVal !== 'string' || isNaN(+cellVal))) { return }
 
       const cellNumVal = +cellVal
-      if (cellNumVal < minVal) { minVal = cellNumVal }
-      if (cellNumVal > maxVal) { maxVal = cellNumVal }
+      if (!validMinVal && cellNumVal < minVal) { minVal = cellNumVal }
+      if (!validMaxVal && cellNumVal > maxVal) { maxVal = cellNumVal }
     })
     return [minVal, maxVal]
   }
@@ -691,15 +709,24 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const { fore, positive, negative } = colors
 
     const valRange = (Math.max(maxCellVal, 0) - Math.min(0, minCellVal))
-    let cellBarPercentage
-    let barZeroPosition
+    let cellBarPercentage: number = void 0
+    if (cellVal < minCellVal) {
+      cellBarPercentage = 0
+    } else if (cellVal > maxCellVal) {
+      cellBarPercentage = 100
+    }
+    let barZeroPosition: number
     switch (zeroPosition) {
       case 'center':
-        cellBarPercentage = Math.abs(cellVal) / Math.max(Math.abs(minCellVal), Math.abs(maxCellVal)) * 50
+        if (cellBarPercentage === void 0) {
+          cellBarPercentage = Math.abs(cellVal) / Math.max(Math.abs(minCellVal), Math.abs(maxCellVal)) * 50
+        }
         barZeroPosition = 50
         break
       case 'auto':
-        cellBarPercentage = (Math.abs(cellVal) / valRange) * 100
+        if (cellBarPercentage === void 0) {
+          cellBarPercentage = (Math.abs(cellVal) / valRange) * 100
+        }
         barZeroPosition = Math.abs(Math.min(0, minCellVal)) / Math.max(Math.abs(minCellVal), Math.abs(maxCellVal)) * 100
         break
     }
@@ -837,7 +864,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       ...this.basePagination,
       ...pagination
     }
-    const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
+    // const key = new Date().getTime() // FIXME force to rerender Table to avoid bug by setting changes
     const scroll = this.getTableScroll(columns, width, headerFixed, tableBodyHeight)
     const style = this.getTableStyle(headerFixed, tableBodyHeight)
 
@@ -852,7 +879,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     return (
       <>
         <AntTable
-          key={key}
+          // key={key}
           style={style}
           className={styles.table}
           ref={this.table}
