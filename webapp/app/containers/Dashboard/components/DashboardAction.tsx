@@ -35,7 +35,7 @@ interface IDashboardActionProps {
     name: string
   }
   splitWidth: number
-  onInitOperateMore: (id: number, type: string) => any
+  onInitOperateMore: (item: any, type: string) => any
   initChangeDashboard: (id: number) => any
 }
 
@@ -57,7 +57,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     })
   }
 
-  private operateMore = (itemId, type) => (e) => {
+  private operateMore = (item, type) => (e) => {
     const { popoverVisible } = this.state
     const { onInitOperateMore } = this.props
 
@@ -66,7 +66,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
         popoverVisible: false
       })
     }
-    onInitOperateMore(itemId, type)
+    onInitOperateMore(item, type)
   }
 
   public render () {
@@ -80,13 +80,13 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const { popoverVisible } = this.state
 
     const editAction = (
-      <li onClick={this.operateMore(item.id, 'edit')}>
+      <li onClick={this.operateMore(item, 'edit')}>
         <Icon type="edit" /> 编辑
       </li>
     )
 
     const moveAction = (
-      <li onClick={this.operateMore(item.id, 'move')}>
+      <li onClick={this.operateMore(item, 'move')}>
         <Icon type="swap" className={styles.swap} /> 移动
       </li>
     )
@@ -95,7 +95,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       <ul className={styles.menu}>
         {editAction}
         {moveAction}
-        <li onClick={this.operateMore(item.id, 'delete')}>
+        <li onClick={this.operateMore(item, 'delete')}>
           <Icon type="delete" /> 删除
         </li>
       </ul>
