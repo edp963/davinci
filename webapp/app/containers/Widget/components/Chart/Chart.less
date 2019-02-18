@@ -54,50 +54,52 @@
 
 .table {
 
-  :global(.ant-table),
-  :global(.ant-pagination),
-  :global(.ant-select) {
-    font-size: 12px;
-  }
-  :global(.ant-table-header) {
-    // @FIXME
-    margin-right: 15px;
-    margin-bottom: 0 !important;
-    .hideScrollbar
-  }
+  :global {
+    .ant-table,
+    .ant-pagination,
+    .ant-select {
+      font-style: 12px;
+    }
 
-  :global(.ant-table-thead th) {
-    padding: 0;
-    height: 1px;
+    .ant-table-header {
+      // @FIXME
+      margin-right: 15px;
+      margin-bottom: 0 !important;
+      .hideScrollbar
+    }
 
-    & > div {
+    .ant-table-thead th {
+      padding: 0;
+      height: 1px;
+
+      & > div {
+        height: 100%;
+      }
+    }
+
+    .ant-table-body,
+    .ant-table-tbody {
+      background: transparent !important;
+
+      .ant-table-row:hover {
+        background: transparent !important;
+      }
+
+      td {
+        padding: 0 !important;
+        height: 1px;
+      }
+    }
+
+    .react-resizable-handle {
+      position: absolute;
+      width: 10px;
       height: 100%;
-    }
-  }
-
-  :global(.ant-table-body) {
-    background: transparent !important;
-
-    :global(.ant-table-row:hover) {
-      background: transparent !important;
-    }
-
-    td {
-      padding: 0 !important;
-      height: 1px;
-    }
-  }
-
-  :global(.ant-table-tbody) {
-    background: transparent !important;
-
-    :global(.ant-table-row:hover) {
-      background: transparent !important;
-    }
-
-    td {
-      padding: 0 !important;
-      height: 1px;
+      padding: 0;
+      bottom: 0;
+      right: -5px;
+      cursor: col-resize;
+      background: none;
     }
   }
 
