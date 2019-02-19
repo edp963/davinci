@@ -298,18 +298,11 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           // case 'copy':
             onAddDashboard(addObj, (dashboardId) => {
               this.hideDashboardForm()
+              this.setState({ isGrid: true })
               const { pid, portalId, portalName } = params
-              if (addObj.type === 0) {
-                this.setState({
-                  isGrid: false
-                })
-                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
-              } else {
-                this.setState({
-                  isGrid: true
-                })
-                router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-              }
+              addObj.type === 0
+                ? router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
+                : router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
             })
             break
           case 'edit':
@@ -620,7 +613,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     } else {
       let currentKey = []
       if (expandedKeys.length === 0) {
-        expandedKeys.push(obj.node.props.title)
+        expandedKeys.push(obj.node.props.eventKey)
         currentKey = expandedKeys
       } else {
         currentKey = expandedKeys.filter((e) => e !== obj.node.props.title)
