@@ -10,24 +10,13 @@ import {
   PIVOT_DEFAULT_HEADER_BACKGROUND_COLOR } from '../../../../../../../app/globalConstants'
 import { uuid } from 'utils/util'
 import { fontWeightOptions, fontStyleOptions, fontFamilyOptions, fontSizeOptions } from './util'
-import TableSection, { ITableHeaderConfig, ITableCellStyle } from './'
+import { ITableHeaderConfig, ITableCellStyle } from './'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Modal from 'antd/lib/modal'
-import Input from 'antd/lib/input'
-const Search = Input.Search
-import Button from 'antd/lib/button'
+import { Icon, Row, Col, Modal, Input, Button, Radio, Select, Table, message } from 'antd'
 const ButtonGroup = Button.Group
-import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
-const Option = Select.Option
-import Table, { TableRowSelection, ColumnProps } from 'antd/lib/table'
-import Message from 'antd/lib/message'
+import { TableRowSelection, ColumnProps } from 'antd/lib/table'
 
 import ColorPicker from 'components/ColorPicker'
 import { fromJS } from 'immutable'
@@ -102,7 +91,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
   private moveUp = () => {
     const { localConfig, mapHeaderParent, currentSelectedKeys } = this.state
     if (currentSelectedKeys.length <= 0) {
-      Message.warning('请勾选要上移的列')
+      message.warning('请勾选要上移的列')
       return
     }
     currentSelectedKeys.forEach((key) => {
@@ -122,7 +111,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
   private moveDown = () => {
     const { localConfig, mapHeaderParent, currentSelectedKeys } = this.state
     if (currentSelectedKeys.length <= 0) {
-      Message.warning('请勾选要下移的列')
+      message.warning('请勾选要下移的列')
       return
     }
     currentSelectedKeys.forEach((key) => {
@@ -142,7 +131,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
   private mergeColumns = () => {
     const { localConfig, mapHeader, mapHeaderParent, currentSelectedKeys } = this.state
     if (currentSelectedKeys.length <= 0) {
-      Message.warning('请勾选要合并的列')
+      message.warning('请勾选要合并的列')
       return
     }
     const ancestors = []
@@ -164,7 +153,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
 
     const isTop = ancestors.every((config) => !mapHeaderParent[config.key])
     if (!isTop) {
-      Message.warning('勾选的列应是当前最上级列')
+      message.warning('勾选的列应是当前最上级列')
       return
     }
 
@@ -286,7 +275,7 @@ export class HeaderConfigModal extends React.PureComponent<IHeaderConfigModalPro
   private saveEditingHeaderName = (e) => {
     const value = e.target.value
     if (!value) {
-      Message.warning('请输入和并列名称')
+      message.warning('请输入和并列名称')
       return
     }
     const { localConfig, currentEditingConfig } = this.state

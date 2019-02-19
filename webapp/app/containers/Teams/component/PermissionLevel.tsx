@@ -1,11 +1,7 @@
 import * as React from 'react'
-import Form from 'antd/lib/form'
+import { Form, Radio, Row, Col, Input } from 'antd'
 const FormItem = Form.Item
-import Radio from 'antd/lib/radio/radio'
 const RadioButton = Radio.Button
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
 const utilStyles = require('../../../assets/less/util.less')
 
 const permissions = [

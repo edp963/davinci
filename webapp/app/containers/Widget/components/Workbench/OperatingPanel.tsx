@@ -31,20 +31,11 @@ import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
 import { uuid } from '../../../../utils/util'
 
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Icon from 'antd/lib/icon'
-import Menu from 'antd/lib/menu'
+import { RadioChangeEvent } from 'antd/lib/radio'
+import { Row, Col, Icon, Menu, Table, Button, Radio, InputNumber, Dropdown, Modal, Popconfirm } from 'antd'
 const MenuItem = Menu.Item
-import Table from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Radio, { RadioChangeEvent } from 'antd/lib/radio'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
-import InputNumber from 'antd/lib/input-number'
-import Dropdown from 'antd/lib/dropdown'
-import Modal from 'antd/lib/modal'
-import Popconfirm from 'antd/lib/popconfirm'
 const confirm = Modal.confirm
 const styles = require('./Workbench.less')
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')

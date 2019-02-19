@@ -35,24 +35,18 @@ import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table, { SortOrder } from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
+import { Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
+import { ButtonProps } from 'antd/lib/button/button'
+import { SortOrder } from 'antd/lib/table'
 
 import { loadBizlogics, deleteBizlogic } from './actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
-import { ButtonProps } from 'antd/lib/button/button'
+import { IProject } from '../Projects'
 
 interface IBizlogicsProps  {
   params: any

@@ -2,12 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { iconMapping } from './util'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Checkbox from 'antd/lib/checkbox'
-import Pagination from 'antd/lib/pagination'
-import Input from 'antd/lib/input'
+import { Icon, Row, Col, Checkbox, Pagination, Input } from 'antd'
 const Search = Input.Search
 const styles = require('../Widget.less')
 

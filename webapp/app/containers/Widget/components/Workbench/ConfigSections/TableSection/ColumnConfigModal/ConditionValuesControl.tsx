@@ -3,24 +3,7 @@ import * as classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import OperatorTypes from 'utils/operatorTypes'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Modal from 'antd/lib/modal'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import DatePicker from 'antd/lib/date-picker'
-const Search = Input.Search
-import Button from 'antd/lib/button'
-import Radio from 'antd/lib/radio'
-const RadioGroup = Radio.Group
-const RadioButton = Radio.Button
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
-const Option = Select.Option
-import Tag from 'antd/lib/tag'
-import Table from 'antd/lib/table'
-import Message from 'antd/lib/message'
+import { Row, Col, Input, InputNumber, DatePicker, Button, Tag } from 'antd'
 
 const styles = require('../TableSection.less')
 

@@ -1,8 +1,6 @@
 import * as React from 'react'
 import * as debounce from 'lodash/debounce'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
+import { Row, Col, Input } from 'antd'
 const styles = require('../Workbench.less')
 
 export interface IframeConfig {

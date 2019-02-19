@@ -7,8 +7,7 @@ const loginStyles = require('../../../app/containers/Login/Login.less')
 
 import { login } from '../../containers/App/actions'
 
-import Icon from 'antd/lib/icon'
-import Message from 'antd/lib/message'
+import { Icon } from 'antd'
 
 interface ILoginProps {
   loginLoading?: boolean

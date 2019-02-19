@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { SketchPicker } from 'react-color'
-import Popover from 'antd/lib/popover'
+import { Popover } from 'antd'
 const styles = require('./ColorPicker.less')
 
 interface IColorPickerProps {

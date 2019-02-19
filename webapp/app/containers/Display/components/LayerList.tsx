@@ -1,14 +1,7 @@
-import * as React from 'react'
-import {
-  selectLayer
-} from '../actions'
+import React from 'react'
 import { OrderDirection } from './util'
 
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Checkbox from 'antd/lib/checkbox'
-const CheckboxGroup = Checkbox.Group
+import { Icon, Tooltip } from 'antd'
 
 const styles = require('../Display.less')
 

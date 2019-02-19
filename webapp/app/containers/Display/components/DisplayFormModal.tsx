@@ -18,20 +18,13 @@
  * >>
  */
 
-import * as React from 'react'
-import Form from 'antd/lib/form'
+import React from 'react'
+import { Form, Row, Col, Input, Radio, Button, Tabs, Modal } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import Button from 'antd/lib/button'
-import Tabs from 'antd/lib/tabs'
 const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
-import Modal from 'antd/lib/modal'
 import { IDisplay } from './DisplayList'
 
 const utilStyles = require('../../../assets/less/util.less')

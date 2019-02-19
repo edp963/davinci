@@ -23,13 +23,7 @@ import * as classnames from 'classnames'
 import { uuid } from '../../../../utils/util'
 
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
+import { Form, Input, InputNumber, Select, Radio, Button, Icon } from 'antd'
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group

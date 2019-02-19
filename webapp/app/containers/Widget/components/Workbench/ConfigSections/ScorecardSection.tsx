@@ -1,10 +1,6 @@
 
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
+import { Row, Col, Input, Checkbox, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
 import {

@@ -63,7 +63,7 @@ import {
   teamMemberRoleChanged
 } from './actions'
 
-import Message from 'antd/lib/message'
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
@@ -92,7 +92,7 @@ export function* editTeam (action) {
     if (resolve) {
       resolve()
     }
-    Message.success('success')
+    message.success('success')
   } catch (err) {
     yield put(editTeamFail())
     errorHandler(err)

@@ -8,18 +8,10 @@ import {
   fontSizeOptions,
   TableCellStyleTypes, TableConditionStyleTypes, TableConditionStyleFieldTypes, pageSizeOptions } from './util'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Select from 'antd/lib/select'
+import { Icon, Row, Col, Select, Radio, Checkbox, Modal } from 'antd'
 const { Option } = Select
-import Button from 'antd/lib/button'
-import Radio from 'antd/lib/radio'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-import Checkbox from 'antd/lib/checkbox'
-import Modal from 'antd/lib/modal'
-
 
 const styles = require('../../Workbench.less')
 

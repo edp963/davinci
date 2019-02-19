@@ -1,8 +1,6 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { Row, Col, Form } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import Form from 'antd/lib/form'
 import { FilterControl } from './FilterControl'
 import { IFilterItem, OnGetFilterControlOptions, FilterControlOptions } from './'
 

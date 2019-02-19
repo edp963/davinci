@@ -19,13 +19,7 @@
  */
 
 import * as React from 'react'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Dropdown from 'antd/lib/dropdown'
-import Tree from 'antd/lib/tree'
-import Menu from 'antd/lib/menu'
+import { Form, Row, Col, Input, Dropdown, Tree, Menu } from 'antd'
 const Search = Input.Search
 const FormItem = Form.Item
 const TreeNode = Tree.TreeNode

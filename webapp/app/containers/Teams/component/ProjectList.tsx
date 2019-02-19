@@ -1,28 +1,12 @@
 import * as React from 'react'
-import Collapse from 'antd/lib/collapse'
-import Popconfirm from 'antd/lib/popconfirm'
-import Tooltip from 'antd/lib/tooltip'
-import Button from 'antd/lib/button'
-import Select from 'antd/lib/select'
-import Table from 'antd/lib/table'
-import Icon from 'antd/lib/icon'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Modal from 'antd/lib/modal'
-import Input from 'antd/lib/input'
+import { Collapse, Popconfirm, Tooltip, Button, Row, Col, Modal, Input } from 'antd'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 const styles = require('../Team.less')
-import Checkbox from 'antd/lib/checkbox'
-import Radio from 'antd/lib/radio'
-const RadioButton = Radio.Button
-const RadioGroup = Radio.Group
 import PermissionLevel from './PermissionLevel'
 import AddForm from './AddForm'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {ITeamProjects} from '../Team'
+import { ITeamProjects } from '../Team'
 import Avatar from '../../../components/Avatar'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
-import {CREATE_ORGANIZATION_PROJECT} from '../../App/constants'
 
 interface ITag {
   description: string

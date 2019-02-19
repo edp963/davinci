@@ -1,20 +1,12 @@
 import * as React from 'react'
 const styles = require('../Team.less')
-import Button from 'antd/lib/Button'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
+import { Button, Input, Select, Form, Row, Col } from 'antd'
 const Option = Select.Option
-import Form from 'antd/lib/form'
-import Radio from 'antd/lib/radio/radio'
-const RadioGroup = Radio.Group
 const FormItem = Form.Item
-import Row from 'antd/lib/row'
-import Tag from 'antd/lib/tag'
 import Avatar from '../../../components/Avatar'
 const utilStyles = require('../../../assets/less/util.less')
-import Col from 'antd/lib/col'
 import UploadAvatar from '../../../components/UploadAvatar'
-import {ITeam} from '../Team'
+import { ITeam } from '../Team'
 
 interface ISettingProps {
   form: any

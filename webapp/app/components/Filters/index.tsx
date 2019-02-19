@@ -5,12 +5,8 @@ import { FilterTypes, FilterTypesOperatorSetting } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { QueryVariable } from '../../containers/Dashboard/Grid'
 
-import Input from 'antd/lib/input'
-// import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
+import { Input, Select, TreeSelect, DatePicker } from 'antd'
 const Option = Select.Option
-import TreeSelect from 'antd/lib/tree-select'
-import DatePicker from 'antd/lib/date-picker'
 import NumberRange from '../NumberRange'
 import MultiDatePicker from '../MultiDatePicker'
 import DatePickerFormats, { DatePickerDefaultValues } from './datePickerFormats'

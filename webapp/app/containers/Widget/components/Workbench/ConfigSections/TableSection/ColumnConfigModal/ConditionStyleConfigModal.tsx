@@ -1,26 +1,9 @@
 import * as React from 'react'
 import { fromJS } from 'immutable'
-import * as classnames from 'classnames'
-import moment from 'moment'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Modal from 'antd/lib/modal'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import DatePicker from 'antd/lib/date-picker'
-const Search = Input.Search
-import Button from 'antd/lib/button'
-import Radio from 'antd/lib/radio'
+import { Icon, Row, Col, Modal, InputNumber, Button, Radio, Select } from 'antd'
 const RadioGroup = Radio.Group
-const RadioButton = Radio.Button
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
 const Option = Select.Option
-import Tag from 'antd/lib/tag'
-import Table from 'antd/lib/table'
-import Message from 'antd/lib/message'
 
 import ColorPicker from 'components/ColorPicker'
 import ConditionValuesControl from './ConditionValuesControl'

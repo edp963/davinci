@@ -4,11 +4,7 @@ import * as echarts from 'echarts/lib/echarts'
 
 import LinkageForm, { ILinkageForm } from './LinkageForm'
 import AntdFormType from 'antd/lib/form/Form'
-import Table from 'antd/lib/table'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
+import { Table, Row, Col, Button, Modal } from 'antd'
 
 import { DEFAULT_SPLITER, TABLE_HEADER_HEIGHT } from '../../globalConstants'
 import { uuid } from 'utils/util'

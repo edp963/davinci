@@ -20,7 +20,7 @@
 
 import * as React from 'react'
 
-import Input from 'antd/lib/input'
+import { Input } from 'antd'
 const Search = Input.Search
 
 const utilStyles = require('../../assets/less/util.less')

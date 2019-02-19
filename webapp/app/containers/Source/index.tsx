@@ -35,19 +35,11 @@ import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
-import AntdFormType from 'antd/lib/form/Form'
-import { ButtonProps } from 'antd/lib/button/button'
 
-import message from 'antd/lib/message'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table, { SortOrder } from 'antd/lib/table'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Breadcrumb from 'antd/lib/breadcrumb'
+import { message, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
+import { ButtonProps } from 'antd/lib/button/button'
+import { SortOrder } from 'antd/lib/table'
+import AntdFormType from 'antd/lib/form/Form'
 
 import {
   loadSources,

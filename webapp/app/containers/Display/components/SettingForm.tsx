@@ -18,30 +18,16 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
-import { FormComponentProps } from 'antd/lib/form/Form'
+import React from 'react'
 import * as debounce from 'lodash/debounce'
 import api from 'utils/api'
-import { getBase64 } from 'utils/util'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Radio from 'antd/lib/radio/radio'
-import Checkbox from 'antd/lib/checkbox'
-import Button from 'antd/lib/button'
-import Select from 'antd/lib/select'
-import Upload from 'antd/lib/upload'
-import Icon from 'antd/lib/icon'
-import Popover from 'antd/lib/popover'
-import Tooltip from 'antd/lib/tooltip'
+import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Upload, Icon, Popover, Tooltip } from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const CheckboxGroup = Checkbox.Group
 const Option = Select.Option
+import { FormComponentProps } from 'antd/lib/form/Form'
 
 import { SketchPicker } from 'react-color'
 

@@ -10,8 +10,7 @@ import { IChartInfo, WidgetMode } from '../../Widget'
 import { IFieldConfig } from '../FieldConfig'
 import { IFieldFormatConfig } from '../FormatConfigModal'
 import { decodeMetricName } from '../../util'
-import Popover from 'antd/lib/popover'
-import Icon from 'antd/lib/icon'
+import { Popover, Icon } from 'antd'
 
 const styles = require('../Workbench.less')
 

@@ -25,9 +25,7 @@ import { Link } from 'react-router'
 import classnames from 'classnames'
 
 import { makeSelectLoginUser } from '../../containers/App/selectors'
-import Icon from 'antd/lib/icon'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
+import { Dropdown, Menu } from 'antd'
 
 const styles = require('./Navigator.less')
 

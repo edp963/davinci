@@ -19,20 +19,11 @@
  */
 
 import * as React from 'react'
-// import {connect} from 'react-redux'
-// import {checkNameAction} from '../App/actions'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
+import { Form, Row, Col, Input, Select, TreeSelect } from 'antd'
 const Option = Select.Option
-import TreeSelect from 'antd/lib/tree-select'
-import { ButtonSize } from 'antd/lib/button'
 const FormItem = Form.Item
+import { ButtonSize } from 'antd/lib/button'
 const utilStyles =  require('../../assets/less/util.less')
-
-
 
 interface IConfigFormProps {
   form: any

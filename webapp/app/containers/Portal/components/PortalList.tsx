@@ -1,21 +1,15 @@
 import React from 'react'
 import classnames from 'classnames'
 
-import Icon, { IconProps } from 'antd/lib/icon'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
+import { Icon, Col, Button, Tooltip, Popconfirm, Modal, Row } from 'antd'
+import { IconProps } from 'antd/lib/icon'
+import AntdFormType from 'antd/lib/form/Form'
 const styles = require('../Portal.less')
 
-import AntdFormType from 'antd/lib/form/Form'
-import EllipsisList from '../../../components/EllipsisList'
 import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import {IProject} from '../../Projects'
-import {IPortal} from '../../Portal'
+import { IProject } from '../../Projects'
+import { IPortal } from '../../Portal'
 import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 interface IPortalListProps {

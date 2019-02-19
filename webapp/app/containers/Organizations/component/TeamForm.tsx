@@ -18,23 +18,14 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
+import React from 'react'
+import { Form, Row, Col, Input, Button, Select } from 'antd'
+const FormItem = Form.Item
 const TextArea = Input.TextArea
-import Radio from 'antd/lib/radio/radio'
-import Button from 'antd/lib/button'
-import Select from 'antd/lib/select'
 const Option = Select.Option
-import Tag from 'antd/lib/tag'
 import Avatar from '../../../components/Avatar'
 const styles = require('../Organization.less')
-const FormItem = Form.Item
-const RadioGroup = Radio.Group
-import {ITeam} from './TeamList'
+import { ITeam } from './TeamList'
 
 
 

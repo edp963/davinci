@@ -18,34 +18,15 @@
  * >>
  */
 
-import * as React from 'react'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Popover from 'antd/lib/popover'
-import Tooltip from 'antd/lib/tooltip'
-import Icon from 'antd/lib/icon'
-import Dropdown from 'antd/lib/dropdown'
-import Tree from 'antd/lib/tree'
-import Menu from 'antd/lib/menu'
-import Tabs from 'antd/lib/tabs'
-import Radio from 'antd/lib/radio'
-import InputNumber from 'antd/lib/input-number'
-import Button from 'antd/lib/button'
-import Select from 'antd/lib/select'
-import Alert from 'antd/lib/alert'
-import Table from 'antd/lib/table'
-const Search = Input.Search
+import React from 'react'
+import { Form, Row, Col, Input, Popover, Tooltip, Icon, Tree, Menu, Tabs, Radio, InputNumber, Button, Select, Alert, Table } from 'antd'
 const FormItem = Form.Item
 const TreeNode = Tree.TreeNode
-const MenuItem = Menu.Item
 const TabPane = Tabs.TabPane
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
 const styles = require('../Bizlogic.less')
 const utilStyles = require('../../../assets/less/util.less')
-import { generateData } from '../../../utils/util'
 import { SQL_FIELD_TYPES } from '../components/viewUtil'
 import { ITeamParams, IViewTeams } from '../../Bizlogic'
 import TeamTreeAction from '../components/TeamTreeAction'

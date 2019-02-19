@@ -9,7 +9,7 @@ import Filters from './Filters'
 import ChartTypes from 'containers/Widget/config/chart/ChartTypes'
 import { SettingTypes, ItemTypes } from './type'
 
-import Menu from 'antd/lib/menu'
+import { Menu } from 'antd'
 const { Item: MenuItem, SubMenu, Divider: MenuDivider } = Menu
 
 const SettingsList = [...Aggregator, Format, Field, Sort, Filters, Color]

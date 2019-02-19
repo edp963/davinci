@@ -87,7 +87,7 @@ import {
   showEditorBaselines,
   clearEditorBaselines,
   resetDisplayState } from './actions'
-import message from 'antd/lib/message'
+import { message } from 'antd'
 const styles = require('./Display.less')
 
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'

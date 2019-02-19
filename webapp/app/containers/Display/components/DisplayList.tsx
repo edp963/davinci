@@ -1,20 +1,13 @@
 import React from 'react'
 import classnames from 'classnames'
-import AntdFormType from 'antd/lib/form/Form'
 
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Icon, { IconProps } from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Modal from 'antd/lib/modal'
-import Row from 'antd/lib/row'
+import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
+import { IconProps } from 'antd/lib/icon'
 const styles = require('../Display.less')
 
-import EllipsisList from '../../../components/EllipsisList'
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import {IProject} from '../../Projects'
+import { IProject } from '../../Projects'
 import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 export interface IDisplay {

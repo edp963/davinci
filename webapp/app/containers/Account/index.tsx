@@ -10,9 +10,9 @@ import sagaTeam from '../Teams/sagas'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
 import Menus from './components/Menus'
-import Tooltip from 'antd/lib/tooltip'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
+import { Tooltip } from 'antd'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from '../App/selectors'
 
 interface IAccountProps {
   loginUser: any,

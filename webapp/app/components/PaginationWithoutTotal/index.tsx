@@ -21,10 +21,8 @@
 import React, { PureComponent } from 'react'
 import classnames from 'classnames'
 
-import Button, { ButtonSize } from 'antd/lib/button'
-import Select from 'antd/lib/select'
-import Input from 'antd/lib/input'
-import Icon from 'antd/lib/icon'
+import { ButtonSize } from 'antd/lib/button'
+import { Button, Select, Input, Icon } from 'antd'
 const Option = Select.Option
 
 const styles = require('./PaginationWithoutTotal.less')

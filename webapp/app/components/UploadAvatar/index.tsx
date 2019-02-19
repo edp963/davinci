@@ -1,8 +1,6 @@
 import * as React from 'react'
 import Avatar from '../Avatar'
-import Upload from 'antd/lib/upload'
-import Message from 'antd/lib/message'
-import Button from 'antd/lib/button'
+import { Upload, message as Message, Button } from 'antd'
 const styles = require('./UploadAvatar.less')
 import api from '../../utils/api'
 import { setToken, getToken } from '../../utils/request'

@@ -1,14 +1,11 @@
 import React from 'react'
 import classnames from 'classnames'
 import _ from 'lodash'
-import {IOrganizationMembers} from '../../Organizations/Organization'
-import Button from 'antd/lib/button'
-import Form from 'antd/lib/form'
+import { IOrganizationMembers } from '../../Organizations/Organization'
+import { Button, Form, Input, Icon } from 'antd'
 const FormItem = Form.Item
-import Input from 'antd/lib/input'
 const InputGroup = Input.Group
 const styles = require('../Team.less')
-import Icon from 'antd/lib/icon'
 const utilStyles =  require('../../../assets/less/util.less')
 
 

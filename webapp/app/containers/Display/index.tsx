@@ -15,19 +15,10 @@ import injectSaga from '../../utils/injectSaga'
 import Container from '../../components/Container'
 import DisplayList from './components/DisplayList'
 import DisplayFormModal from './components/DisplayFormModal'
-import AntdFormType from 'antd/lib/form/Form'
 
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Popconfirm from 'antd/lib/popconfirm'
-import Input from 'antd/lib/input'
-import Pagination from 'antd/lib/pagination'
+import { Row, Col, Button, Tooltip, Modal, Breadcrumb, Input } from 'antd'
 const Search = Input.Search
+import AntdFormType from 'antd/lib/form/Form'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')

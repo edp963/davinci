@@ -19,8 +19,7 @@
  */
 
 import * as React from 'react'
-import Icon from 'antd/lib/icon'
-import Menu from 'antd/lib/menu'
+import { Menu } from 'antd'
 import { getPivot } from '../../containers/Widget/components/util'
 
 export interface IDataDrillProps {

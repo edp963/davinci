@@ -19,8 +19,7 @@
  */
 
 import * as React from 'react'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
+import { Button, Modal } from 'antd'
 
 import { IMapFilterControlOptions, OnGetFilterControlOptions } from 'components/Filters'
 import FilterConfig from 'components/Filters/FilterConfig'

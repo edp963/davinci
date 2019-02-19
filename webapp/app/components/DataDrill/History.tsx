@@ -19,8 +19,7 @@
  */
 
 import * as React from 'react'
-import Icon from 'antd/lib/icon'
-import Breadcrumb from 'antd/lib/breadcrumb'
+import { Icon, Breadcrumb } from 'antd'
 
 export interface IDataDrillHistoryProps {
   itemId?: number

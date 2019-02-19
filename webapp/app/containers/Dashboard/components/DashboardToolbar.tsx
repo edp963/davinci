@@ -1,11 +1,8 @@
 import * as React from 'react'
 
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
-import Popover from 'antd/lib/popover'
-import Col from 'antd/lib/col'
-
+import { Button, Tooltip, Popover, Col } from 'antd'
 import { ButtonProps } from 'antd/lib/button/button'
+
 import { IProject } from '../../Projects'
 import { ICurrentDashboard } from '../'
 

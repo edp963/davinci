@@ -1,19 +1,13 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Button from 'antd/lib/button'
-import Input from 'antd/lib/input'
-import Table, { PaginationConfig } from 'antd/lib/table'
-import Modal from 'antd/lib/modal'
+import { Row, Col, Tooltip, Popconfirm, Button, Input, Table, Modal } from 'antd'
+import { PaginationConfig } from 'antd/lib/table'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 const styles = require('../Team.less')
 import AddForm from './AddForm'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
 import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
-import {IOrganizationMembers} from '../../Organizations/Organization'
+import { IOrganizationMembers } from '../../Organizations/Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 

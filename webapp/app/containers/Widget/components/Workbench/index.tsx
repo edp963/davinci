@@ -22,7 +22,7 @@ import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
-import message from 'antd/lib/message'
+import { message } from 'antd'
 import 'assets/less/resizer.less'
 const styles = require('./Workbench.less')
 

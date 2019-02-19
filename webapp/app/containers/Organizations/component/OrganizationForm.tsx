@@ -18,16 +18,10 @@
  * >>
  */
 
-import * as React from 'react'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
-import Radio from 'antd/lib/radio/radio'
+import React from 'react'
+import { Form, Row, Col, Input, Button } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
-const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
 

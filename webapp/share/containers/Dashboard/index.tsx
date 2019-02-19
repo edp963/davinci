@@ -39,8 +39,7 @@ import { IMapItemFilterValue } from '../../../app/components/Filters'
 import DashboardFilterPanel from 'containers/Dashboard/components/DashboardFilterPanel'
 
 import { RenderType, IWidgetConfig } from '../../../app/containers/Widget/components/Widget'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { Row, Col } from 'antd'
 
 import {
   getDashboard,

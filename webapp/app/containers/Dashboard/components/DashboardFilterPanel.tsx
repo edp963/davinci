@@ -20,8 +20,7 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { Row, Col } from 'antd'
 const utilStyles = require('assets/less/util.less')
 import { IFilterItem, IMapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
 import FilterPanel from 'components/Filters/FilterPanel'

@@ -39,22 +39,13 @@ import bizlogicSaga from '../Bizlogic/sagas'
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
 import DashboardAction from './components/DashboardAction'
-import AntdFormType from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
-import {IconProps} from 'antd/lib/icon/index'
-import Tooltip from 'antd/lib/tooltip'
-import Popover from 'antd/lib/popover'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Popconfirm from 'antd/lib/popconfirm'
-import Input from 'antd/lib/input'
-import Menu from 'antd/lib/menu'
 
-import Tree from 'antd/lib/tree'
+import { Button, Icon, Tooltip, Popover, Modal, Input, Tree } from 'antd'
 const TreeNode = Tree.TreeNode
+
+import { IconProps } from 'antd/lib/icon/index'
+import AntdFormType from 'antd/lib/form/Form'
+
 
 const Search = Input.Search
 

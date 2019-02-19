@@ -18,29 +18,14 @@
  * >>
  */
 
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
-const Form = require('antd/lib/form')
-const Radio = require('antd/lib/radio/radio')
+import { Radio, Select, Button, Icon, message } from 'antd'
 const RadioGroup = Radio.Group
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Button = require('antd/lib/button')
-const Message = require('antd/lib/message')
-const Icon = require('antd/lib/icon')
-const Steps = require('antd/lib/steps')
-const Pagination = require('antd/lib/pagination')
-const FormItem = Form.Item
 const Option = Select.Option
-const Step = Steps.Step
-const Search = Input.Search
 
-import { iconMapping } from '../../Widget/components/chartUtil'
+
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 import { SQL_NUMBER_TYPES, SQL_DATE_TYPES } from '../../../globalConstants'
 const utilStyles = require('../../../assets/less/util.less')
@@ -232,7 +217,7 @@ export class DrillPathSetting extends React.PureComponent<IDrillPathSettingProps
     let validate = true
     if (pathOrFree === 'path' && pathNodes.length === 1) {
       validate = false
-      Message.error('至少设置两个路径')
+      message.error('至少设置两个路径')
     }
     for (let index = 0, l = pathNodes.length;  index < l; index++) {
       const node = pathNodes[index]

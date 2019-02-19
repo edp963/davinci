@@ -1,5 +1,5 @@
 import moment from 'moment'
-import Message from 'antd/lib/message'
+import { message } from 'antd'
 import {
   DEFAULT_SPLITER,
   DEFAULT_FONT_SIZE,
@@ -834,7 +834,7 @@ export function getFieldAlias (fieldConfig: IFieldConfig, queryVariableMap: IQue
     const dynamicAlias: string = func(...params)
     return dynamicAlias
   } catch (e) {
-    Message.error(`字段别名转换错误：${e.message}`)
+    message.error(`字段别名转换错误：${e.message}`)
   }
 }
 

@@ -38,7 +38,10 @@ module.exports = require('./webpack.base.babel')({
     //   }
     // }
     {
-      loader: 'babel-loader'
+      loader: 'babel-loader',
+      options: {
+        plugins: [['import', { libraryName: 'antd', style: true }],]
+      }
     },
     {
       loader: 'ts-loader',

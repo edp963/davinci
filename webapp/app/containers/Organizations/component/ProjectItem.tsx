@@ -1,15 +1,10 @@
 import * as React from 'react'
 import * as Organization from '../Organization'
-import Modal from 'antd/lib/modal'
-import Button from 'antd/lib/button'
 const styles = require('../Organization.less')
-import Tag from 'antd/lib/tag'
-import Icon from 'antd/lib/icon'
-import Popconfirm from 'antd/lib/popconfirm'
-import Tooltip from 'antd/lib/tooltip'
+import { Tag, Icon, Popconfirm, Tooltip } from 'antd'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import Star from '../../../components/StarPanel/Star'
-import {IProject, IStarUser} from '../../Projects'
+import { IProject, IStarUser } from '../../Projects'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectItemProps {

@@ -30,10 +30,9 @@ import { TableConditionStyleTypes } from '../Workbench/ConfigSections/TableSecti
 import { Resizable } from 'libs/react-resizable'
 import { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
 import PaginationWithoutTotal from '../../../../components/PaginationWithoutTotal'
+import { Select, Tooltip, Table as AntTable } from 'antd'
+import { TableProps, ColumnProps } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination/Pagination'
-import AntTable, { TableProps, ColumnProps } from 'antd/lib/table'
-import Select from 'antd/lib/select'
-import Tooltip from 'antd/lib/tooltip'
 const Option = Select.Option
 import SearchFilterDropdown from '../../../../components/SearchFilterDropdown/index'
 import NumberFilterDropdown from '../../../../components/NumberFilterDropdown/index'
