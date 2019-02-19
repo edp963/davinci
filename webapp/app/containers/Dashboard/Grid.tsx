@@ -94,7 +94,6 @@ import {
 import {
   loadDataFromItem,
   loadCascadeSource,
-  loadBizdataSchema,
   loadDistinctValue
 } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
@@ -217,7 +216,6 @@ interface IGridProps {
   ) => void
   onClearCurrentDashboard: () => any
   onLoadCascadeSource: (controlId: number, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) => void
-  onLoadBizdataSchema: () => any
   onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
@@ -1550,7 +1548,6 @@ export function mapDispatchToProps (dispatch) {
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
     onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeSource(controlId, viewId, columns, parents)),
-    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),

@@ -30,9 +30,6 @@ import {
   EDIT_BIZLOGIC,
   EDIT_BIZLOGIC_SUCCESS,
   EDIT_BIZLOGIC_FAILURE,
-  LOAD_SCHEMA,
-  LOAD_SCHEMA_SUCCESS,
-  LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
   EXECUTE_SQL_FAILURE,
@@ -96,12 +93,6 @@ function bizlogicReducer (state = initialState, action) {
         .set('modalLoading', false)
     case EDIT_BIZLOGIC_FAILURE:
       return state.set('modalLoading', false)
-    case LOAD_SCHEMA:
-      return state
-    case LOAD_SCHEMA_SUCCESS:
-      return state
-    case LOAD_SCHEMA_FAILURE:
-      return state
     case EXECUTE_SQL:
       return state.set('executeLoading', true)
     case EXECUTE_SQL_SUCCESS:

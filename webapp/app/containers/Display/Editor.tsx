@@ -94,8 +94,8 @@ import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import {
   loadDataFromItem,
-  loadCascadeSource, // TODO global filter in Display
-  loadBizdataSchema  } from '../Bizlogic/actions'
+  loadCascadeSource // TODO global filter in Display
+} from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
@@ -190,9 +190,11 @@ interface IEditorStates {
 }
 
 export class Editor extends React.Component<IEditorProps, IEditorStates> {
+
+  private editor = React.createRef<DisplayContainer>()
+
   constructor (props) {
     super(props)
-
     this.state = {
       slideParams: {},
       currentLocalLayers: [],
@@ -206,30 +208,14 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         param: null
       }
     }
-
-    this.refHandlers = {
-      editor: (ref) => {
-        this.editor = ref
-      }
-    }
-  }
-
-  private refHandlers: { editor: (ref: any) => void }
-  private editor: any
-
-  public componentWillMount () {
-    const {
-      params,
-      onLoadDisplayDetail
-    } = this.props
-    const projectId = +params.pid
-    const displayId = +params.displayId
-    onLoadDisplayDetail(projectId, displayId)
   }
 
   public componentDidMount () {
-    this.props.onHideNavigator()
-    // onHideNavigator 导致页面渲染
+    const { params, onLoadDisplayDetail, onHideNavigator } = this.props
+    const projectId = +params.pid
+    const displayId = +params.displayId
+    onLoadDisplayDetail(projectId, displayId)
+    onHideNavigator()
   }
 
   public componentWillUnmount () {
@@ -622,7 +608,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private coverCut = () => {
-    this.editor.createCoverCut()
+    this.editor.current.createCoverCut()
   }
 
   private coverCutCreated = (blob) => {
@@ -893,7 +879,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
             onCoverCutCreated={this.coverCutCreated}
             onKeyDown={this.keyDown}
             onLayersSelectionRemove={this.layersSelectionRemove}
-            ref={this.refHandlers.editor}
+            ref={this.editor}
           >
             {[...baselines, ...layerItems]}
           </DisplayContainer>
