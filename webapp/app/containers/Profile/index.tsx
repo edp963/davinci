@@ -1,27 +1,16 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router'
-import Icon from 'antd/lib/icon'
-import Col from 'antd/lib/col'
-import Message from 'antd/lib/message'
-import Row from 'antd/lib/row'
-import Input from 'antd/lib/input'
-import Form from 'antd/lib/Form'
+import { Icon, Col, message, Row, Input, Form, Button, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-import Button from 'antd/lib/button'
 import Box from '../../components/Box'
 import UploadAvatar from '../../components/UploadAvatar'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
-import {compose} from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import {updateProfile, checkNameUniqueAction, uploadAvatarSuccess} from '../App/actions'
-import injectSaga from '../../utils/injectSaga'
-// import reducer from '../App/reducer'
-// import saga from '../App/sagas'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from '../App/selectors'
+import { compose } from 'redux'
+import { updateProfile, checkNameUniqueAction, uploadAvatarSuccess } from '../App/actions'
 const utilStyles = require('../../assets/less/util.less')
-import Breadcrumb from 'antd/lib/breadcrumb'
 
 interface IProfileProps {
   form: any
@@ -52,7 +41,7 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
     const values = this.props.form.getFieldsValue()
     const {name, description, department} = values
     onUpdateProfile(id, name, description, department, (data) => {
-      Message.success(data.header && data.header.msg)
+      message.success(data.header && data.header.msg)
     })
   }
   public componentDidMount () {

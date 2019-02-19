@@ -18,16 +18,9 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
+import React from 'react'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import Tabs from 'antd/lib/tabs'
-import Tree from 'antd/lib/tree'
+import { Form, Row, Col, Input, Radio, Tabs, Tree } from 'antd'
 const TreeNode = Tree.TreeNode
 const FormItem = Form.Item
 const TextArea = Input.TextArea

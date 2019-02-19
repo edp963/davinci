@@ -1,13 +1,8 @@
 import * as React from 'react'
 import api from 'utils/api'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Upload from 'antd/lib/upload'
-import Icon from 'antd/lib/icon'
+import { Form, Row, Col, Upload, Icon, Button } from 'antd'
 const FormItem = Form.Item
-import Button from 'antd/lib/button'
 
 const styles = require('../Display.less')
 

@@ -7,9 +7,7 @@ import { FilterTypesLocale } from './filterTypes'
 
 const styles = require('./filter.less')
 
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Tree, { AntdTreeNodeAttribute } from 'antd/lib/tree'
+import { Icon, Tooltip, Tree } from 'antd'
 const { TreeNode } = Tree
 
 interface IFilterListProps {

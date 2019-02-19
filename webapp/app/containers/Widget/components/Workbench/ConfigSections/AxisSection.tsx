@@ -1,10 +1,6 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-import InputNumber from 'antd/lib/input-number'
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
 const styles = require('../Workbench.less')

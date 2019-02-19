@@ -25,8 +25,6 @@ import {
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
   LOAD_CASCADESOURCE,
-  LOAD_BIZDATA_SCHEMA,
-  LOAD_SCHEMA,
   EXECUTE_SQL,
   LOAD_DATA,
   LOAD_DISTINCT_VALUE,
@@ -46,10 +44,6 @@ import {
   editBizlogicFail,
   cascadeSourceLoaded,
   loadCascadeSourceFail,
-  bizdataSchemaLoaded,
-  loadBizdataSchemaFail,
-  schemaLoaded,
-  loadSchemaFail,
   sqlExecuted,
   executeSqlFail,
   dataLoaded,
@@ -68,7 +62,6 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import resultsetConverter from '../../utils/resultsetConverter'
 import { errorHandler } from '../../utils/util'
 
 declare interface IObjectConstructor {
@@ -161,37 +154,6 @@ export function* getCascadeSource (action) {
     yield put(cascadeSourceLoaded(controlId, columns, asyncData.payload))
   } catch (err) {
     yield put(loadCascadeSourceFail(err))
-    errorHandler(err)
-  }
-}
-
-export function* getBizdataSchema (action) {
-  const { payload } = action
-  try {
-    const { id, resolve } = payload
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/resultset?limit=1`,
-      data: {}
-    })
-    const bizdatas = resultsetConverter(asyncData.payload)
-    yield put(bizdataSchemaLoaded(bizdatas.keys))
-    resolve(bizdatas.keys)
-  } catch (err) {
-    yield put(loadBizdataSchemaFail(err))
-  }
-}
-
-export function* getSchema (action) {
-  const { payload } = action
-  try {
-    const asyncData = yield call(request, `${api.bizlogic}/database?sourceId=${payload.sourceId}`)
-    const schema = asyncData.payload
-    yield put(schemaLoaded(schema))
-    payload.resolve(schema)
-  } catch (err) {
-    yield put(loadSchemaFail())
     errorHandler(err)
   }
 }
@@ -351,8 +313,6 @@ export default function* rootBizlogicSaga (): IterableIterator<any> {
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
     takeEvery(LOAD_CASCADESOURCE, getCascadeSource),
-    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
-    takeLatest(LOAD_SCHEMA, getSchema),
     takeEvery(LOAD_SOURCE_TABLE, loadSourceTable),
     takeEvery(LOAD_SOURCE_TABLE_COLUMN, loadSourceTableColumn),
     takeLatest(EXECUTE_SQL, executeSql),

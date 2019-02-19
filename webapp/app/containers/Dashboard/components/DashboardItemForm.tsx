@@ -21,23 +21,13 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-import Form from 'antd/lib/form'
+import { Form, Row, Col, Table, Input, InputNumber, Select, Steps } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Table, { SortOrder } from 'antd/lib/table'
-import Input from 'antd/lib/input'
-import InputNumber from 'antd/lib/input-number'
-import Select from 'antd/lib/select'
-import Icon from 'antd/lib/icon'
-import Steps from 'antd/lib/steps'
-import Pagination from 'antd/lib/pagination'
+import { SortOrder } from 'antd/lib/table'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step
-const Search = Input.Search
 
-import { iconMapping } from '../../Widget/components/chartUtil'
 import SearchFilterDropdown from '../../../components/SearchFilterDropdown'
 
 const utilStyles = require('../../../assets/less/util.less')

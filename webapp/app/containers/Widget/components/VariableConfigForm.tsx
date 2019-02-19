@@ -21,13 +21,7 @@
 import * as React from 'react'
 
 import VariableConfigTable from './VariableConfigTable'
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio/radio'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { Form, Input, Select, Radio, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 const RadioButton = Radio.Button

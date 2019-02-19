@@ -12,7 +12,22 @@ export class DisplayBody extends React.Component<{}, {}> {
   private bottom
   private sidebar
 
-  public render () {
+  public constructor (props) {
+    super(props)
+    this.distributeChild()
+  }
+
+  public componentDidUpdate () {
+    this.distributeChild()
+  }
+
+  public shouldComponentUpdate (nextProps) {
+    const needUpdate = nextProps.children.some((child, idx) => this.props.children[idx] !== child)
+    console.log('shouldUpdate: ', needUpdate)
+    return needUpdate
+  }
+
+  private distributeChild = () => {
     React.Children.forEach(this.props.children, (c) => {
       if (!c) { return }
 
@@ -25,6 +40,9 @@ export class DisplayBody extends React.Component<{}, {}> {
         this.sidebar = c
       }
     })
+  }
+
+  public render () {
     return (
       <div className={styles.body}>
         <div className={styles.main}>

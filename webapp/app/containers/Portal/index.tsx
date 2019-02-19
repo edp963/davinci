@@ -32,20 +32,9 @@ import reducer from './reducer'
 import saga from './sagas'
 
 import Container from '../../components/Container'
-import PortalForm from './components/PortalForm'
-import AntdFormType from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Popconfirm from 'antd/lib/popconfirm'
-import Input from 'antd/lib/input'
-import Pagination from 'antd/lib/pagination'
-
+import { Row, Col, Button, Icon, Tooltip, Modal, Breadcrumb, Popconfirm, Input, Pagination } from 'antd'
 const Search = Input.Search
+import AntdFormType from 'antd/lib/form/Form'
 
 import { loadPortals, addPortal, editPortal, deletePortal } from './actions'
 import { makeSelectPortals } from './selectors'

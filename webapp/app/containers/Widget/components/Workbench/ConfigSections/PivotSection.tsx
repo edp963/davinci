@@ -1,7 +1,5 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Select from 'antd/lib/select'
+import { Row, Col, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_FONT_SIZES, PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'

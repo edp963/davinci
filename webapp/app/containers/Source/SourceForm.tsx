@@ -23,14 +23,7 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { ISource } from '.'
 
-import Modal from 'antd/lib/modal'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Icon from 'antd/lib/icon'
+import { Modal, Form, Row, Col, Button, Input, Select, Icon } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 const Option = Select.Option

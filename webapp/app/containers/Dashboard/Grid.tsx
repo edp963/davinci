@@ -48,14 +48,7 @@ import { getMappingLinkage, processLinkage, removeLinkage } from 'components/Lin
 
 import { Responsive, WidthProvider } from 'libs/react-grid-layout'
 import AntdFormType from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Button from 'antd/lib/button'
-import Modal from 'antd/lib/modal'
-import Breadcrumb from 'antd/lib/breadcrumb'
-import Icon from 'antd/lib/icon'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
+import { Row, Col, Button, Modal, Breadcrumb, Icon, Dropdown, Menu } from 'antd'
 import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
@@ -94,7 +87,6 @@ import {
 import {
   loadDataFromItem,
   loadCascadeSource,
-  loadBizdataSchema,
   loadDistinctValue
 } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
@@ -217,7 +209,6 @@ interface IGridProps {
   ) => void
   onClearCurrentDashboard: () => any
   onLoadCascadeSource: (controlId: number, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) => void
-  onLoadBizdataSchema: () => any
   onLoadDistinctValue: (viewId: number, fieldName: string, resolve: (data) => void) => void
   onRenderDashboardItem: (itemId: number) => void
   onResizeDashboardItem: (itemId: number) => void
@@ -1550,7 +1541,6 @@ export function mapDispatchToProps (dispatch) {
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
     onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeSource(controlId, viewId, columns, parents)),
-    onLoadBizdataSchema: (id, resolve) => dispatch(loadBizdataSchema(id, resolve)),
     onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),

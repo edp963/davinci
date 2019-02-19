@@ -1,12 +1,6 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Checkbox from 'antd/lib/checkbox'
-import Radio from 'antd/lib/radio/radio'
-const RadioGroup = Radio.Group
-import Select from 'antd/lib/select'
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-import InputNumber from 'antd/lib/input-number'
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES, CHART_VISUALMAP_POSITIONS, CHART_VISUALMAP_DIRECYTIONS } from '../../../../../globalConstants'
 import configureStore from '../../../../../store'

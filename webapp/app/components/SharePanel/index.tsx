@@ -21,12 +21,7 @@
 import * as React from 'react'
 
 import ShareForm from './ShareForm'
-import Icon from 'antd/lib/icon'
-import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Radio from 'antd/lib/radio'
+import { Icon, Input, Button, Row, Col, Radio } from 'antd'
 const RadioButton = Radio.Button
 const RadioGroup = Radio.Group
 

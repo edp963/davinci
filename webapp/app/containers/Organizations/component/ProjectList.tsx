@@ -1,19 +1,14 @@
-import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Tooltip from 'antd/lib/tooltip'
-import Button from 'antd/lib/button'
-import Pagination from 'antd/lib/pagination'
-import Input from 'antd/lib/input'
-const styles = require('../Organization.less')
-import Modal from 'antd/lib/modal'
+import React from 'react'
+import { Row, Col, Tooltip, Button, Pagination, Input, Modal } from 'antd'
 import ProjectItem from './ProjectItem'
 import AntdFormType from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
-import {IStarUser, IProject} from '../../Projects'
+import { IStarUser, IProject } from '../../Projects'
+
+const styles = require('../Organization.less')
 
 interface IProjectsState {
   formType?: string

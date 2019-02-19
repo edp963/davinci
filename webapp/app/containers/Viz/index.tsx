@@ -1,5 +1,5 @@
-
 import * as React from 'react'
+import * as classnames from 'classnames'
 import Helmet from 'react-helmet'
 import { Link, RouteComponentProps } from 'react-router'
 
@@ -22,24 +22,17 @@ import { makeSelectPortals, makeSelectTeams } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
 import { loadViewTeam } from '../Bizlogic/actions'
 
-import Icon from 'antd/lib/icon'
-import Collapse from 'antd/lib/collapse'
-import * as classnames from 'classnames'
+import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from '../../components/Box'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Breadcrumb from 'antd/lib/breadcrumb'
-const Panel = Collapse.Panel
 const styles = require('./Viz.less')
 const utilStyles = require('../../assets/less/util.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
-import { Portal } from '../Portal'
-import {makeSelectCurrentProject} from '../Projects/selectors'
-import {makeSelectViewTeam} from '../Bizlogic/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectViewTeam } from '../Bizlogic/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
-import {IProject} from '../Projects'
+import { IProject } from '../Projects'
 
 interface IParams {
   pid: number

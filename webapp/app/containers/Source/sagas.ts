@@ -48,7 +48,7 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
-import message from 'antd/lib/message'
+import { message } from 'antd'
 
 export function* getSources (action) {
   const { payload } = action

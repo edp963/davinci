@@ -1,28 +1,20 @@
 import * as React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router'
-import Icon from 'antd/lib/icon'
-import Col from 'antd/lib/col'
-import Message from 'antd/lib/message'
-import Row from 'antd/lib/row'
-import Input from 'antd/lib/input'
-import Form from 'antd/lib/Form'
+import { Icon, Col, Row, Input, Form, Tooltip, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-import Button from 'antd/lib/button'
-import Tooltip from 'antd/lib/tooltip'
 import Box from '../../components/Box'
 import Avatar from '../../components/Avatar'
-import {createStructuredSelector} from 'reselect'
+import { createStructuredSelector } from 'reselect'
 import { makeSelectLoading, makeSelectUserProfile } from './selectors'
-import {compose} from 'redux'
+import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'
 import { getUserProfile } from './actions'
 import injectSaga from '../../utils/injectSaga'
 import reducer from './reducer'
 import saga from './sagas'
 const utilStyles = require('../../assets/less/util.less')
-import Breadcrumb from 'antd/lib/breadcrumb'
 
 interface IProfileProps {
   form: any

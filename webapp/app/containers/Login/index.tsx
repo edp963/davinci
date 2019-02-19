@@ -24,7 +24,7 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 
 import LoginForm from './LoginForm'
-import Icon from 'antd/lib/icon'
+import { Icon } from 'antd'
 
 import { compose } from 'redux'
 import injectReducer from '../../utils/injectReducer'

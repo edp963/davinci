@@ -10,20 +10,9 @@ import ColorPicker from 'components/ColorPicker'
 import ConditionStyleConfigModal,
   { defaultConditionStyle, AvailableTableConditionStyleTypes } from './ConditionStyleConfigModal'
 
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Select from 'antd/lib/select'
-const { Option } = Select
-import Button from 'antd/lib/button'
-import Radio from 'antd/lib/radio'
+import { Row, Col, Tooltip, Select, Button, Radio, Table, Modal } from 'antd'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-import Table from 'antd/lib/table'
-import Form from 'antd/lib/form'
-const FormItem = Form.Item
-import Modal from 'antd/lib/modal'
 
 const styles = require('../TableSection.less')
 

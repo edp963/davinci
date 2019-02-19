@@ -3,30 +3,18 @@
 // TEAM PROJECT
 import * as React from 'react'
 import { Link } from 'react-router'
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Tag from 'antd/lib/tag'
+import { Icon, Row, Col, Tag, Breadcrumb, Pagination } from 'antd'
+import { PaginationConfig } from 'antd/lib/table'
 import Box from '../../components/Box'
-import {InjectedRouter} from 'react-router/lib/Router'
+import { InjectedRouter } from 'react-router/lib/Router'
 import { loadTeams } from './actions'
-import saga from './sagas'
-// import sagaApp from '../App/sagas'
-import injectReducer from '../../utils/injectReducer'
-import reducer from './reducer'
-import {makeSelectLoginUser} from '../App/selectors'
-import injectSaga from '../../utils/injectSaga'
-import {makeSelectTeams} from './selectors'
-// import reducerApp from '../App/reducer'
-import {createStructuredSelector} from 'reselect'
-import {connect} from 'react-redux'
-import {compose} from 'redux'
+import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectTeams } from './selectors'
+import { createStructuredSelector } from 'reselect'
+import { connect } from 'react-redux'
 const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
-import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
-import { PaginationConfig } from 'antd/lib/table'
-import Pagination from 'antd/lib/pagination'
 
 interface ITeam {
   id: number

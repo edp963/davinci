@@ -20,21 +20,9 @@
 
 import * as React from 'react'
 
-import Form from 'antd/lib/form'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio/radio'
-import Button from 'antd/lib/button'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
-import Tabs from 'antd/lib/tabs'
-import Icon from 'antd/lib/icon'
+import { Form, Input, Select, Button, Row, Col, Menu, Tabs } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
-const RadioButton = Radio.Button
-const RadioGroup = Radio.Group
 const Search = Input.Search
 const TabPane = Tabs.TabPane
 

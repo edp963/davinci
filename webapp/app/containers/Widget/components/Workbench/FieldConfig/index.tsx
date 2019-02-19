@@ -1,22 +1,14 @@
 import * as React from 'react'
 import classnames from 'classnames'
-import ReactDOM, { findDOMNode } from 'react-dom'
+import { findDOMNode } from 'react-dom'
 
-import Icon from 'antd/lib/icon'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Form, { FormComponentProps } from 'antd/lib/form'
+import { Icon, Row, Col, Form, Input, Checkbox, Select, Button, Popover, Modal, message } from 'antd'
+import { FormComponentProps } from 'antd/lib/form'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { CheckboxChangeEvent } from 'antd/lib/checkbox'
 const FormItem = Form.Item
-import Input from 'antd/lib/input'
 const { TextArea } = Input
-import Checkbox, { CheckboxChangeEvent } from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
 const { Option } = Select
-import Button from 'antd/lib/button'
-import Popover from 'antd/lib/popover'
-import Message from 'antd/lib/message'
-import Modal from 'antd/lib/modal'
 
 import 'codemirror/lib/codemirror.css'
 import 'assets/override/codemirror_theme.css'
@@ -200,7 +192,7 @@ export class FieldConfig extends React.PureComponent<IFieldConfigProps, IFieldCo
       if (err) { return }
       const config = this.getFieldsValue(form)
       if (!config.alias) {
-        Message.error('字段别名不能为空')
+        message.error('字段别名不能为空')
         return
       }
 

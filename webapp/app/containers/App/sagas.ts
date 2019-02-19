@@ -20,7 +20,7 @@
 
 import { call, put, all, takeLatest, throttle } from 'redux-saga/effects'
 
-import message from 'antd/lib/message'
+import { message } from 'antd'
 import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, JOIN_ORGANIZATION } from './constants'
 import {
   logged,

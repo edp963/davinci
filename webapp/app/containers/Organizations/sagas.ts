@@ -63,7 +63,7 @@ import {
   changeOrganizationMemberRoleFail
 } from './actions'
 
-import message from 'antd/lib/message'
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { userPasswordChanged } from '../App/actions'

@@ -30,12 +30,16 @@ import { hot } from 'react-hot-loader'
 
 import App from './containers/App'
 import { makeSelectLocationState } from './containers/App/selectors'
+import { LocaleProvider } from 'antd'
+import zh_CN from 'antd/lib/locale-provider/zh_CN'
 import LanguageProvider from './containers/LanguageProvider'
 import { translationMessages } from './i18n'
+import moment from 'moment'
+import 'moment/locale/zh-cn'
+moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
 import 'file-loader?name=[name].[ext]!./.htaccess'
-import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
 import '../libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
@@ -106,11 +110,13 @@ const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <Router
-          history={history}
-          routes={rootRoute}
-          render={applyRouterMiddleware(useScroll())}
-        />
+        <LocaleProvider locale={zh_CN}>
+          <Router
+            history={history}
+            routes={rootRoute}
+            render={applyRouterMiddleware(useScroll())}
+          />
+        </LocaleProvider>
       </LanguageProvider>
     </Provider>,
     MOUNT_NODE

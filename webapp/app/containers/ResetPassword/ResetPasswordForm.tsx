@@ -1,11 +1,7 @@
 import * as React from 'react'
-import Col from 'antd/lib/col'
-import Row from 'antd/lib/row'
-import Input from 'antd/lib/input'
-import Form from 'antd/lib/Form'
+import { Col, Row, Input, Button, Form } from 'antd'
 const FormItem = Form.Item
 const styles = require('../Profile/profile.less')
-import Button from 'antd/lib/button'
 
 
 

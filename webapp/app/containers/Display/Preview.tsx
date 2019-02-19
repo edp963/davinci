@@ -33,8 +33,8 @@ import {
 import { hideNavigator } from '../App/actions'
 import {
   loadDataFromItem,
-  loadCascadeSource, // TODO global filter in Display Preview
-  loadBizdataSchema  } from '../Bizlogic/actions'
+  loadCascadeSource // TODO global filter in Display Preview
+} from '../Bizlogic/actions'
 import {
   editCurrentDisplay,
   loadDisplayDetail,

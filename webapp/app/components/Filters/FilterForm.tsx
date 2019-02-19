@@ -3,18 +3,11 @@ import classnames from 'classnames'
 import moment from 'moment'
 import { FormComponentProps } from 'antd/lib/form/Form'
 
-import Form from 'antd/lib/form'
+import { Form, Row, Col, Input, Checkbox, Select, Radio } from 'antd'
 const FormItem = Form.Item
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Checkbox from 'antd/lib/checkbox'
-import Select from 'antd/lib/select'
-import Radio from 'antd/lib/radio'
 const Option = Select.Option
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-import Switch from 'antd/lib/switch'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')

@@ -1,30 +1,22 @@
-import * as React from 'react'
+import React from 'react'
 import { Link } from 'react-router'
-import Icon from 'antd/lib/icon'
+import { Icon, Tabs, Breadcrumb } from 'antd'
 import Box from '../../components/Box'
 const styles = require('./Organization.less')
-import {InjectedRouter} from 'react-router/lib/Router'
+import { InjectedRouter } from 'react-router/lib/Router'
 import MemberList from './component/MemberList'
 import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
 import TeamList from './component/TeamList'
 const utilStyles = require('../../assets/less/util.less')
-import Tabs from 'antd/lib/tabs'
 const TabPane = Tabs.TabPane
-import Breadcrumb from 'antd/lib/breadcrumb'
 import Avatar from '../../components/Avatar'
-import {connect} from 'react-redux'
-import saga from './sagas'
-// import sagaApp from '../App/sagas'
-import reducerTeam from '../Teams/reducer'
-import sagaTeam from '../Teams/sagas'
+import { connect } from 'react-redux'
 import injectReducer from '../../utils/injectReducer'
-import reducer from './reducer'
 import injectSaga from '../../utils/injectSaga'
-// import reducerApp from '../App/reducer'
 import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
-import {compose} from 'redux'
+import { compose } from 'redux'
 import {
   editOrganization,
   deleteOrganization,
@@ -37,7 +29,7 @@ import {
   deleteOrganizationMember,
   changeOrganizationMemberRole
 } from './actions'
-import {makeSelectLoginUser} from '../App/selectors'
+import { makeSelectLoginUser } from '../App/selectors'
 import {
   makeSelectOrganizations,
   makeSelectCurrentOrganizations,
@@ -47,11 +39,11 @@ import {
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
 } from './selectors'
-import {createStructuredSelector} from 'reselect'
-import {addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects} from '../Projects/actions'
-import {checkNameUniqueAction} from '../App/actions'
-import {makeSelectStarUserList, makeSelectCollectProjects} from '../Projects/selectors'
-import {IStarUser, IProject} from '../Projects'
+import { createStructuredSelector } from 'reselect'
+import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from '../Projects/actions'
+import { checkNameUniqueAction } from '../App/actions'
+import { makeSelectStarUserList, makeSelectCollectProjects } from '../Projects/selectors'
+import { IStarUser, IProject } from '../Projects'
 
 interface IOrganizationProps {
   loginUser: any

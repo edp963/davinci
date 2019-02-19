@@ -1,10 +1,8 @@
 import * as React from 'react'
 
-import Input from 'antd/lib/input'
-import Button from 'antd/lib/button'
-import Form, { FormComponentProps } from 'antd/lib/form'
+import { Input, Button, Form, Modal } from 'antd'
+import { FormComponentProps } from 'antd/lib/form'
 const FormItem = Form.Item
-import Modal from 'antd/lib/modal'
 import { IQueryVariableMap } from 'app/containers/Dashboard/Grid'
 
 interface IAliasExpressionTestProps extends FormComponentProps {

@@ -41,8 +41,8 @@ import { decodeMetricName } from '../../../app/containers/Widget/components/util
 const styles = require('../../../app/containers/Display/Display.less')
 
 import {
-  loadBizlogics,
-  loadBizdataSchema  } from '../../../app/containers/Bizlogic/actions'
+  loadBizlogics
+} from '../../../app/containers/Bizlogic/actions'
 import { loadDisplay, loadLayerData } from './actions'
 import {
   makeSelectTitle,

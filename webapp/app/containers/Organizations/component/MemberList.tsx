@@ -1,15 +1,6 @@
-import * as React from 'react'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Tooltip from 'antd/lib/tooltip'
-import Button from 'antd/lib/button'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import Popconfirm from 'antd/lib/popconfirm'
-import Modal from 'antd/lib/modal'
-import Table from 'antd/lib/table'
-import Icon from 'antd/lib/icon'
+import React from 'react'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+import { Row, Col, Tooltip, Button, Input, Popconfirm, Modal, Table } from 'antd'
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
 import MemberForm from '../../Teams/component/AddForm'

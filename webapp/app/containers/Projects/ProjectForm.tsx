@@ -20,14 +20,7 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import Tag from 'antd/lib/tag'
-import Button from 'antd/lib/button'
-import Select from 'antd/lib/select'
+import { Form, Row, Col, Input, Tag, Button, Select } from 'antd'
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item

@@ -19,9 +19,8 @@
  */
 
 import React, { PureComponent } from 'react'
-import PropTypes from 'prop-types'
 
-import Input from 'antd/lib/input'
+import { Input } from 'antd'
 const InputGroup = Input.Group
 
 const styles = require('./NumberRange.less')

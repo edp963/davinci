@@ -41,12 +41,7 @@ require('codemirror/addon/hint/show-hint')
 require('codemirror/addon/hint/sql-hint')
 require('codemirror/addon/display/placeholder')
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Select from 'antd/lib/select'
-import message from 'antd/lib/message'
+import { Form, Row, Col, Input, message } from 'antd'
 const FormItem = Form.Item
 
 const utilStyles = require('../../assets/less/util.less')
@@ -62,7 +57,7 @@ import {
   makeSelectViewTeam
  } from './selectors'
 import { checkNameUniqueAction, hideNavigator } from '../App/actions'
-import { loadSchema, executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState, loadSourceTable, loadSourceTableColumn } from './actions'
+import { executeSql, addBizlogic, editBizlogic, loadBizlogics, loadViewTeam, resetViewState, loadSourceTable, loadSourceTableColumn } from './actions'
 import { makeSelectSources } from '../Source/selectors'
 import { loadSources } from '../Source/actions'
 import { toListBF, getColumns } from './components/viewUtil'
@@ -88,7 +83,6 @@ interface IBizlogicFormProps {
   viewTeam: IViewTeams[]
   onHideNavigator: () => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onLoadSchema: (sourceId: number, resolve: any) => any
   onLoadSourceTable: (sourceId: number, resolve: (result: any) => any) => any
   onLoadSourceTableColumn: (sourceId: number, tableName: string, resolve: (result: any) => any) => any
   onExecuteSql: (requestObj: any, resolve: any) => any
@@ -180,7 +174,6 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
       route,
       bizlogics,
       onLoadSources,
-      onLoadSchema,
       onLoadBizlogics,
       onLoadViewTeam
     } = this.props
@@ -285,7 +278,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
   }
 
   private showViewInfo (bizlogics) {
-    const { params, onLoadSchema } = this.props
+    const { params } = this.props
     const { listData, limit } = this.state
 
     const {
@@ -951,7 +944,6 @@ function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onLoadSchema: (sourceId, resolve) => dispatch(loadSchema(sourceId, resolve)),
     onLoadSourceTable: (sourceId, resolve) => dispatch(loadSourceTable(sourceId, resolve)),
     onLoadSourceTableColumn: (sourceId, tableName, resolve) => dispatch(loadSourceTableColumn(sourceId, tableName, resolve)),
     onExecuteSql: (requestObj, resolve) => dispatch(executeSql(requestObj, resolve)),

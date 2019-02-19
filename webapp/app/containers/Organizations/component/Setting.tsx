@@ -1,15 +1,10 @@
-import * as React from 'react'
+import React from 'react'
 const styles = require('../Organization.less')
-import Button from 'antd/lib/Button'
-import Input from 'antd/lib/input'
-import Form from 'antd/lib/form'
+import { Button, Input, Form, Row, Col, Radio } from 'antd'
 const FormItem = Form.Item
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Radio from 'antd/lib/radio'
 const RadioButton = Radio.Button
 import UploadAvatar from '../../../components/UploadAvatar'
-import {IOrganization} from '../Organization'
+import { IOrganization } from '../Organization'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface ISettingProps {

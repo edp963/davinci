@@ -21,13 +21,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 import { connect } from 'react-redux'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import Steps from 'antd/lib/steps'
-import Transfer from 'antd/lib/transfer'
+import { Form, Row, Col, Input, Radio, Steps, Transfer } from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const Step = Steps.Step

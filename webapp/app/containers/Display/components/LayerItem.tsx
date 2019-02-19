@@ -3,7 +3,7 @@ import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
 import moment from 'moment'
 
-import Tooltip from 'antd/lib/tooltip'
+import { Tooltip, Icon } from 'antd'
 import Draggable from 'libs/react-draggable'
 import Video from 'components/Video'
 
@@ -21,7 +21,6 @@ import { IModel } from '../../Widget/components/Workbench/index'
 import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
-import Icon from 'antd/lib/icon'
 import { Resizable } from 'libs/react-resizable'
 
 const styles = require('../Display.less')

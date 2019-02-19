@@ -19,10 +19,7 @@
  */
 
 import * as React from 'react'
-import Icon from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Popover from 'antd/lib/popover'
-import Popconfirm from 'antd/lib/popconfirm'
+import { Icon, Tooltip, Popover } from 'antd'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
 

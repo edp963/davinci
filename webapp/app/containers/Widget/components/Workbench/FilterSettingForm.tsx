@@ -1,17 +1,14 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
-import moment, {Moment} from 'moment'
+import moment, { Moment } from 'moment'
 import { IDataParamConfig, IDataParamSource } from './Dropbox'
 import ConditionalFilterForm from './ConditionalFilterForm'
 import { DEFAULT_DATETIME_FORMAT } from '../../../../globalConstants'
 import { decodeMetricName } from '../util'
 import { uuid } from 'utils/util'
-import Transfer from 'antd/lib/transfer'
-import Radio from 'antd/lib/radio'
+import { Transfer, Radio, Button, DatePicker } from 'antd'
 const RadioGroup = Radio.Group
 const RadioButton = Radio.Button
-import Button from 'antd/lib/button'
-import DatePicker from 'antd/lib/date-picker'
 const RangePicker = DatePicker.RangePicker
 const styles = require('./Workbench.less')
 const utilStyles = require('../../../../assets/less/util.less')

@@ -32,12 +32,8 @@ import {IView, IModel} from '../../../containers/Widget/components/Workbench/ind
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
-import Icon, { IconProps } from 'antd/lib/icon'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Popover from 'antd/lib/popover'
-import Dropdown from 'antd/lib/dropdown'
-import Menu from 'antd/lib/menu'
+import { IconProps } from 'antd/lib/icon'
+import { Icon, Tooltip, Popconfirm, Popover, Dropdown, Menu } from 'antd'
 
 import ModulePermission from '../../Account/components/checkModulePermission'
 import ShareDownloadPermission from '../../Account/components/checkShareDownloadPermission'

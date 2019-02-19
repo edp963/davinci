@@ -24,18 +24,8 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { ICSVMetaInfo } from '.'
 
-import Modal from 'antd/lib/modal'
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import RadioGroup from 'antd/lib/radio/group'
-import Upload from 'antd/lib/upload'
-import Icon from 'antd/lib/icon'
-import Popover from 'antd/lib/popover'
-import Button from 'antd/lib/button'
-import Steps from 'antd/lib/steps'
+import { Modal, Form, Row, Col, Input, Radio, Upload, Icon, Popover, Button, Steps } from 'antd'
+const RadioGroup = Radio.Group
 const Step = Steps.Step
 const FormItem = Form.Item
 

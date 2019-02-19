@@ -1,12 +1,6 @@
 import * as React from 'react'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Checkbox from 'antd/lib/checkbox'
-import Radio from 'antd/lib/radio/radio'
-const RadioGroup = Radio.Group
-import Select from 'antd/lib/select'
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-import InputNumber from 'antd/lib/input-number'
 const styles = require('../Workbench.less')
 import { CHART_SORT_MODES, CHART_ALIGNMENT_MODES, CHART_LAYER_TYPES, CHART_LINES_SYMBOL_TYPE } from '../../../../../globalConstants'
 

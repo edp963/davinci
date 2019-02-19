@@ -1,9 +1,6 @@
 import * as React from 'react'
-import Modal from 'antd/lib/modal'
-import Icon from 'antd/lib/icon'
-import {IProject, IStarUser} from '../../containers/Projects'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
+import { Modal, Row, Col } from 'antd'
+import { IProject, IStarUser } from '../../containers/Projects'
 const styles = require('./Star.less')
 import Avatar from '../../components/Avatar'
 import * as Organization from '../../containers/Organizations/Organization'

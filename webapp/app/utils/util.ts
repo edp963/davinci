@@ -19,7 +19,7 @@
  */
 
 import { removeToken } from './request'
-import message from 'antd/lib/message'
+import { message } from 'antd'
 
 /**
  * UUID生成器

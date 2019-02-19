@@ -1,37 +1,26 @@
 import * as React from 'react'
-import {connect} from 'react-redux'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Tooltip from 'antd/lib/tooltip'
-import Popconfirm from 'antd/lib/popconfirm'
-import Tag from 'antd/lib/tag'
-import Icon from 'antd/lib/icon'
-import Modal from 'antd/lib/modal'
-import Button from 'antd/lib/button'
-const ButtonGroup = Button.Group
-import Pagination from 'antd/lib/pagination'
-const styles = require('./Project.less')
 import * as classnames from 'classnames'
-import {InjectedRouter} from 'react-router/lib/Router'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
-  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects} from './actions'
-import {compose} from 'redux'
-import {makeSelectLoginUser} from '../App/selectors'
-import {makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects} from './selectors'
+import { connect } from 'react-redux'
+import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button, Pagination } from 'antd'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const styles = require('./Project.less')
+import { InjectedRouter } from 'react-router/lib/Router'
+import { addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
+  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects } from './actions'
+import { compose } from 'redux'
+import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects } from './selectors'
 import injectReducer from '../../utils/injectReducer'
-import {createStructuredSelector} from 'reselect'
+import { createStructuredSelector } from 'reselect'
 import injectSaga from '../../utils/injectSaga'
 import ProjectsForm from './ProjectForm'
 import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-import reducerApp from '../App/reducer'
-import sagaApp from '../App/sagas'
-import {loadOrganizations} from '../Organizations/actions'
-import {makeSelectOrganizations} from '../Organizations/selectors'
-import {checkNameUniqueAction} from '../App/actions'
+import { loadOrganizations } from '../Organizations/actions'
+import { makeSelectOrganizations } from '../Organizations/selectors'
+import { checkNameUniqueAction } from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
@@ -39,7 +28,7 @@ import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
 import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
-const  historyStack = new HistoryStack()
+const historyStack = new HistoryStack()
 
 interface IProjectsProps {
   router: InjectedRouter

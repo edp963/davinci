@@ -19,15 +19,8 @@
  */
 
 import * as React from 'react'
-import { connect } from 'react-redux'
 
-import Form from 'antd/lib/form'
-import Row from 'antd/lib/row'
-import Col from 'antd/lib/col'
-import Input from 'antd/lib/input'
-import Radio from 'antd/lib/radio/radio'
-import Select from 'antd/lib/select'
-import Tabs from 'antd/lib/tabs'
+import { Form, Row, Col, Input, Radio, Select, Tabs } from 'antd'
 const TabPane = Tabs.TabPane
 const Option = Select.Option
 const FormItem = Form.Item

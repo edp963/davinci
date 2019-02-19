@@ -17,7 +17,7 @@ import {
 import { FilterTypes, FilterTypesViewSetting } from './filterTypes'
 import * as debounce from 'lodash/debounce'
 
-import Form from 'antd/lib/form'
+import { Form } from 'antd'
 const FormItem = Form.Item
 
 const styles = require('./filter.less')

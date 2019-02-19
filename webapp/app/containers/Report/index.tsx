@@ -24,7 +24,7 @@ import { compose } from 'redux'
 import { createStructuredSelector } from 'reselect'
 import {InjectedRouter} from 'react-router/lib/Router'
 
-import Icon from 'antd/lib/icon'
+import { Icon } from 'antd'
 import { IProject } from '../Projects'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'

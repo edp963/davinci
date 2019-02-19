@@ -35,12 +35,6 @@ import {
   LOAD_CASCADESOURCE,
   LOAD_CASCADESOURCE_SUCCESS,
   LOAD_CASCADESOURCE_FAILURE,
-  LOAD_BIZDATA_SCHEMA,
-  LOAD_BIZDATA_SCHEMA_SUCCESS,
-  LOAD_BIZDATA_SCHEMA_FAILURE,
-  LOAD_SCHEMA,
-  LOAD_SCHEMA_SUCCESS,
-  LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
   EXECUTE_SQL_FAILURE,
@@ -205,34 +199,6 @@ export function loadCascadeSourceFail (error) {
   }
 }
 
-export function loadBizdataSchema (id, resolve) {
-  return {
-    type: LOAD_BIZDATA_SCHEMA,
-    payload: {
-      id,
-      resolve
-    }
-  }
-}
-
-export function bizdataSchemaLoaded (scheme) {
-  return {
-    type: LOAD_BIZDATA_SCHEMA_SUCCESS,
-    payload: {
-      scheme
-    }
-  }
-}
-
-export function loadBizdataSchemaFail (error) {
-  return {
-    type: LOAD_BIZDATA_SCHEMA_FAILURE,
-    payload: {
-      error
-    }
-  }
-}
-
 export function loadSourceTable (sourceId, resolve) {
   return {
     type: LOAD_SOURCE_TABLE,
@@ -287,31 +253,6 @@ export function loadSourceTableColumnFail (error) {
     payload: {
       error
     }
-  }
-}
-
-export function loadSchema (sourceId, resolve) {
-  return {
-    type: LOAD_SCHEMA,
-    payload: {
-      sourceId,
-      resolve
-    }
-  }
-}
-
-export function schemaLoaded (schema) {
-  return {
-    type: LOAD_SCHEMA_SUCCESS,
-    payload: {
-      schema
-    }
-  }
-}
-
-export function loadSchemaFail () {
-  return {
-    type: LOAD_SCHEMA_FAILURE
   }
 }
 
