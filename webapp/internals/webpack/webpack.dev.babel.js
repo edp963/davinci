@@ -80,10 +80,7 @@ module.exports = require('./webpack.base.babel')({
     {
       loader: 'babel-loader',
       options: {
-        plugins: [
-          ['import', { libraryName: 'antd', style: true }],
-          'react-hot-loader/babel'
-        ]
+        plugins: ['react-hot-loader/babel']
       }
     },
     {
