@@ -8,7 +8,7 @@ import { QueryVariable } from '../../containers/Dashboard/Grid'
 import { Input, Select, TreeSelect, DatePicker } from 'antd'
 const Option = Select.Option
 import NumberRange from '../NumberRange'
-import MultiDatePicker from '../MultiDatePicker'
+const MultiDatePicker = React.lazy(() => import('../MultiDatePicker'))
 import DatePickerFormats, { DatePickerDefaultValues } from './datePickerFormats'
 const { WeekPicker, MonthPicker, RangePicker } = DatePicker
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
