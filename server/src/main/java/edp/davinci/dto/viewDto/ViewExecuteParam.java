@@ -55,8 +55,17 @@ public class ViewExecuteParam {
                 String column = order.getColumn().trim();
                 Matcher matcher = pattern.matcher(order.getColumn().trim());
                 if (!matcher.find()) {
-                    column = SqlUtils.getKeywordPrefix(jdbcUrl) + column + SqlUtils.getKeywordSuffix(jdbcUrl);
-                    order.setColumn(column);
+                    String prefix = SqlUtils.getKeywordPrefix(jdbcUrl);
+                    String suffix = SqlUtils.getKeywordSuffix(jdbcUrl);
+                    StringBuilder columnBuilder = new StringBuilder();
+                    if (!column.startsWith(prefix)) {
+                        columnBuilder.append(prefix);
+                    }
+                    columnBuilder.append(column);
+                    if (!column.endsWith(suffix)) {
+                        columnBuilder.append(suffix);
+                    }
+                    order.setColumn(columnBuilder.toString());
                 }
                 list.add(order);
             }

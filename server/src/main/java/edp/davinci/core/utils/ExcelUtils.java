@@ -349,7 +349,7 @@ public class ExcelUtils {
                         try {
                             Double d = Double.parseDouble(String.valueOf(obj));
 
-                            if (dataUnitMap.containsKey(queryColumn.getName())) {
+                            if (null != dataUnitMap && dataUnitMap.containsKey(queryColumn.getName())) {
                                 NumericUnitEnum numericUnitEnum = dataUnitMap.get(queryColumn.getName());
                                 //如果单位为"万"和"亿"，格式按照"k"和"M"，数据上除10计算渲染
                                 switch (numericUnitEnum) {
