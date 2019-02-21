@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { HashedModuleIdsPlugin } = require('webpack')
 const TerserPlugin = require('terser-webpack-plugin')
 const CompressionPlugin = require('compression-webpack-plugin')
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
 
 module.exports = require('./webpack.base.babel')({
   mode: 'production',
@@ -38,10 +39,7 @@ module.exports = require('./webpack.base.babel')({
     //   }
     // }
     {
-      loader: 'babel-loader',
-      options: {
-        plugins: [['import', { libraryName: 'antd', style: true }],]
-      }
+      loader: 'babel-loader'
     },
     {
       loader: 'ts-loader',
@@ -84,10 +82,11 @@ module.exports = require('./webpack.base.babel')({
       name: true,
       cacheGroups: {
         vendors: {
-          test: /[\\/]node_modules[\\/]/,
+          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker)(.[a-zA-Z0-9.\-_]+)[\\/]/,
+          // test: /[\\/]node_modules[\\/]/,
           name: 'vendor',
           chunks: 'all'
-        },
+        }
         // main: {
         //   chunks: 'all',
         //   minChunks: 2,
@@ -149,6 +148,19 @@ module.exports = require('./webpack.base.babel')({
       hashFunction: 'sha256',
       hashDigest: 'hex',
       hashDigestLength: 20
+    }),
+
+    new BundleAnalyzerPlugin({
+      analyzerMode: 'server',
+      analyzerHost: 'localhost',
+      analyzerPort: 5000,
+      reportFilename: 'report.html',
+      defaultSizes: 'parsed',
+      openAnalyzer: true,
+      generateStatsFile: true,
+      statsFilename: 'stats.json',
+      statsOptions: null,
+      logLevel: 'info'
     })
   ],
 

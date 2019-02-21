@@ -18,9 +18,8 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { Suspense } from 'react'
 
-import MultiDatePicker from '../../../components/MultiDatePicker'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { Form, Input, InputNumber, Select, DatePicker, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
@@ -30,6 +29,7 @@ const RangePicker = DatePicker.RangePicker
 import { KEY_COLUMN } from '../../../globalConstants'
 import { QueryVariable } from '../Grid'
 const styles = require('../Dashboard.less')
+const MultiDatePicker = React.lazy(() => import('../../../components/MultiDatePicker'))
 
 interface IDashboardItemControlFormProps {
   form: WrappedFormUtils
@@ -380,7 +380,9 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
     return (
       <Form className={styles.controlForm}>
         <Row gutter={10}>
-          {controlItems}
+          <Suspense fallback={null}>
+            {controlItems}
+          </Suspense>
         </Row>
         <Row className={styles.buttonRow}>
           <Col span={24}>

@@ -36,7 +36,8 @@ module.exports = require('./webpack.base.babel')({
       chunks: 'all',
       cacheGroups: {
         vendors: {
-          test: /[\\/]node_modules[\\/]/,
+          test: /[\\/]node_modules[\\/](?!antd|jquery|three|bootstrap-datepicker)(.[a-zA-Z0-9.\-_]+)[\\/]/,
+          // test: /[\\/]node_modules[\\/]/,
           name: 'vendor',
           chunks: 'all'
         }
@@ -80,10 +81,7 @@ module.exports = require('./webpack.base.babel')({
     {
       loader: 'babel-loader',
       options: {
-        plugins: [
-          ['import', { libraryName: 'antd', style: true }],
-          'react-hot-loader/babel'
-        ]
+        plugins: ['react-hot-loader/babel']
       }
     },
     {

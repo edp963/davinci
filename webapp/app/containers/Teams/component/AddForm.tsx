@@ -1,6 +1,6 @@
 import React from 'react'
 import classnames from 'classnames'
-import _ from 'lodash'
+import debounce from 'lodash/debounce'
 import { IOrganizationMembers } from '../../Organizations/Organization'
 import { Button, Form, Input, Icon } from 'antd'
 const FormItem = Form.Item
@@ -93,7 +93,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
   }
 
-  private change = _.debounce((e) => {
+  private change = debounce((e) => {
     const { category, inviteMemberList, currentOrganizationMembers, handleSearchMember } = this.props
 
     this.setState({

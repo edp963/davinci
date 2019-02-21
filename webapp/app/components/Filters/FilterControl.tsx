@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import {
   IFilterItem,
@@ -137,7 +137,11 @@ export class FilterControl extends React.PureComponent<IFilterControlProps, {}> 
 
   public render () {
     const { filter } = this.props
-    return this.renderControl(filter)
+    return (
+      <Suspense fallback={null}>
+        {this.renderControl(filter)}
+      </Suspense>
+    )
   }
 }
 
