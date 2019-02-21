@@ -86,11 +86,7 @@ GROUP BY <groups:{group|<if(keywordPrefix && keywordSuffix)><keywordPrefix><grou
 <endif>
 <endif>
 <if(orders)>
-<if(nativeQuery)>
-ORDER BY <orders:{order|<if(order)><if(keywordPrefix && keywordSuffix)>T.<keywordPrefix><order.column><keywordSuffix><else>T.<order.column><endif> <order.direction><endif>}; separator=",">
-<else>
-ORDER BY <orders:{order|<if(order)>T.<order.column> <order.direction><endif>}; separator=",">
-<endif>
+ORDER BY <orders:{order|<if(order)><order.column> <order.direction><endif>}; separator=", ">
 <endif>
 <endif>
 >>
@@ -102,7 +98,7 @@ queryDistinctSql(columns, params, sql, keywordPrefix, keywordSuffix)
 <if(keywordPrefix && keywordSuffix)>
 SELECT DISTINCT <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=","> FROM (<sql>) T
 <if(params)>
-WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|<keywordPrefix>T.<k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
+WHERE <params:{paramMap|<if(paramMap)><paramMap:{k|T.<keywordPrefix><k><keywordSuffix><paramMap.(k)>}><endif>}; separator=" AND ">
 <endif>
 ORDER BY <columns:{column|<if(column)>T.<keywordPrefix><column><keywordSuffix><endif>}; separator=",">
 <else>

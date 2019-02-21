@@ -730,7 +730,7 @@ public class TeamServiceImpl implements TeamService {
 
         if ((null == relUserOrg || relUserOrg.getRole() == UserOrgRoleEnum.MEMBER.getRole()) &&
                 (null == relUserTeam || relUserTeam.getRole() == UserTeamRoleEnum.MEMBER.getRole())) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to  add project to the team");
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to add project to the team");
         }
 
         Project project = projectMapper.getById(projectId);

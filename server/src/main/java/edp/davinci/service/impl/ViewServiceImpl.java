@@ -451,20 +451,17 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     if (null != querySqlList && querySqlList.size() > 0) {
                         Paginate<Map<String, Object>> paginate = null;
 
-//                        for (String sql : querySqlList) {
-//                            paginate = sqlUtils.query4Paginate(sql, executeSql.getPageNo(), executeSql.getPageSize(), executeSql.getLimit());
-//                        }
-//
-//                        if (null != paginate) {
-//                            executeSqlResult = new ExecuteSqlResult(sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1)), paginate);
-//                        }
-
-
-                        long l3 = System.currentTimeMillis();
-
                         for (String sql : querySqlList) {
-                            paginateWithQueryColumns = sqlUtils.query4PaginateWithQueryColumns(sql, executeSql.getLimit());
+                            paginate = sqlUtils.query4Paginate(sql, executeSql.getPageNo(), executeSql.getPageSize(), executeSql.getLimit());
                         }
+
+                        if (null != paginate) {
+                            executeSqlResult = new ExecuteSqlResult(sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1)), paginate);
+                        }
+
+//                        for (String sql : querySqlList) {
+//                            paginateWithQueryColumns = sqlUtils.query4PaginateWithQueryColumns(sql, executeSql.getLimit());
+//                        }
                     }
                 }
             }
@@ -473,9 +470,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-//        return resultMap.successAndRefreshToken(request).payload(executeSqlResult);
-        return resultMap.successAndRefreshToken(request).payload(paginateWithQueryColumns);
-
+        return resultMap.successAndRefreshToken(request).payload(executeSqlResult);
+//        return resultMap.successAndRefreshToken(request).payload(paginateWithQueryColumns);
     }
 
     /**
@@ -551,12 +547,11 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
                 if (executeParam.isNativeQuery()) {
                     st.add("aggregators", executeParam.getAggregators());
-                    st.add("orders", executeParam.getOrders());
                 } else {
                     st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                    st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
                 }
 
+                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
                 st.add("filters", executeParam.getFilters());
                 st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
                 st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));

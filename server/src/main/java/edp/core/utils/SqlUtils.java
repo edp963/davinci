@@ -157,13 +157,14 @@ public class SqlUtils {
                     Map<String, Object> map = new HashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
                         String key = metaData.getColumnName(i);
+                        Object value = sqlRowSet.getObject(key);
+                        map.put(key, value);
+
                         if (!columnMap.containsKey(key)) {
                             columnMap.put(key, i);
                             QueryColumn queryColumn = new QueryColumn(key, metaData.getColumnTypeName(i));
                             queryColumns.add(queryColumn);
                         }
-                        Object value = sqlRowSet.getObject(key);
-                        map.put(key, value);
                     }
                     resultList.add(map);
                     size++;
@@ -668,28 +669,28 @@ public class SqlUtils {
                         Object obj = map.get(queryColumn.getName());
                         switch (SqlColumnEnum.toJavaType(queryColumn.getType())) {
                             case "Short":
-                                pstmt.setShort(i, (Short) obj);
+                                pstmt.setShort(i, Short.parseShort(String.valueOf(obj).trim()));
                                 break;
                             case "Integer":
-                                pstmt.setInt(i, (Integer) obj);
+                                pstmt.setInt(i, Integer.parseInt(String.valueOf(obj).trim()));
                                 break;
                             case "Long":
-                                pstmt.setLong(i, (Long) obj);
+                                pstmt.setLong(i, Long.parseLong(String.valueOf(obj).trim()));
                                 break;
                             case "BigDecimal":
                                 pstmt.setBigDecimal(i, (BigDecimal) obj);
                                 break;
                             case "Float":
-                                pstmt.setFloat(i, (Float) obj);
+                                pstmt.setFloat(i, Float.parseFloat(String.valueOf(obj).trim()));
                                 break;
                             case "Double":
-                                pstmt.setDouble(i, (Double) obj);
+                                pstmt.setDouble(i, Double.parseDouble(String.valueOf(obj).trim()));
                                 break;
                             case "String":
                                 pstmt.setString(i, (String) obj);
                                 break;
                             case "Boolean":
-                                pstmt.setBoolean(i, (Boolean) obj);
+                                pstmt.setBoolean(i, Boolean.parseBoolean(String.valueOf(obj).trim()));
                                 break;
                             case "Bytes":
                                 pstmt.setBytes(i, (byte[]) obj);
@@ -875,7 +876,7 @@ class StreamingStatementCreator implements PreparedStatementCreator {
         final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
         switch (dataTypeEnum) {
             case ORACLE:
-                statement.setFetchSize(0xFFFF); //65535
+                statement.setFetchSize(0xFFFF);
                 break;
             default:
                 statement.setFetchSize(Integer.MIN_VALUE);
