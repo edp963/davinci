@@ -32,7 +32,7 @@ const utilStyles = require('../../../assets/less/util.less')
 import sqlFunctions from '../../../assets/sqlFunctionName/sqlFns'
 import 'codemirror/lib/codemirror.css'
 import '../../../assets/override/codemirror_theme.css'
-require('codemirror/mode/javascript/Javascript')
+require('codemirror/mode/javascript/javascript')
 import 'codemirror/addon/lint/lint.css'
 require('codemirror/addon/hint/javascript-hint')
 require('codemirror/addon/lint/json-lint')
