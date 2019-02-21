@@ -1,8 +1,8 @@
-import * as isEmpty from 'lodash/isEmpty'
-import * as isFunction from 'lodash/isFunction'
-import * as isString from 'lodash/isString'
-import * as invariant from 'invariant'
-import * as conformsTo from 'lodash/conformsTo'
+import isEmpty from 'lodash/isEmpty'
+import isFunction from 'lodash/isFunction'
+import isString from 'lodash/isString'
+import invariant from 'invariant'
+import conformsTo from 'lodash/conformsTo'
 
 import checkStore from './checkStore'
 import {

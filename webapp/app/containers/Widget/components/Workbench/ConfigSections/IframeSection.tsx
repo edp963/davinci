@@ -1,5 +1,5 @@
-import * as React from 'react'
-import * as debounce from 'lodash/debounce'
+import React from 'react'
+import debounce from 'lodash/debounce'
 import { Row, Col, Input } from 'antd'
 const styles = require('../Workbench.less')
 

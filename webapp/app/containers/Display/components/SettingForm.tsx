@@ -19,7 +19,7 @@
  */
 
 import React from 'react'
-import * as debounce from 'lodash/debounce'
+import debounce from 'lodash/debounce'
 import api from 'utils/api'
 
 import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Upload, Icon, Popover, Tooltip } from 'antd'
