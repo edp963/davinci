@@ -150,7 +150,7 @@ module.exports = options => ({
       }
     }),
     new webpack.ContextReplacementPlugin(/^\.\/locale$/, (context) => {
-      if (!/\/moment\//.test(context.context)) { return }
+      if (!/\/(.[a-zA-Z0-9.\-_@]+)moment\//.test(context.context)) { return }
       // context needs to be modified in place
       Object.assign(context, {
         // include only CJK
