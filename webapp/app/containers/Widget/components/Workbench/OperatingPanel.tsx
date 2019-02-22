@@ -1651,9 +1651,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
               <a>{selectedView ? selectedView.name : '选择一个View'}</a>
             </Dropdown>
-            <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
+            {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
               <Icon type="plus" />
-            </Dropdown>
+            </Dropdown> */}
           </div>
           <div className={styles.columnContainer}>
             <h4>分类型</h4>
