@@ -11,7 +11,7 @@ import FormatConfigModal, { IFieldFormatConfig, getDefaultFieldFormatConfig } fr
 import ColorSettingForm from './ColorSettingForm'
 import ActOnSettingForm from './ActOnSettingForm'
 import FilterSettingForm from './FilterSettingForm'
-import VariableConfigFormTwo from '../VariableConfigFormTwo'
+import VariableConfigForm from '../VariableConfigForm'
 import ComputedConfigForm from '../ComputedConfigForm'
 import ChartIndicator from './ChartIndicator'
 import AxisSection, { IAxisConfig } from './ConfigSections/AxisSection'
@@ -1399,7 +1399,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       title: '控制器名称',
       dataIndex: 'variables',
       key: 'variables',
-      render: (text, record) => record.variables.join(',')
+      render: (text, record) => {
+        return record.name
+        // return  record.variables.join(',')
+      }
     }, {
       title: '操作',
       key: 'action',
@@ -1791,7 +1794,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           footer={false}
           maskClosable={false}
         >
-          <VariableConfigFormTwo
+          <VariableConfigForm
             queryInfo={queryInfo}
             control={variableConfigControl}
             onSave={this.saveControl}

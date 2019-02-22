@@ -28,14 +28,17 @@ const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Widget.less')
 
 interface IVariableConfigTableProps {
-  form: any,
-  dataSource: any[],
-  variableSource: any[],
-  hasRelatedComponent: string,
-  onAddConfigValue: () => void,
-  onChangeConfigValueStatus: (id: any) => any,
-  onUpdateConfigValue: (id: any) => any,
+  form: any
+  dataSource: any[]
+  variableSource: any[]
+  hasRelatedComponent: boolean
+  chosenType: string
+  isMultiple: boolean
+  onAddConfigValue: () => void
+  onChangeConfigValueStatus: (id: any) => any
+  onUpdateConfigValue: (id: any) => any
   onDeleteConfigValue: (id: any) => any
+  onChangeRelatedComponent: (status: boolean) => any
 }
 
 interface IVariableConfigTableState {
@@ -52,6 +55,15 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
   private isRelationcCtrl = (e) => {
     this.setState({
       isRelationcCtrl: !this.state.isRelationcCtrl
+    }, () => {
+      this.props.onChangeRelatedComponent(this.state.isRelationcCtrl)
+    })
+  }
+
+  public componentWillMount () {
+    const { hasRelatedComponent } = this.props
+    this.setState({
+      isRelationcCtrl: hasRelatedComponent
     })
   }
 
@@ -61,6 +73,8 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
       dataSource,
       variableSource,
       hasRelatedComponent,
+      isMultiple,
+      chosenType,
       onAddConfigValue,
       onChangeConfigValueStatus,
       onUpdateConfigValue,
@@ -167,7 +181,7 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
         if (record.status) {
           return (
             <span className={styles.actions}>
-              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl}>
+              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl} disabled={!!record.status}>
                 <span className={`${this.state.isRelationcCtrl ? utilStyles.highlight : utilStyles.unSelected}`}>关联控件</span>
               </Checkbox>
               <a onClick={onChangeConfigValueStatus(record.id)}>修改</a>
@@ -177,7 +191,7 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
         } else {
           return (
             <span className={styles.actions}>
-              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl}>
+              <Checkbox onChange={this.isRelationcCtrl} checked={this.state.isRelationcCtrl} disabled={!!record.status}>
                 <span className={`${this.state.isRelationcCtrl ? utilStyles.highlight : utilStyles.unSelected}`}>关联控件</span>
               </Checkbox>
               <a onClick={onUpdateConfigValue(record.id)}>保存</a>
@@ -188,8 +202,7 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
       }
     }]
 
-    // if (hasRelatedComponent === 'yes') {
-    if (this.state.isRelationcCtrl) {
+    if (this.state.isRelationcCtrl === true) {
       columns.splice(3, 0, {
         title: '关联控件类别',
         dataIndex: 'variableType',
@@ -202,6 +215,10 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
             return (
               <FormItem className={styles.formItem}>
                 {getFieldDecorator(`${record.id}VariableType`, {
+                  rules: [{
+                    required: true,
+                    message: '关联控件类型不能为空'
+                  }],
                   initialValue: record.variableType
                 })(
                   <Select placeholder="未选择" allowClear>
@@ -214,7 +231,9 @@ export class VariableConfigTable extends React.Component<IVariableConfigTablePro
         }
       })
     }
-
+    if (chosenType === 'select' && isMultiple === true) {
+      columns.splice(2, 1)
+    }
     return (
       <Row className={styles.variableConfigTable}>
         <Col span={24} className={styles.addCol}>
