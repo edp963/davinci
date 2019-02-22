@@ -81,7 +81,8 @@ interface IOperatingPanelStates {
   mode: WidgetMode
   currentWidgetlibs: IChartInfo[]
   chartModeSelectedChart: IChartInfo
-  selectedTab: 'data' | 'style' | 'variable' | 'cache'
+  // selectedTab: 'data' | 'style' | 'variable' | 'cache'
+  selectedTab: 'data' | 'style' | 'setting'
   dataParams: IDataParams
   styleParams: IChartStyles
   pagination: IPaginationParams
@@ -147,8 +148,8 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
   private tabKeys = [
     { key: 'data', title: '数据' },
     { key: 'style', title: '样式' },
-    { key: 'variable', title: '变量' },
-    { key: 'cache', title: '缓存' }
+    // { key: 'variable', title: '变量' },
+    { key: 'setting', title: '配置' }
   ]
 
   private colorSettingForm = null
@@ -1395,10 +1396,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     })
 
     const queryConfigColumns = [{
-      title: '变量',
+      title: '控制器名称',
       dataIndex: 'variables',
       key: 'variables',
-      render: (text, record) => record.variables.join(',')
+      render: (text, record) => {
+        return record.name
+        // return  record.variables.join(',')
+      }
     }, {
       title: '操作',
       key: 'action',
@@ -1540,44 +1544,42 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           </div>
         )
         break
-      case 'variable':
-        if (queryInfo.length) {
-          tabPane = (
-            <div className={styles.paramsPane}>
-              <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                <Col
-                  span={24}
-                  className={styles.addVariable}
-                  onClick={this.showVariableConfigTable()}
-                >
-                  <Icon type="plus" /> 点击添加
-                </Col>
-              </Row>
-              <Table
-                dataSource={controls}
-                columns={queryConfigColumns}
-                rowKey="id"
-                pagination={false}
-              />
-            </div>
-          )
-        } else {
-          tabPane = (
-            <div className={styles.paramsPane}>
-              <div className={styles.paneBlock}>
-                <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-                  <Col span={24}>
-                    <h4>没有变量可以设置</h4>
-                  </Col>
-                </Row>
-              </div>
-            </div>
-          )
-        }
-        break
-      case 'cache':
+      case 'setting':
         tabPane = (
           <div className={styles.paramsPane}>
+            <div className={styles.paneBlock}>
+                <h4 className={styles.control}>控制器</h4>
+            </div>
+              {
+                  queryInfo.length ?
+                  <div className={styles.paramsPane}>
+                    <Row  type="flex" align="middle" className={styles.blockRow}>
+                      <Col
+                        span={24}
+                        className={styles.addVariable}
+                        onClick={this.showVariableConfigTable()}
+                      >
+                        <Icon type="plus" /> 点击添加
+                      </Col>
+                    </Row>
+                    <Table
+                      dataSource={controls}
+                      columns={queryConfigColumns}
+                      rowKey="id"
+                      pagination={false}
+                    />
+                    <div style={{height: '10px'}}/>
+                  </div> :
+                  <div className={styles.paramsPane}>
+                    <div className={styles.paneBlock}>
+                      <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
+                        <Col span={24}>
+                          <h4>没有变量可以设置</h4>
+                        </Col>
+                      </Row>
+                    </div>
+                  </div>
+              }
             <div className={styles.paneBlock}>
               <h4>开启缓存</h4>
               <div className={styles.blockBody}>
@@ -1641,8 +1643,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         categories.push(compute)
       }
     })
-    console.log({categories})
-    console.log({values})
 
     return (
       <div className={styles.operatingPanel}>
@@ -1651,9 +1651,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
             <Dropdown overlay={viewSelectMenu} trigger={['click']} placement="bottomLeft">
               <a>{selectedView ? selectedView.name : '选择一个View'}</a>
             </Dropdown>
-            {/* <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
+            <Dropdown overlay={coustomFieldSelectMenu} trigger={['click']} placement="bottomRight">
               <Icon type="plus" />
-            </Dropdown> */}
+            </Dropdown>
           </div>
           <div className={styles.columnContainer}>
             <h4>分类型</h4>
@@ -1786,7 +1786,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           />
         </Modal>
         <Modal
-          title="QUERY变量配置"
+          title="控制器配置"
           wrapClassName="ant-modal-large"
           visible={variableConfigModalVisible}
           onCancel={this.hideVariableConfigTable}
