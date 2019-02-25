@@ -1,0 +1,15 @@
+package edp.davinci.model;
+
+import edp.davinci.common.model.RecordInfo;
+import lombok.Data;
+
+@Data
+public class Role extends RecordInfo {
+    private Long id;
+
+    private Long orgId;
+
+    private String name;
+
+    private String description;
+}
