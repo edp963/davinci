@@ -158,7 +158,7 @@ module.exports = require('./webpack.base.babel')({
       defaultSizes: 'parsed',
       openAnalyzer: true,
       generateStatsFile: true,
-      statsFilename: 'stats.json',
+      statsFilename: '../stats.json',
       statsOptions: null,
       logLevel: 'info'
     })
