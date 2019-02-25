@@ -888,19 +888,21 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       allowFullScreen: !allowFullScreen
     })
   }
-  private currentWidgetInFullScreen = (id) => {
-    const {currentItems, currentItemsInfo, widgets, bizlogics} = this.props
+  private currentWidgetInFullScreen = (id: number) => {
+    const { currentItems, currentItemsInfo, widgets, bizlogics, onRenderDashboardItem } = this.props
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
     const model = JSON.parse(bizlogics.find((b) => b.id === widget.viewId).model)
-    const loading = currentItemsInfo[id].loading
+    const { rendered } = currentItemsInfo[id]
+    if (!rendered) {
+      onRenderDashboardItem(id)
+    }
     this.setState({
       currentDataInFullScreen: {
         itemId: id,
         widgetId: widget.id,
         widget,
         model,
-        loading,
         onGetChartData: this.getChartData
       }
     })

@@ -12,7 +12,6 @@ interface IFullScreenPanelProps {
   visible: boolean
   isVisible: (currentChartData?: any) => any
   currentDataInFullScreen: {
-    loading?: any
     renderType?: string
     widget?: any
     model?: IModel
@@ -130,7 +129,8 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
           {...widgetProps}
           data={itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []}
           model={currentDataInFullScreen.model}
-          renderType="rerender"
+          renderType={itemInfo.loading ? 'loading' : 'rerender'}
+          loading={itemInfo.loading}
         />
       )
     }
