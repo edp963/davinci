@@ -2,7 +2,7 @@
   "plugins": [
     ["import", {
       "libraryName": "antd",
-      "style": false // @TODO make it true when not import /dist/antd.less in app.tsx
+      "style": true
     }]
   ]
 }

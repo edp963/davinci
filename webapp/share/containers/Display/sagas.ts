@@ -51,8 +51,16 @@ export function* getDisplay (action) {
 
 export function* getData (action) {
   const { payload } = action
-  const { renderType, layerId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { renderType, layerId, dataToken, requestParams } = payload
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    ...rest
+  } = requestParams
 
   try {
     const response = yield call(request, {
@@ -61,7 +69,7 @@ export function* getData (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
     const { resultList } = response.payload

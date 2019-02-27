@@ -40,7 +40,6 @@ moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
 import 'file-loader?name=[name].[ext]!./.htaccess'
-import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
 import '../libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'

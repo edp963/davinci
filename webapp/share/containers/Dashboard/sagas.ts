@@ -81,7 +81,8 @@ export function* getResultset (action) {
     linkageVariables,
     globalVariables,
     pagination,
-    ...rest } = requestParams
+    ...rest
+  } = requestParams
   const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
