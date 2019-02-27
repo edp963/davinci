@@ -43,7 +43,6 @@ import { translationMessages } from '../app/i18n'
 
 import createRoutes from './routes'
 
-import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
 import '../libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'

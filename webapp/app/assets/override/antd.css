@@ -176,11 +176,11 @@
   margin: 0 4px;
 }
 
-/* 缩小默认行高 */
-.ant-table-thead > tr > th,
+/* 缩小默认行高（override variable） */
+/* .ant-table-thead > tr > th,
 .ant-table-tbody > tr > td {
   padding: 10px 8px;
-}
+} */
 
 /* 调整空列表与 BoxBody 下方间距 */
 .ant-table-empty {
