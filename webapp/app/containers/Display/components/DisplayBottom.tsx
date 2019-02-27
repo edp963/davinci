@@ -12,7 +12,7 @@ interface IDisplayBottomProps {
   onSliderChange: (val: number) => void
 }
 
-export const DisplayBottom: React.SFC<IDisplayBottomProps> = (props) => {
+export const DisplayBottom: React.FunctionComponent<IDisplayBottomProps> = (props) => {
   const {
     scale,
     onZoomIn,
@@ -34,7 +34,5 @@ export const DisplayBottom: React.SFC<IDisplayBottomProps> = (props) => {
     </div>
   )
 }
-
-DisplayBottom.displayName = 'DisplayBottom'
 
 export default DisplayBottom
