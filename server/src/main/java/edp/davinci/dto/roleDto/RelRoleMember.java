@@ -17,36 +17,29 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.davinci.dto.roleDto;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.druid.util.StringUtils;
+import edp.davinci.dto.userDto.UserBaseInfo;
+import edp.davinci.model.User;
 import lombok.Data;
 
-import java.util.Date;
-
 @Data
-public class RecordInfo {
+public class RelRoleMember {
+    private Long id;
 
-    @JSONField(serialize = false)
-    Long createBy;
+    private UserBaseInfo user;
 
-    @JSONField(serialize = false)
-    Date createTime;
 
-    @JSONField(serialize = false)
-    Long updateBy;
-
-    @JSONField(serialize = false)
-    Date updateTime;
-
-    public void createBy(Long userId) {
-        this.createBy = userId;
-        this.createTime = new Date();
+    public RelRoleMember(Long id, User user) {
+        this.id = id;
+        UserBaseInfo userBaseInfo = new UserBaseInfo();
+        userBaseInfo.setId(user.getId());
+        userBaseInfo.setAvatar(user.getAvatar());
+        userBaseInfo.setUsername(StringUtils.isEmpty(user.getName()) ? user.getUsername() : user.getName());
+        this.user = userBaseInfo;
     }
 
-
-    public void updateBy(Long userId) {
-        this.updateBy = userId;
-        this.updateTime = new Date();
+    public RelRoleMember() {
     }
 }

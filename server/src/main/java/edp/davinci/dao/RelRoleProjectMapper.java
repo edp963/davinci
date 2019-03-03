@@ -11,7 +11,12 @@ public interface RelRoleProjectMapper {
     int insert(RelRoleProject record);
 
     @Delete({
-            "delete from rel_role_project where project_id = #{iprojectIdd}"
+            "delete from rel_role_project where id = #{relationId}"
+    })
+    int deleteById(@Param("relationId") Long relationId);
+
+    @Delete({
+            "delete from rel_role_project where project_id = #{projectId}"
     })
     int deleteByProjectId(@Param("projectId") Long projectId);
 
@@ -19,7 +24,7 @@ public interface RelRoleProjectMapper {
     @Select({
             "select * from rel_role_project where id = #{id,jdbcType=BIGINT}"
     })
-    RelRoleProject selectById(Long id);
+    RelRoleProject getById(Long id);
 
     @Update({
             "update rel_role_project",
@@ -36,5 +41,11 @@ public interface RelRoleProjectMapper {
             "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
-    int updateById(RelRoleProject record);
+    int update(RelRoleProject record);
+
+    @Select({
+            "select * from rel_role_project where role_id = #{roleId} and project_id = #{projectId}"
+    })
+    RelRoleProject getByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
+
 }

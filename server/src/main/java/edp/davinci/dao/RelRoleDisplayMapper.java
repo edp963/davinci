@@ -17,7 +17,7 @@ public interface RelRoleDisplayMapper {
     @Select({
             "select * from rel_role_display where id = #{id,jdbcType=BIGINT}"
     })
-    RelRoleDisplay selectById(Long id);
+    RelRoleDisplay getById(Long id);
 
 
     @Update({

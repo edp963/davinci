@@ -53,10 +53,10 @@ public class SwaggerConfiguration {
 
 
         return new Docket(DocumentationType.SWAGGER_2)
-                .globalResponseMessage(RequestMethod.GET,responseMessageList)
-                .globalResponseMessage(RequestMethod.POST,responseMessageList)
-                .globalResponseMessage(RequestMethod.PUT,responseMessageList)
-                .globalResponseMessage(RequestMethod.DELETE,responseMessageList)
+                .globalResponseMessage(RequestMethod.GET, responseMessageList)
+                .globalResponseMessage(RequestMethod.POST, responseMessageList)
+                .globalResponseMessage(RequestMethod.PUT, responseMessageList)
+                .globalResponseMessage(RequestMethod.DELETE, responseMessageList)
 
                 .apiInfo(apiInfo())
                 .select()

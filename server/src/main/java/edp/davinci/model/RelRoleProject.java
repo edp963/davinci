@@ -19,4 +19,29 @@ public class RelRoleProject extends RecordInfo {
 
     private Boolean sharePermission = false;
     private Boolean downloadPermission = false;
+
+
+    public RelRoleProject(Long projectId, Long roleId) {
+        this.projectId = projectId;
+        this.roleId = roleId;
+    }
+
+    public RelRoleProject() {
+    }
+
+    @Override
+    public String toString() {
+        return "RelRoleProject{" +
+                "id=" + id +
+                ", projectId=" + projectId +
+                ", roleId=" + roleId +
+                ", sourcePermission=" + sourcePermission +
+                ", viewPermission=" + viewPermission +
+                ", widgetPermission=" + widgetPermission +
+                ", vizPermission=" + vizPermission +
+                ", schedulePermission=" + schedulePermission +
+                ", sharePermission=" + sharePermission +
+                ", downloadPermission=" + downloadPermission +
+                '}';
+    }
 }

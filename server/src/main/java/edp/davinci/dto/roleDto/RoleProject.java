@@ -17,36 +17,22 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.davinci.dto.roleDto;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson.annotation.JSONType;
+import edp.davinci.model.Project;
+import edp.davinci.model.RelRoleProject;
 import lombok.Data;
 
-import java.util.Date;
-
 @Data
-public class RecordInfo {
+@JSONType(ignores = {"projectId", "roleId"})
+public class RoleProject extends RelRoleProject {
+    private Project project;
 
-    @JSONField(serialize = false)
-    Long createBy;
-
-    @JSONField(serialize = false)
-    Date createTime;
-
-    @JSONField(serialize = false)
-    Long updateBy;
-
-    @JSONField(serialize = false)
-    Date updateTime;
-
-    public void createBy(Long userId) {
-        this.createBy = userId;
-        this.createTime = new Date();
+    public RoleProject(Project project) {
+        this.project = project;
     }
 
-
-    public void updateBy(Long userId) {
-        this.updateBy = userId;
-        this.updateTime = new Date();
+    public RoleProject() {
     }
 }

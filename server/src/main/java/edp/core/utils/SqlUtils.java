@@ -28,6 +28,7 @@ import edp.core.enums.TypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.*;
+import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.JSQLParserException;
@@ -37,6 +38,8 @@ import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
 import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachePut;
@@ -61,6 +64,8 @@ import java.util.regex.Pattern;
 @Component
 @Scope("prototype")
 public class SqlUtils {
+
+    private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
@@ -102,7 +107,7 @@ public class SqlUtils {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
-            log.info("execute sql >>>> {}", sql);
+            sqlLogger.info("{}", sql);
         }
         try {
             jdbcTemplate().execute(sql);
@@ -118,7 +123,7 @@ public class SqlUtils {
         checkSensitiveSql(sql);
         List<Map<String, Object>> list = null;
         if (isQueryLogEnable) {
-            log.info("query sql >>>> {}", sql);
+            sqlLogger.info("{}", sql);
         }
         try {
             JdbcTemplate jdbcTemplate = jdbcTemplate();
@@ -136,7 +141,7 @@ public class SqlUtils {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
-            log.info("query sql >>>> {}", sql);
+            sqlLogger.info("{}", sql);
         }
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
         try {
@@ -189,7 +194,7 @@ public class SqlUtils {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
-            log.info("query sql >>>> {}", sql);
+            sqlLogger.info("{}", sql);
         }
 
         final Paginate<Map<String, Object>> paginate = new Paginate<>();

@@ -17,36 +17,23 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.davinci.dto.roleDto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
-import java.util.Date;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
-public class RecordInfo {
+@NotNull(message = "role info cannot be null")
+public class RoleCreate {
 
-    @JSONField(serialize = false)
-    Long createBy;
+    @NotBlank(message = "role name cannot be empty")
+    private String name;
 
-    @JSONField(serialize = false)
-    Date createTime;
+    private String description;
 
-    @JSONField(serialize = false)
-    Long updateBy;
-
-    @JSONField(serialize = false)
-    Date updateTime;
-
-    public void createBy(Long userId) {
-        this.createBy = userId;
-        this.createTime = new Date();
-    }
-
-
-    public void updateBy(Long userId) {
-        this.updateBy = userId;
-        this.updateTime = new Date();
-    }
+    @Min(value = 1L, message = "Invalid orgId")
+    private Long orgId;
 }

@@ -17,36 +17,19 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.davinci.core.enums;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import lombok.Data;
+public enum LogNameEnum {
+    BUSINESS_SQL("BUSINESS_SQL"),
+    BUSINESS_OPERATION("BUSINESS_OPERATION");
 
-import java.util.Date;
+    private String name;
 
-@Data
-public class RecordInfo {
-
-    @JSONField(serialize = false)
-    Long createBy;
-
-    @JSONField(serialize = false)
-    Date createTime;
-
-    @JSONField(serialize = false)
-    Long updateBy;
-
-    @JSONField(serialize = false)
-    Date updateTime;
-
-    public void createBy(Long userId) {
-        this.createBy = userId;
-        this.createTime = new Date();
+    LogNameEnum(String name) {
+        this.name = name;
     }
 
-
-    public void updateBy(Long userId) {
-        this.updateBy = userId;
-        this.updateTime = new Date();
+    public String getName() {
+        return name;
     }
 }

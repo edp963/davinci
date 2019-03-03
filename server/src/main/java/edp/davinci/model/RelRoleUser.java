@@ -10,4 +10,21 @@ public class RelRoleUser extends RecordInfo {
     private Long userId;
 
     private Long roleId;
+
+    public RelRoleUser(Long userId, Long roleId) {
+        this.userId = userId;
+        this.roleId = roleId;
+    }
+
+    public RelRoleUser() {
+    }
+
+    @Override
+    public String toString() {
+        return "RelRoleUser{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", roleId=" + roleId +
+                '}';
+    }
 }

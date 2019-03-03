@@ -12,4 +12,14 @@ public class Role extends RecordInfo {
     private String name;
 
     private String description;
+
+    @Override
+    public String toString() {
+        return "Role{" +
+                "id=" + id +
+                ", orgId=" + orgId +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

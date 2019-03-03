@@ -19,7 +19,7 @@ public interface DownloadRecordMapper {
     @Select({
             "select * from download_record where id = #{id,jdbcType=BIGINT}"
     })
-    DownloadRecord selectById(Long id);
+    DownloadRecord getById(Long id);
 
 
     @Select({

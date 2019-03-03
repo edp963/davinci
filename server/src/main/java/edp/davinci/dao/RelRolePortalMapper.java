@@ -19,7 +19,7 @@ public interface RelRolePortalMapper {
     @Select({
             "select * from rel_role_portal where id = #{id,jdbcType=BIGINT}"
     })
-    RelRolePortal selectById(Long id);
+    RelRolePortal getById(Long id);
 
 
     @Update({

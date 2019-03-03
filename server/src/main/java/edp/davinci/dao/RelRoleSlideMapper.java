@@ -17,7 +17,7 @@ public interface RelRoleSlideMapper {
     @Select({
             "select * from rel_role_slide where id = #{id,jdbcType=BIGINT}"
     })
-    RelRoleSlide selectById(Long id);
+    RelRoleSlide getById(Long id);
 
 
     @Update({

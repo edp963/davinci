@@ -4,7 +4,7 @@
 
     <insert id="insert" parameterType="edp.davinci.model.RelRoleProject">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
-            SELECT LAST_INSERT_ID() AS id
+            SELECT id from rel_role_project where `role_id` = #{roleId} and `project_id` = #{projectId}
         </selectKey>
         insert ignore rel_role_project
         <trim prefix="(" suffix=")" suffixOverrides=",">

@@ -17,36 +17,13 @@
  *
  */
 
-package edp.davinci.common.model;
+package edp.davinci.dto.roleDto;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import edp.davinci.model.Organization;
+import edp.davinci.model.Role;
 import lombok.Data;
 
-import java.util.Date;
-
 @Data
-public class RecordInfo {
-
-    @JSONField(serialize = false)
-    Long createBy;
-
-    @JSONField(serialize = false)
-    Date createTime;
-
-    @JSONField(serialize = false)
-    Long updateBy;
-
-    @JSONField(serialize = false)
-    Date updateTime;
-
-    public void createBy(Long userId) {
-        this.createBy = userId;
-        this.createTime = new Date();
-    }
-
-
-    public void updateBy(Long userId) {
-        this.updateBy = userId;
-        this.updateTime = new Date();
-    }
+public class RoleWithOrganization extends Role {
+    private Organization organization;
 }

@@ -2,6 +2,9 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="edp.davinci.dao.RelRoleUserMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelRoleUser">
+        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
+            SELECT id from rel_role_user where role_id = #{roleId} and user_id = #{userId}
+        </selectKey>
         insert ignore rel_role_user
         <trim prefix="(" suffix=")" suffixOverrides=",">
             user_id,
