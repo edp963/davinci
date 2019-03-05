@@ -147,33 +147,37 @@
 
     <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
         SELECT
-            p.*,
-            IF(s.id is NULL, FALSE, TRUE) as 'isStar',
-            u.id as 'createBy.id',
-            IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',
-            u.avatar as 'createBy.avatar'
-        FROM project p
-        left join `user` u on u.id = p.user_id
-        left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
-        left join (
-           SELECT org.id, ruo.role, org.member_permission
-           FROM rel_user_organization ruo
-           LEFT JOIN organization org on ruo.org_id = org.id
-           WHERE ruo.user_id = #{userId}
-        ) o on o.id = p.org_id
-        WHERE p.id IN (
-           SELECT id  FROM project WHERE user_id = #{userId}
-           UNION
-           SELECT p.id
-           FROM project p
-               LEFT JOIN rel_team_project rtp on rtp.project_id = p.id
-               LEFT JOIN team t ON t.id = rtp.team_id
-               LEFT JOIN rel_user_team rut ON rut.team_id = t.id
-           WHERE rut.user_id = #{userId}
-        )
-        or (p.visibility = 1 and o.member_permission > 0)
-        or o.role > 0
-        order by p.id asc
+          p.*,
+          IF(s.id is NULL, FALSE, TRUE) as 'isStar',
+          u.id as 'createBy.id',
+          IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',
+          u.avatar as 'createBy.avatar'
+        from project p
+               left join `user` u on u.id = p.user_id
+               left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        where p.id in (
+
+          select p.id
+          from project p
+          where p.user_id = #{userId}
+
+          union all
+
+          select p.id
+          from project p
+                 left join rel_user_organization ruo on ruo.org_id = p.org_id
+                 left join organization o on o.id = p.org_id
+          where ruo.user_id = #{userId}
+            and (ruo.role > 0 or (p.visibility = 1 and o.member_permission > 0))
+
+          union all
+
+          select p.id
+          from project p
+                 left join rel_team_project rtp on rtp.project_id = p.id
+                 left join rel_user_team rru on rru.team_id = rtp.team_id
+          where rru.user_id = #{userId}
+        );
     </select>
 
 
