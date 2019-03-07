@@ -28,7 +28,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
-import edp.davinci.dto.projectDto.ProjectWithOrganization;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.teamDto.*;
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.dto.userDto.UserWithTeamId;
@@ -818,8 +818,8 @@ public class TeamServiceImpl implements TeamService {
     public ResultMap getTeamsByProject(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
-        if (null == projectWithOrganization) {
+        ProjectDetail projectDetail = projectMapper.getProjectDetail(projectId);
+        if (null == projectDetail) {
             return resultMap.successAndRefreshToken(request).payloads(null);
         }
 
@@ -830,7 +830,7 @@ public class TeamServiceImpl implements TeamService {
 
         List<TeamWithMembers> structuredList = new ArrayList<>();
         if (rootIds.size() > 0) {
-            List<TeamBaseInfoWithParent> list = teamMapper.getTeamsByOrgId(projectWithOrganization.getOrgId());
+            List<TeamBaseInfoWithParent> list = teamMapper.getTeamsByOrgId(projectDetail.getOrgId());
             Map<Long, List<TeamWithMembers>> childMap = getChildMap(list, rootIds);
             structuredList = getChildsByMap(childMap, null);
         }

@@ -32,7 +32,7 @@ import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.dashboardDto.PortalWithProject;
-import edp.davinci.dto.projectDto.ProjectWithOrganization;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardPortalService;
 import lombok.extern.slf4j.Slf4j;
@@ -87,25 +87,25 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
     public ResultMap getDashboardPortals(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
+        ProjectDetail projectDetail = projectMapper.getProjectDetail(projectId);
 
-        if (null == projectWithOrganization) {
-            log.info("project {} not found", projectWithOrganization);
+        if (null == projectDetail) {
+            log.info("project {} not found", projectDetail);
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowRead(projectWithOrganization, user)) {
+        if (!allowRead(projectDetail, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
         List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId, user.getId());
 
         if (null != dashboardPortals && dashboardPortals.size() > 0) {
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
-            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+            if (!isProjectAdmin(projectDetail, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
                 if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+                    Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectDetail.getOrgId(), user.getId());
                     if (teamNumOfOrgByUser > 0) {
                         short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(projectId, user.getId());
                         if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
@@ -120,7 +120,7 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
                             }
                         }
                     } else {
-                        Organization organization = projectWithOrganization.getOrganization();
+                        Organization organization = projectDetail.getOrganization();
                         if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
                             dashboardPortals = null;
                         }

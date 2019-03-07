@@ -1,21 +1,25 @@
 package edp.davinci.dao;
 
+import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.dto.roleDto.RoleWithOrganization;
 import edp.davinci.model.Role;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 public interface RoleMapper {
     int insert(Role record);
 
     @Delete({
-            "delete from role where id = #{id,jdbcType=BIGINT}"
+            "delete from `role` where id = #{id,jdbcType=BIGINT}"
     })
     int deleteById(Long id);
 
     @Select({
-            "select * from role where id = #{id,jdbcType=BIGINT}"
+            "select * from `role` where id = #{id,jdbcType=BIGINT}"
     })
     Role getById(Long id);
 
@@ -36,13 +40,13 @@ public interface RoleMapper {
             "    o.`create_by` AS 'organization.createBy',",
             "    o.`update_time` AS 'organization.updateTime',",
             "    o.`update_by` AS 'organization.updateBy'",
-            "from role r left join organization o on o.id = r.org_id",
+            "from `role` r left join organization o on o.id = r.org_id",
             "where r.id = #{id,jdbcType=BIGINT}"
     })
     RoleWithOrganization getRoleWithOrganizationById(Long id);
 
     @Update({
-            "update role",
+            "update `role`",
             "set org_id = #{orgId,jdbcType=BIGINT},",
             "name = #{name,jdbcType=VARCHAR},",
             "description = #{description,jdbcType=VARCHAR},",
@@ -53,4 +57,22 @@ public interface RoleMapper {
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Role record);
+
+
+    @Select({
+            "select id, `name`, description  from `role` where org_id = #{orgId}"
+    })
+    List<RoleBaseInfo> getBaseInfoByOrgId(Long orgId);
+
+
+    List<Role> selectByIdsAndOrgId(@Param("orgId") Long orgId, @Param("roleIds") List<Long> roleIds);
+
+
+    @Select({
+            "select r.id, r.`name`, r.description ",
+            "from `role` r",
+            "   left join rel_role_project rrp on rrp.role_id = r.id ",
+            "where rrp.project_id = #{projectId}",
+    })
+    List<RoleBaseInfo> getBaseInfoByProjectId(Long projectId);
 }

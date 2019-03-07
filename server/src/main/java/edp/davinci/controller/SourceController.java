@@ -264,9 +264,9 @@ public class SourceController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "upload csv file")
+    @ApiOperation(value = "upload csv/excel file")
     @PostMapping("{id}/upload{type}")
-    public ResponseEntity uploadCsv(@PathVariable Long id,
+    public ResponseEntity uploadData(@PathVariable Long id,
                                     @PathVariable String type,
                                     @Valid @ModelAttribute(value = "sourceDataUpload") SourceDataUpload sourceDataUpload,
                                     @ApiIgnore BindingResult bindingResult,

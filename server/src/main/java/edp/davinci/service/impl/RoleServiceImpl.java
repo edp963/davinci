@@ -23,10 +23,12 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.enums.LogNameEnum;
+import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.roleDto.*;
 import edp.davinci.model.*;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.RoleService;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -34,8 +36,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -65,6 +72,10 @@ public class RoleServiceImpl implements RoleService {
     @Autowired
     private RelRoleProjectMapper relRoleProjectMapper;
 
+    @Autowired
+    private ProjectService projectService;
+
+
     /**
      * 新建Role
      *
@@ -73,6 +84,7 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     @Override
+    @Transactional
     public Role createRole(RoleCreate roleCreate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         Organization organization = organizationMapper.getById(roleCreate.getOrgId());
         if (null == organization) {
@@ -81,7 +93,7 @@ public class RoleServiceImpl implements RoleService {
         }
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == rel) {
+        if (null == rel && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
             log.info("user(:{}) have not permission to create role in organization (:{})", user.getId(), organization.getId());
             throw new UnAuthorizedExecption("you have not permission");
         }
@@ -108,11 +120,12 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     @Override
+    @Transactional
     public boolean deleteRole(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         Role role = null;
         try {
-            role = getRole(id, user);
+            role = getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -139,11 +152,12 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     @Override
+    @Transactional
     public boolean updateRole(Long id, RoleUpdate roleUpdate, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
         Role role = null;
         try {
-            role = getRole(id, user);
+            role = getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -179,7 +193,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     public Role getRoleInfo(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        return getRole(id, user);
+        return getRole(id, user, false);
     }
 
 
@@ -187,7 +201,7 @@ public class RoleServiceImpl implements RoleService {
      * 添加Role与User关联
      *
      * @param id
-     * @param memberId
+     * @param memberIds
      * @param user
      * @return
      * @throws ServerException
@@ -195,10 +209,11 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
-    public RelRoleMember addMember(Long id, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    @Transactional
+    public List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         Role role = null;
         try {
-            role = getRole(id, user);
+            role = getRole(id, user, false);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -206,28 +221,40 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("you have not permission");
         }
 
-        User member = userMapper.getById(memberId);
-        if (null == member) {
-            log.info("user ( :{} ) is not found", memberId);
-            throw new NotFoundException("member is not found");
+        List<User> members = userMapper.getByIds(memberIds);
+        if (null == members || members.size() == 0) {
+            log.info("user ( :{} ) is not found", memberIds);
+            throw new NotFoundException("members is not found");
         }
 
-        RelRoleUser rel = relRoleUserMapper.getByRoleAndMember(id, memberId);
-        if (null != rel) {
-            log.warn("RelRoleUser (role:{}, member:{}) is already exist", id, memberId);
-            throw new ServerException("Already exist");
+        List<Long> users = relRoleUserMapper.getUserIdsByIdAndMembers(id, members.stream().map(u -> u.getId()).collect(Collectors.toList()));
+
+        if (null != users && users.size() == members.size()) {
+            log.info("user ( :{} ) is not found", memberIds);
+            throw new ServerException("members is already exist");
         }
 
-        RelRoleUser relRoleUser = new RelRoleUser(memberId, role.getId());
-        relRoleUser.createBy(user.getId());
-        relRoleUserMapper.insert(relRoleUser);
-        if (null != relRoleUser.getId() && relRoleUser.getId().longValue() > 0L) {
-            optLogger.info("create relRoleUser ( {} ) update by user( :{} )", relRoleUser.toString(), user.getId());
-            return new RelRoleMember(relRoleUser.getId(), member);
+        List<RelRoleUser> relRoleUsers = new ArrayList<>();
+        members.forEach(m -> {
+            if (!users.contains(m.getId())) {
+                RelRoleUser relRoleUser = new RelRoleUser(m.getId(), id);
+                relRoleUser.createBy(user.getId());
+                relRoleUsers.add(relRoleUser);
+            }
+        });
+
+        int i = relRoleUserMapper.insertBatch(relRoleUsers);
+        if (i > 0) {
+            Map<Long, User> map = new HashMap<>();
+            members.forEach(m -> {
+                map.put(m.getId(), m);
+            });
+            return relRoleUsers.stream().map(r -> new RelRoleMember(r.getId(), map.get(r.getUserId()))).collect(Collectors.toList());
         } else {
-            log.error("add role member fail: (role:{}, memeber:{})", id, memberId);
+            log.error("add role member fail: (role:{}, memebers:{})", id, memberIds.toString());
             throw new ServerException("unspecified error");
         }
+
     }
 
 
@@ -242,6 +269,7 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
+    @Transactional
     public boolean deleteMember(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         RelRoleUser relRoleUser = relRoleUserMapper.getById(relationId);
 
@@ -252,7 +280,7 @@ public class RoleServiceImpl implements RoleService {
 
         Role role = null;
         try {
-            role = getRole(relRoleUser.getRoleId(), user);
+            role = getRole(relRoleUser.getRoleId(), user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -274,6 +302,38 @@ public class RoleServiceImpl implements RoleService {
         }
     }
 
+
+    @Override
+    @Transactional
+    public List<RelRoleMember> updateMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+
+        getRole(id, user, true);
+
+        List<User> users = userMapper.getByIds(memberIds);
+        if (null == users || users.size() == 0) {
+            throw new ServerException("members are not found");
+        }
+
+        List<Long> userIds = users.stream().map(u -> u.getId()).collect(Collectors.toList());
+
+        List<Long> members = relRoleUserMapper.getUserIdsByRoleId(id);
+
+        List<Long> deleteIds = members.stream().filter(mId -> !userIds.contains(mId)).collect(Collectors.toList());
+
+        List<RelRoleUser> collect = userIds.stream().map(uId -> new RelRoleUser(uId, id)).collect(Collectors.toList());
+
+        Object lock = new Object();
+        synchronized (lock) {
+            if (null != deleteIds && deleteIds.size() > 0) {
+                relRoleUserMapper.deleteByRoleIdAndMemberIds(id, deleteIds);
+            }
+            relRoleUserMapper.insertBatch(collect);
+        }
+        lock = null;
+        optLogger.info("replace role(:{}) member by user(:{})", id, user.getId());
+        return relRoleUserMapper.getMembersByRoleId(id);
+    }
+
     /**
      * 获取单条Role所关联的Users
      *
@@ -288,7 +348,7 @@ public class RoleServiceImpl implements RoleService {
     public List<RelRoleMember> getMembers(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         Role role = null;
         try {
-            role = getRole(id, user);
+            role = getRole(id, user, false);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -312,10 +372,11 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
+    @Transactional
     public RoleProject addProject(Long id, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         Role role = null;
         try {
-            role = getRole(id, user);
+            role = getRole(id, user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -361,6 +422,7 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
+    @Transactional
     public boolean deleteProject(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         RelRoleProject relRoleProject = relRoleProjectMapper.getById(relationId);
 
@@ -371,7 +433,7 @@ public class RoleServiceImpl implements RoleService {
 
         Role role = null;
         try {
-            role = getRole(relRoleProject.getRoleId(), user);
+            role = getRole(relRoleProject.getRoleId(), user, true);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -402,6 +464,7 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
+    @Transactional
     public boolean updateProjectRole(Long relationId, RelRoleProjectDto projectRoleDto, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         RelRoleProject relRoleProject = relRoleProjectMapper.getById(relationId);
         if (null == relRoleProject) {
@@ -413,7 +476,7 @@ public class RoleServiceImpl implements RoleService {
 
         Role role = null;
         try {
-            role = getRole(relRoleProject.getRoleId(), user);
+            role = getRole(relRoleProject.getRoleId(), user, false);
         } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
@@ -421,8 +484,8 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("you have not permission");
         }
 
-        //TODO project admin权限校验
-
+        //校验Project Admin权限
+        projectService.getProjectDetail(relRoleProject.getProjectId(), user, true);
 
         BeanUtils.copyProperties(projectRoleDto, relRoleProject);
 
@@ -470,7 +533,51 @@ public class RoleServiceImpl implements RoleService {
 
     }
 
-    private Role getRole(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+    /**
+     * 获取单个Organization里的Role列表
+     *
+     * @param orgId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    public List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        Organization organization = organizationMapper.getById(orgId);
+        if (null == organization) {
+            log.info("orgainzation (:{}) is not found", orgId);
+            throw new NotFoundException("organization is not found");
+        }
+
+        RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
+        if (null == rel) {
+            log.info("user(:{}) have not permission to create role in organization (:{})", user.getId(), organization.getId());
+            throw new UnAuthorizedExecption("you have not permission");
+        }
+
+        return roleMapper.getBaseInfoByOrgId(orgId);
+    }
+
+
+    /**
+     * 获取单个关联的Role列表
+     *
+     * @param projectId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    @Override
+    public List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        projectService.getProjectDetail(projectId, user, false);
+        return roleMapper.getBaseInfoByProjectId(projectId);
+    }
+
+    private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
         Role role = roleMapper.getById(id);
         if (null == role) {
             log.warn("role (:{}) is not found", id);
@@ -479,8 +586,13 @@ public class RoleServiceImpl implements RoleService {
 
         RelUserOrganization rel = relUserOrganizationMapper.getRel(user.getId(), role.getOrgId());
         if (null == rel) {
-            throw new UnAuthorizedExecption("you have not permission");
+            throw new NotFoundException("role is not found");
         }
+
+        if (true == moidfy && !rel.getRole().equals(UserOrgRoleEnum.OWNER.getRole())) {
+            throw new NotFoundException("role is not found");
+        }
+
         return role;
     }
 

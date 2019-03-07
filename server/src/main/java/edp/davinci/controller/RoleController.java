@@ -42,6 +42,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Arrays;
 import java.util.List;
 
 @Api(value = "/roles", tags = "roles", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -165,15 +166,15 @@ public class RoleController extends BaseController {
      * 添加Role与User关联
      *
      * @param id
-     * @param memberId
+     * @param memberIds
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "add relation between a role and a member")
-    @PostMapping("/{id}/member/{memberId}")
+    @ApiOperation(value = "add relation between a role and members")
+    @PostMapping(value = "/{id}/members", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity addMember(@PathVariable Long id,
-                                    @PathVariable Long memberId,
+                                    @RequestBody Long[] memberIds,
                                     @ApiIgnore @CurrentUser User user,
                                     HttpServletRequest request) {
         if (invalidId(id)) {
@@ -181,13 +182,8 @@ public class RoleController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(memberId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid member id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        RelRoleMember relRoleMember = roleService.addMember(id, memberId, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(relRoleMember));
+        List<RelRoleMember> relRoleMembers = roleService.addMembers(id, Arrays.asList(memberIds), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(relRoleMembers));
     }
 
 
@@ -211,6 +207,36 @@ public class RoleController extends BaseController {
 
         roleService.deleteMember(relationId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
+
+
+    /**
+     * 更新rele 和 member关联
+     *
+     * @param id
+     * @param memberIds
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "update role member relations")
+    @PutMapping(value = "/{id}/members", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity updateMembers(@PathVariable Long id,
+                                        @RequestBody Long[] memberIds,
+                                        @ApiIgnore @CurrentUser User user,
+                                        HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (null == memberIds || memberIds.length == 0) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("members cannot be empty");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<RelRoleMember> relRoleMembers = roleService.updateMembers(id, Arrays.asList(memberIds), user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(relRoleMembers));
     }
 
 

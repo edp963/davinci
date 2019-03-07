@@ -84,4 +84,11 @@
         or email like #{keyword}
     </select>
 
+    <select id="getByIds" resultType="edp.davinci.model.User">
+        select * from `user` where id in
+        <foreach collection="userIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

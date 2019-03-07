@@ -21,4 +21,11 @@
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
+
+    <select id="selectByIdsAndOrgId" resultType="edp.davinci.model.Role">
+        select * from role where org_id = #{orgId} and id in
+        <foreach collection="roleIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

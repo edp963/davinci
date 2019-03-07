@@ -76,17 +76,17 @@ public interface RoleService {
 
 
     /**
-     *  添加Role与User关联
+     * 添加Role与User关联
      *
      * @param id
-     * @param memberId
+     * @param memberIds
      * @param user
      * @return
      * @throws ServerException
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    RelRoleMember addMember(Long id, Long memberId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RelRoleMember> addMembers(Long id, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     /**
      * 删除Role与User关联
@@ -99,6 +99,20 @@ public interface RoleService {
      * @throws NotFoundException
      */
     boolean deleteMember(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+
+    /**
+     * 更新role member
+     *
+     * @param roleId
+     * @param memberIds
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    List<RelRoleMember> updateMembers(Long roleId, List<Long> memberIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
 
     /**
@@ -150,4 +164,30 @@ public interface RoleService {
      * @throws NotFoundException
      */
     boolean updateProjectRole(Long relationId, RelRoleProjectDto projectRoleDto, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+
+    /**
+     * 获取单个Organization里的Role列表
+     *
+     * @param orgId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    List<RoleBaseInfo> getRolesByOrgId(Long orgId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
+    /**
+     * 获取单个关联的Role列表
+     *
+     * @param projectId
+     * @param user
+     * @return
+     * @throws ServerException
+     * @throws UnAuthorizedExecption
+     * @throws NotFoundException
+     */
+    List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+
 }

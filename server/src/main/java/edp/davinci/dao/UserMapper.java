@@ -69,4 +69,6 @@ public interface UserMapper {
             "WHERE u.id = rut.user_id AND rut.team_id = t.id AND t.org_id = #{orgId}"
     })
     List<TeamUserBaseInfo> getUsersByTeamOrgId(Long orgId);
+
+    List<User> getByIds(@Param("userIds") List<Long> userIds);
 }

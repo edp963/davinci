@@ -36,7 +36,7 @@ import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.*;
-import edp.davinci.dto.projectDto.ProjectWithOrganization;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.Aggregator;
 import edp.davinci.dto.viewDto.Order;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
@@ -117,14 +117,14 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     public ResultMap getWidgets(Long projectId, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
+        ProjectDetail projectDetail = projectMapper.getProjectDetail(projectId);
 
-        if (null == projectWithOrganization) {
+        if (null == projectDetail) {
             log.info("project {} not found", projectId);
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowRead(projectWithOrganization, user)) {
+        if (!allowRead(projectDetail, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
@@ -133,11 +133,11 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         if (null != widgets && widgets.size() > 0) {
 
             //获取当前用户在organization的role
-            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
+            RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
 
             //当前用户是project的创建者和organization的owner，直接返回
-            if (!isProjectAdmin(projectWithOrganization, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectWithOrganization.getOrgId(), user.getId());
+            if (!isProjectAdmin(projectDetail, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(projectDetail.getOrgId(), user.getId());
                 if (teamNumOfOrgByUser > 0) {
                     //查询project所属team中当前用户最高角色
                     short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(projectId, user.getId());
@@ -166,7 +166,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                         }
                     }
                 } else {
-                    Organization organization = projectWithOrganization.getOrganization();
+                    Organization organization = projectDetail.getOrganization();
                     if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
                         widgets = null;
                     }

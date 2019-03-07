@@ -35,4 +35,67 @@
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        insert ignore rel_role_project
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            `project_id`,
+            `role_id`,
+            `source_permission`,
+            `view_permission`,
+            `widget_permission`,
+            `viz_permission`,
+            `schedule_permission`,
+            `share_permission`,
+            `download_permission`,
+            `create_by`,
+            `create_time`,
+        </trim>
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            <trim prefix=" (" suffix=")" suffixOverrides=",">
+                #{record.projectId, jdbcType=BIGINT},
+                #{record.roleId, jdbcType=BIGINT},
+                #{record.sourcePermission, jdbcType=SMALLINT},
+                #{record.viewPermission, jdbcType=SMALLINT},
+                #{record.widgetPermission, jdbcType=SMALLINT},
+                #{record.vizPermission, jdbcType=SMALLINT},
+                #{record.schedulePermission, jdbcType=SMALLINT},
+                #{record.sharePermission, jdbcType=TINYINT},
+                #{record.downloadPermission, jdbcType=TINYINT},
+                #{record.createBy,jdbcType=BIGINT},
+                #{record.createTime,jdbcType=TIMESTAMP}
+            </trim>
+        </foreach>
+    </insert>
+
+
+    <sql id="userMaxPermissionBaseSql">
+        SELECT IFNULL(rrp.project_id, 0)               as projectId,
+               IFNULL(max(rrp.viz_permission), 0)      as vizPermission,
+               IFNULL(max(rrp.widget_permission), 0)   as widgetPermission,
+               IFNULL(max(rrp.view_permission), 0)     as viewPermission,
+               IFNULL(max(rrp.source_permission), 0)   as sourcePermission,
+               IFNULL(max(rrp.schedule_permission), 0) as schedulePermission,
+               IFNULL(max(rrp.share_permission), 0)    as sharePermission,
+               IFNULL(max(rrp.download_permission), 0) as downloadPermission
+        FROM rel_role_project rrp
+               left join rel_role_user rru on rru.role_id = rrp.role_id
+    </sql>
+
+    <select id="getMaxPermissions" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
+        <include refid="userMaxPermissionBaseSql"></include>
+        WHERE rru.user_id = #{userId} and rrp.project_id in
+        <foreach collection="projectIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        GROUP BY rrp.project_id
+    </select>
+
+
+    <select id="getMaxPermission" resultType="edp.davinci.dto.projectDto.UserMaxProjectPermission">
+        <include refid="userMaxPermissionBaseSql"></include>
+        WHERE rru.user_id = #{userId} and rrp.project_id = #{projectId}
+    </select>
 </mapper>

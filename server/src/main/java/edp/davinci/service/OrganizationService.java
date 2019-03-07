@@ -22,10 +22,12 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.organizationDto.OrganizationCreate;
 import edp.davinci.dto.organizationDto.OrganizationPut;
+import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface OrganizationService extends CheckEntityService {
 

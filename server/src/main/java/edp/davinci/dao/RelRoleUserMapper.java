@@ -10,12 +10,20 @@ import org.apache.ibatis.annotations.Update;
 import java.util.List;
 
 public interface RelRoleUserMapper {
-    int insert(RelRoleUser record);
+    int insert(RelRoleUser relRoleUser);
+
+    int insertBatch(@Param("relRoleUsers") List<RelRoleUser> relRoleUsers);
 
     @Delete({
             "delete from rel_role_user where id = #{id,jdbcType=BIGINT}"
     })
     int deleteById(Long id);
+
+
+    @Delete({
+            "delete from rel_role_user where role_id = #{roleId,jdbcType=BIGINT}"
+    })
+    int deleteByRoleId(Long roleId);
 
 
     @Select({
@@ -25,6 +33,10 @@ public interface RelRoleUserMapper {
             "where id = #{id,jdbcType=BIGINT}"
     })
     RelRoleUser getById(Long id);
+
+
+    List<RelRoleUser> getByIds(List<Long> ids);
+
 
     @Update({
             "update rel_role_user",
@@ -50,4 +62,13 @@ public interface RelRoleUserMapper {
             "select * from rel_role_user where role_id = #{roleId} and user_id = #{userId}"
     })
     RelRoleUser getByRoleAndMember(@Param("roleId") Long roleId, @Param("userId") Long userId);
+
+    List<Long> getUserIdsByIdAndMembers(@Param("roleId") Long roleId, @Param("userList") List<Long> userList);
+
+    @Select({
+            "select user_id from rel_role_user where role_id = #{roleId}"
+    })
+    List<Long> getUserIdsByRoleId(Long roleId);
+
+    int deleteByRoleIdAndMemberIds(@Param("roleId") Long roleId, @Param("userIds") List<Long> userIds);
 }

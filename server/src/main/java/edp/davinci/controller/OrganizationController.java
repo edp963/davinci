@@ -19,6 +19,7 @@
 package edp.davinci.controller;
 
 import com.alibaba.druid.util.StringUtils;
+import com.github.pagehelper.PageInfo;
 import edp.core.annotation.CurrentUser;
 import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
@@ -27,8 +28,12 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.organizationDto.OrganizationCreate;
 import edp.davinci.dto.organizationDto.OrganizationPut;
 import edp.davinci.dto.organizationDto.OrganzationRole;
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
+import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.model.User;
 import edp.davinci.service.OrganizationService;
+import edp.davinci.service.ProjectService;
+import edp.davinci.service.RoleService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -44,6 +49,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/organization", tags = "organization", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "organization not found"))
@@ -54,6 +60,12 @@ public class OrganizationController extends BaseController {
 
     @Autowired
     private OrganizationService organizationService;
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private ProjectService projectService;
 
     /**
      * 新建组织
@@ -254,14 +266,9 @@ public class OrganizationController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = organizationService.getOrgProjects(id, user, keyword, pageNum, pageSize, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        PageInfo<ProjectWithCreateBy> projects = projectService.getProjectsByOrg(id, user, keyword, pageNum, pageSize);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(projects));
     }
 
 
@@ -297,8 +304,8 @@ public class OrganizationController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get organization teams")
-    @GetMapping("/{id}/teams")
+//    @ApiOperation(value = "get organization teams")
+//    @GetMapping("/{id}/teams")
     public ResponseEntity getOrgTeams(@PathVariable Long id,
                                       @ApiIgnore @CurrentUser User user,
                                       HttpServletRequest request) {
@@ -314,6 +321,28 @@ public class OrganizationController extends BaseController {
             log.error(e.getMessage());
             return ResponseEntity.badRequest().body(HttpCodeEnum.SERVER_ERROR.getMessage());
         }
+    }
+
+    /**
+     * 获取组织下权限列表
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get organization roles")
+    @GetMapping("/{id}/roles")
+    public ResponseEntity getOrgRoles(@PathVariable Long id,
+                                      @ApiIgnore @CurrentUser User user,
+                                      HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid organization id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        List<RoleBaseInfo> roles = roleService.getRolesByOrgId(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(roles));
     }
 
     /**

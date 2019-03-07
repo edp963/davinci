@@ -22,10 +22,8 @@ import com.alibaba.druid.util.StringUtils;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
-import edp.davinci.dao.OrganizationMapper;
-import edp.davinci.dao.RelTeamProjectMapper;
-import edp.davinci.dao.RelUserOrganizationMapper;
-import edp.davinci.dao.RelUserTeamMapper;
+import edp.davinci.dao.*;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.model.*;
 import edp.davinci.service.ShareService;
@@ -50,6 +48,9 @@ public class CommonService<T> {
 
     @Autowired
     public OrganizationMapper organizationMapper;
+
+    @Autowired
+    public RelProjectAdminMapper relProjectAdminMapper;
 
     @Autowired
     private ShareService shareService;
@@ -142,32 +143,38 @@ public class CommonService<T> {
     /**
      * user是否project 的维护者
      *
-     * @param project
+     * @param projectDetail
      * @param user
      * @return
      */
-    public boolean isMaintainer(Project project, User user) {
-        if (null == project || null == user) {
+    public boolean isMaintainer(ProjectDetail projectDetail, User user) {
+        if (null == projectDetail || null == user) {
             return false;
         }
 
+        //project所在org的creater
+        if (projectDetail.getOrganization().getUserId().equals(user.getId())) {
+            return true;
+        }
+
         //当前project的creater
-        if (isProjectAdmin(project, user)) {
+        if (projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer()) {
             return true;
         }
 
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null != organization && organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-
+        //project 所在org的owner
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
         if (null == orgRel) {
             return false;
         }
 
         if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+            return true;
+        }
+
+        //project 的admin
+        RelProjectAdmin projectAdmin = relProjectAdminMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
+        if (null != projectAdmin) {
             return true;
         }
 

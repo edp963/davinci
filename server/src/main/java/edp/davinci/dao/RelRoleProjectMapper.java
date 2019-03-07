@@ -1,10 +1,15 @@
 package edp.davinci.dao;
 
+import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.model.RelRoleProject;
+import edp.davinci.model.RelRoleUser;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
+import java.util.Set;
 
 public interface RelRoleProjectMapper {
 
@@ -48,4 +53,9 @@ public interface RelRoleProjectMapper {
     })
     RelRoleProject getByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 
+    List<UserMaxProjectPermission> getMaxPermissions(@Param("projectIds") Set<Long> projectIds, @Param("userId") Long userId);
+
+    UserMaxProjectPermission getMaxPermission(@Param("projectId") Long projectId, @Param("userId") Long userId);
+
+    int insertBatch(@Param("list") List<RelRoleProject> list);
 }

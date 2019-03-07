@@ -18,11 +18,31 @@
 
 package edp.davinci.dto.projectDto;
 
+import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.Organization;
 import edp.davinci.model.Project;
 import lombok.Data;
 
 @Data
-public class ProjectWithOrganization extends Project {
+public class ProjectDetail extends Project {
     private Organization organization;
+
+    private UserBaseInfo createBy;
+
+
+    @Override
+    public String toString() {
+        return "Project{" +
+                "id=" + getId() +
+                ", name='" + getName() + '\'' +
+                ", description='" + getDescription() + '\'' +
+                ", pic='" + getPic() + '\'' +
+                ", orgId=" + getOrgId() +
+                ", userId=" + getUserId() +
+                ", starNum=" + getStarNum() +
+                ", visibility=" + getVisibility() +
+                ", isTransfer=" + getIsTransfer() +
+                ", initialOrgId=" + getInitialOrgId() +
+                '}';
+    }
 }
