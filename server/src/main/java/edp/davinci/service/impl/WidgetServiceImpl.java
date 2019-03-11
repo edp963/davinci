@@ -753,7 +753,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             throw new ServerException("unknow file format");
         }
 
-        SXSSFWorkbook wb = new SXSSFWorkbook();
+        SXSSFWorkbook wb = new SXSSFWorkbook(1000);
 
         ExecutorService executorService = Executors.newCachedThreadPool();
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
