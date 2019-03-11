@@ -49,8 +49,8 @@ import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -753,7 +753,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             throw new ServerException("unknow file format");
         }
 
-        XSSFWorkbook wb = new XSSFWorkbook();
+        SXSSFWorkbook wb = new SXSSFWorkbook();
 
         ExecutorService executorService = Executors.newCachedThreadPool();
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
@@ -764,7 +764,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             Widget widget = iterator.next();
             final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
             executorService.execute(() -> {
-                XSSFSheet sheet = null;
+                Sheet sheet = null;
                 try {
                     ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widget.getViewId());
 
