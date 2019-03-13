@@ -755,7 +755,6 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
 
-        ExecutorService executorService = Executors.newCachedThreadPool();
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
 
         Iterator<Widget> iterator = widgets.iterator();
@@ -796,7 +795,6 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         }
 
         countDownLatch.await();
-        executorService.shutdown();
 
         File file = new File(filePath);
         File dir = new File(file.getParent());
