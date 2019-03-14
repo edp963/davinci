@@ -3,7 +3,7 @@ Davinci
 
 [![License](https://img.shields.io/badge/license-Apache%202-4EB1BA.svg)](https://www.apache.org/licenses/LICENSE-2.0.html)
 [![Total Lines](https://tokei.rs/b1/github/edp963/davinci?category=lines)](https://github.com/edp963/davinci)
-[![Build Status](https://travis-ci.org/edp963/davinci.svg?branch=dev)](https://travis-ci.org/edp963/davinci)
+[![Build Status](https://travis-ci.org/edp963/davinci.svg?branch=master)](https://travis-ci.org/edp963/davinci)
 [![GitHub release](https://img.shields.io/github/release/edp963/davinci.svg)](https://github.com/edp963/davinci/releases)
 [![Stargazers over time](https://starcharts.herokuapp.com/edp963/davinci.svg)](https://starcharts.herokuapp.com/edp963/davinci)
 
