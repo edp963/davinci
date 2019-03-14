@@ -543,7 +543,7 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
@@ -598,7 +598,7 @@ export function getChartTooltipLabel (type, seriesData, options) {
   }, [])
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
-    if (!arr.find((m) => m.name.includes(decodedName) && m.agg === mc.agg)) {
+    if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
       arr.push(mc)
     }
     return arr
