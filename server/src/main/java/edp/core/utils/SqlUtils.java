@@ -154,7 +154,7 @@ public class SqlUtils {
                 Map<String, Integer> columnMap = new HashMap<>();
                 int size = 0;
                 while (sqlRowSet.next()) {
-                    Map<String, Object> map = new HashMap<>();
+                    Map<String, Object> map = new LinkedHashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
                         String key = metaData.getColumnName(i);
                         Object value = sqlRowSet.getObject(key);
@@ -669,28 +669,28 @@ public class SqlUtils {
                         Object obj = map.get(queryColumn.getName());
                         switch (SqlColumnEnum.toJavaType(queryColumn.getType())) {
                             case "Short":
-                                pstmt.setShort(i, Short.parseShort(String.valueOf(obj).trim()));
+                                pstmt.setShort(i, null == obj ? (short) 0 : Short.parseShort(String.valueOf(obj).trim()));
                                 break;
                             case "Integer":
-                                pstmt.setInt(i, Integer.parseInt(String.valueOf(obj).trim()));
+                                pstmt.setInt(i, null == obj ? 0 : Integer.parseInt(String.valueOf(obj).trim()));
                                 break;
                             case "Long":
-                                pstmt.setLong(i, Long.parseLong(String.valueOf(obj).trim()));
+                                pstmt.setLong(i, null == obj ? 0L : Long.parseLong(String.valueOf(obj).trim()));
                                 break;
                             case "BigDecimal":
                                 pstmt.setBigDecimal(i, (BigDecimal) obj);
                                 break;
                             case "Float":
-                                pstmt.setFloat(i, Float.parseFloat(String.valueOf(obj).trim()));
+                                pstmt.setFloat(i, null == obj ? 0.0F : Float.parseFloat(String.valueOf(obj).trim()));
                                 break;
                             case "Double":
-                                pstmt.setDouble(i, Double.parseDouble(String.valueOf(obj).trim()));
+                                pstmt.setDouble(i, null == obj ? 0.0D : Double.parseDouble(String.valueOf(obj).trim()));
                                 break;
                             case "String":
                                 pstmt.setString(i, (String) obj);
                                 break;
                             case "Boolean":
-                                pstmt.setBoolean(i, Boolean.parseBoolean(String.valueOf(obj).trim()));
+                                pstmt.setBoolean(i, null == obj ? false : Boolean.parseBoolean(String.valueOf(obj).trim()));
                                 break;
                             case "Bytes":
                                 pstmt.setBytes(i, (byte[]) obj);

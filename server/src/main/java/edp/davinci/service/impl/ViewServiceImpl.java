@@ -429,7 +429,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         //结构化Sql
-        ExecuteSqlResult executeSqlResult = null;
         PaginateWithQueryColumns paginateWithQueryColumns = null;
         try {
             SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql(), sqlTempDelimiter);
@@ -449,19 +448,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
-                        Paginate<Map<String, Object>> paginate = null;
-
                         for (String sql : querySqlList) {
-                            paginate = sqlUtils.query4Paginate(sql, executeSql.getPageNo(), executeSql.getPageSize(), executeSql.getLimit());
+                            paginateWithQueryColumns = sqlUtils.query4PaginateWithQueryColumns(sql, executeSql.getLimit());
                         }
-
-                        if (null != paginate) {
-                            executeSqlResult = new ExecuteSqlResult(sqlUtils.getColumns(querySqlList.get(querySqlList.size() - 1)), paginate);
-                        }
-
-//                        for (String sql : querySqlList) {
-//                            paginateWithQueryColumns = sqlUtils.query4PaginateWithQueryColumns(sql, executeSql.getLimit());
-//                        }
                     }
                 }
             }
@@ -470,8 +459,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             return resultMap.failAndRefreshToken(request).message(e.getMessage());
         }
 
-        return resultMap.successAndRefreshToken(request).payload(executeSqlResult);
-//        return resultMap.successAndRefreshToken(request).payload(paginateWithQueryColumns);
+        return resultMap.successAndRefreshToken(request).payload(paginateWithQueryColumns);
     }
 
     /**

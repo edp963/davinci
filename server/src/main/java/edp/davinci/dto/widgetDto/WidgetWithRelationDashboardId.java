@@ -17,15 +17,12 @@
  *
  */
 
-package edp.core.model;
+package edp.davinci.dto.widgetDto;
 
+import edp.davinci.model.Widget;
 import lombok.Data;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class PaginateWithQueryColumns extends Paginate<Map<String, Object>> {
-    List<QueryColumn> columns;
+public class WidgetWithRelationDashboardId extends Widget {
+    private Long relationId;
 }
