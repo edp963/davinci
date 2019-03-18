@@ -28,4 +28,12 @@ public class Order {
     private String column;
 
     private String direction = "ASC";
+
+    public Order(String column, String direction) {
+        this.column = column;
+        this.direction = direction;
+    }
+
+    public Order() {
+    }
 }

@@ -38,7 +38,8 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.script.Invocable;
@@ -170,36 +171,39 @@ public class ExcelUtils {
      * @param workbook
      * @param params
      */
-    public static void writeSheet(XSSFSheet sheet,
+    public static void writeSheet(Sheet sheet,
                                   List<QueryColumn> columns,
                                   List<Map<String, Object>> dataList,
-                                  XSSFWorkbook workbook,
+                                  SXSSFWorkbook workbook,
                                   boolean containType,
                                   String json,
                                   List<Param> params) {
 
 
-        XSSFRow row = null;
+        Row row = null;
 
         //默认格式
-        XSSFCellStyle cellStyle = workbook.createCellStyle();
-        XSSFCellStyle headerCellStyle = workbook.createCellStyle();
+        CellStyle cellStyle = workbook.createCellStyle();
+        CellStyle headerCellStyle = workbook.createCellStyle();
 
 
-        XSSFDataFormat format = workbook.createDataFormat();
+//        XSSFDataFormat format = workbook.createDataFormat();
+        DataFormat format = workbook.createDataFormat();
 
         //常规格式
-        XSSFCellStyle generalStyle = workbook.createCellStyle();
+//        XSSFCellStyle generalStyle = workbook.createCellStyle();
+        CellStyle generalStyle = workbook.createCellStyle();
         generalStyle.setDataFormat(format.getFormat("General"));
 
         //表头粗体居中
-        XSSFFont font = workbook.createFont();
+//        XSSFFont font = workbook.createFont();
+        Font font = workbook.createFont();
         font.setFontName("黑体");
-        font.setBold(true);
+        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
         headerCellStyle.setFont(font);
         headerCellStyle.setDataFormat(format.getFormat("@"));
-        headerCellStyle.setAlignment(HorizontalAlignment.CENTER);
-        headerCellStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerCellStyle.setAlignment(CellStyle.ALIGN_CENTER);
+        headerCellStyle.setVerticalAlignment(CellStyle.VERTICAL_CENTER);
 
         boolean isTable = isTable(json);
 
@@ -218,7 +222,8 @@ public class ExcelUtils {
 
 
         //用于记录表头对应数据格式
-        Map<String, XSSFCellStyle> headerFormatMap = null;
+//        Map<String, XSSFCellStyle> headerFormatMap = null;
+        Map<String, CellStyle> headerFormatMap = null;
         //用于标记标记数字格式单位
         Map<String, NumericUnitEnum> dataUnitMap = null;
 
@@ -265,8 +270,11 @@ public class ExcelUtils {
                             //生成excel数据格式
                             String dataFormat = getDataFormat(excelHeader.getFormat());
                             if (!StringUtils.isEmpty(dataFormat)) {
-                                XSSFCellStyle dataStyle = workbook.createCellStyle();
-                                XSSFDataFormat xssfDataFormat = workbook.createDataFormat();
+//                                XSSFCellStyle dataStyle = workbook.createCellStyle();
+                                CellStyle dataStyle = workbook.createCellStyle();
+
+//                                XSSFDataFormat xssfDataFormat = workbook.createDataFormat();
+                                DataFormat xssfDataFormat = workbook.createDataFormat();
                                 dataStyle.setDataFormat(xssfDataFormat.getFormat(dataFormat));
                                 headerFormatMap.put(queryColumn.getName(), dataStyle);
                             }
@@ -281,7 +289,8 @@ public class ExcelUtils {
 
             //画出表头
             for (int i = 0; i < rownum + 1; i++) {
-                XSSFRow headerRow = sheet.createRow(i);
+//                XSSFRow headerRow = sheet.createRow(i);
+                Row headerRow = sheet.createRow(i);
                 for (int j = 0; j <= colnum; j++) {
                     headerRow.createCell(j);
                 }
@@ -297,12 +306,14 @@ public class ExcelUtils {
                         sheet.addMergedRegion(cellRangeAddress);
                     }
                 }
-                XSSFCell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
+//                XSSFCell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
+                Cell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(StringUtils.isEmpty(excelHeader.getAlias()) ? excelHeader.getKey() : excelHeader.getAlias());
             }
 
         } else {
+//            row = sheet.createRow(rownum);
             row = sheet.createRow(rownum);
             for (int i = 0; i < columns.size(); i++) {
                 QueryColumn queryColumn = columns.get(i);
@@ -310,7 +321,8 @@ public class ExcelUtils {
                 columnWidthMap.put(queryColumn.getName(), queryColumn.getName().getBytes().length >= queryColumn.getType().getBytes().length ?
                         queryColumn.getName().getBytes().length : queryColumn.getType().getBytes().length);
 
-                XSSFCell cell = row.createCell(i);
+//                XSSFCell cell = row.createCell(i);
+                Cell cell = row.createCell(i);
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(queryColumn.getName());
             }
@@ -343,7 +355,8 @@ public class ExcelUtils {
                 QueryColumn queryColumn = columns.get(j);
                 cellStyle.setDataFormat(format.getFormat("@"));
                 Object obj = map.get(queryColumn.getName());
-                XSSFCell cell = row.createCell(j);
+//                XSSFCell cell = row.createCell(j);
+                Cell cell = row.createCell(j);
                 if (null != obj) {
                     if (obj instanceof Number || queryColumn.getType().equals("value")) {
                         try {
@@ -560,6 +573,7 @@ public class ExcelUtils {
 
     /**
      * 格式化表头
+     *
      * @param engine
      * @param json
      * @param params

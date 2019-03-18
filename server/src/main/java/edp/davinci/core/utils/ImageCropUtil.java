@@ -76,7 +76,7 @@ public class ImageCropUtil {
         if (height > cutHeight) {
             int count = (int) Math.ceil((double) height / cutHeight);
             log.info("count crop image num: {}", count);
-            ExecutorService executorService = Executors.newCachedThreadPool();
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
             CountDownLatch countDownLatch = new CountDownLatch(count);
 
             for (int i = 0; i < count; i++) {

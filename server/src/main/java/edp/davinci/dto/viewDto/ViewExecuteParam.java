@@ -43,6 +43,28 @@ public class ViewExecuteParam {
 
     private boolean nativeQuery = false;
 
+
+    public ViewExecuteParam() {
+    }
+
+    public ViewExecuteParam(List<String> groupList,
+                            List<Aggregator> aggregators,
+                            List<Order> orders,
+                            List<String> filterList,
+                            List<Param> params,
+                            Boolean cache,
+                            Long expired,
+                            Boolean nativeQuery) {
+        this.groups = groupList.toArray(new String[0]);
+        this.aggregators = aggregators;
+        this.orders = orders;
+        this.filters = filterList.toArray(new String[0]);
+        this.params = params;
+        this.cache = cache;
+        this.expired = expired;
+        this.nativeQuery = nativeQuery;
+    }
+
     public List<Order> getOrders(String jdbcUrl) {
         List<Order> list = null;
         if (null != this.orders && this.orders.size() > 0) {

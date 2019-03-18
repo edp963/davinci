@@ -672,7 +672,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 }
             }
 
-            ExecutorService executorService = Executors.newCachedThreadPool();
+//            ExecutorService executorService = Executors.newCachedThreadPool();
 
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("insertData");
@@ -709,7 +709,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
-                executorService.shutdown();
+//                executorService.shutdown();
             }
         }
     }

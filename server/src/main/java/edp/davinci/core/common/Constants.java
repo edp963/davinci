@@ -109,6 +109,12 @@ public class Constants extends Consts {
 
 
     /**
+     * 格式化全局参数js
+     */
+    public static final String EXECUTE_PARAM_FORMAT_JS = "templates/js/executeParam.js";
+
+
+    /**
      * 定时任务发送邮件模板
      */
     public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";
