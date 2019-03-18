@@ -70,10 +70,16 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.break-after-acquire-failure:true}")
     private boolean breakAfterAcquireFailure;
 
-    @Value("${source.connection-error-retry-attempts:3}")
+    @Value("${source.connection-error-retry-attempts:0}")
     private int connectionErrorRetryAttempts;
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
+
+    public synchronized void removeDatasource(String jdbcUrl, String username) {
+        if (map.containsKey(username + "@" + jdbcUrl.trim())) {
+            map.remove(username + "@" + jdbcUrl.trim());
+        }
+    }
 
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
         if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {

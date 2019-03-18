@@ -25,6 +25,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.User;
+import edp.davinci.service.TeamVarService;
 import edp.davinci.service.ViewService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,6 +53,10 @@ public class ViewController extends BaseController {
     private ViewService viewService;
 
 
+    @Autowired(required = false)
+    private TeamVarService teamVarService;
+
+
     /**
      * 获取view
      *
@@ -72,6 +77,67 @@ public class ViewController extends BaseController {
         }
         try {
             ResultMap resultMap = viewService.getViews(projectId, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取用户可见的当前view对应的team@var
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get views")
+    @GetMapping("{id}/config/teamvar")
+    public ResponseEntity getViewTeamVarConfig(@PathVariable Long id,
+                                               @ApiIgnore @CurrentUser User user,
+                                               HttpServletRequest request) {
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = viewService.getViewConfigTeamVar(id, user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+    /**
+     * 获取TeamVar 来源信息及默认值
+     *
+     * @param projectId
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get team variables sources")
+    @GetMapping("/teamvar/source")
+    public ResponseEntity getTeamVarSource(@RequestParam("projectId") Long projectId,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
+        if (null == teamVarService) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(projectId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+        try {
+            ResultMap resultMap = teamVarService.getTeamVarSource(projectId, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -181,34 +247,6 @@ public class ViewController extends BaseController {
         }
     }
 
-    /**
-     * 获取数据库schema信息
-     *
-     * @param sourceId
-     * @param user
-     * @param request
-     * @return
-     */
-    @ApiOperation(value = "get view data schema")
-    @GetMapping("/database")
-    public ResponseEntity getSourceSchema(@RequestParam Long sourceId,
-                                          @ApiIgnore @CurrentUser User user,
-                                          HttpServletRequest request) {
-        if (invalidId(sourceId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Inavlid source id");
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        }
-
-        try {
-            ResultMap resultMap = viewService.getSourceSchema(sourceId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
-    }
-
 
     /**
      * 执行sql
@@ -226,6 +264,7 @@ public class ViewController extends BaseController {
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
 
+        long l = System.currentTimeMillis();
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -233,6 +272,8 @@ public class ViewController extends BaseController {
 
         try {
             ResultMap resultMap = viewService.executeSql(executeSql, user, request);
+            long l1 = System.currentTimeMillis();
+            log.info("request getData for: >> {}ms", l1 - l);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
@@ -257,6 +298,7 @@ public class ViewController extends BaseController {
                                   @RequestBody(required = false) ViewExecuteParam executeParam,
                                   @ApiIgnore @CurrentUser User user,
                                   HttpServletRequest request) {
+        long l = System.currentTimeMillis();
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -264,6 +306,9 @@ public class ViewController extends BaseController {
 
         try {
             ResultMap resultMap = viewService.getData(id, executeParam, user, request);
+
+            long l1 = System.currentTimeMillis();
+            log.info("request getData for: >> {}ms", l1 - l);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

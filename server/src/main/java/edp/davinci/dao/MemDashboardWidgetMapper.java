@@ -51,6 +51,7 @@ public interface MemDashboardWidgetMapper {
             "height = #{height,jdbcType=INTEGER},",
             "polling = #{polling,jdbcType=BIT},",
             "frequency = #{frequency,jdbcType=INTEGER}",
+            "`config` = #{frequency,jdbcType=LONGVARCHAR}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(MemDashboardWidget memDashboardWidget);

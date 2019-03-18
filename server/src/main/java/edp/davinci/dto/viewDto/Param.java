@@ -30,4 +30,12 @@ public class Param {
 
     @NotBlank(message = "Invalid parameter value")
     private String value;
+
+    public Param() {
+    }
+
+    public Param(String name, String value) {
+        this.name = name;
+        this.value = value;
+    }
 }

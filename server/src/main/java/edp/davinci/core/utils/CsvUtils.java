@@ -22,36 +22,45 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
 import edp.core.utils.SqlUtils;
+import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
-import edp.davinci.core.model.CsvEntity;
+import edp.davinci.core.model.DataUploadEntity;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.*;
 
 public class CsvUtils {
 
-    public static CsvEntity parseCsvWithFirstAsHeader(MultipartFile csvFile, String charsetName) throws ServerException {
+
+    /**
+     * 解析Csv
+     *
+     * @param csvFile
+     * @param charsetName
+     * @return
+     * @throws ServerException
+     */
+    public static DataUploadEntity parseCsvWithFirstAsHeader(MultipartFile csvFile, String charsetName) throws ServerException {
 
         if (null == csvFile) {
             throw new ServerException("Invalid csv file");
         }
 
-        if (!csvFile.getOriginalFilename().endsWith(".csv")) {
+        if (!csvFile.getOriginalFilename().toLowerCase().endsWith(FileTypeEnum.CSV.getType())) {
             throw new ServerException("Invalid csv file");
         }
 
-        CsvEntity csvEntity = null;
+        DataUploadEntity dataUploadEntity = null;
+        BufferedReader reader = null;
+        CSVParser csvParser = null;
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream(), charsetName));
-            CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
+            reader = new BufferedReader(new InputStreamReader(csvFile.getInputStream(), charsetName));
+            csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                     .withFirstRecordAsHeader()
                     .withIgnoreHeaderCase()
                     .withTrim());
@@ -78,9 +87,9 @@ public class CsvUtils {
                     }
                 }
 
-                csvEntity = new CsvEntity();
-                csvEntity.setHeaders(headers);
-                csvEntity.setValues(values);
+                dataUploadEntity = new DataUploadEntity();
+                dataUploadEntity.setHeaders(headers);
+                dataUploadEntity.setValues(values);
             }
 
 
@@ -90,11 +99,35 @@ public class CsvUtils {
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
+        } finally {
+            try {
+                if (null != csvParser) {
+                    csvParser.close();
+                }
+
+                if (null != reader) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new ServerException(e.getMessage());
+            }
         }
 
-        return csvEntity;
+        return dataUploadEntity;
     }
 
+
+    /**
+     * 写入csv
+     *
+     * @param filePath
+     * @param fileName
+     * @param columns
+     * @param dataList
+     * @return
+     * @throws ServerException
+     */
     public static String formatCsvWithFirstAsHeader(String filePath, String fileName, List<QueryColumn> columns, List<Map<String, Object>> dataList) throws ServerException {
 
         String csvFullName = null;
@@ -107,8 +140,8 @@ public class CsvUtils {
                 headerTypes.add(column.getType());
             }
 
-            if (!fileName.endsWith(".csv") && !fileName.endsWith(".CSV")) {
-                fileName = fileName.trim() + ".csv";
+            if (!fileName.toLowerCase().endsWith(FileTypeEnum.CSV.getFormat())) {
+                fileName = fileName.trim() + FileTypeEnum.CSV.getFormat();
             }
 
             if (!StringUtils.isEmpty(filePath)) {
@@ -120,7 +153,7 @@ public class CsvUtils {
 
             File file = new File(filePath + File.separator + fileName);
             if (file.exists()) {
-                fileName = fileName.substring(0, fileName.lastIndexOf(".") - 1) + "_" + UUID.randomUUID() + ".csv";
+                fileName = fileName.substring(0, fileName.lastIndexOf(".") - 1) + "_" + UUID.randomUUID() + FileTypeEnum.CSV.getFormat();
             }
 
             csvFullName = filePath + File.separator + fileName;
@@ -132,7 +165,10 @@ public class CsvUtils {
             try {
                 CSVFormat csvFormat = CSVFormat.DEFAULT.withFirstRecordAsHeader().withIgnoreHeaderCase().withTrim();
 
+
                 fileWriter = new FileWriter(csvFullName, true);
+
+                fileWriter.write("\uFEFF"); //解决csv用excel打开乱码问题
 
                 csvPrinter = new CSVPrinter(fileWriter, csvFormat);
 

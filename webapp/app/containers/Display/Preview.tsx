@@ -69,7 +69,12 @@ interface IPreviewProps {
   currentLayers: any[]
   currentLayersInfo: {
     [key: string]: {
-      datasource: any[]
+      datasource: {
+        pageNo: number
+        pageSize: number
+        resultList: any[]
+        totalCount: number
+      }
       loading: boolean
       queryParams: {
         filters: string
@@ -314,7 +319,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           itemId={layerId}
           widget={widget}
           view={view}
-          data={datasource}
+          datasource={datasource}
           loading={loading}
           polling={polling}
           frequency={frequency}

@@ -29,7 +29,6 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 export function* getUserProfile (action): IterableIterator<any> {
@@ -40,7 +39,7 @@ export function* getUserProfile (action): IterableIterator<any> {
       method: 'get',
       url: `${api.user}/profile/${id}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(userProfileGot(result))
   } catch (err) {
     yield put(getUserProfileFail())

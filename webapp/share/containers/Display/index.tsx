@@ -64,7 +64,12 @@ interface IDisplayProps extends RouteComponentProps<{}, {}> {
   widgets: any
   layersInfo: {
     [key: string]: {
-      datasource: any[]
+      datasource: {
+        pageNo: number
+        pageSize: number
+        resultList: any[]
+        totalCount: number
+      }
       loading: boolean
       queryParams: {
         filters: string
@@ -352,7 +357,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
             itemId={layerId}
             widget={widget}
             view={view}
-            data={datasource}
+            datasource={datasource}
             layer={layer}
             loading={loading}
             polling={polling}

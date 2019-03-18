@@ -52,9 +52,6 @@ import java.util.*;
 public class OrganizationServiceImpl extends CommonService implements OrganizationService {
 
     @Autowired
-    private OrganizationMapper organizationmapper;
-
-    @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
 
     @Autowired
@@ -391,24 +388,31 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
             List<TeamUserBaseInfo> userList = userMapper.getUsersByTeamOrgId(orgId);
             //构造组织团队返回结果
             if (null != userList && userList.size() > 0) {
-                for (TeamBaseInfoWithParent teamBaseInfoWithParent : teams) {
-                    //成员列表
-                    List<UserBaseInfo> teamUserList = new ArrayList<>();
-                    for (TeamUserBaseInfo teamUserBaseInfo : userList) {
-                        if (teamBaseInfoWithParent.getId().equals(teamUserBaseInfo.getTeamId())) {
-                            UserBaseInfo userBaseInfo = new UserBaseInfo();
-                            BeanUtils.copyProperties(teamUserBaseInfo, userBaseInfo);
-                            teamUserList.add(userBaseInfo);
+                Map<Long, TeamBaseInfoWithParent> map = new HashMap<>();
+                teams.forEach(t -> map.put(t.getId(), t));
+
+                //成员列表
+                for (TeamUserBaseInfo teamUserBaseInfo : userList) {
+                    Long teamId = teamUserBaseInfo.getTeamId();
+                    if (map.containsKey(teamId)) {
+                        List<UserBaseInfo> userBaseInfoList = map.get(teamId).getUsers();
+                        if (null == userBaseInfoList) {
+                            map.get(teamId).setUsers(new ArrayList<>());
                         }
+
+                        UserBaseInfo userBaseInfo = new UserBaseInfo();
+                        BeanUtils.copyProperties(teamUserBaseInfo, userBaseInfo);
+
+                        map.get(teamId).getUsers().add(userBaseInfo);
                     }
+                }
 
-                    teamBaseInfoWithParent.setUsers(teamUserList);
-
-                    orgTeams.add(teamBaseInfoWithParent);
+                for (Long teamId : map.keySet()) {
+                    orgTeams.add(map.get(teamId));
                 }
             }
         }
-        return resultMap.successAndRefreshToken(request).payloads(teamService.getStructuredList(orgTeams));
+        return resultMap.successAndRefreshToken(request).payloads(teamService.getStructuredList(orgTeams, null));
     }
 
 

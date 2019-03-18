@@ -115,7 +115,12 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   currentLayers: any[]
   currentLayersInfo: {
     [key: string]: {
-      datasource: any[]
+      datasource: {
+        pageNo: number
+        pageSize: number
+        resultList: any[]
+        totalCount: number
+      }
       loading: boolean
       queryParams: {
         filters: string
@@ -868,7 +873,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           itemId={layerId}
           widget={widget}
           view={view}
-          data={datasource}
+          datasource={datasource}
           loading={loading}
           polling={polling}
           frequency={frequency}

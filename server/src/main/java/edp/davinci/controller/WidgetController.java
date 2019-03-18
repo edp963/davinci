@@ -211,20 +211,21 @@ public class WidgetController extends BaseController {
 
 
     /**
-     * 分享widget
+     * 下载widget
      *
      * @param id
      * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "download widget")
-    @PostMapping("/{id}/csv")
-    public ResponseEntity getWidgetCsv(@PathVariable Long id,
-                                       @Valid @RequestBody ViewExecuteParam executeParam,
-                                       @ApiIgnore BindingResult bindingResult,
-                                       @ApiIgnore @CurrentUser User user,
-                                       HttpServletRequest request) {
+    @ApiOperation(value = "download widget csv")
+    @PostMapping("/{id}/{type}")
+    public ResponseEntity downloadWidget(@PathVariable("id") Long id,
+                                         @PathVariable("type") String type,
+                                         @Valid @RequestBody ViewExecuteParam executeParam,
+                                         @ApiIgnore BindingResult bindingResult,
+                                         @ApiIgnore @CurrentUser User user,
+                                         HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -236,7 +237,7 @@ public class WidgetController extends BaseController {
         }
 
         try {
-            ResultMap resultMap = widgetService.generationCsv(id, executeParam, user, request);
+            ResultMap resultMap = widgetService.generationFile(id, executeParam, user, type, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

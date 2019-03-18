@@ -31,6 +31,12 @@ public class Constants extends Consts {
      */
     public static final String BASE_API_PATH = "/api/v3";
 
+
+    /**
+     * auth基本路径
+     */
+    public static final String AUTH_API_PATH = "/auth/v3";
+
     /**
      * 用户激活 / 重发激活邮件模板
      */
@@ -97,6 +103,18 @@ public class Constants extends Consts {
 
 
     /**
+     * excel 表头，数据格式化js
+     */
+    public static final String TABLE_FORMAT_JS = "templates/js/formatCellValue.js";
+
+
+    /**
+     * 格式化全局参数js
+     */
+    public static final String EXECUTE_PARAM_FORMAT_JS = "templates/js/executeParam.js";
+
+
+    /**
      * 定时任务发送邮件模板
      */
     public static final String SCHEDULE_MAIL_TEMPLATE = "mail/scheduleEmaiTemplate";
@@ -113,4 +131,8 @@ public class Constants extends Consts {
 
 
     public static final String REG_USER_PASSWORD = ".{6,20}";
+
+    public static final String EXCEL_FORMAT_KEY = "format";
+
+    public static final String EXCEL_FORMAT_TYPE_KEY = "formatType";
 }

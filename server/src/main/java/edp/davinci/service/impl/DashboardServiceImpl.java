@@ -26,10 +26,7 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
-import edp.davinci.dao.DashboardMapper;
-import edp.davinci.dao.DashboardPortalMapper;
-import edp.davinci.dao.MemDashboardWidgetMapper;
-import edp.davinci.dao.WidgetMapper;
+import edp.davinci.dao.*;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
@@ -42,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service("dashboardService")
@@ -64,6 +62,9 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
 
     @Autowired
     private ShareService shareService;
+
+    @Autowired
+    private ExcludeDashboardTeamMapper excludeDashboardTeamMapper;
 
 
     @Override
@@ -88,9 +89,8 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         PortalWithProject portal = dashboardPortalMapper.getPortalWithProjectById(portalId);
-
         if (null == portal) {
-            return resultMap.failAndRefreshToken(request).message("dashboard portal not found");
+            return resultMap.failAndRefreshToken(request).message("");
         }
 
         Project project = portal.getProject();
@@ -102,34 +102,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
-        List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portalId);
-
-        //获取当前用户在organization的role
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
-                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
-                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
-                        dashboardList = null;
-                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
-                        if (!portal.getPublish()) {
-                            dashboardList = null;
-                        }
-                    }
-                }
-            } else {
-                Organization organization = organizationMapper.getById(project.getOrgId());
-                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
-                    dashboardList = null;
-                }
-            }
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(dashboardList);
+        return resultMap.successAndRefreshToken(request).payloads(getDashboardListByPortal(portal, user, portal.getProject()));
     }
 
     /**
@@ -169,7 +142,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         //获取当前用户在organization的role
         RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
 
-        if (!isProjectAdmin(project,user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
             Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
             if (teamNumOfOrgByUser > 0) {
                 short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
@@ -237,6 +210,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
 
         int insert = dashboardMapper.insert(dashboard);
         if (insert > 0) {
+            excludeTeamForDashboard(dashboardCreate.getTeamIds(), dashboard.getId(), user.getId(), null);
             return resultMap.successAndRefreshToken(request).payload(dashboard);
         } else {
             return resultMap.failAndRefreshToken(request).message("create dashboard fail");
@@ -254,7 +228,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
      */
     @Override
     @Transactional
-    public ResultMap updateDashboards(Long portalId, Dashboard[] dashboards, User user, HttpServletRequest request) {
+    public ResultMap updateDashboards(Long portalId, DashboardDto[] dashboards, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         PortalWithProject portalWithProject = dashboardPortalMapper.getPortalWithProjectById(portalId);
@@ -283,8 +257,59 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         }
 
         List<Dashboard> dashboardList = new ArrayList<>(Arrays.asList(dashboards));
-        dashboardMapper.updateBatch(dashboardList);
+        int i = dashboardMapper.updateBatch(dashboardList);
+        if (i > 0) {
+            List<Long> dashBoardIds = dashboardList.stream().map(d -> d.getId()).collect(Collectors.toList());
+            List<ExcludeDashboardTeam> excludeDashboardTeams = excludeDashboardTeamMapper.selectExcludesByDashboardIds(dashBoardIds);
+            Map<Long, List<Long>> map = new HashMap<>();
+
+            excludeDashboardTeams.forEach(e -> {
+                List<Long> teamIds;
+                if (map.containsKey(e.getDashboardId())) {
+                    teamIds = map.get(e.getDashboardId());
+                } else {
+                    teamIds = new ArrayList<>();
+                    map.put(e.getDashboardId(), teamIds);
+                }
+                teamIds.add(e.getTeamId());
+            });
+
+            Arrays.asList(dashboards).forEach(dashboard -> {
+                excludeTeamForDashboard(dashboard.getTeamIds(), dashboard.getId(), user.getId(), map.get(dashboard.getId()));
+            });
+        }
         return resultMap.successAndRefreshToken(request);
+    }
+
+
+    @Transactional
+    protected void excludeTeamForDashboard(List<Long> teamIds, Long dashboardId, Long userId, List<Long> excludeTeams) {
+
+        if (null != excludeTeams && excludeTeams.size() > 0) {
+            if (null != teamIds && teamIds.size() > 0) {
+                List<Long> rmTeamIds = new ArrayList<>();
+                excludeTeams.forEach(teamId -> {
+                    if (teamId.longValue() > 0L && !teamIds.contains(teamId)) {
+                        rmTeamIds.add(teamId);
+                    }
+                });
+                if (rmTeamIds.size() > 0) {
+                    excludeDashboardTeamMapper.deleteByDashboardIdAndTeamIds(dashboardId, rmTeamIds);
+                }
+            } else {
+                //删除所有要排除的项
+                excludeDashboardTeamMapper.deleteByDashboardId(dashboardId);
+            }
+        }
+
+        //添加排除项
+        if (null != teamIds && teamIds.size() > 0) {
+            List<ExcludeDashboardTeam> list = new ArrayList<>();
+            teamIds.forEach(tid -> list.add(new ExcludeDashboardTeam(tid, dashboardId, userId)));
+            if (list.size() > 0) {
+                excludeDashboardTeamMapper.insertBatch(list);
+            }
+        }
     }
 
     /**
@@ -315,6 +340,7 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
 
         dashboardMapper.deleteByParentId(id);
         dashboardMapper.deleteById(id);
+        excludeDashboardTeamMapper.deleteByDashboardId(id);
 
         return resultMap.successAndRefreshToken(request);
     }
@@ -499,5 +525,56 @@ public class DashboardServiceImpl extends CommonService<Dashboard> implements Da
         dashboardMapper.deleteByProject(projectId);
         //删除dashboardPortal
         dashboardPortalMapper.deleteByProject(projectId);
+    }
+
+
+    public List<Dashboard> getDashboardListByPortal(DashboardPortal portal, User user, Project project) {
+
+        List<Dashboard> dashboardList = dashboardMapper.getByPortalId(portal.getId(), user.getId(), project.getId());
+
+        if (null != dashboardList && dashboardList.size() > 0) {
+
+            List<Long> idList = dashboardList.stream().map(d -> d.getId()).collect(Collectors.toList());
+
+            Iterator<Dashboard> dashboardIterator = dashboardList.iterator();
+            while (dashboardIterator.hasNext()) {
+                Dashboard dashboard = dashboardIterator.next();
+                if (!dashboard.getParentId().equals(0L) && !idList.contains(dashboard.getParentId())) {
+                    dashboardIterator.remove();
+                }
+            }
+        }
+
+        //获取当前用户在organization的role
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+        if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
+            if (teamNumOfOrgByUser > 0) {
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+                    short maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
+                    if (maxVizPermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        dashboardList = null;
+                    } else if (maxVizPermission == UserPermissionEnum.READ.getPermission()) {
+                        if (!portal.getPublish()) {
+                            dashboardList = null;
+                        }
+                    }
+                }
+            } else {
+                Organization organization = organizationMapper.getById(project.getOrgId());
+                if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission() || !portal.getPublish()) {
+                    dashboardList = null;
+                }
+            }
+        }
+
+        return dashboardList;
+    }
+
+    @Override
+    public List<Long> getExcludeTeams(Long id) {
+        return excludeDashboardTeamMapper.selectExcludeTeamsByDashboardId(id);
     }
 }

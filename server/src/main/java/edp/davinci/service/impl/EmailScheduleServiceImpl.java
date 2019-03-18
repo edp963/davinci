@@ -22,7 +22,6 @@ import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.common.job.ScheduleService;
 import edp.core.exception.ServerException;
-import edp.core.model.QueryColumn;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.MailUtils;
@@ -30,28 +29,38 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.CheckEntityEnum;
 import edp.davinci.core.enums.CronJobMediaType;
+import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.cronJobDto.CronJobConfig;
 import edp.davinci.dto.cronJobDto.CronJobContent;
+import edp.davinci.dto.viewDto.Aggregator;
+import edp.davinci.dto.viewDto.Order;
+import edp.davinci.dto.viewDto.Param;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.model.*;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.xssf.usermodel.*;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.net.URLDecoder;
-import java.text.DecimalFormat;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("AlibabaThreadPoolCreation")
 @Slf4j
@@ -171,6 +180,9 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
             if (!file.exists()) {
                 file.mkdirs();
             }
+
+            imagePath = imagePath.replaceAll(File.separator + "{2,}", File.separator);
+
             String url = getContentUrl(userId, cronJobContent.getContentType(), cronJobContent.getId());
             boolean bol = phantomRender(url, imagePath);
             if (bol) {
@@ -232,7 +244,6 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
      */
     private boolean checkFileExists(String filePath) {
         boolean result = false;
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
         Future<Boolean> future = (Future<Boolean>) executorService.submit(() -> {
             while (!imageExit && !new File(filePath).exists()) {
                 Thread.sleep(1000);
@@ -245,8 +256,6 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
         } catch (Exception e) {
             e.printStackTrace();
             throw new ServerException(e.getMessage());
-        } finally {
-            executorService.shutdown();
         }
         return result;
     }
@@ -266,11 +275,24 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                     || portal.equalsIgnoreCase(cronJobContent.getContentType().trim())) {
                 Dashboard dashboard = dashboardMapper.getById(cronJobContent.getId());
                 if (dashboard != null) {
-                    Set<Widget> widgets = widgetMapper.getByDashboard(dashboard.getId());
+                    ScriptEngine engine = getScriptEngine();
+                    Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
+                    Set<WidgetWithRelationDashboardId> set = widgetMapper.getByDashboard(dashboard.getId());
+                    Set<Widget> widgets = new HashSet<>();
+                    if (null != set && set.size() > 0) {
+                        set.forEach(w -> {
+                            Widget widget = new Widget();
+                            BeanUtils.copyProperties(w, widget);
+                            widgets.add(widget);
+                            executeParamMap.put(w.getId(), getViewExecuteParam((engine), dashboard.getConfig(), widget.getConfig(), w.getRelationId()));
+                        });
+                    }
                     if (widgets != null && widgets.size() > 0) {
-                        String filePath = fileBasePath + baseUrl + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + ".xlsx";
+                        String filePath = fileBasePath + baseUrl + File.separator + dashboard.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
 
-                        File file = writeExcel(widgets, filePath, user);
+                        filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
+
+                        File file = widgetService.writeExcel(widgets, executeParamMap, filePath, user, false);
                         files.add(file);
                     }
                 }
@@ -279,10 +301,9 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
                 if (display != null) {
                     Set<Widget> widgets = widgetMapper.getByDisplayId(display.getId());
                     if (widgets != null && widgets.size() > 0) {
-
-                        String filePath = fileBasePath + baseUrl + File.separator + display.getName() + "-" + UUID.randomUUID() + ".xlsx";
-
-                        File file = writeExcel(widgets, filePath, user);
+                        String filePath = fileBasePath + baseUrl + File.separator + display.getName() + "-" + UUID.randomUUID() + FileTypeEnum.XLSX.getFormat();
+                        filePath = filePath.replaceAll(File.separator + "{2,}", File.separator);
+                        File file = widgetService.writeExcel(widgets, null, filePath, user, false);
                         files.add(file);
                     }
                 }
@@ -300,113 +321,108 @@ public class EmailScheduleServiceImpl extends CommonService implements ScheduleS
     }
 
 
-    /**
-     * widget列表数据渲染到excel
-     *
-     * @param widgets
-     * @param excelFilePath
-     * @return
-     * @throws Exception
-     */
-    private File writeExcel(Set<Widget> widgets, String excelFilePath, User user) throws Exception {
-        if (StringUtils.isEmpty(excelFilePath)) {
-            throw new ServerException("excel file path is empty");
-        }
-        if (!excelFilePath.trim().toLowerCase().endsWith(".xlsx")) {
-            throw new ServerException("unknow file format");
-        }
-
-        XSSFWorkbook wb = new XSSFWorkbook();
-        XSSFCellStyle cellStyle = wb.createCellStyle();
-        XSSFDataFormat format = wb.createDataFormat();
-        cellStyle.setDataFormat(format.getFormat("@"));
-
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
-
-        Iterator<Widget> iterator = widgets.iterator();
-        int i = 1;
-        while (iterator.hasNext()) {
-            Widget widget = iterator.next();
-            final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
-            executorService.execute(() -> {
-                XSSFSheet sheet = null;
-                try {
-                    ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widget.getViewId());
-
-                    ViewExecuteParam executeParam = widgetService.buildViewExecuteParam(widget);
-
-                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
-                    List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
-
-                    sheet = wb.createSheet(sheetName + "_" + widget.getName());
-                    writeSheet(sheet, columns, dataList, cellStyle);
-                } catch (ServerException e) {
-                    e.printStackTrace();
-                } finally {
-                    sheet = null;
-                    countDownLatch.countDown();
-                }
-            });
-
-            i++;
-        }
-
-        countDownLatch.await();
-        executorService.shutdown();
-
-        File file = new File(excelFilePath);
-        File dir = new File(file.getParent());
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
-
-        FileOutputStream out = new FileOutputStream(excelFilePath);
-        wb.write(out);
-        out.flush();
-        out.close();
-        return file;
+    private static ScriptEngine getScriptEngine() throws Exception {
+        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
+        ClassLoader classLoader = EmailScheduleServiceImpl.class.getClassLoader();
+        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(Constants.EXECUTE_PARAM_FORMAT_JS)));
+        return engine;
     }
 
-    /**
-     * 写入数据到excel sheet页
-     *
-     * @param sheet
-     * @param columns
-     * @param dataList
-     * @param cellStyle
-     */
-    private void writeSheet(XSSFSheet sheet, List<QueryColumn> columns, List<Map<String, Object>> dataList, XSSFCellStyle cellStyle) {
-        XSSFRow row = null;
-        row = sheet.createRow(0);
-        //header
-        for (int i = 0; i < columns.size(); i++) {
-            row.createCell(i).setCellValue(columns.get(i).getName());
-        }
-        //data
-        for (int i = 0; i < dataList.size(); i++) {
-            row = sheet.createRow(i + 1);
-            Map<String, Object> map = dataList.get(i);
-            for (int j = 0; j < columns.size(); j++) {
-                Object obj = map.get(columns.get(j).getName());
-                String v = "";
-                if (null != obj) {
-                    if (obj instanceof Double || obj instanceof Float) {
-                        DecimalFormat decimalFormat = new DecimalFormat("#,###.####");
-                        v = decimalFormat.format(obj);
-                    } else {
-                        v = obj.toString();
+    public static void main(String[] args) throws Exception {
+        ScriptEngine engine = getScriptEngine();
+        String dashboardconfig = "{\"filters\":[{\"relatedViews\":{\"305\":{\"key\":\"to_day\",\"name\":\"to_day\",\"isVariable\":true,\"items\":[418]}},\"dateFormat\":\"YYYY-MM-DD\",\"key\":\"E233F4E4\",\"name\":\"日期\",\"type\":\"date\",\"width\":0,\"dynamicDefaultValue\":\"yesterday\",\"operator\":\"=\"},{\"relatedViews\":{\"305\":{\"key\":\"month_var\",\"name\":\"month_var\",\"isVariable\":true,\"items\":[418]}},\"dateFormat\":\"YYYY-MM\",\"key\":\"E553B0E1\",\"name\":\"月份\",\"type\":\"date\",\"width\":0,\"dynamicDefaultValue\":\"month\",\"operator\":\"=\"}]}\n";
+        String widgetConfig = "{\"data\":[],\"cols\":[{\"name\":\"zone\",\"type\":\"category\",\"visualType\":\"string\",\"config\":true,\"field\":{\"alias\":\"大区\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"cols\"},{\"name\":\"office_name\",\"type\":\"category\",\"visualType\":\"string\",\"config\":true,\"field\":{\"alias\":\"营业部\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"cols\"}],\"rows\":[],\"metrics\":[{\"name\":\"apply_num@davinci@53CCAE42\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_amount@davinci@49327A7A\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"},{\"name\":\"rn@davinci@D482A707\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_rn@davinci@1510D578\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"},{\"name\":\"apply_num3@davinci@055D4BB6\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_amount3@davinci@B6C0C9EE\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"},{\"name\":\"rn3@davinci@5E500819\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_rn3@davinci@C85FD31B\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"},{\"name\":\"apply_num2@davinci@22F8B846\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_amount2@davinci@3DB9F888\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"},{\"name\":\"rn2@davinci@8E13B2A9\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"申请#\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"default\"},\"from\":\"metrics\"},{\"name\":\"loan_rn2@davinci@631999CF\",\"type\":\"value\",\"visualType\":\"number\",\"agg\":\"sum\",\"config\":true,\"chart\":{\"id\":1,\"name\":\"table\",\"title\":\"表格\",\"icon\":\"icon-table\",\"coordinate\":\"other\",\"requireDimetions\":[0,9999],\"requireMetrics\":[0,9999],\"data\":{\"cols\":{\"title\":\"列\",\"type\":\"category\"},\"rows\":{\"title\":\"行\",\"type\":\"category\"},\"metrics\":{\"title\":\"指标\",\"type\":\"value\"},\"filters\":{\"title\":\"筛选\",\"type\":\"all\"}},\"style\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":true,\"withPaging\":true,\"pageSize\":\"20\",\"withNoAggregators\":false},\"spec\":{}}},\"field\":{\"alias\":\"放款￥\",\"useExpression\":false,\"desc\":\"\"},\"format\":{\"formatType\":\"numeric\",\"numeric\":{\"decimalPlaces\":2,\"unit\":\"无\",\"useThousandSeparator\":true}},\"from\":\"metrics\"}],\"filters\":[],\"chartStyles\":{\"table\":{\"fontFamily\":\"PingFang SC\",\"fontSize\":\"12\",\"color\":\"#666\",\"lineStyle\":\"solid\",\"lineColor\":\"#D9D9D9\",\"headerBackgroundColor\":\"#f7f7f7\",\"headerConfig\":[{\"key\":\"3KaVv\",\"headerName\":\"zone\",\"alias\":\"zone[大区]\",\"visualType\":\"string\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":null},{\"key\":\"9p5vw\",\"headerName\":\"office_name\",\"alias\":\"office_name[营业部]\",\"visualType\":\"string\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":null},{\"key\":\"rYXOZ\",\"headerName\":\"整体\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"eBM1m\",\"headerName\":\"今天\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"mQ0Kq\",\"headerName\":\"apply_num@davinci@53CCAE42\",\"alias\":\"[总计]apply_num[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"7cx1E\",\"headerName\":\"loan_amount@davinci@49327A7A\",\"alias\":\"[总计]loan_amount[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]},{\"key\":\"la6vG\",\"headerName\":\"MTD截止今日\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"oHMAP\",\"headerName\":\"rn@davinci@D482A707\",\"alias\":\"[总计]rn[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"DACEp\",\"headerName\":\"loan_rn@davinci@1510D578\",\"alias\":\"[总计]loan_rn[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]}]},{\"key\":\"3JxxQ\",\"headerName\":\"三期\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"Vnhga\",\"headerName\":\"今日\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"UNxB3\",\"headerName\":\"apply_num3@davinci@055D4BB6\",\"alias\":\"[总计]apply_num3[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"PRfZj\",\"headerName\":\"loan_amount3@davinci@B6C0C9EE\",\"alias\":\"[总计]loan_amount3[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]},{\"key\":\"cH9kp\",\"headerName\":\"MTD截止今日\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"gV0lw\",\"headerName\":\"rn3@davinci@5E500819\",\"alias\":\"[总计]rn3[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"lBrdz\",\"headerName\":\"loan_rn3@davinci@C85FD31B\",\"alias\":\"[总计]loan_rn3[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]}]},{\"key\":\"6GqSo\",\"headerName\":\"分期\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"KqpLM\",\"headerName\":\"今日\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"BhJu5\",\"headerName\":\"apply_num2@davinci@22F8B846\",\"alias\":\"[总计]apply_num2[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"PyZZy\",\"headerName\":\"loan_amount2@davinci@3DB9F888\",\"alias\":\"[总计]loan_amount2[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]},{\"key\":\"g1NUZ\",\"headerName\":\"MTD截止今日\",\"alias\":null,\"visualType\":null,\"isGroup\":true,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"center\"},\"children\":[{\"key\":\"wAu5d\",\"headerName\":\"rn2@davinci@8E13B2A9\",\"alias\":\"[总计]rn2[申请#]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null},{\"key\":\"lv4d8\",\"headerName\":\"loan_rn2@davinci@631999CF\",\"alias\":\"[总计]loan_rn2[放款￥]\",\"visualType\":\"number\",\"isGroup\":false,\"style\":{\"fontSize\":\"12\",\"fontFamily\":\"PingFang SC\",\"fontWeight\":\"normal\",\"fontColor\":\"#666\",\"fontStyle\":\"normal\",\"backgroundColor\":\"#f7f7f7\",\"justifyContent\":\"flex-start\"},\"children\":null}]}]}],\"columnsConfig\":[],\"leftFixedColumns\":[],\"rightFixedColumns\":[],\"headerFixed\":true,\"autoMergeCell\":false,\"withPaging\":false,\"pageSize\":\"20\",\"withNoAggregators\":true},\"spec\":{}},\"selectedChart\":1,\"pagination\":{\"pageNo\":0,\"pageSize\":0,\"withPaging\":false,\"totalCount\":0},\"renderType\":\"clear\",\"orders\":[],\"mode\":\"chart\",\"model\":{\"zone\":{\"sqlType\":\"VARCHAR\",\"visualType\":\"string\",\"modelType\":\"category\"},\"office_name\":{\"sqlType\":\"VARCHAR\",\"visualType\":\"string\",\"modelType\":\"category\"},\"apply_num\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_amount\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"rn\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_rn\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"apply_num3\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_amount3\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"rn3\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_rn3\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"apply_num2\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_amount2\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"rn2\":{\"sqlType\":\"BIGINT\",\"visualType\":\"number\",\"modelType\":\"value\"},\"loan_rn2\":{\"sqlType\":\"DOUBLE\",\"visualType\":\"number\",\"modelType\":\"value\"},\"n\":{\"sqlType\":\"VARCHAR\",\"visualType\":\"string\",\"modelType\":\"value\"}},\"controls\":[],\"computed\":[],\"cache\":false,\"expired\":300}\n";
+        ViewExecuteParam viewExecuteParam = getViewExecuteParam(engine, dashboardconfig, widgetConfig, 418L);
+
+        System.out.println(JSONObject.toJSONString(viewExecuteParam));
+    }
+
+    private static ViewExecuteParam getViewExecuteParam(ScriptEngine engine, String dashboardConfig, String widgetConfig, Long releationId) {
+        try {
+            Invocable invocable = (Invocable) engine;
+            Object obj = invocable.invokeFunction("getDashboardItemExecuteParam", dashboardConfig, widgetConfig, releationId);
+
+            if (obj instanceof ScriptObjectMirror) {
+                ScriptObjectMirror vsom = (ScriptObjectMirror) obj;
+                List<String> groups = new ArrayList<>();
+                List<Aggregator> aggregators = new ArrayList<>();
+                List<Order> orders = new ArrayList<>();
+                List<String> filters = new ArrayList<>();
+                Boolean cache = false;
+                Boolean nativeQuery = false;
+
+                Long expired = 0L;
+                List<Param> params = new ArrayList<>();
+                for (String key : vsom.keySet()) {
+                    switch (key) {
+                        case "groups":
+                            ScriptObjectMirror groupMirror = (ScriptObjectMirror) vsom.get(key);
+                            if (groupMirror.isArray()) {
+                                Collection<Object> values = groupMirror.values();
+                                values.forEach(v -> groups.add(String.valueOf(v)));
+                            }
+                            break;
+                        case "aggregators":
+                            ScriptObjectMirror aggregatorsMirror = (ScriptObjectMirror) vsom.get(key);
+                            if (aggregatorsMirror.isArray()) {
+                                Collection<Object> values = aggregatorsMirror.values();
+                                values.forEach(v -> {
+                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
+                                    Aggregator aggregator = new Aggregator(String.valueOf(agg.get("column")), String.valueOf(agg.get("func")));
+                                    aggregators.add(aggregator);
+                                });
+                            }
+                            break;
+                        case "orders":
+                            ScriptObjectMirror ordersMirror = (ScriptObjectMirror) vsom.get(key);
+                            if (ordersMirror.isArray()) {
+                                Collection<Object> values = ordersMirror.values();
+                                values.forEach(v -> {
+                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
+                                    Order order = new Order(String.valueOf(agg.get("column")), String.valueOf(agg.get("direction")));
+                                    orders.add(order);
+                                });
+                            }
+                            break;
+                        case "filters":
+                            ScriptObjectMirror filterMirror = (ScriptObjectMirror) vsom.get(key);
+                            if (filterMirror.isArray()) {
+                                Collection<Object> values = filterMirror.values();
+                                values.forEach(v -> filters.add(String.valueOf(v)));
+                            }
+                            break;
+                        case "cache":
+                            cache = (Boolean) vsom.get(key);
+                            break;
+                        case "expired":
+                            expired = Long.parseLong(String.valueOf(vsom.get(key)));
+                            break;
+                        case "params":
+                            ScriptObjectMirror paramsMirror = (ScriptObjectMirror) vsom.get(key);
+                            if (paramsMirror.isArray()) {
+                                Collection<Object> values = paramsMirror.values();
+                                values.forEach(v -> {
+                                    ScriptObjectMirror agg = (ScriptObjectMirror) v;
+                                    Param param = new Param(String.valueOf(agg.get("name")), String.valueOf(agg.get("value")));
+                                    params.add(param);
+                                });
+                            }
+                            break;
+                        case "nativeQuery":
+                            nativeQuery = (Boolean) vsom.get(key);
+                            break;
                     }
                 }
-                XSSFCell cell = row.createCell(j);
-                cell.setCellValue(v);
-                cell.setCellStyle(cellStyle);
-            }
-        }
 
-        sheet.setDefaultRowHeight((short) (16.5 * 20));
-        for (int i = 0; i < columns.size(); i++) {
-            sheet.autoSizeColumn(i);
+                return new ViewExecuteParam(groups, aggregators, orders, filters, params, cache, expired, nativeQuery);
+            }
+
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
         }
+        return null;
     }
+
 }

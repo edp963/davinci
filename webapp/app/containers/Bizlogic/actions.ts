@@ -345,13 +345,13 @@ export function loadDataFromItem (renderType, itemId, viewId, params, vizType: '
   }
 }
 
-export function dataFromItemLoaded (renderType, itemId, data, vizType: 'dashboard' | 'display') {
+export function dataFromItemLoaded (renderType, itemId, result, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM_SUCCESS,
     payload: {
       renderType,
       itemId,
-      data,
+      result,
       vizType
     }
   }

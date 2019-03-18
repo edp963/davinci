@@ -61,7 +61,7 @@ function shareReducer (state = initialState, { type, payload }) {
         .set('items', payload.dashboard.relations)
         .set('itemsInfo', payload.dashboard.relations.reduce((obj, item) => {
           obj[item.id] = {
-            datasource: [],
+            datasource: { resultList: [] },
             loading: false,
             queryParams: {
               linkageFilters: [],
@@ -91,7 +91,7 @@ function shareReducer (state = initialState, { type, payload }) {
         }])
         .set('itemsInfo', {
           1: {
-            datasource: [],
+            datasource: { resultList: [] },
             loading: false,
             queryParams: {
               linkageFilters: [],
@@ -194,7 +194,7 @@ function shareReducer (state = initialState, { type, payload }) {
           info[key] = {
             ...prop,
             renderType: 'resize',
-            datasource: [...prop.datasource]
+            datasource: {...prop.datasource}
           }
           return info
         }, {})

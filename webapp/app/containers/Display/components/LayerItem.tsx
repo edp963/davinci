@@ -37,7 +37,12 @@ interface ILayerItemProps {
   itemId: number
   widget: any
   view: any
-  data: any
+  datasource: {
+    pageNo: number
+    pageSize: number
+    resultList: any[]
+    totalCount: number
+  }
   loading: boolean
   polling: string
   frequency: string
@@ -269,7 +274,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
-      data,
+      datasource,
       loading,
       renderType,
       interactId,
@@ -289,6 +294,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     const layerStyle = this.getLayerStyle(layer, layerParams)
     const isLoading = !pure && loading
+    const data = datasource.resultList || []
 
     return (
       <div
@@ -308,7 +314,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
         {this.wrapLayerTooltip(
           (<Widget
             {...widgetProps}
-            data={data || []}
+            data={data}
             loading={isLoading}
             renderType={renderType}
             model={model}

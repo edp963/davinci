@@ -18,16 +18,16 @@
   -->
 
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
-<mapper namespace="edp.davinci.dao.TeamMapper" >
+<mapper namespace="edp.davinci.dao.TeamMapper">
     <insert id="insert" parameterType="edp.davinci.model.Team">
         <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
             SELECT LAST_INSERT_ID() AS id
         </selectKey>
         insert team
-        <trim prefix="(" suffix=")" suffixOverrides="," >
+        <trim prefix="(" suffix=")" suffixOverrides=",">
             `name`,
             <if test="description != null">
-              description,
+                description,
             </if>
             org_id,
             visibility,
@@ -39,10 +39,10 @@
             </if>
         </trim>
         values
-        <trim prefix=" (" suffix=")" suffixOverrides="," >
+        <trim prefix="(" suffix=")" suffixOverrides=",">
             #{name, jdbcType=VARCHAR},
             <if test="description != null">
-              #{description, jdbcType=VARCHAR},
+                #{description, jdbcType=VARCHAR},
             </if>
             #{orgId, jdbcType=BIGINT},
             #{visibility, jdbcType=TINYINT},
@@ -54,4 +54,12 @@
             </if>
         </trim>
     </insert>
+
+
+    <select id="getTeamsByIds" resultType="edp.davinci.dto.teamDto.TeamFullId">
+        SELECT id, full_team_id as fullTeamId FROM team WHERE id in
+        <foreach collection="set" open="(" close=")" separator="," item="item">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

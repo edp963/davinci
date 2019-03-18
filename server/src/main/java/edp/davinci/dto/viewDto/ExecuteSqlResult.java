@@ -18,6 +18,7 @@
 
 package edp.davinci.dto.viewDto;
 
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import lombok.Data;
 
@@ -25,14 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 @Data
-public class ExecuteSqlResult {
+public class ExecuteSqlResult extends Paginate<Map<String, Object>> {
 
     private List<QueryColumn> columns;
 
-    private List<Map<String, Object>> resultset;
-
-    public ExecuteSqlResult(List<QueryColumn> columns, List<Map<String, Object>> resultset) {
+    public ExecuteSqlResult(List<QueryColumn> columns, Paginate<Map<String, Object>> paginate) {
         this.columns = columns;
-        this.resultset = resultset;
+        this.setPageNo(paginate.getPageNo());
+        this.setPageSize(paginate.getPageSize());
+        this.setTotalCount(paginate.getTotalCount());
+        this.setResultList(paginate.getResultList());
     }
 }

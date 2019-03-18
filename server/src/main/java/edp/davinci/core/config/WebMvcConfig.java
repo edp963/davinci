@@ -25,7 +25,9 @@ import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
 import edp.core.inteceptor.RequestJsonHandlerArgumentResolver;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.inteceptor.AuthenticationInterceptor;
+import edp.davinci.core.inteceptor.CurrentPlatformMethodArgumentResolver;
 import edp.davinci.core.inteceptor.CurrentUserMethodArgumentResolver;
+import edp.davinci.core.inteceptor.PlatformAuthInterceptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +38,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,24 +51,65 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
     @Value("${file.web_resources}")
     private String webResources;
 
+    /**
+     * 登录校验拦截器
+     *
+     * @return
+     */
     @Bean
     public AuthenticationInterceptor loginRequiredInterceptor() {
         return new AuthenticationInterceptor();
     }
 
+    /**
+     * 授权平台校验拦截器
+     *
+     * @return
+     */
+    @Bean
+    public PlatformAuthInterceptor platformAuthInterceptor() {
+        return new PlatformAuthInterceptor();
+    }
+
+    /**
+     * CurrentUser 注解参数解析器
+     *
+     * @return
+     */
     @Bean
     public CurrentUserMethodArgumentResolver currentUserMethodArgumentResolver() {
         return new CurrentUserMethodArgumentResolver();
     }
 
+    /**
+     * CurrentPlatform 注解参数解析器
+     *
+     * @return
+     */
+    @Bean
+    public CurrentPlatformMethodArgumentResolver currentPlatformMethodArgumentResolver() {
+        return new CurrentPlatformMethodArgumentResolver();
+    }
+
+    /**
+     * JsonParam 参数解析器
+     *
+     * @return
+     */
     @Bean
     public RequestJsonHandlerArgumentResolver requestJsonHandlerArgumentResolver() {
         return new RequestJsonHandlerArgumentResolver();
     }
 
+    /**
+     * 参数解析器
+     *
+     * @param argumentResolvers
+     */
     @Override
     protected void addArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
         argumentResolvers.add(currentUserMethodArgumentResolver());
+        argumentResolvers.add(currentPlatformMethodArgumentResolver());
         argumentResolvers.add(requestJsonHandlerArgumentResolver());
         super.addArgumentResolvers(argumentResolvers);
     }
@@ -75,6 +119,9 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         registry.addInterceptor(loginRequiredInterceptor())
                 .addPathPatterns(Constants.BASE_API_PATH + "/**")
                 .excludePathPatterns(Constants.BASE_API_PATH + "/login");
+
+        registry.addInterceptor(platformAuthInterceptor())
+                .addPathPatterns(Constants.AUTH_API_PATH + "/**");
 
         super.addInterceptors(registry);
     }
@@ -104,11 +151,13 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
                 SerializerFeature.WriteDateUseDateFormat,
                 SerializerFeature.DisableCircularReferenceDetect);
         fastJsonConfig.setSerializeFilters((ValueFilter) (o, s, source) -> {
-            if (null == source) {
-                return "";
+            if (null != source && (source instanceof Long || source instanceof BigInteger) && source.toString().length() > 15) {
+                return source.toString();
+            } else {
+                return null == source ? "" : source;
             }
-            return source;
         });
+
         //处理中文乱码问题
         List<MediaType> fastMediaTypes = new ArrayList<>();
         fastMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
@@ -116,4 +165,6 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
         fastConverter.setFastJsonConfig(fastJsonConfig);
         converters.add(fastConverter);
     }
+
+
 }

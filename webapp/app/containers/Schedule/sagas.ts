@@ -18,7 +18,6 @@ import {
 } from './actions'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 import { PortalList } from '../Portal/components/PortalList'
 const message = require('antd/lib/message')
@@ -26,7 +25,7 @@ const message = require('antd/lib/message')
 export function* getSchedules ({payload}) {
   try {
     const asyncData = yield call(request, `${api.schedule}?projectId=${payload.pid}`)
-    const schedules = readListAdapter(asyncData)
+    const schedules = asyncData.payload
     yield put(schedulesLoaded(schedules))
   } catch (err) {
     yield put(loadSchedulesFail())
@@ -39,10 +38,9 @@ export function* addSchedules ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.schedule,
-    //  data: writeAdapter(payload.schedule)
       data: payload.schedule
     })
-    const result = readObjectAdapter(asyncData)
+    const result = asyncData.payload
     yield put(scheduleAdded(result))
     payload.resolve()
   } catch (err) {
@@ -87,7 +85,7 @@ export function* changeScheduleStatus ({ payload }) {
       method: 'post',
       url: `${api.schedule}/${status}/${payload.id}`
     })
-    const result = readObjectAdapter(asyncData)
+    const result = asyncData.payload
     yield put(currentScheduleStatusChanged(payload.id, result))
   } catch (err) {
     yield put(changeSchedulesStatusFail())
@@ -100,10 +98,9 @@ export function* updateSchedule ({ payload }) {
     const asyncData = yield call(request, {
       method: 'put',
       url: `${api.schedule}/${payload.schedule.id}`,
-   //   data: writeAdapter(payload.schedule)
       data: payload.schedule
     })
-    const result = readObjectAdapter(asyncData)
+    const result = asyncData.payload
     yield put(scheduleUpdated(result))
     payload.resolve()
   } catch (err) {
@@ -117,8 +114,8 @@ export function* getVizsData ({ payload }) {
   try {
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
-    const portalsList = readListAdapter(portalsData)
-    const displayList = readListAdapter(displayData).map((display) => ({...display, ...{
+    const portalsList = portalsData.payload
+    const displayList = displayData.payload.map((display) => ({...display, ...{
       contentType: 'display',
       label: `${display.name}`,
       key: display.name,
@@ -129,7 +126,7 @@ export function* getVizsData ({ payload }) {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
     const portals = portalsList.map((portal, index) => {
-      portal.children =  buildTree(readListAdapter(list[index]))
+      portal.children =  buildTree(list[index].payload)
       return {
         ...portal,
         ...{

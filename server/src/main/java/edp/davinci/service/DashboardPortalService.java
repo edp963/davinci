@@ -25,6 +25,7 @@ import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.model.User;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface DashboardPortalService extends CheckEntityService {
     ResultMap getDashboardPortals(Long projectId, User user, HttpServletRequest request);
@@ -35,4 +36,5 @@ public interface DashboardPortalService extends CheckEntityService {
 
     ResultMap deleteDashboardPortal(Long id, User user, HttpServletRequest request);
 
+    List<Long> getExcludeTeams(Long id);
 }

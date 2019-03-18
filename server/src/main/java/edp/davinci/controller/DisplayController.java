@@ -26,8 +26,8 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.displayDto.DisplayInfo;
 import edp.davinci.dto.displayDto.DisplaySlideCreate;
+import edp.davinci.dto.displayDto.DisplayUpdateDto;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetCreate;
-import edp.davinci.model.Display;
 import edp.davinci.model.DisplaySlide;
 import edp.davinci.model.MemDisplaySlideWidget;
 import edp.davinci.model.User;
@@ -47,6 +47,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.List;
 
 @Api(value = "/displays", tags = "displays", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
 @ApiResponses(@ApiResponse(code = 404, message = "display not found"))
@@ -100,7 +101,7 @@ public class DisplayController extends BaseController {
      */
     @ApiOperation(value = "update display info", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateDisplay(@Valid @RequestBody Display display,
+    public ResponseEntity updateDisplay(@Valid @RequestBody DisplayUpdateDto display,
                                         @ApiIgnore BindingResult bindingResult,
                                         @ApiIgnore @CurrentUser User user,
                                         @PathVariable Long id, HttpServletRequest request) {
@@ -725,6 +726,34 @@ public class DisplayController extends BaseController {
 
         try {
             ResultMap resultMap = displayService.shareDisplay(id, user, username, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    /**
+     * 获取Display 排除访问的团队列表
+     *
+     * @param id
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get display  exclude teams")
+    @GetMapping("/{id}/exclude/teams")
+    public ResponseEntity getPortalExcludeTeams(@PathVariable Long id,
+                                                HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            List<Long> excludeTeams = displayService.getDisplayExcludeTeams(id);
+            ResultMap resultMap = new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeTeams);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();

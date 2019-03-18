@@ -35,6 +35,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class CommonService<T> {
@@ -69,6 +71,7 @@ public class CommonService<T> {
     @Value("${server.access.port:}")
     private String accessPort;
 
+    public final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
     private static final String HTTP_PROTOCOL = "http";
 

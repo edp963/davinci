@@ -48,6 +48,9 @@ export class DisplayForm extends React.PureComponent<IDisplayFormProps, {}> {
     const { projectId, onCheckName, type, form } = this.props
     const { id } = form.getFieldsValue()
     const typeName = 'display'
+    if (!value) {
+      callback()
+    }
     onCheckName(typeName, {
       projectId,
       id,

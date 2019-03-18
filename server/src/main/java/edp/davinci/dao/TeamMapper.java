@@ -27,6 +27,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface TeamMapper {
@@ -42,7 +43,7 @@ public interface TeamMapper {
 
 
     @Select({
-            "select distinct t.id, t.`name`, t.description, t.visibility, t.parent_team_id from team t left join rel_user_team rut on rut.team_id = t.id",
+            "select distinct t.id, t.`name`, t.description, t.visibility, t.parent_team_id, t.full_team_id from team t left join rel_user_team rut on rut.team_id = t.id",
             "where t.org_id = #{orgId}"
     })
     List<TeamBaseInfoWithParent> getTeamsByOrgId(@Param("orgId") Long orgId);
@@ -51,6 +52,11 @@ public interface TeamMapper {
     Long getByNameWithOrgId(@Param("name") String name, @Param("orgId") Long orgId);
 
     int insert(Team team);
+
+    @Update({
+            "UPDATE team SET full_team_id = parentTeamIds(id) where id = #{id}"
+    })
+    int updateFullTeamById(@Param("id") Long id);
 
     @Select({"select * from team where id = #{id}"})
     Team getById(@Param("id") Long id);
@@ -75,25 +81,14 @@ public interface TeamMapper {
     int deleteById(@Param("id") Long id);
 
     @Select({
-            "SELECT rut.id, u.id as 'user.id', u.username as 'user.username', u.avatar as 'user.avatar', rut.role as 'user.role'",
+            "SELECT rut.id, u.id as 'user.id', IF(u.`name` is NULL,u.username,u.`name`) as 'user.username', u.avatar as 'user.avatar', rut.role as 'user.role'",
             "FROM `user` u, rel_user_team rut WHERE u.id = rut.user_id AND rut.team_id = #{id}"})
     List<TeamMember> getTeamMembers(@Param("id") Long id);
 
-
-//    @Select({
-//            "select t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
-//            "from team t, rel_user_team rut",
-//            "where ",
-//            "	rut.team_id = t.id and FIND_IN_SET(t.id,childTeamIds(#{id})) and ",
-//            "	rut.user_id = #{userId} and (rut.role = 1 OR t.visibility = 1)",
-//    })
-//    List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id, @Param("userId") Long userId);
-
-
     @Select({
-            "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id ",
+            "select DISTINCT t.id, t.`name`, t.description, t.visibility, t.parent_team_id, t.full_team_id",
             "from team t left join rel_user_team rut on rut.team_id = t.id ",
-            "where FIND_IN_SET(t.id,childTeamIds(#{id}))",
+            "where FIND_IN_SET(#{id}, t.full_team_id) > 0",
     })
     List<TeamBaseInfoWithParent> getChildTeams(@Param("id") Long id);
 
@@ -148,4 +143,11 @@ public interface TeamMapper {
     })
     TeamWithOrg getTeamWithOrg(@Param("id") Long id);
 
+    @Select({
+            "SELECT t.id from rel_user_team r LEFT JOIN team t on t.id = r.team_id WHERE r.user_id = #{userId} and t.org_id = #{orgId}"
+    })
+    Set<Long> getUserTeams(@Param("userId") Long userId, @Param("orgId") Long orgId);
+
+
+    Set<TeamFullId> getTeamsByIds(@Param("set") Set<Long> ids);
 }

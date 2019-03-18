@@ -22,6 +22,7 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.core.utils.AESUtils;
 import edp.core.utils.FileUtils;
@@ -343,7 +344,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      */
     @Override
     public ResultMap getShareData(String token, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
-        List<Map<String, Object>> list = null;
+        Paginate<Map<String, Object>> paginate = null;
         try {
 
             ShareInfo shareInfo = getShareInfo(token, user);
@@ -359,14 +360,14 @@ public class ShareServiceImpl extends CommonService implements ShareService {
 
             Long viewId = shareInfo.getShareId();
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
-            list = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+            paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
-        return resultSuccess(user, request).payloads(list);
+        return resultSuccess(user, request).payload(paginate);
     }
 
 
@@ -404,7 +405,10 @@ public class ShareServiceImpl extends CommonService implements ShareService {
 
             List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
-            List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+            executeParam.setLimit(-1);
+            executeParam.setPageSize(-1);
+            executeParam.setPageNo(-1);
+            Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             if (null != columns && columns.size() > 0) {
                 String csvPath = fileUtils.fileBasePath + File.separator + "csv";
@@ -414,7 +418,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 }
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
                 String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
-                String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
+                String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
                 filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
             }
         } catch (ServerException e) {
@@ -437,7 +441,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
      */
     @Override
     public ResultMap getDistinctValue(String token, Long viewId, DistinctParam param, User user, HttpServletRequest request) {
-        Map<String, Object> map = null;
+        List<Map<String, Object>> list = null;
         try {
 
             ShareInfo shareInfo = getShareInfo(token, user);
@@ -468,7 +472,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             }
 
             try {
-                map = viewService.getDistinctValueData(viewWithProjectAndSource, param, shareInfo.getShareUser());
+                list = viewService.getDistinctValueData(viewWithProjectAndSource, param, shareInfo.getShareUser());
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }
@@ -478,7 +482,7 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
         }
 
-        return resultSuccess(user, request).payload(map);
+        return resultSuccess(user, request).payloads(list);
     }
 
 

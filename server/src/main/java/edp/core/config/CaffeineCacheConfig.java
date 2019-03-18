@@ -61,8 +61,6 @@ public class CaffeineCacheConfig {
             @Override
             public Object generate(Object o, Method method, Object... params) {
                 StringBuilder sb = new StringBuilder();
-                sb.append(o.getClass().getName());
-                sb.append(method.getName());
                 for (Object obj : params) {
                     sb.append(obj.toString());
                 }

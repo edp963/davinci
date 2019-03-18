@@ -69,10 +69,8 @@ public class SqlParseUtils {
      */
     public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
         if (!StringUtils.isEmpty(sqlStr.trim())) {
-            log.info("original sql >>>>>>: {}", sqlStr);
             //过滤注释
             sqlStr = SqlUtils.filterAnnotate(sqlStr);
-            log.info("after filter annotate sql >>>>>>: {}", sqlStr);
 
             //sql体
             String sqlStruct = null, queryParam = null;
@@ -99,7 +97,6 @@ public class SqlParseUtils {
                 if (sqlStruct.endsWith(sqlSeparator)) {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
-                log.info("after structed sql >>>>>>: {}", sqlStruct);
             }
 
             Map<String, String> queryParamMap = new HashMap<>();
@@ -120,8 +117,7 @@ public class SqlParseUtils {
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
-                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                             }
                         } else if (param.startsWith(TEAM_VAR_KEY)) {
@@ -129,8 +125,7 @@ public class SqlParseUtils {
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
-                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 teamParamMap.put(k.trim(), Arrays.asList(v));
                             }
                         }
@@ -318,9 +313,16 @@ public class SqlParseUtils {
                                                     .append(list.stream().collect(Collectors.joining(",", "(", ")")));
                                             break;
                                         default:
-                                            expBuilder
-                                                    .append(left).append(space)
-                                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            if (list.get(0).split(",").length > 0) {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                                        .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                            } else {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            }
                                             break;
                                     }
                                 } else {

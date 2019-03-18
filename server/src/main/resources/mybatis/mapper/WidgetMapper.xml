@@ -67,6 +67,17 @@
         </foreach>
     </insert>
 
+    <update id="updateConfigBatch">
+        update widget set `config` =
+        <foreach collection="list" item="record" index="index" separator=" " open="case id" close="end">
+            when #{record.id} then #{record.config}
+        </foreach>
+        where id in
+        <foreach collection="list" index="index" item="record" separator="," open="(" close=")">
+            #{record.id,jdbcType=BIGINT}
+        </foreach>
+    </update>
+
 
     <select id="getByIds" resultType="edp.davinci.model.Widget" parameterType="java.util.Set">
         select * from widget where id in

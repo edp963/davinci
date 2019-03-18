@@ -28,6 +28,7 @@ import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
+import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.dto.teamDto.*;
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.dto.userDto.UserWithTeamId;
@@ -43,6 +44,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static edp.core.consts.Consts.conditionSeparator;
 
 @Slf4j
 @Service("teamService")
@@ -127,6 +131,7 @@ public class TeamServiceImpl implements TeamService {
         int insert = teamMapper.insert(team);
         //添加成功，建立关联
         if (insert > 0) {
+            teamMapper.updateFullTeamById(team.getId());
             RelUserTeam rel = new RelUserTeam(team.getId(), user.getId(), UserTeamRoleEnum.MAINTAINER.getRole());
             int insertRel = relUserTeamMapper.insert(rel);
             if (insertRel > 0) {
@@ -497,7 +502,7 @@ public class TeamServiceImpl implements TeamService {
                 child.setUsers(userList);
             }
         }
-        return resultMap.successAndRefreshToken(request).payloads(getStructuredList(childTeams));
+        return resultMap.successAndRefreshToken(request).payloads(getStructuredList(childTeams, null));
     }
 
 
@@ -725,7 +730,7 @@ public class TeamServiceImpl implements TeamService {
 
         if ((null == relUserOrg || relUserOrg.getRole() == UserOrgRoleEnum.MEMBER.getRole()) &&
                 (null == relUserTeam || relUserTeam.getRole() == UserTeamRoleEnum.MEMBER.getRole())) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to  add project to the team");
+            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to add project to the team");
         }
 
         Project project = projectMapper.getById(projectId);
@@ -810,32 +815,154 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<TeamWithMembers> getStructuredList(List<TeamBaseInfoWithParent> list) {
-        List<TeamWithMembers> teamWithMembersList = null;
-        if (null != list && list.size() > 0) {
-            teamWithMembersList = new ArrayList<>();
-            for (TeamBaseInfoWithParent t : list) {
-                if (null == t.getParentTeamId() || t.getParentTeamId().longValue() == 0L) {
-                    TeamWithMembers teamWithMembers = new TeamWithMembers();
-                    BeanUtils.copyProperties(t, teamWithMembers);
-                    teamWithMembers.setChildren(bulidChildren(teamWithMembers, list));
-                    teamWithMembersList.add(teamWithMembers);
+    public ResultMap getTeamsByProject(Long projectId, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        ProjectWithOrganization projectWithOrganization = projectMapper.getProjectWithOrganization(projectId);
+        if (null == projectWithOrganization) {
+            return resultMap.successAndRefreshToken(request).payloads(null);
+        }
+
+        Set<Long> rootIds = getRootTeamIds(user.getId(), projectId);
+        if (null == rootIds || rootIds.size() == 0) {
+            return resultMap.successAndRefreshToken(request).payloads(null);
+        }
+
+        List<TeamWithMembers> structuredList = new ArrayList<>();
+        if (rootIds.size() > 0) {
+            List<TeamBaseInfoWithParent> list = teamMapper.getTeamsByOrgId(projectWithOrganization.getOrgId());
+            Map<Long, List<TeamWithMembers>> childMap = getChildMap(list, rootIds);
+            structuredList = getChildsByMap(childMap, null);
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(structuredList);
+    }
+
+
+    public Set<Long> getRootTeamIds(Long userId, Long projectId) {
+        List<TeamFullId> teamFullIds = relUserTeamMapper.selectTeamFullParentByUserAndProject(userId, projectId);
+
+        if (null == teamFullIds || teamFullIds.size() == 0) {
+            return null;
+        }
+
+        Set<Long> rootIds = new HashSet<>();
+        Set<Long> teamIds = new HashSet<>();
+        Map<Long, Set<Long>> teamFullParentsMap = new HashMap<>();
+
+        teamFullIds.forEach(t -> {
+            teamIds.add(t.getId());
+            if (StringUtils.isEmpty(t.getFullTeamId())) {
+                rootIds.add(t.getId());
+            } else {
+                List<String> list = Arrays.asList(t.getFullTeamId().trim().split(conditionSeparator));
+                if (null != list && list.size() > 0) {
+                    Set<Long> collect = list.stream()
+                            .filter(s -> !String.valueOf(t.getId()).equals(s))
+                            .map(s -> Long.parseLong(s))
+                            .collect(Collectors.toSet());
+
+                    teamFullParentsMap.put(t.getId(), collect);
+                } else {
+                    rootIds.add(t.getId());
                 }
             }
+        });
+
+        teamIds.forEach(teamId -> {
+            if (teamFullParentsMap.containsKey(teamId)) {
+                Set<Long> parentIds = teamFullParentsMap.get(teamId);
+                if (Collections.disjoint(parentIds, teamIds)) {
+                    rootIds.add(teamId);
+                }
+            }
+        });
+        return rootIds;
+    }
+
+
+    @Override
+    public List<TeamWithMembers> getStructuredList(List<TeamBaseInfoWithParent> list, Long parentId) {
+        List<TeamWithMembers> teamWithMembersList = new ArrayList<>();
+        if (null != list && list.size() > 0) {
+            Set<Long> roots = null;
+            if (null != parentId && parentId.longValue() > 0L) {
+                roots = new HashSet<>();
+                roots.add(parentId);
+            }
+            Map<Long, List<TeamWithMembers>> childMap = getChildMap(list, roots);
+            teamWithMembersList = getChildsByMap(childMap, null);
         }
         return teamWithMembersList;
     }
 
-    private List<TeamWithMembers> bulidChildren(TeamWithMembers teamWithMembers, List<TeamBaseInfoWithParent> list) {
-        List<TeamWithMembers> children = new ArrayList<>();
-        for (TeamBaseInfoWithParent t : list) {
-            if (null != t.getParentTeamId() && t.getParentTeamId().longValue() > 0L && t.getParentTeamId().equals(teamWithMembers.getId())) {
-                TeamWithMembers teamWithMembers1 = new TeamWithMembers();
-                BeanUtils.copyProperties(t, teamWithMembers1);
-                teamWithMembers1.setChildren(bulidChildren(teamWithMembers1, list));
-                children.add(teamWithMembers1);
+    public Map<Long, List<TeamWithMembers>> getChildMap(List<TeamBaseInfoWithParent> list, Set<Long> roots) {
+        if (null != list && list.size() > 0) {
+            Map<Long, List<TeamWithMembers>> childMap = new HashMap<>();
+
+            if (null != roots && roots.size() > 0) {
+                List<TeamBaseInfoWithParent> filter = list.stream().filter(t -> {
+                    if (StringUtils.isEmpty(t.getFullTeamId())) {
+                        return false;
+                    } else {
+                        Set<Long> fullIds = new HashSet<>();
+                        Arrays.asList(t.getFullTeamId().split(conditionSeparator))
+                                .forEach(s -> fullIds.add(Long.parseLong(s)));
+
+                        if (!Collections.disjoint(fullIds, roots)) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                }).collect(Collectors.toList());
+
+                Iterator<TeamBaseInfoWithParent> iterator = filter.iterator();
+                while (iterator.hasNext()) {
+                    TeamBaseInfoWithParent team = iterator.next();
+                    if (roots.contains(team.getId())) {
+                        team.setParentTeamId(null);
+                    }
+                }
+                list = filter;
             }
+
+            list.forEach(t -> {
+                TeamWithMembers teamWithMembers = new TeamWithMembers();
+                BeanUtils.copyProperties(t, teamWithMembers);
+
+                List<TeamWithMembers> childList;
+                if (childMap.containsKey(t.getParentTeamId())) {
+                    childList = childMap.get(t.getParentTeamId());
+                } else {
+                    childList = new ArrayList<>();
+                    childMap.put(t.getParentTeamId(), childList);
+                }
+                childList.add(teamWithMembers);
+            });
+            return childMap;
         }
-        return children;
+        return null;
+    }
+
+
+    public List<TeamWithMembers> getStructuredList(Map<Long, List<TeamWithMembers>> childMap, Long parentId) {
+        if (null != childMap) {
+            return getChildsByMap(childMap, parentId);
+        }
+        return null;
+    }
+
+    private List<TeamWithMembers> getChildsByMap(Map<Long, List<TeamWithMembers>> map, Long parentId) {
+        List<TeamWithMembers> childList = map.get(parentId);
+        if (null == childList) {
+            return null;
+        }
+
+        for (TeamWithMembers child : childList) {
+            child.setChildren(getChildsByMap(map, child.getId()));
+        }
+
+        return childList;
     }
 }

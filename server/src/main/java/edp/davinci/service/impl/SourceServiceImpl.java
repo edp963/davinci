@@ -24,6 +24,7 @@ import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.SourceException;
 import edp.core.model.QueryColumn;
+import edp.core.model.TableInfo;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
@@ -32,8 +33,9 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.*;
-import edp.davinci.core.model.CsvEntity;
+import edp.davinci.core.model.DataUploadEntity;
 import edp.davinci.core.utils.CsvUtils;
+import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dao.SourceMapper;
 import edp.davinci.dao.ViewMapper;
@@ -345,14 +347,14 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * 生成csv对应的表结构
      *
      * @param sourceId
-     * @param csvmeta
+     * @param uploadMeta
      * @param user
      * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap validCsvmeta(Long sourceId, Csvmeta csvmeta, User user, HttpServletRequest request) {
+    public ResultMap validCsvmeta(Long sourceId, UploadMeta uploadMeta, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         Source source = sourceMapper.getById(sourceId);
@@ -374,16 +376,16 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to upload csv file in this source");
         }
 
-        if (csvmeta.getMode() != CsvmetaModeEnum.REPLACE.getMode()) {
+        if (uploadMeta.getMode() != UploadModeEnum.REPLACE.getMode()) {
             try {
-                boolean tableIsExist = sqlUtils.init(source).tableIsExist(csvmeta.getTableName());
-                if (csvmeta.getMode() == CsvmetaModeEnum.NEW.getMode()) {
+                boolean tableIsExist = sqlUtils.init(source).tableIsExist(uploadMeta.getTableName());
+                if (uploadMeta.getMode() == UploadModeEnum.NEW.getMode()) {
                     if (tableIsExist) {
-                        return resultMap.failAndRefreshToken(request).message("table " + csvmeta.getTableName() + " is already exist");
+                        return resultMap.failAndRefreshToken(request).message("table " + uploadMeta.getTableName() + " is already exist");
                     }
                 } else {
                     if (!tableIsExist) {
-                        return resultMap.failAndRefreshToken(request).message("table " + csvmeta.getTableName() + " is not exist");
+                        return resultMap.failAndRefreshToken(request).message("table " + uploadMeta.getTableName() + " is not exist");
                     }
                 }
             } catch (SourceException e) {
@@ -398,20 +400,30 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      * 上传csv文件
      *
      * @param sourceId
-     * @param csvUpload
+     * @param sourceDataUpload
      * @param file
      * @param user
+     * @param type
      * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap uploadCsv(Long sourceId, CsvUpload csvUpload, MultipartFile file, User user, HttpServletRequest request) {
+    public ResultMap dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
+
+        if (!type.equals(FileTypeEnum.CSV.getType()) && !type.equals(FileTypeEnum.XLSX.getType()) && !type.equals(FileTypeEnum.XLS.getType())) {
+            return resultMap.failAndRefreshToken(request).message("Unsupported file format");
+        }
+
         //校验文件是否csv文件
-        if (!fileUtils.isCsv(file)) {
+        if (type.equals(FileTypeEnum.CSV.getType()) && !fileUtils.isCsv(file)) {
             return resultMap.failAndRefreshToken(request).message("Please upload csv file");
+        }
+
+        if (type.equals(FileTypeEnum.XLSX.getType()) && !fileUtils.isExcel(file)) {
+            return resultMap.failAndRefreshToken(request).message("Please upload excel file");
         }
 
         Source source = sourceMapper.getById(sourceId);
@@ -441,15 +453,21 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
 
 
         try {
-            //解析csv文件
-            CsvEntity csvEntity = CsvUtils.parseCsvWithFirstAsHeader(file, "UTF-8");
+            DataUploadEntity dataUploadEntity = null;
+            if (type.equals(FileTypeEnum.CSV.getType())) {
+                //解析csv文件
+                dataUploadEntity = CsvUtils.parseCsvWithFirstAsHeader(file, "UTF-8");
+            } else {
+                //解析excel文件
+                dataUploadEntity = ExcelUtils.parseExcelWithFirstAsHeader(file);
+            }
 
-            if (null != csvEntity && null != csvEntity.getHeaders() && csvEntity.getHeaders().size() > 0) {
+            if (null != dataUploadEntity && null != dataUploadEntity.getHeaders() && dataUploadEntity.getHeaders().size() > 0) {
                 //建表
-                createTable(csvEntity.getHeaders(), csvUpload, source);
+                createTable(dataUploadEntity.getHeaders(), sourceDataUpload, source);
 
                 //传输数据
-                insertData(csvEntity.getHeaders(), csvEntity.getValues(), csvUpload, source);
+                insertData(dataUploadEntity.getHeaders(), dataUploadEntity.getValues(), sourceDataUpload, source);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -461,14 +479,102 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
 
 
     /**
+     * 获取Source的data tables
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getSourceTables(Long id, User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        SourceWithProject sourceWithProject = sourceMapper.getSourceWithProjectById(id);
+        if (null == sourceWithProject) {
+            log.info("source (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("source not found");
+        }
+
+        Project project = sourceWithProject.getProject();
+        if (null == project) {
+            log.info("project (:{}) not found", sourceWithProject.getProjectId());
+            return resultMap.failAndRefreshToken(request).message("project not found");
+        }
+
+        //获取当前用户在organization的role
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
+
+        List<String> tableList = null;
+
+        try {
+            tableList = sqlUtils.init(sourceWithProject.getJdbcUrl(), sourceWithProject.getUsername(), sourceWithProject.getPassword()).getTableList();
+        } catch (SourceException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+
+        if (null != tableList) {
+            //当前用户是project的创建者和organization的owner，直接返回
+            if (!isProjectAdmin(project, user) && (null == orgRel || orgRel.getRole() == UserOrgRoleEnum.MEMBER.getRole())) {
+                //查询project所属team中当前用户最高角色
+                short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
+
+                //如果当前用户是team的matainer 全部返回，否则验证 当前用户team对project的权限
+                if (maxTeamRole == UserTeamRoleEnum.MEMBER.getRole()) {
+
+                    //查询当前用户在的 project所属team对project source的最高权限
+                    short maxSourcePermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
+
+                    if (maxSourcePermission == UserPermissionEnum.HIDDEN.getPermission()) {
+                        tableList = null;
+                    }
+                }
+            }
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(tableList);
+    }
+
+
+
+    /**
+     * 获取Source的data tables
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @Override
+    public ResultMap getTableColumns(Long id, String tableName,User user, HttpServletRequest request) {
+        ResultMap resultMap = new ResultMap(tokenUtils);
+
+        Source source = sourceMapper.getById(id);
+        if (null == source) {
+            log.info("source (:{}) not found", id);
+            return resultMap.failAndRefreshToken(request).message("source not found");
+        }
+
+        List<TableInfo> tableInfoList = null;
+
+        try {
+            tableInfoList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableColumns(tableName);
+        } catch (SourceException e) {
+            return resultMap.failAndRefreshToken(request).message(e.getMessage());
+        }
+
+        return resultMap.successAndRefreshToken(request).payloads(tableInfoList);
+    }
+
+    /**
      * 建表
      *
      * @param fileds
-     * @param csvUpload
+     * @param sourceDataUpload
      * @param source
      * @throws ServerException
      */
-    private void createTable(Set<QueryColumn> fileds, CsvUpload csvUpload, Source source) throws ServerException {
+    private void createTable(Set<QueryColumn> fileds, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
 
         if (null == fileds || fileds.size() <= 0) {
             throw new ServerException("there is have not any fileds");
@@ -480,33 +586,33 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
 
         String sql = null;
 
-        if (csvUpload.getMode() == CsvmetaModeEnum.REPLACE.getMode()) {
+        if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
             ST st = stg.getInstanceOf("createTable");
-            st.add("tableName", csvUpload.getTableName());
+            st.add("tableName", sourceDataUpload.getTableName());
             st.add("fields", fileds);
-            st.add("primaryKeys", StringUtils.isEmpty(csvUpload.getPrimaryKeys()) ? null : csvUpload.getPrimaryKeys().split(","));
-            st.add("indexKeys", csvUpload.getIndexList());
+            st.add("primaryKeys", StringUtils.isEmpty(sourceDataUpload.getPrimaryKeys()) ? null : sourceDataUpload.getPrimaryKeys().split(","));
+            st.add("indexKeys", sourceDataUpload.getIndexList());
             sql = st.render();
-            String dropSql = "DROP TABLE IF EXISTS `" + csvUpload.getTableName() + "`";
+            String dropSql = "DROP TABLE IF EXISTS `" + sourceDataUpload.getTableName() + "`";
             sqlUtils.jdbcTemplate().execute(dropSql);
             log.info("drop table sql : {}", dropSql);
         } else {
-            boolean tableIsExist = sqlUtils.tableIsExist(csvUpload.getTableName());
-            if (csvUpload.getMode() == CsvmetaModeEnum.NEW.getMode()) {
+            boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
+            if (sourceDataUpload.getMode() == UploadModeEnum.NEW.getMode()) {
                 if (!tableIsExist) {
                     ST st = stg.getInstanceOf("createTable");
-                    st.add("tableName", csvUpload.getTableName());
+                    st.add("tableName", sourceDataUpload.getTableName());
                     st.add("fields", fileds);
-                    st.add("primaryKeys", csvUpload.getPrimaryKeys());
-                    st.add("indexKeys", csvUpload.getIndexList());
+                    st.add("primaryKeys", sourceDataUpload.getPrimaryKeys());
+                    st.add("indexKeys", sourceDataUpload.getIndexList());
 
                     sql = st.render();
                 } else {
-                    throw new ServerException("table " + csvUpload.getTableName() + " is already exist");
+                    throw new ServerException("table " + sourceDataUpload.getTableName() + " is already exist");
                 }
             } else {
                 if (!tableIsExist) {
-                    throw new ServerException("table " + csvUpload.getTableName() + " is not exist");
+                    throw new ServerException("table " + sourceDataUpload.getTableName() + " is not exist");
                 }
             }
         }
@@ -527,10 +633,10 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
      *
      * @param headers
      * @param values
-     * @param csvUpload
+     * @param sourceDataUpload
      * @param source
      */
-    private void insertData(Set<QueryColumn> headers, List<Map<String, Object>> values, CsvUpload csvUpload, Source source) throws ServerException {
+    private void insertData(Set<QueryColumn> headers, List<Map<String, Object>> values, SourceDataUpload sourceDataUpload, Source source) throws ServerException {
         if (null == values || values.size() <= 0) {
             return;
         }
@@ -538,17 +644,17 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         SqlUtils sqlUtils = this.sqlUtils.init(source);
 
         try {
-            if (csvUpload.getMode() == CsvmetaModeEnum.REPLACE.getMode()) {
+            if (sourceDataUpload.getMode() == UploadModeEnum.REPLACE.getMode()) {
                 //清空表
-                sqlUtils.jdbcTemplate().execute("Truncate table `" + csvUpload.getTableName() + "`");
+                sqlUtils.jdbcTemplate().execute("Truncate table `" + sourceDataUpload.getTableName() + "`");
                 //插入数据
-                executeInsert(csvUpload.getTableName(), headers, values, sqlUtils);
+                executeInsert(sourceDataUpload.getTableName(), headers, values, sqlUtils);
             } else {
-                boolean tableIsExist = sqlUtils.tableIsExist(csvUpload.getTableName());
+                boolean tableIsExist = sqlUtils.tableIsExist(sourceDataUpload.getTableName());
                 if (tableIsExist) {
-                    executeInsert(csvUpload.getTableName(), headers, values, sqlUtils);
+                    executeInsert(sourceDataUpload.getTableName(), headers, values, sqlUtils);
                 } else {
-                    throw new ServerException("table " + csvUpload.getTableName() + " is not exist");
+                    throw new ServerException("table " + sourceDataUpload.getTableName() + " is not exist");
                 }
             }
         } catch (ServerException e) {
@@ -581,7 +687,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 }
             }
 
-            ExecutorService executorService = Executors.newCachedThreadPool();
+//            ExecutorService executorService = Executors.newCachedThreadPool();
 
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("insertData");
@@ -618,7 +724,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
                 e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
-                executorService.shutdown();
+//                executorService.shutdown();
             }
         }
     }

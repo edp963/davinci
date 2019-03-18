@@ -20,6 +20,7 @@ package edp.davinci.dao;
 
 import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
+import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.model.Widget;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -113,8 +114,8 @@ public interface WidgetMapper {
     })
     WidgetWithProjectAndView getWidgetWithProjectAndViewById(@Param("id") Long id);
 
-    @Select({"SELECT w.* FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId}"})
-    Set<Widget> getByDashboard(@Param("dashboardId") Long dashboardId);
+    @Select({"SELECT w.*, m.id as 'relationId' FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId}"})
+    Set<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);
 
     @Select({"SELECT w.*, v.model FROM mem_dashboard_widget m ",
             "LEFT JOIN widget w on w.id = m.widget_Id ",
@@ -127,4 +128,10 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where view_id = #{viewId}"})
     List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
+
+    @Select({"SELECT * from widget WHERE IFNULL(config,'') != ''"})
+    List<Widget> queryUpgrade();
+
+
+    int updateConfigBatch(@Param("list") List<Widget> list);
 }

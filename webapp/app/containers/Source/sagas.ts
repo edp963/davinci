@@ -48,7 +48,6 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 const message = require('antd/lib/message')
 
@@ -56,7 +55,7 @@ export function* getSources (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
-    const sources = readListAdapter(asyncData)
+    const sources = asyncData.payload
     yield put(sourcesLoaded(sources))
   } catch (err) {
     yield put(loadSourceFail())

@@ -33,25 +33,31 @@ public class RedisUtils {
     @Qualifier("InitRedisTemplate")
     private RedisTemplate<String, Object> redisTemplate;
 
-    public void set(String key, Object value) {
+    public boolean set(String key, Object value) {
         if (null != redisTemplate) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value);
+            return true;
         }
+        return false;
     }
 
-    public void set(String key, Object value, Long millisecond) {
+    public boolean set(String key, Object value, Long millisecond) {
         if (null != redisTemplate) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value, millisecond, TimeUnit.MILLISECONDS);
+            return true;
         }
+        return false;
     }
 
-    public void set(String key, Object value, Long l, TimeUnit timeUnit) {
+    public boolean set(String key, Object value, Long l, TimeUnit timeUnit) {
         if (null != redisTemplate) {
             ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
             valueOperations.set(key, value, l, timeUnit);
+            return true;
         }
+        return false;
     }
 
     public Object get(String key) {
@@ -60,5 +66,13 @@ public class RedisUtils {
         }
         ValueOperations<String, Object> valueOperations = redisTemplate.opsForValue();
         return valueOperations.get(key);
+    }
+
+    public boolean hasKey(String key) {
+        return null != redisTemplate && redisTemplate.hasKey(key);
+    }
+
+    public boolean delete(String key) {
+        return null != redisTemplate && redisTemplate.delete(key);
     }
 }

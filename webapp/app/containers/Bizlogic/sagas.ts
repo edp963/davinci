@@ -63,7 +63,6 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import resultsetConverter from '../../utils/resultsetConverter'
 import { errorHandler } from '../../utils/util'
 
@@ -75,7 +74,7 @@ export function* getBizlogics (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.bizlogic}?projectId=${payload.projectId}`)
-    const bizlogics = readListAdapter(asyncData)
+    const bizlogics = asyncData.payload
     yield put(bizlogicsLoaded(bizlogics))
     if (payload.resolve) {
       payload.resolve(bizlogics)
@@ -172,7 +171,7 @@ export function* getBizdataSchema (action) {
       url: `${api.bizlogic}/${id}/resultset?limit=1`,
       data: {}
     })
-    const bizdatas = resultsetConverter(readListAdapter(asyncData))
+    const bizdatas = resultsetConverter(asyncData.payload)
     yield put(bizdataSchemaLoaded(bizdatas.keys))
     resolve(bizdatas.keys)
   } catch (err) {
@@ -184,7 +183,7 @@ export function* getSchema (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.bizlogic}/database?sourceId=${payload.sourceId}`)
-    const schema = readListAdapter(asyncData)
+    const schema = asyncData.payload
     yield put(schemaLoaded(schema))
     payload.resolve(schema)
   } catch (err) {
@@ -219,13 +218,15 @@ export function* getData (action) {
   try {
     const { id, params, resolve } = payload
 
-    const data = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/getdata`,
       data: params
     })
     yield put(dataLoaded())
-    resolve(data.payload.slice(0, 500))
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    resolve(response.payload)
   } catch (err) {
     yield put(loadDataFail(err))
     errorHandler(err)
@@ -248,7 +249,7 @@ export function* getDistinctValue (action) {
     })
     yield put(distinctValueLoaded(asyncData.payload, fieldName))
     if (resolve) {
-      resolve(readListAdapter(asyncData))
+      resolve(asyncData.payload)
     }
   } catch (err) {
     yield put(loadDistinctValueFail(err))
@@ -261,7 +262,7 @@ export function* getDataFromItem (action) {
   const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
 
   try {
-    const data = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdata`,
       data: {
@@ -270,7 +271,9 @@ export function* getDataFromItem (action) {
         params: params.concat(linkageParams).concat(globalParams)
       }
     })
-    yield put(dataFromItemLoaded(renderType, itemId, data.payload.slice(0, 500), vizType))
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(dataFromItemLoaded(renderType, itemId, response.payload, vizType))
   } catch (err) {
     yield put(loadDataFromItemFail(itemId, vizType))
     errorHandler(err)
@@ -281,9 +284,9 @@ export function* getViewTeams (action) {
   const { payload } = action
   try {
     const project = yield call(request, `${api.projects}/${payload.projectId}`)
-    const currentProject = readListAdapter(project)
+    const currentProject = project.payload
     const organization = yield call(request, `${api.organizations}/${currentProject.orgId}/teams`)
-    const orgTeam = readListAdapter(organization)
+    const orgTeam = organization.payload
     yield put(viewTeamLoaded(orgTeam))
   } catch (err) {
     yield put(loadViewTeamFail(err))

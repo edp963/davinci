@@ -109,7 +109,8 @@ export function getMetricAxisOption (
   metricAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   title: string,
-  axis: 'x' | 'y' = 'y'
+  axis: 'x' | 'y' = 'y',
+  percentage?: boolean
 ) {
   const {
     inverse,
@@ -140,12 +141,14 @@ export function getMetricAxisOption (
   return {
     type: 'value',
     inverse,
+    min: percentage ? 0 : null,
+    max: percentage ? 100 : null,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
       fontFamily: labelFontFamilyY,
       fontSize: labelFontSizeY,
-      formatter: metricAxisLabelFormatter
+      formatter: percentage ? '{value}%' : metricAxisLabelFormatter
     },
     axisLine: {
       show: showLineY,
@@ -281,11 +284,13 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNames, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]) {
+export function getGridPositions (
+  legendConfig: Partial<ILegendConfig>, seriesNames, barChart?: boolean, yAxisConfig?: IAxisConfig, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]
+) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData)
+    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, barChart, yAxisConfig)
     if (showLegend) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
@@ -297,16 +302,33 @@ export function getGridPositions (legendConfig: Partial<ILegendConfig>, seriesNa
   }, {})
 }
 
-function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[]) {
+function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], barChart?: boolean, yAxisConfig?: IAxisConfig) {
   const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
   const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
   const maxWidth = Math.max(...(xAxisData || []).map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
 
+  const bottomDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
+    ? barChart
+      ? 50
+      : xAxisRotate
+        ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth
+        : 50
+    : 50
+
+  const yAxisConfigLeft = yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit ? 24 : 64
+  const leftDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
+    ? barChart
+      ? xAxisRotate === undefined
+        ? 64
+        : 24 + Math.cos(xAxisRotate * Math.PI / 180) * maxWidth
+      : yAxisConfigLeft
+    : barChart ? 24 : yAxisConfigLeft
+
   switch (pos) {
     case 'top': return 24
-    case 'left': return 64
+    case 'left': return leftDistance
     case 'right': return 24
-    case 'bottom': return xAxisRotate ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth : 50
+    case 'bottom': return bottomDistance
   }
 }
 

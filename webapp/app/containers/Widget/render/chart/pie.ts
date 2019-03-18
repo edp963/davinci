@@ -25,8 +25,7 @@ import {
 } from '../../components/util'
 import {
   getLegendOption,
-  getLabelOption,
-  getGridPositions
+  getLabelOption
 } from './util'
 
 export default function (chartProps: IChartProps) {

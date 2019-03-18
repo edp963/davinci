@@ -26,7 +26,6 @@ import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
 import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
-import { readListAdapter } from 'utils/asyncAdapter'
 
 export function* getDisplay (action) {
   const { token, resolve, reject } = action.payload
@@ -56,7 +55,7 @@ export function* getData (action) {
   const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
 
   try {
-    const asyncData = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
@@ -65,7 +64,9 @@ export function* getData (action) {
         params: params.concat(linkageParams).concat(globalParams)
       }
     })
-    yield put(layerDataLoaded(renderType, layerId, readListAdapter(asyncData)))
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(layerDataLoaded(renderType, layerId, response.payload))
   } catch (err) {
     yield put(loadLayerDataFail(err))
   }

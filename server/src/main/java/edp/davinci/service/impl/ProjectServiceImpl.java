@@ -27,7 +27,6 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
@@ -160,6 +159,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
     /**
      * 获取用户对project的权限
+     *
      * @param projectInfo
      * @param user
      * @return
@@ -313,7 +313,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         }
 
         if (isExist(project.getName(), null, orgId)) {
-            return resultMap.failAndRefreshToken(request).message("the project name \""+project.getName()+"\" is already in the organization you will transfer");
+            return resultMap.failAndRefreshToken(request).message("the project name \"" + project.getName() + "\" is already in the organization you will transfer");
         }
 
         Long beforeOrgId = project.getOrgId();

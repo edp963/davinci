@@ -41,8 +41,6 @@ import {
   CHANGE_USER_PASSWORD_FAILURE
 } from './constants'
 
-// import { promiseActionCreator } from '../../utils/reduxPromisation'
-
 // export const loadUserDetail = promiseActionCreator(LOAD_USER_DETAIL, ['id'])
 
 export function loadUsers () {
