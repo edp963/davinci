@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as PropTypes from 'prop-types'
 import * as hoistNonReactStatics from 'hoist-non-react-statics'
 import { IStore } from '../store'
 
@@ -20,7 +21,7 @@ export default ({ key, reducer }) => (WrappedComponent) => {
     private static WrappedComponent = WrappedComponent
 
     private static contextTypes = {
-      store: React.PropTypes.object.isRequired
+      store: PropTypes.object.isRequired
     }
 
     private static displayName = `withReducer(${(WrappedComponent.displayName || WrappedComponent.name || 'Component')})`

@@ -1,235 +1,182 @@
-import * as React from 'react'
-import moment from 'moment'
-import { FormComponentProps, WrappedFormUtils } from 'antd/lib/form/Form'
-import { IFilterViewConfig, IFilterItem, IFilterValue, IFilterChangeParam } from './'
-import { FilterTypes } from './filterTypes'
+import React from 'react'
+import { FormComponentProps } from 'antd/lib/form/Form'
+import {
+  IFilterViewConfig,
+  IFilterItem,
+  IFilterValue,
+  IMapItemFilterValue,
+  OnGetFilterControlOptions,
+  OnFilterValueChange,
+  IMapFilterControlOptions,
+  getVariableValue,
+  getModelValue,
+  getValidValue,
+  getDefaultValue
+} from './'
+import { FilterTypes, CascadeFilterTypes, defaultFilterControlGridProps } from './filterTypes'
 import { OperatorTypes } from 'utils/operatorTypes'
 import { SQL_NUMBER_TYPES } from '../../globalConstants'
 import FilterControl from './FilterControl'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Form = require('antd/lib/form')
+import { Row, Col, Form } from 'antd'
 
 const styles = require('./filter.less')
 
 interface IFilterPanelProps {
   filters: IFilterItem[]
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  },
-  onChange: (
-    queryParams: IFilterChangeParam,
-    filterKey: string
-  ) => void
+  mapOptions: IMapFilterControlOptions
+  onGetOptions: OnGetFilterControlOptions
+  onChange: OnFilterValueChange
 }
 
-export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps> {
-
-  private itemsFilterValues: {
+export class FilterPanel extends React.Component<IFilterPanelProps & FormComponentProps, null> {
+  private filterValues: {
+    [key: string]: any
+  } = {}
+  private filterValuesByItem: {
     [itemId: number]: {
       [filterKey: string]: IFilterValue
     }
   } = {}
 
-  private change = (filter: IFilterItem, val) => {
-    const { key, type, relatedViews, operator } = filter
-    const relatedItemIds = []
+  public componentWillReceiveProps (nextProps: IFilterPanelProps & FormComponentProps) {
+    const { filters } = this.props
+    if (nextProps.filters !== filters) {
+      this.initFilterValues(nextProps.filters)
+    }
+  }
+
+  private initFilterValues = (filters: IFilterItem[]) => {
+    this.filterValues = {}
+    this.filterValuesByItem = {}
+    filters.forEach((f) => {
+      const defaultFilterValue = getDefaultValue(f)
+      if (defaultFilterValue) {
+        this.setFilterValues(f, defaultFilterValue)
+      }
+    })
+  }
+
+  private setFilterValues = (filter: IFilterItem, val, callback?) => {
+    const { key, relatedViews, operator } = filter
+
+    this.filterValues = {
+      ...this.filterValues,
+      [key]: Array.isArray(val)
+        ? val.map((v) => getValidValue(v, filter.fromSqlType))
+        : getValidValue(val, filter.fromSqlType)
+    }
+
     Object.entries(relatedViews).forEach(([_, config]) => {
-      const { items, isParam } = config
+      const { items, isVariable } = config
       if (items.length <= 0) { return }
 
-      const filterValue = isParam ?
-        this.getParamValue(type, config, val) : this.getModelValue(type, config, operator, val)
+      const filterValue = isVariable ? getVariableValue(filter, config, val) : getModelValue(filter, config, operator, val)
 
       items.forEach((itemId) => {
-        relatedItemIds.push(itemId)
-        if (!this.itemsFilterValues[itemId]) {
-          this.itemsFilterValues[itemId] = {}
+        if (callback) {
+          callback(itemId)
         }
-        if (!this.itemsFilterValues[itemId][key]) {
-          this.itemsFilterValues[itemId][key] = {
-            params: [],
+        if (!this.filterValuesByItem[itemId]) {
+          this.filterValuesByItem[itemId] = {}
+        }
+        if (!this.filterValuesByItem[itemId][key]) {
+          this.filterValuesByItem[itemId][key] = {
+            variables: [],
             filters: []
           }
         }
-        if (isParam) {
-          this.itemsFilterValues[itemId][key].params = filterValue
+        if (isVariable) {
+          this.filterValuesByItem[itemId][key].variables = filterValue
         } else {
-          this.itemsFilterValues[itemId][key].filters = filterValue
+          this.filterValuesByItem[itemId][key].filters = filterValue
         }
       })
     })
+  }
 
-    const filterChangeParam: IFilterChangeParam = relatedItemIds.reduce((acc, itemId) => {
-      acc[itemId] = Object.values(this.itemsFilterValues[itemId]).reduce((filterValue, val) => {
-        filterValue.params.push(...val.params)
+  private change = (filter: IFilterItem, val) => {
+    const { key } = filter
+    const relatedItemIds = []
+
+    this.setFilterValues(filter, val, (itemId) => {
+      relatedItemIds.push(itemId)
+    })
+
+    const mapItemFilterValue: IMapItemFilterValue = relatedItemIds.reduce((acc, itemId) => {
+      acc[itemId] = Object.values(this.filterValuesByItem[itemId]).reduce((filterValue, val) => {
+        filterValue.variables.push(...val.variables)
         filterValue.filters.push(...val.filters)
         return filterValue
       }, {
-        params: [],
+        variables: [],
         filters: []
       })
       return acc
     }, {})
 
-    const { onChange } = this.props
-    onChange(filterChangeParam, key)
+    this.props.onChange(mapItemFilterValue, key)
   }
 
-  private getParamValue = (type: FilterTypes, config: IFilterViewConfig, value) => {
-    const { key, sqlType } = config
-    let param = []
-
-    switch (type) {
-      case FilterTypes.InputText:
-      case FilterTypes.InputNumber:
-      case FilterTypes.Select:
-        if (value !== undefined) { param.push({ name: key, value: this.getValidValue(value, sqlType) }) }
-        break
-      case FilterTypes.NumberRange:
-        param = value.filter((val) => val !== '').map((val) => ({ name: key, value: this.getValidValue(val, sqlType) }))
-        break
-      case FilterTypes.MultiSelect:
-        if (value.length && value.length > 0) {
-          param.push({ name: key, value: value.map((val) => this.getValidValue(val, sqlType)).join(',') })
-        }
-        break
-      case FilterTypes.CascadeSelect: // TODO
-        break
-      case FilterTypes.InputDate:
-        if (value) {
-          param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD')}'` })
-        }
-        break
-      case FilterTypes.MultiDate:
-        if (value) {
-          param.push({ name: key, value: value.split(',').map((v) => `'${v}'`).join(',') })
-        }
-        break
-      case FilterTypes.DateRange:
-        if (value.length) {
-          param.push(...value.map((v) => ({ name: key, value: `'${moment(v).format('YYYY-MM-DD')}'` })))
-        }
-        break
-      case FilterTypes.Datetime:
-        if (value) {
-          param.push({ name: key, value: `'${moment(value).format('YYYY-MM-DD HH:mm:ss')}'` })
-        }
-        break
-      case FilterTypes.DatetimeRange:
-        if (value.length) {
-          param.push(...value.map((v) => ({ name: key, value: `'${moment(v).format('YYYY-MM-DD HH:mm:ss')}'` })))
-        }
-        break
-      default:
-        const val = value.target.value.trim()
-        if (val) {
-          param.push({ name: key, value: this.getValidValue(val, sqlType) })
-        }
-        break
-    }
-    return param
-  }
-
-  private getModelValue = (type: FilterTypes, config: IFilterViewConfig, operator: OperatorTypes, value) => {
-    const { key, sqlType } = config
-    const filters = []
-
-    switch (type) {
-      case FilterTypes.InputText:
-      case FilterTypes.InputNumber:
-      case FilterTypes.Select:
-        if (value !== undefined) { filters.push(`${key} ${operator} ${this.getValidValue(value, sqlType)}`) }
-        break
-      case FilterTypes.NumberRange:
-        if (value[0] !== '' && !isNaN(value[0])) {
-          filters.push(`${key} >= ${this.getValidValue(value[0], sqlType)}`)
-        }
-        if (value[1] !== '' && !isNaN(value[1])) {
-          filters.push(`${key} <= ${this.getValidValue(value[1], sqlType)}`)
-        }
-        break
-      case FilterTypes.MultiSelect:
-        if (value.length && value.length > 0) {
-          filters.push(`${key} ${operator} (${value.map((val) => this.getValidValue(val, sqlType)).join(',')})`)
-        }
-        break
-      case FilterTypes.CascadeSelect: // @TODO
-        break
-      case FilterTypes.InputDate:
-        if (value) {
-          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD'), sqlType)}`)
-        }
-        break
-      case FilterTypes.MultiDate:
-        if (value) {
-          filters.push(`${key} ${operator} (${value.split(',').map((val) => this.getValidValue(val, sqlType)).join(',')})`)
-        }
-        break
-      case FilterTypes.DateRange:
-        if (value.length) {
-          filters.push(`${key} >= ${this.getValidValue(moment(value[0]).format('YYYY-MM-DD'), sqlType)}`)
-          filters.push(`${key} <= ${this.getValidValue(moment(value[1]).format('YYYY-MM-DD'), sqlType)}`)
-        }
-        break
-      case FilterTypes.Datetime:
-        if (value) {
-          filters.push(`${key} ${operator} ${this.getValidValue(moment(value).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-        }
-        break
-      case FilterTypes.DatetimeRange:
-        if (value.length) {
-          filters.push(`${key} >= ${this.getValidValue(moment(value[0]).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-          filters.push(`${key} <= ${this.getValidValue(moment(value[1]).format('YYYY-MM-DD HH:mm:ss'), sqlType)}`)
-        }
-        break
-      default:
-        const inputValue = value.target.value.trim()
-        if (inputValue) {
-          filters.push(`${key} ${operator} ${this.getValidValue(inputValue, sqlType)}`)
-        }
-        break
-    }
-
-    return filters
-  }
-
-  private getValidValue = (value, sqlType) => {
-    if (!sqlType) { return value }
-    return SQL_NUMBER_TYPES.indexOf(sqlType) >= 0 ? value : `'${value}'`
+  private renderFilterControls = (filters: IFilterItem[], parents?: IFilterItem[]) => {
+    const { onGetOptions, mapOptions, form } = this.props
+    let controls = []
+    filters.forEach((filter) => {
+      const parentValues = parents
+        ? parents.reduce((values, p) => {
+            const parentSelectedValue = this.filterValues[p.key]
+            if (parentSelectedValue
+                && !(Array.isArray(parentSelectedValue) && !parentSelectedValue.length)
+                && CascadeFilterTypes.includes(p.type)) {
+              values = values.concat({
+                column: p.fromModel,
+                value: parentSelectedValue
+              })
+            }
+            return values
+          }, [])
+        : null
+      const controlGridProps = filter.width
+          ? {
+              lg: filter.width,
+              md: filter.width < 8 ? 12 : 24
+            }
+          : defaultFilterControlGridProps
+      controls = controls.concat(
+        <Col
+          key={filter.key}
+          {...controlGridProps}
+        >
+          <FilterControl
+            formToAppend={form}
+            filter={filter}
+            currentOptions={mapOptions[filter.key] || []}
+            parentValues={parentValues}
+            onGetOptions={onGetOptions}
+            onChange={this.change}
+          />
+        </Col>
+      )
+      if (filter.children) {
+        controls = controls.concat(
+          this.renderFilterControls(filter.children, parents ? parents.concat(filter) : [filter])
+        )
+      }
+    })
+    return controls
   }
 
   public render () {
-    const { filters, onGetOptions, filterOptions, form } = this.props
+    const { filters } = this.props
+
     return (
       <Form className={styles.filterPanel}>
         <Row gutter={8}>
-          {filters.map((f) => (
-            <Col
-              xl={3}
-              lg={4}
-              md={6}
-              sm={12}
-              key={f.key}
-            >
-              <FilterControl
-                filter={f}
-                onGetOptions={onGetOptions}
-                currentOptions={filterOptions[f.key] || {}}
-                formToAppend={form}
-                onChange={this.change}
-              />
-            </Col>
-          ))}
+          {this.renderFilterControls(filters)}
+          {/* <Col span={4}>
+            <Button type="primary" size="small" icon="search">查询</Button>
+            <Button size="small" icon="reload">重置</Button>
+          </Col> */}
         </Row>
       </Form>
     )

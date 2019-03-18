@@ -1,19 +1,14 @@
-import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Button = require('antd/lib/button')
-const Pagination = require('antd/lib/pagination')
-const Input = require('antd/lib/input')
-const styles = require('../Organization.less')
-const Modal = require('antd/lib/modal')
+import React from 'react'
+import { Row, Col, Tooltip, Button, Pagination, Input, Modal } from 'antd'
 import ProjectItem from './ProjectItem'
 import AntdFormType from 'antd/lib/form/Form'
 import ProjectForm from '../../Projects/ProjectForm'
 import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
-import {IStarUser, IProject} from '../../Projects'
+import { IStarUser, IProject } from '../../Projects'
+
+const styles = require('../Organization.less')
 
 interface IProjectsState {
   formType?: string
@@ -76,15 +71,17 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       formType,
       formVisible: true
     }, () => {
-      const {orgId, id, name, pic, description, visibility} = option
-      this.ProjectForm.props.form.setFieldsValue({
-        orgId: `${orgId}`,
-        id,
-        name,
-        pic,
-        description,
-        visibility: `${visibility}`
-      })
+      setTimeout(() => {
+        const {orgId, id, name, pic, description, visibility} = option
+        this.ProjectForm.props.form.setFieldsValue({
+          orgId: `${orgId}`,
+          id,
+          name,
+          pic,
+          description,
+          visibility: `${visibility}`
+        })
+      }, 0)
     })
   }
 
@@ -111,9 +108,11 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.ProjectForm.props.form.resetFields()
     })
+  }
+
+  private afterProjectFormClose = () => {
+    this.ProjectForm.props.form.resetFields()
   }
 
   private checkUniqueName = (rule, value = '', callback) => {
@@ -210,7 +209,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     const addButton =  (
           <Tooltip placement="bottom" title="创建">
             <CreateButton
-              size="large"
               type="primary"
               icon="plus"
               onClick={this.showProjectForm('organizationProject')}
@@ -257,8 +255,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="Project 名称"
+              placeholder="搜索项目"
               onChange={this.onSearchProject}
             />
           </Col>
@@ -281,6 +278,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
           visible={formVisible}
           footer={null}
           onCancel={this.hideProjectForm}
+          afterClose={this.afterProjectFormClose}
         >
           <ProjectForm
             type={formType}

@@ -29,7 +29,7 @@ import {
   LOAD_DATA_FROM_ITEM_FAILURE
 } from '../Bizlogic/constants'
 
-const initialState = fromJS({
+const emptyDisplayState = {
   displays: [],
   currentDisplay: null,
   currentDisplayLoading: false,
@@ -49,7 +49,9 @@ const initialState = fromJS({
   lastLayers: [],
 
   editorBaselines: []
-})
+}
+
+const initialState = fromJS(emptyDisplayState)
 
 function displayReducer (state = initialState, action) {
   const { type, payload } = action
@@ -119,12 +121,12 @@ function displayReducer (state = initialState, action) {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: [],
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
               pagination: {}
             },
             interactId: '',
@@ -166,12 +168,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',
@@ -231,12 +233,12 @@ function displayReducer (state = initialState, action) {
           [payload.itemId]: {
             ...layersInfo[payload.itemId],
             loading: true,
-            queryParams: {
-              linkageFilters: payload.params.linkageFilters,
-              globalFilters: payload.params.globalFilters,
-              params: payload.params.params,
-              linkageParams: payload.params.linkageParams,
-              globalParams: payload.params.globalParams
+            queryConditions: {
+              linkageFilters: payload.requestParams.linkageFilters,
+              globalFilters: payload.requestParams.globalFilters,
+              variables: payload.requestParams.variables,
+              linkageVariables: payload.requestParams.linkageVariables,
+              globalVariables: payload.requestParams.globalVariables
             }
           }
         })
@@ -350,12 +352,12 @@ function displayReducer (state = initialState, action) {
             obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
               datasource: { resultList: [] },
               loading: false,
-              queryParams: {
+              queryConditions: {
                 linkageFilters: [],
                 globalFilters: [],
-                params: [],
-                linkageParams: [],
-                globalParams: [],
+                variables: [],
+                linkageVariables: [],
+                globalVariables: [],
                 pagination: {}
               },
               interactId: '',
@@ -392,14 +394,18 @@ function displayReducer (state = initialState, action) {
         .set('currentDisplayShareInfoLoading', false)
     case ActionTypes.LOAD_DISPLAY_SHARE_LINK_FAILURE:
       return state.set('currentDisplayShareInfoLoading', false)
-
+    case ActionTypes.RESET_DISPLAY_STATE:
+      return fromJS(emptyDisplayState)
     default:
       return state
   }
 }
 
-export default undoable(displayReducer, {
+const undoableDisplayReducer = undoable(displayReducer, {
+  initTypes: [ActionTypes.LOAD_DISPLAY_DETAIL],
+  ignoreInitialState: true,
   filter: includeAction([
+    ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     ActionTypes.EDIT_CURRENT_SLIDE_SUCCESS,
     ActionTypes.ADD_DISPLAY_LAYERS_SUCCESS,
     ActionTypes.EDIT_DISPLAY_LAYERS_SUCCESS,
@@ -409,3 +415,5 @@ export default undoable(displayReducer, {
   undoType: ActionTypes.UNDO_OPERATION_SUCCESS,
   redoType: ActionTypes.REDO_OPERATION_SUCCESS
 })
+
+export default undoableDisplayReducer

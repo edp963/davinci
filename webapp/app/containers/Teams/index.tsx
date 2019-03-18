@@ -3,27 +3,17 @@
 // TEAM PROJECT
 import * as React from 'react'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tag = require('antd/lib/tag')
+import { Icon, Row, Col, Tag, Breadcrumb, Pagination } from 'antd'
+import { PaginationConfig } from 'antd/lib/table'
 import Box from '../../components/Box'
-import {InjectedRouter} from 'react-router/lib/Router'
+import { InjectedRouter } from 'react-router/lib/Router'
 import { loadTeams } from './actions'
-import saga from './sagas'
-// import sagaApp from '../App/sagas'
-import injectReducer from '../../utils/injectReducer'
-import reducer from './reducer'
-import {makeSelectLoginUser} from '../App/selectors'
-import injectSaga from '../../utils/injectSaga'
-import {makeSelectTeams} from './selectors'
-// import reducerApp from '../App/reducer'
-import {createStructuredSelector} from 'reselect'
-import {connect} from 'react-redux'
-import {compose} from 'redux'
+import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectTeams } from './selectors'
+import { createStructuredSelector } from 'reselect'
+import { connect } from 'react-redux'
 const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
 
 interface ITeam {
@@ -42,33 +32,79 @@ interface ITeamProps {
   onLoadTeams?: () => any
 }
 
+interface ITeamStates {
+  pagination: PaginationConfig
+}
 
 
-export class Teams extends React.PureComponent <ITeamProps> {
+
+export class Teams extends React.PureComponent <ITeamProps, ITeamStates> {
+  constructor (props) {
+    super(props)
+    this.state = {
+      pagination: {
+        current: 1,
+        pageSize: 20,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100'],
+        total: 0
+      }
+    }
+  }
+
   private toTeam = (team) => () => {
     this.props.router.push(`/account/team/${team.id}`)
   }
+
   public componentWillMount () {
     const { onLoadTeams } = this.props
     onLoadTeams()
   }
+
+  public componentWillReceiveProps (nextProps: ITeamProps) {
+    const { teams } = this.props
+    const { pagination } = this.state
+    if (nextProps.teams !== teams) {
+      this.setState({
+        pagination: {
+          ...pagination,
+          current: 1,
+          total: nextProps.teams.length
+        }
+      })
+    }
+  }
+
+  private change = (current, pageSize) => {
+    this.setState({
+      pagination: {
+        ...this.state.pagination,
+        current,
+        pageSize
+      }
+    })
+  }
+
   public render () {
     const { teams } = this.props
-    const teamArr = teams ? teams.map((team) => (
-        <div className={styles.groupList} key={`team${team.id}`} onClick={this.toTeam(team)}>
-          <div className={styles.orgHeader}>
-            <div className={styles.avatar}>
-              <Avatar path={team.avatar} enlarge={false} size="small"/>
-              <Tag className={styles.orgName} color="#2db7f5">{team.organization.name}</Tag>/
-              &nbsp;<div className={styles.title}>{team.name}</div>
-            </div>
-          </div>
-          <div className={styles.setting}>
-            <Icon type="setting"/>
+    const { pagination } = this.state
+    const { current, pageSize } = pagination
+    const currentIndex = (current - 1) * pageSize
+    const currentPageTeams = teams ? teams.slice(currentIndex, currentIndex + pageSize) : []
+    const teamArr = currentPageTeams.map((team) => (
+      <div className={styles.groupList} key={`team${team.id}`} onClick={this.toTeam(team)}>
+        <div className={styles.orgHeader}>
+          <div className={styles.avatar}>
+            <Avatar path={team.avatar} enlarge={false} size="small"/>
+            <Tag className={styles.orgName} color="#2db7f5">{team.organization.name}</Tag>/
+            &nbsp;<div className={styles.title}>{team.name}</div>
           </div>
         </div>
-      )
-    ) : ''
+        <div className={styles.setting}>
+          <Icon type="setting"/>
+        </div>
+      </div>
+    ))
 
     return (
       <Box>
@@ -88,6 +124,12 @@ export class Teams extends React.PureComponent <ITeamProps> {
           </Box.Title>
         </Box.Header>
         {teamArr}
+        <Pagination
+          className={styles.teamPagination}
+          {...pagination}
+          onChange={this.change}
+          onShowSizeChange={this.change}
+        />
       </Box>
     )
   }

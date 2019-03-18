@@ -30,12 +30,16 @@ import {
     DELETE_PORTAL_FAILURE,
     EDIT_PORTAL,
     EDIT_PORTAL_SUCCESS,
-    EDIT_PORTAL_FAILURE
+    EDIT_PORTAL_FAILURE,
+    LOAD_SELECT_TEAMS,
+    LOAD_SELECT_TEAMS_SUCCESS,
+    LOAD_SELECT_TEAMS_FAILURE
   } from './constants'
 import { fromJS } from 'immutable'
 
 const initialState = fromJS({
-    portals: false
+    portals: false,
+    selectTeams: []
 })
 
 function portalReducer (state = initialState, action) {
@@ -67,6 +71,12 @@ function portalReducer (state = initialState, action) {
         portals.splice(portals.findIndex((g) => g.id === payload.result.id), 1, payload.result)
         return state.set('portals', portals.slice())
     case EDIT_PORTAL_FAILURE:
+        return state
+    case LOAD_SELECT_TEAMS:
+        return state
+    case LOAD_SELECT_TEAMS_SUCCESS:
+        return state.set('selectTeams', payload.result)
+    case LOAD_SELECT_TEAMS_FAILURE:
         return state
     default:
     return state

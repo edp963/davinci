@@ -1,6 +1,6 @@
 import * as React from 'react'
 const styles = require('./register.less')
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 
 interface ISendEmailTipsProps {
   email?: string

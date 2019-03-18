@@ -1,8 +1,6 @@
 import * as React from 'react'
 
-const Input = require('antd/lib/input')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import { Input, Row, Col} from 'antd'
 import config, { env } from '../../globalConfig'
 // FIXME
 const apiHost = `${location.origin}${config[env].host}`

@@ -4,6 +4,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   position: relative;
 
   .mask {
@@ -15,7 +16,7 @@
     right: 0;
     display: none;
 
-    &.loading {
+    &.active {
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -24,6 +25,10 @@
 
     i {
       font-size: 1.5em;
+
+      &.emptyIcon {
+        font-size: 2em;
+      }
     }
 
     p {
@@ -37,6 +42,7 @@
   flex: 1;
   display: flex;
   flex-direction: row;
+  min-height: 0;
 
   .leftSide {
     flex-shrink: 0;
@@ -57,6 +63,7 @@
       flex: 1;
       display: flex;
       flex-direction: row;
+      min-height: 0;
 
       .rowTitle {
         flex-shrink: 0;

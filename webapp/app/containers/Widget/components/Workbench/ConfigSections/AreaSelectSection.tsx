@@ -1,7 +1,5 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const InputNumber = require('antd/lib/input-number')
+import { Row, Col, InputNumber } from 'antd'
 import ColorPicker from '../../../../../components/ColorPicker'
 const styles = require('../Workbench.less')
 

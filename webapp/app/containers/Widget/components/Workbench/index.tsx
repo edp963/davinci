@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { Suspense } from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -11,17 +11,19 @@ import saga from '../../sagas'
 import bizlogicSaga from '../../../Bizlogic/sagas'
 import { hideNavigator } from '../../../App/actions'
 import { loadBizlogics, loadData, loadDistinctValue } from '../../../Bizlogic/actions'
-import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget } from '../../actions'
+import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from '../../actions'
 import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
 import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
 
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
+import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
 import EditorHeader from '../../../../components/EditorHeader'
 import { DEFAULT_SPLITER } from '../../../../globalConstants'
 import { getStyleConfig } from 'containers/Widget/components/util'
 import ChartTypes from '../../config/chart/ChartTypes'
-const message = require('antd/lib/message')
+import { message } from 'antd'
+import 'assets/less/resizer.less'
 const styles = require('./Workbench.less')
 
 export interface IView {
@@ -66,11 +68,12 @@ interface IWorkbenchProps {
   onHideNavigator: () => void
   onLoadBizlogics: (projectId: number, resolve?: any) => void
   onLoadWidgetDetail: (id: number) => void
-  onLoadData: (viewId: number, params: object, resolve: (data: any[]) => void) => void
+  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
   onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
   onClearCurrentWidget: () => void
+  onExecuteComputed: (sql: string) => void
 }
 
 interface IWorkbenchStates {
@@ -78,27 +81,47 @@ interface IWorkbenchStates {
   name: string
   description: string
   selectedView: IView
-  queryParams: any[]
+  controls: any[]
+  computed: any[]
   cache: boolean
   expired: number
-  currentWidgetConfig: IWidgetProps
+  splitSize: number
+  originalWidgetProps: IWidgetProps
+  originalComputed: any[]
   widgetProps: IWidgetProps
 }
 
+const SplitPane = React.lazy(() => import('react-split-pane'))
+
 export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates> {
+
+  private operatingPanel: OperatingPanel = null
+  private defaultSplitSize = 440
+  private maxSplitSize = this.defaultSplitSize * 1.5
+
   constructor (props) {
     super(props)
+    const splitSize = +localStorage.getItem('workbenchSplitSize') || this.defaultSplitSize
     this.state = {
       id: 0,
       name: '',
       description: '',
       selectedView: null,
-      queryParams: [],
+      controls: [],
+      computed: [],
+      originalComputed: [],
       cache: false,
       expired: 300,
-      currentWidgetConfig: null,
+      splitSize,
+      originalWidgetProps: null,
       widgetProps: {
         data: [],
+        pagination: {
+          pageNo: 0,
+          pageSize: 0,
+          totalCount: 0,
+          withPaging: false
+        },
         cols: [],
         rows: [],
         metrics: [],
@@ -106,11 +129,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
         chartStyles: getStyleConfig({}),
         selectedChart: ChartTypes.Table,
         orders: [],
-        queryParams: [],
-        cache: false,
-        expired: 300,
         mode: 'pivot',
-        model: {}
+        model: {},
+        onPaginationChange: this.paginationChange
       }
     }
   }
@@ -136,16 +157,18 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public componentWillReceiveProps (nextProps) {
     const { views, currentWidget } = nextProps
     if (currentWidget && currentWidget !== this.props.currentWidget) {
-      const { queryParams, cache, expired, ...rest } = JSON.parse(currentWidget.config)
+      const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
         selectedView: views.find((v) => v.id === currentWidget.viewId),
-        queryParams,
+        controls,
         cache,
         expired,
-        currentWidgetConfig: {...rest}
+        originalWidgetProps: {...rest},
+        widgetProps: {...rest},
+        originalComputed: computed
       })
     }
   }
@@ -169,16 +192,111 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   private viewSelect = (selectedView: IView) => {
     this.setState({
       selectedView,
-      queryParams: [],
+      controls: [],
       cache: false,
       expired: 300
     })
   }
 
-  private setQueryParams = (queryParams: any[]) => {
+  private setControls = (controls: any[]) => {
     this.setState({
-      queryParams
+      controls
     })
+  }
+
+  private deleteComputed = (computeField) => {
+    console.log({computeField})
+    const { from } = computeField
+    const { params, onEditWidget } = this.props
+    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    if (from === 'originalComputed') {
+      this.setState({
+        originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedView.id,
+          projectId: Number(params.pid),
+          config: JSON.stringify({
+            ...widgetProps,
+            controls,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    } else if (from === 'computed') {
+      this.setState({
+        computed: computed.filter((cm) => cm.id !== computeField.id)
+      }, () => {
+        const {originalComputed, computed} = this.state
+        const widget = {
+          name,
+          description,
+          type: 1,
+          viewId: selectedView.id,
+          projectId: Number(params.pid),
+          config: JSON.stringify({
+            ...widgetProps,
+            controls,
+            computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
+            cache,
+            expired,
+            data: []
+          }),
+          publish: true
+        }
+        if (id) {
+          onEditWidget({...widget, id}, () => void 0)
+        }
+      })
+    }
+  }
+
+  private setComputed = (computeField) => {
+    const {computed, originalComputed} = this.state
+    const {from, sqlExpression} = computeField
+    // todo  首先做sql合法校验； sqlExpression
+    let isEdit = void 0
+    let newComputed = null
+    if (from === 'originalComputed') {
+      isEdit = originalComputed ? originalComputed.some((cm) => cm.id === computeField.id) : false
+      newComputed =  isEdit ? originalComputed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : originalComputed.concat(computeField)
+      this.setState({
+        originalComputed: newComputed
+      })
+    } else if (from === 'computed') {
+      isEdit = computed.some((cm) => cm.id === computeField.id)
+      newComputed =  isEdit ? computed.map((cm) => {
+        if (cm.id === computeField.id) {
+          return computeField
+        } else {
+          return cm
+        }
+      }) : computed.concat(computeField)
+      this.setState({
+        computed: newComputed
+      })
+    } else {
+      this.setState({
+        computed: computed.concat(computeField)
+      })
+    }
   }
 
   private cacheChange = (e) => {
@@ -194,20 +312,23 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private setWidgetProps = (widgetProps: IWidgetProps) => {
-    const data = widgetProps.data || this.state.widgetProps.data
     this.setState({
       widgetProps: {
         ...widgetProps,
-        data
+        data: widgetProps.data || this.state.widgetProps.data
       }
     })
   }
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, queryParams, cache, expired, widgetProps } = this.state
+    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
+      return
+    }
+    if (!selectedView) {
+      message.error('请选择一个View')
       return
     }
     const widget = {
@@ -218,13 +339,17 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       projectId: Number(params.pid),
       config: JSON.stringify({
         ...widgetProps,
-        queryParams,
+        controls,
+        computed: originalComputed && originalComputed ? [...computed, ...originalComputed] : [...computed],
         cache,
         expired,
         data: []
       }),
       publish: true
     }
+    console.info({
+      widget
+    })
     if (id) {
       onEditWidget({...widget, id}, () => {
         message.success('修改成功')
@@ -256,6 +381,23 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.router.goBack()
   }
 
+  private paginationChange = (pageNo: number, pageSize: number) => {
+    this.operatingPanel.triggerWidgetRefresh(pageNo, pageSize)
+  }
+
+  private saveSplitSize (newSize: number) {
+    localStorage.setItem('workbenchSplitSize', newSize.toString())
+  }
+
+  private resizeChart = () => {
+    this.setState({
+      widgetProps: {
+        ...this.state.widgetProps,
+        renderType: 'resize'
+      }
+    })
+  }
+
   public render () {
     const {
       views,
@@ -263,20 +405,23 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       dataLoading,
       distinctColumnValues,
       columnValueLoading,
-      onLoadDistinctValue,
-      onLoadData
+      onLoadData,
+      onLoadDistinctValue
     } = this.props
     const {
       name,
       description,
       selectedView,
-      queryParams,
+      controls,
       cache,
       expired,
-      currentWidgetConfig,
+      computed,
+      splitSize,
+      originalWidgetProps,
+      originalComputed,
       widgetProps
     } = this.state
-
+    console.log({originalComputed})
     return (
       <div className={styles.workbench}>
         <EditorHeader
@@ -292,21 +437,35 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           loading={loading}
         />
         <div className={styles.body}>
+          <Suspense fallback={null}>
+            <SplitPane
+              split="vertical"
+              defaultSize={splitSize}
+              minSize={this.defaultSplitSize}
+              maxSize={this.maxSplitSize}
+              onChange={this.saveSplitSize}
+              onDragFinished={this.resizeChart}
+            >
           <OperatingPanel
+            ref={(f) => this.operatingPanel = f}
             views={views}
-            currentWidgetConfig={currentWidgetConfig}
+            originalWidgetProps={originalWidgetProps}
+            originalComputed={originalComputed}
             selectedView={selectedView}
             distinctColumnValues={distinctColumnValues}
             columnValueLoading={columnValueLoading}
-            queryParams={queryParams}
+            controls={controls}
             cache={cache}
             expired={expired}
+            computed={computed}
             onViewSelect={this.viewSelect}
-            onSetQueryParams={this.setQueryParams}
+            onSetControls={this.setControls}
             onCacheChange={this.cacheChange}
             onExpiredChange={this.expiredChange}
-            onLoadData={onLoadData}
             onSetWidgetProps={this.setWidgetProps}
+            onSetComputed={this.setComputed}
+            onDeleteComputed={this.deleteComputed}
+            onLoadData={onLoadData}
             onLoadDistinctValue={onLoadDistinctValue}
           />
           <div className={styles.viewPanel}>
@@ -314,9 +473,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
               <Widget
                 {...widgetProps}
                 loading={dataLoading}
+                onPaginationChange={this.paginationChange}
               />
             </div>
           </div>
+            </SplitPane>
+          </Suspense>
         </div>
       </div>
     )
@@ -337,11 +499,12 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
-    onLoadData: (viewId, params, resolve) => dispatch(loadData(viewId, params, resolve)),
+    onLoadData: (viewId, requestParams, resolve) => dispatch(loadData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
     onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),
-    onClearCurrentWidget: () => dispatch(clearCurrentWidget())
+    onClearCurrentWidget: () => dispatch(clearCurrentWidget()),
+    onExecuteComputed: (sql) => dispatch(executeComputed(sql))
   }
 }
 

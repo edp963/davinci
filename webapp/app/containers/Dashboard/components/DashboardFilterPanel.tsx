@@ -20,34 +20,21 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import { Row, Col } from 'antd'
 const utilStyles = require('assets/less/util.less')
-import { IFilterChangeParam } from 'components/Filters'
+import { IFilterItem, IMapFilterControlOptions, OnGetFilterControlOptions, OnFilterValueChange } from 'components/Filters'
 import FilterPanel from 'components/Filters/FilterPanel'
 
 interface IDashboardFilterPanelProps {
   currentDashboard
   currentItems
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  },
-  onChange: (
-    queryParams: IFilterChangeParam,
-    filterKey: string
-  ) => void
+  onGetOptions: OnGetFilterControlOptions
+  mapOptions: IMapFilterControlOptions,
+  onChange: OnFilterValueChange
 }
 
 interface IDashboardFilterPanelStates {
-  filters: any[]
+  filters: IFilterItem[]
 }
 
 export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelProps, IDashboardFilterPanelStates> {
@@ -62,30 +49,35 @@ export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelP
   public componentWillReceiveProps (nextProps: IDashboardFilterPanelProps) {
     const { currentDashboard, currentItems } = nextProps
     if (currentDashboard !== this.props.currentDashboard || currentItems !== this.props.currentItems) {
-      this.adjustGlobalFilterTableSource(currentDashboard, currentItems)
+      this.getValidGlobalFilterItems(currentDashboard, currentItems)
     }
   }
 
-  private adjustGlobalFilterTableSource = (currentDashboard, currentItems) => {
+  private getValidGlobalFilterItems = (currentDashboard, currentItems) => {
     if (!currentDashboard) { return [] }
 
     const config = JSON.parse(currentDashboard.config || '{}')
-    const globalFilterTableSource = config.filters || []
+    const globalFilters: IFilterItem[] = config.filters || []
 
-    const filters =  globalFilterTableSource.map((gfts) => {
-      const { relatedViews } = gfts
-      let { items } = relatedViews
-      if (items) {
-        items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+    const filters = globalFilters.map((filter) => {
+      const { relatedViews } = filter
+      Object.values(relatedViews).forEach((viewConfig) => {
+        let { items } = viewConfig
+        if (items.length) {
+          items = items.filter((itemId) => currentItems.findIndex((ci) => ci.id === itemId) >= 0)
+        }
+      })
+      if (!filter.fromText) {
+        filter.fromText = filter.fromModel
       }
-      return gfts
+      return filter
     })
 
     this.setState({ filters })
   }
 
   public render () {
-    const { onGetOptions, filterOptions, onChange } = this.props
+    const { onGetOptions, mapOptions, onChange } = this.props
     const { filters } = this.state
     const globalFilterContainerClass = classnames({
       [utilStyles.hide]: !filters.length
@@ -97,7 +89,7 @@ export class DashboardFilterPanel extends React.Component<IDashboardFilterPanelP
           <FilterPanel
             filters={filters}
             onGetOptions={onGetOptions}
-            filterOptions={filterOptions}
+            mapOptions={mapOptions}
             onChange={onChange}
           />
         </Col>

@@ -46,3 +46,9 @@
 .ant-form-item-control {
   height: 100%;
 }
+
+/* add by rh 
+   override 
+*/
+
+.cm-s-3024-day span.cm-error { background: #ef6155; color: #fefefe; }

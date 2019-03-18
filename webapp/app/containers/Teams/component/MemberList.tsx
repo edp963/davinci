@@ -1,19 +1,13 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Button = require('antd/lib/button')
-const Input = require('antd/lib/input')
-const Table = require('antd/lib/table')
-const Modal = require('antd/lib/modal')
+import { Row, Col, Tooltip, Popconfirm, Button, Input, Table, Modal } from 'antd'
+import { PaginationConfig } from 'antd/lib/table'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 const styles = require('../Team.less')
 import AddForm from './AddForm'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
 import ChangeRoleForm from '../../Organizations/component/ChangeRoleForm'
-import {IOrganizationMembers} from '../../Organizations/Organization'
+import { IOrganizationMembers } from '../../Organizations/Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 
 
@@ -28,6 +22,7 @@ interface IMemberListState {
   changeRoleFormVisible: boolean
   changeRoleModalLoading: boolean
   currentTeamMembers: any[]
+  pagination: PaginationConfig
 }
 
 interface IMemberListProps {
@@ -53,7 +48,12 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       currentMember: {},
       changeRoleFormVisible: false,
       changeRoleModalLoading: false,
-      currentTeamMembers: []
+      currentTeamMembers: [],
+      pagination: {
+        defaultPageSize: 50,
+        showSizeChanger: true,
+        pageSizeOptions: ['10', '20', '50', '100']
+      }
     }
   }
   public componentDidMount () {
@@ -142,8 +142,10 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormVisible: true,
       changeRoleFormCategory: type
     }, () => {
-      const {user: {role}, id} = obj
-      this.ChangeRoleForm.setFieldsValue({id, role})
+      setTimeout(() => {
+        const {user: {role}, id} = obj
+        this.ChangeRoleForm.setFieldsValue({id, role})
+      }, 0)
     })
   }
   public render () {
@@ -153,7 +155,8 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
       changeRoleFormVisible,
       changeRoleModalLoading,
       changeRoleFormCategory,
-      currentTeamMembers
+      currentTeamMembers,
+      pagination
     } = this.state
     const { currentTeam} = this.props
     let CreateButton = void 0
@@ -163,7 +166,6 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
     const addButton =  (
       <Tooltip placement="bottom" title="添加">
         <CreateButton
-          size="large"
           type="primary"
           icon="plus"
           onClick={this.showAddForm('teamMember')}
@@ -182,33 +184,32 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
             <span className={styles.avatarName}>{text.username}</span>
           </div>
         )
-      },
-        {
-          title: 'role',
-          dataIndex: 'user',
-          key: 'userKey',
-          render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
-        },
-        {
-          title: 'settings',
-          dataIndex: 'user',
-          key: 'settings',
-          render: (text, record) => (
-            <span>
-          <Popconfirm
-            title="确定删除此成员吗？"
-            placement="bottom"
-            onConfirm={this.removeMemberForm(text, record)}
-          >
-            <Tooltip title="删除">
-              <a href="javascript:;">从团队里移除</a>
-            </Tooltip>
-          </Popconfirm>
-          <span className="ant-divider" />
-          <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
-        </span>
-          )
-        }]
+      }, {
+        title: 'role',
+        dataIndex: 'user',
+        key: 'userKey',
+        render: (text) => <span>{text.role === 1 ? 'Maintainer' : 'Member'}</span>
+      }, {
+        title: 'settings',
+        dataIndex: 'user',
+        key: 'settings',
+        width: 200,
+        render: (text, record) => (
+          <span>
+        <Popconfirm
+          title="确定删除此成员吗？"
+          placement="bottom"
+          onConfirm={this.removeMemberForm(text, record)}
+        >
+          <Tooltip title="删除">
+            <a href="javascript:;">从团队里移除</a>
+          </Tooltip>
+        </Popconfirm>
+        <span className="ant-divider" />
+        <a href="javascript:;" onClick={this.showChangeRoleForm('teamMember', record)}>改变角色</a>
+      </span>
+        )
+      }]
     } else {
       columns = [{
         title: 'Name',
@@ -233,8 +234,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
         <Row>
           <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="placeholder"
+              placeholder="搜索成员"
               onChange={this.onSearchMember}
             />
           </Col>
@@ -248,6 +248,7 @@ export class MemberList extends React.PureComponent<IMemberListProps, IMemberLis
               bordered
               columns={columns}
               dataSource={currentTeamMembers as Team.ITeamMembers[]}
+              pagination={pagination}
             />
           </div>
         </Row>

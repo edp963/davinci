@@ -1,20 +1,12 @@
 import * as React from 'react'
 const styles = require('../Team.less')
-const Button = require('antd/lib/Button')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import { Button, Input, Select, Form, Row, Col } from 'antd'
 const Option = Select.Option
-const Form = require('antd/lib/form')
-const Radio = require('antd/lib/radio/radio')
-const RadioGroup = Radio.Group
 const FormItem = Form.Item
-const Row = require('antd/lib/row')
-const Tag = require('antd/lib/tag')
 import Avatar from '../../../components/Avatar'
 const utilStyles = require('../../../assets/less/util.less')
-const Col = require('antd/lib/col')
 import UploadAvatar from '../../../components/UploadAvatar'
-import {ITeam} from '../Team'
+import { ITeam } from '../Team'
 
 interface ISettingProps {
   form: any
@@ -37,7 +29,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
 
   private setFieldData = (currentTeam) => {
     const { id, name, description, parentTeamId, visibility } = currentTeam
-    console.log({currentTeam})
+
     this.parentTeamChange(`${parentTeamId}`).then(() => {
       this.props.form.setFieldsValue({id, name, description, parentTeamId: `${parentTeamId}`, visibility})
     })
@@ -120,7 +112,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                       initialValue: '',
                       rules: [{ required: true }, {}]
                     })(
-                      <Input size="large" placeholder="Name"/>
+                      <Input placeholder="Name"/>
                     )}
                   </FormItem>
                 </Col>
@@ -158,7 +150,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                       {/*initialValue: ''*/}
                     {/*})(*/}
                       {/*<RadioGroup>*/}
-                        {/*<Radio value={false} className={styles.radioStyle}>私密（只对该团队成员可见）</Radio>*/}
+                        {/*<Radio value={false} className={styles.radioStyle}>授权（只对该团队成员可见）</Radio>*/}
                         {/*<Radio value={true} className={styles.radioStyle}>公开 <Tag>推荐</Tag>（对该组织内所有成员可见）</Radio>*/}
                       {/*</RadioGroup>*/}
                     {/*)}*/}
@@ -166,7 +158,6 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 {/*</Col>*/}
                 <Col>
                   <Button
-                    size="large"
                     onClick={this.props.editTeam(this.props.form.getFieldsValue())}
                     disabled={isDisabled}
                   >
@@ -181,7 +172,7 @@ export class Setting extends React.PureComponent <ISettingProps> {
                 <div className={styles.titleDesc}>
                   <p className={styles.desc}>删除后无法恢复，请确定此次操作</p>
                   <p className={styles.button}>
-                    <Button size="large" type="danger" onClick={this.props.deleteTeam(this.props.form.getFieldsValue().id)}>删除{name}</Button>
+                    <Button type="danger" onClick={this.props.deleteTeam(this.props.form.getFieldsValue().id)}>删除{name}</Button>
                   </p>
                 </div>
               </Row>

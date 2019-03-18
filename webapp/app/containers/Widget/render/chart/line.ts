@@ -75,11 +75,12 @@ export default function (chartProps: IChartProps) {
     label: getLabelOption('line', label)
   }
 
-  let xAxisData = data.map((d) => d[cols[0]] || '')
+  const xAxisColumnName = cols[0].name
+  let xAxisData = data.map((d) => d[xAxisColumnName] || '')
   let grouped = {}
   if (color.items.length) {
-    xAxisData = distinctXaxis(data, cols[0])
-    grouped = makeGrouped(data, color.items.map((c) => c.name), cols[0], metrics, xAxisData)
+    xAxisData = distinctXaxis(data, xAxisColumnName)
+    grouped = makeGrouped(data, color.items.map((c) => c.name), xAxisColumnName, metrics, xAxisData)
   }
 
   const series = []
@@ -169,13 +170,6 @@ export default function (chartProps: IChartProps) {
 
   const seriesNames = series.map((s) => s.name)
 
-  let legendOption
-  if (color.items.length || metrics.length > 1) {
-    legendOption = {
-      legend: getLegendOption(legend, seriesNames)
-    }
-  }
-
   // dataZoomOptions = dataZoomThreshold > 0 && dataZoomThreshold < dataSource.length && {
   //   dataZoom: [{
   //     type: 'inside',
@@ -217,7 +211,7 @@ export default function (chartProps: IChartProps) {
     tooltip: {
       formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
     },
-    ...legendOption,
+    legend: getLegendOption(legend, seriesNames),
     grid: getGridPositions(legend, seriesNames, false, yAxis, xAxis, xAxisData)
   }
 }

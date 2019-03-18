@@ -1,20 +1,15 @@
 import * as React from 'react'
 import api from 'utils/api'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Upload = require('antd/lib/upload')
-const Icon = require('antd/lib/icon')
+import { Form, Row, Col, Upload, Icon, Button } from 'antd'
 const FormItem = Form.Item
-const Button = require('antd/lib/button')
 
 const styles = require('../Display.less')
 
 interface IDisplaySettingProps {
   display: any
   onCoverCut: () => void
-  onCoverUploaded: (path: string) => void
+  onCoverUpdated: (path: string) => void
 }
 
 interface IDisplaySettingStates {
@@ -39,10 +34,13 @@ export class DisplaySetting extends React.PureComponent<IDisplaySettingProps, ID
     if (status === 'done') {
       this.setState({ loading: false }, () => {
         const path = response.payload
-        const { onCoverUploaded } = this.props
-        onCoverUploaded(path)
+        this.props.onCoverUpdated(path)
       })
     }
+  }
+
+  private deleteCover = () => {
+    this.props.onCoverUpdated(null)
   }
 
   public render () {
@@ -62,29 +60,36 @@ export class DisplaySetting extends React.PureComponent<IDisplaySettingProps, ID
     }
 
     return (
-      <Row gutter={16} className={styles.formBlock} key="coverImage">
+      <Row className={styles.formBlock} key="coverImage">
         <Col span={24}>
           <h3 className={styles.formBlockTitle}>封面</h3>
         </Col>
         <Col span={24}>
-          <Button onClick={onCoverCut}>截取封面</Button>
+          <Button size="small" onClick={onCoverCut}>截取封面</Button>
         </Col>
         <Col span={24}>
           <FormItem label="封面图片" {...formItemlayout}>
-            <Upload
-              className={styles.upload}
-              name="coverImage"
-              disabled={true}
-              action={DisplaySetting.uploadUrl}
-              headers={headers}
-              onChange={this.onChange}
-            >
-              {avatar ? (
-                <div className={styles.img}>
-                  <img src={avatar} alt={tip}/>
-                </div>
-              ) : <Icon type="plus" />}
-            </Upload>
+            <Row>
+              <Col span={24}>
+                <Upload
+                  className={styles.upload}
+                  name="coverImage"
+                  disabled={true}
+                  action={DisplaySetting.uploadUrl}
+                  headers={headers}
+                  onChange={this.onChange}
+                >
+                  {avatar && (
+                    <>
+                      <div className={styles.img}>
+                        <img src={avatar} alt={tip}/>
+                      </div>
+                      <Icon type="delete" onClick={this.deleteCover} />
+                    </>
+                  )}
+                </Upload>
+              </Col>
+            </Row>
           </FormItem>
         </Col>
       </Row>

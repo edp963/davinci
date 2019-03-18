@@ -35,12 +35,6 @@ import {
   LOAD_CASCADESOURCE,
   LOAD_CASCADESOURCE_SUCCESS,
   LOAD_CASCADESOURCE_FAILURE,
-  LOAD_BIZDATA_SCHEMA,
-  LOAD_BIZDATA_SCHEMA_SUCCESS,
-  LOAD_BIZDATA_SCHEMA_FAILURE,
-  LOAD_SCHEMA,
-  LOAD_SCHEMA_SUCCESS,
-  LOAD_SCHEMA_FAILURE,
   EXECUTE_SQL,
   EXECUTE_SQL_SUCCESS,
   EXECUTE_SQL_FAILURE,
@@ -55,8 +49,18 @@ import {
   LOAD_DATA_FROM_ITEM_FAILURE,
   LOAD_VIEW_TEAM,
   LOAD_VIEW_TEAM_SUCCESS,
-  LOAD_VIEW_TEAM_FAILURE
+  LOAD_VIEW_TEAM_FAILURE,
+  RESET_VIEW_STATE,
+  LOAD_SOURCE_TABLE,
+  LOAD_SOURCE_TABLE_FAILURE,
+  LOAD_SOURCE_TABLE_SUCCESS,
+  LOAD_SOURCE_TABLE_COLUMN,
+  LOAD_SOURCE_TABLE_COLUMN_FAILURE,
+  LOAD_SOURCE_TABLE_COLUMN_SUCCESS
 } from './constants'
+
+import { IDataRequestParams } from '../Dashboard/Grid'
+import { RenderType } from '../Widget/components/Widget'
 
 export function loadBizlogics (projectId, resolve) {
   return {
@@ -163,24 +167,24 @@ export function clearBizdatas () {
   }
 }
 
-export function loadCascadeSource (controlId, viewId, column, parents) {
+export function loadCascadeSource (controlId, viewId, columns, parents) {
   return {
     type: LOAD_CASCADESOURCE,
     payload: {
       controlId,
       viewId,
-      column,
+      columns,
       parents
     }
   }
 }
 
-export function cascadeSourceLoaded (controlId, column, values) {
+export function cascadeSourceLoaded (controlId, columns, values) {
   return {
     type: LOAD_CASCADESOURCE_SUCCESS,
     payload: {
       controlId,
-      column,
+      columns,
       values
     }
   }
@@ -195,65 +199,68 @@ export function loadCascadeSourceFail (error) {
   }
 }
 
-export function loadBizdataSchema (id, resolve) {
+export function loadSourceTable (sourceId, resolve) {
   return {
-    type: LOAD_BIZDATA_SCHEMA,
+    type: LOAD_SOURCE_TABLE,
     payload: {
-      id,
+      sourceId,
       resolve
     }
   }
 }
 
-export function bizdataSchemaLoaded (scheme) {
+export function sourceTableLoaded (table) {
   return {
-    type: LOAD_BIZDATA_SCHEMA_SUCCESS,
+    type: LOAD_SOURCE_TABLE_SUCCESS,
     payload: {
-      scheme
+      table
     }
   }
 }
 
-export function loadBizdataSchemaFail (error) {
+export function loadSourceTableFail (error) {
   return {
-    type: LOAD_BIZDATA_SCHEMA_FAILURE,
+    type: LOAD_SOURCE_TABLE_FAILURE,
     payload: {
       error
     }
   }
 }
 
-export function loadSchema (sourceId, resolve) {
+export function loadSourceTableColumn (sourceId, tableName, resolve) {
   return {
-    type: LOAD_SCHEMA,
+    type: LOAD_SOURCE_TABLE_COLUMN,
     payload: {
       sourceId,
+      tableName,
       resolve
     }
   }
 }
 
-export function schemaLoaded (schema) {
+export function sourceTableColumnLoaded (column) {
   return {
-    type: LOAD_SCHEMA_SUCCESS,
+    type: LOAD_SOURCE_TABLE_COLUMN_SUCCESS,
     payload: {
-      schema
+      column
     }
   }
 }
 
-export function loadSchemaFail () {
+export function loadSourceTableColumnFail (error) {
   return {
-    type: LOAD_SCHEMA_FAILURE
+    type: LOAD_SOURCE_TABLE_COLUMN_FAILURE,
+    payload: {
+      error
+    }
   }
 }
 
-export function executeSql (sourceId, sql, resolve) {
+export function executeSql (requestObj, resolve) {
   return {
     type: EXECUTE_SQL,
     payload: {
-      sourceId,
-      sql,
+      requestObj,
       resolve
     }
   }
@@ -277,12 +284,12 @@ export function executeSqlFail (error) {
   }
 }
 
-export function loadData (id, params, resolve) {
+export function loadData (id: number, requestParams: IDataRequestParams, resolve: () => void) {
   return {
     type: LOAD_DATA,
     payload: {
       id,
-      params,
+      requestParams,
       resolve
     }
   }
@@ -332,25 +339,32 @@ export function loadDistinctValueFail (error) {
   }
 }
 
-export function loadDataFromItem (renderType, itemId, viewId, params, vizType: 'dashboard' | 'display') {
+export function loadDataFromItem (
+  renderType: RenderType,
+  itemId: number,
+  viewId: number,
+  requestParams: IDataRequestParams,
+  vizType: 'dashboard' | 'display'
+) {
   return {
     type: LOAD_DATA_FROM_ITEM,
     payload: {
       renderType,
       itemId,
       viewId,
-      params,
+      requestParams,
       vizType
     }
   }
 }
 
-export function dataFromItemLoaded (renderType, itemId, result, vizType: 'dashboard' | 'display') {
+export function dataFromItemLoaded (renderType, itemId, requestParams, result, vizType: 'dashboard' | 'display') {
   return {
     type: LOAD_DATA_FROM_ITEM_SUCCESS,
     payload: {
       renderType,
       itemId,
+      requestParams,
       result,
       vizType
     }
@@ -367,11 +381,12 @@ export function loadDataFromItemFail (itemId, vizType: 'dashboard' | 'display') 
   }
 }
 
-export function loadViewTeam (projectId) {
+export function loadViewTeam (projectId, resolve) {
   return {
     type: LOAD_VIEW_TEAM,
     payload: {
-      projectId
+      projectId,
+      resolve
     }
   }
 }
@@ -391,5 +406,11 @@ export function loadViewTeamFail (error) {
     payload: {
       error
     }
+  }
+}
+
+export function resetViewState () {
+  return {
+    type: RESET_VIEW_STATE
   }
 }

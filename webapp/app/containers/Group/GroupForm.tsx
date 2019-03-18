@@ -18,15 +18,12 @@
  * >>
  */
 
-import * as React from 'react'
-import {connect} from 'react-redux'
-import {checkNameAction} from '../App/actions'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const FormItem = require('antd/lib/form/FormItem')
-const TextArea = require('antd/lib/input/TextArea')
+import React from 'react'
+import { connect } from 'react-redux'
+import { checkNameAction } from '../App/actions'
+import { Form, Row, Col, Input } from 'antd'
+const FormItem = Form.Item
+const TextArea = Input.TextArea
 
 const utilStyles = require('../../assets/less/util.less')
 

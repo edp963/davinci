@@ -24,13 +24,7 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Popover = require('antd/lib/popover')
-const Menu = require('antd/lib/menu')
-const Dropdown = require('antd/lib/dropdown')
-const Modal = require('antd/lib/modal')
+import { Icon, Tooltip, Popover, Menu, Dropdown } from 'antd'
 
 const styles = require('../Display.less')
 

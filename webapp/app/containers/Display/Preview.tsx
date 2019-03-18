@@ -17,10 +17,8 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
 import { GraphTypes, SecondaryGraphTypes } from './components/util'
-import { echartsOptionsGenerator } from '../Widget/components/chartUtil'
 
 import Container from '../../components/Container'
-import DisplayForm from './components/DisplayForm'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { makeSelectWidgets } from '../Widget/selectors'
@@ -35,8 +33,8 @@ import {
 import { hideNavigator } from '../App/actions'
 import {
   loadDataFromItem,
-  loadCascadeSource, // TODO global filter in Display Preview
-  loadBizdataSchema  } from '../Bizlogic/actions'
+  loadCascadeSource // TODO global filter in Display Preview
+} from '../Bizlogic/actions'
 import {
   editCurrentDisplay,
   loadDisplayDetail,
@@ -44,16 +42,15 @@ import {
   addDisplayLayers,
   deleteDisplayLayers,
   editDisplayLayers } from './actions'
-import {
-  ECHARTS_RENDERER,
-  DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
+import { DEFAULT_PRIMARY_COLOR } from '../../globalConstants'
 import LayerItem from './components/LayerItem'
 
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
-import { IWidgetProps, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
+import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
 
 interface IBizdataIncomeParamObject {
   k: string
@@ -76,14 +73,7 @@ interface IPreviewProps {
         totalCount: number
       }
       loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-      }
+      queryConditions: IQueryConditions
       interactId: string
       rendered: boolean
       renderType: RenderType
@@ -95,19 +85,7 @@ interface IPreviewProps {
     renderType: RenderType,
     layerItemId: number,
     viewId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    }
+    requestParams: IDataRequestParams
   ) => void
 }
 
@@ -167,7 +145,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     }
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
       currentLayersInfo,
       widgets,
@@ -175,31 +153,31 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = currentLayersInfo[itemId].queryParams
+    const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params || cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
+    if (queryConditions) {
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -251,9 +229,9 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
-        params,
-        linkageParams,
-        globalParams,
+        variables,
+        linkageVariables,
+        globalVariables,
         orders,
         cache,
         expired
@@ -354,7 +332,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display'))
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) => dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'display'))
   }
 }
 

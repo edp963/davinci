@@ -42,10 +42,22 @@ const makeSelectTestLoading = () => createSelector(
   (sourceState) => sourceState.get('testLoading')
 )
 
+const makeSelectSourceFormValues = () => createSelector(
+  selectSource,
+  (sourceState) => sourceState.get('sourceFormValues')
+)
+
+const makeSelectUploadFormValues = () => createSelector(
+  selectSource,
+  (sourceState) => sourceState.get('uploadFormValues')
+)
+
 export {
   selectSource,
   makeSelectSources,
   makeSelectListLoading,
   makeSelectFormLoading,
-  makeSelectTestLoading
+  makeSelectTestLoading,
+  makeSelectSourceFormValues,
+  makeSelectUploadFormValues
 }

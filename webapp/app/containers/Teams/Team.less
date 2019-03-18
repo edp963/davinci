@@ -30,7 +30,7 @@
     .name {
       .desc {
         font-size: 12px;
-        color: @description-text;
+        color: @light-text-color;
       }
     }
   }
@@ -128,7 +128,7 @@
     .tips{
       margin: 4px auto 0;
       font-size: 14px;
-      color: @description-text;
+      color: @light-text-color;
     }
   }
   .search {
@@ -193,7 +193,7 @@
       }
     }
     .create {
-      color: @description-text;
+      color: @light-text-color;
       font-weight: 400;
       font-size: 15px;
       margin-right: 8px;
@@ -207,6 +207,8 @@
 
 .avatarWrapper {
   display: flex;
+  flex-direction: row;
+  align-items: center;
 }
 
 .permissionZone {
@@ -273,7 +275,7 @@
     margin-right: 8px;
   }
   .create {
-    color: @description-text;
+    color: @light-text-color;
     font-weight: 400;
     font-size: 15px;
     margin-right: 8px;
@@ -286,4 +288,23 @@
   line-Height: 30px;
 }
 
+.teamPagination {
+  margin: 16px 0;
+  float: right
+}
 
+.teamTableExpandIcon {
+  cursor: pointer;
+}
+
+.childTable {
+  background-color: @white;
+  margin: -11px -9px !important;
+}
+
+.childTableCell {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding-right: 8px;
+}

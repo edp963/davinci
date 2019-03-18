@@ -38,28 +38,19 @@ import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import UserForm from './UserForm'
 import UserPasswordForm from './UserPasswordForm'
 import GroupForm from '../Group/GroupForm'
+import { Modal, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb, message } from 'antd'
+import { SortOrder } from 'antd/lib/table'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const message = require('antd/lib/message')
 
 import { loadUsers, addUser, deleteUser, loadUserGroups, editUserInfo, changeUserPassword } from './actions'
 import { loadGroups, addGroup } from '../Group/actions'
 import { makeSelectUsers, makeSelectTableLoading, makeSelectFormLoading } from './selectors'
 import { makeSelectGroups } from '../Group/selectors'
-// import { resolve } from 'dns'
 const utilStyles = require('../../assets/less/util.less')
 
 interface IUserProps {
-  users: boolean | any[]
-  groups: boolean | any[]
+  users: any[]
+  groups: any[]
   tableLoading: boolean
   formLoading: boolean
   onLoadUsers: () => any
@@ -74,7 +65,10 @@ interface IUserProps {
 
 interface IUserStates {
   tableSource: any[]
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   formType: string
   groupTransfer: { id: string, targets: any[] }
   emailFilterValue: string
@@ -299,11 +293,11 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
     })
   }
 
-  private onEmailInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  private onEmailInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ emailFilterValue: e.currentTarget.value })
   }
 
-  private onNameInputChange = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  private onNameInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ nameFilterValue: e.currentTarget.value })
   }
 
@@ -397,7 +391,7 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
       filterDropdownVisible: emailFilterDropdownVisible,
       onFilterDropdownVisibleChange: (visible) => this.setState({ emailFilterDropdownVisible: visible }),
       sorter: (a, b) => a.email > b.email ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'email' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'email' ? tableSortedInfo.order : void 0
     }, {
       title: '姓名',
       dataIndex: 'name',
@@ -413,7 +407,7 @@ export class User extends React.PureComponent<IUserProps, IUserStates> {
       filterDropdownVisible: nameFilterDropdownVisible,
       onFilterDropdownVisibleChange: (visible) => this.setState({ nameFilterDropdownVisible: visible }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '职位',
       dataIndex: 'title',
