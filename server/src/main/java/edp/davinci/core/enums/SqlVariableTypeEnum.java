@@ -17,15 +17,30 @@
  *
  */
 
-package edp.davinci.dto.auth;
+package edp.davinci.core.enums;
 
-import lombok.Data;
+public enum SqlVariableTypeEnum {
+    QUERYVAR("query"),
+    AUTHVARE("auth")
+    ;
 
-@Data
-public class AuthVar {
-    private String name;
-    private String type;            //变量类型
-    private String valueType;       //变量值类型
-    private String defaultValue;    //默认值
-    private AuthVarChannel channel;
+
+    private String type;
+
+    public static SqlVariableTypeEnum typeOf(String type) {
+        for (SqlVariableTypeEnum typeEnum : SqlVariableTypeEnum.values()) {
+            if (typeEnum.type.equals(type)) {
+                return typeEnum;
+            }
+        }
+        return null;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    SqlVariableTypeEnum(String type) {
+        this.type = type;
+    }
 }

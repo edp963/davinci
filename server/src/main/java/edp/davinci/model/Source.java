@@ -102,7 +102,7 @@ public class Source extends BaseSource {
         return password;
     }
 
-    private String getConcigParams() {
+    public String getConfigParams() {
         String params = null;
         if (null == config) {
             return null;
@@ -114,5 +114,18 @@ public class Source extends BaseSource {
             log.error("get jdbc parameters from source config, {}", e.getMessage());
         }
         return params;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Source{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", type='" + type + '\'' +
+                ", projectId=" + projectId +
+                ", config='" + config + '\'' +
+                '}';
     }
 }

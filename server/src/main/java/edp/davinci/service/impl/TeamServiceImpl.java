@@ -136,9 +136,9 @@ public class TeamServiceImpl implements TeamService {
             int insertRel = relUserTeamMapper.insert(rel);
             if (insertRel > 0) {
                 Organization organization = organizationMapper.getById(teamCreate.getOrgId());
-                organization.setTeamNum(organization.getTeamNum() + 1);
+//                organization.setTeamNum(organization.getTeamNum() + 1);
 
-                organizationMapper.updateTeamNum(organization);
+                organizationMapper.updateRoleNum(organization);
 
                 TeamWithMembers teamWithMembers = new TeamWithMembers();
                 BeanUtils.copyProperties(team, teamWithMembers);
@@ -312,7 +312,7 @@ public class TeamServiceImpl implements TeamService {
         Organization organization = organizationMapper.getById(team.getOrgId());
         //删除team
         teamMapper.deleteById(id);
-        organizationMapper.updateTeamNum(organization);
+        organizationMapper.updateRoleNum(organization);
 
         return resultMap.successAndRefreshToken(request);
     }

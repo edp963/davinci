@@ -18,11 +18,12 @@
 
 package edp.core.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.extern.slf4j.Slf4j;
 
 
 @Slf4j
-public abstract class BaseSource {
+public abstract class BaseSource extends RecordInfo {
 
 
     public abstract String getJdbcUrl();

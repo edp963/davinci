@@ -21,10 +21,11 @@ package edp.core.model;
 
 import lombok.Data;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class PaginateWithQueryColumns extends Paginate<Map<String, Object>> {
+public class PaginateWithQueryColumns extends Paginate<LinkedHashMap<String, Object>> {
     List<QueryColumn> columns;
 }

@@ -17,13 +17,18 @@
  *
  */
 
-package edp.davinci.dto.auth;
+package edp.davinci.dto.viewDto;
 
+import edp.davinci.model.Source;
+import edp.davinci.model.View;
 import lombok.Data;
 
 @Data
-public class AuthVarChannel {
-    private String name;
-    private Long tenantId;
-    private Long bizId;
+public class ViewWithSource extends View {
+    private Source source;
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

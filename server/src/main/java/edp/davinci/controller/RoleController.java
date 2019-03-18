@@ -67,7 +67,7 @@ public class RoleController extends BaseController {
      */
     @ApiOperation(value = "create role", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createProject(@Valid @RequestBody RoleCreate role,
+    public ResponseEntity createRole(@Valid @RequestBody RoleCreate role,
                                         @ApiIgnore BindingResult bindingResult,
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {

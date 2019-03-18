@@ -93,14 +93,14 @@
     </update>
 
 
-    <update id="updateTeamNum" parameterType="edp.davinci.model.Organization">
+    <update id="updateRoleNum" parameterType="edp.davinci.model.Organization">
         update organization
         <choose>
-            <when test="teamNum > 0">
-                set team_num=#{teamNum,jdbcType=INTEGER}
+            <when test="roleNum > 0">
+                set role_num=#{roleNum,jdbcType=INTEGER}
             </when>
             <otherwise>
-                set team_num=0
+                set role_num=0
             </otherwise>
         </choose>
         <where>
@@ -109,7 +109,7 @@
     </update>
 
     <update id="addOneMemberNum" parameterType="java.util.Set">
-        update organization set team_num=(team_num + 1) where id in
+        update organization set role_num=(role_num + 1) where id in
         <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>

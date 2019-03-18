@@ -188,6 +188,6 @@ public interface RoleService {
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleWithProjectPermission> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
 }

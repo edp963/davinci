@@ -34,12 +34,14 @@ import edp.davinci.core.model.TokenEntity;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.model.*;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
@@ -360,7 +362,8 @@ public class ShareServiceImpl extends CommonService implements ShareService {
 
             Long viewId = shareInfo.getShareId();
             ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
-            paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+            paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, shareInfo.getShareUser());
+//            paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
@@ -408,7 +411,8 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             executeParam.setLimit(-1);
             executeParam.setPageSize(-1);
             executeParam.setPageNo(-1);
-            Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+//            Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
+            Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, shareInfo.getShareUser());
 
             if (null != columns && columns.size() > 0) {
                 String csvPath = fileUtils.fileBasePath + File.separator + "csv";

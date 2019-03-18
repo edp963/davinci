@@ -112,7 +112,7 @@
   <select id="getProjectsByOrgWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
       <include refid="selectProjectByUserBaseSql"></include>
       <if test="orgId != null">
-          and p.id = #{orgId}
+          and p.org_id = #{orgId}
       </if>
       <if test="keyword != null">
           AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
@@ -163,7 +163,7 @@
              o.`user_id`                                AS 'organization.userId',
              o.`project_num`                            AS 'organization.projectNum',
              o.`member_num`                             AS 'organization.memberNum',
-             o.`team_num`                               AS 'organization.teamNum',
+             o.role_num                               AS 'organization.teamNum',
              o.`allow_create_project`                   AS 'organization.allowCreateProject',
              o.`member_permission`                      AS 'organization.memberPermission',
              o.`create_time`                            AS 'organization.createTime',

@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.viewDto.ViewWithSourceBaseInfo;
 import edp.davinci.model.View;
 import org.apache.ibatis.annotations.Delete;
@@ -77,6 +78,7 @@ public interface ViewMapper {
             "`source_id` = #{sourceId,jdbcType=BIGINT},",
             "`sql` = #{sql,jdbcType=LONGVARCHAR},",
             "`model` = #{model,jdbcType=LONGVARCHAR},",
+            "`variable` = #{model,jdbcType=LONGVARCHAR},",
             "`config` = #{config,jdbcType=LONGVARCHAR}",
             "where id = #{id,jdbcType=BIGINT}"
     })
@@ -86,16 +88,32 @@ public interface ViewMapper {
     List<View> getBySourceId(@Param("sourceId") Long sourceId);
 
     @Select({
-            "select v.`id`,v.`name`,v.`description`,v.`project_id`,v.`source_id`,v.`sql`,v.`model`, ",
-            "s.id 'source.id', s.name 'source.name' from view v ",
+            "select v.*,",
+            "s.id as 'source.id', s.name as 'source.name' from view v ",
             "left join source s on s.id = v.source_id ",
             "where v.project_id = #{projectId}"
     })
-    List<ViewWithSourceBaseInfo> getByProject(@Param("projectId")Long projectId);
+    List<ViewWithSourceBaseInfo> getByProject(@Param("projectId") Long projectId);
 
 
     int insertBatch(@Param("list") List<View> sourceList);
 
     @Delete({"delete from view where project_id = #{projectId}"})
     int deleteByPorject(@Param("projectId") Long projectId);
+
+    @Select({
+            "SELECT ",
+            "	v.*,",
+            "	s.id 'source.id',",
+            "	s.`name` 'source.name',",
+            "	s.description 'source.description',",
+            "	s.config 'source.config',",
+            "	s.project_id 'source.projectId',",
+            "	s.type 'source.type'",
+            "FROM `view` v",
+            "	LEFT JOIN project p on p.id = v.project_id",
+            "	LEFT JOIN source s on s.id = v.source_id",
+            "WHERE v.id = #{id}",
+    })
+    ViewWithSource getViewWithSource(Long id);
 }

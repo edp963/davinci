@@ -56,9 +56,15 @@ public interface ProjectService extends CheckEntityService {
 
     boolean removeAdmin(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
-    ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption;
 
-    List<RoleProject> addRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     PageInfo<ProjectWithCreateBy> getProjectsByOrg(Long id, User user, String keyword, int pageNum, int pageSize);
+
+    ProjectPermission getProjectPermission(ProjectDetail projectDetail, User user);
+
+    boolean allowGetData(ProjectDetail projectDetail, User user);
+
+    List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
 }

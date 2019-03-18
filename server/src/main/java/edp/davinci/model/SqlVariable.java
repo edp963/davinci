@@ -17,19 +17,26 @@
  *
  */
 
-package edp.core.model;
+package edp.davinci.model;
 
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Paginate<T> implements Serializable {
+public class SqlVariable {
+    private String name;
+    private String type;           //变量类型 query/auth
+    private String valueType;      //变量值类型 string/number/boolean/date
+    private List<Object> defaultValues;   //默认值
 
-    private int pageNo = -1;
-    private int pageSize = -1;
-    private long totalCount = -1;
-    private List<T> resultList = new ArrayList<T>();
+    private Channel channel;
+}
+
+
+@Data
+class Channel {
+    private String name;
+    private Long tenantId;
+    private Long bizId;
 }

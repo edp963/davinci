@@ -25,7 +25,7 @@ import edp.davinci.model.RelRoleProject;
 import lombok.Data;
 
 @Data
-@JSONType(ignores = {"projectId", "roleId"})
+@JSONType(ignores = {"projectId", "roleId", "id"})
 public class RoleProject extends RelRoleProject {
     private Project project;
 

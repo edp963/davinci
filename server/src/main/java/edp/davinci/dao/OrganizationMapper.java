@@ -87,7 +87,7 @@ public interface OrganizationMapper {
 
     int addOneMemberNum(@Param("set") Set<Long> orgIds);
 
-    int updateTeamNum(Organization organization);
+    int updateRoleNum(Organization organization);
 
 
     @Delete({"delete from organization where id = #{id}"})

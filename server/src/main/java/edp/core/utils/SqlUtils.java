@@ -154,22 +154,21 @@ public class SqlUtils {
                 SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
                 paginateWithQueryColumns.setPageNo(1);
 
-                List<Map<String, Object>> resultList = new ArrayList<>();
+                List<LinkedHashMap<String, Object>> resultList = new ArrayList<>();
                 List<QueryColumn> queryColumns = new ArrayList<>();
                 Map<String, Integer> columnMap = new HashMap<>();
                 int size = 0;
                 while (sqlRowSet.next()) {
-                    Map<String, Object> map = new HashMap<>();
+                    LinkedHashMap<String, Object> map = new LinkedHashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
                         String key = metaData.getColumnName(i);
-                        Object value = sqlRowSet.getObject(key);
-                        map.put(key, value);
-
                         if (!columnMap.containsKey(key)) {
                             columnMap.put(key, i);
                             QueryColumn queryColumn = new QueryColumn(key, metaData.getColumnTypeName(i));
                             queryColumns.add(queryColumn);
                         }
+                        Object value = sqlRowSet.getObject(key);
+                        map.put(key, value);
                     }
                     resultList.add(map);
                     size++;

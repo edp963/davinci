@@ -37,10 +37,7 @@ import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.viewDto.Aggregator;
-import edp.davinci.dto.viewDto.Order;
-import edp.davinci.dto.viewDto.ViewExecuteParam;
-import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
+import edp.davinci.dto.viewDto.*;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
@@ -605,7 +602,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         try {
             if (type.equals(FileTypeEnum.CSV.getType())) {
-                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+//                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);
                 List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
                 if (null != columns && columns.size() > 0) {
                     File file = new File(rootPath);
@@ -780,7 +778,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
                     List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
 
-                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+//                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
                     ExcelUtils.writeSheet(sheet, columns, paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());

@@ -27,6 +27,7 @@ import edp.davinci.dto.organizationDto.OrganizationTransfer;
 import edp.davinci.dto.projectDto.*;
 import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.dto.roleDto.RoleProject;
+import edp.davinci.dto.roleDto.RoleWithProjectPermission;
 import edp.davinci.model.User;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.RoleService;
@@ -35,7 +36,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,9 +76,10 @@ public class ProjectController extends BaseController {
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(projects));
     }
 
+
     @ApiOperation(value = "get roles where proejct is located")
     @GetMapping("/{id}/roles")
-    public ResponseEntity getTeamsOfProject(@ApiIgnore @CurrentUser User user,
+    public ResponseEntity getRolesOfProject(@ApiIgnore @CurrentUser User user,
                                             @PathVariable Long id,
                                             HttpServletRequest request) {
         if (invalidId(id)) {
@@ -86,7 +87,7 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<RoleBaseInfo> list = roleService.getRolesByProjectId(id, user);
+        List<RoleWithProjectPermission> list = roleService.getRolesByProjectId(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
     }
 
@@ -110,6 +111,22 @@ public class ProjectController extends BaseController {
         }
 
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(projectService.getProjectInfo(id, user)));
+    }
+
+    /**
+     * 获取项目列表：用户创建和用户所在组可访问的
+     *
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get admins of project")
+    @GetMapping("/{id}/admins")
+    public ResponseEntity getAdmins(@PathVariable Long id,
+                                    @ApiIgnore @CurrentUser User user,
+                                    HttpServletRequest request) {
+        List<RelProjectAdminDto> admins = projectService.getAdmins(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(admins));
     }
 
 
@@ -337,7 +354,7 @@ public class ProjectController extends BaseController {
      * @return
      */
     @ApiOperation(value = "remove an admin from a project")
-    @Delete(value = "/{id}/admin/{relationId}")
+    @DeleteMapping(value = "/{id}/admin/{relationId}")
     public ResponseEntity removeProjectAdmin(@PathVariable Long id,
                                              @PathVariable Long relationId,
                                              @ApiIgnore @CurrentUser User user,
@@ -378,7 +395,7 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<RoleProject> list = projectService.addRoles(id, Arrays.asList(roleIds), user);
+        List<RoleProject> list = projectService.postRoles(id, Arrays.asList(roleIds), user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(list));
     }
 }

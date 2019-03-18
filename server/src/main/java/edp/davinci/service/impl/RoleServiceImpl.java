@@ -26,6 +26,7 @@ import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.roleDto.*;
 import edp.davinci.model.*;
 import edp.davinci.service.ProjectService;
@@ -75,6 +76,8 @@ public class RoleServiceImpl implements RoleService {
     @Autowired
     private ProjectService projectService;
 
+    private RelRoleViewMapper relRoleViewMapper;
+
 
     /**
      * 新建Role
@@ -105,6 +108,9 @@ public class RoleServiceImpl implements RoleService {
         int insert = roleMapper.insert(role);
         if (insert > 0) {
             optLogger.info("role ( :{} ) create by user( :{} )", role.toString(), user.getId());
+            organization.setRoleNum(organization.getRoleNum() + 1);
+            organizationMapper.updateRoleNum(organization);
+
             return role;
         } else {
             log.info("create role fail: {}", role.toString());
@@ -136,6 +142,22 @@ public class RoleServiceImpl implements RoleService {
         int delete = roleMapper.deleteById(id);
         if (delete > 0) {
             optLogger.info("role ( {} ) delete by user( :{} )", role.toString(), user.getId());
+
+            Organization organization = organizationMapper.getById(role.getOrgId());
+            if (null != organization) {
+                int roleNum = organization.getRoleNum() - 1;
+                organization.setRoleNum(roleNum > 0 ? roleNum : 0);
+                organizationMapper.updateRoleNum(organization);
+            }
+
+            //删除Role关联project
+            relRoleProjectMapper.deleteByRoleId(id);
+
+            //删除Role关联view
+            relRoleViewMapper.deleteByRoleId(id);
+
+            //TODO 删除Role关联
+
             return true;
         } else {
             log.info("delete role fail: {}", role.toString());
@@ -246,9 +268,7 @@ public class RoleServiceImpl implements RoleService {
         int i = relRoleUserMapper.insertBatch(relRoleUsers);
         if (i > 0) {
             Map<Long, User> map = new HashMap<>();
-            members.forEach(m -> {
-                map.put(m.getId(), m);
-            });
+            members.forEach(m -> map.put(m.getId(), m));
             return relRoleUsers.stream().map(r -> new RelRoleMember(r.getId(), map.get(r.getUserId()))).collect(Collectors.toList());
         } else {
             log.error("add role member fail: (role:{}, memebers:{})", id, memberIds.toString());
@@ -322,14 +342,11 @@ public class RoleServiceImpl implements RoleService {
 
         List<RelRoleUser> collect = userIds.stream().map(uId -> new RelRoleUser(uId, id)).collect(Collectors.toList());
 
-        Object lock = new Object();
-        synchronized (lock) {
-            if (null != deleteIds && deleteIds.size() > 0) {
-                relRoleUserMapper.deleteByRoleIdAndMemberIds(id, deleteIds);
-            }
-            relRoleUserMapper.insertBatch(collect);
+        if (null != deleteIds && deleteIds.size() > 0) {
+            relRoleUserMapper.deleteByRoleIdAndMemberIds(id, deleteIds);
         }
-        lock = null;
+        relRoleUserMapper.insertBatch(collect);
+
         optLogger.info("replace role(:{}) member by user(:{})", id, user.getId());
         return relRoleUserMapper.getMembersByRoleId(id);
     }
@@ -572,10 +589,15 @@ public class RoleServiceImpl implements RoleService {
      * @throws NotFoundException
      */
     @Override
-    public List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
-        projectService.getProjectDetail(projectId, user, false);
-        return roleMapper.getBaseInfoByProjectId(projectId);
+    public List<RoleWithProjectPermission> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        ProjectDetail projectDetail = projectService.getProjectDetail(projectId, user, false);
+
+        List<RoleWithProjectPermission> list = relRoleProjectMapper.getRoleWithProjectPermissionByProject(projectId);
+        list.forEach(r -> r.getPermission().setProject(projectDetail));
+        return list;
     }
+
+
 
     private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {
         Role role = roleMapper.getById(id);

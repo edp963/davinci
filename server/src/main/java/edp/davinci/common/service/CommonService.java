@@ -26,6 +26,7 @@ import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.UserMaxProjectPermission;
 import edp.davinci.model.*;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

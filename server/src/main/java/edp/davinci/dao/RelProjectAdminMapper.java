@@ -1,9 +1,12 @@
 package edp.davinci.dao;
 
+import edp.davinci.dto.projectDto.RelProjectAdminDto;
 import edp.davinci.model.RelProjectAdmin;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 public interface RelProjectAdminMapper {
 
@@ -34,4 +37,15 @@ public interface RelProjectAdminMapper {
             "delete from rel_project_admin where project_id = #{projectId}"
     })
     int deleteByProjectId(Long projectId);
+
+    @Select({
+            "select r.id,",
+            "    u.id                         as 'user.id',",
+            "    ifnull(u.`name`, u.username) as 'user.username',",
+            "    u.avatar                     as 'user.avatar'",
+            "from rel_project_admin r",
+            "    left join `user` u on u.id = r.user_id",
+            "where r.project_id = #{projectId}"
+    })
+    List<RelProjectAdminDto> getByProject(Long projectId);
 }

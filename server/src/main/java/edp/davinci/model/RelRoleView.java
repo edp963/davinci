@@ -17,19 +17,15 @@
  *
  */
 
-package edp.core.model;
+package edp.davinci.model;
 
+import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
 @Data
-public class Paginate<T> implements Serializable {
-
-    private int pageNo = -1;
-    private int pageSize = -1;
-    private long totalCount = -1;
-    private List<T> resultList = new ArrayList<T>();
+public class RelRoleView extends RecordInfo {
+    private Long viewId;
+    private Long roleId;
+    private String rowAuth;
+    private String columnAuth;
 }

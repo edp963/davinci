@@ -28,6 +28,7 @@ import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
+import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.projectDto.*;
@@ -294,12 +295,10 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
         ProjectDetail project = null;
         try {
             project = getProjectDetail(id, user, true);
-        } catch (ServerException e) {
+        } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
             throw new UnAuthorizedExecption("you have not permission to delete this project");
-        } catch (NotFoundException e) {
-            throw e;
         }
 
         //删除displayslide、display、slide和widget的关联
@@ -351,17 +350,15 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         ProjectDetail project = null;
 
-        String originInfo = project.baseInfoToString();
-
         try {
             project = getProjectDetail(id, user, true);
-        } catch (ServerException e) {
+        } catch (NotFoundException e) {
             throw e;
         } catch (UnAuthorizedExecption e) {
             throw new UnAuthorizedExecption("you have not permission to update this project");
-        } catch (NotFoundException e) {
-            throw e;
         }
+
+        String originInfo = project.baseInfoToString();
 
         project.setName(projectUpdate.getName());
         project.setDescription(projectUpdate.getDescription());
@@ -513,7 +510,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      * @throws NotFoundException
      */
     @Override
-    public ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public ProjectDetail getProjectDetail(Long id, User user, boolean modify) throws NotFoundException, UnAuthorizedExecption {
         ProjectDetail projectDetail = projectMapper.getProjectDetail(id);
         if (null == projectDetail) {
             log.info("project (:{}) is not found", id);
@@ -563,7 +560,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      */
     @Override
     @Transactional
-    public List<RoleProject> addRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+    public List<RoleProject> postRoles(Long id, List<Long> roleIds, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
         ProjectDetail projectDetail = getProjectDetail(id, user, true);
 
         List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
@@ -574,18 +571,15 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             relRoleProject.createBy(user.getId());
             list.add(relRoleProject);
         });
-        int insert = relRoleProjectMapper.insertBatch(list);
-        if (insert > 0) {
-            List<RoleProject> roleProjects = list.stream().map(r -> {
-                RoleProject roleProject = new RoleProject(projectDetail);
-                BeanUtils.copyProperties(r, roleProject);
-                return roleProject;
-            }).collect(Collectors.toList());
-            return roleProjects;
-        } else {
-            log.error("batch add relRoleProject  fail");
-            throw new ServerException("unspecified error");
-        }
+
+        relRoleProjectMapper.deleteByProjectId(id);
+        relRoleProjectMapper.insertBatch(list);
+        List<RoleProject> roleProjects = list.stream().map(r -> {
+            RoleProject roleProject = new RoleProject(projectDetail);
+            BeanUtils.copyProperties(r, roleProject);
+            return roleProject;
+        }).collect(Collectors.toList());
+        return roleProjects;
     }
 
     @Override
@@ -648,7 +642,6 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             }
 
             List<ProjectInfo> list = projectInfoList.stream().sorted(Comparator.comparing(ProjectInfo::getId)).collect(Collectors.toList());
-            projectInfoList = null;
 
             return list;
         }
@@ -662,7 +655,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
      * @param user
      * @return
      */
-    private ProjectPermission getProjectPermission(ProjectDetail projectDetail, User user) {
+    public ProjectPermission getProjectPermission(ProjectDetail projectDetail, User user) {
         if (isMaintainer(projectDetail, user)) {
             return ProjectPermission.adminPermission();
         } else {
@@ -675,5 +668,25 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
                 return new ProjectPermission((short) 0);
             }
         }
+    }
+
+
+    @Override
+    public boolean allowGetData(ProjectDetail projectDetail, User user) throws NotFoundException {
+        ProjectPermission projectPermission = getProjectPermission(projectDetail, user);
+
+        return projectPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSchedulePermission() > UserPermissionEnum.HIDDEN.getPermission()
+                || projectPermission.getSharePermission()
+                || projectPermission.getDownloadPermission();
+    }
+
+    @Override
+    public List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
+        getProjectDetail(id, user, false);
+        return relProjectAdminMapper.getByProject(id);
     }
 }

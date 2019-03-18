@@ -18,11 +18,15 @@
 
 package edp.davinci.service;
 
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.Project;
 import edp.davinci.model.User;
@@ -34,19 +38,19 @@ import java.util.Map;
 
 public interface ViewService extends CheckEntityService {
 
-    ResultMap getViews(Long projectId, User user, HttpServletRequest request);
+    List<ViewWithSourceBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createView(ViewCreate viewCreate, User user, HttpServletRequest request);
+    ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateView(ViewUpdate viewUpdate, User user, HttpServletRequest request);
+    boolean updateView(ViewUpdate viewUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteView(Long id, User user, HttpServletRequest request);
+    boolean deleteView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap executeSql(ViewExecuteSql executeSql, User user, HttpServletRequest request);
+    PaginateWithQueryColumns executeSql(ViewExecuteSql executeSql, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap getData(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request);
+    Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    Paginate<Map<String, Object>> getResultDataList(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
+    Paginate getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
     List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
 
