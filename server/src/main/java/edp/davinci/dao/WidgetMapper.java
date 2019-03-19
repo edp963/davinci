@@ -56,7 +56,9 @@ public interface WidgetMapper {
             "project_id = #{projectId,jdbcType=BIGINT},",
             "type = #{type,jdbcType=BIGINT},",
             "publish = #{publish,jdbcType=BIT},",
-            "config = #{config,jdbcType=LONGVARCHAR}",
+            "config = #{config,jdbcType=LONGVARCHAR},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(Widget widget);
@@ -128,9 +130,6 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where view_id = #{viewId}"})
     List<Widget> getWidgetsByWiew(@Param("viewId") Long viewId);
-
-    @Select({"SELECT * from widget WHERE IFNULL(config,'') != ''"})
-    List<Widget> queryUpgrade();
 
 
     int updateConfigBatch(@Param("list") List<Widget> list);

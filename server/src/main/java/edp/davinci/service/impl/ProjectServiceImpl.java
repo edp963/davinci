@@ -292,14 +292,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     @Transactional
     public boolean deleteProject(Long id, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
 
-        ProjectDetail project = null;
-        try {
-            project = getProjectDetail(id, user, true);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to delete this project");
-        }
+        ProjectDetail project = getProjectDetail(id, user, true);
 
         //删除displayslide、display、slide和widget的关联
         displayService.deleteSlideAndDisplayByProject(project.getId());
@@ -528,18 +521,18 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             //项目的创建人 和 当前项目对应组织的owner可以修改
             if (!isCreater && null == relProjectAdmin && (null == rel || rel.getRole() != UserOrgRoleEnum.OWNER.getRole())) {
                 log.info("user(:{}) have not permission to modify project (:{})", user.getId(), id);
-                throw new UnAuthorizedExecption("UnAuthorized");
+                throw new UnAuthorizedExecption();
             }
         } else {
             if (null == rel) {
                 log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
-                throw new UnAuthorizedExecption("UnAuthorized");
+                throw new UnAuthorizedExecption();
             }
 
             //project 所在org 对普通成员project不可见
             if (!isCreater && !projectDetail.getVisibility() && projectDetail.getOrganization().getMemberPermission() < (short) 1) {
                 log.info("user(:{}) have not permission to get project (:{})", user.getId(), id);
-                throw new UnAuthorizedExecption("UnAuthorized");
+                throw new UnAuthorizedExecption();
             }
         }
 

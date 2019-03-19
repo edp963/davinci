@@ -309,7 +309,7 @@ public class SqlParseUtils {
         while (iterator.hasNext()) {
             String exp = iterator.next().trim();
             try {
-                map.put(exp, getTeamVarExpression(exp, authParamMap, sqlTempDelimiter));
+                map.put(exp, getAuthVarExpression(exp, authParamMap, sqlTempDelimiter));
             } catch (Exception e) {
                 e.printStackTrace();
                 continue;
@@ -322,7 +322,7 @@ public class SqlParseUtils {
         }
     }
 
-    private static String getTeamVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
+    private static String getAuthVarExpression(String srcExpression, Map<String, List<String>> authParamMap, char sqlTempDelimiter) throws Exception {
 
         if (null == authParamMap) {
             return "1=1";

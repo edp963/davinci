@@ -138,14 +138,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
     @Override
     @Transactional
     public Source createSource(SourceCreate sourceCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(sourceCreate.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to create source");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(sourceCreate.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getSourcePermission() < UserPermissionEnum.WRITE.getPermission()) {
@@ -202,14 +195,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             throw new NotFoundException("this source is not found");
         }
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to update this source");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
@@ -261,14 +247,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             throw new NotFoundException("this source is not found");
         }
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to delete this source");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
@@ -329,14 +308,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             throw new ServerException("source not found");
         }
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permisson to upload csv file in this source");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
@@ -376,14 +348,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
     @Override
     @Transactional
     public Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(sourceId, user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to upload data in this source");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(sourceId, user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
@@ -459,15 +424,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             throw new NotFoundException("source is not found");
         }
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            log.info("user (:{}) have not permission to get source(:{}) tables", user.getId(), source.getId());
-            return null;
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
         List<String> tableList = null;
 
@@ -507,18 +464,9 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             throw new NotFoundException("source is not found");
         }
 
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
+
         List<TableInfo> tableInfoList = null;
-
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            log.info("user (:{}) have not permission to get source(:{}) table cloumns", user.getId(), source.getId());
-            return null;
-        }
-
         try {
             tableInfoList = sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword()).getTableColumns(tableName);
         } catch (SourceException e) {

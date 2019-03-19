@@ -79,7 +79,9 @@ public interface ViewMapper {
             "`sql` = #{sql,jdbcType=LONGVARCHAR},",
             "`model` = #{model,jdbcType=LONGVARCHAR},",
             "`variable` = #{model,jdbcType=LONGVARCHAR},",
-            "`config` = #{config,jdbcType=LONGVARCHAR}",
+            "`config` = #{config,jdbcType=LONGVARCHAR},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"
     })
     int update(View view);

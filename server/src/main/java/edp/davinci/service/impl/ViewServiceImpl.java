@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.*;
+import static edp.core.consts.Consts.conditionSeparator;
 
 @Slf4j
 @Service("viewService")
@@ -158,15 +158,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     @Override
     @Transactional
     public ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(viewCreate.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to create view");
-        }
-
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewCreate.getProjectId(), user, false);
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
         if (projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
@@ -243,14 +235,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             throw new NotFoundException("view is not found");
         }
 
-        ProjectDetail projectDetail = null;
-        try {
-            projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
-        } catch (NotFoundException e) {
-            throw e;
-        } catch (UnAuthorizedExecption e) {
-            throw new UnAuthorizedExecption("you have not permission to update this view");
-        }
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
         if (projectPermission.getViewPermission() < UserPermissionEnum.WRITE.getPermission()) {
@@ -297,7 +282,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             int update = viewMapper.update(viewWithSource);
             if (update > 0) {
-                optLogger.info("view ({}) is updated by user(:{}), origin: ({})", originStr, user.getId(), viewWithSource.toString());
+                optLogger.info("view ({}) is updated by user(:{}), origin: ({})", viewWithSource.toString(), user.getId(), originStr);
                 return true;
             } else {
                 throw new ServerException("update view fail");
@@ -502,43 +487,37 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
 
-    /**
-     * 构造查询语句
-     *
-     * @param sqlEntity
-     * @param executeParam
-     * @return
-     */
-    public void buildQuerySql(List<String> querySqlList, SqlEntity sqlEntity, ViewExecuteParam executeParam, Source source) {
-        if (null != sqlEntity && !StringUtils.isEmpty(sqlEntity.getSql())) {
-            if (null != executeParam) {
-                //构造参数， 原有的被传入的替换
-                if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
-                    executeParam.setGroups(null);
-                }
-
-                if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
-                    executeParam.setFilters(null);
-                }
-                STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                ST st = stg.getInstanceOf("querySql");
-                st.add("nativeQuery", executeParam.isNativeQuery());
-                st.add("groups", executeParam.getGroups());
-
-                if (executeParam.isNativeQuery()) {
-                    st.add("aggregators", executeParam.getAggregators());
-                } else {
-                    st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl()));
-                }
-
-                st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
-                st.add("filters", executeParam.getFilters());
-                st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
-                st.add("sql", querySqlList.get(querySqlList.size() - 1));
-
-                querySqlList.set(querySqlList.size() - 1, st.render());
+    public void buildQuerySql(List<String> querySqlList, Source source, ViewExecuteParam executeParam, Set<String> excludeColumns) {
+        if (null != executeParam) {
+            //构造参数， 原有的被传入的替换
+            if (null == executeParam.getGroups() || executeParam.getGroups().length < 1) {
+                executeParam.setGroups(null);
             }
+
+            if (null == executeParam.getFilters() || executeParam.getFilters().length < 1) {
+                executeParam.setFilters(null);
+            }
+            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+            ST st = stg.getInstanceOf("querySql");
+            st.add("nativeQuery", executeParam.isNativeQuery());
+            st.add("groups", executeParam.getGroups());
+
+            if (executeParam.isNativeQuery()) {
+                st.add("aggregators", executeParam.getAggregators(excludeColumns));
+            } else {
+                st.add("aggregators", executeParam.getAggregators(source.getJdbcUrl(), excludeColumns));
+            }
+
+            st.add("orders", executeParam.getOrders(source.getJdbcUrl()));
+            st.add("filters", executeParam.getFilters());
+            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+
+            for (int i = 0; i < querySqlList.size(); i++) {
+                st.add("sql", querySqlList.get(i));
+                querySqlList.set(i, st.render());
+            }
+
         }
     }
 
@@ -569,31 +548,30 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         try {
 
             if (!StringUtils.isEmpty(viewWithSource.getSql())) {
+                //解析变量
                 List<SqlVariable> variables = viewWithSource.getVariables();
+                //解析sql
                 SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
 
+                //获取当前用户对该view的行列权限配置
                 List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
 
+                //行权限
                 List<SqlVariable> rowVariables = getRowVariables(roleViewList);
-                Set<String> excludeColumn = getColumnAuth(roleViewList);
 
+                //列权限（只记录被限制访问的字段）
+                Set<String> excludeColumns = getColumnAuth(roleViewList);
+
+                //解析行权限
                 parseParams(projectDetail, sqlEntity, executeParam.getParams(), rowVariables, user);
 
-                cacheKey = getCacheKey(viewDataCacheKey, viewWithSource, executeParam, sqlEntity.getAuthParams(), sqlEntity.getQuaryParams());
-                try {
-                    Object object = redisUtils.get(cacheKey);
-                    if (null != object && executeParam.getCache()) {
-                        return (Paginate) object;
-                    }
-                } catch (Exception e) {
-                    log.warn("get data by cache: {}", e.getMessage());
-                }
-
+                //替换参数
                 String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                 Source source = viewWithSource.getSource();
 
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
+
 
                 List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
                 if (null != executeSqlList && executeSqlList.size() > 0) {
@@ -602,7 +580,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
                 List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
                 if (null != querySqlList && querySqlList.size() > 0) {
-                    buildQuerySql(querySqlList, sqlEntity, executeParam, source);
+                    buildQuerySql(querySqlList, source, executeParam, excludeColumns);
+
+                    cacheKey = MD5Util.getMD5(querySqlList.get(querySqlList.size() - 1), true, 32);
+
                     for (String sql : querySqlList) {
                         paginate = sqlUtils.syncQuery4Paginate(
                                 sql,
@@ -764,7 +745,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                     log.info("parse params for >>> {} ms", l4 - l2);
 
 
-                    cacheKey = getCacheKey(viewMetaCacheKey, new ViewWithSource(), executeParam, teamParams, queryParam);
+                    // TODO cahceKey
+//                    cacheKey = getCacheKey(viewMetaCacheKey, new ViewWithSource(), executeParam, teamParams, queryParam);
 
                     try {
                         Object object = redisUtils.get(cacheKey);
@@ -788,7 +770,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
-                        buildQuerySql(querySqlList, sqlEntity, executeParam, source);
+                        //TODO 构建查询语句
+                        buildQuerySql(querySqlList, source, executeParam, null);
                         //逐条查询的目的是为了执行用户sql中的变量定义
                         for (String sql : querySqlList) {
                             sqlUtils.syncQuery4List(sql);
@@ -949,38 +932,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
     }
 
 
-    /**
-     * 获取用户所能访问的当前view的team@var
-     *
-     * @param id
-     * @param user
-     * @param request
-     * @return
-     */
-    @Override
-    public ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        ViewWithProjectAndSource view = viewMapper.getViewWithProjectAndSourceById(id);
-        if (null == view) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message("view is not found");
-        }
-
-        List<TeamVar> list = null;
-        if (null != view && !StringUtils.isEmpty(view.getConfig())) {
-            JSONObject jsonObject = JSONObject.parseObject(view.getConfig());
-            if (null != jsonObject && jsonObject.containsKey(viewTeamVarKey)) {
-                String teamVarString = jsonObject.getString(viewTeamVarKey);
-                if (!StringUtils.isEmpty(teamVarString)) {
-                    list = JSONObject.parseArray(teamVarString, TeamVar.class);
-                    teamVarFilter(list, user, view.getProject().getId());
-                }
-            }
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(list);
-    }
-
     private Map<String, List<String>> parseAuthParams(Map<String, List<String>> paramMap,
                                                       ViewWithProjectAndSource view,
                                                       User user,
@@ -1105,58 +1056,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
             }
         }
         return map;
-    }
-
-    private String getCacheKey(String prefix,
-                               ViewWithSource viewWithSource,
-                               ViewExecuteParam executeParam,
-                               Map<String, List<String>> authParams,
-                               Map<String, Object> queryParams) {
-
-        StringBuilder sqlKey = new StringBuilder(prefix)
-                .append(viewWithSource.getSource().getId())
-                .append("-")
-                .append(viewWithSource.getId());
-
-        STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-        ST st = stg.getInstanceOf("querySql");
-        st.add("groups", executeParam.getGroups());
-        st.add("aggregators", executeParam.getAggregators(viewWithSource.getSource().getJdbcUrl()));
-        st.add("orders", executeParam.getOrders());
-        st.add("filters", executeParam.getFilters());
-        st.add("keywordPrefix", sqlUtils.getKeywordPrefix(viewWithSource.getSource().getJdbcUrl()));
-        st.add("keywordSuffix", sqlUtils.getKeywordSuffix(viewWithSource.getSource().getJdbcUrl()));
-        st.add("sql", sqlKey.toString());
-
-        StringBuilder keyBuilder = new StringBuilder(st.render()).append(minus);
-        keyBuilder.append(executeParam.getPageNo()).append(executeParam.getPageSize()).append(executeParam.getLimit());
-
-        if (null != queryParams && queryParams.size() > 0) {
-            for (String key : authParams.keySet()) {
-                keyBuilder.append(key).append(colon).append(authParams.get(key)).append(conditionSeparator);
-            }
-        }
-        if (null != authParams && authParams.size() > 0) {
-            for (String key : authParams.keySet()) {
-                List<String> list = authParams.get(key);
-                if (null != list && list.size() > 0) {
-                    keyBuilder.append(key).append(colon).append(squareBracketStart);
-                    for (String str : list) {
-                        keyBuilder.append(str).append(conditionSeparator);
-                    }
-                    keyBuilder.append(key).append(colon).append(squareBracketEnd);
-                }
-            }
-        }
-
-        String src = keyBuilder.toString()
-                .replaceAll(newLineChar, "")
-                .replaceAll(space, "")
-                .replace(mysqlKeyDelimiter, "")
-                .replace(apostrophe, "")
-                .replace(doubleQuotes, "");
-
-        return MD5Util.getMD5(src, true, 32);
     }
 
 }

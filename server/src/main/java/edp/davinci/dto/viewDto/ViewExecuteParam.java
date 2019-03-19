@@ -25,8 +25,10 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Data
 public class ViewExecuteParam {
@@ -95,13 +97,24 @@ public class ViewExecuteParam {
         return list;
     }
 
-    public List<String> getAggregators(String jdbcUrl) {
+    public List<Aggregator> getAggregators(Set<String> excludeColumns) {
+        if (null != excludeColumns && excludeColumns.size() > 0) {
+            List<Aggregator> list = aggregators.stream().filter(agg -> !excludeColumns.contains(agg.getColumn())).collect(Collectors.toList());
+            return list;
+        }
+        return this.aggregators;
+    }
+
+    public List<String> getAggregators(String jdbcUrl, Set<String> excludeColumns) {
         List<String> list = null;
         if (null != this.aggregators && this.aggregators.size() > 0) {
             Iterator<Aggregator> iterator = this.aggregators.iterator();
             list = new ArrayList<>();
             while (iterator.hasNext()) {
                 Aggregator next = iterator.next();
+                if (null != excludeColumns && excludeColumns.size() > 0 && excludeColumns.contains(next.getColumn())) {
+                    continue;
+                }
                 StringBuilder sb = new StringBuilder();
                 if ("COUNTDISTINCT".equals(next.getFunc().trim().toUpperCase())) {
                     sb.append("COUNT(").append("DISTINCT").append(" ");

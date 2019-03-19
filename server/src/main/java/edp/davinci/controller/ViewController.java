@@ -57,11 +57,6 @@ public class ViewController extends BaseController {
     @Autowired
     private ViewService viewService;
 
-
-    @Autowired(required = false)
-    private TeamVarService teamVarService;
-
-
     /**
      * 获取view
      *

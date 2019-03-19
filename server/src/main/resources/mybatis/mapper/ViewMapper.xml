@@ -42,7 +42,9 @@
             <if test="config != null">
                 config,
             </if>
-            source_id
+            source_id,
+            create_by,
+            create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -62,7 +64,9 @@
             <if test="config != null">
                 #{config,jdbcType=LONGVARCHAR},
             </if>
-            #{sourceId,jdbcType=BIGINT}
+            #{sourceId,jdbcType=BIGINT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 

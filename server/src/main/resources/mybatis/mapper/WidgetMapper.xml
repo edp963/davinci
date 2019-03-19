@@ -33,7 +33,9 @@
             project_id,
             `type`,
             publish,
-            config
+            config,
+            create_by,
+            create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{name,jdbcType=VARCHAR},
@@ -44,7 +46,9 @@
             #{projectId,jdbcType=BIGINT},
             #{type,jdbcType=BIGINT},
             #{publish,jdbcType=BIT},
-            #{config,jdbcType=LONGVARCHAR}
+            #{config,jdbcType=LONGVARCHAR},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
 

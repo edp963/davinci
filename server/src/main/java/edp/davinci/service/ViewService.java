@@ -60,7 +60,5 @@ public interface ViewService extends CheckEntityService {
 
     List<Map<String, Object>> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
 
-    ResultMap getViewConfigTeamVar(Long id, User user, HttpServletRequest request);
-
     void updateViewTeamVar(View view, String config, Project project, User user);
 }
