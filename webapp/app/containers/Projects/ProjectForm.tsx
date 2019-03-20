@@ -20,14 +20,8 @@
 
 import * as React from 'react'
 import * as classnames from 'classnames'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Tag = require('antd/lib/tag')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
+import { Form, Row, Col, Input, Tag, Button, Select } from 'antd'
+const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
 const styles = require('./Project.less')
@@ -181,9 +175,8 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     hidden: this.props.type === 'transfer',
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}
@@ -200,7 +193,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                         公开
                       </Option>
                       <Option key="hidden" value="false">
-                        私密
+                        授权
                       </Option>
                     </Select>
                   )}

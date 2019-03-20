@@ -1,13 +1,15 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
 import { fromJS } from 'immutable'
-import { uuid } from 'utils/util'
-import { FilterTypes, FilterTypesViewSetting, FilterTypesOperatorSetting } from './filterTypes'
+import {
+  getDefaultFilterItem, traverseFilters,
+  OnGetFilterControlOptions, IMapFilterControlOptions, IFilterItem } from './'
+import { FilterTypes} from './filterTypes'
+
 import FilterList from './FilterList'
 import FilterForm from './FilterForm'
 import FilterValuePreview from './FilterValuePreview'
+import DatePickerFormats from './datePickerFormats'
 
-const utilStyles = require('../../assets/less/util.less')
 const styles = require('./filter.less')
 
 interface IFilterConfigProps {
@@ -17,24 +19,14 @@ interface IFilterConfigProps {
   filters: any[]
   saving: boolean
   onOk: (filters: any[]) => void
-  onGetPreviewData: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
-  previewData: object
+  onGetOptions: OnGetFilterControlOptions
+  mapOptions: IMapFilterControlOptions
 }
 
 interface IFilterConfigStates {
-  localFilters: any[]
-  selectedFilter: any,
-  showPreview: boolean,
-  previewFilter: {
-    key: string
-    viewId: string
-    fromModel: string
-  }
+  localFilters: IFilterItem[]
+  selectedFilter: IFilterItem,
+  previewFilter: IFilterItem
 }
 
 export class FilterConfig extends React.Component<IFilterConfigProps, IFilterConfigStates> {
@@ -46,13 +38,8 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     super(props)
     this.state = {
       localFilters: [],
-      selectedFilter: {},
-      showPreview: false,
-      previewFilter: {
-        key: '',
-        viewId: '',
-        fromModel: ''
-      }
+      selectedFilter: null,
+      previewFilter: null
     }
     this.refHandlers = {
       filterForm: (ref) => this.filterForm = ref
@@ -60,103 +47,140 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
   }
 
   public componentWillMount () {
-    this.initState()
+    this.initState(this.props.filters)
   }
 
   public componentWillReceiveProps (nextProps: IFilterConfigProps) {
     const { filters, saving } = nextProps
     if (filters !== this.props.filters) {
-      this.initState()
+      this.initState(filters)
     }
     if (saving !== this.props.saving) {
       this.ok()
     }
   }
 
-  private initState = () => {
-    const { filters } = this.props
+  private initState = (filters: any[]) => {
     const localFilters = fromJS(filters).toJS()
-    const selectedFilter = localFilters.length > 0 ? localFilters[0] : {}
+    const selectedFilter = localFilters[0]
     this.setState({
       localFilters,
-      selectedFilter,
-      showPreview: FilterTypesViewSetting[selectedFilter.type]
+      selectedFilter
     }, () => {
-      if (!selectedFilter.key) { return }
-      this.filterForm.setFieldsValue(selectedFilter)
+      if (selectedFilter) {
+        this.filterForm.setFieldsValue(selectedFilter)
+      }
     })
   }
 
-  private selectFilter = (key) => {
+  private selectFilter = (key: string) => {
     const { localFilters } = this.state
-    const selectedFilter = localFilters.find((f) => f.key === key)
-    this.setState({
-      selectedFilter,
-      previewFilter: {
-        key: '',
-        viewId: '',
-        fromModel: ''
-      }
-    }, () => {
-      this.filterForm.setFieldsValue(selectedFilter)
+    traverseFilters(localFilters, key, (selectedFilter) => {
+      this.setState({
+        selectedFilter
+      }, () => {
+        this.filterForm.setFieldsValue(selectedFilter)
+      })
     })
   }
 
   private addFilter = () => {
     const { localFilters } = this.state
-    const newFilter = {
-      key: uuid(8, 16),
-      name: '新建全局筛选',
-      type: FilterTypes.InputText,
-      operator: FilterTypesOperatorSetting[FilterTypes.InputText][0],
-      relatedViews: {}
-    }
+    const newFilter: IFilterItem = getDefaultFilterItem()
     this.setState({
       localFilters: [...localFilters, newFilter],
-      selectedFilter: newFilter,
-      showPreview: false
+      selectedFilter: newFilter
     }, () => {
       this.filterForm.setFieldsValue(newFilter)
     })
   }
 
-  private deleteFilter = (key) => {
+  private deleteFilter = (key: string) => {
     const { localFilters, selectedFilter } = this.state
-    const newLocalFilters = localFilters.filter((f) => f.key !== key)
-    const newSelectedFilter = (selectedFilter.key !== key) ?
-      selectedFilter : (newLocalFilters.length > 0 ? newLocalFilters[0] : {})
-    this.setState({
-      localFilters: newLocalFilters,
-      selectedFilter: newSelectedFilter,
-      showPreview: FilterTypesViewSetting[newSelectedFilter.type]
-    }, () => {
-      if (!newSelectedFilter.key) { return }
-      this.filterForm.setFieldsValue(newSelectedFilter)
+    // const newLocalFilters = localFilters.filter((f) => f.key !== key)
+
+    traverseFilters(localFilters, key, (filterItem, idx, filterArr, parent) => {
+      filterArr.splice(idx, 1)
+      const newSelectedFilter = selectedFilter && (selectedFilter.key !== key)
+        ? selectedFilter
+        : parent
+          ? filterArr.length
+            ? filterArr[idx - 1]
+            : parent
+          : localFilters[idx - 1]
+
+      this.setState({
+        localFilters,
+        selectedFilter: newSelectedFilter
+      }, () => {
+        if (newSelectedFilter) {
+          this.filterForm.setFieldsValue(newSelectedFilter)
+        }
+      })
     })
   }
 
-  private filterTypeChange = (filterType: FilterTypes) => {
+  private filtersChange = (filters: IFilterItem[]) => {
     this.setState({
-      showPreview: FilterTypesViewSetting[filterType]
+      localFilters: filters
+    })
+  }
+
+  private filterTypeChange = (key, filterType: FilterTypes) => {
+    const { localFilters } = this.state
+    traverseFilters(localFilters, key, (filterItem) => {
+      filterItem.type = filterType
+      if ([FilterTypes.Date, FilterTypes.DateRange].includes(filterType)) {
+        filterItem.dateFormat = DatePickerFormats.Date
+      }
+      this.setState({
+        localFilters
+      })
     })
   }
 
   private filterItemNameChange = (key, name) => {
     const { localFilters } = this.state
-    const filterItem = localFilters.find((f) => f.key === key)
-    filterItem.name = name
-    this.setState({
-      localFilters
+    traverseFilters(localFilters, key, (filterItem) => {
+      filterItem.name = name
+      this.setState({
+        localFilters
+      })
+    })
+  }
+
+  private filterMultipleSelectChange = (key, multiple) => {
+    const { localFilters } = this.state
+    traverseFilters(localFilters, key, (filterItem) => {
+      filterItem.multiple = multiple
+      this.setState({
+        localFilters
+      })
+    })
+  }
+
+  private filterDateFormatChange = (key, dateFormat) => {
+    const { localFilters } = this.state
+    traverseFilters(localFilters, key, (filterItem) => {
+      filterItem.dateFormat = dateFormat
+      this.setState({
+        localFilters
+      })
     })
   }
 
   private filterItemSave = (filterItem) => {
     const { localFilters } = this.state
-    const filterIdx = localFilters.findIndex((f) => f.key === filterItem.key)
-    if (filterIdx < 0) { return }
-    localFilters.splice(filterIdx, 1, filterItem)
-    this.setState({
-      localFilters
+    traverseFilters(localFilters, filterItem.key, (originItem, idx, originFilterArr) => {
+      originFilterArr.splice(idx, 1, {
+        ...filterItem,
+        ...originItem.children && {
+          children: originItem.children
+        }
+      })
+      this.setState({
+        localFilters
+      })
     })
   }
 
@@ -173,66 +197,57 @@ export class FilterConfig extends React.Component<IFilterConfigProps, IFilterCon
     }
   }
 
-  private getPreviewData = (filterKey, viewId, fieldName, parents) => {
-    const { onGetPreviewData } = this.props
+  private previewControl = (filter: IFilterItem) => {
     this.setState({
-      previewFilter: {
-        key: filterKey,
-        viewId,
-        fromModel: fieldName
-      }
-    }, () => {
-      onGetPreviewData(filterKey, viewId, fieldName, parents)
+      previewFilter: filter
     })
   }
 
   public render () {
-    const { views, widgets, items, previewData } = this.props
-    const { localFilters, selectedFilter, showPreview } = this.state
-    const { previewFilter: { key, fromModel } } = this.state
-    const currentPreviewData = previewData[key] ? (previewData[key][fromModel] || []) : []
-
-    const previewClass = classnames({
-      [styles.right]: true,
-      [utilStyles.hide]: !showPreview
-    })
+    const { views, widgets, items, mapOptions, onGetOptions } = this.props
+    const { localFilters, selectedFilter, previewFilter } = this.state
 
     return (
       <div className={styles.filterConfig}>
-        <div className={styles.content}>
-          <div className={styles.left}>
-            <FilterList
-              list={localFilters}
-              onSelectFilter={this.selectFilter}
-              onAddFilter={this.addFilter}
-              onDeleteFilter={this.deleteFilter}
-              selectedFilterKey={selectedFilter.key}
-            />
-          </div>
-          <div className={styles.center}>
+        <div className={styles.left}>
+          <FilterList
+            list={localFilters}
+            selectedFilter={selectedFilter}
+            onSelectFilter={this.selectFilter}
+            onAddFilter={this.addFilter}
+            onDeleteFilter={this.deleteFilter}
+            onFiltersChange={this.filtersChange}
+          />
+        </div>
+        <div className={styles.center}>
+          {
+            selectedFilter && (
+              <FilterForm
+                views={views}
+                widgets={widgets}
+                items={items}
+                filterItem={selectedFilter}
+                onFilterTypeChange={this.filterTypeChange}
+                onFilterItemNameChange={this.filterItemNameChange}
+                onFilterMultipleSelectChange={this.filterMultipleSelectChange}
+                onFilterDateFormatChange={this.filterDateFormatChange}
+                onFilterItemSave={this.filterItemSave}
+                onPreviewControl={this.previewControl}
+                wrappedComponentRef={this.refHandlers.filterForm}
+              />
+            )
+          }
+          {/* <div className={styles.bottom}>
             {
-              !selectedFilter.key ? null : (
-                <FilterForm
-                  views={views}
-                  widgets={widgets}
-                  items={items}
-                  filterItem={selectedFilter}
-                  onFilterTypeChange={this.filterTypeChange}
-                  onFilterItemNameChange={this.filterItemNameChange}
-                  onFilterItemSave={this.filterItemSave}
-                  onGetPreviewData={this.getPreviewData}
-                  wrappedComponentRef={this.refHandlers.filterForm}
+              !previewFilter ? null : (
+                <FilterValuePreview
+                  filter={previewFilter}
+                  currentOptions={mapOptions[previewFilter.key] || []}
+                  onGetOptions={onGetOptions}
                 />
               )
             }
-          </div>
-          <div className={previewClass}>
-            {
-              !selectedFilter.key ? null : (
-                <FilterValuePreview currentPreviewData={currentPreviewData} />
-              )
-            }
-          </div>
+          </div> */}
         </div>
       </div>
     )

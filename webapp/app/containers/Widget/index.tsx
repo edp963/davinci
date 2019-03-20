@@ -38,17 +38,8 @@ import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 import { ButtonProps } from 'antd/lib/button/button'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Modal = require('antd/lib/modal')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import { SortOrder } from 'antd/lib/table'
+import { Row, Col, Table, Button, Tooltip, Icon, Modal, Popconfirm, Breadcrumb } from 'antd'
 
 import { loadWidgets, deleteWidget, addWidget } from './actions'
 import { loadBizlogics } from '../Bizlogic/actions'
@@ -56,7 +47,6 @@ import { makeSelectWidgets, makeSelectLoading } from './selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { checkNameUniqueAction } from '../App/actions'
-import { iconMapping } from './components/chartUtil'
 import {makeSelectCurrentProject} from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
@@ -75,7 +65,7 @@ interface IWidgetProps {
   currentProject: IProject
   onLoadWidgets: (projectId: number) => void
   onLoadBizlogics: (projectId: number, resolve?: any) => void
-  onDeleteWidget: (id: any) => void
+  onDeleteWidget: (id: any) => () => void
   onAddWidget: (widget: object, resolve: any) => Promise<any>
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
@@ -85,7 +75,6 @@ interface IWidgetStates {
   currentWidget: object
   workbenchVisible: boolean
   copyWidgetVisible: boolean
-  copyQueryInfo: object
   filteredWidgets: any[]
   filteredWidgetsName: RegExp
   filteredWidgetsType: object
@@ -96,7 +85,10 @@ interface IWidgetStates {
   tableWidget: any[]
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
 }
 
 export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
@@ -107,7 +99,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
       currentWidget: null,
       workbenchVisible: false,
       copyWidgetVisible: false,
-      copyQueryInfo: null,
       filteredWidgets: null,
       filteredWidgetsName: null,
       filteredWidgetsType: undefined,
@@ -174,28 +165,18 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
       currentWidget: widget,
       copyWidgetVisible: true
     }, () => {
-      const copyItem = (this.props.widgets as any[]).find((i) => i.id === widget.id)
-      this.setState({
-        copyQueryInfo: {
-          widgetlib_id: copyItem.widgetlib_id,
-          flatTable_id: copyItem.flatTable_id,
-          adhoc_sql: copyItem.adhoc_sql,
-          config: copyItem.config,
-          chart_params: copyItem.chart_params,
-          query_params: copyItem.query_params,
-          publish: copyItem.publish
-        }
-      })
-
-      const { name, description, type, viewId, config, publish } = copyItem
-      this.copyWidgetForm.setFieldsValue({
-        name: `${name}_copy`,
-        description: description || '',
-        type,
-        viewId,
-        config,
-        publish
-      })
+      setTimeout(() => {
+        const copyItem = (this.props.widgets as any[]).find((i) => i.id === widget.id)
+        const { name, description, type, viewId, config, publish } = copyItem
+        this.copyWidgetForm.setFieldsValue({
+          name: `${name}_copy`,
+          description: description || '',
+          type,
+          viewId,
+          config,
+          publish
+        })
+      }, 0)
     })
   }
 
@@ -212,7 +193,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
   private onModalOk = () => new Promise((resolve, reject) => {
     this.copyWidgetForm.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const { workbenchType, copyQueryInfo } = this.state
         const { params } = this.props
 
         const widgetValue = {
@@ -326,7 +306,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
         nameFilterDropdownVisible: visible
       }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',
@@ -334,7 +314,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
     }, {
       title: '操作',
       key: 'action',
-      width: 135,
+      width: 150,
       className: `${initializePermission(currentProject, 'widgetPermission') ? utilStyles.textAlignCenter : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
@@ -368,7 +348,7 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
         <Helmet title="Widget" />
         <Container.Title>
           <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+            <Col xl={18} lg={16} md={12} sm={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">Widget</Link>
@@ -386,7 +366,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
               <Box.Tools>
                 <Tooltip placement="bottom" title="新增">
                   <AdminButton
-                    size="large"
                     type="primary"
                     icon="plus"
                     onClick={this.toWorkbench('add')}
@@ -439,7 +418,6 @@ export class WidgetList extends React.Component<IWidgetProps, IWidgetStates> {
           <CopyWidgetForm
             type={workbenchType}
             projectId={params.pid}
-            widget={currentWidget}
             onCheckUniqueName={onCheckUniqueName}
             ref={(f) => { this.copyWidgetForm = f }}
           />

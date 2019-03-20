@@ -22,7 +22,7 @@
       "name": "backgroundColor",
       "title": "背景颜色",
       "component": "colorPicker",
-      "default": [255,255,255]
+      "default": [255,255,255,50]
     }]
   }, {
     "name": "scale",

@@ -1,21 +1,17 @@
-import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Menu = require('antd/lib/menu/')
+import React from 'react'
+import { Icon, Menu } from 'antd'
 import * as classnames from 'classnames'
-import * as echarts from 'echarts/lib/echarts'
 import DashboardItemControlForm from '../DashboardItemControlForm'
-import {iconMapping, echartsOptionsGenerator} from '../../../Widget/components/chartUtil'
-import Chart from '../Chart'
 import { IModel } from '../../../Widget/components/Workbench/index'
-import Widget from '../../../Widget/components/Widget/WidgetInViz'
-import {ECHARTS_RENDERER} from '../../../../globalConstants'
+import Widget, { IWidgetWrapperProps } from '../../../Widget/components/Widget'
+import { getStyleConfig } from '../../../Widget/components/util'
+import ChartTypes from '../../../Widget/config/chart/ChartTypes'
 const styles = require('./fullScreenPanel.less')
 
 interface IFullScreenPanelProps {
   visible: boolean
   isVisible: (currentChartData?: any) => any
   currentDataInFullScreen: {
-    loading?: any
     renderType?: string
     widget?: any
     model?: IModel
@@ -62,9 +58,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     })
   }
   private triggerWidget = (e) => {
-    const {onCurrentWidgetInFullScreen} = this.props
-    const itemId = e.item.props.itemId
-    onCurrentWidgetInFullScreen(itemId)
+    this.props.onCurrentWidgetInFullScreen(Number(e.key))
   }
 
   private isShowSideMenu = () => {
@@ -72,14 +66,14 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       isShowMenu: !this.state.isShowMenu
     })
   }
-  private onControlSearch = (queryParams) => {
+  private onControlSearch = (queryConditions) => {
     const {currentDataInFullScreen} = this.props
     const {
       itemId,
       widget,
       onGetChartData
     } = currentDataInFullScreen
-    onGetChartData('rerender', itemId, widget.id, queryParams)
+    onGetChartData('rerender', itemId, widget.id, queryConditions)
   }
   public render () {
     const {isShowMenu, controlPanelVisible} = this.state
@@ -89,16 +83,11 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
       [styles.displayNone]: !visible,
       [styles.displayBlock]: visible
     })
-    let charts: any
+    let charts: any = null
     let menus: any
     let title: string = ''
-    let renderType: string = ''
     let itemInfo: any = null
-    const chartClass = {
-      chart: styles.chartBlock,
-      table: styles.tableBlock,
-      container: styles.block
-    }
+
     const sideMenuClass = classnames({
       [styles.sideMenu]: true,
       [styles.hide]: !isShowMenu,
@@ -116,12 +105,12 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
           <Menu theme="light" onClick={this.triggerWidget} selectedKeys={[itemId]}>
             {
               currentItems && currentItems.map(
-                (widget, i) => {
-                  const w = widgets.find((w) => w.id === widget.widgetId)
+                (item, i) => {
+                  const w = widgets.find((w) => w.id === item.widgetId)
                // const iconName = widgetlibs.find((wl) => wl.id === w['widgetlib_id'])['name']
-                  return <Menu.Item key={widget.id} itemId={widget.id} >
+                  return <Menu.Item key={item.id}>
                     <i style={{marginRight: '8px'}}/>
-                    {w['name']}
+                    {w.name}
                   </Menu.Item>
                 }
               )
@@ -133,33 +122,27 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
     if (Object.keys(currentDataInFullScreen).length > 0) {
       const c = currentDataInFullScreen
       title = c.widget.name
-      renderType = c.renderType
       itemInfo = currentItemsInfo[c.itemId]
       const widgetProps = JSON.parse(currentDataInFullScreen.widget.config)
-      const data = itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []
-      charts = renderType !== 'echarts'
-        ?
-        (
-          <Widget
-            {...widgetProps}
-            renderType="rerender"
-            data={data}
-            model={currentDataInFullScreen.model}
-          />
-        )
-        :
-        (
-          <div style={{width: '100%', height: '100%'}} id="fsChartsWrapper"/>
-        )
+      charts = (
+        <Widget
+          {...widgetProps}
+          data={itemInfo && itemInfo.datasource ? itemInfo.datasource.resultList : []}
+          model={currentDataInFullScreen.model}
+          renderType={itemInfo.loading ? 'loading' : 'rerender'}
+          loading={itemInfo.loading}
+        />
+      )
     }
-    let isHasControl: any
-    if (currentDataInFullScreen && currentDataInFullScreen.widget && currentDataInFullScreen.widget.query_params) {
-      const queryParams = currentDataInFullScreen.widget.query_params
-      isHasControl = !!JSON.parse(queryParams).length
+    let controlTypes = []
+    let isHasControl = false
+    if (currentDataInFullScreen && currentDataInFullScreen.widget) {
+      const controls = currentDataInFullScreen.widget.controls
+        ? JSON.parse(currentDataInFullScreen.widget.controls)
+        : []
+      isHasControl = !!controls.length
+      controlTypes = controls.filter((c) => c.type)
     }
-    const controls = currentDataInFullScreen && currentDataInFullScreen.widget && currentDataInFullScreen.widget.query_params
-      ? JSON.parse(currentDataInFullScreen.widget.query_params).filter((c) => c.type)
-      : []
     const modalPanel = classnames({
       [styles.modalPanel]: true,
       [styles.displayNone]: !controlPanelVisible
@@ -197,7 +180,7 @@ class FullScreenPanel extends React.PureComponent<IFullScreenPanelProps, IFullSc
             <div className={controlPanel}>
               <div className={styles.formPanel}>
                 <DashboardItemControlForm
-                  controls={controls}
+                  controls={controlTypes}
                   onSearch={this.onControlSearch}
                   onHide={this.toggleControlPanel}
                 />

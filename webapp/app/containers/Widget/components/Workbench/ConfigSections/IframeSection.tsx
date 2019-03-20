@@ -1,7 +1,6 @@
-import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
+import React from 'react'
+import debounce from 'lodash/debounce'
+import { Row, Col, Input } from 'antd'
 const styles = require('../Workbench.less')
 
 export interface IframeConfig {
@@ -16,8 +15,15 @@ interface IframeSectionProps {
 
 export class IframeSection extends React.PureComponent<IframeSectionProps, {}> {
 
+  private debounceInputChange = null
+
+  constructor (props: IframeSectionProps) {
+    super(props)
+    this.debounceInputChange = debounce(props.onChange, 1500)
+  }
+
   private inputChange = (prop) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(prop, e.target.value)
+    this.debounceInputChange(prop, e.target.value)
   }
 
   public render () {
@@ -30,7 +36,7 @@ export class IframeSection extends React.PureComponent<IframeSectionProps, {}> {
         <div className={styles.blockBody}>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={24}>
-              <Input onChange={this.inputChange('src')} placeholder="网页地址" value={src}/>
+              <Input onChange={this.inputChange('src')} placeholder="网页地址" defaultValue={src}/>
             </Col>
           </Row>
         </div>

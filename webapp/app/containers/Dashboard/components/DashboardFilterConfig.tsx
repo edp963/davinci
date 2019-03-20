@@ -19,9 +19,9 @@
  */
 
 import * as React from 'react'
-const Button = require('antd/lib/button')
-const Modal = require('antd/lib/modal')
+import { Button, Modal } from 'antd'
 
+import { IMapFilterControlOptions, OnGetFilterControlOptions } from 'components/Filters'
 import FilterConfig from 'components/Filters/FilterConfig'
 
 const styles = require('../Dashboard.less')
@@ -33,19 +33,10 @@ interface IDashboardFilterConfigProps {
   widgets: any[]
   visible: boolean
   loading: boolean
-  filterOptions: {
-    [filterKey: string]: {
-      [key: string]: Array<number | string>
-    }
-  }
+  mapOptions: IMapFilterControlOptions
   onCancel: () => void
   onSave: (filterItems: any[]) => void
-  onGetOptions: (
-    filterKey: string,
-    fromViewId: string,
-    fromModel: string,
-    parents: Array<{ column: string, value: string }>
-  ) => void
+  onGetOptions: OnGetFilterControlOptions
 }
 
 interface IDashboardFilterConfigStates {
@@ -95,7 +86,7 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
   }
 
   public render () {
-    const { visible, loading, currentItems, widgets, views, onSave, onGetOptions, filterOptions, onCancel } = this.props
+    const { visible, loading, currentItems, widgets, views, onSave, onGetOptions, mapOptions, onCancel } = this.props
     const { filters, savingFilterConfig } = this.state
 
     if (!visible) { return null }
@@ -123,25 +114,23 @@ export class DashboardFilterConfig extends React.Component<IDashboardFilterConfi
 
     return (
       <Modal
-        wrapClassName="ant-modal-large"
+        wrapClassName="ant-modal-large ant-modal-center"
         title="全局筛选配置"
         maskClosable={false}
         visible={visible}
         footer={modalButtons}
         onCancel={onCancel}
       >
-        <div className={styles.modalFilterConfig}>
-          <FilterConfig
-            views={views}
-            widgets={widgets}
-            items={currentItems}
-            filters={filters}
-            saving={savingFilterConfig}
-            onOk={onSave}
-            onGetPreviewData={onGetOptions}
-            previewData={filterOptions}
-          />
-        </div>
+        <FilterConfig
+          views={views}
+          widgets={widgets}
+          items={currentItems}
+          filters={filters}
+          saving={savingFilterConfig}
+          onOk={onSave}
+          onGetOptions={onGetOptions}
+          mapOptions={mapOptions}
+        />
       </Modal>
     )
   }

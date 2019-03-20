@@ -1,5 +1,4 @@
-import { takeEvery } from 'redux-saga'
-import { call, put, all } from 'redux-saga/effects'
+import { call, put, all, takeEvery } from 'redux-saga/effects'
 
 import {ADD_SCHEDULES, DELETE_SCHEDULES, LOAD_SCHEDULES, CHANGE_SCHEDULE_STATUS, UPDATE_SCHEDULES, LOAD_VIZS} from './constants'
 import {
@@ -20,7 +19,7 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 import { PortalList } from '../Portal/components/PortalList'
-const message = require('antd/lib/message')
+import { message } from 'antd'
 
 export function* getSchedules ({payload}) {
   try {
@@ -115,13 +114,14 @@ export function* getVizsData ({ payload }) {
     const displayData = yield call(request, `${api.display}?projectId=${pid}`)
     const portalsData = yield call(request, `${api.portal}?projectId=${pid}`)
     const portalsList = portalsData.payload
-    const displayList = displayData.payload.map((display) => ({...display, ...{
+    const displayList = displayData.payload.map((display) => ({
+      ...display,
       contentType: 'display',
-      label: `${display.name}`,
+      title: `${display.name}`,
       key: display.name,
       value: `${display.id}(d)`,
       isLeaf: true
-    }}))
+    }))
     const list = yield all(portalsList.map((portals, index) => {
       return call(request, `${api.portal}/${portals.id}/dashboards`)
     }))
@@ -129,29 +129,25 @@ export function* getVizsData ({ payload }) {
       portal.children =  buildTree(list[index].payload)
       return {
         ...portal,
-        ...{
-          contentType: 'portal',
-          label: `${portal.name}`,
-          key: portal.name,
-          value: `${portal.id}(p)`,
-          isLeaf: true
-        }
+        contentType: 'portal',
+        title: `${portal.name}`,
+        key: portal.name,
+        value: `${portal.id}(p)`,
+        isLeaf: !portal.children.length
       }
     })
     const result = [{
       contentType: 'display',
-      label: `Display`,
+      title: `Display`,
       key: 'display',
       value: 'display',
-      isLeaf: true,
       children: displayList
     },
     {
       contentType: 'portal',
-      label: `Dashboard`,
+      title: `Dashboard`,
       key: 'portal',
       value: 'portal',
-      isLeaf: true,
       children: portals
     }]
     yield put(vizsLoaded(result))
@@ -213,12 +209,12 @@ export function* getVizsData ({ payload }) {
 }
 
 export default function* rootScheduleSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeEvery(LOAD_SCHEDULES, getSchedules as any),
     takeEvery(ADD_SCHEDULES, addSchedules as any),
     takeEvery(DELETE_SCHEDULES, deleteSchedule as any),
     takeEvery(CHANGE_SCHEDULE_STATUS, changeScheduleStatus as any),
     takeEvery(UPDATE_SCHEDULES, updateSchedule as any),
     takeEvery(LOAD_VIZS, getVizsData as any)
-  ]
+  ])
 }

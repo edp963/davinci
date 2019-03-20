@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_TEAMS,
   EDIT_TEAM,
@@ -64,7 +63,7 @@ import {
   teamMemberRoleChanged
 } from './actions'
 
-const message =  require('antd/lib/message')
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
@@ -260,7 +259,7 @@ export function* changeTeamMemberRole ({payload}) {
 }
 
 export default function* rootTeamSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_TEAMS, getTeams),
     takeEvery(EDIT_TEAM, editTeam),
     takeEvery(DELETE_TEAM, deleteTeam),
@@ -274,5 +273,5 @@ export default function* rootTeamSaga (): IterableIterator<any> {
     takeLatest(DELETE_TEAM_MEMBER, deleteTeamMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_TEAM, changeTeamMemberRole as any),
     takeLatest(PULL_MEMBER_IN_TEAM, pullMemberInTeam as any)
-  ]
+  ])
 }

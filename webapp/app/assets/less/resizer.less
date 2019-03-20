@@ -1,0 +1,49 @@
+:global {
+  .Resizer {
+    z-index: 1;
+    box-sizing: border-box;
+    background-clip: padding-box;
+
+    &:hover {
+      transition: all 2s ease;
+    }
+
+    &.horizontal {
+      height: 11px;
+      margin: -5px 0;
+      cursor: row-resize;
+      width: 100%;
+
+      &:hover {
+        border-top: 5px solid rgba(0, 0, 0, 0.5);
+        border-bottom: 5px solid rgba(0, 0, 0, 0.5);
+      }
+    }
+
+    &.vertical {
+      width: 11px;
+      margin: 0 -5px;
+      cursor: col-resize;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+
+      &:hover {
+        border-color: transparent;
+      }
+    }
+  }
+
+  .Pane {
+    &.Pane1 {
+      display: flex;
+    }
+
+    &.Pane2 {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+  }
+}

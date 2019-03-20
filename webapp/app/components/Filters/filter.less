@@ -1,76 +1,63 @@
 @import "../../assets/less/variable";
 
 .filterConfig {
-  flex: 1;
+  height: 480px;
+  margin: -24px;
   display: flex;
-  flex-direction: column;
-
-  .title {
-    display: flex;
-    flex-direction: row;
-    border-bottom: 1px solid @border-color-base;
-    padding: 8px;
-
-    h2 {
-      flex: 1;
-      font-size: 12px;
-      padding-right: 8px;
-    }
-
-    ul {
-      display: flex;
-      flex-direction: row;
-
-      li {
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    i {
-      font-size: 12px;
-
-      &:hover {
-        cursor: pointer;
-      }
-    }
-  }
-
-  .content {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    margin-bottom: 16px;
-  }
+  flex-direction: row;
 
   .left {
-    width: 150px;
-    border: 1px solid @border-color-base;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    width: 200px;
+    border-right: 1px solid @border-color-split;
   }
 
   .center {
-    border: 1px solid @border-color-base;
-    border-left: none;
     flex: 1;
     display: flex;
     flex-direction: column;
   }
 
-  .right {
-    border: 1px solid @border-color-base;
-    border-left: none;
-    width: 200px;
-    display: flex;
-    flex-direction: column;
-  }
+  // .bottom {
+  //   min-height: 90px;
+  //   border-top: 1px solid @border-color-split;
+  //   display: flex;
+  //   flex-direction: column;
+  // }
 }
 
 .filterList {
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .title {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 1px solid @border-color-split;
+    padding: 8px;
+
+    h2 {
+      flex: 1;
+      padding-left: 8px;
+      font-size: 14px;
+      color: @light-text-color;
+    }
+
+    i {
+      margin-left: 8px;
+      color: @disabled-text-color;
+
+      &:hover {
+        color: @text-color;
+        cursor: pointer;
+      }
+    }
+  }
 
   .list {
     flex: 1;
@@ -82,7 +69,7 @@
       line-height: 24px;
       padding: 0 8px;
       box-sizing: border-box;
-      border-bottom: 1px solid @border-color-base;
+      border-bottom: 1px solid @border-color-split;
       cursor: pointer;
 
       label {
@@ -99,40 +86,130 @@
       }
     }
   }
+
+  .treeContainer {
+    flex: 1;
+    padding: 4px 8px;
+    overflow: auto;
+  }
+
+  .tree {
+    :global(li) {
+      padding: 2px 0;
+    }
+
+    :global(li span.ant-tree-switcher),
+    :global(li span.ant-tree-iconEle) {
+      width: 18px;
+      height: 18px;
+    }
+    :global(li .ant-tree-node-content-wrapper) {
+      padding: 0 4px 0 2px;
+    }
+    :global(li .ant-tree-node-content-wrapper:hover),
+    :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+      background-color: transparent;
+    }
+    :global(li .ant-tree-node-content-wrapper.ant-tree-node-selected) {
+      color: @primary-color;
+      font-weight: bold;
+    }
+  }
 }
 
 .filterForm {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 0 16px;
+  font-size: 12px;
 
-  .form {
-    padding: 16px;
+  .title {
+    flex-shrink: 0;
+    margin: 0 -16px;
+    padding: 0 8px;
+    display: flex;
+    flex-direction: row;
+
+    h2 {
+      flex: 1;
+      color: @light-text-color;
+      font-size: 14px;
+      line-height: 3em;
+    }
+
+    .checkAll {
+      margin-left: 96px;
+      font-weight: normal;
+    }
+
+    &.widgetConfigTitle {
+      border-bottom: 1px solid @border-color-split;
+    }
+  }
+
+  .controlConfig {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 8px;
+  }
+
+  .widgetConfig {
     flex: 1;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+  :global(.ant-form-item-label) {
+    line-height: 1em;
+  }
+  :global(.ant-form-item-label label) {
+    color: @disabled-text-color;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  :global(.ant-form-item-required:before) {
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+  :global(.ant-form-item-control) {
+    line-height: 32px;
   }
 
   .configItem {
+    flex: 1;
     display: flex;
-    align-items: center;
-    border: 1px solid @border-color-base;
 
     .itemList {
-      border-right: 1px solid @border-color-base;
+      flex: 1;
+      padding: 16px 0;
+      border-right: 1px solid @border-color-split;
+      overflow-y: auto;
 
       >div:nth-child(1+n) {
-        border-top: 1px solid @border-color-base;
+        border-top: 1px solid @border-color-split;
       }
     }
 
     .viewSet {
-      border-left: 1px solid @border-color-base;
-      margin-left: -1px;
+      flex: 1;
+      padding: 16px 0 16px 16px;
+      overflow-y: auto;
+
+      h3 {
+        font-weight: normal;
+        line-height: 32px;
+        .ellipsis;
+      }
     }
 
     .item {
-      margin-top: 8px;
-      margin-bottom: 8px;
+      padding: 0 16px;
+      .ellipsis;
     }
   }
 
@@ -145,6 +222,12 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+
+  .previewContent {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+  }
 
   ul {
     overflow-y: auto;
@@ -161,11 +244,15 @@
 
 .filterPanel {
   background-color: @white;
-  padding: 8px 8px 0;
-  margin-top: 16px;
+  padding: 0 8px !important;
+  margin-top: 16px !important;
   border-radius: 3px;
+}
 
-  .item {
-    margin-bottom: 8px;
-  }
+.filterControl {
+  margin: 8px 0 !important;
+}
+
+.filterControlComponent {
+  width: 100% !important;
 }

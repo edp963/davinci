@@ -1,9 +1,6 @@
-import * as React from 'react'
-const Form = require('antd/lib/form')
+import React from 'react'
+import { Form, Input, Radio, Button } from 'antd'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
 const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
@@ -80,7 +77,6 @@ export class ChangeRoleForm extends React.PureComponent<IChangeRoleProps, {}> {
     const modalButtons = [(
       <Button
         key="submit"
-        size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}

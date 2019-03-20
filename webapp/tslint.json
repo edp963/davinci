@@ -1,8 +1,8 @@
 {
   "extends": ["tslint:latest", "tslint-react"],
   "rules": {
-    "indent": [ true, "spaces" ],
     "semicolon": [true, "never"],
+    "indent": [ true, "spaces" ],
     "quotemark": [ true, "single", "jsx-double" ],
     "trailing-comma": [ true, { "multiline": "never", "singleline": "never" } ],
     "space-before-function-paren": [true, "always"],
@@ -16,11 +16,15 @@
     "object-literal-sort-keys": false,
     "no-shadowed-variable": false,
     "no-console": [false],
+    "no-bitwise": false,
     "max-line-length": [true, { "limit": 180, "ignore-pattern": "'[^']{180,}'" }],
     "no-consecutive-blank-lines": [false],
     "no-string-literal": false,
     "jsx-no-multiline-js": false,
     "jsx-boolean-value": false,
     "no-implicit-dependencies": false
+  },
+  "linterOptions": {
+    "exclude": ["**/*.js"]
   }
 }

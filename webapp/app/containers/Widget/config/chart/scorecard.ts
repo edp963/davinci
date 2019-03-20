@@ -36,7 +36,24 @@ const scorecard: IChartInfo = {
   coordinate: 'other',
   requireDimetions: 0,
   requireMetrics: [1, 3],
-  data: {},
+  data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    }
+  },
   style: {
     scorecard: {
       headerVisible: true,

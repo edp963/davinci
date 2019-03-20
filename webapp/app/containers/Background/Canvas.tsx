@@ -18,15 +18,9 @@
  * >>
  */
 
-import * as React from 'react'
-
+import React from 'react'
 import { DEFAULT_SECONDARY_COLOR } from '../../globalConstants'
 const styles = require('./Background.less')
-
-declare interface IWindow extends Window {
-  THREE: any
-}
-declare const window: IWindow
 
 export class Canvas extends React.Component<{}, {}> {
   constructor (props) {
@@ -34,27 +28,32 @@ export class Canvas extends React.Component<{}, {}> {
   }
 
   private removeListeners: () => any = null
-  private container: any = null
+  private container = React.createRef<HTMLDivElement>()
 
   public componentDidMount () {
-    import('three')
-      .then((_) => {
-        window.THREE = _
-        Promise.all([
-          import('three/examples/js/renderers/Projector'),
-          import('three/examples/js/renderers/CanvasRenderer')
-        ]).then(() => {
-          this.drawBackground()
-        })
-      })
+    // TODO to verify the performance under one or multiple chunks
+    Promise.all([
+      import('three/src/cameras/PerspectiveCamera'),
+      import('three/src/scenes/Scene'),
+      import('three/src/core/BufferAttribute'),
+      import('three/src/core/BufferGeometry'),
+      import('three/src/math/Color'),
+      import('three/src/objects/Points'),
+      import('three/src/materials/ShaderMaterial'),
+      import('three/src/renderers/WebGLRenderer')
+    ]).then(([...args]) => {
+      this.drawBackground(args)
+    })
   }
 
   public componentWillUnmount () {
-    this.removeListeners()
+    if (this.removeListeners) {
+      this.removeListeners()
+    }
   }
 
-  private drawBackground = () => {
-    const THREE = window.THREE
+  private drawBackground = (modules: any[]) => {
+    const [{ PerspectiveCamera }, { Scene }, { BufferAttribute }, { BufferGeometry }, { Color }, { Points }, { ShaderMaterial }, { WebGLRenderer }] = modules
     const SEPARATION = 100
     const AMOUNTX = 50
     const AMOUNTY = 50
@@ -64,7 +63,6 @@ export class Canvas extends React.Component<{}, {}> {
     let renderer
 
     let particles
-    let particle
     let count = 0
 
     let mouseX = 0
@@ -74,35 +72,47 @@ export class Canvas extends React.Component<{}, {}> {
     let windowHalfY = window.innerHeight / 2
 
     const init = () => {
-      const container = this.container
+      const container = this.container.current
 
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000)
+      camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000)
       camera.position.z = 1000
-      scene = new THREE.Scene()
+      scene = new Scene()
 
-      particles = []
-
-      const PI2 = Math.PI * 2
-      const material = new THREE.SpriteCanvasMaterial({
-        color: 0xffffff,
-        program: (context) => {
-          context.beginPath()
-          context.arc(0, 0, 1, 0, PI2, true)
-          context.fill()
-        }
-      })
+      const numParticles = AMOUNTX * AMOUNTY
+      const positions = new Float32Array(numParticles * 3)
+      const scales = new Float32Array(numParticles)
 
       let i = 0
+      let j = 0
+
       for (let ix = 0; ix < AMOUNTX; ix++) {
         for (let iy = 0; iy < AMOUNTY; iy++) {
-          particle = particles[i++] = new THREE.Sprite(material)
-          particle.position.x = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2)
-          particle.position.z = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2)
-          scene.add(particle)
+          positions[i] = ix * SEPARATION - ((AMOUNTX * SEPARATION) / 2) // x
+          positions[i + 1] = 0 // y
+          positions[i + 2] = iy * SEPARATION - ((AMOUNTY * SEPARATION) / 2) // z
+          scales[j] = 1
+          i += 3
+          j++
         }
       }
 
-      renderer = new THREE.CanvasRenderer()
+      const geometry = new BufferGeometry()
+      geometry.addAttribute('position', new BufferAttribute(positions, 3))
+      geometry.addAttribute('scale', new BufferAttribute(scales, 1))
+      const material = new ShaderMaterial({
+        uniforms: {
+          color: {
+            value: new Color(0xffffff)
+          }
+        },
+        vertexShader: document.getElementById('vertexshader').textContent,
+        fragmentShader: document.getElementById('fragmentshader').textContent
+      })
+      //
+      particles = new Points(geometry, material)
+      scene.add(particles)
+
+      renderer = new WebGLRenderer({ antialias: true })
       renderer.setPixelRatio(window.devicePixelRatio || 1)
       renderer.setSize(window.innerWidth, window.innerHeight)
       renderer.setClearColor(parseInt(DEFAULT_SECONDARY_COLOR.substr(1), 16))
@@ -139,16 +149,16 @@ export class Canvas extends React.Component<{}, {}> {
     function onDocumentTouchStart (event) {
       if (event.touches.length === 1) {
         event.preventDefault()
-        mouseX = event.touches[ 0 ].pageX - windowHalfX
-        mouseY = event.touches[ 0 ].pageY - windowHalfY
+        mouseX = event.touches[0].pageX - windowHalfX
+        mouseY = event.touches[0].pageY - windowHalfY
       }
     }
 
     function onDocumentTouchMove (event) {
       if (event.touches.length === 1) {
         event.preventDefault()
-        mouseX = event.touches[ 0 ].pageX - windowHalfX
-        mouseY = event.touches[ 0 ].pageY - windowHalfY
+        mouseX = event.touches[0].pageX - windowHalfX
+        mouseY = event.touches[0].pageY - windowHalfY
       }
     }
 
@@ -158,18 +168,27 @@ export class Canvas extends React.Component<{}, {}> {
     }
 
     function render () {
-      camera.position.x += (mouseX - camera.position.x) * 0.05
-      camera.position.y += (-mouseY - camera.position.y) * 0.05
+      camera.position.x += (mouseX - camera.position.x) * .05
+      camera.position.y += (-mouseY - camera.position.y) * .05
       camera.lookAt(scene.position)
+      const positions = particles.geometry.attributes.position.array
+      const scales = particles.geometry.attributes.scale.array
 
       let i = 0
+      let j = 0
       for (let ix = 0; ix < AMOUNTX; ix++) {
         for (let iy = 0; iy < AMOUNTY; iy++) {
-          particle = particles[ i++ ]
-          particle.position.y = (Math.sin((ix + count) * 0.3) * 50) + (Math.sin((iy + count) * 0.5) * 50) - 120
-          particle.scale.x = particle.scale.y = (Math.sin((ix + count) * 0.3) + 1) * 2 + (Math.sin((iy + count) * 0.5) + 1) * 2
+          positions[i + 1] = (Math.sin((ix + count) * 0.3) * 50) +
+            (Math.sin((iy + count) * 0.5) * 50)
+          scales[j] = (Math.sin((ix + count) * 0.3) + 1) * 8 +
+            (Math.sin((iy + count) * 0.5) + 1) * 8
+          i += 3
+          j++
         }
       }
+
+      particles.geometry.attributes.position.needsUpdate = true
+      particles.geometry.attributes.scale.needsUpdate = true
 
       renderer.render(scene, camera)
       count += 0.1
@@ -181,7 +200,7 @@ export class Canvas extends React.Component<{}, {}> {
 
   public render () {
     return (
-      <div ref={(f) => this.container = f} className={styles.background} />
+      <div ref={this.container} className={styles.background}/>
     )
   }
 }

@@ -1,17 +1,11 @@
 import * as React from 'react'
-import {connect} from 'react-redux'
-import {createStructuredSelector} from 'reselect'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Input = require('antd/lib/input')
-const Table = require('antd/lib/table')
-const Modal = require('antd/lib/modal')
-const Button = require('antd/lib/button')
+import { connect } from 'react-redux'
+import { createStructuredSelector } from 'reselect'
+import { Row, Col, Tooltip, Input, Table, Modal, Button, Icon } from 'antd'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
 const styles = require('../Team.less')
 import AddForm from './AddForm'
 import TeamForm from '../../Organizations/component/TeamForm'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
 import * as Team from '../Team'
 import Avatar from '../../../components/Avatar'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
@@ -26,6 +20,11 @@ interface ITeamListState {
   formVisible: boolean
   teamFormVisible: boolean
   listType: string
+  searchValue: string
+  filteredTableSource: {
+    type: 'origin' | 'filtered'
+    dataSource: any[]
+  }
 }
 
 interface ITeamListProps {
@@ -47,12 +46,29 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       formType: '',
       formVisible: false,
       teamFormVisible: false,
-      listType: ''
+      listType: '',
+      searchValue: '',
+      filteredTableSource: {
+        type: 'origin',
+        dataSource: []
+      }
     }
   }
 
   private TeamForm: WrappedFormUtils
   private AddForm: WrappedFormUtils
+
+  public componentWillMount () {
+    this.getFilteredTableSource(this.props.currentTeamTeams)
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    const { currentTeamTeams } = this.props
+    if (nextProps.currentTeamTeams && nextProps.currentTeamTeams !== currentTeamTeams) {
+      this.getFilteredTableSource(nextProps.currentTeamTeams)
+    }
+  }
+
   private showAddForm = (type: string) => (e) => {
     e.stopPropagation()
     this.setState({
@@ -66,37 +82,11 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
     })
   }
 
-  private toThatTeam = (text, record) => () => {
+  private toThatTeam = (record) => () => {
     const {id} = record
     if (id) {
       this.props.toThatTeam(`account/team/${id}`)
     }
-  }
-  private isEmptyObj =  (obj) => {
-    for (const attr in obj) {
-      if (obj.hasOwnProperty(attr)) {
-        return false
-      }
-    }
-    return true
-  }
-
-  private filter = (array) => {
-    if (!Array.isArray(array)) {
-      return array
-    }
-    array.forEach((d) => {
-      if (!this.isEmptyObj(d)) {
-        d.key = `key${d.id}`
-      }
-      if (d.children && d.children.length > 0) {
-        this.filter(d.children)
-      }
-      if (d.children && d.children.length === 0) {
-        delete d.children
-      }
-    })
-    return array
   }
 
   private checkNameUnique = (rule, value = '', callback) => {
@@ -121,9 +111,11 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
       teamFormVisible: true,
       listType: 'teamTeamList'
     }, () => {
-      this.TeamForm.setFieldsValue({
-        parentTeamId: currentTeam.name
-      })
+      setTimeout(() => {
+        this.TeamForm.setFieldsValue({
+          parentTeamId: currentTeam.name
+        })
+      }, 0)
     })
   }
 
@@ -156,74 +148,178 @@ export class TeamList extends React.PureComponent <ITeamListProps, ITeamListStat
     })
   }
 
+  private renderExpandIcon = (props) => {
+    return props.record.children
+      ? (
+        <Icon
+          className={styles.teamTableExpandIcon}
+          type={`${props.expanded ? 'minus' : 'plus'}-square`}
+          onClick={this.expandIconClick(props)}
+        />
+      )
+      : null
+  }
+
+  private expandIconClick = (props) => (e) => {
+    return props.onExpand(props.record, e)
+  }
+
+  private expandedTableRow = (record) => {
+    const tableSource = []
+    this.getExpandChildTeams(this.props.currentTeamTeams, record.id, tableSource)
+    return (
+      <Table
+        className={styles.childTable}
+        showHeader={false}
+        columns={this.getTableColumn()}
+        dataSource={tableSource}
+        expandedRowRender={this.expandedTableRow}
+        expandIcon={this.renderExpandIcon}
+        pagination={false}
+      />
+    )
+  }
+
+  private getExpandChildTeams = (teams, recordId, tableSource) => {
+    for (let i = 0; i < teams.length; i += 1) {
+      const team = teams[i]
+      if (team.id === recordId) {
+        if (team.children) {
+          team.children.forEach((childTeam) => {
+            const { children, ...rest } = childTeam
+            tableSource.push({
+              key: rest.id,
+              ...rest,
+              children: !!children
+            })
+          })
+        }
+        break
+      } else {
+        if (team.children) {
+          this.getExpandChildTeams(team.children, recordId, tableSource)
+        }
+      }
+    }
+  }
+
+  private getTableColumn = () => {
+    return  [{
+      title: 'Name',
+      key: 'name',
+      render: (text, record) => {
+        return (
+          <div className={styles.childTableCell}>
+            <a onClick={this.toThatTeam(record)} className={styles.avatarName}>{record.name}</a>
+            <span className={styles.avatarName}>{`${ record.users ? record.users.length : 0 } 成员`}</span>
+          </div>
+        )
+      }
+    }]
+  }
+
+  private getFilteredTableSource = (originDataSource) => {
+    const { searchValue } = this.state
+    const filteredData = []
+
+    if (originDataSource) {
+      if (searchValue.trim()) {
+        this.getSearchingTeams(originDataSource, searchValue.trim(), filteredData)
+        this.setState({
+          filteredTableSource: {
+            type: 'filtered',
+            dataSource: filteredData
+          }
+        })
+      } else {
+        originDataSource.forEach((team) => {
+          const { children, ...rest } = team
+          filteredData.push({
+            key: rest.id,
+            ...rest,
+            children: !!children
+          })
+        })
+        this.setState({
+          filteredTableSource: {
+            type: 'origin',
+            dataSource: filteredData
+          }
+        })
+      }
+    }
+  }
+
+  private getSearchingTeams = (teams, value, filteredData) => {
+    teams.forEach((team) => {
+      const { children, ...rest } = team
+      if (rest.name.includes(value)) {
+        filteredData.push({
+          key: rest.id,
+          children: !!children,
+          ...rest
+        })
+      }
+      if (children) {
+        this.getSearchingTeams(
+          children,
+          value,
+          filteredData
+        )
+      }
+    })
+  }
+
+  private searchChange = (e) => {
+    this.setState({
+      searchValue: e.target.value
+    })
+  }
+
+  private searchTeam = () => {
+    this.getFilteredTableSource(this.props.currentTeamTeams)
+  }
+
   public render () {
-    const { formVisible, teamFormVisible, listType } = this.state
-    const { currentTeamTeams, currentTeam, teamModalLoading } = this.props
-    this.filter(currentTeamTeams)
+    const { formVisible, teamFormVisible, listType, searchValue, filteredTableSource } = this.state
+    const { currentTeam, teamModalLoading } = this.props
+    const { dataSource } = filteredTableSource
 
     let CreateButton = void 0
     if (currentTeam) {
       CreateButton = ComponentPermission(currentTeam, '')(Button)
     }
-    const addButton = (
-      <Tooltip placement="bottom" title="创建">
-        <CreateButton
-          size="large"
-          type="primary"
-          icon="plus"
-          onClick={this.showTeamForm()}
-        />
-      </Tooltip>
-    )
 
-    const columns = [{
-      title: 'Name',
-      dataIndex: 'name',
-      key: 'name',
-      width: '40%',
-      render: (text, record) => <a href="javascript:;" onClick={this.toThatTeam(text, record)} className={styles.avatarName}>{text}</a>
-    }, {
-      title: 'Member',
-      dataIndex: 'users',
-      key: 'users',
-      width: '30%',
-      render: (users) => {
-        return (
-          <div className={styles.avatarWrapper}>
-            {users.map((user, index) => <Tooltip key={`tooltip${index}`} placement="topRight" title={user.username}>
-              <span><Avatar key={index} path={user.avatar} size="small" enlarge={true}/></span></Tooltip>)}
-            <span className={styles.avatarName}>{`${ users ? users.length : 0 }menbers`}</span>
-          </div>
-        )
-      }
-    }
-    // {
-    //   title: 'Visibility',
-    //   dataIndex: 'visibility',
-    //   key: 'visibility',
-    //   render: (text) => text ? '公开（可见）' : '私密（不可见）'
-    // }
-  ]
     return (
       <div className={styles.listWrapper}>
         <Row>
-          {/* <Col span={16}>
+          <Col span={16}>
             <Input.Search
-              size="large"
-              placeholder="placeholder"
-              onSearch={this.onSearchTeam}
+              value={searchValue}
+              placeholder="搜索团队"
+              onChange={this.searchChange}
+              onSearch={this.searchTeam}
             />
-          </Col> */}
-          <Col span={1} offset={23}>
-            {addButton}
+          </Col>
+          <Col span={1} offset={7}>
+          <Tooltip placement="bottom" title="创建">
+            <CreateButton
+              type="primary"
+              icon="plus"
+              onClick={this.showTeamForm()}
+            />
+          </Tooltip>
           </Col>
         </Row>
         <Row>
           <div className={styles.tableWrap}>
             <Table
               bordered
-              columns={columns}
-              dataSource={currentTeamTeams}
+              columns={this.getTableColumn()}
+              dataSource={dataSource}
+              expandedRowRender={this.expandedTableRow}
+              expandIcon={this.renderExpandIcon}
+              pagination={false}
             />
           </div>
         </Row>

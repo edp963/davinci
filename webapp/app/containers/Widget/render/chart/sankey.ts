@@ -34,6 +34,7 @@ import {
   getGridPositions,
   getSymbolSize
 } from './util'
+import { EChartOption } from 'echarts'
 
 export default function (chartProps: IChartProps) {
   const {
@@ -74,25 +75,36 @@ export default function (chartProps: IChartProps) {
   const nodesValues = []
   const links = []
   data.forEach((row) => {
-    dimensions.forEach((dim, idx) => {
-      if (nodesValues.indexOf(row[dim]) < 0) {
-        nodesValues.push(row[dim])
+    dimensions.forEach(({ name }, idx) => {
+      if (!nodesValues.includes(row[name])) {
+        nodesValues.push(row[name])
       }
       if (dimensions[idx - 1]) {
-        links.push({
-          source: row[dimensions[idx - 1]],
-          target: row[dimensions[idx]],
-          value: row[`${agg}(${metricsName})`]
-        })
+        const source = row[dimensions[idx - 1].name]
+        const target = row[dimensions[idx].name]
+        const value = +row[`${agg}(${metricsName})`]
+        if (isNaN(value)) { return }
+        const existedLink = links.length && links.find((lnk) => lnk.source === source && lnk.target === target)
+        if (!existedLink) {
+          links.push({
+            source,
+            target,
+            value
+          })
+        } else {
+          existedLink.value += value
+        }
       }
     })
   })
 
+  const tooltip: EChartOption.Tooltip = {
+    trigger: 'item',
+    triggerOn: 'mousemove'
+  }
+
   return {
-    tooltip: {
-      trigger: 'item',
-      triggerOn: 'mousemove'
-    },
+    tooltip,
     series: [{
       type: 'sankey',
       layout: 'none',

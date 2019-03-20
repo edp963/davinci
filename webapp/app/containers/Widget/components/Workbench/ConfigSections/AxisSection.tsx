@@ -1,10 +1,6 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select, InputNumber } from 'antd'
 const Option = Select.Option
-const InputNumber = require('antd/lib/input-number')
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_FONT_FAMILIES, PIVOT_CHART_LINE_STYLES, PIVOT_CHART_FONT_SIZES } from '../../../../../globalConstants'
 const styles = require('../Workbench.less')
@@ -12,7 +8,7 @@ const styles = require('../Workbench.less')
 export interface IAxisConfig {
   inverse: boolean
   showLine: boolean
-  lineStyle: string
+  lineStyle: 'solid' | 'dashed' | 'dotted'
   lineSize: string
   lineColor: string
   showLabel: boolean

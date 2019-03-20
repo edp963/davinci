@@ -85,22 +85,24 @@ import {
   redoOperation,
   loadDisplayShareLink,
   showEditorBaselines,
-  clearEditorBaselines    } from './actions'
-const message = require('antd/lib/message')
+  clearEditorBaselines,
+  resetDisplayState } from './actions'
+import { message } from 'antd'
 const styles = require('./Display.less')
 
-import { IWidgetProps, RenderType } from '../Widget/components/Widget'
+import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import {
   loadDataFromItem,
-  loadCascadeSource, // TODO global filter in Display
-  loadBizdataSchema  } from '../Bizlogic/actions'
+  loadCascadeSource // TODO global filter in Display
+} from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams, ISlide } from './'
+import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
 
 interface IParams {
   pid: number
@@ -122,14 +124,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
         totalCount: number
       }
       loading: boolean
-      queryParams: {
-        filters: string
-        linkageFilters: string
-        globalFilters: string
-        params: Array<{name: string, value: string}>
-        linkageParams: Array<{name: string, value: string}>
-        globalParams: Array<{name: string, value: string}>
-      }
+      queryConditions: IQueryConditions
       interactId: string
       rendered: boolean
       renderType: RenderType
@@ -172,33 +167,20 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
     renderType: RenderType,
     layerItemId: number,
     viewId: number,
-    params: {
-      groups: string[]
-      aggregators: Array<{column: string, func: string}>
-      filters: string[]
-      linkageFilters: string[]
-      globalFilters: string[]
-      params: Array<{name: string, value: string}>
-      linkageParams: Array<{name: string, value: string}>
-      globalParams: Array<{name: string, value: string}>
-      orders: Array<{column: string, direction: string}>
-      cache: boolean
-      expired: number
-    }
+    requestParams: IDataRequestParams
   ) => void
 
   onShowEditorBaselines: (baselines: IBaseline[]) => void
   onClearEditorBaselines: () => void
+  onResetDisplayState: () => void
 }
 
 interface IEditorStates {
   slideParams: Partial<ISlideParams>
   currentLocalLayers: any[]
-  editorWidth: number
-  editorHeight: number
-  editorPadding: string
-  scale: number
+  zoomRatio: number
   sliderValue: number
+  scale: number
   settingInfo: {
     key: string
     id: number
@@ -208,17 +190,17 @@ interface IEditorStates {
 }
 
 export class Editor extends React.Component<IEditorProps, IEditorStates> {
+
+  private editor = React.createRef<DisplayContainer>()
+
   constructor (props) {
     super(props)
-
     this.state = {
       slideParams: {},
       currentLocalLayers: [],
-      editorWidth: 0,
-      editorHeight: 0,
-      editorPadding: '',
-      scale: 1,
+      zoomRatio: 1,
       sliderValue: 20,
+      scale: 1,
       settingInfo: {
         key: '',
         id: 0,
@@ -226,52 +208,26 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         param: null
       }
     }
-
-    this.refHandlers = {
-      settingForm: (ref) => this.settingForm = ref,
-      editor: (ref) => this.editor = ref
-    }
-  }
-
-  private refHandlers: { settingForm: (ref: any) => void, editor: (ref: any) => void }
-  private settingForm: any
-  private editor: any
-  private charts: object = {}
-
-  public componentWillMount () {
-    const {
-      params,
-      onLoadDisplayDetail
-    } = this.props
-    const projectId = +params.pid
-    const displayId = +params.displayId
-    onLoadDisplayDetail(projectId, displayId)
   }
 
   public componentDidMount () {
-    const {
-      slideParams,
-      scale
-    } = this.state
-
-    this.props.onHideNavigator()
-    window.addEventListener('resize', this.containerResize, false)
-    // onHideNavigator 导致页面渲染
+    const { params, onLoadDisplayDetail, onHideNavigator } = this.props
+    const projectId = +params.pid
+    const displayId = +params.displayId
+    onLoadDisplayDetail(projectId, displayId)
+    onHideNavigator()
   }
 
   public componentWillUnmount () {
-    window.removeEventListener('resize', this.containerResize, false)
-    this.props.onClearLayersSelection()
+    this.props.onResetDisplayState()
   }
 
   public componentWillReceiveProps (nextProps: IEditorProps) {
     const { currentSlide, currentLayers } = nextProps
 
     let { slideParams, currentLocalLayers } = this.state
-    let init = false
     if (currentSlide !== this.props.currentSlide) {
       slideParams = JSON.parse(currentSlide.config).slideParams
-      init = true
     }
     if (currentLayers !== this.props.currentLayers) {
       currentLocalLayers = fromJS(currentLayers).toJS()
@@ -281,10 +237,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       slideParams,
       currentLocalLayers,
       settingInfo
-    }, () => {
-      if (init) {
-        this.doScale(1)
-      }
     })
   }
 
@@ -313,14 +265,11 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     return settingInfo
   }
 
-  private containerResize = () => {
-    this.sliderChange(this.state.sliderValue)
-  }
-
-  private sliderChange = (value) => {
-    this.doScale(value / 40 + 0.5)
+  private sliderChange = (sliderValue: number) => {
+    const zoomRatio = sliderValue / 40 + 0.5
     this.setState({
-      sliderValue: value
+      sliderValue,
+      zoomRatio
     })
   }
 
@@ -336,31 +285,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     }
   }
 
-  private doScale = (times) => {
-    const { slideParams } = this.state
-    const { offsetWidth, offsetHeight } = this.editor.container
-
-    const editorWidth = Math.max(offsetWidth * times, offsetWidth)
-    const editorHeight = Math.max(offsetHeight * times, offsetHeight)
-
-    let scale = (slideParams.width / slideParams.height > editorWidth / editorHeight) ?
-      // landscape
-      (editorWidth - 64) / slideParams.width * times :
-      // portrait
-      (editorHeight - 64) / slideParams.height * times
-    scale = +(Math.floor(scale / 0.05) * 0.05).toFixed(2)
-
-    const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
-
-    this.setState({
-      editorWidth: Math.max(editorWidth, slideParams.width * scale + 64),
-      editorHeight: Math.max(editorHeight, slideParams.height * scale + 64),
-      editorPadding: `${topBottomPadding}px ${leftRightPadding}px`,
-      scale
-    })
-  }
-
   private displaySizeChange = (width, height) => {
     const { slideParams } = this.state
     this.setState({
@@ -374,7 +298,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
-  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => {
+  private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {
     const {
       currentLayersInfo,
       widgets,
@@ -382,31 +306,31 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
-    const widgetConfig: IWidgetProps = JSON.parse(widget.config)
+    const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
     const { cols, rows, metrics, filters, color, label, size, xAxis, tip, orders, cache, expired } = widgetConfig
 
-    const cachedQueryParams = currentLayersInfo[itemId].queryParams
+    const cachedQueryConditions = currentLayersInfo[itemId].queryConditions
     let linkageFilters
     let globalFilters
-    let params
-    let linkageParams
-    let globalParams
+    let variables
+    let linkageVariables
+    let globalVariables
 
-    if (queryParams) {
-      linkageFilters = queryParams.linkageFilters !== undefined ? queryParams.linkageFilters : cachedQueryParams.linkageFilters
-      globalFilters = queryParams.globalFilters !== undefined ? queryParams.globalFilters : cachedQueryParams.globalFilters
-      params = queryParams.params || cachedQueryParams.params
-      linkageParams = queryParams.linkageParams || cachedQueryParams.linkageParams
-      globalParams = queryParams.globalParams || cachedQueryParams.globalParams
+    if (queryConditions) {
+      linkageFilters = queryConditions.linkageFilters !== void 0 ? queryConditions.linkageFilters : cachedQueryConditions.linkageFilters
+      globalFilters = queryConditions.globalFilters !== void 0 ? queryConditions.globalFilters : cachedQueryConditions.globalFilters
+      variables = queryConditions.variables || cachedQueryConditions.variables
+      linkageVariables = queryConditions.linkageVariables || cachedQueryConditions.linkageVariables
+      globalVariables = queryConditions.globalVariables || cachedQueryConditions.globalVariables
     } else {
-      linkageFilters = cachedQueryParams.linkageFilters
-      globalFilters = cachedQueryParams.globalFilters
-      params = cachedQueryParams.params
-      linkageParams = cachedQueryParams.linkageParams
-      globalParams = cachedQueryParams.globalParams
+      linkageFilters = cachedQueryConditions.linkageFilters
+      globalFilters = cachedQueryConditions.globalFilters
+      variables = cachedQueryConditions.variables
+      linkageVariables = cachedQueryConditions.linkageVariables
+      globalVariables = cachedQueryConditions.globalVariables
     }
 
-    let groups = cols.concat(rows).filter((g) => g !== '指标名称')
+    let groups = cols.concat(rows).filter((g) => g.name !== '指标名称').map((g) => g.name)
     let aggregators =  metrics.map((m) => ({
       column: decodeMetricName(m.name),
       func: m.agg
@@ -458,9 +382,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         filters: filters.map((i) => i.config.sql),
         linkageFilters,
         globalFilters,
-        params,
-        linkageParams,
-        globalParams,
+        variables,
+        linkageVariables,
+        globalVariables,
         orders,
         cache,
         expired
@@ -475,7 +399,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   ) => {
     const editLayers = []
     const { currentLayersOperationInfo, onShowEditorBaselines } = this.props
-    const { currentLocalLayers, slideParams, scale } = this.state
+    const { currentLocalLayers, slideParams, zoomRatio } = this.state
     const copyCurrentLocalLayers = fromJS(currentLocalLayers).toJS()
 
     editLayers.push(copyCurrentLocalLayers.find((localLayer) => localLayer.id === itemId))
@@ -485,7 +409,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const otherLayers = copyCurrentLocalLayers.filter((localLayer) => editLayers.map((l) => l.id).indexOf(localLayer.id) < 0)
 
     const baselines = computeEditorBaselines(otherLayers, editLayers, slideParams as ISlideParams,
-      GRID_ITEM_MARGIN / 2, scale, { deltaX, deltaY, deltaWidth, deltaHeight }, adjustType)
+      GRID_ITEM_MARGIN / 2, zoomRatio, { deltaX, deltaY, deltaWidth, deltaHeight }, adjustType)
     onShowEditorBaselines(baselines)
     const adjustPosition = [0, 0]
     const adjustSize = [0, 0]
@@ -679,8 +603,12 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     onPasteSlideLayers(currentDisplay.id, currentSlide.id, clipboardLayers)
   }
 
+  private scaleChange = (nextScale: number) => {
+    this.setState({ scale: nextScale })
+  }
+
   private coverCut = () => {
-    this.editor.createCoverCut()
+    this.editor.current.createCoverCut()
   }
 
   private coverCutCreated = (blob) => {
@@ -693,7 +621,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     })
   }
 
-  private coverUploaded = (avatar) => {
+  private coverUpdated = (avatar) => {
     const { onEditCurrentDisplay, currentDisplay } = this.props
     onEditCurrentDisplay({
       ...currentDisplay,
@@ -702,8 +630,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
   }
 
   private collapseChange = () => {
-    const { sliderValue } = this.state
-    this.doScale(sliderValue / 40 + 0.5)
+    this.setState({
+      zoomRatio: this.state.zoomRatio - 0.0001
+    })
   }
 
   private keyDown = (key: Keys) => {
@@ -840,11 +769,9 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const {
       slideParams,
       currentLocalLayers,
-      editorWidth,
-      editorHeight,
-      editorPadding,
-      scale,
+      zoomRatio,
       sliderValue,
+      scale,
       settingInfo
     } = this.state
 
@@ -912,7 +839,6 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
           settingParams={settingInfo.param}
           onDisplaySizeChange={this.displaySizeChange}
           onFormItemChange={this.formItemChange}
-          wrappedComponentRef={this.refHandlers.settingForm}
           onCollapseChange={this.collapseChange}
         >
           {currentSelectedLayers.length === 0 ? (
@@ -920,7 +846,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
               key="displaySetting"
               display={currentDisplay}
               onCoverCut={this.coverCut}
-              onCoverUploaded={this.coverUploaded}
+              onCoverUpdated={this.coverUpdated}
             />
           ) : null}
         </SettingForm>
@@ -947,15 +873,13 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         <DisplayBody>
           <DisplayContainer
             key="editor"
-            width={editorWidth}
-            height={editorHeight}
-            padding={editorPadding}
             slideParams={slideParams}
-            scale={scale}
+            zoomRatio={zoomRatio}
+            onScaleChange={this.scaleChange}
             onCoverCutCreated={this.coverCutCreated}
             onKeyDown={this.keyDown}
             onLayersSelectionRemove={this.layersSelectionRemove}
-            ref={this.refHandlers.editor}
+            ref={this.editor}
           >
             {[...baselines, ...layerItems]}
           </DisplayContainer>
@@ -1007,7 +931,7 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, params) => dispatch(loadDataFromItem(renderType, itemId, viewId, params, 'display')),
+    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) => dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'display')),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
     onClearLayersSelection: () => dispatch(clearLayersSelection()),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
@@ -1025,7 +949,8 @@ function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
 
     onShowEditorBaselines: (baselines) => dispatch(showEditorBaselines(baselines)),
-    onClearEditorBaselines: () => dispatch(clearEditorBaselines())
+    onClearEditorBaselines: () => dispatch(clearEditorBaselines()),
+    onResetDisplayState: () => dispatch(resetDisplayState())
   }
 }
 

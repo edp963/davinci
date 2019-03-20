@@ -1,9 +1,8 @@
 import * as React from 'react'
 
-const Menu = require('antd/lib/menu')
+import { Menu, Dropdown } from 'antd'
 const SubMenu = Menu.SubMenu
 const MenuItem = Menu.Item
-const Dropdown = require('antd/lib/dropdown')
 
 export class LayerContextMenu extends React.PureComponent {
 

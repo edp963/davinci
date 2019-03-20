@@ -35,24 +35,18 @@ import Container from '../../components/Container'
 import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import { Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
+import { ButtonProps } from 'antd/lib/button/button'
+import { SortOrder } from 'antd/lib/table'
 
 import { loadBizlogics, deleteBizlogic } from './actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
-import { ButtonProps } from 'antd/lib/button/button'
+import { IProject } from '../Projects'
 
 interface IBizlogicsProps  {
   params: any
@@ -67,7 +61,10 @@ interface IBizlogicsProps  {
 
 interface IBizlogicsStates {
   tableSource: any[]
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
   screenWidth: number
@@ -76,6 +73,15 @@ interface IBizlogicsStates {
 export interface ITeamParams {
   k: string,
   v: string
+}
+
+export interface IViewTeams {
+  id: number
+  orgId: number
+  name: string,
+  description: string,
+  parentTeamId: number,
+  visibility: boolean
 }
 
 export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsStates> {
@@ -185,7 +191,7 @@ export class Bizlogics extends React.PureComponent<IBizlogicsProps, IBizlogicsSt
       filterDropdownVisible: nameFilterDropdownVisible,
       onFilterDropdownVisibleChange: (visible) => this.setState({ nameFilterDropdownVisible: visible }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',

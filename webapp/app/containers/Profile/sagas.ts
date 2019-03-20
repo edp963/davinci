@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest } from 'redux-saga/effects'
 
 import { GET_USER_PROFILE } from './constants'
 import {
@@ -49,8 +48,8 @@ export function* getUserProfile (action): IterableIterator<any> {
 
 
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(GET_USER_PROFILE, getUserProfile as any)
-  ]
+  ])
 }
 

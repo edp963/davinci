@@ -23,7 +23,7 @@ export interface IResizableProps {
   className?: string,
   width: number,
   height: number,
-  scale: number
+  scale?: number
   handleSize: [number, number],
   lockAspectRatio: boolean,
   axis: Axis,

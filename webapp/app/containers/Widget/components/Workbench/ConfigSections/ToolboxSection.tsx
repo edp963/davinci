@@ -1,7 +1,5 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
+import { Row, Col, Checkbox } from 'antd'
 const styles = require('../Workbench.less')
 
 export interface IToolboxConfig {

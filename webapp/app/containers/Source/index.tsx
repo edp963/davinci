@@ -18,7 +18,7 @@
  * >>
  */
 
-import * as React from 'react'
+import React from 'react'
 import Helmet from 'react-helmet'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
@@ -35,19 +35,11 @@ import Box from '../../components/Box'
 import SearchFilterDropdown from '../../components/SearchFilterDropdown'
 import SourceForm from './SourceForm'
 import UploadCsvForm from './UploadCsvForm'
-import AntdFormType from 'antd/lib/form/Form'
-import { ButtonProps } from 'antd/lib/button/button'
 
-const message = require('antd/lib/message')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Table = require('antd/lib/table')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Breadcrumb = require('antd/lib/breadcrumb')
+import { message, Row, Col, Table, Button, Tooltip, Icon, Popconfirm, Breadcrumb } from 'antd'
+import { ButtonProps } from 'antd/lib/button/button'
+import { SortOrder } from 'antd/lib/table'
+import AntdFormType from 'antd/lib/form/Form'
 
 import {
   loadSources,
@@ -55,7 +47,9 @@ import {
   deleteSource,
   editSource,
   testSourceConnection,
-  getCsvMetaId
+  getCsvMetaId,
+  setSourceFormValue,
+  setUploadFormValue
 } from './actions'
 import {
   makeSelectSources,
@@ -72,9 +66,42 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import {IProject} from '../Projects'
 
+export type SourceType = 'csv' | 'jdbc'
+
+interface ISourceCommon {
+  id: number
+  name: string
+  type: SourceType
+  username: string
+  password: string
+  jdbcUrl: string
+  description: string
+}
+
+export interface ISource extends ISourceCommon {
+  config: string
+}
+
+export interface ISourcePersist extends ISourceCommon {
+  config: {
+    parameters: string
+    password: string
+    url: string
+    username: string
+  }
+}
+
+export interface ICSVMetaInfo {
+  sourceId: number
+  tableName: string
+  replaceMode: number
+  primaryKeys: string
+  indexKeys: string
+}
+
 interface ISourceProps {
   params: any
-  sources: boolean | any[]
+  sources: ISourcePersist[]
   listLoading: boolean
   formLoading: boolean
   testLoading: boolean
@@ -84,32 +111,34 @@ interface ISourceProps {
   onDeleteSource: (id: number) => any
   onEditSource: (sourceData: any, resolve: any) => any
   onTestSourceConnection: (testSource: any) => any
-  onGetCsvMetaId: (
-    csvMeta: any,
-    resolve: any,
-    reject: any) => any
+  onGetCsvMetaId: (csvMeta: ICSVMetaInfo, resolve: () => void) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onSetSourceFormValue: (changedValues: ISource) => void
+  onSetUploadFormValue: (changedValues: Partial<ICSVMetaInfo>) => void
 }
 
 interface ISourceStates {
   tableSource: any[]
-  tableSortedInfo: {columnKey?: string, order?: string}
+  tableSortedInfo: {
+    columnKey?: string,
+    order?: SortOrder
+  }
   nameFilterValue: string
   nameFilterDropdownVisible: boolean
-  formVisible: boolean
-  formType: string
+  sourceFormVisible: boolean
+  sourceFormType: string
   uploadFormVisible: boolean
   formStep: number
-  metaObj: any
+  metaObj: ICSVMetaInfo | null
   isUploadDisabled: boolean
-  newUploadModalKey: string
+  uploadFormKey: string
   screenWidth: number
 }
 
 interface ISourceObject {
-  user: string
+  username: string
   password: string
-  url: string
+  jdbcUrl: string
 }
 
 export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
@@ -122,172 +151,158 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       nameFilterValue: '',
       nameFilterDropdownVisible: false,
 
-      formVisible: false,
-      formType: 'add',
+      sourceFormVisible: false,
+      sourceFormType: 'add',
 
       uploadFormVisible: false,
       formStep: 0,
-      metaObj: {},
+      metaObj: null,
       isUploadDisabled: false,
 
-      newUploadModalKey: '1',
+      uploadFormKey: '1',
       screenWidth: 0
     }
   }
 
-  private sourceForm: AntdFormType = null
-  private uploadForm: AntdFormType = null
-  private refHandlers = {
-    sourceForm: (ref) => this.sourceForm = ref,
-    uploadForm: (ref) => this.uploadForm = ref
-  }
+  private sourceForm = React.createRef<AntdFormType>()
+  private uploadForm = React.createRef<AntdFormType>()
 
   public componentWillMount () {
     this.props.onLoadSources(this.props.params.pid)
+    this.props.onSetSourceFormValue(this.getSourceFormInitialValues())
+    this.props.onSetUploadFormValue(this.getUploadFormInitialValues())
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  public componentWillReceiveProps (props) {
+  public componentWillReceiveProps (props: ISourceProps) {
     window.onresize = () => this.setState({ screenWidth: document.documentElement.clientWidth })
 
     if (props.sources) {
       this.setState({
-        tableSource: props.sources.map((g) => {
-          g.key = g.id
-          return g
-        })
+        tableSource: props.sources.slice()
       })
+    }
+  }
+
+  private getSourceFormInitialValues = (): ISource => {
+    return {
+      id: 0,
+      name: '',
+      type: 'jdbc',
+      username: '',
+      password: '',
+      jdbcUrl: '',
+      description: '',
+      config: ''
+    }
+  }
+
+  private getUploadFormInitialValues = (): ICSVMetaInfo => {
+    return {
+      sourceId: 0,
+      tableName: '',
+      replaceMode: 0,
+      primaryKeys: '',
+      indexKeys: ''
     }
   }
 
   private showAdd = () => {
     this.setState({
-      formVisible: true,
-      formType: 'add'
+      sourceFormVisible: true,
+      sourceFormType: 'add'
     })
   }
 
   private showDetail = (sourceId) => () => {
-    this.setState({
-      formVisible: true,
-      formType: 'edit'
-    }, () => {
-      const {
-        id,
-        name,
-        type,
-        username,
-        password,
-        jdbcUrl,
-        description,
-        config
-      } = (this.props.sources as any[]).find((g) => g.id === sourceId)
+    const originSource = this.props.sources.find((g) => g.id === sourceId) as ISourcePersist
 
-      const configObj = JSON.parse(config)
-      this.sourceForm.props.form.setFieldsValue({
-        id,
-        name,
-        type,
-        user: username,
-        password,
-        url: jdbcUrl,
-        desc: description,
-        config: configObj.parameters
-      })
+    this.props.onSetSourceFormValue({
+      ...originSource,
+      config: originSource.config.parameters
+    })
+    this.setState({
+      sourceFormVisible: true,
+      sourceFormType: 'edit'
     })
   }
 
   private showUpload = (sourceId) => () => {
-    const redrawKey = uuid(6, 10)
     this.setState({
-      newUploadModalKey: redrawKey,
       uploadFormVisible: true
-    }, () => {
-      this.uploadForm.props.form.setFieldsValue({
-        source_id: sourceId
-      })
     })
+    this.props.onSetUploadFormValue({ sourceId })
   }
 
-  private onModalOk = () => {
-    this.sourceForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { params } = this.props
-        const { id, name, type, url, user, password, desc, config } = values
-        const requestValue = {
-          config: {
-            parameters: config,
-            password,
-            url,
-            username: user
-          },
-          description: desc,
-          name,
-          type,
-          projectId: Number(params.pid)
-        }
+  private saveSourceForm = (values) => {
+    const { params } = this.props
+    const { id, name, type, jdbcUrl, username, password, description, config } = values
+    const requestValue = {
+      config: {
+        parameters: config,
+        password,
+        url: jdbcUrl,
+        username
+      },
+      description,
+      name,
+      type,
+      projectId: Number(params.pid)
+    }
 
-        if (this.state.formType === 'add') {
-          this.props.onAddSource({...requestValue}, () => {
-            this.hideForm()
-          })
-        } else {
-          this.props.onEditSource({ ...requestValue, id }, () => {
-            this.hideForm()
-          })
-        }
-      }
-    })
-  }
-
-  private changeFormStep = (step) => () => {
-    const { onGetCsvMetaId } = this.props
-    if (step) {
-      this.uploadForm.props.form.validateFieldsAndScroll((err, values) => {
-        if (!err) {
-          const { table_name, source_id, primary_keys, index_keys, replace_mode } = values
-          const csvMeta = {
-            table_name,
-            source_id,
-            replace_mode
-          }
-          onGetCsvMetaId(csvMeta, () => {
-            this.setState({
-              metaObj: csvMeta,
-              formStep: step
-            })
-          }, (error) => {
-            message.error(error)
-          })
-        }
+    if (this.state.sourceFormType === 'add') {
+      this.props.onAddSource({...requestValue}, () => {
+        this.closeSourceForm()
       })
     } else {
-      this.setState({
-        formStep: step
+      this.props.onEditSource({ ...requestValue, id }, () => {
+        this.closeSourceForm()
       })
     }
   }
 
-  private hideForm = () => {
+  private changeUploadFormStep = (step: number, values?: ICSVMetaInfo) => {
+    if (values) {
+      const { onGetCsvMetaId } = this.props
+      onGetCsvMetaId(values, () => {
+        this.setState({
+          metaObj: { ...values }
+        })
+      })
+    }
+
     this.setState({
-      formVisible: false
+      formStep: step
     })
-    this.sourceForm.props.form.resetFields()
   }
 
-  private hideUploadForm = () => {
+  private closeSourceForm = () => {
     this.setState({
-      uploadFormVisible: false
-    }, () => {
-      this.setState({formStep: 0})
-      this.uploadForm.props.form.resetFields()
+      sourceFormVisible: false
     })
   }
 
-  private onUploadFile = () => {
-    this.hideUploadForm()
+  private afterSourceFormClose = () => {
+    this.props.onSetSourceFormValue(this.getSourceFormInitialValues())
+  }
+
+  private uploadFile = () => {
+    this.closeUploadForm()
     this.setState({
       isUploadDisabled: false
+    })
+  }
+
+  private closeUploadForm = () => {
+    this.setState({
+      uploadFormVisible: false
+    })
+  }
+
+  private afterUploadFormClose = () => {
+    this.setState({
+      formStep: 0,
+      uploadFormKey: uuid(6, 10)
     })
   }
 
@@ -328,15 +343,12 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     })
   }
 
-  private testSourceConnection = () => {
-    const formValues = this.sourceForm.props.form.getFieldsValue() as ISourceObject
-    const { user, password, url } = formValues
-
-    if (url) {
+  private testSourceConnection = (username, password, jdbcUrl) => {
+    if (jdbcUrl) {
       this.props.onTestSourceConnection({
-        username: user,
+        username,
         password,
-        url
+        url: jdbcUrl
       })
     } else {
       message.error('连接 Url 都不能为空')
@@ -353,13 +365,13 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       }
     }
     if (info.file.status === 'done') {
-      message.success(`${info.file.name} file uploaded successfully`)
+      message.success(`${info.file.name} 文件上传成功`)
       this.setState({
         formStep: 2,
         isUploadDisabled: true
       })
     } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} file upload failed.`)
+      message.error(info.file.response.header.msg)
     }
   }
 
@@ -369,13 +381,13 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       tableSortedInfo,
       nameFilterValue,
       nameFilterDropdownVisible,
-      formVisible,
+      sourceFormType,
+      sourceFormVisible,
       uploadFormVisible,
-      formType,
       formStep,
       metaObj,
       isUploadDisabled,
-      newUploadModalKey,
+      uploadFormKey,
       screenWidth
     } = this.state
 
@@ -392,11 +404,32 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     const AdminButton = ModulePermission<ButtonProps>(currentProject, 'source', true)(Button)
     const EditButton = ModulePermission<ButtonProps>(currentProject, 'source', false)(Button)
 
-    const { table_name, source_id, replace_mode } = metaObj
+    let sourceId
+    let tableName
+    let replaceMode
+    let primaryKeys
+    let indexKeys
+    if (metaObj) {
+      sourceId = metaObj.sourceId
+      tableName = metaObj.tableName
+      replaceMode = metaObj.replaceMode
+      primaryKeys = metaObj.primaryKeys || ''
+      indexKeys = metaObj.indexKeys || ''
+    }
+
+    let uploadUrl = `${api.source}/${sourceId}/uploadcsv?tableName=${tableName}&mode=${replaceMode}`
+    if (primaryKeys) {
+      uploadUrl = `${uploadUrl}&primaryKeys=${primaryKeys}`
+    }
+    if (indexKeys) {
+      uploadUrl = `${uploadUrl}&indexKeys=${indexKeys}`
+    }
+
+
     const uploadProps = {
       name: 'file',
       disabled: isUploadDisabled,
-      action: `${api.source}/${source_id}/uploadcsv?tableName=${table_name}&mode=${replace_mode}`,
+      action: uploadUrl,
       onChange: this.uploadOnchange,
       headers: {
         authorization: `Bearer ${localStorage.getItem('TOKEN')}`
@@ -421,7 +454,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
         nameFilterDropdownVisible: visible
       }),
       sorter: (a, b) => a.name > b.name ? -1 : 1,
-      sortOrder: tableSortedInfo.columnKey === 'name' && tableSortedInfo.order
+      sortOrder: tableSortedInfo.columnKey === 'name' ? tableSortedInfo.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description',
@@ -453,7 +486,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
     }, {
       title: '操作',
       key: 'action',
-      width: 135,
+      width: 150,
       className: `${initializePermission(currentProject, 'sourcePermission') ? utilStyles.textAlignLeft : utilStyles.hide}`,
       render: (text, record) => (
         <span className="ant-table-action-column">
@@ -483,48 +516,6 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
       defaultPageSize: 20,
       showSizeChanger: true
     }
-
-    const modalButtons = ([(
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={formLoading}
-        disabled={formLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>),
-      (
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideForm}
-      >
-        取 消
-      </Button>)
-    ])
-    const uploadFormButtons = formStep
-      ? [(
-      <Button
-          key="submit"
-          size="large"
-          type="primary"
-          onClick={this.onUploadFile}
-      >
-          保 存
-      </Button>)
-      ]
-      : [(
-      <Button
-          key="forward"
-          size="large"
-          type="primary"
-          onClick={this.changeFormStep(1)}
-      >
-          下一步
-      </Button>)
-      ]
 
     return (
       <Container>
@@ -557,6 +548,7 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
                 <Col span={24}>
                   <Table
                     dataSource={tableSource}
+                    rowKey="id"
                     columns={columns}
                     pagination={pagination}
                     loading={listLoading}
@@ -565,36 +557,30 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
                   />
                 </Col>
               </Row>
-              <Modal
-                title={`${formType === 'add' ? '新增' : '修改'} Source`}
-                wrapClassName="ant-modal-small"
-                visible={formVisible}
-                footer={modalButtons}
-                onCancel={this.hideForm}
-              >
-                <SourceForm
-                  type={formType}
-                  projectId={params.pid}
-                  testLoading={testLoading}
-                  onTestSourceConnection={this.testSourceConnection}
-                  onCheckUniqueName={onCheckUniqueName}
-                  wrappedComponentRef={this.refHandlers.sourceForm}
-                />
-              </Modal>
-              <Modal
-                title="上传CSV"
-                key={newUploadModalKey}
+              <SourceForm
+                projectId={params.pid}
+                type={sourceFormType}
+                visible={sourceFormVisible}
+                formLoading={formLoading}
+                testLoading={testLoading}
+                onSave={this.saveSourceForm}
+                onClose={this.closeSourceForm}
+                onAfterClose={this.afterSourceFormClose}
+                onTestSourceConnection={this.testSourceConnection}
+                onCheckUniqueName={onCheckUniqueName}
+                wrappedComponentRef={this.sourceForm}
+              />
+              <UploadCsvForm
+                formKey={uploadFormKey}
                 visible={uploadFormVisible}
-                wrapClassName="ant-modal-small"
-                footer={uploadFormButtons}
-                onCancel={this.hideUploadForm}
-              >
-                <UploadCsvForm
-                  step={formStep}
-                  uploadProps={uploadProps}
-                  wrappedComponentRef={this.refHandlers.uploadForm}
-                />
-              </Modal>
+                step={formStep}
+                uploadProps={uploadProps}
+                onStepChange={this.changeUploadFormStep}
+                onUpload={this.uploadFile}
+                onClose={this.closeUploadForm}
+                onAfterClose={this.afterUploadFormClose}
+                wrappedComponentRef={this.uploadForm}
+              />
             </Box.Body>
           </Box>
         </Container.Body>
@@ -610,8 +596,10 @@ export function mapDispatchToProps (dispatch) {
     onDeleteSource: (id) => () => dispatch(deleteSource(id)),
     onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
     onTestSourceConnection: (url) => dispatch(testSourceConnection(url)),
-    onGetCsvMetaId: (csvMeta, resolve, reject) => dispatch(getCsvMetaId(csvMeta, resolve, reject)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onGetCsvMetaId: (csvMeta, resolve) => dispatch(getCsvMetaId(csvMeta, resolve)),
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onSetSourceFormValue: (values) => dispatch(setSourceFormValue(values)),
+    onSetUploadFormValue: (values) => dispatch(setUploadFormValue(values))
   }
 }
 

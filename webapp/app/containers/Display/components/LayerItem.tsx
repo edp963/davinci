@@ -3,13 +3,13 @@ import { findDOMNode } from 'react-dom'
 import * as classnames from 'classnames'
 import moment from 'moment'
 
-const Tooltip = require('antd/lib/tooltip')
+import { Tooltip, Icon } from 'antd'
 import Draggable from 'libs/react-draggable'
 import Video from 'components/Video'
 
 // @TODO contentMenu
-// const Dropdown = require('antd/lib/dropdown')
-// const Menu = require('antd/lib/menu')
+// import Dropdown from 'antd/lib/dropdown'
+// import Menu from 'antd/lib/menu'
 // import LayerContextMenu from './LayerContextMenu'
 
 import {
@@ -17,12 +17,11 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IWidgetProps, RenderType } from '../../Widget/components/Widget'
 import { IModel } from '../../Widget/components/Workbench/index'
-import Widget from '../../Widget/components/Widget/WidgetInViz'
+import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
+import { TextAlignProperty } from 'csstype'
 
-const Icon = require('antd/lib/icon')
-const Resizable = require('libs/react-resizable').Resizable
+import { Resizable } from 'libs/react-resizable'
 
 const styles = require('../Display.less')
 
@@ -49,7 +48,7 @@ interface ILayerItemProps {
   interactId: string
   rendered?: boolean
   renderType: RenderType
-  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryParams?: any) => void
+  onGetChartData: (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: any) => void
   onCheckTableInteract?: (itemId: number) => object
   onDoTableInteract?: (itemId: number, linkagers: any[], value: any) => void
   onSelectLayer?: (obj: { id: any, selected: boolean, exclusive: boolean }) => void
@@ -64,7 +63,7 @@ interface ILayerItemStates {
   layerParams: ILayerParams
   layerTooltipPosition: [number, number]
   mousePos: number[]
-  widgetProps: IWidgetProps
+  widgetProps: IWidgetConfig
   model: IModel
   currentTime: string
 }
@@ -143,7 +142,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
   }
 
   public componentDidUpdate () {
-    const rect = findDOMNode(this.refLayer).getBoundingClientRect()
+    const rect = (findDOMNode(this.refLayer) as Element).getBoundingClientRect()
     const { top, height, right } = rect
     const [ x, y ] = this.state.layerTooltipPosition
     const [newX, newY] = [top + height / 2, right]
@@ -442,7 +441,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       fontFamily,
       color: `rgba(${fontColor.join()})`,
       fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
-      textAlign,
+      textAlign: textAlign as TextAlignProperty,
       lineHeight: `${lineHeight * exactScaleHeight}px`,
       textIndent: `${textIndent * exactScaleWidth}px`,
       paddingTop: `${paddingTop * exactScaleHeight}px`,
@@ -547,7 +546,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       fontFamily,
       color: `rgba(${fontColor.join()})`,
       fontSize: `${fontSize * Math.min(exactScaleHeight, exactScaleWidth)}px`,
-      textAlign,
+      textAlign: textAlign as TextAlignProperty,
       lineHeight: `${lineHeight * exactScaleHeight}px`,
       textIndent: `${textIndent * exactScaleWidth}px`,
       paddingTop: `${paddingTop * exactScaleHeight}px`,
@@ -612,7 +611,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     const content = this.renderLayer(layer)
     if (pure) { return content }
 
-    const maxConstraints = [slideParams.width - position.x, slideParams.height - position.y]
+    const maxConstraints: [number, number] = [slideParams.width - position.x, slideParams.height - position.y]
 
     return (
       <Draggable

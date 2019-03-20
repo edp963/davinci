@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_ORGANIZATIONS,
   ADD_ORGANIZATION,
@@ -64,7 +63,7 @@ import {
   changeOrganizationMemberRoleFail
 } from './actions'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { userPasswordChanged } from '../App/actions'
@@ -161,8 +160,7 @@ export function* getOrganizationsMembers ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/members`)
-    const organizations = asyncData.payload
-    yield put(organizationsMembersLoaded(organizations))
+    yield put(organizationsMembersLoaded(asyncData.payload))
   } catch (err) {
     yield put(loadOrganizationsMembersFail())
     errorHandler(err)
@@ -268,7 +266,7 @@ export function* changeOrganizationMemberRole ({payload}) {
 }
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_ORGANIZATIONS, getOrganizations),
     takeEvery(ADD_ORGANIZATION, addOrganization),
     takeEvery(EDIT_ORGANIZATION, editOrganization),
@@ -279,8 +277,8 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
     takeEvery(ADD_TEAM, addTeam),
     takeLatest(INVITE_MEMBER, inviteMember as any),
-    throttle(600, SEARCH_MEMBER, searchMember as any),
+    takeLatest(SEARCH_MEMBER, searchMember as any),
     takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
-  ]
+  ])
 }

@@ -30,7 +30,10 @@ import {
   EDIT_PORTAL_FAILURE,
   DELETE_PORTAL,
   DELETE_PORTAL_SUCCESS,
-  DELETE_PORTAL_FAILURE
+  DELETE_PORTAL_FAILURE,
+  LOAD_SELECT_TEAMS,
+  LOAD_SELECT_TEAMS_SUCCESS,
+  LOAD_SELECT_TEAMS_FAILURE
 } from './constants'
 
 export function loadPortals (projectId) {
@@ -128,5 +131,31 @@ export function portalDeleted (id) {
 export function deletePortalFail () {
   return {
       type: DELETE_PORTAL_FAILURE
+  }
+}
+
+export function loadSelectTeams (type, id, resolve) {
+  return {
+    type: LOAD_SELECT_TEAMS,
+    payload: {
+      type,
+      id,
+      resolve
+    }
+  }
+}
+
+export function selectTeamsLoaded (result) {
+  return {
+    type: LOAD_SELECT_TEAMS_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function loadSelectTeamsFail () {
+  return {
+      type: LOAD_SELECT_TEAMS_FAILURE
   }
 }

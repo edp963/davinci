@@ -1,8 +1,5 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select} from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
 import { PIVOT_CHART_LINE_STYLES } from '../../../../../globalConstants'
@@ -10,11 +7,11 @@ const styles = require('../Workbench.less')
 
 export interface ISplitLineConfig {
   showHorizontalLine: boolean
-  horizontalLineStyle: string
+  horizontalLineStyle: 'solid' | 'dashed' | 'dotted'
   horizontalLineSize: string
   horizontalLineColor: string
   showVerticalLine: boolean
-  verticalLineStyle: string
+  verticalLineStyle: 'solid' | 'dashed' | 'dotted'
   verticalLineSize: string
   verticalLineColor: string
 }

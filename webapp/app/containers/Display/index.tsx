@@ -14,25 +14,17 @@ import injectSaga from '../../utils/injectSaga'
 
 import Container from '../../components/Container'
 import DisplayList from './components/DisplayList'
-import DisplayForm from './components/DisplayForm'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import DisplayFormModal from './components/DisplayFormModal'
 
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Popconfirm = require('antd/lib/popconfirm')
-const Input = require('antd/lib/input')
-const Pagination = require('antd/lib/pagination')
+import { Row, Col, Button, Tooltip, Modal, Breadcrumb, Input } from 'antd'
 const Search = Input.Search
+import AntdFormType from 'antd/lib/form/Form'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Display.less')
 const stylesDashboard = require('../Dashboard/Dashboard.less')
 
+import { checkNameUniqueAction } from '../App/actions'
 import { loadDisplays, deleteDisplay, addDisplay, editDisplay } from './actions'
 import { makeSelectDisplays } from './selectors'
 import { makeSelectLoginUser } from '../App/selectors'
@@ -46,6 +38,7 @@ interface IDisplayProps {
   onDeleteDisplay: (id: any) => void
   onAddDisplay: (display: any, resolve: () => void) => void
   onEditDisplay: (display: any, resolve: () => void) => void
+  onCheckName: (type, data, resolve, reject) => void
 }
 
 interface IDisplayStates {
@@ -57,6 +50,10 @@ interface IDisplayStates {
 }
 
 export class Display extends React.Component<IDisplayProps, IDisplayStates> {
+
+  private refHandlers: { displayFormModal: (ref: AntdFormType) => void }
+  private displayFormModal: AntdFormType
+
   constructor (props) {
     super(props)
     this.state = {
@@ -66,9 +63,10 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       currentDisplay: null,
       kwDisplay: ''
     }
+    this.refHandlers = {
+      displayFormModal: (ref) => this.displayFormModal = ref
+    }
   }
-
-  private displayForm: WrappedFormUtils
 
   public componentWillMount () {
     const {
@@ -113,29 +111,29 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
     return filteredDisplays
   }
 
-  private showDisplayForm = (formType, display?) => (e) => {
+  private showDisplayFormModal = (formType, display?) => (e) => {
     e.stopPropagation()
     this.setState({
       formType,
       formVisible: true
     }, () => {
       if (display) {
-        this.displayForm.setFieldsValue(display)
+        this.displayFormModal.props.form.setFieldsValue(display)
       }
     })
   }
 
-  private hideDisplayForm = () => {
+  private hideDisplayFormModal = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
     }, () => {
-      this.displayForm.resetFields()
+      this.displayFormModal.props.form.resetFields()
     })
   }
 
   private onModalOk = () => {
-    this.displayForm.validateFieldsAndScroll((err, values) => {
+    this.displayFormModal.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         this.setState({ modalLoading: true })
         if (this.state.formType === 'add') {
@@ -144,9 +142,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           this.props.onAddDisplay({
             ...values,
             projectId
-          }, () => { this.hideDisplayForm() })
+          }, () => { this.hideDisplayFormModal() })
         } else {
-          this.props.onEditDisplay(values, () => { this.hideDisplayForm() })
+          this.props.onEditDisplay(values, () => { this.hideDisplayFormModal() })
         }
       }
     })
@@ -158,7 +156,8 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       displays,
       loginUser,
       onAddDisplay,
-      onDeleteDisplay
+      onDeleteDisplay,
+      onCheckName
     } = this.props
     const projectId = params.pid
 
@@ -175,7 +174,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
       <Button
         key="back"
         size="large"
-        onClick={this.hideDisplayForm}
+        onClick={this.hideDisplayFormModal}
       >
         取 消
       </Button>
@@ -194,13 +193,13 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
 
     const addButton = loginUser.admin
       ? (
-        <Col xl={2} lg={2} md={2} sm={2} xs={24} className={stylesDashboard.addCol}>
+        <Col md={2} sm={24} className={stylesDashboard.addCol}>
           <Tooltip placement="bottom" title="新增">
             <Button
               size="large"
               type="primary"
               icon="plus"
-              onClick={this.showDisplayForm('add')}
+              onClick={this.showDisplayFormModal('add')}
             />
           </Tooltip>
         </Col>
@@ -213,7 +212,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
         <Helmet title="Display" />
         <Container.Title>
           <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+            <Col xl={18} lg={16} md={12} sm={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="/">
@@ -222,9 +221,9 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+            <Col xl={6} lg={8} md={12} sm={24}>
               <Row>
-                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
+                <Col md={22} sm={24} className={searchCol}>
                   <Search
                     size="large"
                     className={`${utilStyles.searchInput} ${loginUser.admin ? stylesDashboard.searchInputAdmin : ''}`}
@@ -243,7 +242,7 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
             displays={displaysFiltered}
             onDisplayClick={this.goToDisplay}
             onAdd={onAddDisplay}
-            onEdit={this.showDisplayForm}
+            onEdit={this.showDisplayFormModal}
             onCopy={this.onCopy}
             onDelete={onDeleteDisplay}
           />
@@ -253,12 +252,13 @@ export class Display extends React.Component<IDisplayProps, IDisplayStates> {
           wrapClassName="ant-modal-small"
           visible={formVisible}
           footer={modalButtons}
-          onCancel={this.hideDisplayForm}
+          onCancel={this.hideDisplayFormModal}
         >
-          <DisplayForm
+          <DisplayFormModal
             projectId={projectId}
             type={formType}
-            ref={(f) => { this.displayForm = f }}
+            onCheckName={onCheckName}
+            ref={this.refHandlers.displayFormModal}
           />
         </Modal>
       </Container>
@@ -276,7 +276,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadDisplays: (projectId) => dispatch(loadDisplays(projectId)),
     onDeleteDisplay: (id) => () => dispatch(deleteDisplay(id)),
     onAddDisplay: (display, resolve) => dispatch(addDisplay(display, resolve)),
-    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve))
+    onEditDisplay: (display, resolve) => dispatch(editDisplay(display, resolve)),
+    onCheckName: (type, data, resolve, reject) => dispatch(checkNameUniqueAction(type, data, resolve, reject))
   }
 }
 

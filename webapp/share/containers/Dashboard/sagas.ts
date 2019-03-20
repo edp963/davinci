@@ -72,8 +72,18 @@ export function* getWidget (action) {
 
 export function* getResultset (action) {
   const { payload } = action
-  const { renderType, itemId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { renderType, itemId, dataToken, requestParams } = payload
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    pagination,
+    ...rest
+  } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
     const resultset = yield call(request, {
@@ -82,18 +92,22 @@ export function* getResultset (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
-    yield put(resultsetGetted(renderType, itemId, resultset.payload))
+    const { resultList } = resultset.payload
+    resultset.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(resultsetGetted(renderType, itemId, requestParams, resultset.payload))
   } catch (err) {
     errorHandler(err)
   }
 }
 
 export function* getWidgetCsv (action) {
-  const { itemId, params: parameters, token } = action.payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { itemId, requestParams, token } = action.payload
+  const { filters, linkageFilters, globalFilters, variables, linkageVariables, globalVariables, ...rest } = requestParams
 
   try {
     const path = yield call(request, {
@@ -102,7 +116,7 @@ export function* getWidgetCsv (action) {
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
     yield put(widgetCsvLoaded(itemId))
@@ -119,15 +133,15 @@ export function* getWidgetCsv (action) {
 export function* getCascadeSourceFromDashboard (action) {
   try {
     const { payload } = action
-    const { controlId, viewId, dataToken, column, parents } = payload
-    const params = { column, parents }
+    const { controlId, viewId, dataToken, columns, parents } = payload
+    const params = { columns, parents }
 
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${dataToken}/distinctvalue/${viewId}`,
       data: params
     })
-    yield put(cascadeSourceFromDashboardLoaded(controlId, column, asyncData.payload[column]))
+    yield put(cascadeSourceFromDashboardLoaded(controlId, columns, asyncData.payload))
   } catch (err) {
     yield put(loadCascadeSourceFromDashboardFail(err))
     errorHandler(err)

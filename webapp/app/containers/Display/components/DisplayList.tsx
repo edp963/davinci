@@ -1,21 +1,14 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
-import { WrappedFormUtils } from 'antd/lib/form/Form'
+import React from 'react'
+import classnames from 'classnames'
 
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Icon = require('antd/lib/icon')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
+import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
+import { IconProps } from 'antd/lib/icon'
 const styles = require('../Display.less')
 
-import EllipsisList from '../../../components/EllipsisList'
-import DisplayForm from './DisplayForm'
+import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import {IProject} from '../../Projects'
-import { IconProps } from 'antd/lib/icon'
+import { IProject } from '../../Projects'
+import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 export interface IDisplay {
   id: number
@@ -24,10 +17,11 @@ export interface IDisplay {
   publish: boolean
   avatar: string
   description: string
+  teamIds: any[]
 }
 
 export interface IDisplayEvent {
-  onDisplayClick: (display: IDisplay) => void
+  onDisplayClick: (display: IDisplay) => () => void
   onAdd: (display: IDisplay, resolve: () => void) => void
   onEdit: (display: IDisplay, resolve: () => void) => void
   onCopy: (display: IDisplay) => void
@@ -38,24 +32,31 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
+  viewTeam: any[]
+  selectTeams: any[]
+  onCheckName: (type, data, resolve, reject) => void
+  onLoadViewTeam: (projectId: number, resolve?: any) => any
+  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
 }
 
 interface IDisplayListStates {
+  editingDisplay: IDisplay
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
+  checkedKeys: any[]
 }
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
 
-  private displayForm: WrappedFormUtils
-
   constructor (props: IDisplayListProps) {
     super(props)
     this.state = {
+      editingDisplay: null,
       modalLoading: false,
       formType: 'add',
-      formVisible: false
+      formVisible: false,
+      checkedKeys: []
     }
   }
 
@@ -63,41 +64,66 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
-  private showDisplayForm = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
+  private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
+    this.setState({ modalLoading: true })
+    const { onAdd, onEdit, viewTeam } = this.props
+    const { checkedKeys } = this.state
+    const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+    if (type === 'add') {
+      onAdd({
+        ...display, teamIds
+      }, () => { this.hideDisplayFormModal() })
+    } else {
+      onEdit({
+        ...display, teamIds
+      }, () => { this.hideDisplayFormModal() })
+    }
+  }
+
+  private cancel = () => {
+    this.setState({
+      formVisible: false,
+      modalLoading: false,
+      checkedKeys: []
+    })
+  }
+
+  private showDisplayFormModal = (formType: 'edit' | 'add', display?: IDisplay) => (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation()
     this.setState({
+      editingDisplay: display,
       formType,
       formVisible: true
     }, () => {
-      if (display) {
-        this.displayForm.setFieldsValue(display)
+      const { onLoadViewTeam, projectId } = this.props
+      const { formType } = this.state
+      if (formType === 'edit') {
+        const { onLoadSelectTeams } = this.props
+        new Promise((resolve) => {
+          onLoadViewTeam(projectId, (teams) => {
+            resolve(teams)
+          })
+        }).then((teams) => {
+          onLoadSelectTeams('display', display.id, (result) => {
+            this.setState({
+              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+            })
+          })
+        })
+      } else if (formType === 'add') {
+        onLoadViewTeam(projectId, (result) => {
+          this.setState({
+            checkedKeys: toListBF(result).map((t) => t.id)
+          })
+        })
       }
     })
   }
 
-  private hideDisplayForm = () => {
+  private hideDisplayFormModal = () => {
     this.setState({
       formVisible: false,
       modalLoading: false
-    }, () => {
-      this.displayForm.resetFields()
-    })
-  }
-
-  private onModalOk = () => {
-    const { onAdd, onEdit, projectId } = this.props
-    this.displayForm.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        this.setState({ modalLoading: true })
-        if (this.state.formType === 'add') {
-          onAdd({
-            ...values,
-            projectId
-          }, () => { this.hideDisplayForm() })
-        } else {
-          onEdit(values, () => { this.hideDisplayForm() })
-        }
-      }
     })
   }
 
@@ -106,18 +132,24 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
+  private initCheckNodes = (checkedKeys) => {
+    this.setState({
+      checkedKeys
+    })
+  }
+
   private renderCreate () {
     return (
       <Col
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         key="createDisplay"
       >
         <div className={styles.display}>
-          <div className={styles.container} onClick={this.showDisplayForm('add')}>
+          <div className={styles.container} onClick={this.showDisplayFormModal('add')}>
             <div className={styles.central}>
               <div className={`${styles.item} ${styles.icon}`}><Icon type="plus-circle-o" /></div>
               <div className={`${styles.item} ${styles.text}`}>创建新 Display</div>
@@ -145,11 +177,11 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
     return (
       <Col
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         key={display.id}
         onClick={onDisplayClick(display)}
       >
@@ -161,7 +193,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
             </header>
             <div className={styles.displayActions}>
               <Tooltip title="编辑">
-                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayForm('edit', display)} />
+                <EditIcon className={styles.edit} type="setting" onClick={this.showDisplayFormModal('edit', display)} />
               </Tooltip>
               <Tooltip title="复制">
                 <AdminIcon className={styles.copy} type="copy" onClick={this.delegate(onCopy, display)} />
@@ -183,31 +215,11 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, currentProject } = this.props
+    const { displays, projectId, currentProject, onCheckName, viewTeam } = this.props
+    const { checkedKeys } = this.state
     if (!Array.isArray(displays)) { return null }
 
-    const { formType, formVisible, modalLoading } = this.state
-
-    const modalButtons = [(
-      <Button
-        key="back"
-        size="large"
-        onClick={this.hideDisplayForm}
-      >
-        取 消
-      </Button>
-    ), (
-      <Button
-        key="submit"
-        size="large"
-        type="primary"
-        loading={modalLoading}
-        disabled={modalLoading}
-        onClick={this.onModalOk}
-      >
-        保 存
-      </Button>
-    )]
+    const { editingDisplay, formType, formVisible, modalLoading } = this.state
 
     let addAction
     if (currentProject && currentProject.permission) {
@@ -227,19 +239,19 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
         >
           {addAction}
         </Row>
-        <Modal
-          title={`${formType === 'add' ? '新增' : '修改'} Display`}
-          wrapClassName="ant-modal-small"
+        <DisplayFormModal
+          projectId={projectId}
+          display={editingDisplay}
           visible={formVisible}
-          footer={modalButtons}
-          onCancel={this.hideDisplayForm}
-        >
-          <DisplayForm
-            projectId={projectId}
-            type={formType}
-            ref={(f) => { this.displayForm = f }}
-          />
-        </Modal>
+          loading={modalLoading}
+          type={formType}
+          onCheckName={onCheckName}
+          onSave={this.saveDisplay}
+          onCancel={this.cancel}
+          viewTeam={viewTeam}
+          checkedKeys={checkedKeys}
+          initCheckNodes={this.initCheckNodes}
+        />
       </div>
     )
   }

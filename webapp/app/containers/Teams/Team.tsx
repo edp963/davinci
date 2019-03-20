@@ -1,32 +1,25 @@
 import * as React from 'react'
+import { compose } from 'redux'
 import { connect } from 'react-redux'
-const Icon = require('antd/lib/icon')
+import { Icon, Tabs, Breadcrumb } from 'antd'
+const TabPane = Tabs.TabPane
 import { Link } from 'react-router'
 import Box from '../../components/Box'
-import {InjectedRouter} from 'react-router/lib/Router'
+import { InjectedRouter } from 'react-router/lib/Router'
 import MemberList from './component/MemberList'
 import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
 import TeamList from './component/TeamList'
 const styles = require('./Team.less')
 const utilStyles = require('../../assets/less/util.less')
-const Tabs = require('antd/lib/tabs')
-const TabPane = Tabs.TabPane
-const Breadcrumb = require('antd/lib/breadcrumb')
 import Avatar from '../../components/Avatar'
-import {compose} from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import reducer from './reducer'
-import injectSaga from '../../utils/injectSaga'
-import saga from './sagas'
-// import reducerApp from '../App/reducer'
-// import sagaApp from '../App/sagas'
+
 import {
   loadTeamProjects, loadTeamMembers, loadTeamTeams, loadTeamDetail, pullProjectInTeam, updateTeamProjectPermission, deleteTeamProject, deleteTeamMember, changeTeamMemberRole,
   editTeam, deleteTeam, loadTeams, pullMemberInTeam
 } from './actions'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from '../App/selectors'
 import {
   makeSelectCurrentTeamMembers,
   makeSelectCurrentTeamProjects,
@@ -35,10 +28,8 @@ import {
   makeSelectTeams,
   makeSelectTeamRouter
 } from './selectors'
-import {makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjects, makeSelectCurrentOrganizationTeams} from '../Organizations/selectors'
-import {loadOrganizationMembers, loadOrganizationProjects, loadOrganizationTeams} from '../Organizations/actions'
-import reducerOrganization from '../Organizations/reducer'
-import sagaOrganization from '../Organizations/sagas'
+import { makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjects, makeSelectCurrentOrganizationTeams } from '../Organizations/selectors'
+import { loadOrganizationMembers, loadOrganizationProjects, loadOrganizationTeams } from '../Organizations/actions'
 
 export interface ITeam {
   id?: number
@@ -228,6 +219,7 @@ export class Teams extends React.Component<ITeamsProps> {
       currentOrganizationProjects,
       currentOrganizationMembers
     } = this.props
+
     const { avatar, name } = currentTeam
     const  projectNum = currentTeamProjects.length
     const  memberNum = currentTeamMembers.length

@@ -1,73 +1,69 @@
 
-import OperatorTypes from './operatorTypes'
+import OperatorTypes from 'utils/operatorTypes'
 
 export enum FilterTypes {
   InputText = 'inputText',
-  InputNumber = 'inputNumber',
-  NumberRange = 'NumberRange',
+  // InputNumber = 'inputNumber',
+  NumberRange = 'numberRange',
   Select = 'select',
-  MultiSelect = 'multiSelect',
-  CascadeSelect = 'cascadeSelect',
-  InputDate = 'inputDate',
-  MultiDate = 'multiDate',
+  TreeSelect = 'treeSelect',
+  Date = 'date',
   DateRange = 'dateRange',
-  Datetime = 'datetime',
-  DatetimeRange = 'datetimeRange'
+  MultiDate = 'multiDate'
 }
 
 export const FilterTypeList = [
   FilterTypes.InputText,
-  FilterTypes.InputNumber,
+  // FilterTypes.InputNumber,
   FilterTypes.NumberRange,
   FilterTypes.Select,
-  FilterTypes.MultiSelect,
-  // FilterTypes.CascadeSelect,
-  FilterTypes.InputDate,
-  FilterTypes.MultiDate,
+  FilterTypes.TreeSelect,
+  FilterTypes.Date,
   FilterTypes.DateRange,
-  FilterTypes.Datetime,
-  FilterTypes.DatetimeRange
+  FilterTypes.MultiDate
 ]
 
 export const FilterTypesLocale = {
   [FilterTypes.InputText]: '文本输入框',
-  [FilterTypes.InputNumber]: '数字输入框',
+  // [FilterTypes.InputNumber]: '数字输入框',
   [FilterTypes.NumberRange]: '数字范围输入框',
-  [FilterTypes.Select]: '单选下拉菜单',
-  [FilterTypes.MultiSelect]: '多选下拉菜单',
-  [FilterTypes.CascadeSelect]: '级联下拉菜单',
-  [FilterTypes.InputDate]: '日期选择',
-  [FilterTypes.MultiDate]: '日期多选',
+  [FilterTypes.Select]: '下拉菜单',
+  [FilterTypes.TreeSelect]: '下拉树',
+  [FilterTypes.Date]: '日期选择',
   [FilterTypes.DateRange]: '日期范围选择',
-  [FilterTypes.Datetime]: '日期时间选择',
-  [FilterTypes.DatetimeRange]: '日期时间范围选择'
+  [FilterTypes.MultiDate]: '日期多选'
 }
 
 export const FilterTypesViewSetting = {
   [FilterTypes.InputText]: false,
-  [FilterTypes.InputNumber]: false,
+  // [FilterTypes.InputNumber]: false,
   [FilterTypes.NumberRange]: false,
   [FilterTypes.Select]: true,
-  [FilterTypes.MultiSelect]: true,
-  [FilterTypes.CascadeSelect]: true,
-  [FilterTypes.InputDate]: false,
-  [FilterTypes.MultiDate]: false,
+  [FilterTypes.TreeSelect]: true,
+  [FilterTypes.Date]: false,
   [FilterTypes.DateRange]: false,
-  [FilterTypes.Datetime]: false,
-  [FilterTypes.DatetimeRange]: false
+  [FilterTypes.MultiDate]: false
 }
 
 export const FilterTypesOperatorSetting = {
   [FilterTypes.InputText]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.InputNumber]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
+  // [FilterTypes.InputNumber]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
   [FilterTypes.NumberRange]: [],
-  [FilterTypes.Select]: [OperatorTypes.Equal, OperatorTypes.NotEqual],
-  [FilterTypes.MultiSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
-  [FilterTypes.InputDate]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.MultiDate]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.Select]: {
+    normal: [OperatorTypes.Equal, OperatorTypes.NotEqual],
+    multiple: [OperatorTypes.In, OperatorTypes.NotIn]
+  },
+  [FilterTypes.TreeSelect]: [OperatorTypes.In, OperatorTypes.NotIn],
+  [FilterTypes.Date]: [OperatorTypes.Equal, OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
   [FilterTypes.DateRange]: [],
-  [FilterTypes.Datetime]: [OperatorTypes.LessThan, OperatorTypes.LessThanOrEqual, OperatorTypes.GreaterThan, OperatorTypes.GreaterThanOrEqual],
-  [FilterTypes.DatetimeRange]: []
+  [FilterTypes.MultiDate]: [OperatorTypes.Equal, OperatorTypes.In, OperatorTypes.NotIn]
 }
+
+export const CascadeFilterTypes = [
+  FilterTypes.Select,
+  FilterTypes.TreeSelect
+]
+
+export const defaultFilterControlGridProps = { xxl: 3, xl: 4, lg: 6, md: 12}
 
 export default FilterTypes

@@ -63,12 +63,13 @@ function shareReducer (state = initialState, { type, payload }) {
           obj[item.id] = {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: []
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
@@ -93,12 +94,13 @@ function shareReducer (state = initialState, { type, payload }) {
           1: {
             datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: []
+              variables: [],
+              linkageVariables: [],
+              globalVariables: [],
+              pagination: {}
             },
             downloadCsvLoading: false,
             interactId: '',
@@ -109,7 +111,6 @@ function shareReducer (state = initialState, { type, payload }) {
       if (!widgets) {
         widgets = []
       }
-      console.log(widgets.concat(payload.widget))
       return state.set('widgets', widgets.concat(payload.widget))
     case LOAD_SHARE_RESULTSET:
       return state.set('itemsInfo', {
@@ -117,27 +118,29 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: true,
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            linkageFilters: payload.params.linkageFilters,
-            globalFilters: payload.params.globalFilters,
-            params: payload.params.params,
-            linkageParams: payload.params.linkageParams,
-            globalParams: payload.params.globalParams
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            linkageFilters: payload.requestParams.linkageFilters,
+            globalFilters: payload.requestParams.globalFilters,
+            variables: payload.requestParams.variables,
+            linkageVariables: payload.requestParams.linkageVariables,
+            globalVariables: payload.requestParams.globalVariables,
+            pagination: payload.requestParams.pagination,
+            nativeQuery: payload.requestParams.nativeQuery
           }
         }
       })
     case DRILL_DASHBOARDITEM:
-      if (!itemsInfo[payload.itemId]['queryParams']['drillHistory']) {
-        itemsInfo[payload.itemId]['queryParams']['drillHistory'] = []
+      if (!itemsInfo[payload.itemId].queryConditions.drillHistory) {
+        itemsInfo[payload.itemId].queryConditions.drillHistory = []
       }
       return state.set('itemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].concat(payload.drillHistory)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillHistory: itemsInfo[payload.itemId].queryConditions.drillHistory.concat(payload.drillHistory)
           }
         }
       })
@@ -146,9 +149,9 @@ function shareReducer (state = initialState, { type, payload }) {
         ...itemsInfo,
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
-          queryParams: {
-            ...itemsInfo[payload.itemId]['queryParams'],
-            drillHistory: itemsInfo[payload.itemId]['queryParams']['drillHistory'].slice(0, payload.index + 1)
+          queryConditions: {
+            ...itemsInfo[payload.itemId].queryConditions,
+            drillHistory: itemsInfo[payload.itemId].queryConditions.drillHistory.slice(0, payload.index + 1)
           }
         }
       })
@@ -158,7 +161,7 @@ function shareReducer (state = initialState, { type, payload }) {
         [payload.itemId]: {
           ...itemsInfo[payload.itemId],
           loading: false,
-          datasource: payload.resultset,
+          datasource: payload.resultset || { resultList: [] },
           renderType: payload.renderType
         }
       })
@@ -182,10 +185,7 @@ function shareReducer (state = initialState, { type, payload }) {
     case LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS:
       return state.set('dashboardCascadeSources', {
         ...dashboardCascadeSources,
-        [payload.controlId]: {
-          ...dashboardCascadeSources[payload.controlId],
-          [payload.column]: payload.values
-        }
+        [payload.controlId]: payload.values
       })
     case RESIZE_ALL_DASHBOARDITEM:
       return state.set(

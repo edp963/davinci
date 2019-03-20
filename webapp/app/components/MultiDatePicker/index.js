@@ -4,7 +4,7 @@ import $ from 'jquery'
 import moment from 'moment'
 import 'bootstrap-datepicker'
 
-import Icon from 'antd/lib/icon'
+import { Icon } from 'antd'
 
 import styles from './MultiDatePicker.less'
 

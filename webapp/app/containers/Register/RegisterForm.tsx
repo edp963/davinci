@@ -19,7 +19,7 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 const styles = require('../Login/Login.less')
 
 interface IRegisterFormProps {

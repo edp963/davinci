@@ -2,7 +2,7 @@ import * as React from 'react'
 import * as classnames from 'classnames'
 import { IChartInfo } from '../Widget'
 import { checkChartEnable } from '../util'
-const Tooltip = require('antd/lib/tooltip')
+import { Tooltip } from 'antd'
 const styles = require('./Workbench.less')
 
 interface IChartIndicatorProps {

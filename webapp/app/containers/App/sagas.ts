@@ -18,10 +18,9 @@
  * >>
  */
 
-import { takeLatest, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, throttle } from 'redux-saga/effects'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, JOIN_ORGANIZATION } from './constants'
 import {
   logged,
@@ -223,7 +222,7 @@ export function* joinOrganization (action): IterableIterator<any> {
   }
 }
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
@@ -231,6 +230,6 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeLatest(UPDATE_PROFILE, updateProfile as any),
     takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
     takeLatest(JOIN_ORGANIZATION, joinOrganization as any)
-  ]
+  ])
 }
 
