@@ -875,12 +875,12 @@ class StreamingStatementCreator implements PreparedStatementCreator {
     public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
         final PreparedStatement statement = connection.prepareStatement(sql, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
         switch (dataTypeEnum) {
-            case ORACLE:
-                statement.setFetchSize(0xFFFF);
-                break;
-            default:
+            case MYSQL:
                 statement.setFetchSize(Integer.MIN_VALUE);
                 break;
+            default:
+                statement.setFetchSize(0xFFFF);
+
         }
         return statement;
     }
