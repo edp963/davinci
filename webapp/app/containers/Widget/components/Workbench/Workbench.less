@@ -26,13 +26,14 @@
       flex: 1;
       display: flex;
       flex-direction: row;
+      min-width: 0;
 
       .model {
         flex: 9;
         background-color: @light-bg;
-        flex-shrink: 0;
         display: flex;
         flex-direction: column;
+        min-width: 0;
       }
 
       .config {
@@ -41,7 +42,6 @@
         background-color: @white;
         border-left: 1px solid @border-color-base;
         box-shadow: @left-side-box-shadow;
-        flex-shrink: 0;
         display: flex;
         flex-direction: column;
       }
