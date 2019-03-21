@@ -313,10 +313,10 @@ export class FilterSettingForm extends React.PureComponent<IFilterSettingFormPro
       )
     }
 
-    const dateRadios = this.dateRadioSource.map((arr) => {
+    const dateRadios = this.dateRadioSource.map((arr, index) => {
       return arr.map((s) => (
         <Radio key={s.value} value={s.value} className={styles.radio}>{s.name}</Radio>
-      )).concat(<br />)
+      )).concat(<br key={index} />)
     })
 
     let shownBlock
