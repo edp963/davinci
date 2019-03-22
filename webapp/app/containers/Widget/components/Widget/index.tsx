@@ -19,6 +19,7 @@ import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection
 import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
+import { IRichTextConfig } from '../Workbench/ConfigSections'
 import { IModel } from '../Workbench/index'
 import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
@@ -71,6 +72,7 @@ export interface IChartStyles {
   scorecard?: IScorecardConfig
   iframe?: IframeConfig
   table?: ITableConfig
+  richText?: IRichTextConfig
 }
 
 export interface IChartInfo {
@@ -114,11 +116,13 @@ export interface IWidgetProps {
   mode: WidgetMode
   model: IModel
   pagination?: IPaginationParams
+  editing: boolean
   queryVariables?: IQueryVariableMap
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
   getDataDrillDetail?: (position: string) => void
   onPaginationChange?: (pageNo: number, pageSize: number) => void
+  onChartStylesChange?: (propPath: string[], value: string) => void
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   computed?: any[]
@@ -141,6 +145,11 @@ export interface IWidgetWrapperStates {
 }
 
 export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperStates> {
+
+  public static defaultProps = {
+    editing: false
+  }
+
   constructor (props) {
     super(props)
     this.state = {
@@ -172,11 +181,22 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
     }
   }
 
+  private needMask = () => {
+    const { selectedChart, cols, rows, metrics } = this.props
+    switch (selectedChart) {
+      case ChartTypes.Iframe:
+        return false
+      case ChartTypes.RichText:
+        return cols.length || rows.length || metrics.length
+      default:
+        return true
+    }
+  }
+
   public render () {
-    const { data, loading, selectedChart, mode } = this.props
+    const { data, loading } = this.props
     const { width, height } = this.state
-    const isIframeChart = selectedChart === ChartTypes.Iframe && mode === 'chart'
-    const empty = !(data.length || isIframeChart)
+    const empty = !(data.length || !this.needMask())
 
     const widgetProps = { width, height, ...this.props }
 
@@ -195,7 +215,7 @@ export class Widget extends React.Component<IWidgetWrapperProps, IWidgetWrapperS
         : (<Pivot {...widgetProps} />)
     }
 
-    let maskContent
+    let maskContent = null
     if (loading) {
       maskContent = (
         <>
