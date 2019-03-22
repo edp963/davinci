@@ -22,7 +22,8 @@ import { IChartProps } from '../../components/Chart'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getAggregatorLocale
+  getAggregatorLocale,
+  getFormattedValue
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -74,7 +75,16 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const { selectedItems } = drillOptions
   const labelOption = {
-    label: getLabelOption('bar', label)
+    label: {
+      ...getLabelOption('bar', label, false, {
+        formatter: (params) => {
+          const { value, seriesName } = params
+          const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+          const formatted = getFormattedValue(value, m.format)
+          return formatted
+        }
+      })
+    }
   }
 
   const xAxisColumnName = cols.length ? cols[0].name : ''
