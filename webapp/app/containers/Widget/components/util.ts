@@ -620,11 +620,12 @@ export function getChartTooltipLabel (type, seriesData, options) {
       })
       .concat(metricColumns.map((mc) => {
         const decodedName = decodeMetricName(mc.name)
-        const value = record
+        let value = record
           ? Array.isArray(record)
             ? record.reduce((sum, r) => sum + r[`${mc.agg}(${decodedName})`], 0)
             : record[`${mc.agg}(${decodedName})`]
           : 0
+        value = getFormattedValue(value, mc.format)
         return `${decodedName}: ${value}`
       }))
       .join('<br/>')
