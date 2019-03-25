@@ -56,12 +56,8 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
 
   public static displayName = 'DisplayContainer'
 
-  private container: HTMLDivElement
-  private content: HTMLDivElement
-  private refHandlers = {
-    container: (f) => { this.container = f },
-    content: (f) => { this.content = f }
-  }
+  private container = React.createRef<HTMLDivElement>()
+  private content = React.createRef<HTMLDivElement>()
 
   constructor (props: IDisplayContainerProps) {
     super(props)
@@ -98,8 +94,8 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
   }
 
   private updateStyle = (zoomRatio: number, slideParams: any, onScaleChange: (scale: number) => void) => {
-    const { offsetHeight, offsetWidth } = this.container
-    const [containerWidth, containerHeight] = [offsetWidth, offsetHeight].map((item) => Math.max(zoomRatio, 1) * item)
+    const { clientWidth, clientHeight } = this.container.current
+    const [containerWidth, containerHeight] = [clientWidth, clientHeight].map((item) => Math.max(zoomRatio, 1) * item)
 
     let scale = (slideParams.width / slideParams.height > containerWidth / containerHeight) ?
       // landscape
@@ -108,8 +104,8 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
       (containerHeight - 64) / slideParams.height * zoomRatio
     scale = +(Math.floor(scale / 0.05) * 0.05).toFixed(2)
 
-    const leftRightPadding = Math.max((offsetWidth - slideParams.width * scale) / 2, 32)
-    const topBottomPadding = Math.max((offsetHeight - slideParams.height * scale) / 2, 32)
+    const leftRightPadding = Math.max((clientWidth - slideParams.width * scale) / 2, 32)
+    const topBottomPadding = Math.max((clientHeight - slideParams.height * scale) / 2, 32)
     const nextStyle = {
       width: containerWidth,
       height: containerHeight,
@@ -123,10 +119,10 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
   public createCoverCut = () => {
     const { onCoverCutCreated } = this.props
     const { scale } = this.state
-    this.content.style.transform = 'scale(1)'
+    this.content.current.style.transform = 'scale(1)'
     // captureVideosWithImages()
     html2canvas(this.content, { useCORS: true }).then((canvas) => {
-      this.content.style.transform = `scale(${scale})`
+      this.content.current.style.transform = `scale(${scale})`
       canvas.toBlob((blob) => {
         onCoverCutCreated(blob)
       })
@@ -218,7 +214,7 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
 
     return (
       <div className={styles.editor}>
-        <div ref={this.refHandlers.container} className={styles.editorContainer}>
+        <div ref={this.container} className={styles.editorContainer}>
           <div
             className={styles.displayContainer}
             style={{
@@ -230,7 +226,7 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
           >
             <div className={styles.displayPanelWrapper}>
               <div
-                ref={this.refHandlers.content}
+                ref={this.content}
                 className={styles.displayPanel}
                 style={slideStyle}
                 onClick={onLayersSelectionRemove}
