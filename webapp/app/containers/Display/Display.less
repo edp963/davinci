@@ -155,11 +155,6 @@
       display: flex;
       flex-direction: column;
 
-      .editor {
-        flex: 1;
-        position: relative;
-      }
-
       .bottom {
         height: 40px;
         background-color: @white;
@@ -380,36 +375,22 @@
   }
 }
 
-.editorContainer {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  overflow: auto;
-}
-
 .displayContainer {
-  transition: all ease-in 200ms;
+  flex: 1;
+  overflow: hidden;
 }
 
-.displayPanelWrapper {
-  width: 100%;
-  height: 100%;
+.displayPanel {
+  position: relative;
+  background-color: #3F51B5;
+  box-shadow: @block-active-box-shadow;
+  transform-origin: 0 0;
+  transition: all ease-in 200ms;
 
-  .displayPanel {
-    position: relative;
-    background-color: #3F51B5;
-    box-shadow: @block-active-box-shadow;
-    transform-origin: 0 0;
-    transition: transform ease-in 200ms;
-
-    .baseline {
-      position: absolute;
-      z-index: 999999;
-    }
+  .baseline {
+    position: absolute;
+    z-index: 999999;
   }
-
 }
 
 .formTitle {
