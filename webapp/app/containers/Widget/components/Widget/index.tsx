@@ -19,7 +19,7 @@ import { IAreaSelectConfig } from '../Workbench/ConfigSections/AreaSelectSection
 import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
-import { IRichTextConfig } from '../Workbench/ConfigSections'
+import { IRichTextConfig, IBarConfig } from '../Workbench/ConfigSections'
 import { IModel } from '../Workbench/index'
 import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
@@ -73,6 +73,7 @@ export interface IChartStyles {
   iframe?: IframeConfig
   table?: ITableConfig
   richText?: IRichTextConfig
+  bar?: IBarConfig
 }
 
 export interface IChartInfo {

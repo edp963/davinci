@@ -49,6 +49,16 @@ const bar: IChartInfo = {
       barChart: false,
       percentage: false
     },
+    bar: {
+      border: {
+        color: '#000',
+        width: 0,
+        type: 'solid',
+        radius: 0
+      },
+      gap: 30,
+      width: null
+    },
     label: {
       showLabel: false,
       labelPosition: CHART_LABEL_POSITIONS[0].value,
