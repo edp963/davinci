@@ -575,10 +575,10 @@ export function getPivotTooltipLabel (seriesData, cols, rows, metrics, color, la
 
 export function getChartTooltipLabel (type, seriesData, options) {
   const { cols, metrics, color, size, scatterXAxis, tip } = options
-  let dimetionColumns = cols.map((c) => c.name)
+  let dimentionColumns: any[] = cols
   let metricColumns = [...metrics]
   if (color) {
-    dimetionColumns = dimetionColumns.concat(color.items.map((i) => i.name))
+    dimentionColumns = dimentionColumns.concat(color.items)
   }
   if (size) {
     metricColumns = metricColumns.concat(size.items)
@@ -590,12 +590,9 @@ export function getChartTooltipLabel (type, seriesData, options) {
     metricColumns = metricColumns.concat(tip.items)
   }
 
-  dimetionColumns = dimetionColumns.reduce((arr, dc) => {
-    if (!arr.includes(dc)) {
-      arr.push(dc)
-    }
-    return arr
-  }, [])
+  dimentionColumns = dimentionColumns.filter((dc, idx) =>
+    dimentionColumns.findIndex((c) => c.name === dc.name) === idx)
+
   metricColumns = metricColumns.reduce((arr, mc) => {
     const decodedName = decodeMetricName(mc.name)
     if (!arr.find((m) => decodeMetricName(m.name) === decodedName && m.agg === mc.agg)) {
@@ -609,14 +606,15 @@ export function getChartTooltipLabel (type, seriesData, options) {
     const record = (type === 'funnel' || type === 'map')
       ? seriesData[dataIndex]
       : seriesData[seriesIndex][dataIndex]
-    return dimetionColumns
+    return dimentionColumns
       .map((dc) => {
-        const value = record
+        let value = record
           ? Array.isArray(record)
-            ? record[0][dc]
-            : record[dc]
+            ? record[0][dc.name]
+            : record[dc.name]
           : ''
-        return `${dc}: ${value}`
+        value = getFormattedValue(value, dc.format)
+        return `${getFieldAlias(dc.field, {}) || dc.name}: ${value}` // @FIXME dynamic field alias by queryVariable in dashboard
       })
       .concat(metricColumns.map((mc) => {
         const decodedName = decodeMetricName(mc.name)
