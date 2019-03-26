@@ -113,7 +113,7 @@ export class DisplayContainer extends React.Component<IDisplayContainerProps, ID
   public createCoverCut = () => {
     const { onCoverCutCreated } = this.props
     const transformTemp = this.content.current.style.transform
-    this.content.current.style.transform = transformTemp.replace(/scale\([\.|\d]*\)/, 'scale(1)')
+    this.content.current.style.transform = 'scale(1)'
     // captureVideosWithImages()
     html2canvas(this.content.current, { useCORS: true }).then((canvas) => {
       this.content.current.style.transform = transformTemp
