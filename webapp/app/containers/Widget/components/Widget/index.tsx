@@ -117,7 +117,7 @@ export interface IWidgetProps {
   mode: WidgetMode
   model: IModel
   pagination?: IPaginationParams
-  editing: boolean
+  editing?: boolean
   queryVariables?: IQueryVariableMap
   onCheckTableInteract?: () => boolean
   onDoInteract?: (triggerData: object) => void
