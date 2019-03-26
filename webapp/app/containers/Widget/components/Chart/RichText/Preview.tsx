@@ -35,7 +35,7 @@ export class RichTextPreview extends React.PureComponent<IRichTextPreviewProps> 
     const fieldRegx = new RegExp(`${prefix}(.+?)${suffix}`, 'g')
 
     const formattedText = content.replace(fieldRegx, (_, p1: string) => {
-      if (!data.length || !data[0][p1]) { return '' }
+      if (!data.length || data[0][p1] === null) { return '' }
       const text = data.map((item) => item[p1]).join(', ')
       return text
     })
@@ -44,10 +44,12 @@ export class RichTextPreview extends React.PureComponent<IRichTextPreviewProps> 
 
   public render () {
     return (
-      <div
-        className={Styles.content}
-        dangerouslySetInnerHTML={{__html: this.renderFormattedText()}}
-      />
+      <div className={Styles.content}>
+        <div
+          className="ql-editor"
+          dangerouslySetInnerHTML={{__html: this.renderFormattedText()}}
+        />
+      </div>
     )
   }
 }

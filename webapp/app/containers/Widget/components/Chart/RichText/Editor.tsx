@@ -22,6 +22,8 @@ import React from 'react'
 import { Icon, Dropdown, Menu, Row, Col, Button, Modal } from 'antd'
 const MenuItem = Menu.Item
 import ReactQuill, { Quill } from 'react-quill'
+import ImageResize from 'quill-image-resize-module'
+import 'react-quill/dist/quill.core.css'
 import 'react-quill/dist/quill.snow.css'
 import Preview from './Preview'
 const Styles = require('./RichText.less')
@@ -52,6 +54,7 @@ export class RichTextEditor extends React.Component<IRichTextEditorProps, IRichT
     const size = Quill.import('attributors/style/size')
     size.whitelist = props.fontSizes.map((fontSize) => `${fontSize}px`)
     Quill.register(size, true)
+    Quill.register('modules/imageResize', ImageResize)
   }
 
   private toolbarId = `react_quill_${new Date().getTime()}`
@@ -59,6 +62,9 @@ export class RichTextEditor extends React.Component<IRichTextEditorProps, IRichT
   private modules = {
     toolbar: {
       container: `#${this.toolbarId}`
+    },
+    imageResize: {
+      displaySize: true
     }
   }
 
@@ -100,28 +106,31 @@ export class RichTextEditor extends React.Component<IRichTextEditorProps, IRichT
 
     return (
       <div className={Styles.editor}>
-        <div className="text-editor">
-          <div id={this.toolbarId}>
-            <select className="ql-header" onChange={this.headerChange} />
-            <select className="ql-font" />
-            <select className="ql-size" defaultValue="13px">
-              {fontSizes.map((size) => <option value={`${size}px`} key={size}>{`${size}px`}</option>)}
-            </select>
-            <select className="ql-align" />
-            <button className="ql-bold" />
-            <button className="ql-italic" />
-            <button className="ql-underline" />
-            <button className="ql-strike" />
-            <select className="ql-color" />
-            <button className="ql-link" />
-            <button className="ql-clean" />
+        <div id={this.toolbarId}>
+          <select className="ql-header" onChange={this.headerChange} />
+          <select className="ql-font" />
+          <select className="ql-size" defaultValue="13px">
+            {fontSizes.map((size) => <option value={`${size}px`} key={size}>{`${size}px`}</option>)}
+          </select>
+          <button className="ql-bold" />
+          <button className="ql-italic" />
+          <button className="ql-underline" />
+          <button className="ql-strike" />
+          <select className="ql-color" />
+          <select className="ql-background" />
 
-            <Dropdown overlay={fieldItems}>
-              <a className={Styles.selectLink}>
-                <Icon type="select" />
-              </a>
-            </Dropdown>
-          </div>
+          <button className="ql-list" value="ordered" />
+          <button className="ql-list" value="bullet" />
+          <select className="ql-align" />
+          <button className="ql-link" />
+          <button className="ql-image" />
+          <button className="ql-clean" />
+
+          <Dropdown overlay={fieldItems}>
+            <a className={Styles.selectLink}>
+              <Icon type="select" />
+            </a>
+          </Dropdown>
         </div>
         <ReactQuill
           ref={this.reactQuill}
