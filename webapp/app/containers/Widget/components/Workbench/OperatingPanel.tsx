@@ -26,6 +26,7 @@ import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelec
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
 import TableSection, { ITableConfig } from './ConfigSections/TableSection'
+import BarSection from './ConfigSections/BarSection'
 import { encodeMetricName, decodeMetricName, getPivot, getTable, getPivotModeSelectedCharts, checkChartEnable } from '../util'
 import { PIVOT_DEFAULT_SCATTER_SIZE_TIMES } from '../../../../globalConstants'
 import PivotTypes from '../../config/pivot/PivotTypes'
@@ -1027,9 +1028,19 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     this.setWidgetProps(dataParams, styleParams, 'refresh')
   }
 
-  private styleChange = (name) => (prop, value) => {
+  private styleChange = (name) => (prop, value, propPath?: string[]) => {
     const { dataParams, styleParams } = this.state
-    styleParams[name][prop] = value
+    if (!propPath || !propPath.length) {
+      styleParams[name][prop] = value
+    } else {
+      propPath.reduce((subStyle, currentPathName, idx) => {
+        const childStyle = subStyle[currentPathName]
+        if (idx === propPath.length - 1) {
+          childStyle[prop] = value
+        }
+        return childStyle
+      }, styleParams[name])
+    }
     let renderType: RenderType = 'clear'
     switch (prop) {
       case 'layerType':
@@ -1278,7 +1289,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1465,6 +1476,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               config={spec as ISpecConfig}
               onChange={this.styleChange('spec')}
               isLegendSection={mapLegendLayerType}
+            />}
+            {bar && <BarSection
+              onChange={this.styleChange('bar')}
+              config={bar}
             />}
             { mapLabelLayerType
                 ? label && <LabelSection

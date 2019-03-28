@@ -54,6 +54,18 @@
 
 .table {
 
+  &.noBorder {
+    :global {
+      .ant-table-thead > tr > th {
+        border: none;
+      }
+
+      .ant-table-tbody > tr > td {
+        border: none;
+      }
+    }
+  }
+
   :global {
     .ant-table,
     .ant-pagination,
@@ -65,12 +77,14 @@
       // @FIXME
       margin-right: 15px;
       margin-bottom: 0 !important;
+      background: transparent !important;
       .hideScrollbar
     }
 
     .ant-table-thead th {
       padding: 0;
       height: 1px;
+      background: transparent !important;
 
       & > div {
         height: 100%;
@@ -117,24 +131,23 @@
 
   .tableCell {
     height: 100%;
+    padding: 10px 8px;
     display: flex;
 
     .valCell {
-      padding: 10px 8px;
       flex: 1;
       display: flex;
-      align-items: center;
+      // align-items: center;
     }
     .cdtCell {
       padding: 4px 0;
-
     }
   }
   .selectedRow {
     background-color: #d2eafb;
   }
   .unSelectedRow {
-    background-color: #fff;
+    background-color: transparent;
   }
 }
 

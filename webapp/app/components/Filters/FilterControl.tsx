@@ -71,7 +71,8 @@ export class FilterControl extends React.PureComponent<IFilterControlProps, {}> 
     if (!FilterTypesViewSetting[type]) { return } // @TODO 固定过滤项处理
     const { key, fromView, fromModel, fromText, fromParent } = filter
     if (!fromView) { return }
-    const columns = [fromModel, fromText]
+    const columns = [fromModel]
+    if (fromText !== fromModel) { columns.push(fromModel) }
     if (!columns.join('').length) { return }
     // if (fromChild) { columns.push(fromChild) }
     if (fromParent) { columns.push(fromParent) }

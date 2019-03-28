@@ -19,10 +19,12 @@
  */
 
 import { IChartProps } from '../../components/Chart'
+import barDefaultConfig from '../../config/chart/bar'
 import {
   decodeMetricName,
   getChartTooltipLabel,
-  getAggregatorLocale
+  getAggregatorLocale,
+  getFormattedValue
 } from '../../components/util'
 import {
   getDimetionAxisOption,
@@ -48,12 +50,15 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const {
     spec,
+    bar,
     label,
     legend,
     xAxis,
     yAxis,
     splitLine
   } = chartStyles
+  const { border: barBorder, gap: barGap, width: barWidth } = bar || (barDefaultConfig.style as any).bar
+  const { color: borderColor, width: borderWidth, type: borderType, radius: barBorderRadius } = barBorder
 
   const {
     stack,
@@ -74,7 +79,16 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
 
   const { selectedItems } = drillOptions
   const labelOption = {
-    label: getLabelOption('bar', label)
+    label: {
+      ...getLabelOption('bar', label, false, {
+        formatter: (params) => {
+          const { value, seriesName } = params
+          const m = metrics.find((m) => decodeMetricName(m.name) === seriesName)
+          const formatted = getFormattedValue(value, m.format)
+          return formatted
+        }
+      })
+    }
   }
 
   const xAxisColumnName = cols.length ? cols[0].name : ''
@@ -206,10 +220,16 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         }),
         itemStyle: {
           normal: {
-            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
-            // color: color.items[0].config.values[k]
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1,
+            borderColor,
+            borderWidth,
+            borderType,
+            barBorderRadius,
+            color: color.value[m.name] || defaultThemeColors[i]
           }
         },
+        barGap: `${barGap}%`,
+        barWidth: barWidth ? `${barWidth}%` : undefined,
         // lineStyle: {
         //   normal: {
         //     opacity: interactIndex === undefined ? 1 : 0.25
