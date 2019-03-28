@@ -213,6 +213,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
     normal: {
       show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
       position: positionVale,
+      distance: 15,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
@@ -222,6 +223,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
       emphasis: {
         show: showLabel,
         position: positionVale,
+        distance: 15,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,
@@ -300,8 +302,8 @@ export function getGridPositions (
     if (showLegend && seriesNames.length > 1) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
-          ? 32
-          : 32 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+          ? 64
+          : 64 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
         : 0
     }
     return grid
