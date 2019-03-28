@@ -70,6 +70,7 @@ export interface ITableConfig {
   leftFixedColumns: string[]
   rightFixedColumns: string[]
   headerFixed: boolean
+  bordered: boolean
   autoMergeCell: boolean
   withPaging: boolean
   pageSize: string
@@ -332,7 +333,7 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
   public render () {
     const { config } = this.props
     const {
-      leftFixedColumns, rightFixedColumns, headerFixed,
+      leftFixedColumns, rightFixedColumns, headerFixed, bordered,
       autoMergeCell, withPaging, pageSize, withNoAggregators } = config
     const {
       validColumns, validHeaderConfig, validColumnConfig,
@@ -359,8 +360,11 @@ export class TableSection extends React.PureComponent<ITableSectionProps, ITable
         <div className={styles.paneBlock}>
           <div className={styles.blockBody}>
             <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
-              <Col span={24}>
+              <Col span={12}>
                 <Checkbox checked={headerFixed} onChange={this.checkboxChange('headerFixed')}>固定表头</Checkbox>
+              </Col>
+              <Col span={12}>
+                <Checkbox checked={bordered} onChange={this.checkboxChange('bordered')}>边框</Checkbox>
               </Col>
             </Row>
           </div>
