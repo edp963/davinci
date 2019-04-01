@@ -76,7 +76,7 @@ public enum DataTypeEnum {
     }
 
     public static DataTypeEnum urlOf(String jdbcUrl) throws SourceException {
-        String url = jdbcUrl.toLowerCase();
+        String url = jdbcUrl.toLowerCase().trim();
         for (DataTypeEnum dataTypeEnum : values()) {
             if (url.startsWith(jdbcUrlPrefix + dataTypeEnum.feature)) {
                 try {
