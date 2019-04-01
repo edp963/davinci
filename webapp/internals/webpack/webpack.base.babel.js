@@ -32,7 +32,7 @@ module.exports = options => ({
       },
       {
         test: /\.js$/, // Transform all .js files required somewhere with Babel
-        exclude: /node_modules/,
+        exclude: /node_modules(?!\/quill-image-drop-module|quill-image-resize-module)/,
         use: {
           loader: 'babel-loader',
           options: options.babelQuery
@@ -158,6 +158,9 @@ module.exports = options => ({
         // point to the locale data folder relative to moment's src/lib/locale
         request: '../../locale'
       })
+    }),
+    new webpack.ProvidePlugin({
+      'window.Quill': 'quill'
     })
   ]),
   resolve: {

@@ -3,6 +3,7 @@ import { IWidgetProps } from '../Widget'
 import Table from './Table'
 import Scorecard from './Scorecard'
 import Iframe from './Iframe'
+import RichText from './RichText'
 import Chart from './Chart'
 import ChartTypes from '../../config/chart/ChartTypes'
 
@@ -29,9 +30,13 @@ export class CombinedChart extends Component<IChartProps, {}> {
           <Scorecard {...this.props} />
         )
       case ChartTypes.Iframe:
-          return (
-            <Iframe {...this.props} />
-          )
+        return (
+          <Iframe {...this.props} />
+        )
+      case ChartTypes.RichText:
+        return (
+          <RichText {...this.props} />
+        )
       default:
         return (
           <Chart {...this.props}/>

@@ -385,6 +385,22 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.operatingPanel.triggerWidgetRefresh(pageNo, pageSize)
   }
 
+  private chartStylesChange = (propPath: string[], value: string) => {
+    const { widgetProps } = this.state
+    const { chartStyles } = widgetProps
+    const updatedChartStyles = { ...chartStyles }
+    propPath.reduce((subObj, propName, idx) => {
+      if (idx === propPath.length - 1) {
+        subObj[propName] = value
+      }
+      return subObj[propName]
+    }, updatedChartStyles)
+    this.setWidgetProps({
+      ...widgetProps,
+      chartStyles: updatedChartStyles
+    })
+  }
+
   private saveSplitSize (newSize: number) {
     localStorage.setItem('workbenchSplitSize', newSize.toString())
   }
@@ -473,7 +489,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
               <Widget
                 {...widgetProps}
                 loading={dataLoading}
+                editing={true}
                 onPaginationChange={this.paginationChange}
+                onChartStylesChange={this.chartStylesChange}
               />
             </div>
           </div>

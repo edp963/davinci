@@ -140,9 +140,19 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
           nextScaleWidth = clientWidth / width
       }
       if (scaleHeight !== nextScaleHeight || scaleWidth !== nextScaleWidth) {
-        this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
+        if (nextScaleHeight === nextScaleWidth) {
+          this.scaleViewport(nextScaleHeight)
+          this.setState({ scale: [1, 1] })
+        } else {
+          this.setState({ scale: [nextScaleWidth, nextScaleHeight] })
+        }
       }
     }
+  }
+
+  private scaleViewport = (scale: number) => {
+    const viewport = document.querySelector('meta[name=viewport]')
+    viewport.setAttribute('content', `width=device-width, initial-scale=${scale}, maximum-scale=${scale}, user-scalable=0`)
   }
 
   private getChartData = (renderType: RenderType, itemId: number, widgetId: number, queryConditions?: Partial<IQueryConditions>) => {

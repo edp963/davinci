@@ -528,6 +528,13 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       [styles.mergedCell]: isMerged
     })
     const cellStyle = { ...basicStyle, ...conditionStyle }
+    if (!conditionStyle) {
+      return (
+        <div className={cellCls} style={basicStyle}>
+          {formattedValue}
+        </div>
+      )
+    }
     return (
       <div className={cellCls} style={basicStyle}>
         <div className={styles.valCell} style={conditionStyle}>{formattedValue}</div>
@@ -730,10 +737,6 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         break
     }
 
-    const cssStyle: React.CSSProperties = {
-      padding: '0',
-      margin: '10px 8px' // number bar do not fill 100% height
-    }
     const divisions = ['transparent 0%']
     if (cellVal < 0) {
       divisions.push(`transparent ${barZeroPosition - cellBarPercentage}%`)
@@ -748,7 +751,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     }
     divisions.push('transparent 100%')
 
-    cssStyle.background = `linear-gradient(90deg, ${divisions.join(',')})`
+    const cssStyle: React.CSSProperties = {
+      background: `linear-gradient(90deg, ${divisions.join(',')})`
+    }
     return cssStyle
   }
 
@@ -857,7 +862,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
   public render () {
     const { data, chartStyles, width } = this.props
-    const { headerFixed, withPaging } = chartStyles.table
+    const { headerFixed, bordered, withPaging } = chartStyles.table
     const { pagination, columns, tableBodyHeight } = this.state
     const paginationConfig: PaginationConfig = {
       ...this.basePagination,
@@ -874,20 +879,24 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         {...paginationConfig}
       />
     ) : null
+    const tableCls = classnames({
+      [styles.table]: true,
+      [styles.noBorder]: bordered !== undefined && !bordered
+    })
 
     return (
       <>
         <AntTable
           // key={key}
           style={style}
-          className={styles.table}
+          className={tableCls}
           ref={this.table}
           dataSource={data}
           components={this.components}
           columns={columns}
           pagination={withPaging && pagination.total !== -1 ? paginationConfig : false}
           scroll={scroll}
-          bordered
+          bordered={bordered}
           rowClassName={this.setRowClassName}
           onRowClick={this.rowClick}
         />
