@@ -257,6 +257,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const {
       width,
       height,
+      scaleMode,
       backgroundColor,
       backgroundImage
     } = slideParams
@@ -266,15 +267,20 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
       overflow: 'visible',
       width: `${width * scale[0]}px`,
       height: `${height * scale[1]}px`,
-      backgroundSize: 'cover'
     }
+
+    let backgroundStyle: React.CSSProperties | CSSStyleDeclaration = slideStyle
+    if (scaleMode === 'scaleWidth' && (document.documentElement.clientWidth / window.devicePixelRatio) < 600) {
+      backgroundStyle = document.body.style
+    }
+    backgroundStyle.backgroundSize = 'cover'
 
     if (backgroundColor) {
       const rgb = backgroundColor.join()
-      slideStyle.backgroundColor = `rgba(${rgb})`
+      backgroundStyle.backgroundColor = `rgba(${rgb})`
     }
     if (backgroundImage) {
-      slideStyle.backgroundImage = `url("${backgroundImage}")`
+      backgroundStyle.backgroundImage = `url("${backgroundImage}")`
     }
     return slideStyle
   }
