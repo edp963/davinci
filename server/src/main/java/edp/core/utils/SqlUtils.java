@@ -156,7 +156,7 @@ public class SqlUtils {
                 while (sqlRowSet.next()) {
                     Map<String, Object> map = new LinkedHashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String key = metaData.getColumnName(i);
+                        String key = metaData.getColumnLabel(i);
                         Object value = sqlRowSet.getObject(key);
                         map.put(key, value);
 
