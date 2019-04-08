@@ -498,6 +498,15 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
         const cellJsx = this.getCellReactNode(cellVal, cellValRange, format, columnConfig, isMerged)
         return !isMerged ? cellJsx : { children: cellJsx, props: { rowSpan: span } }
       }
+      header.sorter = (a, b) => {
+        if (a[expression] === b[expression]) { return 0 }
+        if (typeof a[expression] === 'number') {
+          return a[expression] > b[expression] ? 1 : -1
+        } else if (typeof a[expression] === 'string') {
+          return (a[expression] as string).localeCompare(b[expression])
+        }
+        return 0
+      }
     }
     header.title = (
       <div className={styles.headerCell} style={headerStyle}>{headerText}</div>
