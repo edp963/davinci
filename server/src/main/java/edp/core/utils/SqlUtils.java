@@ -156,7 +156,7 @@ public class SqlUtils {
                 while (sqlRowSet.next()) {
                     Map<String, Object> map = new LinkedHashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String key = metaData.getColumnName(i);
+                        String key = metaData.getColumnLabel(i);
                         Object value = sqlRowSet.getObject(key);
                         map.put(key, value);
 
@@ -272,7 +272,7 @@ public class SqlUtils {
                 if (currentRow >= startRow && (currentRow < total || total == -1)) {
                     Map<String, Object> map = new HashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String c = metaData.getColumnName(i);
+                        String c = metaData.getColumnLabel(i);
                         Object v = resultSet.getObject(c);
                         map.put(c, v);
                     }
