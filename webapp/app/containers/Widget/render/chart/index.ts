@@ -26,20 +26,28 @@ import area from './area'
 import funnel from './funnel'
 import map from './map'
 import radar from './radar'
+import sankey from './sankey'
+import parallel from './parallel'
 import wordCloud from './wordCloud'
+import waterfall from './waterfall'
+// import doubleYAxis from './doubleYAxis'
 import { EChartOption } from 'echarts'
 import { IChartProps } from '../../components/Chart'
 
-export default function (type, chartProps: IChartProps): EChartOption {
+export default function (type, chartProps: IChartProps, drillOptions?: any): EChartOption {
   switch (type) {
     case 'line': return line(chartProps)
-    case 'bar': return bar(chartProps)
-    case 'scatter': return scatter(chartProps)
-    case 'pie': return pie(chartProps)
+    case 'bar': return bar(chartProps, drillOptions)
+    case 'scatter': return scatter(chartProps, drillOptions)
+    case 'pie': return pie(chartProps, drillOptions)
     case 'funnel': return funnel(chartProps)
     // case 'area': return area(chartProps)
-    // case 'map': return map(chartProps)
-    // case 'radar': return radar(chartProps)
-    // case 'wordCloud': return wordCloud(chartProps)
+    case 'radar': return radar(chartProps)
+    case 'sankey': return sankey(chartProps)
+    case 'parallel': return parallel(chartProps)
+    case 'map': return map(chartProps)
+    case 'wordCloud': return wordCloud(chartProps)
+    case 'waterfall': return waterfall(chartProps)
+    // case 'doubleYAxis': return doubleYAxis(chartProps)
   }
 }

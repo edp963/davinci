@@ -18,12 +18,10 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, fork, put, all } from 'redux-saga/effects'
+import { call, fork, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 import { getDefaultSlideParams } from './components/util'
 import { errorHandler } from '../../utils/util'
 
@@ -75,7 +73,7 @@ export function* getDisplays (action): IterableIterator<any> {
   const { projectId } = action.payload
   try {
     const asyncData = yield call(request, `${api.display}?projectId=${projectId}`)
-    const displays = readListAdapter(asyncData)
+    const displays = asyncData.payload
     yield put(displaysLoaded(displays))
   } catch (err) {
     yield put(loadDisplaysFail(err))
@@ -89,7 +87,7 @@ export function* addDisplay (action) {
       method: 'post',
       data: display
     })
-    const resultDisplay = readObjectAdapter(asyncDisplayData)
+    const resultDisplay = asyncDisplayData.payload
     const { id } = resultDisplay
     const slide = {
       displayId: id,
@@ -109,16 +107,19 @@ export function* addDisplay (action) {
 }
 
 export function* getDisplayDetail (action): IterableIterator<any> {
-  const { id } = action.payload
+  const { projectId, displayId } = action.payload
   try {
-    const asyncDataDetail = yield call(request, `${api.display}/${id}/slides`)
-    const display = readObjectAdapter(asyncDataDetail)
+    const result = yield all({
+      dashboardDetail: call(request, `${api.display}/${displayId}/slides`),
+      widgets: call(request, `${api.widget}?projectId=${projectId}`),
+      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+    })
+    const { dashboardDetail, widgets, bizlogics } = result
+    const display = dashboardDetail.payload
     const slide = display.slides[0]
     delete display.slides
-    const asyncDataWidgets = yield call(request, `${api.display}/${id}/slides/${slide.id}/widgets`)
-    const layers = readListAdapter(asyncDataWidgets)
-    yield put(displayDetailLoaded(display, slide, layers))
-    return display
+    const layers = yield call(request, `${api.display}/${displayId}/slides/${slide.id}/widgets`)
+    yield put(displayDetailLoaded(display, slide, layers.payload, widgets.payload, bizlogics.payload))
   } catch (err) {
     yield put(loadDisplaysFail(err))
   }
@@ -180,7 +181,7 @@ export function* uploadCurrentSlideCover (action): IterableIterator<any> {
       method: 'post',
       data: formData
     })
-    const coverPath = readObjectAdapter(asyncData)
+    const coverPath = asyncData.payload
     yield put(currentSlideCoverUploaded(coverPath))
     resolve(coverPath)
   } catch (err) {
@@ -209,7 +210,7 @@ export function* addDisplayLayers (action) {
       method: 'post',
       data: layers
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(displayLayersAdded(result))
     return result
   } catch (err) {
@@ -253,7 +254,7 @@ export function* pasteSlideLayers (action) {
       method: 'post',
       data: layers
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(slideLayersPasted(result))
     return result
   } catch (err) {
@@ -270,7 +271,7 @@ export function* getDisplayShareLink (action) {
       url: `${api.display}/${id}/share`,
       params: { username: authName }
     })
-    const shareInfo = readListAdapter(asyncData)
+    const shareInfo = asyncData.payload
     if (authName) {
       yield put(displaySecretLinkLoaded(shareInfo))
     } else {
@@ -369,7 +370,7 @@ export function* redoOperation (action) {
 }
 
 export default function* rootDisplaySaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(ActionTypes.LOAD_DISPLAYS, getDisplays),
     takeEvery(ActionTypes.ADD_DISPLAY, addDisplay),
     takeLatest(ActionTypes.LOAD_DISPLAY_DETAIL, getDisplayDetail),
@@ -385,5 +386,5 @@ export default function* rootDisplaySaga (): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_DISPLAY_SHARE_LINK, getDisplayShareLink),
     takeEvery(ActionTypes.UNDO_OPERATION, undoOperation),
     takeEvery(ActionTypes.REDO_OPERATION, redoOperation)
-  ]
+  ])
 }

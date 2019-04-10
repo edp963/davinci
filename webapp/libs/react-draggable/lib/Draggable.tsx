@@ -199,7 +199,8 @@ export default class Draggable extends React.Component<IDraggableProps, Partial<
 
     // If this is controlled, we don't want to move it - unless it's dragging.
     const controlled = Boolean(this.props.position)
-    const draggable = !controlled || this.state.dragging
+    // const draggable = !controlled || this.state.dragging // FIXME fixed
+    const draggable = !controlled
 
     const position = this.props.position || this.props.defaultPosition
     const transformOpts = {

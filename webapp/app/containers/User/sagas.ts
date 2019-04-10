@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeEvery, takeLatest } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeEvery, takeLatest } from 'redux-saga/effects'
 import {
   LOAD_USERS,
   ADD_USER,
@@ -48,12 +47,11 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 export function* getUsers () {
   try {
     const asyncData = yield call(request, api.user)
-    const users = readListAdapter(asyncData)
+    const users = asyncData.payload
     yield put(usersLoaded(users))
   } catch (err) {
     yield put(loadUsersFail())
@@ -66,9 +64,9 @@ export function* addUser ({ payload }) {
     const asyncData = yield call(request, {
       method: 'post',
       url: api.user,
-      data: writeAdapter(payload.user)
+      data: [payload.user]
     })
-    const result = readObjectAdapter(asyncData)
+    const result = asyncData.payload
     yield put(userAdded(result))
     payload.resolve()
   } catch (err) {
@@ -104,7 +102,7 @@ export function* deleteUser ({ payload }) {
 export function* getUserGroups ({ payload }) {
   try {
     const asyncData = yield call(request, `${api.user}/${payload.id}/groups`)
-    const groups = readListAdapter(asyncData)
+    const groups = asyncData.payload
     yield put(userGroupsLoaded(groups))
     payload.resolve(groups)
   } catch (err) {
@@ -118,7 +116,7 @@ export function* editUserInfo ({ payload }) {
     yield call(request, {
       method: 'put',
       url: api.user,
-      data: writeAdapter(payload.user)
+      data: [payload.user]
     })
     yield put(userInfoEdited(payload.user))
     payload.resolve()
@@ -145,13 +143,12 @@ export function* changeUserPassword ({ payload }) {
 }
 
 export default function* rootUserSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_USERS, getUsers),
     takeEvery(ADD_USER, addUser as any),
     takeEvery(DELETE_USER, deleteUser as any),
-    // takeLatest(LOAD_USER_DETAIL, getUserDetail),
     takeLatest(LOAD_USER_GROUPS, getUserGroups as any),
     takeEvery(EDIT_USER_INFO, editUserInfo as any),
     takeEvery(CHANGE_USER_PASSWORD, changeUserPassword as any)
-  ]
+  ])
 }

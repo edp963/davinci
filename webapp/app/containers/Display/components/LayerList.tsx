@@ -1,14 +1,7 @@
-import * as React from 'react'
-import {
-  selectLayer
-} from '../actions'
+import React from 'react'
 import { OrderDirection } from './util'
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Checkbox = require('antd/lib/checkbox')
-const CheckboxGroup = Checkbox.Group
+import { Icon, Tooltip } from 'antd'
 
 const styles = require('../Display.less')
 
@@ -26,6 +19,9 @@ interface ILayerListStates {
 }
 
 export class LayerList extends React.Component <ILayerListProps, ILayerListStates> {
+
+  public static displayName = 'LayerList'
+
   constructor (props) {
     super(props)
     this.state = {
@@ -151,11 +147,11 @@ export class LayerList extends React.Component <ILayerListProps, ILayerListState
   }]
 
   private changeLayerStatus = (layerId) => (e: React.MouseEvent<HTMLElement>) => {
-    const { ctrlKey, metaKey } = e
-    const { layersStatus, onSelectLayer } = this.props
-    const exclusive = !ctrlKey && !metaKey
-    onSelectLayer({ id: layerId, selected: !layersStatus[layerId].selected, exclusive})
     e.stopPropagation()
+    const { altKey, metaKey } = e
+    const { layersStatus, onSelectLayer } = this.props
+    const exclusive = !altKey && !metaKey
+    onSelectLayer({ id: layerId, selected: !layersStatus[layerId].selected, exclusive})
   }
 
   private getLayersByIndexDesc = (layers: any[]) => {

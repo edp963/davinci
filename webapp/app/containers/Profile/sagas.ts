@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest } from 'redux-saga/effects'
 
 import { GET_USER_PROFILE } from './constants'
 import {
@@ -29,7 +28,6 @@ import {
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 export function* getUserProfile (action): IterableIterator<any> {
@@ -40,7 +38,7 @@ export function* getUserProfile (action): IterableIterator<any> {
       method: 'get',
       url: `${api.user}/profile/${id}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(userProfileGot(result))
   } catch (err) {
     yield put(getUserProfileFail())
@@ -50,8 +48,8 @@ export function* getUserProfile (action): IterableIterator<any> {
 
 
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(GET_USER_PROFILE, getUserProfile as any)
-  ]
+  ])
 }
 

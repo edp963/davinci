@@ -24,13 +24,7 @@ import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import { Link } from 'react-router'
 
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Popover = require('antd/lib/popover')
-const Menu = require('antd/lib/menu')
-const Dropdown = require('antd/lib/dropdown')
-const Modal = require('antd/lib/modal')
+import { Icon, Tooltip, Popover, Menu, Dropdown } from 'antd'
 
 const styles = require('../Display.less')
 
@@ -237,6 +231,20 @@ export class DisplayHeader extends React.Component<IDisplayHeaderProps, IDisplay
             className="iconfont icon-rect-text"
             onClick={this.addSecondaryGraph(SecondaryGraphTypes.Label)}
           > 标签
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-video"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Video)}
+          > 视频
+          </i>
+        </Menu.Item>
+        <Menu.Item>
+          <i
+            className="iconfont icon-clock"
+            onClick={this.addSecondaryGraph(SecondaryGraphTypes.Timer)}
+          > 时间器
           </i>
         </Menu.Item>
       </Menu>

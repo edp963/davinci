@@ -1,38 +1,37 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
+import React from 'react'
+import classnames from 'classnames'
 
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Modal = require('antd/lib/modal')
-const Row = require('antd/lib/row')
+import { Icon, Col, Button, Tooltip, Popconfirm, Modal, Row } from 'antd'
+import { IconProps } from 'antd/lib/icon'
+import AntdFormType from 'antd/lib/form/Form'
 const styles = require('../Portal.less')
 
-import AntdFormType from 'antd/lib/form/Form'
-import EllipsisList from '../../../components/EllipsisList'
 import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import {IProject} from '../../Projects'
-import {IPortal} from '../../Portal'
-import { IconProps } from 'antd/lib/icon'
+import { IProject } from '../../Projects'
+import { IPortal } from '../../Portal'
+import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]
   currentProject: IProject
-  onPortalClick: (portal: any) => void
+  viewTeam: any[]
+  selectTeams: any[]
+  onPortalClick: (portal: any) => () => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onLoadViewTeam: (projectId: number, resolve?: any) => any
+  onLoadSelectTeams: (type: string, projectId: number, resolve?: any) => any
 }
 
 interface IPortalListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
+  checkedKeys: any[]
 }
 
 export class PortalList extends React.Component<IPortalListProps, IPortalListStates> {
@@ -47,7 +46,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     this.state = {
       modalLoading: false,
       formType: 'add',
-      formVisible: false
+      formVisible: false,
+      checkedKeys: []
     }
   }
 
@@ -55,7 +55,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     e.stopPropagation()
   }
 
-  private delegate = (func: (...args) => void, ...args) => (e: MouseEvent) => {
+  private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent) => {
     func.apply(this, args)
     e.stopPropagation()
   }
@@ -63,7 +63,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   private hidePortalForm = () => {
     this.setState({
       formVisible: false,
-      modalLoading: false
+      modalLoading: false,
+      checkedKeys: []
     }, () => {
       this.portalForm.props.form.resetFields()
     })
@@ -72,14 +73,15 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   private onModalOk = () => {
     this.portalForm.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
-        const {  projectId, onAdd, onEdit } = this.props
-        const { formType } = this.state
+        const {  projectId, onAdd, onEdit, viewTeam } = this.props
+        const { formType, checkedKeys } = this.state
         const { id, name, description, publish, avatar } = values
         const val = {
           description,
           name,
           publish,
-          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
+          avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar,
+          teamIds: toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
         }
 
         if (formType === 'add') {
@@ -107,8 +109,32 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       formType,
       formVisible: true
     }, () => {
-      if (portal) {
-        this.portalForm.props.form.setFieldsValue(portal)
+      setTimeout(() => {
+        if (portal) {
+          this.portalForm.props.form.setFieldsValue(portal)
+        }
+      }, 0)
+      const { onLoadViewTeam, projectId } = this.props
+      const { formType } = this.state
+      if (formType === 'edit') {
+        const { onLoadSelectTeams } = this.props
+        new Promise((resolve) => {
+          onLoadViewTeam(projectId, (teams) => {
+            resolve(teams)
+          })
+        }).then((teams) => {
+          onLoadSelectTeams('portal', portal.id, (result) => {
+            this.setState({
+              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+            })
+          })
+        })
+      } else if (formType === 'add') {
+        onLoadViewTeam(projectId, (result) => {
+          this.setState({
+            checkedKeys: toListBF(result).map((t) => t.id)
+          })
+        })
       }
     })
   }
@@ -117,11 +143,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     return (
       <Col
         key="createPortal"
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
       >
         <div className={styles.unit} onClick={this.showPortalForm('add')}>
             <div className={styles.central}>
@@ -147,11 +173,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     return (
       <Col
         key={portal.id}
-        xl={4}
-        lg={6}
-        md={8}
-        sm={12}
-        xs={24}
+        xxl={4}
+        xl={6}
+        lg={8}
+        md={12}
+        sm={24}
         onClick={onPortalClick(portal)}
       >
         <div
@@ -185,11 +211,29 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     )
   }
 
+  private initCheckNodes = (checkedKeys) => {
+    this.setState({
+      checkedKeys
+    })
+  }
+
   public render () {
-    const { projectId, portals, currentProject, onCheckUniqueName } = this.props
+    const {
+      projectId,
+      portals,
+      currentProject,
+      onCheckUniqueName,
+      viewTeam,
+      selectTeams
+    } = this.props
     if (!Array.isArray(portals)) { return null }
 
-    const { formType, formVisible, modalLoading } = this.state
+    const {
+      formType,
+      formVisible,
+      modalLoading,
+      checkedKeys
+    } = this.state
 
     const modalButtons = [(
       <Button
@@ -241,6 +285,10 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
             onCheckUniqueName={onCheckUniqueName}
             projectId={projectId}
             type={formType}
+            initCheckNodes={this.initCheckNodes}
+            checkedKeys={checkedKeys}
+            selectTeams={selectTeams}
+            viewTeam={viewTeam}
             wrappedComponentRef={this.refHandlers.portalForm}
           />
         </Modal>

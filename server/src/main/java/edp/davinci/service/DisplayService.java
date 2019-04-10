@@ -22,14 +22,15 @@ import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.displayDto.DisplayInfo;
 import edp.davinci.dto.displayDto.DisplaySlideCreate;
+import edp.davinci.dto.displayDto.DisplayUpdateDto;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetCreate;
-import edp.davinci.model.Display;
 import edp.davinci.model.DisplaySlide;
 import edp.davinci.model.MemDisplaySlideWidget;
 import edp.davinci.model.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 public interface DisplayService extends CheckEntityService {
 
@@ -41,7 +42,7 @@ public interface DisplayService extends CheckEntityService {
 
     ResultMap createDisplay(DisplayInfo displayInfo, User user, HttpServletRequest request);
 
-    ResultMap updateDisplay(Display display, User user, HttpServletRequest request);
+    ResultMap updateDisplay(DisplayUpdateDto displayUpdateDto, User user, HttpServletRequest request);
 
     ResultMap deleteDisplay(Long id, User user, HttpServletRequest request);
 
@@ -70,4 +71,6 @@ public interface DisplayService extends CheckEntityService {
     void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException;
 
     ResultMap uploadSlideSubWidgetBGImage(Long relationId, MultipartFile file, User user, HttpServletRequest request);
+
+    List<Long> getDisplayExcludeTeams(Long id);
 }

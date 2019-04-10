@@ -1,13 +1,11 @@
-import * as React from 'react'
-import * as classnames from 'classnames'
-import {IOrganizationMembers} from '../../Organizations/Organization'
-const Button = require('antd/lib/button')
-const Form = require('antd/lib/form')
+import React from 'react'
+import classnames from 'classnames'
+import debounce from 'lodash/debounce'
+import { IOrganizationMembers } from '../../Organizations/Organization'
+import { Button, Form, Input, Icon } from 'antd'
 const FormItem = Form.Item
-const Input = require('antd/lib/input')
 const InputGroup = Input.Group
 const styles = require('../Team.less')
-const Icon = require('antd/lib/icon')
 const utilStyles =  require('../../../assets/less/util.less')
 
 
@@ -27,6 +25,7 @@ interface IAddFormStates {
   visible: boolean
   isDisabled: boolean
   inviteMemberInputValue: string
+  filteredCurrentOrganizationMembers: IOrganizationMembers[]
 }
 
 export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> {
@@ -35,7 +34,8 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     this.state = {
       visible: false,
       isDisabled: true,
-      inviteMemberInputValue: ''
+      inviteMemberInputValue: '',
+      filteredCurrentOrganizationMembers: []
     }
   }
   public componentDidMount () {
@@ -93,7 +93,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
   }
 
-  private inputChange = (e) => {
+  private change = debounce((e) => {
     const { category, inviteMemberList, currentOrganizationMembers, handleSearchMember } = this.props
 
     this.setState({
@@ -102,7 +102,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     })
 
     if (category === 'member') {
-      if (inviteMemberList.length) {
+      if (inviteMemberList) {
         const currentList = inviteMemberList.find((list) => list.username === e.target.value)
         this.setState({
           isDisabled: currentList ? false : true
@@ -110,16 +110,31 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       }
       handleSearchMember()
     }
-    if (category === 'teamMember' && currentOrganizationMembers.length) {
-      const currentList = currentOrganizationMembers.find((list) => list.user.username === e.target.value)
+    if (category === 'teamMember' && currentOrganizationMembers) {
+      let currentList
+      const filteredCurrentOrganizationMembers = []
+      currentOrganizationMembers.forEach((list) => {
+        if (list.user.username === e.target.value) {
+          currentList = list
+        }
+        if (list.user.username.includes(e.target.value)) {
+          filteredCurrentOrganizationMembers.push(list)
+        }
+      })
       this.setState({
-        isDisabled: currentList ? false : true
+        isDisabled: currentList ? false : true,
+        filteredCurrentOrganizationMembers
       })
     }
+  }, 300)
+
+  private debouncedChange = (e) => {
+    e.persist()
+    this.change(e)
   }
 
   private bootstrapOptionsLi = (searchLi, data) => {
-    const Options =  data ? data.map((o) => {
+    const Options =  data ? data.slice(0, 20).map((o) => {
       if (o && o.user) {
         return (
           <li key={o.id} className={searchLi} onClick={this.selectOption(o)}>
@@ -167,13 +182,13 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
       category,
       inviteMemberList,
       organizationOrTeam,
-      currentOrganizationMembers,
       currentOrganizationProjects
     } = this.props
 
     const {
       isDisabled,
-      inviteMemberInputValue
+      inviteMemberInputValue,
+      filteredCurrentOrganizationMembers
     } = this.state
 
     const searchLi = classnames({
@@ -186,7 +201,7 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
     } else if (category === 'member' && inviteMemberInputValue !== '') {
       optionList = this.bootstrapOptionsLi(searchLi, inviteMemberList)
     } else if (category === 'teamMember' && inviteMemberInputValue !== '') {
-      optionList = this.bootstrapOptionsLi(searchLi, currentOrganizationMembers)
+      optionList = this.bootstrapOptionsLi(searchLi, filteredCurrentOrganizationMembers)
     }
 
     const orgOrTeamName = organizationOrTeam ? organizationOrTeam.name : ''
@@ -213,14 +228,14 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
               )}
             </FormItem>
             <FormItem>
-              <InputGroup size="large" compact>
+              <InputGroup compact>
                 {getFieldDecorator('searchValue', {
                   initialValue: '',
-                  onChange: this.inputChange
+                  onChange: this.debouncedChange
                 })(
                   <Input style={{width: '65%'}} autoComplete="off"/>
                 )}
-                <Button className={styles.plusBtn}  type="primary" size="large" onClick={this.props.addHandler} disabled={isDisabled}>
+                <Button className={styles.plusBtn}  type="primary" onClick={this.props.addHandler} disabled={isDisabled}>
                   {this.submitText(category)}<Icon type="plus"/>
                 </Button>
                 {optionList}

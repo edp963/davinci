@@ -23,10 +23,12 @@ import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSec
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
+import { dataFromItemLoaded } from 'containers/Bizlogic/actions'
+import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {
   showLine: boolean
-  lineStyle: string
+  lineStyle: 'solid' | 'dashed' | 'dotted'
   lineSize: string
   lineColor: string
 }
@@ -35,8 +37,9 @@ export function getDimetionAxisOption (
   dimetionAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   data: string[]
-) {
+): EChartOption.XAxis {
   const {
+    inverse,
     showLine: showLineX,
     lineStyle: lineStyleX,
     lineSize: lineSizeX,
@@ -44,7 +47,13 @@ export function getDimetionAxisOption (
     showLabel: showLabelX,
     labelFontFamily: labelFontFamilyX,
     labelFontSize: labelFontSizeX,
-    labelColor: labelColorX
+    labelColor: labelColorX,
+    nameLocation,
+    nameGap,
+    nameRotate,
+    showInterval,
+    xAxisInterval,
+    xAxisRotate
   } = dimetionAxisConfig
 
   const {
@@ -54,24 +63,31 @@ export function getDimetionAxisOption (
     lineColor
   } = splitLineConfig
 
+  const intervalOption = showInterval
+    ? { interval: xAxisInterval }
+    : null
+
   return {
     data,
+    inverse,
     axisLabel: {
       show: showLabelX,
       color: labelColorX,
       fontFamily: labelFontFamilyX,
-      fontSize: labelFontSizeX
+      fontSize: Number(labelFontSizeX),
+      rotate: xAxisRotate,
+      ...intervalOption
     },
     axisLine: {
       show: showLineX,
       lineStyle: {
         color: lineColorX,
-        width: lineSizeX,
+        width: Number(lineSizeX),
         type: lineStyleX
       }
     },
     axisTick: {
-      show: showLineX,
+      show: showLabelX,
       lineStyle: {
         color: lineColorX
       }
@@ -80,10 +96,13 @@ export function getDimetionAxisOption (
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
-    }
+    },
+    nameLocation,
+    nameRotate,
+    nameGap
   }
 }
 
@@ -91,9 +110,11 @@ export function getMetricAxisOption (
   metricAxisConfig: IAxisConfig,
   splitLineConfig: ISplitLineConfig,
   title: string,
-  axis: 'x' | 'y' = 'y'
-) {
+  axis: 'x' | 'y' = 'y',
+  percentage?: boolean
+): EChartOption.YAxis {
   const {
+    inverse,
     showLine: showLineY,
     lineStyle: lineStyleY,
     lineSize: lineSizeY,
@@ -105,7 +126,10 @@ export function getMetricAxisOption (
     showTitleAndUnit,
     titleFontFamily,
     titleFontSize,
-    titleColor
+    titleColor,
+    nameLocation,
+    nameRotate,
+    nameGap
   } = metricAxisConfig
 
   const {
@@ -117,40 +141,44 @@ export function getMetricAxisOption (
 
   return {
     type: 'value',
+    inverse,
+    min: percentage ? 0 : null,
+    max: percentage ? 100 : null,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,
       fontFamily: labelFontFamilyY,
-      fontSize: labelFontSizeY,
-      formatter: metricAxisLabelFormatter
+      fontSize: Number(labelFontSizeY),
+      formatter: percentage ? '{value}%' : metricAxisLabelFormatter
     },
     axisLine: {
       show: showLineY,
       lineStyle: {
         color: lineColorY,
-        width: lineSizeY,
+        width: Number(lineSizeY),
         type: lineStyleY
       }
     },
     axisTick: {
-      show: showLineY,
+      show: showLabelY,
       lineStyle: {
         color: lineColorY
       }
     },
     name: showTitleAndUnit ? title : '',
-    nameLocation: axis === 'y' ? 'middle' : 'center',
-    nameGap: axis === 'y' ? 45 : 30,
+    nameLocation,
+    nameGap,
+    nameRotate,
     nameTextStyle: {
       color: titleColor,
       fontFamily: titleFontFamily,
-      fontSize: titleFontSize
+      fontSize: Number(titleFontSize)
     },
     splitLine: {
       show: showLine,
       lineStyle: {
         color: lineColor,
-        width: lineSize,
+        width: Number(lineSize),
         type: lineStyle
       }
     }
@@ -185,6 +213,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
     normal: {
       show: type === 'pie' && pieLabelPosition === 'center' ? false : showLabel,
       position: positionVale,
+      distance: 15,
       color: labelColor,
       fontFamily: labelFontFamily,
       fontSize: labelFontSize,
@@ -194,6 +223,7 @@ export function getLabelOption (type: string, labelConfig: ILabelConfig, emphasi
       emphasis: {
         show: showLabel,
         position: positionVale,
+        distance: 15,
         color: labelColor,
         fontFamily: labelFontFamily,
         fontSize: labelFontSize,
@@ -243,7 +273,7 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 
   return {
-    show: showLegend,
+    show: showLegend && seriesNames.length > 1,
     data: seriesNames,
     type: 'scroll',
     textStyle: {
@@ -257,28 +287,58 @@ export function getLegendOption (legendConfig: ILegendConfig, seriesNames: strin
   }
 }
 
-export function getGridPositions (legendConfig: ILegendConfig, seriesNames) {
+export function getGridPositions (
+  legendConfig: Partial<ILegendConfig>,
+  seriesNames,
+  isHorizontalBar?: boolean,
+  yAxisConfig?: IAxisConfig,
+  dimetionAxisConfig?: IAxisConfig,
+  xAxisData?: string[]
+) {
   const { showLegend, legendPosition, fontSize } = legendConfig
   return CHART_LEGEND_POSITIONS.reduce((grid, pos) => {
     const val = pos.value
-    grid[val] = getGridBase(val)
-    if (showLegend) {
+    grid[val] = getGridBase(val, dimetionAxisConfig, xAxisData, isHorizontalBar, yAxisConfig)
+    if (showLegend && seriesNames.length > 1) {
       grid[val] += legendPosition === val
         ? ['top', 'bottom'].includes(val)
-          ? 32
-          : 32 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
+          ? 64
+          : 64 + Math.max(...seriesNames.map((s) => getTextWidth(s, '', `${fontSize}px`)))
         : 0
     }
     return grid
   }, {})
 }
 
-function getGridBase (pos) {
+function getGridBase (pos, dimetionAxisConfig?: IAxisConfig, xAxisData?: string[], isHorizontalBar?: boolean, yAxisConfig?: IAxisConfig) {
+  const labelFontSize = dimetionAxisConfig ? dimetionAxisConfig.labelFontSize : 12
+  const xAxisRotate = dimetionAxisConfig ? dimetionAxisConfig.xAxisRotate : 0
+  const maxWidth = xAxisData && xAxisData.length
+    ? Math.max(...xAxisData.map((s) => getTextWidth(s, '', `${labelFontSize}px`)))
+    : 0
+
+  const bottomDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
+    ? isHorizontalBar
+      ? 50
+      : xAxisRotate
+        ? 50 + Math.sin(xAxisRotate * Math.PI / 180) * maxWidth
+        : 50
+    : 50
+
+  const yAxisConfigLeft = yAxisConfig && !yAxisConfig.showLabel && !yAxisConfig.showTitleAndUnit ? 24 : 64
+  const leftDistance = dimetionAxisConfig && dimetionAxisConfig.showLabel
+    ? isHorizontalBar
+      ? xAxisRotate === void 0
+        ? 64
+        : 24 + Math.cos(xAxisRotate * Math.PI / 180) * maxWidth
+      : yAxisConfigLeft
+    : isHorizontalBar ? 24 : yAxisConfigLeft
+
   switch (pos) {
     case 'top': return 24
-    case 'left': return 64
+    case 'left': return leftDistance
     case 'right': return 24
-    case 'bottom': return 50
+    case 'bottom': return bottomDistance
   }
 }
 
@@ -287,7 +347,7 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
 
   data.forEach((d) => {
     const groupingKey = groupColumns.map((col) => d[col]).join(' ')
-    const colKey = d[xAxisColumn]
+    const colKey = d[xAxisColumn] || 'default'
     if (!grouped[groupingKey]) {
       grouped[groupingKey] = {}
     }
@@ -300,13 +360,15 @@ export function makeGrouped (data, groupColumns, xAxisColumn, metrics, xAxisData
   Object.keys(grouped).map((groupingKey) => {
     const currentGroupValues = grouped[groupingKey]
 
-    grouped[groupingKey] = xAxisData.map((xd) => {
-      if (currentGroupValues[xd]) {
-        return currentGroupValues[xd][0]
-      } else {
-        return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
-      }
-    })
+    grouped[groupingKey] = xAxisData.length
+      ? xAxisData.map((xd) => {
+        if (currentGroupValues[xd]) {
+          return currentGroupValues[xd][0]
+        } else {
+          return metrics.reduce((obj, m) => ({ ...obj, [`${m.agg}(${decodeMetricName(m.name)})`]: 0 }), {})
+        }
+      })
+      : [currentGroupValues['default'][0]]
   })
 
   return grouped

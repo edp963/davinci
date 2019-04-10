@@ -19,6 +19,7 @@
 package edp.davinci.dao;
 
 
+import edp.davinci.dto.teamDto.TeamFullId;
 import edp.davinci.dto.userDto.UserWithTeamId;
 import edp.davinci.model.RelUserTeam;
 import org.apache.ibatis.annotations.Delete;
@@ -60,8 +61,14 @@ public interface RelUserTeamMapper {
 
 
     @Select({
+            "SELECT userTeamStruct(#{userId})"
+    })
+    String getUserFullTeam(@Param("userId") Long userId);
+
+
+    @Select({
             "SELECT u.id, u.username, u.avatar, t.id as 'teamId' FROM `user` u, rel_user_team rut, team t ",
-            "where rut.user_id = u.id and t.id = rut.team_id and FIND_IN_SET(t.id,childTeamIds(#{teamId}))"
+            "where rut.user_id = u.id and t.id = rut.team_id and FIND_IN_SET(#{teamId},t.full_team_id) > 0"
     })
     List<UserWithTeamId> getChildTeamMembers(@Param("teamId") Long teamId);
 
@@ -78,14 +85,13 @@ public interface RelUserTeamMapper {
 
     /**
      * 查询用户和project所在team结构中的最大权限
-     * <p>
      * project和用户所在team交集的 完整team结构
      *
      * @param projectId
      * @param userId
      * @return
      */
-    @Select({"SELECT IFNULL(MAX(role),0) FROM rel_user_team where user_id = #{userId} and FIND_IN_SET(team_id,projectTeamStruct(#{projectId}))"})
+    @Select({"SELECT IFNULL(MAX(role),0) FROM rel_user_team where user_id = #{userId} and FIND_IN_SET(team_id,projectTeamStruct(#{projectId})) > 0"})
     short getUserAllTeamMaxRoleByProjectId(@Param("projectId") Long projectId, @Param("userId") Long userId);
 
 
@@ -98,7 +104,7 @@ public interface RelUserTeamMapper {
      */
     @Select({
             "SELECT IFNULL(max(r.role),0) FROM team t inner JOIN rel_user_team r on r.team_id = t.id ",
-            "where r.user_id = #{userId} and FIND_IN_SET(t.id,parentTeamIds(#{teamId}))"
+            "where r.user_id = #{userId} and FIND_IN_SET(t.id,t.full_team_id) > 0"
     })
     short getUserAllTeamMaxRoleByChildTeamId(@Param("teamId") Long teamId, @Param("userId") Long userId);
 
@@ -138,4 +144,38 @@ public interface RelUserTeamMapper {
 
 
     int deleteBatch(@Param("list") List<Long> list);
+
+
+    int insertBatch(@Param("set") Set<RelUserTeam> set);
+
+    /**
+     * 查询用户和project所在team id 交集
+     *
+     * @param userId
+     * @param projectId
+     * @return
+     */
+    @Select({
+            "SELECT DISTINCT t.id FROM team t",
+            "LEFT JOIN rel_team_project rtp on rtp.team_id = t.id",
+            "LEFT JOIN rel_user_team rut on rut.team_id = t.id",
+            "WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}"
+    })
+    Set<Long> selectTeamIdByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+
+    /**
+     * 查询用户和project所在team id 交集
+     *
+     * @param userId
+     * @param projectId
+     * @return
+     */
+    @Select({
+            "SELECT DISTINCT t.id, t.full_team_id as fullTeamId FROM team t",
+            "LEFT JOIN rel_team_project rtp on rtp.team_id = t.id",
+            "LEFT JOIN rel_user_team rut on rut.team_id = t.id",
+            "WHERE rut.user_id = #{userId} and rtp.project_id = #{projectId}"
+    })
+    List<TeamFullId> selectTeamFullParentByUserAndProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
 }

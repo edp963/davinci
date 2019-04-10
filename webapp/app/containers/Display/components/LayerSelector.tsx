@@ -21,14 +21,7 @@
 import * as React from 'react'
 import * as classnames from 'classnames'
 
-const Modal = require('antd/lib/modal')
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const Steps = require('antd/lib/steps')
+import { Modal, Form, Row, Col, Button, InputNumber, Select, Steps } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 const Step = Steps.Step

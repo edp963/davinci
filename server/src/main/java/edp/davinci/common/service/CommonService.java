@@ -35,6 +35,8 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 public class CommonService<T> {
@@ -69,6 +71,7 @@ public class CommonService<T> {
     @Value("${server.access.port:}")
     private String accessPort;
 
+    public final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
     private static final String HTTP_PROTOCOL = "http";
 
@@ -77,26 +80,22 @@ public class CommonService<T> {
     private static final String PROTOCOL_SEPARATOR = "://";
 
     public String getHost() {
-        protocol = protocol.trim().toLowerCase();
-        accessAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
-        accessPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
+        String pro = protocol.trim().toLowerCase();
+        String accAddress = StringUtils.isEmpty(accessAddress) ? address : accessAddress;
+        String accPort = StringUtils.isEmpty(accessPort) ? port : accessPort;
 
-        if (protocol.equals(HTTP_PROTOCOL)) {
-            if ("80".equals(accessPort)) {
-                accessPort = null;
-            }
+        if (pro.equals(HTTP_PROTOCOL) && "80".equals(accPort)) {
+            accPort = null;
         }
 
-        if (protocol.equals(HTTPS_PROTOCOL)) {
-            if ("443".equals(accessPort)) {
-                accessPort = null;
-            }
+        if (pro.equals(HTTPS_PROTOCOL) && "443".equals(accPort)) {
+            accPort = null;
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(protocol).append(PROTOCOL_SEPARATOR).append(accessAddress);
-        if (!StringUtils.isEmpty(accessPort)) {
-            sb.append(":" + accessPort);
+        sb.append(pro).append(PROTOCOL_SEPARATOR).append(accAddress);
+        if (!StringUtils.isEmpty(accPort)) {
+            sb.append(":" + accPort);
         }
         return sb.toString();
     }
@@ -123,11 +122,14 @@ public class CommonService<T> {
         }
 
         sb.append(getHost())
-            .append("/share.html#/share/")
-            .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
-            .append("?shareInfo=")
-            .append(shareToken)
-            .append("&type=" + type);
+                .append("/share.html#/share/")
+                .append(contentType.equalsIgnoreCase("widget") || contentType.equalsIgnoreCase("portal") ? "dashboard" : contentType)
+                .append("?shareInfo=")
+                .append(shareToken);
+
+        if (!StringUtils.isEmpty(type)) {
+            sb.append("&type=" + type);
+        }
 
         return sb.toString();
     }

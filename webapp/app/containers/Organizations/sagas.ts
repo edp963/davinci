@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_ORGANIZATIONS,
   ADD_ORGANIZATION,
@@ -64,17 +63,16 @@ import {
   changeOrganizationMemberRoleFail
 } from './actions'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import {userPasswordChanged} from '../App/actions'
+import { userPasswordChanged } from '../App/actions'
 import { errorHandler } from '../../utils/util'
 
 export function* getOrganizations () {
   try {
     const asyncData = yield call(request, api.organizations)
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsFail())
@@ -90,7 +88,7 @@ export function* addOrganization (action) {
       url: api.organizations,
       data: organization
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(organizationAdded(result))
     resolve()
   } catch (err) {
@@ -133,7 +131,7 @@ export function* deleteOrganization (action) {
 export function* getOrganizationDetail ({ payload }) {
   try {
     const asyncData = yield call(request, `${api.organizations}/${payload.id}`)
-    const organization = readListAdapter(asyncData)
+    const organization = asyncData.payload
     yield put(organizationDetailLoaded(organization))
   } catch (err) {
     errorHandler(err)
@@ -150,7 +148,7 @@ export function* getOrganizationsProjects ({payload}) {
       method: 'get',
       url: requestUrl
     })
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsProjectsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsProjectsFail())
@@ -162,8 +160,7 @@ export function* getOrganizationsMembers ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/members`)
-    const organizations = readListAdapter(asyncData)
-    yield put(organizationsMembersLoaded(organizations))
+    yield put(organizationsMembersLoaded(asyncData.payload))
   } catch (err) {
     yield put(loadOrganizationsMembersFail())
     errorHandler(err)
@@ -174,7 +171,7 @@ export function* getOrganizationsTeams ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.organizations}/${id}/teams`)
-    const organizations = readListAdapter(asyncData)
+    const organizations = asyncData.payload
     yield put(organizationsTeamsLoaded(organizations))
   } catch (err) {
     yield put(loadOrganizationsTeamsFail())
@@ -189,9 +186,8 @@ export function* addTeam (action) {
       method: 'post',
       url: api.teams,
       data: team
-      // data: writeAdapter(project)
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(teamAdded(result))
     resolve()
   } catch (err) {
@@ -210,7 +206,7 @@ export function* searchMember ({payload}) {
     const msg = asyncData && asyncData.header && asyncData.header.msg ? asyncData.header.msg : ''
     const code = asyncData && asyncData.header && asyncData.header.code ? asyncData.header.code : ''
 
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(memberSearched(result))
   } catch (err) {
     yield put(searchMemberFail())
@@ -229,7 +225,7 @@ export function* inviteMember ({payload}) {
         memId
       }
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(inviteMemberSuccess(result))
   } catch (err) {
     yield put(inviteMemberFail())
@@ -260,7 +256,7 @@ export function* changeOrganizationMemberRole ({payload}) {
       method: 'put',
       data: {role: newRole}
     })
-    const member = readListAdapter(asyncData)
+    const member = asyncData.payload
     yield put(organizationMemberRoleChanged(relationId, member))
     yield resolve()
   } catch (err) {
@@ -270,7 +266,7 @@ export function* changeOrganizationMemberRole ({payload}) {
 }
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_ORGANIZATIONS, getOrganizations),
     takeEvery(ADD_ORGANIZATION, addOrganization),
     takeEvery(EDIT_ORGANIZATION, editOrganization),
@@ -281,8 +277,8 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(LOAD_ORGANIZATIONS_TEAMS, getOrganizationsTeams as any),
     takeEvery(ADD_TEAM, addTeam),
     takeLatest(INVITE_MEMBER, inviteMember as any),
-    throttle(600, SEARCH_MEMBER, searchMember as any),
+    takeLatest(SEARCH_MEMBER, searchMember as any),
     takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
-  ]
+  ])
 }

@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
 import {
   LOAD_SOURCES,
   ADD_SOURCE,
@@ -41,20 +40,21 @@ import {
   sourceDeleted,
   deleteSourceFail,
   sourceConnected,
-  testSourceConnectionFail
+  testSourceConnectionFail,
+  csvMetaIdGeted,
+  getCsvMetaIdFail
 } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
-const message = require('antd/lib/message')
+import { message } from 'antd'
 
 export function* getSources (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
-    const sources = readListAdapter(asyncData)
+    const sources = asyncData.payload
     yield put(sourcesLoaded(sources))
   } catch (err) {
     yield put(loadSourceFail())
@@ -150,29 +150,27 @@ export function* testSourceConnection (action) {
 }
 
 export function* getCsvMetaId (action) {
-  const { resolve, reject } = action.payload
-  const { source_id, replace_mode, table_name } = action.payload.csvMeta
+  const { resolve } = action.payload
+  const { sourceId, replaceMode, tableName } = action.payload.csvMeta
   try {
-    const res = yield call(request, {
-      url: `${api.source}/${source_id}/csvmeta`,
+    yield call(request, {
+      url: `${api.source}/${sourceId}/csvmeta`,
       method: 'post',
       data: {
-        mode: replace_mode,
-        tableName: table_name
+        mode: replaceMode,
+        tableName
       }
     })
-    if (res && res.header && res.header.code === 200) {
-      resolve()
-    } else {
-      reject(res.header.msg)
-    }
+    yield put(csvMetaIdGeted())
+    resolve()
   } catch (err) {
-    reject(err)
+    yield put(getCsvMetaIdFail(err))
+    errorHandler(err)
   }
 }
 
 export default function* rootSourceSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_SOURCES, getSources),
     takeEvery(ADD_SOURCE, addSource),
     takeEvery(DELETE_SOURCE, deleteSource),
@@ -180,5 +178,5 @@ export default function* rootSourceSaga (): IterableIterator<any> {
     takeEvery(EDIT_SOURCE, editSource),
     takeEvery(TEST_SOURCE_CONNECTION, testSourceConnection),
     takeEvery(GET_CSV_META_ID, getCsvMetaId)
-  ]
+  ])
 }

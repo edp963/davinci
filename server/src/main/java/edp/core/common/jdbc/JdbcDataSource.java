@@ -70,18 +70,23 @@ public class JdbcDataSource extends DruidDataSource {
     @Value("${source.break-after-acquire-failure:true}")
     private boolean breakAfterAcquireFailure;
 
-    @Value("${source.connection-error-retry-attempts:3}")
+    @Value("${source.connection-error-retry-attempts:0}")
     private int connectionErrorRetryAttempts;
 
     private static volatile Map<String, DruidDataSource> map = new HashMap<>();
 
+    public synchronized void removeDatasource(String jdbcUrl, String username) {
+        if (map.containsKey(username + "@" + jdbcUrl.trim())) {
+            map.remove(username + "@" + jdbcUrl.trim());
+        }
+    }
+
     public synchronized DruidDataSource getDataSource(String jdbcUrl, String username, String password) throws SourceException {
-        String url = jdbcUrl.toLowerCase();
-        if (!map.containsKey(username + "@" + url) || null == map.get(username + "@" + url)) {
+        if (!map.containsKey(username + "@" + jdbcUrl.trim()) || null == map.get(username + "@" + jdbcUrl.trim())) {
             DruidDataSource instance = new JdbcDataSource();
             String className = null;
             try {
-                className = DriverManager.getDriver(url).getClass().getName();
+                className = DriverManager.getDriver(jdbcUrl.trim()).getClass().getName();
             } catch (SQLException e) {
             }
 
@@ -106,9 +111,9 @@ public class JdbcDataSource extends DruidDataSource {
                 instance.setDriverClassName(className);
             }
 
-            instance.setUrl(url);
-            instance.setUsername(url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
-            instance.setPassword((url.indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || url.indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
+            instance.setUrl(jdbcUrl.trim());
+            instance.setUsername(jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1 ? null : username);
+            instance.setPassword((jdbcUrl.toLowerCase().indexOf(DataTypeEnum.PRESTO.getFeature()) > -1 || jdbcUrl.toLowerCase().indexOf(DataTypeEnum.ELASTICSEARCH.getFeature()) > -1) ?
                     null : password);
             instance.setInitialSize(initialSize);
             instance.setMinIdle(minIdle);
@@ -116,7 +121,7 @@ public class JdbcDataSource extends DruidDataSource {
             instance.setMaxWait(maxWait);
             instance.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRunsMillis);
             instance.setMinEvictableIdleTimeMillis(minEvictableIdleTimeMillis);
-            instance.setTestWhileIdle(testWhileIdle);
+            instance.setTestWhileIdle(false);
             instance.setTestOnBorrow(testOnBorrow);
             instance.setTestOnReturn(testOnReturn);
             instance.setConnectionErrorRetryAttempts(connectionErrorRetryAttempts);
@@ -124,13 +129,13 @@ public class JdbcDataSource extends DruidDataSource {
 
             try {
                 instance.init();
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 log.error("Exception during pool initialization", e);
-                throw new SourceException("Exception during pool initialization");
+                throw new SourceException(e.getMessage());
             }
-            map.put(username + "@" + url, instance);
+            map.put(username + "@" + jdbcUrl.trim(), instance);
         }
 
-        return map.get(username + "@" + url);
+        return map.get(username + "@" + jdbcUrl.trim());
     }
 }

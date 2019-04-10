@@ -18,10 +18,9 @@
  * >>
  */
 
-import { takeLatest, throttle } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, throttle } from 'redux-saga/effects'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import { LOGIN, GET_LOGIN_USER, CHECK_NAME, ACTIVE, UPDATE_PROFILE, CHANGE_USER_PASSWORD, JOIN_ORGANIZATION } from './constants'
 import {
   logged,
@@ -39,7 +38,6 @@ import {
 import request, { removeToken } from '../../utils/request'
 // import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter, readObjectAdapter } from '../../utils/asyncAdapter'
 import { errorHandler } from '../../utils/util'
 
 export function* login (action): IterableIterator<any> {
@@ -55,23 +53,7 @@ export function* login (action): IterableIterator<any> {
       }
     })
 
-    // switch (asyncData.header.code) {
-    //   case 400:
-    //     message.error('密码错误')
-    //     yield put(loginError())
-    //     return null
-    //   case 404:
-    //     message.error('用户不存在')
-    //     yield put(loginError())
-    //     return null
-    //   default:
-    //     const loginUser = readListAdapter(asyncData)
-    //     yield put(logged(loginUser))
-    //     localStorage.setItem('loginUser', JSON.stringify(loginUser))
-    //     resolve()
-    //     return loginUser
-    // }
-    const loginUser = readListAdapter(asyncData)
+    const loginUser = asyncData.payload
     yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
     resolve()
@@ -91,7 +73,7 @@ export function* activeUser (action): IterableIterator<any> {
     })
     switch (asyncData.header.code) {
       case 200:
-        const loginUser = readListAdapter(asyncData)
+        const loginUser = asyncData.payload
         yield put(activeSuccess(loginUser))
         localStorage.setItem('loginUser', JSON.stringify(loginUser))
         resolve()
@@ -114,7 +96,7 @@ export function* activeUser (action): IterableIterator<any> {
 export function* getLoginUser (action): IterableIterator<any> {
   try {
     const asyncData = yield call(request, `${api.user}/token`)
-    const loginUser = readObjectAdapter(asyncData)
+    const loginUser = asyncData.payload
     yield put(logged(loginUser))
     localStorage.setItem('loginUser', JSON.stringify(loginUser))
     action.payload.resolve()
@@ -207,7 +189,7 @@ export function* joinOrganization (action): IterableIterator<any> {
     })
     switch (asyncData.header.code) {
       case 200:
-        const detail = readListAdapter(asyncData)
+        const detail = asyncData.payload
         yield put(joinOrganizationSuccess(detail))
         if (resolve) {
           resolve(detail)
@@ -240,8 +222,7 @@ export function* joinOrganization (action): IterableIterator<any> {
   }
 }
 export default function* rootGroupSaga (): IterableIterator<any> {
-  yield [
-    // throttle(1000, CHECK_NAME, checkName as any),
+  yield all([
     throttle(1000, CHECK_NAME, checkNameUnique as any),
     takeLatest(GET_LOGIN_USER, getLoginUser as any),
     takeLatest(ACTIVE, activeUser as any),
@@ -249,6 +230,6 @@ export default function* rootGroupSaga (): IterableIterator<any> {
     takeLatest(UPDATE_PROFILE, updateProfile as any),
     takeLatest(CHANGE_USER_PASSWORD, changeUserPassword as any),
     takeLatest(JOIN_ORGANIZATION, joinOrganization as any)
-  ]
+  ])
 }
 

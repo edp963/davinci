@@ -39,7 +39,8 @@ export interface IStore<T> extends Store<T> {
 }
 
 declare interface IWindow extends Window {
-  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose
+  // __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: typeof compose
+  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: any
 }
 declare const window: IWindow
 
@@ -52,19 +53,22 @@ export default function configureStore<T> (initialState: object = {}, history): 
     routerMiddleware(history)
   ]
 
+  const enhancers = [applyMiddleware(...middlewares)]
+
   // If Redux DevTools Extension is installed use it, otherwise use Redux compose
   /* eslint-disable no-underscore-dangle */
   const composeEnhancers =
     process.env.NODE_ENV !== 'production' &&
-    typeof window === 'object' && window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
-      ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+    typeof window === 'object' &&
+    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__
+      ? window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({})
       : compose
   /* eslint-enable */
 
   const store: IStore<T> = createStore(
     createReducer(),
     fromJS(initialState),
-    composeEnhancers(applyMiddleware(...middlewares))
+    composeEnhancers(...enhancers)
   )
 
   // Extensions
@@ -79,12 +83,6 @@ export default function configureStore<T> (initialState: object = {}, history): 
   if (module.hot) {
     module.hot.accept('./reducers', () => {
       store.replaceReducer(createReducer(store.injectedReducers))
-      // import('./reducers').then((reducerModule) => {
-      //   const createReducers = reducerModule.default
-      //   const nextReducers = createReducers(store.asyncReducers)
-
-      //   store.replaceReducer(nextReducers)
-      // })
     })
   }
 

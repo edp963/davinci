@@ -86,7 +86,8 @@ public interface ViewMapper {
     List<View> getBySourceId(@Param("sourceId") Long sourceId);
 
     @Select({
-            "select v.*, s.id 'source.id', s.name 'source.name' from view v ",
+            "select v.`id`,v.`name`,v.`description`,v.`project_id`,v.`source_id`,v.`sql`,v.`model`, ",
+            "s.id 'source.id', s.name 'source.name' from view v ",
             "left join source s on s.id = v.source_id ",
             "where v.project_id = #{projectId}"
     })

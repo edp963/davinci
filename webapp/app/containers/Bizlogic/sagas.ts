@@ -18,21 +18,20 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_BIZLOGICS,
   ADD_BIZLOGIC,
   DELETE_BIZLOGIC,
   EDIT_BIZLOGIC,
   LOAD_CASCADESOURCE,
-  LOAD_BIZDATA_SCHEMA,
-  LOAD_SCHEMA,
   EXECUTE_SQL,
   LOAD_DATA,
   LOAD_DISTINCT_VALUE,
   LOAD_DATA_FROM_ITEM,
-  LOAD_VIEW_TEAM
+  LOAD_VIEW_TEAM,
+  LOAD_SOURCE_TABLE,
+  LOAD_SOURCE_TABLE_COLUMN
 } from './constants'
 import {
   bizlogicsLoaded,
@@ -45,10 +44,6 @@ import {
   editBizlogicFail,
   cascadeSourceLoaded,
   loadCascadeSourceFail,
-  bizdataSchemaLoaded,
-  loadBizdataSchemaFail,
-  schemaLoaded,
-  loadSchemaFail,
   sqlExecuted,
   executeSqlFail,
   dataLoaded,
@@ -58,13 +53,15 @@ import {
   dataFromItemLoaded,
   loadDataFromItemFail,
   viewTeamLoaded,
-  loadViewTeamFail
+  loadViewTeamFail,
+  sourceTableLoaded,
+  sourceTableColumnLoaded,
+  loadSourceTableFail,
+  loadSourceTableColumnFail
 } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
-import { readListAdapter } from '../../utils/asyncAdapter'
-import resultsetConverter from '../../utils/resultsetConverter'
 import { errorHandler } from '../../utils/util'
 
 declare interface IObjectConstructor {
@@ -75,7 +72,7 @@ export function* getBizlogics (action) {
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.bizlogic}?projectId=${payload.projectId}`)
-    const bizlogics = readListAdapter(asyncData)
+    const bizlogics = asyncData.payload
     yield put(bizlogicsLoaded(bizlogics))
     if (payload.resolve) {
       payload.resolve(bizlogics)
@@ -144,64 +141,62 @@ export function* editBizlogic (action) {
 export function* getCascadeSource (action) {
   const { payload } = action
   try {
-    const { controlId, viewId, column, parents } = payload
+    const { controlId, viewId, columns, parents } = payload
 
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
       data: {
-        column,
+        columns,
         parents: parents || []
       }
     })
-    const values = asyncData.payload[column]
-    yield put(cascadeSourceLoaded(controlId, column, values))
+    yield put(cascadeSourceLoaded(controlId, columns, asyncData.payload))
   } catch (err) {
     yield put(loadCascadeSourceFail(err))
     errorHandler(err)
   }
 }
 
-export function* getBizdataSchema (action) {
+export function* loadSourceTable (action) {
   const { payload } = action
   try {
-    const { id, resolve } = payload
-
-    const asyncData = yield call(request, {
-      method: 'post',
-      url: `${api.bizlogic}/${id}/resultset?limit=1`,
-      data: {}
-    })
-    const bizdatas = resultsetConverter(readListAdapter(asyncData))
-    yield put(bizdataSchemaLoaded(bizdatas.keys))
-    resolve(bizdatas.keys)
+    const asyncData = yield call(request, `${api.source}/${payload.sourceId}/tables`)
+    const table = asyncData.payload
+    yield put(sourceTableLoaded(table))
+    payload.resolve(table)
   } catch (err) {
-    yield put(loadBizdataSchemaFail(err))
+    yield put(loadSourceTableFail(err))
+    errorHandler(err)
   }
 }
 
-export function* getSchema (action) {
+export function* loadSourceTableColumn (action) {
   const { payload } = action
   try {
-    const asyncData = yield call(request, `${api.bizlogic}/database?sourceId=${payload.sourceId}`)
-    const schema = readListAdapter(asyncData)
-    yield put(schemaLoaded(schema))
-    payload.resolve(schema)
+    const asyncData = yield call(request, `${api.source}/${payload.sourceId}/table/columns?tableName=${payload.tableName}`)
+    const column = asyncData.payload
+    yield put(sourceTableColumnLoaded(column))
+    payload.resolve(column)
   } catch (err) {
-    yield put(loadSchemaFail())
+    yield put(loadSourceTableColumnFail(err))
     errorHandler(err)
   }
 }
 
 export function* executeSql (action) {
   const { payload } = action
+  const { sourceIdGeted, sql, pageNo, pageSize, limit} = payload.requestObj
   try {
     const asyncData = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/executesql`,
       data: {
-        sql: payload.sql,
-        sourceId: payload.sourceId
+        sourceId: sourceIdGeted,
+        sql,
+        pageNo,
+        pageSize,
+        limit
       }
     })
     const result = asyncData && asyncData.header
@@ -217,15 +212,17 @@ export function* executeSql (action) {
 export function* getData (action) {
   const { payload } = action
   try {
-    const { id, params, resolve } = payload
+    const { id, requestParams, resolve } = payload
 
-    const data = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${id}/getdata`,
-      data: params
+      data: requestParams
     })
     yield put(dataLoaded())
-    resolve(data.payload)
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    resolve(response.payload)
   } catch (err) {
     yield put(loadDataFail(err))
     errorHandler(err)
@@ -240,15 +237,16 @@ export function* getDistinctValue (action) {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdistinctvalue`,
       data: {
-        column: fieldName,
+        columns: [fieldName],
         parents: filters
           ? Object.entries(filters).map(([column, value]) => ({ column, value }))
           : []
       }
     })
-    yield put(distinctValueLoaded(asyncData.payload, fieldName))
+    const result = asyncData.payload.map((item) => item[fieldName])
+    yield put(distinctValueLoaded(result, fieldName))
     if (resolve) {
-      resolve(readListAdapter(asyncData))
+      resolve(asyncData.payload)
     }
   } catch (err) {
     yield put(loadDistinctValueFail(err))
@@ -257,21 +255,34 @@ export function* getDistinctValue (action) {
 }
 
 export function* getDataFromItem (action) {
-  const { payload } = action
-  const { renderType, itemId, viewId, params: parameters, vizType } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { renderType, itemId, viewId, requestParams, vizType } = action.payload
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    pagination,
+    ...rest
+  } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
 
   try {
-    const data = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.bizlogic}/${viewId}/getdata`,
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
       }
     })
-    yield put(dataFromItemLoaded(renderType, itemId, data.payload, vizType))
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(dataFromItemLoaded(renderType, itemId, requestParams, response.payload, vizType))
   } catch (err) {
     yield put(loadDataFromItemFail(itemId, vizType))
     errorHandler(err)
@@ -279,13 +290,16 @@ export function* getDataFromItem (action) {
 }
 
 export function* getViewTeams (action) {
-  const { payload } = action
+  const { projectId, resolve } = action.payload
   try {
-    const project = yield call(request, `${api.projects}/${payload.projectId}`)
-    const currentProject = readListAdapter(project)
+    const project = yield call(request, `${api.projects}/${projectId}`)
+    const currentProject = project.payload
     const organization = yield call(request, `${api.organizations}/${currentProject.orgId}/teams`)
-    const orgTeam = readListAdapter(organization)
+    const orgTeam = organization.payload
     yield put(viewTeamLoaded(orgTeam))
+    if (resolve) {
+      resolve(orgTeam)
+    }
   } catch (err) {
     yield put(loadViewTeamFail(err))
     errorHandler(err)
@@ -293,18 +307,18 @@ export function* getViewTeams (action) {
 }
 
 export default function* rootBizlogicSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_BIZLOGICS, getBizlogics),
     takeEvery(ADD_BIZLOGIC, addBizlogic),
     takeEvery(DELETE_BIZLOGIC, deleteBizlogic),
     takeEvery(EDIT_BIZLOGIC, editBizlogic),
     takeEvery(LOAD_CASCADESOURCE, getCascadeSource),
-    takeEvery(LOAD_BIZDATA_SCHEMA, getBizdataSchema),
-    takeLatest(LOAD_SCHEMA, getSchema),
+    takeEvery(LOAD_SOURCE_TABLE, loadSourceTable),
+    takeEvery(LOAD_SOURCE_TABLE_COLUMN, loadSourceTableColumn),
     takeLatest(EXECUTE_SQL, executeSql),
     takeEvery(LOAD_DATA, getData),
     takeEvery(LOAD_DISTINCT_VALUE, getDistinctValue),
     takeEvery(LOAD_DATA_FROM_ITEM, getDataFromItem),
     takeLatest(LOAD_VIEW_TEAM, getViewTeams)
-  ]
+  ])
 }

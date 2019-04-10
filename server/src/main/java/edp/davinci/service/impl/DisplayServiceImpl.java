@@ -83,6 +83,9 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
     @Autowired
     private TokenUtils tokenUtils;
 
+    @Autowired
+    private ExcludeDisplayTeamMapper excludeDisplayTeamMapper;
+
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
         Long displayId = displayMapper.getByNameWithProjectId(name, projectId);
@@ -126,6 +129,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         int insert = displayMapper.insert(display);
         if (insert > 0) {
+            excludeTeamForDisplay(displayInfo.getTeamIds(), display.getId(), user.getId(), null);
             return resultMap.successAndRefreshToken(request).payload(display);
         } else {
             return resultMap.failAndRefreshToken(request).message("create display fail");
@@ -159,6 +163,8 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
 
         //删除display实体
         displayMapper.deleteById(id);
+
+        excludeDisplayTeamMapper.deleteByDisplayId(id);
 
         //删除displaySlide
         displaySlideMapper.deleteByDisplayId(id);
@@ -204,17 +210,17 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
     /**
      * 更新display信息
      *
-     * @param display
+     * @param displayUpdateDto
      * @param user
      * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateDisplay(Display display, User user, HttpServletRequest request) {
+    public ResultMap updateDisplay(DisplayUpdateDto displayUpdateDto, User user, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
-        Project project = projectMapper.getById(display.getProjectId());
+        Project project = projectMapper.getById(displayUpdateDto.getProjectId());
         if (null == project) {
             return resultMap.failAndRefreshToken(request).message("project is not found");
         }
@@ -223,6 +229,8 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         if (!allowWrite(project, user)) {
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to update the display in this project");
         }
+
+        Display display = displayMapper.getById(displayUpdateDto.getId());
 
         if (!StringUtils.isEmpty(display.getAvatar()) && !display.getAvatar().startsWith(Constants.DISPLAY_AVATAR_PATH)) {
             return resultMap.failAndRefreshToken(request).message("Invalid cover image");
@@ -239,7 +247,12 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             }
         }
 
-        displayMapper.update(display);
+        BeanUtils.copyProperties(displayUpdateDto, display);
+        int update = displayMapper.update(display);
+        if (update > 0) {
+            List<Long> excludeTeams = excludeDisplayTeamMapper.selectExcludeTeamsByDisplayId(display.getId());
+            excludeTeamForDisplay(displayUpdateDto.getTeamIds(), display.getId(), user.getId(), excludeTeams);
+        }
 
         return resultMap.successAndRefreshToken(request);
     }
@@ -539,7 +552,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
-        List<Display> displays = displayMapper.getByProject(projectId);
+        List<Display> displays = displayMapper.getByProject(projectId, user.getId());
 
         if (null != displays && displays.size() > 0) {
 
@@ -644,7 +657,7 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
                             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permisson to view display slides");
                         }
                     }
-                }else {
+                } else {
                     Organization organization = projectWithOrganization.getOrganization();
                     if (organization.getMemberPermission() < UserPermissionEnum.READ.getPermission()) {
                         log.info("user (:{}) have not permission to view display slides", user.getId());
@@ -1001,6 +1014,12 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         }
     }
 
+
+    @Override
+    public List<Long> getDisplayExcludeTeams(Long id) {
+        return excludeDisplayTeamMapper.selectExcludeTeamsByDisplayId(id);
+    }
+
     @Override
     @Transactional
     public void deleteSlideAndDisplayByProject(Long projectId) throws RuntimeException {
@@ -1010,5 +1029,36 @@ public class DisplayServiceImpl extends CommonService<Display> implements Displa
         displaySlideMapper.deleteByProjectId(projectId);
         //删除display
         displayMapper.deleteByProject(projectId);
+    }
+
+
+    @Transactional
+    protected void excludeTeamForDisplay(List<Long> teamIds, Long displayId, Long userId, List<Long> excludeTeams) {
+
+        if (null != excludeTeams && excludeTeams.size() > 0) {
+            if (null != teamIds && teamIds.size() > 0) {
+                List<Long> rmTeamIds = new ArrayList<>();
+                excludeTeams.forEach(teamId -> {
+                    if (teamId.longValue() > 0L && !teamIds.contains(teamId)) {
+                        rmTeamIds.add(teamId);
+                    }
+                });
+                if (rmTeamIds.size() > 0) {
+                    excludeDisplayTeamMapper.deleteByDisplayIdAndTeamIds(displayId, rmTeamIds);
+                }
+            } else {
+                //删除所有要排除的项
+                excludeDisplayTeamMapper.deleteByDisplayId(displayId);
+            }
+        }
+
+        //添加排除项
+        if (null != teamIds && teamIds.size() > 0) {
+            List<ExcludeDisplayTeam> list = new ArrayList<>();
+            teamIds.forEach(tid -> list.add(new ExcludeDisplayTeam(tid, displayId, userId)));
+            if (list.size() > 0) {
+                excludeDisplayTeamMapper.insertBatch(list);
+            }
+        }
     }
 }

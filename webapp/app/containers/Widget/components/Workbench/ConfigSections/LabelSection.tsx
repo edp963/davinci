@@ -1,8 +1,5 @@
 import * as React from 'react'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Checkbox = require('antd/lib/checkbox')
-const Select = require('antd/lib/select')
+import { Row, Col, Checkbox, Select } from 'antd'
 const Option = Select.Option
 import ColorPicker from '../../../../../components/ColorPicker'
 import {
@@ -85,8 +82,23 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-      <Option key={f} value={`${f}`}>{f}</Option>
+      <Option key={`${f}`} value={`${f}`}>{f}</Option>
     ))
+
+    const labelPositionSetting = positionName !== void 0 && [(
+      <Col key="posLabel" span={4}>位置</Col>
+    ), (
+      <Col key="posSetting" span={10}>
+        <Select
+          placeholder="位置"
+          className={styles.blockElm}
+          value={positionName}
+          onChange={this.selectChange(positionChangeName)}
+        >
+          {positions}
+        </Select>
+      </Col>
+    )]
 
     return (
       <div className={styles.paneBlock}>
@@ -101,17 +113,7 @@ export class LabelSection extends React.PureComponent<ILabelSectionProps, {}> {
                 显示标签
               </Checkbox>
             </Col>
-            <Col span={4}>位置</Col>
-            <Col span={10}>
-              <Select
-                placeholder="位置"
-                className={styles.blockElm}
-                value={positionName}
-                onChange={this.selectChange(positionChangeName)}
-              >
-                {positions}
-              </Select>
-            </Col>
+            {labelPositionSetting}
           </Row>
           <Row gutter={8} type="flex" align="middle" className={styles.blockRow}>
             <Col span={10}>

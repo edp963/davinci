@@ -33,7 +33,9 @@ import {
   LOAD_CASCADESOURCE_FROM_DASHBOARD,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
   LOAD_CASCADESOURCE_FROM_DASHBOARD_FAILURE,
-  RESIZE_ALL_DASHBOARDITEM
+  RESIZE_ALL_DASHBOARDITEM,
+  DRILL_DASHBOARDITEM,
+  DELETE_DRILL_HISTORY
 } from './constants'
 
 export function getDashboard (token, reject) {
@@ -81,24 +83,25 @@ export function widgetGetted (widget) {
   }
 }
 
-export function getResultset (renderType, itemId, dataToken, params) {
+export function getResultset (renderType, itemId, dataToken, requestParams) {
   return {
     type: LOAD_SHARE_RESULTSET,
     payload: {
       renderType,
       itemId,
       dataToken,
-      params
+      requestParams
     }
   }
 }
 
-export function resultsetGetted (renderType, itemId, resultset) {
+export function resultsetGetted (renderType, itemId, requestParams, resultset) {
   return {
     type: LOAD_SHARE_RESULTSET_SUCCESS,
     payload: {
       renderType,
       itemId,
+      requestParams,
       resultset
     }
   }
@@ -114,12 +117,12 @@ export function setIndividualDashboard (widgetId, token) {
   }
 }
 
-export function loadWidgetCsv (itemId, params, token) {
+export function loadWidgetCsv (itemId, requestParams, token) {
   return {
     type: LOAD_WIDGET_CSV,
     payload: {
       itemId,
-      params,
+      requestParams,
       token
     }
   }
@@ -143,25 +146,25 @@ export function loadWidgetCsvFail (itemId) {
   }
 }
 
-export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, column, parents) {
+export function loadCascadeSourceFromDashboard (controlId, viewId, dataToken, columns, parents) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD,
     payload: {
       controlId,
       viewId,
       dataToken,
-      column,
+      columns,
       parents
     }
   }
 }
 
-export function cascadeSourceFromDashboardLoaded (controlId, column, values) {
+export function cascadeSourceFromDashboardLoaded (controlId, columns, values) {
   return {
     type: LOAD_CASCADESOURCE_FROM_DASHBOARD_SUCCESS,
     payload: {
       controlId,
-      column,
+      columns,
       values
     }
   }
@@ -179,5 +182,25 @@ export function loadCascadeSourceFromDashboardFail (error) {
 export function resizeAllDashboardItem () {
   return {
     type: RESIZE_ALL_DASHBOARDITEM
+  }
+}
+
+export function drillDashboardItem (itemId, drillHistory) {
+  return {
+    type: DRILL_DASHBOARDITEM,
+    payload: {
+      itemId,
+      drillHistory
+    }
+  }
+}
+
+export function deleteDrillHistory (itemId, index) {
+  return {
+    type: DELETE_DRILL_HISTORY,
+    payload: {
+      itemId,
+      index
+    }
   }
 }

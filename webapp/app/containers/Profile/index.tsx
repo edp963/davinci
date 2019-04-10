@@ -1,27 +1,16 @@
-import * as React from 'react'
+import React from 'react'
 import { connect } from 'react-redux'
 import { Link } from 'react-router'
-const Icon = require('antd/lib/icon')
-const Col = require('antd/lib/col')
-const Message = require('antd/lib/message')
-const Row = require('antd/lib/row')
-const Input = require('antd/lib/input')
-const Form = require('antd/lib/Form')
+import { Icon, Col, message, Row, Input, Form, Button, Breadcrumb } from 'antd'
 const FormItem = Form.Item
 const styles = require('./profile.less')
-const Button = require('antd/lib/button')
 import Box from '../../components/Box'
 import UploadAvatar from '../../components/UploadAvatar'
-import {createStructuredSelector} from 'reselect'
-import {makeSelectLoginUser} from '../App/selectors'
-import {compose} from 'redux'
-import injectReducer from '../../utils/injectReducer'
-import {updateProfile, checkNameUniqueAction, uploadAvatarSuccess} from '../App/actions'
-import injectSaga from '../../utils/injectSaga'
-// import reducer from '../App/reducer'
-// import saga from '../App/sagas'
+import { createStructuredSelector } from 'reselect'
+import { makeSelectLoginUser } from '../App/selectors'
+import { compose } from 'redux'
+import { updateProfile, checkNameUniqueAction, uploadAvatarSuccess } from '../App/actions'
 const utilStyles = require('../../assets/less/util.less')
-const Breadcrumb = require('antd/lib/breadcrumb')
 
 interface IProfileProps {
   form: any
@@ -49,13 +38,10 @@ export class Profile extends React.PureComponent<IProfileProps, {}> {
   }
   private submit = () => {
     const { onUpdateProfile, loginUser: {id} } = this.props
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if(!err) {
-        const {name, description, department} = values
-        onUpdateProfile(id, name, description, department, (data) => {
-          Message.success(data.header && data.header.msg)
-        })
-      }
+    const values = this.props.form.getFieldsValue()
+    const {name, description, department} = values
+    onUpdateProfile(id, name, description, department, (data) => {
+      message.success(data.header && data.header.msg)
     })
   }
   public componentDidMount () {

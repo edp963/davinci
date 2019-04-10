@@ -26,14 +26,34 @@ import bar from './bar'
 import scatter from './scatter'
 import pie from './pie'
 import funnel from './funnel'
+import radar from './radar'
+import sankey from './sankey'
+import parallel from './parallel'
+import map from './map'
+import wordCloud from './wordCloud'
+import waterfall from './waterfall'
+import scorecard from './scorecard'
+import iframe from './iframe'
+import richText from './richText'
+// import doubleYAxis from './doubleYAxis'
 
 const widgetlibs: IChartInfo[] = [
   table,
+  scorecard,
   line,
   bar,
   scatter,
   pie,
-  funnel
+  funnel,
+  radar,
+  sankey,
+  parallel,
+  map,
+  wordCloud,
+  waterfall,
+  iframe,
+  richText
+  // doubleYAxis
 ]
 
 export default widgetlibs

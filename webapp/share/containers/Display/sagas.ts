@@ -21,12 +21,11 @@
 import { takeLatest, takeEvery } from 'redux-saga'
 import { call, fork, put } from 'redux-saga/effects'
 
-const message = require('antd/lib/message')
+import { message } from 'antd'
 import request from 'utils/request'
 import api from 'utils/api'
 import { ActionTypes } from './constants'
 import { displayLoaded, loadDisplayFail, layerDataLoaded, loadLayerDataFail } from './actions'
-import { readListAdapter } from 'utils/asyncAdapter'
 
 export function* getDisplay (action) {
   const { token, resolve, reject } = action.payload
@@ -52,20 +51,30 @@ export function* getDisplay (action) {
 
 export function* getData (action) {
   const { payload } = action
-  const { renderType, layerId, dataToken, params: parameters } = payload
-  const { filters, linkageFilters, globalFilters, params, linkageParams, globalParams, ...rest } = parameters
+  const { renderType, layerId, dataToken, requestParams } = payload
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    ...rest
+  } = requestParams
 
   try {
-    const asyncData = yield call(request, {
+    const response = yield call(request, {
       method: 'post',
       url: `${api.share}/data/${dataToken}`,
       data: {
         ...rest,
         filters: filters.concat(linkageFilters).concat(globalFilters),
-        params: params.concat(linkageParams).concat(globalParams)
+        params: variables.concat(linkageVariables).concat(globalVariables)
       }
     })
-    yield put(layerDataLoaded(renderType, layerId, readListAdapter(asyncData)))
+    const { resultList } = response.payload
+    response.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(layerDataLoaded(renderType, layerId, response.payload))
   } catch (err) {
     yield put(loadLayerDataFail(err))
   }

@@ -27,8 +27,8 @@ public enum SqlTypeEnum {
     INT("INT", "INT(12)"),
     INTEGER("INTEGER", "INTEGER(12)"),
     BIGINT("BIGINT", "BIGINT(20)"),
-    DECIMAL("DECIMAL", "DECIMAL(17,3)"),
-    NUMERIC("NUMERIC", "NUMERIC(17,3)"),
+    DECIMAL("DECIMAL", "DECIMAL(17,6)"),
+    NUMERIC("NUMERIC", "NUMERIC(17,6)"),
     REAL("REAL", "REAL"),
     FLOAT("FLOAT", "FLOAT"),
     DOUBLE("DOUBLE", "DOUBLE"),
@@ -55,6 +55,10 @@ public enum SqlTypeEnum {
     SqlTypeEnum(String name, String type) {
         this.name = name;
         this.type = type;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public static String getType(String name) throws ServerException {

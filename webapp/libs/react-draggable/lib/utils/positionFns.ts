@@ -139,7 +139,7 @@ function cloneBounds (bounds: IBounds): IBounds {
 }
 
 function findDOMNode (draggable: Draggable | DraggableCore): Element {
-  const node = ReactDOM.findDOMNode(draggable)
+  const node = ReactDOM.findDOMNode(draggable) as Element
   if (!node) {
     throw new Error('<DraggableCore>: Unmounted during event!')
   }

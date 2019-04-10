@@ -18,8 +18,7 @@
  * >>
  */
 
-import { takeLatest, takeEvery } from 'redux-saga'
-import { call, put } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import {
   LOAD_TEAMS,
   EDIT_TEAM,
@@ -64,17 +63,16 @@ import {
   teamMemberRoleChanged
 } from './actions'
 
-const message =  require('antd/lib/message')
+import { message } from 'antd'
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
-import { writeAdapter, readListAdapter } from '../../utils/asyncAdapter'
 
 
 export function* getTeams () {
   try {
     const asyncData = yield call(request, api.teams)
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(teamsLoaded(projects))
   } catch (err) {
     yield put(loadTeamsFail())
@@ -119,7 +117,7 @@ export function* deleteTeam (action) {
 export function* getTeamDetail ({ payload }) {
   try {
     const asyncData = yield  call(request, `${api.teams}/${payload.id}`)
-    const detail = readListAdapter(asyncData)
+    const detail = asyncData.payload
     yield put(teamDetailLoaded(detail))
     yield payload.resolve && payload.resolve(detail)
   } catch (err) {
@@ -131,7 +129,7 @@ export function* getTeamProjects ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.teams}/${id}/projects`)
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(teamProjectsLoaded(projects))
   } catch (err) {
     yield put(loadTeamProjectsFail())
@@ -143,7 +141,7 @@ export function* getTeamMembers ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.teams}/${id}/members`)
-    const members = readListAdapter(asyncData)
+    const members = asyncData.payload
     yield put(teamMembersLoaded(members))
   } catch (err) {
     yield put(loadTeamMembersFail())
@@ -155,7 +153,7 @@ export function* getTeamTeams ({payload}) {
   const {id} = payload
   try {
     const asyncData = yield call(request, `${api.teams}/${id}/teams`)
-    const teams = readListAdapter(asyncData)
+    const teams = asyncData.payload
     yield put(teamTeamsLoaded(teams))
   } catch (err) {
     yield put(loadTeamTeamsFail())
@@ -171,7 +169,7 @@ export function* pullProjectInTeam ({payload}) {
       method: 'post',
       data: {projectId}
     })
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(projectInTeamPulled(projects))
     resolve()
   } catch (err) {
@@ -188,7 +186,7 @@ export function* updateTeamProjectPermission ({payload}) {
       method: 'put',
       data: relTeamProjectDto
     })
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(teamProjectPermissionUpdated(projects))
     if (resolve) {
       resolve(projects)
@@ -220,7 +218,7 @@ export function* pullMemberInTeam ({payload}) {
       url: `${api.teams}/${teamId}/member/${memberId}`,
       method: 'post'
     })
-    const members = readListAdapter(asyncData)
+    const members = asyncData.payload
     yield put(memberInTeamPulled(members))
     resolve()
   } catch (err) {
@@ -261,7 +259,7 @@ export function* changeTeamMemberRole ({payload}) {
 }
 
 export default function* rootTeamSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_TEAMS, getTeams),
     takeEvery(EDIT_TEAM, editTeam),
     takeEvery(DELETE_TEAM, deleteTeam),
@@ -275,5 +273,5 @@ export default function* rootTeamSaga (): IterableIterator<any> {
     takeLatest(DELETE_TEAM_MEMBER, deleteTeamMember as any),
     takeLatest(CHANGE_MEMBER_ROLE_TEAM, changeTeamMemberRole as any),
     takeLatest(PULL_MEMBER_IN_TEAM, pullMemberInTeam as any)
-  ]
+  ])
 }

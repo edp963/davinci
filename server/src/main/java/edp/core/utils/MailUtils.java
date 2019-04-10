@@ -119,7 +119,8 @@ public class MailUtils {
      * @param content  内容
      * @throws ServerException
      */
-    public void sendHtmlEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc, String content) throws ServerException {
+    public void sendHtmlEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,
+                              String content, List<File> files) throws ServerException {
 
         if (StringUtils.isEmpty(from)) {
             log.info("email address(from) cannot be empty");
@@ -153,6 +154,7 @@ public class MailUtils {
         log.info("start send email to {}", to);
 
         try {
+
             MimeMessage message = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(message, true);
 
@@ -165,7 +167,25 @@ public class MailUtils {
             if (null != bcc && bcc.length > 0) {
                 messageHelper.setBcc(bcc);
             }
+
+            if (StringUtils.isEmpty(content)) {
+                content = "<html></html>";
+            }
             messageHelper.setText(content, true);
+
+            if (null != files && files.size() > 0) {
+                if (files.size() == 1) {
+                    File file = files.get(0);
+                    String attName = "attachment" + file.getName().substring(file.getName().lastIndexOf("."));
+                    messageHelper.addAttachment(attName, file);
+                } else {
+                    for (int i = 0; i < files.size(); i++) {
+                        File file = files.get(i);
+                        String attName = "attachment-" + (i + 1) + file.getName().substring(file.getName().lastIndexOf("."));
+                        messageHelper.addAttachment(attName, file);
+                    }
+                }
+            }
 
             javaMailSender.send(message);
             log.info("Send mail success, in {} million seconds", System.currentTimeMillis() - startTimestamp);
@@ -188,22 +208,35 @@ public class MailUtils {
      * @param content
      * @throws ServerException
      */
-    public void sendHtmlEmail(String subject, String to, String content) throws ServerException {
-        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, content);
+    public void sendHtmlEmail(String subject, String to, String content, List<File> files) throws ServerException {
+        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, null, null, content, files);
+    }
+
+    /**
+     * 发送 Html 邮件
+     * 使用默认配置发送地址
+     *
+     * @param subject
+     * @param to
+     * @param content
+     * @throws ServerException
+     */
+    public void sendHtmlEmail(String subject, String to, String[] cc, String[] bcc, String content, List<File> files) throws ServerException {
+        sendHtmlEmail(sendEmailfrom, nickName, subject, new String[]{to}, cc, bcc, content, files);
     }
 
     /**
      * 发送模板邮件
      *
-     * @param from      发件地址
-     * @param nickName  昵称
-     * @param subject   主题
-     * @param to        收件地址
-     * @param cc        抄送
-     * @param bcc       加密抄送
-     * @param template  模板地址
-     * @param content   模板内容
-     * @param files     附件
+     * @param from     发件地址
+     * @param nickName 昵称
+     * @param subject  主题
+     * @param to       收件地址
+     * @param cc       抄送
+     * @param bcc      加密抄送
+     * @param template 模板地址
+     * @param content  模板内容
+     * @param files    附件
      * @throws ServerException
      */
     public void sendTemplateEmail(String from, String nickName, String subject, String[] to, String[] cc, String[] bcc,

@@ -19,10 +19,7 @@
  */
 
 import * as React from 'react'
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Popover = require('antd/lib/popover')
-const Popconfirm = require('antd/lib/popconfirm')
+import { Icon, Tooltip, Popover } from 'antd'
 const styles = require('../Dashboard.less')
 import {IProject} from '../../Projects'
 
@@ -34,7 +31,8 @@ interface IDashboardActionProps {
     type: number,
     name: string
   }
-  onInitOperateMore: (id: number, type: string) => any
+  splitWidth: number
+  onInitOperateMore: (item: any, type: string) => any
   initChangeDashboard: (id: number) => any
 }
 
@@ -56,7 +54,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     })
   }
 
-  private operateMore = (itemId, type) => (e) => {
+  private operateMore = (item, type) => (e) => {
     const { popoverVisible } = this.state
     const { onInitOperateMore } = this.props
 
@@ -65,7 +63,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
         popoverVisible: false
       })
     }
-    onInitOperateMore(itemId, type)
+    onInitOperateMore(item, type)
   }
 
   public render () {
@@ -73,18 +71,19 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       currentProject,
       depth,
       item,
-      initChangeDashboard
+      initChangeDashboard,
+      splitWidth
     } = this.props
     const { popoverVisible } = this.state
 
     const editAction = (
-      <li onClick={this.operateMore(item.id, 'edit')}>
+      <li onClick={this.operateMore(item, 'edit')}>
         <Icon type="edit" /> 编辑
       </li>
     )
 
     const moveAction = (
-      <li onClick={this.operateMore(item.id, 'move')}>
+      <li onClick={this.operateMore(item, 'move')}>
         <Icon type="swap" className={styles.swap} /> 移动
       </li>
     )
@@ -92,11 +91,8 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
     const ulActionAll = (
       <ul className={styles.menu}>
         {editAction}
-        {/* <li onClick={this.operateMore(item.id, 'copy')} className={item.type === 0 ? styles.popHide : ''}>
-          <Icon type="copy" /> 复制
-        </li> */}
         {moveAction}
-        <li onClick={this.operateMore(item.id, 'delete')}>
+        <li onClick={this.operateMore(item, 'delete')}>
           <Icon type="delete" /> 删除
         </li>
       </ul>
@@ -136,7 +132,7 @@ export class DashboardAction extends React.PureComponent<IDashboardActionProps, 
       }
     }
 
-    const titleWidth = `${130 - 18 * depth}px`
+    const titleWidth = `${splitWidth - 60 - 18 * depth}px`
 
     return (
       <span className={styles.portalTreeItem}>

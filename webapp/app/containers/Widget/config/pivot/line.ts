@@ -1,3 +1,4 @@
+import PivotTypes from './PivotTypes'
 import {
   PIVOT_DEFAULT_AXIS_LINE_COLOR,
   PIVOT_CHART_FONT_FAMILIES,
@@ -8,7 +9,7 @@ import {
 import { IChartInfo } from '../../../../containers/Widget/components/Widget'
 
 const line: IChartInfo = {
-  id: 2,
+  id: PivotTypes.Line,
   name: 'line',
   title: '折线图',
   icon: 'icon-chart-line',
@@ -17,6 +18,22 @@ const line: IChartInfo = {
   requireMetrics: [1, 9999],
   dimetionAxis: 'col',
   data: {
+    cols: {
+      title: '列',
+      type: 'category'
+    },
+    rows: {
+      title: '行',
+      type: 'category'
+    },
+    metrics: {
+      title: '指标',
+      type: 'value'
+    },
+    filters: {
+      title: '筛选',
+      type: 'all'
+    },
     color: {
       title: '颜色',
       type: 'category'

@@ -18,29 +18,23 @@
  * >>
  */
 
-import * as React from 'react'
+import React, { Suspense } from 'react'
 
-import MultiDatePicker from '../../../components/MultiDatePicker'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
-const Form = require('antd/lib/form')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Select = require('antd/lib/select')
-const DatePicker = require('antd/lib/date-picker')
-const Button = require('antd/lib/button')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
+import { Form, Input, InputNumber, Select, DatePicker, Button, Row, Col } from 'antd'
 const FormItem = Form.Item
 const Option = Select.Option
 const RangePicker = DatePicker.RangePicker
 
 import { KEY_COLUMN } from '../../../globalConstants'
+import { QueryVariable } from '../Grid'
 const styles = require('../Dashboard.less')
+const MultiDatePicker = React.lazy(() => import('../../../components/MultiDatePicker'))
 
 interface IDashboardItemControlFormProps {
   form: WrappedFormUtils
   controls: any[]
-  onSearch: (queayParams: { params: any[] }) => void
+  onSearch: (queayConditions: { variables: QueryVariable }) => void
   onHide: () => void
 }
 
@@ -78,6 +72,24 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
     })
   }
 
+// {
+// 	"id": "96F6258E",
+// 	"type": "multiSelect",
+// 	"variables": ["city"],
+// 	"sub": [{
+// 		"id": "FB0DF8A8",
+// 		"text": "北京",
+// 		"value": "beijing",
+// 		"variables": ["city"],
+// 		"status": 1
+// 	}, {
+// 		"id": "57940A50",
+// 		"text": "上海",
+// 		"value": "shanghai",
+// 		"variables": ["city"],
+// 		"status": 1
+// 	}]
+// }
   private generateFormComponent = (c) => {
     const {
       form,
@@ -102,7 +114,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           </Col>
         )
       case 'select':
-      case 'multiSelect':
+   //   case 'multiSelect':
         const options = []
         let followComponents = []
 
@@ -112,9 +124,9 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           )
 
           if (c.type === 'select' &&
-              c.hasRelatedComponent === 'yes' &&
+              c.hasRelatedComponent === true &&
               sub.variableType &&
-              this.state.parentSelValues[c.id] === index) {
+              this.state.parentSelValues[c.id] === index) {   // todo 变量关联控件
             followComponents = followComponents.concat(this.generateFormComponent({
               ...sub,
               id: `sub_${c.id}_${sub.id}`,
@@ -123,7 +135,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           }
         })
 
-        const mode = c.type === 'multiSelect'
+        const mode = c.multiple === true
           ? {
             mode: 'multiple'
           }
@@ -164,7 +176,20 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
             format: 'YYYY-MM-DD'
           }
         const dateProperties = {...dateFormat}
-
+        if (c.type === 'date' && c.multiple === true) {
+          return (
+            <Col
+              key={c.id}
+              xl={12}
+            >
+              <FormItem className={styles.formItem}>
+                {getFieldDecorator(`${c.id}`, {})(
+                  <MultiDatePicker />
+                )}
+              </FormItem>
+            </Col>
+          )
+        }
         return (
           <Col
             key={c.id}
@@ -174,19 +199,6 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
             <FormItem className={styles.formItem}>
               {getFieldDecorator(`${c.id}`, {})(
                 <DatePicker {...dateProperties} />
-              )}
-            </FormItem>
-          </Col>
-        )
-      case 'multiDate':
-        return (
-          <Col
-            key={c.id}
-            xl={12}
-          >
-            <FormItem className={styles.formItem}>
-              {getFieldDecorator(`${c.id}`, {})(
-                <MultiDatePicker />
               )}
             </FormItem>
           </Col>
@@ -239,7 +251,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
   private parentSelectChange = (control) => (val) => {
     const { parentSelValues } = this.state
 
-    if (Object.prototype.toString.call(val) !== '[object Array]') {
+    if (Object.prototype.toString.call(val) !== '[object Array]') { // 下拉多选
       let selIndex = -1
 
       if (val) {
@@ -266,7 +278,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
 
     const formValues = this.props.form.getFieldsValue()
 
-    const params = Object.keys(formValues).reduce((arr, key) => {
+    const variables = Object.keys(formValues).reduce((arr, key) => {
       let val = formValues[key]
 
       let valControl
@@ -279,7 +291,6 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
       }
 
       valControl.type = valControl.variableType || valControl.type
-
       if (Object.prototype.toString.call(val) === '[object Array]') {
         switch (valControl.type) {
           case 'dateRange':
@@ -302,12 +313,21 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
               value: `'${val[1]}'`
             })
             break
-          case 'multiSelect':
-            if (val.length) {
-              arr = arr.concat({
-                name: valControl.variables[0],
-                value: val.map((v) => `${v}`).join(',')
-              })
+          // case 'multiSelect':
+          //   if (val.length) {
+          //     arr = arr.concat({
+          //       name: valControl.variables[0],
+          //       value: val.map((v) => `${v}`).join(',')
+          //     })
+          //   }
+            case 'select':
+            if (valControl.multiple === true) { // 适配下拉多选
+              if (val.length) {
+                arr = arr.concat({
+                  name: valControl.variables[0],
+                  value: val.map((v) => `'${v}'`).join(',')
+                })
+              }
             }
             break
           default:
@@ -318,11 +338,18 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
           if (valControl.variables[0]) {
             switch (valControl.type) {
               case 'date':
-                val = val.format('YYYY-MM-DD')
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: `'${val}'`
-                })
+                if (valControl.multiple === false) {
+                  val = val.format('YYYY-MM-DD')
+                  arr = arr.concat({
+                    name: valControl.variables[0],
+                    value: `'${val}'`
+                  })
+                } else {
+                  arr = arr.concat({
+                    name: valControl.variables[0],
+                    value: val.split(',').map((v) => `'${v}'`).join(',')
+                  })
+                }
                 break
               case 'datetime':
                 val = val.format('YYYY-MM-DD HH:mm:ss')
@@ -331,17 +358,13 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
                   value: `'${val}'`
                 })
                 break
-              case 'multiDate':
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: val.split(',').map((v) => `'${v}'`).join(',')
-                })
-                break
               case 'select':
-                arr = arr.concat({
-                  name: valControl.variables[0],
-                  value: `${val}`
-                })
+                if (valControl.multiple === false) {
+                  arr = arr.concat({
+                    name: valControl.variables[0],
+                    value: `${val}`
+                  })
+                }
                 break
               default:
                 arr = arr.concat({
@@ -352,7 +375,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
             }
           } else {
             if (valControl.type === 'select') {
-              if (valControl.hasRelatedComponent === 'no') {
+              if (valControl.hasRelatedComponent === false) {
                 const chosenSub = valControl.sub.find((s) => s.value === val)
 
                 if (chosenSub.variables[0]) {
@@ -370,9 +393,7 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
       return arr
     }, [])
 
-    onSearch({
-      params
-    })
+    onSearch({ variables })
 
     onHide()
   }
@@ -381,14 +402,15 @@ export class DashboardItemControlForm extends React.PureComponent<IDashboardItem
     const {
       controls
     } = this.props
-
     const controlItems = controls
       .map((c) => this.generateFormComponent(c))
 
     return (
       <Form className={styles.controlForm}>
         <Row gutter={10}>
-          {controlItems}
+          <Suspense fallback={null}>
+            {controlItems}
+          </Suspense>
         </Row>
         <Row className={styles.buttonRow}>
           <Col span={24}>

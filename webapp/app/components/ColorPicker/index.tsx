@@ -1,14 +1,22 @@
 import * as React from 'react'
+import * as classnames from 'classnames'
 import { SketchPicker } from 'react-color'
-const Popover = require('antd/lib/popover')
+import { Popover } from 'antd'
 const styles = require('./ColorPicker.less')
 
 interface IColorPickerProps {
   value: string
+  disableAlpha?: boolean
+  className?: string
   onChange: (value: string) => void
 }
 
 export function ColorPicker (props: IColorPickerProps) {
+  const cls = !props.className ? styles.picker
+    : classnames({
+      [styles.picker]: true,
+      [props.className]: true
+    })
   return (
     <Popover
       content={
@@ -17,12 +25,13 @@ export function ColorPicker (props: IColorPickerProps) {
             color={props.value}
             presetColors={[]}
             onChangeComplete={colorChange(props)}
+            disableAlpha={props.disableAlpha}
           />
         </div>}
       trigger="click"
       placement="right"
     >
-      <div className={styles.picker}>
+      <div className={cls}>
         <span className={styles.colorIndicator} style={{background: props.value}} />
       </div>
     </Popover>

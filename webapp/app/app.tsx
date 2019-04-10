@@ -18,7 +18,7 @@
  * >>
  */
 
-import 'babel-polyfill'
+import '@babel/polyfill'
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
@@ -26,16 +26,20 @@ import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
 import { useScroll } from 'react-router-scroll'
+import { hot } from 'react-hot-loader'
 
 import App from './containers/App'
 import { makeSelectLocationState } from './containers/App/selectors'
+import { LocaleProvider } from 'antd'
+import zh_CN from 'antd/lib/locale-provider/zh_CN'
 import LanguageProvider from './containers/LanguageProvider'
 import { translationMessages } from './i18n'
+import moment from 'moment'
+import 'moment/locale/zh-cn'
+moment.locale('zh-cn')
 
 import '!file-loader?name=[name].[ext]!./favicon.ico'
-import '!file-loader?name=[name].[ext]!./manifest.json'
 import 'file-loader?name=[name].[ext]!./.htaccess'
-import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
 import '../libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
@@ -55,6 +59,9 @@ import 'echarts/lib/chart/scatter'
 import 'echarts/lib/chart/pie'
 import 'echarts/lib/chart/sankey'
 import 'echarts/lib/chart/funnel'
+import 'echarts/lib/chart/map'
+import 'echarts/lib/chart/lines'
+import 'echarts/lib/chart/effectScatter'
 import 'echarts/lib/chart/treemap'
 import 'echarts/lib/chart/heatmap'
 import 'echarts/lib/chart/boxplot'
@@ -71,7 +78,8 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
-import './containers/Widget/charts/mapFile/china'
+import 'echarts/lib/component/brush'
+import './assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from './globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
@@ -81,13 +89,14 @@ import createRoutes from './routes'
 
 const initialState = {}
 const store = configureStore(initialState, hashHistory)
+const MOUNT_NODE = document.getElementById('app')
 const history = syncHistoryWithStore(hashHistory, store, {
   selectLocationState: makeSelectLocationState()
 })
 
 const rootRoute = {
   path: '/',
-  component: App,
+  component: hot(module)(App),
   childRoutes: createRoutes(store),
   indexRoute: {
     onEnter: (_, replace) => {
@@ -101,19 +110,22 @@ const render = (messages) => {
   ReactDOM.render(
     <Provider store={store}>
       <LanguageProvider messages={messages}>
-        <Router
-          history={history}
-          routes={rootRoute}
-          render={applyRouterMiddleware(useScroll())}
-        />
+        <LocaleProvider locale={zh_CN}>
+          <Router
+            history={history}
+            routes={rootRoute}
+            render={applyRouterMiddleware(useScroll())}
+          />
+        </LocaleProvider>
       </LanguageProvider>
     </Provider>,
-    document.getElementById('app')
+    MOUNT_NODE
   )
 }
-
+// declare const module: any
 if (module.hot) {
-  module.hot.accept('./i18n', () => {
+  module.hot.accept(['./i18n', 'containers/App'], () => {
+    ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
 }
@@ -153,3 +165,4 @@ if (process.env.NODE_ENV === 'production') {
 //   const { whyDidYouUpdate } = require('why-did-you-update')
 //   whyDidYouUpdate(React)
 // }
+

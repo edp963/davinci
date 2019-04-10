@@ -18,8 +18,7 @@
  * >>
  */
 
-import {takeLatest, takeEvery, throttle} from 'redux-saga'
-import { call, all, put } from 'redux-saga/effects'
+import { call, all, put, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
 import {
   LOAD_PROJECTS,
   ADD_PROJECT,
@@ -61,15 +60,11 @@ import {
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
-import { writeAdapter, readObjectAdapter, readListAdapter } from '../../utils/asyncAdapter'
-import configureStore from '../../store'
-import { resolve } from 'url'
 
 export function* getProjects (action) {
-  const { payload } = action
   try {
     const asyncData = yield call(request, api.projects)
-    const projects = readListAdapter(asyncData)
+    const projects = asyncData.payload
     yield put(projectsLoaded(projects))
   } catch (err) {
     yield put(loadProjectsFail())
@@ -85,7 +80,7 @@ export function* addProject (action) {
       url: api.projects,
       data: project
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectAdded(result))
     resolve()
   } catch (err) {
@@ -102,7 +97,6 @@ export function* editProject (action) {
       method: 'put',
       url: `${api.projects}/${id}`,
       data: project
-     // data: writeAdapter(project)
     })
     yield put(projectEdited(project))
     resolve()
@@ -131,7 +125,7 @@ export function* deleteProject (action) {
 export function* getProjectDetail ({ payload }) {
   try {
     const asyncData = yield  call(request, `${api.projects}/${payload.id}`)
-    const project = readListAdapter(asyncData)
+    const project = asyncData.payload
     yield put(projectDetailLoaded(project))
   } catch (err) {
     errorHandler(err)
@@ -146,7 +140,7 @@ export function* transferProject ({payload}) {
       url: `${api.projects}/${id}/transfer`,
       data: {orgId}
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectTransfered(result))
   } catch (err) {
     yield put(transferProjectFail())
@@ -161,7 +155,7 @@ export function* searchProject ({payload}) {
       method: 'get',
       url: `${api.projects}/search/?pageNum=${pageNum || 1}&pageSize=${pageSize || 10}&keywords=${keywords || ''}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(projectSearched(result))
   } catch (err) {
     yield put(searchProjectFail())
@@ -177,7 +171,7 @@ export function* unStarProject ({payload}) {
       url: `${api.star}/project/${id}`,
       data: {id}
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(unStarProjectSuccess(result))
     yield resolve()
   } catch (err) {
@@ -193,7 +187,7 @@ export function* getProjectStarUser ({payload}) {
       method: 'get',
       url: `${api.star}/project/${id}`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(getProjectStarUserSuccess(result))
   } catch (err) {
     yield put(getProjectStarUserFail())
@@ -207,7 +201,7 @@ export function* getCollectProjects (action) {
       method: 'get',
       url: `${api.projects}/favorites`
     })
-    const result = readListAdapter(asyncData)
+    const result = asyncData.payload
     yield put(collectProjectLoaded(result))
   } catch (err) {
     yield put(collectProjectFail())
@@ -240,7 +234,7 @@ export function* editCollectProject ({payload}) {
 }
 
 export default function* rootProjectSaga (): IterableIterator<any> {
-  yield [
+  yield all([
     takeLatest(LOAD_PROJECTS, getProjects as any),
     takeEvery(ADD_PROJECT, addProject as any),
     takeEvery(EDIT_PROJECT, editProject as any),
@@ -252,5 +246,5 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     throttle(1000, SEARCH_PROJECT, searchProject as any),
     takeLatest(LOAD_COLLECT_PROJECTS, getCollectProjects as any),
     takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any)
-  ]
+  ])
 }

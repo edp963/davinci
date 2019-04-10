@@ -37,7 +37,11 @@ import {
   TEST_SOURCE_CONNECTION,
   TEST_SOURCE_CONNECTION_SUCCESS,
   TEST_SOURCE_CONNECTION_FAILURE,
-  GET_CSV_META_ID
+  GET_CSV_META_ID,
+  GET_CSV_META_ID_FAILURE,
+  GET_CSV_META_ID_SUCCESS,
+  SET_SOURCE_FORM_VALUE,
+  SET_UPLOAD_FORM_VALUE
 } from './constants'
 
 export function loadSources (projectId) {
@@ -183,14 +187,45 @@ export function testSourceConnectionFail () {
   }
 }
 
-// tableName, sourceId, primaryKeys, indexKeys, replaceMode
-export function getCsvMetaId (csvMeta, resolve, reject) {
+export function getCsvMetaId (csvMeta, resolve) {
   return {
     type: GET_CSV_META_ID,
     payload: {
       csvMeta,
-      resolve,
-      reject
+      resolve
+    }
+  }
+}
+
+export function csvMetaIdGeted () {
+  return {
+    type: GET_CSV_META_ID_SUCCESS
+  }
+}
+
+export function getCsvMetaIdFail (error) {
+  return {
+    type: GET_CSV_META_ID_FAILURE,
+    payload: {
+      error
+    }
+  }
+}
+
+export function setSourceFormValue (values) {
+  return {
+    type: SET_SOURCE_FORM_VALUE,
+    payload: {
+      values
+    }
+  }
+}
+
+export function setUploadFormValue (values) {
+  return {
+    type: SET_UPLOAD_FORM_VALUE,
+    payload: {
+      values
     }
   }
 }

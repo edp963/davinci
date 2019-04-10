@@ -81,7 +81,8 @@
                 width = #{item.width,jdbcType=INTEGER},
                 height = #{item.height,jdbcType=INTEGER},
                 polling = #{item.polling,jdbcType=BIT},
-                frequency = #{item.frequency,jdbcType=INTEGER}
+                frequency = #{item.frequency,jdbcType=INTEGER},
+                `config` = #{item.config,jdbcType=LONGVARCHAR}
             </set>
             <where>
                 id = #{item.id,jdbcType=BIGINT}

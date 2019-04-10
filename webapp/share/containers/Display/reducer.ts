@@ -44,14 +44,14 @@ function displayReducer (state = initialState, { type, payload }) {
         .set('widgets', payload.widgets)
         .set('layersInfo', payload.slide.relations.reduce((obj, layer) => {
           obj[layer.id] = (layer.type === GraphTypes.Chart) ? {
-            datasource: [],
+            datasource: { resultList: [] },
             loading: false,
-            queryParams: {
+            queryConditions: {
               linkageFilters: [],
               globalFilters: [],
-              params: [],
-              linkageParams: [],
-              globalParams: []
+              variables: [],
+              linkageVariables: [],
+              globalVariables: []
             },
             interactId: '',
             renderType: 'rerender'

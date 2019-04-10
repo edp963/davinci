@@ -51,7 +51,7 @@ public interface ProjectMapper {
             "SELECT ",
             "    p.*, ",
             "    u.id as 'createBy.id',",
-            "    u.username as 'createBy.username',",
+            "    IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',",
             "    u.avatar as 'createBy.avatar'",
             "from project p",
             "LEFT JOIN `user` u on u.id = p.user_id",

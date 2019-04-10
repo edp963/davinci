@@ -23,15 +23,18 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
+import edp.core.model.Paginate;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
 import edp.core.utils.TokenUtils;
 import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.core.utils.CsvUtils;
+import edp.davinci.core.utils.ExcelUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.projectDto.ProjectWithOrganization;
 import edp.davinci.dto.viewDto.Aggregator;
@@ -46,6 +49,8 @@ import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import edp.davinci.service.WidgetService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,8 +58,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service("widgetService")
 @Slf4j
@@ -375,7 +384,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     }
 
 
-    public ViewExecuteParam buildViewExecuteParam(Widget widget) {
+    private ViewExecuteParam buildViewExecuteParam(Widget widget) {
         ViewExecuteParam executeParam = null;
         try {
             if (null != widget && !StringUtils.isEmpty(widget.getConfig())) {
@@ -392,15 +401,25 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                         JSONArray cols = jsonObject.getJSONArray("cols");
                         if (null != cols && cols.size() > 0) {
                             for (Object obj : cols) {
-                                groups.add(String.valueOf(obj));
+                                if (obj instanceof String) {
+                                    groups.add(String.valueOf(obj));
+                                } else {
+                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
+                                    groups.add(col.getString("name"));
+                                }
                             }
                         }
                     }
                     if (jsonObject.containsKey("rows")) {
-                        JSONArray cols = jsonObject.getJSONArray("cols");
-                        if (null != cols && cols.size() > 0) {
-                            for (Object obj : cols) {
-                                groups.add(String.valueOf(obj));
+                        JSONArray rows = jsonObject.getJSONArray("rows");
+                        if (null != rows && rows.size() > 0) {
+                            for (Object obj : rows) {
+                                if (obj instanceof String) {
+                                    groups.add(String.valueOf(obj));
+                                } else {
+                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
+                                    groups.add(col.getString("name"));
+                                }
                             }
                         }
                     }
@@ -543,7 +562,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
 
     @Override
-    public ResultMap generationCsv(Long id, ViewExecuteParam executeParam, User user, HttpServletRequest request) {
+    public ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
 
         String filePath = null;
@@ -569,21 +588,224 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             return resultMap.failAndRefreshToken(request).message("view not found");
         }
 
-        List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+        executeParam.setPageNo(-1);
+        executeParam.setPageSize(-1);
+        executeParam.setLimit(-1);
 
-        List<Map<String, Object>> dataList = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 
-        if (null != columns && columns.size() > 0) {
-            String csvPath = fileUtils.fileBasePath + File.separator + "csv";
-            File file = new File(csvPath);
-            if (!file.exists()) {
-                file.mkdirs();
+        String rootPath = fileUtils.fileBasePath +
+                File.separator +
+                "download" +
+                File.separator +
+                sdf.format(new Date()) +
+                File.separator +
+                type +
+                File.separator;
+
+        try {
+            if (type.equals(FileTypeEnum.CSV.getType())) {
+                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+                if (null != columns && columns.size() > 0) {
+                    File file = new File(rootPath);
+                    if (!file.exists()) {
+                        file.mkdirs();
+                    }
+
+                    String csvName = viewWithProjectAndSource.getName() + "_" +
+                            System.currentTimeMillis() +
+                            UUID.randomUUID().toString().replace("-", "") +
+                            FileTypeEnum.CSV.getFormat();
+
+                    filePath = CsvUtils.formatCsvWithFirstAsHeader(rootPath, csvName, columns, paginate.getResultList());
+                }
+            } else if (type.equals(FileTypeEnum.XLSX.getType())) {
+
+                String excelName = widgetWithProjectAndView.getName() + "_" +
+                        System.currentTimeMillis() +
+                        UUID.randomUUID().toString().replace("-", "") +
+                        FileTypeEnum.XLSX.getFormat();
+
+
+                HashSet<Widget> widgets = new HashSet<>();
+                widgets.add(widgetWithProjectAndView);
+                Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
+                executeParamMap.put(widgetWithProjectAndView.getId(), executeParam);
+
+                filePath = rootPath + excelName;
+                writeExcel(widgets, executeParamMap, filePath, user, false);
+            } else {
+                return resultMap.failAndRefreshToken(request).message("unknow file type");
             }
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-            String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
-            String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, dataList);
-            filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
+        } catch (Exception e) {
+            return resultMap.failAndRefreshToken(request).message("generation " + type + " error!");
         }
+
+
+        filePath = fileUtils.formatFilePath(filePath);
+
         return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);
+    }
+
+
+    @Transactional
+    public void upgradeWidgetConfig() {
+        List<Widget> widgets = widgetMapper.queryUpgrade();
+        List<Widget> updateList = null;
+        if (null != widgets && widgets.size() > 0) {
+            updateList = new ArrayList<>();
+
+            for (Widget widget : widgets) {
+                if (StringUtils.isEmpty(widget.getConfig())) {
+                    continue;
+                }
+
+                JSONObject jsonObject = JSONObject.parseObject(widget.getConfig());
+                if (null != jsonObject) {
+                    if (jsonObject.containsKey("cols")) {
+                        JSONArray cols = jsonObject.getJSONArray("cols");
+                        if (null != cols && cols.size() > 0) {
+                            Map<Long, List<JSONObject>> map = null;
+                            for (Object obj : cols) {
+                                if (obj instanceof String) {
+                                    if (null == map) {
+                                        map = new HashMap<>();
+                                    }
+
+                                    List<JSONObject> list = null;
+                                    if (map.containsKey(widget.getId())) {
+                                        list = map.get(widget.getId());
+                                    } else {
+                                        list = new ArrayList<>();
+                                        map.put(widget.getId(), list);
+                                    }
+                                    JSONObject col = new JSONObject();
+                                    col.put("name", String.valueOf(obj));
+                                    list.add(col);
+                                }
+                            }
+                            if (null != map && map.size() > 0) {
+                                jsonObject.put("cols", map.get(widget.getId()));
+                                widget.setConfig(jsonObject.toJSONString());
+                                updateList.add(widget);
+                            }
+                        }
+                    }
+
+                    if (jsonObject.containsKey("rows")) {
+                        JSONArray cols = jsonObject.getJSONArray("rows");
+                        if (null != cols && cols.size() > 0) {
+                            Map<Long, List<JSONObject>> map = null;
+                            for (Object obj : cols) {
+                                if (obj instanceof String) {
+                                    if (null == map) {
+                                        map = new HashMap<>();
+                                    }
+
+                                    List<JSONObject> list = null;
+                                    if (map.containsKey(widget.getId())) {
+                                        list = map.get(widget.getId());
+                                    } else {
+                                        list = new ArrayList<>();
+                                        map.put(widget.getId(), list);
+                                    }
+                                    JSONObject col = new JSONObject();
+                                    col.put("name", String.valueOf(obj));
+                                    list.add(col);
+                                }
+                            }
+                            if (null != map && map.size() > 0) {
+                                jsonObject.put("rows", map.get(widget.getId()));
+                                widget.setConfig(jsonObject.toJSONString());
+                                updateList.add(widget);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (null != updateList && updateList.size() > 0) {
+            widgetMapper.updateConfigBatch(updateList);
+        }
+    }
+
+
+    /**
+     * widget列表数据写入指定excle文件
+     *
+     * @param widgets
+     * @param executeParamMap
+     * @param filePath
+     * @param user
+     * @param containType
+     * @return
+     * @throws Exception
+     */
+    public File writeExcel(Set<Widget> widgets,
+                           Map<Long, ViewExecuteParam> executeParamMap,
+                           String filePath, User user, boolean containType) throws Exception {
+        if (StringUtils.isEmpty(filePath)) {
+            throw new ServerException("excel file path is empty");
+        }
+        if (!filePath.trim().toLowerCase().endsWith(FileTypeEnum.XLSX.getFormat())) {
+            throw new ServerException("unknow file format");
+        }
+
+        SXSSFWorkbook wb = new SXSSFWorkbook(1000);
+
+        CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
+
+        Iterator<Widget> iterator = widgets.iterator();
+        int i = 1;
+        while (iterator.hasNext()) {
+            Widget widget = iterator.next();
+            final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
+            executorService.execute(() -> {
+                Sheet sheet = null;
+                try {
+                    ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widget.getViewId());
+
+                    ViewExecuteParam executeParam = null;
+                    if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
+                        executeParam = executeParamMap.get(widget.getId());
+                    } else {
+                        executeParam = buildViewExecuteParam(widget);
+                        executeParam.setPageNo(-1);
+                        executeParam.setPageSize(-1);
+                        executeParam.setLimit(-1);
+                    }
+
+                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+
+                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
+
+                    sheet = wb.createSheet(sheetName);
+                    ExcelUtils.writeSheet(sheet, columns, paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
+                } catch (ServerException e) {
+                    e.printStackTrace();
+                } finally {
+                    sheet = null;
+                    countDownLatch.countDown();
+                }
+            });
+
+            i++;
+        }
+
+        countDownLatch.await();
+
+        File file = new File(filePath);
+        File dir = new File(file.getParent());
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        FileOutputStream out = new FileOutputStream(filePath);
+        wb.write(out);
+        out.flush();
+        out.close();
+        return file;
     }
 }

@@ -1,16 +1,15 @@
 import * as React from 'react'
-import {compose} from 'redux'
+import { compose } from 'redux'
 import Helmet from 'react-helmet'
 
-const Icon = require('antd/lib/icon')
+import { Icon } from 'antd'
 
-import {connect} from 'react-redux'
-import {joinOrganization, login} from '../App/actions'
-import {createStructuredSelector} from 'reselect'
-import {InjectedRouter} from 'react-router/lib/Router'
-import {makeSelectLoginLoading} from '../App/selectors'
+import { connect } from 'react-redux'
+import { joinOrganization, login } from '../App/actions'
+import { createStructuredSelector } from 'reselect'
+import { InjectedRouter } from 'react-router/lib/Router'
+import { makeSelectLoginLoading } from '../App/selectors'
 
-const Spin = require('antd/lib/spin')
 const styles = require('../Login/Login.less')
 const utilStyles = require('../../assets/less/util.less')
 const registerStyles = require('./register.less')

@@ -2,12 +2,12 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 import Helmet from 'react-helmet'
 import LoginForm from '../../../app/containers/Login/LoginForm'
-const styles = require('../../../app/containers/Login/Login.less')
+const styles = require('../../../app/containers/Background/Background.less')
+const loginStyles = require('../../../app/containers/Login/Login.less')
 
 import { login } from '../../containers/App/actions'
 
-const Icon = require('antd/lib/icon')
-const Message = require('antd/lib/message')
+import { Icon } from 'antd'
 
 interface ILoginProps {
   loginLoading?: boolean
@@ -57,10 +57,10 @@ class Login extends React.PureComponent<ILoginProps, ILoginStates> {
     const { loginLoading } = this.props
     const { username, password } = this.state
     return (
-      <div className={`${styles.login} ${styles.share}`}>
+      <div className={`${styles.container} ${styles.share}`}>
         <Helmet title="Login" />
         <img className={styles.logo} src={require('../../../app/assets/images/logo_light.svg')} />
-        <div className={styles.window}>
+        <div className={`${styles.window} ${loginStyles.window}`}>
           <LoginForm
             username={username}
             password={password}

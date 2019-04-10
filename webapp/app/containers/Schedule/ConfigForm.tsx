@@ -19,20 +19,11 @@
  */
 
 import * as React from 'react'
-// import {connect} from 'react-redux'
-// import {checkNameAction} from '../App/actions'
-const Form  = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Select = require('antd/lib/select')
+import { Form, Row, Col, Input, Select, TreeSelect } from 'antd'
 const Option = Select.Option
-const TreeSelect = require('antd/lib/tree-select')
-const SHOW_PARENT = TreeSelect.SHOW_PARENT
 const FormItem = Form.Item
+import { ButtonSize } from 'antd/lib/button'
 const utilStyles =  require('../../assets/less/util.less')
-
-
 
 interface IConfigFormProps {
   form: any
@@ -54,18 +45,16 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
       wrapperCol: { span: 18 }
     }
     const treeSelectProps = {
-      size: 'large',
-      multiple: true,
-      maxHeight: 400,
-      overflow: 'auto',
+      size: 'large' as ButtonSize,
+      dropdownStyle: { maxHeight: 400, overflow: 'auto' },
       treeCheckable: true,
       onChange: treeChange,
       onSelect: treeSelect,
       treeData: vizs,
       value: dashboardTreeValue,
       loadData: loadTreeData,
-      showCheckedStrategy: SHOW_PARENT,
-      searchPlaceholder: 'Please select'
+      showCheckedStrategy: TreeSelect.SHOW_PARENT,
+      searchPlaceholder: '请选择要发送的 Dashboard 或 Display'
     }
     return (
       <Form>
@@ -126,7 +115,7 @@ export class ConfigForm extends React.PureComponent<IConfigFormProps> {
         <Row>
           <Col span={12}>
             <FormItem
-              label="私密发送"
+              label="密送"
               {...commonFormItemStyle}
             >
               {getFieldDecorator('bcc', {

@@ -27,6 +27,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface RelUserOrganizationMapper {
@@ -42,7 +43,7 @@ public interface RelUserOrganizationMapper {
 
     @Select({
             "SELECT ruo.id, tm.team_num, ",
-            "u.id AS 'user.id', u.username AS 'user.username', u.avatar AS 'user.avatar', ruo.role AS 'user.role'",
+            "u.id AS 'user.id', IF(u.`name` is NULL,u.username,u.`name`) AS 'user.username', u.avatar AS 'user.avatar', ruo.role AS 'user.role'",
             "FROM rel_user_organization ruo",
             "LEFT JOIN `user` u on u.id = ruo.user_id",
             "LEFT JOIN organization o on o.id = ruo.org_id",
@@ -70,5 +71,11 @@ public interface RelUserOrganizationMapper {
 
     @Select({"SELECT r.* FROM rel_user_organization r inner join project p on p.org_id = r.org_id where r.user_id = #{userId} and p.id = #{projectId}"})
     RelUserOrganization getRelByProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
+
+
+    int insertBatch(@Param("set") Set<RelUserOrganization> set);
+
+
+    int deleteBatch(@Param("set") Set<Long> set);
 
 }

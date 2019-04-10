@@ -37,6 +37,7 @@ import {
   CLEAR_CURRENT_WIDGET
 } from './constants'
 import { LOAD_DASHBOARD_DETAIL_SUCCESS } from '../Dashboard/constants'
+import { ActionTypes } from '../Display/constants'
 import {
   LOAD_DATA,
   LOAD_DATA_SUCCESS,
@@ -121,6 +122,8 @@ function widgetReducer (state = initialState, action) {
       return state.set('bizdatas', false)
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
       return state.set('widgets', payload.widgets)
+    case ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
+      return state.set('widgets', payload.widgets)
     case LOAD_DISTINCT_VALUE:
       return state
         .set('columnValueLoading', true)
@@ -128,7 +131,7 @@ function widgetReducer (state = initialState, action) {
     case LOAD_DISTINCT_VALUE_SUCCESS:
       return state
         .set('columnValueLoading', false)
-        .set('distinctColumnValues', payload.data[payload.fieldName].slice(0, 100))
+        .set('distinctColumnValues', payload.data.slice(0, 100))
     case LOAD_DISTINCT_VALUE_FAILURE:
       return state.set('columnValueLoading', false)
     case CLEAR_CURRENT_WIDGET:

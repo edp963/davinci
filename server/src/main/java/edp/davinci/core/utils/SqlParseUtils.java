@@ -49,17 +49,17 @@ public class SqlParseUtils {
 
     private static final String REG_SQL_STRUCT = "[{].*[}]";
 
-    private static final String select = "select";
+    private static final String SELECT = "select";
 
-    private static final String with = "with";
+    private static final String WITH = "with";
 
-    private static final String queryVarKey = "query@var";
+    private static final String QUERY_VAR_KEY = "query@var";
 
-    private static final String teamVarKey = "team@var";
+    private static final String TEAM_VAR_KEY = "team@var";
 
     private static final String REG_PLACEHOLDER = "\\$.+\\$";
 
-    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_]{1,}\\s?\\w*[<>!=]*\\s?\\(?%s\\w+%s\\)?\\s?\\)";
+    private static final String REG_TEAMVAR = "\\([a-zA-Z0-9_.-]{1,}\\s?\\w*[<>!=]*\\s?\\(?%s\\w+%s\\)?\\s?\\)";
 
     /**
      * 解析sql
@@ -69,10 +69,8 @@ public class SqlParseUtils {
      */
     public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
         if (!StringUtils.isEmpty(sqlStr.trim())) {
-            log.info("original sql >>>>>>: {}", sqlStr);
             //过滤注释
             sqlStr = SqlUtils.filterAnnotate(sqlStr);
-            log.info("after filter annotate sql >>>>>>: {}", sqlStr);
 
             //sql体
             String sqlStruct = null, queryParam = null;
@@ -99,7 +97,6 @@ public class SqlParseUtils {
                 if (sqlStruct.endsWith(sqlSeparator)) {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
-                log.info("after structed sql >>>>>>: {}", sqlStruct);
             }
 
             Map<String, String> queryParamMap = new HashMap<>();
@@ -115,22 +112,20 @@ public class SqlParseUtils {
                 if (null != split && split.length > 0) {
                     for (String param : split) {
                         param = param.trim();
-                        if (param.startsWith(queryVarKey)) {
-                            param = param.replaceAll(queryVarKey, "");
+                        if (param.startsWith(QUERY_VAR_KEY)) {
+                            param = param.replaceAll(QUERY_VAR_KEY, "");
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
-                                log.info("query param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
                             }
-                        } else if (param.startsWith(teamVarKey)) {
-                            param = param.replaceAll(teamVarKey, "").trim();
+                        } else if (param.startsWith(TEAM_VAR_KEY)) {
+                            param = param.replaceAll(TEAM_VAR_KEY, "").trim();
                             String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
                             if (null != paramArray && paramArray.length > 0) {
                                 String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim(): null;
-                                log.info("team param >>>>>>: {}  ->  {}", k.replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
+                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
                                 teamParamMap.put(k.trim(), Arrays.asList(v));
                             }
                         }
@@ -218,7 +213,7 @@ public class SqlParseUtils {
             list = new ArrayList<>();
             for (String sqlStr : split) {
                 sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(select) || sqlStr.toLowerCase().startsWith(with)) {
+                if (sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH)) {
                     continue;
                 } else {
                     list.add(sqlStr);
@@ -249,7 +244,7 @@ public class SqlParseUtils {
             list = new ArrayList<>();
             for (String sqlStr : split) {
                 sqlStr = sqlStr.trim();
-                if (sqlStr.toLowerCase().startsWith(select) || sqlStr.toLowerCase().startsWith(with)) {
+                if (sqlStr.toLowerCase().startsWith(SELECT) || sqlStr.toLowerCase().startsWith(WITH)) {
                     list.add(sqlStr);
                 } else {
                     continue;
@@ -318,9 +313,16 @@ public class SqlParseUtils {
                                                     .append(list.stream().collect(Collectors.joining(",", "(", ")")));
                                             break;
                                         default:
-                                            expBuilder
-                                                    .append(left).append(space)
-                                                    .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            if (list.get(0).split(",").length > 0) {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(SqlOperatorEnum.IN.getValue()).append(space)
+                                                        .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                            } else {
+                                                expBuilder
+                                                        .append(left).append(space)
+                                                        .append(sqlOperator.getValue()).append(space).append(list.get(0));
+                                            }
                                             break;
                                     }
                                 } else {

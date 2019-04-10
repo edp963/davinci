@@ -32,20 +32,9 @@ import reducer from './reducer'
 import saga from './sagas'
 
 import Container from '../../components/Container'
-import PortalForm from './components/PortalForm'
-import AntdFormType from 'antd/lib/form/Form'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Button = require('antd/lib/button')
-const Icon = require('antd/lib/icon')
-const Tooltip = require('antd/lib/tooltip')
-const Modal = require('antd/lib/modal')
-const Breadcrumb = require('antd/lib/breadcrumb')
-const Popconfirm = require('antd/lib/popconfirm')
-const Input = require('antd/lib/input')
-const Pagination = require('antd/lib/pagination')
-
+import { Row, Col, Button, Icon, Tooltip, Modal, Breadcrumb, Popconfirm, Input, Pagination } from 'antd'
 const Search = Input.Search
+import AntdFormType from 'antd/lib/form/Form'
 
 import { loadPortals, addPortal, editPortal, deletePortal } from './actions'
 import { makeSelectPortals } from './selectors'
@@ -230,11 +219,11 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
           colItems = (
             <Col
               key={d.id}
-              xl={4}
-              lg={6}
-              md={8}
-              sm={12}
-              xs={24}
+              xxl={4}
+              xl={6}
+              lg={8}
+              md={12}
+              sm={24}
             >
               <div
                 className={itemClass}
@@ -312,7 +301,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
         <Helmet title="Portal" />
         <Container.Title>
           <Row>
-            <Col xl={18} lg={18} md={16} sm={12} xs={24}>
+            <Col xl={18} lg={16} md={12} sm={24}>
               <Breadcrumb className={utilStyles.breadcrumb}>
                 <Breadcrumb.Item>
                   <Link to="">
@@ -321,9 +310,9 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
                 </Breadcrumb.Item>
               </Breadcrumb>
             </Col>
-            <Col xl={6} lg={6} md={8} sm={12} xs={24}>
+            <Col xl={6} lg={8} md={12} sm={24}>
               <Row>
-                <Col xl={22} lg={22} md={22} sm={22} xs={24} className={searchCol}>
+                <Col md={22} sm={24} className={searchCol}>
                   <Search
                     size="large"
                     className={`${utilStyles.searchInput} ${styles.searchInputAdmin}`}
@@ -331,7 +320,7 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
                     onSearch={this.onSearchPortal}
                   />
                 </Col>
-                <Col xl={2} lg={2} md={2} sm={2} xs={24} className={styles.addCol}>
+                <Col md={2} sm={24} className={styles.addCol}>
                   <Tooltip placement="bottom" title="新增">
                     <Button
                       size="large"
@@ -360,11 +349,11 @@ export class Portal extends React.Component<IPortalProps, IPortalStates> {
           footer={modalButtons}
           onCancel={this.hidePortalForm}
         >
-          <PortalForm
+          {/* <PortalForm
             projectId={params.pid}
             type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
-          />
+          /> */}
         </Modal>
       </Container>
     )

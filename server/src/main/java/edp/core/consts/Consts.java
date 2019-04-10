@@ -18,6 +18,8 @@
 
 package edp.core.consts;
 
+import java.io.File;
+
 public class Consts {
 
     /**
@@ -31,19 +33,32 @@ public class Consts {
 
     public static final String sqlUrlSeparator = "&";
 
+    public static final String octothorpe = "#";
+
+    public static final String percentSign = "%";
+
     public static final String newLineChar = "\n";
 
     public static final String colon = ":";
+
+    public static final String minus = "-";
+
+    public static final String underline = "_";
 
     public static final char CSVHeaderSeparator = ':';
 
     public static final char delimiterStartChar = '<';
 
+    public static final char delimiterEndChar = '>';
+
     public static final String parenthesesStart = "(";
 
     public static final String parenthesesEnd = ")";
 
-    public static final char delimiterEndChar = '>';
+    public static final String squareBracketStart = "[";
+
+    public static final String squareBracketEnd = "]";
+
 
     public static final char assignmentChar = '=';
 
@@ -60,6 +75,19 @@ public class Consts {
      * 当前用户
      */
     public static final String CURRENT_USER = "CURRENT_USER";
+
+
+    /**
+     * 当前平台
+     */
+    public static final String CURRENT_PLATFORM = "CURRENT_PLATFORM";
+
+
+    /**
+     * auth code key
+     */
+    public static final String AUTH_CODE = "authCode";
+
 
     /**
      * Token 前缀
@@ -102,12 +130,19 @@ public class Consts {
     /**
      * 敏感sql操作
      */
-    public static final String REG_SENSITIVE_SQL = "drop\\s|alert\\s|grant\\s|delete\\s|update\\s|remove\\s";
+    public static final String REG_SENSITIVE_SQL = "drop\\s|alert\\s|grant\\s|delete\\s|truncate\\s|update\\s|remove\\s";
 
 
     /**
      * 匹配多行sql注解正则
      */
-    public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*.*?\\*/";
+    public static final String REG_SQL_ANNOTATE = "(?ms)('(?:''|[^'])*')|--.*?$|/\\*[^+]*?\\*/";
+
+
+    public static final String DIR_DOWNLOAD = File.separator + "download" + File.separator;
+
+    public static final String DIR_EMAIL = File.separator + "email" + File.separator;
+
+    public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
 
 }

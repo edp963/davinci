@@ -47,4 +47,6 @@ public class MemDashboardWidget {
     private Boolean polling = false;
 
     private Integer frequency;
+
+    private String config;
 }

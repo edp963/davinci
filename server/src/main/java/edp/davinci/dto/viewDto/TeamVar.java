@@ -26,4 +26,12 @@ import java.util.List;
 public class TeamVar {
     private Long id;
     List<TeamParam> params;
+
+    public TeamVar(Long id, List<TeamParam> params) {
+        this.id = id;
+        this.params = params;
+    }
+
+    public TeamVar() {
+    }
 }

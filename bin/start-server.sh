@@ -32,7 +32,7 @@ if [ -z "$Lib_dir" ]; then
   exit
 fi
 
-Server=`ps -ef | grep java | grep davinci-server_3.01-0.3.0-SNAPSHOT | grep -v grep | awk '{print $2}'`
+Server=`ps -ef | grep java | grep edp.DavinciServerApplication | grep -v grep | awk '{print $2}'`
 if [[ $Server -gt 0 ]]; then
   echo "[Davinci Server] is already started"
   exit

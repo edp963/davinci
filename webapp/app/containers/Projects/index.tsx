@@ -1,37 +1,26 @@
 import * as React from 'react'
-import {connect} from 'react-redux'
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Tooltip = require('antd/lib/tooltip')
-const Popconfirm = require('antd/lib/popconfirm')
-const Tag = require('antd/lib/tag')
-const Icon = require('antd/lib/icon')
-const Modal = require('antd/lib/modal')
-const Button = require('antd/lib/button')
-const ButtonGroup = Button.Group
-const Pagination = require('antd/lib/pagination')
-const styles = require('./Project.less')
 import * as classnames from 'classnames'
-import {InjectedRouter} from 'react-router/lib/Router'
-import {WrappedFormUtils} from 'antd/lib/form/Form'
-import {addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
-  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects} from './actions'
-import {compose} from 'redux'
-import {makeSelectLoginUser} from '../App/selectors'
-import {makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects} from './selectors'
+import { connect } from 'react-redux'
+import { Row, Col, Tooltip, Popconfirm, Icon, Modal, Button, Pagination } from 'antd'
+import { WrappedFormUtils } from 'antd/lib/form/Form'
+const styles = require('./Project.less')
+import { InjectedRouter } from 'react-router/lib/Router'
+import { addProject, deleteProject, editProject, loadProjects, loadProjectDetail,
+  transferProject, searchProject, unStarProject, getProjectStarUser, loadCollectProjects, clickCollectProjects } from './actions'
+import { compose } from 'redux'
+import { makeSelectLoginUser } from '../App/selectors'
+import { makeSelectProjects, makeSelectSearchProject, makeSelectStarUserList, makeSelectCollectProjects } from './selectors'
 import injectReducer from '../../utils/injectReducer'
-import {createStructuredSelector} from 'reselect'
+import { createStructuredSelector } from 'reselect'
 import injectSaga from '../../utils/injectSaga'
 import ProjectsForm from './ProjectForm'
 import saga from './sagas'
 import reducer from './reducer'
 import reducerOrganization from '../Organizations/reducer'
 import sagaOrganization from '../Organizations/sagas'
-import reducerApp from '../App/reducer'
-import sagaApp from '../App/sagas'
-import {loadOrganizations} from '../Organizations/actions'
-import {makeSelectOrganizations} from '../Organizations/selectors'
-import {checkNameUniqueAction} from '../App/actions'
+import { loadOrganizations } from '../Organizations/actions'
+import { makeSelectOrganizations } from '../Organizations/selectors'
+import { checkNameUniqueAction } from '../App/actions'
 import ComponentPermission from '../Account/components/checkMemberPermission'
 import Avatar from '../../components/Avatar'
 import Box from '../../components/Box'
@@ -39,7 +28,7 @@ import Star from '../../components/StarPanel/Star'
 const utilStyles = require('../../assets/less/util.less')
 import HistoryStack from './historyStack'
 import { DEFAULT_ECHARTS_THEME } from '../../globalConstants'
-const  historyStack = new HistoryStack()
+const historyStack = new HistoryStack()
 
 interface IProjectsProps {
   router: InjectedRouter
@@ -131,18 +120,20 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       formType,
       formVisible: true
     }, () => {
-      if (project) {
-        const {orgId, id, name, pic, description, visibility} = project
-        this.widgetTypeChange(`${orgId}`).then(
-          () => {
-            if (this.state.formType === 'transfer') {
-              this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility}`})
-              return
+      setTimeout(() => {
+        if (project) {
+          const {orgId, id, name, pic, description, visibility} = project
+          this.widgetTypeChange(`${orgId}`).then(
+            () => {
+              if (this.state.formType === 'transfer') {
+                this.ProjectForm.setFieldsValue({id, name, orgId_hc: `${orgId}`, pic, description, visibility: `${visibility}`})
+                return
+              }
+              this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility}`})
             }
-            this.ProjectForm.setFieldsValue({orgId: `${orgId}`, id, name, pic, description, visibility: `${visibility}`})
-          }
-        )
-      }
+          )
+        }
+      }, 0)
     })
   }
 
@@ -423,11 +414,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
           return (
             <Col
               key={d.id}
-              xl={6}
+              xxl={6}
+              xl={8}
               lg={8}
-              md={8}
-              sm={12}
-              xs={24}
+              md={12}
+              sm={24}
             >
               <div
                 className={styles.unit}
@@ -500,11 +491,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         const colItems = (
             <Col
               key={d.id}
-              xl={6}
+              xxl={6}
+              xl={8}
               lg={8}
-              md={8}
-              sm={12}
-              xs={24}
+              md={12}
+              sm={24}
             >
               <div
                 className={itemClass}
@@ -632,11 +623,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         const colItems = (
           <Col
             key={d.id}
-            xl={6}
+            xxl={6}
+            xl={8}
             lg={8}
-            md={8}
-            sm={12}
-            xs={24}
+            md={12}
+            sm={24}
           >
             <div
               className={itemClass}
@@ -713,11 +704,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       const colItems = (
         <Col
           key={d.id}
-          xl={6}
+          xxl={6}
+          xl={8}
           lg={8}
-          md={8}
-          sm={12}
-          xs={24}
+          md={12}
+          sm={24}
         >
           <div
             className={itemClass}
@@ -771,11 +762,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
       }
       const colItems = (
           <Col
-            xl={6}
+            xxl={6}
+            xl={8}
             lg={8}
-            md={8}
-            sm={12}
-            xs={24}
+            md={12}
+            sm={24}
             key={d.id}
           >
             <div className={styles.searchList} key={d.id} onClick={this.toProject(d)}>
@@ -911,11 +902,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
         <div className={styles.wrap}>
           <Row style={{width: '100%'}}>
             <Col
+              xxl={18}
               xl={18}
-              lg={18}
+              lg={24}
               md={24}
               sm={24}
-              xs={24}
               key="projects"
             >
               <div className={styles.container}>
@@ -978,11 +969,11 @@ export class Projects extends React.PureComponent<IProjectsProps, IProjectsState
               </div>
             </Col>
             <Col
+              xxl={6}
               xl={6}
-              lg={6}
+              lg={24}
               md={24}
               sm={24}
-              xs={24}
               key="history"
             >
               <div className={styles.sideBox}>

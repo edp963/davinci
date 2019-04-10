@@ -27,6 +27,7 @@ import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.DashboardMapper;
 import edp.davinci.dao.DashboardPortalMapper;
+import edp.davinci.dao.ExcludePortalTeamMapper;
 import edp.davinci.dao.ProjectMapper;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -60,6 +62,9 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
 
     @Autowired
     private DashboardMapper dashboardMapper;
+
+    @Autowired
+    private ExcludePortalTeamMapper excludePortalTeamMapper;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long projectId) {
@@ -93,7 +98,7 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
             return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED);
         }
 
-        List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId);
+        List<DashboardPortal> dashboardPortals = dashboardPortalMapper.getByProject(projectId, user.getId());
 
         if (null != dashboardPortals && dashboardPortals.size() > 0) {
             RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectWithOrganization.getOrgId());
@@ -162,11 +167,13 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
 
         int insert = dashboardPortalMapper.insert(dashboardPortal);
         if (insert > 0) {
+            excludeTeamForPortal(dashboardPortalCreate.getTeamIds(), dashboardPortal.getId(), user.getId(), null);
             return resultMap.successAndRefreshToken(request).payload(dashboardPortal);
         } else {
             return resultMap.failAndRefreshToken(request).message("create dashboardPortal fail");
         }
     }
+
 
     /**
      * 更新DashboardPortal
@@ -206,13 +213,56 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
         BeanUtils.copyProperties(dashboardPortalUpdate, dashboardPortal);
         dashboardPortal.setProjectId(project.getId());
 
-        int insert = dashboardPortalMapper.update(dashboardPortal);
-        if (insert > 0) {
+        int update = dashboardPortalMapper.update(dashboardPortal);
+        if (update > 0) {
+            List<Long> excludeTeams = excludePortalTeamMapper.selectExcludeTeamsByPortalId(dashboardPortal.getId());
+            excludeTeamForPortal(dashboardPortalUpdate.getTeamIds(), dashboardPortal.getId(), user.getId(), excludeTeams);
             return resultMap.successAndRefreshToken(request).payload(dashboardPortal);
         } else {
             return resultMap.failAndRefreshToken(request).message("update dashboardPortal fail");
         }
     }
+
+
+    @Override
+    public List<Long> getExcludeTeams(Long id) {
+        return excludePortalTeamMapper.selectExcludeTeamsByPortalId(id);
+    }
+
+    @Transactional
+    protected void excludeTeamForPortal(List<Long> teamIds, Long portalId, Long userId, List<Long> excludeTeams) {
+        if (null != excludeTeams && excludeTeams.size() > 0) {
+            //已存在排除项
+            if (null != teamIds && teamIds.size() > 0) {
+                List<Long> rmTeamIds = new ArrayList<>();
+
+                //对比要修改的项，删除不在要修改项中的排除项
+                excludeTeams.forEach(teamId -> {
+                    if (teamId.longValue() > 0L && !teamIds.contains(teamId)) {
+                        rmTeamIds.add(teamId);
+                    }
+                });
+                if (rmTeamIds.size() > 0) {
+                    excludePortalTeamMapper.deleteByPortalIdAndTeamIds(portalId, rmTeamIds);
+                }
+            } else {
+                //删除所有要排除的项
+                excludePortalTeamMapper.deleteByPortalId(portalId);
+            }
+        }
+
+        //添加排除项
+        if (null != teamIds && teamIds.size() > 0) {
+            List<ExcludePortalTeam> list = new ArrayList<>();
+            teamIds.forEach(tid -> {
+                list.add(new ExcludePortalTeam(tid, portalId, userId));
+            });
+            if (list.size() > 0) {
+                excludePortalTeamMapper.insertBatch(list);
+            }
+        }
+    }
+
 
     /**
      * 删除DashboardPortal
@@ -241,7 +291,10 @@ public class DashboardPortalServiceImpl extends CommonService<DashboardPortal> i
         }
 
         dashboardMapper.deleteByPortalId(id);
-        dashboardPortalMapper.deleteById(id);
+        int i = dashboardPortalMapper.deleteById(id);
+        if (i > 0) {
+            excludePortalTeamMapper.deleteByPortalId(id);
+        }
 
         return resultMap.successAndRefreshToken(request);
     }

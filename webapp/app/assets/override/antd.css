@@ -33,25 +33,25 @@
 /***** antd *****/
 
 /* 调整因默认字体变大造成的按钮变形 */
-.ant-btn {
+/* .ant-btn {
   line-height: 22px;
-}
+} */
 
 /* 调整 InputGroup 后缀按钮变形 */
-.ant-input-group-wrap .ant-btn-lg {
+/* .ant-input-group-wrap .ant-btn-lg {
   padding-top: 3px;
   padding-bottom: 3px;
-}
+} */
 
 /* 调整 Form 中圆形按钮大小 */
-.ant-form .ant-btn-circle {
+/* .ant-form .ant-btn-circle {
   width: 30px;
   height: 30px;
   padding-bottom: 0;
-}
+} */
 
 /* 调整 ModalFooter 中按钮文字大小 */
-.ant-modal-footer .ant-btn-lg {
+/* .ant-modal-footer .ant-btn-lg {
   font-size: 14px;
 }
 
@@ -74,7 +74,7 @@
 .small-item-margin .ant-radio-button-wrapper-checked {
   color: #fff !important;
   background-color: #1B98E0 !important;
-}
+} */
 
 .ant-modal-small > .ant-modal {
   width: 400px !important;
@@ -116,13 +116,27 @@
   min-height: 0;  /* firefox flex overflow issue */
 }
 
+.ant-modal-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-modal-center > .ant-modal {
+  padding: 0;
+  margin: 0;
+  top: auto;
+  min-height: 0;
+}
+
 /* 解决 RangePicker 与其他form元素不对齐 */
 .ant-calendar-range-picker-input {
   vertical-align: baseline;
 }
 
-  /* 去掉默认动画效果 */
-.fade-enter,
+/* 去掉默认动画效果 */
+/* .fade-enter,
 .fade-appear,
 .fade-leave,
 .fade-enter.fade-enter-active,
@@ -135,7 +149,7 @@
 .zoom-appear.zoom-appear-active,
 .zoom-leave.zoom-leave-active {
   animation: none;
-}
+} */
 
 @media (max-width: 1200px) {
   .ant-modal-xlarge {
@@ -162,11 +176,11 @@
   margin: 0 4px;
 }
 
-/* 缩小默认行高 */
-.ant-table-thead > tr > th,
+/* 缩小默认行高（override variable） */
+/* .ant-table-thead > tr > th,
 .ant-table-tbody > tr > td {
   padding: 10px 8px;
-}
+} */
 
 /* 调整空列表与 BoxBody 下方间距 */
 .ant-table-empty {

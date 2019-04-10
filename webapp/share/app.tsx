@@ -18,7 +18,7 @@
  * >>
  */
 
-import 'babel-polyfill'
+import '@babel/polyfill'
 
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
@@ -26,6 +26,7 @@ import { Provider } from 'react-redux'
 import { applyRouterMiddleware, Router, hashHistory } from 'react-router'
 import { syncHistoryWithStore } from 'react-router-redux'
 import { useScroll } from 'react-router-scroll'
+import { hot } from 'react-hot-loader'
 
 import App from './containers/App/index'
 
@@ -34,7 +35,6 @@ import { makeSelectLocationState } from '../app/containers/App/selectors'
 import LanguageProvider from '../app/containers/LanguageProvider'
 
 import '!file-loader?name=[name].[ext]!../app/favicon.ico'
-import '!file-loader?name=[name].[ext]!../app/manifest.json'
 import 'file-loader?name=[name].[ext]!../app/.htaccess'
 
 import configureStore from './store'
@@ -43,7 +43,6 @@ import { translationMessages } from '../app/i18n'
 
 import createRoutes from './routes'
 
-import 'antd/dist/antd.less'
 import '../libs/react-grid-layout/css/styles.css'
 import '../libs/react-resizable/css/styles.css'
 import 'bootstrap-datepicker/dist/css/bootstrap-datepicker3.standalone.min.css'
@@ -55,12 +54,15 @@ import '../app/assets/override/datepicker.css'
 import '../app/assets/less/style.less'
 
 import * as echarts from 'echarts/lib/echarts'
+import 'zrender/lib/svg/svg'
 import 'echarts/lib/chart/bar'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/chart/scatter'
 import 'echarts/lib/chart/pie'
 import 'echarts/lib/chart/sankey'
 import 'echarts/lib/chart/funnel'
+import 'echarts/lib/chart/map'
+import 'echarts/lib/chart/lines'
 import 'echarts/lib/chart/treemap'
 import 'echarts/lib/chart/heatmap'
 import 'echarts/lib/chart/boxplot'
@@ -77,13 +79,15 @@ import 'echarts/lib/component/toolbox'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/visualMap'
 import 'echarts/lib/component/geo'
-import '../app/containers/Widget/charts/mapFile/china'
+import 'echarts/lib/component/brush'
+import '../app/assets/js/china.js'
 
 import { DEFAULT_ECHARTS_THEME } from '../app/globalConstants'
 echarts.registerTheme('default', DEFAULT_ECHARTS_THEME)
 
 const initialState = {}
 const store = configureStore(initialState, hashHistory)
+const MOUNT_NODE = document.getElementById('app')
 
 const history = syncHistoryWithStore(hashHistory, store, {
   selectLocationState: makeSelectLocationState()
@@ -91,7 +95,7 @@ const history = syncHistoryWithStore(hashHistory, store, {
 
 const rootRoute = {
   path: '/',
-  component: App,
+  component: hot(module)(App),
   childRoutes: createRoutes(store),
   indexRoute: {
     onEnter: (_, replace) => {
@@ -115,15 +119,14 @@ const render = (messages) => {
         />
       </LanguageProvider>
     </Provider>,
-    document.getElementById('app')
+    MOUNT_NODE
   )
 }
 
 // Hot reloadable translation json files
 if (module.hot) {
-  // modules.hot.accept does not accept dynamic dependencies,
-  // have to be constants at compile-time
-  module.hot.accept('../app/i18n', () => {
+  module.hot.accept(['../app/i18n', 'containers/App'], () => {
+    ReactDOM.unmountComponentAtNode(MOUNT_NODE)
     render(translationMessages)
   })
 }
@@ -140,8 +143,7 @@ if (!window.Intl) {
     resolve(import('intl'))
   }))
     .then(() => Promise.all([
-      import('intl/locale-data/jsonp/en.js'),
-      import('intl/locale-data/jsonp/de.js')
+      import('intl/locale-data/jsonp/en.js')
     ]))
     .then(() => render(translationMessages))
     .catch((err) => {

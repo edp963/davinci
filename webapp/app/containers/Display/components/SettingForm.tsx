@@ -18,29 +18,16 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
-import { FormComponentProps } from 'antd/lib/form/Form'
+import React from 'react'
+import debounce from 'lodash/debounce'
 import api from 'utils/api'
-import { getBase64 } from 'utils/util'
 
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const InputNumber = require('antd/lib/input-number')
-const Radio = require('antd/lib/radio/radio')
-const Checkbox = require('antd/lib/checkbox')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
-const Upload = require('antd/lib/upload')
-const Icon = require('antd/lib/icon')
-const Popover = require('antd/lib/popover')
-const Tooltip = require('antd/lib/tooltip')
+import { Form, Row, Col, Input, InputNumber, Radio, Checkbox, Select, Upload, Icon, Popover, Tooltip } from 'antd'
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const CheckboxGroup = Checkbox.Group
 const Option = Select.Option
+import { FormComponentProps } from 'antd/lib/form/Form'
 
 import { SketchPicker } from 'react-color'
 
@@ -50,6 +37,7 @@ interface ISettingFormProps {
   id: number
   settingInfo: any
   settingParams: any
+  onDisplaySizeChange: (width: number, height: number) => void
   onFormItemChange: (field: any, value: any) => any
   onCollapseChange: () => void
 }
@@ -59,7 +47,9 @@ interface ISettingFormStates {
   collapse: boolean
 }
 
-export class SettingForm extends React.PureComponent<ISettingFormProps & FormComponentProps, ISettingFormStates> {
+export class SettingForm extends React.Component<ISettingFormProps & FormComponentProps, ISettingFormStates> {
+
+  private debounceFormItemChange = null
 
   constructor (props: ISettingFormProps & FormComponentProps) {
     super(props)
@@ -67,24 +57,39 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       loading: {},
       collapse: false
     }
+    this.debounceFormItemChange = debounce(this.props.onFormItemChange, 1000)
   }
 
-  public componentDidMount () {
-    const {
-      form,
-      settingParams
-    } = this.props
-    form.setFieldsValue({...settingParams})
+  public shouldComponentUpdate (nextProps: ISettingFormProps, nextState: ISettingFormStates) {
+    const { settingInfo, settingParams } = nextProps
+    const { collapse } = nextState
+    const needUpdate = settingInfo !== this.props.settingInfo
+      || !(this.compareSettingParams(this.props.settingParams, settingParams) && this.compareSettingParams(this.props.settingParams, this.props.form.getFieldsValue()))
+      || collapse !== this.state.collapse
+    return needUpdate
   }
 
   public componentWillReceiveProps (nextProps: ISettingFormProps) {
     const {
-      form,
+      onFormItemChange,
       settingParams
-    } = this.props
-    if (settingParams !== nextProps.settingParams) {
-      form.setFieldsValue({...nextProps.settingParams})
+    } = nextProps
+    if (onFormItemChange !== this.props.onFormItemChange) {
+      this.debounceFormItemChange = debounce(onFormItemChange, 1000)
     }
+
+    if (!this.compareSettingParams(this.props.settingParams, settingParams)) {
+      this.props.form.setFieldsValue({...settingParams})
+    }
+  }
+
+  private compareSettingParams = (
+    params1: ISettingFormProps['settingParams'],
+    params2: ISettingFormProps['settingParams']
+  ) => {
+    const isSame = Object.keys(params1)
+      .every((key) => JSON.stringify(params1[key]) === JSON.stringify(params2[key]))
+    return isSame
   }
 
   private getFormItemLayout = (item) => {
@@ -133,6 +138,18 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   private formItemChange = (field) => (val) => {
     this.props.onFormItemChange(field, val)
   }
+  private formDebouncedItemChange = (field) => (val) => {
+    this.debounceFormItemChange(field, val)
+  }
+  private formInputItemChange = (field) => (e) => {
+    this.props.onFormItemChange(field, e.target.value)
+  }
+  private formRadioItemChange = (field) => (e) => {
+    this.props.onFormItemChange(field, e.target.value)
+  }
+  private formCheckboxItemChange = (field) => (e) => {
+    this.props.onFormItemChange(field, e.target.checked)
+  }
 
   private renderItem = (param) => {
     const { form, settingParams } = this.props
@@ -143,22 +160,25 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       let control
       switch (item.component) {
         case 'input':
-          control = this.renderInput(item, this.formItemChange)
+          control = this.renderInput(item, this.formInputItemChange)
           break
         case 'inputnumber':
-          control = this.renderInputNumber(item, this.formItemChange)
+          control = this.renderInputNumber(item, this.formDebouncedItemChange)
           break
         case 'colorPicker':
-          control = this.renderColorPicker(item, this.formItemChange, settingParams[item.name])
+          control = this.renderColorPicker(item, this.formDebouncedItemChange, settingParams[item.name])
           break
         case 'select':
           control = this.renderSelect(item, this.formItemChange)
           break
         case 'radio':
-          control = this.renderRadio(item, this.formItemChange)
+          control = this.renderRadio(item, this.formRadioItemChange)
           break
         case 'checkbox':
-          control = this.renderCheckbox(item, this.formItemChange)
+          control = this.renderCheckbox(item, this.formCheckboxItemChange)
+          break
+        case 'checkboxGroup':
+          control = this.renderCheckboxGroup(item, this.formItemChange)
           break
         case 'upload':
           control = this.renderUpload(item, this.formItemChange, settingParams[item.name])
@@ -205,11 +225,12 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private wrapFormItem = (control, item, getFieldDecorator) => {
+    const { settingParams, id } = this.props
     return (
       <Col key={item.name} span={item.span || 24}>
         <FormItem label={item.title} {...this.getFormItemLayout(item)}>
           {getFieldDecorator(item.name, {
-            initialValue: item.default || ''
+            initialValue: settingParams[item.name] || item.default || ''
           })(control)}
         </FormItem>
       </Col>
@@ -234,13 +255,10 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderInput = (item, formItemChange) => {
-    const onFormInputItemChange = (e) => {
-      formItemChange(item.name)(e.target.value)
-    }
     return (
       <Input
         placeholder={item.tip || item.placeholder || item.name}
-        onPressEnter={onFormInputItemChange}
+        onPressEnter={formItemChange(item.name)}
       />
     )
   }
@@ -257,11 +275,8 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
   }
 
   private renderRadio = (item, formItemChange) => {
-    const onFormRadioItemChange = (e) => {
-      formItemChange(item.name)(e.target.value)
-    }
     return (
-      <RadioGroup onChange={onFormRadioItemChange}>
+      <RadioGroup onChange={formItemChange(item.name)}>
         {
           item.values.map((val) => (
             <Radio key={val.value} value={val.value}>{val.name}</Radio>
@@ -273,21 +288,26 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
 
   private renderCheckbox = (item, formItemChange) => {
     return (
+      <Checkbox checked={item.value} onChange={formItemChange(item.name)}>{item.title}</Checkbox>
+    )
+  }
+
+  private renderCheckboxGroup = (item, formItemChange) => {
+    return (
       <CheckboxGroup onChange={formItemChange(item.name)} options={item.values} />
     )
   }
 
   private renderColorPicker = (item, formItemChange, rgb) => {
     const onChangeComplete = (e) => {
-      const { r, g, b } = e.rgb
-      formItemChange(item.name)([r, g, b])
+      const { r, g, b, a } = e.rgb
+      formItemChange(item.name)([r, g, b, a])
     }
 
-    const color = rgb ? `rgb(${rgb.join()}` : `rgb(0,0,0,1)`
+    const color = rgb ? `rgba(${rgb.join()})` : `rgba(0,0,0,1)`
     const colorPicker = (
       <SketchPicker
         color={color}
-        disableAlpha={true}
         onChangeComplete={onChangeComplete}
       />
     )
@@ -330,7 +350,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
       }
     }
 
-    const deleteUpload = (e: MouseEvent) => {
+    const deleteUpload = (e: React.MouseEvent) => {
       formItemChange(item.name)(null)
       e.stopPropagation()
     }
@@ -340,7 +360,7 @@ export class SettingForm extends React.PureComponent<ISettingFormProps & FormCom
         <Col span={24}>
           <Upload
             className={styles.upload}
-            showUploadList={{ showRemoveIcon: true, showPreviewIcon: true }}
+            showUploadList={false}
             name={item.name}
             disabled={loading[item.name]}
             action={action}

@@ -18,22 +18,14 @@
  * >>
  */
 
-import * as React from 'react'
-import { connect } from 'react-redux'
-const Form = require('antd/lib/form')
-const Row = require('antd/lib/row')
-const Col = require('antd/lib/col')
-const Input = require('antd/lib/input')
-const Radio = require('antd/lib/radio/radio')
-const Button = require('antd/lib/button')
-const Select = require('antd/lib/select')
+import React from 'react'
+import { Form, Row, Col, Input, Button, Select } from 'antd'
+const FormItem = Form.Item
+const TextArea = Input.TextArea
 const Option = Select.Option
-const Tag = require('antd/lib/tag')
 import Avatar from '../../../components/Avatar'
 const styles = require('../Organization.less')
-const FormItem = Form.Item
-const RadioGroup = Radio.Group
-import {ITeam} from './TeamList'
+import { ITeam } from './TeamList'
 
 
 
@@ -86,7 +78,6 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
     const modalButtons = [(
       <Button
         key="submit"
-        size="large"
         type="primary"
         loading={modalLoading}
         disabled={modalLoading}
@@ -127,9 +118,8 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                   {getFieldDecorator('description', {
                     initialValue: ''
                   })(
-                    <Input
+                    <TextArea
                       placeholder="Description"
-                      type="textarea"
                       autosize={{minRows: 2, maxRows: 6}}
                     />
                   )}
@@ -156,7 +146,7 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, {}> {
                     initialValue: ''
                   })(
                     <RadioGroup>
-                      <Radio value="0" className={styles.radioStyle}>私密（只对该团队成员可见）</Radio>
+                      <Radio value="0" className={styles.radioStyle}>授权（只对该团队成员可见）</Radio>
                       <Radio value="1" className={styles.radioStyle}>公开 <Tag>推荐</Tag>（对该组织内所有成员可见）</Radio>
                     </RadioGroup>
                   )}

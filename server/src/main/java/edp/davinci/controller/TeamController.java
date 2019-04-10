@@ -26,6 +26,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.teamDto.*;
 import edp.davinci.model.User;
+import edp.davinci.service.DepartmentService;
 import edp.davinci.service.TeamService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,6 +53,9 @@ public class TeamController extends BaseController {
 
     @Autowired
     private TeamService teamService;
+
+    @Autowired(required = false)
+    private DepartmentService departmentService;
 
     /**
      * 创建团队
@@ -513,6 +517,29 @@ public class TeamController extends BaseController {
     public ResponseEntity getTeams(@ApiIgnore @CurrentUser User user, HttpServletRequest request) {
         try {
             ResultMap resultMap = teamService.getTeams(user, request);
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        }
+    }
+
+
+    @ApiOperation(value = "get team variables sources")
+    @GetMapping("/departments")
+    public ResponseEntity getTeamVarSource(@RequestParam("type") String type,
+                                           @RequestParam("projectId") Long projectId,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
+
+        if (StringUtils.isEmpty(type)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid type");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        try {
+            ResultMap resultMap = departmentService.getdepartments(projectId, type, user, request);
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         } catch (Exception e) {
             e.printStackTrace();
