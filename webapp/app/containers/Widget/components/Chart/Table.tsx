@@ -95,7 +95,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   private handleResize = (idx: number) => (_, { size }: IResizeCallbackData) => {
     const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
       columns.forEach((col) => {
-        col.width = Math.ceil(ratio * Number(col.width))
+        col.width = Math.floor(ratio * Number(col.width))
         if (Array.isArray(col.children) && col.children.length) {
           loop(col.children, ratio)
         }
@@ -334,7 +334,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const cellValRange = this.getTableCellValueRange(data, expression, columnConfig)
       const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
-      const width = Math.max(headerWidth, maxCellWidth)
+      const width = Math.floor(Math.max(headerWidth, maxCellWidth))
       const column: ColumnProps<any> = {
         title: (<div className={styles.headerCell}>{headerNode}</div>),
         dataIndex: expression,
@@ -362,7 +362,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const ratio = containerWidth / totalWidth
       const loop = (columns: Array<ColumnProps<any>>, ratio: number) => {
         columns.forEach((col) => {
-          col.width = Math.ceil(ratio * Number(col.width))
+          col.width = Math.floor(ratio * Number(col.width))
           if (Array.isArray(col.children) && col.children.length) {
             loop(col.children, ratio)
           }
@@ -408,7 +408,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const headerNode = this.getHeaderNode(field, headerText)
       const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
-      const width = Math.max(headerWidth, maxCellWidth)
+      const width = Math.floor(Math.max(headerWidth, maxCellWidth))
       const column: ColumnProps<any> = {
         key: uuid(5),
         dataIndex: name,
@@ -460,7 +460,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (isGroup) {
       currentConfig.children.forEach((c) =>
         this.traverseHeaderConfig(c, props, mapMetaConfig, header, columns, metaKeys))
-      header.width = Math.max(this.computeCellWidth(style, headerName), +header.width)
+      header.width = Math.floor(Math.max(this.computeCellWidth(style, headerName), +header.width))
     }
 
     const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
@@ -485,7 +485,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       headerText = this.getHeaderText(field, expression, queryVariables)
       const headerWidth = this.computeCellWidth(style, headerText)
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
-      header.width = Math.max(headerWidth, maxCellWidth)
+      header.width = Math.floor(Math.max(headerWidth, maxCellWidth))
       headerText = this.getHeaderNode(field, headerText)
       const cellValRange = this.getTableCellValueRange(data, expression, columnConfig)
       header.render = (_, record, idx) => {
@@ -788,7 +788,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
   ) {
     const scroll: TableProps<any>['scroll'] = {}
     const columnsTotalWidth = columns.reduce((acc, c) => acc + (c.width as number), 0)
-    scroll.x = Math.max(columnsTotalWidth, containerWidth)
+    if (columnsTotalWidth > containerWidth) {
+      scroll.x = Math.max(columnsTotalWidth, containerWidth)
+    }
     if (headerFixed) {
       scroll.y = tableBodyHeght
     }
