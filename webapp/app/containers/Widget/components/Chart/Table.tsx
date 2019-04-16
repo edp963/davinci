@@ -84,6 +84,8 @@ const ResizableHeader = (props) => {
 }
 export class Table extends React.PureComponent<IChartProps, ITableStates> {
 
+  private static HeaderSorterWidth = 30
+
   private table = React.createRef<AntTable<any>>()
 
   private components = {
@@ -332,7 +334,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const headerNode = this.getHeaderNode(field, headerText)
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       const cellValRange = this.getTableCellValueRange(data, expression, columnConfig)
-      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
+      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText) + Table.HeaderSorterWidth
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       const width = Math.floor(Math.max(headerWidth, maxCellWidth))
       const column: ColumnProps<any> = {
@@ -406,7 +408,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       }
       const headerText = this.getHeaderText(field, expression, queryVariables)
       const headerNode = this.getHeaderNode(field, headerText)
-      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText)
+      const headerWidth = this.computeCellWidth(DefaultTableCellStyle, headerText) + Table.HeaderSorterWidth
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       const width = Math.floor(Math.max(headerWidth, maxCellWidth))
       const column: ColumnProps<any> = {
@@ -460,7 +462,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     if (isGroup) {
       currentConfig.children.forEach((c) =>
         this.traverseHeaderConfig(c, props, mapMetaConfig, header, columns, metaKeys))
-      header.width = Math.floor(Math.max(this.computeCellWidth(style, headerName), +header.width))
+      header.width = Math.floor(Math.max(this.computeCellWidth(style, headerName) + Table.HeaderSorterWidth, +header.width))
     }
 
     const { fontColor: color, fontFamily, fontSize, fontStyle, fontWeight, backgroundColor, justifyContent } = style
@@ -483,7 +485,7 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       const { name, field, format, expression, agg } = metaConfig
       const columnConfig = columnsConfig.find((config) => config.columnName === name)
       headerText = this.getHeaderText(field, expression, queryVariables)
-      const headerWidth = this.computeCellWidth(style, headerText)
+      const headerWidth = this.computeCellWidth(style, headerText) + Table.HeaderSorterWidth
       const maxCellWidth = this.getMaxCellWidth(expression, columnConfig, format, data)
       header.width = Math.floor(Math.max(headerWidth, maxCellWidth))
       headerText = this.getHeaderNode(field, headerText)
