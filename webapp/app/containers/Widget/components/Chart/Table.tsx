@@ -651,6 +651,9 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
       case TableConditionStyleTypes.BackgroundColor:
         cssStyle = this.getBackgroundConditionCellStyle(conditionStyle)
         break
+      case TableConditionStyleTypes.TextColor:
+        cssStyle = this.getTextConditionCellStyle(conditionStyle)
+        break
       case TableConditionStyleTypes.NumericBar:
         const [minCellVal, maxCellVal] = cellValRange
         cssStyle = this.getNumericBarConditionCellStyle(conditionStyle, +cellVal, maxCellVal, minCellVal)
@@ -710,6 +713,17 @@ export class Table extends React.PureComponent<IChartProps, ITableStates> {
     const cssStyle: React.CSSProperties = {
       color: fore,
       backgroundColor: background
+    }
+    return cssStyle
+  }
+
+  private getTextConditionCellStyle (
+    conditionStyle: ITableConditionStyle
+  ): React.CSSProperties {
+    const { colors } = conditionStyle
+    const { fore } = colors
+    const cssStyle: React.CSSProperties = {
+      color: fore
     }
     return cssStyle
   }
