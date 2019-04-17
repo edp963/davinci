@@ -24,6 +24,10 @@ import Report from './containers/Report'
 import Source from './containers/Source'
 import Bizlogics from './containers/Bizlogic'
 import Bizlogic from './containers/Bizlogic/Bizlogic'
+
+import ViewIndex from 'containers/View'
+import ViewEditor from 'containers/View/Editor'
+
 import Widget from './containers/Widget'
 import Workbench from './containers/Widget/components/Workbench/index'
 import Viz from './containers/Viz'
@@ -125,6 +129,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Bizlogics
             },
             {
+              path: '/project/:pid/views',
+              name: 'views',
+              component: ViewIndex
+            },
+            {
               path: '/project/:pid/sources',
               name: 'sources',
               component: Source
@@ -194,6 +203,11 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           component: Bizlogic
         },
         {
+          path: '/project/:pid/view/:viewId',
+          name: 'viewEditor',
+          component: ViewEditor
+        },
+        {
           path: '/project/:pid/portal/:portalId/portalName/:portalName',
           name: 'dashboard',
           component: Dashboard,
@@ -237,4 +251,9 @@ export default function createRoutes (store): IExtendedRouteProps[] {
       }
     }
   ]
+}
+
+export interface IRouteParams {
+  pid?: number
+  viewId?: number
 }

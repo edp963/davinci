@@ -6,7 +6,7 @@ const RadioGroup = Radio.Group
 const Option = Select.Option
 
 import ColorPicker from 'components/ColorPicker'
-import ConditionValuesControl from './ConditionValuesControl'
+import ConditionValuesControl from 'components/ConditionValuesControl'
 
 import OperatorTypes, { OperatorTypesLocale, TableCellConditionOperatorTypes } from 'utils/operatorTypes'
 import { ITableConditionStyle } from '../'
@@ -303,12 +303,18 @@ export class ConditionStyleConfigModal extends React.PureComponent<IConditionSty
               </Select>
             </Col>
           </Row>
-          <ConditionValuesControl
-            visualType={visualType}
-            operatorType={operatorType}
-            conditionValues={conditionValues}
-            onChange={this.conditionValuesChange}
-          />
+          <Row key="valueControls" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
+            <Col span={8}>值：</Col>
+            <Col span={16}>
+              <ConditionValuesControl
+                size="small"
+                visualType={visualType}
+                operatorType={operatorType}
+                conditionValues={conditionValues}
+                onChange={this.conditionValuesChange}
+              />
+            </Col>
+          </Row>
           {this.renderConfigItems()}
         </div>
       </Modal>

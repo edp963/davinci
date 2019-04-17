@@ -179,6 +179,10 @@ export const SQL_NUMBER_TYPES = [
 ]
 export const SQL_DATE_TYPES = ['DATE', 'DATETIME', 'TIMESTAMP', 'TIME', 'YEAR']
 
+export const SQL_TYPES = SQL_STRING_TYPES.concat(SQL_NUMBER_TYPES).concat(SQL_DATE_TYPES)
+
+export type SqlTypes = typeof SQL_TYPES[number]
+
 export const DEFAULT_SPLITER = '@davinci@'
 export const KEY_COLUMN = 'davinciUniqueId'
 
