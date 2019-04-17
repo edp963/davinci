@@ -777,76 +777,77 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           pageSize,
           totalCount
         }
-        if (data.length) {
-          onSetWidgetProps({
-            cols: cols.items.map((item) => ({
-              ...item,
-              field: item.field || getDefaultFieldConfig(),
-              format: item.format || getDefaultFieldFormatConfig()
-            })),
-            rows: rows.items.map((item) => ({
-              ...item,
-              field: item.field || getDefaultFieldConfig(),
-              format: item.format || getDefaultFieldFormatConfig()
-            })),
-            metrics: metrics.items.map((item) => ({
+        onSetWidgetProps({
+          cols: cols.items.map((item) => ({
+            ...item,
+            field: item.field || getDefaultFieldConfig(),
+            format: item.format || getDefaultFieldFormatConfig()
+          })),
+          rows: rows.items.map((item) => ({
+            ...item,
+            field: item.field || getDefaultFieldConfig(),
+            format: item.format || getDefaultFieldFormatConfig()
+          })),
+          metrics: metrics.items.map((item) => ({
+            ...item,
+            agg: item.agg || 'sum',
+            chart: item.chart || getPivot(),
+            field: item.field || getDefaultFieldConfig(),
+            format: item.format || getDefaultFieldFormatConfig()
+          })),
+          ...secondaryMetrics && {
+            secondaryMetrics: secondaryMetrics.items.map((item) => ({
               ...item,
               agg: item.agg || 'sum',
               chart: item.chart || getPivot(),
               field: item.field || getDefaultFieldConfig(),
               format: item.format || getDefaultFieldFormatConfig()
-            })),
-            ...secondaryMetrics && {
-              secondaryMetrics: secondaryMetrics.items.map((item) => ({
-                ...item,
-                agg: item.agg || 'sum',
-                chart: item.chart || getPivot(),
-                field: item.field || getDefaultFieldConfig(),
-                format: item.format || getDefaultFieldFormatConfig()
-              }))
-            },
-            filters: filters.items.map(({name, type, config}) => ({ name, type, config })),
-            ...color && {color},
-            ...label && {label},
-            ...size && {size},
-            ...xAxis && {xAxis},
-            ...tip && {tip},
-            ...yAxis && {yAxis},
-            chartStyles: mergedStyleParams,
-            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
-            data,
-            pagination: updatedPagination,
-            dimetionAxis: this.getDimetionAxis(selectedCharts),
-            renderType: renderType || 'rerender',
-            orders,
-            mode,
-            model: JSON.parse(selectedView.model)
-          })
-          this.setState({
-            chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-            pagination: updatedPagination
-          })
-        } else {
-          onSetWidgetProps({
-            cols: [],
-            rows: [],
-            metrics: [],
-            filters: [],
-            data: [],
-            pagination: updatedPagination,
-            chartStyles: mergedStyleParams,
-            selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
-            dimetionAxis: this.getDimetionAxis([getPivot()]),
-            renderType: 'rerender',
-            orders,
-            mode,
-            model: JSON.parse(selectedView.model)
-          })
-          this.setState({
-            chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
-            pagination: updatedPagination
-          })
-        }
+            }))
+          },
+          filters: filters.items.map(({name, type, config}) => ({ name, type, config })),
+          ...color && {color},
+          ...label && {label},
+          ...size && {size},
+          ...xAxis && {xAxis},
+          ...tip && {tip},
+          ...yAxis && {yAxis},
+          chartStyles: mergedStyleParams,
+          selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
+          data,
+          pagination: updatedPagination,
+          dimetionAxis: this.getDimetionAxis(selectedCharts),
+          renderType: renderType || 'rerender',
+          orders,
+          mode,
+          model: JSON.parse(selectedView.model)
+        })
+        this.setState({
+          chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
+          pagination: updatedPagination
+        })
+        // if (data.length) {
+
+        // } else {
+        //   onSetWidgetProps({
+        //     cols: [],
+        //     rows: [],
+        //     metrics: [],
+        //     filters: [],
+        //     data: [],
+        //     pagination: updatedPagination,
+        //     chartStyles: mergedStyleParams,
+        //     selectedChart: mode === 'pivot' ? chartModeSelectedChart.id : selectedCharts[0].id,
+        //     dimetionAxis: this.getDimetionAxis([getPivot()]),
+        //     renderType: 'rerender',
+        //     orders,
+        //     mode,
+        //     model: JSON.parse(selectedView.model)
+        //   })
+        //   this.setState({
+        //     chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
+        //     pagination: updatedPagination
+        //   })
+        // }
         this.setState({
           dataParams: mergedDataParams,
           styleParams: mergedStyleParams
