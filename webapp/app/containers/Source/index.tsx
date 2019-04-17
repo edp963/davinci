@@ -41,16 +41,7 @@ import { ButtonProps } from 'antd/lib/button/button'
 import { SortOrder } from 'antd/lib/table'
 import AntdFormType from 'antd/lib/form/Form'
 
-import {
-  loadSources,
-  addSource,
-  deleteSource,
-  editSource,
-  testSourceConnection,
-  getCsvMetaId,
-  setSourceFormValue,
-  setUploadFormValue
-} from './actions'
+import { SourceActions } from './actions'
 import {
   makeSelectSources,
   makeSelectListLoading,
@@ -591,15 +582,15 @@ export class Source extends React.PureComponent<ISourceProps, ISourceStates> {
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onLoadSources: (projectId) => dispatch(loadSources(projectId)),
-    onAddSource: (source, resolve) => dispatch(addSource(source, resolve)),
-    onDeleteSource: (id) => () => dispatch(deleteSource(id)),
-    onEditSource: (source, resolve) => dispatch(editSource(source, resolve)),
-    onTestSourceConnection: (url) => dispatch(testSourceConnection(url)),
-    onGetCsvMetaId: (csvMeta, resolve) => dispatch(getCsvMetaId(csvMeta, resolve)),
+    onLoadSources: (projectId) => dispatch(SourceActions.loadSources(projectId)),
+    onAddSource: (source, resolve) => dispatch(SourceActions.addSource(source, resolve)),
+    onDeleteSource: (id) => () => dispatch(SourceActions.deleteSource(id)),
+    onEditSource: (source, resolve) => dispatch(SourceActions.editSource(source, resolve)),
+    onTestSourceConnection: (url) => dispatch(SourceActions.testSourceConnection(url)),
+    onGetCsvMetaId: (csvMeta, resolve) => dispatch(SourceActions.getCsvMetaId(csvMeta, resolve)),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onSetSourceFormValue: (values) => dispatch(setSourceFormValue(values)),
-    onSetUploadFormValue: (values) => dispatch(setUploadFormValue(values))
+    onSetSourceFormValue: (values) => dispatch(SourceActions.setSourceFormValue(values)),
+    onSetUploadFormValue: (values) => dispatch(SourceActions.setUploadFormValue(values))
   }
 }
 

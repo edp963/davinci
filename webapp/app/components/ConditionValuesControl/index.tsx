@@ -3,24 +3,32 @@ import * as classnames from 'classnames'
 import moment, { Moment } from 'moment'
 import OperatorTypes from 'utils/operatorTypes'
 
-import { Row, Col, Input, InputNumber, DatePicker, Button, Tag } from 'antd'
+import { Row, Col, Input, InputNumber, DatePicker, Button, Tag, Switch } from 'antd'
 
-const styles = require('../TableSection.less')
+import Styles from './ConditionValuesControl.less'
+
+export type ConditionValueTypes = string | number | boolean
 
 interface IConditionValuesControlProps {
+  size: 'small' | 'default'
   visualType: string
   operatorType: OperatorTypes
-  conditionValues: Array<string | number>
-  onChange: (values: Array<string | number | Moment>) => void
+  conditionValues: ConditionValueTypes[]
+  onChange: (values: ConditionValueTypes[]) => void
 }
 
+
 interface IConditionValuesControlStates {
-  localValues: Array<string | number>
+  localValues: ConditionValueTypes[]
   tagInputting: boolean
-  tagInputValue: string | number | Moment
+  tagInputValue: ConditionValueTypes
 }
 
 export class ConditionValuesControl extends React.PureComponent<IConditionValuesControlProps, IConditionValuesControlStates> {
+
+  public static defaultProps: Partial<IConditionValuesControlProps> = { size: 'default' }
+
+  private controlStyle: React.CSSProperties = { width: '100%' }
 
   public constructor (props: IConditionValuesControlProps) {
     super(props)
@@ -44,7 +52,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   private initLocalValues (
     operatorType: OperatorTypes,
     visualType: string,
-    conditionValues: Array<string | number>
+    conditionValues: ConditionValueTypes[]
   ) {
     const values = []
     const initValue = this.getInitValueByVisualType(visualType)
@@ -77,7 +85,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
     this.setState({ localValues: values })
   }
 
-  private getInitValueByVisualType (visualType: string) {
+  private getInitValueByVisualType (visualType: string): ConditionValueTypes {
     switch (visualType) {
       case 'string':
       case 'geoCountry':
@@ -87,15 +95,37 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
       case 'number':
         return 0
       case 'date':
-        return moment()
+        return moment().format('YYYY-MM-DD')
+      case 'boolean':
+        return false
       default:
         return null
     }
   }
 
-  private localValuesChange = (idx: number) => (e) => {
-    const value = e.target ? e.target.value : e
-    const { onChange } = this.props
+  private getControlValueByVisualType (visualType: string, args: any[]) {
+    let value: ConditionValueTypes
+    switch (visualType) {
+      case 'string':
+      case 'geoCountry':
+      case 'geoProvince':
+      case 'geoCity':
+        value = (args[0] as React.ChangeEvent<HTMLInputElement>).target.value
+        break
+      case 'number':
+      case 'boolean':
+        value = args[0]
+        break
+      case 'date':
+        value = args[1]
+        break
+    }
+    return value
+  }
+
+  private localValuesChange = (idx: number) => (...args: any[]) => {
+    const { onChange, visualType } = this.props
+    const value = this.getControlValueByVisualType(visualType, args)
     const { localValues } = this.state
     const values = [...localValues]
     values.splice(idx, 1, value)
@@ -103,23 +133,60 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   }
 
   private renderControl = (idx: number) => {
-    const { visualType } = this.props
+    const { visualType, size } = this.props
     const { localValues } = this.state
 
-    let control
+    let control: React.ReactElement
     switch (visualType) {
       case 'string':
       case 'geoCountry':
       case 'geoProvince':
       case 'geoCity':
-        control = (<Input className={styles.colControl} size="small" value={localValues[idx]} onChange={this.localValuesChange(idx)}/>)
+        const stringValue = localValues[idx] as string
+        control = (
+          <Input
+            style={this.controlStyle}
+            size={size}
+            value={stringValue}
+            onChange={this.localValuesChange(idx)}
+          />
+        )
         break
       case 'number':
-        control = (<InputNumber className={styles.colControl} size="small" value={(localValues[idx] as number)} onChange={this.localValuesChange(idx)} />)
+        const numberValue = localValues[idx] as number
+        control = (
+          <InputNumber
+            style={this.controlStyle}
+            size={size}
+            value={numberValue}
+            onChange={this.localValuesChange(idx)}
+          />
+        )
         break
       case 'date':
-        control = (<DatePicker className={styles.colControl} size="small" value={moment(localValues[idx])} onChange={this.localValuesChange(idx)} />)
+        const dateValue = moment(localValues[idx] as string)
+        control = (
+          <DatePicker
+            style={this.controlStyle}
+            size={size}
+            format="YYYY-MM-DD HH:mm:ss"
+            showTime={{ defaultValue: moment('00:00:00', 'HH:mm:ss') }}
+            value={dateValue}
+            onChange={this.localValuesChange(idx)}
+          />
+        )
         break
+      case 'boolean':
+        const booleanValue = localValues[idx] as boolean
+        control = (
+          <Switch
+            size={size}
+            checkedChildren="是"
+            unCheckedChildren="否"
+            checked={booleanValue}
+            onChange={this.localValuesChange(idx)}
+          />
+        )
     }
 
     return control
@@ -128,7 +195,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   private renderRow = () => {
     const { operatorType } = this.props
 
-    let controls
+    let controls: React.ReactElement
     switch (operatorType) {
       case OperatorTypes.Contain:
       case OperatorTypes.Equal:
@@ -141,11 +208,11 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
         break
       case OperatorTypes.Between:
         controls = (
-          <Row key="between" type="flex" align="middle" className={styles.rowBlock}>
+          <Row key="between" type="flex" align="middle" className={Styles.rowBlock}>
             <Col span={11}>
               {this.renderControl(0)}
             </Col>
-            <Col span={2} className={styles.colDivider}>-</Col>
+            <Col span={2} className={Styles.colDivider}>-</Col>
             <Col span={11}>
               {this.renderControl(1)}
             </Col>
@@ -157,22 +224,15 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
         break
     }
 
-    return (
-      <Row key="valueControls" gutter={8} type="flex" align="middle" className={styles.rowBlock}>
-        <Col span={8}>值：</Col>
-        <Col span={16}>
-          {controls}
-        </Col>
-      </Row>
-    )
+    return controls
   }
 
   private renderTags = () => {
-    const { visualType } = this.props
+    const { visualType, size } = this.props
     const { localValues, tagInputting, tagInputValue } = this.state
 
     const tagList = localValues.map((val) => (
-      <Tag key={val} className={styles.tag} closable afterClose={this.removeTag(val)}>{val}</Tag>
+      <Tag key={val.toString()} className={Styles.tag} closable afterClose={this.removeTag(val)}>{val}</Tag>
     ))
 
     const tagInputControl = []
@@ -187,7 +247,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
               key="input"
               type="text"
               size="small"
-              className={styles.tagInput}
+              className={Styles.tagInput}
               value={(tagInputValue as string)}
               onChange={this.tagInputValueChange}
               onBlur={this.addTag}
@@ -200,19 +260,20 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
             <InputNumber
               key="inputNumber"
               size="small"
-              className={styles.tagInput}
+              className={Styles.tagInput}
               value={(tagInputValue as number)}
               onChange={this.tagInputValueChange}
             />
           )
           break
         case 'date':
+          const dateValue = moment(tagInputValue as string)
           tagInputControl.push(
             <DatePicker
               key="datePicker"
               size="small"
-              className={styles.tagInput}
-              value={(tagInputValue as Moment)}
+              className={Styles.tagInput}
+              value={dateValue}
               onChange={this.tagInputValueChange}
             />
           )
@@ -221,7 +282,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
       tagInputControl.push(
         <Button
           key="saveTag"
-          className={styles.tagBtn}
+          className={Styles.tagBtn}
           size="small"
           type="dashed"
           onClick={this.addTag}
@@ -232,7 +293,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
       tagInputControl.push(
         <Button
           key="addTag"
-          className={styles.tagBtn}
+          className={Styles.tagBtn}
           size="small"
           type="dashed"
           onClick={this.showTagInput}
@@ -242,8 +303,8 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
     }
 
     const rowCls = classnames({
-      [styles.rowBlock]: true,
-      [styles.tagList]: true
+      [Styles.rowBlock]: true,
+      [Styles.tagList]: true
     })
 
     return (
@@ -278,10 +339,10 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
     })
   }
 
-  private tagInputValueChange = (e) => {
-    this.setState({
-      tagInputValue: e.target ? e.target.value : e
-    })
+  private tagInputValueChange = (...args: any[]) => {
+    const { visualType } = this.props
+    const tagInputValue = this.getControlValueByVisualType(visualType, args)
+    this.setState({ tagInputValue })
   }
 
   public render () {

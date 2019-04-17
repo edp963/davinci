@@ -29,7 +29,7 @@ interface ISearchFilterDropdownProps {
   placeholder: string
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onSearch: () => void
+  onSearch: (value: string) => void
 }
 
 export function SearchFilterDropdown (props: ISearchFilterDropdownProps) {
