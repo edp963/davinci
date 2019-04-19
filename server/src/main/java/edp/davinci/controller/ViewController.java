@@ -44,6 +44,7 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -207,7 +208,7 @@ public class ViewController extends BaseController {
     public ResponseEntity getData(@PathVariable Long id,
                                   @RequestBody(required = false) ViewExecuteParam executeParam,
                                   @ApiIgnore @CurrentUser User user,
-                                  HttpServletRequest request) {
+                                  HttpServletRequest request) throws SQLException {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

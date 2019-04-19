@@ -26,7 +26,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class View extends RecordInfo {
+public class View extends RecordInfo<View> {
     private Long id;
 
     private String name;

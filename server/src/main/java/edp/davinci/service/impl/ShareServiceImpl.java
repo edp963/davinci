@@ -19,6 +19,7 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
+import com.ibm.db2.jcc.am.SqlException;
 import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
@@ -53,6 +54,7 @@ import org.springframework.stereotype.Service;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -368,6 +370,10 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        } catch (SqlException e) {
+            return resultFail(user, request, null).message(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return resultSuccess(user, request).payload(paginate);
@@ -429,6 +435,8 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return resultSuccess(user, request).payload(getHost() + filePath);
     }

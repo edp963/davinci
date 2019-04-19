@@ -5,7 +5,7 @@ import lombok.Data;
 
 
 @Data
-public class RelProjectAdmin extends RecordInfo {
+public class RelProjectAdmin extends RecordInfo<RelProjectAdmin> {
     private Long id;
 
     private Long projectId;

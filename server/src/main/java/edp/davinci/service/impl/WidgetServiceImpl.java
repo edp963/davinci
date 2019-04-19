@@ -63,6 +63,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -203,9 +204,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             throw new NotFoundException("view not found");
         }
 
-        Widget widget = new Widget();
+        Widget widget = new Widget().createdBy(user.getId());
         BeanUtils.copyProperties(widgetCreate, widget);
-        widget.createBy(user.getId());
         int insert = widgetMapper.insert(widget);
         if (insert > 0) {
             optLogger.info("widget ({}) create by user(:{})", widget.toString());
@@ -254,7 +254,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         String originStr = widget.toString();
 
         BeanUtils.copyProperties(widgetUpdate, widget);
-        widget.updateBy(user.getId());
+        widget.updatedBy(user.getId());
         int update = widgetMapper.update(widget);
         if (update > 0) {
             optLogger.info("widget ({}) is updated by user(:{}), origin: ({})", widget.toString(), user.getId(), originStr);
@@ -470,6 +470,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                     sheet = wb.createSheet(sheetName);
                     ExcelUtils.writeSheet(sheet, columns, paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
                 } catch (ServerException e) {
+                    e.printStackTrace();
+                } catch (SQLException e) {
                     e.printStackTrace();
                 } finally {
                     sheet = null;

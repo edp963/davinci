@@ -118,79 +118,66 @@ public class SqlUtils {
     }
 
     @CachePut(value = "query", key = "#sql")
-    public List<Map<String, Object>> query4List(String sql, int limit) throws ServerException {
+    public List<Map<String, Object>> query4List(String sql, int limit) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
-        List<Map<String, Object>> list = null;
+        String md5 = MD5Util.getMD5(sql, true, 16);
         if (isQueryLogEnable) {
-            sqlLogger.info("{}", sql);
+            sqlLogger.info("{}  >> {}", md5, sql);
         }
-        try {
-            JdbcTemplate jdbcTemplate = jdbcTemplate();
-            jdbcTemplate.setMaxRows(limit);
-            list = jdbcTemplate.queryForList(sql);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
+        JdbcTemplate jdbcTemplate = jdbcTemplate();
+        jdbcTemplate.setMaxRows(limit);
+
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
         return list;
     }
 
 
-    public PaginateWithQueryColumns query4PaginateWithQueryColumns(String sql, int limit) throws ServerException {
+    public PaginateWithQueryColumns query4PaginateWithQueryColumns(String sql, int limit) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
             sqlLogger.info("{}", sql);
         }
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
-        try {
-            JdbcTemplate jdbcTemplate = jdbcTemplate();
-            if (limit > 0) {
-                jdbcTemplate.setMaxRows(limit);
+        JdbcTemplate jdbcTemplate = jdbcTemplate();
+        if (limit > 0) {
+            jdbcTemplate.setMaxRows(limit);
+        }
+        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
+        if (null != sqlRowSet) {
+            SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
+            paginateWithQueryColumns.setPageNo(1);
+
+            List<QueryColumn> queryColumns = new ArrayList<>();
+
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                queryColumns.add(new QueryColumn(metaData.getColumnLabel(i), metaData.getColumnTypeName(i)));
             }
-            SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql);
-            if (null != sqlRowSet) {
-                SqlRowSetMetaData metaData = sqlRowSet.getMetaData();
-                paginateWithQueryColumns.setPageNo(1);
 
-                List<Map<String, Object>> resultList = new ArrayList<>();
-                List<QueryColumn> queryColumns = new ArrayList<>();
-                Map<String, Integer> columnMap = new HashMap<>();
-                int size = 0;
-                while (sqlRowSet.next()) {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String key = metaData.getColumnName(i);
-                        Object value = sqlRowSet.getObject(key);
-                        map.put(key, value);
+            paginateWithQueryColumns.setColumns(queryColumns);
 
-                        if (!columnMap.containsKey(key)) {
-                            columnMap.put(key, i);
-                            QueryColumn queryColumn = new QueryColumn(key, metaData.getColumnTypeName(i));
-                            queryColumns.add(queryColumn);
-                        }
-                    }
-                    resultList.add(map);
-                    size++;
+            List<Map<String, Object>> resultList = new ArrayList<>();
+            int size = 0;
+            while (sqlRowSet.next()) {
+                Map<String, Object> map = new LinkedHashMap<>();
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                    String key = metaData.getColumnLabel(i);
+                    Object value = sqlRowSet.getObject(key);
+                    map.put(key, value);
                 }
-                paginateWithQueryColumns.setPageSize(size);
-                paginateWithQueryColumns.setTotalCount(size);
-                paginateWithQueryColumns.setColumns(queryColumns);
-                paginateWithQueryColumns.setResultList(resultList);
+                resultList.add(map);
+                size++;
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
+            paginateWithQueryColumns.setPageSize(size);
+            paginateWithQueryColumns.setTotalCount(size);
+            paginateWithQueryColumns.setResultList(resultList);
         }
         return paginateWithQueryColumns;
     }
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
-    public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws ServerException {
-
-        long millis = System.currentTimeMillis();
-
+    public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
         if (isQueryLogEnable) {
@@ -198,60 +185,42 @@ public class SqlUtils {
         }
 
         final Paginate<Map<String, Object>> paginate = new Paginate<>();
-        try {
-            if (pageNo < 1 && pageSize < 1) {
-                List<Map<String, Object>> list = null;
-                if (limit < 1) {
-                    long l = System.currentTimeMillis();
-                    list = syncQuery4List(sql);
-                    long l1 = System.currentTimeMillis();
-                    sqlLogger.info("query for >>> : {} ms", l1 - l);
-                } else {
-                    long l = System.currentTimeMillis();
-                    list = syncQuery4ListByLimit(sql, limit);
-                    long l1 = System.currentTimeMillis();
-                    sqlLogger.info("query for >>> : {} ms", l1 - l);
-                }
-                paginate.setPageNo(1);
-                paginate.setPageSize(null == list ? 0 : list.size());
-                paginate.setTotalCount(null == list ? 0 : list.size());
-                paginate.setResultList(list);
+        if (pageNo < 1 && pageSize < 1) {
+            List<Map<String, Object>> list = null;
+            if (limit < 1) {
+                list = syncQuery4List(sql);
             } else {
-
-                JdbcTemplate jdbcTemplate = jdbcTemplate();
-
-                paginate.setPageNo(pageNo);
-                paginate.setPageSize(pageSize);
-
-                final int startRow = (pageNo - 1) * pageSize;
-                String finalSql = sql;
-                switch (this.dataTypeEnum) {
-                    case MOONBOX:
-                        jdbcTemplate.query(finalSql, getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
-                        break;
-                    default:
-                        jdbcTemplate.query(new StreamingStatementCreator(finalSql, this.dataTypeEnum),
-                                getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
-                        break;
-                }
+                list = syncQuery4ListByLimit(sql, limit);
             }
+            paginate.setPageNo(1);
+            paginate.setPageSize(null == list ? 0 : list.size());
+            paginate.setTotalCount(null == list ? 0 : list.size());
+            paginate.setResultList(list);
+        } else {
 
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new ServerException(e.getMessage());
+            JdbcTemplate jdbcTemplate = jdbcTemplate();
+
+            paginate.setPageNo(pageNo);
+            paginate.setPageSize(pageSize);
+
+            final int startRow = (pageNo - 1) * pageSize;
+            String finalSql = sql;
+            switch (this.dataTypeEnum) {
+                case MOONBOX:
+                    jdbcTemplate.query(finalSql, getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
+                    break;
+                default:
+                    jdbcTemplate.query(new StreamingStatementCreator(finalSql, this.dataTypeEnum),
+                            getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
+                    break;
+            }
         }
-
-
-        long millis1 = System.currentTimeMillis();
-        log.info("query data set for >>> : {} ms", millis1 - millis);
 
         return paginate;
     }
 
     private ResultSetExtractor<Paginate<Map<String, Object>>> getPaginateResultSetExtractor(int pageSize, int limit, Paginate<Map<String, Object>> paginate, int startRow) {
         return (ResultSet resultSet) -> {
-            long l = System.currentTimeMillis();
-
             int total = 0;
             try {
                 resultSet.last();
@@ -277,7 +246,7 @@ public class SqlUtils {
                 if (currentRow >= startRow && (currentRow < total || total == -1)) {
                     Map<String, Object> map = new HashMap<>();
                     for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String c = metaData.getColumnName(i);
+                        String c = metaData.getColumnLabel(i);
                         Object v = resultSet.getObject(c);
                         map.put(c, v);
                     }
@@ -286,15 +255,14 @@ public class SqlUtils {
                 currentRow++;
             }
 
-            long l1 = System.currentTimeMillis();
-            log.info("query for >>> : {} ms", l1 - l);
+            resultSet.close();
             return paginate;
         };
     }
 
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public Paginate<Map<String, Object>> syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer limit) throws ServerException {
+    public Paginate<Map<String, Object>> syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer limit) throws Exception {
         if (null == pageNo) {
             pageNo = -1;
         }
@@ -311,28 +279,22 @@ public class SqlUtils {
     }
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public List<Map<String, Object>> syncQuery4List(String sql) throws ServerException {
+    public List<Map<String, Object>> syncQuery4List(String sql) throws Exception {
         List<Map<String, Object>> list = query4List(sql, -1);
         return list;
     }
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws ServerException {
+    public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws Exception {
         List<Map<String, Object>> list = query4List(sql, limit);
         return list;
     }
 
 
-    public Map<String, Object> query4Map(String sql) throws ServerException {
+    public Map<String, Object> query4Map(String sql) throws Exception {
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
-        Map<String, Object> map = null;
-        try {
-            map = jdbcTemplate().queryForMap(sql);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
+        Map<String, Object> map = jdbcTemplate().queryForMap(sql);
         return map;
     }
 

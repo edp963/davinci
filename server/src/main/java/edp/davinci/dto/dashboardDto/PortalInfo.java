@@ -17,25 +17,12 @@
  *
  */
 
-package edp.davinci.model;
+package edp.davinci.dto.dashboardDto;
 
-import edp.davinci.common.model.RecordInfo;
+import edp.davinci.model.DashboardPortal;
 import lombok.Data;
 
 @Data
-public class RelRolePortal extends RecordInfo<RelRolePortal> {
-    private Long roleId;
-
-    private Long portalId;
-
-    private Boolean visiable = false; // 可见/不可见  true/false
-
-    public RelRolePortal(Long roleId, Long portalId) {
-        this.roleId = roleId;
-        this.portalId = portalId;
-    }
-
-    public RelRolePortal() {
-    }
-
+public class PortalInfo extends DashboardPortal {
+    private Short permission;
 }

@@ -18,19 +18,24 @@
 
 package edp.davinci.service;
 
+import edp.core.exception.NotFoundException;
+import edp.core.exception.ServerException;
+import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
+import edp.davinci.dto.dashboardDto.PortalInfo;
+import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface DashboardPortalService extends CheckEntityService {
-    ResultMap getDashboardPortals(Long projectId, User user, HttpServletRequest request);
+    List<DashboardPortal> getDashboardPortals(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user, HttpServletRequest request);
+    DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     ResultMap updateDashboardPortal(DashboardPortalUpdate dashboardPortalUpdate, User user, HttpServletRequest request);
 

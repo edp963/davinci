@@ -2,21 +2,18 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="edp.davinci.dao.RelRoleDisplayMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelRoleDisplay">
-        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
-            SELECT id from rel_role_display where role_id = #{roleId} and display_id = #{displayId}
-        </selectKey>
         insert ignore rel_role_display
         <trim prefix="(" suffix=")" suffixOverrides=",">
             role_id,
             display_id,
-            permission,
+            visiable,
             create_by,
             create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},
             #{displayId,jdbcType=BIGINT},
-            #{permission,jdbcType=SMALLINT},
+            #{visiable,jdbcType=TINYINT},
             #{createBy,jdbcType=BIGINT},
             #{createTime,jdbcType=TIMESTAMP}
         </trim>

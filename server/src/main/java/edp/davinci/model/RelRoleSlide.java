@@ -4,12 +4,12 @@ import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class RelRoleSlide extends RecordInfo {
+public class RelRoleSlide extends RecordInfo<RelRoleSlide> {
     private Long id;
 
     private Long roleId;
 
     private Long slideId;
 
-    private Short permission = 1;  // 隐藏/只读/修改/删除 0/1/2/3
+    private Boolean visiable = false; // 可见/不可见  true/false
 }

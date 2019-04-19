@@ -25,7 +25,7 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class RecordInfo {
+public class RecordInfo<T> {
 
     @JSONField(serialize = false)
     Long createBy;
@@ -39,13 +39,13 @@ public class RecordInfo {
     @JSONField(serialize = false)
     Date updateTime;
 
-    public void createBy(Long userId) {
+    public T createdBy(Long userId) {
         this.createBy = userId;
         this.createTime = new Date();
+        return (T) this;
     }
 
-
-    public void updateBy(Long userId) {
+    public void updatedBy(Long userId) {
         this.updateBy = userId;
         this.updateTime = new Date();
     }

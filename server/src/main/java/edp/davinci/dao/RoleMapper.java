@@ -24,6 +24,9 @@ public interface RoleMapper {
     Role getById(Long id);
 
 
+    List<Role> getRolesByIds(List<Long> list);
+
+
     @Select({
             "select r.*,  ",
             "    o.`id` AS 'organization.id',",

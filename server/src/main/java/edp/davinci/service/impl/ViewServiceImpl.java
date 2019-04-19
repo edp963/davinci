@@ -42,11 +42,13 @@ import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
 import javax.servlet.http.HttpServletRequest;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static edp.core.consts.Consts.conditionSeparator;
+import static edp.core.consts.Consts.minus;
 
 @Slf4j
 @Service("viewService")
@@ -180,9 +182,8 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         boolean testConnection = sourceService.isTestConnection(new SourceConfig(source));
 
         if (testConnection) {
-            View view = new View();
+            View view = new View().createdBy(user.getId());
             BeanUtils.copyProperties(viewCreate, view);
-            view.createBy(user.getId());
 
             int insert = viewMapper.insert(view);
             if (insert > 0) {
@@ -193,10 +194,9 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         List<RelRoleView> relRoleViews = new ArrayList<>();
                         viewCreate.getRoles().forEach(r -> {
                             if (r.getRoleId().longValue() > 0L) {
-                                RelRoleView relRoleView = new RelRoleView();
+                                RelRoleView relRoleView = new RelRoleView().createdBy(user.getId());
                                 BeanUtils.copyProperties(r, relRoleView);
                                 relRoleView.setViewId(view.getId());
-                                relRoleView.createBy(user.getId());
                                 relRoleViews.add(relRoleView);
                             }
                         });
@@ -265,11 +265,10 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 List<RelRoleView> relRoleViews = new ArrayList<>();
                 viewUpdate.getRoles().forEach(r -> {
                     if (r.getViewId().equals(viewUpdate.getId()) && r.getRoleId().longValue() > 0L) {
-                        RelRoleView relRoleView = new RelRoleView();
+                        RelRoleView relRoleView = new RelRoleView().createdBy(user.getId());
                         BeanUtils.copyProperties(r, relRoleView);
                         relRoleView.setViewId(viewUpdate.getId());
-                        relRoleView.createBy(user.getId());
-                        relRoleView.updateBy(user.getId());
+                        relRoleView.updatedBy(user.getId());
                         relRoleViews.add(relRoleView);
                     }
                 });
@@ -278,7 +277,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
 
             String originStr = viewWithSource.toString();
             BeanUtils.copyProperties(viewWithSource, viewUpdate);
-            viewWithSource.updateBy(user.getId());
+            viewWithSource.updatedBy(user.getId());
 
             int update = viewMapper.update(viewWithSource);
             if (update > 0) {
@@ -464,7 +463,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @return
      */
     @Override
-    public Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public Paginate<Map<String, Object>> getData(Long id, ViewExecuteParam executeParam, User user) throws NotFoundException, UnAuthorizedExecption, ServerException, SQLException {
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
         }
@@ -533,7 +532,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
      * @throws ServerException
      */
     @Override
-    public Paginate<Map<String, Object>> getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException {
+    public Paginate<Map<String, Object>> getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
         Paginate paginate = null;
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
@@ -541,7 +540,7 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
         }
 
         if (null == viewWithSource.getSource()) {
-            throw new ServerException("source is not found");
+            throw new NotFoundException("source is not found");
         }
 
         String cacheKey = null;
@@ -582,7 +581,30 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                 if (null != querySqlList && querySqlList.size() > 0) {
                     buildQuerySql(querySqlList, source, executeParam, excludeColumns);
 
-                    cacheKey = MD5Util.getMD5(querySqlList.get(querySqlList.size() - 1), true, 32);
+                    if (null != executeParam
+                            && null != executeParam.getCache()
+                            && executeParam.getCache()
+                            && executeParam.getExpired() > 0L) {
+
+                        StringBuilder pageInfoStringBuilder = new StringBuilder();
+                        pageInfoStringBuilder.append(executeParam.getPageNo());
+                        pageInfoStringBuilder.append(minus);
+                        pageInfoStringBuilder.append(executeParam.getLimit());
+                        pageInfoStringBuilder.append(minus);
+                        pageInfoStringBuilder.append(executeParam.getPageSize());
+
+                        cacheKey = MD5Util.getMD5(pageInfoStringBuilder.toString() + querySqlList.get(querySqlList.size() - 1), true, 32);
+
+                        try {
+                            Object object = redisUtils.get(cacheKey);
+                            if (null != object && executeParam.getCache()) {
+                                paginate = (Paginate) object;
+                                return paginate;
+                            }
+                        } catch (Exception e) {
+                            log.warn("get data by cache: {}", e.getMessage());
+                        }
+                    }
 
                     for (String sql : querySqlList) {
                         paginate = sqlUtils.syncQuery4Paginate(
@@ -914,7 +936,6 @@ public class ViewServiceImpl extends CommonService<View> implements ViewService 
                         }
                         List<Map<String, Object>> list = null;
                         for (String sql : querySqlList) {
-                            log.info(sql);
                             list = sqlUtils.query4List(sql, -1);
                         }
                         if (null != list) {

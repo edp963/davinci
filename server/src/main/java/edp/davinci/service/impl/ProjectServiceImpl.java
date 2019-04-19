@@ -439,8 +439,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
             throw new NotFoundException("user is not found");
         }
 
-        relProjectAdmin = new RelProjectAdmin(id, adminId);
-        relProjectAdmin.createBy(user.getId());
+        relProjectAdmin = new RelProjectAdmin(id, adminId).createdBy(user.getId());
         int insert = relProjectAdminMapper.insert(relProjectAdmin);
         if (insert > 0) {
             optLogger.info("relProjectAdmin(:{}) creaty by user(:{})", relProjectAdmin.toString(), user.getId());
@@ -558,12 +557,7 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
 
         List<Role> roleList = roleMapper.selectByIdsAndOrgId(projectDetail.getOrgId(), roleIds);
 
-        List<RelRoleProject> list = new ArrayList<>();
-        roleList.forEach(role -> {
-            RelRoleProject relRoleProject = new RelRoleProject(projectDetail.getId(), role.getId());
-            relRoleProject.createBy(user.getId());
-            list.add(relRoleProject);
-        });
+        List<RelRoleProject> list = roleList.stream().map(role -> new RelRoleProject(projectDetail.getId(), role.getId()).createdBy(user.getId())).collect(Collectors.toList());
 
         relRoleProjectMapper.deleteByProjectId(id);
         relRoleProjectMapper.insertBatch(list);

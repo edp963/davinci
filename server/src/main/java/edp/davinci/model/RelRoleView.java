@@ -23,7 +23,7 @@ import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class RelRoleView extends RecordInfo {
+public class RelRoleView extends RecordInfo<RelRoleView> {
     private Long viewId;
     private Long roleId;
     private String rowAuth;

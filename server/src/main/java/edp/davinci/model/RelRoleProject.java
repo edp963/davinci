@@ -4,7 +4,7 @@ import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class RelRoleProject extends RecordInfo {
+public class RelRoleProject extends RecordInfo<RelRoleProject> {
     private Long id;
 
     private Long projectId;

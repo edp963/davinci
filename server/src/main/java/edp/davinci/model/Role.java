@@ -4,7 +4,7 @@ import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
 @Data
-public class Role extends RecordInfo {
+public class Role extends RecordInfo<Role> {
     private Long id;
 
     private Long orgId;

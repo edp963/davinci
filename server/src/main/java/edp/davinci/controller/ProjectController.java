@@ -369,7 +369,7 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        boolean result = projectService.removeAdmin(relationId, user);
+        projectService.removeAdmin(relationId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

@@ -39,7 +39,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,9 +100,8 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("you have not permission");
         }
 
-        Role role = new Role();
+        Role role = new Role().createdBy(user.getId());
         BeanUtils.copyProperties(roleCreate, role);
-        role.createBy(user.getId());
 
         int insert = roleMapper.insert(role);
         if (insert > 0) {
@@ -191,7 +189,7 @@ public class RoleServiceImpl implements RoleService {
 
         BeanUtils.copyProperties(roleUpdate, role);
 
-        role.updateBy(user.getId());
+        role.updatedBy(user.getId());
 
         int update = roleMapper.update(role);
         if (update > 0) {
@@ -256,14 +254,10 @@ public class RoleServiceImpl implements RoleService {
             throw new ServerException("members is already exist");
         }
 
-        List<RelRoleUser> relRoleUsers = new ArrayList<>();
-        members.forEach(m -> {
-            if (!users.contains(m.getId())) {
-                RelRoleUser relRoleUser = new RelRoleUser(m.getId(), id);
-                relRoleUser.createBy(user.getId());
-                relRoleUsers.add(relRoleUser);
-            }
-        });
+        List<RelRoleUser> relRoleUsers = members.stream()
+                .filter(m -> !users.contains(m.getId()))
+                .map(m -> new RelRoleUser(m.getId(), id).createdBy(user.getId()))
+                .collect(Collectors.toList());
 
         int i = relRoleUserMapper.insertBatch(relRoleUsers);
         if (i > 0) {
@@ -413,10 +407,9 @@ public class RoleServiceImpl implements RoleService {
             throw new ServerException("Already exist");
         }
 
-        RelRoleProject relRoleProject = new RelRoleProject(projectId, id);
-        relRoleProject.createBy(user.getId());
+        RelRoleProject relRoleProject = new RelRoleProject(projectId, id).createdBy(user.getId());
 
-        int insert = relRoleProjectMapper.insert(relRoleProject);
+        relRoleProjectMapper.insert(relRoleProject);
         if (null != relRoleProject.getId() && relRoleProject.getId().longValue() > 0L) {
             optLogger.info("create relRoleProject ( {} ) update by user( :{} )", relRoleProject.toString(), user.getId());
             RoleProject roleProject = new RoleProject(project);
@@ -537,7 +530,7 @@ public class RoleServiceImpl implements RoleService {
             throw new UnAuthorizedExecption("Invalid schedule permission");
         }
 
-        relRoleProject.updateBy(user.getId());
+        relRoleProject.updatedBy(user.getId());
         int i = relRoleProjectMapper.update(relRoleProject);
 
         if (i > 0) {
@@ -596,7 +589,6 @@ public class RoleServiceImpl implements RoleService {
         list.forEach(r -> r.getPermission().setProject(projectDetail));
         return list;
     }
-
 
 
     private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {

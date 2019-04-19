@@ -28,4 +28,11 @@
             #{item}
         </foreach>
     </select>
+
+    <select id="getRolesByIds" resultType="edp.davinci.model.Role">
+        select * from role where id in
+        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

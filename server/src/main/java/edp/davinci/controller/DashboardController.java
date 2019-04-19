@@ -26,6 +26,7 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.model.Dashboard;
+import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.MemDashboardWidget;
 import edp.davinci.model.User;
 import edp.davinci.service.DashboardPortalService;
@@ -76,14 +77,8 @@ public class DashboardController extends BaseController {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = dashboardPortalService.getDashboardPortals(projectId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<DashboardPortal> dashboardPortals = dashboardPortalService.getDashboardPortals(projectId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dashboardPortals));
     }
 
 
@@ -210,7 +205,7 @@ public class DashboardController extends BaseController {
     /**
      * 新建dashboardPortal
      *
-     * @param dashboardPortalCreate
+     * @param dashboardPortal
      * @param bindingResult
      * @param user
      * @param request
@@ -218,7 +213,7 @@ public class DashboardController extends BaseController {
      */
     @ApiOperation(value = "create dashboard portal")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createDashboardPortal(@Valid @RequestBody DashboardPortalCreate dashboardPortalCreate,
+    public ResponseEntity createDashboardPortal(@Valid @RequestBody DashboardPortalCreate dashboardPortal,
                                                 @ApiIgnore BindingResult bindingResult,
                                                 @ApiIgnore @CurrentUser User user,
                                                 HttpServletRequest request) {
@@ -228,14 +223,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardPortalService.createDashboardPortal(dashboardPortalCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        DashboardPortal portal = dashboardPortalService.createDashboardPortal(dashboardPortal, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(portal));
     }
 
 

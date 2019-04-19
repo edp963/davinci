@@ -104,7 +104,7 @@ public class WidgetController extends BaseController {
     /**
      * 新建widget
      *
-     * @param widgetCreate
+     * @param widget
      * @param bindingResult
      * @param user
      * @param request
@@ -112,7 +112,7 @@ public class WidgetController extends BaseController {
      */
     @ApiOperation(value = "create widget")
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity createWidgets(@Valid @RequestBody WidgetCreate widgetCreate,
+    public ResponseEntity createWidgets(@Valid @RequestBody WidgetCreate widget,
                                         @ApiIgnore BindingResult bindingResult,
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
@@ -121,8 +121,8 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        Widget widget = widgetService.createWidget(widgetCreate, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(widget));
+        Widget newWidget = widgetService.createWidget(widget, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(newWidget));
     }
 
 
@@ -130,7 +130,7 @@ public class WidgetController extends BaseController {
      * 修改widget
      *
      * @param id
-     * @param widgetUpdate
+     * @param widget
      * @param bindingResult
      * @param user
      * @param request
@@ -139,7 +139,7 @@ public class WidgetController extends BaseController {
     @ApiOperation(value = "update widget")
     @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateWidget(@PathVariable Long id,
-                                       @Valid @RequestBody WidgetUpdate widgetUpdate,
+                                       @Valid @RequestBody WidgetUpdate widget,
                                        @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
@@ -149,12 +149,12 @@ public class WidgetController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(id) || !id.equals(widgetUpdate.getId())) {
+        if (invalidId(id) || !id.equals(widget.getId())) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        widgetService.updateWidget(widgetUpdate, user);
+        widgetService.updateWidget(widget, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 

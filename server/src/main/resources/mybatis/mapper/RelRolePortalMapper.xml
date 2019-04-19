@@ -2,23 +2,36 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="edp.davinci.dao.RelRolePortalMapper">
     <insert id="insert" parameterType="edp.davinci.model.RelRolePortal">
-        <selectKey resultType="java.lang.Long" order="AFTER" keyProperty="id">
-            SELECT id from rel_role_portal where role_id = #{roleId} and portal_id = #{portalId}
-        </selectKey>
         insert ignore rel_role_portal
         <trim prefix="(" suffix=")" suffixOverrides=",">
             role_id,
             portal_id,
-            permission,
+            visiable,
             create_by,
             create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},
             #{portalId,jdbcType=BIGINT},
-            #{permission,jdbcType=SMALLINT},
+            #{visiable,jdbcType=TINYINT},
             #{createBy,jdbcType=BIGINT},
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
+    </insert>
+
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        replace into rel_role_portal
+        (`role_id`, `portal_id`, `visiable`, `create_by`, `create_time`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.roleId,jdbcType=BIGINT},
+            #{record.portalId,jdbcType=BIGINT},
+            #{record.visiable,jdbcType=TINYINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
     </insert>
 </mapper>

@@ -158,14 +158,9 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         boolean testConnection = isTestConnection(sourceCreate.getConfig());
 
         if (testConnection) {
-            Source source = new Source();
-            source.setName(sourceCreate.getName());
-            source.setDescription(sourceCreate.getDescription());
-            source.setType(sourceCreate.getType());
-            source.setProjectId(sourceCreate.getProjectId());
+            Source source = new Source().createdBy(user.getId());
+            BeanUtils.copyProperties(sourceCreate, source);
             source.setConfig(JSONObject.toJSONString(sourceCreate.getConfig()));
-
-            source.createBy(user.getId());
 
             int insert = sourceMapper.insert(source);
             if (insert > 0) {
@@ -215,7 +210,7 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
             String origin = source.toString();
 
             BeanUtils.copyProperties(sourceInfo, source);
-            source.updateBy(user.getId());
+            source.updatedBy(user.getId());
 
             int update = sourceMapper.update(source);
             if (update > 0) {
