@@ -245,44 +245,48 @@ public class SqlUtils {
 
     private ResultSetExtractor<Paginate<Map<String, Object>>> getPaginateResultSetExtractor(int pageSize, int limit, Paginate<Map<String, Object>> paginate, int startRow) {
         return (ResultSet resultSet) -> {
-            long l = System.currentTimeMillis();
-
-            int total = 0;
             try {
-                resultSet.last();
-                total = resultSet.getRow();
+                long l = System.currentTimeMillis();
 
-                if (!resultSet.isBeforeFirst()) {
-                    resultSet.beforeFirst();
-                }
-            } catch (SQLException e) {
-                total = -1;
-            }
+                int total = 0;
+                try {
+                    resultSet.last();
+                    total = resultSet.getRow();
 
-            if (limit > 0) {
-                total = limit < total ? limit : total;
-            }
-            paginate.setTotalCount(total);
-
-            final List<Map<String, Object>> resultList = paginate.getResultList();
-            int currentRow = 0;
-            ResultSetMetaData metaData = resultSet.getMetaData();
-
-            while (resultSet.next() && currentRow < startRow + pageSize) {
-                if (currentRow >= startRow && (currentRow < total || total == -1)) {
-                    Map<String, Object> map = new HashMap<>();
-                    for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                        String c = metaData.getColumnLabel(i);
-                        Object v = resultSet.getObject(c);
-                        map.put(c, v);
+                    if (!resultSet.isBeforeFirst()) {
+                        resultSet.beforeFirst();
                     }
-                    resultList.add(map);
+                } catch (SQLException e) {
+                    total = -1;
                 }
-                currentRow++;
-            }
 
-            long l1 = System.currentTimeMillis();
-            log.info("query for >>> : {} ms", l1 - l);
+                if (limit > 0) {
+                    total = limit < total ? limit : total;
+                }
+                paginate.setTotalCount(total);
+
+                final List<Map<String, Object>> resultList = paginate.getResultList();
+                int currentRow = 0;
+                ResultSetMetaData metaData = resultSet.getMetaData();
+
+                while (resultSet.next() && currentRow < startRow + pageSize) {
+                    if (currentRow >= startRow && (currentRow < total || total == -1)) {
+                        Map<String, Object> map = new HashMap<>();
+                        for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                            String c = metaData.getColumnLabel(i);
+                            Object v = resultSet.getObject(c);
+                            map.put(c, v);
+                        }
+                        resultList.add(map);
+                    }
+                    currentRow++;
+                }
+
+                long l1 = System.currentTimeMillis();
+                log.info("query for >>> : {} ms", l1 - l);
+            } finally {
+                closeResult(resultSet);
+            }
             return paginate;
         };
     }
@@ -362,7 +366,7 @@ public class SqlUtils {
                         }
                     }
                 }
-                tables.close();
+                closeResult(tables);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -423,7 +427,7 @@ public class SqlUtils {
                 } else {
                     result = false;
                 }
-                tables.close();
+                closeResult(tables);
             }
         } catch (Exception e) {
             throw new SourceException("Get connection meta data error, jdbcUrl=" + this.jdbcUrl);
@@ -460,7 +464,7 @@ public class SqlUtils {
                             TypeEnum.getType(rsmd.getColumnType(i)));
                     columnList.add(queryColumn);
                 }
-                resultSet.close();
+                closeResult(resultSet);
                 statement.close();
             }
         } catch (Exception e) {
