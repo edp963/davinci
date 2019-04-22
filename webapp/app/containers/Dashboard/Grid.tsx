@@ -70,7 +70,8 @@ import {
   loadWidgetShareLink,
   drillDashboardItem,
   deleteDrillHistory,
-  drillPathsetting
+  drillPathsetting,
+  selectDashboardItemChart
 } from './actions'
 import {
   makeSelectDashboards,
@@ -151,6 +152,7 @@ interface IDashboardItemInfo {
   interactId: string
   rendered: boolean
   renderType: RenderType
+  selectedItems?: number[]
 }
 
 export interface IDataRequestParams {
@@ -218,6 +220,7 @@ interface IGridProps {
   onDrillDashboardItem: (itemId: number, drillHistory: any) => void
   onDrillPathSetting: (itemId: number, history: any[]) => void
   onDeleteDrillHistory: (itemId: number, index: number) => void
+  onSelectDashboardItemChart: (itemId: number, renderType: string, selectedItems: number[]) => void
 }
 
 interface IGridStates {
@@ -767,6 +770,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private doInteract = (itemId: number, triggerData) => {
+    console.log('doInteract')
     const {
       currentItems,
       currentLinkages
@@ -792,6 +796,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private clearAllInteracts = () => {
+    console.log('clearAllInteracts')
     const { currentItems } = this.props
     Object.keys(this.interactingLinkagers).forEach((linkagerItemId) => {
       const item = currentItems.find((ci) => ci.id === +linkagerItemId)
@@ -1171,6 +1176,12 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
 
+  private selectChartsItems = (itemId, renderType, selectedItems) => {
+    console.log(itemId, renderType)
+    const { onSelectDashboardItemChart } = this.props
+    onSelectDashboardItemChart(itemId, renderType, selectedItems)
+  }
+
   public render () {
     const {
       dashboards,
@@ -1258,9 +1269,9 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           interactId,
           rendered,
           renderType,
-          queryConditions
+          queryConditions,
+          selectedItems
         } = currentItemsInfo[id]
-
         const widget = widgets.find((w) => w.id === widgetId)
         const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
@@ -1305,6 +1316,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
               onEditWidget={this.toWorkbench}
               onDrillData={this.dataDrill}
               onDrillPathData={this.onDrillPathData}
+              onSelectChartsItems={this.selectChartsItems}
+              selectedItems={selectedItems || []}
               ref={(f) => this[`dashboardItem${id}`] = f}
             />
           </div>
@@ -1551,7 +1564,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadWidgetShareLink: (id, itemId, authName, resolve) => dispatch(loadWidgetShareLink(id, itemId, authName, resolve)),
     onDrillDashboardItem: (itemId, drillHistory) => dispatch(drillDashboardItem(itemId, drillHistory)),
     onDrillPathSetting: (itemId, history) => dispatch(drillPathsetting(itemId, history)),
-    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index))
+    onDeleteDrillHistory: (itemId, index) => dispatch(deleteDrillHistory(itemId, index)),
+    onSelectDashboardItemChart: (itemId, renderType, selectedItems) => dispatch(selectDashboardItemChart(itemId, renderType, selectedItems))
   }
 }
 

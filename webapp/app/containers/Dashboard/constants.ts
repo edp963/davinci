@@ -68,3 +68,5 @@ export const DELETE_DRILL_HISTORY = 'davinci/Dashboard/DELETE_DRILL_HISTORY'
 export const DRILL_PATH_SETTING = 'davinci/Dashboard/DRILL_PATH_SETTING'
 export const DRILL_PATH_DASHBOARDITEM = 'davinci/Dashboard/DRILL_PATH_DASHBOARDITEM'
 export const DELETE_DRILL_PATH_HISTORY = 'davinci/Dashboard/DELETE_DRILL_PATH_HISTORY'
+export const SELECT_DASHBOARD_ITEM_CHART = 'davinci/Dashboard/SELECT_DASHBOARD_ITEM_CHART'
+

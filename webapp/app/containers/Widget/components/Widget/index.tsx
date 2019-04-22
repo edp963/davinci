@@ -27,7 +27,7 @@ import ChartTypes from '../../config/chart/ChartTypes'
 const styles = require('../Pivot/Pivot.less')
 
 export type DimetionType = 'row' | 'col'
-export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading'
+export type RenderType = 'rerender' | 'clear' | 'refresh' | 'resize' | 'loading' | 'select'
 export type WidgetMode = 'pivot' | 'chart'
 
 export interface IWidgetDimension {
@@ -127,6 +127,8 @@ export interface IWidgetProps {
   isDrilling?: boolean
   whichDataDrillBrushed?: boolean | object []
   computed?: any[]
+  selectedItems?: number[]
+  onSelectChartsItems?: (selectedItems: number[]) => void
   // onHideDrillPanel?: (swtich: boolean) => void
 }
 
