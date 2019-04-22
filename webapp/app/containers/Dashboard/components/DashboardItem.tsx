@@ -40,6 +40,7 @@ import ShareDownloadPermission from '../../Account/components/checkShareDownload
 import { IProject } from '../../Projects'
 import { DEFAULT_SPLITER } from '../../../globalConstants'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
+import { render } from 'react-dom';
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -62,6 +63,7 @@ interface IDashboardItemProps {
   drillpathInstance?: any
   rendered?: boolean
   renderType: RenderType
+  selectedItems: number[]
   currentProject?: IProject
   queryConditions: IQueryConditions
   container?: string
@@ -79,6 +81,7 @@ interface IDashboardItemProps {
   onEditWidget?: (itemId: number, widgetId: number) => void
   onDrillData?: (e: object) => void
   onDrillPathData?: (e: object) => void
+  onSelectChartsItems?: (itemId: number, renderType: string, selectedItems: number[]) => void
 }
 
 interface IDashboardItemStates {
@@ -152,7 +155,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
   }
 
   public componentWillReceiveProps (nextProps: IDashboardItemProps) {
-    const { widget, queryConditions } = this.props
+    const { widget, queryConditions, renderType } = this.props
     let { widgetProps, pagination, model } = this.state
 
     if (nextProps.widget !== widget) {
@@ -203,6 +206,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     if (!container) {
       if (!this.props.rendered && rendered) {
+        // clear
         onGetChartData('clear', itemId, widget.id, { pagination, nativeQuery })
         this.setFrequent(this.props)
       }
@@ -211,7 +215,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     if (polling !== this.props.polling || frequency !== this.props.frequency) {
       this.setFrequent(nextProps)
     }
-    // console.log('---------------- out ------------------')
   }
 
   public componentWillUnmount () {
@@ -633,6 +636,18 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       }
     }
   }
+  private selectChartsItems = (selectedItems) => {
+    // console.log('changeRenderType')
+    // const { widgetProps } = this.state
+    // this.setState({
+    //   widgetProps: {
+    //     ...widgetProps,
+    //     renderType: 'select'
+    //   }
+    // })
+    const {onSelectChartsItems, itemId} = this.props
+    onSelectChartsItems(itemId, 'select', selectedItems)
+  }
   public render () {
     const {
       itemId,
@@ -655,6 +670,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       onLoadWidgetShareLink,
       container
     } = this.props
+
     const data = datasource.resultList
     const {
       controlPanelVisible,
@@ -804,6 +820,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         }
       })
     }
+    console.log(this.state.whichDataDrillBrushed)
+    console.log(isSelectedData)
     const categoriesCol = []
     Object.entries(model).forEach(([key, m]) => {
       if (m.modelType === 'category') {
@@ -919,6 +937,8 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
               getDataDrillDetail={this.getDataDrillDetail}
               isDrilling={this.state.isDrilling}
               whichDataDrillBrushed={this.state.whichDataDrillBrushed}
+              onSelectChartsItems={this.selectChartsItems}
+              selectedItems={this.props.selectedItems}
             //  onHideDrillPanel={this.onHideDrillPanel}
             />
             {dataDrillHistory}

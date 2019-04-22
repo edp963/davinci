@@ -59,7 +59,8 @@ import {
   RESIZE_ALL_DASHBOARDITEM,
   DRILL_DASHBOARDITEM,
   DELETE_DRILL_HISTORY,
-  DRILL_PATH_SETTING
+  DRILL_PATH_SETTING,
+  SELECT_DASHBOARD_ITEM_CHART
 } from './constants'
 
 import {
@@ -287,6 +288,7 @@ function dashboardReducer (state = initialState, action) {
           ...itemsInfo[payload.itemId],
           loading: false,
           datasource: payload.result,
+          selectedItems: [],
           renderType: payload.renderType,
           queryConditions: {
             ...itemsInfo[payload.itemId].queryConditions,
@@ -298,6 +300,15 @@ function dashboardReducer (state = initialState, action) {
             pagination: payload.requestParams.pagination,
             nativeQuery: payload.requestParams.nativeQuery
           }
+        }
+      })
+    case SELECT_DASHBOARD_ITEM_CHART:
+      return state.set('currentItemsInfo', {
+        ...itemsInfo,
+        [payload.itemId]: {
+          ...itemsInfo[payload.itemId],
+          renderType: payload.renderType,
+          selectedItems: payload.selectedItems
         }
       })
     case DRILL_DASHBOARDITEM:

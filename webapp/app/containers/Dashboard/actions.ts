@@ -68,7 +68,8 @@ import {
   DELETE_DRILL_HISTORY,
   DRILL_PATH_DASHBOARDITEM,
   DELETE_DRILL_PATH_HISTORY,
-  DRILL_PATH_SETTING
+  DRILL_PATH_SETTING,
+  SELECT_DASHBOARD_ITEM_CHART
 } from './constants'
 
 export function addDashboardItems (portalId, items, resolve) {
@@ -491,16 +492,13 @@ export function drillPathsetting (itemId, history) {
   }
 }
 
-// export function drillPthDashboardItem (itemId, history) {
-//   return {
-//     type: DRILL_PATH_DASHBOARDITEM,
-//     payload: {
-//       itemId,
-//       history
-//     }
-//   }
-// }
-
-// export function deleteDrillPathHistory () {
-
-// }
+export function selectDashboardItemChart (itemId, renderType, selectedItems) {
+  return {
+    type: SELECT_DASHBOARD_ITEM_CHART,
+    payload: {
+      itemId,
+      renderType,
+      selectedItems
+    }
+  }
+}
