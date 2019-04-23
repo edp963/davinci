@@ -29,7 +29,7 @@ import {
   getLabelOption
 } from './util'
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     width,
     height,
@@ -62,6 +62,8 @@ export default function (chartProps: IChartProps) {
   const labelOption = {
     label: getLabelOption('funnel', label)
   }
+
+  const { selectedItems } = drillOptions
 
   let seriesObj = {}
   const seriesArr = []
@@ -149,12 +151,26 @@ export default function (chartProps: IChartProps) {
         width: widthValue,
         height: heightValue,
         color: colorArr,
-        data: seriesData,
+      //  data: seriesData,
+        data: seriesData.map((data, index) => {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
+          return {
+            ...data,
+            ...itemStyleObj
+          }
+        }),
         itemStyle: {
           emphasis: {
               shadowBlur: 10,
               shadowOffsetX: 0,
               shadowColor: 'rgba(0, 0, 0, 0.5)'
+          },
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption
@@ -172,9 +188,15 @@ export default function (chartProps: IChartProps) {
         width: width - width * 0.15 * 2,
         height: height - height * 0.12 * 2,
         data: data.map((d, index) => {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
           return {
             name: decodedMetricName,
-            value: d[`${m.agg}(${decodedMetricName})`]
+            value: d[`${m.agg}(${decodedMetricName})`],
+            ...itemStyleObj
           }
         }),
         itemStyle: {
@@ -182,6 +204,9 @@ export default function (chartProps: IChartProps) {
               shadowBlur: 10,
               shadowOffsetX: 0,
               shadowColor: 'rgba(0, 0, 0, 0.5)'
+          },
+          normal: {
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption

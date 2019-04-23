@@ -36,11 +36,11 @@ import { IChartProps } from '../../components/Chart'
 
 export default function (type, chartProps: IChartProps, drillOptions?: any): EChartOption {
   switch (type) {
-    case 'line': return line(chartProps)
+    case 'line': return line(chartProps, drillOptions)
     case 'bar': return bar(chartProps, drillOptions)
     case 'scatter': return scatter(chartProps, drillOptions)
     case 'pie': return pie(chartProps, drillOptions)
-    case 'funnel': return funnel(chartProps)
+    case 'funnel': return funnel(chartProps, drillOptions)
     // case 'area': return area(chartProps)
     case 'radar': return radar(chartProps)
     case 'sankey': return sankey(chartProps)

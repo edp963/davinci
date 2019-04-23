@@ -820,8 +820,6 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
         }
       })
     }
-    console.log(this.state.whichDataDrillBrushed)
-    console.log(isSelectedData)
     const categoriesCol = []
     Object.entries(model).forEach(([key, m]) => {
       if (m.modelType === 'category') {
