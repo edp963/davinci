@@ -861,3 +861,19 @@ export const iconMapping = {
   parallel: 'icon-parallel',
   confidenceBand: 'icon-confidence-band'
 }
+
+export function getCorrectInputNumber (num: any): number {
+  switch (typeof num) {
+    case 'string':
+      if (!num.trim()) {
+        return null
+      } else {
+        return Number(num) || null
+      }
+      return
+    case 'number':
+      return num
+    default:
+      return null
+  }
+}
