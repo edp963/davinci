@@ -129,7 +129,9 @@ export function getMetricAxisOption (
     titleColor,
     nameLocation,
     nameRotate,
-    nameGap
+    nameGap,
+    min,
+    max
   } = metricAxisConfig
 
   const {
@@ -142,8 +144,8 @@ export function getMetricAxisOption (
   return {
     type: 'value',
     inverse,
-    min: percentage ? 0 : null,
-    max: percentage ? 100 : null,
+    min: percentage ? 0 : min,
+    max: percentage ? 100 : max,
     axisLabel: {
       show: showLabelY,
       color: labelColorY,

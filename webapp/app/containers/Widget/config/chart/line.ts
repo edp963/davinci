@@ -83,7 +83,9 @@ const line: IChartInfo = {
       titleColor: PIVOT_DEFAULT_FONT_COLOR,
       nameLocation: 'middle',
       nameRotate: 90,
-      nameGap: 40
+      nameGap: 40,
+      min: null,
+      max: null
     },
     splitLine: {
       showHorizontalLine: true,
