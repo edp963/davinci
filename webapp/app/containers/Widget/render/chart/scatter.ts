@@ -64,7 +64,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     horizontalLineSize,
     horizontalLineStyle
   } = splitLine
-
+  const { selectedItems } = drillOptions
   const labelOption = {
     label: getLabelOption('scatter', labelStyleConfig, true, {
       formatter (param) {
@@ -107,16 +107,22 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     const labelItemName = color.items.length
       ? color.items[0].name
       : cols[0].name
-
-    Object.entries(grouped).forEach(([key, value]) => {
+    console.log(selectedItems)
+    Object.entries(grouped).forEach(([key, value], gIndex) => {
       series.push({
         name: key.replace(String.fromCharCode(0), ' '),
         type: 'scatter',
-        data: value.map((v) => {
+        data: value.map((v, index) => {
           const [x, y] = metrics
           const currentSize = size.items.length ? v[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
           const sizeValue = getSizeValue(size.value['all'])
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === gIndex) ? {itemStyle: {
+            normal: {
+              opacity: 1
+            }
+          }} : {}
           return {
+            ...itemStyleObj,
             value: [
               v[`${x.agg}(${decodeMetricName(x.name)})`],
               v[`${y.agg}(${decodeMetricName(y.name)})`],
@@ -132,7 +138,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
           normal: {
             color: color.items.length
               ? color.items[0].config.values[key.split(String.fromCharCode(0))[0]]
-              : color.value['all']
+              : color.value['all'],
+            opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
           }
         },
         ...labelOption
@@ -143,11 +150,17 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     series.push({
       name: 'single',
       type: 'scatter',
-      data: data.map((d) => {
+      data: data.map((d, index) => {
         const [x, y] = metrics
         const currentSize = size.items.length ? d[sizeItemName] : PIVOT_DEFAULT_SCATTER_SIZE
         const sizeValue = getSizeValue(size.value['all'])
+        const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+          normal: {
+            opacity: 1
+          }
+        }} : {}
         return {
+          ...itemStyleObj,
           value: [
             d[`${x.agg}(${decodeMetricName(x.name)})`],
             d[`${y.agg}(${decodeMetricName(y.name)})`],
@@ -161,7 +174,8 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       }),
       itemStyle: {
         normal: {
-          color: color.value['all']
+          color: color.value['all'],
+          opacity: selectedItems && selectedItems.length > 0 ? 0.25 : 1
         }
       },
       ...labelOption

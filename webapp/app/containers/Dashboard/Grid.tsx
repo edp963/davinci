@@ -1168,7 +1168,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     }
 
     this.props.onEditDashboardItem(modifiedDashboardItem, () => {
-     // this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
@@ -1177,7 +1176,6 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private selectChartsItems = (itemId, renderType, selectedItems) => {
-    console.log(itemId, renderType)
     const { onSelectDashboardItemChart } = this.props
     onSelectDashboardItemChart(itemId, renderType, selectedItems)
   }

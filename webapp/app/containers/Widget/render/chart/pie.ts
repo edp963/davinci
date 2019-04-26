@@ -143,7 +143,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         center: legend.showLegend ? [leftValue, topValue] : [width / 2, height / 2],
         color: colorArr,
         data: seriesData.map((data, index) => {
-          const itemStyleObj = selectedItems.some((item) => item === index) ? {itemStyle: {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
             normal: {
               opacity: 1
             }
@@ -175,7 +175,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
         avoidLabelOverlap: false,
         center: [width / 2, height / 2],
         data: data.map((d, index) => {
-          const itemStyleObj = selectedItems.some((item) => item === index) ? {itemStyle: {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
             normal: {
               opacity: 1
             }

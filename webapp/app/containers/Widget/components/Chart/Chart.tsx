@@ -64,10 +64,13 @@ export class Chart extends React.PureComponent<IChartProps, IState> {
   }
 
   public collectSelectedItems = (params) => {
-    const { data, onSelectChartsItems } = this.props
+    const { data, onSelectChartsItems, selectedChart } = this.props
     const selectedItems = [...this.props.selectedItems]
     const { getDataDrillDetail } = this.props
-    const dataIndex = params.dataIndex
+    let dataIndex = params.dataIndex
+    if (selectedChart === 4) {
+      dataIndex = params.seriesIndex
+    }
     if (selectedItems.length === 0) {
       selectedItems.push(dataIndex)
     } else {
@@ -131,7 +134,6 @@ export class Chart extends React.PureComponent<IChartProps, IState> {
   //   })
   // }
   public render () {
-   // console.log(this.props.renderType)
     return (
       <div
         className={styles.chartContainer}

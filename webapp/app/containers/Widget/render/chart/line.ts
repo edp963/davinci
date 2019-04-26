@@ -36,7 +36,7 @@ import {
 const defaultTheme = require('../../../../assets/json/echartsThemes/default.project.json')
 const defaultThemeColors = defaultTheme.theme.color
 
-export default function (chartProps: IChartProps) {
+export default function (chartProps: IChartProps, drillOptions?: any) {
   const {
     data,
     cols,
@@ -71,6 +71,8 @@ export default function (chartProps: IChartProps) {
     step
   } = spec
 
+  const { selectedItems } = drillOptions
+
   const labelOption = {
     label: getLabelOption('line', label)
   }
@@ -98,6 +100,12 @@ export default function (chartProps: IChartProps) {
             type: 'line',
             sampling: 'average',
             data: v.map((g, index) => {
+              const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+                normal: {
+                  opacity: 1,
+                  borderWidth: 8
+                }
+              }} : {}
               // if (index === interactIndex) {
               //   return {
               //     value: g[m],
@@ -108,13 +116,18 @@ export default function (chartProps: IChartProps) {
               //     }
               //   }
               // } else {
-                return g[`${m.agg}(${decodedMetricName})`]
+              // return g[`${m.agg}(${decodedMetricName})`]
+              return {
+                value: g[`${m.agg}(${decodedMetricName})`],
+                ...itemStyleObj
+              }
               // }
             }),
             itemStyle: {
               normal: {
                 // opacity: interactIndex === undefined ? 1 : 0.25
-                color: color.items[0].config.values[k]
+                color: color.items[0].config.values[k],
+                opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
               }
             },
             smooth,
@@ -129,7 +142,13 @@ export default function (chartProps: IChartProps) {
         name: decodedMetricName,
         type: 'line',
         sampling: 'average',
-        data: data.map((d, index) => {
+        data: data.map((g, index) => {
+          const itemStyleObj = selectedItems && selectedItems.length && selectedItems.some((item) => item === index) ? {itemStyle: {
+            normal: {
+              opacity: 1,
+              borderWidth: 8
+            }
+          }} : {}
           // if (index === interactIndex) {
           //   return {
           //     value: d[m],
@@ -145,7 +164,10 @@ export default function (chartProps: IChartProps) {
           //     }
           //   }
           // } else {
-            return d[`${m.agg}(${decodedMetricName})`]
+          return {
+            value: g[`${m.agg}(${decodedMetricName})`],
+            ...itemStyleObj
+          }
           // }
         }),
         // lineStyle: {
@@ -156,7 +178,8 @@ export default function (chartProps: IChartProps) {
         itemStyle: {
           normal: {
             // opacity: interactIndex === undefined ? 1 : 0.25
-            color: color.value[m.name] || defaultThemeColors[i]
+            color: color.value[m.name] || defaultThemeColors[i],
+            opacity: selectedItems && selectedItems.length > 0 ? 0.7 : 1
           }
         },
         smooth,

@@ -201,7 +201,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
             //   return d[`${m.agg}(${decodedMetricName})`]
             // }
           // }
-          if (selectedItems.some((item) => item === index)) {
+          if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
             return {
               value: percentage ? d[`${m.agg}(${decodedMetricName})`] / getDataSum(data, metrics)[index] * 100 : d[`${m.agg}(${decodedMetricName})`],
               itemStyle: {
