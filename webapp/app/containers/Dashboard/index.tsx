@@ -241,73 +241,76 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
   }
 
   private onModalOk = () => {
-    this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
-        const { formType, checkedKeys } = this.state
-        const { id, name, folder, selectType, index, config } = values
-        const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+    const { formType, checkedKeys } = this.state
 
-        const dashArr = folder === '0'
-          ? dashboards.filter((d) => d.parentId === 0)
-          : dashboards.filter((d) => d.parentId === Number(folder))
+    if (formType === 'delete') {
+      const id = this.dashboardForm.props.form.getFieldValue('id')
+      this.confirmDeleteDashboard(id)
+    } else {
+      this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
+        if (!err) {
+          const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
+          const { id, name, folder, selectType, index, config } = values
+          const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
 
-        const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
-        const obj = {
-          config,
-          dashboardPortalId: Number(params.portalId),
-          name,
-          type: selectType ? 1 : 0
+          const dashArr = folder === '0'
+            ? dashboards.filter((d) => d.parentId === 0)
+            : dashboards.filter((d) => d.parentId === Number(folder))
+
+          const indexTemp = dashArr.length === 0 ? 0 : dashArr[dashArr.length - 1].index + 1
+          const obj = {
+            config,
+            dashboardPortalId: Number(params.portalId),
+            name,
+            type: selectType ? 1 : 0
+          }
+
+          const addObj = {
+            ...obj,
+            parentId: Number(folder),
+            index: indexTemp,
+            teamIds
+          }
+
+          const editObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index,
+            teamIds
+          }]
+
+          const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
+          const moveObj = [{
+            ...obj,
+            parentId: Number(folder),
+            id,
+            index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0,
+            teamIds
+          }]
+
+          switch (formType) {
+            case 'add':
+            // case 'copy':
+              onAddDashboard(addObj, (dashboardId) => {
+                this.hideDashboardForm()
+                this.setState({ isGrid: true })
+                const { pid, portalId, portalName } = params
+                addObj.type === 0
+                  ? router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
+                  : router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
+              })
+              break
+            case 'edit':
+              onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
+              break
+            case 'move':
+              onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
+              break
+          }
         }
-
-        const addObj = {
-          ...obj,
-          parentId: Number(folder),
-          index: indexTemp,
-          teamIds
-        }
-
-        const editObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index,
-          teamIds
-        }]
-
-        const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
-        const moveObj = [{
-          ...obj,
-          parentId: Number(folder),
-          id,
-          index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0,
-          teamIds
-        }]
-
-        switch (formType) {
-          case 'add':
-          // case 'copy':
-            onAddDashboard(addObj, (dashboardId) => {
-              this.hideDashboardForm()
-              this.setState({ isGrid: true })
-              const { pid, portalId, portalName } = params
-              addObj.type === 0
-                ? router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}`)
-                : router.replace(`/project/${pid}/portal/${portalId}/portalName/${portalName}/dashboard/${dashboardId}`)
-            })
-            break
-          case 'edit':
-            onEditDashboard('edit', editObj, () => { this.hideDashboardForm() })
-            break
-          case 'move':
-            onEditDashboard('move', moveObj, () => { this.hideDashboardForm() })
-            break
-          case 'delete':
-            this.confirmDeleteDashboard(id)
-            break
-        }
-      }
-    })
+      })
+    }
   }
 
   private onExpand = (expandedKeys) => {
