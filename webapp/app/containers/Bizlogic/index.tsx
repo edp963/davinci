@@ -43,10 +43,10 @@ import { loadBizlogics, deleteBizlogic } from './actions'
 import { makeSelectBizlogics, makeSelectTableLoading } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 import { makeSelectLoginUser } from '../App/selectors'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Organizations/containers/Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import { IProject } from '../Projects'
+import { IProject } from '../Organizations/containers/Projects'
 
 interface IBizlogicsProps  {
   params: any

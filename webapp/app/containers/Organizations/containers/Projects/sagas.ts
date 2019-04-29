@@ -30,7 +30,12 @@ import {
   GET_PROJECT_STAR_USER,
   PROJECT_UNSTAR,
   LOAD_COLLECT_PROJECTS,
-  CLICK_COLLECT_PROJECT
+  CLICK_COLLECT_PROJECT,
+  ADD_PROJECT_ADMIN,
+  DELETE_PROJECT_ADMIN,
+  ADD_PROJECT_ROLE,
+  LOAD_RELATION_ROLE_PROJECT,
+  UPDATE_RELATION_ROLE_PROJECT
 } from './constants'
 
 import {
@@ -54,12 +59,17 @@ import {
   collectProjectLoaded,
   collectProjectFail,
   collectProjectClicked,
-  clickCollectProjectFail
+  clickCollectProjectFail,
+  addProjectRoleFail,
+  relRoleProjectLoaded,
+  relRoleProjectUpdated,
+  loadRelRoleProjectFail,
+  updateRelRoleProjectFail
 } from './actions'
 
-import request from '../../utils/request'
-import api from '../../utils/api'
-import { errorHandler } from '../../utils/util'
+import request from '../../../../utils/request'
+import api from '../../../../utils/api'
+import { errorHandler } from '../../../../utils/util'
 
 export function* getProjects (action) {
   try {
@@ -122,6 +132,58 @@ export function* deleteProject (action) {
     errorHandler(err)
   }
 }
+
+
+export function* addProjectAdmin (action) {
+  const { id, adminId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.projects}/${id}/admin/${adminId}`,
+      data: {id, adminId}
+    })
+    const result = asyncData.payload
+  //  yield put(projectAdded(result))
+    resolve(result)
+  } catch (err) {
+    yield put(addProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* deleteProjectAdmin (action) {
+  const { id, relationId, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'delete',
+      url:  `${api.projects}/${id}/admin/${relationId}`
+    })
+    const result = asyncData.payload
+  //  yield put(projectAdded(result))
+    resolve(result)
+  } catch (err) {
+    yield put(addProjectFail())
+    errorHandler(err)
+  }
+}
+
+
+export function* addProjectRole (action) {
+  const { projectId, roleIds, resolve } = action.payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.projects}/${projectId}/roles`,
+      data: roleIds
+    })
+    const result = asyncData.payload
+    resolve(result)
+  } catch (err) {
+    yield put(addProjectRoleFail())
+    errorHandler(err)
+  }
+}
+
 export function* getProjectDetail ({ payload }) {
   try {
     const asyncData = yield  call(request, `${api.projects}/${payload.id}`)
@@ -233,9 +295,41 @@ export function* editCollectProject ({payload}) {
   }
 }
 
+export function* loadRelRoleProject (action) {
+  try {
+    const {id, roleId} = action.payload
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.projects}/${id}/roles/${roleId}`
+    })
+    const result = asyncData.payload
+    yield put(relRoleProjectLoaded(result))
+  } catch (err) {
+    yield put(loadRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* updateRelRoleProject (action) {
+  try {
+    const {relationId, projectRole} = action
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.roles}/project/${relationId}`,
+      data: projectRole
+    })
+    const result = asyncData.payload
+    yield put(relRoleProjectUpdated(result))
+  } catch (err) {
+    yield put(updateRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
 export default function* rootProjectSaga (): IterableIterator<any> {
   yield all([
     takeLatest(LOAD_PROJECTS, getProjects as any),
+    takeLatest(ADD_PROJECT_ROLE, addProjectRole as any),
     takeEvery(ADD_PROJECT, addProject as any),
     takeEvery(EDIT_PROJECT, editProject as any),
     takeEvery(DELETE_PROJECT, deleteProject as any),
@@ -245,6 +339,10 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(GET_PROJECT_STAR_USER, getProjectStarUser as any),
     throttle(1000, SEARCH_PROJECT, searchProject as any),
     takeLatest(LOAD_COLLECT_PROJECTS, getCollectProjects as any),
-    takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any)
+    takeEvery(CLICK_COLLECT_PROJECT, editCollectProject as any),
+    takeEvery(ADD_PROJECT_ADMIN, addProjectAdmin as any),
+    takeEvery(DELETE_PROJECT_ADMIN, deleteProjectAdmin as any),
+    takeEvery(LOAD_RELATION_ROLE_PROJECT, loadRelRoleProject as any),
+    takeEvery(UPDATE_RELATION_ROLE_PROJECT, updateRelRoleProject as any)
   ])
 }

@@ -5,12 +5,10 @@ const RadioGroup = Radio.Group
 const styles = require('../Organization.less')
 const utilStyles = require('../../../assets/less/util.less')
 
+
 interface IChangeRoleProps {
   form: any
-  memberId: number
-  memberName: string
   category: string
-  modalLoading: boolean
   organizationOrTeam: { name?: string }
   submitLoading: boolean
   changeHandler: () => any

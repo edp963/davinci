@@ -29,10 +29,10 @@ const utilStyles = require('../../assets/less/util.less')
 import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Organizations/containers/Projects/selectors'
 import { makeSelectViewTeam } from '../Bizlogic/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
-import { IProject } from '../Projects'
+import { IProject } from '../Organizations/containers/Projects'
 
 interface IParams {
   pid: number

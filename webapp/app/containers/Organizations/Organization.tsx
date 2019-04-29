@@ -7,22 +7,22 @@ import { InjectedRouter } from 'react-router/lib/Router'
 import MemberList from './component/MemberList'
 import ProjectList from './component/ProjectList'
 import Setting from './component/Setting'
-import TeamList from './component/TeamList'
+import RoleList from './component/RoleList'
 const utilStyles = require('../../assets/less/util.less')
 const TabPane = Tabs.TabPane
 import Avatar from '../../components/Avatar'
 import { connect } from 'react-redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducerProject from '../Projects/reducer'
-import sagaProject from '../Projects/sagas'
+import reducerProject from './containers/Projects/reducer'
+import sagaProject from './containers/Projects/sagas'
 import { compose } from 'redux'
 import {
   editOrganization,
   deleteOrganization,
   loadOrganizationProjects,
   loadOrganizationMembers,
-  loadOrganizationTeams,
+  loadOrganizationRole,
   loadOrganizationDetail,
   searchMember,
   inviteMember,
@@ -35,15 +35,14 @@ import {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationProjectsDetail,
-  makeSelectCurrentOrganizationTeams,
+  makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
 } from './selectors'
 import { createStructuredSelector } from 'reselect'
-import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from '../Projects/actions'
-import { checkNameUniqueAction } from '../App/actions'
-import { makeSelectStarUserList, makeSelectCollectProjects } from '../Projects/selectors'
-import { IStarUser, IProject } from '../Projects'
+import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from './containers/Projects/actions'
+import { makeSelectStarUserList, makeSelectCollectProjects } from './containers/Projects/selectors'
+import { IStarUser, IProject } from './containers/Projects'
 
 interface IOrganizationProps {
   loginUser: any
@@ -56,7 +55,6 @@ interface IOrganizationProps {
   collectProjects: IProject[]
   onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
-  onLoadOrganizationTeams: (id: number) => any
   onLoadOrganizationDetail: (id: number) => any
   onDeleteOrganizationMember: (id: number, resolve: () => any) => any
   onChangeOrganizationMemberRole: (id: number, role: number, resolve: () => any) => any
@@ -66,13 +64,8 @@ interface IOrganizationProps {
   currentOrganizationMembers: IOrganizationMembers[]
   onInviteMember: (ordId: number, memId: number) => any
   onSearchMember: (keywords: string) => any
-  onAddProject: (project: any, resolve: () => any) => any
-  onEditProject: (project: any, resolve: () => any) => any
   onClickCollectProjects: (formType: string, project: object, resolve: (id: number) => any) => any
   onLoadCollectProjects: () => any
-  onDeleteProject: (id: number, resolve?: any) => any
-  onStarProject: (id: number, resolve: () => any) => any,
-  onGetProjectStarUser: (id: number) => any,
   onEditOrganization: (organization: IOrganization) => any
   onDeleteOrganization: (id: number, resolve: () => any) => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
@@ -89,7 +82,7 @@ export interface IOrganization {
   memberPermission?: number
   projectNum?: number
   memberNum?: number
-  teamNum?: number
+  roleNum?: number
   role?: number
 }
 
@@ -128,84 +121,38 @@ export interface IOrganizationMembers {
     username?: string
   }
 }
-interface IOrganizationStates {
-  pageNum: number
-  pageSize: number
-}
 
-export class Organization extends React.PureComponent <IOrganizationProps, IOrganizationStates> {
+export class Organization extends React.PureComponent <IOrganizationProps, {}> {
   constructor (props) {
     super(props)
-    this.state = {
-      pageNum: 1,
-      pageSize: 10
-    }
   }
+
   private toProject = (id: number) => () => {
     this.props.router.push(`/project/${id}`)
   }
+
   private toThatTeam = (url) => {
     if (url) {
       this.props.router.push(url)
     }
   }
-  private delete = (id) => () => {
-    if (id) {
-      this.props.onDeleteProject(id)
-    }
-  }
+
   public componentWillMount () {
     const {
-      onLoadOrganizationProjects,
       onLoadOrganizationMembers,
-      onLoadOrganizationTeams,
       onLoadOrganizationDetail,
-      onLoadCollectProjects,
       params: { organizationId }
     } = this.props
-    onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadOrganizationMembers(Number(organizationId))
-    onLoadOrganizationTeams(Number(organizationId))
     onLoadOrganizationDetail(Number(organizationId))
-    onLoadCollectProjects()
   }
 
-  private getOrganizationProjectsByPagination = (obj) => {
-    const { onLoadOrganizationProjects, params: { organizationId }} = this.props
-    this.setState({
-      pageNum: obj.pageNum,
-      pageSize: obj.pageSize
-    })
-    const param = {
-      keyword: obj.keyword,
-      id: organizationId,
-      pageNum: obj.pageNum,
-      pageSize: obj.pageSize
-    }
-    onLoadOrganizationProjects(param)
-  }
   private deleteOrganization = (id) => () => {
     this.props.onDeleteOrganization(id, () => {
       this.props.router.push(`/account/organizations`)
     })
   }
 
-  private starProject = (id)  => () => {
-    const { onStarProject, params: { organizationId } } = this.props
-    const param = {
-      id: Number(organizationId),
-      pageNum: this.state.pageNum,
-      pageSize: this.state.pageSize
-    }
-    onStarProject(id, () => {
-      this.props.onLoadOrganizationProjects(param)
-    })
-  }
-
-  private getStarProjectUserList = (id) => () => {
-    const { onGetProjectStarUser } = this.props
-    onGetProjectStarUser(id)
-  }
 
   private editOrganization = (organization) => () => {
     this.props.onEditOrganization(organization)
@@ -218,16 +165,13 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
       currentOrganization,
       currentOrganizationProjects,
       currentOrganizationMembers,
-      currentOrganizationTeams,
       inviteMemberList,
       starUserList,
       params: {organizationId},
-      currentOrganizationProjectsDetail,
-      onCheckUniqueName,
-      collectProjects
+      currentOrganizationProjectsDetail
     } = this.props
 
-    const {avatar, name, memberNum, teamNum} = currentOrganization as IOrganization
+    const {avatar, name, memberNum, roleNum} = currentOrganization as IOrganization
     const projectNum = currentOrganizationProjects && currentOrganizationProjects.length ? currentOrganizationProjects.length : 0
     return (
       <Box>
@@ -250,24 +194,12 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
           <Tabs>
             <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
-                unStar={this.starProject}
-                userList={this.getStarProjectUserList}
-                getOrganizationProjectsByPagination={this.getOrganizationProjectsByPagination}
                 currentOrganization={currentOrganization}
-                deleteProject={this.delete}
-                onCheckUniqueName={this.props.onCheckUniqueName}
-                onAddProject={this.props.onAddProject}
-                onEditProject={this.props.onEditProject}
-                onClickCollectProjects={this.props.onClickCollectProjects}
-                onLoadCollectProjects={this.props.onLoadCollectProjects}
-                onLoadOrganizationProjects={this.props.onLoadOrganizationProjects}
                 organizationId={this.props.params['organizationId']}
-                organizationProjects={currentOrganizationProjects}
                 organizationProjectsDetail={currentOrganizationProjectsDetail}
                 toProject={this.toProject}
                 loginUser={loginUser}
-                starUser={starUserList}
-                collectProjects={collectProjects}
+                organizationMembers={currentOrganizationMembers}
               />
             </TabPane>
             <TabPane tab={<span><Icon type="user" />成员<span className={styles.badge}>{memberNum}</span></span>} key="members">
@@ -284,14 +216,12 @@ export class Organization extends React.PureComponent <IOrganizationProps, IOrga
                 changeOrganizationMemberRole={this.props.onChangeOrganizationMemberRole}
               />
             </TabPane>
-            <TabPane tab={<span><Icon type="usergroup-add" />团队<span className={styles.badge}>{teamNum}</span></span>} key="teams">
-              <TeamList
-                loadOrganizationTeams={this.props.onLoadOrganizationTeams}
+            <TabPane tab={<span><Icon type="usergroup-add" />角色<span className={styles.badge}>{roleNum}</span></span>} key="roles">
+              <RoleList
                 onLoadOrganizationDetail={this.props.onLoadOrganizationDetail}
                 organizations={organizations}
+                organizationMembers={currentOrganizationMembers}
                 currentOrganization={this.props.currentOrganization}
-                organizationTeams={currentOrganizationTeams}
-                toThatTeam={this.toThatTeam}
               />
             </TabPane>
             {
@@ -316,32 +246,23 @@ const mapStateToProps = createStructuredSelector({
   currentOrganization: makeSelectCurrentOrganizations(),
   currentOrganizationProjects: makeSelectCurrentOrganizationProjects(),
   currentOrganizationProjectsDetail: makeSelectCurrentOrganizationProjectsDetail(),
-  currentOrganizationTeams: makeSelectCurrentOrganizationTeams(),
+  currentOrganizationTeams: makeSelectCurrentOrganizationRole(),
   currentOrganizationMembers: makeSelectCurrentOrganizationMembers(),
-  inviteMemberList: makeSelectInviteMemberList(),
-  collectProjects: makeSelectCollectProjects()
+  inviteMemberList: makeSelectInviteMemberList()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
     onLoadOrganizationProjects: (param) => dispatch(loadOrganizationProjects(param)),
     onLoadOrganizationMembers: (id) => dispatch(loadOrganizationMembers(id)),
-    onLoadOrganizationTeams: (id) => dispatch(loadOrganizationTeams(id)),
     onLoadOrganizationDetail: (id) => dispatch(loadOrganizationDetail(id)),
     onEditOrganization: (organization) => dispatch(editOrganization(organization)),
     onDeleteOrganization: (id, resolve) => dispatch(deleteOrganization(id, resolve)),
     onSearchMember: (keyword) => dispatch(searchMember(keyword)),
     onInviteMember: (orgId, memId) => dispatch(inviteMember(orgId, memId)),
-    onDeleteProject: (id, resolve) => dispatch(deleteProject(id, resolve)),
     onDeleteOrganizationMember: (id, resolve) => dispatch(deleteOrganizationMember(id, resolve)),
-    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve)),
-    onAddProject: (project, resolve) => dispatch(addProject(project, resolve)),
-    onEditProject: (project, resolve) => dispatch(editProject(project, resolve)),
-    onClickCollectProjects: (formType, project, resolve) => dispatch(clickCollectProjects(formType, project, resolve)),
-    onLoadCollectProjects: () => dispatch(loadCollectProjects()),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onChangeOrganizationMemberRole: (id, role, resolve) => dispatch(changeOrganizationMemberRole(id, role, resolve))
   }
 }
 

@@ -1,4 +1,4 @@
-@import "../../assets/less/variable";
+@import "../../../../assets/less/variable";
 .wrapper{
   width: 100%;
   display: flex;
@@ -35,7 +35,7 @@
         }
       }
       .searchLabel{
-        background: url("../../assets/images/logo_mobile.svg") no-repeat center center;
+        background: url("../../../../assets/images/logo_mobile.svg") no-repeat center center;
         background-size: 16px 16px;
         border: 0;
         border-radius: 0 3px 3px 0;
@@ -520,6 +520,122 @@
 }
 
 
+.filterConfig {
+  height: 540px;
+  margin: -24px;
+  display: flex;
+  flex-direction: row;
+  :global(.ant-menu-inline), :global(.ant-menu-vertical), :global(.ant-menu-vertical-left) {
+    border-right: none;
+  }
+  :global(.ant-menu) {
+    :global(li) {
+      margin-top: 0;
+      margin-bottom: 0
+    }
+  }
+  :global(.ant-menu-item:not(:last-child)){
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+  .left {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    width: 160px;
+    border-right: 1px solid @border-color-split;
+  }
+  .center {
+    flex: 1;
+    display: flex;
+    overflow-y: auto;
+    flex-direction: column;
+  }
 
+  // .bottom {
+  //   min-height: 90px;
+  //   border-top: 1px solid @border-color-split;
+  //   display: flex;
+  //   flex-direction: column;
+  // }
+}
 
+.basic {
+  padding: 24px;
+  .owner {
+    margin-top: 16px;
+    .title {
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .button {
+      font-weight: 600;
+      font-size: 18px;
+      color: @blue;
+    }
+  }
+  .save {
+    margin-top: 16px;
+  }
+  .dangerZone{
+    .title {
+      font-weight: 500;
+      font-size: 14px;
+      margin: 24px auto 16px auto;
+      color: crimson;
+    }
+    .titleDesc {
+      padding: 16px;
+      border-radius: 4px;
+      border: 1px solid crimson;
+      display: inline-block;
+      .button {
+        font-weight: 600;
+        font-size: 18px;
+        color: @rich-text;
+      }
+      .desc{
+        margin-bottom: 8px;
+        font-size: 12px;
+        color: crimson;
+      }
+    }
+  }
+  :global(.ant-form-item) {
+    margin-bottom: 4px;
+  }
+}
 
+.role {
+  padding: 24px;
+  .tableWrap {
+    padding: 24px 0px 8px 0px;
+  }
+}
+
+.admin{
+  padding: 24px;
+  .tableWrap {
+    padding: 24px 0px 8px 0px;
+  }
+}
+
+.auth {
+  padding: 8px;
+  .module {
+    margin: 8px auto 24px auto;
+    .title {
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+  }
+  .dv{
+    margin: 8px auto 24px auto;
+    .title {
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+  }
+}

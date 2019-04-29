@@ -16,7 +16,6 @@ interface IComponentPermissionProps {
 export default (currentOrganization, code) => (WrapperComponent) => {
   class ComponentPermission extends React.PureComponent<IComponentPermissionProps, {}> {
     public render () {
-      console.log({currentOrganization})
       let role = void 0
       if (currentOrganization && currentOrganization.role) {
         role = currentOrganization.role

@@ -53,7 +53,6 @@ import { uuid } from '../../utils/util'
 import FullScreenPanel from './components/fullScreenPanel/FullScreenPanel'
 import { decodeMetricName } from '../Widget/components/util'
 import { hideNavigator } from '../App/actions'
-import { loadProjectDetail } from '../Projects/actions'
 import {
   loadDashboardDetail,
   addDashboardItems,
@@ -92,7 +91,7 @@ import {
 } from '../Bizlogic/actions'
 import { makeSelectWidgets } from '../Widget/selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Organizations/containers/Projects/selectors'
 
 import {
   SQL_NUMBER_TYPES,
@@ -105,7 +104,7 @@ import {
 } from '../../globalConstants'
 import { InjectedRouter } from 'react-router/lib/Router'
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
-import { IProject } from '../Projects'
+import { IProject } from '../Organizations/containers/Projects'
 import { ICurrentDashboard } from './'
 import { ChartTypes } from '../Widget/config/chart/ChartTypes'
 const utilStyles = require('../../assets/less/util.less')
