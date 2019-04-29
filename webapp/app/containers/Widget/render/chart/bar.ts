@@ -145,7 +145,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
               //   return g[`${m.agg}(${decodedMetricName})`]
               // }
               // }
-               if (selectedItems.some((item) => item === index)) {
+               if (selectedItems && selectedItems.length && selectedItems.some((item) => item === index)) {
                 return {
                   value: percentage ? g[`${m.agg}(${decodedMetricName})`] / sumArr[index] * 100 : g[`${m.agg}(${decodedMetricName})`],
                   itemStyle: {

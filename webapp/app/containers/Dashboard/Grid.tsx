@@ -1218,7 +1218,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     let grids = void 0
     //   const drillPanels = []
     let drillpathSetting = void 0
-    if (currentItemsInfo && currentItemId) {
+    if (currentItemsInfo && currentItemId && currentItemsInfo[Number(currentItemId)]) {
       drillpathSetting = currentItemsInfo[Number(currentItemId)].queryConditions.drillpathSetting
     }
     if (dashboards) {

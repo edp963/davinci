@@ -107,7 +107,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
     const labelItemName = color.items.length
       ? color.items[0].name
       : cols[0].name
-    console.log(selectedItems)
+
     Object.entries(grouped).forEach(([key, value], gIndex) => {
       series.push({
         name: key.replace(String.fromCharCode(0), ' '),
