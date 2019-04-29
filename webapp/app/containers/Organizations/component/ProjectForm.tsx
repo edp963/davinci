@@ -24,9 +24,9 @@ import { Form, Row, Col, Input, Tag, Button, Select } from 'antd'
 const TextArea = Input.TextArea
 const Option = Select.Option
 const FormItem = Form.Item
-const styles = require('./Project.less')
-import Avatar from '../../components/Avatar'
-const utilStyles = require('../../assets/less/util.less')
+const styles = require('../containers/Projects/Project.less')
+import Avatar from '../../../components/Avatar'
+const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectsFormProps {
   type: string

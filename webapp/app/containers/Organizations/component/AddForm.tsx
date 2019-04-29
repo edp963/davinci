@@ -10,15 +10,16 @@ const utilStyles =  require('../../../assets/less/util.less')
 
 
 interface IAddFormProps {
-  ref: (f: any) => void
-  form: any
-  category: string
-  organizationOrTeam: { name?: string }
-  currentOrganizationProjects?: any
-  handleSearchMember?: () => any
-  inviteMemberList?: any
-  addHandler: () => any
-  currentOrganizationMembers: IOrganizationMembers[]
+    iconType?: string
+    optionList: any[]
+    title: string
+    descripton: string
+    submit: () => any
+    handleSearch?: (searchValue: string) => any
+}
+
+interface IAddFormStates {
+    searchValue: string
 }
 
 interface IAddFormStates {

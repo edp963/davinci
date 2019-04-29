@@ -39,13 +39,11 @@ import Schedule from './containers/Schedule'
 import Editor from './containers/Display/Editor'
 import Preview from './containers/Display/Preview'
 import Account from './containers/Account'
-import Projects from './containers/Projects/index'
+import Projects from './containers/Organizations/containers/Projects/index'
 import Profile from './containers/Profile'
 import ResetPassword from './containers/ResetPassword'
 import Organizations from './containers/Organizations/index'
 import Organization from './containers/Organizations/Organization'
-import Teams from './containers/Teams/index'
-import Team from './containers/Teams/Team'
 import UserProfile from './containers/Profile/UserProfile'
 import {replace} from 'react-router-redux'
 import NoAuthorization from './containers/NoAuthorization'
@@ -170,16 +168,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               path: '/account/organization/:organizationId',
               name: 'organization',
               component: Organization
-            },
-            {
-              path: '/account/teams',
-              name: 'teams',
-              component: Teams
-            },
-            {
-              path: '/account/team/:teamId',
-              name: 'team',
-              component: Team
             }
           ]
         },

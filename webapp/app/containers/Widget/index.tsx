@@ -47,10 +47,10 @@ import { makeSelectWidgets, makeSelectLoading } from './selectors'
 import { makeSelectBizlogics } from '../Bizlogic/selectors'
 import { makeSelectLoginUser } from '../App/selectors'
 import { checkNameUniqueAction } from '../App/actions'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import {makeSelectCurrentProject} from '../Organizations/containers/Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
+import {IProject} from '../Organizations/containers/Projects'
 
 const styles = require('./Widget.less')
 const utilStyles = require('../../assets/less/util.less')

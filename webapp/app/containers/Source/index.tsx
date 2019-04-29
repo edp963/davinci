@@ -61,10 +61,10 @@ const utilStyles = require('../../assets/less/util.less')
 import api from '../../utils/api'
 import { uuid } from '../../utils/util'
 import { checkNameUniqueAction } from '../App/actions'
-import {makeSelectCurrentProject} from '../Projects/selectors'
+import {makeSelectCurrentProject} from '../Organizations/containers/Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
-import {IProject} from '../Projects'
+import {IProject} from '../Organizations/containers/Projects'
 
 export type SourceType = 'csv' | 'jdbc'
 

@@ -47,9 +47,9 @@ const makeSelectCurrentOrganizationProjectsDetail = () => createSelector(
   (organizationState) => organizationState.get('currentOrganizationProjectsDetail')
 )
 
-const makeSelectCurrentOrganizationTeams = () => createSelector(
+const makeSelectCurrentOrganizationRole = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('currentOrganizationTeams')
+  (organizationState) => organizationState.get('currentOrganizationRole')
 )
 
 const makeSelectCurrentOrganizationMembers = () => createSelector(
@@ -57,10 +57,26 @@ const makeSelectCurrentOrganizationMembers = () => createSelector(
   (organizationState) => organizationState.get('currentOrganizationMembers')
 )
 
-const makeSelectTeamModalLoading = () => createSelector(
+const makeSelectRoleModalLoading = () => createSelector(
   selectOrganization,
-  (organizationState) => organizationState.get('teamModalLoading')
+  (organizationState) => organizationState.get('roleModalLoading')
 )
+
+const makeSelectCurrentOrganizationProject = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('projectDetail')
+)
+
+const makeSelectCurrentOrganizationProjectAdmins = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('projectAdmins')
+)
+
+const makeSelectCurrentOrganizationProjectRoles = () => createSelector(
+  selectOrganization,
+  (organizationState) => organizationState.get('projectRoles')
+)
+
 
 export {
   selectOrganization,
@@ -68,8 +84,11 @@ export {
   makeSelectCurrentOrganizations,
   makeSelectCurrentOrganizationProjects,
   makeSelectCurrentOrganizationProjectsDetail,
-  makeSelectCurrentOrganizationTeams,
+  makeSelectCurrentOrganizationRole,
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList,
-  makeSelectTeamModalLoading
+  makeSelectRoleModalLoading,
+  makeSelectCurrentOrganizationProject,
+  makeSelectCurrentOrganizationProjectAdmins,
+  makeSelectCurrentOrganizationProjectRoles
 }

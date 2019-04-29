@@ -37,7 +37,8 @@ import {
   LOAD_COLLECT_PROJECTS_FAILURE,
   CLICK_COLLECT_PROJECT,
   CLICK_COLLECT_PROJECT_SUCCESS,
-  CLICK_COLLECT_PROJECT_FAILURE
+  CLICK_COLLECT_PROJECT_FAILURE,
+  RELATION_ROLE_PROJECT_LOADED
 } from './constants'
 
 
@@ -47,7 +48,8 @@ const initialState = fromJS({
   currentProjectLoading: false,
   searchProject: false,
   starUserList: false,
-  collectProjects: null
+  collectProjects: null,
+  currentProjectRole: false
 })
 
 function projectReducer (state = initialState, action) {
@@ -60,7 +62,8 @@ function projectReducer (state = initialState, action) {
       return state.set('projects', payload.projects)
     case LOAD_PROJECTS_FAILURE:
       return state
-
+    case RELATION_ROLE_PROJECT_LOADED:
+      return state.set('currentProjectRole', payload.result)
     case ADD_PROJECT_SUCCESS:
       if (projects) {
         projects.unshift(payload.result)

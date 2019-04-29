@@ -42,6 +42,7 @@ export default {
   checkNameUnique: `${host}/check`,
   projects: `${host}/projects`,
   teams: `${host}/teams`,
+  roles: `${host}/roles`,
   portal: `${host}/dashboardPortals`,
   star: `${host}/star`
 }

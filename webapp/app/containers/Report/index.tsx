@@ -25,22 +25,21 @@ import { createStructuredSelector } from 'reselect'
 import {InjectedRouter} from 'react-router/lib/Router'
 
 import { Icon } from 'antd'
-import { IProject } from '../Projects'
+import { IProject } from '../Organizations/containers/Projects'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
-import { loadProjectDetail, killProjectDetail } from '../Projects/actions'
-import reducer from '../Projects/reducer'
+import { loadProjectDetail, killProjectDetail } from '../Organizations/containers/Projects/actions'
+import reducer from '../Organizations/containers/Projects/reducer'
 import injectReducer from 'utils/injectReducer'
-import saga from '../Projects/sagas'
+import saga from '../Organizations/containers/Projects/sagas'
 import injectSaga from 'utils/injectSaga'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectCurrentProject } from '../Organizations/containers/Projects/selectors'
 
 import MenuPermission from '../Account/components/checkMenuPermission'
-import { PermissionLevel } from '../Teams/component/PermissionLevel'
 const styles = require('./Report.less')
 
 interface IReportProps {
