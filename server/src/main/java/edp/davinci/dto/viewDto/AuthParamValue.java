@@ -17,13 +17,14 @@
  *
  */
 
-package edp.davinci.service;
+package edp.davinci.dto.viewDto;
 
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.model.User;
+import lombok.Data;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
-public interface TeamVarService {
-    ResultMap getTeamVarSource(Long projectId, User user, HttpServletRequest request);
+@Data
+public class AuthParamValue {
+    private String name;
+    private List<Object> values;
 }

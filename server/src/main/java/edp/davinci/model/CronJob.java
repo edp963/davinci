@@ -19,6 +19,7 @@
 package edp.davinci.model;
 
 import edp.core.model.ScheduleJob;
+import edp.core.utils.DateUtils;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import lombok.Data;
 
@@ -49,9 +50,20 @@ public class CronJob extends ScheduleJob {
 
     private String description;
 
-    private Long createBy;
-
-    private Date createTime = new Date();
-
-    private Date updateTime;
+    @Override
+    public String toString() {
+        return "CronJob{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", projectId=" + projectId +
+                ", jobType='" + jobType + '\'' +
+                ", config='" + config + '\'' +
+                ", jobStatus='" + jobStatus + '\'' +
+                ", execLog='" + execLog + '\'' +
+                ", cronExpression='" + cronExpression + '\'' +
+                ", startDate=" + DateUtils.toyyyyMMddHHmmss(startDate) +
+                ", endDate=" + DateUtils.toyyyyMMddHHmmss(endDate) +
+                ", description='" + description + '\'' +
+                '}';
+    }
 }

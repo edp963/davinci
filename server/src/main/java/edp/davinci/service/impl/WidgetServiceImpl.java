@@ -19,7 +19,6 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.enums.HttpCodeEnum;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
@@ -34,7 +33,10 @@ import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.core.utils.ExcelUtils;
-import edp.davinci.dao.*;
+import edp.davinci.dao.MemDashboardWidgetMapper;
+import edp.davinci.dao.MemDisplaySlideWidgetMapper;
+import edp.davinci.dao.ViewMapper;
+import edp.davinci.dao.WidgetMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
@@ -70,7 +72,7 @@ import java.util.concurrent.CountDownLatch;
 
 @Service("widgetService")
 @Slf4j
-public class WidgetServiceImpl extends CommonService<Widget> implements WidgetService {
+public class WidgetServiceImpl extends CommonService implements WidgetService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
 
@@ -79,9 +81,6 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
     @Autowired
     private TokenUtils tokenUtils;
-
-    @Autowired
-    private ProjectMapper projectMapper;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -136,11 +135,9 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
         List<Widget> widgets = widgetMapper.getByProject(projectId);
 
         if (null != widgets) {
-            if (!isMaintainer(projectDetail, user)) {
-                ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-                if (projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-                    return null;
-                }
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getWidgetPermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                return null;
             }
         }
 
@@ -350,9 +347,9 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             return resultMap.failAndRefreshToken(request).message("project not found");
         }
 
-        if (!allowDownload(widgetWithProjectAndView.getProject(), user)) {
-            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to download the widget");
-        }
+//        if (!allowDownload(widgetWithProjectAndView.getProject(), user)) {
+//            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to download the widget");
+//        }
 
         ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widgetWithProjectAndView.getViewId());
 
@@ -379,7 +376,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
             if (type.equals(FileTypeEnum.CSV.getType())) {
 //                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
                 Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);
-                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+//                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+                List<QueryColumn> columns = null;
                 if (null != columns && columns.size() > 0) {
                     File file = new File(rootPath);
                     if (!file.exists()) {
@@ -462,7 +460,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                         executeParam = executeParamMap.get(widget.getId());
                     }
 
-                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+//                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
+                    List<QueryColumn> columns = null;
 
 //                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
                     Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);

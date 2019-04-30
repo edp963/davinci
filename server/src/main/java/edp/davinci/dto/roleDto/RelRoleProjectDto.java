@@ -29,27 +29,27 @@ import javax.validation.constraints.NotNull;
 @NotNull
 public class RelRoleProjectDto {
 
-    @Min(value = (short) 0 ,message = "Invalid source permission")
+    @Min(value = (short) 0, message = "Invalid source permission")
     @Max(value = (short) 3, message = "Invalid source permission")
-    private Short sourcePermission;
+    private Short sourcePermission = 1;
 
-    @Min(value = (short) 0 ,message = "Invalid view permission")
+    @Min(value = (short) 0, message = "Invalid view permission")
     @Max(value = (short) 3, message = "Invalid view permission")
-    private Short viewPermission;
+    private Short viewPermission = 1;
 
-    @Min(value = (short) 0 ,message = "Invalid widget permission")
+    @Min(value = (short) 0, message = "Invalid widget permission")
     @Max(value = (short) 3, message = "Invalid widget permission")
-    private Short widgetPermission;
+    private Short widgetPermission = 1;
 
-    @Min(value = (short) 0 ,message = "Invalid viz permission")
+    @Min(value = (short) 0, message = "Invalid viz permission")
     @Max(value = (short) 3, message = "Invalid viz permission")
-    private Short vizPermission;
+    private Short vizPermission = 1;
 
-    @Min(value = (short) 0 ,message = "Invalid schedule permission")
+    @Min(value = (short) 0, message = "Invalid schedule permission")
     @Max(value = (short) 3, message = "Invalid schedule permission")
-    private Short schedulePermission;
+    private Short schedulePermission = 1;
 
-    private Boolean sharePermission;
+    private Boolean sharePermission = false;
 
-    private Boolean downloadPermission;
+    private Boolean downloadPermission = false;
 }

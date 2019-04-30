@@ -19,8 +19,8 @@
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
-import com.ibm.db2.jcc.am.SqlException;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
@@ -36,6 +36,7 @@ import edp.davinci.core.utils.CsvUtils;
 import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.MemDisplaySlideWidgetWithSlide;
 import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectPermission;
 import edp.davinci.dto.shareDto.*;
 import edp.davinci.dto.userDto.UserLogin;
 import edp.davinci.dto.userDto.UserLoginResult;
@@ -44,6 +45,7 @@ import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.model.*;
+import edp.davinci.service.ProjectService;
 import edp.davinci.service.ShareService;
 import edp.davinci.service.ViewService;
 import lombok.extern.slf4j.Slf4j;
@@ -76,6 +78,9 @@ public class ShareServiceImpl extends CommonService implements ShareService {
 
     @Autowired
     private DashboardMapper dashboardMapper;
+
+    @Autowired
+    private ProjectService projectService;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -370,8 +375,6 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
             return resultFail(user, request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
-        } catch (SqlException e) {
-            return resultFail(user, request, null).message(e.getMessage());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -405,20 +408,19 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 }
             }
 
-            Long viewId = shareInfo.getShareId();
-            ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(viewId);
+            View view = viewMapper.getById(shareInfo.getShareId());
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(view.getProjectId(), shareInfo.getShareUser(), false), shareInfo.getShareUser());
 
-            if (!allowDownload(viewWithProjectAndSource.getProject(), shareInfo.getShareUser())) {
+            if (projectPermission.getDownloadPermission()) {
                 resultFail(user, request, HttpCodeEnum.FORBIDDEN).message("ERROR Permission denied");
             }
-
-            List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
 
             executeParam.setLimit(-1);
             executeParam.setPageSize(-1);
             executeParam.setPageNo(-1);
 //            Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, shareInfo.getShareUser());
             Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, shareInfo.getShareUser());
+            List<QueryColumn> columns = null;
 
             if (null != columns && columns.size() > 0) {
                 String csvPath = fileUtils.fileBasePath + File.separator + "csv";
@@ -427,10 +429,12 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                     file.mkdirs();
                 }
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                String csvName = viewWithProjectAndSource.getName() + "_" + sdf.format(new Date());
+                String csvName = view.getName() + "_" + sdf.format(new Date());
                 String fileFullPath = CsvUtils.formatCsvWithFirstAsHeader(csvPath, csvName, columns, paginate.getResultList());
                 filePath = fileFullPath.replace(fileUtils.fileBasePath, "");
             }
+        } catch (NotFoundException e) {
+            return resultFail(user, request, null).message(e.getMessage());
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {
@@ -473,13 +477,9 @@ public class ShareServiceImpl extends CommonService implements ShareService {
                 return resultFail(user, request, null).message("view not found");
             }
 
-            Project project = viewWithProjectAndSource.getProject();
-            if (null == project) {
-                log.info("project not found");
-                return resultFail(user, request, null).message("project not found");
-            }
+            ProjectDetail projectDetail = projectService.getProjectDetail(viewWithProjectAndSource.getProjectId(), user, false);
 
-            if (!viewService.allowGetData(project, shareInfo.getShareUser())) {
+            if (!projectService.allowGetData(projectDetail, user)) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message("ERROR Permission denied");
             }
 
@@ -488,6 +488,8 @@ public class ShareServiceImpl extends CommonService implements ShareService {
             } catch (ServerException e) {
                 return resultFail(user, request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
             }
+        } catch (NotFoundException e) {
+            return resultFail(user, request, null).message(e.getMessage());
         } catch (ServerException e) {
             return resultFail(user, request, null).message(e.getMessage());
         } catch (UnAuthorizedExecption e) {

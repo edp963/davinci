@@ -18,6 +18,7 @@
 
 package edp.davinci.dao;
 
+import edp.davinci.dto.viewDto.ViewBaseInfo;
 import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.viewDto.ViewWithSourceBaseInfo;
@@ -93,9 +94,18 @@ public interface ViewMapper {
             "select v.*,",
             "s.id as 'source.id', s.name as 'source.name' from view v ",
             "left join source s on s.id = v.source_id ",
+            "where v.id = #{id}"
+    })
+    ViewWithSourceBaseInfo getViewWithSourceBaseInfo(@Param("id") Long id);
+
+
+    @Select({
+            "select v.id, v.name, v.description, s.name as 'sourceName'",
+            "from view v ",
+            "left join source s on s.id = v.source_id ",
             "where v.project_id = #{projectId}"
     })
-    List<ViewWithSourceBaseInfo> getByProject(@Param("projectId") Long projectId);
+    List<ViewBaseInfo> getViewBaseInfoByProject(@Param("projectId") Long projectId);
 
 
     int insertBatch(@Param("list") List<View> sourceList);

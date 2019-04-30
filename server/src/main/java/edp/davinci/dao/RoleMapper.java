@@ -71,11 +71,6 @@ public interface RoleMapper {
     List<Role> selectByIdsAndOrgId(@Param("orgId") Long orgId, @Param("roleIds") List<Long> roleIds);
 
 
-    @Select({
-            "select r.id, r.`name`, r.description ",
-            "from `role` r",
-            "   left join rel_role_project rrp on rrp.role_id = r.id ",
-            "where rrp.project_id = #{projectId}",
-    })
-    List<RoleBaseInfo> getBaseInfoByProjectId(Long projectId);
+    @Delete({"delete from role where org_id = #{orgId}"})
+    int deleteByOrg(Long orgId);
 }

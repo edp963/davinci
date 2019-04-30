@@ -66,6 +66,9 @@ public interface WidgetMapper {
     List<Widget> getByIds(@Param("list") Set<Long> ids);
 
 
+    Set<Long> getIdSetByIds(@Param("set") Set<Long> ids);
+
+
     @Select({
             "SELECT  w.* FROM widget w ",
             "LEFT JOIN mem_display_slide_widget m on w.id = m.widget_id",

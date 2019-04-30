@@ -27,7 +27,6 @@ import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.User;
-import edp.davinci.service.TeamVarService;
 import edp.davinci.service.ViewService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -77,8 +76,32 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<ViewWithSourceBaseInfo> views = viewService.getViews(projectId, user);
+        List<ViewBaseInfo> views = viewService.getViews(projectId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(views));
+    }
+
+
+    /**
+     * get view info
+     *
+     * @param id
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get view info")
+    @GetMapping("/{id}")
+    public ResponseEntity getView(@PathVariable Long id,
+                                  @ApiIgnore @CurrentUser User user,
+                                  HttpServletRequest request) {
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid view id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        ViewWithSourceBaseInfo view = viewService.getView(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(view));
     }
 
 

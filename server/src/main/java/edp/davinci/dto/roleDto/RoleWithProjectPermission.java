@@ -23,5 +23,6 @@ import lombok.Data;
 
 @Data
 public class RoleWithProjectPermission extends RoleBaseInfo {
-    private RoleProject permission;
+
+    private RelRoleProjectDto permission;
 }

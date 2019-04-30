@@ -27,6 +27,8 @@ public class Consts {
      */
     public static final String conditionSeparator = ",";
 
+    public static final String Slash = "/";
+
     public static final String space = " ";
 
     public static final String sqlSeparator = ";";

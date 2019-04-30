@@ -21,15 +21,12 @@ package edp.davinci.service;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
-import edp.davinci.dto.dashboardDto.PortalInfo;
 import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.User;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface DashboardPortalService extends CheckEntityService {
@@ -37,9 +34,9 @@ public interface DashboardPortalService extends CheckEntityService {
 
     DashboardPortal createDashboardPortal(DashboardPortalCreate dashboardPortalCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap updateDashboardPortal(DashboardPortalUpdate dashboardPortalUpdate, User user, HttpServletRequest request);
+    DashboardPortal updateDashboardPortal(DashboardPortalUpdate dashboardPortalUpdate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap deleteDashboardPortal(Long id, User user, HttpServletRequest request);
+    boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
 
-    List<Long> getExcludeTeams(Long id);
+    List<Long> getExcludeRoles(Long id);
 }

@@ -89,4 +89,12 @@
             #{item}
         </foreach>
     </select>
+
+
+    <select id="getIdSetByIds" resultType="java.lang.Long" parameterType="java.util.Set">
+        select id from widget where id in
+        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

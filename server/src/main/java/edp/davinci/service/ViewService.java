@@ -23,14 +23,11 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
-import edp.core.model.QueryColumn;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.*;
-import edp.davinci.model.Project;
 import edp.davinci.model.User;
-import edp.davinci.model.View;
 
 import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
@@ -39,7 +36,7 @@ import java.util.Map;
 
 public interface ViewService extends CheckEntityService {
 
-    List<ViewWithSourceBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    List<ViewBaseInfo> getViews(Long projectId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     ViewWithSourceBaseInfo createView(ViewCreate viewCreate, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
@@ -53,13 +50,9 @@ public interface ViewService extends CheckEntityService {
 
     Paginate getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException;
 
-    List<QueryColumn> getResultMeta(ViewWithProjectAndSource viewWithProjectAndSource, ViewExecuteParam executeParam, User user) throws ServerException;
-
     ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request);
-
-    boolean allowGetData(Project project, User user);
 
     List<Map<String, Object>> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException;
 
-    void updateViewTeamVar(View view, String config, Project project, User user);
+    ViewWithSourceBaseInfo getView(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

@@ -6,16 +6,38 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             role_id,
             dashboard_id,
-            visiable,
+            visible,
             create_by,
             create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},
             #{dashboardId,jdbcType=BIGINT},
-            #{visiable,jdbcType=TINYINT},
+            #{visible,jdbcType=TINYINT},
             #{createBy,jdbcType=BIGINT},
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
     </insert>
+
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        replace into rel_role_dashboard
+        (`role_id`, `dashboard_id`, `visible`, `create_by`, `create_time`)
+        VALUES
+        <foreach collection="list" item="record" index="index" separator=",">
+            (
+            #{record.roleId,jdbcType=BIGINT},
+            #{record.dashboardId,jdbcType=BIGINT},
+            #{record.visible,jdbcType=TINYINT},
+            #{record.createBy,jdbcType=BIGINT},
+            #{record.createTime,jdbcType=TIMESTAMP}
+            )
+        </foreach>
+    </insert>
+
+    <delete id="deleteByDashboardIds" parameterType="java.util.Set">
+        delete from rel_role_dashboard where dashboard_id in
+        <foreach collection="dashboardIds" index="index" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </delete>
 </mapper>

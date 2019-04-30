@@ -60,6 +60,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static edp.core.consts.Consts.newLineChar;
+import static edp.core.consts.Consts.space;
+
 @Slf4j
 @Component
 @Scope("prototype")
@@ -123,12 +126,19 @@ public class SqlUtils {
         checkSensitiveSql(sql);
         String md5 = MD5Util.getMD5(sql, true, 16);
         if (isQueryLogEnable) {
-            sqlLogger.info("{}  >> {}", md5, sql);
+            sqlLogger.info("{}  >> \n{}", md5, sql);
         }
         JdbcTemplate jdbcTemplate = jdbcTemplate();
         jdbcTemplate.setMaxRows(limit);
 
+        long befor = System.currentTimeMillis();
+
         List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
+
+        if (isQueryLogEnable) {
+            sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - befor);
+        }
+
         return list;
     }
 
@@ -178,12 +188,6 @@ public class SqlUtils {
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
     public Paginate<Map<String, Object>> query4Paginate(String sql, int pageNo, int pageSize, int limit) throws Exception {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-        if (isQueryLogEnable) {
-            sqlLogger.info("{}", sql);
-        }
-
         final Paginate<Map<String, Object>> paginate = new Paginate<>();
         if (pageNo < 1 && pageSize < 1) {
             List<Map<String, Object>> list = null;
@@ -198,21 +202,35 @@ public class SqlUtils {
             paginate.setResultList(list);
         } else {
 
+            sql = filterAnnotate(sql);
+            checkSensitiveSql(sql);
+
             JdbcTemplate jdbcTemplate = jdbcTemplate();
 
             paginate.setPageNo(pageNo);
             paginate.setPageSize(pageSize);
 
             final int startRow = (pageNo - 1) * pageSize;
-            String finalSql = sql;
+
+            String md5 = MD5Util.getMD5(sql, true, 16);
+            if (isQueryLogEnable) {
+                sqlLogger.info("{}  >> \n{}", md5, sql);
+            }
+
+            long befor = System.currentTimeMillis();
+
             switch (this.dataTypeEnum) {
                 case MOONBOX:
-                    jdbcTemplate.query(finalSql, getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
+                    jdbcTemplate.query(sql, getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
                     break;
                 default:
-                    jdbcTemplate.query(new StreamingStatementCreator(finalSql, this.dataTypeEnum),
+                    jdbcTemplate.query(new StreamingStatementCreator(sql, this.dataTypeEnum),
                             getPaginateResultSetExtractor(pageSize, limit, paginate, startRow));
                     break;
+            }
+
+            if (isQueryLogEnable) {
+                sqlLogger.info("{} query for >> {} ms", md5, System.currentTimeMillis() - befor);
             }
         }
 
@@ -788,6 +806,7 @@ public class SqlUtils {
     public static String filterAnnotate(String sql) {
         Pattern p = Pattern.compile(Consts.REG_SQL_ANNOTATE);
         sql = p.matcher(sql).replaceAll("$1");
+        sql = sql.replaceAll(newLineChar, space);
         return sql;
     }
 

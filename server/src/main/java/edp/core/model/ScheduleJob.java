@@ -18,12 +18,14 @@
 
 package edp.core.model;
 
+import edp.davinci.common.model.RecordInfo;
+import edp.davinci.model.CronJob;
 import lombok.Data;
 
 import java.util.Date;
 
 @Data
-public class ScheduleJob {
+public class ScheduleJob extends RecordInfo<CronJob> {
 
     private Long id;
 

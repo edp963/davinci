@@ -68,9 +68,9 @@ public class RoleController extends BaseController {
     @ApiOperation(value = "create role", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity createRole(@Valid @RequestBody RoleCreate role,
-                                        @ApiIgnore BindingResult bindingResult,
-                                        @ApiIgnore @CurrentUser User user,
-                                        HttpServletRequest request) {
+                                     @ApiIgnore BindingResult bindingResult,
+                                     @ApiIgnore @CurrentUser User user,
+                                     HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -296,22 +296,29 @@ public class RoleController extends BaseController {
     /**
      * 删除Role和Project之间的关联
      *
-     * @param relationId
+     * @param id
+     * @param projectId
      * @param user
      * @param request
      * @return
      */
     @ApiOperation(value = "delete relation between a role and a project")
-    @DeleteMapping("/project/{relationId}")
-    public ResponseEntity deleteProject(@PathVariable Long relationId,
+    @DeleteMapping("/{id}/project/{projectId}")
+    public ResponseEntity deleteProject(@PathVariable Long id,
+                                        @PathVariable Long projectId,
                                         @ApiIgnore @CurrentUser User user,
                                         HttpServletRequest request) {
-        if (invalidId(relationId)) {
+        if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid relation id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        roleService.deleteProject(relationId, user);
+        if (invalidId(projectId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project Id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        roleService.deleteProject(id, projectId, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
@@ -319,7 +326,8 @@ public class RoleController extends BaseController {
     /**
      * 修改Role和Project之间的关联
      *
-     * @param relationId
+     * @param id
+     * @param projectId
      * @param projectRole
      * @param bindingResult
      * @param user
@@ -327,14 +335,20 @@ public class RoleController extends BaseController {
      * @return
      */
     @ApiOperation(value = "update relation between a role and a project", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PutMapping(value = "/project/{relationId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateProjet(@PathVariable Long relationId,
+    @PutMapping(value = "/{id}/project/{projectId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity updateProjet(@PathVariable Long id,
+                                       @PathVariable Long projectId,
                                        @Valid @RequestBody RelRoleProjectDto projectRole,
                                        @ApiIgnore BindingResult bindingResult,
                                        @ApiIgnore @CurrentUser User user,
                                        HttpServletRequest request) {
-        if (invalidId(relationId)) {
-            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid releation id");
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(projectId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
@@ -343,7 +357,7 @@ public class RoleController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        roleService.updateProjectRole(relationId, projectRole, user);
+        roleService.updateProjectRole(id, projectId, user, projectRole);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 }

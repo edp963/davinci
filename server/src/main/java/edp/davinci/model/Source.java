@@ -20,6 +20,7 @@ package edp.davinci.model;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import edp.core.model.BaseSource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,7 @@ public class Source extends BaseSource {
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getJdbcUrl() {
         String url = null;
         if (null == config) {
@@ -67,6 +69,7 @@ public class Source extends BaseSource {
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getUsername() {
         String username = null;
         if (null == config) {
@@ -88,6 +91,7 @@ public class Source extends BaseSource {
      * @return
      */
     @Override
+    @JSONField(serialize = false)
     public String getPassword() {
         String password = null;
         if (null == config) {
@@ -102,6 +106,7 @@ public class Source extends BaseSource {
         return password;
     }
 
+    @JSONField(serialize = false)
     public String getConfigParams() {
         String params = null;
         if (null == config) {

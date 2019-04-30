@@ -11,5 +11,14 @@ public class RelRoleSlide extends RecordInfo<RelRoleSlide> {
 
     private Long slideId;
 
-    private Boolean visiable = false; // 可见/不可见  true/false
+    private Boolean visible = false; // 可见/不可见  true/false
+
+
+    public RelRoleSlide(Long roleId, Long slideId) {
+        this.roleId = roleId;
+        this.slideId = slideId;
+    }
+
+    public RelRoleSlide() {
+    }
 }

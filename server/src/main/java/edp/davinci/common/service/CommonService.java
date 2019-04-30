@@ -19,35 +19,28 @@
 package edp.davinci.common.service;
 
 import com.alibaba.druid.util.StringUtils;
+import edp.core.consts.Consts;
 import edp.davinci.core.enums.UserOrgRoleEnum;
-import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.UserTeamRoleEnum;
-import edp.davinci.dao.*;
+import edp.davinci.dao.OrganizationMapper;
+import edp.davinci.dao.RelProjectAdminMapper;
+import edp.davinci.dao.RelUserOrganizationMapper;
 import edp.davinci.dto.projectDto.ProjectDetail;
-import edp.davinci.dto.projectDto.UserMaxProjectPermission;
-import edp.davinci.model.*;
-import edp.davinci.service.ProjectService;
+import edp.davinci.model.RelProjectAdmin;
+import edp.davinci.model.RelUserOrganization;
+import edp.davinci.model.User;
 import edp.davinci.service.ShareService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Component
-public class CommonService<T> {
+public class CommonService {
 
     @Autowired
     public RelUserOrganizationMapper relUserOrganizationMapper;
-
-    @Autowired
-    public RelUserTeamMapper relUserTeamMapper;
-
-    @Autowired
-    public RelTeamProjectMapper relTeamProjectMapper;
 
     @Autowired
     public OrganizationMapper organizationMapper;
@@ -67,11 +60,15 @@ public class CommonService<T> {
     @Value("${server.port}")
     public String port;
 
+    @Value("${server.servlet.context-path:}")
+    private String contextPath;
+
     @Value("${server.access.address:}")
     private String accessAddress;
 
     @Value("${server.access.port:}")
     private String accessPort;
+
 
     public final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
@@ -99,6 +96,13 @@ public class CommonService<T> {
         if (!StringUtils.isEmpty(accPort)) {
             sb.append(":" + accPort);
         }
+
+        if (!StringUtils.isEmpty(contextPath)) {
+            contextPath.replaceAll(Consts.Slash, "");
+            sb.append(Consts.Slash);
+            sb.append(contextPath);
+        }
+
         return sb.toString();
     }
 
@@ -134,14 +138,6 @@ public class CommonService<T> {
         }
 
         return sb.toString();
-    }
-
-
-    public boolean isProjectAdmin(Project project, User user) {
-        if (project.getUserId().equals(user.getId()) && !project.getIsTransfer()) {
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -184,446 +180,4 @@ public class CommonService<T> {
 
         return false;
     }
-
-
-    /**
-     * 读权限
-     * 1. 当前project的owner
-     * 2. 当前project所属organization的owner
-     * 3. 当前project对应team的maintainer
-     * 4. 当前project对应team的member且project下内容的权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowRead(Project project, User user) {
-
-        if (null == project || null == user) {
-            return false;
-        }
-
-        //当前project的owner
-        if (project.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null == organization) {
-            return false;
-        }
-
-        if (organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == orgRel) {
-            return false;
-        }
-
-        //当前project所属organization的owner
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return true;
-        }
-
-        Short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-        if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-            //当前project对应team的maintainer
-            return true;
-        } else {
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(organization.getId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                //当前project对应team的member且project下内容的权限
-                short maxVizPermission = getMaxPermission(organization, project, user);
-                if (maxVizPermission > UserPermissionEnum.HIDDEN.getPermission()) {
-                    return true;
-                }
-            } else {
-                if (organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                    return true;
-                }
-            }
-            //可见
-            if (project.getVisibility() || organization.getMemberPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                return true;
-            }
-        }
-
-        Type type = getClass().getGenericSuperclass();
-        Object clazz = null;
-        if (type instanceof ParameterizedType) {
-            Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
-            try {
-                clazz = ((Class) actualTypeArguments[0]).newInstance();
-            } catch (Exception e) {
-                clazz = null;
-            }
-        }
-
-        UserMaxProjectPermission userMaxPermission = relTeamProjectMapper.getUserMaxPermission(project.getId(), user.getId());
-
-        if (clazz instanceof Source) {
-            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getSourcePermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                return true;
-            }
-        } else if (clazz instanceof View) {
-            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getViewPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                return true;
-            }
-        } else if (clazz instanceof Widget) {
-            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()
-                    || userMaxPermission.getWidgetPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                return true;
-            }
-        } else if (clazz instanceof DashboardPortal || clazz instanceof Dashboard || clazz instanceof Display) {
-            if (userMaxPermission.getVizPermission() > UserPermissionEnum.HIDDEN.getPermission()) {
-                return true;
-            }
-        }
-
-        if (null != clazz) {
-            clazz = null;
-            System.gc();
-        }
-
-        return false;
-    }
-
-    /**
-     * 允许创建更新
-     * 1. 当前project的owner
-     * 2. 当前project所属organization的owner
-     * 3. 当前project对应team的maintainer
-     * 4. 当前project对应team的member且project下内容的权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowWrite(Project project, User user) {
-
-        if (null == project || null == user) {
-            return false;
-        }
-
-        //当前project的owner
-        if (isProjectAdmin(project, user)) {
-            return true;
-        }
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null == organization) {
-            return false;
-        }
-
-        if (organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == orgRel) {
-            return false;
-        }
-
-        //当前project所属organization的owner
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return true;
-        }
-
-        Short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-        if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-            //当前project对应team的maintainer
-            return true;
-        } else {
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
-            }
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(organization.getId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                //当前project对应team的member且project下内容的权限
-                short maxVizPermission = getMaxPermission(organization, project, user);
-                if (maxVizPermission > UserPermissionEnum.READ.getPermission()) {
-                    return true;
-                }
-            } else {
-                if (organization.getMemberPermission() > UserPermissionEnum.READ.getPermission()) {
-                    return true;
-                }
-            }
-
-        }
-
-        return false;
-    }
-
-
-    /**
-     * 允许删除
-     * 1. 当前project的owner
-     * 2. 当前project所属organization的owner
-     * 3. 当前project对应team的maintainer
-     * 4. 当前project对应team的member且project下内容的权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowDelete(Project project, User user) {
-
-        if (null == project || null == user) {
-            return false;
-        }
-
-        //当前project的owner
-        if (isProjectAdmin(project, user)) {
-            return true;
-        }
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null == organization) {
-            return false;
-        }
-
-        if (organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == orgRel) {
-            return false;
-        }
-
-        //当前project所属organization的owner
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return true;
-        }
-
-        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-        if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-            //当前project对应team的maintainer
-            return true;
-        } else {
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
-            }
-            Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(organization.getId(), user.getId());
-            if (teamNumOfOrgByUser > 0) {
-                //当前project对应team的member且project下内容的权限
-                short maxVizPermission = getMaxPermission(organization, project, user);
-                if (maxVizPermission > UserPermissionEnum.WRITE.getPermission()) {
-                    return true;
-                }
-            } else {
-                if (organization.getMemberPermission() > UserPermissionEnum.WRITE.getPermission()) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-
-    /**
-     * 允许分享
-     * 1. 当前project的owner
-     * 2. 当前project所属organization的owner
-     * 3. 当前project对应team的maintainer
-     * 4. 当前project对应team的member且project下内容的权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowShare(Project project, User user) {
-        if (null == project || null == user) {
-            return false;
-        }
-
-        //当前project的owner
-        if (isProjectAdmin(project, user)) {
-            return true;
-        }
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null == organization) {
-            return false;
-        }
-
-        if (organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == orgRel) {
-            return false;
-        }
-
-        //当前project所属organization的owner
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return true;
-        }
-
-        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-        if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-            //当前project对应team的maintainer
-            return true;
-        } else {
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
-            }
-            //当前project对应team的member且project下内容的分享权限
-            Boolean bol = relTeamProjectMapper.getMaxSharePermission(project.getId(), user.getId());
-            return null != bol && bol;
-        }
-    }
-
-
-    /**
-     * 允许下载
-     * 1. 当前project的owner
-     * 2. 当前project所属organization的owner
-     * 3. 当前project对应team的maintainer
-     * 4. 当前project对应team的member且project下内容的权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public boolean allowDownload(Project project, User user) {
-        if (null == project || null == user) {
-            return false;
-        }
-
-        //当前project的owner
-        if (isProjectAdmin(project, user)) {
-            return true;
-        }
-
-        Organization organization = organizationMapper.getById(project.getOrgId());
-        if (null == organization) {
-            return false;
-        }
-
-        if (organization.getUserId().equals(user.getId())) {
-            return true;
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), organization.getId());
-        if (null == orgRel) {
-            return false;
-        }
-
-        //当前project所属organization的owner
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return true;
-        }
-
-        short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-
-        if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-            //当前project对应team的maintainer
-            return true;
-        } else {
-            //不可见
-            if (!project.getVisibility()) {
-                return false;
-            }
-            //当前project对应team的member且project下内容的分享权限
-            Boolean bol = relTeamProjectMapper.getMaxDownloadPermission(project.getId(), user.getId());
-            return null != bol && bol;
-        }
-    }
-
-
-    /**
-     * 获取Viz权限
-     *
-     * @param project
-     * @param user
-     * @return
-     */
-    public short vizPermission(Project project, User user) {
-        if (null == project || null == user) {
-            return 0;
-        }
-        if (isProjectAdmin(project, user)) {
-            return UserPermissionEnum.DELETE.getPermission();
-        }
-
-        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), project.getOrgId());
-
-        if (null == orgRel) {
-            return 0;
-        }
-
-        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
-            return UserPermissionEnum.DELETE.getPermission();
-        }
-
-
-        Integer teamNumOfOrgByUser = relUserTeamMapper.getTeamNumOfOrgByUser(project.getOrgId(), user.getId());
-        if (teamNumOfOrgByUser > 0) {
-            short maxTeamRole = relUserTeamMapper.getUserMaxRoleWithProjectId(project.getId(), user.getId());
-            if (maxTeamRole == UserTeamRoleEnum.MAINTAINER.getRole()) {
-                return UserPermissionEnum.DELETE.getPermission();
-            } else {
-                return relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
-            }
-        } else {
-            Organization organization = organizationMapper.getById(project.getOrgId());
-            return organization.getMemberPermission();
-        }
-    }
-
-
-    public short getMaxPermission(Organization organization, Project project, User user) {
-        short maxVizPermission = (short) 0;
-
-        Type type = getClass().getGenericSuperclass();
-
-        Object clazz = null;
-
-        if (type instanceof ParameterizedType) {
-            Type[] actualTypeArguments = ((ParameterizedType) type).getActualTypeArguments();
-            try {
-                clazz = ((Class) actualTypeArguments[0]).newInstance();
-            } catch (Exception e) {
-                clazz = null;
-            }
-        }
-
-        if (clazz instanceof Source) {
-            maxVizPermission = relTeamProjectMapper.getMaxSourcePermission(project.getId(), user.getId());
-        } else if (clazz instanceof View) {
-            maxVizPermission = relTeamProjectMapper.getMaxViewPermission(project.getId(), user.getId());
-        } else if (clazz instanceof Widget) {
-            maxVizPermission = relTeamProjectMapper.getMaxWidgetPermission(project.getId(), user.getId());
-        } else if (clazz instanceof DashboardPortal || clazz instanceof Dashboard || clazz instanceof Display) {
-            maxVizPermission = relTeamProjectMapper.getMaxVizPermission(project.getId(), user.getId());
-        } else if (clazz instanceof CronJob) {
-            maxVizPermission = relTeamProjectMapper.getMaxSchedulePermission(project.getId(), user.getId());
-        }
-
-        if (null != clazz) {
-            clazz = null;
-            System.gc();
-        }
-
-        return maxVizPermission;
-    }
-
 }

@@ -22,14 +22,9 @@ package edp.davinci.dto.displayDto;
 import edp.davinci.model.Display;
 import lombok.Data;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Data
-public class DisplayUpdateDto extends Display {
-    private Long[] teamIds;
-
-    public List<Long> getTeamIds() {
-        return null == this.teamIds || this.teamIds.length == 0 ? null : Arrays.asList(this.teamIds);
-    }
+public class DisplayUpdate extends Display {
+    private List<Long> roleIds;
 }

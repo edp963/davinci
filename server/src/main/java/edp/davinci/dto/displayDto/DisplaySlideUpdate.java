@@ -17,9 +17,12 @@
  *
  */
 
-package edp.davinci.dto.teamDto;
+package edp.davinci.dto.displayDto;
 
-public class TeamFullParent {
-    Long teamId;
-    String fullParentTeamId;
+import edp.davinci.model.DisplaySlide;
+
+import java.util.List;
+
+public class DisplaySlideUpdate extends DisplaySlide {
+    private List<Long> rolesIds;
 }

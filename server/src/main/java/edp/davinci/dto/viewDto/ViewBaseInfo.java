@@ -17,12 +17,15 @@
  *
  */
 
-package edp.davinci.dto.teamDto;
+package edp.davinci.dto.viewDto;
 
 import lombok.Data;
 
 @Data
-public class TeamFullId {
+public class ViewBaseInfo {
     private Long id;
-    private String fullTeamId;
+    private String name;
+    private String description;
+
+    private String sourceName;
 }

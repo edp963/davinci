@@ -20,7 +20,6 @@ package edp.davinci.controller;
 
 
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -100,14 +99,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.getDashboards(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<Dashboard> dashboards = dashboardService.getDashboards(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dashboards));
     }
 
 
@@ -118,24 +111,16 @@ public class DashboardController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get dashboard exclude teams")
-    @GetMapping("/dashboard/{id}/exclude/teams")
-    public ResponseEntity getDashboardExcludeTeams(@PathVariable Long id,
+    @ApiOperation(value = "get dashboard exclude roles")
+    @GetMapping("/dashboard/{id}/exclude/roles")
+    public ResponseEntity getDashboardExcludeRoles(@PathVariable Long id,
                                                    HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            List<Long> excludeTeams = dashboardService.getExcludeTeams(id);
-            ResultMap resultMap = new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeTeams);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dashboardService.getExcludeRoles(id)));
     }
 
 
@@ -143,27 +128,21 @@ public class DashboardController extends BaseController {
      * 获取Dashboardportal 排除访问的团队列表
      *
      * @param id
+     * @param user
      * @param request
      * @return
      */
-    @ApiOperation(value = "get dashboard portal exclude teams")
-    @GetMapping("/{id}/exclude/teams")
-    public ResponseEntity getPortalExcludeTeams(@PathVariable Long id,
+    @ApiOperation(value = "get dashboard portal exclude roles")
+    @GetMapping("/{id}/exclude/roles")
+    public ResponseEntity getPortalExcludeRoles(@PathVariable Long id,
+                                                @ApiIgnore @CurrentUser User user,
                                                 HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            List<Long> excludeTeams = dashboardPortalService.getExcludeTeams(id);
-            ResultMap resultMap = new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(excludeTeams);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(dashboardPortalService.getExcludeRoles(id)));
     }
 
 
@@ -187,19 +166,14 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        if (invalidId(portalId)) {
+        if (invalidId(dashboardId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid dashboard id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.getDashboardMemWidgets(portalId, dashboardId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        DashboardWithMem dashboardMemWidgets = dashboardService.getDashboardMemWidgets(portalId, dashboardId, user);
+
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dashboardMemWidgets));
     }
 
     /**
@@ -256,14 +230,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardPortalService.updateDashboardPortal(dashboardPortalUpdate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        DashboardPortal dashboardPortal = dashboardPortalService.updateDashboardPortal(dashboardPortalUpdate, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dashboardPortal));
     }
 
 
@@ -286,14 +254,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardPortalService.deleteDashboardPortal(id, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        dashboardPortalService.deleteDashboardPortal(id, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -325,14 +287,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.createDashboard(dashboardCreate, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        Dashboard dashboard = dashboardService.createDashboard(dashboardCreate, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(dashboard));
     }
 
     /**
@@ -365,14 +321,8 @@ public class DashboardController extends BaseController {
             }
         }
 
-        try {
-            ResultMap resultMap = dashboardService.updateDashboards(portalId, dashboards, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        dashboardService.updateDashboards(portalId, dashboards, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -395,14 +345,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.deleteDashboard(dashboardId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        dashboardService.deleteDashboard(dashboardId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -447,14 +391,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.createMemDashboardWidget(portalId, dashboardId, memDashboardWidgetCreates, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<MemDashboardWidget> memDashboardWidget = dashboardService.createMemDashboardWidget(portalId, dashboardId, memDashboardWidgetCreates, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(memDashboardWidget));
     }
 
 
@@ -467,8 +405,9 @@ public class DashboardController extends BaseController {
      * @return
      */
     @ApiOperation(value = "update dashboard widget relation")
-    @PutMapping(value = "/dashboards/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity updateMemDashboardWidget(@Valid @RequestBody MemDashboardWidget[] memDashboardWidgets,
+    @PutMapping(value = "/{portalId}/dashboards/widgets", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity updateMemDashboardWidget(@PathVariable("portalId") Long portalId,
+                                                   @Valid @RequestBody MemDashboardWidget[] memDashboardWidgets,
                                                    @ApiIgnore BindingResult bindingResult,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
@@ -499,14 +438,8 @@ public class DashboardController extends BaseController {
             }
         }
 
-        try {
-            ResultMap resultMap = dashboardService.updateMemDashboardWidgets(memDashboardWidgets, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        dashboardService.updateMemDashboardWidgets(portalId, user, memDashboardWidgets);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -523,14 +456,8 @@ public class DashboardController extends BaseController {
     public ResponseEntity deleteMemDashboardWidget(@PathVariable Long relationId,
                                                    @ApiIgnore @CurrentUser User user,
                                                    HttpServletRequest request) {
-        try {
-            ResultMap resultMap = dashboardService.deleteMemDashboardWidget(relationId, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        dashboardService.deleteMemDashboardWidget(relationId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
 
 
@@ -555,14 +482,8 @@ public class DashboardController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = dashboardService.shareDashboard(dashboardId, username, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        String shareToken = dashboardService.shareDashboard(dashboardId, username, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareToken));
     }
 
 }

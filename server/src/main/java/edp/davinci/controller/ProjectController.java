@@ -87,8 +87,24 @@ public class ProjectController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<RoleWithProjectPermission> list = roleService.getRolesByProjectId(id, user);
+        List<RoleBaseInfo> list = roleService.getRolesByProjectId(id, user);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(list));
+    }
+
+
+    @ApiOperation(value = "get roles where proejct is located")
+    @GetMapping("/{id}/roles/{roleId}")
+    public ResponseEntity getRoleOfProject(@ApiIgnore @CurrentUser User user,
+                                            @PathVariable Long id,
+                                            @PathVariable Long roleId,
+                                            HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        RoleWithProjectPermission permission = roleService.getRoleByProject(id, roleId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(permission));
     }
 
 

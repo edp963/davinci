@@ -19,6 +19,7 @@ file:
   web_resources: ${DAVINCI3_HOME}/davinci-ui/
   phantomJs-path: ${DAVINCI3_HOME}/bin/phantom.js
 
+
 spring:
   servlet:
       multipart:
@@ -101,7 +102,3 @@ mapper:
 sql_template_delimiter: $
 
 custom-datasource-driver-path: ${DAVINCI3_HOME}/config/datasource_driver.yml
-
-
-
-

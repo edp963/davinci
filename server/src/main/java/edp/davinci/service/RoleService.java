@@ -143,27 +143,29 @@ public interface RoleService {
     /**
      * 删除Role与Project关联
      *
-     * @param relationId
+     * @param roleId
+     * @param projectId
      * @param user
      * @return
      * @throws ServerException
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    boolean deleteProject(Long relationId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean deleteProject(Long roleId, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
     /**
      * 修改Role与Project关联信息
      *
-     * @param relationId
-     * @param projectRoleDto
+     * @param roleId
+     * @param projectId
      * @param user
+     * @param projectRoleDto
      * @return
      * @throws ServerException
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    boolean updateProjectRole(Long relationId, RelRoleProjectDto projectRoleDto, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    boolean updateProjectRole(Long roleId, Long projectId, User user, RelRoleProjectDto projectRoleDto) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
 
     /**
@@ -188,6 +190,7 @@ public interface RoleService {
      * @throws UnAuthorizedExecption
      * @throws NotFoundException
      */
-    List<RoleWithProjectPermission> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
+    List<RoleBaseInfo> getRolesByProjectId(Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException;
 
+    RoleWithProjectPermission getRoleByProject(Long projectId, Long roleId, User user);
 }

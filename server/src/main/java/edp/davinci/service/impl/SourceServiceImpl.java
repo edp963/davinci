@@ -62,14 +62,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 
 @Slf4j
 @Service("sourceService")
-public class SourceServiceImpl extends CommonService<Source> implements SourceService {
+public class SourceServiceImpl extends CommonService implements SourceService {
 
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
@@ -118,11 +116,9 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         List<Source> sources = sourceMapper.getByProject(projectId);
 
         if (null != sources && sources.size() > 0) {
-            if (!isMaintainer(projectDetail, user)) {
-                ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-                if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-                    sources = null;
-                }
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                sources = null;
             }
         }
         return sources;
@@ -430,12 +426,10 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         }
 
         if (null != tableList) {
-            if (!isMaintainer(projectDetail, user)) {
-                ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-                if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-                    log.info("user (:{}) have not permission to get source(:{}) tables", user.getId(), source.getId());
-                    tableList = null;
-                }
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) tables", user.getId(), source.getId());
+                tableList = null;
             }
         }
 
@@ -470,15 +464,13 @@ public class SourceServiceImpl extends CommonService<Source> implements SourceSe
         }
 
         if (null != tableInfoList) {
-            if (!isMaintainer(projectDetail, user)) {
-                ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
-                if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
-                    log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(), source.getId());
-                    tableInfoList = null;
-                }
-
-                //TODO 列权限计算
+            ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+            if (projectPermission.getSourcePermission() == UserPermissionEnum.HIDDEN.getPermission()) {
+                log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(), source.getId());
+                tableInfoList = null;
             }
+
+            //TODO 列权限计算
         }
 
 

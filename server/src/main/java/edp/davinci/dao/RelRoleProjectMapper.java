@@ -1,9 +1,9 @@
 package edp.davinci.dao;
 
 import edp.davinci.dto.projectDto.UserMaxProjectPermission;
+import edp.davinci.dto.roleDto.RoleBaseInfo;
 import edp.davinci.dto.roleDto.RoleWithProjectPermission;
 import edp.davinci.model.RelRoleProject;
-import edp.davinci.model.RelRoleUser;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -69,6 +69,16 @@ public interface RelRoleProjectMapper {
     @Select({
             "select r.id,",
             "       r.name,",
+            "       r.description",
+            "from role r",
+            "       left join rel_role_project rrp on rrp.role_id = r.id",
+            "where rrp.project_id = #{projectId}",
+    })
+    List<RoleBaseInfo> getRoleBaseInfoByProject(Long projectId);
+
+    @Select({
+            "select r.id,",
+            "       r.name,",
             "       r.description,",
             "       rrp.source_permission   as 'permission.sourcePermission',",
             "       rrp.view_permission     as 'permission.viewPermission',",
@@ -79,7 +89,12 @@ public interface RelRoleProjectMapper {
             "       rrp.download_permission as 'downloadPermission'",
             "from role r",
             "       left join rel_role_project rrp on rrp.role_id = r.id",
-            "where rrp.project_id = #{projectId}",
+            "where rrp.project_id = #{projectId} and rrp.role_id = #{roleId}",
     })
-    List<RoleWithProjectPermission> getRoleWithProjectPermissionByProject(Long projectId);
+    RoleWithProjectPermission getPermission(@Param("projectId") Long projectId, @Param("roleId") Long roleId);
+
+    @Delete({
+            "delete from rel_role_project where role_id = #{roleId} and project_id = #{projectId}"
+    })
+    int deleteByRoleAndProject(@Param("roleId") Long roleId, @Param("projectId") Long projectId);
 }

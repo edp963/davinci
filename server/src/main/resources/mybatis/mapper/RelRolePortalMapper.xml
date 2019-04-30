@@ -6,14 +6,14 @@
         <trim prefix="(" suffix=")" suffixOverrides=",">
             role_id,
             portal_id,
-            visiable,
+            visible,
             create_by,
             create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             #{roleId,jdbcType=BIGINT},
             #{portalId,jdbcType=BIGINT},
-            #{visiable,jdbcType=TINYINT},
+            #{visible,jdbcType=TINYINT},
             #{createBy,jdbcType=BIGINT},
             #{createTime,jdbcType=TIMESTAMP}
         </trim>
@@ -22,13 +22,13 @@
 
     <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
         replace into rel_role_portal
-        (`role_id`, `portal_id`, `visiable`, `create_by`, `create_time`)
+        (`role_id`, `portal_id`, `visible`, `create_by`, `create_time`)
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
             #{record.roleId,jdbcType=BIGINT},
             #{record.portalId,jdbcType=BIGINT},
-            #{record.visiable,jdbcType=TINYINT},
+            #{record.visible,jdbcType=TINYINT},
             #{record.createBy,jdbcType=BIGINT},
             #{record.createTime,jdbcType=TIMESTAMP}
             )

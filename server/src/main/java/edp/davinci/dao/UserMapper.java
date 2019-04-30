@@ -18,7 +18,6 @@
 
 package edp.davinci.dao;
 
-import edp.davinci.dto.teamDto.TeamUserBaseInfo;
 import edp.davinci.dto.userDto.UserBaseInfo;
 import edp.davinci.model.User;
 import org.apache.ibatis.annotations.Param;
@@ -63,12 +62,6 @@ public interface UserMapper {
 
     @Update({"update `user` set password = #{password}, update_time = #{updateTime}  where id = #{id}"})
     int changePassword(User user);
-
-    @Select({
-            "SELECT u.id, u.username, u.avatar, t.id as 'teamId' FROM `user` u, rel_user_team rut, team t",
-            "WHERE u.id = rut.user_id AND rut.team_id = t.id AND t.org_id = #{orgId}"
-    })
-    List<TeamUserBaseInfo> getUsersByTeamOrgId(Long orgId);
 
     List<User> getByIds(@Param("userIds") List<Long> userIds);
 }

@@ -20,6 +20,7 @@ package edp.davinci.model;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.annotation.JSONField;
 import edp.davinci.common.model.RecordInfo;
 import lombok.Data;
 
@@ -61,6 +62,7 @@ public class View extends RecordInfo<View> {
     }
 
 
+    @JSONField(serialize = false)
     public List<SqlVariable> getVariables() {
         if (StringUtils.isEmpty(variable) || StringUtils.isEmpty(sql)) {
             return null;
