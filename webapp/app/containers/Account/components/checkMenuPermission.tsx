@@ -1,6 +1,6 @@
 import * as React from 'react'
 import {IOrganization} from '../../Organizations/Organization'
-import {IProject} from '../../Projects'
+import {IProject} from '../../Organizations/containers/Projects'
 
 interface IModulePermissionProps {
   size?: string

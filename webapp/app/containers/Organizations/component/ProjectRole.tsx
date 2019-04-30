@@ -22,7 +22,7 @@ import * as React from 'react'
 import { compose } from 'redux'
 import { connect } from 'react-redux'
 import * as classnames from 'classnames'
-import { Icon, Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form } from 'antd'
+import { Icon, Button, Row, Col, Input, Tooltip, Popconfirm, Table, Modal, Form, Divider } from 'antd'
 const FormItem = Form.Item
 const InputGroup = Input.Group
 import Avatar from '../../../components/Avatar/index'
@@ -33,7 +33,7 @@ import { loadOrganizationRole, loadProjectRoles } from '../actions'
 const styles = require('../containers/Projects/Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
-import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject} from '../containers/Projects/actions'
+import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../containers/Projects/actions'
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles } from '../selectors'
 import { makeSelectCurrentProjectRole} from '../containers/Projects/selectors'
 
@@ -50,12 +50,18 @@ interface IRoleProps {
   projectRoles: any[]
   projectDetail: any
   organizationRoles: any[]
-  currentProjectRole: any[]
+  currentProjectRole: {
+    id: number
+    description: string
+    name: string
+    permission: object
+  }
   onLoadOrganizationRole: (id: number) => any
   onLoadProjectRoles: (id: number) => any
   onAddProjectRole: (id: number, roleIds: number[], resolve: () => any) => any
   onLoadRelRoleProject: (id: number, roleId: number) => any,
-  onUpdateRelRoleProject: (relationId: number, projectRole: object) => any
+  onUpdateRelRoleProject: (roleId: number, projectId: number, projectRole: object) => any
+  onDeleteRelRoleProject: (roleId: number, projectId: number, resolve?: () => any) => () => any
 }
 
 export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
@@ -141,17 +147,16 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
   }
 
   private changePermission = (record, event) => {
-    // const value = event.target.value
-    // const [ keys ] = Object.keys(record)
-    // const { onUpdateRelRoleProject, currentProjectRole} = this.props
-    // onUpdateRelRoleProject(currentProjectRole.id, {
-    //   ...currentProjectRole.permission,
-      
-    // })
+    const { user } = record
+    const { onUpdateRelRoleProject, currentProjectRole, projectDetail} = this.props
+    onUpdateRelRoleProject(currentProjectRole.id, projectDetail.id, {
+      ...currentProjectRole.permission,
+      [`${user}Permission`] : event.target.value
+    })
   }
 
   public render () {
-    const { organizationRoles } = this.props
+    const { organizationRoles, projectDetail } = this.props
     const { projectRoles } = this.state
     const roles = projectRoles && projectRoles.length ? projectRoles : []
     const addButton =  (
@@ -195,6 +200,16 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
             return (
               <span>
                 <a href="javascript:;" onClick={this.toggleModal('authSettingVisible', record.id)}>权限设置</a>
+                <Divider type="vertical" />
+                <Popconfirm
+                  title="确定删除？"
+                  placement="bottom"
+                  onConfirm={this.props.onDeleteRelRoleProject(record.id, projectDetail.id, () => this.loadProjectRoles())}
+                >
+                  <Tooltip title="删除">
+                   <a href="javascript:;">删除角色</a>
+                  </Tooltip>
+                </Popconfirm>
               </span>
             )
           }
@@ -275,7 +290,8 @@ export function mapDispatchToProps (dispatch) {
      onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id)),
      onAddProjectRole: (id, roleIds, resolve) => dispatch(addProjectRole(id, roleIds, resolve)),
      onLoadRelRoleProject: (id, roleId) => dispatch(loadRelRoleProject(id, roleId)),
-     onUpdateRelRoleProject: (relationId, projectRole) => dispatch(updateRelRoleProject(relationId, projectRole))
+     onUpdateRelRoleProject: (roleId, projectId, projectRole) => dispatch(updateRelRoleProject(roleId, projectId, projectRole)),
+     onDeleteRelRoleProject: (roleId, projectId, resolve) => () => dispatch(deleteRelRoleProject(roleId, projectId, resolve))
   }
 }
 

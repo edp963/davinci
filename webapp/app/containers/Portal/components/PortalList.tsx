@@ -8,7 +8,7 @@ const styles = require('../Portal.less')
 
 import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import { IProject } from '../../Projects'
+import { IProject } from '../../Organizations/containers/Projects'
 import { IPortal } from '../../Portal'
 import { toListBF } from '../../Bizlogic/components/viewUtil'
 
@@ -123,11 +123,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
             resolve(teams)
           })
         }).then((teams) => {
-          onLoadSelectTeams('portal', portal.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
-            })
-          })
+          // onLoadSelectTeams('portal', portal.id, (result) => {
+          //   this.setState({
+          //     checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
+          //   })
+          // })
         })
       } else if (formType === 'add') {
         onLoadViewTeam(projectId, (result) => {

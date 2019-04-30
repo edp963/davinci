@@ -70,7 +70,10 @@ import {
   UPDATE_RELATION_ROLE_PROJECT_FAIL,
   LOAD_RELATION_ROLE_PROJECT,
   RELATION_ROLE_PROJECT_LOADED,
-  LOAD_RELATION_ROLE_PROJECT_FAIL
+  LOAD_RELATION_ROLE_PROJECT_FAIL,
+  DELETE_RELATION_ROLE_PROJECT,
+  DELETE_RELATION_ROLE_PROJECT_FAIL,
+  DELETE_RELATION_ROLE_PROJECT_SUCCESS
 } from './constants'
 
 
@@ -443,11 +446,12 @@ export function deleteProjectRoleFail () {
   }
 }
 
-export function updateRelRoleProject (relationId, projectRole) {
+export function updateRelRoleProject (roleId, projectId, projectRole) {
   return {
     type: UPDATE_RELATION_ROLE_PROJECT,
     payload: {
-      relationId,
+      roleId,
+      projectId,
       projectRole
     }
   }
@@ -465,6 +469,32 @@ export function relRoleProjectUpdated (result) {
 export function updateRelRoleProjectFail () {
   return {
     type: UPDATE_RELATION_ROLE_PROJECT_FAIL
+  }
+}
+
+export function deleteRelRoleProject (roleId, projectId, resolve) {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT,
+    payload: {
+      roleId,
+      projectId,
+      resolve
+    }
+  }
+}
+
+export function relRoleProjectDeleted (result) {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT_SUCCESS,
+    payload: {
+      result
+    }
+  }
+}
+
+export function deleteRelRoleProjectFail () {
+  return {
+    type: DELETE_RELATION_ROLE_PROJECT_FAIL
   }
 }
 

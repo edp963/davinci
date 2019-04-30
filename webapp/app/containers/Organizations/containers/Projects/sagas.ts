@@ -35,7 +35,8 @@ import {
   DELETE_PROJECT_ADMIN,
   ADD_PROJECT_ROLE,
   LOAD_RELATION_ROLE_PROJECT,
-  UPDATE_RELATION_ROLE_PROJECT
+  UPDATE_RELATION_ROLE_PROJECT,
+  DELETE_RELATION_ROLE_PROJECT
 } from './constants'
 
 import {
@@ -64,7 +65,9 @@ import {
   relRoleProjectLoaded,
   relRoleProjectUpdated,
   loadRelRoleProjectFail,
-  updateRelRoleProjectFail
+  updateRelRoleProjectFail,
+  relRoleProjectDeleted,
+  deleteRelRoleProjectFail
 } from './actions'
 
 import request from '../../../../utils/request'
@@ -312,16 +315,32 @@ export function* loadRelRoleProject (action) {
 
 export function* updateRelRoleProject (action) {
   try {
-    const {relationId, projectRole} = action
+    const {roleId, projectId, projectRole} = action.payload
     const asyncData = yield call(request, {
-      method: 'get',
-      url: `${api.roles}/project/${relationId}`,
+      method: 'put',
+      url: `${api.roles}/${roleId}/project/${projectId}`,
       data: projectRole
     })
     const result = asyncData.payload
-    yield put(relRoleProjectUpdated(result))
+    yield put(relRoleProjectUpdated(projectRole))
   } catch (err) {
     yield put(updateRelRoleProjectFail())
+    errorHandler(err)
+  }
+}
+
+export function* deleteRelRoleProject (action) {
+  try {
+    const {roleId, projectId, resolve} = action.payload
+    const asyncData = yield call(request, {
+      method: 'delete',
+      url: `${api.roles}/${roleId}/project/${projectId}`
+    })
+    const result = asyncData.payload
+    yield put(relRoleProjectDeleted(result))
+    resolve()
+  } catch (err) {
+    yield put(deleteRelRoleProjectFail())
     errorHandler(err)
   }
 }
@@ -343,6 +362,7 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(ADD_PROJECT_ADMIN, addProjectAdmin as any),
     takeEvery(DELETE_PROJECT_ADMIN, deleteProjectAdmin as any),
     takeEvery(LOAD_RELATION_ROLE_PROJECT, loadRelRoleProject as any),
-    takeEvery(UPDATE_RELATION_ROLE_PROJECT, updateRelRoleProject as any)
+    takeEvery(UPDATE_RELATION_ROLE_PROJECT, updateRelRoleProject as any),
+    takeEvery(DELETE_RELATION_ROLE_PROJECT, deleteRelRoleProject as any)
   ])
 }

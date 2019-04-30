@@ -119,7 +119,7 @@ export class Report extends React.Component<IReportProps, {}> {
       )
     })
 
-    const sidebarComponent = currentProject && currentProject.inTeam
+    const sidebarComponent = currentProject && currentProject.permission
       ? (
         <Sidebar>
           {sidebarOptions}

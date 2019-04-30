@@ -64,16 +64,16 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
       })
   }
 
-  private renderTreeNodes = (data) => data.map((item) => {
-    if (item.children) {
-      return (
-        <TreeNode title={item.title} key={item.key} dataRef={item}>
-          {this.renderTreeNodes(item.children)}
-        </TreeNode>
-      )
-    }
-    return <TreeNode {...item} key={item.key} />
-  })
+  // private renderTreeNodes = (data) => data.map((item) => {
+  //   if (item.children) {
+  //     return (
+  //       <TreeNode title={item.title} key={item.key} dataRef={item}>
+  //         {this.renderTreeNodes(item.children)}
+  //       </TreeNode>
+  //     )
+  //   }
+  //   return <TreeNode {...item} key={item.key} />
+  // })
 
   public render () {
     const {
@@ -106,46 +106,43 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
                 <Input />
               )}
             </FormItem>
-            <Tabs defaultActiveKey="infomation">
+            <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
+              {getFieldDecorator('name', {
+                rules: [{
+                  required: true,
+                  message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
+                }]
+              })(
+                <Input placeholder="Name" />
+              )}
+            </FormItem>
+            <FormItem label="描述" {...commonFormItemStyle}>
+              {getFieldDecorator('description', {
+                initialValue: ''
+              })(
+                <TextArea
+                  placeholder="Description"
+                  autosize={{minRows: 2, maxRows: 6}}
+                />
+              )}
+            </FormItem>
+            <FormItem label="是否发布" {...commonFormItemStyle}>
+              {getFieldDecorator('publish', {
+                initialValue: true
+              })(
+                <RadioGroup>
+                  <Radio value>发布</Radio>
+                  <Radio value={false}>编辑</Radio>
+                </RadioGroup>
+              )}
+            </FormItem>
+            {/* <Tabs defaultActiveKey="infomation">
               <TabPane tab="基本信息" key="infomation">
-              <Col span={24}>
-                <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
-                  {getFieldDecorator('name', {
-                    rules: [{
-                      required: true,
-                      message: 'Name 不能为空'
-                    }, {
-                      validator: this.checkNameUnique
-                    }]
-                  })(
-                    <Input placeholder="Name" />
-                  )}
-                </FormItem>
-              </Col>
-              <Col span={24}>
-                <FormItem label="描述" {...commonFormItemStyle}>
-                  {getFieldDecorator('description', {
-                    initialValue: ''
-                  })(
-                    <TextArea
-                      placeholder="Description"
-                      autosize={{minRows: 2, maxRows: 6}}
-                    />
-                  )}
-                </FormItem>
-              </Col>
-              <Col span={24}>
-                <FormItem label="是否发布" {...commonFormItemStyle}>
-                  {getFieldDecorator('publish', {
-                    initialValue: true
-                  })(
-                    <RadioGroup>
-                      <Radio value>发布</Radio>
-                      <Radio value={false}>编辑</Radio>
-                    </RadioGroup>
-                  )}
-                </FormItem>
-              </Col>
+                <Col span={24}></Col>
+                <Col span={24}></Col>
+                <Col span={24}></Col>
               </TabPane>
               <TabPane tab="权限管理" key="control" className={styles.controlTab}>
               <AuthControl
@@ -154,7 +151,7 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
                 viewTeam={viewTeam}
               />
               </TabPane>
-            </Tabs>
+            </Tabs> */}
           </Col>
         </Row>
       </Form>
