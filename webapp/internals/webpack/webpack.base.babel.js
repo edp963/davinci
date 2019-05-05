@@ -165,6 +165,7 @@ module.exports = options => ({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.react.js'],
     mainFields: ['browser', 'jsnext:main', 'main'],
     alias: {
+      app: path.resolve(process.cwd(), 'app'),
       libs: path.resolve(process.cwd(), 'libs'),
       assets: path.resolve(process.cwd(), 'app/assets')
       // fonts: path.resolve(process.cwd(), 'app/assets/fonts')
