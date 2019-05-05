@@ -21,10 +21,10 @@
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
-import { IView, IExecuteSqlParams } from './types'
+import { IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse } from './types'
 
 export const ViewActions = {
-  viewsLoaded (views: IView[]) {
+  viewsLoaded (views: IViewBase[]) {
     return {
       type: ActionTypes.LOAD_VIEWS_SUCCESS,
       payload: {
@@ -32,7 +32,7 @@ export const ViewActions = {
       }
     }
   },
-  loadViews (projectId: number, resolve: (views: IView[]) => void) {
+  loadViews (projectId: number, resolve?: (views: IViewBase[]) => void) {
     return {
       type: ActionTypes.LOAD_VIEWS,
       payload: {
@@ -44,6 +44,29 @@ export const ViewActions = {
   loadViewsFail () {
     return {
       type: ActionTypes.LOAD_VIEWS_FAILURE,
+      payload: {}
+    }
+  },
+
+  viewDetailLoaded (view: IView) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DETAIL_SUCCESS,
+      payload: {
+        view
+      }
+    }
+  },
+  loadViewDetail (viewId: number) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DETAIL,
+      payload: {
+        viewId
+      }
+    }
+  },
+  loadViewDetailFail () {
+    return {
+      type: ActionTypes.LOAD_VIEW_DETAIL_FAILURE,
       payload: {}
     }
   },
@@ -96,11 +119,12 @@ export const ViewActions = {
     }
   },
 
-  deleteView (id: number) {
+  deleteView (id: number, resolve: (id: number) => void) {
     return {
       type: ActionTypes.DELETE_VIEW,
       payload: {
-        id
+        id,
+        resolve
       }
     }
   },
@@ -127,7 +151,7 @@ export const ViewActions = {
       }
     }
   },
-  sqlExecuted (result: any[]) {
+  sqlExecuted (result: IDavinciResponse<IExecuteSqlResponse>) {
     return {
       type: ActionTypes.EXECUTE_SQL_SUCCESS,
       payload: {
@@ -135,12 +159,28 @@ export const ViewActions = {
       }
     }
   },
-  executeSqlFail (err: IDavinciResponse) {
+  executeSqlFail (err: IDavinciResponse<any>['header']) {
     return {
       type: ActionTypes.EXECUTE_SQL_FAILURE,
       payload: {
         err
       }
+    }
+  },
+
+  setSqlLimit (limit: number) {
+    return {
+      type: ActionTypes.SET_SQL_LIMIT,
+      payload: {
+        limit
+      }
+    }
+  },
+
+  resetViewState () {
+    return {
+      type: ActionTypes.RESET_VIEW_STATE,
+      payload: {}
     }
   }
 }

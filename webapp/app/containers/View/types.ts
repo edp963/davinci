@@ -22,15 +22,22 @@ import { SqlTypes } from 'app/globalConstants'
 import { IPersistSource, ISourceTable, IMapTableColumns } from 'containers/Source/types'
 import { ViewModelTypes, ViewModelVisualTypes, ViewVariableTypes, ViewVariableValueTypes } from './constants'
 
-export interface IView {
+export interface IViewBase {
   id: number
   name: string
+  description: string
+  sourceName: string
+}
+
+type IViewTemp = Omit<IViewBase, 'sourceName'>
+
+export interface IView extends IViewTemp {
   sql: string
   model: string
+  variable: string
   config: string
-  description: string
   projectId: number
-  source: IPersistSource
+  source?: IPersistSource
   sourceId: number
 }
 
@@ -40,6 +47,7 @@ export interface ISqlValidation {
 }
 
 export interface IViewLoading {
+  view: boolean
   table: boolean
   modal: boolean
   execute: boolean
@@ -48,9 +56,13 @@ export interface IViewLoading {
 export interface IExecuteSqlParams {
   sourceId: number
   sql: string
-  pageNo: number
-  pageSize: number
   limit: number
+}
+
+export interface IExecuteSqlResponse {
+  columns: Array<{ name: string, type: SqlTypes }>
+  totalCount: number
+  resultList: Array<{[key: string]: string | number}>
 }
 
 export interface IViewModel {
@@ -68,11 +80,20 @@ export interface IViewVariable {
   fromService: boolean
 }
 
+export interface IViewInfo {
+  model: IViewModel[]
+  variable: IViewVariable[]
+}
+
 export interface IViewState {
-  views: IView[]
+  views: IViewBase[]
+  editingView: IView
+  editingViewInfo: IViewInfo
   sources: IPersistSource[]
   tables: ISourceTable[]
   mapTableColumns: IMapTableColumns
   sqlValidation: ISqlValidation
+  sqlDataSource: IExecuteSqlResponse
+  sqlLimit: number
   loading: IViewLoading
 }

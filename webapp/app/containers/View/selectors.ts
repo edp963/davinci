@@ -28,6 +28,16 @@ const makeSelectViews = () => createSelector(
   (viewState: ViewStateType) => viewState.get('views')
 )
 
+const makeSelectEditingView = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('editingView')
+)
+
+const makeSelectEditingViewInfo = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('editingViewInfo')
+)
+
 const makeSelectSources = () => createSelector(
   selectView,
   (viewState: ViewStateType) => viewState.get('sources')
@@ -43,10 +53,36 @@ const makeSelectMapTableColumns = () => createSelector(
   (viewState: ViewStateType) => viewState.get('mapTableColumns')
 )
 
+const makeSelectSqlValidation = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('sqlValidation')
+)
+
+const makeSelectSqlDataSource = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('sqlDataSource')
+)
+
+const makeSelectSqlLimit = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('sqlLimit')
+)
+
+const makeSelectLoading = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('loading')
+)
+
 export {
   selectView,
   makeSelectViews,
+  makeSelectEditingView,
+  makeSelectEditingViewInfo,
   makeSelectSources,
   makeSelectSourceTables,
-  makeSelectMapTableColumns
+  makeSelectMapTableColumns,
+  makeSelectSqlValidation,
+  makeSelectSqlDataSource,
+  makeSelectSqlLimit,
+  makeSelectLoading
 }

@@ -18,7 +18,7 @@
  * >>
  */
 
-import { call, put, all, takeLatest } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { ViewActions, ViewActionType } from './actions'
 
@@ -27,17 +27,16 @@ import request, { IDavinciResponse } from 'utils/request'
 import api from 'utils/api'
 import { errorHandler } from 'utils/util'
 
-import { IView } from './types'
+import { IViewBase, IView, IExecuteSqlResponse } from './types'
 
 export function* getViews (action: ViewActionType) {
   if (action.type !== ActionTypes.LOAD_VIEWS) { return }
   const { payload } = action
   const { viewsLoaded, loadViewsFail } = ViewActions
-  let views: IView[]
+  let views: IViewBase[]
   try {
     const asyncData = yield call(request, `${api.view}?projectId=${payload.projectId}`)
     views = asyncData.payload
-    put.resolve(viewsLoaded(views))
     yield put(viewsLoaded(views))
   } catch (err) {
     yield put(loadViewsFail())
@@ -46,6 +45,20 @@ export function* getViews (action: ViewActionType) {
     if (payload.resolve) {
       payload.resolve(views)
     }
+  }
+}
+
+export function* getViewDetail (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_VIEW_DETAIL) { return }
+  const { payload } = action
+  const { viewDetailLoaded, loadViewDetailFail } = ViewActions
+  try {
+    const asyncData = yield call(request, `${api.view}/${payload.viewId}`)
+    const view: IView = asyncData.payload
+    yield put(viewDetailLoaded(view))
+  } catch (err) {
+    yield put(loadViewDetailFail())
+    errorHandler(err)
   }
 }
 
@@ -95,6 +108,7 @@ export function* deleteView (action: ViewActionType) {
       url: `${api.view}/${payload.id}`
     })
     yield put(viewDeleted(payload.id))
+    payload.resolve(payload.id)
   } catch (err) {
     yield put(deleteViewFail())
     errorHandler(err)
@@ -106,22 +120,27 @@ export function* executeSql (action: ViewActionType) {
   const { params } = action.payload
   const { sqlExecuted, executeSqlFail } = ViewActions
   try {
-    const asyncData = yield call<AxiosRequestConfig>(request, {
+    const asyncData: IDavinciResponse<IExecuteSqlResponse> = yield call<AxiosRequestConfig>(request, {
       method: 'post',
       url: `${api.view}/executesql`,
       data: params
     })
-    yield put(sqlExecuted(asyncData.payload))
+    yield put(sqlExecuted(asyncData))
   } catch (err) {
     const { response } = err as AxiosError
-    const { data } = response as AxiosResponse<IDavinciResponse>
-    yield put(executeSqlFail(data))
+    const { data } = response as AxiosResponse<IDavinciResponse<any>>
+    yield put(executeSqlFail(data.header))
   }
 
 }
 
 export default function* rootViewSaga () {
   yield all([
-    takeLatest(ActionTypes.LOAD_VIEWS, getViews)
+    takeLatest(ActionTypes.LOAD_VIEWS, getViews),
+    takeEvery(ActionTypes.LOAD_VIEW_DETAIL, getViewDetail),
+    takeLatest(ActionTypes.ADD_VIEW, addView),
+    takeEvery(ActionTypes.EDIT_VIEW, editView),
+    takeEvery(ActionTypes.DELETE_VIEW, deleteView),
+    takeLatest(ActionTypes.EXECUTE_SQL, executeSql)
   ])
 }

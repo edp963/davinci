@@ -56,6 +56,7 @@
 
   .right {
     border-bottom: 1px solid @border-color-base;
+    margin-bottom: -1px;
     box-sizing: content-box;
     user-select: none;
     flex-shrink: 0;
@@ -90,12 +91,8 @@
   }
 
   .preview {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    flex-grow: 0;
     padding: 0 16px;
-    overflow-y: auto;
+    overflow: auto;
   }
 
   .bottom {
@@ -103,7 +100,7 @@
     border-left: none;
     padding: 16px;
 
-    span {
+    .previewInput span {
       display: inline-block;
       padding: 0 8px;
     }
@@ -116,6 +113,10 @@
       text-align: right;
 
       button + button {
+        margin-left: 16px;
+      }
+
+      > span {
         margin-left: 16px;
       }
     }
@@ -139,13 +140,16 @@
     flex: 1;
     padding: 0 16px;
     margin-bottom: 16px;
-    overflow-y: auto;
-    display: flex;
+    position: relative;
 
     > ul {
-      overflow-x: auto;
+      overflow: auto;
       user-select: none;
-      flex: 1;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 16px;
+      right: 16px;
     }
   }
 }
@@ -183,5 +187,16 @@
 
   .variableItem {
     padding: 0 16px;
+  }
+}
+
+.sqlPreview {
+  background: #f7f7f7;
+  padding-top: 1px;
+}
+
+.modelAuth {
+  .tableControl {
+    width: 160px;
   }
 }

@@ -1,21 +1,43 @@
 import React from 'react'
+import classnames from 'classnames'
 import memoizeOne from 'memoize-one'
 import { Table, Tabs, Radio, Select, Row, Col, Button } from 'antd'
+const { Column } = Table
 const { TabPane } = Tabs
 const RadioGroup = Radio.Group
 const { Option } = Select
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ColumnProps } from 'antd/lib/table'
 
-import { IViewVariable, IViewModel } from '../types'
-import { ViewModelTypes, ViewModelVisualTypes, ViewModelTypesLocale, ViewModelVisualTypesLocale } from '../constants'
+import { IViewVariable, IViewModel, IExecuteSqlResponse } from '../types'
+import {
+  ViewModelTypes,
+  ViewModelVisualTypes,
+  ViewModelTypesLocale,
+  ModelTypeSqlTypeSetting,
+  ViewModelVisualTypesLocale,
+  VisualTypeSqlTypeSetting
+} from '../constants'
 
 import Styles from '../View.less'
+import { SqlTypes } from 'app/globalConstants'
+
+function getMapKeyByValue (value: SqlTypes, map: typeof VisualTypeSqlTypeSetting | typeof ModelTypeSqlTypeSetting) {
+  let result
+  Object.entries(map).some(([key, values]) => {
+    if (values.includes(value)) {
+      result = key
+      return true
+    }
+  })
+  return result
+}
 
 interface IModelAuthProps {
-  models: IViewModel[]
-  variables: IViewVariable[]
-  onModelChange: (model: IViewModel) => void
+  model: IViewModel[]
+  variable: IViewVariable[]
+  sqlColumns: IExecuteSqlResponse['columns']
+  onModelChange: (model: IViewModel[], replace: boolean) => void
   onStepChange: (stepChange: number) => void
 }
 
@@ -36,36 +58,49 @@ export class ModelAuth extends React.Component<IModelAuthProps> {
       ...record,
       [key]: value
     }
-    this.props.onModelChange(model)
+    this.props.onModelChange([model], false)
   }
 
   private stepChange = (step: number) => () => {
     this.props.onStepChange(step)
   }
 
-  private getModelTableColumns = memoizeOne((models: IViewModel[]) => {
-    const columns: Array<ColumnProps<IViewModel>> = [{
-      title: '字段名称',
-      dataIndex: 'name'
-    }, {
-      title: '数据类型',
-      dataIndex: 'modelType',
-      render: (text: string, record) => (
-        <RadioGroup
-          options={this.modelTypeOptions}
-          value={text}
-          onChange={this.modelChange(record, 'modelType')}
-        />
-      )
-    }, {
-      title: '可视化类型',
-      dataIndex: 'visualType',
-      render: (text: string, record) => (
-        <Select onChange={this.modelChange(record, 'visualType')}>{this.visualTypeOptions}</Select>
-      )
-    }]
-    return columns
-  })
+  private getValidModel = memoizeOne(
+    (model: IViewModel[], sqlColumns: IExecuteSqlResponse['columns'], onModelChange: IModelAuthProps['onModelChange']) => {
+      if (!Array.isArray(sqlColumns)) { return [] }
+
+      let needNotify = false
+      const validModel = sqlColumns.map<IViewModel>((column) => {
+        const { name: columnName, type: columnType } = column
+        const modelItem = model.find((m) => m.name === columnName)
+        if (!modelItem) {
+          needNotify = true
+          return {
+            name: columnName,
+            sqlType: columnType,
+            visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting),
+            modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
+          }
+        } else {
+          const item = { ...modelItem }
+          // @TODO verify modelType & visualType are valid by the sqlType or not
+          // if (!VisualTypeSqlTypeSetting[item.visualType].includes(columnType)) {
+          //   needNotify = true
+          //   item.visualType = getMapKeyByValue(columnType, VisualTypeSqlTypeSetting)
+          // }
+          // if (!ModelTypeSqlTypeSetting[item.modelType].includes(columnType)) {
+          //   needNotify = true
+          //   item.modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
+          // }
+          return item
+        }
+      })
+      if (needNotify) {
+        onModelChange(validModel, true)
+      }
+
+      return validModel
+    })
 
   private getAuthTableColumns = memoizeOne((variables: IViewVariable[]) => {
     const columns: Array<ColumnProps<any>> = variables.map((variable) => ({
@@ -80,27 +115,48 @@ export class ModelAuth extends React.Component<IModelAuthProps> {
     return columns
   })
 
-  public render () {
-    const { models, variables } = this.props
-    const modelColumns = this.getModelTableColumns(models)
-    const authColumns = this.getAuthTableColumns(variables)
+  private renderColumnModelType = (text: string, record) => (
+    <RadioGroup
+      options={this.modelTypeOptions}
+      value={text}
+      onChange={this.modelChange(record, 'modelType')}
+    />
+  )
 
+  private renderColumnVisualType = (text: string, record) => (
+    <Select
+      className={Styles.tableControl}
+      value={text}
+      onChange={this.modelChange(record, 'visualType')}
+    >
+      {this.visualTypeOptions}
+    </Select>
+  )
+
+  public render () {
+    const { model, variable, sqlColumns, onModelChange } = this.props
+    const validModel = this.getValidModel(model, sqlColumns, onModelChange)
+    const authColumns = this.getAuthTableColumns(variable)
+    const styleCls = classnames({
+      [Styles.containerHorizontal]: true,
+      [Styles.modelAuth]: true
+    })
     return (
-      <div className={Styles.containerHorizontal}>
+      <div className={styleCls}>
         <div className={Styles.containerHorizontal}>
           <Tabs defaultActiveKey="model">
             <TabPane tab="Model" key="model">
-              <Table
-                bordered
-                columns={modelColumns}
-                dataSource={models}
-              />
+              <Table bordered pagination={false} rowKey="name" dataSource={validModel}>
+                <Column title="字段名称" dataIndex="name" />
+                <Column title="数据类型" dataIndex="modelType" render={this.renderColumnModelType} />
+                <Column title="可视化类型" dataIndex="visualType" render={this.renderColumnVisualType} />
+              </Table>
             </TabPane>
             <TabPane tab="Auth" key="auth">
               <Table
                 bordered
                 columns={authColumns}
-                dataSource={variables}
+                dataSource={variable}
               />
             </TabPane>
           </Tabs>

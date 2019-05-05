@@ -33,7 +33,7 @@ import reducer, { ViewStateType } from './reducer'
 import sagas from './sagas'
 
 import { ViewActions, ViewActionType } from './actions'
-import { makeSelectViews } from './selectors'
+import { makeSelectViews, makeSelectLoading } from './selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import ModulePermission from '../Account/components/checkModulePermission'
@@ -49,50 +49,48 @@ import SearchFilterDropdown from 'components/SearchFilterDropdown'
 
 
 import { IRouteParams } from 'app/routes'
-import { IView } from './types'
+import { IViewBase, IView, IViewLoading } from './types'
 import { IProject } from '../Projects'
 
 import utilStyles from 'assets/less/util.less'
 
 interface IViewListStateProps {
-  views: IView[]
+  views: IViewBase[]
   currentProject: IProject
+  loading: IViewLoading
 }
 
 interface IViewListDispatchProps {
-  onLoadViews: (projectId: number, resolve: (views: IView[]) => void) => void
+  onLoadViews: (projectId: number) => void
+  onDeleteView: (viewId: number, resolve: () => void) => void
 }
+
+type IViewListProps = IViewListStateProps & IViewListDispatchProps & RouteComponentProps<{}, IRouteParams>
 
 interface IViewListStates {
   screenWidth: number
-  loadingTable: boolean
   tempFilterViewName: string
   filterViewName: string
   filterDropdownVisible: boolean
-  tableSorter: SorterResult<IView>
+  tableSorter: SorterResult<IViewBase>
 }
 
-export class ViewList extends React.PureComponent<IViewListStateProps & IViewListDispatchProps & RouteComponentProps<{}, IRouteParams>, IViewListStates> {
+export class ViewList extends React.PureComponent<IViewListProps, IViewListStates> {
 
   public state: Readonly<IViewListStates> = {
-    screenWidth: 0,
-    loadingTable: true,
+    screenWidth: document.documentElement.clientWidth,
     tempFilterViewName: '',
     filterViewName: '',
     filterDropdownVisible: false,
     tableSorter: null
   }
 
-  public componentDidMount () {
+  public componentWillMount () {
     const { onLoadViews, params } = this.props
-    if (params.pid) {
-      onLoadViews(params.pid, (views) => {
-        this.setState({
-          loadingTable: !Array.isArray(views)
-        })
-      })
+    const { pid: projectId } = params
+    if (projectId) {
+      onLoadViews(+projectId)
     }
-    this.setScreenWidth()
     window.addEventListener('resize', this.setScreenWidth, false)
   }
 
@@ -104,7 +102,7 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
     this.setState({ screenWidth: document.documentElement.clientWidth })
   }
 
-  private getFilterViews = memoizeOne((viewName: string, views: IView[]) => {
+  private getFilterViews = memoizeOne((viewName: string, views: IViewBase[]) => {
     if (!Array.isArray(views) || !views.length) { return [] }
     const regex = new RegExp(viewName, 'gi')
     const filterViews = views.filter((v) => v.name.match(regex))
@@ -123,7 +121,7 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
     const {} = this.props
     const { tempFilterViewName, filterViewName, filterDropdownVisible, tableSorter } = this.state
 
-    const columns: Array<ColumnProps<IView>> = [{
+    const columns: Array<ColumnProps<IViewBase>> = [{
       title: '名称',
       dataIndex: 'name',
       filterDropdown: (
@@ -184,7 +182,7 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
     return columns
   }
 
-  private tableChange = (_1, _2, sorter: SorterResult<IView>) => {
+  private tableChange = (_1, _2, sorter: SorterResult<IViewBase>) => {
     this.setState({ tableSorter: sorter })
   }
 
@@ -209,20 +207,24 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
 
   private addView = () => {
     const { router, params } = this.props
-    router.push(`/project/${params.pid}/view/-1`)
+    router.push(`/project/${params.pid}/view`)
   }
 
   private editView = (viewId: number) => () => {
-
+    const { router, params } = this.props
+    router.push(`/project/${params.pid}/view/${viewId}`)
   }
 
   private deleteView = (viewId: number) => () => {
-
+    const { onDeleteView, onLoadViews, params: { pid: projectId } } = this.props
+    onDeleteView(viewId, () => {
+      onLoadViews(+projectId)
+    })
   }
 
   public render () {
-    const { currentProject, views } = this.props
-    const { screenWidth, loadingTable, filterViewName } = this.state
+    const { currentProject, views, loading: { view: loadingView } } = this.props
+    const { screenWidth, filterViewName } = this.state
     const { viewPermission, AdminButton, EditButton } = ViewList.getViewPermission(currentProject)
     const tableColumns = this.getTableColumns({ viewPermission, AdminButton, EditButton })
     const tablePagination: PaginationConfig = {
@@ -263,7 +265,7 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
                   <Table
                     bordered
                     rowKey="id"
-                    loading={loadingTable}
+                    loading={loadingView}
                     dataSource={filterViews}
                     columns={tableColumns}
                     pagination={tablePagination}
@@ -281,12 +283,14 @@ export class ViewList extends React.PureComponent<IViewListStateProps & IViewLis
 }
 
 const mapDispatchToProps = (dispatch: Dispatch<ViewActionType>) => ({
-  onLoadViews: (projectId, resolve) => dispatch(ViewActions.loadViews(projectId, resolve))
+  onLoadViews: (projectId) => dispatch(ViewActions.loadViews(projectId)),
+  onDeleteView: (viewId, resolve) => dispatch(ViewActions.deleteView(viewId, resolve))
 })
 
 const mapStateToProps = createStructuredSelector({
   views: makeSelectViews(),
-  currentProject: makeSelectCurrentProject()
+  currentProject: makeSelectCurrentProject(),
+  loading: makeSelectLoading()
 })
 
 const withConnect = connect<IViewListStateProps, IViewListDispatchProps, RouteComponentProps<{}, IRouteParams>>(mapStateToProps, mapDispatchToProps)

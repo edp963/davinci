@@ -191,7 +191,7 @@ export default function createRoutes (store): IExtendedRouteProps[] {
           component: Bizlogic
         },
         {
-          path: '/project/:pid/view/:viewId',
+          path: '/project/:pid/view(/:viewId)',
           name: 'viewEditor',
           component: ViewEditor
         },
@@ -242,6 +242,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
 }
 
 export interface IRouteParams {
-  pid?: number
-  viewId?: number
+  pid?: string
+  viewId?: string
 }

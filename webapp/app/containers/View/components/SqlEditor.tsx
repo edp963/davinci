@@ -19,17 +19,21 @@
  */
 
 import React from 'react'
+import debounce from 'lodash/debounce'
 
 import Styles from '../View.less'
 
 interface ISqlEditorProps {
   // hintItems: string[]
+  value: string
   onSqlChange: (sql: string) => void
 }
 
-export class SqlEditor extends React.Component<ISqlEditorProps> {
+export class SqlEditor extends React.PureComponent<ISqlEditorProps> {
 
-  private sqlEditor = React.createRef<HTMLTextAreaElement>()
+  private sqlEditorContainer = React.createRef<HTMLTextAreaElement>()
+  private sqlEditor
+  private debouncedSqlChange = debounce((val: string) => { this.props.onSqlChange(val) }, 500)
 
   constructor (props) {
     super(props)
@@ -46,11 +50,21 @@ export class SqlEditor extends React.Component<ISqlEditorProps> {
       'codemirror/addon/display/placeholder'
     ], (CodeMirror) => {
       console.log(CodeMirror)
-      this.initEditor(CodeMirror)
+      this.initEditor(CodeMirror, props.value)
     })
   }
 
-  private initEditor = (codeMirror) => {
+  public componentDidUpdate () {
+    if (this.sqlEditor) {
+      const { value } = this.props
+      const localValue = this.sqlEditor.doc.getValue()
+      if (value !== localValue) {
+        this.sqlEditor.doc.setValue(this.props.value)
+      }
+    }
+  }
+
+  private initEditor = (codeMirror, value: string) => {
     const { fromTextArea } = codeMirror
     const config = {
       mode: 'text/x-sql',
@@ -61,12 +75,13 @@ export class SqlEditor extends React.Component<ISqlEditorProps> {
       matchBrackets: true,
       foldGutter: true
     }
-    const editor = fromTextArea(this.sqlEditor.current, config)
-    editor.on('change', (_: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
-      this.props.onSqlChange(_.getDoc().getValue())
+    this.sqlEditor = fromTextArea(this.sqlEditorContainer.current, config)
+    this.sqlEditor.doc.setValue(value)
+    this.sqlEditor.on('change', (_: CodeMirror.Editor, change: CodeMirror.EditorChange) => {
+      this.debouncedSqlChange(_.getDoc().getValue())
     //   if (change.origin )
 
-    //   editor.showHint({
+    //   this.sqlEditor.showHint({
     //     completeSingle: false,
     //     hint: () => ({
     //       from:
@@ -79,7 +94,7 @@ export class SqlEditor extends React.Component<ISqlEditorProps> {
   public render () {
     return (
       <div className={Styles.sqlEditor}>
-        <textarea ref={this.sqlEditor} />
+        <textarea ref={this.sqlEditorContainer} />
       </div>
     )
   }
