@@ -17,6 +17,7 @@
       "*": [
         "*"
       ],
+      "app/*": ["app/*"],
       "utils/*": ["app/utils/*"],
       "assets/*": ["app/assets/*"],
       "components/*": [ "app/components/*" ],
