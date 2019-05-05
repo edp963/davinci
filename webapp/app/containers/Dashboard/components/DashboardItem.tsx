@@ -646,7 +646,9 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
     //   }
     // })
     const {onSelectChartsItems, itemId} = this.props
-    onSelectChartsItems(itemId, 'select', selectedItems)
+    if (onSelectChartsItems) {
+      onSelectChartsItems(itemId, 'select', selectedItems)
+    }
   }
   public render () {
     const {

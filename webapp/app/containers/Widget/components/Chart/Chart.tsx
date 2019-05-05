@@ -59,7 +59,10 @@ export class Chart extends React.PureComponent<IChartProps> {
 
   public collectSelectedItems = (params) => {
     const { data, onSelectChartsItems, selectedChart } = this.props
-    const selectedItems = [...this.props.selectedItems]
+    let selectedItems = []
+    if (this.props.selectedItems && this.props.selectedItems.length) {
+      selectedItems = [...this.props.selectedItems]
+    }
     const { getDataDrillDetail } = this.props
     let dataIndex = params.dataIndex
     if (selectedChart === 4) {
