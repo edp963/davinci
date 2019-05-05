@@ -9,24 +9,24 @@ const { TreeNode } = Tree
 const FormItem = Form.Item
 
 import { ISource, ISourceTable, IMapTableColumns, ISourceColumn, ISourceTableColumns } from 'containers/Source/types'
+import { IView } from '../types'
 import { SQL_DATE_TYPES, SQL_NUMBER_TYPES, SQL_STRING_TYPES } from 'app/globalConstants'
 
 import utilStyles from 'assets/less/util.less'
 import Styles from 'containers/View/View.less'
 
 interface ISourceTableProps {
-  viewName: string
-  viewDesc: string
+  view: IView
   sources: ISource[]
   tables: ISourceTable[]
   mapTableColumns: IMapTableColumns
+  onViewChange: (propName: keyof(IView), value: string | number) => void
   onSourceSelect: (sourceId: number) => void
   onTableSelect: (sourceId: number, tableName: string) => void
 }
 
 interface ISourceTableStates {
   filterTableColumnName: string
-  currentSourceId: number
   expandedTables: string[]
   autoExpandTable: boolean
 }
@@ -35,13 +35,15 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
 
   public state: ISourceTableStates = {
     filterTableColumnName: '',
-    currentSourceId: null,
     expandedTables: [],
     autoExpandTable: true
   }
 
+  private inputChange = (propName: keyof IView) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    this.props.onViewChange(propName, e.target.value)
+  }
+
   private selectSource = (sourceId: number) => {
-    this.setState({ currentSourceId: sourceId })
     const { onSourceSelect } = this.props
     onSourceSelect(sourceId)
   }
@@ -133,9 +135,8 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
     const { eventKey: tableName } = node.props
     const { mapTableColumns } = this.props
     if (mapTableColumns[tableName]) { return }
-    const { onTableSelect } = this.props
-    const { currentSourceId } = this.state
-    onTableSelect(currentSourceId, tableName)
+    const { view, onTableSelect } = this.props
+    onTableSelect(view.sourceId, tableName)
     resolve()
   })
 
@@ -180,23 +181,24 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
   }
 
   public render () {
-    const { viewName, viewDesc, sources, tables, mapTableColumns } = this.props
-    const { currentSourceId, filterTableColumnName, expandedTables } = this.state
+    const { view, sources, tables, mapTableColumns } = this.props
+    const { filterTableColumnName, expandedTables } = this.state
+    const { name: viewName, description: viewDesc, sourceId } = view
 
     return (
       <div className={Styles.sourceTable}>
         <Row gutter={16}>
           <Col span={24}>
-            <Input placeholder="名称" value={viewName} />
+            <Input placeholder="名称" value={viewName} onChange={this.inputChange('name')} />
           </Col>
           <Col span={24}>
-            <Input placeholder="描述" value={viewDesc} />
+            <Input placeholder="描述" value={viewDesc} onChange={this.inputChange('description')} />
           </Col>
           <Col span={24}>
             <Select
               placeholder="数据源"
               style={{width: '100%'}}
-              value={currentSourceId}
+              value={sourceId}
               onSelect={this.selectSource}
             >
               {sources.map(({ id, name }) => (<Option key={id.toString()} value={id}>{name}</Option>))}
@@ -219,7 +221,7 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
             onExpand={this.tableNodeExpand}
             expandedKeys={expandedTables}
           >
-            {this.renderTableColumns(currentSourceId, tables, mapTableColumns, filterTableColumnName)}
+            {this.renderTableColumns(sourceId, tables, mapTableColumns, filterTableColumnName)}
           </Tree>
         </div>
       </div>

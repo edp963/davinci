@@ -19,11 +19,16 @@
  */
 
 import { createTypes } from 'utils/redux'
+import { SQL_STRING_TYPES, SQL_NUMBER_TYPES, SQL_DATE_TYPES, SQL_TYPES } from 'app/globalConstants'
 
 enum Types {
   LOAD_VIEWS = 'davinci/View/LOAD_VIEWS',
   LOAD_VIEWS_SUCCESS = 'davinci/View/LOAD_VIEWS_SUCCESS',
   LOAD_VIEWS_FAILURE = 'davinci/View/LOAD_VIEWS_FAILURE',
+
+  LOAD_VIEW_DETAIL = 'davinci/View/LOAD_VIEW_DETAIL',
+  LOAD_VIEW_DETAIL_SUCCESS = 'davinci/View/LOAD_VIEW_DETAIL_SUCCESS',
+  LOAD_VIEW_DETAIL_FAILURE = 'davinci/View/LOAD_VIEW_DETAIL_FAILURE',
 
   ADD_VIEW = 'davinci/View/ADD_VIEW',
   ADD_VIEW_SUCCESS = 'davinci/View/ADD_VIEW_SUCCESS',
@@ -39,7 +44,10 @@ enum Types {
 
   EXECUTE_SQL = 'davinci/View/EXECUTE_SQL',
   EXECUTE_SQL_SUCCESS = 'davinci/View/EXECUTE_SQL_SUCCESS',
-  EXECUTE_SQL_FAILURE = 'davinci/View/EXECUTE_SQL_FAILURE'
+  EXECUTE_SQL_FAILURE = 'davinci/View/EXECUTE_SQL_FAILURE',
+
+  SET_SQL_LIMIT = 'davinci/View/SET_SQL_LIMIT',
+  RESET_VIEW_STATE = 'davinci/View/RESET_VIEW_STATE'
 }
 
 export const ActionTypes = createTypes(Types)
@@ -73,6 +81,11 @@ export enum ViewModelTypes {
   Value = 'value'
 }
 
+export const ModelTypeSqlTypeSetting = {
+  [ViewModelTypes.Value]: SQL_NUMBER_TYPES,
+  [ViewModelTypes.Category]: SQL_TYPES
+}
+
 export const ViewModelTypesLocale = {
   [ViewModelTypes.Category]: '维度',
   [ViewModelTypes.Value]: '指标'
@@ -87,6 +100,12 @@ export enum ViewModelVisualTypes {
   GeoCity = 'geoCity'
 }
 
+export const VisualTypeSqlTypeSetting = {
+  [ViewModelVisualTypes.Number]: SQL_NUMBER_TYPES,
+  [ViewModelVisualTypes.String]: SQL_STRING_TYPES,
+  [ViewModelVisualTypes.Date]: SQL_DATE_TYPES
+}
+
 export const ViewModelVisualTypesLocale = {
   [ViewModelVisualTypes.Number]: '数字',
   [ViewModelVisualTypes.String]: '字符',
@@ -95,3 +114,6 @@ export const ViewModelVisualTypesLocale = {
   [ViewModelVisualTypes.GeoProvince]: '地理省份',
   [ViewModelVisualTypes.GeoCity]: '地理城市'
 }
+
+export const DEFAULT_SQL_LIMIT = 500
+export const DEFAULT_PAGE_SIZE = 100

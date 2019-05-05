@@ -19,9 +19,9 @@
  */
 
 import { Record } from 'immutable'
-import { IViewState } from './types'
+import { IViewState, IViewModel } from './types'
 
-import { ActionTypes } from './constants'
+import { ActionTypes, DEFAULT_SQL_LIMIT, DEFAULT_PAGE_SIZE } from './constants'
 import { ViewActionType } from './actions'
 
 import { ActionTypes as SourceActionTypes } from 'containers/Source/constants'
@@ -30,14 +30,26 @@ import { SourceActionType } from 'containers/Source/actions'
 
 const ViewRecord = Record<IViewState>({
   views: [],
+  editingView: null,
+  editingViewInfo: {
+    model: [],
+    variable: []
+  },
   sources: [],
   tables: [],
   mapTableColumns: {},
   sqlValidation: {
-    code: 200,
+    code: null,
     message: null
   },
+  sqlDataSource: {
+    columns: [],
+    totalCount: 0,
+    resultList: []
+  },
+  sqlLimit: DEFAULT_SQL_LIMIT,
   loading: {
+    view: false,
     table: false,
     modal: false,
     execute: false
@@ -46,12 +58,29 @@ const ViewRecord = Record<IViewState>({
 const initialState = new ViewRecord()
 
 function viewReducer (state = initialState, action: ViewActionType | SourceActionType): ViewStateType {
-  const views = state.get('views')
   const mapTableColumns = state.get('mapTableColumns')
+  const sqlDatasource = state.get('sqlDataSource')
+  const loading = state.get('loading')
 
   switch (action.type) {
+    case ActionTypes.LOAD_VIEWS:
+    case ActionTypes.DELETE_VIEW:
+      return state.set('loading', { ...loading, view: true })
+    case ActionTypes.LOAD_VIEWS_FAILURE:
+    case ActionTypes.DELETE_VIEW_FAILURE:
+      return state.set('loading', { ...loading, view: false })
     case ActionTypes.LOAD_VIEWS_SUCCESS:
-      return state.set('views', action.payload.views)
+      return state
+        .set('views', action.payload.views)
+        .set('loading', { ...loading, view: false })
+    case ActionTypes.LOAD_VIEW_DETAIL_SUCCESS:
+      const { variable, model } = action.payload.view
+      return state
+        .set('editingView', action.payload.view)
+        .set('editingViewInfo', {
+          model: JSON.parse((model || '[]')),
+          variable: JSON.parse((variable || '[]'))
+        })
     case SourceActionTypes.LOAD_SOURCES_SUCCESS:
       return state.set('sources', action.payload.sources)
     case SourceActionTypes.LOAD_SOURCE_TABLES_SUCCESS:
@@ -64,6 +93,35 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
         ...mapTableColumns,
         [tableColumns.tableName]: tableColumns
       })
+    case ActionTypes.EXECUTE_SQL:
+      return state
+        .set('loading', { ...loading, execute: true })
+        .set('sqlValidation', { code: null, message: null })
+    case ActionTypes.EXECUTE_SQL_SUCCESS:
+      return state
+        .set('sqlDataSource', action.payload.result.payload)
+        .set('loading', { ...loading, execute: false })
+        .set('sqlValidation', {
+          code: action.payload.result.header.code,
+          message: action.payload.result.header.msg
+        })
+    case ActionTypes.EXECUTE_SQL_FAILURE:
+      return state
+        .set('sqlDataSource', {
+          ...sqlDatasource,
+          columns: [],
+          totalCount: 0,
+          resultList: []
+        })
+        .set('loading', { ...loading, execute: false })
+        .set('sqlValidation', {
+          code: action.payload.err.code,
+          message: action.payload.err.msg
+        })
+    case ActionTypes.SET_SQL_LIMIT:
+      return state.set('sqlLimit', action.payload.limit)
+    case ActionTypes.RESET_VIEW_STATE:
+      return new ViewRecord()
     default:
       return state
   }

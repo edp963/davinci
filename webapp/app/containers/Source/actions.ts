@@ -194,7 +194,7 @@ export const SourceActions = {
       }
     }
   },
-  loadSourceTables (sourceId: number, resolve) {
+  loadSourceTables (sourceId: number, resolve?) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLES,
       payload: {
@@ -219,7 +219,7 @@ export const SourceActions = {
       }
     }
   },
-  loadTableColumns (sourceId: number, tableName: string, resolve) {
+  loadTableColumns (sourceId: number, tableName: string, resolve?) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLE_COLUMNS,
       payload: {

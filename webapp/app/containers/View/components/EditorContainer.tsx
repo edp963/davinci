@@ -21,9 +21,10 @@
 import React from 'react'
 
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
-import { IExecuteSqlParams, IViewVariable } from '../types'
+import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading } from '../types'
+import { DEFAULT_SQL_LIMIT, DEFAULT_PAGE_SIZE } from '../constants'
 
-import { InputNumber, Button, Row, Col } from 'antd'
+import { InputNumber, Button, Row, Col, Tooltip } from 'antd'
 import Resizable, { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'
 import SourceTable from './SourceTable'
 import SqlEditor from './SqlEditor'
@@ -34,25 +35,29 @@ import SqlPreview from './SqlPreview'
 import Styles from '../View.less'
 
 interface IEditorContainerProps {
+  view: IView
   sources: ISource[],
   tables: ISourceTable[],
   mapTableColumns: IMapTableColumns
-  onLoadSourceTables: (sourceId: number, resolve: (tables: ISourceTable[]) => void) => void
-  onLoadTableColumns: (sourceId: number, tableName: string, resolve: () => void) => void
+  sqlDataSource: IExecuteSqlResponse
+  sqlLimit: number
+  loading: IViewLoading
+  nextDisabled: boolean
+  onLoadSourceTables: (sourceId: number) => void
+  onLoadTableColumns: (sourceId: number, tableName: string) => void
+  onSetSqlLimit: (limit: number) => void
   onExecuteSql: (params: IExecuteSqlParams) => void
   onStepChange: (stepChange: number) => void
+  onViewChange: (propName: keyof(IView), value: string | number) => void
 }
 
 interface IEditorContainerStates {
   editorHeight: number
   siderWidth: number
   previewHeight: number
-  previewTopCount: number
   viewVariables: IViewVariable[]
   variableModalVisible: boolean
   editingVariable: IViewVariable
-  sourceId: number
-  sql: string
 }
 
 export class EditorContainer extends React.Component<IEditorContainerProps, IEditorContainerStates> {
@@ -60,18 +65,14 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   private editor = React.createRef<HTMLDivElement>()
   public static SiderMinWidth = 250
   public static EditorMinHeight = 100
-  public static PreviewMinHeight = 250
 
   public state: Readonly<IEditorContainerStates> = {
     editorHeight: 0,
     siderWidth: EditorContainer.SiderMinWidth,
-    previewHeight: EditorContainer.PreviewMinHeight,
-    previewTopCount: 500,
+    previewHeight: 0,
     viewVariables: [],
     variableModalVisible: false,
-    editingVariable: null,
-    sourceId: null,
-    sql: ''
+    editingVariable: null
   }
 
   public componentDidMount () {
@@ -79,13 +80,23 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     // @FIX for this init height, 64px is the height of the hidden navigator in Main.tsx
     const editorHeight = this.editor.current.clientHeight + 64
     this.setState({
-      editorHeight,
-      previewHeight: editorHeight
+      editorHeight
     })
   }
 
   public componentWillUnmount () {
     window.removeEventListener('resize', this.setEditorHeight, false)
+  }
+
+  public static getDerivedStateFromProps:
+    React.GetDerivedStateFromProps<IEditorContainerProps, IEditorContainerStates>
+  = (props, state) => {
+    const { sqlDataSource } = props
+    const { previewHeight } = state
+    if (previewHeight === 0 && sqlDataSource.columns.length > 0) {
+      return { previewHeight: 200 }
+    }
+    return null
   }
 
   public setEditorHeight = () => {
@@ -105,20 +116,17 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
 
   private previewResize = (_: any, { size }: IResizeCallbackData) => {
     const { height } = size
-    this.setState({ previewHeight: height })
-  }
-
-  private setPreviewTopCount = (count: number) => {
-    this.setState({ previewTopCount: count })
+    this.setState(({ editorHeight }) => ({ previewHeight: editorHeight - height }))
   }
 
   private sourceSelect = (sourceId: number) => {
-    this.setState({ sourceId })
-    this.props.onLoadSourceTables(sourceId, () => {})
+    const { onViewChange, onLoadSourceTables } = this.props
+    onViewChange('sourceId', sourceId)
+    onLoadSourceTables(sourceId)
   }
 
   private tableSelect = (sourceId: number, tableName: string) => {
-    this.props.onLoadTableColumns(sourceId, tableName, () => {})
+    this.props.onLoadTableColumns(sourceId, tableName)
   }
 
   private addVariable = () => {
@@ -156,7 +164,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
     })
   }
 
-  private varibleNameValidate = (name: string, callback: (msg?: string) => void) => {
+  private variableNameValidate = (name: string, callback: (msg?: string) => void) => {
     const { viewVariables } = this.state
     const exists = viewVariables.findIndex((v) => v.name === name) >= 0
     exists ? callback('名称不能重复') : callback()
@@ -167,20 +175,27 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   }
 
   private sqlChange = (sql: string) => {
-    this.setState({ sql })
+    this.props.onViewChange('sql', sql)
   }
 
-  private executeSql = () => {
-    const { onExecuteSql } = this.props
-    const { sourceId, sql, previewTopCount } = this.state
-    const params: IExecuteSqlParams = {
+  private initExecuteSql = () => {
+    this.executeSql()
+  }
+
+  private executeSql = (params?: Partial<IExecuteSqlParams>) => {
+    const { onExecuteSql, view, sqlLimit } = this.props
+    const { sourceId, sql } = view
+    const updatedParams: IExecuteSqlParams = {
       sourceId,
       sql,
-      limit: previewTopCount,
-      pageNo: 1,
-      pageSize: 100
+      limit: sqlLimit,
+      ...params
     }
-    onExecuteSql(params)
+    onExecuteSql(updatedParams)
+  }
+
+  private cancel = () => {
+    this.props.onStepChange(-1)
   }
 
   private nextStep = () => {
@@ -188,10 +203,14 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
   }
 
   public render () {
-    const { sources, tables, mapTableColumns } = this.props
     const {
-      editorHeight, siderWidth, previewHeight, previewTopCount,
+      view, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
+      onViewChange, onSetSqlLimit
+    } = this.props
+    const {
+      editorHeight, siderWidth, previewHeight,
       viewVariables, variableModalVisible, editingVariable } = this.state
+    const { execute: loadingExecute } = loading
 
     return (
       <>
@@ -207,9 +226,11 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
             >
               <div>
                 <SourceTable
+                  view={view}
                   sources={sources}
                   tables={tables}
                   mapTableColumns={mapTableColumns}
+                  onViewChange={onViewChange}
                   onSourceSelect={this.sourceSelect}
                   onTableSelect={this.tableSelect}
                 />
@@ -218,17 +239,22 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
           </div>
           <div className={Styles.containerHorizontal}>
             <div className={Styles.containerHorizontal} ref={this.editor}>
-              <div className={Styles.right} style={{ height: previewHeight }}>
+              <div className={Styles.right} style={{ height: editorHeight - previewHeight }}>
                 <Resizable
                   axis="y"
                   width={0}
-                  height={previewHeight}
+                  height={editorHeight - previewHeight}
                   minConstraints={[0, EditorContainer.EditorMinHeight]}
                   maxConstraints={[0, editorHeight]}
                   onResize={this.previewResize}
                 >
                   <div className={Styles.containerVertical}>
-                    <div className={Styles.editor}><SqlEditor onSqlChange={this.sqlChange} /></div>
+                    <div className={Styles.editor}>
+                      <SqlEditor
+                        value={view.sql}
+                        onSqlChange={this.sqlChange}
+                      />
+                    </div>
                     <div className={Styles.list}>
                       <ViewVariableList
                         variables={viewVariables}
@@ -240,20 +266,36 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
                   </div>
                 </Resizable>
               </div>
-              <div className={Styles.preview}>
-                  <SqlPreview />
+              <div className={Styles.preview} style={{height: previewHeight}}>
+                  <SqlPreview
+                    loading={loadingExecute}
+                    response={sqlDataSource}
+                    onChange={this.executeSql}
+                  />
               </div>
             </div>
             <Row className={Styles.bottom} type="flex" align="middle" justify="start">
-              <Col span={12}>
+              <Col span={12} className={Styles.previewInput}>
                 <span>展示前</span>
-                <InputNumber value={previewTopCount} onChange={this.setPreviewTopCount} />
+                <InputNumber value={sqlLimit} onChange={onSetSqlLimit} />
                 <span>条数据</span>
               </Col>
               <Col span={12} className={Styles.toolBtns}>
-                <Button>取消</Button>
-                <Button type="primary" icon="caret-right" onClick={this.executeSql}>执行</Button>
-                <Button onClick={this.nextStep}>下一步</Button>
+                <Button onClick={this.cancel}>取消</Button>
+                <Button
+                  type="primary"
+                  disabled={loadingExecute}
+                  loading={loadingExecute}
+                  icon="caret-right"
+                  onClick={this.initExecuteSql}
+                >
+                  执行
+                </Button>
+                <Tooltip title={nextDisabled ? '执行后下一步可用' : ''}>
+                  <Button onClick={this.nextStep} disabled={nextDisabled}>
+                    下一步
+                  </Button>
+                </Tooltip>
               </Col>
             </Row>
           </div>
@@ -261,7 +303,7 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
         <VariableModal
           visible={variableModalVisible}
           variable={editingVariable}
-          nameValidator={this.varibleNameValidate}
+          nameValidator={this.variableNameValidate}
           onCancel={this.closeVariableModal}
           onSave={this.saveVariable}
         />
