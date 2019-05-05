@@ -64,9 +64,7 @@ interface IDavinciResponseHeader {
   token: string
 }
 
-type DavinciResponsePayload = any | any[]
-
-export interface IDavinciResponse {
+export interface IDavinciResponse<T> {
   header: IDavinciResponseHeader,
-  payload: DavinciResponsePayload
+  payload: T
 }
