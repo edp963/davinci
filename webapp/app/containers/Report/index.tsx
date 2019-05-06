@@ -25,19 +25,19 @@ import { createStructuredSelector } from 'reselect'
 import {InjectedRouter} from 'react-router/lib/Router'
 
 import { Icon } from 'antd'
-import { IProject } from '../Organizations/containers/Projects'
+import { IProject } from '../Projects'
 import Sidebar from '../../components/Sidebar'
 import SidebarOption from '../../components/SidebarOption/index'
 import { selectSidebar } from './selectors'
 import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
-import { loadProjectDetail, killProjectDetail } from '../Organizations/containers/Projects/actions'
-import reducer from '../Organizations/containers/Projects/reducer'
+import { loadProjectDetail, killProjectDetail } from '../Projects/actions'
+import reducer from '../Projects/reducer'
 import injectReducer from 'utils/injectReducer'
-import saga from '../Organizations/containers/Projects/sagas'
+import saga from '../Projects/sagas'
 import injectSaga from 'utils/injectSaga'
-import { makeSelectCurrentProject } from '../Organizations/containers/Projects/selectors'
+import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import MenuPermission from '../Account/components/checkMenuPermission'
 const styles = require('./Report.less')
@@ -119,7 +119,7 @@ export class Report extends React.Component<IReportProps, {}> {
       )
     })
 
-    const sidebarComponent = currentProject && currentProject.inTeam
+    const sidebarComponent = currentProject && currentProject.permission
       ? (
         <Sidebar>
           {sidebarOptions}

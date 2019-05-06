@@ -29,11 +29,11 @@ import AdminForm from './Transfer'
 import AntdFormType from 'antd/lib/form/Form'
 import Avatar from '../../../components/Avatar/index'
 import Auth from './ProjectAuth'
-const styles = require('../containers/Projects/Project.less')
+const styles = require('../Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 import { createStructuredSelector } from 'reselect'
 import { makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationMembers, makeSelectCurrentOrganizationProjectAdmins } from '../selectors'
-import { addProjectAdmin, deleteProjectAdmin} from '../containers/Projects/actions'
+import { addProjectAdmin, deleteProjectAdmin} from '../../Projects/actions'
 import { loadProjectAdmin } from '../actions'
 
 interface IProjectAdminStates {

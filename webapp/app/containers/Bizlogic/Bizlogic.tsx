@@ -188,7 +188,7 @@ export class Bizlogic extends React.Component<IBizlogicFormProps, IBizlogicFormS
     }
 
     onLoadSources(params.pid)
-    onLoadViewTeam(params.pid)
+   // onLoadViewTeam(params.pid)
   }
 
   public componentWillReceiveProps (nextProps) {

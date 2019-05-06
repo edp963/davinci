@@ -38,7 +38,8 @@ import {
   CLICK_COLLECT_PROJECT,
   CLICK_COLLECT_PROJECT_SUCCESS,
   CLICK_COLLECT_PROJECT_FAILURE,
-  RELATION_ROLE_PROJECT_LOADED
+  RELATION_ROLE_PROJECT_LOADED,
+  UPDATE_RELATION_ROLE_PROJECT_SUCCESS
 } from './constants'
 
 
@@ -56,7 +57,7 @@ function projectReducer (state = initialState, action) {
   const { type, payload } = action
   const projects = state.get('projects')
   const collectProjects = state.get('collectProjects')
-
+  const currentProjectRole = state.get('currentProjectRole')
   switch (type) {
     case LOAD_PROJECTS_SUCCESS:
       return state.set('projects', payload.projects)
@@ -64,6 +65,11 @@ function projectReducer (state = initialState, action) {
       return state
     case RELATION_ROLE_PROJECT_LOADED:
       return state.set('currentProjectRole', payload.result)
+    case UPDATE_RELATION_ROLE_PROJECT_SUCCESS:
+      return state.set('currentProjectRole', {
+        ...currentProjectRole,
+        permission: payload.result
+      })
     case ADD_PROJECT_SUCCESS:
       if (projects) {
         projects.unshift(payload.result)

@@ -14,8 +14,8 @@ import Avatar from '../../components/Avatar'
 import { connect } from 'react-redux'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
-import reducerProject from './containers/Projects/reducer'
-import sagaProject from './containers/Projects/sagas'
+import reducerProject from '../Projects/reducer'
+import sagaProject from '../Projects/sagas'
 import { compose } from 'redux'
 import {
   editOrganization,
@@ -40,9 +40,9 @@ import {
   makeSelectInviteMemberList
 } from './selectors'
 import { createStructuredSelector } from 'reselect'
-import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from './containers/Projects/actions'
-import { makeSelectStarUserList, makeSelectCollectProjects } from './containers/Projects/selectors'
-import { IStarUser, IProject } from './containers/Projects'
+import { addProject, editProject, deleteProject, getProjectStarUser, loadProjects, unStarProject, clickCollectProjects, loadCollectProjects } from '../Projects/actions'
+import { makeSelectStarUserList, makeSelectCollectProjects } from '../Projects/selectors'
+import { IStarUser, IProject } from '../Projects'
 
 interface IOrganizationProps {
   loginUser: any
