@@ -8,7 +8,7 @@ const styles = require('../Portal.less')
 
 import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
-import { IProject } from '../../Organizations/containers/Projects'
+import { IProject } from '../../Projects'
 import { IPortal } from '../../Portal'
 import { toListBF } from '../../Bizlogic/components/viewUtil'
 

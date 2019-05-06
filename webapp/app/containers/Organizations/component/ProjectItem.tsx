@@ -4,7 +4,7 @@ const styles = require('../Organization.less')
 import { Tag, Icon, Popconfirm, Tooltip } from 'antd'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import Star from '../../../components/StarPanel/Star'
-import { IProject, IStarUser } from '../containers/Projects'
+import { IProject, IStarUser } from '../../Projects'
 const utilStyles = require('../../../assets/less/util.less')
 
 interface IProjectItemProps {

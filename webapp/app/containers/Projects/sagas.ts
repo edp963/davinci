@@ -70,9 +70,9 @@ import {
   deleteRelRoleProjectFail
 } from './actions'
 
-import request from '../../../../utils/request'
-import api from '../../../../utils/api'
-import { errorHandler } from '../../../../utils/util'
+import request from '../../utils/request'
+import api from '../../utils/api'
+import { errorHandler } from '../../utils/util'
 
 export function* getProjects (action) {
   try {

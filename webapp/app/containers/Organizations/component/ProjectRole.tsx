@@ -30,12 +30,12 @@ import RoleForm from './Transfer'
 import Auth from './ProjectAuth'
 import AntdFormType from 'antd/lib/form/Form'
 import { loadOrganizationRole, loadProjectRoles } from '../actions'
-const styles = require('../containers/Projects/Project.less')
+const styles = require('../Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
-import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../containers/Projects/actions'
+import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../../Projects/actions'
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles } from '../selectors'
-import { makeSelectCurrentProjectRole} from '../containers/Projects/selectors'
+import { makeSelectCurrentProjectRole} from '../../Projects/selectors'
 
 interface IRoleStates {
   relationRoleVisible: boolean

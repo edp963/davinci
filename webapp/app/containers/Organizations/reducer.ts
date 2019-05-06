@@ -45,7 +45,7 @@ import {
   LOAD_PROJECT_ADMINS_FAIL,
   LOAD_PROJECT_ROLES_SUCCESS
 } from './constants'
-import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from './containers/Projects/constants'
+import {ADD_PROJECT_SUCCESS, DELETE_PROJECT_SUCCESS} from '../Projects/constants'
 
 
 const initialState = fromJS({

@@ -39,10 +39,10 @@ import {
   loadCollectProjects,
   addProjectAdmin,
   deleteProjectAdmin
-} from '../containers/Projects/actions'
+} from '../../Projects/actions'
 import { makeSelectLoginUser } from '../../App/selectors'
 const styles = require('../Organization.less')
-import { makeSelectStarUserList, makeSelectCollectProjects } from '../containers/Projects/selectors'
+import { makeSelectStarUserList, makeSelectCollectProjects } from '../../Projects/selectors'
 
 interface IProjectsState {
  

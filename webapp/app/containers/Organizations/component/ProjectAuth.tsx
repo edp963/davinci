@@ -25,7 +25,7 @@ const FormItem = Form.Item
 const InputGroup = Input.Group
 const RadioGroup = Radio.Group
 const Option = Select.Option
-const styles = require('../containers/Projects/Project.less')
+const styles = require('../Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 
 interface IAuthProps {
