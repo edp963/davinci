@@ -136,7 +136,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
     const { visualType, size } = this.props
     const { localValues } = this.state
 
-    let control: React.ReactElement
+    let control: React.ReactNode
     switch (visualType) {
       case 'string':
       case 'geoCountry':
@@ -195,7 +195,7 @@ export class ConditionValuesControl extends React.PureComponent<IConditionValues
   private renderRow = () => {
     const { operatorType } = this.props
 
-    let controls: React.ReactElement
+    let controls: React.ReactNode
     switch (operatorType) {
       case OperatorTypes.Contain:
       case OperatorTypes.Equal:
