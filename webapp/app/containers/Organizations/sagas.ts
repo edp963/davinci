@@ -140,7 +140,8 @@ export function* getOrganizationDetail ({ payload }) {
 
 export function* getOrganizationsProjects ({payload}) {
   const {param: {id, keyword, pageNum, pageSize}} = payload
-  const requestUrl = keyword
+  console.log(payload)
+  const requestUrl = keyword && keyword.length
     ? `${api.organizations}/${id}/projects?keyword=${keyword}&pageNum=1&pageSize=${pageSize || 10}`
     : `${api.organizations}/${id}/projects/?pageNum=${pageNum || 1}&pageSize=${pageSize || 10}`
   try {

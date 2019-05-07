@@ -19,6 +19,7 @@ interface IAddFormProps {
   inviteMemberList?: any
   addHandler: () => any
   currentOrganizationMembers: IOrganizationMembers[]
+  onSearchValueChange?: (value: string) => any
 }
 
 interface IAddFormStates {
@@ -94,11 +95,17 @@ export class AddForm extends React.PureComponent<IAddFormProps, IAddFormStates> 
   }
 
   private change = debounce((e) => {
+    console.log('change')
     const { category, inviteMemberList, currentOrganizationMembers, handleSearchMember } = this.props
 
     this.setState({
       visible: false,
       inviteMemberInputValue: e.target.value
+    }, () => {
+      const { onSearchValueChange } = this.props
+      if (onSearchValueChange) {
+        onSearchValueChange(this.state.inviteMemberInputValue)
+      }
     })
 
     if (category === 'member') {

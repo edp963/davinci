@@ -58,7 +58,7 @@ interface ITeamsProps {
   onLoadTeamMembers: (id: number) => any
   onLoadTeamTeams: (id: number) => any
   onLoadTeamDetail: (id: number, resolve?: (data: any) => any) => any
-  onLoadOrganizationProjects: (param: {id: number, pageNum?: number, pageSize?: number}) => any
+  onLoadOrganizationProjects: (param: {id: number, keyword?: string,  pageNum?: number, pageSize?: number}) => any
   onLoadOrganizationMembers: (id: number) => any
   onLoadOrganizationTeams: (id: number) => any
   onDeleteTeamProject: (id: number) => any
@@ -209,6 +209,14 @@ export class Teams extends React.Component<ITeamsProps> {
     this.props.onEditTeam(obj)
   }
 
+  private searchValueChange = (value) => {
+    const { onLoadOrganizationProjects, onLoadTeamDetail, params: {teamId} } = this.props
+    onLoadTeamDetail(Number(teamId), (data) => {
+      const { organization: {id} } = data
+      onLoadOrganizationProjects({id: Number(id), keyword: value && value.length ? value : ''})
+    })
+  }
+
   public render () {
     const {
       teamRouter,
@@ -259,6 +267,7 @@ export class Teams extends React.Component<ITeamsProps> {
           <TabPane tab={<span><Icon type="api" />项目<span className={styles.badge}>{projectNum}</span></span>} key="projects">
               <ProjectList
                 deleteProject={this.deleteProject}
+                onSearchValueChange={this.searchValueChange}
                 currentTeam={currentTeam}
                 currentTeamProjects={currentTeamProjects}
                 currentOrganizationProjects={currentOrganizationProjects}

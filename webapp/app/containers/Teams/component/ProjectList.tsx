@@ -27,6 +27,7 @@ interface IProjectListProps {
   currentTeamProjects: ITeamProjects[]
   currentOrganizationProjects: any
   pullProjectInTeam: (projectId: number) => any
+  onSearchValueChange?: (value: string) => any
   onUpdateTeamProjectPermission: (relationId: number, relTeamProjectDto: any, resolve?: () => any) => any
 }
 interface IProjectListState {
@@ -120,6 +121,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
   private stopPPG = (e) => {
     e.stopPropagation()
   }
+
   private headerPanel = (props) => {
     const {currentTeam} = this.props
     let CreateButton = void 0
@@ -206,6 +208,7 @@ export class ProjectList extends React.PureComponent<IProjectListProps, IProject
             category={formType}
             organizationOrTeam={currentTeam}
             currentOrganizationProjects={currentOrganizationProjects}
+            onSearchValueChange={this.props.onSearchValueChange}
             ref={(f) => { this.AddForm = f }}
             addHandler={this.add}
           />
