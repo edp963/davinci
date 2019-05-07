@@ -59,8 +59,13 @@ export interface IExecuteSqlParams {
   limit: number
 }
 
+export interface ISqlColumn {
+  name: string
+  type: SqlTypes
+}
+
 export interface IExecuteSqlResponse {
-  columns: Array<{ name: string, type: SqlTypes }>
+  columns: ISqlColumn[]
   totalCount: number
   resultList: Array<{[key: string]: string | number}>
 }
@@ -78,6 +83,23 @@ export interface IViewVariable {
   valueType: ViewVariableValueTypes
   defaultValues: Array<string | number | boolean>
   fromService: boolean
+}
+
+export interface IViewRoleAuth {
+  roleId: number
+  /**
+   * view columns name
+   * @type {string[]}
+   * @memberof IViewRoleAuth
+   */
+  columnAuth: string[]
+
+  /**
+   * query variable values
+   * @type {(Array<string | number>)}
+   * @memberof IViewRoleAuth
+   */
+  rowAuth: Array<{ name: string, values: Array<string | number> }>
 }
 
 export interface IViewInfo {

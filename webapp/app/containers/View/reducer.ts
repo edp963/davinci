@@ -20,6 +20,7 @@
 
 import { Record } from 'immutable'
 import { IViewState, IViewModel } from './types'
+import { getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT, DEFAULT_PAGE_SIZE } from './constants'
 import { ViewActionType } from './actions'
@@ -60,6 +61,7 @@ const initialState = new ViewRecord()
 function viewReducer (state = initialState, action: ViewActionType | SourceActionType): ViewStateType {
   const mapTableColumns = state.get('mapTableColumns')
   const sqlDatasource = state.get('sqlDataSource')
+  const editingViewInfo = state.get('editingViewInfo')
   const loading = state.get('loading')
 
   switch (action.type) {
@@ -98,12 +100,18 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
         .set('loading', { ...loading, execute: true })
         .set('sqlValidation', { code: null, message: null })
     case ActionTypes.EXECUTE_SQL_SUCCESS:
+      const sqlResponse = action.payload.result
+      const validModel = getValidModel(editingViewInfo.model, sqlResponse.payload.columns)
       return state
-        .set('sqlDataSource', action.payload.result.payload)
+        .set('sqlDataSource', sqlResponse.payload)
+        .set('editingViewInfo', {
+          ...editingViewInfo,
+          model: validModel
+        })
         .set('loading', { ...loading, execute: false })
         .set('sqlValidation', {
-          code: action.payload.result.header.code,
-          message: action.payload.result.header.msg
+          code: sqlResponse.header.code,
+          message: sqlResponse.header.msg
         })
     case ActionTypes.EXECUTE_SQL_FAILURE:
       return state
