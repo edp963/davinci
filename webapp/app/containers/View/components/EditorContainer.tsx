@@ -35,6 +35,7 @@ import SqlPreview from './SqlPreview'
 import Styles from '../View.less'
 
 interface IEditorContainerProps {
+  visible: boolean
   view: IView
   sources: ISource[],
   tables: ISourceTable[],
@@ -204,17 +205,18 @@ export class EditorContainer extends React.Component<IEditorContainerProps, IEdi
 
   public render () {
     const {
-      view, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
+      visible, view, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       onViewChange, onSetSqlLimit
     } = this.props
     const {
       editorHeight, siderWidth, previewHeight,
       viewVariables, variableModalVisible, editingVariable } = this.state
     const { execute: loadingExecute } = loading
+    const style = visible ? {} : { display: 'none' }
 
     return (
       <>
-        <div className={Styles.containerVertical}>
+        <div className={Styles.containerVertical} style={style}>
           <div className={Styles.sider} style={{ width: siderWidth }}>
             <Resizable
               axis="x"

@@ -1,7 +1,7 @@
 import React from 'react'
 import classnames from 'classnames'
 import memoizeOne from 'memoize-one'
-import { Table, Tabs, Radio, Select, Row, Col, Button } from 'antd'
+import { Table, Tabs, Radio, Select, Row, Col, Button, Tag } from 'antd'
 const { Column } = Table
 const { TabPane } = Tabs
 const RadioGroup = Radio.Group
@@ -9,7 +9,7 @@ const { Option } = Select
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ColumnProps } from 'antd/lib/table'
 
-import { IViewVariable, IViewModel, IExecuteSqlResponse } from '../types'
+import { IViewVariable, IViewModel, IExecuteSqlResponse, IViewRoleAuth } from '../types'
 import {
   ViewModelTypes,
   ViewModelVisualTypes,
@@ -19,29 +19,28 @@ import {
   VisualTypeSqlTypeSetting
 } from '../constants'
 
+import ModelAuthModal from './ModelAuthModal'
 import Styles from '../View.less'
-import { SqlTypes } from 'app/globalConstants'
-
-function getMapKeyByValue (value: SqlTypes, map: typeof VisualTypeSqlTypeSetting | typeof ModelTypeSqlTypeSetting) {
-  let result
-  Object.entries(map).some(([key, values]) => {
-    if (values.includes(value)) {
-      result = key
-      return true
-    }
-  })
-  return result
-}
 
 interface IModelAuthProps {
+  visible: boolean
   model: IViewModel[]
   variable: IViewVariable[]
   sqlColumns: IExecuteSqlResponse['columns']
-  onModelChange: (model: IViewModel[], replace: boolean) => void
+  roles: any[] // @FIXME role typing
+  onModelChange: (model: IViewModel[]) => void
   onStepChange: (stepChange: number) => void
 }
 
-export class ModelAuth extends React.Component<IModelAuthProps> {
+interface IModelAuthStates {
+  modalVisible: boolean
+}
+
+export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates> {
+
+  public state: Readonly<IModelAuthStates> = {
+    modalVisible: false
+  }
 
   private modelTypeOptions = Object.entries(ViewModelTypesLocale).map(([value, label]) => ({
     label,
@@ -58,61 +57,61 @@ export class ModelAuth extends React.Component<IModelAuthProps> {
       ...record,
       [key]: value
     }
-    this.props.onModelChange([model], false)
+    this.props.onModelChange([model])
   }
 
   private stepChange = (step: number) => () => {
     this.props.onStepChange(step)
   }
 
-  private getValidModel = memoizeOne(
-    (model: IViewModel[], sqlColumns: IExecuteSqlResponse['columns'], onModelChange: IModelAuthProps['onModelChange']) => {
-      if (!Array.isArray(sqlColumns)) { return [] }
+  private setColumnAuth = (roleAuth: IViewRoleAuth) => () => {
+    this.setState({
+      modalVisible: true
 
-      let needNotify = false
-      const validModel = sqlColumns.map<IViewModel>((column) => {
-        const { name: columnName, type: columnType } = column
-        const modelItem = model.find((m) => m.name === columnName)
-        if (!modelItem) {
-          needNotify = true
-          return {
-            name: columnName,
-            sqlType: columnType,
-            visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting),
-            modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
-          }
-        } else {
-          const item = { ...modelItem }
-          // @TODO verify modelType & visualType are valid by the sqlType or not
-          // if (!VisualTypeSqlTypeSetting[item.visualType].includes(columnType)) {
-          //   needNotify = true
-          //   item.visualType = getMapKeyByValue(columnType, VisualTypeSqlTypeSetting)
-          // }
-          // if (!ModelTypeSqlTypeSetting[item.modelType].includes(columnType)) {
-          //   needNotify = true
-          //   item.modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
-          // }
-          return item
-        }
-      })
-      if (needNotify) {
-        onModelChange(validModel, true)
-      }
-
-      return validModel
     })
+  }
 
-  private getAuthTableColumns = memoizeOne((variables: IViewVariable[]) => {
+  private getAuthTableColumns = memoizeOne((model: IViewModel[], variables: IViewVariable[]) => {
     const columns: Array<ColumnProps<any>> = variables.map((variable) => ({
       title: variable.name
     }))
     columns.unshift({
-      title: '角色'
+      title: '角色',
+      dataIndex: 'roleName'
+    }, {
+      title: '描述',
+      dataIndex: 'roleDesc'
     })
     columns.push({
-      title: '可见字段'
+      title: '可见字段',
+      dataIndex: 'columnAuth',
+      render: (columnAuth: string[], record) => {
+        if (columnAuth.length === 0) {
+          return (<Tag onClick={this.setColumnAuth(record)} color="#f50">不可见</Tag>)
+        }
+        if (columnAuth.length === model.length) {
+          return (<Tag onClick={this.setColumnAuth(record)}>全部可见</Tag>)
+        }
+        return (<Tag color="green" onClick={this.setColumnAuth(record)}>部分可见</Tag>)
+      }
     })
     return columns
+  })
+
+  private getAuthDatasource = memoizeOne((roles: any[], variables: IViewVariable[]) => {
+    if (!Array.isArray(roles)) { return [] }
+
+    const authDatasource = roles.map<IViewRoleAuth>((role) => {
+      const { id: roleId, name: roleName, description: roleDesc } = role
+      return {
+        roleId,
+        roleName,
+        roleDesc,
+        columnAuth: [],
+        rowAuth: []
+      }
+    })
+    return authDatasource
   })
 
   private renderColumnModelType = (text: string, record) => (
@@ -133,20 +132,31 @@ export class ModelAuth extends React.Component<IModelAuthProps> {
     </Select>
   )
 
+  private saveModelAuth = (auth: string[]) => {
+
+  }
+
+  private cancelModelAuth = () => {
+    this.setState({ modalVisible: false })
+  }
+
   public render () {
-    const { model, variable, sqlColumns, onModelChange } = this.props
-    const validModel = this.getValidModel(model, sqlColumns, onModelChange)
-    const authColumns = this.getAuthTableColumns(variable)
+    const { visible, model, variable, sqlColumns, roles, onModelChange } = this.props
+    const { modalVisible } = this.state
+    const authColumns = this.getAuthTableColumns(model, variable)
+    const authDatasource = this.getAuthDatasource(roles, variable)
     const styleCls = classnames({
       [Styles.containerHorizontal]: true,
       [Styles.modelAuth]: true
     })
+    const style = visible ? {} : { display: 'none' }
+
     return (
-      <div className={styleCls}>
+      <div className={styleCls} style={style}>
         <div className={Styles.containerHorizontal}>
           <Tabs defaultActiveKey="model">
             <TabPane tab="Model" key="model">
-              <Table bordered pagination={false} rowKey="name" dataSource={validModel}>
+              <Table bordered pagination={false} rowKey="name" dataSource={model}>
                 <Column title="字段名称" dataIndex="name" />
                 <Column title="数据类型" dataIndex="modelType" render={this.renderColumnModelType} />
                 <Column title="可视化类型" dataIndex="visualType" render={this.renderColumnVisualType} />
@@ -155,8 +165,17 @@ export class ModelAuth extends React.Component<IModelAuthProps> {
             <TabPane tab="Auth" key="auth">
               <Table
                 bordered
+                rowKey="roleId"
+                pagination={false}
                 columns={authColumns}
-                dataSource={variable}
+                dataSource={authDatasource}
+              />
+              <ModelAuthModal
+                visible={modalVisible}
+                model={model}
+                auth={[]}
+                onSave={this.saveModelAuth}
+                onCancel={this.cancelModelAuth}
               />
             </TabPane>
           </Tabs>

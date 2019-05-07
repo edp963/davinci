@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { Table } from 'antd'
-import { ColumnProps } from 'antd/lib/table'
+import { ColumnProps, TableProps } from 'antd/lib/table'
 import { PaginationConfig } from 'antd/lib/pagination'
 import Styles from '../View.less'
 
@@ -16,6 +16,7 @@ interface ISqlPreviewProps {
 export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
 
   private static basePagination: PaginationConfig = {
+    pageSize: 100,
     pageSizeOptions: ['100', '200', '500', '1000'],
     showQuickJumper: true,
     showSizeChanger: true
@@ -25,6 +26,7 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
     return Object.values(record).join('_')
   }
 
+
   public render () {
     const { loading, response, onChange } = this.props
     const { totalCount, columns, resultList } = response
@@ -33,19 +35,23 @@ export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
       total: totalCount
 
     }
-    const tableColumns: Array<ColumnProps<any>> = columns.map((col) => ({
+    const tableColumns = columns.map<ColumnProps<any>>((col) => ({
       title: col.name,
-      dataIndex: col.name
+      dataIndex: col.name,
+      width: 250
     }))
+    const scroll: TableProps<any>['scroll'] = {
+      x: tableColumns.reduce((acc, col) => (col.width as number + acc), 0)
+    }
 
     return (
       <Table
         className={Styles.sqlPreview}
         bordered
-        size="small"
         pagination={paginationConfig}
         dataSource={resultList}
         columns={tableColumns}
+        scroll={scroll}
         loading={loading}
         rowKey={SqlPreview.computeRowKey}
         // onChange={onChange}
