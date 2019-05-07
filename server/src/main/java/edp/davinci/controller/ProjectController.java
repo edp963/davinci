@@ -95,9 +95,9 @@ public class ProjectController extends BaseController {
     @ApiOperation(value = "get roles where proejct is located")
     @GetMapping("/{id}/roles/{roleId}")
     public ResponseEntity getRoleOfProject(@ApiIgnore @CurrentUser User user,
-                                            @PathVariable Long id,
-                                            @PathVariable Long roleId,
-                                            HttpServletRequest request) {
+                                           @PathVariable Long id,
+                                           @PathVariable Long roleId,
+                                           HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

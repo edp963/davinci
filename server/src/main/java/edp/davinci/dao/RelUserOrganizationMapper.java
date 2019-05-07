@@ -68,11 +68,6 @@ public interface RelUserOrganizationMapper {
     @Update({"update rel_user_organization set role = #{role} where id= #{id}"})
     int updateMemberRole(RelUserOrganization relUserOrganization);
 
-
-    @Select({"SELECT r.* FROM rel_user_organization r inner join project p on p.org_id = r.org_id where r.user_id = #{userId} and p.id = #{projectId}"})
-    RelUserOrganization getRelByProject(@Param("userId") Long userId, @Param("projectId") Long projectId);
-
-
     int insertBatch(@Param("set") Set<RelUserOrganization> set);
 
 

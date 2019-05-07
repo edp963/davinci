@@ -53,10 +53,6 @@ public interface DashboardMapper {
     Long getByNameWithPortalId(@Param("name") String name, @Param("portalId") Long portalId);
 
 
-    @Select({"SELECT IFNULL(MAX(`index`),0) `index` FROM dashboard WHERE dashboard_portal_id = #{portalId}"})
-    int getMaxIndexByPortalId(@Param("portalId") Long portalId);
-
-
     @Update({
             "update dashboard",
             "set `name` = #{name,jdbcType=VARCHAR},",

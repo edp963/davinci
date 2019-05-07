@@ -24,7 +24,6 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.FileUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -50,7 +49,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service("displayService")
-public class DisplayServiceImpl extends CommonService implements DisplayService {
+public class DisplayServiceImpl implements DisplayService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired

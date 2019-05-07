@@ -23,7 +23,6 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.DateUtils;
 import edp.core.utils.QuartzUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.enums.CronJobStatusEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -50,7 +49,7 @@ import java.util.List;
 
 @Slf4j
 @Service("cronJobService")
-public class CronJobServiceImpl extends CommonService implements CronJobService {
+public class CronJobServiceImpl implements CronJobService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired

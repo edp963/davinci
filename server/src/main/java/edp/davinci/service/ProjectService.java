@@ -67,4 +67,6 @@ public interface ProjectService extends CheckEntityService {
     boolean allowGetData(ProjectDetail projectDetail, User user);
 
     List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
+
+    boolean isMaintainer(ProjectDetail projectDetail, User user);
 }

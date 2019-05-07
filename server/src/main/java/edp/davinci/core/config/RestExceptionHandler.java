@@ -19,6 +19,8 @@
 
 package edp.davinci.core.config;
 
+import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ForbiddenExecption;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
@@ -67,13 +69,30 @@ public class RestExceptionHandler {
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 
+    @ExceptionHandler(value = ForbiddenExecption.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    private ResultMap forbiddenExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.FORBIDDEN).message(e.getMessage());
+    }
+
     @ExceptionHandler(value = UnAuthorizedExecption.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     private ResultMap unAuthorizedExceptionHandler(HttpServletRequest request, Exception e) {
         log.error(e.getMessage());
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message(e.getMessage());
     }
+
+    @ExceptionHandler(value = NotFoundException.class)
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
+        log.error(e.getMessage());
+        return new ResultMap(tokenUtils).failAndRefreshToken(request, HttpCodeEnum.NOT_FOUND).message(e.getMessage());
+    }
+
 
     @ExceptionHandler(value = SQLException.class)
     @ResponseBody
@@ -95,14 +114,6 @@ public class RestExceptionHandler {
         }
 
         return new ResultMap(tokenUtils).failAndRefreshToken(request).message(message);
-    }
-
-    @ExceptionHandler(value = NotFoundException.class)
-    @ResponseBody
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    private ResultMap notFoundExceptionHandler(HttpServletRequest request, Exception e) {
-        log.error(e.getMessage());
-        return new ResultMap(tokenUtils).failAndRefreshToken(request).message(e.getMessage());
     }
 
 }

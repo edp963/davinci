@@ -72,7 +72,7 @@
 
 
     <select id="getUsersByKeyword" resultType="edp.davinci.dto.userDto.UserBaseInfo">
-        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.avatar
+        select DISTINCT u.id, IF(u.`name` is NULL,u.username,u.`name`) as username, u.email, u.avatar
         from `user` u
         LEFT JOIN rel_user_organization r on r.user_id = u.id
         where

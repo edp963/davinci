@@ -62,16 +62,16 @@
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
-                #{record.dashboardId,jdbcType=BIGINT},
-                #{record.widgetId,jdbcType=BIGINT},
-                #{record.x,jdbcType=INTEGER},
-                #{record.y,jdbcType=INTEGER},
-                #{record.width,jdbcType=INTEGER},
-                #{record.height,jdbcType=INTEGER},
-                #{record.frequency,jdbcType=INTEGER},
-                #{record.polling,jdbcType=BIT},
-                #{createBy,jdbcType=BIGINT},
-                #{createTime,jdbcType=TIMESTAMP}
+            #{record.dashboardId,jdbcType=BIGINT},
+            #{record.widgetId,jdbcType=BIGINT},
+            #{record.x,jdbcType=INTEGER},
+            #{record.y,jdbcType=INTEGER},
+            #{record.width,jdbcType=INTEGER},
+            #{record.height,jdbcType=INTEGER},
+            #{record.frequency,jdbcType=INTEGER},
+            #{record.polling,jdbcType=BIT},
+            #{createBy,jdbcType=BIGINT},
+            #{createTime,jdbcType=TIMESTAMP}
             )
         </foreach>
     </insert>

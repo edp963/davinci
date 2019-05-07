@@ -23,10 +23,15 @@ import edp.core.annotation.AuthIgnore;
 import edp.core.annotation.AuthShare;
 import edp.core.annotation.CurrentUser;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.model.Paginate;
 import edp.davinci.common.controller.BaseController;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
+import edp.davinci.dto.shareDto.ShareDashboard;
+import edp.davinci.dto.shareDto.ShareDisplay;
+import edp.davinci.dto.shareDto.ShareWidget;
 import edp.davinci.dto.userDto.UserLogin;
+import edp.davinci.dto.userDto.UserLoginResult;
 import edp.davinci.dto.viewDto.DistinctParam;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.model.User;
@@ -45,6 +50,8 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.sql.SQLException;
+import java.util.Map;
 
 
 @Api(value = "/share", tags = "share", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
@@ -83,14 +90,9 @@ public class ShareController extends BaseController {
             ResultMap resultMap = new ResultMap().fail().message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
-        try {
-            ResultMap resultMap = shareService.shareLogin(token, userLogin);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+
+        User user = shareService.shareLogin(token, userLogin);
+        return ResponseEntity.ok(new ResultMap().success(tokenUtils.generateToken(user)).payload(new UserLoginResult(user)));
     }
 
     /**
@@ -112,13 +114,12 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = shareService.getShareDashboard(token, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        ShareDashboard shareDashboard = shareService.getShareDashboard(token, user);
+
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap().success().payload(shareDashboard));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDashboard));
         }
     }
 
@@ -141,13 +142,12 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = shareService.getShareDisplay(token, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        ShareDisplay shareDisplay = shareService.getShareDisplay(token, user);
+
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap().success().payload(shareDisplay));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareDisplay));
         }
     }
 
@@ -170,13 +170,12 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = shareService.getShareWidget(token, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        ShareWidget shareWidget = shareService.getShareWidget(token, user);
+
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap().success().payload(shareWidget));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareWidget));
         }
     }
 
@@ -195,20 +194,18 @@ public class ShareController extends BaseController {
     public ResponseEntity getShareData(@PathVariable String token,
                                        @RequestBody(required = false) ViewExecuteParam executeParam,
                                        @ApiIgnore @CurrentUser User user,
-                                       HttpServletRequest request) {
+                                       HttpServletRequest request) throws SQLException {
 
         if (StringUtils.isEmpty(token)) {
             ResultMap resultMap = new ResultMap().fail().message("Invalid share token");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = shareService.getShareData(token, executeParam, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        Paginate<Map<String, Object>> shareData = shareService.getShareData(token, executeParam, user);
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap().success().payload(shareData));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(shareData));
         }
     }
 
@@ -282,13 +279,11 @@ public class ShareController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = shareService.generationShareDataCsv(token, executeParam, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
+        String filePath = shareService.generationShareDataCsv(executeParam, user, token);
+        if (null == user) {
+            return ResponseEntity.ok(new ResultMap().success().payload(filePath));
+        } else {
+            return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(filePath));
         }
     }
 }

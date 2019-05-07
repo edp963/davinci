@@ -42,6 +42,7 @@ public class ViewExecuteParam {
     private int limit = 0;
     private int pageNo = -1;
     private int pageSize = -1;
+    private int totalCount = 0;
 
     private boolean nativeQuery = false;
 

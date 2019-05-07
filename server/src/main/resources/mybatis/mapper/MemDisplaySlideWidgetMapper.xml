@@ -55,21 +55,21 @@
         VALUES
         <foreach collection="list" item="record" index="index" separator=",">
             (
-                <choose>
-                    <when test="record.id != null and record.id > 0">
-                        #{record.id,jdbcType=BIGINT},
-                    </when>
-                    <otherwise>
-                        null,
-                    </otherwise>
-                </choose>
-                #{record.displaySlideId,jdbcType=BIGINT},
-                #{record.widgetId,jdbcType=BIGINT},
-                #{record.name,jdbcType=VARCHAR},
-                #{record.type,jdbcType=SMALLINT},
-                #{record.params,jdbcType=LONGVARCHAR},
-                #{record.subType,jdbcType=SMALLINT},
-                #{record.index,jdbcType=INTEGER}
+            <choose>
+                <when test="record.id != null and record.id > 0">
+                    #{record.id,jdbcType=BIGINT},
+                </when>
+                <otherwise>
+                    null,
+                </otherwise>
+            </choose>
+            #{record.displaySlideId,jdbcType=BIGINT},
+            #{record.widgetId,jdbcType=BIGINT},
+            #{record.name,jdbcType=VARCHAR},
+            #{record.type,jdbcType=SMALLINT},
+            #{record.params,jdbcType=LONGVARCHAR},
+            #{record.subType,jdbcType=SMALLINT},
+            #{record.index,jdbcType=INTEGER}
             )
         </foreach>
     </insert>

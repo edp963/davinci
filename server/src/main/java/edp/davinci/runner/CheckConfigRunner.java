@@ -20,8 +20,6 @@
 package edp.davinci.runner;
 
 import com.alibaba.druid.util.StringUtils;
-import edp.core.utils.CustomDataSourceUtils;
-import edp.davinci.service.CronJobService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

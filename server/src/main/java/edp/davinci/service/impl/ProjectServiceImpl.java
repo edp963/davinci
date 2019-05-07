@@ -24,7 +24,6 @@ import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.utils.PageUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
@@ -51,7 +50,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Service("projectService")
-public class ProjectServiceImpl extends CommonService implements ProjectService {
+public class ProjectServiceImpl implements ProjectService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
@@ -63,6 +62,8 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
 
+    @Autowired
+    public RelProjectAdminMapper relProjectAdminMapper;
 
     @Autowired
     private DashboardService dashboardService;
@@ -675,5 +676,47 @@ public class ProjectServiceImpl extends CommonService implements ProjectService 
     public List<RelProjectAdminDto> getAdmins(Long id, User user) throws NotFoundException, UnAuthorizedExecption {
         getProjectDetail(id, user, false);
         return relProjectAdminMapper.getByProject(id);
+    }
+
+
+    /**
+     * user是否project 的维护者
+     *
+     * @param projectDetail
+     * @param user
+     * @return
+     */
+    public boolean isMaintainer(ProjectDetail projectDetail, User user) {
+        if (null == projectDetail || null == user) {
+            return false;
+        }
+
+        //project所在org的creater
+        if (projectDetail.getOrganization().getUserId().equals(user.getId())) {
+            return true;
+        }
+
+        //当前project的creater
+        if (projectDetail.getUserId().equals(user.getId()) && !projectDetail.getIsTransfer()) {
+            return true;
+        }
+
+        //project 所在org的owner
+        RelUserOrganization orgRel = relUserOrganizationMapper.getRel(user.getId(), projectDetail.getOrgId());
+        if (null == orgRel) {
+            return false;
+        }
+
+        if (orgRel.getRole() == UserOrgRoleEnum.OWNER.getRole()) {
+            return true;
+        }
+
+        //project 的admin
+        RelProjectAdmin projectAdmin = relProjectAdminMapper.getByProjectAndUser(projectDetail.getId(), user.getId());
+        if (null != projectAdmin) {
+            return true;
+        }
+
+        return false;
     }
 }

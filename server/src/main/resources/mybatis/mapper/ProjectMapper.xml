@@ -59,84 +59,85 @@
 
     <sql id="selectProjectByUserBaseSql">
         SELECT p.*,
-               IF(s.id is NULL, FALSE, TRUE)              as 'isStar',
-               u.id                                       as 'createBy.id',
-               IF(u.`name` is NULL, u.username, u.`name`) as 'createBy.username',
-               u.avatar                                   as 'createBy.avatar'
+        IF(s.id is NULL, FALSE, TRUE) as 'isStar',
+        u.id as 'createBy.id',
+        IF(u.`name` is NULL, u.username, u.`name`) as 'createBy.username',
+        u.avatar as 'createBy.avatar'
         from project p
-               left join `user` u on u.id = p.user_id
-               left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
+        left join `user` u on u.id = p.user_id
+        left join star s on (s.target_id = p.id and s.target = 'project' and s.user_id = #{userId})
         where p.id in (
-            <!-- 当前用户是project的创建者或管理员 -->
-            select p.id
-            from project p
-                 left join rel_project_admin rpa on rpa.project_id = p.id
-            where p.user_id = #{userId} or rpa.user_id = #{userId}
+        <!-- 当前用户是project的创建者或管理员 -->
+        select p.id
+        from project p
+        left join rel_project_admin rpa on rpa.project_id = p.id
+        where p.user_id = #{userId} or rpa.user_id = #{userId}
 
-            union all
+        union all
 
-            <!--当前用户是project所在org的owner或project对普通成员可见-->
-            select p.id
-            from project p
-               left join rel_user_organization ruo on ruo.org_id = p.org_id
-               left join organization o on o.id = p.org_id
-            where o.user_id = #{userId} or (ruo.user_id = #{userId} and (ruo.role > 0 or (p.visibility = 1 and o.member_permission > 0)))
+        <!--当前用户是project所在org的owner或project对普通成员可见-->
+        select p.id
+        from project p
+        left join rel_user_organization ruo on ruo.org_id = p.org_id
+        left join organization o on o.id = p.org_id
+        where o.user_id = #{userId} or (ruo.user_id = #{userId} and (ruo.role > 0 or (p.visibility = 1 and
+        o.member_permission > 0)))
 
-            union all
+        union all
 
-            <!-- 当前用户权限关联的project -->
-            select p.id
-            from project p
-               left join rel_role_project rrp on rrp.project_id = p.id
-               left join rel_role_user rru on rru.role_id = rrp.role_id
-            where rru.user_id = #{userId}
-      )
-  </sql>
-
-
-  <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
-      <include refid="selectProjectByUserBaseSql"></include>
-      <if test="orgList != null">
-          AND p.org_id IN
-          <foreach collection="orgList" index="index" item="item" open="(" close=")" separator=",">
-              #{item.id}
-          </foreach>
-      </if>
-      <if test="keywords != null">
-          AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keywords})), '%')
-      </if>
-      ORDER BY p.id
-  </select>
+        <!-- 当前用户权限关联的project -->
+        select p.id
+        from project p
+        left join rel_role_project rrp on rrp.project_id = p.id
+        left join rel_role_user rru on rru.role_id = rrp.role_id
+        where rru.user_id = #{userId}
+        )
+    </sql>
 
 
-  <select id="getProjectsByOrgWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
-      <include refid="selectProjectByUserBaseSql"></include>
-      <if test="orgId != null">
-          and p.org_id = #{orgId}
-      </if>
-      <if test="keyword != null">
-          AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
-      </if>
-      ORDER BY p.id
-  </select>
-
-
-  <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
-      <include refid="selectProjectByUserBaseSql"></include>
-      order by p.id
-  </select>
-
-
-  <select id="getFavoriteProjects" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
-      select t.* from (
+    <select id="getProjectsByKewordsWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
         <include refid="selectProjectByUserBaseSql"></include>
-      ) t LEFT JOIN favorite f on t.id = f.project_id
-      where f.user_id = #{userId}
-      order by t.id
-  </select>
+        <if test="orgList != null">
+            AND p.org_id IN
+            <foreach collection="orgList" index="index" item="item" open="(" close=")" separator=",">
+                #{item.id}
+            </foreach>
+        </if>
+        <if test="keywords != null">
+            AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keywords})), '%')
+        </if>
+        ORDER BY p.id
+    </select>
 
 
-  <select id="getProjectIdsByAdmin" resultType="java.lang.Long">
+    <select id="getProjectsByOrgWithUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        <include refid="selectProjectByUserBaseSql"></include>
+        <if test="orgId != null">
+            and p.org_id = #{orgId}
+        </if>
+        <if test="keyword != null">
+            AND LOWER(p.`name`) LIKE CONCAT(CONCAT('%', LOWER(#{keyword})), '%')
+        </if>
+        ORDER BY p.id
+    </select>
+
+
+    <select id="getProejctsByUser" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        <include refid="selectProjectByUserBaseSql"></include>
+        order by p.id
+    </select>
+
+
+    <select id="getFavoriteProjects" resultType="edp.davinci.dto.projectDto.ProjectWithCreateBy">
+        select t.* from (
+        <include refid="selectProjectByUserBaseSql"></include>
+        ) t LEFT JOIN favorite f on t.id = f.project_id
+        where f.user_id = #{userId}
+        order by t.id
+    </select>
+
+
+    <select id="getProjectIdsByAdmin" resultType="java.lang.Long">
       select p.id
       from project p
              left join rel_project_admin rpa on rpa.project_id = p.id
@@ -151,7 +152,7 @@
          or (ruo.user_id = #{userId} and ruo.role > 0)
   </select>
 
-  <select id="getProjectDetail" resultType="edp.davinci.dto.projectDto.ProjectDetail">
+    <select id="getProjectDetail" resultType="edp.davinci.dto.projectDto.ProjectDetail">
       SELECT p.*,
              u.id                                       AS 'createBy.id',
              IF(u.`name` is NULL, u.username, u.`name`) AS 'createBy.username',

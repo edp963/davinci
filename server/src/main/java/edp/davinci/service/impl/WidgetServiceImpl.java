@@ -22,12 +22,10 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.core.model.Paginate;
+import edp.core.model.PaginateWithQueryColumns;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
-import edp.davinci.core.common.ResultMap;
+import edp.core.utils.ServerUtils;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -44,7 +42,6 @@ import edp.davinci.dto.viewDto.ViewWithProjectAndSource;
 import edp.davinci.dto.viewDto.ViewWithSource;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
-import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
 import edp.davinci.model.User;
 import edp.davinci.model.View;
 import edp.davinci.model.Widget;
@@ -62,25 +59,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Service("widgetService")
 @Slf4j
-public class WidgetServiceImpl extends CommonService implements WidgetService {
+public class WidgetServiceImpl implements WidgetService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
-
 
     @Autowired
     private WidgetMapper widgetMapper;
-
-    @Autowired
-    private TokenUtils tokenUtils;
 
     @Autowired
     private ViewMapper viewMapper;
@@ -100,6 +94,8 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
     @Autowired
     private FileUtils fileUtils;
 
+    @Autowired
+    private ServerUtils serverUtils;
 
     @Autowired
     private ProjectService projectService;
@@ -317,8 +313,7 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
             throw new NotFoundException("widget is not found");
         }
 
-        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
-        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectService.getProjectDetail(widget.getProjectId(), user, false), user);
 
         //校验权限
         if (!projectPermission.getSharePermission()) {
@@ -331,30 +326,21 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
 
 
     @Override
-    public ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption {
         String filePath = null;
-        WidgetWithProjectAndView widgetWithProjectAndView = widgetMapper.getWidgetWithProjectAndViewById(id);
+        Widget widget = widgetMapper.getById(id);
 
-        if (null == widgetWithProjectAndView) {
+        if (null == widget) {
             log.info("widget (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("widget not found");
+            throw new NotFoundException("widget is not found");
         }
 
-        if (null == widgetWithProjectAndView.getProject()) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-//        if (!allowDownload(widgetWithProjectAndView.getProject(), user)) {
-//            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to download the widget");
-//        }
-
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(widgetWithProjectAndView.getViewId());
-
-        if (null == viewWithProjectAndSource) {
-            return resultMap.failAndRefreshToken(request).message("view not found");
+        ProjectDetail projectDetail = projectService.getProjectDetail(widget.getProjectId(), user, false);
+        ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
+        //校验权限
+        if (!projectPermission.getDownloadPermission()) {
+            log.info("user {} have not permisson to download the widget {}", user.getUsername(), id);
+            throw new UnAuthorizedExecption("you have not permission to download the widget");
         }
 
         executeParam.setPageNo(-1);
@@ -374,17 +360,16 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
 
         try {
             if (type.equals(FileTypeEnum.CSV.getType())) {
-//                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
-                Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);
-//                List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
-                List<QueryColumn> columns = null;
+                ViewWithSource viewWithSource = viewMapper.getViewWithSource(widget.getViewId());
+                PaginateWithQueryColumns paginate = viewService.getResultDataList(projectDetail, viewWithSource, executeParam, user);
+                List<QueryColumn> columns = paginate.getColumns();
                 if (null != columns && columns.size() > 0) {
                     File file = new File(rootPath);
                     if (!file.exists()) {
                         file.mkdirs();
                     }
 
-                    String csvName = viewWithProjectAndSource.getName() + "_" +
+                    String csvName = widget.getName() + "_" +
                             System.currentTimeMillis() +
                             UUID.randomUUID().toString().replace("-", "") +
                             FileTypeEnum.CSV.getFormat();
@@ -393,30 +378,27 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
                 }
             } else if (type.equals(FileTypeEnum.XLSX.getType())) {
 
-                String excelName = widgetWithProjectAndView.getName() + "_" +
+                String excelName = widget.getName() + "_" +
                         System.currentTimeMillis() +
                         UUID.randomUUID().toString().replace("-", "") +
                         FileTypeEnum.XLSX.getFormat();
 
 
                 HashSet<Widget> widgets = new HashSet<>();
-                widgets.add(widgetWithProjectAndView);
+                widgets.add(widget);
                 Map<Long, ViewExecuteParam> executeParamMap = new HashMap<>();
-                executeParamMap.put(widgetWithProjectAndView.getId(), executeParam);
+                executeParamMap.put(widget.getId(), executeParam);
 
                 filePath = rootPath + excelName;
-                writeExcel(widgets, executeParamMap, filePath, user, false);
+                writeExcel(widgets, projectDetail, executeParamMap, filePath, user, false);
             } else {
-                return resultMap.failAndRefreshToken(request).message("unknow file type");
+                throw new ServerException("unknow file type");
             }
         } catch (Exception e) {
-            return resultMap.failAndRefreshToken(request).message("generation " + type + " error!");
+            throw new ServerException("generation " + type + " error!");
         }
 
-
-        filePath = fileUtils.formatFilePath(filePath);
-
-        return resultMap.successAndRefreshToken(request).payload(getHost() + filePath);
+        return serverUtils.getHost() + fileUtils.formatFilePath(filePath);
     }
 
 
@@ -424,6 +406,7 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
      * widget列表数据写入指定excle文件
      *
      * @param widgets
+     * @param projectDetail
      * @param executeParamMap
      * @param filePath
      * @param user
@@ -432,7 +415,7 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
      * @throws Exception
      */
     public File writeExcel(Set<Widget> widgets,
-                           Map<Long, ViewExecuteParam> executeParamMap,
+                           ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap,
                            String filePath, User user, boolean containType) throws Exception {
         if (StringUtils.isEmpty(filePath)) {
             throw new ServerException("excel file path is empty");
@@ -443,10 +426,12 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
 
         SXSSFWorkbook wb = new SXSSFWorkbook(1000);
 
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
         CountDownLatch countDownLatch = new CountDownLatch(widgets.size());
 
         Iterator<Widget> iterator = widgets.iterator();
         int i = 1;
+
         while (iterator.hasNext()) {
             Widget widget = iterator.next();
             final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
@@ -460,14 +445,10 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
                         executeParam = executeParamMap.get(widget.getId());
                     }
 
-//                    List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
-                    List<QueryColumn> columns = null;
-
-//                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(viewWithProjectAndSource, executeParam, user);
-                    Paginate<Map<String, Object>> paginate = viewService.getResultDataList(new ProjectDetail(), new ViewWithSource(), executeParam, user);
+                    PaginateWithQueryColumns paginate = viewService.getResultDataList(projectDetail, viewWithProjectAndSource, executeParam, user);
 
                     sheet = wb.createSheet(sheetName);
-                    ExcelUtils.writeSheet(sheet, columns, paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
+                    ExcelUtils.writeSheet(sheet, paginate.getColumns(), paginate.getResultList(), wb, containType, widget.getConfig(), executeParam.getParams());
                 } catch (ServerException e) {
                     e.printStackTrace();
                 } catch (SQLException e) {
@@ -482,6 +463,7 @@ public class WidgetServiceImpl extends CommonService implements WidgetService {
         }
 
         countDownLatch.await();
+        executorService.shutdown();
 
         File file = new File(filePath);
         File dir = new File(file.getParent());

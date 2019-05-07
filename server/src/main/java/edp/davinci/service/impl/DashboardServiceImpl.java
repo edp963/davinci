@@ -22,11 +22,8 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.enums.LogNameEnum;
-import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
-import edp.davinci.core.enums.UserTeamRoleEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
@@ -50,7 +47,7 @@ import static edp.core.consts.Consts.conditionSeparator;
 
 @Slf4j
 @Service("dashboardService")
-public class DashboardServiceImpl extends CommonService implements DashboardService {
+public class DashboardServiceImpl implements DashboardService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired

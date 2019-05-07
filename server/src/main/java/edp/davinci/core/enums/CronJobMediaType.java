@@ -32,4 +32,4 @@ public enum CronJobMediaType {
     CronJobMediaType(String type) {
         this.type = type;
     }
-    }
+}

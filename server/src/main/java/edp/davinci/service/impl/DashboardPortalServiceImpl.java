@@ -21,7 +21,6 @@ package edp.davinci.service.impl;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
 import edp.davinci.dao.DashboardMapper;
@@ -52,7 +51,7 @@ import java.util.stream.Collectors;
 
 @Service("dashboardPortalService")
 @Slf4j
-public class DashboardPortalServiceImpl extends CommonService implements DashboardPortalService {
+public class DashboardPortalServiceImpl implements DashboardPortalService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
@@ -115,7 +114,7 @@ public class DashboardPortalServiceImpl extends CommonService implements Dashboa
         Iterator<DashboardPortal> iterator = dashboardPortals.iterator();
         while (iterator.hasNext()) {
             DashboardPortal portal = iterator.next();
-            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && (disbalePortals.contains(portal.getId())|| !portal.getPublish())) {
+            if (projectPermission.getVizPermission() == UserPermissionEnum.READ.getPermission() && (disbalePortals.contains(portal.getId()) || !portal.getPublish())) {
                 iterator.remove();
             }
         }

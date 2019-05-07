@@ -22,19 +22,12 @@ import com.alibaba.druid.util.StringUtils;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.core.utils.AESUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.MailUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.model.TokenEntity;
-import edp.davinci.dao.ProjectMapper;
-import edp.davinci.dao.RelUserOrganizationMapper;
-import edp.davinci.dao.RoleMapper;
-import edp.davinci.dao.UserMapper;
+import edp.davinci.dao.*;
 import edp.davinci.dto.organizationDto.*;
 import edp.davinci.model.Organization;
 import edp.davinci.model.Project;
@@ -54,11 +47,14 @@ import java.util.*;
 
 @Slf4j
 @Service("organizationService")
-public class OrganizationServiceImpl extends CommonService implements OrganizationService {
+public class OrganizationServiceImpl implements OrganizationService {
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
     @Autowired
     private RelUserOrganizationMapper relUserOrganizationMapper;
+
+    @Autowired
+    public OrganizationMapper organizationMapper;
 
     @Autowired
     private UserMapper userMapper;
@@ -77,6 +73,9 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
 
     @Autowired
     private FileUtils fileUtils;
+
+    @Autowired
+    private ServerUtils serverUtils;
 
     @Override
     public synchronized boolean isExist(String name, Long id, Long scopeId) {
@@ -364,7 +363,7 @@ public class OrganizationServiceImpl extends CommonService implements Organizati
         content.put("username", member.getUsername());
         content.put("inviter", user.getUsername());
         content.put("orgName", organization.getName());
-        content.put("host", getHost());
+        content.put("host", serverUtils.getHost());
         //aes加密token
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(orgInviteDetail), null));
         try {

@@ -38,13 +38,6 @@ public interface RelRoleViewMapper {
     })
     int delete(@Param("roleId") Long roleId, @Param("viewId") Long viewId);
 
-
-    @Select({
-            "select * from rel_role_view where role_id = #{roleId} and view_id = #{viewId}"
-    })
-    RelRoleView getOne(@Param("roleId") Long roleId, @Param("viewId") Long viewId);
-
-
     @Update({
             "update rel_role_view",
             "set `row_auth` = #{rowAuth, jdbcType=LONGVARCHAR},",
@@ -54,11 +47,6 @@ public interface RelRoleViewMapper {
             "where role_id = #{roleId} and view_id = #{viewId}"
     })
     int update(RelRoleView relRoleView);
-
-    @Select({
-            "select * from rel_role_view where view_id = #{viewId}"
-    })
-    List<RelRoleView> getByViewId(Long viewId);
 
     @Delete({
             "delete from rel_role_view where  view_id = #{viewId}"

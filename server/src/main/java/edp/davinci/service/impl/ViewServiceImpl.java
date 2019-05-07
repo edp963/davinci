@@ -1,3 +1,22 @@
+/*
+ * <<
+ *  Davinci
+ *  ==
+ *  Copyright (C) 2016 - 2018 EDP
+ *  ==
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *  >>
+ *
+ */
+
 package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
@@ -8,10 +27,11 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
-import edp.core.utils.*;
-import edp.davinci.common.service.CommonService;
+import edp.core.utils.CollectionUtils;
+import edp.core.utils.MD5Util;
+import edp.core.utils.RedisUtils;
+import edp.core.utils.SqlUtils;
 import edp.davinci.core.common.Constants;
-import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlVariableTypeEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
@@ -27,7 +47,6 @@ import edp.davinci.dto.sourceDto.SourceBaseInfo;
 import edp.davinci.dto.sourceDto.SourceConfig;
 import edp.davinci.dto.viewDto.*;
 import edp.davinci.model.*;
-import edp.davinci.service.AdditionalTeamVarService;
 import edp.davinci.service.ProjectService;
 import edp.davinci.service.SourceService;
 import edp.davinci.service.ViewService;
@@ -43,7 +62,6 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import javax.servlet.http.HttpServletRequest;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.*;
@@ -54,7 +72,7 @@ import static edp.core.consts.Consts.minus;
 
 @Slf4j
 @Service("viewService")
-public class ViewServiceImpl extends CommonService implements ViewService {
+public class ViewServiceImpl implements ViewService {
 
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
@@ -74,9 +92,6 @@ public class ViewServiceImpl extends CommonService implements ViewService {
     private SqlUtils sqlUtils;
 
     @Autowired
-    private TokenUtils tokenUtils;
-
-    @Autowired
     private RedisUtils redisUtils;
 
     @Autowired
@@ -85,17 +100,8 @@ public class ViewServiceImpl extends CommonService implements ViewService {
     @Autowired
     private SourceService sourceService;
 
-    @Autowired(required = false)
-    private AdditionalTeamVarService additionalTeamVarService;
-
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
-
-    protected static final String viewDataCacheKey = "view_data_";
-
-    protected static final String viewMetaCacheKey = "view_meta_";
-
-    protected static final String viewTeamVarKey = "team";
 
     private static final String SQL_VARABLE_KEY = "name";
 
@@ -367,7 +373,7 @@ public class ViewServiceImpl extends CommonService implements ViewService {
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
                         for (String sql : querySqlList) {
-                            paginateWithQueryColumns = sqlUtils.query4PaginateWithQueryColumns(sql, executeSql.getLimit());
+                            paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, executeSql.getLimit());
                         }
                     }
                 }
@@ -457,8 +463,8 @@ public class ViewServiceImpl extends CommonService implements ViewService {
      * @throws ServerException
      */
     @Override
-    public Paginate<Map<String, Object>> getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
-        Paginate paginate = null;
+    public PaginateWithQueryColumns getResultDataList(ProjectDetail projectDetail, ViewWithSource viewWithSource, ViewExecuteParam executeParam, User user) throws ServerException, SQLException {
+        PaginateWithQueryColumns paginate = null;
 
         if (null == executeParam || (CollectionUtils.isEmpty(executeParam.getGroups()) && CollectionUtils.isEmpty(executeParam.getAggregators()))) {
             return null;
@@ -523,7 +529,7 @@ public class ViewServiceImpl extends CommonService implements ViewService {
                         try {
                             Object object = redisUtils.get(cacheKey);
                             if (null != object && executeParam.getCache()) {
-                                paginate = (Paginate) object;
+                                paginate = (PaginateWithQueryColumns) object;
                                 return paginate;
                             }
                         } catch (Exception e) {
@@ -556,6 +562,88 @@ public class ViewServiceImpl extends CommonService implements ViewService {
 
         return paginate;
     }
+
+
+    @Override
+    public List<Map<String, Object>> getDistinctValue(Long id, DistinctParam param, User user) throws NotFoundException, ServerException, UnAuthorizedExecption {
+        ViewWithSource viewWithSource = viewMapper.getViewWithSource(id);
+        if (null == viewWithSource) {
+            log.info("view (:{}) not found", id);
+            throw new NotFoundException("view is not found");
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(viewWithSource.getProjectId(), user, false);
+
+        boolean allowGetData = projectService.allowGetData(projectDetail, user);
+
+        if (!allowGetData) {
+            throw new UnAuthorizedExecption();
+        }
+
+        return getDistinctValueData(projectDetail, viewWithSource, param, user);
+    }
+
+
+    @Override
+    public List<Map<String, Object>> getDistinctValueData(ProjectDetail projectDetail, ViewWithSource viewWithSource, DistinctParam param, User user) throws ServerException {
+        try {
+            if (!StringUtils.isEmpty(viewWithSource.getSql())) {
+                //解析变量
+                List<SqlVariable> variables = viewWithSource.getVariables();
+                //解析sql
+                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+
+                //获取当前用户对该view的行列权限配置
+                List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
+
+                //行权限
+                List<SqlVariable> rowVariables = getRowVariables(roleViewList, variables);
+
+                //解析行权限
+                parseParams(projectDetail, sqlEntity, null, rowVariables, user);
+
+                //替换参数
+                String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+
+                Source source = viewWithSource.getSource();
+
+                SqlUtils sqlUtils = this.sqlUtils.init(source);
+
+                List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
+                if (null != executeSqlList && executeSqlList.size() > 0) {
+                    executeSqlList.forEach(sql -> sqlUtils.execute(sql));
+                }
+
+                List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
+                if (null != querySqlList && querySqlList.size() > 0) {
+                    if (null != param) {
+                        STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
+                        ST st = stg.getInstanceOf("queryDistinctSql");
+                        st.add("columns", param.getColumns());
+                        st.add("params", param.getParents());
+                        st.add("sql", querySqlList.get(querySqlList.size() - 1));
+                        st.add("keywordPrefix", SqlUtils.getKeywordPrefix(source.getJdbcUrl()));
+                        st.add("keywordSuffix", SqlUtils.getKeywordSuffix(source.getJdbcUrl()));
+
+                        querySqlList.set(querySqlList.size() - 1, st.render());
+                    }
+                    List<Map<String, Object>> list = null;
+                    for (String sql : querySqlList) {
+                        list = sqlUtils.query4List(sql, -1);
+                    }
+                    if (null != list) {
+                        return list;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServerException(e.getMessage());
+        }
+
+        return null;
+    }
+
 
     private Set<String> getColumnAuth(List<RelRoleView> roleViewList) {
         if (null != roleViewList && roleViewList.size() > 0) {
@@ -604,7 +692,7 @@ public class ViewServiceImpl extends CommonService implements ViewService {
         }
 
         //如果当前用户是project的维护者，直接不走行权限
-        if (isMaintainer(projectDetail, user)) {
+        if (projectService.isMaintainer(projectDetail, user)) {
             sqlEntity.setAuthParams(null);
             sqlEntity.setQuaryParams(null);
             return;
@@ -646,93 +734,6 @@ public class ViewServiceImpl extends CommonService implements ViewService {
                 sqlEntity.setAuthParams(new HashMap<>());
             }
         }
-    }
-
-
-    @Override
-    public ResultMap getDistinctValue(Long id, DistinctParam param, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
-        List<Map<String, Object>> list = null;
-
-        ViewWithProjectAndSource viewWithProjectAndSource = viewMapper.getViewWithProjectAndSourceById(id);
-        if (null == viewWithProjectAndSource) {
-            log.info("view (:{}) not found", id);
-            return resultMap.failAndRefreshToken(request).message("view not found");
-        }
-
-        Project project = viewWithProjectAndSource.getProject();
-        if (null == project) {
-            log.info("project not found");
-            return resultMap.failAndRefreshToken(request).message("project not found");
-        }
-
-        //当前用户是project的创建者和organization的owner，直接返回
-//        if (!allowGetData(project, user)) {
-//            return resultMap.failAndRefreshToken(request, HttpCodeEnum.UNAUTHORIZED).message("you have not permission to get data");
-//        }
-
-        try {
-            list = getDistinctValueData(viewWithProjectAndSource, param, user);
-        } catch (ServerException e) {
-            return resultMap.failAndRefreshToken(request).message(e.getMessage());
-        }
-
-        return resultMap.successAndRefreshToken(request).payloads(list);
-    }
-
-
-    @Override
-    public List<Map<String, Object>> getDistinctValueData(ViewWithProjectAndSource viewWithProjectAndSource, DistinctParam param, User user) throws ServerException {
-        try {
-            if (!StringUtils.isEmpty(viewWithProjectAndSource.getSql())) {
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithProjectAndSource.getSql(), sqlTempDelimiter);
-                Source source = viewWithProjectAndSource.getSource();
-                if (null == viewWithProjectAndSource) {
-                    throw new ServerException("source not found");
-                }
-                if (!StringUtils.isEmpty(sqlEntity.getSql())) {
-                    SqlUtils sqlUtils = this.sqlUtils.init(source);
-
-                    //解析team@var查询参数
-//                    Map<String, List<String>> teamParams = parseAuthParams(sqlEntity.getAuthParams(), viewWithProjectAndSource, user, sqlTempDelimiter);
-                    Map<String, List<String>> teamParams = null;
-                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), teamParams, sqlTempDelimiter);
-                    List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
-                    List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
-                    if (null != executeSqlList && executeSqlList.size() > 0) {
-                        for (String sql : executeSqlList) {
-                            sqlUtils.execute(sql);
-                        }
-                    }
-                    if (null != querySqlList && querySqlList.size() > 0) {
-                        if (null != param) {
-                            STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
-                            ST st = stg.getInstanceOf("queryDistinctSql");
-                            st.add("columns", param.getColumns());
-                            st.add("params", param.getParents());
-                            st.add("sql", querySqlList.get(querySqlList.size() - 1));
-                            st.add("keywordPrefix", sqlUtils.getKeywordPrefix(source.getJdbcUrl()));
-                            st.add("keywordSuffix", sqlUtils.getKeywordSuffix(source.getJdbcUrl()));
-
-                            querySqlList.set(querySqlList.size() - 1, st.render());
-                        }
-                        List<Map<String, Object>> list = null;
-                        for (String sql : querySqlList) {
-                            list = sqlUtils.query4List(sql, -1);
-                        }
-                        if (null != list) {
-                            return list;
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServerException(e.getMessage());
-        }
-
-        return null;
     }
 
     private Map<String, Object> getQueryParam(SqlEntity sqlEntity, ViewExecuteParam viewExecuteParam) {

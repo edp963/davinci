@@ -29,7 +29,6 @@ import edp.core.model.TableInfo;
 import edp.core.utils.DateUtils;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
-import edp.davinci.common.service.CommonService;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.enums.*;
 import edp.davinci.core.model.DataUploadEntity;
@@ -62,12 +61,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 
 @Slf4j
 @Service("sourceService")
-public class SourceServiceImpl extends CommonService implements SourceService {
+public class SourceServiceImpl implements SourceService {
 
     private static final Logger optLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_OPERATION.getName());
 
@@ -607,7 +608,7 @@ public class SourceServiceImpl extends CommonService implements SourceService {
                 }
             }
 
-//            ExecutorService executorService = Executors.newCachedThreadPool();
+            ExecutorService executorService = Executors.newFixedThreadPool(8);
 
             STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
             ST st = stg.getInstanceOf("insertData");
@@ -644,7 +645,7 @@ public class SourceServiceImpl extends CommonService implements SourceService {
                 e.printStackTrace();
                 throw new ServerException(e.getMessage());
             } finally {
-//                executorService.shutdown();
+                executorService.shutdown();
             }
         }
     }

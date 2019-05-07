@@ -19,7 +19,6 @@
 package edp.davinci.dao;
 
 import edp.davinci.dto.shareDto.ShareWidget;
-import edp.davinci.dto.widgetDto.WidgetWithProjectAndView;
 import edp.davinci.dto.widgetDto.WidgetWithRelationDashboardId;
 import edp.davinci.model.Widget;
 import org.apache.ibatis.annotations.Delete;
@@ -91,33 +90,6 @@ public interface WidgetMapper {
 
     @Select({"select * from widget where project_id = #{projectId}"})
     List<Widget> getByProject(@Param("projectId") Long projectId);
-
-
-    @Select({
-            "SELECT ",
-            "	w.*,",
-            "	p.id 'project.id',",
-            "	p.`name` 'project.name',",
-            "	p.description 'project.description',",
-            "	p.pic 'project.pic',",
-            "	p.org_id 'project.orgId',",
-            "	p.user_id 'project.userId',",
-            "	p.visibility 'p.visibility',",
-            "	v.id 'view.id',",
-            "	v.`name` 'view.name',",
-            "	v.description 'view.description',",
-            "	v.project_id 'view.projectId',",
-            "	v.source_id 'view.sourceId',",
-            "	v.`sql` 'view.sql',",
-            "	v.model 'view.model',",
-            "	v.config 'view.config'",
-            "FROM",
-            "	widget w ",
-            "	LEFT JOIN project p on w.project_id = p.id",
-            "	LEFT JOIN `view` v on w.view_id = v.id",
-            "WHERE w.id = #{id}",
-    })
-    WidgetWithProjectAndView getWidgetWithProjectAndViewById(@Param("id") Long id);
 
     @Select({"SELECT w.*, m.id as 'relationId' FROM mem_dashboard_widget m LEFT JOIN widget w on w.id = m.widget_Id WHERE m.dashboard_id = #{dashboardId}"})
     Set<WidgetWithRelationDashboardId> getByDashboard(@Param("dashboardId") Long dashboardId);

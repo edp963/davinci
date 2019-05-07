@@ -147,4 +147,9 @@ public class Consts {
 
     public static final String DIR_TEMPL = File.separator + "tempFiles" + File.separator;
 
+    public static final String HTTP_PROTOCOL = "http";
+
+    public static final String HTTPS_PROTOCOL = "https";
+
+    public static final String PROTOCOL_SEPARATOR = "://";
 }

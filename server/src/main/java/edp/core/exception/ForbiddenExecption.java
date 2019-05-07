@@ -17,14 +17,22 @@
  *
  */
 
-package edp.davinci.service;
+package edp.core.exception;
 
-import edp.davinci.core.common.ResultMap;
-import edp.davinci.model.User;
+import edp.core.enums.HttpCodeEnum;
 
-import javax.servlet.http.HttpServletRequest;
+public class ForbiddenExecption extends RuntimeException {
 
-public interface DepartmentService {
+    public ForbiddenExecption(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    ResultMap getdepartments(Long projectId, String type, User user, HttpServletRequest request);
+    public ForbiddenExecption(String message) {
+        super(message);
+    }
+
+
+    public ForbiddenExecption() {
+        super(HttpCodeEnum.FORBIDDEN.getMessage());
+    }
 }

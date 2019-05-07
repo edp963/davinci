@@ -20,11 +20,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
-import edp.core.utils.AESUtils;
-import edp.core.utils.FileUtils;
-import edp.core.utils.MailUtils;
-import edp.core.utils.TokenUtils;
-import edp.davinci.common.service.CommonService;
+import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.enums.UserOrgRoleEnum;
@@ -51,7 +47,7 @@ import java.util.*;
 
 @Slf4j
 @Service("userService")
-public class UserServiceImpl extends CommonService implements UserService {
+public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserMapper userMapper;
@@ -72,6 +68,8 @@ public class UserServiceImpl extends CommonService implements UserService {
     @Autowired
     private FileUtils fileUtils;
 
+    @Autowired
+    private ServerUtils serverUtils;
 
     /**
      * 用户是否存在
@@ -121,7 +119,7 @@ public class UserServiceImpl extends CommonService implements UserService {
             //添加成功，发送激活邮件
             Map content = new HashMap<String, Object>();
             content.put("username", user.getUsername());
-            content.put("host", getHost());
+            content.put("host", serverUtils.getHost());
             content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
             mailUtils.sendTemplateEmail(user.getEmail(),
                     Constants.USER_ACTIVATE_EMAIL_SUBJECT,
@@ -319,7 +317,7 @@ public class UserServiceImpl extends CommonService implements UserService {
 
         Map content = new HashMap<String, Object>();
         content.put("username", user.getUsername());
-        content.put("host", getHost());
+        content.put("host", serverUtils.getHost());
         content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
         mailUtils.sendTemplateEmail(user.getEmail(),
                 Constants.USER_ACTIVATE_EMAIL_SUBJECT,

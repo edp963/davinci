@@ -27,9 +27,9 @@ public class MD5Util {
     /**
      * MD5加密
      *
-     * @param src       需要加密的字符串
-     * @param isUpper   大小写
-     * @param bit       加密长度（16,32,64）
+     * @param src     需要加密的字符串
+     * @param isUpper 大小写
+     * @param bit     加密长度（16,32,64）
      * @return
      */
     public static String getMD5(String src, boolean isUpper, Integer bit) {
@@ -56,7 +56,7 @@ public class MD5Util {
                     sb.append(Integer.toHexString(i));
                 }
                 md5 = sb.toString();
-                if(bit == 16) {
+                if (bit == 16) {
                     //截取32位md5为16位
                     String md16 = md5.substring(8, 24);
                     md5 = md16;

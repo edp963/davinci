@@ -98,7 +98,7 @@ public class QuartzUtils {
                 return;
             }
 
-            String oldExp= trigger.getCronExpression();
+            String oldExp = trigger.getCronExpression();
             if (!oldExp.equalsIgnoreCase(scheduleJob.getCronExpression())) {
                 removeJob(scheduleJob);
                 addJob(scheduleJob);

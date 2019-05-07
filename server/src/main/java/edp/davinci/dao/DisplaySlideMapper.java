@@ -57,9 +57,6 @@ public interface DisplaySlideMapper {
 
     int updateBatch(List<DisplaySlide> list);
 
-    @Select({"SELECT IFNULL(MAX(`index`),0) `index` FROM display_slide WHERE display_id = #{displayId}"})
-    int getMaxIndexByDisplayId(@Param("displayId") Long displayId);
-
 
     @Select({"select * from display_slide where display_id = #{displayId} order by `index`"})
     List<DisplaySlide> selectByDisplayId(@Param("displayId") Long displayId);

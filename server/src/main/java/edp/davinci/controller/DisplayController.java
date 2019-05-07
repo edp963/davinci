@@ -627,7 +627,7 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "get display  exclude roles")
     @GetMapping("/{id}/exclude/roles")
     public ResponseEntity getDisplayExcludeRoles(@PathVariable Long id,
-                                                HttpServletRequest request) {
+                                                 HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
@@ -648,7 +648,7 @@ public class DisplayController extends BaseController {
     @ApiOperation(value = "get display slide exclude roles")
     @GetMapping("/slide/{id}/exclude/roles")
     public ResponseEntity getSlideExcludeRoles(@PathVariable Long id,
-                                                HttpServletRequest request) {
+                                               HttpServletRequest request) {
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid id");
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

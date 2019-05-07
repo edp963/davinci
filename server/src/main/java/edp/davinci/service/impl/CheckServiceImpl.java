@@ -71,7 +71,7 @@ public class CheckServiceImpl implements CheckService {
         }
 
         CheckEntityService checkEntityService = (CheckEntityService) beanFactory.getBean(checkEntityEnum.getService());
-        if (checkEntityService.isExist(name, id,scopeId)) {
+        if (checkEntityService.isExist(name, id, scopeId)) {
             if (checkEntityEnum.equals(CheckEntityEnum.USER)) {
                 return resultMap.fail().message("the current " + checkEntityEnum.getSource() + " name is already taken");
             }

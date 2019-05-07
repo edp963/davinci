@@ -42,8 +42,9 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取jdbcUrl
-     *
+     * <p>
      * json key： url
+     *
      * @return
      */
     @Override
@@ -64,8 +65,9 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取jdbc username
-     *
+     * <p>
      * json key: user
+     *
      * @return
      */
     @Override
@@ -86,8 +88,9 @@ public class Source extends BaseSource {
 
     /**
      * 从config中获取 jdbc password
-     *
+     * <p>
      * json key: password
+     *
      * @return
      */
     @Override

@@ -21,15 +21,14 @@ package edp.davinci.service;
 import edp.core.exception.NotFoundException;
 import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
-import edp.davinci.core.common.ResultMap;
 import edp.davinci.core.service.CheckEntityService;
+import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.viewDto.ViewExecuteParam;
 import edp.davinci.dto.widgetDto.WidgetCreate;
 import edp.davinci.dto.widgetDto.WidgetUpdate;
 import edp.davinci.model.User;
 import edp.davinci.model.Widget;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,7 @@ public interface WidgetService extends CheckEntityService {
 
     Widget getWidget(Long id, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request);
+    String generationFile(Long id, ViewExecuteParam executeParam, User user, String type) throws NotFoundException, ServerException, UnAuthorizedExecption;
 
-    File writeExcel(Set<Widget> widgets, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
+    File writeExcel(Set<Widget> widgets, ProjectDetail projectDetail, Map<Long, ViewExecuteParam> executeParamMap, String filePath, User user, boolean containType) throws Exception;
 }

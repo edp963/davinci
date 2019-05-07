@@ -19,7 +19,6 @@
 package edp.davinci.controller;
 
 import edp.core.annotation.CurrentUser;
-import edp.core.enums.HttpCodeEnum;
 import edp.core.model.Paginate;
 import edp.core.model.PaginateWithQueryColumns;
 import edp.davinci.common.controller.BaseController;
@@ -259,13 +258,7 @@ public class ViewController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        try {
-            ResultMap resultMap = viewService.getDistinctValue(id, param, user, request);
-            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
-        } catch (Exception e) {
-            e.printStackTrace();
-            log.error(e.getMessage());
-            return ResponseEntity.status(HttpCodeEnum.SERVER_ERROR.getCode()).body(HttpCodeEnum.SERVER_ERROR.getMessage());
-        }
+        List<Map<String, Object>> distinctValue = viewService.getDistinctValue(id, param, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(distinctValue));
     }
 }

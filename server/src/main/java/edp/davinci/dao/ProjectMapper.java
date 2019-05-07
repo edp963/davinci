@@ -19,8 +19,8 @@
 package edp.davinci.dao;
 
 import edp.davinci.dto.organizationDto.OrganizationInfo;
-import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.dto.projectDto.ProjectDetail;
+import edp.davinci.dto.projectDto.ProjectWithCreateBy;
 import edp.davinci.model.Project;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Param;
@@ -47,20 +47,7 @@ public interface ProjectMapper {
     @Select({"select id from project where org_id = #{orgId} and `name` = #{name}"})
     Long getByNameWithOrgId(@Param("name") String name, @Param("orgId") Long orgId);
 
-
     int insert(Project project);
-
-    @Select({
-            "SELECT ",
-            "    p.*, ",
-            "    u.id as 'createBy.id',",
-            "    IF(u.`name` is NULL,u.username,u.`name`) as 'createBy.username',",
-            "    u.avatar as 'createBy.avatar'",
-            "from project p",
-            "LEFT JOIN `user` u on u.id = p.user_id",
-            "where p.id = #{id}",
-    })
-    ProjectWithCreateBy getProjectWithUserById(@Param("id") Long id);
 
 
     @Select({"select * from project where id = #{id}"})
@@ -89,8 +76,6 @@ public interface ProjectMapper {
     @Select({"select * from project where org_id = #{orgId}"})
     List<Project> getByOrgId(@Param("orgId") Long orgId);
 
-    @Select({"SELECT p.* FROM project p INNER JOIN display d on p.id = d.project_id where d.id = #{displayId}"})
-    Project getByDisplayId(@Param("displayId") Long displayId);
 
     @Update({"update project set star_num = star_num + 1 where id = #{id}"})
     int starNumAdd(@Param("id") Long id);

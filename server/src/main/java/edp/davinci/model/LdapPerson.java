@@ -20,8 +20,6 @@ package edp.davinci.model;
 
 import lombok.Data;
 
-import java.util.List;
-
 @Data
 public class LdapPerson {
 
