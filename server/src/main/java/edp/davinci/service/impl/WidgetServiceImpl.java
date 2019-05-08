@@ -56,14 +56,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.script.ScriptEngine;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
+import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 @Service("widgetService")
 @Slf4j
@@ -384,183 +386,6 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
     }
 
 
-    private ViewExecuteParam buildViewExecuteParam(Widget widget) {
-        ViewExecuteParam executeParam = null;
-        try {
-            if (null != widget && !StringUtils.isEmpty(widget.getConfig())) {
-                executeParam = new ViewExecuteParam();
-                Set<String> groups = new HashSet<>();
-                Set<Aggregator> aggregators = new HashSet<>();
-                //TODO order暂留
-                Set<Order> orders = new HashSet<>();
-                Set<String> filters = new HashSet<>();
-
-                JSONObject jsonObject = JSONObject.parseObject(widget.getConfig());
-                if (null != jsonObject) {
-                    if (jsonObject.containsKey("cols")) {
-                        JSONArray cols = jsonObject.getJSONArray("cols");
-                        if (null != cols && cols.size() > 0) {
-                            for (Object obj : cols) {
-                                if (obj instanceof String) {
-                                    groups.add(String.valueOf(obj));
-                                } else {
-                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
-                                    groups.add(col.getString("name"));
-                                }
-                            }
-                        }
-                    }
-                    if (jsonObject.containsKey("rows")) {
-                        JSONArray rows = jsonObject.getJSONArray("rows");
-                        if (null != rows && rows.size() > 0) {
-                            for (Object obj : rows) {
-                                if (obj instanceof String) {
-                                    groups.add(String.valueOf(obj));
-                                } else {
-                                    JSONObject col = JSONArray.parseObject(String.valueOf(obj));
-                                    groups.add(col.getString("name"));
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("metrics")) {
-                        JSONArray metrics = jsonObject.getJSONArray("metrics");
-                        if (null != metrics && metrics.size() > 0) {
-                            for (int i = 0; i < metrics.size(); i++) {
-                                JSONObject metric = metrics.getJSONObject(i);
-                                if (null != metric && metric.containsKey("name") && metric.containsKey("agg")) {
-                                    String name = metric.getString("name");
-                                    String agg = metric.getString("agg");
-                                    String[] split = name.split("@");
-                                    if (split.length > 0) {
-                                        aggregators.add(new Aggregator(split[0], agg));
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("filters")) {
-                        JSONArray filterArray = jsonObject.getJSONArray("filters");
-                        if (null != filterArray && filterArray.size() > 0) {
-                            for (int i = 0; i < filterArray.size(); i++) {
-                                JSONObject item = filterArray.getJSONObject(i);
-                                if (null != item && item.containsKey("config")) {
-                                    JSONObject config = item.getJSONObject("config");
-                                    if (null != config && config.containsKey("sql")) {
-                                        String sql = config.getString("sql");
-                                        if (!StringUtils.isEmpty(sql)) {
-                                            filters.add(sql);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("color")) {
-                        JSONObject color = jsonObject.getJSONObject("color");
-                        if (null != color && color.containsKey("items")) {
-                            JSONArray items = color.getJSONArray("items");
-                            if (null != items && items.size() > 0) {
-                                for (int i = 0; i < items.size(); i++) {
-                                    JSONObject item = items.getJSONObject(i);
-                                    if (null != item && item.containsKey("name")) {
-                                        groups.add(String.valueOf(item.getString("name")));
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("label")) {
-                        JSONObject label = jsonObject.getJSONObject("label");
-                        if (null != label && label.containsKey("items")) {
-                            JSONArray items = label.getJSONArray("items");
-                            if (null != items && items.size() > 0) {
-                                for (int i = 0; i < items.size(); i++) {
-                                    JSONObject item = items.getJSONObject(i);
-                                    if (null != item && item.containsKey("name")) {
-                                        if (item.containsKey("type")) {
-                                            String type = item.getString("type");
-                                            String name = item.getString("name");
-                                            if (!StringUtils.isEmpty(type) && !StringUtils.isEmpty(name)) {
-                                                if ("category".equals(type)) {
-                                                    groups.add(String.valueOf(item.getString("name")));
-                                                } else if ("value".equals(type) && item.containsKey("agg")) {
-                                                    String agg = item.getString("agg");
-                                                    if (!StringUtils.isEmpty(agg)) {
-                                                        aggregators.add(new Aggregator(name, agg));
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("xAxis")) {
-                        JSONObject xAxis = jsonObject.getJSONObject("xAxis");
-                        if (null != xAxis && xAxis.containsKey("items")) {
-                            JSONArray items = xAxis.getJSONArray("items");
-                            if (null != items && items.size() > 0) {
-                                for (int i = 0; i < items.size(); i++) {
-                                    JSONObject item = items.getJSONObject(i);
-                                    if (null != item && item.containsKey("name")) {
-                                        if (item.containsKey("type")) {
-                                            String agg = item.getString("agg");
-                                            String name = item.getString("name");
-                                            if (!StringUtils.isEmpty(agg) && !StringUtils.isEmpty(name)) {
-                                                if (!StringUtils.isEmpty(agg)) {
-                                                    aggregators.add(new Aggregator(name, agg));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (jsonObject.containsKey("size")) {
-                        JSONObject size = jsonObject.getJSONObject("size");
-                        if (null != size && size.containsKey("items")) {
-                            JSONArray items = size.getJSONArray("items");
-                            if (null != items && items.size() > 0) {
-                                for (int i = 0; i < items.size(); i++) {
-                                    JSONObject item = items.getJSONObject(i);
-                                    if (null != item && item.containsKey("name")) {
-                                        if (item.containsKey("type")) {
-                                            String agg = item.getString("agg");
-                                            String name = item.getString("name");
-                                            if (!StringUtils.isEmpty(agg) && !StringUtils.isEmpty(name)) {
-                                                if (!StringUtils.isEmpty(agg)) {
-                                                    aggregators.add(new Aggregator(name, agg));
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                executeParam.setFilters(filters.toArray(new String[filters.size()]));
-                executeParam.setAggregators(Arrays.asList(aggregators.toArray(new Aggregator[aggregators.size()])));
-                executeParam.setGroups(groups.toArray(new String[groups.size()]));
-                executeParam.setOrders(Arrays.asList(orders.toArray(new Order[orders.size()])));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return executeParam;
-    }
-
-
     @Override
     public ResultMap generationFile(Long id, ViewExecuteParam executeParam, User user, String type, HttpServletRequest request) {
         ResultMap resultMap = new ResultMap(tokenUtils);
@@ -759,6 +584,8 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
 
         Iterator<Widget> iterator = widgets.iterator();
         int i = 1;
+        ScriptEngine engine = getExecuptParamScriptEngine();
+
         while (iterator.hasNext()) {
             Widget widget = iterator.next();
             final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
@@ -771,10 +598,7 @@ public class WidgetServiceImpl extends CommonService<Widget> implements WidgetSe
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
                     } else {
-                        executeParam = buildViewExecuteParam(widget);
-                        executeParam.setPageNo(-1);
-                        executeParam.setPageSize(-1);
-                        executeParam.setLimit(-1);
+                        executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
                     List<QueryColumn> columns = viewService.getResultMeta(viewWithProjectAndSource, executeParam, user);
