@@ -18,7 +18,7 @@ public interface RelRoleDisplayMapper {
     int deleteByDisplayId(Long id);
 
     @Select({
-            "select rrp.display_id",
+            "select rrd.display_id",
             "from rel_role_display rrd",
             "       inner join rel_role_user rru on rru.role_id = rrd.role_id",
             "       inner join display d on d.id = rrd.display_id",

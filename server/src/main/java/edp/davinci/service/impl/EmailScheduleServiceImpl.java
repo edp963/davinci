@@ -68,6 +68,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static edp.core.consts.Consts.semicolon;
+
 @Slf4j
 @Service("emailScheduleService")
 public class EmailScheduleServiceImpl implements ScheduleService {
@@ -150,11 +152,11 @@ public class EmailScheduleServiceImpl implements ScheduleService {
 
                 String[] cc = null, bcc = null;
                 if (!StringUtils.isEmpty(cronJobConfig.getCc())) {
-                    cc = cronJobConfig.getCc().split(";");
+                    cc = cronJobConfig.getCc().split(semicolon);
                 }
 
                 if (!StringUtils.isEmpty(cronJobConfig.getBcc())) {
-                    bcc = cronJobConfig.getBcc().split(";");
+                    bcc = cronJobConfig.getBcc().split(semicolon);
                 }
 
                 mailUtils.sendTemplateAttachmentsEmail(
@@ -252,7 +254,7 @@ public class EmailScheduleServiceImpl implements ScheduleService {
      */
     private boolean checkFileExists(String filePath) {
         boolean result = false;
-        ExecutorService executorService = Executors.newFixedThreadPool(8);
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
         Future<Boolean> future = executorService.submit(() -> {
             while (!imageExit && !new File(filePath).exists()) {
                 Thread.sleep(1000);

@@ -31,7 +31,7 @@ public class Consts {
 
     public static final String space = " ";
 
-    public static final String sqlSeparator = ";";
+    public static final String semicolon = ";";
 
     public static final String sqlUrlSeparator = "&";
 

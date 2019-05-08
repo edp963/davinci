@@ -100,7 +100,7 @@ public class SqlParseUtils {
                 if (sqlStruct.endsWith(String.valueOf(STEndChar))) {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
-                if (sqlStruct.endsWith(sqlSeparator)) {
+                if (sqlStruct.endsWith(semicolon)) {
                     sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
                 }
             }
@@ -109,12 +109,12 @@ public class SqlParseUtils {
             Map<String, List<String>> teamParamMap = new HashMap<>();
             //参数
             if (!StringUtils.isEmpty(queryParam)) {
-                queryParam = queryParam.trim().replaceAll(newLineChar, sqlSeparator).trim();
-                queryParam = queryParam.replaceAll(sqlSeparator + "{2,}", sqlSeparator);
-                if (queryParam.endsWith(sqlSeparator)) {
+                queryParam = queryParam.trim().replaceAll(newLineChar, semicolon).trim();
+                queryParam = queryParam.replaceAll(semicolon + "{2,}", semicolon);
+                if (queryParam.endsWith(semicolon)) {
                     queryParam = queryParam.substring(0, queryParam.length() - 1);
                 }
-                String[] split = queryParam.split(sqlSeparator);
+                String[] split = queryParam.split(semicolon);
                 if (null != split && split.length > 0) {
                     for (String param : split) {
                         param = param.trim();
@@ -268,17 +268,17 @@ public class SqlParseUtils {
             return null;
         }
 
-        if (sql.startsWith(sqlSeparator)) {
+        if (sql.startsWith(semicolon)) {
             sql = sql.substring(1);
         }
 
-        if (sql.endsWith(sqlSeparator)) {
+        if (sql.endsWith(semicolon)) {
             sql = sql.substring(0, sql.length() - 1);
         }
 
         List<String> list = null;
 
-        String[] split = sql.split(sqlSeparator);
+        String[] split = sql.split(semicolon);
         if (null != split && split.length > 0) {
             list = new ArrayList<>();
             for (String sqlStr : split) {
