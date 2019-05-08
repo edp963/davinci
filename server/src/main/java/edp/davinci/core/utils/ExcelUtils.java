@@ -21,14 +21,11 @@ package edp.davinci.core.utils;
 
 import com.alibaba.druid.util.StringUtils;
 import com.alibaba.fastjson.JSONObject;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edp.core.enums.SqlTypeEnum;
 import edp.core.exception.ServerException;
 import edp.core.model.QueryColumn;
 import edp.core.utils.FileUtils;
 import edp.core.utils.SqlUtils;
-import edp.davinci.core.common.Constants;
-import edp.davinci.core.enums.FieldFormatTypeEnum;
 import edp.davinci.core.enums.FileTypeEnum;
 import edp.davinci.core.enums.NumericUnitEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
@@ -44,19 +41,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static edp.core.consts.Consts.*;
-import static edp.davinci.core.common.Constants.EXCEL_FORMAT_TYPE_KEY;
+import static edp.davinci.common.utils.ScriptUtiils.formatHeader;
+import static edp.davinci.common.utils.ScriptUtiils.getCellValueScriptEngine;
 
 public class ExcelUtils {
 
@@ -187,16 +181,13 @@ public class ExcelUtils {
         CellStyle headerCellStyle = workbook.createCellStyle();
 
 
-//        XSSFDataFormat format = workbook.createDataFormat();
         DataFormat format = workbook.createDataFormat();
 
         //常规格式
-//        XSSFCellStyle generalStyle = workbook.createCellStyle();
         CellStyle generalStyle = workbook.createCellStyle();
         generalStyle.setDataFormat(format.getFormat("General"));
 
         //表头粗体居中
-//        XSSFFont font = workbook.createFont();
         Font font = workbook.createFont();
         font.setFontName("黑体");
         font.setBoldweight(Font.BOLDWEIGHT_BOLD);
@@ -211,7 +202,7 @@ public class ExcelUtils {
         List<ExcelHeader> excelHeaders = null;
         if (isTable) {
             try {
-                engine = getScriptEngine();
+                engine = getCellValueScriptEngine();
                 excelHeaders = formatHeader(engine, json, params);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -222,7 +213,6 @@ public class ExcelUtils {
 
 
         //用于记录表头对应数据格式
-//        Map<String, XSSFCellStyle> headerFormatMap = null;
         Map<String, CellStyle> headerFormatMap = null;
         //用于标记标记数字格式单位
         Map<String, NumericUnitEnum> dataUnitMap = null;
@@ -270,10 +260,7 @@ public class ExcelUtils {
                             //生成excel数据格式
                             String dataFormat = getDataFormat(excelHeader.getFormat());
                             if (!StringUtils.isEmpty(dataFormat)) {
-//                                XSSFCellStyle dataStyle = workbook.createCellStyle();
                                 CellStyle dataStyle = workbook.createCellStyle();
-
-//                                XSSFDataFormat xssfDataFormat = workbook.createDataFormat();
                                 DataFormat xssfDataFormat = workbook.createDataFormat();
                                 dataStyle.setDataFormat(xssfDataFormat.getFormat(dataFormat));
                                 headerFormatMap.put(queryColumn.getName(), dataStyle);
@@ -289,7 +276,6 @@ public class ExcelUtils {
 
             //画出表头
             for (int i = 0; i < rownum + 1; i++) {
-//                XSSFRow headerRow = sheet.createRow(i);
                 Row headerRow = sheet.createRow(i);
                 for (int j = 0; j <= colnum; j++) {
                     headerRow.createCell(j);
@@ -306,14 +292,12 @@ public class ExcelUtils {
                         sheet.addMergedRegion(cellRangeAddress);
                     }
                 }
-//                XSSFCell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
                 Cell cell = sheet.getRow(excelHeader.getRow()).getCell(excelHeader.getCol());
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(StringUtils.isEmpty(excelHeader.getAlias()) ? excelHeader.getKey() : excelHeader.getAlias());
             }
 
         } else {
-//            row = sheet.createRow(rownum);
             row = sheet.createRow(rownum);
             for (int i = 0; i < columns.size(); i++) {
                 QueryColumn queryColumn = columns.get(i);
@@ -321,7 +305,6 @@ public class ExcelUtils {
                 columnWidthMap.put(queryColumn.getName(), queryColumn.getName().getBytes().length >= queryColumn.getType().getBytes().length ?
                         queryColumn.getName().getBytes().length : queryColumn.getType().getBytes().length);
 
-//                XSSFCell cell = row.createCell(i);
                 Cell cell = row.createCell(i);
                 cell.setCellStyle(headerCellStyle);
                 cell.setCellValue(queryColumn.getName());
@@ -355,7 +338,6 @@ public class ExcelUtils {
                 QueryColumn queryColumn = columns.get(j);
                 cellStyle.setDataFormat(format.getFormat("@"));
                 Object obj = map.get(queryColumn.getName());
-//                XSSFCell cell = row.createCell(j);
                 Cell cell = row.createCell(j);
                 if (null != obj) {
                     if (obj instanceof Number || queryColumn.getType().equals("value")) {
@@ -569,140 +551,6 @@ public class ExcelUtils {
         }
 
         return list;
-    }
-
-    /**
-     * 格式化表头
-     *
-     * @param engine
-     * @param json
-     * @param params
-     * @return
-     */
-    private static List<ExcelHeader> formatHeader(ScriptEngine engine, String json, List<Param> params) {
-        try {
-            Invocable invocable = (Invocable) engine;
-            Object obj = invocable.invokeFunction("getFieldsHeader", json, params);
-
-            if (obj instanceof ScriptObjectMirror) {
-                ScriptObjectMirror som = (ScriptObjectMirror) obj;
-                if (som.isArray()) {
-                    final List<ExcelHeader> excelHeaders = new ArrayList<>();
-                    Collection<Object> values = som.values();
-                    values.forEach(v -> {
-                        ExcelHeader header = new ExcelHeader();
-                        ScriptObjectMirror vsom = (ScriptObjectMirror) v;
-                        for (String key : vsom.keySet()) {
-                            if (!StringUtils.isEmpty(key)) {
-                                String setter = "set" + String.valueOf(key.charAt(0)).toUpperCase() + key.substring(1);
-                                Object o = vsom.get(key);
-                                Class clazz = o.getClass();
-
-                                try {
-                                    if (o instanceof ScriptObjectMirror) {
-                                        ScriptObjectMirror mirror = (ScriptObjectMirror) o;
-                                        if ("range".equals(key)) {
-                                            if (mirror.isArray()) {
-                                                int[] array = new int[4];
-                                                for (int i = 0; i < 4; i++) {
-                                                    array[i] = Integer.parseInt(mirror.get(i + "").toString());
-                                                }
-                                                header.setRange(array);
-                                            }
-                                        } else if ("style".equals(key)) {
-                                            if (mirror.isArray()) {
-                                                List<String> list = new ArrayList<>();
-                                                for (int i = 0; i < 4; i++) {
-                                                    list.add(mirror.get(i + "").toString());
-                                                }
-                                                header.setStyle(list);
-                                            }
-                                        } else if ("format".equals(key)) {
-                                            String formatType = mirror.get(EXCEL_FORMAT_TYPE_KEY).toString();
-                                            ScriptObjectMirror format = (ScriptObjectMirror) mirror.get(formatType);
-
-                                            if (null != format) {
-                                                FieldFormatTypeEnum typeEnum = FieldFormatTypeEnum.typeOf(formatType);
-                                                ObjectMapper mapper = new ObjectMapper();
-
-                                                NumericUnitEnum numericUnit = null;
-                                                if (format.containsKey("unit")) {
-                                                    numericUnit = NumericUnitEnum.unitOf(String.valueOf(format.get("unit")));
-                                                }
-
-                                                switch (typeEnum) {
-                                                    case Currency:
-                                                        FieldCurrency fieldCurrency = mapper.convertValue(format, FieldCurrency.class);
-                                                        if (null != fieldCurrency) {
-                                                            fieldCurrency.setUnit(numericUnit);
-                                                            header.setFormat(fieldCurrency);
-                                                        }
-                                                        break;
-                                                    case Custom:
-                                                        FieldCustom fieldCustom = mapper.convertValue(format, FieldCustom.class);
-                                                        header.setFormat(fieldCustom);
-                                                        break;
-                                                    case Date:
-                                                        FieldDate fieldDate = mapper.convertValue(format, FieldDate.class);
-                                                        header.setFormat(fieldDate);
-
-                                                        break;
-                                                    case Numeric:
-                                                        FieldNumeric fieldNumeric = mapper.convertValue(format, FieldNumeric.class);
-                                                        fieldNumeric.setUnit(numericUnit);
-                                                        header.setFormat(fieldNumeric);
-
-                                                        break;
-                                                    case Percentage:
-                                                        FieldPercentage fieldPercentage = mapper.convertValue(format, FieldPercentage.class);
-                                                        header.setFormat(fieldPercentage);
-
-                                                        break;
-                                                    case ScientificNotation:
-                                                        FieldScientificNotation scientificNotation = mapper.convertValue(format, FieldScientificNotation.class);
-                                                        header.setFormat(scientificNotation);
-                                                        break;
-                                                    default:
-                                                        break;
-                                                }
-                                            }
-                                        }
-
-                                    } else {
-                                        Method method = header.getClass().getMethod(setter, clazz);
-                                        method.invoke(header, vsom.get(key));
-                                    }
-                                } catch (NoSuchMethodException e) {
-                                    e.printStackTrace();
-                                } catch (IllegalAccessException e) {
-                                    e.printStackTrace();
-                                } catch (InvocationTargetException e) {
-                                    e.printStackTrace();
-                                } finally {
-                                    continue;
-                                }
-                            }
-                        }
-                        excelHeaders.add(header);
-                    });
-                    return excelHeaders;
-                }
-            }
-
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-
-    private static ScriptEngine getScriptEngine() throws Exception {
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
-        ClassLoader classLoader = ExcelUtils.class.getClassLoader();
-        engine.eval(new InputStreamReader(classLoader.getResourceAsStream(Constants.TABLE_FORMAT_JS)));
-        return engine;
     }
 
 

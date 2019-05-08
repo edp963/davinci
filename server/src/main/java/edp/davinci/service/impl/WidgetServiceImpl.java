@@ -59,6 +59,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.sql.SQLException;
@@ -67,6 +68,9 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static edp.davinci.common.utils.ScriptUtiils.getExecuptParamScriptEngine;
+import static edp.davinci.common.utils.ScriptUtiils.getViewExecuteParam;
 
 @Service("widgetService")
 @Slf4j
@@ -432,6 +436,7 @@ public class WidgetServiceImpl implements WidgetService {
         Iterator<Widget> iterator = widgets.iterator();
         int i = 1;
 
+        ScriptEngine engine = getExecuptParamScriptEngine();
         while (iterator.hasNext()) {
             Widget widget = iterator.next();
             final String sheetName = widgets.size() == 1 ? "Sheet" : "Sheet" + (widgets.size() - (i - 1));
@@ -443,6 +448,8 @@ public class WidgetServiceImpl implements WidgetService {
                     ViewExecuteParam executeParam = null;
                     if (null != executeParamMap && executeParamMap.containsKey(widget.getId())) {
                         executeParam = executeParamMap.get(widget.getId());
+                    } else {
+                        executeParam = getViewExecuteParam((engine), null, widget.getConfig(), null);
                     }
 
                     PaginateWithQueryColumns paginate = viewService.getResultDataList(projectDetail, viewWithProjectAndSource, executeParam, user);
