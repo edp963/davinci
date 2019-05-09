@@ -22,7 +22,6 @@ import React from 'react'
 
 import { ISource, ISourceTable, IMapTableColumns } from 'containers/source/types'
 import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading } from '../types'
-import { DEFAULT_SQL_LIMIT, DEFAULT_PAGE_SIZE } from '../constants'
 
 import { InputNumber, Button, Row, Col, Tooltip } from 'antd'
 import Resizable, { IResizeCallbackData } from 'libs/react-resizable/lib/Resizable'

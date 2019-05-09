@@ -237,14 +237,14 @@ export function loadDashboardDetail (projectId, portalId, dashboardId) {
   }
 }
 
-export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, bizlogics) {
+export function dashboardDetailLoaded (dashboardId, dashboardDetail, widgets, views) {
   return {
     type: LOAD_DASHBOARD_DETAIL_SUCCESS,
     payload: {
       dashboardId,
       dashboardDetail,
       widgets,
-      bizlogics
+      views
     }
   }
 }

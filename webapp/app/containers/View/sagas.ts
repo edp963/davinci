@@ -134,6 +134,92 @@ export function* executeSql (action: ViewActionType) {
 
 }
 
+/** View sagas for external usages */
+export function* getViewData (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_VIEW_DATA) { return }
+  const { id, requestParams, resolve } = action.payload
+  const { viewDataLoaded, loadViewDataFail } = ViewActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.view}/${id}/getdata`,
+      data: requestParams
+    })
+    yield put(viewDataLoaded())
+    const { resultList } = asyncData.payload
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    resolve(asyncData.payload)
+  } catch (err) {
+    yield put(loadViewDataFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* getViewDistinctValue (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_VIEW_DISTINCT_VALUE) { return }
+  const { viewId, fieldName, filters, resolve } = action.payload
+  const { viewDistinctValueLoaded, loadViewDistinctValueFail } = ViewActions
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.view}/${viewId}/getdistinctvalue`,
+      data: {
+        columns: [fieldName],
+        parents: filters
+          ? Object.entries(filters).map(([column, value]) => ({ column, value }))
+          : []
+      }
+    })
+    const result = asyncData.payload.map((item) => item[fieldName])
+    yield put(viewDistinctValueLoaded(result, fieldName))
+    if (resolve) {
+      resolve(asyncData.payload)
+    }
+  } catch (err) {
+    yield put(loadViewDistinctValueFail(err))
+    errorHandler(err)
+  }
+}
+
+export function* getViewDataFromVizItem (action: ViewActionType) {
+  if (action.type !== ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM) { return }
+  const { renderType, itemId, viewId, requestParams, vizType } = action.payload
+  const { viewDataFromVizItemLoaded, loadViewDataFromVizItemFail } = ViewActions
+  const {
+    filters,
+    linkageFilters,
+    globalFilters,
+    variables,
+    linkageVariables,
+    globalVariables,
+    pagination,
+    ...rest
+  } = requestParams
+  const { pageSize, pageNo } = pagination || { pageSize: 0, pageNo: 0 }
+
+  try {
+    const asyncData = yield call(request, {
+      method: 'post',
+      url: `${api.view}/${viewId}/getdata`,
+      data: {
+        ...rest,
+        filters: filters.concat(linkageFilters).concat(globalFilters),
+        params: variables.concat(linkageVariables).concat(globalVariables),
+        pageSize,
+        pageNo
+      }
+    })
+    const { resultList } = asyncData.payload
+    asyncData.payload.resultList = (resultList && resultList.slice(0, 500)) || []
+    yield put(viewDataFromVizItemLoaded(renderType, itemId, requestParams, asyncData.payload, vizType))
+  } catch (err) {
+    yield put(loadViewDataFromVizItemFail(itemId, vizType))
+    errorHandler(err)
+  }
+}
+
+/** */
+
 export default function* rootViewSaga () {
   yield all([
     takeLatest(ActionTypes.LOAD_VIEWS, getViews),
@@ -141,6 +227,10 @@ export default function* rootViewSaga () {
     takeLatest(ActionTypes.ADD_VIEW, addView),
     takeEvery(ActionTypes.EDIT_VIEW, editView),
     takeEvery(ActionTypes.DELETE_VIEW, deleteView),
-    takeLatest(ActionTypes.EXECUTE_SQL, executeSql)
+    takeLatest(ActionTypes.EXECUTE_SQL, executeSql),
+
+    takeEvery(ActionTypes.LOAD_VIEW_DATA, getViewData),
+    takeEvery(ActionTypes.LOAD_VIEW_DISTINCT_VALUE, getViewDistinctValue),
+    takeEvery(ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM, getViewDataFromVizItem)
   ])
 }

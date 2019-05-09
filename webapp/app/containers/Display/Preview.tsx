@@ -11,8 +11,8 @@ import reducer from './reducer'
 import reducerWidget from '../Widget/reducer'
 import saga from './sagas'
 import sagaWidget from '../Widget/sagas'
-import reducerBizlogic from '../Bizlogic/reducer'
-import sagaBizlogic from '../Bizlogic/sagas'
+import reducerView from '../View/reducer'
+import sagaView from '../View/sagas'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
@@ -22,7 +22,7 @@ import Container from '../../components/Container'
 import { WrappedFormUtils } from 'antd/lib/form/Form'
 
 import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import {
   makeSelectCurrentDisplay,
   makeSelectCurrentSlide,
@@ -31,10 +31,8 @@ import {
   makeSelectCurrentLayersInfo } from './selectors'
 
 import { hideNavigator } from '../App/actions'
-import {
-  loadDataFromItem,
-  loadCascadeSource // TODO global filter in Display Preview
-} from '../Bizlogic/actions'
+import { ViewActions } from '../View/actions'
+const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display Preview
 import {
   editCurrentDisplay,
   loadDisplayDetail,
@@ -51,16 +49,13 @@ const stylesDashboard = require('../Dashboard/Dashboard.less')
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
-
-interface IBizdataIncomeParamObject {
-  k: string
-  v: string
-}
+import { IFormedViews } from '../View/types'
 
 interface IPreviewProps {
   params: any
   widgets: any[]
-  bizlogics: any[]
+  views: any[]
+  formedViews: IFormedViews
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
@@ -81,7 +76,7 @@ interface IPreviewProps {
   }
   onHideNavigator: () => void
   onLoadDisplayDetail: (projectId: number, displayId: number) => void
-  onLoadDataFromItem: (
+  onLoadViewDataFromVizItem: (
     renderType: RenderType,
     layerItemId: number,
     viewId: number,
@@ -159,7 +154,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const {
       currentLayersInfo,
       widgets,
-      onLoadDataFromItem
+      onLoadViewDataFromVizItem
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
@@ -229,7 +224,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
         })))
     }
 
-    onLoadDataFromItem(
+    onLoadViewDataFromVizItem(
       renderType,
       itemId,
       widget.viewId,
@@ -280,7 +275,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
   public render () {
     const {
       widgets,
-      bizlogics,
+      views,
+      formedViews,
       currentDisplay,
       currentSlide,
       currentLayers,
@@ -291,7 +287,7 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
     const slideStyle = this.getSlideStyle(JSON.parse(currentSlide.config).slideParams)
     const layerItems =  Array.isArray(widgets) ? currentLayers.map((layer) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && bizlogics.find((b) => b.id === widget.viewId)
+      const view = widget && formedViews[widget.viewId]
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -330,7 +326,8 @@ export class Preview extends React.Component<IPreviewProps, IPreviewStates> {
 
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentDisplay: makeSelectCurrentDisplay(),
   currentSlide: makeSelectCurrentSlide(),
   displays: makeSelectDisplays(),
@@ -342,7 +339,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadDisplayDetail: (projectId, displayId) => dispatch(loadDisplayDetail(projectId, displayId)),
-    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) => dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'display'))
+    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display'))
   }
 }
 
@@ -352,16 +349,16 @@ const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget 
 const withSaga = injectSaga({ key: 'display', saga })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
+const withSagaView = injectSaga({ key: 'view', saga: sagaView })
 
 const withConnect = connect<{}, {}, IPreviewProps>(mapStateToProps, mapDispatchToProps)
 
 export default compose(
   withReducer,
   withReducerWidget,
-  withReducerBizlogic,
+  withReducerView,
   withSaga,
   withSagaWidget,
-  withSagaBizlogic,
+  withSagaView,
   withConnect)(Preview)

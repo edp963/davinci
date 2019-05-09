@@ -23,7 +23,6 @@ import { ILabelConfig } from '../../components/Workbench/ConfigSections/LabelSec
 import { ILegendConfig } from '../../components/Workbench/ConfigSections/LegendSection'
 import { metricAxisLabelFormatter, decodeMetricName, getTextWidth } from '../../components/util'
 import { CHART_LEGEND_POSITIONS } from '../../../../globalConstants'
-import { dataFromItemLoaded } from 'containers/Bizlogic/actions'
 import { EChartOption } from 'echarts'
 
 interface ISplitLineConfig {

@@ -12,15 +12,14 @@ import displayReducer from '../Display/reducer'
 import displaySaga from '../Display/sagas'
 import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
-import bizlogicReducer from '../Bizlogic/reducer'
-import bizlogicSaga from '../Bizlogic/sagas'
+import viewReducer from '../View/reducer'
+import viewSaga from '../View/sagas'
 
 import { loadDisplays, addDisplay, editDisplay, deleteDisplay } from '../Display/actions'
-import { loadPortals, addPortal, editPortal, deletePortal, loadSelectTeams } from '../Portal/actions'
+import { loadPortals, addPortal, editPortal, deletePortal } from '../Portal/actions'
 import { makeSelectDisplays } from '../Display/selectors'
-import { makeSelectPortals, makeSelectTeams } from '../Portal/selectors'
+import { makeSelectPortals } from '../Portal/selectors'
 import { checkNameUniqueAction } from '../App/actions'
-import { loadViewTeam } from '../Bizlogic/actions'
 
 import { Icon, Row, Col, Breadcrumb } from 'antd'
 import Box from '../../components/Box'
@@ -30,7 +29,6 @@ import Container from '../../components/Container'
 import PortalList from '../Portal/components/PortalList'
 import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
-import { makeSelectViewTeam } from '../Bizlogic/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
 
@@ -42,8 +40,6 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   displays: any[]
   portals: any[]
   currentProject: IProject
-  viewTeam: any[]
-  selectTeams: any[]
   onLoadDisplays: (projectId) => void
   onAddDisplay: (display: IDisplay, resolve: () => void) => void
   onEditDisplay: (display: IDisplay, resolve: () => void) => void
@@ -53,8 +49,6 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
 }
 
 interface IVizStates {
@@ -108,8 +102,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
   public render () {
     const {
       displays, params, onAddDisplay, onEditDisplay, onDeleteDisplay,
-      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName,
-      onLoadViewTeam, viewTeam, onLoadSelectTeams, selectTeams
+      portals, onAddPortal, onEditPortal, onDeletePortal, currentProject, onCheckUniqueName
     } = this.props
     const projectId = params.pid
     const isHideDashboardStyle = classnames({
@@ -155,10 +148,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
                 onCheckUniqueName={onCheckUniqueName}
-                onLoadViewTeam={onLoadViewTeam}
-                onLoadSelectTeams={onLoadSelectTeams}
-                viewTeam={viewTeam}
-                selectTeams={selectTeams}
               />
             </div>
           </Box>
@@ -184,10 +173,6 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onCopy={this.onCopy}
                 onDelete={onDeleteDisplay}
                 onCheckName={onCheckUniqueName}
-                onLoadViewTeam={onLoadViewTeam}
-                onLoadSelectTeams={onLoadSelectTeams}
-                viewTeam={viewTeam}
-                selectTeams={selectTeams}
               />
             </div>
           </Box>
@@ -200,9 +185,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
 const mapStateToProps = createStructuredSelector({
   displays: makeSelectDisplays(),
   portals: makeSelectPortals(),
-  selectTeams: makeSelectTeams(),
-  currentProject: makeSelectCurrentProject(),
-  viewTeam: makeSelectViewTeam()
+  currentProject: makeSelectCurrentProject()
 })
 
 export function mapDispatchToProps (dispatch) {
@@ -215,9 +198,7 @@ export function mapDispatchToProps (dispatch) {
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
-    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
-    onLoadSelectTeams: (type, id, resolve) => dispatch(loadSelectTeams(type, id, resolve))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
   }
 }
 
@@ -226,15 +207,15 @@ const withDisplayReducer = injectReducer({ key: 'display', reducer: displayReduc
 const withDisplaySaga = injectSaga({ key: 'display', saga: displaySaga })
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withDisplayReducer,
   withDisplaySaga,
   withPortalReducer,
   withPortalSaga,
-  withReducerBizlogic,
-  withSagaBizlogic,
+  withReducerView,
+  withSagaView,
   withConnect
 )(Viz)

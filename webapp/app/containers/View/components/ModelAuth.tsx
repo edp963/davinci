@@ -9,7 +9,7 @@ const { Option } = Select
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ColumnProps } from 'antd/lib/table'
 
-import { IViewVariable, IViewModel, IExecuteSqlResponse, IViewRoleAuth } from '../types'
+import { IViewVariable, IViewModelProps, IViewModel, IExecuteSqlResponse, IViewRoleAuth } from '../types'
 import {
   ViewModelTypes,
   ViewModelVisualTypes,
@@ -24,11 +24,11 @@ import Styles from '../View.less'
 
 interface IModelAuthProps {
   visible: boolean
-  model: IViewModel[]
+  model: IViewModel
   variable: IViewVariable[]
   sqlColumns: IExecuteSqlResponse['columns']
   roles: any[] // @FIXME role typing
-  onModelChange: (model: IViewModel[]) => void
+  onModelChange: (partialModel: IViewModel) => void
   onStepChange: (stepChange: number) => void
 }
 
@@ -51,13 +51,16 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
     <Option key={visualType} value={visualType}>{text}</Option>
   ))
 
-  private modelChange = (record: IViewModel, key: keyof IViewModel) => (e: RadioChangeEvent | string) => {
+  private modelChange = (record: IViewModelProps, propName: keyof IViewModelProps) => (e: RadioChangeEvent | string) => {
     const value: string = (e as RadioChangeEvent).target ? (e as RadioChangeEvent).target.value : e
-    const model = {
-      ...record,
-      [key]: value
+    const { name, ...rest } = record
+    const partialModel: IViewModel = {
+      [name]: {
+        ...rest,
+        [propName]: value
+      }
     }
-    this.props.onModelChange([model])
+    this.props.onModelChange(partialModel)
   }
 
   private stepChange = (step: number) => () => {
@@ -71,7 +74,7 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
     })
   }
 
-  private getAuthTableColumns = memoizeOne((model: IViewModel[], variables: IViewVariable[]) => {
+  private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[]) => {
     const columns: Array<ColumnProps<any>> = variables.map((variable) => ({
       title: variable.name
     }))
@@ -89,7 +92,7 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
         if (columnAuth.length === 0) {
           return (<Tag onClick={this.setColumnAuth(record)} color="#f50">不可见</Tag>)
         }
-        if (columnAuth.length === model.length) {
+        if (columnAuth.length === Object.keys(model).length) {
           return (<Tag onClick={this.setColumnAuth(record)}>全部可见</Tag>)
         }
         return (<Tag color="green" onClick={this.setColumnAuth(record)}>部分可见</Tag>)
@@ -143,6 +146,7 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
   public render () {
     const { visible, model, variable, sqlColumns, roles, onModelChange } = this.props
     const { modalVisible } = this.state
+    const modelDatasource = Object.entries(model).map(([name, value]) => ({ name, ...value }))
     const authColumns = this.getAuthTableColumns(model, variable)
     const authDatasource = this.getAuthDatasource(roles, variable)
     const styleCls = classnames({
@@ -156,7 +160,7 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
         <div className={Styles.containerHorizontal}>
           <Tabs defaultActiveKey="model">
             <TabPane tab="Model" key="model">
-              <Table bordered pagination={false} rowKey="name" dataSource={model}>
+              <Table bordered pagination={false} rowKey="name" dataSource={modelDatasource}>
                 <Column title="字段名称" dataIndex="name" />
                 <Column title="数据类型" dataIndex="modelType" render={this.renderColumnModelType} />
                 <Column title="可视化类型" dataIndex="visualType" render={this.renderColumnVisualType} />

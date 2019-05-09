@@ -41,6 +41,13 @@ export interface IView extends IViewTemp {
   sourceId: number
 }
 
+type IViewTemp2 = Omit<Omit<IView, 'model'>, 'variable'>
+
+export interface IFormedView extends IViewTemp2 {
+  model: IViewModel
+  variable: IViewVariable[]
+}
+
 export interface ISqlValidation {
   code: number
   message: string
@@ -70,11 +77,15 @@ export interface IExecuteSqlResponse {
   resultList: Array<{[key: string]: string | number}>
 }
 
-export interface IViewModel {
+export interface IViewModelProps {
   name: string
   sqlType: SqlTypes,
   visualType: ViewModelVisualTypes,
   modelType: ViewModelTypes
+}
+
+export interface IViewModel {
+  [name: string]: Omit<IViewModelProps, 'name'>
 }
 
 export interface IViewVariable {
@@ -103,12 +114,17 @@ export interface IViewRoleAuth {
 }
 
 export interface IViewInfo {
-  model: IViewModel[]
+  model: IViewModel
   variable: IViewVariable[]
+}
+
+export interface IFormedViews {
+  [viewId: number]: IFormedView
 }
 
 export interface IViewState {
   views: IViewBase[]
+  formedViews: IFormedViews
   editingView: IView
   editingViewInfo: IViewInfo
   sources: IPersistSource[]

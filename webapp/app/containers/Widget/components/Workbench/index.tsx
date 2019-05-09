@@ -6,15 +6,17 @@ import { createStructuredSelector } from 'reselect'
 import injectReducer from '../../../../utils/injectReducer'
 import injectSaga from '../../../../utils/injectSaga'
 import reducer from '../../reducer'
-import bizlogicReducer from '../../../Bizlogic/reducer'
+import viewReducer from '../../../View/reducer'
 import saga from '../../sagas'
-import bizlogicSaga from '../../../Bizlogic/sagas'
+import viewSaga from '../../../View/sagas'
 import { hideNavigator } from '../../../App/actions'
-import { loadBizlogics, loadData, loadDistinctValue } from '../../../Bizlogic/actions'
+import { ViewActions } from 'containers/View/actions'
+const { loadViews, loadViewDetail, loadViewData, loadViewDistinctValue } = ViewActions
 import { addWidget, editWidget, loadWidgetDetail, clearCurrentWidget, executeComputed } from '../../actions'
 import { makeSelectCurrentWidget, makeSelectLoading, makeSelectDataLoading, makeSelectDistinctColumnValues, makeSelectColumnValueLoading } from '../../selectors'
-import { makeSelectBizlogics } from '../../../Bizlogic/selectors'
+import { makeSelectViews, makeSelectFormedViews } from 'containers/View/selectors'
 
+import { IViewBase, IFormedViews, IFormedView } from 'containers/View/types'
 import OperatingPanel from './OperatingPanel'
 import Widget, { IWidgetProps } from '../Widget'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
@@ -25,25 +27,6 @@ import ChartTypes from '../../config/chart/ChartTypes'
 import { message } from 'antd'
 import 'assets/less/resizer.less'
 const styles = require('./Workbench.less')
-
-export interface IView {
-  id?: number
-  name: string
-  description: string
-  projectId: number
-  source: { id: number, name: string }
-  sourceId: number
-  sql: string
-  model: string
-  config: string
-}
-
-export interface IModel {
-  [key: string]: {
-    visualType: string
-    modelType: string
-  }
-}
 
 interface IWidget {
   id?: number
@@ -57,7 +40,8 @@ interface IWidget {
 }
 
 interface IWorkbenchProps {
-  views: IView[]
+  views: IViewBase[]
+  formedViews: IFormedViews
   currentWidget: IWidget
   loading: boolean
   dataLoading: boolean
@@ -66,12 +50,13 @@ interface IWorkbenchProps {
   router: any
   params: { pid: string, wid: string }
   onHideNavigator: () => void
-  onLoadBizlogics: (projectId: number, resolve?: any) => void
+  onLoadViews: (projectId: number, resolve?: any) => void
+  onLoadViewDetail: (viewId: number) => void
   onLoadWidgetDetail: (id: number) => void
-  onLoadData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
+  onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
   onEditWidget: (widget: IWidget, resolve: () => void) => void
-  onLoadDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
+  onLoadViewDistinctValue: (viewId: number, column: string, parents?: Array<{column: string, value: string}>) => void
   onClearCurrentWidget: () => void
   onExecuteComputed: (sql: string) => void
 }
@@ -80,7 +65,7 @@ interface IWorkbenchStates {
   id: number
   name: string
   description: string
-  selectedView: IView
+  selectedViewId: number
   controls: any[]
   computed: any[]
   cache: boolean
@@ -106,7 +91,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       id: 0,
       name: '',
       description: '',
-      selectedView: null,
+      selectedViewId: null,
       controls: [],
       computed: [],
       originalComputed: [],
@@ -142,8 +127,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillMount () {
-    const { params, onLoadBizlogics, onLoadWidgetDetail } = this.props
-    onLoadBizlogics(Number(params.pid), () => {
+    const { params, onLoadViews, onLoadWidgetDetail } = this.props
+    onLoadViews(Number(params.pid), () => {
       if (params.wid !== 'add' && !Number.isNaN(Number(params.wid))) {
         onLoadWidgetDetail(Number(params.wid))
       }
@@ -154,18 +139,19 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     this.props.onHideNavigator()
   }
 
-  public componentWillReceiveProps (nextProps) {
-    const { views, currentWidget } = nextProps
-    if (currentWidget && currentWidget !== this.props.currentWidget) {
+  public componentWillReceiveProps (nextProps: IWorkbenchProps) {
+    const { currentWidget, onLoadViewDetail } = nextProps
+    if (currentWidget && (currentWidget !== this.props.currentWidget)) {
       const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
+      onLoadViewDetail(currentWidget.viewId)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
         description: currentWidget.description,
-        selectedView: views.find((v) => v.id === currentWidget.viewId),
         controls,
         cache,
         expired,
+        selectedViewId: currentWidget.viewId,
         originalWidgetProps: {...rest},
         widgetProps: {...rest},
         originalComputed: computed
@@ -189,9 +175,10 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     })
   }
 
-  private viewSelect = (selectedView: IView) => {
+  private viewSelect = (viewId: number) => {
+    this.props.onLoadViewDetail(viewId)
     this.setState({
-      selectedView,
+      selectedViewId: viewId,
       controls: [],
       cache: false,
       expired: 300
@@ -208,7 +195,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
     console.log({computeField})
     const { from } = computeField
     const { params, onEditWidget } = this.props
-    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (from === 'originalComputed') {
       this.setState({
         originalComputed: originalComputed.filter((oc) => oc.id !== computeField.id)
@@ -218,7 +205,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           name,
           description,
           type: 1,
-          viewId: selectedView.id,
+          viewId: selectedViewId,
           projectId: Number(params.pid),
           config: JSON.stringify({
             ...widgetProps,
@@ -243,7 +230,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
           name,
           description,
           type: 1,
-          viewId: selectedView.id,
+          viewId: selectedViewId,
           projectId: Number(params.pid),
           config: JSON.stringify({
             ...widgetProps,
@@ -322,12 +309,12 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 
   private saveWidget = () => {
     const { params, onAddWidget, onEditWidget } = this.props
-    const { id, name, description, selectedView, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
+    const { id, name, description, selectedViewId, controls, cache, expired, widgetProps, computed, originalWidgetProps, originalComputed } = this.state
     if (!name.trim()) {
       message.error('Widget名称不能为空')
       return
     }
-    if (!selectedView) {
+    if (!selectedViewId) {
       message.error('请选择一个View')
       return
     }
@@ -335,7 +322,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       name,
       description,
       type: 1,
-      viewId: selectedView.id,
+      viewId: selectedViewId,
       projectId: Number(params.pid),
       config: JSON.stringify({
         ...widgetProps,
@@ -417,17 +404,18 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   public render () {
     const {
       views,
+      formedViews,
       loading,
       dataLoading,
       distinctColumnValues,
       columnValueLoading,
-      onLoadData,
-      onLoadDistinctValue
+      onLoadViewData,
+      onLoadViewDistinctValue
     } = this.props
     const {
       name,
       description,
-      selectedView,
+      selectedViewId,
       controls,
       cache,
       expired,
@@ -437,6 +425,7 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
       originalComputed,
       widgetProps
     } = this.state
+    const selectedView = formedViews[selectedViewId]
     console.log({originalComputed})
     return (
       <div className={styles.workbench}>
@@ -481,8 +470,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
             onSetWidgetProps={this.setWidgetProps}
             onSetComputed={this.setComputed}
             onDeleteComputed={this.deleteComputed}
-            onLoadData={onLoadData}
-            onLoadDistinctValue={onLoadDistinctValue}
+            onLoadData={onLoadViewData}
+            onLoadDistinctValue={onLoadViewDistinctValue}
           />
           <div className={styles.viewPanel}>
             <div className={styles.widgetBlock}>
@@ -504,7 +493,8 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
 }
 
 const mapStateToProps = createStructuredSelector({
-  views: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentWidget: makeSelectCurrentWidget(),
   loading: makeSelectLoading(),
   dataLoading: makeSelectDataLoading(),
@@ -515,12 +505,13 @@ const mapStateToProps = createStructuredSelector({
 export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
-    onLoadBizlogics: (projectId, resolve) => dispatch(loadBizlogics(projectId, resolve)),
+    onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
+    onLoadViewDetail: (viewId) => dispatch(loadViewDetail(viewId)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
-    onLoadData: (viewId, requestParams, resolve) => dispatch(loadData(viewId, requestParams, resolve)),
+    onLoadViewData: (viewId, requestParams, resolve) => dispatch(loadViewData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),
     onEditWidget: (widget, resolve) => dispatch(editWidget(widget, resolve)),
-    onLoadDistinctValue: (viewId, column, parents) => dispatch(loadDistinctValue(viewId, column, parents)),
+    onLoadViewDistinctValue: (viewId, column, parents) => dispatch(loadViewDistinctValue(viewId, column, parents)),
     onClearCurrentWidget: () => dispatch(clearCurrentWidget()),
     onExecuteComputed: (sql) => dispatch(executeComputed(sql))
   }
@@ -531,13 +522,13 @@ const withConnect = connect<{}, {}>(mapStateToProps, mapDispatchToProps)
 const withReducerWidget = injectReducer({ key: 'widget', reducer })
 const withSagaWidget = injectSaga({ key: 'widget', saga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducerWidget,
-  withReducerBizlogic,
-  withSagaBizlogic,
+  withReducerView,
+  withSagaView,
   withSagaWidget,
   withConnect
 )(Workbench)

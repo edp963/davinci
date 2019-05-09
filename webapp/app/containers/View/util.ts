@@ -14,21 +14,20 @@ function getMapKeyByValue (value: SqlTypes, map: typeof VisualTypeSqlTypeSetting
   return result
 }
 
-export function getValidModel (model: IViewModel[], sqlColumns: ISqlColumn[]) {
-  if (!Array.isArray(sqlColumns)) { return [] }
+export function getValidModel (model: IViewModel, sqlColumns: ISqlColumn[]) {
+  if (!Array.isArray(sqlColumns)) { return {} }
 
-  const validModel = sqlColumns.map<IViewModel>((column) => {
+  const validModel = sqlColumns.reduce<IViewModel>((accModel, column) => {
     const { name: columnName, type: columnType } = column
-    const modelItem = model.find((m) => m.name === columnName)
+    const modelItem = model[columnName]
     if (!modelItem) {
-      return {
-        name: columnName,
+      accModel[columnName] = {
         sqlType: columnType,
         visualType: getMapKeyByValue(columnType, VisualTypeSqlTypeSetting),
         modelType: getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
       }
     } else {
-      const item = { ...modelItem }
+      accModel[columnName] = { ...modelItem }
       // @TODO verify modelType & visualType are valid by the sqlType or not
       // if (!VisualTypeSqlTypeSetting[item.visualType].includes(columnType)) {
       //   needNotify = true
@@ -38,16 +37,16 @@ export function getValidModel (model: IViewModel[], sqlColumns: ISqlColumn[]) {
       //   needNotify = true
       //   item.modelType = getMapKeyByValue(columnType, ModelTypeSqlTypeSetting)
       // }
-      return item
     }
-  })
+    return accModel
+  }, {})
 
   return validModel
 }
 
-export function getValidRoleModelNames (model: IViewModel[], modelNames: string[]) {
+export function getValidRoleModelNames (model: IViewModel, modelNames: string[]) {
   if (!Array.isArray(modelNames)) { return [] }
 
-  const validModelNames = modelNames.filter((name) => model.findIndex((m) => m.name === name) >= 0)
+  const validModelNames = modelNames.filter((name) => !!model[name])
   return validModelNames
 }

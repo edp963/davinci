@@ -232,16 +232,15 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     }))
   }
 
-  private modelChange = (updatedModel: IViewModel[]) => {
+  private modelChange = (partialModel: IViewModel) => {
     this.setState(({ localViewInfo }) => {
       const { model, variable } = localViewInfo
-      updatedModel.forEach((modelItem) => {
-        const idx = model.findIndex((m) => m.name === modelItem.name)
-        if (idx >= 0) {
-          model.splice(idx, 1, modelItem)
+      return {
+        localViewInfo: {
+          model: { ...model, ...partialModel },
+          variable: [...variable]
         }
-      })
-      return { localViewInfo: { model: [...model], variable: [...variable]  } }
+      }
     })
   }
 

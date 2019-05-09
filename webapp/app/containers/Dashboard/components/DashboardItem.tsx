@@ -28,7 +28,7 @@ import SharePanel from '../../../components/SharePanel'
 import DownloadCsv, { IDownloadCsvProps } from '../../../components/DownloadCsv'
 import DataDrill from '../../../components/DataDrill/Panel'
 import DataDrillHistory from '../../../components/DataDrill/History'
-import {IView, IModel} from '../../../containers/Widget/components/Workbench/index'
+import { IFormedView, IViewModel } from 'containers/View/types'
 
 import Widget, { IWidgetConfig, IPaginationParams, RenderType } from '../../Widget/components/Widget'
 import { ChartTypes } from '../../Widget/config/chart/ChartTypes'
@@ -40,7 +40,6 @@ import ShareDownloadPermission from '../../Account/components/checkShareDownload
 import { IProject } from '../../Projects'
 import { DEFAULT_SPLITER } from '../../../globalConstants'
 import { IQueryConditions, IQueryVariableMap } from '../Grid'
-import { render } from 'react-dom';
 const styles = require('../Dashboard.less')
 const utilStyles = require('../../../assets/less/util.less')
 
@@ -48,7 +47,7 @@ interface IDashboardItemProps {
   itemId: number
   widget: any
   widgets: any
-  view?: Partial<IView>
+  view?: Partial<IFormedView>
   datasource: any
   loading: boolean
   polling: string
@@ -91,7 +90,7 @@ interface IDashboardItemStates {
   pagination: IPaginationParams
   queryVariables: IQueryVariableMap
   nativeQuery: boolean
-  model: IModel
+  model: IViewModel
   isDrilling: boolean
   dataDrillPanelPosition: boolean | object
   whichDataDrillBrushed: boolean | object []
@@ -144,7 +143,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
       widgetProps,
       pagination,
       nativeQuery,
-      model: JSON.parse(view.model)
+      model: view.model
     })
     if (!cacheWidgetProps) {
       this.setState({
@@ -160,7 +159,7 @@ export class DashboardItem extends React.PureComponent<IDashboardItemProps, IDas
 
     if (nextProps.widget !== widget) {
       widgetProps = JSON.parse(nextProps.widget.config)
-      model = JSON.parse(nextProps.view.model)
+      model = nextProps.view.model
       this.setState({
         widgetProps,
         model

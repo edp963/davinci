@@ -8,7 +8,6 @@ const styles = require('../Display.less')
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
-import { toListBF } from '../../Bizlogic/components/viewUtil'
 
 export interface IDisplay {
   id: number
@@ -17,7 +16,6 @@ export interface IDisplay {
   publish: boolean
   avatar: string
   description: string
-  teamIds: any[]
 }
 
 export interface IDisplayEvent {
@@ -32,11 +30,7 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
-  viewTeam: any[]
-  selectTeams: any[]
   onCheckName: (type, data, resolve, reject) => void
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
 }
 
 interface IDisplayListStates {
@@ -44,7 +38,6 @@ interface IDisplayListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
-  checkedKeys: any[]
 }
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
@@ -55,8 +48,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       editingDisplay: null,
       modalLoading: false,
       formType: 'add',
-      formVisible: false,
-      checkedKeys: []
+      formVisible: false
     }
   }
 
@@ -66,16 +58,14 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
   private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
     this.setState({ modalLoading: true })
-    const { onAdd, onEdit, viewTeam } = this.props
-    const { checkedKeys } = this.state
-    const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
+    const { onAdd, onEdit } = this.props
     if (type === 'add') {
       onAdd({
-        ...display, teamIds
+        ...display
       }, () => { this.hideDisplayFormModal() })
     } else {
       onEdit({
-        ...display, teamIds
+        ...display
       }, () => { this.hideDisplayFormModal() })
     }
   }
@@ -83,8 +73,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   private cancel = () => {
     this.setState({
       formVisible: false,
-      modalLoading: false,
-      checkedKeys: []
+      modalLoading: false
     })
   }
 
@@ -94,29 +83,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       editingDisplay: display,
       formType,
       formVisible: true
-    }, () => {
-      const { onLoadViewTeam, projectId } = this.props
-      const { formType } = this.state
-      if (formType === 'edit') {
-        const { onLoadSelectTeams } = this.props
-        new Promise((resolve) => {
-          onLoadViewTeam(projectId, (teams) => {
-            resolve(teams)
-          })
-        }).then((teams) => {
-          onLoadSelectTeams('display', display.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((item) => !result.includes(item))
-            })
-          })
-        })
-      } else if (formType === 'add') {
-        onLoadViewTeam(projectId, (result) => {
-          this.setState({
-            checkedKeys: toListBF(result).map((t) => t.id)
-          })
-        })
-      }
     })
   }
 
@@ -130,12 +96,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent<any>) => {
     func.apply(this, args)
     e.stopPropagation()
-  }
-
-  private initCheckNodes = (checkedKeys) => {
-    this.setState({
-      checkedKeys
-    })
   }
 
   private renderCreate () {
@@ -215,8 +175,7 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 
   public render () {
-    const { displays, projectId, currentProject, onCheckName, viewTeam } = this.props
-    const { checkedKeys } = this.state
+    const { displays, projectId, currentProject, onCheckName } = this.props
     if (!Array.isArray(displays)) { return null }
 
     const { editingDisplay, formType, formVisible, modalLoading } = this.state
@@ -248,9 +207,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
           onCheckName={onCheckName}
           onSave={this.saveDisplay}
           onCancel={this.cancel}
-          viewTeam={viewTeam}
-          checkedKeys={checkedKeys}
-          initCheckNodes={this.initCheckNodes}
         />
       </div>
     )

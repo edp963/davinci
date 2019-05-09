@@ -28,7 +28,6 @@ const TabPane = Tabs.TabPane
 import { IDisplay } from './DisplayList'
 
 const utilStyles = require('../../../assets/less/util.less')
-import AuthControl from '../../Portal/components/AuthControl'
 
 interface IDisplayFormModalProps {
   projectId: number
@@ -36,12 +35,9 @@ interface IDisplayFormModalProps {
   visible: boolean
   loading: boolean
   type: 'add' | 'edit'
-  viewTeam?: any[]
-  checkedKeys: any[]
   onCheckName: (type, data, resolve, reject) => void
   onSave: (display, type: string) => void
   onCancel: () => void
-  initCheckNodes: (checkedKeys: any[]) => any
 }
 
 export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps & FormComponentProps, {}> {
@@ -99,7 +95,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 
   public render () {
-    const { type, visible, loading, form, onCancel, initCheckNodes, viewTeam, checkedKeys } = this.props
+    const { type, visible, loading, form, onCancel } = this.props
     const { getFieldDecorator } = form
 
     const modalButtons = [(
@@ -144,60 +140,49 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
                   <Input />
                 )}
               </FormItem>
-              <Tabs defaultActiveKey="displayInfo">
-                <TabPane tab="基本信息" key="displayInfo">
-                  <Col span={24}>
-                    <FormItem label="名称" {...this.commonFormItemStyle}>
-                      {getFieldDecorator('name', {
-                        rules: [{
-                          required: true,
-                          message: 'Name 不能为空'
-                        }, {
-                          validator: this.checkNameUnique
-                        }]
-                      })(
-                        <Input placeholder="Name" />
-                      )}
-                    </FormItem>
-                  </Col>
-                  <Col span={24}>
-                    <FormItem label="描述" {...this.commonFormItemStyle}>
-                      {getFieldDecorator('description', {
-                        initialValue: ''
-                      })(
-                        <TextArea
-                          placeholder="Description"
-                          autosize={{minRows: 2, maxRows: 6}}
-                        />
-                      )}
-                    </FormItem>
-                  </Col>
-                  <Col span={24}>
-                    <FormItem label="是否发布" {...this.commonFormItemStyle}>
-                      {getFieldDecorator('publish', {
-                        initialValue: true
-                      })(
-                        <RadioGroup>
-                          <Radio value>发布</Radio>
-                          <Radio value={false}>编辑</Radio>
-                        </RadioGroup>
-                      )}
-                    </FormItem>
-                    <FormItem className={utilStyles.hide}>
-                      {getFieldDecorator('avatar')(
-                        <Input />
-                      )}
-                    </FormItem>
-                  </Col>
-                </TabPane>
-                <TabPane tab="权限管理" key="dislayControl">
-                  <AuthControl
-                    initCheckNodes={initCheckNodes}
-                    checkedKeys={checkedKeys}
-                    viewTeam={viewTeam}
-                  />
-                </TabPane>
-              </Tabs>
+              <Col span={24}>
+                <FormItem label="名称" {...this.commonFormItemStyle}>
+                  {getFieldDecorator('name', {
+                    rules: [{
+                      required: true,
+                      message: 'Name 不能为空'
+                    }, {
+                      validator: this.checkNameUnique
+                    }]
+                  })(
+                    <Input placeholder="Name" />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="描述" {...this.commonFormItemStyle}>
+                  {getFieldDecorator('description', {
+                    initialValue: ''
+                  })(
+                    <TextArea
+                      placeholder="Description"
+                      autosize={{minRows: 2, maxRows: 6}}
+                    />
+                  )}
+                </FormItem>
+              </Col>
+              <Col span={24}>
+                <FormItem label="是否发布" {...this.commonFormItemStyle}>
+                  {getFieldDecorator('publish', {
+                    initialValue: true
+                  })(
+                    <RadioGroup>
+                      <Radio value>发布</Radio>
+                      <Radio value={false}>编辑</Radio>
+                    </RadioGroup>
+                  )}
+                </FormItem>
+                <FormItem className={utilStyles.hide}>
+                  {getFieldDecorator('avatar')(
+                    <Input />
+                  )}
+                </FormItem>
+              </Col>
             </Col>
           </Row>
         </Form>

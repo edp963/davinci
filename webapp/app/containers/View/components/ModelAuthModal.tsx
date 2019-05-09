@@ -6,7 +6,7 @@ import { IViewModel } from '../types'
 
 interface IModelAuthModalProps {
   visible: boolean
-  model: IViewModel[]
+  model: IViewModel
   auth: string[]
   onSave: (auth: string[]) => void
   onCancel: () => void
@@ -40,7 +40,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
   )]
 
   private toggleCheckAll = (e: CheckboxChangeEvent) => {
-    const localAuth = e.target.checked ? this.props.model.map((m) => m.name) : []
+    const localAuth = e.target.checked ? Object.keys(this.props.model) : []
     this.setState({ localAuth })
   }
 
@@ -56,8 +56,8 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
   private renderListHeader (props: IModelAuthModalProps) {
     const { auth, model } = props
-    const indeterminate = (auth.length > 0 && auth.length !== model.length)
-    const checkAll = (auth.length === model.length)
+    const indeterminate = (auth.length > 0 && auth.length !== Object.keys(model).length)
+    const checkAll = (auth.length === Object.keys(model).length)
 
     return (
       <Checkbox
@@ -70,16 +70,16 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
     )
   }
 
-  private renderItem = (item: IViewModel) => {
+  private renderItem = (name: string) => {
     const { localAuth } = this.state
-    const checked = localAuth.includes(item.name)
+    const checked = localAuth.includes(name)
     return (
       <ListItem>
         <Checkbox
-          onChange={this.toggleCheck(item.name)}
+          onChange={this.toggleCheck(name)}
           checked={checked}
         >
-          {item.name}
+          {name}
         </Checkbox>
       </ListItem>
     )
@@ -87,6 +87,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
   public render () {
     const { visible, model, onCancel, onSave } = this.props
+    const listDataSource = Object.keys(model)
 
     return (
       <Modal
@@ -98,7 +99,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
         <List
           bordered
           header={this.renderListHeader(this.props)}
-          dataSource={model}
+          dataSource={listDataSource}
           renderItem={this.renderItem}
         />
       </Modal>

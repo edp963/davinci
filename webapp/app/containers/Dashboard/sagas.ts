@@ -159,10 +159,11 @@ export function* getDashboardDetail (action) {
   try {
     const result = yield all({
       dashboardDetail: call(request, `${api.portal}/${portalId}/dashboards/${dashboardId}`),
-      widgets: call(request, `${api.widget}?projectId=${projectId}`),
-      bizlogics: call(request, `${api.bizlogic}?projectId=${projectId}`)
+      widgets: call(request, `${api.widget}?projectId=${projectId}`)
     })
-    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, result.bizlogics.payload))
+    const views = result.dashboardDetail.payload.views
+    delete result.dashboardDetail.payload.views
+    yield put(dashboardDetailLoaded(dashboardId, result.dashboardDetail.payload, result.widgets.payload, views))
   } catch (err) {
     yield put(loadDashboardDetailFail())
     errorHandler(err)

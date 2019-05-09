@@ -17,7 +17,7 @@ import {
   SecondaryGraphTypes
 } from './util'
 import { GRID_ITEM_MARGIN } from '../../../globalConstants'
-import { IModel } from '../../Widget/components/Workbench/index'
+import { IFormedView } from 'containers/View/types'
 import Widget, { IWidgetConfig, RenderType } from '../../Widget/components/Widget'
 import { TextAlignProperty } from 'csstype'
 
@@ -35,7 +35,7 @@ interface ILayerItemProps {
   dragging?: boolean
   itemId: number
   widget: any
-  view: any
+  view: IFormedView
   datasource: {
     pageNo: number
     pageSize: number
@@ -64,7 +64,6 @@ interface ILayerItemStates {
   layerTooltipPosition: [number, number]
   mousePos: number[]
   widgetProps: IWidgetConfig
-  model: IModel
   currentTime: string
 }
 
@@ -80,7 +79,6 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       layerTooltipPosition: [0, 0],
       mousePos: [-1, -1],
       widgetProps: null,
-      model: null,
       currentTime: ''
     }
   }
@@ -90,8 +88,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     if (!widget) { return }
 
     this.setState({
-      widgetProps: JSON.parse(widget.config),
-      model: JSON.parse(view.model)
+      widgetProps: JSON.parse(widget.config)
     })
   }
 
@@ -121,8 +118,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
 
     if (this.props.widget !== nextProps.widget) {
       this.setState({
-        widgetProps: JSON.parse(nextProps.widget.config),
-        model: nextProps.view && JSON.parse(nextProps.view.model)
+        widgetProps: JSON.parse(nextProps.widget.config)
       })
     }
   }
@@ -273,6 +269,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
       selected,
       itemId,
       widget,
+      view,
       datasource,
       loading,
       renderType,
@@ -282,8 +279,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
     } = this.props
     const {
       layerParams,
-      widgetProps,
-      model } = this.state
+      widgetProps } = this.state
 
     const layerClass = classnames({
       [styles.layer]: true,
@@ -316,7 +312,7 @@ export class LayerItem extends React.PureComponent<ILayerItemProps, ILayerItemSt
             data={data}
             loading={isLoading}
             renderType={renderType}
-            model={model}
+            model={view.model}
           />)
         )}
       </div>

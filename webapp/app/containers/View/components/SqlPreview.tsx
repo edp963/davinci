@@ -6,6 +6,7 @@ import { PaginationConfig } from 'antd/lib/pagination'
 import Styles from '../View.less'
 
 import { IExecuteSqlResponse, IExecuteSqlParams } from '../types'
+import { DEFAULT_SQL_PREVIEW_PAGE_SIZE, SQL_PREVIEW_PAGE_SIZE_OPTIONS } from '../constants'
 
 interface ISqlPreviewProps {
   loading: boolean
@@ -16,8 +17,8 @@ interface ISqlPreviewProps {
 export class SqlPreview extends React.PureComponent<ISqlPreviewProps> {
 
   private static basePagination: PaginationConfig = {
-    pageSize: 100,
-    pageSizeOptions: ['100', '200', '500', '1000'],
+    pageSize: DEFAULT_SQL_PREVIEW_PAGE_SIZE,
+    pageSizeOptions: SQL_PREVIEW_PAGE_SIZE_OPTIONS.map((size) => size.toString()),
     showQuickJumper: true,
     showSizeChanger: true
   }

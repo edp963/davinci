@@ -78,7 +78,7 @@ export function loadDisplayDetail (projectId, displayId) {
     }
   }
 }
-export function displayDetailLoaded (display, slide, layers, widgets, bizlogics) {
+export function displayDetailLoaded (display, slide, layers, widgets, views) {
   return {
     type: ActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS,
     payload: {
@@ -86,7 +86,7 @@ export function displayDetailLoaded (display, slide, layers, widgets, bizlogics)
       slide,
       layers,
       widgets,
-      bizlogics
+      views
     }
   }
 }

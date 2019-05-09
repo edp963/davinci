@@ -11,7 +11,7 @@ export function createTypes<EnumTypes> (enumTypes: EnumTypes): ReturnTypes<EnumT
 }
 
 type ActionCreatorMap<ActionMap> = {
-  [key in keyof ActionMap]: (arg2?: any, arg3?: any, arg4?: any) => ActionMap[key]
+  [key in keyof ActionMap]: (arg2?: any, arg3?: any, arg4?: any, arg5?: any, arg6?: any) => ActionMap[key]
 }
 
 type ValueOf<ActionMap> = ActionMap[keyof ActionMap]

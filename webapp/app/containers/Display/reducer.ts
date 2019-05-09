@@ -23,11 +23,7 @@ import undoable, { includeAction } from 'redux-undo'
 
 import { ActionTypes } from './constants'
 import { GraphTypes } from './components/util'
-import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE
-} from '../Bizlogic/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
 
 const emptyDisplayState = {
   displays: [],
@@ -226,7 +222,7 @@ function displayReducer (state = initialState, action) {
         .set('lastLayers', lastLayers)
         .set('currentLayers', copyLayers)
 
-    case LOAD_DATA_FROM_ITEM:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -242,7 +238,7 @@ function displayReducer (state = initialState, action) {
             }
           }
         })
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
       return payload.vizType !== 'display' ? state : state
         .set('currentLayersInfo', {
           ...layersInfo,
@@ -253,7 +249,7 @@ function displayReducer (state = initialState, action) {
             renderType: payload.renderType
           }
         })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
       return payload.vizType !== 'display' ? state : state.set('currentLayersInfo', {
         ...layersInfo,
         [payload.layerId]: {
