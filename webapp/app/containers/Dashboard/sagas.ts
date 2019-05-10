@@ -188,11 +188,11 @@ export function* addDashboardItems (action) {
 }
 
 export function* editDashboardItem (action) {
-  const { item, resolve } = action.payload
+  const { portalId, item, resolve } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: [item]
     })
     yield put(dashboardItemEdited(item))
@@ -204,11 +204,11 @@ export function* editDashboardItem (action) {
 }
 
 export function* editDashboardItems (action) {
-  const { items } = action.payload
+  const { portalId, items } = action.payload
   try {
     yield call(request, {
       method: 'put',
-      url: `${api.portal}/dashboards/widgets`,
+      url: `${api.portal}/${portalId}/dashboards/widgets`,
       data: items
     })
     yield put(dashboardItemsEdited(items))

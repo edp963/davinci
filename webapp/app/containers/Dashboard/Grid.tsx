@@ -194,8 +194,8 @@ interface IGridProps {
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
-  onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
-  onEditDashboardItems: (item: IDashboardItem[]) => void
+  onEditDashboardItem: (portalId: number, item: IDashboardItem, resolve: () => void) => void
+  onEditDashboardItems: (portalid: number, item: IDashboardItem[]) => void
   onDeleteDashboardItem: (id: number, resolve?: () => void) => void
   onLoadDataFromItem: (
     renderType: RenderType,
@@ -532,7 +532,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private onEditDashboardItemsPosition = (layout) => {
-    const { currentItems, onEditDashboardItems } = this.props
+    const { currentItems, onEditDashboardItems, params } = this.props
+    const portalId = +params.portalId
     const changedItems = currentItems.map((item) => {
       const { x, y, w, h } = layout.find((l) => Number(l.i) === item.id)
       return {
@@ -543,7 +544,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: h
       }
     })
-    onEditDashboardItems(changedItems)
+    onEditDashboardItems(portalId, changedItems)
   }
 
   private onWindowResize = () => {
@@ -633,6 +634,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private saveDashboardItem = () => {
     const { params, currentDashboard, currentItems, widgets } = this.props
+    const portalId = +params.portalId
     const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
@@ -692,7 +694,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         return item
       })
 
-      this.props.onAddDashboardItems(Number(params.portalId), newItems, () => {
+      this.props.onAddDashboardItems(portalId, newItems, () => {
         this.hideDashboardItemForm()
       })
     } else {
@@ -703,7 +705,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         widgetId: selectedWidgets[0]
       }
 
-      this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+      this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
         this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
         this.hideDashboardItemForm()
       })
@@ -1144,6 +1146,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     // onDrillPathSetting(currentItemId as number, flag)
 
     const {currentItems, params, onLoadDashboardDetail} = this.props
+    const portalId = +params.portalId
     const { currentItemId } = this.state
     const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
     const config = dashboardItem.config
@@ -1166,7 +1169,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       config: JSON.stringify(configObj)
     }
 
-    this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+    this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
@@ -1547,8 +1550,8 @@ export function mapDispatchToProps (dispatch) {
     onLoadDashboardDetail: (projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
     onAddDashboardItems: (portalId, items, resolve) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
-    onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
-    onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
+    onEditDashboardItem: (portalId, item, resolve) => dispatch(editDashboardItem(portalId, item, resolve)),
+    onEditDashboardItems: (portalId, items) => dispatch(editDashboardItems(portalId, items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
                         dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),

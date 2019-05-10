@@ -270,10 +270,11 @@ export function addDashboardItemsFail () {
   }
 }
 
-export function editDashboardItem (item, resolve) {
+export function editDashboardItem (portalId, item, resolve) {
   return {
     type: EDIT_DASHBOARD_ITEM,
     payload: {
+      portalId,
       item,
       resolve
     }
@@ -295,10 +296,11 @@ export function editDashboardItemFail () {
   }
 }
 
-export function editDashboardItems (items) {
+export function editDashboardItems (portalId, items) {
   return {
     type: EDIT_DASHBOARD_ITEMS,
     payload: {
+      portalId,
       items
     }
   }
