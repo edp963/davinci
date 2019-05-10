@@ -33,8 +33,8 @@ import reducerProject from '../Projects/reducer'
 import sagaProject from '../Projects/sagas'
 import portalSaga from '../Portal/sagas'
 import portalReducer from '../Portal/reducer'
-import bizlogicReducer from '../Bizlogic/reducer'
-import bizlogicSaga from '../Bizlogic/sagas'
+import viewReducer from '../view/reducer'
+import viewSaga from '../view/sagas'
 
 import Container from '../../components/Container'
 import DashboardForm from './components/DashboardForm'
@@ -59,11 +59,9 @@ import {
 import { makeSelectDashboards, makeSelectModalLoading } from './selectors'
 import { hideNavigator, checkNameUniqueAction } from '../App/actions'
 import { listToTree, findFirstLeaf } from './components/localPositionUtil'
-import { loadPortals, loadSelectTeams } from '../Portal/actions'
+import { loadPortals } from '../Portal/actions'
 import { makeSelectPortals } from '../Portal/selectors'
 import { loadProjectDetail } from '../Projects/actions'
-import {makeSelectViewTeam} from '../Bizlogic/selectors'
-import { loadViewTeam } from '../Bizlogic/actions'
 
 const utilStyles = require('../../assets/less/util.less')
 const styles = require('./Dashboard.less')
@@ -73,7 +71,6 @@ import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
 import { IProject } from '../Projects'
 import EditorHeader from '../../components/EditorHeader'
-import { toListBF } from '../Bizlogic/components/viewUtil'
 const SplitPane = React.lazy(() => import('react-split-pane'))
 
 interface IDashboardProps {
@@ -83,7 +80,6 @@ interface IDashboardProps {
   params: any
   currentProject: IProject
   portals: any[]
-  viewTeam: any[]
   onLoadDashboards: (portalId: number, resolve: any) => void
   onAddDashboard: (dashboard: IDashboard, resolve: any) => any
   onEditDashboard: (type: string, dashboard: IDashboard[], resolve: any) => void
@@ -92,9 +88,6 @@ interface IDashboardProps {
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
   onLoadPortals: (projectId) => void
   onLoadProjectDetail: (id) => any
-  onLoadViewTeam: (projectId: number, resolve?: any) => any
-  onLoadSelectTeams: (type: string, id: number, resolve?: any) => any
-  // onLoadDashboardDetail: (selectedDashboard: object, projectId: number, portalId: number, dashboardId: number) => any
 }
 
 export interface IDashboard {
@@ -249,9 +242,8 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     } else {
       this.dashboardForm.props.form.validateFieldsAndScroll((err, values) => {
         if (!err) {
-          const { dashboards, params, router, onEditDashboard, onAddDashboard, viewTeam } = this.props
+          const { dashboards, params, router, onEditDashboard, onAddDashboard } = this.props
           const { id, name, folder, selectType, index, config } = values
-          const teamIds = toListBF(viewTeam).map((t) => t.id).filter((item) => !checkedKeys.includes(item))
 
           const dashArr = folder === '0'
             ? dashboards.filter((d) => d.parentId === 0)
@@ -268,16 +260,14 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
           const addObj = {
             ...obj,
             parentId: Number(folder),
-            index: indexTemp,
-            teamIds
+            index: indexTemp
           }
 
           const editObj = [{
             ...obj,
             parentId: Number(folder),
             id,
-            index,
-            teamIds
+            index
           }]
 
           const currentArr = dashboards.filter((d) => d.parentId === Number(folder))
@@ -285,8 +275,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             ...obj,
             parentId: Number(folder),
             id,
-            index: currentArr.length ? currentArr[currentArr.length - 1].index + 1  : 0,
-            teamIds
+            index: currentArr.length ? currentArr[currentArr.length - 1].index + 1 : 0
           }]
 
           switch (formType) {
@@ -435,13 +424,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
     this.setState({
       formVisible: true,
       formType: 'add'
-    }, () => {
-      const { params, onLoadViewTeam } = this.props
-      onLoadViewTeam(params.pid, (result) => {
-        this.setState({
-          checkedKeys: toListBF(result).map((t) => t.id)
-        })
-      })
     })
   }
 
@@ -503,21 +485,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       formType: type
     }, () => {
       this.onShowDashboardForm(item, this.state.formType)
-      const { formType } = this.state
-      if (formType === 'edit' || formType === 'move') {
-        const { onLoadViewTeam, onLoadSelectTeams, params } = this.props
-        new Promise((resolve) => {
-          onLoadViewTeam(params.pid, (teams) => {
-            resolve(teams)
-          })
-        }).then((teams) => {
-          onLoadSelectTeams('dashboard', item.id, (result) => {
-            this.setState({
-              checkedKeys: toListBF(teams).map((t) => t.id).filter((it) => !result.includes(it))
-            })
-          })
-        })
-      }
     })
   }
 
@@ -644,8 +611,7 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
       children,
       currentProject,
       onCheckUniqueName,
-      portals,
-      viewTeam
+      portals
     } = this.props
 
     const {
@@ -846,9 +812,6 @@ export class Dashboard extends React.Component<IDashboardProps, IDashboardStates
             dashboards={dashboards}
             portalId={params.portalId}
             onCheckUniqueName={onCheckUniqueName}
-            checkedKeys={checkedKeys}
-            viewTeam={viewTeam}
-            initCheckNodes={this.initCheckNodes}
             wrappedComponentRef={this.refHandlers.dashboardForm}
           />
         </Modal>
@@ -861,13 +824,11 @@ const mapStateToProps = createStructuredSelector({
   dashboards: makeSelectDashboards(),
   modalLoading: makeSelectModalLoading(),
   currentProject: makeSelectCurrentProject(),
-  portals: makeSelectPortals(),
-  viewTeam: makeSelectViewTeam()
+  portals: makeSelectPortals()
 })
 
 export function mapDispatchToProps (dispatch) {
   return {
-    // onLoadDashboardDetail: (selectedDashboard, projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(selectedDashboard, projectId, portalId, dashboardId)),
     onLoadDashboards: (portalId, resolve) => dispatch(loadDashboards(portalId, resolve)),
     onAddDashboard: (dashboard, resolve) => dispatch(addDashboard(dashboard, resolve)),
     onEditDashboard: (formType, dashboard, resolve) => dispatch(editDashboard(formType, dashboard, resolve)),
@@ -875,9 +836,7 @@ export function mapDispatchToProps (dispatch) {
     onHideNavigator: () => dispatch(hideNavigator()),
     onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
     onLoadPortals: (projectId) => dispatch(loadPortals(projectId)),
-    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
-    onLoadViewTeam: (projectId, resolve) => dispatch(loadViewTeam(projectId, resolve)),
-    onLoadSelectTeams: (type, id, resolve) => dispatch(loadSelectTeams(type, id, resolve))
+    onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id))
   }
 }
 
@@ -892,8 +851,8 @@ const withSagaProject = injectSaga({ key: 'project', saga: sagaProject })
 const withPortalReducer = injectReducer({ key: 'portal', reducer: portalReducer })
 const withPortalSaga = injectSaga({ key: 'portal', saga: portalSaga })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: bizlogicReducer })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: bizlogicSaga })
+const withReducerView = injectReducer({ key: 'view', reducer: viewReducer })
+const withSagaView = injectSaga({ key: 'view', saga: viewSaga })
 
 export default compose(
   withReducer,
@@ -903,6 +862,6 @@ export default compose(
   withSagaProject,
   withPortalSaga,
   withConnect,
-  withReducerBizlogic,
-  withSagaBizlogic
+  withReducerView,
+  withSagaView
 )(Dashboard)

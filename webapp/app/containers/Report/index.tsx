@@ -83,7 +83,7 @@ export class Report extends React.Component<IReportProps, {}> {
           const pStr = attr.slice(0, -10)
           if (pathname.indexOf(pStr) > 0) {
             permission = projectPermission[attr]
-          } else if (pathname.indexOf('bizlogics') > 0 && pathname.replace('bizlogics', 'view').indexOf(pStr) > 0) {
+          } else if (pathname.indexOf('views') > 0 && pathname.replace('views', 'view').indexOf(pStr) > 0) {
             permission = projectPermission[attr]
           }
         }
@@ -149,7 +149,7 @@ export function mapDispatchToProps (dispatch) {
       const sidebarSource = [
         { icon: (<i className="iconfont icon-dashboard" />), route: ['vizs', 'dashboard'], permission: 'viz' },
         { icon: (<i className="iconfont icon-widget-gallery" />), route: ['widgets'], permission: 'widget' },
-        { icon: (<i className="iconfont icon-custom-business" />), route: ['bizlogics', 'bizlogic'], permission: 'view' },
+        { icon: (<i className="iconfont icon-custom-business" />), route: ['views', 'view'], permission: 'view' },
         { icon: (<i className="iconfont icon-datasource24" />), route: ['sources'], permission: 'source' },
         { icon: (<Icon type="clock-circle" />), route: ['schedule'], permission: 'schedule' }
       ]

@@ -38,6 +38,11 @@ const makeSelectEditingViewInfo = () => createSelector(
   (viewState: ViewStateType) => viewState.get('editingViewInfo')
 )
 
+const makeSelectFormedViews = () => createSelector(
+  selectView,
+  (viewState: ViewStateType) => viewState.get('formedViews')
+)
+
 const makeSelectSources = () => createSelector(
   selectView,
   (viewState: ViewStateType) => viewState.get('sources')
@@ -78,6 +83,7 @@ export {
   makeSelectViews,
   makeSelectEditingView,
   makeSelectEditingViewInfo,
+  makeSelectFormedViews,
   makeSelectSources,
   makeSelectSourceTables,
   makeSelectMapTableColumns,

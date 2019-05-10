@@ -22,6 +22,8 @@ import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
 import { IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse } from './types'
+import { IDataRequestParams } from 'containers/Dashboard/Grid'
+import { RenderType } from 'containers/Widget/components/Widget'
 
 export const ViewActions = {
   viewsLoaded (views: IViewBase[]) {
@@ -182,7 +184,138 @@ export const ViewActions = {
       type: ActionTypes.RESET_VIEW_STATE,
       payload: {}
     }
+  },
+
+  /** Actions for external usages */
+  loadCascadeViewData (controlId: string, viewId: number, columns: string[], parents: Array<{ column: string, value: string }>) {
+    return {
+      type: ActionTypes.LOAD_CASCADE_VIEW_DATA,
+      payload: {
+        controlId,
+        viewId,
+        columns,
+        parents
+      }
+    }
+  },
+  cascadeViewDataLoaded (controlId: string, columns: string[], values: any[]) {
+    return {
+      type: ActionTypes.LOAD_CASCADE_VIEW_DATA_SUCCESS,
+      payload: {
+        controlId,
+        columns,
+        values
+      }
+    }
+  },
+  loadCascadeViewDataFail (err) {
+    return {
+      type: ActionTypes.LOAD_CASCADE_VIEW_DATA_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+
+  loadViewData (id: number, requestParams: IDataRequestParams, resolve: (data: any[]) => void) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA,
+      payload: {
+        id,
+        requestParams,
+        resolve
+      }
+    }
+  },
+  viewDataLoaded () {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA_SUCCESS
+    }
+  },
+  loadViewDataFail (err) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+
+  loadViewDistinctValue (viewId: number, fieldName: string, filters?: any[], resolve?: any) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE,
+      payload: {
+        viewId,
+        fieldName,
+        filters,
+        resolve
+      }
+    }
+  },
+  viewDistinctValueLoaded (data: any[], fieldName: string) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_SUCCESS,
+      payload: {
+        data,
+        fieldName
+      }
+    }
+  },
+  loadViewDistinctValueFail (err) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DISTINCT_VALUE_FAILURE,
+      payload: {
+        err
+      }
+    }
+  },
+
+  loadViewDataFromVizItem (
+    renderType: RenderType,
+    itemId: number,
+    viewId: number,
+    requestParams: IDataRequestParams,
+    vizType: 'dashboard' | 'display'
+  ) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM,
+      payload: {
+        renderType,
+        itemId,
+        viewId,
+        requestParams,
+        vizType
+      }
+    }
+  },
+  viewDataFromVizItemLoaded (
+    renderType: RenderType,
+    itemId: number,
+    requestParams: IDataRequestParams,
+    result: any[],
+    vizType: 'dashboard' | 'display'
+  ) {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS,
+      payload: {
+        renderType,
+        itemId,
+        requestParams,
+        result,
+        vizType
+      }
+    }
+  },
+  loadViewDataFromVizItemFail (itemId: number, vizType: 'dashboard' | 'display') {
+    return {
+      type: ActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE,
+      payload: {
+        itemId,
+        vizType
+      }
+    }
   }
+  /** */
 }
 const mockAction = returnType(ViewActions)
 export type ViewActionType = typeof mockAction

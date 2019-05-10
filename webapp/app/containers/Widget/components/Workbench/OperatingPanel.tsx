@@ -3,7 +3,7 @@ import classnames from 'classnames'
 
 import widgetlibs from '../../config'
 import { IDataRequestParams } from 'app/containers/Dashboard/Grid'
-import { IView, IModel } from './index'
+import { IViewBase, IFormedView, IViewModel } from 'containers/View/types'
 import Dropbox, { DropboxType, ViewModelType, DropType, SortType, AggregatorType, IDataParamSource, IDataParamConfig, DragType} from './Dropbox'
 import { IWidgetProps, IChartStyles, IChartInfo, IPaginationParams, WidgetMode, RenderType, DimetionType } from '../Widget'
 import FieldConfigModal, { IFieldConfig, getDefaultFieldConfig } from './FieldConfig'
@@ -55,9 +55,9 @@ export interface IDataParams {
 }
 
 interface IOperatingPanelProps {
-  views: IView[]
+  views: IViewBase[]
   originalWidgetProps: IWidgetProps
-  selectedView: IView
+  selectedView: IFormedView
   distinctColumnValues: any[]
   columnValueLoading: boolean
   controls: any[]
@@ -65,7 +65,7 @@ interface IOperatingPanelProps {
   expired: number
   computed: any[]
   originalComputed: any[]
-  onViewSelect: (selectedView: IView) => void
+  onViewSelect: (viewId: number) => void
   onSetControls: (controls: any[]) => void
   onCacheChange: (e: RadioChangeEvent) => void
   onExpiredChange: (expired: number) => void
@@ -172,10 +172,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   public componentWillReceiveProps (nextProps: IOperatingPanelProps) {
     const { selectedView, originalWidgetProps } = nextProps
-    if (originalWidgetProps && originalWidgetProps !== this.props.originalWidgetProps) {
+    if ((originalWidgetProps && selectedView) &&
+      (originalWidgetProps !== this.props.originalWidgetProps || selectedView !== this.props.selectedView)) {
       const { cols, rows, metrics, secondaryMetrics, filters, color, label, size, xAxis, tip, chartStyles, mode, selectedChart } = originalWidgetProps
       const { dataParams } = this.state
-      const model = JSON.parse(selectedView.model)
+      const model = selectedView.model
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
 
       cols.forEach((c) => {
@@ -766,8 +767,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       expired: 0
     }
 
+    let needRequest = groups.length > 0 || aggregators.length > 0
     const requestParamString = JSON.stringify(requestParams)
-    if (selectedView && requestParamString !== this.lastRequestParamString) {
+    needRequest = needRequest && (selectedView && requestParamString !== this.lastRequestParamString)
+
+    if (needRequest) {
       this.lastRequestParamString = requestParamString
       onLoadData(selectedView.id, requestParams, (result) => {
         const { resultList: data, pageNo, pageSize, totalCount } = result
@@ -819,7 +823,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           renderType: renderType || 'rerender',
           orders,
           mode,
-          model: JSON.parse(selectedView.model)
+          model: selectedView.model
         })
         this.setState({
           chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
@@ -896,7 +900,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         renderType: renderType || 'clear',
         orders,
         mode,
-        model: selectedView ? JSON.parse(selectedView.model) : {}
+        model: selectedView ? selectedView.model : {}
       })
       this.setState({
         chartModeSelectedChart: mode === 'pivot' ? chartModeSelectedChart : selectedCharts[0],
@@ -950,11 +954,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
         title: '切换 View 会清空所有配置项，是否继续？',
         onOk: () => {
           this.resetWorkbench(mode)
-          this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+          this.props.onViewSelect(+key)
         }
       })
     } else {
-      this.props.onViewSelect(this.props.views.find((v) => v.id === Number(key)))
+      this.props.onViewSelect(+key)
     }
   }
 
@@ -1309,7 +1313,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const values = []
 
     if (selectedView) {
-      const model: IModel = JSON.parse(selectedView.model)
+      const model = selectedView.model
       const pivot = getPivot()
       Object.entries(model).forEach(([key, m]) => {
         if (m.modelType === 'category') {

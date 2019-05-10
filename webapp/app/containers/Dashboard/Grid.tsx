@@ -30,8 +30,10 @@ import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 import reducerWidget from '../Widget/reducer'
 import sagaWidget from '../Widget/sagas'
-import reducerBizlogic from '../Bizlogic/reducer'
-import sagaBizlogic from '../Bizlogic/sagas'
+import reducerView from '../View/reducer'
+import sagaView from '../View/sagas'
+
+import { IViewBase, IFormedView } from '../View/types'
 
 import Container from '../../components/Container'
 // import DataDrill from '../../components/DataDrill/Panel'
@@ -84,13 +86,10 @@ import {
   makeSelectCurrentDashboardCascadeSources,
   makeSelectCurrentLinkages
 } from './selectors'
-import {
-  loadDataFromItem,
-  loadCascadeSource,
-  loadDistinctValue
-} from '../Bizlogic/actions'
+import { ViewActions, ViewActionType } from '../View/actions'
+const { loadViewDataFromVizItem, loadCascadeViewData, loadViewDistinctValue } = ViewActions
 import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectViews, makeSelectFormedViews } from '../View/selectors'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 
 import {
@@ -176,7 +175,8 @@ export interface IDataRequestParams {
 interface IGridProps {
   dashboards: any[]
   widgets: any[]
-  bizlogics: any[]
+  views: IViewBase[]
+  formedViews: IFormedView[]
   currentProject: IProject
   router: InjectedRouter
   params: any
@@ -194,8 +194,8 @@ interface IGridProps {
   onLoadDashboardDetail: (projectId: number, portalId: number, dashboardId: number) => any
   onAddDashboardItems: (portalId: number, items: IDashboardItem[], resolve: (items: IDashboardItem[]) => void) => any
   onEditCurrentDashboard: (dashboard: object, resolve: () => void) => void
-  onEditDashboardItem: (item: IDashboardItem, resolve: () => void) => void
-  onEditDashboardItems: (item: IDashboardItem[]) => void
+  onEditDashboardItem: (portalId: number, item: IDashboardItem, resolve: () => void) => void
+  onEditDashboardItems: (portalid: number, item: IDashboardItem[]) => void
   onDeleteDashboardItem: (id: number, resolve?: () => void) => void
   onLoadDataFromItem: (
     renderType: RenderType,
@@ -532,7 +532,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
   }
 
   private onEditDashboardItemsPosition = (layout) => {
-    const { currentItems, onEditDashboardItems } = this.props
+    const { currentItems, onEditDashboardItems, params } = this.props
+    const portalId = +params.portalId
     const changedItems = currentItems.map((item) => {
       const { x, y, w, h } = layout.find((l) => Number(l.i) === item.id)
       return {
@@ -543,7 +544,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         height: h
       }
     })
-    onEditDashboardItems(changedItems)
+    onEditDashboardItems(portalId, changedItems)
   }
 
   private onWindowResize = () => {
@@ -633,6 +634,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
 
   private saveDashboardItem = () => {
     const { params, currentDashboard, currentItems, widgets } = this.props
+    const portalId = +params.portalId
     const { selectedWidgets, dashboardItemFormType } = this.state
     const formdata: any = this.dashboardItemForm.props.form.getFieldsValue()
     const cols = GRID_COLS.lg
@@ -692,7 +694,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         return item
       })
 
-      this.props.onAddDashboardItems(Number(params.portalId), newItems, () => {
+      this.props.onAddDashboardItems(portalId, newItems, () => {
         this.hideDashboardItemForm()
       })
     } else {
@@ -703,7 +705,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         widgetId: selectedWidgets[0]
       }
 
-      this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+      this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
         this.getChartData('rerender', modifiedDashboardItem.id, modifiedDashboardItem.widgetId)
         this.hideDashboardItemForm()
       })
@@ -893,10 +895,10 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     })
   }
   private currentWidgetInFullScreen = (id: number) => {
-    const { currentItems, currentItemsInfo, widgets, bizlogics, onRenderDashboardItem } = this.props
+    const { currentItems, currentItemsInfo, widgets, formedViews, onRenderDashboardItem } = this.props
     const item = currentItems.find((ci) => ci.id === id)
     const widget = widgets.find((w) => w.id === item.widgetId)
-    const model = JSON.parse(bizlogics.find((b) => b.id === widget.viewId).model)
+    const model = formedViews[widget.viewId].model
     const { rendered } = currentItemsInfo[id]
     if (!rendered) {
       onRenderDashboardItem(id)
@@ -1144,6 +1146,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
     // onDrillPathSetting(currentItemId as number, flag)
 
     const {currentItems, params, onLoadDashboardDetail} = this.props
+    const portalId = +params.portalId
     const { currentItemId } = this.state
     const dashboardItem = currentItems.find((item) => item.id === Number(currentItemId))
     const config = dashboardItem.config
@@ -1166,7 +1169,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       config: JSON.stringify(configObj)
     }
 
-    this.props.onEditDashboardItem(modifiedDashboardItem, () => {
+    this.props.onEditDashboardItem(portalId, modifiedDashboardItem, () => {
       if (params.dashboardId && Number(params.dashboardId) !== -1) {
         onLoadDashboardDetail(params.pid, params.portalId, params.dashboardId)
       }
@@ -1191,7 +1194,8 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
       currentItems,
       currentItemsInfo,
       currentDashboardCascadeSources,
-      bizlogics,
+      views,
+      formedViews,
       onLoadDashboardShareLink,
       onLoadWidgetShareLink,
       currentProject,
@@ -1270,11 +1274,11 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           selectedItems
         } = currentItemsInfo[id]
         const widget = widgets.find((w) => w.id === widgetId)
-        const view = bizlogics.find((b) => b.id === widget.viewId)
         const interacting = interactingStatus[id] || false
         const drillHistory = queryConditions.drillHistory
         const drillpathSetting = queryConditions.drillpathSetting
         const drillpathInstance = queryConditions.drillpathInstance
+        const view = formedViews[widget.viewId]
 
         itemblocks.push((
           <div key={id}>
@@ -1479,7 +1483,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
              drillpathSetting={drillpathSetting}
              selectedWidget={this.state.selectedWidgets}
              widgets={widgets || []}
-             views={bizlogics || []}
+             views={views || []}
              saveDrillPathSetting={this.saveDrillPathSetting}
              cancel={this.hideDrillPathSettingModal}
           />
@@ -1488,7 +1492,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           currentDashboard={currentDashboard}
           currentItems={currentItems}
           currentItemsInfo={currentItemsInfo}
-          views={bizlogics}
+          views={views}
           widgets={widgets}
           visible={linkageConfigVisible}
           loading={currentDashboardLoading}
@@ -1500,7 +1504,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
         <DashboardFilterConfig
           currentDashboard={currentDashboard}
           currentItems={currentItems}
-          views={bizlogics}
+          views={views}
           widgets={widgets}
           visible={globalFilterConfigVisible}
           loading={currentDashboardLoading}
@@ -1536,7 +1540,8 @@ const mapStateToProps = createStructuredSelector({
   currentDashboardCascadeSources: makeSelectCurrentDashboardCascadeSources(),
   currentLinkages: makeSelectCurrentLinkages(),
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  views: makeSelectViews(),
+  formedViews: makeSelectFormedViews(),
   currentProject: makeSelectCurrentProject()
 })
 
@@ -1545,15 +1550,15 @@ export function mapDispatchToProps (dispatch) {
     onLoadDashboardDetail: (projectId, portalId, dashboardId) => dispatch(loadDashboardDetail(projectId, portalId, dashboardId)),
     onAddDashboardItems: (portalId, items, resolve) => dispatch(addDashboardItems(portalId, items, resolve)),
     onEditCurrentDashboard: (dashboard, resolve) => dispatch(editCurrentDashboard(dashboard, resolve)),
-    onEditDashboardItem: (item, resolve) => dispatch(editDashboardItem(item, resolve)),
-    onEditDashboardItems: (items) => dispatch(editDashboardItems(items)),
+    onEditDashboardItem: (portalId, item, resolve) => dispatch(editDashboardItem(portalId, item, resolve)),
+    onEditDashboardItems: (portalId, items) => dispatch(editDashboardItems(portalId, items)),
     onDeleteDashboardItem: (id, resolve) => dispatch(deleteDashboardItem(id, resolve)),
     onLoadDataFromItem: (renderType, itemId, viewId, requestParams) =>
-                        dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'dashboard')),
+                        dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'dashboard')),
     onClearCurrentDashboard: () => dispatch(clearCurrentDashboard()),
     onLoadWidgetCsv: (itemId, widgetId, requestParams) => dispatch(loadWidgetCsv(itemId, widgetId, requestParams)),
-    onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeSource(controlId, viewId, columns, parents)),
-    onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadDistinctValue(viewId, fieldName, [], resolve)),
+    onLoadCascadeSource: (controlId, viewId, columns, parents) => dispatch(loadCascadeViewData(controlId, viewId, columns, parents)),
+    onLoadDistinctValue: (viewId, fieldName, resolve) => dispatch(loadViewDistinctValue(viewId, fieldName, [], resolve)),
     onRenderDashboardItem: (itemId) => dispatch(renderDashboardItem(itemId)),
     onResizeDashboardItem: (itemId) => dispatch(resizeDashboardItem(itemId)),
     onResizeAllDashboardItem: () => dispatch(resizeAllDashboardItem()),
@@ -1571,13 +1576,13 @@ const withConnect = connect(mapStateToProps, mapDispatchToProps)
 const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
+const withSagaView = injectSaga({ key: 'view', saga: sagaView })
 
 export default compose(
   withReducerWidget,
-  withReducerBizlogic,
+  withReducerView,
   withSagaWidget,
-  withSagaBizlogic,
+  withSagaView,
   withConnect
 )(Grid)

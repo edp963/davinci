@@ -199,14 +199,13 @@ export class SourceTable extends React.Component<ISourceTableProps, ISourceTable
               placeholder="数据源"
               style={{width: '100%'}}
               value={sourceId}
-              onSelect={this.selectSource}
+              onChange={this.selectSource}
             >
               {sources.map(({ id, name }) => (<Option key={id.toString()} value={id}>{name}</Option>))}
             </Select>
           </Col>
           <Col span={24}>
             <Search
-              allowClear
               placeholder="搜索表/字段名称"
               value={filterTableColumnName}
               onChange={this.filterTableColumnNameChange}

@@ -41,6 +41,13 @@ export interface IView extends IViewTemp {
   sourceId: number
 }
 
+type IViewTemp2 = Omit<Omit<IView, 'model'>, 'variable'>
+
+export interface IFormedView extends IViewTemp2 {
+  model: IViewModel
+  variable: IViewVariable[]
+}
+
 export interface ISqlValidation {
   code: number
   message: string
@@ -59,17 +66,26 @@ export interface IExecuteSqlParams {
   limit: number
 }
 
+export interface ISqlColumn {
+  name: string
+  type: SqlTypes
+}
+
 export interface IExecuteSqlResponse {
-  columns: Array<{ name: string, type: SqlTypes }>
+  columns: ISqlColumn[]
   totalCount: number
   resultList: Array<{[key: string]: string | number}>
 }
 
-export interface IViewModel {
+export interface IViewModelProps {
   name: string
   sqlType: SqlTypes,
   visualType: ViewModelVisualTypes,
   modelType: ViewModelTypes
+}
+
+export interface IViewModel {
+  [name: string]: Omit<IViewModelProps, 'name'>
 }
 
 export interface IViewVariable {
@@ -80,13 +96,35 @@ export interface IViewVariable {
   fromService: boolean
 }
 
+export interface IViewRoleAuth {
+  roleId: number
+  /**
+   * view columns name
+   * @type {string[]}
+   * @memberof IViewRoleAuth
+   */
+  columnAuth: string[]
+
+  /**
+   * query variable values
+   * @type {(Array<string | number>)}
+   * @memberof IViewRoleAuth
+   */
+  rowAuth: Array<{ name: string, values: Array<string | number> }>
+}
+
 export interface IViewInfo {
-  model: IViewModel[]
+  model: IViewModel
   variable: IViewVariable[]
+}
+
+export interface IFormedViews {
+  [viewId: number]: IFormedView
 }
 
 export interface IViewState {
   views: IViewBase[]
+  formedViews: IFormedViews
   editingView: IView
   editingViewInfo: IViewInfo
   sources: IPersistSource[]

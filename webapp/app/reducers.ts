@@ -34,7 +34,7 @@ import reportReducer from './containers/Report/reducer'
 // import groupReducer from './containers/Group/reducer'
 // import userReducer from './containers/User/reducer'
 // import sourceReducer from './containers/Source/reducer'
-import bizlogicReducer from './containers/Bizlogic/reducer'
+// import bizlogicReducer from './containers/Bizlogic/reducer'
 import widgetReducer from './containers/Widget/reducer'
 // import dashboardReducer from './containers/Dashboard/reducer'
 import scheduleReducer from './containers/Schedule/reducer'
@@ -80,7 +80,7 @@ export default function createReducer (injectedReducers: ReducersMapObject = {})
     // group: groupReducer,
     // user: userReducer,
     // source: sourceReducer,
-    bizlogic: bizlogicReducer,
+    // bizlogic: bizlogicReducer,
     widget: widgetReducer,
     // dashboard: dashboardReducer,
   //  schedule: scheduleReducer,

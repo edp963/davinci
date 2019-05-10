@@ -30,8 +30,8 @@ import reducer from './reducer'
 import saga from './sagas'
 import reducerWidget from '../Widget/reducer'
 import sagaWidget from '../Widget/sagas'
-import reducerBizlogic from '../Bizlogic/reducer'
-import sagaBizlogic from '../Bizlogic/sagas'
+import reducerView from '../View/reducer'
+import sagaView from '../View/sagas'
 import injectReducer from '../../utils/injectReducer'
 import injectSaga from '../../utils/injectSaga'
 
@@ -92,17 +92,16 @@ const styles = require('./Display.less')
 
 import { IWidgetConfig, RenderType } from '../Widget/components/Widget'
 import { decodeMetricName } from '../Widget/components/util'
-import {
-  loadDataFromItem,
-  loadCascadeSource // TODO global filter in Display
-} from '../Bizlogic/actions'
+import { ViewActions } from '../View/actions'
+const { loadViewDataFromVizItem } = ViewActions // @TODO global filter in Display
 import { makeSelectWidgets } from '../Widget/selectors'
-import { makeSelectBizlogics } from '../Bizlogic/selectors'
+import { makeSelectFormedViews } from '../View/selectors'
 import { GRID_ITEM_MARGIN, DEFAULT_BASELINE_COLOR, DEFAULT_SPLITER } from '../../globalConstants'
 // import { LayerContextMenu } from './components/LayerContextMenu'
 
 import { ISlideParams, ISlide } from './'
 import { IQueryConditions, IDataRequestParams } from '../Dashboard/Grid'
+import { IFormedViews } from 'containers/View/types'
 
 interface IParams {
   pid: number
@@ -111,7 +110,7 @@ interface IParams {
 
 interface IEditorProps extends RouteComponentProps<{}, IParams> {
   widgets: any[]
-  bizlogics: any[]
+  formedViews: IFormedViews
   currentDisplay: any
   currentSlide: any
   currentLayers: any[]
@@ -163,7 +162,7 @@ interface IEditorProps extends RouteComponentProps<{}, IParams> {
   onUndo: (currentState) => void
   onRedo: (nextState) => void
   onHideNavigator: () => void
-  onLoadDataFromItem: (
+  onLoadViewDataFromVizItem: (
     renderType: RenderType,
     layerItemId: number,
     viewId: number,
@@ -302,7 +301,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
     const {
       currentLayersInfo,
       widgets,
-      onLoadDataFromItem
+      onLoadViewDataFromVizItem
     } = this.props
 
     const widget = widgets.find((w) => w.id === widgetId)
@@ -372,7 +371,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
         })))
     }
 
-    onLoadDataFromItem(
+    onLoadViewDataFromVizItem(
       renderType,
       itemId,
       widget.viewId,
@@ -758,7 +757,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
       currentLayersOperationInfo,
       currentSelectedLayers,
       widgets,
-      bizlogics,
+      formedViews,
       currentDisplay,
       onSelectLayer,
       onLoadDisplayShareLink,
@@ -779,7 +778,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
     const layerItems = !Array.isArray(widgets) ? null : currentLocalLayers.map((layer, idx) => {
       const widget = widgets.find((w) => w.id === layer.widgetId)
-      const view = widget && bizlogics.find((b) => b.id === widget.viewId)
+      const view = widget && formedViews[widget.viewId]
       const layerId = layer.id
 
       const { polling, frequency } = JSON.parse(layer.params)
@@ -909,7 +908,7 @@ export class Editor extends React.Component<IEditorProps, IEditorStates> {
 
 const mapStateToProps = createStructuredSelector({
   widgets: makeSelectWidgets(),
-  bizlogics: makeSelectBizlogics(),
+  formedViews: makeSelectFormedViews(),
   displays: makeSelectDisplays(),
   currentDisplay: makeSelectCurrentDisplay(),
   currentSlide: makeSelectCurrentSlide(),
@@ -931,7 +930,7 @@ function mapDispatchToProps (dispatch) {
     onEditCurrentDisplay: (display, resolve?) => dispatch(editCurrentDisplay(display, resolve)),
     onEditCurrentSlide: (displayId, slide, resolve?) => dispatch(editCurrentSlide(displayId, slide, resolve)),
     onUploadCurrentSlideCover: (cover, resolve) => dispatch(uploadCurrentSlideCover(cover, resolve)),
-    onLoadDataFromItem: (renderType, itemId, viewId, requestParams) => dispatch(loadDataFromItem(renderType, itemId, viewId, requestParams, 'display')),
+    onLoadViewDataFromVizItem: (renderType, itemId, viewId, requestParams) => dispatch(loadViewDataFromVizItem(renderType, itemId, viewId, requestParams, 'display')),
     onSelectLayer: ({ id, selected, exclusive }) => dispatch(selectLayer({ id, selected, exclusive })),
     onClearLayersSelection: () => dispatch(clearLayersSelection()),
     onDragSelectedLayer: (id, deltaX, deltaY) => dispatch(dragSelectedLayer({ id, deltaX, deltaY })),
@@ -962,14 +961,14 @@ const withSaga = injectSaga({ key: 'display', saga })
 const withReducerWidget = injectReducer({ key: 'widget', reducer: reducerWidget })
 const withSagaWidget = injectSaga({ key: 'widget', saga: sagaWidget })
 
-const withReducerBizlogic = injectReducer({ key: 'bizlogic', reducer: reducerBizlogic })
-const withSagaBizlogic = injectSaga({ key: 'bizlogic', saga: sagaBizlogic })
+const withReducerView = injectReducer({ key: 'view', reducer: reducerView })
+const withSagaView = injectSaga({ key: 'view', saga: sagaView })
 
 export default compose(
   withReducer,
   withReducerWidget,
-  withReducerBizlogic,
+  withReducerView,
   withSaga,
   withSagaWidget,
-  withSagaBizlogic,
+  withSagaView,
   withConnect)(Editor)

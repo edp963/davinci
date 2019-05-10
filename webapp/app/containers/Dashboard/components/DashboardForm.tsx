@@ -20,15 +20,12 @@
 
 import * as React from 'react'
 
-import { Form, Row, Col, Input, Radio, Select, Tabs } from 'antd'
-const TabPane = Tabs.TabPane
+import { Form, Row, Col, Input, Radio, Select } from 'antd'
 const Option = Select.Option
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 
 const utilStyles = require('../../../assets/less/util.less')
-import { listToTree } from './localPositionUtil'
-import AuthControl from '../../Portal/components/AuthControl'
 
 interface IDashboardFormProps {
   portalId: number
@@ -36,9 +33,6 @@ interface IDashboardFormProps {
   itemId: number
   form: any
   dashboards: any[]
-  checkedKeys: any[]
-  viewTeam: any[]
-  initCheckNodes: (checkedKeys: any[]) => any
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -68,7 +62,7 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
 
   public render () {
     const { getFieldDecorator } = this.props.form
-    const { dashboards, type, itemId, initCheckNodes, checkedKeys, viewTeam } = this.props
+    const { dashboards, type, itemId } = this.props
     const commonFormItemStyle = {
       labelCol: { span: 6 },
       wrapperCol: { span: 16 }
@@ -113,75 +107,64 @@ export class DashboardForm extends React.PureComponent<IDashboardFormProps, {}> 
           </Col>
         </Row>
         <Row gutter={8} className={type === 'delete' || type === 'move' ? utilStyles.hide : ''}>
-            <Tabs defaultActiveKey="dashboardInfo">
-              <TabPane tab="基本信息" key="dashboardInfo">
-               <Col span={24}>
-                <FormItem label="所属文件夹" {...commonFormItemStyle}>
-                {getFieldDecorator('folder', {
-                  rules: [{
-                    required: true,
-                    message: '请选择所属文件夹'
-                  }],
-                  // initialValue: (folderOptions as any[]).length ? `${dashboardsArr[0].name}` : ''
-                  initialValue: '0'
-                })(
-                  <Select>
-                    <Option key="0" value="0">根目录</Option>
-                    {folderOptions}
-                  </Select>
-                )}
-              </FormItem>
-              <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('config', {})(
-                  <Input />
-                )}
-              </FormItem>
-              <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('index', {})(
-                  <Input />
-                )}
-              </FormItem>
-              <FormItem
-                label={type === 'copy' ? '重命名' : '名称'}
-                {...commonFormItemStyle}
-                hasFeedback
-                className={type === 'move' ? utilStyles.hide : ''}
-              >
-                {getFieldDecorator('name', {
-                  rules: [{
-                    required: true,
-                    message: 'Name 不能为空'
-                  }, {
-                    validator: this.checkNameUnique
-                  }]
-                })(
-                  <Input placeholder="Name" />
-                )}
-              </FormItem>
-              <FormItem
-                label="选择类型"
-                {...commonFormItemStyle}
-                className={type === 'move' ? utilStyles.hide : ''}
-              >
-                {getFieldDecorator('selectType', {
-                  initialValue: true
-                })(
-                  <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
-                    <Radio value={false}>文件夹</Radio>
-                    <Radio value>Dashboard</Radio>
-                  </RadioGroup>
-                )}
-              </FormItem>
-              </Col>
-              </TabPane>
-              <TabPane tab="权限管理" key="dashboardControl">
-                <AuthControl
-                  initCheckNodes={initCheckNodes}
-                  checkedKeys={checkedKeys}
-                  viewTeam={viewTeam}
-                />
-              </TabPane>
-            </Tabs>
+          <Col span={24}>
+            <FormItem label="所属文件夹" {...commonFormItemStyle}>
+              {getFieldDecorator('folder', {
+                rules: [{
+                  required: true,
+                  message: '请选择所属文件夹'
+                }],
+                // initialValue: (folderOptions as any[]).length ? `${dashboardsArr[0].name}` : ''
+                initialValue: '0'
+              })(
+                <Select>
+                  <Option key="0" value="0">根目录</Option>
+                  {folderOptions}
+                </Select>
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('config', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem className={utilStyles.hide}>
+              {getFieldDecorator('index', {})(
+                <Input />
+              )}
+            </FormItem>
+            <FormItem
+              label={type === 'copy' ? '重命名' : '名称'}
+              {...commonFormItemStyle}
+              hasFeedback
+              className={type === 'move' ? utilStyles.hide : ''}
+            >
+              {getFieldDecorator('name', {
+                rules: [{
+                  required: true,
+                  message: 'Name 不能为空'
+                }, {
+                  validator: this.checkNameUnique
+                }]
+              })(
+                <Input placeholder="Name" />
+              )}
+            </FormItem>
+            <FormItem
+              label="选择类型"
+              {...commonFormItemStyle}
+              className={type === 'move' ? utilStyles.hide : ''}
+            >
+              {getFieldDecorator('selectType', {
+                initialValue: true
+              })(
+                <RadioGroup disabled={type === 'edit' || type === 'copy' || type === 'move'}>
+                  <Radio value={false}>文件夹</Radio>
+                  <Radio value>Dashboard</Radio>
+                </RadioGroup>
+              )}
+            </FormItem>
+          </Col>
         </Row>
         <p className={type === 'delete' ? '' : utilStyles.hide}>
           确定要删除 {deleteType}：{deleteName} ？

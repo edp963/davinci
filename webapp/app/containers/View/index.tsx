@@ -34,7 +34,7 @@ import sagas from './sagas'
 
 import { ViewActions, ViewActionType } from './actions'
 import { makeSelectViews, makeSelectLoading } from './selectors'
-import { makeSelectCurrentProject } from '../Projects/selectors'
+import { makeSelectCurrentProject } from 'containers/Projects/selectors'
 
 import ModulePermission from '../Account/components/checkModulePermission'
 import { initializePermission } from '../Account/components/checkUtilPermission'
@@ -45,8 +45,6 @@ import { ButtonProps } from 'antd/lib/button'
 import Container from 'components/Container'
 import Box from 'components/Box'
 import SearchFilterDropdown from 'components/SearchFilterDropdown'
-
-
 
 import { IRouteParams } from 'app/routes'
 import { IViewBase, IView, IViewLoading } from './types'

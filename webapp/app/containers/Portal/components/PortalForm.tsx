@@ -29,17 +29,12 @@ const TabPane = Tabs.TabPane
 
 const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Portal.less')
-import AuthControl from './AuthControl'
 
 interface IProtalListProps {
   projectId: number
   type: string
   form: any
   params?: any
-  checkedKeys: any[]
-  selectTeams: any[]
-  viewTeam: any[]
-  initCheckNodes: (checkedKeys: any[]) => any
   onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -64,25 +59,7 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
       })
   }
 
-  // private renderTreeNodes = (data) => data.map((item) => {
-  //   if (item.children) {
-  //     return (
-  //       <TreeNode title={item.title} key={item.key} dataRef={item}>
-  //         {this.renderTreeNodes(item.children)}
-  //       </TreeNode>
-  //     )
-  //   }
-  //   return <TreeNode {...item} key={item.key} />
-  // })
-
   public render () {
-    const {
-      type,
-      checkedKeys,
-      initCheckNodes,
-      viewTeam,
-      selectTeams
-    } = this.props
     const { getFieldDecorator } = this.props.form
 
     const commonFormItemStyle = {
@@ -138,20 +115,6 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
                 </RadioGroup>
               )}
             </FormItem>
-            {/* <Tabs defaultActiveKey="infomation">
-              <TabPane tab="基本信息" key="infomation">
-                <Col span={24}></Col>
-                <Col span={24}></Col>
-                <Col span={24}></Col>
-              </TabPane>
-              <TabPane tab="权限管理" key="control" className={styles.controlTab}>
-              <AuthControl
-                initCheckNodes={initCheckNodes}
-                checkedKeys={checkedKeys}
-                viewTeam={viewTeam}
-              />
-              </TabPane>
-            </Tabs> */}
           </Col>
         </Row>
       </Form>

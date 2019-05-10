@@ -63,12 +63,8 @@ import {
   SELECT_DASHBOARD_ITEM_CHART
 } from './constants'
 
-import {
-  LOAD_DATA_FROM_ITEM,
-  LOAD_DATA_FROM_ITEM_SUCCESS,
-  LOAD_DATA_FROM_ITEM_FAILURE,
-  LOAD_CASCADESOURCE_SUCCESS
-} from '../Bizlogic/constants'
+import { ActionTypes as ViewActionTypes } from '../View/constants'
+import { ViewActionType } from '../View/actions'
 
 import {
   IFilterItem,
@@ -90,7 +86,7 @@ const initialState = fromJS({
   modalLoading: false
 })
 
-function dashboardReducer (state = initialState, action) {
+function dashboardReducer (state = initialState, action: ViewActionType | any) {
   const { type, payload } = action
   const dashboards = state.get('dashboards')
   const dashboardCascadeSources = state.get('currentDashboardCascadeSources')
@@ -271,7 +267,7 @@ function dashboardReducer (state = initialState, action) {
         .set('currentItems', null)
         .set('currentItemsInfo', null)
 
-    case LOAD_DATA_FROM_ITEM:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM:
       return payload.vizType !== 'dashboard' ? state : state
         .set('currentItemsInfo', {
           ...itemsInfo,
@@ -281,7 +277,7 @@ function dashboardReducer (state = initialState, action) {
           }
         })
 
-    case LOAD_DATA_FROM_ITEM_SUCCESS:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_SUCCESS:
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
@@ -351,7 +347,7 @@ function dashboardReducer (state = initialState, action) {
           }
         }
       })
-    case LOAD_DATA_FROM_ITEM_FAILURE:
+    case ViewActionTypes.LOAD_VIEW_DATA_FROM_VIZ_ITEM_FAILURE:
       return payload.vizType !== 'dashboard' ? state : state.set('currentItemsInfo', {
         ...itemsInfo,
         [payload.itemId]: {
@@ -427,7 +423,7 @@ function dashboardReducer (state = initialState, action) {
           downloadCsvLoading: false
         }
       })
-    case LOAD_CASCADESOURCE_SUCCESS:
+    case ViewActionTypes.LOAD_CASCADE_VIEW_DATA_SUCCESS:
       return state.set('currentDashboardCascadeSources', {
         ...dashboardCascadeSources,
         [payload.controlId]: payload.values
