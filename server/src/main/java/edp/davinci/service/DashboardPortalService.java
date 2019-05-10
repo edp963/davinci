@@ -24,7 +24,9 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.DashboardPortal;
+import edp.davinci.model.Role;
 import edp.davinci.model.User;
 
 import java.util.List;
@@ -39,4 +41,6 @@ public interface DashboardPortalService extends CheckEntityService {
     boolean deleteDashboardPortal(Long id, User user) throws NotFoundException, UnAuthorizedExecption;
 
     List<Long> getExcludeRoles(Long id);
+
+    boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

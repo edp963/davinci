@@ -17,25 +17,18 @@
  *
  */
 
-package edp.davinci.model;
+package edp.davinci.dto.displayDto;
 
-import edp.davinci.common.model.RecordInfo;
+import edp.davinci.model.DisplaySlide;
+import edp.davinci.model.MemDisplaySlideWidget;
+import edp.davinci.model.View;
 import lombok.Data;
 
+import java.util.List;
+import java.util.Set;
+
 @Data
-public class RelRolePortal extends RecordInfo<RelRolePortal> {
-    private Long roleId;
-
-    private Long portalId;
-
-    private Boolean visible = false; // 可见/不可见  true/false
-
-    public RelRolePortal(Long portalId, Long roleId) {
-        this.roleId = roleId;
-        this.portalId = portalId;
-    }
-
-    public RelRolePortal() {
-    }
-
+public class SlideWithMem extends DisplaySlide {
+    private List<MemDisplaySlideWidget> widgets;
+    private Set<View> views;
 }

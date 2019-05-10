@@ -30,6 +30,7 @@ import org.apache.ibatis.annotations.Update;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
 
 @Component
 public interface ViewMapper {
@@ -79,7 +80,7 @@ public interface ViewMapper {
             "`source_id` = #{sourceId,jdbcType=BIGINT},",
             "`sql` = #{sql,jdbcType=LONGVARCHAR},",
             "`model` = #{model,jdbcType=LONGVARCHAR},",
-            "`variable` = #{model,jdbcType=LONGVARCHAR},",
+            "`variable` = #{variable,jdbcType=LONGVARCHAR},",
             "`config` = #{config,jdbcType=LONGVARCHAR},",
             "update_by = #{updateBy,jdbcType=BIGINT},",
             "update_time = #{updateTime,jdbcType=TIMESTAMP}",
@@ -128,4 +129,6 @@ public interface ViewMapper {
             "WHERE v.id = #{id}",
     })
     ViewWithSource getViewWithSource(Long id);
+
+    Set<View> selectByWidgetIds(@Param("widgetIds") Set<Long> widgetIds);
 }

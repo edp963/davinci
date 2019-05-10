@@ -360,4 +360,62 @@ public class RoleController extends BaseController {
         roleService.updateProjectRole(id, projectId, user, projectRole);
         return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
     }
+
+
+    /**
+     * 修改Role和Project之间的关联
+     *
+     * @param id
+     * @param projectId
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "get role viz permission", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{id}/project/{projectId}/viz/visibility", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity getVizVisibility(@PathVariable Long id,
+                                           @PathVariable Long projectId,
+                                           @ApiIgnore @CurrentUser User user,
+                                           HttpServletRequest request) {
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+        if (invalidId(projectId)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid project id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+
+        VizPermission vizPermission = roleService.getVizPermission(id, projectId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(vizPermission));
+    }
+
+
+    /**
+     * 修改Role和Project之间的关联
+     *
+     * @param id
+     * @param vizVisibility
+     * @param user
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "exclude role viz permission", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/viz/visibility", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity postVizvisibility(@PathVariable Long id,
+                                              @RequestBody VizVisibility vizVisibility,
+                                              @ApiIgnore @CurrentUser User user,
+                                              HttpServletRequest request) {
+
+        if (invalidId(id)) {
+            ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");
+            return ResponseEntity.status(resultMap.getCode()).body(resultMap);
+        }
+
+
+        roleService.postVizvisibility(id, vizVisibility, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request));
+    }
 }

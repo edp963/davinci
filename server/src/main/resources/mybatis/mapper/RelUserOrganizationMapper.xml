@@ -53,9 +53,15 @@
 
 
     <delete id="deleteBatch" parameterType="java.util.List">
-        DELETE FROM rel_user_organization WHERE id in
-        <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        DELETE FROM rel_user_organization WHERE
+        <if test="set != null and set.size > 0">
+            id in
+            <foreach collection="set" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="set == null or set.size == 0">
+            1=0
+        </if>
     </delete>
 </mapper>

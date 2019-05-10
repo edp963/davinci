@@ -141,6 +141,9 @@ public class Constants extends Consts {
     public static final String REG_AUTHVAR = "\\([a-zA-Z0-9_.-]{1,}\\s?\\w*[<>!=]*\\s?\\(?%s\\w+%s\\)?\\s?\\)";
 
 
+    public static final String LDAP_USER_PASSWORD = "LDAP";
+
+
     public static char getSqlTempDelimiter(String sqlTempDelimiter) {
         return sqlTempDelimiter.charAt(sqlTempDelimiter.length() - 1);
     }

@@ -20,6 +20,7 @@ package edp.davinci.service.impl;
 
 import com.alibaba.druid.util.StringUtils;
 import edp.core.enums.HttpCodeEnum;
+import edp.core.exception.ServerException;
 import edp.core.utils.*;
 import edp.davinci.core.common.Constants;
 import edp.davinci.core.common.ResultMap;
@@ -29,9 +30,11 @@ import edp.davinci.dao.RelUserOrganizationMapper;
 import edp.davinci.dao.UserMapper;
 import edp.davinci.dto.organizationDto.OrganizationInfo;
 import edp.davinci.dto.userDto.*;
+import edp.davinci.model.LdapPerson;
 import edp.davinci.model.Organization;
 import edp.davinci.model.RelUserOrganization;
 import edp.davinci.model.User;
+import edp.davinci.service.LdapService;
 import edp.davinci.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.mindrot.jbcrypt.BCrypt;
@@ -43,6 +46,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+
+import static edp.davinci.core.common.Constants.LDAP_USER_PASSWORD;
 
 
 @Slf4j
@@ -71,6 +76,10 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ServerUtils serverUtils;
 
+
+    @Autowired
+    private LdapService ldapService;
+
     /**
      * 用户是否存在
      *
@@ -95,18 +104,16 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public synchronized ResultMap regist(UserRegist userRegist) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public synchronized User regist(UserRegist userRegist) throws ServerException {
         //用户名是否已经注册
         if (isExist(userRegist.getUsername(), null, null)) {
             log.info("the username {} has been registered", userRegist.getUsername());
-            return resultMap.fail().message("the username:" + userRegist.getUsername() + " has been registered");
+            throw new ServerException("the username:" + userRegist.getUsername() + " has been registered");
         }
         //邮箱是否已经注册
         if (isExist(userRegist.getEmail(), null, null)) {
             log.info("the email:" + userRegist.getEmail() + " has been registered");
-            return resultMap.fail().message("the email:" + userRegist.getEmail() + " has been registered");
+            throw new ServerException("the email:" + userRegist.getEmail() + " has been registered");
         }
 
         User user = new User();
@@ -121,15 +128,16 @@ public class UserServiceImpl implements UserService {
             content.put("username", user.getUsername());
             content.put("host", serverUtils.getHost());
             content.put("token", AESUtils.encrypt(tokenUtils.generateContinuousToken(user), null));
+
             mailUtils.sendTemplateEmail(user.getEmail(),
                     Constants.USER_ACTIVATE_EMAIL_SUBJECT,
                     Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
                     content);
 
-            return resultMap.success(tokenUtils.generateToken(user));
+            return user;
         } else {
             log.info("regist fail: {}", userRegist.toString());
-            return resultMap.fail().message("regist fail: unspecified error");
+            throw new ServerException("regist fail: unspecified error");
         }
     }
 
@@ -151,28 +159,61 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public ResultMap userLogin(UserLogin userLogin) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public User userLogin(UserLogin userLogin) throws ServerException {
         User user = userMapper.selectByUsername(userLogin.getUsername());
+        ServerException e = null;
         if (null == user) {
             log.info("user not found: {}", userLogin.getUsername());
-            return resultMap.fail().message("user not found").payload("username or password is wrong");
+            e = new ServerException("user is not found");
         }
         //校验密码
-        if (!BCrypt.checkpw(userLogin.getPassword(), user.getPassword())) {
-            log.info("password is wrong: {}", userLogin.getUsername());
-            return resultMap.fail().message("password is wrong").payload("username or password is wrong");
-        }
-        //是否激活
-        if (!user.getActive()) {
-            log.info("this user is not active： {}", userLogin.getUsername());
-            return resultMap.failWithToken(tokenUtils.generateToken(user)).message("this user is not active");
+        if (null != user) {
+            boolean checkpw = false;
+            try {
+                checkpw = BCrypt.checkpw(userLogin.getPassword(), user.getPassword());
+            } catch (Exception e1) {
+            }
+            if (!checkpw) {
+                log.info("password is wrong: {}", userLogin.getUsername());
+                e = new ServerException("password is wrong");
+            }
         }
 
-        UserLoginResult userLoginResult = new UserLoginResult();
-        BeanUtils.copyProperties(user, userLoginResult);
-        return resultMap.success(tokenUtils.generateToken(user)).payload(userLoginResult);
+        if (null != e) {
+            if (!ldapService.existLdapServer()) {
+                throw e;
+            }
+            LdapPerson ldapPerson = ldapService.findByUsername(userLogin.getUsername(), userLogin.getPassword());
+            if (null == ldapPerson) {
+                throw new ServerException("username or password is wrong");
+            } else {
+                if (null == user) {
+                    if (userMapper.existEmail(ldapPerson.getEmail())) {
+                        throw new ServerException("password is wrong");
+                    }
+                    if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
+                        ldapPerson.setSAMAccountName(ldapPerson.getEmail());
+                    }
+                    user = ldapService.registPerson(ldapPerson);
+                } else {
+                    if (user.getPassword().equals(LDAP_USER_PASSWORD) && user.getEmail().equals(ldapPerson.getEmail())) {
+                        return user;
+                    } else if (!user.getEmail().equals(ldapPerson.getEmail())) {
+                        if (userMapper.existEmail(ldapPerson.getEmail()) || userMapper.existUsername(ldapPerson.getEmail())) {
+                            throw new ServerException("password is wrong");
+                        }
+                        if (userMapper.existUsername(ldapPerson.getSAMAccountName())) {
+                            ldapPerson.setSAMAccountName(ldapPerson.getEmail());
+                        }
+                        user = ldapService.registPerson(ldapPerson);
+                    } else {
+                        throw e;
+                    }
+                }
+            }
+        }
+
+        return user;
     }
 
     /**
@@ -181,12 +222,10 @@ public class UserServiceImpl implements UserService {
      * @param keyword
      * @param user
      * @param orgId
-     * @param request
      * @return
      */
     @Override
-    public ResultMap getUsersByKeyword(String keyword, User user, Long orgId, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public List<UserBaseInfo> getUsersByKeyword(String keyword, User user, Long orgId) {
         List<UserBaseInfo> users = userMapper.getUsersByKeyword(keyword, orgId);
 
         Iterator<UserBaseInfo> iterator = users.iterator();
@@ -196,25 +235,23 @@ public class UserServiceImpl implements UserService {
                 iterator.remove();
             }
         }
-        return resultMap.successAndRefreshToken(request).payloads(users);
+        return users;
     }
 
     /**
      * 更新用户
      *
      * @param user
-     * @param request
      * @return
      */
     @Override
     @Transactional
-    public ResultMap updateUser(User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
+    public boolean updateUser(User user) throws ServerException {
         if (userMapper.updateBaseInfo(user) > 0) {
-            return resultMap.successAndRefreshToken(request).message("update success");
+            return true;
         } else {
             log.info("update user fail, username: {}", user.getUsername());
-            return resultMap.failAndRefreshToken(request).message("update fail");
+            throw new ServerException("update fail");
         }
     }
 
@@ -303,16 +340,13 @@ public class UserServiceImpl implements UserService {
      *
      * @param email
      * @param user
-     * @param request
      * @return
      */
     @Override
-    public ResultMap sendMail(String email, User user, HttpServletRequest request) {
-        ResultMap resultMap = new ResultMap(tokenUtils);
-
+    public boolean sendMail(String email, User user) throws ServerException {
         //校验邮箱
         if (!email.equals(user.getEmail())) {
-            resultMap.failAndRefreshToken(request).message("The current email address is not match user email address");
+            throw new ServerException("The current email address is not match user email address");
         }
 
         Map content = new HashMap<String, Object>();
@@ -324,7 +358,7 @@ public class UserServiceImpl implements UserService {
                 Constants.USER_ACTIVATE_EMAIL_TEMPLATE,
                 content);
 
-        return resultMap.successAndRefreshToken(request);
+        return true;
     }
 
     /**

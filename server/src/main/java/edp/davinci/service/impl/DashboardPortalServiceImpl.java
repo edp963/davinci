@@ -31,6 +31,7 @@ import edp.davinci.dto.dashboardDto.DashboardPortalCreate;
 import edp.davinci.dto.dashboardDto.DashboardPortalUpdate;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.DashboardPortal;
 import edp.davinci.model.RelRolePortal;
 import edp.davinci.model.Role;
@@ -159,12 +160,15 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
                 List<Role> roles = roleMapper.getRolesByIds(dashboardPortalCreate.getRoleIds());
 
                 List<RelRolePortal> list = roles.stream()
-                        .map(r -> new RelRolePortal(r.getId(), dashboardPortal.getId()).createdBy(user.getId()))
+                        .map(r -> new RelRolePortal(dashboardPortal.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                relRolePortalMapper.insertBatch(list);
+                if (null != list && list.size() > 0) {
+                    relRolePortalMapper.insertBatch(list);
 
-                optLogger.info("portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    optLogger.info("portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+
             }
 
             return dashboardPortal;
@@ -212,15 +216,20 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
         if (update > 0) {
             optLogger.info("portal ({}) is update by (:{}), origin: ({})", dashboardPortal.toString(), user.getId(), origin);
             relRolePortalMapper.deleteByProtalId(dashboardPortal.getId());
-            List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
+            if (null != dashboardPortalUpdate.getRoleIds() && dashboardPortalUpdate.getRoleIds().size() > 0) {
 
-            List<RelRolePortal> list = roles.stream()
-                    .map(r -> new RelRolePortal(r.getId(), dashboardPortal.getId()).createdBy(user.getId()))
-                    .collect(Collectors.toList());
+                List<Role> roles = roleMapper.getRolesByIds(dashboardPortalUpdate.getRoleIds());
 
-            relRolePortalMapper.insertBatch(list);
+                List<RelRolePortal> list = roles.stream()
+                        .map(r -> new RelRolePortal(dashboardPortal.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
 
-            optLogger.info("update portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                if (null != list && list.size() > 0) {
+                    relRolePortalMapper.insertBatch(list);
+
+                    optLogger.info("update portal ({}) limit role ({}) access", dashboardPortal.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+            }
 
             return dashboardPortal;
         } else {
@@ -231,9 +240,32 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
 
     @Override
     public List<Long> getExcludeRoles(Long id) {
-        return relRolePortalMapper.getExecludeRoels(id);
+        return relRolePortalMapper.getExecludeRoles(id);
     }
 
+    @Override
+    @Transactional
+    public boolean postPortalVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        DashboardPortal portal = dashboardPortalMapper.getById(vizVisibility.getId());
+        if (null == portal) {
+            throw new NotFoundException("dashboard portal is not found");
+        }
+
+        projectService.getProjectDetail(portal.getProjectId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRolePortalMapper.delete(portal.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("portal ({}) can be accessed by role ({}), update by (:{})", portal, role, user.getId());
+            }
+        } else {
+            RelRolePortal relRolePortal = new RelRolePortal(portal.getId(), role.getId()).createdBy(user.getId());
+            relRolePortalMapper.insert(relRolePortal);
+            optLogger.info("portal ({}) limit role ({}) access, create by (:{})", portal, role, user.getId());
+        }
+
+        return true;
+    }
 
     /**
      * 删除DashboardPortal

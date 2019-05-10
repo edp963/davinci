@@ -35,9 +35,15 @@
     </insert>
 
     <delete id="deleteByDashboardIds" parameterType="java.util.Set">
-        delete from rel_role_dashboard where dashboard_id in
-        <foreach collection="dashboardIds" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        delete from rel_role_dashboard where
+        <if test="dashboardIds != null and dashboardIds.size > 0">
+            dashboard_id in
+            <foreach collection="dashboardIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="dashboardIds == null or dashboardIds.size == 0">
+            1=0
+        </if>
     </delete>
 </mapper>

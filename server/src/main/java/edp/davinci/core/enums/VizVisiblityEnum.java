@@ -17,25 +17,32 @@
  *
  */
 
-package edp.davinci.model;
+package edp.davinci.core.enums;
 
-import edp.davinci.common.model.RecordInfo;
-import lombok.Data;
+public enum VizVisiblityEnum {
+    PORTAL("portal"),
+    DASHBOARD("dashboard"),
+    DISPLAY("display"),
+    SLIDE("slide"),
 
-@Data
-public class RelRolePortal extends RecordInfo<RelRolePortal> {
-    private Long roleId;
 
-    private Long portalId;
+    ;
 
-    private Boolean visible = false; // 可见/不可见  true/false
+    private String viz;
 
-    public RelRolePortal(Long portalId, Long roleId) {
-        this.roleId = roleId;
-        this.portalId = portalId;
+    VizVisiblityEnum(String viz) {
+        this.viz = viz;
     }
 
-    public RelRolePortal() {
+    VizVisiblityEnum() {
     }
 
+    public static VizVisiblityEnum vizOf(String viz) {
+        for (VizVisiblityEnum visiblityEnum : VizVisiblityEnum.values()) {
+            if (viz.equals(visiblityEnum.viz)) {
+                return visiblityEnum;
+            }
+        }
+        return null;
+    }
 }

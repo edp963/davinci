@@ -152,4 +152,7 @@ public class Consts {
     public static final String HTTPS_PROTOCOL = "https";
 
     public static final String PROTOCOL_SEPARATOR = "://";
+
+
+    public static final String QUERY_COUNT_SQL = "SELECT COUNT(*) FROM (%s) CT";
 }

@@ -259,7 +259,7 @@ public class ViewServiceImpl implements ViewService {
         if (testConnection) {
 
             String originStr = viewWithSource.toString();
-            BeanUtils.copyProperties(viewWithSource, viewUpdate);
+            BeanUtils.copyProperties(viewUpdate, viewWithSource);
             viewWithSource.updatedBy(user.getId());
 
             int update = viewMapper.update(viewWithSource);
@@ -373,7 +373,7 @@ public class ViewServiceImpl implements ViewService {
                     }
                     if (null != querySqlList && querySqlList.size() > 0) {
                         for (String sql : querySqlList) {
-                            paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, executeSql.getLimit());
+                            paginateWithQueryColumns = sqlUtils.syncQuery4Paginate(sql, null, null, null, executeSql.getLimit());
                         }
                     }
                 }
@@ -453,7 +453,7 @@ public class ViewServiceImpl implements ViewService {
 
 
     /**
-     * TODO 获取结果集
+     * 获取结果集
      *
      * @param projectDetail
      * @param viewWithSource
@@ -542,6 +542,7 @@ public class ViewServiceImpl implements ViewService {
                                 sql,
                                 executeParam.getPageNo(),
                                 executeParam.getPageSize(),
+                                executeParam.getTotalCount(),
                                 executeParam.getLimit()
                         );
                     }

@@ -205,7 +205,6 @@ public class ViewController extends BaseController {
                                      @ApiIgnore @CurrentUser User user,
                                      HttpServletRequest request) {
 
-        long l = System.currentTimeMillis();
         if (bindingResult.hasErrors()) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message(bindingResult.getFieldErrors().get(0).getDefaultMessage());
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);

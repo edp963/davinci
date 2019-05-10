@@ -13,7 +13,7 @@ public class RelRoleDisplay extends RecordInfo<RelRoleDisplay> {
 
     private Boolean visible = false; // 可见/不可见  true/false
 
-    public RelRoleDisplay(Long roleId, Long displayId) {
+    public RelRoleDisplay(Long displayId, Long roleId) {
         this.roleId = roleId;
         this.displayId = displayId;
     }

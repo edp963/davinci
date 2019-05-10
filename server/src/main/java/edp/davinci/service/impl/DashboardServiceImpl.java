@@ -28,6 +28,7 @@ import edp.davinci.dao.*;
 import edp.davinci.dto.dashboardDto.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.*;
 import edp.davinci.service.DashboardService;
 import edp.davinci.service.ProjectService;
@@ -70,6 +71,9 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Autowired
     private MemDashboardWidgetMapper memDashboardWidgetMapper;
+
+    @Autowired
+    private ViewMapper viewMapper;
 
     @Autowired
     private WidgetMapper widgetMapper;
@@ -188,14 +192,19 @@ public class DashboardServiceImpl implements DashboardService {
                     iterator.remove();
                 }
             }
-        } else {
-            return null;
+        }
+
+        Set<Long> widgetIds = memDashboardWidgets.stream().map(MemDashboardWidget::getWidgetId).collect(Collectors.toSet());
+        Set<View> views = new HashSet<>();
+        if (null != widgetIds && widgetIds.size() > 0) {
+            views = viewMapper.selectByWidgetIds(widgetIds);
         }
 
 
         DashboardWithMem dashboardWithMem = new DashboardWithMem();
         BeanUtils.copyProperties(dashboard, dashboardWithMem);
         dashboardWithMem.setWidgets(memDashboardWidgets);
+        dashboardWithMem.setViews(views);
 
         return dashboardWithMem;
     }
@@ -249,8 +258,10 @@ public class DashboardServiceImpl implements DashboardService {
                         .map(r -> new RelRoleDashboard(dashboard.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                relRoleDashboardMapper.insertBatch(list);
-                optLogger.info("dashboard (:{}) limit role ({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                if (null != list && list.size() > 0) {
+                    relRoleDashboardMapper.insertBatch(list);
+                    optLogger.info("dashboard (:{}) limit role ({}) access", dashboard.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
             }
 
             return dashboard;
@@ -289,8 +300,10 @@ public class DashboardServiceImpl implements DashboardService {
         Map<Long, List<Long>> rolesMap = new HashMap<>();
 
         Set<Long> parentIds = Arrays.stream(dashboards).map(Dashboard::getParentId).filter(pId -> pId.longValue() > 0).collect(Collectors.toSet());
-
-        Map<Long, String> parentMap = dashboardMapper.getFullParentIds(parentIds);
+        Map<Long, String> parentMap = null;
+        if (null != parentIds && parentIds.size() > 0) {
+            parentMap = dashboardMapper.getFullParentIds(parentIds);
+        }
 
         String befor = dashboards.toString();
 
@@ -306,7 +319,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             dashboardDto.updatedBy(user.getId());
 
-            if (null != dashboardDto.getParentId() && dashboardDto.getParentId() > 0L) {
+            if (null != dashboardDto.getParentId() && dashboardDto.getParentId() > 0L && parentMap.containsKey(dashboardDto.getParentId())) {
                 String fullParentId = parentMap.get(dashboardDto.getParentId());
                 dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + conditionSeparator + fullParentId);
             }
@@ -320,15 +333,22 @@ public class DashboardServiceImpl implements DashboardService {
         if (i > 0) {
             optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), befor);
 
-            Set<Long> ids = rolesMap.keySet();
-            relRoleDashboardMapper.deleteByDashboardIds(ids);
+            if (null != rolesMap && rolesMap.size() > 0) {
 
-            List<RelRoleDashboard> list = new ArrayList<>();
-            rolesMap.forEach((dashboardId, roles) -> {
-                list.addAll(roles.stream().map(roleId -> new RelRoleDashboard(dashboardId, roleId)).collect(Collectors.toList()));
-            });
+                Set<Long> ids = rolesMap.keySet();
+                relRoleDashboardMapper.deleteByDashboardIds(ids);
 
-            relRoleDashboardMapper.insertBatch(list);
+                List<RelRoleDashboard> list = new ArrayList<>();
+                rolesMap.forEach((dashboardId, roles) -> {
+                    if (null != roles && roles.size() > 0) {
+                        list.addAll(roles.stream().map(roleId -> new RelRoleDashboard(dashboardId, roleId)).collect(Collectors.toList()));
+                    }
+                });
+                if (null != list && list.size() > 0) {
+                    relRoleDashboardMapper.insertBatch(list);
+                }
+            }
+
         }
     }
 
@@ -578,6 +598,30 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<Long> getExcludeRoles(Long id) {
-        return relRoleDashboardMapper.getExecludeRoels(id);
+        return relRoleDashboardMapper.getExecludeRoles(id);
+    }
+
+    @Override
+    @Transactional
+    public boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        DashboardWithPortal dashboard = dashboardMapper.getDashboardWithPortalAndProject(vizVisibility.getId());
+        if (null == dashboard) {
+            throw new NotFoundException("dashboard is not found");
+        }
+
+        projectService.getProjectDetail(dashboard.getProject().getId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRoleDashboardMapper.delete(dashboard.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("dashboard ({}) can be accessed by role ({}), update by (:{})", (Dashboard) dashboard, role, user.getId());
+            }
+        } else {
+            RelRoleDashboard relRoleDashboard = new RelRoleDashboard(dashboard.getId(), role.getId()).createdBy(user.getId());
+            relRoleDashboardMapper.insert(relRoleDashboard);
+            optLogger.info("dashboard ({}) limit role ({}) access, create by (:{})", (Dashboard) dashboard, role, user.getId());
+        }
+
+        return true;
     }
 }

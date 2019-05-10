@@ -39,7 +39,6 @@ public interface UserMapper {
     @Select({"select * from `user` where username = #{username} or email = #{username}"})
     User selectByUsername(@Param("username") String username);
 
-
     @Select({"select * from `user` where email = #{email}"})
     User selectByEmail(@Param("email") String email);
 
@@ -64,4 +63,11 @@ public interface UserMapper {
     int changePassword(User user);
 
     List<User> getByIds(@Param("userIds") List<Long> userIds);
+
+    @Select({"select count(id) from `user` where email = #{email}"})
+    boolean existEmail(@Param("email") String email);
+
+
+    @Select({"select count(id) from `user` where username = #{username}"})
+    boolean existUsername(@Param("username") String username);
 }

@@ -27,11 +27,25 @@ public interface RelRolePortalMapper {
     int deleteByProtalId(@Param("portalId") Long portalId);
 
     @Select("select role_id from rel_role_portal where portal_id = #{portalId}")
-    List<Long> getExecludeRoels(@Param("portalId") Long portalId);
+    List<Long> getExecludeRoles(@Param("portalId") Long portalId);
 
     @Select({"select count(1)",
             "from rel_role_portal rrp inner join rel_role_user rru on rru.role_id = rrp.role_id",
             "where rru.user_id = #{userId} and rrp.portal_id = #{id} and rrp.visible = 0"
     })
     boolean isDisable(@Param("id") Long id, @Param("userId") Long userId);
+
+    @Select({
+            "select rrp.portal_id",
+            "from rel_role_portal rrp",
+            "inner join dashboard_portal p on p.id = rrp.portal_id",
+            "where rrp.role_id = #{id} and rrp.visible = 0 and p.project_id = #{projectId}"
+    })
+    List<Long> getExecludePortals(@Param("id") Long id, @Param("projectId") Long projectId);
+
+    @Delete({"delete from rel_role_portal where portal_id = #{portalId and role_id = #{roleId}"})
+    int delete(@Param("portalId") Long portalId, @Param("roleId") Long roleId);
+
+    @Delete({"delete from rel_role_portal where role_id = #{roleId}"})
+    int deleteByRoleId(Long roleId);
 }

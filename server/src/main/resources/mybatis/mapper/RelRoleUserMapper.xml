@@ -54,9 +54,15 @@
     </select>
 
     <delete id="deleteByRoleIdAndMemberIds">
-        delete from rel_role_user where role_id = #{roleId} and user_id in
-        <foreach collection="userIds" item="item" index="index" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        delete from rel_role_user where role_id = #{roleId}
+        <if test="userIds != null and userIds.size > 0">
+            and user_id in
+            <foreach collection="userIds" item="item" index="index" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="userIds == null or userIds.size == 0">
+            and 1=0
+        </if>
     </delete>
 </mapper>

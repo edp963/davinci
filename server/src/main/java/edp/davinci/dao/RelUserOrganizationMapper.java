@@ -65,7 +65,12 @@ public interface RelUserOrganizationMapper {
     @Delete({"delete from rel_user_organization where id = #{id}"})
     int deleteById(@Param("id") Long id);
 
-    @Update({"update rel_user_organization set role = #{role} where id= #{id}"})
+    @Update({
+            "update rel_user_organization set role = #{role},",
+            "update_by = #{updateBy,jdbcType=BIGINT},",
+            "update_time = #{updateTime,jdbcType=TIMESTAMP}",
+            "where id= #{id}"
+    })
     int updateMemberRole(RelUserOrganization relUserOrganization);
 
     int insertBatch(@Param("set") Set<RelUserOrganization> set);

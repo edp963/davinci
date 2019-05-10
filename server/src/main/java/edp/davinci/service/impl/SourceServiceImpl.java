@@ -470,8 +470,6 @@ public class SourceServiceImpl implements SourceService {
                 log.info("user (:{}) have not permission to get source(:{}) table columns", user.getId(), source.getId());
                 tableInfoList = null;
             }
-
-            //TODO 列权限计算
         }
 
 

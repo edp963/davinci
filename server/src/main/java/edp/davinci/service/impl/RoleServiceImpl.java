@@ -25,11 +25,11 @@ import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.UserOrgRoleEnum;
 import edp.davinci.core.enums.UserPermissionEnum;
+import edp.davinci.core.enums.VizVisiblityEnum;
 import edp.davinci.dao.*;
 import edp.davinci.dto.roleDto.*;
 import edp.davinci.model.*;
-import edp.davinci.service.ProjectService;
-import edp.davinci.service.RoleService;
+import edp.davinci.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,6 +76,27 @@ public class RoleServiceImpl implements RoleService {
 
     @Autowired
     private RelRoleViewMapper relRoleViewMapper;
+
+    @Autowired
+    private RelRolePortalMapper relRolePortalMapper;
+
+    @Autowired
+    private RelRoleDashboardMapper relRoleDashboardMapper;
+
+    @Autowired
+    private RelRoleDisplayMapper relRoleDisplayMapper;
+
+    @Autowired
+    private RelRoleSlideMapper relRoleSlideMapper;
+
+    @Autowired
+    private DisplayService displayService;
+
+    @Autowired
+    private DashboardService dashboardService;
+
+    @Autowired
+    private DashboardPortalService dashboardPortalService;
 
 
     /**
@@ -154,7 +175,15 @@ public class RoleServiceImpl implements RoleService {
             //删除Role关联view
             relRoleViewMapper.deleteByRoleId(id);
 
-            //TODO 删除Role关联
+            relRoleUserMapper.deleteByRoleId(id);
+
+            relRolePortalMapper.deleteByRoleId(id);
+
+            relRoleDashboardMapper.deleteByRoleId(id);
+
+            relRoleDisplayMapper.deleteByRoleId(id);
+
+            relRoleSlideMapper.deleteByRoleId(id);
 
             return true;
         } else {
@@ -588,6 +617,54 @@ public class RoleServiceImpl implements RoleService {
         projectService.getProjectDetail(projectId, user, false);
         RoleWithProjectPermission projectPermission = relRoleProjectMapper.getPermission(projectId, roleId);
         return projectPermission;
+    }
+
+    @Override
+    public VizPermission getVizPermission(Long id, Long projectId, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        VizPermission vizPermission = new VizPermission();
+        try {
+            getRole(id, user, true);
+            projectService.getProjectDetail(projectId, user, true);
+        } catch (NotFoundException e) {
+            throw e;
+        } catch (UnAuthorizedExecption unAuthorizedExecption) {
+            return vizPermission;
+        }
+
+        vizPermission.setPortals(relRolePortalMapper.getExecludePortals(id, projectId));
+        vizPermission.setDashboards(relRoleDashboardMapper.getExecludeDashboards(id, projectId));
+        vizPermission.setDisplays(relRoleDisplayMapper.getExecludeDisplays(id, projectId));
+        vizPermission.setSlides(relRoleSlideMapper.getExecludeSlides(id, projectId));
+
+        return vizPermission;
+    }
+
+
+    @Override
+    public boolean postVizvisibility(Long id, VizVisibility vizVisibility, User user) throws ServerException, UnAuthorizedExecption, NotFoundException {
+        VizVisiblityEnum visiblityEnum = VizVisiblityEnum.vizOf(vizVisibility.getViz());
+        if (null == visiblityEnum) {
+            throw new ServerException("Invalid viz");
+        }
+
+        Role role = getRole(id, user, true);
+
+        boolean result = false;
+        switch (visiblityEnum) {
+            case PORTAL:
+                result = dashboardPortalService.postPortalVisibility(role, vizVisibility, user);
+                break;
+            case DASHBOARD:
+                result = dashboardService.postDashboardVisibility(role, vizVisibility, user);
+                break;
+            case DISPLAY:
+                result = displayService.postDisplayVisibility(role, vizVisibility, user);
+                break;
+            case SLIDE:
+                result = displayService.postSlideVisibility(role, vizVisibility, user);
+                break;
+        }
+        return result;
     }
 
     private Role getRole(Long id, User user, Boolean moidfy) throws NotFoundException, UnAuthorizedExecption {

@@ -97,7 +97,6 @@ public class RestExceptionHandler {
     @ExceptionHandler(value = SQLException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    //TODO share 与 登录请求分开处理
     private ResultMap sqlExceptionHandler(HttpServletRequest request, Exception e) {
         e.printStackTrace();
 

@@ -31,6 +31,7 @@ import edp.davinci.dao.*;
 import edp.davinci.dto.displayDto.*;
 import edp.davinci.dto.projectDto.ProjectDetail;
 import edp.davinci.dto.projectDto.ProjectPermission;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.*;
 import edp.davinci.service.DisplayService;
 import edp.davinci.service.ProjectService;
@@ -75,6 +76,9 @@ public class DisplayServiceImpl implements DisplayService {
 
     @Autowired
     private RoleMapper roleMapper;
+
+    @Autowired
+    private ViewMapper viewMapper;
 
     @Autowired
     private RelRoleDisplayMapper relRoleDisplayMapper;
@@ -129,12 +133,15 @@ public class DisplayServiceImpl implements DisplayService {
                 List<Role> roles = roleMapper.getRolesByIds(displayInfo.getRoleIds());
 
                 List<RelRoleDisplay> list = roles.stream()
-                        .map(r -> new RelRoleDisplay(r.getId(), display.getId()).createdBy(user.getId()))
+                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                relRoleDisplayMapper.insertBatch(list);
+                if (null != list && list.size() > 0) {
+                    relRoleDisplayMapper.insertBatch(list);
 
-                optLogger.info("display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    optLogger.info("display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+
             }
 
             return display;
@@ -273,15 +280,17 @@ public class DisplayServiceImpl implements DisplayService {
         if (update > 0) {
             optLogger.info("display ({}) is update by (:{}), origin: ({})", display.toString(), user.getId(), origin);
             relRoleDisplayMapper.deleteByDisplayId(display.getId());
-            List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
+            if (null != displayUpdate.getRoleIds() && displayUpdate.getRoleIds().size() > 0) {
+                List<Role> roles = roleMapper.getRolesByIds(displayUpdate.getRoleIds());
 
-            List<RelRoleDisplay> list = roles.stream()
-                    .map(r -> new RelRoleDisplay(r.getId(), display.getId()).createdBy(user.getId()))
-                    .collect(Collectors.toList());
-
-            relRoleDisplayMapper.insertBatch(list);
-
-            optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                List<RelRoleDisplay> list = roles.stream()
+                        .map(r -> new RelRoleDisplay(display.getId(), r.getId()).createdBy(user.getId()))
+                        .collect(Collectors.toList());
+                if (null != list && list.size() > 0) {
+                    relRoleDisplayMapper.insertBatch(list);
+                    optLogger.info("update display ({}) limit role ({}) access", display.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
+            }
 
             return true;
         } else {
@@ -325,12 +334,14 @@ public class DisplayServiceImpl implements DisplayService {
                 List<Role> roles = roleMapper.getRolesByIds(displaySlideCreate.getRoleIds());
 
                 List<RelRoleSlide> list = roles.stream()
-                        .map(r -> new RelRoleSlide(r.getId(), displaySlide.getId()).createdBy(user.getId()))
+                        .map(r -> new RelRoleSlide(displaySlide.getId(), r.getId()).createdBy(user.getId()))
                         .collect(Collectors.toList());
 
-                relRoleSlideMapper.insertBatch(list);
+                if (null != list && list.size() > 0) {
+                    relRoleSlideMapper.insertBatch(list);
 
-                optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                    optLogger.info("display slide ({}) limit role ({}) access", displaySlide.getId(), roles.stream().map(r -> r.getId()).collect(Collectors.toList()));
+                }
             }
 
             return displaySlide;
@@ -488,6 +499,7 @@ public class DisplayServiceImpl implements DisplayService {
         List<MemDisplaySlideWidget> list = new ArrayList<>();
         for (MemDisplaySlideWidget memDisplaySlideWidget : memDisplaySlideWidgets) {
             memDisplaySlideWidget.updatedBy(user.getId());
+            list.add(memDisplaySlideWidget);
         }
 
         int i = memDisplaySlideWidgetMapper.updateBatch(list);
@@ -678,7 +690,7 @@ public class DisplayServiceImpl implements DisplayService {
             }
         }
 
-        List<DisplaySlideInfo> displaySlideInfos = disableList.stream().map(slide -> {
+        List<DisplaySlideInfo> displaySlideInfos = displaySlides.stream().map(slide -> {
             DisplaySlideInfo displaySlideInfo = new DisplaySlideInfo();
             BeanUtils.copyProperties(slide, displaySlideInfo);
             return displaySlideInfo;
@@ -701,7 +713,7 @@ public class DisplayServiceImpl implements DisplayService {
      * @return
      */
     @Override
-    public List<MemDisplaySlideWidget> getDisplaySlideWidgetList(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+    public SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
 
         Display display = displayMapper.getById(displayId);
         if (null == display) {
@@ -740,7 +752,18 @@ public class DisplayServiceImpl implements DisplayService {
             }
         }
 
-        return widgetList;
+        Set<Long> widgetIds = widgetList.stream().map(MemDisplaySlideWidget::getWidgetId).collect(Collectors.toSet());
+        Set<View> views = new HashSet<>();
+        if (null != widgetIds && widgetIds.size() > 0) {
+            views = viewMapper.selectByWidgetIds(widgetIds);
+        }
+
+        SlideWithMem slideWithMem = new SlideWithMem();
+        BeanUtils.copyProperties(displaySlide, slideWithMem);
+        slideWithMem.setWidgets(widgetList);
+        slideWithMem.setViews(views);
+
+        return slideWithMem;
     }
 
     /**
@@ -998,6 +1021,54 @@ public class DisplayServiceImpl implements DisplayService {
     @Override
     public List<Long> getSlideExecludeRoles(Long id) {
         return relRoleSlideMapper.getById(id);
+    }
+
+    @Override
+    @Transactional
+    public boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        Display display = displayMapper.getById(vizVisibility.getId());
+        if (null == display) {
+            throw new NotFoundException("display is not found");
+        }
+
+        projectService.getProjectDetail(display.getProjectId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRoleDisplayMapper.delete(display.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("display ({}) can be accessed by role ({}), update by (:{})", display, role, user.getId());
+            }
+        } else {
+            RelRoleDisplay relRoleDisplay = new RelRoleDisplay(display.getId(), role.getId());
+            relRoleDisplayMapper.insert(relRoleDisplay);
+            optLogger.info("display ({}) limit role ({}) access, create by (:{})", display, role, user.getId());
+        }
+
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException {
+        SlideWithDisplayAndProject slide = displaySlideMapper.getSlideWithDipalyAndProjectById(vizVisibility.getId());
+        if (null == slide) {
+            throw new NotFoundException("display slide is not found");
+        }
+
+        projectService.getProjectDetail(slide.getProject().getId(), user, true);
+
+        if (vizVisibility.isVisible()) {
+            int delete = relRoleSlideMapper.delete(slide.getId(), role.getId());
+            if (delete > 0) {
+                optLogger.info("display slide ({}) can be accessed by role ({}), update by (:{})", (DisplaySlide) slide, role, user.getId());
+            }
+        } else {
+            RelRoleSlide relRoleSlide = new RelRoleSlide(slide.getId(), role.getId());
+            relRoleSlideMapper.insert(relRoleSlide);
+            optLogger.info("display slide ({}) limit role ({}) access, create by (:{})", (DisplaySlide) slide, role, user.getId());
+        }
+
+        return true;
     }
 
     @Override

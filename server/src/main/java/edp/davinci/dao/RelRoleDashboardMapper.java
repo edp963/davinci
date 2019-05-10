@@ -25,7 +25,7 @@ public interface RelRoleDashboardMapper {
 
 
     @Select("select role_id from rel_role_dashboard where dashboard_id = #{id}")
-    List<Long> getExecludeRoels(@Param("id") Long id);
+    List<Long> getExecludeRoles(@Param("id") Long id);
 
     int deleteByDashboardIds(@Param("dashboardIds") Set<Long> dashboardIds);
 
@@ -40,4 +40,19 @@ public interface RelRoleDashboardMapper {
             "delete from rel_role_dashboard where dashboard_id in (select id from dashboard where id = #{id} or find_in_set(#{id}, full_parent_Id) > 0)"
     })
     int deleteByDashboardId(Long id);
+
+    @Select({
+            "select rrd.dashboard_id",
+            "from rel_role_dashboard rrd",
+            "inner join dashboard d on d.id = rrd.dashboard_id",
+            "INNER JOIN dashboard_portal p on p.id = d.dashboard_portal_id",
+            "where rrd.role_id = #{id} and rrd.visible = 0 and p.project_id = #{projectId}"
+    })
+    List<Long> getExecludeDashboards(@Param("id") Long id, @Param("projectId") Long projectId);
+
+    @Delete({"delete from rel_role_dashboard where dashboard_id = #{dashboardId} and role_id = #{roleId}"})
+    int delete(@Param("dashboardId") Long dashboardId, @Param("roleId") Long roleId);
+
+    @Delete({"delete from rel_role_dashboard where role_id = #{roleId}"})
+    int deleteByRoleId(Long roleId);
 }

@@ -23,10 +23,8 @@ import edp.core.exception.ServerException;
 import edp.core.exception.UnAuthorizedExecption;
 import edp.davinci.core.service.CheckEntityService;
 import edp.davinci.dto.displayDto.*;
-import edp.davinci.model.Display;
-import edp.davinci.model.DisplaySlide;
-import edp.davinci.model.MemDisplaySlideWidget;
-import edp.davinci.model.User;
+import edp.davinci.dto.roleDto.VizVisibility;
+import edp.davinci.model.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -37,7 +35,7 @@ public interface DisplayService extends CheckEntityService {
 
     DisplayWithSlides getDisplaySlideList(Long displayId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
-    List<MemDisplaySlideWidget> getDisplaySlideWidgetList(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+    SlideWithMem getDisplaySlideMem(Long displayId, Long slideId, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
     Display createDisplay(DisplayInfo displayInfo, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 
@@ -74,4 +72,8 @@ public interface DisplayService extends CheckEntityService {
     List<Long> getDisplayExcludeRoles(Long id);
 
     List<Long> getSlideExecludeRoles(Long id);
+
+    boolean postDisplayVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
+
+    boolean postSlideVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;
 }

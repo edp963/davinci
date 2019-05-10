@@ -84,10 +84,16 @@
 
 
     <select id="getByIds" resultType="edp.davinci.model.Widget" parameterType="java.util.Set">
-        select * from widget where id in
-        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        select * from widget where
+        <if test="list != null and list.size > 0">
+            id in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="list == null or list.size == 0">
+            1=0
+        </if>
     </select>
 
 

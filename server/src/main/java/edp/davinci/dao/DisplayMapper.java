@@ -50,7 +50,7 @@ public interface DisplayMapper {
             "description = #{description,jdbcType=VARCHAR},",
             "project_id = #{projectId,jdbcType=BIGINT},",
             "avatar = #{avatar,jdbcType=VARCHAR},",
-            "publish = #{publish,jdbcType=BIT}",
+            "publish = #{publish,jdbcType=BIT},",
             "update_by = #{updateBy,jdbcType=BIGINT},",
             "update_time = #{updateTime,jdbcType=TIMESTAMP}",
             "where id = #{id,jdbcType=BIGINT}"

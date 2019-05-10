@@ -85,10 +85,16 @@
     </select>
 
     <select id="getByIds" resultType="edp.davinci.model.User">
-        select * from `user` where id in
-        <foreach collection="userIds" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        select * from `user` where
+        <if test="userIds != null and userIds.size > 0">
+            id in
+            <foreach collection="userIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="userIds == null or userIds.size == 0">
+            1=0
+        </if>
     </select>
 
 </mapper>

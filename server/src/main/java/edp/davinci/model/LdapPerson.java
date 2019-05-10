@@ -33,12 +33,6 @@ public class LdapPerson {
      */
     private String sAMAccountName;
 
-
-    /**
-     * 机构信息
-     */
-    private String dept;
-
     /**
      * 邮箱
      */

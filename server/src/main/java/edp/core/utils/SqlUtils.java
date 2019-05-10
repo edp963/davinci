@@ -31,12 +31,6 @@ import edp.core.model.*;
 import edp.davinci.core.enums.LogNameEnum;
 import edp.davinci.core.enums.SqlColumnEnum;
 import lombok.extern.slf4j.Slf4j;
-import net.sf.jsqlparser.JSQLParserException;
-import net.sf.jsqlparser.parser.CCJSqlParserManager;
-import net.sf.jsqlparser.schema.Column;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectExpressionItem;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +47,6 @@ import org.springframework.jdbc.support.rowset.SqlRowSetMetaData;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
@@ -67,17 +60,16 @@ import static edp.core.consts.Consts.space;
 @Component
 @Scope("prototype")
 public class SqlUtils {
-
     private static final Logger sqlLogger = LoggerFactory.getLogger(LogNameEnum.BUSINESS_SQL.getName());
 
     @Autowired
     private JdbcDataSource jdbcDataSource;
 
-    @Value("${source.enable-query-log:false}")
-    private boolean isQueryLogEnable;
-
     @Value("${source.result-limit:1000000}")
     private int resultLimit;
+
+    @Value("${source.enable-query-log:false}")
+    private boolean isQueryLogEnable;
 
     private String jdbcUrl;
 
@@ -94,6 +86,7 @@ public class SqlUtils {
         sqlUtils.username = source.getUsername();
         sqlUtils.password = source.getPassword();
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+        sqlUtils.resultLimit = this.resultLimit;
         sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());
         return sqlUtils;
     }
@@ -105,6 +98,7 @@ public class SqlUtils {
         sqlUtils.username = username;
         sqlUtils.password = password;
         sqlUtils.isQueryLogEnable = this.isQueryLogEnable;
+        sqlUtils.resultLimit = this.resultLimit;
         sqlUtils.dataTypeEnum = DataTypeEnum.urlOf(jdbcUrl);
         return sqlUtils;
     }
@@ -146,7 +140,7 @@ public class SqlUtils {
     }
 
     @CachePut(value = "query", keyGenerator = "keyGenerator")
-    public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int limit) throws Exception {
+    public PaginateWithQueryColumns query4Paginate(String sql, int pageNo, int pageSize, int totalCount, int limit) throws Exception {
         PaginateWithQueryColumns paginateWithQueryColumns = new PaginateWithQueryColumns();
         sql = filterAnnotate(sql);
         checkSensitiveSql(sql);
@@ -160,11 +154,14 @@ public class SqlUtils {
         }
 
         JdbcTemplate jdbcTemplate = jdbcTemplate();
+        jdbcTemplate.setMaxRows(resultLimit);
 
         if (pageNo < 1 && pageSize < 1) {
+
             if (limit > 0) {
-                jdbcTemplate.setMaxRows(limit > resultLimit ? resultLimit : limit);
+                resultLimit = limit > resultLimit ? resultLimit : limit;
             }
+            jdbcTemplate.setMaxRows(resultLimit);
             getResultForPaginate(sql, paginateWithQueryColumns, jdbcTemplate);
             paginateWithQueryColumns.setPageNo(1);
             int size = paginateWithQueryColumns.getResultList().size();
@@ -176,17 +173,16 @@ public class SqlUtils {
 
             final int startRow = (pageNo - 1) * pageSize;
 
-            int total = 0;
-            if (pageNo == 1) {
-                String countSql = getCountSql(sql);
-                total = jdbcTemplate.queryForObject(countSql, Integer.class);
+            if (pageNo == 1 || totalCount == 0) {
+                String countSql = String.format(Consts.QUERY_COUNT_SQL, sql);
+                totalCount = jdbcTemplate.queryForObject(countSql, Integer.class);
             }
             if (limit > 0) {
                 limit = limit > resultLimit ? resultLimit : limit;
-                total = limit < total ? limit : total;
+                totalCount = limit < totalCount ? limit : totalCount;
             }
 
-            paginateWithQueryColumns.setTotalCount(total);
+            paginateWithQueryColumns.setTotalCount(totalCount);
             int maxRows = limit > 0 && limit < pageSize * pageNo ? limit : pageSize * pageNo;
 
             switch (this.dataTypeEnum) {
@@ -266,19 +262,22 @@ public class SqlUtils {
 
 
     @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer limit) throws Exception {
+    public PaginateWithQueryColumns syncQuery4Paginate(String sql, Integer pageNo, Integer pageSize, Integer totalCount, Integer limit) throws Exception {
         if (null == pageNo) {
             pageNo = -1;
         }
         if (null == pageSize) {
             pageSize = -1;
         }
+        if (null == totalCount) {
+            totalCount = 0;
+        }
 
         if (null == limit) {
             limit = -1;
         }
 
-        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, limit);
+        PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit);
         return paginate;
     }
 
@@ -809,26 +808,6 @@ public class SqlUtils {
             } else {
                 return type;
             }
-        }
-        return null;
-    }
-
-    private String getCountSql(String sql) {
-        try {
-            CCJSqlParserManager parserManager = new CCJSqlParserManager();
-            net.sf.jsqlparser.statement.Statement parse = parserManager.parse(new StringReader(sql));
-
-            if (parse instanceof Select) {
-                Select select = (Select) parse;
-                PlainSelect selectBody = (PlainSelect) select.getSelectBody();
-                SelectExpressionItem selectExpressionItem = new SelectExpressionItem();
-                selectExpressionItem.setExpression(new Column("count(*)"));
-
-                selectBody.setSelectItems(Arrays.asList(selectExpressionItem));
-                return select.toString();
-            }
-        } catch (JSQLParserException e) {
-            return null;
         }
         return null;
     }

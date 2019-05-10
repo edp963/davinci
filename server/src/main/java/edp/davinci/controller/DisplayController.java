@@ -451,11 +451,11 @@ public class DisplayController extends BaseController {
      * @return
      */
     @ApiOperation(value = "get display slide widgets")
-    @GetMapping("/{displayId}/slides/{slideId}/widgets")
-    public ResponseEntity getDisplaySlideWeight(@PathVariable("displayId") Long displayId,
-                                                @PathVariable("slideId") Long slideId,
-                                                @ApiIgnore @CurrentUser User user,
-                                                HttpServletRequest request) {
+    @GetMapping("/{displayId}/slides/{slideId}")
+    public ResponseEntity getDisplaySlideWidgets(@PathVariable("displayId") Long displayId,
+                                                 @PathVariable("slideId") Long slideId,
+                                                 @ApiIgnore @CurrentUser User user,
+                                                 HttpServletRequest request) {
 
         if (invalidId(displayId)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid Display id");
@@ -467,8 +467,8 @@ public class DisplayController extends BaseController {
             return ResponseEntity.status(resultMap.getCode()).body(resultMap);
         }
 
-        List<MemDisplaySlideWidget> displaySlideWidgetList = displayService.getDisplaySlideWidgetList(displayId, slideId, user);
-        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payloads(displaySlideWidgetList));
+        SlideWithMem displaySlideMem = displayService.getDisplaySlideMem(displayId, slideId, user);
+        return ResponseEntity.ok(new ResultMap(tokenUtils).successAndRefreshToken(request).payload(displaySlideMem));
     }
 
 

@@ -23,16 +23,28 @@
     </insert>
 
     <select id="selectByIdsAndOrgId" resultType="edp.davinci.model.Role">
-        select * from role where org_id = #{orgId} and id in
-        <foreach collection="roleIds" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        select * from role where org_id = #{orgId}
+        <if test="roleIds != null and roleIds.size > 0">
+            and id in
+            <foreach collection="roleIds" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="roleIds == null or roleIds.size == 0">
+            1=0
+        </if>
     </select>
 
     <select id="getRolesByIds" resultType="edp.davinci.model.Role">
-        select * from role where id in
-        <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        select * from role where
+        <if test="list != null and list.size > 0">
+            id in
+            <foreach collection="list" index="index" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="list == null or list.size == 0">
+            1=0
+        </if>
     </select>
 </mapper>

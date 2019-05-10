@@ -26,8 +26,10 @@ import edp.davinci.dto.dashboardDto.DashboardCreate;
 import edp.davinci.dto.dashboardDto.DashboardDto;
 import edp.davinci.dto.dashboardDto.DashboardWithMem;
 import edp.davinci.dto.dashboardDto.MemDashboardWidgetCreate;
+import edp.davinci.dto.roleDto.VizVisibility;
 import edp.davinci.model.Dashboard;
 import edp.davinci.model.MemDashboardWidget;
+import edp.davinci.model.Role;
 import edp.davinci.model.User;
 
 import java.util.List;
@@ -55,4 +57,6 @@ public interface DashboardService extends CheckEntityService {
     void deleteDashboardAndPortalByProject(Long projectId) throws RuntimeException;
 
     List<Long> getExcludeRoles(Long id);
+
+    boolean postDashboardVisibility(Role role, VizVisibility vizVisibility, User user) throws NotFoundException, UnAuthorizedExecption, ServerException;;
 }
