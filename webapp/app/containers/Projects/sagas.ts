@@ -36,8 +36,18 @@ import {
   ADD_PROJECT_ROLE,
   LOAD_RELATION_ROLE_PROJECT,
   UPDATE_RELATION_ROLE_PROJECT,
-  DELETE_RELATION_ROLE_PROJECT
+  DELETE_RELATION_ROLE_PROJECT,
+  EXCLUDE_ROLES
 } from './constants'
+
+import {
+  LOAD_PROJECT_ROLES
+} from '../Organizations/constants'
+
+import {
+  projectRolesLoaded,
+  loadProjectRolesFail
+} from '../Organizations/actions'
 
 import {
   projectsLoaded,
@@ -67,12 +77,15 @@ import {
   loadRelRoleProjectFail,
   updateRelRoleProjectFail,
   relRoleProjectDeleted,
-  deleteRelRoleProjectFail
+  deleteRelRoleProjectFail,
+  rolesExcluded,
+  excludeRolesFail
 } from './actions'
 
 import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
+import { dashboardAdded } from '../Dashboard/actions';
 
 export function* getProjects (action) {
   try {
@@ -345,6 +358,31 @@ export function* deleteRelRoleProject (action) {
   }
 }
 
+export function* getProjectRoles ({payload}) {
+  const { projectId } = payload
+  try {
+    const asyncData = yield call(request, `${api.projects}/${projectId}/roles`)
+    const results = asyncData.payload
+    yield put(projectRolesLoaded(results))
+  } catch (err) {
+    yield put(loadProjectRolesFail())
+    errorHandler(err)
+  }
+}
+
+export function* excludeRole ({payload}) {
+  const { id, type, resolve } = payload
+  const host = type === 'dashboard' ? `${api.portal}/dashboard` : `${api.display}`
+  try {
+    const asyncData = yield call(request, `${host}/${id}/exclude/roles`)
+    const results = asyncData.payload
+    yield put(rolesExcluded(results))
+    resolve(results)
+  } catch (err) {
+    yield put(excludeRolesFail(err))
+  }
+}
+
 export default function* rootProjectSaga (): IterableIterator<any> {
   yield all([
     takeLatest(LOAD_PROJECTS, getProjects as any),
@@ -363,6 +401,8 @@ export default function* rootProjectSaga (): IterableIterator<any> {
     takeEvery(DELETE_PROJECT_ADMIN, deleteProjectAdmin as any),
     takeEvery(LOAD_RELATION_ROLE_PROJECT, loadRelRoleProject as any),
     takeEvery(UPDATE_RELATION_ROLE_PROJECT, updateRelRoleProject as any),
-    takeEvery(DELETE_RELATION_ROLE_PROJECT, deleteRelRoleProject as any)
+    takeEvery(DELETE_RELATION_ROLE_PROJECT, deleteRelRoleProject as any),
+    takeEvery(LOAD_PROJECT_ROLES, getProjectRoles as any),
+    takeEvery(EXCLUDE_ROLES, excludeRole as any)
   ])
 }

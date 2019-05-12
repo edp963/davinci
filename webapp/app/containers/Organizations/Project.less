@@ -577,6 +577,36 @@
   .save {
     margin-top: 16px;
   }
+  .Zone{
+    .title {
+      font-weight: 500;
+      font-size: 14px;
+      margin: 24px auto 16px auto;
+    }
+    .titleDesc {
+      width: 210px;
+      padding: 16px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      display: inline-block;
+      .button {
+        font-weight: 600;
+        font-size: 18px;
+        color: @rich-text;
+      }
+      .desc{
+        .label {
+          display: inline-block;
+          min-width: 58px;
+          padding: 0 4px;
+          border-radius: 2px;
+          font-weight: 300px;  
+        }
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+    }
+  }
   .dangerZone{
     .title {
       font-weight: 500;
@@ -604,6 +634,13 @@
   :global(.ant-form-item) {
     margin-bottom: 4px;
   }
+}
+.crimson {
+  color :crimson;
+}
+
+.crimsonBorder {
+  border: 1px solid crimson;
 }
 
 .role {

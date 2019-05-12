@@ -33,6 +33,7 @@ import { loadSidebar } from './actions'
 import { makeSelectLoginUser } from '../App/selectors'
 import { showNavigator } from '../App/actions'
 import { loadProjectDetail, killProjectDetail } from '../Projects/actions'
+import { loadProjectRoles } from '../Organizations/actions'
 import reducer from '../Projects/reducer'
 import injectReducer from 'utils/injectReducer'
 import saga from '../Projects/sagas'
@@ -52,8 +53,9 @@ interface IReportProps {
   currentProject: IProject
   onPageLoad: () => any
   onShowNavigator: () => any
-  onLoadProjectDetail: (id) => any
+  onLoadProjectDetail: (id: number) => any
   onKillProjectDetail: () => any
+  onLoadProjectRoles: (id: number) => any
 }
 
 interface IsidebarDetail {
@@ -70,6 +72,7 @@ export class Report extends React.Component<IReportProps, {}> {
     this.props.onShowNavigator()
     if (pid) {
       this.props.onLoadProjectDetail(pid)
+      this.props.onLoadProjectRoles(pid)
     }
   }
   public componentWillReceiveProps (nextProps) {
@@ -157,7 +160,8 @@ export function mapDispatchToProps (dispatch) {
     },
     onLoadProjectDetail: (id) => dispatch(loadProjectDetail(id)),
     onShowNavigator: () => dispatch(showNavigator()),
-    onKillProjectDetail: () => dispatch(killProjectDetail())
+    onKillProjectDetail: () => dispatch(killProjectDetail()),
+    onLoadProjectRoles: (id) => dispatch(loadProjectRoles(id))
   }
 }
 

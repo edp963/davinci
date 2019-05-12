@@ -109,6 +109,7 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
     this.props.onLoadWidgets(pid)
     this.props.onLoadVizs(pid)
     this.props.onLoadDashboards().then(() => {
+      console.log('then')
       const {dashboards} = this.props
       const initDashboardTree = (dashboards as any[]).map((dashboard) => ({
         ...dashboard,
@@ -485,7 +486,6 @@ export class Schedule extends React.Component<IScheduleProps, IScheduleStates> {
       formLoading,
       vizs
     } = this.props
-
     const pagination: PaginationProps = {
      // simple: screenWidth < 768 || screenWidth === 768,
       defaultPageSize: 20,

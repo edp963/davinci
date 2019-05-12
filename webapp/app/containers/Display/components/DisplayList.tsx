@@ -31,6 +31,7 @@ interface IDisplayListProps extends IDisplayEvent {
   displays: IDisplay[],
   currentProject?: IProject
   onCheckName: (type, data, resolve, reject) => void
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
 
 interface IDisplayListStates {
@@ -84,6 +85,12 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       formType,
       formVisible: true
     })
+    const { onExcludeRoles } = this.props
+    if (onExcludeRoles && display) {
+      onExcludeRoles('display', display.id, (result) => {
+        console.log(result)
+      })
+    }
   }
 
   private hideDisplayFormModal = () => {

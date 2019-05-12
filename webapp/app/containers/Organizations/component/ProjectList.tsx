@@ -11,7 +11,7 @@ import * as Organization from '../Organization'
 import ComponentPermission from '../../Account/components/checkMemberPermission'
 import { CREATE_ORGANIZATION_PROJECT } from '../../App/constants'
 import { checkNameUniqueAction } from '../../App/actions'
-import { IStarUser, IProject } from '../containers/Projects'
+import { IStarUser, IProject } from '../../Projects'
 import { createStructuredSelector } from 'reselect'
 import {
   loadOrganizationProjects,
@@ -28,6 +28,7 @@ import {
   makeSelectCurrentOrganizationMembers,
   makeSelectInviteMemberList
 } from '../selectors'
+import { makeSelectVizs } from '../../Schedule/selectors'
 import {
   addProject,
   editProject,
@@ -40,12 +41,17 @@ import {
   addProjectAdmin,
   deleteProjectAdmin
 } from '../../Projects/actions'
+import injectReducer from '../../../utils/injectReducer'
+import injectSaga from '../../../utils/injectSaga'
+import scheduleReducer from '../../Schedule/reducer'
+import scheduleSaga from '../../Schedule/sagas'
+import { loadVizs } from '../../Schedule/actions'
+import { loadDashboardDetail, loadDashboards } from '../../Dashboard/actions'
 import { makeSelectLoginUser } from '../../App/selectors'
 const styles = require('../Organization.less')
 import { makeSelectStarUserList, makeSelectCollectProjects } from '../../Projects/selectors'
 
 interface IProjectsState {
- 
   formType?: string
   formVisible: boolean
   modalLoading: boolean
@@ -83,6 +89,8 @@ interface IProjectsProps {
   onGetProjectStarUser: (id: number) => any
   currentOrganizationProjects: Organization.IOrganizationProjects[]
   organizationMembers: any[]
+  onLoadVizs: (pid: number) => any
+  vizs: any
 }
 
 export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsState> {
@@ -120,10 +128,12 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     const {
       onLoadOrganizationProjects,
       onLoadCollectProjects,
-      organizationId
+      organizationId,
+      onLoadVizs
     } = this.props
     onLoadOrganizationProjects({id: Number(organizationId)})
     onLoadCollectProjects()
+    onLoadVizs(Number(organizationId))
   }
 
   private showEditProjectForm = (formType, option) => (e) => {
@@ -208,10 +218,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
       }, (err) => {
         callback(err)
       })
-  }
-
-  private add = () => {
-    console.log('add')
   }
 
 
@@ -299,6 +305,20 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
     }
   }
 
+  private tabsChange = (mode) => {
+    if (mode === 'basic') {
+      const {orgId, id, name, pic, description, visibility} = this.state.currentProject
+      this.ProjectEditForm.props.form.setFieldsValue({
+        orgId: `${orgId}`,
+        id,
+        name,
+        pic,
+        description,
+        visibility: `${visibility}`
+      })
+    }
+  }
+
   private getStarProjectUserList = (id) => () => {
     const { onGetProjectStarUser } = this.props
     onGetProjectStarUser(id)
@@ -306,7 +326,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
   public render () {
     const { formVisible, formType, modalLoading, organizationProjects, editFormVisible, currentProject, adminFormVisible } = this.state
-    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList } = this.props
+    const { currentOrganization, organizationProjectsDetail, onCheckUniqueName, collectProjects, starUserList, vizs } = this.props
     let CreateButton = void 0
     if (currentOrganization) {
        CreateButton = ComponentPermission(currentOrganization, CREATE_ORGANIZATION_PROJECT)(Button)
@@ -347,7 +367,6 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         loginUser={this.props.loginUser}
         options={lists}
         toProject={this.props.toProject}
-        deleteProject={this.deleteProject}
         showEditProjectForm={this.showEditProjectForm('edit', lists)}
         onClickCollectProjects={this.props.onClickCollectProjects}
         onLoadCollectProjects={this.props.onLoadCollectProjects}
@@ -403,13 +422,13 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
         >
           <ProjectEditForm
             type={formType}
+            onTabsChange={this.tabsChange}
             modalLoading={modalLoading}
             onModalOk={this.onModalOk}
-            deleteProject={this.props.deleteProject}
+            deleteProject={this.deleteProject}
             currentProject={currentProject}
             onCancel={this.hideProjectForm}
             onCheckUniqueName={this.checkUniqueName}
-            onDeleteAdmin={this.deleteAdmin}
             showEditProjectForm={this.showProjectForm('transfer')}
             wrappedComponentRef={this.refHandlers.ProjectEditForm}
           />
@@ -421,6 +440,7 @@ export class ProjectList extends React.PureComponent<IProjectsProps, IProjectsSt
 
 
 const mapStateToProps = createStructuredSelector({
+  vizs: makeSelectVizs(),
   starUserList: makeSelectStarUserList(),
   loginUser: makeSelectLoginUser(),
   organizations: makeSelectOrganizations(),
@@ -433,6 +453,7 @@ const mapStateToProps = createStructuredSelector({
 
 export function mapDispatchToProps (dispatch) {
   return {
+    onLoadVizs: (pid) => dispatch(loadVizs(pid)),
     onSetCurrentProject: (option) => dispatch(setCurrentProject(option)),
     onStarProject: (id, resolve) => dispatch(unStarProject(id, resolve)),
     onGetProjectStarUser: (id) => dispatch(getProjectStarUser(id)),
@@ -448,7 +469,12 @@ export function mapDispatchToProps (dispatch) {
   }
 }
 
-const withConnect = connect(mapStateToProps, mapDispatchToProps)
-export default compose(withConnect)(ProjectList)
+const withConnect = connect<{}, {}, IProjectsProps>(mapStateToProps, mapDispatchToProps)
+
+const withReducerSchedule = injectReducer({ key: 'schedule', reducer: scheduleReducer })
+const withSagaSchedule = injectSaga({ key: 'schedule', saga: scheduleSaga })
+
+ // const withConnect = connect(mapStateToProps, mapDispatchToProps)
+export default compose(withReducerSchedule, withSagaSchedule,  withConnect)(ProjectList)
 
 
