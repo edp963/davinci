@@ -1,6 +1,8 @@
 import React from 'react'
 import classnames from 'classnames'
-
+import { createStructuredSelector } from 'reselect'
+import { compose } from 'redux'
+import { connect } from 'react-redux'
 import { Icon, Col, Button, Tooltip, Popconfirm, Modal, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
 import AntdFormType from 'antd/lib/form/Form'
@@ -10,22 +12,31 @@ import PortalForm from './PortalForm'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
 import { IPortal } from '../../Portal'
-
+import { makeSelectProjectRoles } from '../../Projects/selectors'
+import {IProjectRoles} from '../../Organizations/component/ProjectRole'
+import { roleAdded } from 'app/containers/Organizations/actions';
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]
+  projectRoles: IProjectRoles[]
   currentProject: IProject
   onPortalClick: (portal: any) => () => void
   onAdd: (portal, resolve) => void
   onEdit: (portal, resolve) => void
   onDelete: (portalId: number) => void
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+}
+
+export interface IExludeRoles extends IProjectRoles {
+  permission?: boolean
 }
 
 interface IPortalListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
+  exludeRoles: IExludeRoles[]
 }
 
 export class PortalList extends React.Component<IPortalListProps, IPortalListStates> {
@@ -40,7 +51,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     this.state = {
       modalLoading: false,
       formType: 'add',
-      formVisible: false
+      formVisible: false,
+      exludeRoles: []
     }
   }
 
@@ -51,6 +63,19 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent) => {
     func.apply(this, args)
     e.stopPropagation()
+  }
+
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps && nextProps.projectRoles) {
+      this.setState({
+        exludeRoles: nextProps.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
+      })
+    }
   }
 
   private hidePortalForm = () => {
@@ -105,6 +130,36 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           this.portalForm.props.form.setFieldsValue(portal)
         }
       }, 0)
+      const { onExcludeRoles, projectRoles } = this.props
+      if (onExcludeRoles && portal) {
+        onExcludeRoles('dashboard', portal.id, (result) => {
+          console.log(result)
+          this.setState({
+            exludeRoles: projectRoles.map((role) => {
+              return {
+                ...role,
+                permission: true
+              }
+            })
+          })
+        })
+      } else {
+        this.setState({
+          exludeRoles: this.state.exludeRoles.map((role) => {
+            return {
+              ...role,
+              permission: false
+            }
+          })
+        })
+      }
+    })
+  }
+
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
     })
   }
 
@@ -180,6 +235,12 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     )
   }
 
+  private initCheckNodes = (checkedKeys) => {
+    // this.setState({
+    //   checkedKeys
+    // })
+  }
+
   public render () {
     const {
       projectId,
@@ -244,6 +305,9 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           <PortalForm
             onCheckUniqueName={onCheckUniqueName}
             projectId={projectId}
+            initCheckNodes={this.initCheckNodes}
+            exludeRoles={this.state.exludeRoles}
+            onChangePermission={this.changePermission}
             type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
           />
@@ -253,4 +317,14 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 }
 
-export default PortalList
+const mapStateToProps = createStructuredSelector({
+  projectRoles: makeSelectProjectRoles()
+})
+
+const withConnect = connect(mapStateToProps, null)
+
+
+export default compose(
+  withConnect
+)(PortalList)
+

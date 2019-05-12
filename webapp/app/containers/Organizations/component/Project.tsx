@@ -45,7 +45,7 @@ interface IProjectsFormProps {
   showEditProjectForm: () => any
   showAdminProjectForm: () => any
   onCheckUniqueName: (pathname: any, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onDeleteAdmin: (options: any) => any
+  onTabsChange: (mode: string) => any
 }
 
 interface IProjectsFormStates {
@@ -73,6 +73,11 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
   private checkout = ({item, key, keyPath}) => {
     this.setState({
       mode: key
+    }, () => {
+      const { onTabsChange } = this.props
+      if (onTabsChange) {
+        onTabsChange(this.state.mode)
+      }
     })
   }
 
@@ -254,21 +259,20 @@ export class ProjectsForm extends React.PureComponent<IProjectsFormProps, IProje
                 </Col>
             </Row>
         </div>
-        <div className={styles.owner}>
-            <Row>
-                <Col span={20}>
-                    <div className={styles.title}>
-                        项目归属
-                    </div>
-                    <p className={styles.desc}>{createBy.username}</p>
-                </Col>
-                <Col span={4}>
-                    <p className={styles.button}>
-                        <Button onClick={this.props.showEditProjectForm}>移交项目</Button>
-                    </p>
-                </Col>
-            </Row>
-        </div>
+        <Row className={styles.Zone}>
+            <div className={styles.title}>
+              移交项目
+            </div>
+            <div className={styles.titleDesc}>
+              <p className={styles.desc}> <span className={styles.label}>项目归属</span> <b>{name}</b></p>
+              <p className={styles.desc}><span className={styles.label}>创建人</span>  <b>{createBy.username}</b></p>
+              <p className={styles.button}>
+                <Tooltip title="移交">
+                  <Button type="default" onClick={this.props.showEditProjectForm}>移交 {name}</Button>
+                </Tooltip>
+              </p>
+            </div>
+        </Row>
         <Row className={styles.dangerZone}>
             <div className={styles.title}>
               删除项目

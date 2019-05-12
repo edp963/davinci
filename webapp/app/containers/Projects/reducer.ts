@@ -42,6 +42,7 @@ import {
   UPDATE_RELATION_ROLE_PROJECT_SUCCESS
 } from './constants'
 
+import { LOAD_PROJECT_ROLES_SUCCESS } from '../Organizations/constants'
 
 const initialState = fromJS({
   projects: null,
@@ -50,7 +51,8 @@ const initialState = fromJS({
   searchProject: false,
   starUserList: false,
   collectProjects: null,
-  currentProjectRole: false
+  currentProjectRole: false,
+  projectRoles: false
 })
 
 function projectReducer (state = initialState, action) {
@@ -120,6 +122,8 @@ function projectReducer (state = initialState, action) {
         collectProjects.push(payload.result.project)
         return state.set('collectProjects', collectProjects.slice())
       }
+    case LOAD_PROJECT_ROLES_SUCCESS:
+      return state.set('projectRoles', payload.result)
     default:
       return state
   }

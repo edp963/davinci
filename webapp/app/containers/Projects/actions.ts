@@ -73,7 +73,10 @@ import {
   LOAD_RELATION_ROLE_PROJECT_FAIL,
   DELETE_RELATION_ROLE_PROJECT,
   DELETE_RELATION_ROLE_PROJECT_FAIL,
-  DELETE_RELATION_ROLE_PROJECT_SUCCESS
+  DELETE_RELATION_ROLE_PROJECT_SUCCESS,
+  EXCLUDE_ROLES,
+  EXCLUDE_ROLES_SUCCESS,
+  EXCLUDE_ROLES_FAIL
 } from './constants'
 
 
@@ -522,6 +525,35 @@ export function loadRelRoleProjectFail () {
     type: LOAD_RELATION_ROLE_PROJECT_FAIL
   }
 }
+
+
+export function excludeRoles (type, id, resolve) {
+  return {
+    type: EXCLUDE_ROLES,
+    payload: {type, id, resolve}
+  }
+}
+
+export function rolesExcluded (result) {
+  return {
+    type: EXCLUDE_ROLES_SUCCESS,
+    payload: {
+      result
+    }
+  }
+
+}
+
+export function excludeRolesFail (err) {
+  return {
+    type: EXCLUDE_ROLES_FAIL,
+    payload: {
+      err
+    }
+  }
+}
+
+
 
 
 

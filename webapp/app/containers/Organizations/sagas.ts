@@ -37,8 +37,8 @@ import {
   DELETE_ORGANIZATION_MEMBER,
   CHANGE_MEMBER_ROLE_ORGANIZATION,
   GET_REL_ROLE_MEMBER,
-  LOAD_PROJECT_ADMINS,
-  LOAD_PROJECT_ROLES
+  LOAD_PROJECT_ADMINS
+  // LOAD_PROJECT_ROLES
 } from './constants'
 
 import {
@@ -77,8 +77,8 @@ import {
   getRelRoleMemberFail,
   projectAdminLoaded,
   loadProjectAdminFail,
-  projectRolesLoaded,
-  loadProjectRolesFail
+  // projectRolesLoaded,
+  // loadProjectRolesFail
 } from './actions'
 
 import { message } from 'antd'
@@ -363,17 +363,17 @@ export function* getProjectAdmins ({payload}) {
   }
 }
 
-export function* getProjectRoles ({payload}) {
-  const { projectId } = payload
-  try {
-    const asyncData = yield call(request, `${api.projects}/${projectId}/roles`)
-    const results = asyncData.payload
-    yield put(projectRolesLoaded(results))
-  } catch (err) {
-    yield put(loadProjectRolesFail())
-    errorHandler(err)
-  }
-}
+// export function* getProjectRoles ({payload}) {
+//   const { projectId } = payload
+//   try {
+//     const asyncData = yield call(request, `${api.projects}/${projectId}/roles`)
+//     const results = asyncData.payload
+//     yield put(projectRolesLoaded(results))
+//   } catch (err) {
+//     yield put(loadProjectRolesFail())
+//     errorHandler(err)
+//   }
+// }
 
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
@@ -391,7 +391,7 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeEvery(EDIT_ROLE, editRole),
     takeEvery(REL_ROLE_MEMBER, relRoleMember),
     takeEvery(GET_REL_ROLE_MEMBER, getRelRoleMember),
-    takeEvery(LOAD_PROJECT_ROLES, getProjectRoles as any),
+    // takeEvery(LOAD_PROJECT_ROLES, getProjectRoles as any),
     takeLatest(LOAD_PROJECT_ADMINS, getProjectAdmins as any),
     takeLatest(INVITE_MEMBER, inviteMember as any),
     takeLatest(SEARCH_MEMBER, searchMember as any),

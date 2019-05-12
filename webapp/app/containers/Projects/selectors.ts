@@ -51,6 +51,12 @@ const makeSelectCurrentProjectRole = () => createSelector(
   selectProject,
   (projectState) => projectState.get('currentProjectRole')
 )
+
+const makeSelectProjectRoles = () => createSelector(
+  selectProject,
+  (projectState) => projectState.get('projectRoles')
+)
+
 export {
   selectProject,
   makeSelectProjects,
@@ -58,5 +64,6 @@ export {
   makeSelectCurrentProject,
   makeSelectStarUserList,
   makeSelectCollectProjects,
-  makeSelectCurrentProjectRole
+  makeSelectCurrentProjectRole,
+  makeSelectProjectRoles
 }

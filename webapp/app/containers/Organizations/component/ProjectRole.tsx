@@ -36,7 +36,7 @@ import {createStructuredSelector} from 'reselect'
 import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRoleProject, deleteRelRoleProject} from '../../Projects/actions'
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles } from '../selectors'
 import { makeSelectCurrentProjectRole} from '../../Projects/selectors'
-
+import { makeSelectVizs } from '../../Schedule/selectors'
 interface IRoleStates {
   relationRoleVisible: boolean
   authSettingVisible: boolean
@@ -45,9 +45,14 @@ interface IRoleStates {
   searchValue: string
 }
 
+export interface IProjectRoles {
+  id: number
+  name: string
+  description: string
+}
 interface IRoleProps {
   form?: any
-  projectRoles: any[]
+  projectRoles: IProjectRoles[]
   projectDetail: any
   organizationRoles: any[]
   currentProjectRole: {
@@ -56,6 +61,7 @@ interface IRoleProps {
     name: string
     permission: object
   }
+  vizs: any
   onLoadOrganizationRole: (id: number) => any
   onLoadProjectRoles: (id: number) => any
   onAddProjectRole: (id: number, roleIds: number[], resolve: () => any) => any
@@ -83,6 +89,8 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
   public componentWillMount () {
     this.loadOrganizationRole()
     this.loadProjectRoles()
+    console.log(this.props.vizs)
+    console.log(JSON.stringify(this.props.vizs))
   }
 
   private loadOrganizationRole = () => this.props.onLoadOrganizationRole(this.props.projectDetail['id'])
@@ -266,6 +274,7 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
           wrapClassName="ant-modal-large ant-modal-center"
         >
           <Auth
+            vizs={this.props.vizs}
             currentProjectRole={this.props.currentProjectRole}
             onChangePermission={this.changePermission}
           />
@@ -278,6 +287,7 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
 
 
 const mapStateToProps = createStructuredSelector({
+  vizs: makeSelectVizs(),
   projectDetail: makeSelectCurrentOrganizationProject(),
   organizationRoles: makeSelectCurrentOrganizationRole(),
   projectRoles: makeSelectCurrentOrganizationProjectRoles(),

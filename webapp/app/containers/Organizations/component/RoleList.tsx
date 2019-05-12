@@ -263,7 +263,7 @@ export class RoleList extends React.PureComponent<IRoleProps, IRoleState> {
         key: 'setting',
         render: (text, record) => (
           <span>
-              <a href="javascript:;" onClick={this.showRelRoleForm('add', record.id)}>member</a>
+              <a href="javascript:;" onClick={this.showRelRoleForm('add', record.id)}>invite</a>
               <Divider type="vertical" />
               <a href="javascript:;" onClick={this.showRoleForm('edit', record.id)}>edit</a>
               <Divider type="vertical" />

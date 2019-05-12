@@ -31,6 +31,7 @@ import DisplayList, { IDisplay } from '../Display/components/DisplayList'
 import { makeSelectCurrentProject } from '../Projects/selectors'
 import ModulePermission from '../Account/components/checkModulePermission'
 import { IProject } from '../Projects'
+import { excludeRoles } from '../Projects/actions'
 
 interface IParams {
   pid: number
@@ -49,6 +50,7 @@ interface IVizProps extends RouteComponentProps<{}, IParams> {
   onEditPortal: (portal, resolve) => void
   onDeletePortal: (portalId: number) => void
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
+  onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
 
 interface IVizStates {
@@ -148,6 +150,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onEdit={onEditPortal}
                 onDelete={onDeletePortal}
                 onCheckUniqueName={onCheckUniqueName}
+                onExcludeRoles={this.props.onExcludeRoles}
               />
             </div>
           </Box>
@@ -173,6 +176,7 @@ export class Viz extends React.Component<IVizProps, IVizStates> {
                 onCopy={this.onCopy}
                 onDelete={onDeleteDisplay}
                 onCheckName={onCheckUniqueName}
+                onExcludeRoles={this.props.onExcludeRoles}
               />
             </div>
           </Box>
@@ -198,7 +202,8 @@ export function mapDispatchToProps (dispatch) {
     onAddPortal: (portal, resolve) => dispatch(addPortal(portal, resolve)),
     onEditPortal: (portal, resolve) => dispatch(editPortal(portal, resolve)),
     onDeletePortal: (id) => dispatch(deletePortal(id)),
-    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject))
+    onCheckUniqueName: (pathname, data, resolve, reject) => dispatch(checkNameUniqueAction(pathname, data, resolve, reject)),
+    onExcludeRoles: (type, id, resolve) => dispatch(excludeRoles(type, id, resolve))
   }
 }
 
