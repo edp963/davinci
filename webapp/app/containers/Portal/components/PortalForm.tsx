@@ -29,7 +29,6 @@ const TabPane = Tabs.TabPane
 
 const utilStyles = require('../../../assets/less/util.less')
 const styles = require('../Portal.less')
-import AuthControl from './AuthControl'
 import { IExludeRoles} from './PortalList'
 
 interface IProtalListProps {
@@ -38,7 +37,6 @@ interface IProtalListProps {
   form: any
   params?: any
   exludeRoles?: IExludeRoles[]
-  initCheckNodes: (checkedKeys: any[]) => any
   onChangePermission: (scope: object, e: any) => any
   onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
@@ -63,17 +61,6 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
         callback(err)
       })
   }
-
-  private renderTreeNodes = (data) => data.map((item) => {
-    if (item.children) {
-      return (
-        <TreeNode title={item.title} key={item.key} dataRef={item}>
-          {this.renderTreeNodes(item.children)}
-        </TreeNode>
-      )
-    }
-    return <TreeNode {...item} key={item.key} />
-  })
 
   public render () {
     const {

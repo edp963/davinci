@@ -29,7 +29,6 @@ import { IDisplay } from './DisplayList'
 const styles = require('../../Portal/Portal.less')
 import {IExludeRoles} from '../../Portal/components/PortalList'
 const utilStyles = require('../../../assets/less/util.less')
-import AuthControl from '../../Portal/components/AuthControl'
 
 interface IDisplayFormModalProps {
   projectId: number
@@ -37,13 +36,10 @@ interface IDisplayFormModalProps {
   visible: boolean
   loading: boolean
   type: 'add' | 'edit'
-  viewTeam?: any[]
-  checkedKeys: any[]
   onCheckName: (type, data, resolve, reject) => void
   onSave: (display, type: string) => void
   onCancel: () => void
   exludeRoles?: IExludeRoles[]
-  initCheckNodes: (checkedKeys: any[]) => any
   onChangePermission: (scope: object, e: any) => any
 }
 
@@ -102,7 +98,7 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 
   public render () {
-    const { type, visible, loading, form, onCancel, initCheckNodes, viewTeam, checkedKeys, exludeRoles } = this.props
+    const { type, visible, loading, form, onCancel,exludeRoles } = this.props
     const { getFieldDecorator } = form
     const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
       <div className={styles.excludeList} key={`${role.name}key`}>
@@ -202,11 +198,6 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
                   {
                     authControl
                   }
-                  {/* <AuthControl
-                    initCheckNodes={initCheckNodes}
-                    checkedKeys={checkedKeys}
-                    viewTeam={viewTeam}
-                  /> */}
                 </TabPane>
               </Tabs>
             </Col>
