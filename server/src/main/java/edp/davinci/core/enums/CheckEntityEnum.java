@@ -20,7 +20,6 @@ package edp.davinci.core.enums;
 
 public enum CheckEntityEnum {
     USER("user", "userService", "edp.davinci.model.User"),
-    TEAM("team", "teamService", "edp.davinci.model.Team"),
     PROJECT("project", "projectService", "edp.davinci.model.Project"),
     ORGANIZATION("organization", "organizationService", "edp.davinci.model.Organization"),
     SOURCE("source", "sourceService", "edp.davinci.model.Source"),

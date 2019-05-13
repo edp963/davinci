@@ -75,11 +75,6 @@ public class Constants extends Consts {
     public static final String SOURCE_CSV_PATH = "/source/csv/";
 
     /**
-     * 团队头像上传地址
-     */
-    public static final String TEAM_AVATAR_PATH = "/image/organization/";
-
-    /**
      * 邀请组织成员邮件主题
      * inviter username
      * organization

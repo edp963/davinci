@@ -140,7 +140,7 @@ public class SqlParseUtils {
 
         char delimiter = getSqlTempDelimiter(sqlTempDelimiter);
 
-        //替换team@var
+        //替换auth@var
         Pattern p = Pattern.compile(getReg(REG_AUTHVAR, delimiter));
         Matcher matcher = p.matcher(sql);
         String parenthesesEndREG = "\\" + parenthesesEnd + "{2,}";
