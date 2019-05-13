@@ -20,52 +20,43 @@
 
 import React from 'react'
 import classnames from 'classnames'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { ICSVMetaInfo } from '.'
+import { ICSVMetaInfo } from './types'
 
 import { Modal, Form, Row, Col, Input, Radio, Upload, Icon, Popover, Button, Steps } from 'antd'
 const RadioGroup = Radio.Group
 const Step = Steps.Step
 const FormItem = Form.Item
+import { FormComponentProps } from 'antd/lib/form/Form'
+import { UploadProps } from 'antd/lib/upload/Upload'
 
-import { setUploadFormValue } from './actions'
-import { makeSelectUploadFormValues } from './selectors'
-const utilStyles = require('./upload.less')
+const styles = require('./Source.less')
 
 interface IUploadCsvFormProps {
-  formKey: string
   visible: boolean
-  step: any
-  uploadProps: any
-  form: any
-  uploadFormValues: ICSVMetaInfo
+  step: number
+  uploadProps: UploadProps
+  csvMeta: ICSVMetaInfo
   onStepChange: (step: number, values?: ICSVMetaInfo) => void
   onUpload: () => void
   onClose: () => void
   onAfterClose: () => void
-  onSetUploadFormValue: (changedValues: ICSVMetaInfo) => void
 }
 
-interface IUploadCsvFormStates {
-  replaceModeState: number
-}
+export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps & FormComponentProps> {
 
-export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUploadCsvFormStates> {
-  constructor (props) {
-    super(props)
-    this.state = {
-      replaceModeState: 0
+  private commonFormItemStyle = {
+    labelCol: { span: 6 },
+    wrapperCol: { span: 16 }
+  }
+
+  public componentDidUpdate (prevProps: IUploadCsvFormProps & FormComponentProps) {
+    const { form, csvMeta, visible } = this.props
+    if (csvMeta !== prevProps.csvMeta || visible !== prevProps.visible) {
+      form.setFieldsValue(csvMeta)
     }
   }
 
-  private replaceModeChange = (e) => {
-    this.setState({
-      replaceModeState: e.target.value as number
-    })
-  }
-
-  private changeStep = (step) => () => {
+  private changeStep = (step: number) => () => {
     if (step) {
       this.props.form.validateFieldsAndScroll((err, values) => {
         if (!err) {
@@ -85,7 +76,6 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
 
   public render () {
     const {
-      formKey,
       visible,
       step,
       form,
@@ -95,26 +85,15 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
     } = this.props
     const { getFieldDecorator } = form
 
-    const commonFormItemStyle = {
-      labelCol: { span: 6 },
-      wrapperCol: { span: 16 }
-    }
-
     const baseInfoStyle = classnames({
-      [utilStyles.hide]: !!step
+      [styles.hide]: !!step
     })
 
     const authInfoStyle = classnames({
-      [utilStyles.hide]: !step
+      [styles.hide]: !step
     })
 
-    const uploadComponent = (
-      <Upload {...uploadProps} >
-        <Button>
-          <Icon type="upload" /> Click to Upload CSV
-        </Button>
-      </Upload>
-    )
+    const submitDisabled = uploadProps.fileList.length <= 0 || uploadProps.fileList[0].status !== 'success'
 
     const modalButtons = step
       ? [(
@@ -122,6 +101,7 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
         key="submit"
         size="large"
         type="primary"
+        disabled={submitDisabled}
         onClick={onUpload}
       >
           保 存
@@ -141,14 +121,15 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
     return (
       <Modal
         title="上传CSV"
+        maskClosable={false}
         visible={visible}
         wrapClassName="ant-modal-small"
         footer={modalButtons}
         onCancel={onClose}
         afterClose={this.reset}
       >
-        <Form key={formKey}>
-          <Row className={utilStyles.formStepArea}>
+        <Form>
+          <Row className={styles.formStepArea}>
             <Col span={24}>
               <Steps current={step}>
                 <Step title="导入方式" />
@@ -159,8 +140,8 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
           </Row>
           <Row gutter={8} className={baseInfoStyle}>
             <Col span={24}>
-              <FormItem label="表名" {...commonFormItemStyle}>
-                {getFieldDecorator('tableName', {
+              <FormItem label="表名" {...this.commonFormItemStyle}>
+                {getFieldDecorator<ICSVMetaInfo>('tableName', {
                   rules: [{
                     required: true,
                     message: '表格名不能为空'
@@ -169,35 +150,34 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
                   <Input />
                 )}
               </FormItem>
-              <FormItem label="Source ID" className={utilStyles.hide}>
-                {getFieldDecorator('sourceId')(
+              <FormItem label="Source ID" className={styles.hide}>
+                {getFieldDecorator<ICSVMetaInfo>('sourceId')(
                   <Input />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="主键" {...commonFormItemStyle}>
-                {getFieldDecorator('primaryKeys', {
+              <FormItem label="主键" {...this.commonFormItemStyle}>
+                {getFieldDecorator<ICSVMetaInfo>('primaryKeys', {
                 })(
                   <Input />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="索引键" {...commonFormItemStyle}>
-                {getFieldDecorator('indexKeys', {
+              <FormItem label="索引键" {...this.commonFormItemStyle}>
+                {getFieldDecorator<ICSVMetaInfo>('indexKeys', {
                 })(
                   <Input />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="导入方式" {...commonFormItemStyle}>
-                {getFieldDecorator('replaceMode', {
-                  valuePropName: 'checked',
+              <FormItem label="导入方式" {...this.commonFormItemStyle}>
+                {getFieldDecorator<ICSVMetaInfo>('replaceMode', {
                   initialValue: 0
                 })(
-                  <RadioGroup onChange={this.replaceModeChange} value={this.state.replaceModeState}>
+                  <RadioGroup>
                     <Radio value={0}>新增</Radio>
                     <Radio value={1}>替换</Radio>
                     <Radio value={2}>追加</Radio>
@@ -217,10 +197,14 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
           <Row className={authInfoStyle}>
             <Col span={24}>
               <FormItem
-                {...commonFormItemStyle}
+                {...this.commonFormItemStyle}
                 label="上传"
               >
-                {uploadComponent}
+                <Upload {...uploadProps} >
+                  <Button>
+                    <Icon type="upload" />Click to Upload CSV
+                  </Button>
+                </Upload>
               </FormItem>
             </Col>
           </Row>
@@ -230,32 +214,5 @@ export class UploadCsvForm extends React.PureComponent<IUploadCsvFormProps, IUpl
   }
 }
 
-const formOptions = {
-  onValuesChange (props: IUploadCsvFormProps, values) {
-    const { uploadFormValues, onSetUploadFormValue } = props
-    onSetUploadFormValue({
-      ...uploadFormValues,
-      ...values
-    })
-  },
-  mapPropsToFields (props: IUploadCsvFormProps) {
-    return Object.entries(props.uploadFormValues)
-      .reduce((result, [key, value]) => {
-        result[key] = Form.createFormField({ value })
-        return result
-      }, {})
-  }
-}
-
-const mapStateToProps = createStructuredSelector({
-  uploadFormValues: makeSelectUploadFormValues()
-})
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onSetUploadFormValue: (values) => dispatch(setUploadFormValue(values))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create(formOptions)(UploadCsvForm))
+export default Form.create<IUploadCsvFormProps>()(UploadCsvForm)
 

@@ -20,7 +20,7 @@
 
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
-import { IPersistSource, ISourceTableColumns, ISourceTable } from './types'
+import { ISourceRaw, ISource, ISourceTableColumns, ISourceTable, ICSVMetaInfo } from './types'
 
 export const SourceActions = {
   loadSources (projectId: number) {
@@ -31,7 +31,7 @@ export const SourceActions = {
       }
     }
   },
-  sourcesLoaded (sources: IPersistSource[]) {
+  sourcesLoaded (sources: ISourceRaw[]) {
     return {
       type: ActionTypes.LOAD_SOURCES_SUCCESS,
       payload: {
@@ -39,13 +39,13 @@ export const SourceActions = {
       }
     }
   },
-  loadSourceFail () {
+  loadSourcesFail () {
     return {
       type: ActionTypes.LOAD_SOURCES_FAILURE,
       payload: {}
     }
   },
-  addSource (source: IPersistSource, resolve) {
+  addSource (source: ISource, resolve: () => void) {
     return {
       type: ActionTypes.ADD_SOURCE,
       payload: {
@@ -54,7 +54,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceAdded (result) {
+  sourceAdded (result: ISourceRaw) {
     return {
       type: ActionTypes.ADD_SOURCE_SUCCESS,
       payload: {
@@ -90,29 +90,7 @@ export const SourceActions = {
       payload: {}
     }
   },
-  loadSourceDetail (id: number) {
-    return {
-      type: ActionTypes.LOAD_SOURCE_DETAIL,
-      payload: {
-        id
-      }
-    }
-  },
-  sourceDetailLoaded (source: IPersistSource) {
-    return {
-      type: ActionTypes.LOAD_SOURCE_DETAIL_SUCCESS,
-      payload: {
-        source
-      }
-    }
-  },
-  loadSourceDetailFail () {
-    return {
-      type: ActionTypes.LOAD_SOURCE_DETAIL_FAILURE,
-      payload: {}
-    }
-  },
-  editSource (source: IPersistSource, resolve) {
+  editSource (source: ISource, resolve: () => void) {
     return {
       type: ActionTypes.EDIT_SOURCE,
       payload: {
@@ -121,7 +99,7 @@ export const SourceActions = {
       }
     }
   },
-  sourceEdited (result) {
+  sourceEdited (result: ISource) {
     return {
       type: ActionTypes.EDIT_SOURCE_SUCCESS,
       payload: {
@@ -155,7 +133,7 @@ export const SourceActions = {
       payload: {}
     }
   },
-  getCsvMetaId (csvMeta, resolve) {
+  getCsvMetaId (csvMeta: ICSVMetaInfo, resolve: () => void) {
     return {
       type: ActionTypes.GET_CSV_META_ID,
       payload: {
@@ -178,28 +156,11 @@ export const SourceActions = {
       }
     }
   },
-  setSourceFormValue (values) {
-    return {
-      type: ActionTypes.SET_SOURCE_FORM_VALUE,
-      payload: {
-        values
-      }
-    }
-  },
-  setUploadFormValue (values) {
-    return {
-      type: ActionTypes.SET_UPLOAD_FORM_VALUE,
-      payload: {
-        values
-      }
-    }
-  },
-  loadSourceTables (sourceId: number, resolve?) {
+  loadSourceTables (sourceId: number) {
     return {
       type: ActionTypes.LOAD_SOURCE_TABLES,
       payload: {
-        sourceId,
-        resolve
+        sourceId
       }
     }
   },

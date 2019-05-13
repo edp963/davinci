@@ -22,26 +22,24 @@ import { SqlTypes } from 'app/globalConstants'
 
 export type SourceType = 'csv' | 'jdbc'
 
-export interface IBaseSource {
+interface ISourceBase {
   id: number,
   name: string
   type: SourceType
-  username: string
-  password: string
-  jdbcUrl: string
   description: string
+  projectId: number
 }
 
-export interface ISource extends IBaseSource {
+export interface ISourceRaw extends ISourceBase {
   config: string
 }
 
-export interface IPersistSource extends IBaseSource {
+export interface ISource extends ISourceBase {
   config: {
-    parameters: string
+    username: string
     password: string
     url: string
-    username: string
+    parameters: string
   }
 }
 
@@ -62,12 +60,18 @@ export interface IMapTableColumns {
   [tableName: string]: ISourceTableColumns
 }
 
+export interface ICSVMetaInfo {
+  sourceId: number
+  tableName: string
+  replaceMode: number
+  primaryKeys: string
+  indexKeys: string
+}
+
 export interface ISourceState {
   sources: ISource[]
   listLoading: boolean
-  formLoading: boolean,
-  testLoading: boolean,
-  sourceFormValues: any,
-  uploadFormValues: any
+  formLoading: boolean
+  testLoading: boolean
 }
 

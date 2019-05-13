@@ -18,7 +18,7 @@
  * >>
  */
 
-import { call, put, all, takeLatest, takeEvery, throttle } from 'redux-saga/effects'
+import { call, put, all, takeLatest, takeEvery } from 'redux-saga/effects'
 import { ActionTypes } from './constants'
 import { SourceActions, SourceActionType } from './actions'
 
@@ -26,16 +26,17 @@ import request from '../../utils/request'
 import api from '../../utils/api'
 import { errorHandler } from '../../utils/util'
 import { message } from 'antd'
+import { ISourceRaw } from './types'
 
 export function* getSources (action: SourceActionType) {
   if (action.type !== ActionTypes.LOAD_SOURCES) { return }
   const { payload } = action
   try {
     const asyncData = yield call(request, `${api.source}?projectId=${payload.projectId}`)
-    const sources = asyncData.payload
+    const sources = asyncData.payload as ISourceRaw[]
     yield put(SourceActions.sourcesLoaded(sources))
   } catch (err) {
-    yield put(SourceActions.loadSourceFail())
+    yield put(SourceActions.loadSourcesFail())
     errorHandler(err)
   }
 }
@@ -73,40 +74,15 @@ export function* deleteSource (action: SourceActionType) {
   }
 }
 
-export function* getSourceDetail (action: SourceActionType) {
-  if (action.type !== ActionTypes.LOAD_SOURCE_DETAIL) { return }
-  const { payload } = action
-  try {
-    const source = yield call(request, `${api.source}/${payload.id}`)
-    yield put(SourceActions.sourceDetailLoaded(source))
-  } catch (err) {
-    yield put(SourceActions.loadSourceDetailFail())
-    errorHandler(err)
-  }
-}
-
 export function* editSource (action: SourceActionType) {
   if (action.type !== ActionTypes.EDIT_SOURCE) { return }
   const { source, resolve } = action.payload
-  const { config, description, id, name, type } = source
   try {
     yield call(request, {
       method: 'put',
       url: `${api.source}/${source.id}`,
-      data: {
-        config,
-        description,
-        id,
-        name,
-        type
-      }
+      data: source
     })
-
-    const { password, url, username } = config
-    source['config'] = JSON.stringify(config)
-    source['password'] = password
-    source['jdbcUrl'] = url
-    source['username'] = username
     yield put(SourceActions.sourceEdited(source))
     resolve()
   } catch (err) {
@@ -155,14 +131,11 @@ export function* getCsvMetaId (action: SourceActionType) {
 
 export function* getSourceTables (action: SourceActionType) {
   if (action.type !== ActionTypes.LOAD_SOURCE_TABLES) { return }
-  const { sourceId, resolve } = action.payload
+  const { sourceId } = action.payload
   try {
     const asyncData = yield call(request, `${api.source}/${sourceId}/tables`)
     const tables = asyncData.payload
     yield put(SourceActions.sourceTablesLoaded(tables))
-    if (resolve) {
-      resolve(tables)
-    }
   } catch (err) {
     yield put(SourceActions.loadSourceTablesFail(err))
     errorHandler(err)
@@ -190,7 +163,6 @@ export default function* rootSourceSaga (): IterableIterator<any> {
     takeLatest(ActionTypes.LOAD_SOURCES, getSources),
     takeEvery(ActionTypes.ADD_SOURCE, addSource),
     takeEvery(ActionTypes.DELETE_SOURCE, deleteSource),
-    takeLatest(ActionTypes.LOAD_SOURCE_DETAIL, getSourceDetail),
     takeEvery(ActionTypes.EDIT_SOURCE, editSource),
     takeEvery(ActionTypes.TEST_SOURCE_CONNECTION, testSourceConnection),
     takeEvery(ActionTypes.GET_CSV_META_ID, getCsvMetaId),
