@@ -29,7 +29,7 @@ import Avatar from '../../../components/Avatar/index'
 import RoleForm from './Transfer'
 import Auth from './ProjectAuth'
 import AntdFormType from 'antd/lib/form/Form'
-import { loadOrganizationRole, loadProjectRoles } from '../actions'
+import { loadOrganizationRole, loadProjectRoles, getVizVisbility, postVizVisbility } from '../actions'
 const styles = require('../Project.less')
 const utilStyles =  require('../../../assets/less/util.less')
 import {createStructuredSelector} from 'reselect'
@@ -37,12 +37,14 @@ import { addProjectRole, addProjectRoleFail, loadRelRoleProject, updateRelRolePr
 import {makeSelectCurrentOrganizationProject, makeSelectCurrentOrganizationRole, makeSelectCurrentOrganizationProjectRoles } from '../selectors'
 import { makeSelectCurrentProjectRole} from '../../Projects/selectors'
 import { makeSelectVizs } from '../../Schedule/selectors'
+
 interface IRoleStates {
   relationRoleVisible: boolean
   authSettingVisible: boolean
   roleTargetKeys: any[]
   projectRoles: any[]
   searchValue: string
+  vizs: any[]
 }
 
 export interface IProjectRoles {
@@ -68,6 +70,8 @@ interface IRoleProps {
   onLoadRelRoleProject: (id: number, roleId: number) => any,
   onUpdateRelRoleProject: (roleId: number, projectId: number, projectRole: object) => any
   onDeleteRelRoleProject: (roleId: number, projectId: number, resolve?: () => any) => () => any
+  onLoadVizVisbility: (roleId: number, projectId: number, resolve: any) => any
+  onPostVizVisbility: (id: number, permission: object, reslove: any) => any
 }
 
 export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
@@ -78,6 +82,7 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
   constructor (props) {
     super(props)
     this.state = {
+      vizs: [],
       searchValue: '',
       projectRoles: [],
       roleTargetKeys: [],
@@ -87,20 +92,43 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
   }
 
   public componentWillMount () {
+    const {vizs} = this.props
     this.loadOrganizationRole()
     this.loadProjectRoles()
-    console.log(this.props.vizs)
-    console.log(JSON.stringify(this.props.vizs))
+    if (vizs && vizs.length) {
+      this.setState({vizs})
+    }
   }
 
   private loadOrganizationRole = () => this.props.onLoadOrganizationRole(this.props.projectDetail['id'])
 
   private loadProjectRoles = () => this.props.onLoadProjectRoles(this.props.projectDetail['id'])
 
+  private loopVizs = (key, value, tree) => {
+    tree.forEach((viz) => {
+      if (viz.children) {
+        this.loopVizs(key, value, viz.children)
+      }
+      if (viz.vizType === key.slice(0, -1)) {
+        viz.permission = value.some((val) => val === viz.id) ? 0 : 1
+      } else {
+        return
+      }
+    })
+  }
   private toggleModal = (flag: string, id?: number) => () => {
     if (id) {
-      const {onLoadRelRoleProject, projectDetail} = this.props
+      const {onLoadRelRoleProject, projectDetail, onLoadVizVisbility} = this.props
+      const vizs = this.state.vizs
       onLoadRelRoleProject(projectDetail.id, id)
+      onLoadVizVisbility(id, projectDetail.id, (result) => {
+        Object.entries(result).forEach(([key, value]) => {
+          this.loopVizs(key, value, vizs)
+          this.setState({
+            vizs
+          })
+        })
+      })
     }
     if (flag === 'relationRoleVisible') {
       this.setState({
@@ -154,7 +182,7 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
     }
   }
 
-  private changePermission = (record, event) => {
+  private changeModulePermission = (record, event) => {
     const { user } = record
     const { onUpdateRelRoleProject, currentProjectRole, projectDetail} = this.props
     onUpdateRelRoleProject(currentProjectRole.id, projectDetail.id, {
@@ -162,6 +190,19 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
       [`${user}Permission`] : event.target.value
     })
   }
+
+  private changeVizPermission = (record, event) => {
+    const { onPostVizVisbility, currentProjectRole: {id} } = this.props
+    onPostVizVisbility(id, {
+      id: record.id,
+      visible: event.target.value,
+      viz: record.vizType
+    }, (result) => {
+      console.log(result)
+    })
+  }
+
+
 
   public render () {
     const { organizationRoles, projectDetail } = this.props
@@ -274,9 +315,10 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
           wrapClassName="ant-modal-large ant-modal-center"
         >
           <Auth
-            vizs={this.props.vizs}
+            vizs={this.state.vizs}
             currentProjectRole={this.props.currentProjectRole}
-            onChangePermission={this.changePermission}
+            onChangeModulePermission={this.changeModulePermission}
+            onChangeVizPermission={this.changeVizPermission}
           />
         </Modal>
       </div>
@@ -301,7 +343,9 @@ export function mapDispatchToProps (dispatch) {
      onAddProjectRole: (id, roleIds, resolve) => dispatch(addProjectRole(id, roleIds, resolve)),
      onLoadRelRoleProject: (id, roleId) => dispatch(loadRelRoleProject(id, roleId)),
      onUpdateRelRoleProject: (roleId, projectId, projectRole) => dispatch(updateRelRoleProject(roleId, projectId, projectRole)),
-     onDeleteRelRoleProject: (roleId, projectId, resolve) => () => dispatch(deleteRelRoleProject(roleId, projectId, resolve))
+     onDeleteRelRoleProject: (roleId, projectId, resolve) => () => dispatch(deleteRelRoleProject(roleId, projectId, resolve)),
+     onLoadVizVisbility: (roleId, projectId, resolve) => dispatch(getVizVisbility(roleId, projectId, resolve)),
+     onPostVizVisbility: (id, permission, reslove) => dispatch(postVizVisbility(id, permission, reslove))
   }
 }
 

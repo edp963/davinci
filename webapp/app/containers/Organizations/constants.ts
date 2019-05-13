@@ -103,3 +103,6 @@ export const LOAD_PROJECT_ADMINS_FAIL = 'davinci/Organization//LOAD_PROJECT_ADMI
 export const LOAD_PROJECT_ROLES = 'davinci/Project/LOAD_PROJECT_ROLES'
 export const LOAD_PROJECT_ROLES_SUCCESS = 'davinci/Project/LOAD_PROJECT_ROLES_SUCCESS'
 export const LOAD_PROJECT_ROLES_FAIL = 'davinci/Project/LOAD_PROJECT_ROLES_FAIL'
+
+export const GET_VIZ_VISBILITY = 'davinci/Project/GET_VIZ_VISBILITY'
+export const POST_VIZ_VISBILITY = 'davinci/Project/POST_VIZ_VISBILITY'

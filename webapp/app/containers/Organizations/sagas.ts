@@ -37,8 +37,9 @@ import {
   DELETE_ORGANIZATION_MEMBER,
   CHANGE_MEMBER_ROLE_ORGANIZATION,
   GET_REL_ROLE_MEMBER,
-  LOAD_PROJECT_ADMINS
-  // LOAD_PROJECT_ROLES
+  LOAD_PROJECT_ADMINS,
+  GET_VIZ_VISBILITY,
+  POST_VIZ_VISBILITY
 } from './constants'
 
 import {
@@ -363,17 +364,34 @@ export function* getProjectAdmins ({payload}) {
   }
 }
 
-// export function* getProjectRoles ({payload}) {
-//   const { projectId } = payload
-//   try {
-//     const asyncData = yield call(request, `${api.projects}/${projectId}/roles`)
-//     const results = asyncData.payload
-//     yield put(projectRolesLoaded(results))
-//   } catch (err) {
-//     yield put(loadProjectRolesFail())
-//     errorHandler(err)
-//   }
-// }
+export function* getVizVisbility ({payload}) {
+  const {roleId, projectId, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      method: 'get',
+      url: `${api.roles}/${roleId}/project/${projectId}/viz/visibility`
+    })
+    const results = asyncData.payload
+    resolve(results)
+  } catch (err) {
+    errorHandler(err)
+  }
+}
+
+export function* postVizVisbility ({payload}) {
+  const {id, permission, resolve} = payload
+  try {
+    const asyncData = yield call(request, {
+      url: `${api.roles}/${id}/viz/visibility`,
+      method: 'post',
+      data: permission
+    })
+    const result = asyncData.payload
+    yield resolve(result)
+  } catch (err) {
+    errorHandler(err)
+  }
+}
 
 
 export default function* rootOrganizationSaga (): IterableIterator<any> {
@@ -396,6 +414,8 @@ export default function* rootOrganizationSaga (): IterableIterator<any> {
     takeLatest(INVITE_MEMBER, inviteMember as any),
     takeLatest(SEARCH_MEMBER, searchMember as any),
     takeLatest(DELETE_ORGANIZATION_MEMBER, deleteOrganizationMember as any),
-    takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any)
+    takeLatest(CHANGE_MEMBER_ROLE_ORGANIZATION, changeOrganizationMemberRole as any),
+    takeLatest(GET_VIZ_VISBILITY, getVizVisbility as any),
+    takeLatest(POST_VIZ_VISBILITY, postVizVisbility as any)
   ])
 }

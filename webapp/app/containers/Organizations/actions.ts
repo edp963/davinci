@@ -76,7 +76,9 @@ import {
   LOAD_PROJECT_ADMINS_FAIL,
   LOAD_PROJECT_ROLES,
   LOAD_PROJECT_ROLES_SUCCESS,
-  LOAD_PROJECT_ROLES_FAIL
+  LOAD_PROJECT_ROLES_FAIL,
+  GET_VIZ_VISBILITY,
+  POST_VIZ_VISBILITY
 } from './constants'
 
 export function loadOrganizationProjects (param) {
@@ -555,3 +557,26 @@ export function loadProjectRolesFail () {
     type: LOAD_PROJECT_ROLES_FAIL
   }
 }
+
+export function getVizVisbility (roleId, projectId, resolve) {
+  return {
+    type: GET_VIZ_VISBILITY,
+    payload: {
+      roleId, projectId, resolve
+    }
+  }
+}
+
+export function postVizVisbility (id, permission, resolve) {
+  return {
+    type: POST_VIZ_VISBILITY,
+    payload: {
+      id,
+      resolve,
+      permission
+    }
+  }
+}
+
+
+

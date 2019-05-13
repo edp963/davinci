@@ -33,7 +33,8 @@ interface IAuthProps {
   vizs?: any
   form?: any
   currentProjectRole?: object
-  onChangePermission?: (event: any, record: object) => any
+  onChangeModulePermission?: (event: any, record: object) => any
+  onChangeVizPermission?: (event: any, record: object) => any
 }
 
 export class Auth extends React.PureComponent <IAuthProps, {}> {
@@ -53,7 +54,8 @@ export class Auth extends React.PureComponent <IAuthProps, {}> {
       {
         title: 'role',
         dataIndex: 'user',
-        key: 'user'
+        key: 'user',
+        render: (text) => text.toUpperCase()
       },
       {
           title: 'settings',
@@ -66,14 +68,14 @@ export class Auth extends React.PureComponent <IAuthProps, {}> {
               case 'share':
               case 'download':
                 return (
-                  <Radio.Group size="small" disabled={!role} value={text} onChange={this.props.onChangePermission.bind(this, record)}>
+                  <Radio.Group size="small" disabled={!role} value={text} onChange={this.props.onChangeModulePermission.bind(this, record)}>
                     <Radio value={false}>禁止</Radio>
                     <Radio value={true}>允许</Radio>
                   </Radio.Group>
                 )
               default:
                 return (
-                  <Radio.Group size="small" disabled={!role} value={text} onChange={this.props.onChangePermission.bind(this, record)}>
+                  <Radio.Group size="small" disabled={!role} value={text} onChange={this.props.onChangeModulePermission.bind(this, record)}>
                     <Radio value={0}>隐藏</Radio>
                     <Radio value={1}>只读</Radio>
                     <Radio value={2}>修改</Radio>
@@ -95,15 +97,16 @@ export class Auth extends React.PureComponent <IAuthProps, {}> {
       dataIndex: 'name',
       key: `key${uuid(8, 16)}`,
       width: '59%',
-      render: (text) => {
-        return (
-          <Radio.Group size="small" disabled={!role}>
-            <Radio value={0}>隐藏</Radio>
-            <Radio value={1}>只读</Radio>
-            {/* <Radio value={2}>修改</Radio>
-            <Radio value={3}>删除</Radio> */}
-          </Radio.Group>
-        )
+      render: (text, record) => {
+        const isTitle = record.isTitle
+        if (!isTitle) {
+          return (
+            <Radio.Group size="small" value={record.permission} onChange={this.props.onChangeVizPermission.bind(this, record)}>
+              <Radio value={0}>隐藏</Radio>
+              <Radio value={1}>显示</Radio>
+            </Radio.Group>
+          )
+        }
       }
     }
   ]
@@ -131,8 +134,6 @@ export class Auth extends React.PureComponent <IAuthProps, {}> {
               columns={dvColumns}
               dataSource={this.props.vizs}
               pagination={false}
-              // expandedRowRender={this.expandedTableRow}
-              // expandIcon={this.renderExpandIcon}
           />
         </div>
       </div>
