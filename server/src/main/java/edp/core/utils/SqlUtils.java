@@ -53,8 +53,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static edp.core.consts.Consts.newLineChar;
-import static edp.core.consts.Consts.space;
+import static edp.core.consts.Consts.*;
 
 @Slf4j
 @Component
@@ -279,26 +278,6 @@ public class SqlUtils {
 
         PaginateWithQueryColumns paginate = query4Paginate(sql, pageNo, pageSize, totalCount, limit);
         return paginate;
-    }
-
-    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public List<Map<String, Object>> syncQuery4List(String sql) throws Exception {
-        List<Map<String, Object>> list = query4List(sql, -1);
-        return list;
-    }
-
-    @Cacheable(value = "query", keyGenerator = "keyGenerator", sync = true)
-    public List<Map<String, Object>> syncQuery4ListByLimit(String sql, int limit) throws Exception {
-        List<Map<String, Object>> list = query4List(sql, limit);
-        return list;
-    }
-
-
-    public Map<String, Object> query4Map(String sql) throws Exception {
-        sql = filterAnnotate(sql);
-        checkSensitiveSql(sql);
-        Map<String, Object> map = jdbcTemplate().queryForMap(sql);
-        return map;
     }
 
     /**
@@ -793,7 +772,7 @@ public class SqlUtils {
     public static String filterAnnotate(String sql) {
         Pattern p = Pattern.compile(Consts.REG_SQL_ANNOTATE);
         sql = p.matcher(sql).replaceAll("$1");
-        sql = sql.replaceAll(newLineChar, space);
+        sql = sql.replaceAll(newLineChar, space).replaceAll("(;+\\s*)+", semicolon);
         return sql;
     }
 

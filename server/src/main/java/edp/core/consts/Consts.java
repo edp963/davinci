@@ -25,7 +25,7 @@ public class Consts {
     /**
      * 特殊符号定义
      */
-    public static final String conditionSeparator = ",";
+    public static final String comma = ",";
 
     public static final String Slash = "/";
 

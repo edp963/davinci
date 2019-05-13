@@ -419,7 +419,7 @@ public class ExcelUtils {
                 fmtSB.append(octothorpe);
 
                 if (fieldNumeric.isUseThousandSeparator()) {
-                    fmtSB.append(conditionSeparator)
+                    fmtSB.append(comma)
                             .append(makeNTimesString(2, octothorpe))
                             .append("0");
                 }
@@ -491,14 +491,14 @@ public class ExcelUtils {
                 break;
             case Thousand:
             case TenThousand:
-                unitExpr = conditionSeparator + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = comma + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Million:
             case OneHundredMillion:
-                unitExpr = makeNTimesString(2, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(2, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
             case Giga:
-                unitExpr = makeNTimesString(3, conditionSeparator) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
+                unitExpr = makeNTimesString(3, comma) + "\"" + fieldNumeric.getUnit().getUnit() + "\"";
                 break;
 
             default:

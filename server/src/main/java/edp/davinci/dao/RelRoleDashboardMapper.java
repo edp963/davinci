@@ -24,8 +24,8 @@ public interface RelRoleDashboardMapper {
     List<Long> getDisableByUser(@Param("userId") Long userId, @Param("portalId") Long portalId);
 
 
-    @Select("select role_id from rel_role_dashboard where dashboard_id = #{id}")
-    List<Long> getExecludeRoles(@Param("id") Long id);
+    @Select("select role_id from rel_role_dashboard where dashboard_id = #{dashboardId} and visible = 0")
+    List<Long> getExecludeRoles(@Param("dashboardId") Long dashboardId);
 
     int deleteByDashboardIds(@Param("dashboardIds") Set<Long> dashboardIds);
 

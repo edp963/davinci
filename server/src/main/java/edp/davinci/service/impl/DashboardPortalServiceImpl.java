@@ -203,7 +203,7 @@ public class DashboardPortalServiceImpl implements DashboardPortalService {
             throw new UnAuthorizedExecption("you have not permission to update portal");
         }
 
-        if (isExist(dashboardPortalUpdate.getName(), null, dashboardPortal.getProjectId())) {
+        if (isExist(dashboardPortalUpdate.getName(), dashboardPortal.getId(), dashboardPortal.getProjectId())) {
             log.info("the dashboardPortal \"{}\" name is already taken", dashboardPortalUpdate.getName());
             throw new ServerException("the dashboard portal name is already taken");
         }

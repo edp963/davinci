@@ -26,7 +26,7 @@ public interface RelRolePortalMapper {
     @Delete({"delete from rel_role_portal where portal_id = #{portalId}"})
     int deleteByProtalId(@Param("portalId") Long portalId);
 
-    @Select("select role_id from rel_role_portal where portal_id = #{portalId}")
+    @Select("select role_id from rel_role_portal where portal_id = #{portalId} and visible = 0")
     List<Long> getExecludeRoles(@Param("portalId") Long portalId);
 
     @Select({"select count(1)",

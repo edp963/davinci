@@ -67,7 +67,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.conditionSeparator;
+import static edp.core.consts.Consts.comma;
 import static edp.core.consts.Consts.minus;
 
 @Slf4j
@@ -651,7 +651,7 @@ public class ViewServiceImpl implements ViewService {
             Set<String> columns = new HashSet<>();
             roleViewList.forEach(r -> {
                 if (!StringUtils.isEmpty(r.getColumnAuth())) {
-                    columns.addAll(Arrays.asList(r.getColumnAuth().split(conditionSeparator)));
+                    columns.addAll(Arrays.asList(r.getColumnAuth().split(comma)));
                 }
             });
             return columns;

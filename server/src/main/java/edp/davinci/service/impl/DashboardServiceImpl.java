@@ -44,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static edp.core.consts.Consts.conditionSeparator;
+import static edp.core.consts.Consts.comma;
 
 @Slf4j
 @Service("dashboardService")
@@ -245,7 +245,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         if (null != dashboard.getParentId() && dashboard.getParentId() > 0L) {
             String fullParentId = dashboardMapper.getFullParentId(dashboard.getParentId());
-            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + conditionSeparator + fullParentId);
+            dashboard.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboard.getParentId().toString() : dashboard.getParentId() + comma + fullParentId);
         }
 
         int insert = dashboardMapper.insert(dashboard);
@@ -305,8 +305,6 @@ public class DashboardServiceImpl implements DashboardService {
             parentMap = dashboardMapper.getFullParentIds(parentIds);
         }
 
-        String befor = dashboards.toString();
-
         for (DashboardDto dashboardDto : dashboards) {
             if (!dashboardDto.getDashboardPortalId().equals(portalId)) {
                 throw new ServerException("Invalid dashboard portal id");
@@ -321,7 +319,7 @@ public class DashboardServiceImpl implements DashboardService {
 
             if (null != dashboardDto.getParentId() && dashboardDto.getParentId() > 0L && parentMap.containsKey(dashboardDto.getParentId())) {
                 String fullParentId = parentMap.get(dashboardDto.getParentId());
-                dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + conditionSeparator + fullParentId);
+                dashboardDto.setFullParentId(StringUtils.isEmpty(fullParentId) ? dashboardDto.getParentId().toString() : dashboardDto.getParentId() + comma + fullParentId);
             }
 
             dashboardList.add(dashboardDto);
@@ -331,7 +329,7 @@ public class DashboardServiceImpl implements DashboardService {
         int i = dashboardMapper.updateBatch(dashboardList);
 
         if (i > 0) {
-            optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), befor);
+            optLogger.info("dashboard [{}]  is update by (:{}), origin : {}", dashboardList.toString(), user.getId(), dashboards);
 
             if (null != rolesMap && rolesMap.size() > 0) {
 

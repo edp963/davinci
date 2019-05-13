@@ -50,20 +50,9 @@ import static edp.davinci.core.common.Constants.*;
 @Slf4j
 public class SqlParseUtils {
 
-
-    private static final char STStartChar = '{';
-
-    private static final char STEndChar = '}';
-
-    private static final String REG_SQL_STRUCT = "[{].*[}]";
-
     private static final String SELECT = "select";
 
     private static final String WITH = "with";
-
-    private static final String QUERY_VAR_KEY = "query@var";
-
-    private static final String TEAM_VAR_KEY = "team@var";
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
@@ -73,87 +62,6 @@ public class SqlParseUtils {
      * @param sqlStr
      * @return
      */
-    public static SqlEntity parseSql(String sqlStr, String sqlTempDelimiter) throws ServerException {
-        if (!StringUtils.isEmpty(sqlStr.trim())) {
-            //过滤注释
-            sqlStr = SqlUtils.filterAnnotate(sqlStr);
-
-            //sql体
-            String sqlStruct = null, queryParam = null;
-            //Pattern.DOTALL+Pattern.MULTILINE : 在正则表达式中的'.'可以代替所有字符，包括换行符\n
-            Pattern p = Pattern.compile(REG_SQL_STRUCT, Pattern.DOTALL + Pattern.MULTILINE);
-            Matcher matcher = p.matcher(sqlStr);
-            if (matcher.find()) {
-                sqlStruct = matcher.group();
-                queryParam = matcher.replaceAll("");
-            } else {
-                throw new ServerException("You have an error in your SQL syntax;");
-            }
-
-            //sql体
-            if (!StringUtils.isEmpty(sqlStruct.trim())) {
-                sqlStruct = sqlStruct.trim();
-
-                if (sqlStruct.startsWith(String.valueOf(STStartChar))) {
-                    sqlStruct = sqlStruct.substring(1);
-                }
-                if (sqlStruct.endsWith(String.valueOf(STEndChar))) {
-                    sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
-                }
-                if (sqlStruct.endsWith(semicolon)) {
-                    sqlStruct = sqlStruct.substring(0, sqlStruct.length() - 1);
-                }
-            }
-
-            Map<String, String> queryParamMap = new HashMap<>();
-            Map<String, List<String>> teamParamMap = new HashMap<>();
-            //参数
-            if (!StringUtils.isEmpty(queryParam)) {
-                queryParam = queryParam.trim().replaceAll(newLineChar, semicolon).trim();
-                queryParam = queryParam.replaceAll(semicolon + "{2,}", semicolon);
-                if (queryParam.endsWith(semicolon)) {
-                    queryParam = queryParam.substring(0, queryParam.length() - 1);
-                }
-                String[] split = queryParam.split(semicolon);
-                if (null != split && split.length > 0) {
-                    for (String param : split) {
-                        param = param.trim();
-                        if (param.startsWith(QUERY_VAR_KEY)) {
-                            param = param.replaceAll(QUERY_VAR_KEY, "");
-                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
-                            if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                queryParamMap.put(k.trim().replace(String.valueOf(getSqlTempDelimiter(sqlTempDelimiter)), ""), v);
-                            }
-                        } else if (param.startsWith(TEAM_VAR_KEY)) {
-                            param = param.replaceAll(TEAM_VAR_KEY, "").trim();
-                            String[] paramArray = param.trim().split(String.valueOf(assignmentChar));
-                            if (null != paramArray && paramArray.length > 0) {
-                                String k = paramArray[0];
-                                String v = paramArray.length > 1 ? param.replace(k + assignmentChar, "").trim() : null;
-                                teamParamMap.put(k.trim(), Arrays.asList(v));
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (StringUtils.isEmpty(sqlStruct)) {
-                throw new ServerException("Invalid Query Sql");
-            }
-
-            sqlStruct = sqlStruct.replaceAll(newLineChar, space).trim();
-
-            Map<String, Object> map = null;
-
-            SqlEntity sqlEntity = new SqlEntity(sqlStruct, map, teamParamMap);
-            return sqlEntity;
-        }
-        return null;
-    }
-
-
     public static SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
         if (StringUtils.isEmpty(sqlStr.trim())) {
             return null;
@@ -186,7 +94,8 @@ public class SqlParseUtils {
                                 queryParamMap.put(variable.getName().trim(), SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues()));
                                 break;
                             case AUTHVARE:
-                                authParamMap.put(String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter)), getAuthVarValue(variable, null));
+                                authParamMap.put(String.join("", String.valueOf(delimiter), variable.getName().trim(), String.valueOf(delimiter)),
+                                        getAuthVarValue(variable, null));
                                 break;
                         }
                     }
@@ -363,14 +272,14 @@ public class SqlParseUtils {
                                             expBuilder
                                                     .append(left).append(space)
                                                     .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                    .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                    .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
                                             break;
                                         default:
                                             if (list.get(0).split(",").length > 1) {
                                                 expBuilder
                                                         .append(left).append(space)
                                                         .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                        .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                        .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
                                             } else {
                                                 expBuilder
                                                         .append(left).append(space)
@@ -388,14 +297,14 @@ public class SqlParseUtils {
                                         expBuilder
                                                 .append(left).append(space)
                                                 .append(SqlOperatorEnum.IN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
                                         break;
 
                                     case NOTEQUALSTO:
                                         expBuilder
                                                 .append(left).append(space)
                                                 .append(SqlOperatorEnum.NoTIN.getValue()).append(space)
-                                                .append(list.stream().collect(Collectors.joining(",", "(", ")")));
+                                                .append(list.stream().collect(Collectors.joining(comma, parenthesesStart, parenthesesEnd)));
                                         break;
 
                                     case BETWEEN:
@@ -405,7 +314,7 @@ public class SqlParseUtils {
                                     case MINORTHANEQUALS:
                                         expBuilder.append(list.stream()
                                                 .map(x -> space + left + space + SqlOperatorEnum.BETWEEN.getValue() + space + x + space)
-                                                .collect(Collectors.joining("or", "(", ")")));
+                                                .collect(Collectors.joining("or", parenthesesStart, parenthesesEnd)));
                                         break;
 
                                     default:
