@@ -133,7 +133,7 @@ export class ViewList extends React.PureComponent<IViewListProps, IViewListState
       filterDropdownVisible,
       onFilterDropdownVisibleChange: (visible: boolean) => this.setState({ filterDropdownVisible: visible }),
       sorter: (a, b) => (a.name > b.name ? 1 : -1),
-      sortOrder: tableSorter && tableSorter.columnKey === 'name' ? tableSorter.order : false
+      sortOrder: tableSorter && tableSorter.columnKey === 'name' ? tableSorter.order : void 0
     }, {
       title: '描述',
       dataIndex: 'description'

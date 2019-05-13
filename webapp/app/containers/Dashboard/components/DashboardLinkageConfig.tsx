@@ -23,6 +23,7 @@ import { Button, Modal } from 'antd'
 
 import { SQL_NUMBER_TYPES, DEFAULT_SPLITER } from '../../../globalConstants'
 import { decodeMetricName, getAggregatorLocale } from '../../Widget/components/util'
+import { IFormedViews } from 'containers/View/types'
 import { IWidgetConfig } from '../../Widget/components/Widget'
 import LinkageConfig from 'components/Linkages/LinkageConfig'
 
@@ -33,7 +34,7 @@ interface IDashboardLinkageConfigProps {
   currentItems: any[]
   currentItemsInfo: any
   linkages: any[]
-  views: any[]
+  views: IFormedViews
   widgets: any[]
   visible: boolean
   loading: boolean
@@ -68,7 +69,6 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
   private getLinkageConfigSource = () => {
     const { currentItems, widgets, views, currentItemsInfo } = this.props
     if (!currentItemsInfo) { return [] }
-    const varReg = /query@var\s+\$(\w+)\$/g
 
     const linkageConfigSource = []
     Object.keys(currentItemsInfo).forEach((k) => {
@@ -77,19 +77,17 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
       const widgetConfig: IWidgetConfig = JSON.parse(widget.config)
       const { cols, rows, metrics } = widgetConfig
 
-      const view = views.find((bl) => bl.id === widget.viewId)
-      const { sql, model } = view
-      const modelObj = JSON.parse(model)
-      const variableArr = (sql.match(varReg) || []).map((qv) => qv.substring(qv.indexOf('$') + 1, qv.length - 1))
+      const view = views[widget.viewId]
+      const { model, variable } = view
 
       // Cascader value 中带有 itemId、字段类型、参数/变量标识 这些信息，用 DEFAULT_SPLITER 分隔
       const columns = [
         ...[...cols, ...rows]
-          .filter(({ name }) => modelObj[name])
+          .filter(({ name }) => model[name])
           .map(({ name }) => {
             return {
               label: name,
-              value: [name, modelObj[name].sqlType, 'column'].join(DEFAULT_SPLITER)
+              value: [name, model[name].sqlType, 'column'].join(DEFAULT_SPLITER)
             }
           }),
         ...metrics.map(({ name, agg }) => {
@@ -101,10 +99,10 @@ export class DashboardLinkageConfig extends React.Component<IDashboardLinkageCon
         })
       ]
 
-      const variables = variableArr.map((val) => {
+      const variables = variable.map(({ name }) => {
         return {
-          label: `${val}[变量]`,
-          value: [val, null, 'variable'].join(DEFAULT_SPLITER)
+          label: `${name}[变量]`,
+          value: [name, null, 'variable'].join(DEFAULT_SPLITER)
         }
       })
 

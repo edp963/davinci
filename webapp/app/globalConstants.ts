@@ -188,8 +188,8 @@ export const KEY_COLUMN = 'davinciUniqueId'
 
 export const DEFAULT_FONT_WEIGHT = 'normal'
 export const DEFAULT_FONT_STYLE = 'normal'
-export const DEFAULT_FONT_SIZE = '12px'
-export const DEFAULT_FONT_FAMILY = '"Helvetica Neue For Number", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif'
+export const DEFAULT_FONT_SIZE = '14px'
+export const DEFAULT_FONT_FAMILY = '"Chinese Quote", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"'
 
 export const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD'
 export const DEFAULT_DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
