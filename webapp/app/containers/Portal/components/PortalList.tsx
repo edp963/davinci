@@ -14,7 +14,7 @@ import { IProject } from '../../Projects'
 import { IPortal } from '../../Portal'
 import { makeSelectProjectRoles } from '../../Projects/selectors'
 import {IProjectRoles} from '../../Organizations/component/ProjectRole'
-import { roleAdded } from 'app/containers/Organizations/actions';
+import { roleAdded } from 'app/containers/Organizations/actions'
 interface IPortalListProps {
   projectId: number
   portals: IPortal[]
@@ -97,6 +97,7 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           description,
           name,
           publish,
+          roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id),
           avatar: formType === 'add' ? `${Math.ceil(Math.random() * 19)}` : avatar
         }
 
@@ -132,14 +133,10 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
       }, 0)
       const { onExcludeRoles, projectRoles } = this.props
       if (onExcludeRoles && portal) {
-        onExcludeRoles('dashboard', portal.id, (result) => {
-          console.log(result)
+        onExcludeRoles('portal', portal.id, (result: number[]) => {
           this.setState({
-            exludeRoles: projectRoles.map((role) => {
-              return {
-                ...role,
-                permission: true
-              }
+            exludeRoles:  projectRoles.map((role) => {
+              return result.some((re) => re === role.id) ? role : {...role, permission: true}
             })
           })
         })
@@ -242,6 +239,8 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
   }
 
   public render () {
+    console.log(this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id))
+    console.log(this.state.exludeRoles)
     const {
       projectId,
       portals,
