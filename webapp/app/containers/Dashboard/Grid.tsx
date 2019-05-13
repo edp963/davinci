@@ -1492,7 +1492,7 @@ export class Grid extends React.Component<IGridProps, IGridStates> {
           currentDashboard={currentDashboard}
           currentItems={currentItems}
           currentItemsInfo={currentItemsInfo}
-          views={views}
+          views={formedViews}
           widgets={widgets}
           visible={linkageConfigVisible}
           loading={currentDashboardLoading}
