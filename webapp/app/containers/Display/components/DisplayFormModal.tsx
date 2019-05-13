@@ -19,14 +19,15 @@
  */
 
 import React from 'react'
-import { Form, Row, Col, Input, Radio, Button, Tabs, Modal } from 'antd'
+import { Form, Row, Col, Input, Radio, Button, Tabs, Modal, Checkbox } from 'antd'
 import { FormComponentProps } from 'antd/lib/form/Form'
 const TextArea = Input.TextArea
 const FormItem = Form.Item
 const RadioGroup = Radio.Group
 const TabPane = Tabs.TabPane
 import { IDisplay } from './DisplayList'
-
+const styles = require('../../Portal/Portal.less')
+import {IExludeRoles} from '../../Portal/components/PortalList'
 const utilStyles = require('../../../assets/less/util.less')
 import AuthControl from '../../Portal/components/AuthControl'
 
@@ -41,7 +42,9 @@ interface IDisplayFormModalProps {
   onCheckName: (type, data, resolve, reject) => void
   onSave: (display, type: string) => void
   onCancel: () => void
+  exludeRoles?: IExludeRoles[]
   initCheckNodes: (checkedKeys: any[]) => any
+  onChangePermission: (scope: object, e: any) => any
 }
 
 export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps & FormComponentProps, {}> {
@@ -99,9 +102,14 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
   }
 
   public render () {
-    const { type, visible, loading, form, onCancel, initCheckNodes, viewTeam, checkedKeys } = this.props
+    const { type, visible, loading, form, onCancel, initCheckNodes, viewTeam, checkedKeys, exludeRoles } = this.props
     const { getFieldDecorator } = form
-
+    const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
+      <div className={styles.excludeList} key={`${role.name}key`}>
+        <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
+        <b>{role.name}</b>
+      </div>
+    )) : []
     const modalButtons = [(
       <Button
         key="back"
@@ -191,11 +199,14 @@ export class DisplayFormModal extends React.PureComponent<IDisplayFormModalProps
                   </Col>
                 </TabPane>
                 <TabPane tab="权限管理" key="dislayControl">
-                  <AuthControl
+                  {
+                    authControl
+                  }
+                  {/* <AuthControl
                     initCheckNodes={initCheckNodes}
                     checkedKeys={checkedKeys}
                     viewTeam={viewTeam}
-                  />
+                  /> */}
                 </TabPane>
               </Tabs>
             </Col>

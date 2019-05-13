@@ -372,7 +372,20 @@ export function* getProjectRoles ({payload}) {
 
 export function* excludeRole ({payload}) {
   const { id, type, resolve } = payload
-  const host = type === 'dashboard' ? `${api.portal}/dashboard` : `${api.display}`
+  let host: string
+  switch (type) {
+    case 'dashboard':
+      host = `${api.portal}/dashboard`
+      break
+    case 'portal':
+      host = `${api.portal}`
+      break
+    case 'display':
+      host = `${api.display}`
+      break
+    default:
+      break
+  }
   try {
     const asyncData = yield call(request, `${host}/${id}/exclude/roles`)
     const results = asyncData.payload

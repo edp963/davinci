@@ -1,6 +1,9 @@
 import React from 'react'
 import classnames from 'classnames'
-
+import {createStructuredSelector} from 'reselect'
+import { makeSelectProjectRoles } from '../../Projects/selectors'
+import {connect} from 'react-redux'
+import {compose} from 'redux'
 import { Col, Tooltip, Icon, Popconfirm, Row } from 'antd'
 import { IconProps } from 'antd/lib/icon'
 const styles = require('../Display.less')
@@ -8,7 +11,7 @@ const styles = require('../Display.less')
 import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
-
+import {IExludeRoles} from '../../Portal/components/PortalList'
 export interface IDisplay {
   id: number
   name: string
@@ -30,6 +33,7 @@ interface IDisplayListProps extends IDisplayEvent {
   projectId: number
   displays: IDisplay[],
   currentProject?: IProject
+  projectRoles: IProjectRoles[]
   onCheckName: (type, data, resolve, reject) => void
   onExcludeRoles: (type: string, id: number, resolve?: any) => any
 }
@@ -39,6 +43,7 @@ interface IDisplayListStates {
   modalLoading: boolean
   formType: 'edit' | 'add'
   formVisible: boolean
+  exludeRoles: IExludeRoles[]
 }
 
 export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplayListStates> {
@@ -49,7 +54,8 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       editingDisplay: null,
       modalLoading: false,
       formType: 'add',
-      formVisible: false
+      formVisible: false,
+      exludeRoles: []
     }
   }
 
@@ -57,16 +63,34 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
     e.stopPropagation()
   }
 
+  public componentWillReceiveProps (nextProps) {
+    if (nextProps && nextProps.projectRoles) {
+      this.setState({
+        exludeRoles: nextProps.projectRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
+      })
+    }
+  }
+
+
   private saveDisplay = (display: IDisplay, type: 'edit' | 'add') => {
     this.setState({ modalLoading: true })
     const { onAdd, onEdit } = this.props
+    const val = {
+      ...display,
+      roleIds: this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id)
+    }
     if (type === 'add') {
       onAdd({
-        ...display
+        ...val
       }, () => { this.hideDisplayFormModal() })
     } else {
       onEdit({
-        ...display
+        ...val
       }, () => { this.hideDisplayFormModal() })
     }
   }
@@ -85,10 +109,23 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
       formType,
       formVisible: true
     })
-    const { onExcludeRoles } = this.props
+    const { onExcludeRoles, projectRoles } = this.props
     if (onExcludeRoles && display) {
-      onExcludeRoles('display', display.id, (result) => {
-        console.log(result)
+      onExcludeRoles('display', display.id, (result: number[]) => {
+        this.setState({
+          exludeRoles:  projectRoles.map((role) => {
+            return result.some((re) => re === role.id) ? role : {...role, permission: true}
+          })
+        })
+      })
+    } else {
+      this.setState({
+        exludeRoles: this.state.exludeRoles.map((role) => {
+          return {
+            ...role,
+            permission: false
+          }
+        })
       })
     }
   }
@@ -103,6 +140,13 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   private delegate = (func: (...args) => void, ...args) => (e: React.MouseEvent<any>) => {
     func.apply(this, args)
     e.stopPropagation()
+  }
+
+  private changePermission = (scope: IExludeRoles, event) => {
+    scope.permission = event.target.checked
+    this.setState({
+      exludeRoles: this.state.exludeRoles.map((role) => role && role.id === scope.id ? scope : role)
+    })
   }
 
   private renderCreate () {
@@ -210,6 +254,8 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
           display={editingDisplay}
           visible={formVisible}
           loading={modalLoading}
+          exludeRoles={this.state.exludeRoles}
+          onChangePermission={this.changePermission}
           type={formType}
           onCheckName={onCheckName}
           onSave={this.saveDisplay}
@@ -220,4 +266,14 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
   }
 }
 
-export default DisplayList
+
+const mapStateToProps = createStructuredSelector({
+  projectRoles: makeSelectProjectRoles()
+})
+
+const withConnect = connect(mapStateToProps, null)
+
+
+export default compose(
+  withConnect
+)(DisplayList)

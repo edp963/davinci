@@ -39,7 +39,7 @@ interface IProtalListProps {
   params?: any
   exludeRoles?: IExludeRoles[]
   initCheckNodes: (checkedKeys: any[]) => any
-  onChangePermission: (e: any) => any
+  onChangePermission: (scope: object, e: any) => any
   onCheckUniqueName?: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
 }
 
@@ -77,17 +77,11 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
 
   public render () {
     const {
-      type,
-      // checkedKeys,
-      initCheckNodes,
-      exludeRoles,
-      // viewTeam,
-      // selectTeams
+      exludeRoles
     } = this.props
     const { getFieldDecorator } = this.props.form
-    console.log(exludeRoles)
     const authControl = exludeRoles && exludeRoles.length ? exludeRoles.map((role) => (
-        <div className={styles.excludeList}>
+        <div className={styles.excludeList} key={`${role.name}key`}>
           <Checkbox checked={role.permission} onChange={this.props.onChangePermission.bind(this, role)}/>
           <b>{role.name}</b>
         </div>
@@ -158,11 +152,6 @@ export class PortalForm extends React.PureComponent<IProtalListProps, {}> {
                 {
                   authControl
                 }
-                {/* <AuthControl
-                  initCheckNodes={initCheckNodes}
-                  // checkedKeys={checkedKeys}
-                  // viewTeam={viewTeam}
-                /> */}
               </TabPane>
             </Tabs>
           </Col>
