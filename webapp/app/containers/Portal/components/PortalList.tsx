@@ -232,12 +232,6 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
     )
   }
 
-  private initCheckNodes = (checkedKeys) => {
-    // this.setState({
-    //   checkedKeys
-    // })
-  }
-
   public render () {
     console.log(this.state.exludeRoles.filter((role) => !role.permission).map((p) => p.id))
     console.log(this.state.exludeRoles)
@@ -286,9 +280,6 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
 
     return (
       <div>
-        {/* <EllipsisList rows={2}>
-          {addAction}
-        </EllipsisList> */}
         <Row
           gutter={20}
         >
@@ -302,12 +293,11 @@ export class PortalList extends React.Component<IPortalListProps, IPortalListSta
           onCancel={this.hidePortalForm}
         >
           <PortalForm
+            type={formType}
             onCheckUniqueName={onCheckUniqueName}
             projectId={projectId}
-            initCheckNodes={this.initCheckNodes}
             exludeRoles={this.state.exludeRoles}
             onChangePermission={this.changePermission}
-            type={formType}
             wrappedComponentRef={this.refHandlers.portalForm}
           />
         </Modal>

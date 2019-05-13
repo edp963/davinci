@@ -12,6 +12,7 @@ import DisplayFormModal from './DisplayFormModal'
 import ModulePermission from '../../Account/components/checkModulePermission'
 import { IProject } from '../../Projects'
 import {IExludeRoles} from '../../Portal/components/PortalList'
+import {IProjectRoles} from '../../Organizations/component/ProjectRole'
 export interface IDisplay {
   id: number
   name: string
@@ -241,9 +242,6 @@ export class DisplayList extends React.PureComponent<IDisplayListProps, IDisplay
 
     return (
       <div>
-        {/* <EllipsisList rows={2}>
-          {addAction}
-        </EllipsisList> */}
         <Row
           gutter={20}
         >
