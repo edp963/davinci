@@ -37,7 +37,7 @@ interface IAuthProps {
   onChangeVizPermission?: (event: any, record: object) => any
 }
 
-export class Auth extends React.PureComponent <IAuthProps, {}> {
+export class Auth extends React.Component <IAuthProps, {}> {
   constructor (props) {
     super(props)
   }

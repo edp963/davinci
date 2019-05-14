@@ -74,7 +74,7 @@ interface IRoleProps {
   onPostVizVisbility: (id: number, permission: object, reslove: any) => any
 }
 
-export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
+export class ProjectRole extends React.Component<IRoleProps, IRoleStates> {
   private RoleForm: AntdFormType = null
   private refHandlers = {
     RoleForm: (ref) => this.RoleForm = ref
@@ -193,13 +193,27 @@ export class ProjectRole extends React.PureComponent<IRoleProps, IRoleStates> {
 
   private changeVizPermission = (record, event) => {
     const { onPostVizVisbility, currentProjectRole: {id} } = this.props
+    const { vizs } = this.state
     onPostVizVisbility(id, {
       id: record.id,
       visible: event.target.value,
       viz: record.vizType
     }, (result) => {
-      console.log(result)
+      loop(vizs, record)
+      this.setState({vizs}, () => console.log(this.state.vizs))
     })
+    function loop (arr, record) {
+      arr.forEach((a) => {
+        if (a.children && a.children.length) {
+          loop(a.children, record)
+        }
+        if (a.id && a.id === record.id && a.vizType === record.vizType) {
+          a.permission = event.target.value
+        } else {
+          return
+        }
+      })
+    }
   }
 
 
