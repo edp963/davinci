@@ -21,9 +21,7 @@
 import { RouteProps } from 'react-router'
 
 import Report from './containers/Report'
-import Source from './containers/Source'
-import Bizlogics from './containers/Bizlogic'
-import Bizlogic from './containers/Bizlogic/Bizlogic'
+import SourceList from './containers/Source'
 
 import ViewIndex from 'containers/View'
 import ViewEditor from 'containers/View/Editor'
@@ -122,11 +120,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Widget
             },
             {
-              path: '/project/:pid/bizlogics',
-              name: 'bizlogics',
-              component: Bizlogics
-            },
-            {
               path: '/project/:pid/views',
               name: 'views',
               component: ViewIndex
@@ -134,7 +127,7 @@ export default function createRoutes (store): IExtendedRouteProps[] {
             {
               path: '/project/:pid/sources',
               name: 'sources',
-              component: Source
+              component: SourceList
             },
             {
               path: '/project/:pid/schedule',
@@ -179,16 +172,6 @@ export default function createRoutes (store): IExtendedRouteProps[] {
               component: Organization
             }
           ]
-        },
-        {
-          path: '/project/:pid/bizlogic',
-          name: 'bizlogic',
-          component: Bizlogic
-        },
-        {
-          path: '/project/:pid/bizlogic/:bid',
-          name: 'bizlogic',
-          component: Bizlogic
         },
         {
           path: '/project/:pid/view(/:viewId)',

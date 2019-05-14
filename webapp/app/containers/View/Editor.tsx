@@ -123,7 +123,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     currentStep: 0,
     localEditingView: {...emptyView },
     localViewInfo: {
-      model: [],
+      model: {},
       variable: []
     },
     sqlValidationCode: null,

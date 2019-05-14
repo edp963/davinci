@@ -19,46 +19,47 @@
  */
 
 import React from 'react'
-import { connect } from 'react-redux'
-import { createStructuredSelector } from 'reselect'
-import { ISource } from '.'
+import { ISource } from './types'
 
 import { Modal, Form, Row, Col, Button, Input, Select, Icon } from 'antd'
 const FormItem = Form.Item
 const TextArea = Input.TextArea
 const Option = Select.Option
+import { FormComponentProps } from 'antd/lib/form/Form'
 
-import { setSourceFormValue } from './actions'
-import { makeSelectSourceFormValues } from './selectors'
 const utilStyles = require('../../assets/less/util.less')
 
 interface ISourceFormProps {
-  projectId: number
-  type: string
   visible: boolean
   formLoading: boolean
   testLoading: boolean
-  form: any
-  sourceFormValues: ISource
+  source: ISource
   onSave: (values: any) => void
   onClose: () => void
-  onAfterClose: () => void
   onTestSourceConnection: (username: string, password: string, jdbcUrl: string) => any
   onCheckUniqueName: (pathname: string, data: any, resolve: () => any, reject: (error: string) => any) => any
-  onSetSourceFormValue: (changedValues: ISource) => void
 }
 
-export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
-  public checkNameUnique = (rule, value = '', callback) => {
-    const { onCheckUniqueName, type, projectId, form } = this.props
-    const { id } = form.getFieldsValue()
+export class SourceForm extends React.PureComponent<ISourceFormProps & FormComponentProps> {
 
-    const data = {
-      projectId,
-      id: type === 'add' ? '' : id,
-      name: value
+  private commonFormItemStyle = {
+    labelCol: { span: 6 },
+    wrapperCol: { span: 16 }
+  }
+
+  public componentDidUpdate (prevProps: ISourceFormProps & FormComponentProps) {
+    const { form, source, visible } = this.props
+    if (source !== prevProps.source || visible !== prevProps.visible) {
+      form.setFieldsValue(source)
     }
-    if (!value) {
+  }
+
+  public checkNameUnique = (rule, name = '', callback) => {
+    const { onCheckUniqueName, source } = this.props
+    const { id, projectId } = source
+
+    const data = { id, name, projectId }
+    if (!name) {
       callback()
     }
     onCheckUniqueName('source', data,
@@ -70,8 +71,9 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
   }
 
   private testSourceConnection = () => {
-    const { username, password, jdbcUrl } = this.props.form.getFieldsValue()
-    this.props.onTestSourceConnection(username, password, jdbcUrl)
+    const { config } = this.props.form.getFieldsValue() as ISource
+    const { username, password, url } = config
+    this.props.onTestSourceConnection(username, password, url)
   }
 
   private save = () => {
@@ -83,20 +85,20 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
   }
 
   private reset = () => {
-    const { form, onAfterClose } = this.props
-    form.resetFields()
-    onAfterClose()
+    this.props.form.resetFields()
   }
 
   public render () {
     const {
-      type,
+      source,
       visible,
       formLoading,
       testLoading,
       form,
       onClose
     } = this.props
+    if (!source) { return null }
+    const { id: sourceId } = source
     const { getFieldDecorator } = form
 
     const modalButtons = ([(
@@ -120,15 +122,11 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
       </Button>)
     ])
 
-    const commonFormItemStyle = {
-      labelCol: { span: 6 },
-      wrapperCol: { span: 16 }
-    }
-
     return (
       <Modal
-        title={`${type === 'add' ? '新增' : '修改'} Source`}
+        title={`${!sourceId ? '新增' : '修改'} Source`}
         wrapClassName="ant-modal-small"
+        maskClosable={false}
         visible={visible}
         footer={modalButtons}
         onCancel={onClose}
@@ -138,14 +136,12 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
           <Row gutter={8}>
             <Col span={24}>
               <FormItem className={utilStyles.hide}>
-                {getFieldDecorator('id', {
-                  hidden: this.props.type === 'add'
-                })(
+                {getFieldDecorator<ISource>('id')(
                   <Input />
                 )}
               </FormItem>
-              <FormItem label="名称" {...commonFormItemStyle} hasFeedback>
-                {getFieldDecorator('name', {
+              <FormItem label="名称" {...this.commonFormItemStyle} hasFeedback>
+                {getFieldDecorator<ISource>('name', {
                   rules: [{
                     required: true,
                     message: 'Name 不能为空'
@@ -153,13 +149,13 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
                     validator: this.checkNameUnique
                   }]
                 })(
-                  <Input placeholder="Name" />
+                  <Input autoComplete="off" placeholder="Name" />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="类型" {...commonFormItemStyle}>
-                {getFieldDecorator('type', {
+              <FormItem label="类型" {...this.commonFormItemStyle}>
+                {getFieldDecorator<ISource>('type', {
                   initialValue: 'jdbc'
                 })(
                   <Select>
@@ -170,34 +166,34 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="用户名" {...commonFormItemStyle}>
-                {getFieldDecorator('username', {
+              <FormItem label="用户名" {...this.commonFormItemStyle}>
+                {getFieldDecorator('config.username', {
                   // rules: [{
                   //   required: true,
                   //   message: 'User 不能为空'
                   // }],
                   initialValue: ''
                 })(
-                  <Input placeholder="User" />
+                  <Input autoComplete="off" placeholder="User" />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="密码" {...commonFormItemStyle}>
-                {getFieldDecorator('password', {
+              <FormItem label="密码" {...this.commonFormItemStyle}>
+                {getFieldDecorator('config.password', {
                   // rules: [{
                   //   required: true,
                   //   message: 'Password 不能为空'
                   // }],
                   initialValue: ''
                 })(
-                  <Input placeholder="Password" type="password" />
+                  <Input autoComplete="off" placeholder="Password" type="password" />
                 )}
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="连接Url" {...commonFormItemStyle}>
-                {getFieldDecorator('jdbcUrl', {
+              <FormItem label="连接Url" {...this.commonFormItemStyle}>
+                {getFieldDecorator('config.url', {
                   rules: [{
                     required: true,
                     message: 'Url 不能为空'
@@ -206,6 +202,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
                 })(
                   <Input
                     placeholder="Connection Url"
+                    autoComplete="off"
                     addonAfter={
                       testLoading
                         ? <Icon type="loading" />
@@ -216,7 +213,7 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="描述" {...commonFormItemStyle}>
+              <FormItem label="描述" {...this.commonFormItemStyle}>
                 {getFieldDecorator('description', {
                   initialValue: ''
                 })(
@@ -228,8 +225,8 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
               </FormItem>
             </Col>
             <Col span={24}>
-              <FormItem label="配置信息" {...commonFormItemStyle}>
-                {getFieldDecorator('config', {
+              <FormItem label="配置信息" {...this.commonFormItemStyle}>
+                {getFieldDecorator('config.parameters', {
                   initialValue: ''
                 })(
                   <TextArea
@@ -246,32 +243,5 @@ export class SourceForm extends React.PureComponent<ISourceFormProps, {}> {
   }
 }
 
-const formOptions = {
-  onValuesChange (props: ISourceFormProps, values) {
-    const { sourceFormValues, onSetSourceFormValue } = props
-    onSetSourceFormValue({
-      ...sourceFormValues,
-      ...values
-    })
-  },
-  mapPropsToFields (props: ISourceFormProps) {
-    return Object.entries(props.sourceFormValues)
-      .reduce((result, [key, value]) => {
-        result[key] = Form.createFormField({ value })
-        return result
-      }, {})
-  }
-}
-
-const mapStateToProps = createStructuredSelector({
-  sourceFormValues: makeSelectSourceFormValues()
-})
-
-export function mapDispatchToProps (dispatch) {
-  return {
-    onSetSourceFormValue: (values) => dispatch(setSourceFormValue(values))
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Form.create(formOptions)(SourceForm))
+export default Form.create<ISourceFormProps>()(SourceForm)
 
