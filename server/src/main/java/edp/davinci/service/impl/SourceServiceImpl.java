@@ -340,7 +340,14 @@ public class SourceServiceImpl implements SourceService {
     @Override
     @Transactional
     public Boolean dataUpload(Long sourceId, SourceDataUpload sourceDataUpload, MultipartFile file, User user, String type) throws NotFoundException, UnAuthorizedExecption, ServerException {
-        ProjectDetail projectDetail = projectService.getProjectDetail(sourceId, user, false);
+
+        Source source = sourceMapper.getById(sourceId);
+        if (null == source) {
+            log.info("source (:{}) not found", sourceId);
+            throw new NotFoundException("source is not found");
+        }
+
+        ProjectDetail projectDetail = projectService.getProjectDetail(source.getProjectId(), user, false);
 
         ProjectPermission projectPermission = projectService.getProjectPermission(projectDetail, user);
 
@@ -359,12 +366,6 @@ public class SourceServiceImpl implements SourceService {
 
         if (type.equals(FileTypeEnum.XLSX.getType()) && !fileUtils.isExcel(file)) {
             throw new ServerException("Please upload excel file");
-        }
-
-        Source source = sourceMapper.getById(sourceId);
-        if (null == source) {
-            log.info("source ({}) not found", sourceId);
-            throw new NotFoundException("source not found");
         }
 
         DataTypeEnum dataTypeEnum = DataTypeEnum.urlOf(source.getJdbcUrl());

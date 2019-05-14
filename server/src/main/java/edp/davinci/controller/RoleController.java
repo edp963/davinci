@@ -219,7 +219,7 @@ public class RoleController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "update role member relations")
+    @ApiOperation(value = "update role member relations", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping(value = "/{id}/members", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity updateMembers(@PathVariable Long id,
                                         @RequestBody Long[] memberIds,
@@ -272,8 +272,8 @@ public class RoleController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "add relation between a role and a project")
-    @PostMapping("/{id}/project/{projectId}")
+    @ApiOperation(value = "add relation between a role and a project", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{id}/project/{projectId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity addProject(@PathVariable Long id,
                                      @PathVariable Long projectId,
                                      @ApiIgnore @CurrentUser User user,
@@ -371,8 +371,8 @@ public class RoleController extends BaseController {
      * @param request
      * @return
      */
-    @ApiOperation(value = "get role viz permission", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @GetMapping(value = "/{id}/project/{projectId}/viz/visibility", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "get role viz permission")
+    @GetMapping(value = "/{id}/project/{projectId}/viz/visibility")
     public ResponseEntity getVizVisibility(@PathVariable Long id,
                                            @PathVariable Long projectId,
                                            @ApiIgnore @CurrentUser User user,
@@ -405,9 +405,9 @@ public class RoleController extends BaseController {
     @ApiOperation(value = "exclude role viz permission", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping(value = "/{id}/viz/visibility", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity postVizvisibility(@PathVariable Long id,
-                                              @RequestBody VizVisibility vizVisibility,
-                                              @ApiIgnore @CurrentUser User user,
-                                              HttpServletRequest request) {
+                                            @RequestBody VizVisibility vizVisibility,
+                                            @ApiIgnore @CurrentUser User user,
+                                            HttpServletRequest request) {
 
         if (invalidId(id)) {
             ResultMap resultMap = new ResultMap(tokenUtils).failAndRefreshToken(request).message("Invalid role id");

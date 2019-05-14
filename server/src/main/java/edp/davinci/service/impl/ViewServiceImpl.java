@@ -100,6 +100,9 @@ public class ViewServiceImpl implements ViewService {
     @Autowired
     private SourceService sourceService;
 
+    @Autowired
+    private SqlParseUtils sqlParseUtils;
+
     @Value("${sql_template_delimiter:$}")
     private String sqlTempDelimiter;
 
@@ -357,16 +360,16 @@ public class ViewServiceImpl implements ViewService {
         //结构化Sql
         PaginateWithQueryColumns paginateWithQueryColumns = null;
         try {
-            SqlEntity sqlEntity = SqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter);
+            SqlEntity sqlEntity = sqlParseUtils.parseSql(executeSql.getSql(), executeSql.getVariables(), sqlTempDelimiter);
             if (null != sqlUtils && null != sqlEntity) {
                 if (!StringUtils.isEmpty(sqlEntity.getSql())) {
-                    String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+                    String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                     SqlUtils sqlUtils = this.sqlUtils.init(source.getJdbcUrl(), source.getUsername(), source.getPassword());
 
-                    List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
+                    List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
 
-                    List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
+                    List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
 
                     if (null != executeSqlList && executeSqlList.size() > 0) {
                         executeSqlList.forEach(sql -> sqlUtils.execute(sql));
@@ -481,7 +484,7 @@ public class ViewServiceImpl implements ViewService {
                 //解析变量
                 List<SqlVariable> variables = viewWithSource.getVariables();
                 //解析sql
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+                SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
 
                 //获取当前用户对该view的行列权限配置
                 List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
@@ -496,19 +499,19 @@ public class ViewServiceImpl implements ViewService {
                 parseParams(projectDetail, sqlEntity, executeParam.getParams(), rowVariables, user);
 
                 //替换参数
-                String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+                String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                 Source source = viewWithSource.getSource();
 
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
 
 
-                List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
+                List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
                 if (null != executeSqlList && executeSqlList.size() > 0) {
                     executeSqlList.forEach(sql -> sqlUtils.execute(sql));
                 }
 
-                List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
+                List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
                 if (null != querySqlList && querySqlList.size() > 0) {
                     buildQuerySql(querySqlList, source, executeParam, excludeColumns);
 
@@ -592,7 +595,7 @@ public class ViewServiceImpl implements ViewService {
                 //解析变量
                 List<SqlVariable> variables = viewWithSource.getVariables();
                 //解析sql
-                SqlEntity sqlEntity = SqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
+                SqlEntity sqlEntity = sqlParseUtils.parseSql(viewWithSource.getSql(), variables, sqlTempDelimiter);
 
                 //获取当前用户对该view的行列权限配置
                 List<RelRoleView> roleViewList = relRoleViewMapper.getByUserAndView(user.getId(), viewWithSource.getId());
@@ -604,18 +607,18 @@ public class ViewServiceImpl implements ViewService {
                 parseParams(projectDetail, sqlEntity, null, rowVariables, user);
 
                 //替换参数
-                String srcSql = SqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
+                String srcSql = sqlParseUtils.replaceParams(sqlEntity.getSql(), sqlEntity.getQuaryParams(), sqlEntity.getAuthParams(), sqlTempDelimiter);
 
                 Source source = viewWithSource.getSource();
 
                 SqlUtils sqlUtils = this.sqlUtils.init(source);
 
-                List<String> executeSqlList = SqlParseUtils.getSqls(srcSql, false);
+                List<String> executeSqlList = sqlParseUtils.getSqls(srcSql, false);
                 if (null != executeSqlList && executeSqlList.size() > 0) {
                     executeSqlList.forEach(sql -> sqlUtils.execute(sql));
                 }
 
-                List<String> querySqlList = SqlParseUtils.getSqls(srcSql, true);
+                List<String> querySqlList = sqlParseUtils.getSqls(srcSql, true);
                 if (null != querySqlList && querySqlList.size() > 0) {
                     if (null != param) {
                         STGroup stg = new STGroupFile(Constants.SQL_TEMPLATE);
@@ -710,7 +713,7 @@ public class ViewServiceImpl implements ViewService {
                     list.forEach(sqlVariable -> executorService.execute(() -> {
                         //TODO 外部获取参数url
                         String url = "";
-                        List<String> values = SqlParseUtils.getAuthVarValue(sqlVariable, url);
+                        List<String> values = sqlParseUtils.getAuthVarValue(sqlVariable, url);
                         if (map.containsKey(sqlVariable.getName().trim())) {
                             map.get(sqlVariable.getName().trim()).addAll(values);
                         } else {

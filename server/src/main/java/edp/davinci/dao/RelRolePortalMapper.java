@@ -43,7 +43,7 @@ public interface RelRolePortalMapper {
     })
     List<Long> getExecludePortals(@Param("id") Long id, @Param("projectId") Long projectId);
 
-    @Delete({"delete from rel_role_portal where portal_id = #{portalId and role_id = #{roleId}"})
+    @Delete({"delete from rel_role_portal where portal_id = #{portalId} and role_id = #{roleId}"})
     int delete(@Param("portalId") Long portalId, @Param("roleId") Long roleId);
 
     @Delete({"delete from rel_role_portal where role_id = #{roleId}"})

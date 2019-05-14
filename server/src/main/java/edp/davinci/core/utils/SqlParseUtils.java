@@ -33,6 +33,9 @@ import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import org.stringtemplate.v4.ST;
 
 import java.util.*;
@@ -48,6 +51,7 @@ import static edp.core.consts.Consts.*;
 import static edp.davinci.core.common.Constants.*;
 
 @Slf4j
+@Component
 public class SqlParseUtils {
 
     private static final String SELECT = "select";
@@ -56,13 +60,16 @@ public class SqlParseUtils {
 
     private static final ExecutorService executorService = Executors.newFixedThreadPool(8);
 
+    @Autowired
+    private RestTemplate restTemplate;
+
     /**
      * 解析sql
      *
      * @param sqlStr
      * @return
      */
-    public static SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
+    public SqlEntity parseSql(String sqlStr, List<SqlVariable> variables, String sqlTempDelimiter) throws ServerException {
         if (StringUtils.isEmpty(sqlStr.trim())) {
             return null;
         }
@@ -111,15 +118,14 @@ public class SqlParseUtils {
     }
 
 
-    public static List<String> getAuthVarValue(SqlVariable variable, String outDataUrl) {
+    public List<String> getAuthVarValue(SqlVariable variable, String outDataUrl) {
         if (null == variable) {
             return null;
         }
         if (null == variable.getChannel()) {
             return SqlVariableValueTypeEnum.getValue(variable.getValueType(), variable.getDefaultValues());
         } else if (!StringUtils.isEmpty(outDataUrl)) {
-            //TODO  获取外部接口数据
-
+            return restTemplate.<List>getForObject(outDataUrl, List.class);
         }
         return null;
     }
@@ -133,7 +139,7 @@ public class SqlParseUtils {
      * @param sqlTempDelimiter
      * @return
      */
-    public static String replaceParams(String sql, Map<String, Object> queryParamMap, Map<String, List<String>> authParamMap, String sqlTempDelimiter) {
+    public String replaceParams(String sql, Map<String, Object> queryParamMap, Map<String, List<String>> authParamMap, String sqlTempDelimiter) {
         if (StringUtils.isEmpty(sql)) {
             return null;
         }
@@ -170,7 +176,7 @@ public class SqlParseUtils {
     }
 
 
-    public static List<String> getSqls(String sql, boolean isQuery) {
+    public List<String> getSqls(String sql, boolean isQuery) {
         sql = sql.trim();
 
         if (StringUtils.isEmpty(sql)) {
