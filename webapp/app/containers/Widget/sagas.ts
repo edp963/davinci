@@ -89,7 +89,9 @@ export function* getWidgetDetail (action) {
   const { payload } = action
   try {
     const result = yield call(request, `${api.widget}/${payload.id}`)
-    yield put(widgetDetailLoaded(result.payload))
+    const viewId = result.payload.viewId
+    const view = yield call(request, `${api.view}/${viewId}`)
+    yield put(widgetDetailLoaded(result.payload, view.payload))
   } catch (err) {
     yield put(loadWidgetDetailFail(err))
     errorHandler(err)

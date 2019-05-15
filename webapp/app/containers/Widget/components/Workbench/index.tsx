@@ -51,7 +51,7 @@ interface IWorkbenchProps {
   params: { pid: string, wid: string }
   onHideNavigator: () => void
   onLoadViews: (projectId: number, resolve?: any) => void
-  onLoadViewDetail: (viewId: number) => void
+  onLoadViewDetail: (viewId: number, resolve: () => void) => void
   onLoadWidgetDetail: (id: number) => void
   onLoadViewData: (viewId: number, requestParams: IDataRequestParams, resolve: (data: any) => void) => void
   onAddWidget: (widget: IWidget, resolve: () => void) => void
@@ -140,10 +140,9 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   public componentWillReceiveProps (nextProps: IWorkbenchProps) {
-    const { currentWidget, onLoadViewDetail } = nextProps
+    const { currentWidget } = nextProps
     if (currentWidget && (currentWidget !== this.props.currentWidget)) {
       const { controls, cache, expired, computed, ...rest } = JSON.parse(currentWidget.config)
-      onLoadViewDetail(currentWidget.viewId)
       this.setState({
         id: currentWidget.id,
         name: currentWidget.name,
@@ -176,13 +175,20 @@ export class Workbench extends React.Component<IWorkbenchProps, IWorkbenchStates
   }
 
   private viewSelect = (viewId: number) => {
-    this.props.onLoadViewDetail(viewId)
-    this.setState({
+    const { formedViews } = this.props
+    const nextState = {
       selectedViewId: viewId,
       controls: [],
       cache: false,
       expired: 300
-    })
+    }
+    if (formedViews[viewId]) {
+      this.setState(nextState)
+    } else {
+      this.props.onLoadViewDetail(viewId, () => {
+        this.setState(nextState)
+      })
+    }
   }
 
   private setControls = (controls: any[]) => {
@@ -506,7 +512,7 @@ export function mapDispatchToProps (dispatch) {
   return {
     onHideNavigator: () => dispatch(hideNavigator()),
     onLoadViews: (projectId, resolve) => dispatch(loadViews(projectId, resolve)),
-    onLoadViewDetail: (viewId) => dispatch(loadViewDetail(viewId)),
+    onLoadViewDetail: (viewId, resolve) => dispatch(loadViewDetail(viewId, resolve)),
     onLoadWidgetDetail: (id) => dispatch(loadWidgetDetail(id)),
     onLoadViewData: (viewId, requestParams, resolve) => dispatch(loadViewData(viewId, requestParams, resolve)),
     onAddWidget: (widget, resolve) => dispatch(addWidget(widget, resolve)),

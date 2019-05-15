@@ -22,9 +22,12 @@ import { SqlTypes } from 'app/globalConstants'
 
 export type SourceType = 'csv' | 'jdbc'
 
-interface ISourceBase {
-  id: number,
+export interface ISourceSimple {
+  id: number
   name: string
+}
+
+interface ISourceBase extends ISourceSimple {
   type: SourceType
   description: string
   projectId: number
