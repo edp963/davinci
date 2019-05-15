@@ -85,7 +85,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   private getAuthTableColumns = memoizeOne((model: IViewModel, variables: IViewVariable[]) => {
     const columns: Array<ColumnProps<any>> = variables.map((variable) => ({
-      title: variable.name
+      title: variable.alias || variable.name
     }))
     columns.unshift({
       title: '角色',
@@ -169,7 +169,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
 
   public render () {
     const { visible, model, variable, viewRoles, sqlColumns, roles, onModelChange } = this.props
-    const { modalVisible, selectedColumnAuth } = this.state
+    const { modalVisible, selectedColumnAuth, selectedRoleId } = this.state
     const modelDatasource = Object.entries(model).map(([name, value]) => ({ name, ...value }))
     const authColumns = this.getAuthTableColumns(model, variable)
     const authDatasource = this.getAuthDatasource(roles, viewRoles)
@@ -204,6 +204,7 @@ export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthSt
             <ModelAuthModal
               visible={modalVisible}
               model={model}
+              roleId={selectedRoleId}
               auth={selectedColumnAuth}
               onSave={this.saveModelAuth}
               onCancel={this.closeModelAuth}

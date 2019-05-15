@@ -7,28 +7,33 @@ import { IViewModel } from '../types'
 interface IModelAuthModalProps {
   visible: boolean
   model: IViewModel
+  roleId: number
   auth: string[]
   onSave: (auth: string[]) => void
   onCancel: () => void
 }
 
 interface IModelAuthModalStates {
+  localRoleId: number
   localAuth: string[]
 }
 
 export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IModelAuthModalStates> {
 
   public state: Readonly<IModelAuthModalStates> = {
+    localRoleId: 0,
     localAuth: []
   }
 
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IModelAuthModalProps, IModelAuthModalStates>
   = (props, state) => {
-    const { auth } = props
-    const { localAuth } = state
-    if (!localAuth.length) {
-      return { localAuth: [...auth] }
+    const { roleId, auth } = props
+    const { localRoleId } = state
+    if (roleId !== localRoleId) {
+      return {
+        localRoleId: roleId,
+        localAuth: [...auth] }
     }
     return null
   }
@@ -90,10 +95,6 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
     )
   }
 
-  private clearLocalAuth = () => {
-    this.setState({ localAuth: [] })
-  }
-
   public render () {
     const { visible, model, onCancel } = this.props
     const listDataSource = Object.keys(model)
@@ -104,7 +105,6 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
         visible={visible}
         footer={this.modalFooter}
         onCancel={onCancel}
-        afterClose={this.clearLocalAuth}
       >
         <List
           bordered

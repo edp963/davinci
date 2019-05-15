@@ -39,14 +39,15 @@ export interface IView extends IViewTemp {
   projectId: number
   source?: ISourceSimple
   sourceId: number
-  roles: IViewRole[]
+  roles: IViewRoleRaw[]
 }
 
-type IViewTemp2 = Omit<Omit<IView, 'model'>, 'variable'>
+type IViewTemp2 = Omit<Omit<Omit<IView, 'model'>, 'variable'>, 'roles'>
 
 export interface IFormedView extends IViewTemp2 {
   model: IViewModel
   variable: IViewVariable[]
+  roles: IViewRole[]
 }
 
 export interface ISqlValidation {
@@ -90,11 +91,19 @@ export interface IViewModel {
 }
 
 export interface IViewVariable {
+  key: string
   name: string
+  alias: string
   type: ViewVariableTypes
   valueType: ViewVariableValueTypes
   defaultValues: Array<string | number | boolean>
   fromService: boolean
+}
+
+export interface IViewRoleRaw {
+  roleId: number
+  columnAuth: string
+  rowAuth: string
 }
 
 export interface IViewRole {

@@ -11,24 +11,29 @@ import { ViewVariableTypes, ViewVariableTypesLocale, ViewVariableValueTypes, Vie
 interface IVariableModalProps {
   visible: boolean
   variable: IViewVariable
-  nameValidator?: (name: string, callback: (msg?: string) => void) => void
+  nameValidator?: (key: string, name: string, callback: (msg?: string) => void) => void
   onCancel: () => void
   onSave: (variable: IViewVariable) => void
 }
 
 interface IVariableModalStates {
-  variableName: string,
-  editType: 'add' | 'edit'
   operatorType: OperatorTypes
   selectedType: ViewVariableTypes
   selectedValueType: ViewVariableValueTypes
   defaultValues: ConditionValueTypes[]
 }
 
-export class VariableModal extends React.Component<IVariableModalProps & FormComponentProps, IVariableModalStates> {
+const defaultVarible: IViewVariable = {
+  key: '',
+  name: '',
+  alias: '',
+  type: ViewVariableTypes.Query,
+  valueType: ViewVariableValueTypes.String,
+  defaultValues: [],
+  fromService: false
+}
 
-  private static DefaultType = ViewVariableTypes.Query
-  private static DefaultValueType = ViewVariableValueTypes.String
+export class VariableModal extends React.Component<IVariableModalProps & FormComponentProps, IVariableModalStates> {
 
   private formItemStyle = {
     labelCol: { span: 5 },
@@ -44,45 +49,23 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   ))
 
   public state: Readonly<IVariableModalStates> = {
-    variableName: '',
-    editType: 'add',
     operatorType: OperatorTypes.In,
     selectedType: ViewVariableTypes.Query,
     selectedValueType: ViewVariableValueTypes.String,
     defaultValues: []
   }
 
-  // public componentDidMount () {
-  //   const { form, variable } = this.props
-  //   form.setFieldsValue({ ...variable })
-  // }
-
-  public static getDerivedStateFromProps:
-    React.GetDerivedStateFromProps<IVariableModalProps & FormComponentProps, IVariableModalStates>
-  = (props, state) => {
-    const { variable, form } = props
-    if (!variable) {
-      return {
-        variableName: '',
-        editType: 'add',
-        operatorType: OperatorTypes.In,
-        selectedType: VariableModal.DefaultType,
-        selectedValueType: VariableModal.DefaultValueType,
-        defaultValues: []
-      }
+  public componentDidUpdate (prevProps: IVariableModalProps & FormComponentProps) {
+    const { form, variable, visible } = this.props
+    if (variable !== prevProps.variable || visible !== prevProps.visible) {
+      form.setFieldsValue(variable || defaultVarible)
+      const { type, valueType, defaultValues } = variable || defaultVarible
+      this.setState({
+        selectedType: type,
+        selectedValueType: valueType,
+        defaultValues: [...defaultValues]
+      })
     }
-    if (variable.name !== state.variableName) {
-      form.setFieldsValue({ ...variable })
-      return {
-        variableName: variable.name,
-        editType: variable.name ? 'edit' : 'add',
-        operatorType: variable.valueType === ViewVariableValueTypes.Boolean ? OperatorTypes.Equal : OperatorTypes.In,
-        selectedType: variable.type,
-        selectedValueType: variable.valueType,
-        defaultValues: variable.defaultValues
-      }
-    }
-    return null
   }
 
   private typeChange = (selectedType: ViewVariableTypes) => {
@@ -112,7 +95,9 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
       callback()
       return
     }
-    nameValidator(name, callback)
+    const { variable } = this.props
+    const key = variable ? variable.key : ''
+    nameValidator(key, name, callback)
   }
 
   private clearFieldsValue = () => {
@@ -120,22 +105,25 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
   }
 
   private save = () => {
-    const { form, onSave } = this.props
+    const { form, variable, onSave } = this.props
     form.validateFieldsAndScroll((err, fieldsValue) => {
       if (!err) {
-        const variable = fieldsValue as IViewVariable
-        if (variable.type === ViewVariableTypes.Query) {
-          variable.defaultValues = this.state.defaultValues
+        const updatedVariable = fieldsValue as IViewVariable
+        if (variable) {
+          updatedVariable.key = variable.key
         }
-        onSave(variable)
+        if (updatedVariable.type === ViewVariableTypes.Query) {
+          updatedVariable.defaultValues = this.state.defaultValues
+        }
+        onSave(updatedVariable)
       }
     })
   }
 
   public render () {
-    const { visible, onCancel, form } = this.props
+    const { visible, variable, onCancel, form } = this.props
     const { getFieldDecorator } = form
-    const { editType, operatorType, selectedType, selectedValueType, defaultValues } = this.state
+    const { operatorType, selectedType, selectedValueType, defaultValues } = this.state
 
     const modalButtons = [(
       <Button
@@ -150,8 +138,6 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
         key="submit"
         size="large"
         type="primary"
-        // loading={loading}
-        // disabled={loading}
         onClick={this.save}
       >
         保 存
@@ -160,8 +146,9 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
 
     return (
       <Modal
-        title={`${editType === 'add' ? '新增' : '修改'}变量`}
+        title={`${variable && variable.key ? '修改' : '新增'}变量`}
         wrapClassName="ant-modal-small"
+        maskClosable={false}
         visible={visible}
         footer={modalButtons}
         onCancel={onCancel}
@@ -175,13 +162,15 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
               }]
             })(<Input />)}
           </FormItem>
+          <FormItem label="别名" {...this.formItemStyle}>
+            {getFieldDecorator<IViewVariable>('alias')(<Input />)}
+          </FormItem>
           <FormItem label="类型" {...this.formItemStyle}>
             {getFieldDecorator<IViewVariable>('type', {
               rules: [{
                 required: true,
                 message: '请选择类型'
-              }],
-              initialValue: ViewVariableTypes.Query
+              }]
             })(<Select onChange={this.typeChange}>{this.viewVariableTypeOptions}</Select>)}
           </FormItem>
           <FormItem label="值类型" {...this.formItemStyle}>
@@ -189,8 +178,7 @@ export class VariableModal extends React.Component<IVariableModalProps & FormCom
               rules: [{
                 required: true,
                 message: '请选择值类型'
-              }],
-              initialValue: VariableModal.DefaultValueType
+              }]
             })(<Select onChange={this.valueTypeChange}>{this.viewVariableValueTypeOptions}</Select>)}
           </FormItem>
           {selectedType === ViewVariableTypes.Query && (

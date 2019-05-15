@@ -19,7 +19,7 @@
  */
 
 import { Record } from 'immutable'
-import { IViewState, IViewModel, IView, IFormedView, IFormedViews } from './types'
+import { IViewState, IViewRoleRaw, IViewRole, IViewModel, IView, IFormedView, IFormedViews } from './types'
 import { getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -99,12 +99,17 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
       const { id: viewId, variable, model, roles } = action.payload.view
       const formedModel = JSON.parse((model || '{}'))
       const formedVariable = JSON.parse((variable || '[]'))
+      const formedRoles = (roles as IViewRoleRaw[]).map<IViewRole>(({ roleId, columnAuth, rowAuth }) => ({
+        roleId,
+        columnAuth: JSON.parse(columnAuth || '[]'),
+        rowAuth: JSON.parse(rowAuth || '[]')
+      }))
       return state
         .set('editingView', action.payload.view)
         .set('editingViewInfo', {
           model: formedModel,
           variable: formedVariable,
-          roles: roles || []
+          roles: formedRoles
         })
         .set('formedViews', {
           ...formedViews,
@@ -112,7 +117,7 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
             ...action.payload.view,
             model: formedModel,
             variable: formedVariable,
-            roles: roles || []
+            roles: formedRoles
           }
         })
     case SourceActionTypes.LOAD_SOURCES_SUCCESS:

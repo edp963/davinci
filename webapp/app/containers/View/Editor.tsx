@@ -53,7 +53,7 @@ import {
 import { loadProjectRoles } from 'containers/Organizations/actions'
 import { makeSelectCurrentOrganizationProjectRoles } from 'containers/Organizations/selectors'
 
-import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading, IViewBase, IViewModel, IViewInfo, ISqlValidation, IViewRole } from './types'
+import { IExecuteSqlParams, IView, IExecuteSqlResponse, IViewLoading, IViewBase, IViewModel, IViewInfo, ISqlValidation, IViewRole, IViewVariable, IViewRoleRaw } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
 
 import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
@@ -179,14 +179,20 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     }
     this.setState({ currentStep: currentStep + step }, () => {
       if (this.state.currentStep > 1) {
-        const { onAddView, onEditView, editingView, editingViewInfo } = this.props
+        const { onAddView, onEditView, editingView, editingViewInfo, params } = this.props
+        const { pid: projectId } = params
         const { model, variable, roles } = editingViewInfo
         const { id: viewId } = editingView
         const updatedView: IView = {
           ...editingView,
+          projectId: +projectId,
           model: JSON.stringify(model),
           variable: JSON.stringify(variable),
-          roles
+          roles: roles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => ({
+            roleId,
+            columnAuth: JSON.stringify(columnAuth),
+            rowAuth: JSON.stringify(rowAuth)
+          }))
         }
         viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
       }
@@ -222,6 +228,15 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     onUpdateEditingViewInfo(updatedViewInfo)
   }
 
+  private variableChange = (updatedVariable: IViewVariable[]) => {
+    const { editingViewInfo, onUpdateEditingViewInfo } = this.props
+    const updatedViewInfo: IViewInfo = {
+      ...editingViewInfo,
+      variable: updatedVariable
+    }
+    onUpdateEditingViewInfo(updatedViewInfo)
+  }
+
   private viewRoleChange = (viewRole: IViewRole) => {
     const { editingViewInfo, onUpdateEditingViewInfo } = this.props
     const { roles } = editingViewInfo
@@ -242,7 +257,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const { currentStep, nextDisabled } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
     const containerProps = {
-      view: editingView, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
+      view: editingView, variable, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql }
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
@@ -257,6 +272,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
         <EditorContainer
           {...containerProps}
           visible={containerVisible}
+          onVariableChange={this.variableChange}
           onStepChange={this.stepChange}
           onViewChange={this.viewChange}
         />
