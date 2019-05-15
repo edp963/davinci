@@ -96,11 +96,12 @@ export function loadWidgetDetail (id) {
   }
 }
 
-export function widgetDetailLoaded (detail) {
+export function widgetDetailLoaded (detail, view) {
   return {
     type: LOAD_WIDGET_DETAIL_SUCCESS,
     payload: {
-      detail
+      detail,
+      view
     }
   }
 }

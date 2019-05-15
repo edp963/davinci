@@ -24,9 +24,13 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
 
   public static getDerivedStateFromProps:
     React.GetDerivedStateFromProps<IModelAuthModalProps, IModelAuthModalStates>
-  = (props) => {
+  = (props, state) => {
     const { auth } = props
-    return { localAuth: [...auth] }
+    const { localAuth } = state
+    if (!localAuth.length) {
+      return { localAuth: [...auth] }
+    }
+    return null
   }
 
   private save = () => {
@@ -55,9 +59,10 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
   }
 
   private renderListHeader (props: IModelAuthModalProps) {
-    const { auth, model } = props
-    const indeterminate = (auth.length > 0 && auth.length !== Object.keys(model).length)
-    const checkAll = (auth.length === Object.keys(model).length)
+    const { model } = props
+    const { localAuth } = this.state
+    const indeterminate = (localAuth.length > 0 && localAuth.length !== Object.keys(model).length)
+    const checkAll = (localAuth.length === Object.keys(model).length)
 
     return (
       <Checkbox
@@ -85,8 +90,12 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
     )
   }
 
+  private clearLocalAuth = () => {
+    this.setState({ localAuth: [] })
+  }
+
   public render () {
-    const { visible, model, onCancel, onSave } = this.props
+    const { visible, model, onCancel } = this.props
     const listDataSource = Object.keys(model)
 
     return (
@@ -95,6 +104,7 @@ export class ModelAuthModal extends React.PureComponent<IModelAuthModalProps, IM
         visible={visible}
         footer={this.modalFooter}
         onCancel={onCancel}
+        afterClose={this.clearLocalAuth}
       >
         <List
           bordered

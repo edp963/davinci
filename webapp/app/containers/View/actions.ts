@@ -21,7 +21,7 @@
 import { ActionTypes } from './constants'
 import { returnType } from 'utils/redux'
 import { IDavinciResponse } from 'utils/request'
-import { IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse } from './types'
+import { IViewBase, IView, IExecuteSqlParams, IExecuteSqlResponse, IViewInfo } from './types'
 import { IDataRequestParams } from 'containers/Dashboard/Grid'
 import { RenderType } from 'containers/Widget/components/Widget'
 
@@ -58,11 +58,12 @@ export const ViewActions = {
       }
     }
   },
-  loadViewDetail (viewId: number) {
+  loadViewDetail (viewId: number, resolve?: () => void) {
     return {
       type: ActionTypes.LOAD_VIEW_DETAIL,
       payload: {
-        viewId
+        viewId,
+        resolve
       }
     }
   },
@@ -166,6 +167,23 @@ export const ViewActions = {
       type: ActionTypes.EXECUTE_SQL_FAILURE,
       payload: {
         err
+      }
+    }
+  },
+
+  updateEditingView (view: IView) {
+    return {
+      type: ActionTypes.UPDATE_EDITING_VIEW,
+      payload: {
+        view
+      }
+    }
+  },
+  updateEditingViewInfo (viewInfo: IViewInfo) {
+    return {
+      type: ActionTypes.UPDATE_EDITING_VIEW_INFO,
+      payload: {
+        viewInfo
       }
     }
   },

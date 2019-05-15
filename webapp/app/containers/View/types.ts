@@ -19,7 +19,7 @@
  */
 
 import { SqlTypes } from 'app/globalConstants'
-import { IPersistSource, ISourceTable, IMapTableColumns } from 'containers/Source/types'
+import { ISourceSimple, ISourceTable, IMapTableColumns, ISourceRaw } from 'containers/Source/types'
 import { ViewModelTypes, ViewModelVisualTypes, ViewVariableTypes, ViewVariableValueTypes } from './constants'
 
 export interface IViewBase {
@@ -37,8 +37,9 @@ export interface IView extends IViewTemp {
   variable: string
   config: string
   projectId: number
-  source?: IPersistSource
+  source?: ISourceSimple
   sourceId: number
+  roles: IViewRole[]
 }
 
 type IViewTemp2 = Omit<Omit<IView, 'model'>, 'variable'>
@@ -96,19 +97,19 @@ export interface IViewVariable {
   fromService: boolean
 }
 
-export interface IViewRoleAuth {
+export interface IViewRole {
   roleId: number
   /**
    * view columns name
    * @type {string[]}
-   * @memberof IViewRoleAuth
+   * @memberof IViewRole
    */
   columnAuth: string[]
 
   /**
    * query variable values
    * @type {(Array<string | number>)}
-   * @memberof IViewRoleAuth
+   * @memberof IViewRole
    */
   rowAuth: Array<{ name: string, values: Array<string | number> }>
 }
@@ -116,6 +117,7 @@ export interface IViewRoleAuth {
 export interface IViewInfo {
   model: IViewModel
   variable: IViewVariable[]
+  roles: IViewRole[]
 }
 
 export interface IFormedViews {
@@ -127,7 +129,7 @@ export interface IViewState {
   formedViews: IFormedViews
   editingView: IView
   editingViewInfo: IViewInfo
-  sources: IPersistSource[]
+  sources: ISourceRaw[]
   tables: ISourceTable[]
   mapTableColumns: IMapTableColumns
   sqlValidation: ISqlValidation

@@ -19,7 +19,7 @@
  */
 
 import { Record } from 'immutable'
-import { IViewState, IViewModel, IFormedView, IFormedViews } from './types'
+import { IViewState, IViewModel, IView, IFormedView, IFormedViews } from './types'
 import { getValidModel } from './util'
 
 import { ActionTypes, DEFAULT_SQL_LIMIT } from './constants'
@@ -28,17 +28,32 @@ import { ViewActionType } from './actions'
 import { ActionTypes as SourceActionTypes } from 'containers/Source/constants'
 import { SourceActionType } from 'containers/Source/actions'
 
-import { LOAD_DASHBOARD_DETAIL, LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
+import { LOAD_WIDGET_DETAIL_SUCCESS } from 'containers/Widget/constants'
+import { LOAD_DASHBOARD_DETAIL_SUCCESS } from 'containers/Dashboard/constants'
 
 import { ActionTypes as DisplayActionTypes } from 'containers/Display/constants'
+
+const emptyView: IView = {
+  id: null,
+  name: '',
+  sql: '',
+  model: '',
+  variable: '',
+  roles: [],
+  config: '',
+  description: '',
+  projectId: null,
+  sourceId: null
+}
 
 const ViewRecord = Record<IViewState>({
   views: [],
   formedViews: {},
-  editingView: null,
+  editingView: emptyView,
   editingViewInfo: {
     model: {},
-    variable: []
+    variable: [],
+    roles: []
   },
   sources: [],
   tables: [],
@@ -81,21 +96,23 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
         .set('views', action.payload.views)
         .set('loading', { ...loading, view: false })
     case ActionTypes.LOAD_VIEW_DETAIL_SUCCESS:
-      const { id: viewId, variable, model } = action.payload.view
+      const { id: viewId, variable, model, roles } = action.payload.view
       const formedModel = JSON.parse((model || '{}'))
       const formedVariable = JSON.parse((variable || '[]'))
       return state
         .set('editingView', action.payload.view)
         .set('editingViewInfo', {
           model: formedModel,
-          variable: formedVariable
+          variable: formedVariable,
+          roles: roles || []
         })
         .set('formedViews', {
           ...formedViews,
           [viewId]: {
             ...action.payload.view,
             model: formedModel,
-            variable: formedVariable
+            variable: formedVariable,
+            roles: roles || []
           }
         })
     case SourceActionTypes.LOAD_SOURCES_SUCCESS:
@@ -141,10 +158,24 @@ function viewReducer (state = initialState, action: ViewActionType | SourceActio
           code: action.payload.err.code,
           message: action.payload.err.msg
         })
+    case ActionTypes.UPDATE_EDITING_VIEW:
+      return state.set('editingView', action.payload.view)
+    case ActionTypes.UPDATE_EDITING_VIEW_INFO:
+      return state.set('editingViewInfo', action.payload.viewInfo)
     case ActionTypes.SET_SQL_LIMIT:
       return state.set('sqlLimit', action.payload.limit)
     case ActionTypes.RESET_VIEW_STATE:
       return new ViewRecord()
+    case LOAD_WIDGET_DETAIL_SUCCESS:
+      const widgetView = action.payload.view
+      return state.set('formedViews', {
+        ...formedViews,
+        [widgetView.id]: {
+          ...widgetView,
+          model: JSON.parse(widgetView.model || '{}'),
+          variable: JSON.parse(widgetView.variable || '[]')
+        }
+      })
     case LOAD_DASHBOARD_DETAIL_SUCCESS:
     case DisplayActionTypes.LOAD_DISPLAY_DETAIL_SUCCESS:
       const updatedViews: IFormedViews = action.payload.views.reduce((obj, view) => {

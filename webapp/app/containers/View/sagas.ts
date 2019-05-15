@@ -56,6 +56,9 @@ export function* getViewDetail (action: ViewActionType) {
     const asyncData = yield call(request, `${api.view}/${payload.viewId}`)
     const view: IView = asyncData.payload
     yield put(viewDetailLoaded(view))
+    if (payload.resolve) {
+      payload.resolve()
+    }
   } catch (err) {
     yield put(loadViewDetailFail())
     errorHandler(err)
