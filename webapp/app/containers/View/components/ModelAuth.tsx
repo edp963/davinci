@@ -9,7 +9,7 @@ const { Option } = Select
 import { RadioChangeEvent } from 'antd/lib/radio'
 import { ColumnProps } from 'antd/lib/table'
 
-import { IViewVariable, IViewModelProps, IViewModel, IExecuteSqlResponse, IViewRoleAuth } from '../types'
+import { IViewVariable, IViewModelProps, IViewModel, IExecuteSqlResponse, IViewRole } from '../types'
 import {
   ViewModelTypes,
   ViewModelVisualTypes,
@@ -28,18 +28,24 @@ interface IModelAuthProps {
   variable: IViewVariable[]
   sqlColumns: IExecuteSqlResponse['columns']
   roles: any[] // @FIXME role typing
+  viewRoles: IViewRole[]
   onModelChange: (partialModel: IViewModel) => void
+  onViewRoleChange: (viewRole: IViewRole) => void
   onStepChange: (stepChange: number) => void
 }
 
 interface IModelAuthStates {
   modalVisible: boolean
+  selectedRoleId: number
+  selectedColumnAuth: string[]
 }
 
-export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates> {
+export class ModelAuth extends React.PureComponent<IModelAuthProps, IModelAuthStates> {
 
   public state: Readonly<IModelAuthStates> = {
-    modalVisible: false
+    modalVisible: false,
+    selectedRoleId: 0,
+    selectedColumnAuth: []
   }
 
   private modelTypeOptions = Object.entries(ViewModelTypesLocale).map(([value, label]) => ({
@@ -67,10 +73,13 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
     this.props.onStepChange(step)
   }
 
-  private setColumnAuth = (roleAuth: IViewRoleAuth) => () => {
+  private setColumnAuth = (viewRole: IViewRole) => () => {
+    const { roleId, columnAuth } = viewRole
+    const { model } = this.props
     this.setState({
-      modalVisible: true
-
+      modalVisible: true,
+      selectedRoleId: roleId,
+      selectedColumnAuth: columnAuth.filter((column) => !!model[column])
     })
   }
 
@@ -101,21 +110,28 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
     return columns
   })
 
-  private getAuthDatasource = memoizeOne((roles: any[], variables: IViewVariable[]) => {
+  private getAuthDatasource = (roles: any[], viewRoles: IViewRole[]) => {
     if (!Array.isArray(roles)) { return [] }
 
-    const authDatasource = roles.map<IViewRoleAuth>((role) => {
+    const authDatasource = roles.map<IViewRole>((role) => {
       const { id: roleId, name: roleName, description: roleDesc } = role
+      let columnAuth = []
+      let rowAuth = []
+      const viewRole = viewRoles.find((v) => v.roleId === roleId)
+      if (viewRole) {
+        columnAuth = viewRole.columnAuth
+        rowAuth = viewRole.rowAuth
+      }
       return {
         roleId,
         roleName,
         roleDesc,
-        columnAuth: [],
-        rowAuth: []
+        columnAuth,
+        rowAuth
       }
     })
     return authDatasource
-  })
+  }
 
   private renderColumnModelType = (text: string, record) => (
     <RadioGroup
@@ -135,20 +151,28 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
     </Select>
   )
 
-  private saveModelAuth = (auth: string[]) => {
-
+  private saveModelAuth = (columnAuth: string[]) => {
+    const { onViewRoleChange, roles, viewRoles } = this.props
+    const { selectedRoleId } = this.state
+    const authDatasource = this.getAuthDatasource(roles, viewRoles)
+    const viewRole = authDatasource.find((v) => v.roleId === selectedRoleId)
+    onViewRoleChange({
+      ...viewRole,
+      columnAuth
+    })
+    this.closeModelAuth()
   }
 
-  private cancelModelAuth = () => {
+  private closeModelAuth = () => {
     this.setState({ modalVisible: false })
   }
 
   public render () {
-    const { visible, model, variable, sqlColumns, roles, onModelChange } = this.props
-    const { modalVisible } = this.state
+    const { visible, model, variable, viewRoles, sqlColumns, roles, onModelChange } = this.props
+    const { modalVisible, selectedColumnAuth } = this.state
     const modelDatasource = Object.entries(model).map(([name, value]) => ({ name, ...value }))
     const authColumns = this.getAuthTableColumns(model, variable)
-    const authDatasource = this.getAuthDatasource(roles, variable)
+    const authDatasource = this.getAuthDatasource(roles, viewRoles)
     const styleCls = classnames({
       [Styles.containerHorizontal]: true,
       [Styles.modelAuth]: true
@@ -157,16 +181,18 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
 
     return (
       <div className={styleCls} style={style}>
-        <div className={Styles.containerHorizontal}>
-          <Tabs defaultActiveKey="model">
-            <TabPane tab="Model" key="model">
+        <Tabs defaultActiveKey="model" className={Styles.authTab}>
+          <TabPane tab="Model" key="model">
+            <div className={Styles.authTable}>
               <Table bordered pagination={false} rowKey="name" dataSource={modelDatasource}>
                 <Column title="字段名称" dataIndex="name" />
                 <Column title="数据类型" dataIndex="modelType" render={this.renderColumnModelType} />
                 <Column title="可视化类型" dataIndex="visualType" render={this.renderColumnVisualType} />
               </Table>
-            </TabPane>
-            <TabPane tab="Auth" key="auth">
+            </div>
+          </TabPane>
+          <TabPane tab="Auth" key="auth">
+            <div className={Styles.authTable}>
               <Table
                 bordered
                 rowKey="roleId"
@@ -174,16 +200,16 @@ export class ModelAuth extends React.Component<IModelAuthProps, IModelAuthStates
                 columns={authColumns}
                 dataSource={authDatasource}
               />
-              <ModelAuthModal
-                visible={modalVisible}
-                model={model}
-                auth={[]}
-                onSave={this.saveModelAuth}
-                onCancel={this.cancelModelAuth}
-              />
-            </TabPane>
-          </Tabs>
-        </div>
+            </div>
+            <ModelAuthModal
+              visible={modalVisible}
+              model={model}
+              auth={selectedColumnAuth}
+              onSave={this.saveModelAuth}
+              onCancel={this.closeModelAuth}
+            />
+          </TabPane>
+        </Tabs>
         <Row className={Styles.bottom} type="flex" align="middle" justify="end">
           <Col span={12} className={Styles.toolBtns}>
             <Button type="primary" onClick={this.stepChange(-1)}>上一步</Button>

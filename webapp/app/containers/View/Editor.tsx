@@ -53,7 +53,7 @@ import {
 import { loadProjectRoles } from 'containers/Organizations/actions'
 import { makeSelectCurrentOrganizationProjectRoles } from 'containers/Organizations/selectors'
 
-import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading, IViewBase, IViewModel, IViewInfo, ISqlValidation } from './types'
+import { IExecuteSqlParams, IViewVariable, IView, IExecuteSqlResponse, IViewLoading, IViewBase, IViewModel, IViewInfo, ISqlValidation, IViewRole } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
 
 import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
@@ -87,6 +87,8 @@ interface IViewEditorDispatchProps {
   onExecuteSql: (params: IExecuteSqlParams) => void
   onAddView: (view: IView, resolve: () => void) => void
   onEditView: (view: IView, resolve: () => void) => void
+  onUpdateEditingView: (view: IView) => void
+  onUpdateEditingViewInfo: (viewInfo: IViewInfo) => void
   onSetSqlLimit: (limit: number) => void
   onResetState: () => void
   onLoadProjectRoles: (projectId: number) => void
@@ -96,36 +98,18 @@ type IViewEditorProps = IViewEditorStateProps & IViewEditorDispatchProps & Route
 
 interface IViewEditorStates {
   containerHeight: number
-  localEditingView: IView
-  localViewInfo: IViewInfo
   sqlValidationCode: number
   init: boolean
   currentStep: number
   nextDisabled: boolean
 }
 
-const emptyView = {
-  id: null,
-  name: '',
-  sql: '',
-  model: '',
-  variable: '',
-  config: '',
-  description: '',
-  projectId: null,
-  sourceId: null
-}
 
 export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorStates> {
 
   public state: Readonly<IViewEditorStates> = {
     containerHeight: 0,
     currentStep: 0,
-    localEditingView: {...emptyView },
-    localViewInfo: {
-      model: {},
-      variable: []
-    },
     sqlValidationCode: null,
     init: true,
     nextDisabled: true
@@ -149,7 +133,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   = (props, state) => {
     const { params, editingView, editingViewInfo, sqlValidation } = props
     const { pid: projectId, viewId } = params
-    const { init, sqlValidationCode, localEditingView } = state
+    const { init, sqlValidationCode } = state
     let nextDisabled = state.nextDisabled
     if (sqlValidationCode !== sqlValidation.code && sqlValidation.code) {
       message.destroy()
@@ -164,8 +148,6 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       if (init) {
         props.onLoadSourceTables(editingView.sourceId)
         return {
-          localEditingView: { ...editingView },
-          localViewInfo: { ...editingViewInfo },
           init: false,
           sqlValidationCode: sqlValidation.code,
           nextDisabled
@@ -173,16 +155,11 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       }
     } else {
       return {
-        localEditingView: {
-          ...localEditingView,
-          projectId: +projectId
-        },
-        localViewInfo: { ...editingViewInfo },
         sqlValidationCode: sqlValidation.code,
         nextDisabled
       }
     }
-    return { sqlValidationCode: sqlValidation.code, nextDisabled, localViewInfo: { ...editingViewInfo } }
+    return { sqlValidationCode: sqlValidation.code, nextDisabled }
   }
 
   public componentDidMount () {
@@ -201,17 +178,17 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       return
     }
     this.setState({ currentStep: currentStep + step }, () => {
-      const { localEditingView, localViewInfo } = this.state
-      const { model, variable } = localViewInfo
       if (this.state.currentStep > 1) {
-        const { onAddView, onEditView } = this.props
-        const { id: viewId } = localEditingView
-        const editingView: IView = {
-          ...localEditingView,
+        const { onAddView, onEditView, editingView, editingViewInfo } = this.props
+        const { model, variable, roles } = editingViewInfo
+        const { id: viewId } = editingView
+        const updatedView: IView = {
+          ...editingView,
           model: JSON.stringify(model),
-          variable: JSON.stringify(variable)
+          variable: JSON.stringify(variable),
+          roles
         }
-        viewId ? onEditView(editingView, this.goToViewList) : onAddView(editingView, this.goToViewList)
+        viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
       }
     })
   }
@@ -223,35 +200,49 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 
   private viewChange = (propName: keyof IView, value: string | number) => {
-    this.setState(({ localEditingView, nextDisabled }) => ({
-      localEditingView: {
-        ...localEditingView,
-        [propName]: value
-      },
-      nextDisabled: propName === 'sql' && value !== localEditingView.sql ? true : nextDisabled
-    }))
+    const { editingView, onUpdateEditingView } = this.props
+    const nextDisabled = (propName === 'sql' && value !== editingView.sql)
+      ? true
+      : this.state.nextDisabled
+    this.setState({ nextDisabled })
+    const updatedView = {
+      ...editingView,
+      [propName]: value
+    }
+    onUpdateEditingView(updatedView)
   }
 
   private modelChange = (partialModel: IViewModel) => {
-    this.setState(({ localViewInfo }) => {
-      const { model, variable } = localViewInfo
-      return {
-        localViewInfo: {
-          model: { ...model, ...partialModel },
-          variable: [...variable]
-        }
-      }
-    })
+    const { editingViewInfo, onUpdateEditingViewInfo } = this.props
+    const { model } = editingViewInfo
+    const updatedViewInfo: IViewInfo = {
+      ...editingViewInfo,
+      model: { ...model, ...partialModel }
+    }
+    onUpdateEditingViewInfo(updatedViewInfo)
+  }
+
+  private viewRoleChange = (viewRole: IViewRole) => {
+    const { editingViewInfo, onUpdateEditingViewInfo } = this.props
+    const { roles } = editingViewInfo
+    const updatedRoles = roles.filter((role) => role.roleId !== viewRole.roleId)
+    updatedRoles.push(viewRole)
+    const updatedViewInfo = {
+      ...editingViewInfo,
+      roles: updatedRoles
+    }
+    onUpdateEditingViewInfo(updatedViewInfo)
   }
 
   public render () {
     const {
       sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, projectRoles,
+      editingView, editingViewInfo,
       onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql } = this.props
-    const { currentStep, localEditingView: view, localViewInfo, nextDisabled } = this.state
-    const { model, variable } = localViewInfo
+    const { currentStep, nextDisabled } = this.state
+    const { model, variable, roles: viewRoles } = editingViewInfo
     const containerProps = {
-      view, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
+      view: editingView, sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, nextDisabled,
       onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql }
     const containerVisible = !currentStep
     const modelAuthVisible = !!currentStep
@@ -275,7 +266,9 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
           variable={variable}
           sqlColumns={sqlDataSource.columns}
           roles={projectRoles}
+          viewRoles={viewRoles}
           onModelChange={this.modelChange}
+          onViewRoleChange={this.viewRoleChange}
           onStepChange={this.stepChange}
         />
       </div>
@@ -292,6 +285,8 @@ const mapDispatchToProps = (dispatch: Dispatch<ViewActionType | SourceActionType
   onExecuteSql: (params) => dispatch(ViewActions.executeSql(params)),
   onAddView: (view, resolve) => dispatch(ViewActions.addView(view, resolve)),
   onEditView: (view, resolve) => dispatch(ViewActions.editView(view, resolve)),
+  onUpdateEditingView: (view) => dispatch(ViewActions.updateEditingView(view)),
+  onUpdateEditingViewInfo: (viewInfo: IViewInfo) => dispatch(ViewActions.updateEditingViewInfo(viewInfo)),
   onSetSqlLimit: (limit: number) => dispatch(ViewActions.setSqlLimit(limit)),
   onResetState: () => dispatch(ViewActions.resetViewState()),
   onLoadProjectRoles: (projectId) => dispatch(loadProjectRoles(projectId))
