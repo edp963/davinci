@@ -166,6 +166,11 @@ export const CHART_VISUALMAP_DIRECYTIONS = [
   { name: '水平', value: 'horizontal' }
 ]
 
+export const PIVOT_CHART_YAXIS_OPTIONS = [
+  { name: '折线图', value: 'line' },
+  { name: '柱状图', value: 'bar' }
+]
+
 export const SQL_STRING_TYPES = [
   'CHAR', 'VARCHAR', 'TINYTEXT', 'TEXT', 'MEDIUMTEXT', 'LONGTEXT',
   'JSON', 'LINESTRING', 'MULTILINESTRING',

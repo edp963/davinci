@@ -22,6 +22,7 @@ import LabelSection, { ILabelConfig } from './ConfigSections/LabelSection'
 import LegendSection, { ILegendConfig } from './ConfigSections/LegendSection'
 import VisualMapSection, { IVisualMapConfig } from './ConfigSections/VisualMapSection'
 import ToolboxSection, { IToolboxConfig } from './ConfigSections/ToolboxSection'
+import DoubleYAxisSection, { IDoubleYAxisConfig } from './ConfigSections/DoubleYAxisSection'
 import AreaSelectSection, { IAreaSelectConfig } from './ConfigSections/AreaSelectSection'
 import ScorecardSection, { IScorecardConfig } from './ConfigSections/ScorecardSection'
 import IframeSection, { IframeConfig } from './ConfigSections/IframeSection'
@@ -178,7 +179,6 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       const { dataParams } = this.state
       const model = selectedView.model
       const currentWidgetlibs = widgetlibs[mode || 'pivot'] // FIXME 兼容 0.3.0-beta.1 之前版本
-
       cols.forEach((c) => {
         const modelColumn = model[c.name]
         if (modelColumn) {
@@ -201,6 +201,14 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           })
         }
       })
+
+      if (secondaryMetrics) {
+        dataParams.metrics = {
+          title: '左轴指标',
+          type: 'value',
+          items: []
+        }
+      }
       metrics.forEach((m) => {
         const modelColumn = model[decodeMetricName(m.name)]
         if (modelColumn) {
@@ -213,7 +221,13 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
           })
         }
       })
-      if (dataParams.secondaryMetrics && secondaryMetrics) {
+
+      if (secondaryMetrics) {
+        dataParams.secondaryMetrics = {
+          title: '右轴指标',
+          type: 'value',
+          items: []
+        }
         secondaryMetrics.forEach((m) => {
           const modelColumn = model[decodeMetricName(m.name)]
           if (modelColumn) {
@@ -450,6 +464,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       if (name === 'metrics') {
         combinedItem = {...dragged, chart: dataParams.metrics.items.length ? dataParams.metrics.items[0].chart : getPivot()}
       }
+      if (name === 'secondaryMetrics') {
+        combinedItem = {...dragged, chart: dataParams.secondaryMetrics.items.length ? dataParams.secondaryMetrics.items[0].chart : getPivot()}
+      }
       destination.items = [...items.slice(0, dropIndex), combinedItem, ...items.slice(dropIndex)]
     } else {
       destination.items = [...changedItems]
@@ -628,9 +645,9 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
 
   private getDimetionsAndMetricsCount = () => {
     const { dataParams } = this.state
-    const { cols, rows, metrics } = dataParams
+    const { cols, rows, metrics, secondaryMetrics } = dataParams
     const dcount = cols.items.length + rows.items.length
-    const mcount = metrics.items.length
+    const mcount = secondaryMetrics ? secondaryMetrics.items.length + metrics.items.length : metrics.items.length
     return [dcount, mcount]
   }
 
@@ -730,7 +747,10 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
       dimetionsCount = cols.items.length
     }
 
-    if (!checkChartEnable(dimetionsCount, metrics.items.length, selectedCharts)) {
+    const metricsLength = secondaryMetrics
+      ? metrics.items.length + secondaryMetrics.items.length
+      : metrics.items.length
+    if (!checkChartEnable(dimetionsCount, metricsLength, selectedCharts)) {
       selectedCharts = mode === 'pivot'
         ? getPivotModeSelectedCharts([])
         : [getTable()]
@@ -1294,7 +1314,7 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
     const [dimetionsCount, metricsCount] = this.getDimetionsAndMetricsCount()
     const {
       spec, xAxis, yAxis, axis, splitLine, pivot: pivotConfig, label, legend,
-      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar } = styleParams
+      visualMap, toolbox, areaSelect, scorecard, iframe, table, bar, doubleYAxis } = styleParams
 
     const viewSelectMenu = (
       <Menu onClick={this.viewSelect}>
@@ -1515,6 +1535,11 @@ export class OperatingPanel extends React.Component<IOperatingPanelProps, IOpera
               title="工具"
               config={toolbox as IToolboxConfig}
               onChange={this.styleChange('toolbox')}
+            />}
+            {doubleYAxis && <DoubleYAxisSection
+              title="双Y轴"
+              config={doubleYAxis as IDoubleYAxisConfig}
+              onChange={this.styleChange('doubleYAxis')}
             />}
             {xAxis && <AxisSection
               title="X轴"

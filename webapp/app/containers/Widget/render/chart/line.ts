@@ -235,6 +235,6 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('line', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, false, yAxis, xAxis, xAxisData)
+    grid: getGridPositions(legend, seriesNames, '', false, yAxis, xAxis, xAxisData)
   }
 }

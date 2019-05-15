@@ -277,7 +277,7 @@ export default function (chartProps: IChartProps, drillOptions?: any) {
       formatter: getChartTooltipLabel('scatter', seriesData, { cols, metrics, color, tip })
     },
     legend: getLegendOption(legend, seriesNames),
-    grid: getGridPositions(legend, seriesNames, false, yAxis)
-    //...brushedOptions
+    grid: getGridPositions(legend, seriesNames, '', false, yAxis)
+    // ...brushedOptions
   }
 }

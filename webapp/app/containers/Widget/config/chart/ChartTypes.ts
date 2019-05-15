@@ -84,7 +84,10 @@ export enum ChartTypes {
    */
   RichText = 15,
 
-  // DoubleYAxis = 15
+  /**
+   * 双Y轴
+   */
+  DoubleYAxis = 15
 }
 
 export default ChartTypes

@@ -20,6 +20,7 @@ import { IScorecardConfig } from '../Workbench/ConfigSections/ScorecardSection'
 import { IframeConfig } from '../Workbench/ConfigSections/IframeSection'
 import { ITableConfig } from '../Workbench/ConfigSections/TableSection'
 import { IRichTextConfig, IBarConfig } from '../Workbench/ConfigSections'
+import { IDoubleYAxisConfig } from '../Workbench/ConfigSections/DoubleYAxisSection'
 import { IModel } from '../Workbench/index'
 import { IQueryVariableMap } from '../../../Dashboard/Grid'
 import { getStyleConfig } from '../util'
@@ -49,6 +50,9 @@ export interface IWidgetSecondaryMetric {
   agg: AggregatorType
   field: IFieldConfig
   format: IFieldFormatConfig
+  from?: string
+  type?: any
+  visualType?: any
 }
 
 export interface IWidgetFilter {
@@ -74,6 +78,7 @@ export interface IChartStyles {
   table?: ITableConfig
   richText?: IRichTextConfig
   bar?: IBarConfig
+  doubleYAxis?: IDoubleYAxisConfig
 }
 
 export interface IChartInfo {

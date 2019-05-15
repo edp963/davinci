@@ -93,7 +93,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
       <Option key={f.value} value={f.value}>{f.name}</Option>
     ))
     const fontSizes = PIVOT_CHART_FONT_SIZES.map((f) => (
-      <Option key={f} value={`${f}`}>{f}</Option>
+      <Option key={`${f}`} value={`${f}`}>{f}</Option>
     ))
 
     const xAxisLabel = showTitleAndUnit === void 0 && [(
@@ -274,7 +274,7 @@ export class AxisSection extends React.PureComponent<IAxisSectionProps, {}> {
                 onChange={this.selectChange('lineSize')}
               >
                 {Array.from(Array(10), (o, i) => (
-                    <Option key={i} value={`${i + 1}`}>{i + 1}</Option>
+                    <Option key={`${i}`} value={`${i + 1}`}>{i + 1}</Option>
                   ))}
               </Select>
             </Col>
