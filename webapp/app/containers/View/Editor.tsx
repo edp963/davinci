@@ -23,7 +23,7 @@ import { compose, Dispatch } from 'redux'
 import { connect } from 'react-redux'
 import { createStructuredSelector } from 'reselect'
 import Helmet from 'react-helmet'
-import { Link, RouteComponentProps } from 'react-router'
+import { RouteComponentProps } from 'react-router'
 
 import injectReducer from 'utils/injectReducer'
 import injectSaga from 'utils/injectSaga'
@@ -31,8 +31,8 @@ import reducer, { ViewStateType } from './reducer'
 import sagas from './sagas'
 import reducerSource from 'containers/Source/reducer'
 import sagasSource from 'containers/Source/sagas'
-import reducerOrganization from 'containers/Organizations/reducer'
-import sagasOrganization from 'containers/Organizations/sagas'
+import reducerProject from 'containers/Projects/reducer'
+import sagasProject from 'containers/Projects/sagas'
 
 import { IRouteParams } from 'app/routes'
 import { hideNavigator } from '../App/actions'
@@ -55,13 +55,14 @@ import {
 } from './selectors'
 
 import { loadProjectRoles } from 'containers/Organizations/actions'
-import { makeSelectCurrentOrganizationProjectRoles } from 'containers/Organizations/selectors'
+import { makeSelectProjectRoles } from 'containers/Projects/selectors'
 
 import {
   IView, IViewModel, IViewRoleRaw, IViewRole, IViewVariable, IViewInfo,
   IExecuteSqlParams, IExecuteSqlResponse, IViewLoading, ISqlValidation,
   IDacChannel, IDacTenant, IDacBiz } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
+import { ViewVariableTypes } from './constants'
 
 import { message } from 'antd'
 import EditorSteps from './components/EditorSteps'
@@ -218,18 +219,23 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
   }
 
   private saveView = () => {
-    const { onAddView, onEditView, editingView, editingViewInfo, params } = this.props
+    const { onAddView, onEditView, editingView, editingViewInfo, projectRoles, params } = this.props
     const { pid: projectId } = params
     const { model, variable, roles } = editingViewInfo
     const { id: viewId } = editingView
+    const validRoles = roles.filter(({ roleId }) => projectRoles && projectRoles.findIndex(({ id }) => id === roleId) >= 0)
     const updatedView: IView = {
       ...editingView,
       projectId: +projectId,
       model: JSON.stringify(model),
       variable: JSON.stringify(variable),
-      roles: roles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => {
+      roles: validRoles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => {
         const validColumnAuth = columnAuth.filter((c) => !!model[c])
-        const validRowAuth = rowAuth.filter((r) => variable.findIndex((v) => v.name === r.name) >= 0)
+        const validRowAuth = rowAuth.filter((r) => {
+          const v = variable.find((v) => v.name === r.name)
+          if (!v) { return false }
+          return (v.type === ViewVariableTypes.Authorization && !v.fromService)
+        })
         return {
           roleId,
           columnAuth: JSON.stringify(validColumnAuth),
@@ -295,7 +301,7 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
       sources, tables, mapTableColumns, sqlDataSource, sqlLimit, loading, projectRoles,
       channels, tenants, bizs,
       editingView, editingViewInfo,
-      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit, onExecuteSql,
+      onLoadSourceTables, onLoadTableColumns, onSetSqlLimit,
       onLoadDacTenants, onLoadDacBizs } = this.props
     const { currentStep, nextDisabled } = this.state
     const { model, variable, roles: viewRoles } = editingViewInfo
@@ -308,31 +314,34 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     const modelAuthVisible = !!currentStep
 
     return (
-      <div className={Styles.viewEditor}>
-        <div className={Styles.header}>
-          <div className={Styles.steps}>
-            <EditorSteps current={currentStep} />
+      <>
+        <Helmet title="View" />
+        <div className={Styles.viewEditor}>
+          <div className={Styles.header}>
+            <div className={Styles.steps}>
+              <EditorSteps current={currentStep} />
+            </div>
           </div>
+          <EditorContainer
+            {...containerProps}
+            visible={containerVisible}
+            onVariableChange={this.variableChange}
+            onStepChange={this.stepChange}
+            onViewChange={this.viewChange}
+          />
+          <ModelAuth
+            visible={modelAuthVisible}
+            model={model}
+            variable={variable}
+            sqlColumns={sqlDataSource.columns}
+            roles={projectRoles}
+            viewRoles={viewRoles}
+            onModelChange={this.modelChange}
+            onViewRoleChange={this.viewRoleChange}
+            onStepChange={this.stepChange}
+          />
         </div>
-        <EditorContainer
-          {...containerProps}
-          visible={containerVisible}
-          onVariableChange={this.variableChange}
-          onStepChange={this.stepChange}
-          onViewChange={this.viewChange}
-        />
-        <ModelAuth
-          visible={modelAuthVisible}
-          model={model}
-          variable={variable}
-          sqlColumns={sqlDataSource.columns}
-          roles={projectRoles}
-          viewRoles={viewRoles}
-          onModelChange={this.modelChange}
-          onViewRoleChange={this.viewRoleChange}
-          onStepChange={this.stepChange}
-        />
-      </div>
+      </>
     )
   }
 }
@@ -368,7 +377,7 @@ const mapStateToProps = createStructuredSelector({
   sqlLimit: makeSelectSqlLimit(),
   sqlValidation: makeSelectSqlValidation(),
   loading: makeSelectLoading(),
-  projectRoles: makeSelectCurrentOrganizationProjectRoles(),
+  projectRoles: makeSelectProjectRoles(),
 
   channels: makeSelectChannels(),
   tenants: makeSelectTenants(),
@@ -380,15 +389,15 @@ const withReducer = injectReducer({ key: 'view', reducer })
 const withSaga = injectSaga({ key: 'view', saga: sagas })
 const withReducerSource = injectReducer({ key: 'source', reducer: reducerSource })
 const withSagaSource = injectSaga({ key: 'source', saga: sagasSource })
-const withReducerOrganization = injectReducer({ key: 'organization', reducer: reducerOrganization })
-const withSagaOrganization = injectSaga({ key: 'organization', saga: sagasOrganization })
+const withReducerProject = injectReducer({ key: 'project', reducer: reducerProject })
+const withSagaProject = injectSaga({ key: 'project', saga: sagasProject })
 
 export default compose(
   withReducer,
   withReducerSource,
   withSaga,
   withSagaSource,
-  withReducerOrganization,
-  withSagaOrganization,
+  withReducerProject,
+  withSagaProject,
   withConnect
 )(ViewEditor)
