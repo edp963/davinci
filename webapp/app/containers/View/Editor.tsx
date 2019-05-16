@@ -63,8 +63,6 @@ import {
   IDacChannel, IDacTenant, IDacBiz } from './types'
 import { ISource, ISourceTable, IMapTableColumns } from '../Source/types'
 
-import { ModelTypeSqlTypeSetting, VisualTypeSqlTypeSetting } from './constants'
-
 import { message } from 'antd'
 import EditorSteps from './components/EditorSteps'
 import EditorContainer from './components/EditorContainer'
@@ -196,24 +194,32 @@ export class ViewEditor extends React.Component<IViewEditorProps, IViewEditorSta
     }
     this.setState({ currentStep: currentStep + step }, () => {
       if (this.state.currentStep > 1) {
-        const { onAddView, onEditView, editingView, editingViewInfo, params } = this.props
-        const { pid: projectId } = params
-        const { model, variable, roles } = editingViewInfo
-        const { id: viewId } = editingView
-        const updatedView: IView = {
-          ...editingView,
-          projectId: +projectId,
-          model: JSON.stringify(model),
-          variable: JSON.stringify(variable),
-          roles: roles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => ({
-            roleId,
-            columnAuth: JSON.stringify(columnAuth),
-            rowAuth: JSON.stringify(rowAuth)
-          }))
-        }
-        viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
+        this.saveView()
       }
     })
+  }
+
+  private saveView = () => {
+    const { onAddView, onEditView, editingView, editingViewInfo, params } = this.props
+    const { pid: projectId } = params
+    const { model, variable, roles } = editingViewInfo
+    const { id: viewId } = editingView
+    const updatedView: IView = {
+      ...editingView,
+      projectId: +projectId,
+      model: JSON.stringify(model),
+      variable: JSON.stringify(variable),
+      roles: roles.map<IViewRoleRaw>(({ roleId, columnAuth, rowAuth }) => {
+        const validColumnAuth = columnAuth.filter((c) => !!model[c])
+        const validRowAuth = rowAuth.filter((r) => variable.findIndex((v) => v.name === r.name) >= 0)
+        return {
+          roleId,
+          columnAuth: JSON.stringify(validColumnAuth),
+          rowAuth: JSON.stringify(validRowAuth)
+        }
+      })
+    }
+    viewId ? onEditView(updatedView, this.goToViewList) : onAddView(updatedView, this.goToViewList)
   }
 
   private goToViewList = () => {

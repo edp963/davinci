@@ -11,13 +11,9 @@ import { TableProps, ColumnProps } from 'antd/lib/table'
 
 import { IViewVariable, IViewModelProps, IViewModel, IExecuteSqlResponse, IViewRole } from '../types'
 import {
-  ViewModelTypes,
-  ViewModelVisualTypes,
   ViewModelTypesLocale,
   ViewVariableValueTypes,
-  ModelTypeSqlTypeSetting,
-  ViewModelVisualTypesLocale,
-  VisualTypeSqlTypeSetting
+  ViewModelVisualTypesLocale
 } from '../constants'
 
 import OperatorTypes from 'utils/operatorTypes'
